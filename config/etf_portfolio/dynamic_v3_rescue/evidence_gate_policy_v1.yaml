@@ -1,0 +1,63 @@
+schema_version: 1
+policy_id: dynamic_v3_rescue_evidence_gate_policy_v1
+version: 2026-06-08
+status: pilot_baseline
+owner: system_validation
+rationale: >
+  Calibrate observe-only recovery for medium_real candidates after
+  sweep_20260607T102300Z_ae5ae1d8 produced zero usable candidates. The policy
+  separates production/promotion gates from observe-only manual review gates.
+intended_effect: >
+  Restore candidates with evidence gaps to observe_only only when true hard
+  failures are absent, while keeping all recovered candidates manual_review_required.
+validation_evidence: >
+  TRADING-121_to_125 focused tests, artifact validation, and real medium_real
+  recovery run.
+review_condition: >
+  Replace or recalibrate after owner review of recovered candidates and at least
+  one additional real sweep.
+
+gate_levels:
+  observe_only:
+    hard_fail:
+      - DATA_QUALITY_FAIL
+      - DATE_RANGE_FAIL
+      - DATE_RANGE_INSUFFICIENT_DATA
+      - MISSING_REAL_EVALUATION_ARTIFACT
+      - MISSING_DAILY_WEIGHT_PATH
+      - OVERFIT_HIGH_RISK
+      - TECH_SEMICONDUCTOR_RELEVANCE_LOW
+      - TINY_FIXTURE_NOT_FOR_INVESTMENT
+    manual_review_allowed:
+      - DATA_QUALITY_PASS_WITH_WARNINGS
+      - DATA_PROVENANCE_INCOMPLETE
+      - DATA_PROVENANCE_RECONSTRUCTED
+      - BACKTEST_WINDOW_INCOMPLETE
+      - DATE_RANGE_INCOMPLETE
+      - WEIGHT_PATH_PARTIAL
+      - ATTRIBUTION_PARTIAL
+      - ATTRIBUTION_INCOMPLETE
+      - OVERFIT_REVIEW_REQUIRED
+      - REGIME_COVERAGE_PASS_WITH_WARNINGS
+
+  promote_candidate:
+    hard_fail:
+      - DATA_QUALITY_FAIL
+      - BACKTEST_WINDOW_INCOMPLETE
+      - DATE_RANGE_FAIL
+      - DATE_RANGE_INSUFFICIENT_DATA
+      - MISSING_REAL_EVALUATION_ARTIFACT
+      - MISSING_DAILY_WEIGHT_PATH
+      - ATTRIBUTION_INCOMPLETE
+      - OVERFIT_HIGH_RISK
+      - TECH_SEMICONDUCTOR_RELEVANCE_LOW
+      - TINY_FIXTURE_NOT_FOR_INVESTMENT
+    require:
+      - WINDOW_AUDIT_PASS_OR_PASS_WITH_WARNINGS
+      - WEIGHT_PATH_PRESENT
+      - REAL_EVALUATOR_MODE
+      - NO_MISSING_CORE_ARTIFACTS
+
+  production_candidate:
+    manual_only: true
+    auto_generation_allowed: false

@@ -1395,6 +1395,98 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_parameter_research.get("research_decision_next_task"),
                     ),
                     (
+                        "evidence_diagnosis_status",
+                        etf_dynamic_v3_parameter_research.get("evidence_diagnosis_status"),
+                    ),
+                    (
+                        "evidence_diagnosis_usable_candidates",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_diagnosis_usable_candidates"
+                        ),
+                    ),
+                    (
+                        "evidence_diagnosis_hard_blocked_candidates",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_diagnosis_hard_blocked_candidates"
+                        ),
+                    ),
+                    (
+                        "evidence_diagnosis_soft_blocked_candidates",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_diagnosis_soft_blocked_candidates"
+                        ),
+                    ),
+                    (
+                        "gate_impact_best_scenario",
+                        etf_dynamic_v3_parameter_research.get("gate_impact_best_scenario"),
+                    ),
+                    (
+                        "gate_impact_best_observe_candidates",
+                        etf_dynamic_v3_parameter_research.get(
+                            "gate_impact_best_observe_candidates"
+                        ),
+                    ),
+                    (
+                        "gate_policy_version",
+                        etf_dynamic_v3_parameter_research.get("gate_policy_version"),
+                    ),
+                    (
+                        "gate_policy_observe_only_candidates",
+                        etf_dynamic_v3_parameter_research.get(
+                            "gate_policy_observe_only_candidates"
+                        ),
+                    ),
+                    (
+                        "candidate_recovery_status",
+                        etf_dynamic_v3_parameter_research.get("candidate_recovery_status"),
+                    ),
+                    (
+                        "recovered_candidate_count",
+                        etf_dynamic_v3_parameter_research.get("recovered_candidate_count"),
+                    ),
+                    (
+                        "research_decision_update_go_no_go",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_go_no_go"
+                        ),
+                    ),
+                    (
+                        "research_decision_update_recommended_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_recommended_action"
+                        ),
+                    ),
+                    (
+                        "research_decision_update_required_owner_approval",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_required_owner_approval"
+                        ),
+                    ),
+                    (
+                        "research_decision_update_usable_candidates_before",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_usable_candidates_before"
+                        ),
+                    ),
+                    (
+                        "research_decision_update_usable_candidates_after",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_usable_candidates_after"
+                        ),
+                    ),
+                    (
+                        "research_decision_update_warnings",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_warnings"
+                        ),
+                    ),
+                    (
+                        "research_decision_update_next_task",
+                        etf_dynamic_v3_parameter_research.get(
+                            "research_decision_update_next_task"
+                        ),
+                    ),
+                    (
                         "sweep_leaderboard",
                         etf_dynamic_v3_parameter_research.get("sweep_leaderboard"),
                     ),
@@ -1425,6 +1517,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "research_decision",
                         etf_dynamic_v3_parameter_research.get("research_decision"),
+                    ),
+                    (
+                        "evidence_diagnosis",
+                        etf_dynamic_v3_parameter_research.get("evidence_diagnosis"),
+                    ),
+                    (
+                        "gate_impact",
+                        etf_dynamic_v3_parameter_research.get("gate_impact"),
+                    ),
+                    (
+                        "gate_policy",
+                        etf_dynamic_v3_parameter_research.get("gate_policy"),
+                    ),
+                    (
+                        "candidate_recovery",
+                        etf_dynamic_v3_parameter_research.get("candidate_recovery"),
+                    ),
+                    (
+                        "research_decision_update",
+                        etf_dynamic_v3_parameter_research.get("research_decision_update"),
                     ),
                     (
                         "safety_status",
@@ -5205,6 +5317,26 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_research_decision",
     )
+    evidence_diagnosis_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_evidence_diagnosis",
+    )
+    gate_impact_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_gate_impact",
+    )
+    gate_policy_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_gate_policy",
+    )
+    candidate_recovery_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_candidate_recovery",
+    )
+    research_decision_update_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_research_decision_update",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     if not leaderboard:
         return _missing_etf_dynamic_v3_parameter_research_summary()
@@ -5230,6 +5362,17 @@ def _etf_dynamic_v3_parameter_research_summary(
     research_next_action = _read_optional_json(
         _research_decision_recommendation_path(research_decision_path)
     )
+    evidence_diagnosis = _read_optional_json(evidence_diagnosis_path)
+    gate_impact = _read_optional_json(gate_impact_path)
+    gate_policy = _read_optional_json(gate_policy_path)
+    candidate_recovery = _read_optional_json(candidate_recovery_path)
+    research_decision_update = _read_optional_json(research_decision_update_path)
+    research_decision_update_next_action = _read_optional_json(
+        _research_decision_recommendation_path(research_decision_update_path)
+    )
+    go_no_go_matrix = _read_optional_json(
+        _research_decision_update_go_no_go_path(research_decision_update_path)
+    )
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
@@ -5246,7 +5389,15 @@ def _etf_dynamic_v3_parameter_research_summary(
     promotion_blocking_flags = (
         ", ".join(_texts(evidence.get("promotion_blocking_flags"))) or "MISSING"
     )
-    safety_status = _etf_dynamic_v3_parameter_research_safety_status(leaderboard)
+    safety_status = _etf_dynamic_v3_parameter_research_safety_status(
+        leaderboard,
+        promotion,
+        evidence_diagnosis,
+        gate_impact,
+        gate_policy,
+        candidate_recovery,
+        research_decision_update,
+    )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
     not_for_investment = leaderboard.get("not_for_investment_decision") is True
@@ -5263,6 +5414,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"provenance={provenance_status}; "
             f"observe_pool={observe_pool.get('observe_candidate_count', 'MISSING')}; "
             f"research_decision={research_decision.get('recommendation', 'MISSING')}; "
+            f"go_no_go={research_decision_update.get('go_no_go', 'MISSING')}; "
+            f"recovered={candidate_recovery.get('recovered_candidate_count', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -5331,6 +5484,69 @@ def _etf_dynamic_v3_parameter_research_summary(
             research_next_action.get("suggested_codex_task"),
             "MISSING",
         ),
+        "evidence_diagnosis_status": _text(evidence_diagnosis.get("status"), "MISSING"),
+        "evidence_diagnosis_usable_candidates": evidence_diagnosis.get(
+            "usable_candidates",
+            0,
+        ),
+        "evidence_diagnosis_hard_blocked_candidates": evidence_diagnosis.get(
+            "hard_blocked_candidates",
+            0,
+        ),
+        "evidence_diagnosis_soft_blocked_candidates": evidence_diagnosis.get(
+            "soft_blocked_candidates",
+            0,
+        ),
+        "gate_impact_status": _text(gate_impact.get("status"), "MISSING"),
+        "gate_impact_best_scenario": _text(gate_impact.get("best_scenario"), "MISSING"),
+        "gate_impact_best_observe_candidates": gate_impact.get("best_observe_candidates", 0),
+        "gate_policy_status": _text(gate_policy.get("status"), "MISSING"),
+        "gate_policy_version": _text(gate_policy.get("policy_version"), "MISSING"),
+        "gate_policy_observe_only_candidates": gate_policy.get("observe_only_candidates", 0),
+        "gate_policy_manual_review_required_candidates": gate_policy.get(
+            "manual_review_required_candidates",
+            0,
+        ),
+        "candidate_recovery_status": _text(candidate_recovery.get("status"), "MISSING"),
+        "recovered_candidate_count": candidate_recovery.get("recovered_candidate_count", 0),
+        "candidate_recovery_manual_review_required_count": candidate_recovery.get(
+            "manual_review_required_count",
+            0,
+        ),
+        "research_decision_update_status": _text(
+            research_decision_update.get("status"),
+            "MISSING",
+        ),
+        "research_decision_update_go_no_go": _text(
+            research_decision_update.get("go_no_go") or go_no_go_matrix.get("go_no_go"),
+            "MISSING",
+        ),
+        "research_decision_update_recommended_action": _text(
+            research_decision_update.get("recommended_action")
+            or go_no_go_matrix.get("recommended_action"),
+            "MISSING",
+        ),
+        "research_decision_update_required_owner_approval": (
+            go_no_go_matrix.get("required_owner_approval")
+            if "required_owner_approval" in go_no_go_matrix
+            else True
+        ),
+        "research_decision_update_usable_candidates_before": go_no_go_matrix.get(
+            "usable_candidates_before",
+            0,
+        ),
+        "research_decision_update_usable_candidates_after": go_no_go_matrix.get(
+            "usable_candidates_after",
+            0,
+        ),
+        "research_decision_update_warnings": ", ".join(
+            _texts(go_no_go_matrix.get("warnings"))
+        )
+        or "MISSING",
+        "research_decision_update_next_task": _text(
+            research_decision_update_next_action.get("suggested_codex_task"),
+            "MISSING",
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
         "evidence_summary": "" if evidence_path is None else str(evidence_path),
@@ -5345,6 +5561,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         "research_decision": (
             "" if research_decision_path is None else str(research_decision_path)
         ),
+        "evidence_diagnosis": (
+            "" if evidence_diagnosis_path is None else str(evidence_diagnosis_path)
+        ),
+        "gate_impact": "" if gate_impact_path is None else str(gate_impact_path),
+        "gate_policy": "" if gate_policy_path is None else str(gate_policy_path),
+        "candidate_recovery": (
+            "" if candidate_recovery_path is None else str(candidate_recovery_path)
+        ),
+        "research_decision_update": (
+            "" if research_decision_update_path is None else str(research_decision_update_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -5352,14 +5579,44 @@ def _etf_dynamic_v3_parameter_research_summary(
         "production_candidate_generated": (
             leaderboard.get("production_candidate_generated") is True
             or _mapping(promotion).get("production_candidate_generated") is True
+            or _any_payload_flag_true(
+                (
+                    evidence_diagnosis,
+                    gate_impact,
+                    gate_policy,
+                    candidate_recovery,
+                    research_decision_update,
+                ),
+                "production_candidate_generated",
+            )
         ),
         "automatic_candidate_promotion": (
             leaderboard.get("automatic_candidate_promotion") is True
             or _mapping(promotion).get("automatic_candidate_promotion") is True
+            or _any_payload_flag_true(
+                (
+                    evidence_diagnosis,
+                    gate_impact,
+                    gate_policy,
+                    candidate_recovery,
+                    research_decision_update,
+                ),
+                "automatic_candidate_promotion",
+            )
         ),
         "shadow_enrollment_allowed": (
             leaderboard.get("shadow_enrollment_allowed") is True
             or _mapping(promotion).get("shadow_enrollment_allowed") is True
+            or _any_payload_flag_true(
+                (
+                    evidence_diagnosis,
+                    gate_impact,
+                    gate_policy,
+                    candidate_recovery,
+                    research_decision_update,
+                ),
+                "shadow_enrollment_allowed",
+            )
         ),
     }
 
@@ -5404,6 +5661,28 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "research_decision_recommendation": "MISSING",
         "research_decision_priority": "MISSING",
         "research_decision_next_task": "MISSING",
+        "evidence_diagnosis_status": "MISSING",
+        "evidence_diagnosis_usable_candidates": 0,
+        "evidence_diagnosis_hard_blocked_candidates": 0,
+        "evidence_diagnosis_soft_blocked_candidates": 0,
+        "gate_impact_status": "MISSING",
+        "gate_impact_best_scenario": "MISSING",
+        "gate_impact_best_observe_candidates": 0,
+        "gate_policy_status": "MISSING",
+        "gate_policy_version": "MISSING",
+        "gate_policy_observe_only_candidates": 0,
+        "gate_policy_manual_review_required_candidates": 0,
+        "candidate_recovery_status": "MISSING",
+        "recovered_candidate_count": 0,
+        "candidate_recovery_manual_review_required_count": 0,
+        "research_decision_update_status": "MISSING",
+        "research_decision_update_go_no_go": "MISSING",
+        "research_decision_update_recommended_action": "MISSING",
+        "research_decision_update_required_owner_approval": True,
+        "research_decision_update_usable_candidates_before": 0,
+        "research_decision_update_usable_candidates_after": 0,
+        "research_decision_update_warnings": "MISSING",
+        "research_decision_update_next_task": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
         "evidence_summary": "",
@@ -5412,6 +5691,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "observe_pool": "",
         "overnight_readiness_report": "",
         "research_decision": "",
+        "evidence_diagnosis": "",
+        "gate_impact": "",
+        "gate_policy": "",
+        "candidate_recovery": "",
+        "research_decision_update": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -5446,11 +5730,21 @@ def _research_decision_recommendation_path(path: Path | None) -> Path | None:
     return sibling if sibling.exists() else None
 
 
+def _research_decision_update_go_no_go_path(path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    if path.name == "go_no_go_matrix.json":
+        return path
+    sibling = path.parent / "go_no_go_matrix.json"
+    return sibling if sibling.exists() else None
+
+
 def _etf_dynamic_v3_parameter_research_safety_status(
     payload: Mapping[str, Any],
+    *extra_payloads: Mapping[str, Any],
 ) -> str:
     safety = _mapping(payload.get("safety"))
-    safe = (
+    primary_safe = (
         safety.get("observe_only") is True
         and safety.get("candidate_only") is True
         and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
@@ -5467,6 +5761,9 @@ def _etf_dynamic_v3_parameter_research_safety_status(
         and safety.get("production_candidate_generated") is False
         and payload.get("production_candidate_generated") is False
     )
+    safe = primary_safe and all(
+        _etf_dynamic_v3_extra_payload_safe(extra_payload) for extra_payload in extra_payloads
+    )
     return (
         "observe_only=true; candidate_only=true; production_effect=none; "
         "broker_action=none; manual_review_required=true; "
@@ -5475,6 +5772,35 @@ def _etf_dynamic_v3_parameter_research_safety_status(
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )
+
+
+def _etf_dynamic_v3_extra_payload_safe(payload: Mapping[str, Any]) -> bool:
+    if not payload:
+        return True
+    safety = _mapping(payload.get("safety"))
+    source = safety if safety else payload
+    return (
+        _text(source.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and _text(source.get("broker_action"), "none") == "none"
+        and source.get("production_candidate_generated") is not True
+        and payload.get("production_candidate_generated") is not True
+        and source.get("automatic_candidate_promotion") is not True
+        and payload.get("automatic_candidate_promotion") is not True
+        and source.get("shadow_enrollment_allowed") is not True
+        and payload.get("shadow_enrollment_allowed") is not True
+        and source.get("owner_approval_executed") is not True
+        and payload.get("owner_approval_executed") is not True
+        and source.get("production_state_mutated") is not True
+        and payload.get("production_state_mutated") is not True
+        and source.get("baseline_config_mutated") is not True
+        and payload.get("baseline_config_mutated") is not True
+        and source.get("official_target_weights_mutated") is not True
+        and payload.get("official_target_weights_mutated") is not True
+    )
+
+
+def _any_payload_flag_true(payloads: tuple[Mapping[str, Any], ...], flag: str) -> bool:
+    return any(_mapping(payload).get(flag) is True for payload in payloads)
 
 
 def _etf_dynamic_shadow_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:

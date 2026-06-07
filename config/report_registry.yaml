@@ -1810,6 +1810,112 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_evidence_diagnosis
+    title: ETF Dynamic v3 Rescue Evidence Gate Diagnosis
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue evidence-diagnosis run --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_diagnosis/*/diagnosis_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_diagnosis/*/blocking_reason_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_diagnosis/*/gate_category_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_diagnosis/*/evidence_diagnosis_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-121 classifies medium_real evidence gate blockers into true hard
+      failures, soft/manual-review blockers, and warnings before any recovery or
+      observe-only interpretation.
+    owner_action: review_evidence_diagnosis_before_gate_policy_or_candidate_recovery
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_gate_impact
+    title: ETF Dynamic v3 Rescue Gate Impact Matrix
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue gate-impact run --diagnosis-id <diagnosis_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_impact/*/gate_impact_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_impact/*/gate_impact_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_impact/*/candidate_recovery_simulation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_impact/*/gate_impact_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-122 simulates auditable gate-repair scenarios without mutating the
+      source sweep, so recovered observe-only capacity is separated from
+      production or promotion eligibility.
+    owner_action: review_gate_impact_before_selecting_evidence_gate_policy
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_gate_policy
+    title: ETF Dynamic v3 Rescue Evidence Gate Policy
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue gate-policy apply --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_policy/*/gate_policy_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_policy/*/policy_effect_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_policy/*/calibrated_candidate_status.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_policy/*/gate_policy_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-123 records the reviewed distinction between hard promotion
+      failures and observe-only manual-review allowances, with policy version
+      and candidate effects visible before recovery.
+    owner_action: review_gate_policy_effect_before_candidate_recovery_or_observe_pool_rebuild
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_recovery
+    title: ETF Dynamic v3 Rescue Candidate Usability Recovery
+    group: shadow
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-recovery run --sweep-id <sweep_id> --policy-run-id <policy_run_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_recovery/*/recovery_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_recovery/*/recovered_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_recovery/*/recovery_leaderboard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_recovery/*/recovery_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-124 converts calibrated candidates into observe-only/manual-review
+      records and an auditable recovery leaderboard without writing shadow
+      registry entries or production candidates.
+    owner_action: owner_review_recovered_candidates_before_shadow_register_or_overnight_real
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_research_decision_update
+    title: ETF Dynamic v3 Rescue Research Decision Update
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue research-decision update --sweep-id <sweep_id> --diagnosis-id <diagnosis_id> --impact-id <impact_id> --recovery-id <recovery_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision_update/*/decision_update_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision_update/*/go_no_go_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision_update/*/next_action_recommendations.json
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision_update/*/research_decision_update_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision_update/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-125 reconciles diagnosis, gate impact, calibrated recovery,
+      observe pool state, and overnight readiness into a go/no-go matrix for the
+      next owner-reviewed research step.
+    owner_action: owner_review_research_decision_update_before_limited_overnight_real
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

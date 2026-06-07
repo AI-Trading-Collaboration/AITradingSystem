@@ -748,6 +748,20 @@ weight path、turnover、drawdown protection 和 regime behavior，`observe-pool
 `manual_review_required=true`，Reader Brief 只读 latest evidence summary、observe pool、
 overnight readiness 和 research decision，不运行上游、不生成 approval、shadow enrollment、
 production candidate、baseline mutation、official target weights mutation 或 broker action。
+TRADING-121 到 TRADING-125 继续处理 medium_real “0 usable candidates” 的证据门禁问题：
+`evidence-diagnosis run/report` 把 blocker 分为 true hard failure、soft/manual-review blocker
+和 warning，`gate-impact run/report` 在不修改原始 sweep 的前提下模拟修复/降级场景，
+`gate-policy validate/report/apply` 使用
+`config/etf_portfolio/dynamic_v3_rescue/evidence_gate_policy_v1.yaml` 记录 owner-reviewed
+hard/soft gate policy，`candidate-recovery run/report` 只生成 observe-only/manual-review
+recovered candidates，`observe-pool rebuild --recovery-id` 重建人工观察池，
+`research-decision update/update-report` 输出 go/no-go matrix 和下一步 owner action。该链路只允许把 policy 明确
+允许的 soft blockers 恢复为 observe-only/manual-review；true hard failures 仍 fail closed。
+所有输出固定 `production_effect=none`、`broker_action=none`、
+`manual_review_required=true`、`production_candidate_generated=false`，Reader Brief 只读 latest
+diagnosis、impact、policy、recovery、observe pool 和 decision update，不运行上游、不自动启动
+`overnight_real`、不 approval、不 enroll shadow、不写 official target weights、不修改 baseline
+或 production state、不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

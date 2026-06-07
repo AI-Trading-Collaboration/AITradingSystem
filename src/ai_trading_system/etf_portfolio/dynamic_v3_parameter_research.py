@@ -81,6 +81,9 @@ DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH = (
 DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "parameter_governance_v1.yaml"
 )
+DEFAULT_EVIDENCE_GATE_POLICY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "evidence_gate_policy_v1.yaml"
+)
 DEFAULT_DYNAMIC_V3_RESEARCH_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
 DEFAULT_SWEEP_OUTPUT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sweeps"
 DEFAULT_DATA_AUDIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_audit"
@@ -105,6 +108,11 @@ DEFAULT_INTERPRETATION_PACK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "interpreta
 DEFAULT_OBSERVE_POOL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "observe_pool"
 DEFAULT_OVERNIGHT_READINESS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "overnight_readiness"
 DEFAULT_RESEARCH_DECISION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_decision"
+DEFAULT_EVIDENCE_DIAGNOSIS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_diagnosis"
+DEFAULT_GATE_IMPACT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_impact"
+DEFAULT_GATE_POLICY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_policy"
+DEFAULT_CANDIDATE_RECOVERY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_recovery"
+DEFAULT_RESEARCH_DECISION_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_decision_update"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
@@ -164,6 +172,58 @@ OVERNIGHT_WARNING_MAX_HOURS = 24.0
 OVERNIGHT_READY_MAX_FAILURE_RATE = 0.02
 OVERNIGHT_WARNING_MAX_FAILURE_RATE = 0.05
 OVERNIGHT_WARNING_MAX_ARTIFACT_GB = 8.0
+
+EVIDENCE_GATE_TRUE_HARD_FAILURES = {
+    "DATA_QUALITY_FAIL",
+    "DATE_RANGE_FAIL",
+    "DATE_RANGE_INSUFFICIENT_DATA",
+    "MISSING_REAL_EVALUATION_ARTIFACT",
+    "MISSING_DAILY_WEIGHT_PATH",
+    "OVERFIT_HIGH_RISK",
+    "TECH_SEMICONDUCTOR_RELEVANCE_LOW",
+    "TINY_FIXTURE_NOT_FOR_INVESTMENT",
+}
+EVIDENCE_GATE_DEFAULT_MANUAL_REVIEW_REASONS = {
+    "DATA_QUALITY_PASS_WITH_WARNINGS",
+    "DATA_PROVENANCE_INCOMPLETE",
+    "DATA_PROVENANCE_RECONSTRUCTED",
+    "BACKTEST_WINDOW_INCOMPLETE",
+    "DATE_RANGE_INCOMPLETE",
+    "WEIGHT_PATH_PARTIAL",
+    "ATTRIBUTION_PARTIAL",
+    "ATTRIBUTION_INCOMPLETE",
+    "OVERFIT_REVIEW_REQUIRED",
+    "REGIME_COVERAGE_PASS_WITH_WARNINGS",
+}
+EVIDENCE_GATE_REASON_CATEGORIES = {
+    "DATA_QUALITY_FAIL": "data",
+    "DATA_QUALITY_PASS_WITH_WARNINGS": "data",
+    "DATA_PROVENANCE_INCOMPLETE": "data",
+    "DATA_PROVENANCE_RECONSTRUCTED": "data",
+    "DATE_RANGE_FAIL": "window",
+    "DATE_RANGE_INSUFFICIENT_DATA": "window",
+    "DATE_RANGE_INCOMPLETE": "window",
+    "BACKTEST_WINDOW_INCOMPLETE": "window",
+    "MISSING_REAL_EVALUATION_ARTIFACT": "data",
+    "MISSING_DAILY_WEIGHT_PATH": "weight_path",
+    "WEIGHT_PATH_PARTIAL": "weight_path",
+    "ATTRIBUTION_PARTIAL": "attribution",
+    "ATTRIBUTION_INCOMPLETE": "attribution",
+    "OVERFIT_HIGH_RISK": "overfit",
+    "OVERFIT_REVIEW_REQUIRED": "overfit",
+    "REGIME_COVERAGE_PASS_WITH_WARNINGS": "regime",
+    "TECH_SEMICONDUCTOR_RELEVANCE_LOW": "regime",
+    "TINY_FIXTURE_NOT_FOR_INVESTMENT": "promotion",
+}
+EVIDENCE_GATE_CATEGORY_ORDER = (
+    "data",
+    "window",
+    "weight_path",
+    "attribution",
+    "overfit",
+    "regime",
+    "promotion",
+)
 
 # TRADING-111 allows a small start-date grace for signal-lag / warm-up mechanics;
 # a larger gap changes investment interpretation and must block promotion.
@@ -3473,6 +3533,1082 @@ def validate_research_decision_artifact(
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_evidence_diagnosis(
+    *,
+    sweep_id: str,
+    summary_id: str | None = None,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    evidence_summary_dir: Path = DEFAULT_EVIDENCE_SUMMARY_DIR,
+    regime_coverage_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+    output_dir: Path = DEFAULT_EVIDENCE_DIAGNOSIS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    rows, summary_manifest = _candidate_diagnosis_rows_for_sweep(
+        sweep_id=sweep_id,
+        summary_id=summary_id,
+        sweep_output_dir=sweep_output_dir,
+        evidence_summary_dir=evidence_summary_dir,
+        regime_coverage_dir=regime_coverage_dir,
+    )
+    diagnosis_id = _stable_id("evidence-diagnosis", sweep_id, generated.isoformat())
+    diagnosis_dir = _unique_dir(output_dir / diagnosis_id)
+    diagnosis_dir.mkdir(parents=True, exist_ok=False)
+    candidate_count = len(rows)
+    blocking_counter = Counter(
+        reason for row in rows for reason in _texts(row.get("blocking_reasons"))
+    )
+    warning_counter = Counter(
+        reason for row in rows for reason in _texts(row.get("warning_reasons"))
+    )
+    category_counter = Counter(
+        category
+        for row in rows
+        for category, reasons in _mapping(row.get("categories")).items()
+        if _texts(reasons)
+    )
+    hard_count = sum(1 for row in rows if row.get("hard_blocking_reasons"))
+    soft_count = sum(1 for row in rows if row.get("soft_blocking_reasons"))
+    warning_count = sum(1 for row in rows if row.get("warning_reasons"))
+    usable_count = sum(1 for row in rows if row.get("usable") is True)
+    review_required_count = sum(1 for row in rows if _text(row.get("gate")) == GATE_REVIEW_REQUIRED)
+    status = "PASS" if rows else "FAIL"
+    if candidate_count and usable_count == 0:
+        status = "PASS_WITH_WARNINGS"
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_diagnosis_manifest",
+        "diagnosis_id": diagnosis_dir.name,
+        "source_sweep_id": sweep_id,
+        "source_evidence_summary_id": summary_manifest.get("summary_id", ""),
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "candidate_count": candidate_count,
+        "usable_candidates": usable_count,
+        "review_required_candidates": review_required_count,
+        "hard_blocked_candidates": hard_count,
+        "soft_blocked_candidates": soft_count,
+        "warning_candidates": warning_count,
+        "blocking_reason_summary_path": str(diagnosis_dir / "blocking_reason_summary.json"),
+        "candidate_blocking_matrix_path": str(diagnosis_dir / "candidate_blocking_matrix.jsonl"),
+        "gate_category_summary_path": str(diagnosis_dir / "gate_category_summary.json"),
+        "evidence_diagnosis_report_path": str(diagnosis_dir / "evidence_diagnosis_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    blocking_summary = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_blocking_reason_summary",
+        "diagnosis_id": diagnosis_dir.name,
+        "sweep_id": sweep_id,
+        "candidate_count": candidate_count,
+        "usable_candidates": usable_count,
+        "review_required_candidates": review_required_count,
+        "blocking_reasons": [
+            {
+                "reason": reason,
+                "count": count,
+                "share": round(count / max(1, candidate_count), 6),
+                "severity": _evidence_gate_reason_severity(reason),
+                "category": _evidence_gate_reason_category(reason),
+            }
+            for reason, count in blocking_counter.most_common()
+        ],
+        "warning_reasons": [
+            {
+                "reason": reason,
+                "count": count,
+                "share": round(count / max(1, candidate_count), 6),
+                "severity": "warning",
+                "category": _evidence_gate_reason_category(reason),
+            }
+            for reason, count in warning_counter.most_common()
+        ],
+        "top_blocking_categories": [
+            {"category": category, "count": count}
+            for category, count in category_counter.most_common()
+        ],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    gate_category_summary = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_category_summary",
+        "diagnosis_id": diagnosis_dir.name,
+        "source_sweep_id": sweep_id,
+        "categories": [
+            {
+                "category": category,
+                "candidate_count": sum(
+                    1 for row in rows if _texts(_mapping(row.get("categories")).get(category))
+                ),
+                "reasons": [
+                    {
+                        "reason": reason,
+                        "count": count,
+                        "severity": _evidence_gate_reason_severity(reason),
+                    }
+                    for reason, count in Counter(
+                        reason
+                        for row in rows
+                        for reason in _texts(_mapping(row.get("categories")).get(category))
+                    ).most_common()
+                ],
+            }
+            for category in EVIDENCE_GATE_CATEGORY_ORDER
+        ],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(diagnosis_dir / "diagnosis_manifest.json", manifest)
+    _write_json(diagnosis_dir / "blocking_reason_summary.json", blocking_summary)
+    _write_jsonl(diagnosis_dir / "candidate_blocking_matrix.jsonl", rows)
+    _write_json(diagnosis_dir / "gate_category_summary.json", gate_category_summary)
+    _write_text(
+        diagnosis_dir / "evidence_diagnosis_report.md",
+        render_evidence_diagnosis_markdown(manifest, blocking_summary, gate_category_summary),
+    )
+    _update_latest_pointer(
+        "latest_evidence_diagnosis",
+        diagnosis_dir.name,
+        diagnosis_dir / "diagnosis_manifest.json",
+    )
+    return {
+        "diagnosis_id": diagnosis_dir.name,
+        "diagnosis_dir": diagnosis_dir,
+        "manifest": manifest,
+        "blocking_summary": blocking_summary,
+        "candidate_matrix": rows,
+    }
+
+
+def evidence_diagnosis_report_payload(
+    *,
+    diagnosis_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_EVIDENCE_DIAGNOSIS_DIR,
+) -> dict[str, Any]:
+    resolved_id = diagnosis_id or (
+        _latest_pointer_artifact_id("latest_evidence_diagnosis") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--diagnosis-id or --latest is required")
+    diagnosis_dir = output_dir / resolved_id
+    return {
+        **_read_json(diagnosis_dir / "diagnosis_manifest.json"),
+        "diagnosis_dir": str(diagnosis_dir),
+    }
+
+
+def validate_evidence_diagnosis_artifact(
+    *,
+    diagnosis_id: str,
+    output_dir: Path = DEFAULT_EVIDENCE_DIAGNOSIS_DIR,
+) -> dict[str, Any]:
+    diagnosis_dir = output_dir / diagnosis_id
+    manifest = _read_optional_json(diagnosis_dir / "diagnosis_manifest.json") or {}
+    rows = _read_jsonl(diagnosis_dir / "candidate_blocking_matrix.jsonl")
+    required = [
+        "diagnosis_manifest.json",
+        "blocking_reason_summary.json",
+        "candidate_blocking_matrix.jsonl",
+        "gate_category_summary.json",
+        "evidence_diagnosis_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (diagnosis_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "diagnosis_id_matches",
+                manifest.get("diagnosis_id") == diagnosis_id,
+                diagnosis_id,
+            ),
+            _check("candidate_matrix_not_empty", bool(rows), f"rows={len(rows)}"),
+            _check(
+                "candidate_rows_have_reason_classes",
+                all(
+                    row.get("candidate_id")
+                    and isinstance(row.get("blocking_reasons"), list)
+                    and isinstance(row.get("hard_blocking_reasons"), list)
+                    and isinstance(row.get("soft_blocking_reasons"), list)
+                    and isinstance(row.get("warning_reasons"), list)
+                    for row in rows
+                ),
+                "blocking/hard/soft/warning fields required",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "diagnosis is research-only",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_diagnosis_validation",
+        "diagnosis_id": diagnosis_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_gate_impact(
+    *,
+    diagnosis_id: str,
+    diagnosis_dir: Path = DEFAULT_EVIDENCE_DIAGNOSIS_DIR,
+    output_dir: Path = DEFAULT_GATE_IMPACT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_dir = diagnosis_dir / diagnosis_id
+    diagnosis_manifest = _read_json(source_dir / "diagnosis_manifest.json")
+    rows = _read_jsonl(source_dir / "candidate_blocking_matrix.jsonl")
+    top_reasons = [
+        _text(row.get("reason"))
+        for row in _records(
+            _read_json(source_dir / "blocking_reason_summary.json").get("blocking_reasons")
+        )
+    ]
+    scenarios = _gate_impact_scenarios(top_reasons)
+    scenario_results = [
+        _simulate_gate_recovery(rows, scenario_id=scenario["scenario"], scenario=scenario)
+        for scenario in scenarios
+    ]
+    impact_id = _stable_id("gate-impact", diagnosis_id, generated.isoformat())
+    impact_dir = _unique_dir(output_dir / impact_id)
+    impact_dir.mkdir(parents=True, exist_ok=False)
+    baseline = scenario_results[0] if scenario_results else {}
+    best = max(
+        scenario_results,
+        key=lambda row: (int(row.get("observe_candidates") or 0), _text(row.get("scenario"))),
+        default={},
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_impact_manifest",
+        "impact_id": impact_dir.name,
+        "source_diagnosis_id": diagnosis_id,
+        "source_sweep_id": diagnosis_manifest.get("source_sweep_id", ""),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if rows and scenario_results else "FAIL",
+        "scenario_count": len(scenario_results),
+        "baseline_usable_candidates": baseline.get("usable_candidates", 0),
+        "baseline_observe_candidates": baseline.get("observe_candidates", 0),
+        "best_scenario": best.get("scenario", ""),
+        "best_observe_candidates": best.get("observe_candidates", 0),
+        "gate_impact_matrix_path": str(impact_dir / "gate_impact_matrix.json"),
+        "candidate_recovery_simulation_path": str(
+            impact_dir / "candidate_recovery_simulation.json"
+        ),
+        "gate_impact_report_path": str(impact_dir / "gate_impact_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    matrix = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_impact_matrix",
+        "impact_id": impact_dir.name,
+        "source_diagnosis_id": diagnosis_id,
+        "scenarios": scenario_results,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    simulation = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_recovery_simulation",
+        "impact_id": impact_dir.name,
+        "baseline": {
+            "usable_candidates": baseline.get("usable_candidates", 0),
+            "observe_candidates": baseline.get("observe_candidates", 0),
+        },
+        "scenarios": scenario_results,
+        "top_3_repair_items": top_reasons[:3],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(impact_dir / "gate_impact_manifest.json", manifest)
+    _write_json(impact_dir / "gate_impact_matrix.json", matrix)
+    _write_json(impact_dir / "candidate_recovery_simulation.json", simulation)
+    _write_text(
+        impact_dir / "gate_impact_report.md",
+        render_gate_impact_markdown(manifest, scenario_results),
+    )
+    _update_latest_pointer(
+        "latest_gate_impact",
+        impact_dir.name,
+        impact_dir / "gate_impact_manifest.json",
+    )
+    return {
+        "impact_id": impact_dir.name,
+        "impact_dir": impact_dir,
+        "manifest": manifest,
+        "scenarios": scenario_results,
+    }
+
+
+def gate_impact_report_payload(
+    *,
+    impact_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_GATE_IMPACT_DIR,
+) -> dict[str, Any]:
+    resolved_id = impact_id or (_latest_pointer_artifact_id("latest_gate_impact") if latest else "")
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--impact-id or --latest is required")
+    impact_dir = output_dir / resolved_id
+    return {**_read_json(impact_dir / "gate_impact_manifest.json"), "impact_dir": str(impact_dir)}
+
+
+def validate_gate_impact_artifact(
+    *,
+    impact_id: str,
+    output_dir: Path = DEFAULT_GATE_IMPACT_DIR,
+) -> dict[str, Any]:
+    impact_dir = output_dir / impact_id
+    manifest = _read_optional_json(impact_dir / "gate_impact_manifest.json") or {}
+    simulation = _read_optional_json(impact_dir / "candidate_recovery_simulation.json") or {}
+    scenario_ids = {_text(row.get("scenario")) for row in _records(simulation.get("scenarios"))}
+    required = [
+        "gate_impact_manifest.json",
+        "gate_impact_matrix.json",
+        "candidate_recovery_simulation.json",
+        "gate_impact_report.md",
+    ]
+    required_scenarios = {
+        "current_rules",
+        "attribution_partial_as_manual_review",
+        "data_provenance_reconstructed_as_warning",
+        "overfit_review_required_as_manual_review",
+        "regime_pass_with_warnings_allows_observe",
+        "true_hard_failures_only",
+        "fix_top_1_blocking_reason",
+        "fix_top_3_blocking_reasons",
+    }
+    checks = [
+        _check(f"artifact_exists:{name}", (impact_dir / name).exists(), name) for name in required
+    ]
+    checks.extend(
+        [
+            _check("impact_id_matches", manifest.get("impact_id") == impact_id, impact_id),
+            _check(
+                "required_scenarios_present",
+                required_scenarios <= scenario_ids,
+                ",".join(sorted(scenario_ids)),
+            ),
+            _check(
+                "source_results_not_mutated",
+                manifest.get("production_state_mutated") is False,
+                "simulation only",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "simulation only",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_impact_validation",
+        "impact_id": impact_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def load_evidence_gate_policy_config(
+    path: Path | str = DEFAULT_EVIDENCE_GATE_POLICY_CONFIG_PATH,
+) -> dict[str, Any]:
+    raw = safe_load_yaml_path(Path(path))
+    if not isinstance(raw, dict):
+        raise DynamicV3ParameterResearchError("evidence gate policy must be a mapping")
+    return raw
+
+
+def validate_evidence_gate_policy(
+    *,
+    policy_path: Path = DEFAULT_EVIDENCE_GATE_POLICY_CONFIG_PATH,
+) -> dict[str, Any]:
+    policy = load_evidence_gate_policy_config(policy_path)
+    observe = _mapping(_mapping(policy.get("gate_levels")).get("observe_only"))
+    promote = _mapping(_mapping(policy.get("gate_levels")).get("promote_candidate"))
+    production = _mapping(_mapping(policy.get("gate_levels")).get("production_candidate"))
+    hard_fail = set(_texts(observe.get("hard_fail")))
+    manual_allowed = set(_texts(observe.get("manual_review_allowed")))
+    required_hard = {
+        "DATA_QUALITY_FAIL",
+        "DATE_RANGE_FAIL",
+        "DATE_RANGE_INSUFFICIENT_DATA",
+        "MISSING_REAL_EVALUATION_ARTIFACT",
+        "MISSING_DAILY_WEIGHT_PATH",
+        "OVERFIT_HIGH_RISK",
+        "TECH_SEMICONDUCTOR_RELEVANCE_LOW",
+    }
+    checks = [
+        _check("schema_version_present", str(policy.get("schema_version")) == "1", ""),
+        _check("owner_present", bool(policy.get("owner")), _text(policy.get("owner"))),
+        _check("status_present", bool(policy.get("status")), _text(policy.get("status"))),
+        _check(
+            "observe_hard_fail_present",
+            required_hard <= hard_fail,
+            ",".join(sorted(hard_fail)),
+        ),
+        _check(
+            "manual_review_allowed_present",
+            bool(manual_allowed),
+            ",".join(sorted(manual_allowed)),
+        ),
+        _check(
+            "production_candidate_manual_only",
+            production.get("manual_only") is True
+            and production.get("auto_generation_allowed") is False,
+            str(production),
+        ),
+        _check(
+            "promote_candidate_keeps_incomplete_window_block",
+            "BACKTEST_WINDOW_INCOMPLETE" in set(_texts(promote.get("hard_fail"))),
+            ",".join(_texts(promote.get("hard_fail"))),
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_gate_policy_validation",
+        "policy_path": str(policy_path),
+        "policy_version": policy.get("version", ""),
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "hard_fail": sorted(hard_fail),
+        "manual_review_allowed": sorted(manual_allowed),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def evidence_gate_policy_report_payload(
+    *,
+    policy_path: Path = DEFAULT_EVIDENCE_GATE_POLICY_CONFIG_PATH,
+) -> dict[str, Any]:
+    policy = load_evidence_gate_policy_config(policy_path)
+    validation = validate_evidence_gate_policy(policy_path=policy_path)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_gate_policy_report",
+        "policy_path": str(policy_path),
+        "policy": policy,
+        "validation": validation,
+        "status": validation["status"],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def apply_evidence_gate_policy(
+    *,
+    sweep_id: str,
+    policy_path: Path = DEFAULT_EVIDENCE_GATE_POLICY_CONFIG_PATH,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    evidence_summary_dir: Path = DEFAULT_EVIDENCE_SUMMARY_DIR,
+    regime_coverage_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+    output_dir: Path = DEFAULT_GATE_POLICY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validation = validate_evidence_gate_policy(policy_path=policy_path)
+    if validation["status"] != "PASS":
+        raise DynamicV3ParameterResearchError("evidence gate policy validation failed")
+    generated = generated_at or datetime.now(UTC)
+    policy = load_evidence_gate_policy_config(policy_path)
+    rows, summary_manifest = _candidate_diagnosis_rows_for_sweep(
+        sweep_id=sweep_id,
+        summary_id=None,
+        sweep_output_dir=sweep_output_dir,
+        evidence_summary_dir=evidence_summary_dir,
+        regime_coverage_dir=regime_coverage_dir,
+    )
+    observe_policy = _mapping(_mapping(policy.get("gate_levels")).get("observe_only"))
+    hard_fail = set(_texts(observe_policy.get("hard_fail")))
+    manual_allowed = set(_texts(observe_policy.get("manual_review_allowed")))
+    calibrated = [
+        _calibrated_candidate_status(row, hard_fail=hard_fail, manual_allowed=manual_allowed)
+        for row in rows
+    ]
+    policy_run_id = _stable_id(
+        "gate-policy",
+        sweep_id,
+        _stable_id("policy", policy),
+        generated.isoformat(),
+    )
+    policy_dir = _unique_dir(output_dir / policy_run_id)
+    policy_dir.mkdir(parents=True, exist_ok=False)
+    observe_count = sum(
+        1 for row in calibrated if row.get("calibrated_status") == GATE_OBSERVE_ONLY
+    )
+    rejected_count = sum(1 for row in calibrated if row.get("calibrated_status") == GATE_REJECT)
+    manual_count = sum(1 for row in calibrated if row.get("manual_review_required") is True)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_policy_manifest",
+        "policy_run_id": policy_dir.name,
+        "source_sweep_id": sweep_id,
+        "source_evidence_summary_id": summary_manifest.get("summary_id", ""),
+        "policy_path": str(policy_path),
+        "policy_version": policy.get("version", ""),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "candidate_count": len(calibrated),
+        "observe_only_candidates": observe_count,
+        "manual_review_required_candidates": manual_count,
+        "rejected_candidates": rejected_count,
+        "applied_policy_path": str(policy_dir / "applied_policy.yaml"),
+        "calibrated_candidate_status_path": str(policy_dir / "calibrated_candidate_status.jsonl"),
+        "policy_effect_summary_path": str(policy_dir / "policy_effect_summary.json"),
+        "gate_policy_report_path": str(policy_dir / "gate_policy_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    effect = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_policy_effect_summary",
+        "policy_run_id": policy_dir.name,
+        "source_sweep_id": sweep_id,
+        "candidate_count": len(calibrated),
+        "observe_only_candidates": observe_count,
+        "manual_review_required_candidates": manual_count,
+        "rejected_candidates": rejected_count,
+        "hard_fail_reason_distribution": [
+            {"reason": reason, "count": count}
+            for reason, count in Counter(
+                reason
+                for row in calibrated
+                for reason in _texts(row.get("remaining_hard_failures"))
+            ).most_common()
+        ],
+        "manual_review_reason_distribution": [
+            {"reason": reason, "count": count}
+            for reason, count in Counter(
+                reason
+                for row in calibrated
+                for reason in _texts(row.get("manual_review_reasons"))
+            ).most_common()
+        ],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(policy_dir / "gate_policy_manifest.json", manifest)
+    _write_yaml(policy_dir / "applied_policy.yaml", policy)
+    _write_jsonl(policy_dir / "calibrated_candidate_status.jsonl", calibrated)
+    _write_json(policy_dir / "policy_effect_summary.json", effect)
+    _write_text(policy_dir / "gate_policy_report.md", render_gate_policy_markdown(manifest, effect))
+    _update_latest_pointer(
+        "latest_gate_policy",
+        policy_dir.name,
+        policy_dir / "gate_policy_manifest.json",
+    )
+    return {
+        "policy_run_id": policy_dir.name,
+        "policy_dir": policy_dir,
+        "manifest": manifest,
+        "effect_summary": effect,
+        "candidate_status": calibrated,
+    }
+
+
+def run_candidate_recovery(
+    *,
+    sweep_id: str,
+    policy_run_id: str,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    gate_policy_dir: Path = DEFAULT_GATE_POLICY_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_RECOVERY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    policy_dir = gate_policy_dir / policy_run_id
+    policy_manifest = _read_json(policy_dir / "gate_policy_manifest.json")
+    if _text(policy_manifest.get("source_sweep_id")) != sweep_id:
+        raise DynamicV3ParameterResearchError("policy run does not match source sweep")
+    statuses = _read_jsonl(policy_dir / "calibrated_candidate_status.jsonl")
+    sweep_dir = sweep_output_dir / sweep_id
+    results_by_candidate = {
+        _text(row.get("candidate_id")): row for row in _read_candidate_results(sweep_dir)
+    }
+    recovered: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for status_row in statuses:
+        candidate_id = _text(status_row.get("candidate_id"))
+        source_row = results_by_candidate.get(candidate_id, {})
+        if status_row.get("calibrated_status") != GATE_OBSERVE_ONLY:
+            rejected.append(
+                {
+                    "candidate_id": candidate_id,
+                    "source_sweep_id": sweep_id,
+                    "rejection_reasons": status_row.get("remaining_hard_failures", []),
+                    "calibrated_status": status_row.get("calibrated_status"),
+                    "score": source_row.get("score"),
+                }
+            )
+            continue
+        evidence_status = dict(_mapping(status_row.get("evidence_status")))
+        evidence_status["original_promotion_status"] = evidence_status.get("promotion_status", "")
+        evidence_status["promotion_status"] = "manual_review_required"
+        recovered.append(
+            {
+                "candidate_id": candidate_id,
+                "source_sweep_id": sweep_id,
+                "original_status": status_row.get("original_gate", GATE_REVIEW_REQUIRED),
+                "recovered_status": GATE_OBSERVE_ONLY,
+                "manual_review_required": True,
+                "recovery_reasons": status_row.get("manual_review_reasons", []),
+                "remaining_warnings": status_row.get("warning_reasons", []),
+                "parameters": source_row.get("parameters", {}),
+                "metrics": source_row.get("metrics", {}),
+                "evidence_status": evidence_status,
+                "regime_status": status_row.get("regime_status", {}),
+                "score": source_row.get("score"),
+                "real_evaluation_artifact_path": source_row.get(
+                    "real_evaluation_artifact_path", ""
+                ),
+            }
+        )
+    recovered.sort(
+        key=lambda row: (_float(row.get("score")), _text(row.get("candidate_id"))),
+        reverse=True,
+    )
+    recovery_id = _stable_id(
+        "candidate-recovery",
+        sweep_id,
+        policy_run_id,
+        generated.isoformat(),
+    )
+    recovery_dir = _unique_dir(output_dir / recovery_id)
+    recovery_dir.mkdir(parents=True, exist_ok=False)
+    leaderboard = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_recovery_leaderboard",
+        "recovery_id": recovery_dir.name,
+        "source_sweep_id": sweep_id,
+        "top_recovered_candidates": recovered[:20],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_recovery_manifest",
+        "recovery_id": recovery_dir.name,
+        "source_sweep_id": sweep_id,
+        "source_policy_run_id": policy_run_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if recovered else "PASS_WITH_WARNINGS",
+        "candidate_count": len(statuses),
+        "recovered_candidate_count": len(recovered),
+        "observe_only_candidate_count": len(recovered),
+        "manual_review_required_count": len(recovered),
+        "rejected_after_calibration_count": len(rejected),
+        "recovered_candidates_path": str(recovery_dir / "recovered_candidates.jsonl"),
+        "rejected_after_calibration_path": str(recovery_dir / "rejected_after_calibration.jsonl"),
+        "recovery_leaderboard_path": str(recovery_dir / "recovery_leaderboard.json"),
+        "recovery_report_path": str(recovery_dir / "recovery_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(recovery_dir / "recovery_manifest.json", manifest)
+    _write_jsonl(recovery_dir / "recovered_candidates.jsonl", recovered)
+    _write_jsonl(recovery_dir / "rejected_after_calibration.jsonl", rejected)
+    _write_json(recovery_dir / "recovery_leaderboard.json", leaderboard)
+    _write_text(
+        recovery_dir / "recovery_report.md",
+        render_candidate_recovery_markdown(manifest, recovered, rejected),
+    )
+    _update_latest_pointer(
+        "latest_candidate_recovery",
+        recovery_dir.name,
+        recovery_dir / "recovery_manifest.json",
+    )
+    return {
+        "recovery_id": recovery_dir.name,
+        "recovery_dir": recovery_dir,
+        "manifest": manifest,
+        "recovered_candidates": recovered,
+        "rejected_candidates": rejected,
+    }
+
+
+def candidate_recovery_report_payload(
+    *,
+    recovery_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CANDIDATE_RECOVERY_DIR,
+) -> dict[str, Any]:
+    resolved_id = recovery_id or (
+        _latest_pointer_artifact_id("latest_candidate_recovery") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--recovery-id or --latest is required")
+    recovery_dir = output_dir / resolved_id
+    return {
+        **_read_json(recovery_dir / "recovery_manifest.json"),
+        "recovery_dir": str(recovery_dir),
+    }
+
+
+def validate_candidate_recovery_artifact(
+    *,
+    recovery_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_RECOVERY_DIR,
+) -> dict[str, Any]:
+    recovery_dir = output_dir / recovery_id
+    manifest = _read_optional_json(recovery_dir / "recovery_manifest.json") or {}
+    recovered = _read_jsonl(recovery_dir / "recovered_candidates.jsonl")
+    required = [
+        "recovery_manifest.json",
+        "recovered_candidates.jsonl",
+        "rejected_after_calibration.jsonl",
+        "recovery_leaderboard.json",
+        "recovery_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (recovery_dir / name).exists(), name) for name in required
+    ]
+    checks.extend(
+        [
+            _check("recovery_id_matches", manifest.get("recovery_id") == recovery_id, recovery_id),
+            _check(
+                "all_recovered_are_observe_only",
+                all(row.get("recovered_status") == GATE_OBSERVE_ONLY for row in recovered),
+                "observe_only only",
+            ),
+            _check(
+                "all_recovered_manual_review_required",
+                all(row.get("manual_review_required") is True for row in recovered),
+                "manual review required",
+            ),
+            _check(
+                "hard_fail_excluded",
+                all(
+                    _mapping(row.get("evidence_status")).get("data_quality") != "FAIL"
+                    and _mapping(row.get("evidence_status")).get("overfit_status") != "HIGH_RISK"
+                    and _mapping(row.get("evidence_status")).get("date_range_status")
+                    not in {DATE_RANGE_FAIL, DATE_RANGE_INSUFFICIENT_DATA}
+                    for row in recovered
+                ),
+                "hard fail candidates excluded",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "recovery is observe-only",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_recovery_validation",
+        "recovery_id": recovery_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def rebuild_observe_pool_from_recovery(
+    *,
+    recovery_id: str,
+    recovery_dir: Path = DEFAULT_CANDIDATE_RECOVERY_DIR,
+    output_dir: Path = DEFAULT_OBSERVE_POOL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_dir = recovery_dir / recovery_id
+    recovery_manifest = _read_json(source_dir / "recovery_manifest.json")
+    recovered = _read_jsonl(source_dir / "recovered_candidates.jsonl")
+    pool_id = _stable_id("observe-pool-rebuild", recovery_id, generated.isoformat())
+    pool_dir = _unique_dir(output_dir / pool_id)
+    pool_dir.mkdir(parents=True, exist_ok=False)
+    candidates = [
+        {
+            **row,
+            "observe_reason": "recovered_by_calibrated_evidence_gate_policy",
+            "source_recovery_id": recovery_id,
+            "shadow_registry_sync_status": "NOT_SYNCED_BY_DEFAULT",
+        }
+        for row in recovered
+    ]
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_observe_pool_manifest",
+        "pool_id": pool_dir.name,
+        "source_sweep_id": recovery_manifest.get("source_sweep_id", ""),
+        "source_recovery_id": recovery_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if candidates else "PASS_WITH_WARNINGS",
+        "top_n_requested": len(candidates),
+        "observe_candidate_count": len(candidates),
+        "rejected_candidate_count": recovery_manifest.get("rejected_after_calibration_count", 0),
+        "manual_review_required_count": sum(
+            1 for row in candidates if row.get("manual_review_required") is True
+        ),
+        "shadow_registry_sync_status": "NOT_SYNCED_BY_DEFAULT",
+        "shadow_registry_sync_reason": "rebuild writes observe pool artifact only",
+        "observe_candidates_path": str(pool_dir / "observe_candidates.jsonl"),
+        "observe_pool_report_path": str(pool_dir / "observe_pool_report.md"),
+        "rejected_candidates": [],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(pool_dir / "observe_pool_manifest.json", manifest)
+    _write_jsonl(pool_dir / "observe_candidates.jsonl", candidates)
+    _write_text(
+        pool_dir / "observe_pool_report.md",
+        render_observe_pool_markdown(manifest, candidates),
+    )
+    _update_latest_pointer(
+        "latest_observe_pool",
+        pool_dir.name,
+        pool_dir / "observe_pool_manifest.json",
+    )
+    return {
+        "pool_id": pool_dir.name,
+        "pool_dir": pool_dir,
+        "manifest": manifest,
+        "candidates": candidates,
+    }
+
+
+def update_research_decision(
+    *,
+    sweep_id: str,
+    diagnosis_id: str,
+    impact_id: str,
+    recovery_id: str,
+    diagnosis_dir: Path = DEFAULT_EVIDENCE_DIAGNOSIS_DIR,
+    gate_impact_dir: Path = DEFAULT_GATE_IMPACT_DIR,
+    recovery_dir: Path = DEFAULT_CANDIDATE_RECOVERY_DIR,
+    overnight_readiness_dir: Path = DEFAULT_OVERNIGHT_READINESS_DIR,
+    output_dir: Path = DEFAULT_RESEARCH_DECISION_UPDATE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    diagnosis = _read_json(diagnosis_dir / diagnosis_id / "diagnosis_manifest.json")
+    impact = _read_json(gate_impact_dir / impact_id / "gate_impact_manifest.json")
+    simulation = _read_json(gate_impact_dir / impact_id / "candidate_recovery_simulation.json")
+    recovery = _read_json(recovery_dir / recovery_id / "recovery_manifest.json")
+    readiness = _latest_manifest_for_sweep(
+        sweep_id,
+        overnight_readiness_dir,
+        "overnight_readiness_manifest.json",
+        "source_sweep_id",
+    )
+    recovered_count = int(recovery.get("recovered_candidate_count") or 0)
+    engineering_readiness = _text(readiness.get("overnight_readiness"), "MISSING")
+    research_readiness = "NOT_READY"
+    go_no_go = "NO_GO"
+    recommended_action = "fix_evidence_gaps"
+    blockers: list[str] = []
+    warnings: list[str] = []
+    if recovered_count > 0:
+        research_readiness = "READY_WITH_WARNINGS"
+        recommended_action = "manual_review_recovered_candidates"
+        go_no_go = (
+            "GO_WITH_LIMITS"
+            if engineering_readiness in {"READY", "READY_WITH_WARNINGS"}
+            else "NO_GO"
+        )
+        warnings.append("all_recovered_candidates_require_manual_review")
+        if go_no_go == "GO_WITH_LIMITS":
+            warnings.append("owner_approval_required_before_limited_overnight_real")
+    else:
+        blockers.append("no_recovered_observe_only_candidates")
+        recommended_action = "calibrate_gates_or_fix_evidence_gaps"
+    if engineering_readiness in {"NOT_READY", "MISSING"}:
+        blockers.append("overnight_engineering_readiness_not_ready")
+    decision_update_id = _stable_id(
+        "research-decision-update",
+        sweep_id,
+        diagnosis_id,
+        impact_id,
+        recovery_id,
+        generated.isoformat(),
+    )
+    decision_dir = _unique_dir(output_dir / decision_update_id)
+    decision_dir.mkdir(parents=True, exist_ok=False)
+    go_no_go_matrix = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_go_no_go_matrix",
+        "decision_update_id": decision_dir.name,
+        "medium_real_status": "PASS" if int(diagnosis.get("candidate_count") or 0) > 0 else "FAIL",
+        "usable_candidates_before": diagnosis.get("usable_candidates", 0),
+        "usable_candidates_after": recovered_count,
+        "observe_candidates_after": recovery.get("observe_only_candidate_count", recovered_count),
+        "overnight_engineering_readiness": engineering_readiness,
+        "overnight_research_readiness": research_readiness,
+        "recommended_action": recommended_action,
+        "go_no_go": go_no_go,
+        "required_owner_approval": True,
+        "blocking_issues": blockers,
+        "warnings": warnings,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    next_actions = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_decision_update_actions",
+        "decision_update_id": decision_dir.name,
+        "recommended_action": recommended_action,
+        "allowed_actions": (
+            ["manual_review_recovered_candidates", "run_limited_overnight_real"]
+            if go_no_go == "GO_WITH_LIMITS"
+            else ["fix_evidence_gaps", "calibrate_gates", "rebuild_observe_pool"]
+        ),
+        "disallowed_without_owner_approval": ["run_full_overnight_real", "production_candidate"],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_decision_update_manifest",
+        "decision_update_id": decision_dir.name,
+        "source_sweep_id": sweep_id,
+        "source_diagnosis_id": diagnosis_id,
+        "source_impact_id": impact_id,
+        "source_recovery_id": recovery_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "go_no_go": go_no_go,
+        "recommended_action": recommended_action,
+        "recovered_candidate_count": recovered_count,
+        "observe_candidate_count": recovery.get("observe_only_candidate_count", recovered_count),
+        "go_no_go_matrix_path": str(decision_dir / "go_no_go_matrix.json"),
+        "next_action_recommendations_path": str(decision_dir / "next_action_recommendations.json"),
+        "research_decision_update_report_path": str(
+            decision_dir / "research_decision_update_report.md"
+        ),
+        "reader_brief_section_path": str(decision_dir / "reader_brief_section.md"),
+        "source_artifacts": {
+            "diagnosis": str(diagnosis_dir / diagnosis_id / "diagnosis_manifest.json"),
+            "gate_impact": str(gate_impact_dir / impact_id / "gate_impact_manifest.json"),
+            "candidate_recovery": str(recovery_dir / recovery_id / "recovery_manifest.json"),
+            "overnight_readiness": readiness.get("_manifest_path", ""),
+        },
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(decision_dir / "decision_update_manifest.json", manifest)
+    _write_json(decision_dir / "go_no_go_matrix.json", go_no_go_matrix)
+    _write_json(decision_dir / "next_action_recommendations.json", next_actions)
+    _write_text(
+        decision_dir / "reader_brief_section.md",
+        render_research_decision_update_reader_brief(go_no_go_matrix),
+    )
+    _write_text(
+        decision_dir / "research_decision_update_report.md",
+        render_research_decision_update_markdown(
+            manifest,
+            go_no_go_matrix,
+            simulation=_records(simulation.get("scenarios")),
+            impact=impact,
+        ),
+    )
+    _update_latest_pointer(
+        "latest_research_decision_update",
+        decision_dir.name,
+        decision_dir / "decision_update_manifest.json",
+    )
+    return {
+        "decision_update_id": decision_dir.name,
+        "decision_update_dir": decision_dir,
+        "manifest": manifest,
+        "go_no_go_matrix": go_no_go_matrix,
+    }
+
+
+def validate_research_decision_update_artifact(
+    *,
+    decision_update_id: str,
+    output_dir: Path = DEFAULT_RESEARCH_DECISION_UPDATE_DIR,
+) -> dict[str, Any]:
+    decision_dir = output_dir / decision_update_id
+    manifest = _read_optional_json(decision_dir / "decision_update_manifest.json") or {}
+    go_no_go = _read_optional_json(decision_dir / "go_no_go_matrix.json") or {}
+    required = [
+        "decision_update_manifest.json",
+        "go_no_go_matrix.json",
+        "next_action_recommendations.json",
+        "research_decision_update_report.md",
+        "reader_brief_section.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (decision_dir / name).exists(), name) for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "decision_update_id_matches",
+                manifest.get("decision_update_id") == decision_update_id,
+                decision_update_id,
+            ),
+            _check(
+                "go_no_go_present",
+                go_no_go.get("go_no_go") in {"GO_WITH_LIMITS", "NO_GO"},
+                _text(go_no_go.get("go_no_go")),
+            ),
+            _check(
+                "owner_approval_required",
+                go_no_go.get("required_owner_approval") is True,
+                "overnight/production boundary requires owner",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "decision update is research-only",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_decision_update_validation",
+        "decision_update_id": decision_update_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def research_decision_update_report_payload(
+    *,
+    decision_update_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RESEARCH_DECISION_UPDATE_DIR,
+) -> dict[str, Any]:
+    resolved_id = decision_update_id or (
+        _latest_pointer_artifact_id("latest_research_decision_update") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--decision-update-id or --latest is required")
+    decision_dir = output_dir / resolved_id
+    return {
+        **_read_json(decision_dir / "decision_update_manifest.json"),
+        "decision_update_dir": str(decision_dir),
     }
 
 
@@ -7828,6 +8964,577 @@ def render_candidate_interpretation_markdown(payload: Mapping[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _candidate_diagnosis_rows_for_sweep(
+    *,
+    sweep_id: str,
+    summary_id: str | None,
+    sweep_output_dir: Path,
+    evidence_summary_dir: Path,
+    regime_coverage_dir: Path,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    summary_manifest = _evidence_summary_manifest_for_sweep(
+        sweep_id=sweep_id,
+        summary_id=summary_id,
+        evidence_summary_dir=evidence_summary_dir,
+    )
+    evidence_rows = _read_evidence_matrix_rows(summary_manifest, evidence_summary_dir)
+    sweep_dir = sweep_output_dir / sweep_id
+    results_by_candidate = {
+        _text(row.get("candidate_id")): row for row in _read_candidate_results(sweep_dir)
+    }
+    regime_status = _regime_status_for_sweep(sweep_id, regime_coverage_dir)
+    rows = []
+    for evidence in evidence_rows:
+        candidate_id = _text(evidence.get("candidate_id"))
+        source = results_by_candidate.get(candidate_id, {})
+        reasons = _candidate_evidence_reasons(
+            evidence=evidence, source=source, regime=regime_status
+        )
+        reason_classes = _classify_evidence_gate_reasons(reasons)
+        current_gate = _text(source.get("gate"), _text(evidence.get("promotion_status"), "MISSING"))
+        rows.append(
+            {
+                "candidate_id": candidate_id,
+                "source_sweep_id": sweep_id,
+                "gate": current_gate,
+                "usable": evidence.get("evidence_recommendation") == "usable_for_research",
+                "observe_eligible": current_gate == GATE_OBSERVE_ONLY,
+                "blocking_reasons": reason_classes["blocking_reasons"],
+                "warning_reasons": reason_classes["warning_reasons"],
+                "hard_blocking_reasons": reason_classes["hard_blocking_reasons"],
+                "soft_blocking_reasons": reason_classes["soft_blocking_reasons"],
+                "categories": reason_classes["categories"],
+                "evidence_status": evidence,
+                "regime_status": regime_status,
+                "score": source.get("score"),
+                "real_evaluation_artifact_path": source.get("real_evaluation_artifact_path", ""),
+            }
+        )
+    return rows, summary_manifest
+
+
+def _evidence_summary_manifest_for_sweep(
+    *,
+    sweep_id: str,
+    summary_id: str | None,
+    evidence_summary_dir: Path,
+) -> dict[str, Any]:
+    if summary_id:
+        path = evidence_summary_dir / summary_id / "evidence_summary_manifest.json"
+        payload = _read_json(path)
+        payload["_manifest_path"] = str(path)
+        return payload
+    payload = _latest_manifest_for_sweep(
+        sweep_id,
+        evidence_summary_dir,
+        "evidence_summary_manifest.json",
+        "source_sweep_id",
+    )
+    if not payload:
+        raise DynamicV3ParameterResearchError(f"evidence summary not found for sweep: {sweep_id}")
+    return payload
+
+
+def _read_evidence_matrix_rows(
+    summary_manifest: Mapping[str, Any],
+    evidence_summary_dir: Path,
+) -> list[dict[str, Any]]:
+    matrix_path = Path(_text(summary_manifest.get("candidate_evidence_matrix_path")))
+    if not matrix_path.exists():
+        summary_id = _text(summary_manifest.get("summary_id"))
+        matrix_path = evidence_summary_dir / summary_id / "candidate_evidence_matrix.jsonl"
+    return _read_jsonl(matrix_path)
+
+
+def _regime_status_for_sweep(sweep_id: str, regime_coverage_dir: Path) -> dict[str, Any]:
+    coverage = _latest_manifest_for_sweep(
+        sweep_id,
+        regime_coverage_dir,
+        "regime_coverage_manifest.json",
+        "source_sweep_id",
+    )
+    return {
+        "coverage_status": coverage.get("coverage_status", "MISSING"),
+        "tech_semiconductor_relevance": coverage.get("tech_semiconductor_relevance", "MISSING"),
+        "ai_bull_market_overfit_risk": coverage.get("ai_bull_market_overfit_risk", "MISSING"),
+        "coverage_id": coverage.get("coverage_id", ""),
+    }
+
+
+def _candidate_evidence_reasons(
+    *,
+    evidence: Mapping[str, Any],
+    source: Mapping[str, Any],
+    regime: Mapping[str, Any],
+) -> list[str]:
+    reasons = list(dict.fromkeys(_texts(evidence.get("promotion_blocking_reasons"))))
+    data_quality = _text(evidence.get("data_quality"))
+    provenance = _text(evidence.get("data_provenance_status"))
+    date_range = _text(evidence.get("date_range_status"))
+    weight_status = _text(evidence.get("weight_path_status"))
+    attribution_status = _text(evidence.get("candidate_attribution_status"))
+    overfit_status = _text(evidence.get("overfit_status"))
+    real_path_text = _text(source.get("real_evaluation_artifact_path"))
+    real_path = Path(real_path_text) if real_path_text else None
+    weight_metadata = _mapping(source.get("weight_path_metadata"))
+    if not real_path_text or real_path is None or not real_path.exists():
+        reasons.append("MISSING_REAL_EVALUATION_ARTIFACT")
+    if not weight_metadata.get("has_daily_weights"):
+        reasons.append("MISSING_DAILY_WEIGHT_PATH")
+    if data_quality == "PASS_WITH_WARNINGS":
+        reasons.append("DATA_QUALITY_PASS_WITH_WARNINGS")
+    if provenance == DATA_PROVENANCE_RECONSTRUCTED:
+        reasons.append("DATA_PROVENANCE_RECONSTRUCTED")
+    if date_range == DATE_RANGE_FAIL:
+        reasons.append("DATE_RANGE_FAIL")
+    elif date_range == DATE_RANGE_INSUFFICIENT_DATA:
+        reasons.append("DATE_RANGE_INSUFFICIENT_DATA")
+    elif date_range == DATE_RANGE_INCOMPLETE:
+        reasons.append("DATE_RANGE_INCOMPLETE")
+    if weight_status == WEIGHT_PATH_PARTIAL:
+        reasons.append("WEIGHT_PATH_PARTIAL")
+    if attribution_status == WEIGHT_PATH_PARTIAL:
+        reasons.append("ATTRIBUTION_PARTIAL")
+    elif attribution_status in {"MISSING", WEIGHT_PATH_INCOMPLETE}:
+        reasons.append("ATTRIBUTION_INCOMPLETE")
+    if overfit_status == "HIGH_RISK":
+        reasons.append("OVERFIT_HIGH_RISK")
+    elif overfit_status == "REVIEW_REQUIRED":
+        reasons.append("OVERFIT_REVIEW_REQUIRED")
+    if regime.get("coverage_status") == "PASS_WITH_WARNINGS":
+        reasons.append("REGIME_COVERAGE_PASS_WITH_WARNINGS")
+    if regime.get("tech_semiconductor_relevance") == "LOW":
+        reasons.append("TECH_SEMICONDUCTOR_RELEVANCE_LOW")
+    return list(dict.fromkeys(reason for reason in reasons if reason))
+
+
+def _classify_evidence_gate_reasons(reasons: Sequence[str]) -> dict[str, Any]:
+    warning_reason_ids = {
+        "DATA_QUALITY_PASS_WITH_WARNINGS",
+        "DATA_PROVENANCE_RECONSTRUCTED",
+        "WEIGHT_PATH_PARTIAL",
+        "ATTRIBUTION_PARTIAL",
+        "REGIME_COVERAGE_PASS_WITH_WARNINGS",
+    }
+    hard = [reason for reason in reasons if reason in EVIDENCE_GATE_TRUE_HARD_FAILURES]
+    warnings = [reason for reason in reasons if reason in warning_reason_ids]
+    blocking = [
+        reason
+        for reason in reasons
+        if reason not in {"DATA_QUALITY_PASS_WITH_WARNINGS", "DATA_PROVENANCE_RECONSTRUCTED"}
+    ]
+    soft = [
+        reason
+        for reason in blocking
+        if reason not in hard and reason not in {"WEIGHT_PATH_PARTIAL", "ATTRIBUTION_PARTIAL"}
+    ]
+    categories = {category: [] for category in EVIDENCE_GATE_CATEGORY_ORDER}
+    for reason in reasons:
+        categories.setdefault(_evidence_gate_reason_category(reason), []).append(reason)
+    return {
+        "blocking_reasons": blocking,
+        "warning_reasons": warnings,
+        "hard_blocking_reasons": hard,
+        "soft_blocking_reasons": soft,
+        "categories": categories,
+    }
+
+
+def _evidence_gate_reason_category(reason: str) -> str:
+    return EVIDENCE_GATE_REASON_CATEGORIES.get(reason, "promotion")
+
+
+def _evidence_gate_reason_severity(reason: str) -> str:
+    if reason in EVIDENCE_GATE_TRUE_HARD_FAILURES:
+        return "hard_block"
+    if reason in {
+        "DATA_QUALITY_PASS_WITH_WARNINGS",
+        "DATA_PROVENANCE_RECONSTRUCTED",
+        "WEIGHT_PATH_PARTIAL",
+        "ATTRIBUTION_PARTIAL",
+        "REGIME_COVERAGE_PASS_WITH_WARNINGS",
+    }:
+        return "warning"
+    return "review_required"
+
+
+def _gate_impact_scenarios(top_reasons: Sequence[str]) -> list[dict[str, Any]]:
+    return [
+        {
+            "scenario": "current_rules",
+            "label": "Scenario A: current rules",
+            "manual_review_allowed": [],
+            "fixed_reasons": [],
+        },
+        {
+            "scenario": "attribution_partial_as_manual_review",
+            "label": "Scenario B: ATTRIBUTION_PARTIAL as manual review",
+            "manual_review_allowed": ["ATTRIBUTION_PARTIAL"],
+            "fixed_reasons": [],
+        },
+        {
+            "scenario": "data_provenance_reconstructed_as_warning",
+            "label": "Scenario C: reconstructed provenance as warning",
+            "manual_review_allowed": [
+                "DATA_PROVENANCE_INCOMPLETE",
+                "DATA_PROVENANCE_RECONSTRUCTED",
+            ],
+            "fixed_reasons": [],
+        },
+        {
+            "scenario": "overfit_review_required_as_manual_review",
+            "label": "Scenario D: OVERFIT_REVIEW_REQUIRED as manual review",
+            "manual_review_allowed": ["OVERFIT_REVIEW_REQUIRED"],
+            "fixed_reasons": [],
+        },
+        {
+            "scenario": "regime_pass_with_warnings_allows_observe",
+            "label": "Scenario E: regime PASS_WITH_WARNINGS allows observe",
+            "manual_review_allowed": ["REGIME_COVERAGE_PASS_WITH_WARNINGS"],
+            "fixed_reasons": [],
+        },
+        {
+            "scenario": "true_hard_failures_only",
+            "label": "Scenario F: only true hard failures remain hard",
+            "manual_review_allowed": sorted(EVIDENCE_GATE_DEFAULT_MANUAL_REVIEW_REASONS),
+            "fixed_reasons": [],
+        },
+        {
+            "scenario": "fix_top_1_blocking_reason",
+            "label": "Scenario G: fix top 1 blocking reason",
+            "manual_review_allowed": [],
+            "fixed_reasons": list(top_reasons[:1]),
+        },
+        {
+            "scenario": "fix_top_3_blocking_reasons",
+            "label": "Scenario H: fix top 3 blocking reasons",
+            "manual_review_allowed": [],
+            "fixed_reasons": list(top_reasons[:3]),
+        },
+    ]
+
+
+def _simulate_gate_recovery(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    scenario_id: str,
+    scenario: Mapping[str, Any],
+) -> dict[str, Any]:
+    manual_allowed = set(_texts(scenario.get("manual_review_allowed")))
+    fixed = set(_texts(scenario.get("fixed_reasons")))
+    recovered: list[str] = []
+    manual_review: list[str] = []
+    still_blocked = []
+    for row in rows:
+        candidate_id = _text(row.get("candidate_id"))
+        hard = [
+            reason for reason in _texts(row.get("hard_blocking_reasons")) if reason not in fixed
+        ]
+        soft = [
+            reason for reason in _texts(row.get("soft_blocking_reasons")) if reason not in fixed
+        ]
+        warning = [reason for reason in _texts(row.get("warning_reasons")) if reason not in fixed]
+        unresolved_soft = [reason for reason in soft if reason not in manual_allowed]
+        if hard or unresolved_soft:
+            still_blocked.append(
+                {
+                    "candidate_id": candidate_id,
+                    "hard": hard,
+                    "unresolved_soft": unresolved_soft,
+                }
+            )
+            continue
+        recovered.append(candidate_id)
+        if soft or warning or manual_allowed or fixed:
+            manual_review.append(candidate_id)
+    return {
+        "scenario": scenario_id,
+        "label": scenario.get("label", scenario_id),
+        "usable_candidates": len(recovered),
+        "observe_candidates": len(recovered),
+        "new_manual_review_required": len(manual_review),
+        "still_blocked_candidates": len(still_blocked),
+        "manual_review_allowed": sorted(manual_allowed),
+        "fixed_reasons": sorted(fixed),
+        "recovered_candidate_ids": recovered[:50],
+        "risks": _scenario_risks(manual_allowed=manual_allowed, fixed=fixed),
+    }
+
+
+def _scenario_risks(*, manual_allowed: set[str], fixed: set[str]) -> list[str]:
+    risks = []
+    if "ATTRIBUTION_INCOMPLETE" in manual_allowed or "ATTRIBUTION_PARTIAL" in manual_allowed:
+        risks.append("candidate attribution evidence remains incomplete or partial")
+    if "DATA_PROVENANCE_INCOMPLETE" in manual_allowed:
+        risks.append("price cache provenance is reconstructed, not original vendor manifest")
+    if "BACKTEST_WINDOW_INCOMPLETE" in manual_allowed or "DATE_RANGE_INCOMPLETE" in manual_allowed:
+        risks.append("actual evaluation window is shorter than requested range")
+    if "OVERFIT_REVIEW_REQUIRED" in manual_allowed:
+        risks.append("overfit status still requires manual review")
+    if fixed:
+        risks.append("simulation assumes evidence gaps are fixed without changing source metrics")
+    return risks
+
+
+def _calibrated_candidate_status(
+    row: Mapping[str, Any],
+    *,
+    hard_fail: set[str],
+    manual_allowed: set[str],
+) -> dict[str, Any]:
+    all_reasons = list(
+        dict.fromkeys(
+            [
+                *_texts(row.get("hard_blocking_reasons")),
+                *_texts(row.get("soft_blocking_reasons")),
+                *_texts(row.get("warning_reasons")),
+            ]
+        )
+    )
+    remaining_hard = [
+        reason
+        for reason in all_reasons
+        if reason in hard_fail or reason in EVIDENCE_GATE_TRUE_HARD_FAILURES
+    ]
+    manual_reasons = [
+        reason
+        for reason in all_reasons
+        if reason in manual_allowed and reason not in remaining_hard
+    ]
+    unresolved = [
+        reason
+        for reason in all_reasons
+        if reason not in remaining_hard
+        and reason not in manual_reasons
+        and reason not in {"DATA_QUALITY_PASS_WITH_WARNINGS", "DATA_PROVENANCE_RECONSTRUCTED"}
+    ]
+    status = GATE_OBSERVE_ONLY
+    if remaining_hard or unresolved:
+        status = GATE_REJECT
+    return {
+        "candidate_id": row.get("candidate_id"),
+        "source_sweep_id": row.get("source_sweep_id"),
+        "original_gate": row.get("gate"),
+        "calibrated_status": status,
+        "manual_review_required": status == GATE_OBSERVE_ONLY,
+        "remaining_hard_failures": remaining_hard,
+        "manual_review_reasons": manual_reasons,
+        "unresolved_reasons": unresolved,
+        "warning_reasons": row.get("warning_reasons", []),
+        "evidence_status": row.get("evidence_status", {}),
+        "regime_status": row.get("regime_status", {}),
+        "score": row.get("score"),
+    }
+
+
+def render_evidence_diagnosis_markdown(
+    manifest: Mapping[str, Any],
+    blocking_summary: Mapping[str, Any],
+    gate_category_summary: Mapping[str, Any],
+) -> str:
+    blockers = _records(blocking_summary.get("blocking_reasons"))
+    categories = _records(gate_category_summary.get("categories"))
+    top = blockers[0] if blockers else {}
+    lines = [
+        "# Dynamic v3 Evidence Gate Diagnosis",
+        "",
+        f"- sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- diagnosis_id: `{manifest.get('diagnosis_id')}`",
+        f"- candidate_count: `{manifest.get('candidate_count')}`",
+        f"- usable_candidates: `{manifest.get('usable_candidates')}`",
+        f"- review_required_candidates: `{manifest.get('review_required_candidates')}`",
+        f"- hard_blocked_candidates: `{manifest.get('hard_blocked_candidates')}`",
+        f"- soft_blocked_candidates: `{manifest.get('soft_blocked_candidates')}`",
+        f"- top_blocking_reason: `{top.get('reason', 'none')}`",
+        "",
+        "## Blocking Reasons",
+        "|reason|count|share|severity|category|",
+        "|---|---:|---:|---|---|",
+    ]
+    for row in blockers:
+        lines.append(
+            f"|{row.get('reason')}|{row.get('count')}|{row.get('share')}|"
+            f"{row.get('severity')}|{row.get('category')}|"
+        )
+    lines.extend(["", "## Gate Categories", "|category|candidate_count|", "|---|---:|"])
+    for row in categories:
+        lines.append(f"|{row.get('category')}|{row.get('candidate_count')}|")
+    lines.extend(
+        [
+            "",
+            "## Diagnosis",
+            (
+                "300 个 medium_real candidate 全部不可用时，优先解释为 evidence gate "
+                "未闭合，而不是 production candidate 失败。hard block 仍不得降级；"
+                "soft block 和 warning 只能进入 manual review simulation。"
+            ),
+            "",
+            "不建议直接运行 full overnight_real；应先完成 gate impact、policy calibration "
+            "和 recovered observe pool 复核。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_gate_impact_markdown(
+    manifest: Mapping[str, Any],
+    scenarios: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        "# Dynamic v3 Gate Impact Matrix",
+        "",
+        f"- impact_id: `{manifest.get('impact_id')}`",
+        f"- source_diagnosis_id: `{manifest.get('source_diagnosis_id')}`",
+        f"- baseline_observe_candidates: `{manifest.get('baseline_observe_candidates')}`",
+        f"- best_scenario: `{manifest.get('best_scenario')}`",
+        f"- best_observe_candidates: `{manifest.get('best_observe_candidates')}`",
+        "",
+        "|scenario|observe_candidates|manual_review_required|still_blocked|",
+        "|---|---:|---:|---:|",
+    ]
+    for row in scenarios:
+        lines.append(
+            f"|{row.get('scenario')}|{row.get('observe_candidates')}|"
+            f"{row.get('new_manual_review_required')}|{row.get('still_blocked_candidates')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "Simulation 不修改原始 candidate metrics；它只回答哪些 evidence gate "
+            "如果修复或降级为 manual review，候选可进入 observe-only 复核池。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_gate_policy_markdown(
+    manifest: Mapping[str, Any],
+    effect: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic v3 Evidence Gate Policy Apply",
+        "",
+        f"- policy_run_id: `{manifest.get('policy_run_id')}`",
+        f"- source_sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- policy_version: `{manifest.get('policy_version')}`",
+        f"- observe_only_candidates: `{manifest.get('observe_only_candidates')}`",
+        "- manual_review_required_candidates: "
+        f"`{manifest.get('manual_review_required_candidates')}`",
+        f"- rejected_candidates: `{manifest.get('rejected_candidates')}`",
+        "",
+        "## Manual Review Reasons",
+        "|reason|count|",
+        "|---|---:|",
+    ]
+    for row in _records(effect.get("manual_review_reason_distribution")):
+        lines.append(f"|{row.get('reason')}|{row.get('count')}|")
+    lines.extend(
+        [
+            "",
+            "Policy apply 不修改原始 sweep artifact；它只写 calibrated candidate status。",
+            "production_candidate_generated=false.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_candidate_recovery_markdown(
+    manifest: Mapping[str, Any],
+    recovered: Sequence[Mapping[str, Any]],
+    rejected: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        "# Dynamic v3 Candidate Recovery",
+        "",
+        f"- recovery_id: `{manifest.get('recovery_id')}`",
+        f"- source_sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- recovered_candidate_count: `{manifest.get('recovered_candidate_count')}`",
+        f"- observe_only_candidate_count: `{manifest.get('observe_only_candidate_count')}`",
+        f"- manual_review_required_count: `{manifest.get('manual_review_required_count')}`",
+        f"- rejected_after_calibration_count: `{manifest.get('rejected_after_calibration_count')}`",
+        "",
+        "|candidate_id|score|manual_review_required|",
+        "|---|---:|---|",
+    ]
+    for row in recovered[:20]:
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('score')}|{row.get('manual_review_required')}|"
+        )
+    if not recovered:
+        lines.extend(
+            [
+                "",
+                "当前 calibration 后仍无 recovered candidate；需要优先修复 rejected reasons。",
+                f"rejected_after_calibration={len(rejected)}",
+            ]
+        )
+    lines.extend(["", "production_effect=none; broker_action=none."])
+    return "\n".join(lines) + "\n"
+
+
+def render_research_decision_update_reader_brief(go_no_go: Mapping[str, Any]) -> str:
+    return (
+        "Dynamic Rescue Decision Update: "
+        f"go_no_go={go_no_go.get('go_no_go')}; "
+        f"recommended_action={go_no_go.get('recommended_action')}; "
+        f"observe_candidates_after={go_no_go.get('observe_candidates_after')}; "
+        "production_effect=none."
+    )
+
+
+def render_research_decision_update_markdown(
+    manifest: Mapping[str, Any],
+    go_no_go: Mapping[str, Any],
+    *,
+    simulation: Sequence[Mapping[str, Any]],
+    impact: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic v3 Research Decision Update",
+        "",
+        f"- decision_update_id: `{manifest.get('decision_update_id')}`",
+        f"- source_sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- usable_candidates_before: `{go_no_go.get('usable_candidates_before')}`",
+        f"- usable_candidates_after: `{go_no_go.get('usable_candidates_after')}`",
+        f"- observe_candidates_after: `{go_no_go.get('observe_candidates_after')}`",
+        f"- overnight_engineering_readiness: `{go_no_go.get('overnight_engineering_readiness')}`",
+        f"- overnight_research_readiness: `{go_no_go.get('overnight_research_readiness')}`",
+        f"- go_no_go: `{go_no_go.get('go_no_go')}`",
+        f"- recommended_action: `{go_no_go.get('recommended_action')}`",
+        f"- required_owner_approval: `{go_no_go.get('required_owner_approval')}`",
+        "",
+        "## Gate Impact Summary",
+        f"- best_scenario: `{impact.get('best_scenario')}`",
+        f"- best_observe_candidates: `{impact.get('best_observe_candidates')}`",
+        "",
+        "|scenario|observe_candidates|still_blocked|",
+        "|---|---:|---:|",
+    ]
+    for row in simulation:
+        lines.append(
+            f"|{row.get('scenario')}|{row.get('observe_candidates')}|"
+            f"{row.get('still_blocked_candidates')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Conclusion",
+            (
+                "不存在 production-grade candidate；若存在 recovered candidates，它们也只是 "
+                "observe_only + manual_review_required。是否运行 limited overnight_real 需要 "
+                "owner 明确批准，full overnight_real 不应作为自动下一步。"
+            ),
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def _read_csv_rows(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
@@ -10688,6 +12395,31 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pointer_name": "latest_research_decision",
             "pattern": "research_decision/*/research_decision_manifest.json",
             "id_keys": ("decision_id",),
+        },
+        {
+            "pointer_name": "latest_evidence_diagnosis",
+            "pattern": "evidence_diagnosis/*/diagnosis_manifest.json",
+            "id_keys": ("diagnosis_id",),
+        },
+        {
+            "pointer_name": "latest_gate_impact",
+            "pattern": "gate_impact/*/gate_impact_manifest.json",
+            "id_keys": ("impact_id",),
+        },
+        {
+            "pointer_name": "latest_gate_policy",
+            "pattern": "gate_policy/*/gate_policy_manifest.json",
+            "id_keys": ("policy_run_id",),
+        },
+        {
+            "pointer_name": "latest_candidate_recovery",
+            "pattern": "candidate_recovery/*/recovery_manifest.json",
+            "id_keys": ("recovery_id",),
+        },
+        {
+            "pointer_name": "latest_research_decision_update",
+            "pattern": "research_decision_update/*/decision_update_manifest.json",
+            "id_keys": ("decision_update_id",),
         },
     )
 

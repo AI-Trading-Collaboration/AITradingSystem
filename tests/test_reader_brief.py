@@ -280,11 +280,32 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert dynamic_v3_parameter["research_decision_next_task"].startswith(
         "Review observe_pool candidates"
     )
+    assert dynamic_v3_parameter["evidence_diagnosis_status"] == "PASS_WITH_WARNINGS"
+    assert dynamic_v3_parameter["evidence_diagnosis_usable_candidates"] == 0
+    assert dynamic_v3_parameter["evidence_diagnosis_hard_blocked_candidates"] == 0
+    assert dynamic_v3_parameter["evidence_diagnosis_soft_blocked_candidates"] == 300
+    assert dynamic_v3_parameter["gate_impact_best_scenario"] == "true_hard_failures_only"
+    assert dynamic_v3_parameter["gate_impact_best_observe_candidates"] == 300
+    assert dynamic_v3_parameter["gate_policy_version"] == "2026-06-08"
+    assert dynamic_v3_parameter["gate_policy_observe_only_candidates"] == 300
+    assert dynamic_v3_parameter["candidate_recovery_status"] == "PASS"
+    assert dynamic_v3_parameter["recovered_candidate_count"] == 300
+    assert dynamic_v3_parameter["research_decision_update_go_no_go"] == "GO_WITH_LIMITS"
+    assert dynamic_v3_parameter["research_decision_update_recommended_action"] == (
+        "manual_review_recovered_candidates"
+    )
+    assert dynamic_v3_parameter["research_decision_update_required_owner_approval"] is True
+    assert dynamic_v3_parameter["research_decision_update_usable_candidates_before"] == 0
+    assert dynamic_v3_parameter["research_decision_update_usable_candidates_after"] == 300
+    assert "owner_approval_required" in dynamic_v3_parameter["research_decision_update_warnings"]
     assert dynamic_v3_parameter["candidate_evidence_summary"].endswith(
         "evidence_summary_manifest.json"
     )
     assert dynamic_v3_parameter["observe_pool"].endswith("observe_pool_manifest.json")
     assert dynamic_v3_parameter["research_decision"].endswith("research_decision_manifest.json")
+    assert dynamic_v3_parameter["research_decision_update"].endswith(
+        "decision_update_manifest.json"
+    )
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -1957,6 +1978,147 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    dynamic_v3_diagnosis_dir = dynamic_v3_root / "evidence_diagnosis" / "diagnosis1"
+    dynamic_v3_diagnosis_dir.mkdir(parents=True)
+    dynamic_v3_diagnosis_path = dynamic_v3_diagnosis_dir / "diagnosis_manifest.json"
+    dynamic_v3_diagnosis_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_evidence_diagnosis_manifest",
+                "status": "PASS_WITH_WARNINGS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "candidate_count": 300,
+                "usable_candidates": 0,
+                "hard_blocked_candidates": 0,
+                "soft_blocked_candidates": 300,
+                "warning_candidates": 300,
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_gate_impact_dir = dynamic_v3_root / "gate_impact" / "impact1"
+    dynamic_v3_gate_impact_dir.mkdir(parents=True)
+    dynamic_v3_gate_impact_path = dynamic_v3_gate_impact_dir / "gate_impact_manifest.json"
+    dynamic_v3_gate_impact_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_gate_impact_manifest",
+                "status": "PASS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "baseline_usable_candidates": 0,
+                "baseline_observe_candidates": 0,
+                "best_scenario": "true_hard_failures_only",
+                "best_observe_candidates": 300,
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_gate_policy_dir = dynamic_v3_root / "gate_policy" / "policy1"
+    dynamic_v3_gate_policy_dir.mkdir(parents=True)
+    dynamic_v3_gate_policy_path = dynamic_v3_gate_policy_dir / "gate_policy_manifest.json"
+    dynamic_v3_gate_policy_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_gate_policy_manifest",
+                "status": "PASS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "policy_version": "2026-06-08",
+                "candidate_count": 300,
+                "observe_only_candidates": 300,
+                "manual_review_required_candidates": 300,
+                "rejected_candidates": 0,
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_recovery_dir = dynamic_v3_root / "candidate_recovery" / "recovery1"
+    dynamic_v3_recovery_dir.mkdir(parents=True)
+    dynamic_v3_recovery_path = dynamic_v3_recovery_dir / "recovery_manifest.json"
+    dynamic_v3_recovery_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_candidate_recovery_manifest",
+                "status": "PASS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "candidate_count": 300,
+                "recovered_candidate_count": 300,
+                "observe_only_candidate_count": 300,
+                "manual_review_required_count": 300,
+                "rejected_after_calibration_count": 0,
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_decision_update_dir = dynamic_v3_root / "research_decision_update" / "update1"
+    dynamic_v3_decision_update_dir.mkdir(parents=True)
+    dynamic_v3_decision_update_path = (
+        dynamic_v3_decision_update_dir / "decision_update_manifest.json"
+    )
+    dynamic_v3_decision_update_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_research_decision_update_manifest",
+                "status": "PASS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "source_diagnosis_id": "diagnosis1",
+                "source_impact_id": "impact1",
+                "source_recovery_id": "recovery1",
+                "go_no_go": "GO_WITH_LIMITS",
+                "recommended_action": "manual_review_recovered_candidates",
+                "recovered_candidate_count": 300,
+                "observe_candidate_count": 300,
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (dynamic_v3_decision_update_dir / "go_no_go_matrix.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_go_no_go_matrix",
+                "go_no_go": "GO_WITH_LIMITS",
+                "recommended_action": "manual_review_recovered_candidates",
+                "required_owner_approval": True,
+                "usable_candidates_before": 0,
+                "usable_candidates_after": 300,
+                "observe_candidates_after": 300,
+                "warnings": [
+                    "all_recovered_candidates_require_manual_review",
+                    "owner_approval_required_before_limited_overnight_real",
+                ],
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (dynamic_v3_decision_update_dir / "next_action_recommendations.json").write_text(
+        json.dumps(
+            {
+                "recommended_action": "manual_review_recovered_candidates",
+                "suggested_codex_task": (
+                    "Review recovered observe-only candidates before limited overnight run."
+                ),
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     report_index_path = tmp_path / "report_index_2026-05-04.json"
     report_index_path.write_text(
         json.dumps(
@@ -2296,6 +2458,71 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(dynamic_v3_decision_path),
                         "exists": True,
                         "owner_action": "review_dynamic_v3_research_decision",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_evidence_diagnosis",
+                        "title": "ETF Dynamic v3 Evidence Diagnosis",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS_WITH_WARNINGS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_diagnosis_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_evidence_diagnosis",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_gate_impact",
+                        "title": "ETF Dynamic v3 Gate Impact Matrix",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_gate_impact_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_gate_impact",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_gate_policy",
+                        "title": "ETF Dynamic v3 Evidence Gate Policy",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_gate_policy_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_gate_policy",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_candidate_recovery",
+                        "title": "ETF Dynamic v3 Candidate Recovery",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_recovery_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_candidate_recovery",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_research_decision_update",
+                        "title": "ETF Dynamic v3 Research Decision Update",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "GO_WITH_LIMITS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_decision_update_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_research_decision_update",
                         "production_effect": "none",
                     },
                 ],
