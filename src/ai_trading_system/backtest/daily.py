@@ -499,7 +499,7 @@ def run_daily_score_backtest(
     end: date,
     strategy_ticker: str = "SMH",
     benchmark_tickers: tuple[str, ...] = DEFAULT_BENCHMARK_TICKERS,
-    cost_bps: float = 5.0,
+    cost_bps: float | None = None,
     spread_bps: float = 0.0,
     slippage_bps: float = 0.0,
     market_impact_bps: float = 0.0,
@@ -528,6 +528,8 @@ def run_daily_score_backtest(
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
+    if cost_bps is None:
+        cost_bps = load_backtest_validation_policy().execution_costs.default_cost_bps
     if cost_bps < 0:
         raise ValueError("交易成本 bps 不能为负数")
     if feature_lag_days < 0:

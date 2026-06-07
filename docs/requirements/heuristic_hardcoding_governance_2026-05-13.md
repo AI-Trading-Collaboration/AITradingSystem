@@ -68,9 +68,9 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 - `market_feedback_optimization` 报告输出样本政策版本、配置路径和四层 floor。
 - P1-A 第一批迁移已完成：`decision_outcomes.py`、`prediction_ledger.py`、`feedback_loop_review.py`、`periodic_investment_review.py`、`backtest/promotion_gate.py` 和相关 CLI 状态颜色改为读取 `config/feedback_sample_policy.yaml`；样本门槛不再由这些路径的裸 `30` 决定。
 - P1-B 第一批迁移已完成：`config/scoring_rules.yaml` 增加 `policy_metadata`、`position_bands`、`daily_conclusion`、`confidence_policy` 和完整 `source_type_confidence`；`WeightedScoreModel` 不再内置 score->position band，`score-daily`、回测评分和 robustness 信号族基线读取同一套配置；日报 `score_architecture_audit` 输出 scoring policy metadata。
-- P1-C 第一批迁移已完成：新增 `config/backtest_validation_policy.yaml`，管理 robustness 默认实验参数、解释阈值和 promotion gate 要求；`aits backtest` 未显式传入 robustness 参数时读取该 policy，robustness/promotion 报告输出 policy metadata；promotion 的 shadow outcome floor 继续读取 `config/feedback_sample_policy.yaml`。
+- P1-C 第一批迁移已完成：新增 `config/backtest_validation_policy.yaml`，管理默认执行成本、PIT coverage readiness、gate/event attribution 左尾阈值、robustness 默认实验参数、解释阈值和 promotion gate 要求；`aits backtest` 未显式传入核心执行成本或 robustness 参数时读取该 policy，`aits backtest-pit-coverage` 未显式传入 coverage 参数时读取该 policy，`aits backtest-gate-attribution` 未显式传入左尾阈值时读取该 policy，robustness/promotion/PIT coverage/gate attribution 报告输出 policy-driven assumptions；promotion 的 shadow outcome floor 继续读取 `config/feedback_sample_policy.yaml`。
 - Feature coverage 第一批迁移已完成：`backtest/daily.py` 的 data credibility 覆盖率阈值和 `aits backtest --minimum-component-coverage` 默认值读取 `config/backtest_validation_policy.yaml` 的 `data_credibility.component_coverage_min`。
-- P2 自动审计工具和已配置阈值 rationale 已完成：新增 `config/heuristic_governance.yaml` 与 `aits docs heuristic-audit`，默认扫描投资解释源码路径、校验关键 policy metadata，并输出 `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.md/json`；`config/feedback_sample_policy.yaml` 已补顶层 rationale / validation；`decision_outcomes.py` 的 score bucket 改为读取 `config/scoring_rules.yaml`，`backtest/lag_sensitivity.py` 的最小有效滞后天数改为读取 `config/backtest_validation_policy.yaml`。
+- P2 自动审计工具和已配置阈值 rationale 已完成：新增 `config/heuristic_governance.yaml` 与 `aits docs heuristic-audit`，默认扫描投资解释源码路径中的 numeric literal 比较和函数默认参数、校验关键 policy metadata，并输出 `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.md/json`；`config/feedback_sample_policy.yaml` 已补顶层 rationale / validation；`decision_outcomes.py` 的 score bucket 改为读取 `config/scoring_rules.yaml`，`backtest/lag_sensitivity.py` 的最小有效滞后天数、`backtest/daily.py` 的默认执行成本、`backtest/pit_coverage.py` 的 readiness 默认阈值和 `backtest/gate_attribution.py` 的左尾阈值均改为读取 `config/backtest_validation_policy.yaml`。
 
 ## 2026-06-07 实现计划
 
@@ -78,7 +78,7 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 
 1. 新增 `config/heuristic_governance.yaml`，登记审计范围、已知 numeric literal baseline、低风险例外边界和必须具备 governance metadata 的 policy 配置。
 2. 为 `config/feedback_sample_policy.yaml` 补充顶层 `rationale` 和 `validation`，使样本 floor 的 owner/status/review/rationale/validation 都可审计。
-3. 新增只读命令 `aits docs heuristic-audit`，扫描投资解释路径中的未登记数字比较，并校验关键 policy metadata；默认输出 Markdown/JSON 报告到 `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.*`。
+3. 新增只读命令 `aits docs heuristic-audit`，扫描投资解释路径中的未登记 numeric literal 比较和函数默认参数，并校验关键 policy metadata；默认输出 Markdown/JSON 报告到 `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.*`。
 4. 新增单元测试覆盖未登记数字比较失败、baseline 登记通过、policy metadata 缺失失败、默认仓库配置通过和 CLI/direct dispatcher 行为。
 5. 同步更新 `docs/system_flow.md` 与 `docs/artifact_catalog.md`，把该命令记录为治理报告而非 production workflow。
 
@@ -105,7 +105,7 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 
 2026-06-07 并发只读复核建议后续把当前 manifest 级 rationale 进一步扩展为 section 或 threshold 级 rationale map，例如 `position_bands`、`daily_conclusion`、`confidence_policy`、`robustness` 和 `promotion` 内部关键 numeric leaf 的 rationale / validation 对照表。该增强会增加配置审计深度，但不阻断本轮 `GOV-004` 自动审计工具进入验证。
 
-同一复核还指出 `src/ai_trading_system/backtest/pit_coverage.py` 的 PIT readiness 类阈值可纳入下一轮 audit scope。该路径不在初版 GOV-004 扫描范围内；若后续把它纳入，需要先判定阈值应归属 `backtest_validation_policy`、`data_quality` 还是单独 PIT coverage policy，再迁移或登记 rationale。
+同一复核还指出 `src/ai_trading_system/backtest/pit_coverage.py` 的 PIT readiness 类阈值可纳入下一轮 audit scope。复核后确认该路径已在 `src/ai_trading_system/backtest` scope 内，真实缺口是初版 audit 未扫描函数默认参数；本轮已判定 PIT coverage readiness 默认阈值归属 `backtest_validation_policy.pit_coverage`，gate/event attribution 左尾阈值归属 `backtest_validation_policy.gate_attribution`，不再用 baseline 掩盖。
 
 ## 状态记录
 
@@ -118,3 +118,14 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 - 2026-06-07：从 VALIDATING 改回 IN_PROGRESS，原因：继续推进 P2 自动审计工具和已配置阈值 rationale；本轮只新增 governance/reporting 层，不改变 production 评分、仓位、回测或日报结论。
 - 2026-06-07：从 IN_PROGRESS 改回 VALIDATING，原因：已实现 `aits docs heuristic-audit`、默认 governance config、baseline/rationale、policy metadata 校验、CLI/direct dispatcher、系统流图和产物目录更新；同时移除两个真实硬编码解释边界（decision outcome score bucket、lag sensitivity min days）。验证通过 focused pytest 44 passed、`heuristic-audit --fail-on-warning` PASS、ruff、docs freshness 和 documentation contract。
 - 2026-06-07：记录并发复核 follow-up：后续可增强逐阈值 rationale map，并评估是否把 `backtest/pit_coverage.py` 纳入 heuristic audit scope；本轮不临时扩 scope 或补白名单，避免未做归属判断就隐藏新的 policy 设计问题。
+- 2026-06-07：重新进入 IN_PROGRESS。复核确认 `backtest/pit_coverage.py` 已在
+  `src/ai_trading_system/backtest` 审计 scope 内，但初版 heuristic audit 只扫描比较表达式，
+  漏掉函数默认参数中的解释性阈值，例如 PIT coverage 的 `min_forward_days=60` 和
+  `max_staleness_days=3`。本轮目标是扩展审计到 numeric default arguments，并把 PIT coverage
+  默认阈值和 gate/event attribution 左尾阈值迁入 `config/backtest_validation_policy.yaml`，
+  避免用 baseline 掩盖应归属 policy 的阈值。
+- 2026-06-07：从 IN_PROGRESS 改回 VALIDATING，原因：heuristic audit 已扫描函数默认参数；
+  PIT coverage readiness 默认阈值、gate/event attribution 左尾阈值和默认执行成本均读取
+  `config/backtest_validation_policy.yaml`；验证通过 focused pytest 49 passed、
+  `heuristic-audit --fail-on-warning` PASS、Ruff、Black、compileall、docs freshness、
+  documentation contract 和 `git diff --check`。

@@ -30,6 +30,24 @@ def test_heuristic_governance_flags_unregistered_numeric_literal(tmp_path: Path)
     assert finding["numeric_literals"] == ["42"]
 
 
+def test_heuristic_governance_flags_unregistered_numeric_default(tmp_path: Path) -> None:
+    _write_source(tmp_path, "def label(score=42):\n    return score\n")
+    config_path = _write_governance_config(tmp_path)
+
+    payload = build_heuristic_governance_payload(
+        as_of=date(2026, 6, 7),
+        config_path=config_path,
+        project_root=tmp_path,
+    )
+
+    assert payload["status"] == "FAIL"
+    assert payload["summary"]["unregistered_numeric_literal_count"] == 1
+    finding = payload["unregistered_numeric_literal_findings"][0]
+    assert finding["path"] == "src/sample.py"
+    assert finding["expression"] == "label default score=42"
+    assert finding["numeric_literals"] == ["42"]
+
+
 def test_heuristic_governance_registered_baseline_passes(tmp_path: Path) -> None:
     _write_source(
         tmp_path,
@@ -43,10 +61,10 @@ def test_heuristic_governance_registered_baseline_passes(tmp_path: Path) -> None
         baseline=(
             "  - path: src/sample.py\n"
             "    line_hint: 2\n"
-            "    expression: \"score >= 42\"\n"
+            '    expression: "score >= 42"\n'
             "    category: test_policy_threshold\n"
-            "    rationale: \"测试用 baseline。\"\n"
-            "    validation: \"tests/test_heuristic_governance.py\"\n"
+            '    rationale: "测试用 baseline。"\n'
+            '    validation: "tests/test_heuristic_governance.py"\n'
         ),
     )
 
@@ -144,8 +162,8 @@ def _write_governance_config(
                 "  version: test_heuristic_governance_v1",
                 "  status: pilot",
                 "  owner: system",
-                "  rationale: \"测试用 heuristic governance policy。\"",
-                "  validation: \"tests/test_heuristic_governance.py\"",
+                '  rationale: "测试用 heuristic governance policy。"',
+                '  validation: "tests/test_heuristic_governance.py"',
                 "  review_after_reports: 1",
                 "audit_scope:",
                 "  source_paths:",

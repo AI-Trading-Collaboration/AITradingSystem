@@ -10,9 +10,7 @@ from typing import Any
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-DEFAULT_HEURISTIC_GOVERNANCE_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "heuristic_governance.yaml"
-)
+DEFAULT_HEURISTIC_GOVERNANCE_CONFIG_PATH = PROJECT_ROOT / "config" / "heuristic_governance.yaml"
 REPORT_TYPE = "heuristic_governance_audit"
 TASK_ID = "GOV-004"
 PRODUCTION_EFFECT = "none"
@@ -83,15 +81,12 @@ def build_heuristic_governance_payload(
 
     found_keys = {finding.key for finding in findings}
     numeric_payloads = [
-        _numeric_finding_payload(finding, baseline_by_key.get(finding.key))
-        for finding in findings
+        _numeric_finding_payload(finding, baseline_by_key.get(finding.key)) for finding in findings
     ]
     unregistered_numeric = [
         item for item in numeric_payloads if item["registration_status"] == "UNREGISTERED"
     ]
-    stale_baseline = [
-        entry for entry in baseline_entries if str(entry["key"]) not in found_keys
-    ]
+    stale_baseline = [entry for entry in baseline_entries if str(entry["key"]) not in found_keys]
     policy_checks = _policy_metadata_checks(config, project_root)
     failed_policy_checks = [check for check in policy_checks if check["status"] == "FAIL"]
 
@@ -115,8 +110,7 @@ def build_heuristic_governance_payload(
         "summary": {
             "source_path_count": len(source_paths),
             "numeric_literal_finding_count": len(numeric_payloads),
-            "registered_numeric_literal_count": len(numeric_payloads)
-            - len(unregistered_numeric),
+            "registered_numeric_literal_count": len(numeric_payloads) - len(unregistered_numeric),
             "unregistered_numeric_literal_count": len(unregistered_numeric),
             "baseline_entry_count": len(baseline_entries),
             "stale_baseline_entry_count": len(stale_baseline),
@@ -165,7 +159,7 @@ def render_heuristic_governance_markdown(payload: dict[str, Any]) -> str:
         "|指标|数量|",
         "|---|---:|",
         f"|扫描路径|{summary['source_path_count']}|",
-        f"|数字比较命中|{summary['numeric_literal_finding_count']}|",
+        f"|numeric literal 命中|{summary['numeric_literal_finding_count']}|",
         f"|已登记命中|{summary['registered_numeric_literal_count']}|",
         f"|未登记命中|{summary['unregistered_numeric_literal_count']}|",
         f"|baseline 条目|{summary['baseline_entry_count']}|",
@@ -176,7 +170,7 @@ def render_heuristic_governance_markdown(payload: dict[str, Any]) -> str:
         f"|错误|{summary['error_count']}|",
         f"|警告|{summary['warning_count']}|",
         "",
-        "## 未登记数字比较",
+        "## 未登记 Numeric Literal",
         "",
     ]
     unregistered = payload["unregistered_numeric_literal_findings"]
@@ -215,14 +209,14 @@ def render_heuristic_governance_markdown(payload: dict[str, Any]) -> str:
         for item in stale:
             lines.append(f"|`{item['path']}`|`{item['expression']}`|{item['category']}|")
 
-    lines.extend(["", "## 已登记数字比较", ""])
+    lines.extend(["", "## 已登记 Numeric Literal", ""])
     registered = [
         item
         for item in payload["numeric_literal_findings"]
         if item["registration_status"] == "REGISTERED"
     ]
     if not registered:
-        lines.append("未发现已登记数字比较。")
+        lines.append("未发现已登记 numeric literal。")
     else:
         lines.extend(["|文件|行|表达式|类别|rationale|", "|---|---:|---|---|---|"])
         for item in registered:
@@ -262,6 +256,14 @@ class _NumericCompareVisitor(ast.NodeVisitor):
         self._allowed_numeric_literals = allowed_numeric_literals
         self.findings: list[NumericLiteralFinding] = []
 
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._scan_function_defaults(node)
+        self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._scan_function_defaults(node)
+        self.generic_visit(node)
+
     def visit_Compare(self, node: ast.Compare) -> None:
         if any(isinstance(operator, _COMPARE_OPS) for operator in node.ops):
             numeric_literals = _non_allowed_numeric_literals(
@@ -282,6 +284,41 @@ class _NumericCompareVisitor(ast.NodeVisitor):
                     )
                 )
         self.generic_visit(node)
+
+    def _scan_function_defaults(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+    ) -> None:
+        args = [*node.args.posonlyargs, *node.args.args]
+        defaults = [None] * (len(args) - len(node.args.defaults)) + list(node.args.defaults)
+        default_pairs = [
+            (arg.arg, default)
+            for arg, default in zip(args, defaults, strict=True)
+            if default is not None
+        ]
+        default_pairs.extend(
+            (arg.arg, default)
+            for arg, default in zip(node.args.kwonlyargs, node.args.kw_defaults, strict=True)
+            if default is not None
+        )
+        for arg_name, default in default_pairs:
+            numeric_literals = _non_allowed_numeric_literals(
+                default,
+                self._text,
+                self._allowed_numeric_literals,
+            )
+            if not numeric_literals:
+                continue
+            literal = ast.get_source_segment(self._text, default) or ast.unparse(default)
+            expression = _normalize_expression(f"{node.name} default {arg_name}={literal}")
+            self.findings.append(
+                NumericLiteralFinding(
+                    path=self._relative_path,
+                    line=default.lineno,
+                    expression=expression,
+                    numeric_literals=tuple(numeric_literals),
+                )
+            )
 
 
 def _non_allowed_numeric_literals(
@@ -360,9 +397,7 @@ def _source_files(source_paths: list[Path]) -> list[Path]:
                 files.append(source_path)
             continue
         files.extend(
-            path
-            for path in sorted(source_path.rglob("*.py"))
-            if "__pycache__" not in path.parts
+            path for path in sorted(source_path.rglob("*.py")) if "__pycache__" not in path.parts
         )
     return sorted(set(files))
 

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from math import prod, sqrt
 from statistics import mean, pstdev
 
+TRADING_DAYS_PER_YEAR = 252
+
 
 @dataclass(frozen=True)
 class BacktestMetrics:
@@ -30,7 +32,11 @@ def calculate_max_drawdown(equity_curve: list[float]) -> float:
     return max_drawdown
 
 
-def calculate_cagr(total_return: float, periods: int, periods_per_year: int = 252) -> float:
+def calculate_cagr(
+    total_return: float,
+    periods: int,
+    periods_per_year: int = TRADING_DAYS_PER_YEAR,
+) -> float:
     if periods <= 0:
         raise ValueError("periods must be positive")
     years = periods / periods_per_year
@@ -40,7 +46,7 @@ def calculate_cagr(total_return: float, periods: int, periods_per_year: int = 25
 def calculate_sharpe(
     daily_returns: list[float],
     risk_free_rate: float = 0.0,
-    periods_per_year: int = 252,
+    periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> float | None:
     if len(daily_returns) < 2:
         return None
@@ -56,7 +62,7 @@ def calculate_sharpe(
 def calculate_sortino(
     daily_returns: list[float],
     risk_free_rate: float = 0.0,
-    periods_per_year: int = 252,
+    periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> float | None:
     if len(daily_returns) < 2:
         return None
@@ -80,7 +86,7 @@ def summarize_long_only_backtest(
     strategy_returns: list[float],
     exposures: list[float],
     turnovers: list[float],
-    periods_per_year: int = 252,
+    periods_per_year: int = TRADING_DAYS_PER_YEAR,
 ) -> BacktestMetrics:
     if not strategy_returns:
         raise ValueError("strategy_returns must not be empty")

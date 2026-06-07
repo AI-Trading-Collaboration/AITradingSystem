@@ -2,8 +2,8 @@ policy_metadata:
   version: heuristic_governance_v1
   status: pilot
   owner: system
-  rationale: "把投资解释路径中的 numeric literal 审计从人工 rg 固化为只读治理门禁；初版登记现有低风险或已治理例外，新增未登记数字比较必须解释或迁移到 policy config。"
-  validation: "由 tests/test_heuristic_governance.py 覆盖未登记数字比较、baseline 登记、policy metadata 缺失和默认仓库审计；CLI 由 tests/test_cli_direct.py 覆盖 direct dispatcher。"
+  rationale: "把投资解释路径中的 numeric literal 审计从人工 rg 固化为只读治理门禁；初版登记现有低风险或已治理例外，新增未登记数字比较或函数默认参数必须解释或迁移到 policy config。"
+  validation: "由 tests/test_heuristic_governance.py 覆盖未登记数字比较、函数默认参数、baseline 登记、policy metadata 缺失和默认仓库审计；CLI 由 tests/test_cli_direct.py 覆盖 direct dispatcher。"
   review_after_reports: 8
 
 audit_scope:

@@ -254,9 +254,9 @@ def backtest(
         typer.Option(help="rule card registry YAML 路径，用于记录本次回测规则版本。"),
     ] = DEFAULT_RULE_CARDS_PATH,
     cost_bps: Annotated[
-        float,
-        typer.Option(help="单边交易成本，单位 bps。"),
-    ] = 5.0,
+        float | None,
+        typer.Option(help="单边交易成本，单位 bps；默认读取 backtest validation policy。"),
+    ] = None,
     spread_bps: Annotated[
         float,
         typer.Option(help="Bid-ask spread 假设，单位 bps；默认不额外扣除。"),
@@ -528,6 +528,11 @@ def backtest(
     calibration_overlays = load_calibration_overlays()
     backtest_validation_policy = load_backtest_validation_policy()
     robustness_policy = backtest_validation_policy.robustness
+    cost_bps = (
+        cost_bps
+        if cost_bps is not None
+        else backtest_validation_policy.execution_costs.default_cost_bps
+    )
     portfolio = load_portfolio()
     market_regimes = load_market_regimes(regimes_path)
     selected_regime_id = regime or market_regimes.default_backtest_regime
@@ -1520,9 +1525,11 @@ def backtest_gate_attribution(
         typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
     left_tail_threshold: Annotated[
-        float,
-        typer.Option(help="左尾收益阈值，例如 -0.03 表示 -3%。"),
-    ] = -0.03,
+        float | None,
+        typer.Option(
+            help="左尾收益阈值，例如 -0.03 表示 -3%；默认读取 backtest_validation_policy。"
+        ),
+    ] = None,
 ) -> None:
     """基于已生成回测 CSV 输出 gate 与事件效果归因报告。"""
     report_date = _parse_date(as_of) if as_of else date.today()
@@ -1755,13 +1762,18 @@ def backtest_pit_coverage(
         typer.Option(help="Markdown forward-only PIT 覆盖报告输出路径。"),
     ] = None,
     min_forward_days: Annotated[
-        int,
-        typer.Option(help="升级为 B 级 forward-only 样本所需的最小覆盖日期数。"),
-    ] = 60,
+        int | None,
+        typer.Option(
+            help=(
+                "升级为 B 级 forward-only 样本所需的最小覆盖日期数；"
+                "默认读取 backtest validation policy。"
+            )
+        ),
+    ] = None,
     max_staleness_days: Annotated[
-        int,
-        typer.Option(help="最新快照最大允许日龄，超出后保持 C 级或警告。"),
-    ] = 3,
+        int | None,
+        typer.Option(help="最新快照最大允许日龄；默认读取 backtest validation policy。"),
+    ] = None,
 ) -> None:
     """评估 forward-only PIT 快照积累进度和回测输入等级升级日期。"""
     coverage_date = _parse_date(as_of) if as_of else date.today()
@@ -1769,9 +1781,16 @@ def backtest_pit_coverage(
         PROJECT_ROOT / "outputs" / "backtests",
         coverage_date,
     )
-    if min_forward_days <= 0:
+    policy = load_backtest_validation_policy().pit_coverage
+    resolved_min_forward_days = (
+        min_forward_days if min_forward_days is not None else policy.min_forward_days
+    )
+    resolved_max_staleness_days = (
+        max_staleness_days if max_staleness_days is not None else policy.max_staleness_days
+    )
+    if resolved_min_forward_days <= 0:
         raise typer.BadParameter("B 级最小覆盖日期数必须为正数。")
-    if max_staleness_days < 0:
+    if resolved_max_staleness_days < 0:
         raise typer.BadParameter("最新快照最大允许日龄不能为负数。")
 
     validation_report = validate_pit_snapshot_manifest(
@@ -1781,8 +1800,8 @@ def backtest_pit_coverage(
     )
     report = build_backtest_pit_coverage_report(
         validation_report,
-        min_forward_days=min_forward_days,
-        max_staleness_days=max_staleness_days,
+        min_forward_days=resolved_min_forward_days,
+        max_staleness_days=resolved_max_staleness_days,
     )
     report_output = write_backtest_pit_coverage_report(report, coverage_output)
 

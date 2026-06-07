@@ -9,6 +9,16 @@ policy_metadata:
 data_credibility:
   component_coverage_min: 0.90
 
+execution_costs:
+  default_cost_bps: 5.0
+
+pit_coverage:
+  min_forward_days: 60
+  max_staleness_days: 3
+
+gate_attribution:
+  left_tail_threshold: -0.03
+
 robustness:
   default_shifted_start_days: 20
   default_cost_stress_increment_bps: 5.0

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
+from ai_trading_system.config import load_backtest_validation_policy
 from ai_trading_system.pit_snapshots import (
     PitSnapshotManifestRecord,
     PitSnapshotValidationReport,
@@ -78,9 +79,14 @@ def default_backtest_pit_coverage_report_path(output_dir: Path, as_of: date) -> 
 def build_backtest_pit_coverage_report(
     validation_report: PitSnapshotValidationReport,
     *,
-    min_forward_days: int = 60,
-    max_staleness_days: int = 3,
+    min_forward_days: int | None = None,
+    max_staleness_days: int | None = None,
 ) -> BacktestPitCoverageReport:
+    policy = load_backtest_validation_policy().pit_coverage
+    if min_forward_days is None:
+        min_forward_days = policy.min_forward_days
+    if max_staleness_days is None:
+        max_staleness_days = policy.max_staleness_days
     if min_forward_days <= 0:
         raise ValueError("min_forward_days must be positive")
     if max_staleness_days < 0:

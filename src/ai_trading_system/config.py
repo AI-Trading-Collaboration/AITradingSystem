@@ -1041,6 +1041,19 @@ class BacktestDataCredibilityPolicyConfig(BaseModel):
     component_coverage_min: float = Field(default=0.90, ge=0, le=1)
 
 
+class BacktestExecutionCostPolicyConfig(BaseModel):
+    default_cost_bps: float = Field(default=5.0, ge=0)
+
+
+class BacktestPitCoveragePolicyConfig(BaseModel):
+    min_forward_days: int = Field(default=60, gt=0)
+    max_staleness_days: int = Field(default=3, ge=0)
+
+
+class BacktestGateAttributionPolicyConfig(BaseModel):
+    left_tail_threshold: float = Field(default=-0.03, ge=-1, le=0)
+
+
 class BacktestPromotionPolicyConfig(BaseModel):
     blocking_data_credibility_grades: list[str] = Field(
         default_factory=lambda: ["C"],
@@ -1078,6 +1091,15 @@ class BacktestValidationPolicyConfig(BaseModel):
     )
     data_credibility: BacktestDataCredibilityPolicyConfig = Field(
         default_factory=BacktestDataCredibilityPolicyConfig
+    )
+    execution_costs: BacktestExecutionCostPolicyConfig = Field(
+        default_factory=BacktestExecutionCostPolicyConfig
+    )
+    pit_coverage: BacktestPitCoveragePolicyConfig = Field(
+        default_factory=BacktestPitCoveragePolicyConfig
+    )
+    gate_attribution: BacktestGateAttributionPolicyConfig = Field(
+        default_factory=BacktestGateAttributionPolicyConfig
     )
     robustness: BacktestRobustnessPolicyConfig = Field(
         default_factory=BacktestRobustnessPolicyConfig

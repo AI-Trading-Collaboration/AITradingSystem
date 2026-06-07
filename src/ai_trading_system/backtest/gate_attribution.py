@@ -8,6 +8,8 @@ from typing import Literal
 
 import pandas as pd
 
+from ai_trading_system.config import load_backtest_validation_policy
+
 GateAttributionSeverity = Literal["ERROR", "WARNING"]
 
 GATE_TRIGGER_SUFFIX = "_gate_triggered"
@@ -89,10 +91,12 @@ def build_gate_event_attribution_report(
     backtest_daily_path: Path | str,
     input_coverage_path: Path | str | None = None,
     as_of: date,
-    left_tail_threshold: float = -0.03,
+    left_tail_threshold: float | None = None,
 ) -> GateEventAttributionReport:
     daily_path = Path(backtest_daily_path)
     coverage_path = Path(input_coverage_path) if input_coverage_path else None
+    if left_tail_threshold is None:
+        left_tail_threshold = load_backtest_validation_policy().gate_attribution.left_tail_threshold
     issues: list[GateAttributionIssue] = []
     daily = _read_csv(daily_path, issues, "backtest_daily")
     if daily is None:

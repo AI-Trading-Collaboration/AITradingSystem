@@ -50,6 +50,7 @@ def test_gate_event_attribution_handles_missing_event_coverage(tmp_path: Path) -
     codes = {issue.code for issue in report.issues}
 
     assert report.passed
+    assert report.left_tail_threshold == pytest.approx(-0.03)
     assert report.event_summary.label_availability == "coverage_missing"
     assert "event_label_metrics_limited" in codes
 
@@ -77,7 +78,9 @@ def test_backtest_gate_attribution_cli_writes_report(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert "Gate/event 归因状态：PASS_WITH_LIMITATIONS" in result.output
     assert output_path.exists()
-    assert "`risk_events`" in output_path.read_text(encoding="utf-8")
+    report_text = output_path.read_text(encoding="utf-8")
+    assert "- 左尾阈值：-3.0%" in report_text
+    assert "`risk_events`" in report_text
 
 
 def _write_backtest_daily(tmp_path: Path) -> Path:

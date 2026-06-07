@@ -173,6 +173,10 @@ def test_backtest_validation_policy_loads_governed_thresholds() -> None:
 
     assert config.policy_metadata.version == "backtest_validation_policy_v1"
     assert config.data_credibility.component_coverage_min == 0.90
+    assert config.execution_costs.default_cost_bps == 5.0
+    assert config.pit_coverage.min_forward_days == 60
+    assert config.pit_coverage.max_staleness_days == 3
+    assert config.gate_attribution.left_tail_threshold == -0.03
     assert config.robustness.default_weight_perturbation_pct == 0.20
     assert config.robustness.default_oos_split_ratio == 0.70
     assert config.robustness.full_exposure_time_in_market_min == 0.95
