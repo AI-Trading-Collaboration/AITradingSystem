@@ -76,11 +76,7 @@ DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH = (
     / "parameter_sweep_profiles.yaml"
 )
 DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH = (
-    PROJECT_ROOT
-    / "config"
-    / "etf_portfolio"
-    / "dynamic_v3_rescue"
-    / "parameter_governance_v1.yaml"
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "parameter_governance_v1.yaml"
 )
 DEFAULT_DYNAMIC_V3_RESEARCH_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
 DEFAULT_SWEEP_OUTPUT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sweeps"
@@ -601,9 +597,7 @@ def build_sweep_config_validation(
         "status": status,
         "config_path": str(config_path),
         "governance_path": str(governance_path),
-        "search_space_version": (
-            "" if governance is None else governance.search_space_version
-        ),
+        "search_space_version": ("" if governance is None else governance.search_space_version),
         "candidate_preview_count": len(candidates),
         "evaluator_mode": (
             EVALUATOR_TINY_FIXTURE_PROXY if config is None else config.execution.evaluator
@@ -637,9 +631,7 @@ def preview_sweep_candidates(
         "preview_count": min(limit, len(candidates)),
         "evaluator_mode": config.execution.evaluator,
         "evaluator_version": _evaluator_version(config.execution.evaluator),
-        "not_for_investment_decision": (
-            config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
-        ),
+        "not_for_investment_decision": (config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY),
         "candidates": candidates[:limit],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
@@ -1110,8 +1102,7 @@ def validate_data_audit_artifact(
         "data_audit_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name) for name in required
     ]
     manifest = _read_optional_json(audit_dir / "data_audit_manifest.json") or {}
     checks.append(
@@ -1297,9 +1288,7 @@ def run_window_audit(
         requested_start=as_of,
         requested_end=end,
     )
-    mismatch = [
-        row for row in records if _texts(row.get("window_mismatch_reasons"))
-    ]
+    mismatch = [row for row in records if _texts(row.get("window_mismatch_reasons"))]
     insufficient = [
         row
         for row in records
@@ -1376,9 +1365,7 @@ def window_audit_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
 ) -> dict[str, Any]:
-    resolved_id = audit_id or (
-        _latest_pointer_artifact_id("latest_window_audit") if latest else ""
-    )
+    resolved_id = audit_id or (_latest_pointer_artifact_id("latest_window_audit") if latest else "")
     if not resolved_id:
         raise DynamicV3ParameterResearchError("--audit-id or --latest is required")
     audit_dir = output_dir / resolved_id
@@ -1435,8 +1422,7 @@ def validate_window_audit_artifact(
         "window_audit_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name) for name in required
     ]
     rows = (
         _read_jsonl(audit_dir / "artifact_window_inventory.jsonl")
@@ -1588,9 +1574,7 @@ def run_injection_audit(
         "weight_path_diff_summary": weight_summary,
         "metric_diff_summary": metric_summary,
         "not_consumed_parameters": [
-            row["parameter"]
-            for row in parameter_effects
-            if row["effect_status"] == "NOT_CONSUMED"
+            row["parameter"] for row in parameter_effects if row["effect_status"] == "NOT_CONSUMED"
         ],
         "no_observed_effect_parameters": [
             row["parameter"]
@@ -1661,8 +1645,7 @@ def validate_injection_audit_artifact(
         "parameter_effect_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name) for name in required
     ]
     manifest = _read_optional_json(audit_dir / "injection_audit_manifest.json") or {}
     weight_summary = _read_optional_json(audit_dir / "weight_path_diff_summary.json") or {}
@@ -2191,9 +2174,7 @@ def run_candidate_attribution(
     real_path = Path(real_path_raw) if real_path_raw else None
     real_payload = _read_optional_json(real_path) if real_path is not None else None
     weight_metadata_path = (
-        real_path.parent / "weight_path_metadata.json"
-        if real_path is not None
-        else None
+        real_path.parent / "weight_path_metadata.json" if real_path is not None else None
     )
     weight_metadata = (
         _read_optional_json(weight_metadata_path) if weight_metadata_path is not None else None
@@ -2233,9 +2214,9 @@ def run_candidate_attribution(
         "completed_at": datetime.now(UTC).isoformat(),
         "incomplete_reasons": incomplete_reasons,
         "real_evaluation_artifact_path": "" if real_path is None else str(real_path),
-        "weight_path_metadata_path": ""
-        if weight_metadata_path is None
-        else str(weight_metadata_path),
+        "weight_path_metadata_path": (
+            "" if weight_metadata_path is None else str(weight_metadata_path)
+        ),
         "attribution_completeness": attribution_completeness,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
     }
@@ -2510,8 +2491,7 @@ def run_walk_forward_selection(
     sweep_dir = sweep_output_dir / resolved_sweep_id
     config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
     source_results = [
-        row for row in _read_candidate_results(sweep_dir)
-        if row.get("gate") != GATE_REJECT
+        row for row in _read_candidate_results(sweep_dir) if row.get("gate") != GATE_REJECT
     ]
     windows = walk_forward_windows(config)
     wf_selection_id = _stable_id(
@@ -2652,8 +2632,7 @@ def validate_walk_forward_selection_artifact(
         "wf_selection_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (wf_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (wf_dir / name).exists(), name) for name in required
     ]
     manifest = _read_optional_json(wf_dir / "wf_selection_manifest.json") or {}
     checks.append(
@@ -2738,21 +2717,56 @@ def run_robustness_diagnostics(
     generated = generated_at or datetime.now(UTC)
     sweep_dir = sweep_output_dir / sweep_id
     config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
-    result = _candidate_result(sweep_dir, candidate_id)
+    results = _read_candidate_results(sweep_dir)
+    result = _candidate_result_from_rows(results, candidate_id)
     if result is None:
         raise DynamicV3ParameterResearchError(f"candidate not found: {candidate_id}")
     robustness_id = _stable_id("robustness", sweep_id, candidate_id, generated.isoformat())
     robustness_dir = _unique_dir(output_dir / robustness_id)
     robustness_dir.mkdir(parents=True, exist_ok=False)
-    sensitivity = _sensitivity_rows(result, config)
-    stress = _stress_bucket_results(result, config)
-    regime = _regime_bucket_results(result)
-    overfit = _overfit_diagnostics(sensitivity, stress, config)
+    evaluator = _robustness_evaluator_mode(result, config)
+    source_evidence, real_payload = _robustness_source_evidence(result, evaluator)
+    if evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        sensitivity = _real_sensitivity_rows(result, results, config)
+        stress = _real_stress_bucket_results(result, config, real_payload)
+        regime = _real_regime_bucket_results(real_payload)
+    else:
+        sensitivity = _sensitivity_rows(result, config)
+        stress = _stress_bucket_results(result, config)
+        regime = _regime_bucket_results(result)
+    overfit = _overfit_diagnostics(
+        sensitivity,
+        stress,
+        config,
+        evaluator_mode=evaluator,
+        source_evidence=source_evidence,
+        regime=regime,
+    )
     manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_robustness_manifest",
         "robustness_id": robustness_id,
         "source_sweep_id": sweep_id,
         "candidate_id": candidate_id,
         "status": overfit["robustness_status"],
+        "evaluator_mode": evaluator,
+        "evaluator_version": source_evidence["evaluator_version"],
+        "metrics_source": source_evidence["metrics_source"],
+        "not_for_investment_decision": source_evidence["not_for_investment_decision"],
+        "data_quality": source_evidence["data_quality"],
+        "real_evaluation_artifact_path": source_evidence["real_evaluation_artifact_path"],
+        "source_real_evaluation_artifact_path": source_evidence[
+            "source_real_evaluation_artifact_path"
+        ],
+        "source_real_evaluation_artifact_exists": source_evidence[
+            "source_real_evaluation_artifact_exists"
+        ],
+        "source_real_evaluation_report_id": source_evidence["source_real_evaluation_report_id"],
+        "sensitivity_evidence_status": overfit["sensitivity_evidence_status"],
+        "real_neighbor_count": overfit["real_neighbor_count"],
+        "missing_real_neighbor_count": overfit["missing_real_neighbor_count"],
+        "stress_evidence_status": overfit["stress_evidence_status"],
+        "regime_evidence_status": overfit["regime_evidence_status"],
         "started_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -2764,9 +2778,27 @@ def run_robustness_diagnostics(
         "source_sweep_id": sweep_id,
         "candidate_id": candidate_id,
         "status": overfit["robustness_status"],
+        "evaluator_mode": evaluator,
+        "evaluator_version": source_evidence["evaluator_version"],
+        "metrics_source": source_evidence["metrics_source"],
+        "not_for_investment_decision": source_evidence["not_for_investment_decision"],
+        "data_quality": source_evidence["data_quality"],
+        "real_evaluation_artifact_path": source_evidence["real_evaluation_artifact_path"],
+        "source_real_evaluation_artifact_path": source_evidence[
+            "source_real_evaluation_artifact_path"
+        ],
+        "source_real_evaluation_artifact_exists": source_evidence[
+            "source_real_evaluation_artifact_exists"
+        ],
+        "source_real_evaluation_report_id": source_evidence["source_real_evaluation_report_id"],
         "overfit_status": overfit["overfit_status"],
         "parameter_sensitivity_status": overfit["parameter_sensitivity_status"],
+        "sensitivity_evidence_status": overfit["sensitivity_evidence_status"],
+        "real_neighbor_count": overfit["real_neighbor_count"],
+        "missing_real_neighbor_count": overfit["missing_real_neighbor_count"],
         "stress_bucket_status": overfit["stress_bucket_status"],
+        "stress_evidence_status": overfit["stress_evidence_status"],
+        "regime_evidence_status": overfit["regime_evidence_status"],
         "multiple_testing_warning": overfit["multiple_testing_warning"],
         "optional_pbo_dsr_status": "NOT_RUN_REVIEW_NOTE",
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -2900,15 +2932,13 @@ def validate_overfit_artifact(
         "overfit_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (overfit_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (overfit_dir / name).exists(), name) for name in required
     ]
     manifest = _read_optional_json(overfit_dir / "overfit_manifest.json") or {}
     checks.append(
         _check(
             "overfit_status_allowed",
-            _text(manifest.get("overfit_status"))
-            in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
+            _text(manifest.get("overfit_status")) in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
             _text(manifest.get("overfit_status")),
         )
     )
@@ -2943,12 +2973,83 @@ def validate_robustness_artifact(
         _check(f"artifact_exists:{name}", (robustness_dir / name).exists(), name)
         for name in required
     ]
+    manifest = _read_optional_json(robustness_dir / "robustness_manifest.json") or {}
+    diagnostics = _read_optional_json(robustness_dir / "overfit_diagnostics.json") or {}
+    evaluator = _text(manifest.get("evaluator_mode"), EVALUATOR_TINY_FIXTURE_PROXY)
+    checks.append(
+        _check(
+            "robustness_status_allowed",
+            _text(manifest.get("status")) in {"PASS", "REVIEW_REQUIRED", "FAIL"},
+            _text(manifest.get("status")),
+        )
+    )
+    checks.append(
+        _check(
+            "evaluator_mode_valid",
+            evaluator in EVALUATOR_VERSIONS,
+            evaluator,
+        )
+    )
+    checks.append(
+        _check(
+            "metrics_source_recorded",
+            bool(_text(manifest.get("metrics_source"))),
+            _text(manifest.get("metrics_source")),
+        )
+    )
+    if evaluator == EVALUATOR_TINY_FIXTURE_PROXY:
+        checks.append(
+            _check(
+                "tiny_fixture_not_for_investment_decision",
+                manifest.get("not_for_investment_decision") is True,
+                "tiny robustness artifact remains fixture-only",
+            )
+        )
+    if evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        artifact_path = _text(manifest.get("source_real_evaluation_artifact_path"))
+        missing_neighbors = int(_float(manifest.get("missing_real_neighbor_count")))
+        checks.append(
+            _check(
+                "real_evaluation_artifact_path_exists",
+                bool(artifact_path) and Path(artifact_path).exists(),
+                artifact_path,
+            )
+        )
+        checks.append(
+            _check(
+                "real_metrics_from_real_artifact",
+                manifest.get("metrics_source") == "real_evaluation_artifact",
+                _text(manifest.get("metrics_source")),
+            )
+        )
+        checks.append(
+            _check(
+                "real_evaluator_not_fixture_only",
+                manifest.get("not_for_investment_decision") is False,
+                "real evaluator robustness is not marked fixture-only",
+            )
+        )
+        checks.append(
+            _check(
+                "missing_real_neighbors_fail_closed",
+                missing_neighbors == 0 or manifest.get("status") != "PASS",
+                f"missing_real_neighbor_count={missing_neighbors}; status={manifest.get('status')}",
+            )
+        )
+        checks.append(
+            _check(
+                "real_sensitivity_not_fixture_proxy",
+                diagnostics.get("sensitivity_evidence_status") != "TINY_FIXTURE_PROXY",
+                _text(diagnostics.get("sensitivity_evidence_status")),
+            )
+        )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_robustness_validation",
         "robustness_id": robustness_id,
         "status": status,
+        "evaluator_mode": evaluator,
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -3220,8 +3321,7 @@ def validate_shadow_monitor_artifact(
         "reader_brief_section.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (monitor_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (monitor_dir / name).exists(), name) for name in required
     ]
     manifest = _read_optional_json(monitor_dir / "shadow_monitor_manifest.json") or {}
     checks.append(
@@ -3552,7 +3652,8 @@ def research_query_payload(
     output_dir: Path = DEFAULT_RESEARCH_INDEX_DIR,
 ) -> dict[str, Any]:
     rows = [
-        row for row in _read_jsonl(output_dir / "candidates_index.jsonl")
+        row
+        for row in _read_jsonl(output_dir / "candidates_index.jsonl")
         if row.get("candidate_id") == candidate_id
     ]
     return {
@@ -3655,9 +3756,7 @@ def build_promotion_pack(
         "decision_reasons": reasons,
         "evaluator_mode": evaluator,
         "evaluator_version": _evaluator_version(evaluator),
-        "not_for_investment_decision": (
-            candidate.get("not_for_investment_decision") is True
-        ),
+        "not_for_investment_decision": (candidate.get("not_for_investment_decision") is True),
         "generated_at": generated.isoformat(),
         "manual_review_required": True,
         "production_candidate_generated": False,
@@ -3676,9 +3775,7 @@ def build_promotion_pack(
         "decision_reasons": reasons,
         "evaluator_mode": evaluator,
         "evaluator_version": _evaluator_version(evaluator),
-        "not_for_investment_decision": (
-            candidate.get("not_for_investment_decision") is True
-        ),
+        "not_for_investment_decision": (candidate.get("not_for_investment_decision") is True),
         "metric_delta_table": metric_delta,
         "risk_summary": risk_summary,
         "evidence_summary": _promotion_evidence_summary(evidence),
@@ -3918,9 +4015,18 @@ def render_robustness_report_markdown(payload: Mapping[str, Any]) -> str:
         f"# Dynamic v3 Rescue Robustness Report {payload.get('robustness_id')}\n\n"
         f"- Candidate: {payload.get('candidate_id')}\n"
         f"- Robustness status: {payload.get('status')}\n"
+        f"- Evaluator mode: {payload.get('evaluator_mode')}\n"
+        f"- Metrics source: {payload.get('metrics_source')}\n"
+        "- Source real evaluation artifact: "
+        f"{payload.get('source_real_evaluation_artifact_path')}\n"
         f"- Overfit status: {payload.get('overfit_status')}\n"
         f"- Parameter sensitivity: {payload.get('parameter_sensitivity_status')}\n"
+        f"- Sensitivity evidence: {payload.get('sensitivity_evidence_status')}\n"
+        f"- Real neighbors: {payload.get('real_neighbor_count')}\n"
+        f"- Missing real neighbors: {payload.get('missing_real_neighbor_count')}\n"
         f"- Stress bucket status: {payload.get('stress_bucket_status')}\n"
+        f"- Stress evidence: {payload.get('stress_evidence_status')}\n"
+        f"- Regime evidence: {payload.get('regime_evidence_status')}\n"
         f"- Optional PBO/DSR: {payload.get('optional_pbo_dsr_status')}\n\n"
         "## Safety\n"
         "- production_candidate_generated=false\n"
@@ -4313,9 +4419,7 @@ def _prepare_real_evaluation_context(
         data_quality_status=quality_report.status,
         data_quality_report_path=quality_output,
         prices_path=prices_path,
-        real_evaluation_output_dir=real_evaluation_output_dir
-        or sweep_dir
-        / "real_evaluation",
+        real_evaluation_output_dir=real_evaluation_output_dir or sweep_dir / "real_evaluation",
         data_manifest_hash=data_manifest_hash,
     )
 
@@ -4348,15 +4452,12 @@ def _write_real_candidate_evaluation_artifact(
         data_quality_report=str(real_context.data_quality_report_path),
         prices_path=real_context.prices_path,
     )
-    report_id = (
-        "dynamic-v3-real-evaluation-report_"
-        + _stable_id(
-            "sweep-real",
-            sweep_dir.name,
-            candidate_id,
-            parameters,
-            payload.get("dynamic_v3_real_evaluation_report_id"),
-        )
+    report_id = "dynamic-v3-real-evaluation-report_" + _stable_id(
+        "sweep-real",
+        sweep_dir.name,
+        candidate_id,
+        parameters,
+        payload.get("dynamic_v3_real_evaluation_report_id"),
     )
     payload = {
         **payload,
@@ -4414,8 +4515,7 @@ def _real_policy_for_sweep_candidate(
                 ),
             ),
             "trend_overlay_scale_with_soft_penalty": _clamp01(
-                materialization.trend_overlay_scale_with_soft_penalty
-                * (1.0 - turnover_penalty)
+                materialization.trend_overlay_scale_with_soft_penalty * (1.0 - turnover_penalty)
             ),
             "smoothing_max_single_rebalance_delta": min(
                 1.0,
@@ -4437,9 +4537,7 @@ def _real_policy_for_sweep_candidate(
                 1.0,
                 max(
                     REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
-                    materialization.drawdown_cash_increase_step
-                    * intensity
-                    * guard_multiplier,
+                    materialization.drawdown_cash_increase_step * intensity * guard_multiplier,
                 ),
             ),
             "drawdown_semiconductor_reduction_step": min(
@@ -4482,8 +4580,7 @@ def _real_policy_for_sweep_candidate(
             "policy_metadata": policy.policy_metadata.model_copy(
                 update={
                     "version": (
-                        f"{policy.policy_metadata.version}_sweep_"
-                        f"{_stable_id(parameters)[:8]}"
+                        f"{policy.policy_metadata.version}_sweep_" f"{_stable_id(parameters)[:8]}"
                     ),
                     "status": "pilot_sweep_real_evaluator",
                 }
@@ -4522,8 +4619,7 @@ def _real_rescue_policy_for_sweep_candidate(policy: Any, parameters: Mapping[str
                         1.0,
                         max(
                             REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
-                            policy.smoothing_policy.max_single_rebalance_delta
-                            * smooth_scale,
+                            policy.smoothing_policy.max_single_rebalance_delta * smooth_scale,
                         ),
                     )
                 }
@@ -4572,12 +4668,12 @@ def _metrics_from_real_evaluation_payload(
         "return_delta": round(static_gap_delta, 6),
         "robustness_status": _real_robustness_status(real_decision),
         "overfit_status": _text(best.get("overfit_status"), "REVIEW_REQUIRED"),
-        "parameter_sensitivity_status": "LOW"
-        if _text(best.get("overfit_status")) == "PASS"
-        else "REVIEW_REQUIRED",
-        "stress_bucket_status": "PASS"
-        if _text(best.get("walk_forward_status")) == "PASS"
-        else "MIXED",
+        "parameter_sensitivity_status": (
+            "LOW" if _text(best.get("overfit_status")) == "PASS" else "REVIEW_REQUIRED"
+        ),
+        "stress_bucket_status": (
+            "PASS" if _text(best.get("walk_forward_status")) == "PASS" else "MIXED"
+        ),
         "data_quality": _text(summary.get("data_quality_status"), config.data.quality_status),
         "lookahead_status": "PASS",
         "evaluation_mode": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
@@ -4746,9 +4842,7 @@ def _sweep_manifest(
         "evaluator_mode": config.execution.evaluator,
         "evaluator_version": _evaluator_version(config.execution.evaluator),
         "search_space_version": _search_space_version(),
-        "not_for_investment_decision": (
-            config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
-        ),
+        "not_for_investment_decision": (config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY),
         "data_quality": _candidate_data_quality(
             status=config.data.quality_status,
             report_path=_first_data_quality_report_path(results),
@@ -4797,9 +4891,7 @@ def _data_manifest(
         "evaluation_mode": config.execution.evaluator,
         "evaluator_mode": config.execution.evaluator,
         "evaluator_version": _evaluator_version(config.execution.evaluator),
-        "not_for_investment_decision": (
-            config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
-        ),
+        "not_for_investment_decision": (config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY),
     }
 
 
@@ -4932,11 +5024,7 @@ def _leaderboard_evaluator(results: Sequence[Mapping[str, Any]]) -> str:
 
 def _leaderboard_metrics_source(results: Sequence[Mapping[str, Any]]) -> str:
     sources = sorted(
-        {
-            _text(row.get("metrics_source"))
-            for row in results
-            if _text(row.get("metrics_source"))
-        }
+        {_text(row.get("metrics_source")) for row in results if _text(row.get("metrics_source"))}
     )
     return ",".join(sources) if sources else "UNKNOWN"
 
@@ -4977,9 +5065,16 @@ def _first_candidate_id(rows: Any) -> str:
 
 
 def _candidate_result(sweep_dir: Path, candidate_id: str) -> dict[str, Any] | None:
-    for row in _read_candidate_results(sweep_dir):
+    return _candidate_result_from_rows(_read_candidate_results(sweep_dir), candidate_id)
+
+
+def _candidate_result_from_rows(
+    rows: Sequence[Mapping[str, Any]],
+    candidate_id: str,
+) -> dict[str, Any] | None:
+    for row in rows:
         if row.get("candidate_id") == candidate_id:
-            return row
+            return dict(row)
     return None
 
 
@@ -5139,6 +5234,172 @@ def _sensitivity_rows(
     return rows
 
 
+def _robustness_evaluator_mode(
+    result: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+) -> str:
+    evaluator = _text(result.get("evaluator_mode"), config.execution.evaluator)
+    if evaluator not in EVALUATOR_VERSIONS:
+        raise DynamicV3ParameterResearchError(f"unknown robustness evaluator mode: {evaluator}")
+    return evaluator
+
+
+def _robustness_source_evidence(
+    result: Mapping[str, Any],
+    evaluator_mode: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    real_artifact_path = _text(result.get("real_evaluation_artifact_path"))
+    real_artifact = Path(real_artifact_path) if real_artifact_path else None
+    real_payload = _read_optional_json(real_artifact) or {}
+    real_artifact_exists = bool(
+        real_artifact_path and real_artifact is not None and real_artifact.exists()
+    )
+    metrics = _mapping(result.get("metrics"))
+    data_quality = _mapping(result.get("data_quality"))
+    report_id = _text(
+        metrics.get("real_evaluation_report_id"),
+        _text(real_payload.get("dynamic_v3_real_evaluation_report_id")),
+    )
+    evidence = {
+        "evaluator_mode": evaluator_mode,
+        "evaluator_version": _text(
+            result.get("evaluator_version"),
+            _evaluator_version(evaluator_mode),
+        ),
+        "metrics_source": _text(result.get("metrics_source"), "UNKNOWN"),
+        "not_for_investment_decision": result.get("not_for_investment_decision") is True,
+        "data_quality": data_quality,
+        "real_evaluation_artifact_path": real_artifact_path,
+        "source_real_evaluation_artifact_path": real_artifact_path,
+        "source_real_evaluation_artifact_exists": real_artifact_exists,
+        "source_real_evaluation_report_id": report_id,
+        "source_real_evaluation_status": _text(real_payload.get("status"), "UNKNOWN"),
+    }
+    return evidence, real_payload
+
+
+def _real_sensitivity_rows(
+    result: Mapping[str, Any],
+    results: Sequence[Mapping[str, Any]],
+    config: DynamicV3ParameterSweepConfig,
+) -> list[dict[str, Any]]:
+    base_params = _mapping(result.get("parameters"))
+    base_candidate_id = _text(result.get("candidate_id"))
+    base_score = _float(result.get("score"))
+    rows: list[dict[str, Any]] = []
+    axes = config.parameter_space
+    for key, value in base_params.items():
+        values = axes[key].values if key in axes else [value]
+        if value not in values:
+            continue
+        idx = values.index(value)
+        neighbors = []
+        if idx > 0:
+            neighbors.append(values[idx - 1])
+        if idx < len(values) - 1:
+            neighbors.append(values[idx + 1])
+        for neighbor in neighbors:
+            target_params = dict(base_params)
+            target_params[key] = neighbor
+            neighbor_result = _matching_parameter_result(
+                results,
+                target_params,
+                exclude_candidate_id=base_candidate_id,
+            )
+            status = _real_neighbor_evaluation_status(neighbor_result)
+            metrics = _mapping(neighbor_result.get("metrics")) if neighbor_result else {}
+            neighbor_score = neighbor_result.get("score") if neighbor_result else ""
+            score_delta = (
+                round(_float(neighbor_score) - base_score, 6)
+                if status == "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
+                else ""
+            )
+            rows.append(
+                {
+                    "candidate_id": base_candidate_id,
+                    "parameter": key,
+                    "base_value": value,
+                    "neighbor_value": neighbor,
+                    "neighbor_candidate_id": (
+                        "" if neighbor_result is None else neighbor_result.get("candidate_id", "")
+                    ),
+                    "neighbor_evaluation_status": status,
+                    "sensitivity_evidence_source": "real_evaluation_artifact",
+                    "metrics_source": (
+                        "" if neighbor_result is None else neighbor_result.get("metrics_source", "")
+                    ),
+                    "neighbor_real_evaluation_artifact_path": (
+                        ""
+                        if neighbor_result is None
+                        else neighbor_result.get("real_evaluation_artifact_path", "")
+                    ),
+                    "neighbor_real_evaluation_artifact_exists": (
+                        status == "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
+                    ),
+                    "neighbor_gate": (
+                        "" if neighbor_result is None else neighbor_result.get("gate", "")
+                    ),
+                    "neighbor_reasons": (
+                        ""
+                        if neighbor_result is None
+                        else ";".join(_texts(neighbor_result.get("gate_reasons")))
+                    ),
+                    "neighbor_score": (
+                        neighbor_score if status == "AVAILABLE_REAL_NEIGHBOR_EVALUATION" else ""
+                    ),
+                    "score_delta": score_delta,
+                    "constraint_hit_rate": metrics.get("constraint_hit_rate", ""),
+                    "turnover": metrics.get("turnover", ""),
+                    "drawdown_degradation_pp": metrics.get("drawdown_degradation_pp", ""),
+                }
+            )
+    return rows
+
+
+def _matching_parameter_result(
+    results: Sequence[Mapping[str, Any]],
+    target_params: Mapping[str, Any],
+    *,
+    exclude_candidate_id: str,
+) -> dict[str, Any] | None:
+    canonical_target = _canonical_parameters(target_params)
+    for row in results:
+        if _text(row.get("candidate_id")) == exclude_candidate_id:
+            continue
+        if _canonical_parameters(_mapping(row.get("parameters"))) == canonical_target:
+            return dict(row)
+    return None
+
+
+def _canonical_parameters(parameters: Mapping[str, Any]) -> dict[str, Any]:
+    return {key: _canonical_parameter_value(value) for key, value in parameters.items()}
+
+
+def _canonical_parameter_value(value: Any) -> Any:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return round(float(value), 12)
+    text = _text(value)
+    try:
+        return round(float(text), 12)
+    except ValueError:
+        return text
+
+
+def _real_neighbor_evaluation_status(neighbor_result: Mapping[str, Any] | None) -> str:
+    if neighbor_result is None:
+        return "MISSING_REAL_NEIGHBOR_EVALUATION"
+    if _text(neighbor_result.get("status")) != "completed":
+        return "REAL_NEIGHBOR_NOT_COMPLETED"
+    if _text(neighbor_result.get("metrics_source")) != "real_evaluation_artifact":
+        return "REAL_NEIGHBOR_NOT_REAL_EVALUATION"
+    artifact_path = _text(neighbor_result.get("real_evaluation_artifact_path"))
+    if not artifact_path or not Path(artifact_path).exists():
+        return "MISSING_REAL_NEIGHBOR_ARTIFACT"
+    return "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
+
+
 def _stress_bucket_results(
     result: Mapping[str, Any],
     config: DynamicV3ParameterSweepConfig,
@@ -5165,6 +5426,111 @@ def _stress_bucket_results(
     return {"buckets": rows, "pass_ratio": round(pass_ratio, 6)}
 
 
+def _real_stress_bucket_results(
+    result: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+    real_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = []
+    best = _mapping(real_payload.get("best_candidate"))
+    daily = _mapping(real_payload.get("daily_path_summary"))
+    daily_available = bool(real_payload) and _float(daily.get("row_count")) > 0
+    unavailable_count = 0
+    for bucket in config.robustness.require_stress_buckets:
+        status, source, detail = _real_stress_bucket_status(
+            bucket=bucket,
+            result=result,
+            config=config,
+            real_payload=real_payload,
+            best_candidate=best,
+            daily_available=daily_available,
+        )
+        if status == "REVIEW_REQUIRED":
+            unavailable_count += 1
+        rows.append(
+            {
+                "bucket": bucket,
+                "status": status,
+                "constraint_hit_stability": status,
+                "turnover_stability": status,
+                "drawdown_stability": status,
+                "static_gap_stability": status,
+                "evidence_source": source,
+                "evidence_detail": detail,
+            }
+        )
+    pass_ratio = sum(1 for row in rows if row["status"] == "PASS") / max(1, len(rows))
+    return {
+        "buckets": rows,
+        "pass_ratio": round(pass_ratio, 6),
+        "evidence_source": "real_evaluation_artifact",
+        "evidence_status": ("PASS" if unavailable_count == 0 else "PARTIAL_REAL_STRESS_EVIDENCE"),
+        "missing_real_stress_bucket_count": unavailable_count,
+    }
+
+
+def _real_stress_bucket_status(
+    *,
+    bucket: str,
+    result: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+    real_payload: Mapping[str, Any],
+    best_candidate: Mapping[str, Any],
+    daily_available: bool,
+) -> tuple[str, str, str]:
+    if not real_payload:
+        return (
+            "REVIEW_REQUIRED",
+            "missing_real_evaluation_artifact",
+            "source real evaluation artifact is missing",
+        )
+    if not daily_available:
+        return (
+            "REVIEW_REQUIRED",
+            "missing_real_daily_path",
+            "source real evaluation artifact lacks daily_path_summary",
+        )
+    if bucket == "high_drawdown":
+        return _status_from_real_analysis(
+            _mapping(real_payload.get("drawdown_preservation_analysis")),
+            source="drawdown_preservation_analysis",
+        )
+    if bucket == "constraint_heavy":
+        hit_rate = _float(
+            best_candidate.get("constraint_hit_rate"),
+            _float(_mapping(result.get("metrics")).get("constraint_hit_rate")),
+        )
+        status = "PASS" if hit_rate <= config.hard_constraints.max_constraint_hit_rate else "FAIL"
+        return (
+            status,
+            "best_candidate.constraint_hit_rate",
+            f"{hit_rate} <= {config.hard_constraints.max_constraint_hit_rate}",
+        )
+    if bucket in {"fast_recovery", "high_volatility"}:
+        return _status_from_real_analysis(
+            _mapping(real_payload.get("overfit_analysis")),
+            source="overfit_analysis",
+        )
+    return (
+        "REVIEW_REQUIRED",
+        "real_bucket_not_available",
+        f"no dedicated real stress extraction for bucket={bucket}",
+    )
+
+
+def _status_from_real_analysis(
+    analysis: Mapping[str, Any],
+    *,
+    source: str,
+) -> tuple[str, str, str]:
+    status = _text(analysis.get("status"))
+    if status == "PASS":
+        return "PASS", source, _text(analysis.get("conclusion"), "analysis passed")
+    if status == "FAIL":
+        return "FAIL", source, _text(analysis.get("conclusion"), "analysis failed")
+    return "REVIEW_REQUIRED", source, "analysis status missing"
+
+
 def _regime_bucket_results(result: Mapping[str, Any]) -> dict[str, Any]:
     regimes = ["risk_on", "risk_off", "volatile", "sideways"]
     return {
@@ -5179,14 +5545,66 @@ def _regime_bucket_results(result: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _real_regime_bucket_results(real_payload: Mapping[str, Any]) -> dict[str, Any]:
+    paths = _mapping(real_payload.get("comparison_daily_paths"))
+    records = _records(paths.get("dynamic_candidate"))
+    if not records:
+        return {
+            "regimes": [],
+            "evidence_source": "real_evaluation_artifact",
+            "evidence_status": "MISSING_REAL_REGIME_DAILY_PATH",
+        }
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in records:
+        grouped.setdefault(_text(row.get("selected_regime"), "UNKNOWN"), []).append(row)
+    regimes = []
+    for regime, rows in sorted(grouped.items()):
+        regimes.append(
+            {
+                "regime": regime,
+                "status": "PASS",
+                "rank_stability": "REAL_DAILY_PATH_OBSERVED",
+                "row_count": len(rows),
+                "strategy_return_sum": round(
+                    sum(_float(row.get("strategy_return")) for row in rows),
+                    6,
+                ),
+            }
+        )
+    return {
+        "regimes": regimes,
+        "regime_count": len(regimes),
+        "evidence_source": "real_evaluation_artifact_daily_path",
+        "evidence_status": "PASS",
+        "regime_return_concentration": _mapping(real_payload.get("best_candidate")).get(
+            "regime_return_concentration"
+        ),
+    }
+
+
 def _overfit_diagnostics(
     sensitivity: Sequence[Mapping[str, Any]],
     stress: Mapping[str, Any],
     config: DynamicV3ParameterSweepConfig,
+    *,
+    evaluator_mode: str = EVALUATOR_TINY_FIXTURE_PROXY,
+    source_evidence: Mapping[str, Any] | None = None,
+    regime: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    max_delta = max((abs(float(row.get("score_delta") or 0)) for row in sensitivity), default=0.0)
+    source = _mapping(source_evidence)
+    evidence_summary = _sensitivity_evidence_summary(sensitivity, evaluator_mode)
+    max_delta = max(
+        (
+            abs(_float(row.get("score_delta")))
+            for row in sensitivity
+            if _text(row.get("score_delta"))
+        ),
+        default=0.0,
+    )
     stress_pass_ratio = float(stress.get("pass_ratio", 0))
-    if max_delta <= config.robustness.max_score_delta_for_pass:
+    if evaluator_mode == EVALUATOR_REAL_DYNAMIC_V3_RESCUE and evidence_summary["status"] != "PASS":
+        sensitivity_status = "REVIEW_REQUIRED"
+    elif max_delta <= config.robustness.max_score_delta_for_pass:
         sensitivity_status = "PASS"
     elif max_delta <= config.robustness.max_score_delta_for_review:
         sensitivity_status = "REVIEW_REQUIRED"
@@ -5199,18 +5617,72 @@ def _overfit_diagnostics(
         "PASS" if sensitivity_status == "PASS" and stress_status == "PASS" else "REVIEW_REQUIRED"
     )
     overfit_status = "LOW_RISK" if robustness_status == "PASS" else "REVIEW_REQUIRED"
+    stress_evidence_status = _text(
+        stress.get("evidence_status"),
+        "TINY_FIXTURE_PROXY" if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY else "UNKNOWN",
+    )
+    regime_evidence_status = _text(
+        _mapping(regime).get("evidence_status"),
+        "TINY_FIXTURE_PROXY" if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY else "UNKNOWN",
+    )
     return {
         "robustness_status": robustness_status,
         "overfit_status": overfit_status,
         "parameter_sensitivity_status": sensitivity_status,
+        "sensitivity_evidence_status": evidence_summary["status"],
+        "real_neighbor_count": evidence_summary["real_neighbor_count"],
+        "missing_real_neighbor_count": evidence_summary["missing_real_neighbor_count"],
         "stress_bucket_status": stress_status,
+        "stress_evidence_status": stress_evidence_status,
+        "regime_evidence_status": regime_evidence_status,
         "max_abs_score_delta": round(max_delta, 6),
         "stress_pass_ratio": round(stress_pass_ratio, 6),
+        "evaluator_mode": evaluator_mode,
+        "metrics_source": source.get("metrics_source", "UNKNOWN"),
+        "source_real_evaluation_artifact_path": source.get(
+            "source_real_evaluation_artifact_path", ""
+        ),
+        "source_real_evaluation_artifact_exists": source.get(
+            "source_real_evaluation_artifact_exists", False
+        ),
         "multiple_testing_warning": "review sweep size and ranking concentration before promotion",
         "pbo_dsr_placeholder": {
             "status": "NOT_RUN_REVIEW_NOTE",
             "behavioral_impact": "does not create PASS and does not bypass promotion review",
         },
+    }
+
+
+def _sensitivity_evidence_summary(
+    sensitivity: Sequence[Mapping[str, Any]],
+    evaluator_mode: str,
+) -> dict[str, Any]:
+    if evaluator_mode != EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        return {
+            "status": "TINY_FIXTURE_PROXY",
+            "real_neighbor_count": 0,
+            "missing_real_neighbor_count": 0,
+        }
+    available = sum(
+        1
+        for row in sensitivity
+        if row.get("neighbor_evaluation_status") == "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
+    )
+    missing = sum(
+        1
+        for row in sensitivity
+        if row.get("neighbor_evaluation_status") != "AVAILABLE_REAL_NEIGHBOR_EVALUATION"
+    )
+    if available > 0 and missing == 0:
+        status = "PASS"
+    elif available > 0:
+        status = "PARTIAL_REAL_NEIGHBOR_EVIDENCE"
+    else:
+        status = "MISSING_REAL_NEIGHBOR_EVALUATION"
+    return {
+        "status": status,
+        "real_neighbor_count": available,
+        "missing_real_neighbor_count": missing,
     }
 
 
@@ -5614,11 +6086,7 @@ def _cache_file_inventory(path: Path, *, file_role: str) -> dict[str, Any]:
     symbol_column = (
         "ticker"
         if "ticker" in frame
-        else "symbol"
-        if "symbol" in frame
-        else "series"
-        if "series" in frame
-        else ""
+        else "symbol" if "symbol" in frame else "series" if "series" in frame else ""
     )
     if symbol_column:
         summary["symbols"] = sorted(str(value) for value in frame[symbol_column].dropna().unique())
@@ -5831,17 +6299,15 @@ def _rescue_events(
     for row in rows:
         scores = _json_mapping(row.get("input_scores_json"))
         reason_codes = [_text(code) for code in _json_list(row.get("reason_codes_json"))]
-        rescue_codes = [
-            code for code in reason_codes if "DRAWDOWN" in code or "RISK" in code
-        ]
+        rescue_codes = [code for code in reason_codes if "DRAWDOWN" in code or "RISK" in code]
         if not rescue_codes:
             continue
         events.append(
             {
                 "date": _text(row.get("signal_date")),
-                "rescue_trigger": "drawdown"
-                if any("DRAWDOWN" in code for code in rescue_codes)
-                else "regime",
+                "rescue_trigger": (
+                    "drawdown" if any("DRAWDOWN" in code for code in rescue_codes) else "regime"
+                ),
                 "rescue_intensity": scores.get("RiskRegimeScore", 0.0),
                 "affected_symbols": [],
                 "risk_reduction": 0.0,
@@ -5861,9 +6327,7 @@ def _turnover_rows(
     for row in rows:
         trade_deltas = _json_mapping(row.get("trade_deltas_json"))
         buys = {
-            symbol: _float(value)
-            for symbol, value in trade_deltas.items()
-            if _float(value) > 0
+            symbol: _float(value) for symbol, value in trade_deltas.items() if _float(value) > 0
         }
         sells = {
             symbol: abs(_float(value))
@@ -6020,9 +6484,7 @@ def _aggregate_candidate_backtest_windows(
     requested_end: date,
 ) -> dict[str, Any]:
     windows = [
-        _mapping(row.get("backtest_window"))
-        for row in results
-        if row.get("backtest_window")
+        _mapping(row.get("backtest_window")) for row in results if row.get("backtest_window")
     ]
     if not windows:
         return _empty_backtest_window(
@@ -6531,8 +6993,7 @@ def _candidate_weight_delta_rows(real_payload: Mapping[str, Any] | None) -> list
             "candidate_weight": float(best_weights.get(symbol, 0.0)),
             "baseline_weight": float(reference_weights.get(symbol, 0.0)),
             "delta": round(
-                float(best_weights.get(symbol, 0.0))
-                - float(reference_weights.get(symbol, 0.0)),
+                float(best_weights.get(symbol, 0.0)) - float(reference_weights.get(symbol, 0.0)),
                 6,
             ),
         }
@@ -6701,9 +7162,7 @@ def _parameter_neighborhood_stability_payload(
         default=0.0,
     )
     status = (
-        "PASS"
-        if max_abs_delta <= config.robustness.max_score_delta_for_pass
-        else "REVIEW_REQUIRED"
+        "PASS" if max_abs_delta <= config.robustness.max_score_delta_for_pass else "REVIEW_REQUIRED"
     )
     return {
         "status": status,
@@ -6768,11 +7227,7 @@ def _governance_checks(
     governance: ParameterGovernanceConfig,
 ) -> list[dict[str, Any]]:
     policies = _governance_policy_by_parameter(governance)
-    manual_only = {
-        parameter
-        for parameter, policy in policies.items()
-        if policy == "manual_only"
-    }
+    manual_only = {parameter for parameter, policy in policies.items() if policy == "manual_only"}
     overrides = sorted(set(config.parameter_space) & manual_only)
     checks = [
         _check(

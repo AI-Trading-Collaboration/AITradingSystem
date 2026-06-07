@@ -179,6 +179,15 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         )["status"]
         == "PASS"
     )
+    robustness_manifest = json.loads(
+        (
+            tmp_path / "robustness" / robustness["robustness_id"] / "robustness_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert robustness_manifest["evaluator_mode"] == "tiny_fixture_proxy"
+    assert robustness_manifest["metrics_source"] == "tiny_fixture_proxy_formula"
+    assert robustness_manifest["not_for_investment_decision"] is True
+    assert robustness_manifest["sensitivity_evidence_status"] == "TINY_FIXTURE_PROXY"
 
     registry_path = tmp_path / DEFAULT_SHADOW_REGISTRY_PATH.name
     registered = register_shadow_candidate(
@@ -313,6 +322,69 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     assert validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)["status"] == "PASS"
 
     first_artifact = Path(results[0]["real_evaluation_artifact_path"])
+    robustness = run_robustness_diagnostics(
+        sweep_id=sweep_id,
+        candidate_id=results[0]["candidate_id"],
+        sweep_output_dir=output_dir,
+        output_dir=tmp_path / "real_robustness",
+    )
+    robustness_dir = tmp_path / "real_robustness" / robustness["robustness_id"]
+    robustness_manifest = json.loads(
+        (robustness_dir / "robustness_manifest.json").read_text(encoding="utf-8")
+    )
+    robustness_diagnostics = json.loads(
+        (robustness_dir / "overfit_diagnostics.json").read_text(encoding="utf-8")
+    )
+    sensitivity = pd.read_csv(robustness_dir / "sensitivity_matrix.csv")
+    assert robustness_manifest["evaluator_mode"] == "real_dynamic_v3_rescue"
+    assert robustness_manifest["metrics_source"] == "real_evaluation_artifact"
+    assert robustness_manifest["source_real_evaluation_artifact_path"] == str(first_artifact)
+    assert robustness_manifest["source_real_evaluation_artifact_exists"] is True
+    assert robustness_manifest["real_neighbor_count"] >= 1
+    assert robustness_manifest["missing_real_neighbor_count"] == 0
+    assert robustness_diagnostics["sensitivity_evidence_status"] == "PASS"
+    assert set(sensitivity["sensitivity_evidence_source"]) == {"real_evaluation_artifact"}
+    assert "tiny_fixture_proxy" not in set(sensitivity["metrics_source"].astype(str))
+    assert (
+        validate_robustness_artifact(
+            robustness_id=robustness["robustness_id"],
+            output_dir=tmp_path / "real_robustness",
+        )["status"]
+        == "PASS"
+    )
+
+    (sweep_dir / "candidate_results.jsonl").write_text(
+        json.dumps(results[0], sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    missing_neighbor = run_robustness_diagnostics(
+        sweep_id=sweep_id,
+        candidate_id=results[0]["candidate_id"],
+        sweep_output_dir=output_dir,
+        output_dir=tmp_path / "real_robustness_missing_neighbor",
+    )
+    missing_manifest = json.loads(
+        (
+            tmp_path
+            / "real_robustness_missing_neighbor"
+            / missing_neighbor["robustness_id"]
+            / "robustness_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert missing_manifest["status"] == "REVIEW_REQUIRED"
+    assert missing_manifest["missing_real_neighbor_count"] >= 1
+    assert (
+        validate_robustness_artifact(
+            robustness_id=missing_neighbor["robustness_id"],
+            output_dir=tmp_path / "real_robustness_missing_neighbor",
+        )["status"]
+        == "PASS"
+    )
+    (sweep_dir / "candidate_results.jsonl").write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in results) + "\n",
+        encoding="utf-8",
+    )
+
     real_payload = json.loads(first_artifact.read_text(encoding="utf-8"))
     evaluation_id = real_payload["dynamic_v3_real_evaluation_report_id"]
     assert real_payload["backtest_window"]["configured_backtest_start"] == "2022-12-01"
@@ -362,8 +434,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     validation = validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)
     assert validation["status"] == "FAIL"
     assert any(
-        check["check_id"] == "real_evaluation_artifact_paths_exist"
-        and check["passed"] is False
+        check["check_id"] == "real_evaluation_artifact_paths_exist" and check["passed"] is False
         for check in validation["checks"]
     )
 
@@ -425,9 +496,10 @@ def test_window_audit_detects_incomplete_actual_window(tmp_path: Path) -> None:
 
     assert inspected["status"] == "INCOMPLETE"
     assert inspected["record"]["promotion_blocking"] is True
-    assert "actual_evaluation_start_after_configured_backtest_start" in inspected["record"][
-        "window_mismatch_reasons"
-    ]
+    assert (
+        "actual_evaluation_start_after_configured_backtest_start"
+        in inspected["record"]["window_mismatch_reasons"]
+    )
 
 
 def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
@@ -519,10 +591,13 @@ def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
         output_dir=tmp_path / "index",
     )
     assert index["candidate_count"] > 0
-    assert research_query_payload(
-        candidate_id=candidate_id,
-        output_dir=tmp_path / "index",
-    )["status"] == "PASS"
+    assert (
+        research_query_payload(
+            candidate_id=candidate_id,
+            output_dir=tmp_path / "index",
+        )["status"]
+        == "PASS"
+    )
     assert governance_report_payload(output_dir=tmp_path / "governance")["status"] == "PASS"
 
 

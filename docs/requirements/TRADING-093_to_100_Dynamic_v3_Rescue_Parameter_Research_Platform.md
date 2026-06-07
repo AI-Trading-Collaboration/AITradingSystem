@@ -1,6 +1,6 @@
 # TRADING-093 to TRADING-100: Dynamic v3 Rescue Parameter Research Platform
 
-最后更新：2026-06-06
+最后更新：2026-06-07
 
 ## 背景
 
@@ -16,7 +16,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|VALIDATING|
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|VALIDATING|
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
-|TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation|VALIDATING|
+|TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
 |TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
 |TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|VALIDATING|
@@ -51,3 +51,5 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 - 2026-06-06：新增需求文档并登记 TRADING-093 到 TRADING-100；进入实现。目标是以完整骨架、可运行闭环和 tiny fixture 验证作为 baseline，后续真实大规模 sweep 和更复杂统计方法继续按 artifact 和 validation contract 迭代。
 - 2026-06-06：TRADING-093 到 TRADING-100 baseline 实现完成并转入 VALIDATING。新增 parameter sweep config、核心模块、CLI 子命令、hard gate / soft score、sweep artifacts、walk-forward/OOS、robustness/sensitivity/overfit diagnostics、observe-only shadow registry、latest pointer/artifact validation、promotion pack、Reader Brief、report registry、artifact catalog、operations runbook、system flow、README 和 focused tests。样例默认 sweep `sweep_20260606T024119Z_98fa3c81` 生成 5000 个 tiny fixture candidates，其中 observe_only=12、reject=4988、top candidate=`ce9db518659c8d68`；walk-forward sample `1c295ba52ed095df` PASS，robustness sample `8125b579107a88a4` 为 REVIEW_REQUIRED，promotion pack `622ee067448ae09c` 因 `walk_forward_failed` reject，未生成 `production_candidate`。验证通过 focused tests、旧 dynamic-v3 回归、Reader Brief/report index、旧 validation gates、ruff、compileall、diff check 和全量 pytest。
 - 2026-06-06：TRADING-101 扩展本平台的 evaluator contract。默认 CI / focused tests 继续使用 `tiny_fixture_proxy` 验证 artifact contract；manual research run 可用 `real_dynamic_v3_rescue` 生成 per-candidate TRADING-091 real evaluation artifacts。Tiny fixture promotion pack 被限制为 `review_required` / `reject`，不得进入 `promote_candidate`。
+- 2026-06-07：TRADING-097 从 VALIDATING 改回 IN_PROGRESS。审查确认当前 `robustness run` 即使读取 `real_dynamic_v3_rescue` sweep，也仍用 `_fixture_metrics` 生成邻近参数敏感性，manifest/report 未披露 real evaluation artifact、metrics source、data quality 或邻近真实候选覆盖。修复方向是复用同一 sweep 中已完成的 real candidate results 作为邻近敏感性证据；缺少真实邻近证据时保持 `REVIEW_REQUIRED`，不得把 proxy 结果提升为 PASS。
+- 2026-06-07：TRADING-097 real artifact-aware robustness 实现完成并转回 VALIDATING。`robustness run` 继承 source sweep evaluator provenance；real mode sensitivity 只读取同一 sweep 中已完成、`metrics_source=real_evaluation_artifact` 且 linked artifact 存在的 neighbor candidate；缺少 neighbor 或 bucket 证据时报告 `REVIEW_REQUIRED`，不回退 `_fixture_metrics`。Manifest/report/validation 新增 evaluator、metrics source、data quality、source real evaluation artifact、real neighbor count、missing neighbor count、stress evidence 和 regime evidence 字段。验证通过 dynamic-v3 focused tests、real evaluation tests、ruff、black 和 compileall。
