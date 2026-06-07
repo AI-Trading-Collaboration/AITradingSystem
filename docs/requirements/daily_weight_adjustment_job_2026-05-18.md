@@ -1,6 +1,6 @@
 # TRADING-018：Daily Scheduled Weight Adjustment Job
 
-最后更新：2026-05-18
+最后更新：2026-06-07
 
 关联任务：`TRADING-018`
 
@@ -107,3 +107,8 @@
   Daily Weight Adjustment Summary 只读卡片、runbook、系统流图 / 产物目录和测试；
   验证通过目标 pytest、`tests/trading_engine`、`tests/test_daily_task_dashboard.py`、
   全量 pytest、ruff 和 black check。
+- 2026-06-07：从 VALIDATING 改为 DONE。原因：当前 HEAD `725816a7` 的
+  GitHub Actions CI run `27085392644` 已完成且通过；本轮复验
+  `tests/trading_engine/test_daily_weight_adjustment_pipeline.py`、相关交易执行
+  focused tests 和触达文件 ruff 通过。任务验收闭合，后续真实 scheduler 观察由
+  `TRADING-018A` 承接。

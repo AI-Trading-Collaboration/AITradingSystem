@@ -1,6 +1,6 @@
 # TRADING-012：PaperBroker Fill Model Calibration Diagnostics
 
-最后更新：2026-05-18
+最后更新：2026-06-07
 
 关联任务：`TRADING-012`
 
@@ -132,3 +132,8 @@ fill 脚本成功运行解释为 fill model 已验证。
   `NO_FILL_LIFECYCLE_VALIDATED`；该分类不改变 `PaperBroker` fill model，不调用
   broker，不触发 runner/replay，且继续保持 `fill_tested=false` 和
   `LIFECYCLE_ALIGNED_FILL_UNTESTED`。
+- 2026-06-07：从 VALIDATING 改为 DONE。原因：当前 HEAD `725816a7` 的
+  GitHub Actions CI run `27085392644` 已完成且通过；本轮复验
+  `tests/trading_engine/test_paperbroker_fill_model_calibration.py`、controlled fill
+  相关 focused tests 和触达文件 ruff 通过。Diagnostic-only calibration 的
+  fill-model-unvalidated 语义保持不变，验收闭合。

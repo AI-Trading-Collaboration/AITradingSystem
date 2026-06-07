@@ -1,6 +1,6 @@
 # TRADING-013A：IBKR Paper Controlled Fill Local Validation Report
 
-最后更新：2026-05-18
+最后更新：2026-06-07
 
 关联任务：`TRADING-013A`
 
@@ -92,3 +92,7 @@ perm id、execution id、password、token、API key 或完整账户标识。
   `python -m pytest tests/trading_engine`、`python -m pytest`、
   `python -m ruff check scripts src tests`、`python -m black --check scripts src tests`
   和 `git diff --check`。
+- 2026-06-07：从 VALIDATING 改为 DONE。原因：当前 HEAD `725816a7` 的
+  GitHub Actions CI run `27085392644` 已完成且通过；本轮复验 controlled fill /
+  calibration focused tests 和触达文件 ruff 通过。No-fill local validation
+  evidence 仍只证明 submit/open/cancel 链路，不证明 fill model。

@@ -1,6 +1,6 @@
 # TRADING-013：IBKR Paper Controlled Small Fill Test
 
-最后更新：2026-05-17
+最后更新：2026-06-07
 
 关联任务：`TRADING-013`
 
@@ -169,3 +169,9 @@ order id。
   已正常生成 JSON/Markdown，`test_status=LIMITED`、`fill_seen=false`、
   `cancel_requested=true`、`final_order_status=Cancelled`，broker order id 为
   `[REDACTED_BROKER_ORDER_ID:len=N]` 形式。
+- 2026-06-07：从 VALIDATING 改为 DONE。原因：当前 HEAD `725816a7` 的
+  GitHub Actions CI run `27085392644` 已完成且通过；本轮复验
+  `tests/trading_engine/test_ibkr_paper_controlled_fill.py`、相关 calibration /
+  comparison focused tests 和触达文件 ruff 通过。受控 fill 脚本仍保持
+  manual-only、paper-only、`production_effect=none`，不修改 `PaperBroker` fill
+  行为。

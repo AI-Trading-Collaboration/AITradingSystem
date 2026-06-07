@@ -1,6 +1,6 @@
 # TRADING-011：Local PaperBroker vs IBKR Paper Lifecycle / Fill Comparison
 
-最后更新：2026-05-17
+最后更新：2026-06-07
 
 关联任务：`TRADING-011`
 
@@ -155,3 +155,8 @@ recommendations 只输出诊断建议，不直接修改 `PaperBroker` 行为：
   `python -m pytest tests/trading_engine`、`python -m pytest`、
   `python -m ruff check scripts src tests` 和
   `python -m black --check scripts src tests`。
+- 2026-06-07：从 VALIDATING 改为 DONE。原因：当前 HEAD `725816a7` 的
+  GitHub Actions CI run `27085392644` 已完成且通过；本轮复验
+  `tests/trading_engine/test_paperbroker_vs_ibkr_paper_comparison.py` 和相关
+  focused tests / ruff 通过。Diagnostic-only comparison 的安全边界和 CI
+  验收均已闭合。
