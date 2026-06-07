@@ -1,6 +1,6 @@
 # TRADING-038 Manual Approval Record / Retry Execution Dry Run
 
-最后更新：2026-05-26
+最后更新：2026-06-07
 
 ## 背景
 
@@ -83,7 +83,7 @@ CLI 参数：
 |2. 核心模块与 CLI|DONE|可只读加载 latest 或指定 TRADING-037 artifact 和可选 approval record，写 JSON/Markdown/log，fail flags 可在 safety blocked / approval mismatch 时非零退出。|
 |3. Dashboard 只读卡片|DONE|payload 和 HTML 展示 dry-run status、candidate/action counts、retry safety、generated_at 和 source queue status；import guard 证明不触发 dry-run generator 或发送/retry 路径。|
 |4. 文档更新|DONE|runbook、requirements index、system flow、artifact catalog 更新，并说明 TRADING-038 只做 dry-run，不执行 retry。|
-|5. 测试与验证|VALIDATING|专项测试覆盖 source missing/malformed、empty、waiting approval、ready、mismatch、rejected、safety blocked、Markdown、CLI 和 dashboard 只读；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，TRADING-038 触达文件 Black 通过。|
+|5. 测试与验证|DONE|专项测试覆盖 source missing/malformed、empty、waiting approval、ready、mismatch、rejected、safety blocked、Markdown、CLI 和 dashboard 只读；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，TRADING-038 触达文件 Black 通过。2026-06-07 复验通知链路目标测试和 ruff 通过。|
 
 ## 验收标准
 
@@ -113,3 +113,6 @@ CLI 参数：
   `tests/trading_engine/test_retry_execution_dry_run.py`、`tests/test_daily_task_dashboard.py`、
   `tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仅被既有无关
   `tests/test_market_data.py` baseline 阻断，TRADING-038 触达文件 Black 通过。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：只读 retry execution
+  dry-run / manual approval record 实现和安全边界已满足验收；复验通过通知链路目标
+  pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。

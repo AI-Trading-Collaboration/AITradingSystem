@@ -1,6 +1,6 @@
 # TRADING-035 Notification Delivery Audit Summary
 
-最后更新：2026-05-25
+最后更新：2026-06-07
 
 ## 背景
 
@@ -69,7 +69,7 @@ TRADING-035 只生成 audit summary，不发送通知，不创建或修改 Gmail
 |3. Dashboard 只读卡片|DONE|payload 和 HTML 展示 audit_status、lifecycle、draft/preflight/dispatch、hash/latest match、side effect audit 和 alert count；import guard 证明不触发上游或发送路径。|
 |4. 文档更新|DONE|runbook、system flow、artifact catalog 更新，并说明 TRADING-035 不发送通知、不创建 Gmail draft。|
 |5. 测试与 smoke|DONE|专项测试覆盖 PASS、INCOMPLETE、MISMATCH、SAFETY_BLOCKED、Markdown banners、dashboard 只读和 safety invariants；完成要求中的 smoke 路径。|
-|6. 收尾验证|VALIDATING|目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 已通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。|
+|6. 收尾验证|DONE|目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 已通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07 复验通知链路目标测试和 ruff 通过。|
 
 ## 验收标准
 
@@ -83,3 +83,6 @@ TRADING-035 只生成 audit summary，不发送通知，不创建或修改 Gmail
 
 - 2026-05-25：新增并进入 IN_PROGRESS。原因：owner 要求实现 TRADING-035，将 TRADING-030/031/034 串成只读 notification delivery audit summary；当前阶段严格 audit-only/read-only，不发送通知、不创建 Gmail draft、不调用 webhook、不运行上游或交易流水线。
 - 2026-05-25：进入 VALIDATING。已完成核心模块、CLI、audit JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_audit_summary.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未格式化该无关文件。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：只读 audit summary
+  实现、文档和安全边界已满足验收；复验通过通知链路目标 pytest 97 passed 和触达文件
+  ruff，不存在 owner、外部时间窗口或生产副作用 blocker。

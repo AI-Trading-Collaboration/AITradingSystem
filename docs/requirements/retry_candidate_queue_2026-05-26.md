@@ -1,6 +1,6 @@
 # TRADING-037 Retry Candidate Queue / Manual Approval Gate
 
-最后更新：2026-05-26
+最后更新：2026-06-07
 
 ## 背景
 
@@ -65,7 +65,7 @@ CLI 参数：
 |2. 核心模块与 CLI|DONE|可只读加载 latest 或指定 TRADING-036 artifact，写 JSON/Markdown/log，`--fail-on-safety-blocked` 可在 safety blocked 时非零退出。|
 |3. Dashboard 只读卡片|DONE|payload 和 HTML 展示 queue status、candidate/blocker counts、manual review、retry execution safety、approval status、generated_at 和 source classification status；import guard 证明不触发 queue generator 或发送/retry 路径。|
 |4. 文档更新|DONE|runbook、requirements index、system flow、artifact catalog 更新，并说明 TRADING-037 不执行 retry、不发送 notification。|
-|5. 测试与验证|VALIDATING|专项测试覆盖 queue 规则、missing/malformed source、Markdown banner、approval gate、safety invariants、CLI 和 dashboard 只读；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。|
+|5. 测试与验证|DONE|专项测试覆盖 queue 规则、missing/malformed source、Markdown banner、approval gate、safety invariants、CLI 和 dashboard 只读；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07 复验通知链路目标测试和 ruff 通过。|
 
 ## 验收标准
 
@@ -83,3 +83,6 @@ CLI 参数：
 
 - 2026-05-26：新增并进入 IN_PROGRESS。原因：owner 要求在 TRADING-036 failure classification / retry readiness 之上建立只读 retry candidate queue 和 manual approval gate；当前阶段严格 queue/report-only，不执行通知、重试、状态变更或 production 参数变更。
 - 2026-05-26：进入 VALIDATING。已完成核心模块、CLI、retry candidate queue JSON/Markdown/log、dashboard 只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_retry_candidate_queue.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未格式化该无关文件。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：只读 retry
+  candidate queue / manual approval gate 实现和安全边界已满足验收；复验通过通知链路
+  目标 pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。

@@ -1,6 +1,6 @@
 # TRADING-036 Notification Delivery Failure Classification / Retry Readiness
 
-最后更新：2026-05-26
+最后更新：2026-06-07
 
 ## 背景
 
@@ -66,7 +66,7 @@ CLI 参数：
 |2. 核心模块与 CLI|DONE|可只读加载 latest 或指定 TRADING-035 artifact，写 JSON/Markdown/log，`--fail-on-critical` 可在 critical 时非零退出。|
 |3. Dashboard 只读卡片|DONE|payload 和 HTML 展示 overall_status、highest_severity、total_failures、manual review、safe_to_retry、blocks chain、source audit status 和 generated_at；import guard 证明不触发 classifier 或发送路径。|
 |4. 文档更新|DONE|runbook、requirements index、system flow、artifact catalog 更新，并说明 TRADING-036 不发送通知、不自动 retry。|
-|5. 测试与验证|VALIDATING|专项测试覆盖分类、missing/malformed/unknown、Markdown banner、retry readiness、safety invariants、CLI 和 dashboard 只读；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。|
+|5. 测试与验证|DONE|专项测试覆盖分类、missing/malformed/unknown、Markdown banner、retry readiness、safety invariants、CLI 和 dashboard 只读；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07 复验通知链路目标测试和 ruff 通过。|
 
 ## 验收标准
 
@@ -82,3 +82,6 @@ CLI 参数：
 
 - 2026-05-26：新增并进入 IN_PROGRESS。原因：owner 要求在 TRADING-035 audit summary 之上建立只读 failure classification / retry readiness 层；当前阶段严格 classify/report-only，不执行通知、重试、状态变更或 production 参数变更。
 - 2026-05-26：进入 VALIDATING。已完成核心模块、CLI、classification JSON/Markdown/log、dashboard 只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_failure_classification.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未格式化该无关文件。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：只读 failure
+  classification / retry readiness 实现和安全边界已满足验收；复验通过通知链路目标
+  pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。
