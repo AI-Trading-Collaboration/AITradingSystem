@@ -10,7 +10,7 @@ from typing import cast
 import pandas as pd
 from typer.testing import CliRunner
 
-import ai_trading_system.cli as cli_module
+import ai_trading_system.cli_commands.score_daily as score_daily_cli
 from ai_trading_system.belief_state import (
     build_belief_state,
     render_belief_state_summary,
@@ -741,7 +741,7 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
 
 
 def test_risk_event_openai_daily_section_includes_transport_client() -> None:
-    section = cli_module._risk_event_openai_precheck_daily_section(
+    section = score_daily_cli._risk_event_openai_precheck_daily_section(
         official_policy_fetch_report=SimpleNamespace(
             status="PASS",
             payload_count=8,
@@ -1189,7 +1189,7 @@ companies:
         )
     ).to_csv(tsm_path, index=False)
 
-    cli_module._merge_tsm_ir_for_daily_score(
+    score_daily_cli._merge_tsm_ir_for_daily_score(
         sec_fundamentals_path=sec_path,
         tsm_ir_path=tsm_path,
         sec_companies=sec_companies,
