@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from copy import deepcopy
 from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -29,6 +30,9 @@ from ai_trading_system.etf_portfolio.dynamic_robustness import (
     build_dynamic_robustness_report,
     load_dynamic_robustness_policy_config,
 )
+from ai_trading_system.etf_portfolio.dynamic_robustness import (
+    _stable_hash as _dynamic_robustness_stable_hash,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
     DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH,
     DynamicV3CandidateTemplatePolicy,
@@ -38,20 +42,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
 from ai_trading_system.etf_portfolio.models import ETFConfigBundle, PolicyMetadata
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-DYNAMIC_V3_REAL_EVALUATION_POLICY_SCHEMA_VERSION = (
-    "etf_dynamic_v3_real_evaluation_policy_v1"
-)
-DYNAMIC_V3_REAL_EVALUATION_REPORT_SCHEMA_VERSION = (
-    "etf_dynamic_v3_real_evaluation_report_v1"
-)
+DYNAMIC_V3_REAL_EVALUATION_POLICY_SCHEMA_VERSION = "etf_dynamic_v3_real_evaluation_policy_v1"
+DYNAMIC_V3_REAL_EVALUATION_REPORT_SCHEMA_VERSION = "etf_dynamic_v3_real_evaluation_report_v1"
 DYNAMIC_V3_REAL_EVALUATION_VALIDATION_SCHEMA_VERSION = (
     "etf_dynamic_v3_real_evaluation_validation_v1"
 )
 
 DYNAMIC_V3_REAL_EVALUATION_REPORT_TYPE = "etf_dynamic_v3_real_evaluation_report"
-DYNAMIC_V3_REAL_EVALUATION_VALIDATION_REPORT_TYPE = (
-    "etf_dynamic_v3_real_evaluation_validation"
-)
+DYNAMIC_V3_REAL_EVALUATION_VALIDATION_REPORT_TYPE = "etf_dynamic_v3_real_evaluation_validation"
 
 DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_real_evaluation.yaml"
@@ -307,6 +305,70 @@ def materialize_dynamic_v3_real_candidate_policy(
         ) from exc
 
 
+def precompute_dynamic_v3_fixed_robustness_reports(
+    *,
+    prices: pd.DataFrame,
+    etf_config: ETFConfigBundle,
+    policy: DynamicV3RealEvaluationPolicyConfig,
+    dynamic_robustness_policy: DynamicRobustnessPolicyConfig,
+    dynamic_policy: DynamicAllocationPolicyConfig,
+    failure_policy: DynamicFailureDiagnosticsPolicyConfig,
+    start: date | None = None,
+    end: date | None = None,
+    data_quality_status: str = "UNKNOWN",
+    data_quality_report: str = "",
+    prices_path: Path | None = None,
+) -> dict[str, Any]:
+    requested_start = start or policy.market_regime.default_backtest_start
+    fixed_policies = _fixed_dynamic_v3_comparison_policies(
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
+        real_policy=policy,
+    )
+    reports: dict[str, dict[str, Any]] = {}
+    for label, allocation_policy in fixed_policies.items():
+        reports[label] = build_dynamic_robustness_report(
+            prices=prices,
+            etf_config=etf_config,
+            policy=dynamic_robustness_policy,
+            dynamic_policy=allocation_policy,
+            candidate_id=label,
+            start=requested_start,
+            end=end,
+            data_quality_status=data_quality_status,
+            data_quality_report=data_quality_report,
+            prices_path=prices_path,
+        )
+    cache_key = {
+        "requested_start": requested_start.isoformat(),
+        "requested_end": "" if end is None else end.isoformat(),
+        "data_quality_status": data_quality_status,
+        "dynamic_robustness_policy_hash": _stable_hash(
+            dynamic_robustness_policy.model_dump(mode="json")
+        ),
+        "dynamic_policy_hash": _stable_hash(dynamic_policy.model_dump(mode="json")),
+        "failure_policy_hash": _stable_hash(failure_policy.model_dump(mode="json")),
+        "real_evaluation_policy_hash": _stable_hash(policy.model_dump(mode="json")),
+    }
+    return {
+        "cache_id": _stable_id(
+            "dynamic-v3-fixed-robustness-cache",
+            _stable_hash(cache_key),
+            _stable_hash(sorted(reports)),
+        ),
+        "cache_type": "dynamic_v3_fixed_robustness_reports",
+        "status": "READY",
+        "reuse_scope": "same_data_manifest_same_date_range_same_policy_hash",
+        "policy_ids": list(reports),
+        "report_ids": {
+            label: _text(report.get("dynamic_robustness_report_id"))
+            for label, report in reports.items()
+        },
+        "cache_key": cache_key,
+        "reports": reports,
+    }
+
+
 def build_dynamic_v3_real_evaluation_report(
     *,
     prices: pd.DataFrame,
@@ -322,6 +384,7 @@ def build_dynamic_v3_real_evaluation_report(
     data_quality_report: str = "",
     prices_path: Path | None = None,
     generated_at: datetime | None = None,
+    precomputed_robustness_reports: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     materialized = _materialized_policy_set(
@@ -331,20 +394,35 @@ def build_dynamic_v3_real_evaluation_report(
         real_policy=policy,
     )
     robustness_reports: dict[str, dict[str, Any]] = {}
+    reused_precomputed: list[str] = []
     dynamic_rows: list[dict[str, Any]] = []
+    requested_start = start or policy.market_regime.default_backtest_start
+    precomputed = precomputed_robustness_reports or {}
     for label, allocation_policy in materialized["policies"].items():
-        report = build_dynamic_robustness_report(
-            prices=prices,
-            etf_config=etf_config,
-            policy=dynamic_robustness_policy,
-            dynamic_policy=allocation_policy,
-            candidate_id=label,
-            start=start or policy.market_regime.default_backtest_start,
-            end=end,
-            data_quality_status=data_quality_status,
-            data_quality_report=data_quality_report,
-            prices_path=prices_path,
-        )
+        if label in precomputed:
+            report = _validated_precomputed_robustness_report(
+                label=label,
+                report=precomputed[label],
+                allocation_policy=allocation_policy,
+                dynamic_robustness_policy=dynamic_robustness_policy,
+                requested_start=requested_start,
+                requested_end=end,
+                data_quality_status=data_quality_status,
+            )
+            reused_precomputed.append(label)
+        else:
+            report = build_dynamic_robustness_report(
+                prices=prices,
+                etf_config=etf_config,
+                policy=dynamic_robustness_policy,
+                dynamic_policy=allocation_policy,
+                candidate_id=label,
+                start=requested_start,
+                end=end,
+                data_quality_status=data_quality_status,
+                data_quality_report=data_quality_report,
+                prices_path=prices_path,
+            )
         robustness_reports[label] = report
         dynamic_rows.append(
             _dynamic_comparison_row(
@@ -368,7 +446,6 @@ def build_dynamic_v3_real_evaluation_report(
     best_daily_summary = _mapping(best_robustness_report.get("daily_path_summary"))
     analyses = _comprehensive_analyses(best, v0_4_row, static_rows, policy)
     promotion_gate = _promotion_gate(best, v0_4_row, analyses, policy)
-    requested_start = start or policy.market_regime.default_backtest_start
     requested_end = end or _mapping(baseline_report.get("summary")).get("requested_end")
     report_id = _stable_id(
         "dynamic-v3-real-evaluation-report",
@@ -417,19 +494,25 @@ def build_dynamic_v3_real_evaluation_report(
             "best_v0_3_candidate": best.get("policy_id"),
             "promotion_gate_decision": promotion_gate["decision"],
             "data_quality_status": data_quality_status,
-            "constraint_hit_reduction_vs_v0_4": best.get(
-                "constraint_hit_reduction_vs_v0_4"
-            ),
+            "constraint_hit_reduction_vs_v0_4": best.get("constraint_hit_reduction_vs_v0_4"),
             "false_risk_off_delta_vs_v0_4": best.get("false_risk_off_delta_vs_v0_4"),
-            "max_drawdown_degradation_vs_v0_4": best.get(
-                "max_drawdown_degradation_vs_v0_4"
-            ),
+            "max_drawdown_degradation_vs_v0_4": best.get("max_drawdown_degradation_vs_v0_4"),
             "turnover": best.get("turnover"),
             "dynamic_vs_static_gap": best.get("dynamic_vs_static_gap"),
             "static_gap_delta_vs_v0_4": best.get("static_gap_delta_vs_v0_4"),
             "overfit_status": best.get("overfit_status"),
         },
         "materialization_summary": materialized["summary"],
+        "real_evaluation_cache": {
+            "precomputed_robustness_reused": bool(reused_precomputed),
+            "precomputed_robustness_policy_ids": reused_precomputed,
+            "precomputed_robustness_report_ids": {
+                label: _text(robustness_reports[label].get("dynamic_robustness_report_id"))
+                for label in reused_precomputed
+            },
+            "reuse_scope": "same_data_manifest_same_date_range_same_policy_hash",
+            "cache_equivalent": True,
+        },
         "comparison_table": comparison_rows,
         "v0_3_vs_baseline_v0_2_v0_4_table": [
             row
@@ -455,12 +538,8 @@ def build_dynamic_v3_real_evaluation_report(
                 DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
             ),
             "v3_rescue_policy_config": str(DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH),
-            "dynamic_robustness_policy_config": str(
-                DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH
-            ),
-            "dynamic_allocation_policy_config": str(
-                DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH
-            ),
+            "dynamic_robustness_policy_config": str(DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH),
+            "dynamic_allocation_policy_config": str(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH),
             "failure_diagnostics_policy_config": str(
                 DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH
             ),
@@ -487,8 +566,9 @@ def build_dynamic_v3_real_evaluation_validation_report(
     v3_rescue_config_path: Path | str = DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH,
     dynamic_robustness_config_path: Path | str = DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH,
     dynamic_allocation_config_path: Path | str = DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
-    failure_diagnostics_config_path: Path
-    | str = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
+    failure_diagnostics_config_path: (
+        Path | str
+    ) = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
     report_registry_path: Path = PROJECT_ROOT / "config" / "report_registry.yaml",
     reader_brief_path: Path = PROJECT_ROOT
     / "src"
@@ -523,9 +603,7 @@ def build_dynamic_v3_real_evaluation_validation_report(
                 prices=prices,
                 etf_config=load_etf_config_bundle(),
                 policy=policy,
-                v3_rescue_policy=load_dynamic_v3_rescue_policy_config(
-                    Path(v3_rescue_config_path)
-                ),
+                v3_rescue_policy=load_dynamic_v3_rescue_policy_config(Path(v3_rescue_config_path)),
                 dynamic_robustness_policy=robustness_policy,
                 dynamic_policy=load_dynamic_allocation_policy_config(
                     Path(dynamic_allocation_config_path)
@@ -549,13 +627,7 @@ def build_dynamic_v3_real_evaluation_validation_report(
             _append_check(
                 checks,
                 "v0_3_candidates_materialized",
-                len(
-                    [
-                        row
-                        for row in rows
-                        if row.get("group") == "dynamic_v0_3_rescue"
-                    ]
-                )
+                len([row for row in rows if row.get("group") == "dynamic_v0_3_rescue"])
                 >= policy.comparison.required_v0_3_candidate_count,
                 "all v0.3 candidate templates are materialized for robustness evaluation",
             )
@@ -627,9 +699,7 @@ def build_dynamic_v3_real_evaluation_validation_report(
     _append_check(
         checks,
         "cli_commands_visible",
-        "real-evaluate" in cli_text
-        and "real-report" in cli_text
-        and "validate-real" in cli_text,
+        "real-evaluate" in cli_text and "real-report" in cli_text and "validate-real" in cli_text,
         "CLI exposes real-evaluate, real-report, and validate-real",
     )
     failed = [item for item in checks if item["status"] != "PASS"]
@@ -807,6 +877,66 @@ def render_dynamic_v3_real_evaluation_validation_markdown(payload: Mapping[str, 
     return "\n".join(lines) + "\n"
 
 
+def _fixed_dynamic_v3_comparison_policies(
+    *,
+    dynamic_policy: DynamicAllocationPolicyConfig,
+    failure_policy: DynamicFailureDiagnosticsPolicyConfig,
+    real_policy: DynamicV3RealEvaluationPolicyConfig,
+) -> dict[str, DynamicAllocationPolicyConfig]:
+    v0_2_template = _rescue_template_by_id(failure_policy, real_policy.comparison.v0_2_policy_id)
+    v0_4_template = _rescue_template_by_id(failure_policy, real_policy.comparison.v0_4_policy_id)
+    return {
+        real_policy.comparison.baseline_policy_id: dynamic_policy.model_copy(deep=True),
+        real_policy.comparison.v0_2_policy_id: apply_dynamic_rescue_template(
+            dynamic_policy,
+            v0_2_template,
+        ),
+        real_policy.comparison.v0_4_policy_id: apply_dynamic_rescue_template(
+            dynamic_policy,
+            v0_4_template,
+        ),
+    }
+
+
+def _validated_precomputed_robustness_report(
+    *,
+    label: str,
+    report: Mapping[str, Any],
+    allocation_policy: DynamicAllocationPolicyConfig,
+    dynamic_robustness_policy: DynamicRobustnessPolicyConfig,
+    requested_start: date,
+    requested_end: date | None,
+    data_quality_status: str,
+) -> dict[str, Any]:
+    payload = deepcopy(_mapping(report))
+    summary = _mapping(payload.get("summary"))
+    candidate_context = _mapping(payload.get("candidate_context"))
+    expected_policy_hash = _dynamic_robustness_stable_hash(
+        allocation_policy.model_dump(mode="json")
+    )
+    expected_robustness_hash = _dynamic_robustness_stable_hash(
+        dynamic_robustness_policy.model_dump(mode="json")
+    )
+    checks = {
+        "report_type": payload.get("report_type") == "etf_dynamic_robustness_report",
+        "candidate_id": _text(candidate_context.get("candidate_id")) == label,
+        "policy_hash": _text(payload.get("dynamic_allocation_policy_hash")) == expected_policy_hash,
+        "robustness_policy_hash": _text(payload.get("policy_config_hash"))
+        == expected_robustness_hash,
+        "requested_start": _text(summary.get("requested_start")) == requested_start.isoformat(),
+        "data_quality_status": _text(summary.get("data_quality_status")) == data_quality_status,
+    }
+    if requested_end is not None:
+        checks["requested_end"] = _text(summary.get("requested_end")) == requested_end.isoformat()
+    failed = [name for name, passed in checks.items() if not passed]
+    if failed:
+        raise DynamicV3RealEvaluationError(
+            "precomputed robustness report mismatch for " f"{label}: {', '.join(sorted(failed))}"
+        )
+    payload["precomputed_evidence_reused"] = True
+    return payload
+
+
 def _materialized_policy_set(
     *,
     dynamic_policy: DynamicAllocationPolicyConfig,
@@ -814,15 +944,12 @@ def _materialized_policy_set(
     v3_rescue_policy: DynamicV3RescuePolicyConfig,
     real_policy: DynamicV3RealEvaluationPolicyConfig,
 ) -> dict[str, Any]:
-    v0_2_template = _rescue_template_by_id(failure_policy, real_policy.comparison.v0_2_policy_id)
-    v0_4_template = _rescue_template_by_id(failure_policy, real_policy.comparison.v0_4_policy_id)
-    v0_2_policy = apply_dynamic_rescue_template(dynamic_policy, v0_2_template)
-    v0_4_policy = apply_dynamic_rescue_template(dynamic_policy, v0_4_template)
-    policies: dict[str, DynamicAllocationPolicyConfig] = {
-        real_policy.comparison.baseline_policy_id: dynamic_policy.model_copy(deep=True),
-        real_policy.comparison.v0_2_policy_id: v0_2_policy,
-        real_policy.comparison.v0_4_policy_id: v0_4_policy,
-    }
+    policies = _fixed_dynamic_v3_comparison_policies(
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
+        real_policy=real_policy,
+    )
+    v0_4_policy = policies[real_policy.comparison.v0_4_policy_id]
     groups = {
         real_policy.comparison.baseline_policy_id: "baseline",
         real_policy.comparison.v0_2_policy_id: "dynamic_v0_2",
@@ -870,9 +997,7 @@ def _dynamic_comparison_row(
     robustness_report: Mapping[str, Any],
 ) -> dict[str, Any]:
     comparison = _records(robustness_report.get("comparison_table"))
-    dynamic_row = next(
-        row for row in comparison if row.get("comparison_id") == "dynamic_candidate"
-    )
+    dynamic_row = next(row for row in comparison if row.get("comparison_id") == "dynamic_candidate")
     static_row = next(
         row for row in comparison if row.get("comparison_id") == "static_base_candidate"
     )
@@ -1038,13 +1163,10 @@ def _comprehensive_analyses(
     turnover_delta = _float(best.get("turnover_delta_vs_v0_4"))
     static_gap_delta = _float(best.get("static_gap_delta_vs_v0_4"))
     drawdown_degradation = _float(best.get("max_drawdown_degradation_vs_v0_4"))
-    not_turnover_only = (
-        constraint_reduction > 0
-        and (
-            turnover_delta >= 0
-            or static_gap_delta >= policy.promotion_gate.min_static_gap_delta_vs_v0_4
-            or drawdown_degradation <= policy.promotion_gate.max_drawdown_degradation_vs_v0_4
-        )
+    not_turnover_only = constraint_reduction > 0 and (
+        turnover_delta >= 0
+        or static_gap_delta >= policy.promotion_gate.min_static_gap_delta_vs_v0_4
+        or drawdown_degradation <= policy.promotion_gate.max_drawdown_degradation_vs_v0_4
     )
     false_delta = _int(best.get("false_risk_off_delta_vs_v0_4"))
     dynamic_drawdown_delta_vs_static = abs(_float(best.get("max_drawdown"))) - abs(
@@ -1084,8 +1206,7 @@ def _comprehensive_analyses(
         "drawdown_preservation_analysis": {
             "status": (
                 "PASS"
-                if drawdown_degradation
-                <= policy.promotion_gate.max_drawdown_degradation_vs_v0_4
+                if drawdown_degradation <= policy.promotion_gate.max_drawdown_degradation_vs_v0_4
                 and dynamic_drawdown_delta_vs_static
                 <= policy.promotion_gate.max_dynamic_drawdown_delta_vs_static
                 else "FAIL"
@@ -1097,8 +1218,7 @@ def _comprehensive_analyses(
             "dynamic_drawdown_delta_vs_static": dynamic_drawdown_delta_vs_static,
             "conclusion": (
                 "drawdown protection is preserved within configured tolerances."
-                if drawdown_degradation
-                <= policy.promotion_gate.max_drawdown_degradation_vs_v0_4
+                if drawdown_degradation <= policy.promotion_gate.max_drawdown_degradation_vs_v0_4
                 and dynamic_drawdown_delta_vs_static
                 <= policy.promotion_gate.max_dynamic_drawdown_delta_vs_static
                 else "drawdown protection is materially weaker than the configured tolerance."
@@ -1242,8 +1362,7 @@ def _candidate_gate_checks(
         ),
         _gate_check(
             "false_risk_off_delta_vs_v0_4",
-            _int(row.get("false_risk_off_delta_vs_v0_4"))
-            <= gate.max_false_risk_off_delta_vs_v0_4,
+            _int(row.get("false_risk_off_delta_vs_v0_4")) <= gate.max_false_risk_off_delta_vs_v0_4,
             row.get("false_risk_off_delta_vs_v0_4"),
             gate.max_false_risk_off_delta_vs_v0_4,
             False,
@@ -1300,8 +1419,7 @@ def _candidate_gate_checks(
         ),
         _gate_check(
             "regime_return_concentration",
-            _float(row.get("regime_return_concentration"))
-            <= gate.max_regime_return_concentration,
+            _float(row.get("regime_return_concentration")) <= gate.max_regime_return_concentration,
             row.get("regime_return_concentration"),
             gate.max_regime_return_concentration,
             False,
@@ -1438,8 +1556,7 @@ def _reduction_plan(
 def _scale_trend_overlays(policy: DynamicAllocationPolicyConfig, scale: float) -> None:
     for rule in policy.trend_overlay_rules:
         rule.adjustments = {
-            symbol: round(_float(delta) * scale, 10)
-            for symbol, delta in rule.adjustments.items()
+            symbol: round(_float(delta) * scale, 10) for symbol, delta in rule.adjustments.items()
         }
 
 

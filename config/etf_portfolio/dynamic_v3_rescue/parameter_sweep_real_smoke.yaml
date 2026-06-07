@@ -27,9 +27,9 @@ baselines:
 
 parameter_space:
   rescue_intensity:
-    values: [0.50, 0.75, 1.00]
+    values: [0.50, 0.75, 1.00, 1.25]
   smooth_window_days:
-    values: [3, 5]
+    values: [3, 5, 10]
   constraint_buffer_bps:
     values: [10, 25]
   turnover_penalty:

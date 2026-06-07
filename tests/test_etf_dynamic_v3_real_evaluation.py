@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
+import ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation as real_eval
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
 from ai_trading_system.etf_portfolio.dynamic_allocation import (
     load_dynamic_allocation_policy_config,
@@ -19,10 +21,12 @@ from ai_trading_system.etf_portfolio.dynamic_robustness import (
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DYNAMIC_V3_REAL_EVALUATION_REPORT_TYPE,
+    DynamicV3RealEvaluationError,
     build_dynamic_v3_real_evaluation_report,
     build_dynamic_v3_real_evaluation_validation_report,
     load_dynamic_v3_real_evaluation_policy_config,
     materialize_dynamic_v3_real_candidate_policy,
+    precompute_dynamic_v3_fixed_robustness_reports,
     write_dynamic_v3_real_evaluation_report,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
@@ -86,11 +90,7 @@ def test_dynamic_v3_real_evaluation_report_and_reader_brief(tmp_path: Path) -> N
 
     paths = write_dynamic_v3_real_evaluation_report(report, output_dir=tmp_path / "reports")
     summary = reader_brief._etf_dynamic_v3_real_evaluation_summary(
-        {
-            "reports": [
-                _report_record("etf_dynamic_v3_real_evaluation_report", paths["json"])
-            ]
-        }
+        {"reports": [_report_record("etf_dynamic_v3_real_evaluation_report", paths["json"])]}
     )
     assert summary["availability"] == "AVAILABLE"
     assert summary["promotion_gate_decision"] == report["promotion_gate_decision"]
@@ -99,6 +99,77 @@ def test_dynamic_v3_real_evaluation_report_and_reader_brief(tmp_path: Path) -> N
 
     missing = reader_brief._etf_dynamic_v3_real_evaluation_summary({"reports": []})
     assert missing["availability"] == "MISSING"
+
+
+def test_dynamic_v3_real_evaluation_reuses_fixed_robustness_cache(monkeypatch) -> None:
+    real_policy = load_dynamic_v3_real_evaluation_policy_config()
+    robustness_policy = load_dynamic_robustness_policy_config()
+    prices = _synthetic_validation_prices(robustness_policy)
+    etf_config = load_etf_config_bundle()
+    dynamic_policy = load_dynamic_allocation_policy_config()
+    failure_policy = load_dynamic_failure_diagnostics_policy_config()
+    v3_policy = load_dynamic_v3_rescue_policy_config()
+    cache = precompute_dynamic_v3_fixed_robustness_reports(
+        prices=prices,
+        etf_config=etf_config,
+        policy=real_policy,
+        dynamic_robustness_policy=robustness_policy,
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
+        start=real_policy.market_regime.default_backtest_start,
+        data_quality_status="SYNTHETIC_VALIDATION_PASS",
+        data_quality_report="validation_sample",
+        prices_path=Path("validation_sample_prices"),
+    )
+    fixed_ids = set(cache["policy_ids"])
+    calls: list[str] = []
+    original_build = real_eval.build_dynamic_robustness_report
+
+    def counting_build(*args, **kwargs):
+        calls.append(str(kwargs.get("candidate_id")))
+        return original_build(*args, **kwargs)
+
+    monkeypatch.setattr(real_eval, "build_dynamic_robustness_report", counting_build)
+    report = build_dynamic_v3_real_evaluation_report(
+        prices=prices,
+        etf_config=etf_config,
+        policy=real_policy,
+        v3_rescue_policy=v3_policy,
+        dynamic_robustness_policy=robustness_policy,
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
+        start=real_policy.market_regime.default_backtest_start,
+        data_quality_status="SYNTHETIC_VALIDATION_PASS",
+        data_quality_report="validation_sample",
+        prices_path=Path("validation_sample_prices"),
+        precomputed_robustness_reports=cache["reports"],
+    )
+
+    cache_summary = report["real_evaluation_cache"]
+    assert cache_summary["precomputed_robustness_reused"] is True
+    assert set(cache_summary["precomputed_robustness_policy_ids"]) == fixed_ids
+    assert fixed_ids.isdisjoint(calls)
+    assert len(calls) == len(v3_policy.candidate_templates)
+
+    bad_reports = json.loads(json.dumps(cache["reports"]))
+    bad_reports[real_policy.comparison.baseline_policy_id]["summary"][
+        "data_quality_status"
+    ] = "FAIL"
+    with pytest.raises(DynamicV3RealEvaluationError):
+        build_dynamic_v3_real_evaluation_report(
+            prices=prices,
+            etf_config=etf_config,
+            policy=real_policy,
+            v3_rescue_policy=v3_policy,
+            dynamic_robustness_policy=robustness_policy,
+            dynamic_policy=dynamic_policy,
+            failure_policy=failure_policy,
+            start=real_policy.market_regime.default_backtest_start,
+            data_quality_status="SYNTHETIC_VALIDATION_PASS",
+            data_quality_report="validation_sample",
+            prices_path=Path("validation_sample_prices"),
+            precomputed_robustness_reports=bad_reports,
+        )
 
 
 def test_dynamic_v3_real_validation_report_and_cli_pass(tmp_path: Path) -> None:

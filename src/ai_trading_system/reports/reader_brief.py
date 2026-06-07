@@ -1274,9 +1274,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "not_for_investment_decision",
-                        etf_dynamic_v3_parameter_research.get(
-                            "not_for_investment_decision"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("not_for_investment_decision"),
                     ),
                     (
                         "summary",
@@ -1310,9 +1308,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "candidate_attribution_status",
-                        etf_dynamic_v3_parameter_research.get(
-                            "candidate_attribution_status"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("candidate_attribution_status"),
                     ),
                     (
                         "data_provenance_status",
@@ -1320,15 +1316,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "download_manifest_status",
-                        etf_dynamic_v3_parameter_research.get(
-                            "download_manifest_status"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("download_manifest_status"),
                     ),
                     (
                         "promotion_blocking_flags",
-                        etf_dynamic_v3_parameter_research.get(
-                            "promotion_blocking_flags"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("promotion_blocking_flags"),
                     ),
                     (
                         "shadow_monitor_status",
@@ -1349,6 +1341,60 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "candidate_evidence_status",
+                        etf_dynamic_v3_parameter_research.get("candidate_evidence_status"),
+                    ),
+                    (
+                        "candidate_evidence_usable_count",
+                        etf_dynamic_v3_parameter_research.get("candidate_evidence_usable_count"),
+                    ),
+                    (
+                        "candidate_evidence_complete_count",
+                        etf_dynamic_v3_parameter_research.get("candidate_evidence_complete_count"),
+                    ),
+                    (
+                        "candidate_evidence_top_blockers",
+                        etf_dynamic_v3_parameter_research.get("candidate_evidence_top_blockers"),
+                    ),
+                    (
+                        "observe_pool_status",
+                        etf_dynamic_v3_parameter_research.get("observe_pool_status"),
+                    ),
+                    (
+                        "observe_candidate_count",
+                        etf_dynamic_v3_parameter_research.get("observe_candidate_count"),
+                    ),
+                    (
+                        "observe_pool_manual_review_required_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "observe_pool_manual_review_required_count"
+                        ),
+                    ),
+                    (
+                        "shadow_registry_sync_status",
+                        etf_dynamic_v3_parameter_research.get("shadow_registry_sync_status"),
+                    ),
+                    (
+                        "overnight_readiness",
+                        etf_dynamic_v3_parameter_research.get("overnight_readiness"),
+                    ),
+                    (
+                        "overnight_blocking_reasons",
+                        etf_dynamic_v3_parameter_research.get("overnight_blocking_reasons"),
+                    ),
+                    (
+                        "research_decision_recommendation",
+                        etf_dynamic_v3_parameter_research.get("research_decision_recommendation"),
+                    ),
+                    (
+                        "research_decision_priority",
+                        etf_dynamic_v3_parameter_research.get("research_decision_priority"),
+                    ),
+                    (
+                        "research_decision_next_task",
+                        etf_dynamic_v3_parameter_research.get("research_decision_next_task"),
+                    ),
+                    (
                         "sweep_leaderboard",
                         etf_dynamic_v3_parameter_research.get("sweep_leaderboard"),
                     ),
@@ -1363,6 +1409,22 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "shadow_monitor_report",
                         etf_dynamic_v3_parameter_research.get("shadow_monitor_report"),
+                    ),
+                    (
+                        "candidate_evidence_summary",
+                        etf_dynamic_v3_parameter_research.get("candidate_evidence_summary"),
+                    ),
+                    (
+                        "observe_pool",
+                        etf_dynamic_v3_parameter_research.get("observe_pool"),
+                    ),
+                    (
+                        "overnight_readiness_report",
+                        etf_dynamic_v3_parameter_research.get("overnight_readiness_report"),
+                    ),
+                    (
+                        "research_decision",
+                        etf_dynamic_v3_parameter_research.get("research_decision"),
                     ),
                     (
                         "safety_status",
@@ -5127,6 +5189,22 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_shadow_monitor_report",
     )
+    candidate_evidence_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_evidence_summary",
+    )
+    observe_pool_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_observe_pool",
+    )
+    overnight_readiness_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_overnight_readiness",
+    )
+    research_decision_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_research_decision",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     if not leaderboard:
         return _missing_etf_dynamic_v3_parameter_research_summary()
@@ -5139,14 +5217,19 @@ def _etf_dynamic_v3_parameter_research_summary(
         if indexed_promotion_path is not None
         and indexed_promotion_path.name == "evidence_summary.json"
         else (
-            promotion_path.parent / "evidence_summary.json"
-            if promotion_path is not None
-            else None
+            promotion_path.parent / "evidence_summary.json" if promotion_path is not None else None
         )
     )
     promotion = _read_optional_json(promotion_path)
     evidence = _read_optional_json(evidence_path)
     shadow_monitor = _read_optional_json(shadow_monitor_path)
+    candidate_evidence = _read_optional_json(candidate_evidence_path)
+    observe_pool = _read_optional_json(observe_pool_path)
+    overnight_readiness = _read_optional_json(overnight_readiness_path)
+    research_decision = _read_optional_json(research_decision_path)
+    research_next_action = _read_optional_json(
+        _research_decision_recommendation_path(research_decision_path)
+    )
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
@@ -5160,9 +5243,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         evidence.get("download_manifest_status"),
         "MISSING",
     )
-    promotion_blocking_flags = ", ".join(
-        _texts(evidence.get("promotion_blocking_flags"))
-    ) or "MISSING"
+    promotion_blocking_flags = (
+        ", ".join(_texts(evidence.get("promotion_blocking_flags"))) or "MISSING"
+    )
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(leaderboard)
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -5178,6 +5261,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"window={backtest_window_status}; "
             f"weight_path={weight_path_status}; "
             f"provenance={provenance_status}; "
+            f"observe_pool={observe_pool.get('observe_candidate_count', 'MISSING')}; "
+            f"research_decision={research_decision.get('recommendation', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -5207,11 +5292,58 @@ def _etf_dynamic_v3_parameter_research_summary(
             "live_drift_review_required_count",
             0,
         ),
+        "candidate_evidence_status": _text(candidate_evidence.get("status"), "MISSING"),
+        "candidate_evidence_usable_count": candidate_evidence.get(
+            "usable_for_research_count",
+            0,
+        ),
+        "candidate_evidence_complete_count": candidate_evidence.get(
+            "complete_evidence_count",
+            0,
+        ),
+        "candidate_evidence_top_blockers": ", ".join(
+            f"{row.get('reason')}:{row.get('count')}"
+            for row in _records(candidate_evidence.get("top_blocking_reasons"))[:5]
+        )
+        or "MISSING",
+        "observe_pool_status": _text(observe_pool.get("status"), "MISSING"),
+        "observe_candidate_count": observe_pool.get("observe_candidate_count", 0),
+        "observe_pool_manual_review_required_count": observe_pool.get(
+            "manual_review_required_count",
+            0,
+        ),
+        "shadow_registry_sync_status": _text(
+            observe_pool.get("shadow_registry_sync_status"),
+            "MISSING",
+        ),
+        "overnight_readiness": _text(
+            overnight_readiness.get("overnight_readiness"),
+            "MISSING",
+        ),
+        "overnight_blocking_reasons": ", ".join(_texts(overnight_readiness.get("blocking_reasons")))
+        or "none",
+        "research_decision_recommendation": _text(
+            research_decision.get("recommendation"),
+            "MISSING",
+        ),
+        "research_decision_priority": _text(research_decision.get("priority"), "MISSING"),
+        "research_decision_next_task": _text(
+            research_next_action.get("suggested_codex_task"),
+            "MISSING",
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
         "evidence_summary": "" if evidence_path is None else str(evidence_path),
-        "shadow_monitor_report": (
-            "" if shadow_monitor_path is None else str(shadow_monitor_path)
+        "shadow_monitor_report": ("" if shadow_monitor_path is None else str(shadow_monitor_path)),
+        "candidate_evidence_summary": (
+            "" if candidate_evidence_path is None else str(candidate_evidence_path)
+        ),
+        "observe_pool": "" if observe_pool_path is None else str(observe_pool_path),
+        "overnight_readiness_report": (
+            "" if overnight_readiness_path is None else str(overnight_readiness_path)
+        ),
+        "research_decision": (
+            "" if research_decision_path is None else str(research_decision_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -5259,10 +5391,27 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "shadow_observe_only_count": 0,
         "shadow_promotion_ready_count": 0,
         "shadow_live_drift_review_required_count": 0,
+        "candidate_evidence_status": "MISSING",
+        "candidate_evidence_usable_count": 0,
+        "candidate_evidence_complete_count": 0,
+        "candidate_evidence_top_blockers": "MISSING",
+        "observe_pool_status": "MISSING",
+        "observe_candidate_count": 0,
+        "observe_pool_manual_review_required_count": 0,
+        "shadow_registry_sync_status": "MISSING",
+        "overnight_readiness": "MISSING",
+        "overnight_blocking_reasons": "none",
+        "research_decision_recommendation": "MISSING",
+        "research_decision_priority": "MISSING",
+        "research_decision_next_task": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
         "evidence_summary": "",
         "shadow_monitor_report": "",
+        "candidate_evidence_summary": "",
+        "observe_pool": "",
+        "overnight_readiness_report": "",
+        "research_decision": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -5286,6 +5435,15 @@ def _promotion_pack_manifest_path(path: Path | None) -> Path | None:
     if sibling.exists():
         return sibling
     return path
+
+
+def _research_decision_recommendation_path(path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    if path.name == "next_action_recommendations.json":
+        return path
+    sibling = path.parent / "next_action_recommendations.json"
+    return sibling if sibling.exists() else None
 
 
 def _etf_dynamic_v3_parameter_research_safety_status(

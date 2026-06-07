@@ -260,6 +260,31 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert operations_health["production_effect"] == "none"
     assert operations_health["broker_action"] == "none"
+    dynamic_v3_parameter = payload["etf_dynamic_v3_parameter_research"]
+    assert dynamic_v3_parameter["availability"] == "AVAILABLE"
+    assert dynamic_v3_parameter["evaluator_mode"] == "real_dynamic_v3_rescue"
+    assert dynamic_v3_parameter["candidate_count"] == 300
+    assert dynamic_v3_parameter["top_candidate"] == "medium_candidate_001"
+    assert dynamic_v3_parameter["candidate_evidence_status"] == "PASS_WITH_WARNINGS"
+    assert dynamic_v3_parameter["candidate_evidence_usable_count"] == 5
+    assert dynamic_v3_parameter["candidate_evidence_complete_count"] == 3
+    assert dynamic_v3_parameter["observe_pool_status"] == "PASS"
+    assert dynamic_v3_parameter["observe_candidate_count"] == 2
+    assert dynamic_v3_parameter["shadow_registry_sync_status"] == "NOT_SYNCED_BY_DEFAULT"
+    assert dynamic_v3_parameter["overnight_readiness"] == "READY_WITH_WARNINGS"
+    assert dynamic_v3_parameter["overnight_blocking_reasons"] == "none"
+    assert dynamic_v3_parameter["research_decision_recommendation"] == (
+        "manual_review_observe_pool"
+    )
+    assert dynamic_v3_parameter["research_decision_priority"] == "P1"
+    assert dynamic_v3_parameter["research_decision_next_task"].startswith(
+        "Review observe_pool candidates"
+    )
+    assert dynamic_v3_parameter["candidate_evidence_summary"].endswith(
+        "evidence_summary_manifest.json"
+    )
+    assert dynamic_v3_parameter["observe_pool"].endswith("observe_pool_manifest.json")
+    assert dynamic_v3_parameter["research_decision"].endswith("research_decision_manifest.json")
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -895,11 +920,7 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         encoding="utf-8",
     )
     experiment_run_dir = (
-        tmp_path
-        / "reports"
-        / "etf_portfolio"
-        / "experiments"
-        / "etf-exp-20260504T000000Z"
+        tmp_path / "reports" / "etf_portfolio" / "experiments" / "etf-exp-20260504T000000Z"
     )
     experiment_run_dir.mkdir(parents=True)
     experiment_manifest_path = experiment_run_dir / "run_manifest.json"
@@ -1088,9 +1109,7 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
-    ai_confirmation_dir = (
-        tmp_path / "reports" / "etf_portfolio" / "ai_confirmation" / "reports"
-    )
+    ai_confirmation_dir = tmp_path / "reports" / "etf_portfolio" / "ai_confirmation" / "reports"
     ai_confirmation_dir.mkdir(parents=True)
     ai_confirmation_path = ai_confirmation_dir / "ai_confirmation_report_2026-05-04.json"
     ai_confirmation_path.write_text(
@@ -1132,9 +1151,7 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
-    ai_attribution_dir = (
-        tmp_path / "reports" / "etf_portfolio" / "ai_attribution" / "reports"
-    )
+    ai_attribution_dir = tmp_path / "reports" / "etf_portfolio" / "ai_attribution" / "reports"
     ai_attribution_dir.mkdir(parents=True)
     ai_attribution_path = ai_attribution_dir / "ai_attribution_report_2026-05-04.json"
     ai_attribution_path.write_text(
@@ -1263,9 +1280,7 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
-    parameter_review_dir = (
-        tmp_path / "reports" / "etf_portfolio" / "parameter_review" / "reports"
-    )
+    parameter_review_dir = tmp_path / "reports" / "etf_portfolio" / "parameter_review" / "reports"
     parameter_review_dir.mkdir(parents=True)
     parameter_review_path = parameter_review_dir / "parameter_review_2026-05-04.json"
     parameter_review_path.write_text(
@@ -1751,6 +1766,197 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    dynamic_v3_root = tmp_path / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
+    dynamic_v3_sweep_dir = dynamic_v3_root / "sweeps" / "sweep_medium_real_fixture"
+    dynamic_v3_sweep_dir.mkdir(parents=True)
+    dynamic_v3_leaderboard_path = dynamic_v3_sweep_dir / "leaderboard.json"
+    dynamic_v3_leaderboard_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_parameter_sweep_leaderboard",
+                "status": "completed",
+                "evaluator_mode": "real_dynamic_v3_rescue",
+                "evaluator_version": "dynamic_v3_real_fixture",
+                "metrics_source": "real_evaluation_artifact",
+                "not_for_investment_decision": False,
+                "candidate_count": 300,
+                "top_eligible_candidates": [
+                    {
+                        "candidate_id": "medium_candidate_001",
+                        "gate": "observe_only",
+                        "score": 0.71,
+                    }
+                ],
+                "most_common_reject_reasons": [
+                    {"reason": "constraint_hit_rate_exceeds_policy", "count": 42}
+                ],
+                "recommended_next_actions": ["run_evidence_summary"],
+                "production_candidate_generated": False,
+                "safety": {
+                    "observe_only": True,
+                    "candidate_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                    "production_state_mutated": False,
+                    "baseline_config_mutated": False,
+                    "official_target_weights_mutated": False,
+                    "automatic_candidate_promotion": False,
+                    "auto_enrollment_without_owner_approval": False,
+                    "shadow_enrollment_allowed": False,
+                    "automatic_enrollment_allowed": False,
+                    "owner_approval_executed": False,
+                    "production_candidate_generated": False,
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_promotion_dir = dynamic_v3_root / "promotion" / "medium_candidate_001" / "pack1"
+    dynamic_v3_promotion_dir.mkdir(parents=True)
+    dynamic_v3_promotion_manifest_path = dynamic_v3_promotion_dir / "promotion_manifest.json"
+    dynamic_v3_promotion_manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_promotion_pack",
+                "status": "incomplete",
+                "candidate_id": "medium_candidate_001",
+                "production_candidate_generated": False,
+                "automatic_candidate_promotion": False,
+                "shadow_enrollment_allowed": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_promotion_evidence_path = dynamic_v3_promotion_dir / "evidence_summary.json"
+    dynamic_v3_promotion_evidence_path.write_text(
+        json.dumps(
+            {
+                "backtest_window_status": "PASS",
+                "weight_path_status": "COMPLETE",
+                "candidate_attribution_status": "COMPLETE",
+                "provenance_status": "RECONSTRUCTED_MANIFEST",
+                "download_manifest_status": "AVAILABLE",
+                "promotion_blocking_flags": ["OVERFIT_REVIEW_REQUIRED"],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_shadow_monitor_dir = dynamic_v3_root / "shadow_monitor" / "monitor1"
+    dynamic_v3_shadow_monitor_dir.mkdir(parents=True)
+    dynamic_v3_shadow_monitor_path = dynamic_v3_shadow_monitor_dir / "shadow_monitor_manifest.json"
+    dynamic_v3_shadow_monitor_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_shadow_monitor_manifest",
+                "status": "PASS",
+                "summary": {
+                    "observe_only_candidate_count": 2,
+                    "promotion_review_ready_count": 0,
+                    "live_drift_review_required_count": 1,
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_evidence_dir = dynamic_v3_root / "evidence_summary" / "evidence1"
+    dynamic_v3_evidence_dir.mkdir(parents=True)
+    dynamic_v3_evidence_path = dynamic_v3_evidence_dir / "evidence_summary_manifest.json"
+    dynamic_v3_evidence_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_evidence_summary_manifest",
+                "status": "PASS_WITH_WARNINGS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "candidate_count": 300,
+                "usable_for_research_count": 5,
+                "complete_evidence_count": 3,
+                "top_blocking_reasons": [{"reason": "OVERFIT_REVIEW_REQUIRED", "count": 4}],
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_observe_pool_dir = dynamic_v3_root / "observe_pool" / "pool1"
+    dynamic_v3_observe_pool_dir.mkdir(parents=True)
+    dynamic_v3_observe_pool_path = dynamic_v3_observe_pool_dir / "observe_pool_manifest.json"
+    dynamic_v3_observe_pool_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_observe_pool_manifest",
+                "status": "PASS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "observe_candidate_count": 2,
+                "manual_review_required_count": 2,
+                "shadow_registry_sync_status": "NOT_SYNCED_BY_DEFAULT",
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_readiness_dir = dynamic_v3_root / "overnight_readiness" / "ready1"
+    dynamic_v3_readiness_dir.mkdir(parents=True)
+    dynamic_v3_readiness_path = dynamic_v3_readiness_dir / "overnight_readiness_manifest.json"
+    dynamic_v3_readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_overnight_readiness_manifest",
+                "status": "PASS_WITH_WARNINGS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "overnight_readiness": "READY_WITH_WARNINGS",
+                "blocking_reasons": [],
+                "warnings": ["projected_runtime_warning"],
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    dynamic_v3_decision_dir = dynamic_v3_root / "research_decision" / "decision1"
+    dynamic_v3_decision_dir.mkdir(parents=True)
+    dynamic_v3_decision_path = dynamic_v3_decision_dir / "research_decision_manifest.json"
+    dynamic_v3_decision_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_research_decision_manifest",
+                "status": "PASS",
+                "source_sweep_id": "sweep_medium_real_fixture",
+                "recommendation": "manual_review_observe_pool",
+                "priority": "P1",
+                "observe_candidate_count": 2,
+                "overnight_readiness": "READY_WITH_WARNINGS",
+                "production_candidate_generated": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (dynamic_v3_decision_dir / "next_action_recommendations.json").write_text(
+        json.dumps(
+            {
+                "recommendation": "manual_review_observe_pool",
+                "priority": "P1",
+                "suggested_codex_task": (
+                    "Review observe_pool candidates and register selected candidates."
+                ),
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     report_index_path = tmp_path / "report_index_2026-05-04.json"
     report_index_path.write_text(
         json.dumps(
@@ -1999,6 +2205,97 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(operations_health_path),
                         "exists": True,
                         "owner_action": "review_operations_health_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_parameter_sweep_leaderboard",
+                        "title": "ETF Dynamic v3 Parameter Sweep Leaderboard",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "completed",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_leaderboard_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_leaderboard",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_promotion_pack",
+                        "title": "ETF Dynamic v3 Promotion Pack",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "incomplete",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_promotion_manifest_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_promotion_pack",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_shadow_monitor_report",
+                        "title": "ETF Dynamic v3 Shadow Monitor",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_shadow_monitor_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_shadow_monitor",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_evidence_summary",
+                        "title": "ETF Dynamic v3 Evidence Summary",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS_WITH_WARNINGS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_evidence_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_evidence_summary",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_observe_pool",
+                        "title": "ETF Dynamic v3 Observe Pool",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_observe_pool_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_observe_pool",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_overnight_readiness",
+                        "title": "ETF Dynamic v3 Overnight Readiness",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "READY_WITH_WARNINGS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_readiness_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_overnight_readiness",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_dynamic_v3_research_decision",
+                        "title": "ETF Dynamic v3 Research Decision",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "manual_review_observe_pool",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(dynamic_v3_decision_path),
+                        "exists": True,
+                        "owner_action": "review_dynamic_v3_research_decision",
                         "production_effect": "none",
                     },
                 ],

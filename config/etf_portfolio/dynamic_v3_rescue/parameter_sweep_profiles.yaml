@@ -18,15 +18,21 @@ profiles:
     workers: 1
     ci_safe: false
     not_for_investment_decision: false
+    require_data_audit: true
+    require_window_audit: true
+    require_weight_path: true
 
   medium_real:
     description: "Medium real evaluator sweep for manual research"
     config_path: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml
     evaluator_mode: real_dynamic_v3_rescue
-    max_candidates: 500
-    workers: 4
+    max_candidates: 300
+    workers: 8
     ci_safe: false
     not_for_investment_decision: false
+    require_data_audit: true
+    require_window_audit: true
+    require_weight_path: true
 
   overnight_real:
     description: "Overnight real evaluator sweep; not CI safe"
@@ -36,3 +42,6 @@ profiles:
     workers: 8
     ci_safe: false
     not_for_investment_decision: false
+    require_data_audit: true
+    require_window_audit: true
+    require_weight_path: true

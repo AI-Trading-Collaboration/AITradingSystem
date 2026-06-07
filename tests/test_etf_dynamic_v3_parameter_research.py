@@ -120,6 +120,17 @@ def test_tiny_sweep_resume_reports_and_validation(tmp_path: Path) -> None:
     assert resumed["manifest"]["completed_count"] == len(results)
     assert len(_jsonl(sweep_dir / "candidate_results.jsonl")) == len(results)
 
+    resumed_with_worker_override = run_parameter_sweep(
+        config_path=config_path,
+        output_dir=output_dir,
+        resume=sweep_id,
+        workers=2,
+    )
+    assert resumed_with_worker_override["manifest"]["execution"]["workers"] == 2
+    assert "resume worker override applied: workers=2" in (sweep_dir / "run.log").read_text(
+        encoding="utf-8"
+    )
+
     (sweep_dir / "sweep_manifest.json").unlink()
     with (sweep_dir / "candidate_results.jsonl").open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(results[0], sort_keys=True) + "\n")

@@ -6,6 +6,7 @@ import json
 import subprocess
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
@@ -44,6 +45,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DynamicV3RealEvaluationPolicyConfig,
     build_dynamic_v3_real_evaluation_report,
     load_dynamic_v3_real_evaluation_policy_config,
+    precompute_dynamic_v3_fixed_robustness_reports,
     write_dynamic_v3_real_evaluation_report,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
@@ -96,6 +98,13 @@ DEFAULT_PROMOTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "promotion"
 DEFAULT_GOVERNANCE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "governance"
 DEFAULT_RESEARCH_INDEX_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "index"
 DEFAULT_SCHEDULE_OBSERVE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "schedule_observe"
+DEFAULT_EVIDENCE_SUMMARY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_summary"
+DEFAULT_MEDIUM_REAL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "medium_real"
+DEFAULT_REGIME_COVERAGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "regime_coverage"
+DEFAULT_INTERPRETATION_PACK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "interpretation_pack"
+DEFAULT_OBSERVE_POOL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "observe_pool"
+DEFAULT_OVERNIGHT_READINESS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "overnight_readiness"
+DEFAULT_RESEARCH_DECISION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_decision"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
@@ -121,6 +130,40 @@ WEIGHT_PATH_COMPLETE = "COMPLETE"
 WEIGHT_PATH_PARTIAL = "PARTIAL"
 WEIGHT_PATH_INCOMPLETE = "INCOMPLETE"
 DATA_PROVENANCE_RECONSTRUCTED = "RECONSTRUCTED_MANIFEST"
+
+# TRADING-114 pilot evidence score policy. These weights and bands are
+# documented in TRADING-114_to_120 as a baseline interpretation aid, not as an
+# investment promotion rule; missing or warning evidence remains visible.
+EVIDENCE_SCORE_POINTS = {
+    "data_quality": 0.20,
+    "data_provenance": 0.15,
+    "date_range": 0.20,
+    "weight_path": 0.20,
+    "candidate_attribution": 0.15,
+    "overfit": 0.10,
+}
+EVIDENCE_USABLE_SCORE_FLOOR = 0.85
+EVIDENCE_REVIEW_SCORE_FLOOR = 0.60
+
+# TRADING-116 baseline price-behavior windows for the first regime coverage
+# audit. They deliberately use simple ETF price behavior so the workflow does
+# not add an unaudited macro source dependency.
+REGIME_DRAWDOWN_THRESHOLD = -0.10
+SEMICONDUCTOR_DRAWDOWN_THRESHOLD = -0.12
+STRONG_TREND_RETURN_THRESHOLD = 0.15
+SIDEWAYS_ABS_RETURN_THRESHOLD = 0.03
+HIGH_VOL_ANNUALIZED_THRESHOLD = 0.25
+STRONG_RECOVERY_RETURN_THRESHOLD = 0.10
+REGIME_DRAWDOWN_PROTECTION_MAX_DEGRADATION_PP = 0.02
+
+# TRADING-119 pilot readiness bands. They estimate manual research capacity and
+# artifact risk only; the command never starts overnight_real automatically.
+OVERNIGHT_TARGET_CANDIDATES = 5000
+OVERNIGHT_READY_MAX_HOURS = 14.0
+OVERNIGHT_WARNING_MAX_HOURS = 24.0
+OVERNIGHT_READY_MAX_FAILURE_RATE = 0.02
+OVERNIGHT_WARNING_MAX_FAILURE_RATE = 0.05
+OVERNIGHT_WARNING_MAX_ARTIFACT_GB = 8.0
 
 # TRADING-111 allows a small start-date grace for signal-lag / warm-up mechanics;
 # a larger gap changes investment interpretation and must block promotion.
@@ -215,6 +258,8 @@ class RealEvaluationContext:
     prices_path: Path
     real_evaluation_output_dir: Path
     data_manifest_hash: str
+    precomputed_robustness_reports: dict[str, dict[str, Any]]
+    fixed_robustness_cache_manifest: dict[str, Any]
 
 
 class SweepRunConfig(BaseModel):
@@ -387,6 +432,11 @@ class DynamicV3ParameterSweepConfig(BaseModel):
         return self
 
 
+_PARALLEL_SWEEP_CONFIG: DynamicV3ParameterSweepConfig | None = None
+_PARALLEL_SWEEP_DIR: Path | None = None
+_PARALLEL_REAL_CONTEXT: RealEvaluationContext | None = None
+
+
 class SweepProfile(BaseModel):
     description: str = Field(min_length=1)
     config_path: Path
@@ -395,6 +445,9 @@ class SweepProfile(BaseModel):
     workers: int = Field(ge=1)
     ci_safe: bool
     not_for_investment_decision: bool
+    require_data_audit: bool = False
+    require_window_audit: bool = False
+    require_weight_path: bool = False
 
     @model_validator(mode="after")
     def validate_profile(self) -> Self:
@@ -742,6 +795,13 @@ def run_parameter_sweep_profile(
     )
     result["profile"] = profile
     result["profile_config_path"] = str(profile_config_path)
+    _annotate_sweep_profile(
+        sweep_dir=Path(result["sweep_dir"]),
+        profile=profile,
+        profile_config_path=profile_config_path,
+        selected=selected,
+    )
+    result["manifest"] = _read_json(Path(result["sweep_dir"]) / "sweep_manifest.json")
     return result
 
 
@@ -774,11 +834,23 @@ def run_parameter_sweep(
             raise DynamicV3ParameterResearchError(
                 "resume cannot change evaluator_mode from existing sweep config"
             )
+        if workers is not None:
+            config = config.model_copy(
+                update={"execution": config.execution.model_copy(update={"workers": workers})}
+            )
         sweep_id = resume
         candidates = _read_jsonl(sweep_dir / "candidates.jsonl")
         existing_results, duplicate_count = _deduplicate_candidate_results_file(
             sweep_dir / "candidate_results.jsonl"
         )
+        if workers is not None:
+            _append_text(
+                sweep_dir / "run.log",
+                (
+                    f"{datetime.now(UTC).isoformat()} "
+                    f"resume worker override applied: workers={workers}\n"
+                ),
+            )
         if duplicate_count:
             _append_text(
                 sweep_dir / "run.log",
@@ -874,39 +946,85 @@ def run_parameter_sweep(
         _write_jsonl(error_path, [])
     completed_count = len(completed)
     failed_count = len(_read_jsonl(error_path))
-    for idx, candidate in enumerate(candidates, start=1):
-        candidate_id = _text(candidate.get("candidate_id"))
-        if candidate_id in completed:
-            continue
-        started = datetime.now(UTC)
-        try:
-            result = evaluate_sweep_candidate(
-                candidate,
-                config=config,
-                sweep_dir=sweep_dir,
-                real_context=real_context,
-            )
-            result["started_at"] = started.isoformat()
-            result["completed_at"] = datetime.now(UTC).isoformat()
+    pending = [
+        (idx, candidate)
+        for idx, candidate in enumerate(candidates, start=1)
+        if _text(candidate.get("candidate_id")) not in completed
+    ]
+    max_processed_index = 0
+
+    def record_candidate_result(
+        idx: int,
+        candidate_id: str,
+        result: dict[str, Any] | None,
+        error: dict[str, Any] | None,
+    ) -> None:
+        nonlocal completed_count, failed_count, max_processed_index
+        max_processed_index = max(max_processed_index, idx)
+        if result is not None:
             _append_jsonl(result_path, result)
             completed.add(candidate_id)
             completed_count += 1
-        except Exception as exc:  # noqa: BLE001
+        elif error is not None:
             failed_count += 1
-            error = {
-                "candidate_id": candidate_id,
-                "status": "failed",
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-                "parameters": candidate.get("parameters", {}),
-                "started_at": started.isoformat(),
-                "completed_at": datetime.now(UTC).isoformat(),
-            }
             _append_jsonl(error_path, error)
             if not config.execution.continue_on_candidate_error:
-                raise DynamicV3ParameterResearchError(str(exc)) from exc
-        if idx % config.execution.checkpoint_every_candidates == 0:
-            _write_checkpoint(sweep_dir, idx, completed_count, failed_count)
+                raise DynamicV3ParameterResearchError(_text(error.get("error")))
+        if (completed_count + failed_count) % config.execution.checkpoint_every_candidates == 0:
+            _write_checkpoint(sweep_dir, max_processed_index, completed_count, failed_count)
+
+    if config.execution.workers > 1 and len(pending) > 1:
+        if config.execution.evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+            _append_text(
+                sweep_dir / "run.log",
+                (
+                    f"{datetime.now(UTC).isoformat()} "
+                    f"process pool started with {config.execution.workers} workers "
+                    f"for {len(pending)} pending candidates\n"
+                ),
+            )
+            with ProcessPoolExecutor(
+                max_workers=config.execution.workers,
+                initializer=_init_parallel_sweep_worker,
+                initargs=(config, sweep_dir, real_context),
+            ) as executor:
+                futures = [
+                    executor.submit(_evaluate_parallel_sweep_candidate, item) for item in pending
+                ]
+                for future in as_completed(futures):
+                    record_candidate_result(*future.result())
+        else:
+            _append_text(
+                sweep_dir / "run.log",
+                (
+                    f"{datetime.now(UTC).isoformat()} "
+                    f"thread pool started with {config.execution.workers} workers "
+                    f"for {len(pending)} pending candidates\n"
+                ),
+            )
+            with ThreadPoolExecutor(max_workers=config.execution.workers) as executor:
+                futures = [
+                    executor.submit(
+                        _evaluate_sweep_candidate_for_run,
+                        item,
+                        config=config,
+                        sweep_dir=sweep_dir,
+                        real_context=real_context,
+                    )
+                    for item in pending
+                ]
+                for future in as_completed(futures):
+                    record_candidate_result(*future.result())
+    else:
+        for item in pending:
+            record_candidate_result(
+                *_evaluate_sweep_candidate_for_run(
+                    item,
+                    config=config,
+                    sweep_dir=sweep_dir,
+                    real_context=real_context,
+                )
+            )
     _write_checkpoint(sweep_dir, len(candidates), completed_count, failed_count)
     results, duplicate_count = _deduplicate_candidate_results_file(result_path)
     if duplicate_count:
@@ -1814,6 +1932,68 @@ def evaluate_sweep_candidate(
     }
 
 
+def _evaluate_sweep_candidate_for_run(
+    item: tuple[int, Mapping[str, Any]],
+    *,
+    config: DynamicV3ParameterSweepConfig,
+    sweep_dir: Path,
+    real_context: RealEvaluationContext | None,
+) -> tuple[int, str, dict[str, Any] | None, dict[str, Any] | None]:
+    idx, candidate = item
+    candidate_id = _text(candidate.get("candidate_id"))
+    started = datetime.now(UTC)
+    try:
+        result = evaluate_sweep_candidate(
+            candidate,
+            config=config,
+            sweep_dir=sweep_dir,
+            real_context=real_context,
+        )
+        result["started_at"] = started.isoformat()
+        result["completed_at"] = datetime.now(UTC).isoformat()
+        return idx, candidate_id, result, None
+    except Exception as exc:  # noqa: BLE001
+        completed_at = datetime.now(UTC)
+        return (
+            idx,
+            candidate_id,
+            None,
+            {
+                "candidate_id": candidate_id,
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "parameters": candidate.get("parameters", {}),
+                "started_at": started.isoformat(),
+                "completed_at": completed_at.isoformat(),
+            },
+        )
+
+
+def _init_parallel_sweep_worker(
+    config: DynamicV3ParameterSweepConfig,
+    sweep_dir: Path,
+    real_context: RealEvaluationContext | None,
+) -> None:
+    global _PARALLEL_REAL_CONTEXT, _PARALLEL_SWEEP_CONFIG, _PARALLEL_SWEEP_DIR
+    _PARALLEL_SWEEP_CONFIG = config
+    _PARALLEL_SWEEP_DIR = sweep_dir
+    _PARALLEL_REAL_CONTEXT = real_context
+
+
+def _evaluate_parallel_sweep_candidate(
+    item: tuple[int, Mapping[str, Any]],
+) -> tuple[int, str, dict[str, Any] | None, dict[str, Any] | None]:
+    if _PARALLEL_SWEEP_CONFIG is None or _PARALLEL_SWEEP_DIR is None:
+        raise DynamicV3ParameterResearchError("parallel sweep worker is not initialized")
+    return _evaluate_sweep_candidate_for_run(
+        item,
+        config=_PARALLEL_SWEEP_CONFIG,
+        sweep_dir=_PARALLEL_SWEEP_DIR,
+        real_context=_PARALLEL_REAL_CONTEXT,
+    )
+
+
 def gate_candidate(
     metrics: Mapping[str, Any],
     config: DynamicV3ParameterSweepConfig,
@@ -2046,6 +2226,1254 @@ def validate_sweep_artifact(
 def latest_sweep_id() -> str | None:
     pointer = _read_optional_json(DEFAULT_LATEST_POINTER_DIR / "latest_sweep.json")
     return None if not pointer else _text(pointer.get("artifact_id")) or None
+
+
+def run_evidence_summary(
+    *,
+    sweep_id: str,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_EVIDENCE_SUMMARY_DIR,
+    candidate_attribution_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    overfit_dir: Path = DEFAULT_OVERFIT_DIR,
+    window_audit_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
+    data_provenance_dir: Path = DEFAULT_DATA_PROVENANCE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sweep_dir = sweep_output_dir / sweep_id
+    manifest = _read_json(sweep_dir / "sweep_manifest.json")
+    results = _read_candidate_results(sweep_dir)
+    context = _evidence_context(
+        window_audit_dir=window_audit_dir,
+        data_provenance_dir=data_provenance_dir,
+    )
+    rows = [
+        _candidate_evidence_row(
+            row,
+            sweep_id=sweep_id,
+            sweep_manifest=manifest,
+            candidate_attribution_dir=candidate_attribution_dir,
+            overfit_dir=overfit_dir,
+            context=context,
+        )
+        for row in results
+    ]
+    summary_id = _stable_id("evidence-summary", sweep_id, generated.isoformat())
+    summary_dir = _unique_dir(output_dir / summary_id)
+    summary_dir.mkdir(parents=True, exist_ok=False)
+    blocking_counter = Counter(
+        reason for row in rows for reason in _texts(row.get("promotion_blocking_reasons"))
+    )
+    complete_count = sum(
+        1
+        for row in rows
+        if row["weight_path_status"] == WEIGHT_PATH_COMPLETE
+        and row["candidate_attribution_status"] == WEIGHT_PATH_COMPLETE
+    )
+    partial_count = sum(
+        1
+        for row in rows
+        if row["weight_path_status"] == WEIGHT_PATH_PARTIAL
+        or row["candidate_attribution_status"] == WEIGHT_PATH_PARTIAL
+    )
+    usable_count = sum(1 for row in rows if row["evidence_recommendation"] == "usable_for_research")
+    not_usable_count = sum(1 for row in rows if row["evidence_recommendation"] == "not_usable")
+    status = "PASS"
+    if not rows or not_usable_count == len(rows):
+        status = "FAIL"
+    elif any(row["promotion_blocking_reasons"] for row in rows):
+        status = "PASS_WITH_WARNINGS"
+    matrix_path = summary_dir / "candidate_evidence_matrix.jsonl"
+    blocking_path = summary_dir / "evidence_blocking_reasons.json"
+    report_path = summary_dir / "evidence_summary_report.md"
+    manifest_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_summary_manifest",
+        "summary_id": summary_dir.name,
+        "source_sweep_id": sweep_id,
+        "source_sweep_manifest_path": str(sweep_dir / "sweep_manifest.json"),
+        "generated_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "status": status,
+        "market_regime": "ai_after_chatgpt",
+        "requested_range": {
+            "start": manifest.get("as_of", ""),
+            "end": manifest.get("end", ""),
+        },
+        "evaluator_mode": manifest.get("evaluator_mode", "UNKNOWN"),
+        "candidate_count": len(rows),
+        "complete_evidence_count": complete_count,
+        "partial_evidence_count": partial_count,
+        "usable_for_research_count": usable_count,
+        "needs_review_count": sum(
+            1 for row in rows if row["evidence_recommendation"] == "needs_review"
+        ),
+        "not_usable_count": not_usable_count,
+        "data_quality_distribution": dict(Counter(row["data_quality"] for row in rows)),
+        "date_range_distribution": dict(Counter(row["date_range_status"] for row in rows)),
+        "weight_path_distribution": dict(Counter(row["weight_path_status"] for row in rows)),
+        "candidate_attribution_distribution": dict(
+            Counter(row["candidate_attribution_status"] for row in rows)
+        ),
+        "overfit_distribution": dict(Counter(row["overfit_status"] for row in rows)),
+        "promotion_status_distribution": dict(Counter(row["promotion_status"] for row in rows)),
+        "top_blocking_reasons": [
+            {"reason": reason, "count": count} for reason, count in blocking_counter.most_common()
+        ],
+        "can_enter_medium_real": bool(rows) and status in {"PASS", "PASS_WITH_WARNINGS"},
+        "candidate_evidence_matrix_path": str(matrix_path),
+        "evidence_blocking_reasons_path": str(blocking_path),
+        "evidence_summary_report_path": str(report_path),
+        "reader_brief_section": _evidence_summary_reader_brief_section(
+            status=status,
+            usable_count=usable_count,
+            candidate_count=len(rows),
+            blocking_counter=blocking_counter,
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(summary_dir / "evidence_summary_manifest.json", manifest_payload)
+    _write_jsonl(matrix_path, rows)
+    _write_json(
+        blocking_path,
+        {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_evidence_blocking_reasons",
+            "summary_id": summary_dir.name,
+            "source_sweep_id": sweep_id,
+            "blocking_reasons": manifest_payload["top_blocking_reasons"],
+            "candidate_blockers": [
+                {
+                    "candidate_id": row["candidate_id"],
+                    "promotion_blocking_reasons": row["promotion_blocking_reasons"],
+                }
+                for row in rows
+                if row["promotion_blocking_reasons"]
+            ],
+            "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+            **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+        },
+    )
+    _write_text(report_path, render_evidence_summary_markdown(manifest_payload, rows))
+    _update_latest_pointer(
+        "latest_evidence_summary",
+        summary_dir.name,
+        summary_dir / "evidence_summary_manifest.json",
+    )
+    return {
+        "summary_id": summary_dir.name,
+        "summary_dir": summary_dir,
+        "manifest": manifest_payload,
+        "matrix": rows,
+    }
+
+
+def evidence_summary_report_payload(
+    *,
+    summary_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_EVIDENCE_SUMMARY_DIR,
+) -> dict[str, Any]:
+    resolved_id = summary_id or (
+        _latest_pointer_artifact_id("latest_evidence_summary") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--summary-id or --latest is required")
+    summary_dir = output_dir / resolved_id
+    manifest = _read_json(summary_dir / "evidence_summary_manifest.json")
+    return {
+        **manifest,
+        "summary_dir": str(summary_dir),
+        "report_path": str(summary_dir / "evidence_summary_report.md"),
+    }
+
+
+def validate_evidence_summary_artifact(
+    *,
+    summary_id: str,
+    output_dir: Path = DEFAULT_EVIDENCE_SUMMARY_DIR,
+) -> dict[str, Any]:
+    summary_dir = output_dir / summary_id
+    required = [
+        "evidence_summary_manifest.json",
+        "candidate_evidence_matrix.jsonl",
+        "evidence_blocking_reasons.json",
+        "evidence_summary_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (summary_dir / name).exists(), name) for name in required
+    ]
+    manifest = _read_optional_json(summary_dir / "evidence_summary_manifest.json") or {}
+    rows = _read_jsonl(summary_dir / "candidate_evidence_matrix.jsonl")
+    checks.extend(
+        [
+            _check("summary_id_matches", manifest.get("summary_id") == summary_id, summary_id),
+            _check("candidate_matrix_not_empty", bool(rows), f"row_count={len(rows)}"),
+            _check(
+                "candidate_rows_have_required_statuses",
+                all(
+                    row.get("candidate_id")
+                    and row.get("data_quality")
+                    and row.get("date_range_status")
+                    and row.get("weight_path_status")
+                    and row.get("candidate_attribution_status")
+                    and row.get("promotion_status")
+                    and row.get("evidence_recommendation")
+                    for row in rows
+                ),
+                "candidate_evidence_matrix required fields",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "evidence summary is research-only",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_summary_validation",
+        "summary_id": summary_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def build_medium_real_report(
+    *,
+    sweep_id: str | None = None,
+    latest: bool = False,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_MEDIUM_REAL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    resolved_id = sweep_id or (
+        _latest_sweep_id_for_profile("medium_real", sweep_output_dir=sweep_output_dir)
+        if latest
+        else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--sweep-id or --latest is required")
+    sweep_dir = sweep_output_dir / resolved_id
+    manifest = _read_json(sweep_dir / "sweep_manifest.json")
+    leaderboard = _read_optional_json(
+        sweep_dir / "leaderboard.json"
+    ) or build_sweep_leaderboard_payload(sweep_dir=sweep_dir)
+    results = _read_candidate_results(sweep_dir)
+    errors = _read_jsonl(sweep_dir / "candidate_errors.jsonl")
+    report_id = _stable_id("medium-real-report", resolved_id, generated.isoformat())
+    report_dir = _unique_dir(output_dir / report_id)
+    report_dir.mkdir(parents=True, exist_ok=False)
+    gate_counts = Counter(_text(row.get("gate")) for row in results)
+    evidence_dist = Counter(
+        _text(_mapping(row.get("weight_path_metadata")).get("attribution_completeness"), "MISSING")
+        for row in results
+    )
+    reject_counter = Counter(
+        reason
+        for row in results
+        if row.get("gate") == GATE_REJECT
+        for reason in _texts(row.get("gate_reasons"))
+    )
+    artifact_size = _artifact_size_summary(sweep_dir)
+    avg_runtime = _average_runtime_seconds(manifest, len(results))
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_medium_real_report",
+        "medium_real_report_id": report_dir.name,
+        "source_sweep_id": resolved_id,
+        "source_sweep_dir": str(sweep_dir),
+        "generated_at": generated.isoformat(),
+        "status": (
+            "PASS"
+            if results and manifest.get("evaluator_mode") == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+            else "FAIL"
+        ),
+        "profile": manifest.get("profile", ""),
+        "evaluator_mode": manifest.get("evaluator_mode"),
+        "candidate_count": manifest.get("candidate_count", len(results) + len(errors)),
+        "completed_count": manifest.get("completed_count", len(results)),
+        "failed_count": manifest.get("failed_count", len(errors)),
+        "rejected_count": gate_counts.get(GATE_REJECT, 0),
+        "review_required_count": gate_counts.get(GATE_REVIEW_REQUIRED, 0),
+        "observe_only_count": gate_counts.get(GATE_OBSERVE_ONLY, 0),
+        "promote_candidate_count": gate_counts.get(GATE_PROMOTE_CANDIDATE, 0),
+        "top_candidates": _records(leaderboard.get("top_eligible_candidates"))[:20],
+        "reject_reason_distribution": [
+            {"reason": reason, "count": count} for reason, count in reject_counter.most_common()
+        ],
+        "evidence_completeness_distribution": dict(evidence_dist),
+        "average_runtime_seconds_per_candidate": avg_runtime,
+        "artifact_size_summary": artifact_size,
+        "recommended_next_action": _medium_real_next_action(
+            manifest=manifest,
+            completed_count=len(results),
+            failed_count=len(errors),
+            observe_only_count=gate_counts.get(GATE_OBSERVE_ONLY, 0),
+        ),
+        "medium_real_manifest_path": str(report_dir / "medium_real_manifest.json"),
+        "medium_real_report_path": str(report_dir / "medium_real_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(report_dir / "medium_real_manifest.json", payload)
+    _write_text(report_dir / "medium_real_report.md", render_medium_real_markdown(payload))
+    _update_latest_pointer(
+        "latest_medium_real",
+        report_dir.name,
+        report_dir / "medium_real_manifest.json",
+    )
+    return payload
+
+
+def medium_real_report_payload(
+    *,
+    report_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_MEDIUM_REAL_DIR,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> dict[str, Any]:
+    resolved_id = report_id or (_latest_pointer_artifact_id("latest_medium_real") if latest else "")
+    if resolved_id:
+        report_dir = output_dir / resolved_id
+        return _read_json(report_dir / "medium_real_manifest.json")
+    return build_medium_real_report(
+        latest=True, sweep_output_dir=sweep_output_dir, output_dir=output_dir
+    )
+
+
+def validate_medium_real_sweep(
+    *,
+    sweep_id: str,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    min_expected_candidates: int = 300,
+) -> dict[str, Any]:
+    sweep_dir = sweep_output_dir / sweep_id
+    sweep_validation = validate_sweep_artifact(sweep_id=sweep_id, output_dir=sweep_output_dir)
+    manifest = _read_optional_json(sweep_dir / "sweep_manifest.json") or {}
+    results = _read_candidate_results(sweep_dir)
+    errors = _read_jsonl(sweep_dir / "candidate_errors.jsonl")
+    completed_count = len(results)
+    expected_reason = ""
+    enough_candidates = completed_count >= min_expected_candidates
+    if not enough_candidates:
+        candidate_count = int(manifest.get("candidate_count") or completed_count + len(errors))
+        if candidate_count < min_expected_candidates:
+            expected_reason = "parameter_space_exhausted_before_medium_real_floor"
+        elif errors:
+            expected_reason = "candidate_errors_present_before_medium_real_floor"
+    candidate_floor_detail = (
+        f"completed={completed_count}; "
+        f"min_expected={min_expected_candidates}; "
+        f"reason={expected_reason}"
+    )
+    checks = [
+        _check("base_sweep_validation_pass", sweep_validation["status"] == "PASS", sweep_id),
+        _check(
+            "profile_is_medium_real_or_real_manual",
+            _text(manifest.get("profile")) in {"medium_real", ""}
+            and manifest.get("evaluator_mode") == EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
+            _text(manifest.get("profile")),
+        ),
+        _check(
+            "medium_candidate_floor_met_or_explained",
+            enough_candidates or bool(expected_reason),
+            candidate_floor_detail,
+        ),
+        _check("leaderboard_exists", (sweep_dir / "leaderboard.json").exists(), "leaderboard"),
+        _check(
+            "real_artifact_paths_present",
+            all(row.get("real_evaluation_artifact_path") for row in results),
+            "real_evaluation_artifact_path required",
+        ),
+        _check(
+            "tiny_fixture_not_mixed",
+            all(row.get("evaluator_mode") == EVALUATOR_REAL_DYNAMIC_V3_RESCUE for row in results),
+            "leaderboard cannot mix tiny_fixture_proxy",
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_medium_real_validation",
+        "sweep_id": sweep_id,
+        "status": status,
+        "completed_count": completed_count,
+        "failed_count": len(errors),
+        "minimum_expected_candidates": min_expected_candidates,
+        "minimum_candidate_shortfall_reason": expected_reason,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_regime_coverage(
+    *,
+    sweep_id: str,
+    focus: str = "tech_semiconductor",
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    top_n: int = 20,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sweep_dir = sweep_output_dir / sweep_id
+    manifest = _read_json(sweep_dir / "sweep_manifest.json")
+    results = _read_candidate_results(sweep_dir)
+    ranked = _ranked_candidate_rows(results)[:top_n]
+    start = date(2022, 12, 1)
+    end = _date_from_any(manifest.get("end")) or start
+    windows = _regime_windows_from_prices(
+        prices_path=prices_path,
+        start=start,
+        end=end,
+    )
+    candidate_rows = [_candidate_regime_result(row, windows=windows, focus=focus) for row in ranked]
+    gap_report = _regime_gap_report(windows=windows, candidate_rows=candidate_rows)
+    coverage_id = _stable_id("regime-coverage", sweep_id, focus, generated.isoformat())
+    coverage_dir = _unique_dir(output_dir / coverage_id)
+    coverage_dir.mkdir(parents=True, exist_ok=False)
+    status = _coverage_status(gap_report)
+    relevance = _tech_semiconductor_relevance(gap_report)
+    overfit_risk = _ai_bull_market_overfit_risk(gap_report, candidate_rows)
+    manifest_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_regime_coverage_manifest",
+        "coverage_id": coverage_dir.name,
+        "source_sweep_id": sweep_id,
+        "focus": focus,
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "coverage_status": status,
+        "tech_semiconductor_relevance": relevance,
+        "ai_bull_market_overfit_risk": overfit_risk,
+        "market_regime": "ai_after_chatgpt",
+        "requested_range": {"start": start.isoformat(), "end": end.isoformat()},
+        "window_count": len(windows),
+        "candidate_count": len(candidate_rows),
+        "regime_windows_path": str(coverage_dir / "regime_windows.json"),
+        "candidate_regime_results_path": str(coverage_dir / "candidate_regime_results.jsonl"),
+        "regime_gap_report_path": str(coverage_dir / "regime_gap_report.json"),
+        "tech_semiconductor_relevance_report_path": str(
+            coverage_dir / "tech_semiconductor_relevance_report.md"
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(coverage_dir / "regime_coverage_manifest.json", manifest_payload)
+    _write_json(
+        coverage_dir / "regime_windows.json",
+        {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "etf_dynamic_v3_regime_windows",
+            "coverage_id": coverage_dir.name,
+            "windows": windows,
+            "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        },
+    )
+    _write_jsonl(coverage_dir / "candidate_regime_results.jsonl", candidate_rows)
+    _write_json(coverage_dir / "regime_gap_report.json", gap_report)
+    _write_text(
+        coverage_dir / "tech_semiconductor_relevance_report.md",
+        render_regime_coverage_markdown(manifest_payload, windows, gap_report, candidate_rows),
+    )
+    _update_latest_pointer(
+        "latest_regime_coverage",
+        coverage_dir.name,
+        coverage_dir / "regime_coverage_manifest.json",
+    )
+    return {
+        "coverage_id": coverage_dir.name,
+        "coverage_dir": coverage_dir,
+        "manifest": manifest_payload,
+        "windows": windows,
+        "candidate_results": candidate_rows,
+        "gap_report": gap_report,
+    }
+
+
+def regime_coverage_report_payload(
+    *,
+    coverage_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+) -> dict[str, Any]:
+    resolved_id = coverage_id or (
+        _latest_pointer_artifact_id("latest_regime_coverage") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--coverage-id or --latest is required")
+    coverage_dir = output_dir / resolved_id
+    manifest = _read_json(coverage_dir / "regime_coverage_manifest.json")
+    return {**manifest, "coverage_dir": str(coverage_dir)}
+
+
+def validate_regime_coverage_artifact(
+    *,
+    coverage_id: str,
+    output_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+) -> dict[str, Any]:
+    coverage_dir = output_dir / coverage_id
+    required = [
+        "regime_coverage_manifest.json",
+        "regime_windows.json",
+        "candidate_regime_results.jsonl",
+        "regime_gap_report.json",
+        "tech_semiconductor_relevance_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (coverage_dir / name).exists(), name) for name in required
+    ]
+    manifest = _read_optional_json(coverage_dir / "regime_coverage_manifest.json") or {}
+    windows = _records(
+        _mapping(_read_optional_json(coverage_dir / "regime_windows.json")).get("windows")
+    )
+    checks.extend(
+        [
+            _check("coverage_id_matches", manifest.get("coverage_id") == coverage_id, coverage_id),
+            _check(
+                "ai_after_chatgpt_window_present",
+                any(row.get("regime_id") == "ai_after_chatgpt" for row in windows),
+                "",
+            ),
+            _check(
+                "coverage_status_valid",
+                manifest.get("coverage_status") in {"PASS", "PASS_WITH_WARNINGS", "FAIL"},
+                _text(manifest.get("coverage_status")),
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "research-only",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_regime_coverage_validation",
+        "coverage_id": coverage_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_interpretation_pack(
+    *,
+    sweep_id: str,
+    top_n: int = 10,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_INTERPRETATION_PACK_DIR,
+    candidate_attribution_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    overfit_dir: Path = DEFAULT_OVERFIT_DIR,
+    window_audit_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
+    data_provenance_dir: Path = DEFAULT_DATA_PROVENANCE_DIR,
+    regime_coverage_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sweep_dir = sweep_output_dir / sweep_id
+    manifest = _read_json(sweep_dir / "sweep_manifest.json")
+    results = _read_candidate_results(sweep_dir)
+    top_rows = _ranked_candidate_rows(results)[:top_n]
+    context = _evidence_context(
+        window_audit_dir=window_audit_dir,
+        data_provenance_dir=data_provenance_dir,
+    )
+    coverage = _latest_regime_coverage_for_sweep(sweep_id, regime_coverage_dir)
+    pack_id = _stable_id("interpretation-pack", sweep_id, top_n, generated.isoformat())
+    pack_dir = _unique_dir(output_dir / pack_id)
+    candidate_root = pack_dir / "candidate_interpretations"
+    summaries: list[dict[str, Any]] = []
+    incomplete_count = 0
+    for rank, row in enumerate(top_rows, start=1):
+        candidate_id = _text(row.get("candidate_id"))
+        candidate_dir = candidate_root / candidate_id
+        candidate_dir.mkdir(parents=True, exist_ok=True)
+        candidate_report = candidate_report_payload(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            output_dir=sweep_output_dir,
+            write=True,
+        )
+        evidence = _candidate_evidence_row(
+            row,
+            sweep_id=sweep_id,
+            sweep_manifest=manifest,
+            candidate_attribution_dir=candidate_attribution_dir,
+            overfit_dir=overfit_dir,
+            context=context,
+        )
+        weight_summary, major_changes = _weight_path_interpretation(row)
+        if not weight_summary:
+            incomplete_count += 1
+        regime_summary = _candidate_regime_summary(candidate_id, coverage)
+        blocking_summary = {
+            "candidate_id": candidate_id,
+            "promotion_blocking_reasons": evidence["promotion_blocking_reasons"],
+            "evidence_recommendation": evidence["evidence_recommendation"],
+            "evidence_score": evidence["evidence_score"],
+        }
+        interpretation = {
+            "rank": rank,
+            "candidate_id": candidate_id,
+            "parameters": row.get("parameters", {}),
+            "gate_status": row.get("gate"),
+            "evidence_status": evidence,
+            "total_score": row.get("score"),
+            "score_breakdown": row.get("score_breakdown", {}),
+            "top_positive_contribution_windows": _top_contribution_windows(row, positive=True),
+            "top_negative_contribution_windows": _top_contribution_windows(row, positive=False),
+            "major_weight_changes": major_changes,
+            "turnover_source": _mapping(row.get("metrics")).get("turnover"),
+            "drawdown_protection_behavior": _drawdown_protection_text(row),
+            "tech_semiconductor_regime_behavior": regime_summary,
+            "recommendation": _interpretation_recommendation(row, evidence, regime_summary),
+            "human_review_notes": "manual_review_required",
+            "candidate_report_path": str(
+                sweep_dir / "candidates" / candidate_id / "candidate_report.json"
+            ),
+        }
+        _write_text(
+            candidate_dir / "interpretation_report.md",
+            render_candidate_interpretation_markdown(interpretation),
+        )
+        _write_csv(candidate_dir / "weight_path_summary.csv", weight_summary)
+        _write_json(candidate_dir / "major_weight_changes.json", {"changes": major_changes})
+        _write_json(candidate_dir / "regime_performance_summary.json", regime_summary)
+        _write_json(candidate_dir / "blocking_evidence_summary.json", blocking_summary)
+        summaries.append(
+            {
+                "rank": rank,
+                "candidate_id": candidate_id,
+                "gate": row.get("gate"),
+                "score": row.get("score"),
+                "evidence_recommendation": evidence["evidence_recommendation"],
+                "weight_path_status": evidence["weight_path_status"],
+                "report_path": str(candidate_dir / "interpretation_report.md"),
+                "candidate_report_status": candidate_report.get("status"),
+            }
+        )
+    pack_status = "PASS" if summaries and incomplete_count == 0 else "PASS_WITH_WARNINGS"
+    if not summaries:
+        pack_status = "FAIL"
+    manifest_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_interpretation_pack_manifest",
+        "pack_id": pack_dir.name,
+        "source_sweep_id": sweep_id,
+        "generated_at": generated.isoformat(),
+        "status": pack_status,
+        "top_n_requested": top_n,
+        "candidate_count": len(summaries),
+        "incomplete_weight_path_count": incomplete_count,
+        "top_candidates_summary_path": str(pack_dir / "top_candidates_summary.csv"),
+        "candidate_interpretations_dir": str(candidate_root),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(pack_dir / "interpretation_manifest.json", manifest_payload)
+    _write_csv(pack_dir / "top_candidates_summary.csv", summaries)
+    _update_latest_pointer(
+        "latest_interpretation_pack",
+        pack_dir.name,
+        pack_dir / "interpretation_manifest.json",
+    )
+    return {
+        "pack_id": pack_dir.name,
+        "pack_dir": pack_dir,
+        "manifest": manifest_payload,
+        "top_candidates": summaries,
+    }
+
+
+def interpretation_report_payload(
+    *,
+    candidate_id: str,
+    pack_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_INTERPRETATION_PACK_DIR,
+) -> dict[str, Any]:
+    resolved_id = pack_id or (
+        _latest_pointer_artifact_id("latest_interpretation_pack") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--pack-id or --latest is required")
+    report_path = (
+        output_dir
+        / resolved_id
+        / "candidate_interpretations"
+        / candidate_id
+        / "interpretation_report.md"
+    )
+    if not report_path.exists():
+        raise DynamicV3ParameterResearchError(f"interpretation report not found: {candidate_id}")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_interpretation_report_view",
+        "pack_id": resolved_id,
+        "candidate_id": candidate_id,
+        "status": "PASS",
+        "report_path": str(report_path),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_interpretation_pack_artifact(
+    *,
+    pack_id: str,
+    output_dir: Path = DEFAULT_INTERPRETATION_PACK_DIR,
+) -> dict[str, Any]:
+    pack_dir = output_dir / pack_id
+    manifest = _read_optional_json(pack_dir / "interpretation_manifest.json") or {}
+    summary_rows = _read_csv_rows(pack_dir / "top_candidates_summary.csv")
+    checks = [
+        _check("manifest_exists", (pack_dir / "interpretation_manifest.json").exists(), pack_id),
+        _check("top_summary_exists", (pack_dir / "top_candidates_summary.csv").exists(), ""),
+        _check("candidate_summary_not_empty", bool(summary_rows), f"rows={len(summary_rows)}"),
+        _check("pack_id_matches", manifest.get("pack_id") == pack_id, pack_id),
+        _check(
+            "all_candidate_reports_exist",
+            all(Path(_text(row.get("report_path"))).exists() for row in summary_rows),
+            "candidate interpretation reports",
+        ),
+        _check(
+            "production_candidate_not_generated",
+            manifest.get("production_candidate_generated") is False,
+            "research-only",
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_interpretation_pack_validation",
+        "pack_id": pack_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def build_observe_pool(
+    *,
+    sweep_id: str,
+    top_n: int = 20,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_OBSERVE_POOL_DIR,
+    candidate_attribution_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    overfit_dir: Path = DEFAULT_OVERFIT_DIR,
+    window_audit_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
+    data_provenance_dir: Path = DEFAULT_DATA_PROVENANCE_DIR,
+    regime_coverage_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sweep_dir = sweep_output_dir / sweep_id
+    manifest = _read_json(sweep_dir / "sweep_manifest.json")
+    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
+    context = _evidence_context(
+        window_audit_dir=window_audit_dir,
+        data_provenance_dir=data_provenance_dir,
+    )
+    coverage = _latest_regime_coverage_for_sweep(sweep_id, regime_coverage_dir)
+    coverage_manifest = _mapping(coverage.get("manifest"))
+    results = _ranked_candidate_rows(_read_candidate_results(sweep_dir))[:top_n]
+    candidates: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for row in results:
+        evidence = _candidate_evidence_row(
+            row,
+            sweep_id=sweep_id,
+            sweep_manifest=manifest,
+            candidate_attribution_dir=candidate_attribution_dir,
+            overfit_dir=overfit_dir,
+            context=context,
+        )
+        regime_status = {
+            "coverage_status": coverage_manifest.get("coverage_status", "MISSING"),
+            "tech_semiconductor_relevance": coverage_manifest.get(
+                "tech_semiconductor_relevance",
+                "MISSING",
+            ),
+            "ai_bull_market_overfit_risk": coverage_manifest.get(
+                "ai_bull_market_overfit_risk",
+                "MISSING",
+            ),
+        }
+        allowed, reasons = _observe_pool_allowed(
+            row=row,
+            evidence=evidence,
+            regime_status=regime_status,
+        )
+        if not allowed:
+            rejected.append({"candidate_id": row.get("candidate_id"), "reasons": reasons})
+            continue
+        warning_reasons = [
+            reason
+            for reason in reasons
+            if reason.endswith("_warning")
+            or reason in {"WEIGHT_PATH_PARTIAL", "ATTRIBUTION_PARTIAL"}
+        ]
+        candidates.append(
+            {
+                "candidate_id": row.get("candidate_id"),
+                "source_sweep_id": sweep_id,
+                "parameters": row.get("parameters", {}),
+                "evidence_status": evidence,
+                "regime_coverage_status": regime_status,
+                "overfit_status": evidence["overfit_status"],
+                "observe_reason": "passes_observe_only_research_filters",
+                "manual_review_required": bool(warning_reasons)
+                or evidence["promotion_status"] != GATE_PROMOTE_CANDIDATE,
+                "promotion_earliest_after_days": config.shadow.promotion_earliest_after_days,
+                "promotion_earliest_after_rebalance_count": (
+                    config.shadow.promotion_earliest_after_rebalance_count
+                ),
+                "warning_reasons": warning_reasons,
+                "score": row.get("score"),
+            }
+        )
+    pool_id = _stable_id("observe-pool", sweep_id, top_n, generated.isoformat())
+    pool_dir = _unique_dir(output_dir / pool_id)
+    pool_dir.mkdir(parents=True, exist_ok=False)
+    status = "PASS" if candidates else "PASS_WITH_WARNINGS"
+    manifest_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_observe_pool_manifest",
+        "pool_id": pool_dir.name,
+        "source_sweep_id": sweep_id,
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "top_n_requested": top_n,
+        "observe_candidate_count": len(candidates),
+        "rejected_candidate_count": len(rejected),
+        "manual_review_required_count": sum(
+            1 for row in candidates if row.get("manual_review_required") is True
+        ),
+        "shadow_registry_sync_status": "NOT_SYNCED_BY_DEFAULT",
+        "shadow_registry_sync_reason": (
+            "observe_pool build writes an auditable pool artifact; use shadow register "
+            "for explicit per-candidate registry mutation"
+        ),
+        "observe_candidates_path": str(pool_dir / "observe_candidates.jsonl"),
+        "observe_pool_report_path": str(pool_dir / "observe_pool_report.md"),
+        "rejected_candidates": rejected,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(pool_dir / "observe_pool_manifest.json", manifest_payload)
+    _write_jsonl(pool_dir / "observe_candidates.jsonl", candidates)
+    _write_text(
+        pool_dir / "observe_pool_report.md",
+        render_observe_pool_markdown(manifest_payload, candidates),
+    )
+    _update_latest_pointer(
+        "latest_observe_pool",
+        pool_dir.name,
+        pool_dir / "observe_pool_manifest.json",
+    )
+    return {
+        "pool_id": pool_dir.name,
+        "pool_dir": pool_dir,
+        "manifest": manifest_payload,
+        "candidates": candidates,
+    }
+
+
+def observe_pool_report_payload(
+    *,
+    pool_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OBSERVE_POOL_DIR,
+) -> dict[str, Any]:
+    resolved_id = pool_id or (_latest_pointer_artifact_id("latest_observe_pool") if latest else "")
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--pool-id or --latest is required")
+    pool_dir = output_dir / resolved_id
+    return {**_read_json(pool_dir / "observe_pool_manifest.json"), "pool_dir": str(pool_dir)}
+
+
+def validate_observe_pool_artifact(
+    *,
+    pool_id: str,
+    output_dir: Path = DEFAULT_OBSERVE_POOL_DIR,
+) -> dict[str, Any]:
+    pool_dir = output_dir / pool_id
+    manifest = _read_optional_json(pool_dir / "observe_pool_manifest.json") or {}
+    rows = _read_jsonl(pool_dir / "observe_candidates.jsonl")
+    checks = [
+        _check("manifest_exists", (pool_dir / "observe_pool_manifest.json").exists(), pool_id),
+        _check("observe_candidates_exists", (pool_dir / "observe_candidates.jsonl").exists(), ""),
+        _check("report_exists", (pool_dir / "observe_pool_report.md").exists(), ""),
+        _check("pool_id_matches", manifest.get("pool_id") == pool_id, pool_id),
+        _check(
+            "no_rejected_or_high_risk_candidates",
+            all(
+                _mapping(row.get("evidence_status")).get("promotion_status") != "incomplete"
+                and row.get("overfit_status") != "HIGH_RISK"
+                for row in rows
+            ),
+            "observe candidates filtered",
+        ),
+        _check(
+            "production_candidate_not_generated",
+            manifest.get("production_candidate_generated") is False,
+            "research-only",
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_observe_pool_validation",
+        "pool_id": pool_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_overnight_readiness(
+    *,
+    source_sweep_id: str,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_OVERNIGHT_READINESS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sweep_dir = sweep_output_dir / source_sweep_id
+    manifest = _read_json(sweep_dir / "sweep_manifest.json")
+    results = _read_candidate_results(sweep_dir)
+    errors = _read_jsonl(sweep_dir / "candidate_errors.jsonl")
+    avg_runtime = _average_runtime_seconds(manifest, len(results))
+    projected_seconds = avg_runtime * OVERNIGHT_TARGET_CANDIDATES
+    projected_hours = projected_seconds / 3600.0
+    artifact_size = _artifact_size_summary(sweep_dir)
+    projected_artifact_gb = (
+        artifact_size["total_bytes"] / max(1, len(results)) * OVERNIGHT_TARGET_CANDIDATES
+    ) / (1024**3)
+    failure_rate = len(errors) / max(1, len(results) + len(errors))
+    evidence_complete_rate = sum(
+        1
+        for row in results
+        if _text(_mapping(row.get("weight_path_metadata")).get("attribution_completeness"))
+        == WEIGHT_PATH_COMPLETE
+    ) / max(1, len(results))
+    blockers: list[str] = []
+    warnings: list[str] = []
+    if manifest.get("evaluator_mode") != EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        blockers.append("source_sweep_not_real_dynamic_v3_rescue")
+    if failure_rate > OVERNIGHT_WARNING_MAX_FAILURE_RATE:
+        blockers.append("failure_rate_too_high")
+    elif failure_rate > OVERNIGHT_READY_MAX_FAILURE_RATE:
+        warnings.append("failure_rate_warning")
+    if projected_hours > OVERNIGHT_WARNING_MAX_HOURS:
+        blockers.append("projected_runtime_too_high")
+    elif projected_hours > OVERNIGHT_READY_MAX_HOURS:
+        warnings.append("projected_runtime_warning")
+    if projected_artifact_gb > OVERNIGHT_WARNING_MAX_ARTIFACT_GB:
+        warnings.append("projected_artifact_size_warning")
+    if evidence_complete_rate < 0.5:
+        warnings.append("evidence_completeness_below_half")
+    readiness = "READY"
+    if blockers:
+        readiness = "NOT_READY"
+    elif warnings:
+        readiness = "READY_WITH_WARNINGS"
+    readiness_id = _stable_id("overnight-readiness", source_sweep_id, generated.isoformat())
+    readiness_dir = _unique_dir(output_dir / readiness_id)
+    readiness_dir.mkdir(parents=True, exist_ok=False)
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_overnight_readiness_manifest",
+        "readiness_id": readiness_dir.name,
+        "source_sweep_id": source_sweep_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if readiness != "NOT_READY" else "PASS_WITH_WARNINGS",
+        "overnight_readiness": readiness,
+        "blocking_reasons": blockers,
+        "warnings": warnings,
+        "medium_real_completed": manifest.get("status") == "completed",
+        "average_runtime_seconds_per_candidate": avg_runtime,
+        "projected_overnight_runtime_hours": round(projected_hours, 3),
+        "projected_candidate_count": OVERNIGHT_TARGET_CANDIDATES,
+        "projected_artifact_size_gb": round(projected_artifact_gb, 3),
+        "failure_rate": round(failure_rate, 6),
+        "resume_reliability": "PASS" if (sweep_dir / "checkpoint.json").exists() else "MISSING",
+        "data_audit_status": _text(_mapping(manifest.get("data_quality")).get("status"), "MISSING"),
+        "window_audit_status": _text(
+            _mapping(manifest.get("backtest_window")).get("date_range_status"), "MISSING"
+        ),
+        "evidence_completeness_rate": round(evidence_complete_rate, 6),
+        "top_candidate_stability": _top_candidate_stability(results),
+        "overfit_warning_rate": _overfit_warning_rate(results),
+        "disk_usage_risk": (
+            "REVIEW_REQUIRED"
+            if projected_artifact_gb > OVERNIGHT_WARNING_MAX_ARTIFACT_GB
+            else "LOW"
+        ),
+        "ci_contamination_risk": (
+            "LOW" if manifest.get("profile") != "overnight_real" else "REVIEW_REQUIRED"
+        ),
+        "overnight_readiness_report_path": str(readiness_dir / "overnight_readiness_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(readiness_dir / "overnight_readiness_manifest.json", payload)
+    _write_text(
+        readiness_dir / "overnight_readiness_report.md",
+        render_overnight_readiness_markdown(payload),
+    )
+    _update_latest_pointer(
+        "latest_overnight_readiness",
+        readiness_dir.name,
+        readiness_dir / "overnight_readiness_manifest.json",
+    )
+    return {"readiness_id": readiness_dir.name, "readiness_dir": readiness_dir, "manifest": payload}
+
+
+def overnight_readiness_report_payload(
+    *,
+    readiness_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OVERNIGHT_READINESS_DIR,
+) -> dict[str, Any]:
+    resolved_id = readiness_id or (
+        _latest_pointer_artifact_id("latest_overnight_readiness") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--readiness-id or --latest is required")
+    readiness_dir = output_dir / resolved_id
+    return {
+        **_read_json(readiness_dir / "overnight_readiness_manifest.json"),
+        "readiness_dir": str(readiness_dir),
+    }
+
+
+def validate_overnight_readiness_artifact(
+    *,
+    readiness_id: str,
+    output_dir: Path = DEFAULT_OVERNIGHT_READINESS_DIR,
+) -> dict[str, Any]:
+    readiness_dir = output_dir / readiness_id
+    manifest = _read_optional_json(readiness_dir / "overnight_readiness_manifest.json") or {}
+    checks = [
+        _check(
+            "manifest_exists",
+            (readiness_dir / "overnight_readiness_manifest.json").exists(),
+            readiness_id,
+        ),
+        _check("report_exists", (readiness_dir / "overnight_readiness_report.md").exists(), ""),
+        _check("readiness_id_matches", manifest.get("readiness_id") == readiness_id, readiness_id),
+        _check(
+            "readiness_status_valid",
+            manifest.get("overnight_readiness") in {"READY", "READY_WITH_WARNINGS", "NOT_READY"},
+            _text(manifest.get("overnight_readiness")),
+        ),
+        _check(
+            "does_not_auto_start_overnight",
+            manifest.get("production_state_mutated") is False,
+            "no overnight run started",
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_overnight_readiness_validation",
+        "readiness_id": readiness_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_research_decision(
+    *,
+    sweep_id: str,
+    output_dir: Path = DEFAULT_RESEARCH_DECISION_DIR,
+    evidence_summary_dir: Path = DEFAULT_EVIDENCE_SUMMARY_DIR,
+    regime_coverage_dir: Path = DEFAULT_REGIME_COVERAGE_DIR,
+    interpretation_pack_dir: Path = DEFAULT_INTERPRETATION_PACK_DIR,
+    observe_pool_dir: Path = DEFAULT_OBSERVE_POOL_DIR,
+    overnight_readiness_dir: Path = DEFAULT_OVERNIGHT_READINESS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    evidence = _latest_manifest_for_sweep(
+        sweep_id,
+        evidence_summary_dir,
+        "evidence_summary_manifest.json",
+        "source_sweep_id",
+    )
+    regime = _latest_manifest_for_sweep(
+        sweep_id,
+        regime_coverage_dir,
+        "regime_coverage_manifest.json",
+        "source_sweep_id",
+    )
+    interpretation = _latest_manifest_for_sweep(
+        sweep_id,
+        interpretation_pack_dir,
+        "interpretation_manifest.json",
+        "source_sweep_id",
+    )
+    observe_pool = _latest_manifest_for_sweep(
+        sweep_id,
+        observe_pool_dir,
+        "observe_pool_manifest.json",
+        "source_sweep_id",
+    )
+    readiness = _latest_manifest_for_sweep(
+        sweep_id,
+        overnight_readiness_dir,
+        "overnight_readiness_manifest.json",
+        "source_sweep_id",
+    )
+    recommendation = _research_decision_recommendation(
+        evidence=evidence,
+        regime=regime,
+        observe_pool=observe_pool,
+        readiness=readiness,
+    )
+    decision_id = _stable_id("research-decision", sweep_id, generated.isoformat())
+    decision_dir = _unique_dir(output_dir / decision_id)
+    decision_dir.mkdir(parents=True, exist_ok=False)
+    manifest_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_decision_manifest",
+        "decision_id": decision_dir.name,
+        "source_sweep_id": sweep_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "medium_real_success": _text(evidence.get("status"), "MISSING")
+        in {"PASS", "PASS_WITH_WARNINGS"},
+        "research_value_candidate_found": int(observe_pool.get("observe_candidate_count") or 0) > 0,
+        "evidence_quality_status": evidence.get("status", "MISSING"),
+        "regime_coverage_status": regime.get("coverage_status", "MISSING"),
+        "tech_semiconductor_relevance": regime.get("tech_semiconductor_relevance", "MISSING"),
+        "ai_bull_market_overfit_risk": regime.get("ai_bull_market_overfit_risk", "MISSING"),
+        "observe_candidate_count": observe_pool.get("observe_candidate_count", 0),
+        "overnight_readiness": readiness.get("overnight_readiness", "MISSING"),
+        "recommendation": recommendation["recommendation"],
+        "priority": recommendation["priority"],
+        "research_decision_report_path": str(decision_dir / "research_decision_report.md"),
+        "next_action_recommendations_path": str(decision_dir / "next_action_recommendations.json"),
+        "reader_brief_section_path": str(decision_dir / "reader_brief_section.md"),
+        "source_artifacts": {
+            "evidence_summary": evidence.get("_manifest_path", ""),
+            "regime_coverage": regime.get("_manifest_path", ""),
+            "interpretation_pack": interpretation.get("_manifest_path", ""),
+            "observe_pool": observe_pool.get("_manifest_path", ""),
+            "overnight_readiness": readiness.get("_manifest_path", ""),
+        },
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(decision_dir / "research_decision_manifest.json", manifest_payload)
+    _write_json(decision_dir / "next_action_recommendations.json", recommendation)
+    reader_section = render_research_decision_reader_brief_section(manifest_payload, recommendation)
+    _write_text(decision_dir / "reader_brief_section.md", reader_section)
+    _write_text(
+        decision_dir / "research_decision_report.md",
+        render_research_decision_markdown(
+            manifest_payload,
+            recommendation,
+            evidence=evidence,
+            regime=regime,
+            interpretation=interpretation,
+            observe_pool=observe_pool,
+            readiness=readiness,
+        ),
+    )
+    _update_latest_pointer(
+        "latest_research_decision",
+        decision_dir.name,
+        decision_dir / "research_decision_manifest.json",
+    )
+    return {
+        "decision_id": decision_dir.name,
+        "decision_dir": decision_dir,
+        "manifest": manifest_payload,
+        "recommendation": recommendation,
+    }
+
+
+def research_decision_report_payload(
+    *,
+    decision_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RESEARCH_DECISION_DIR,
+) -> dict[str, Any]:
+    resolved_id = decision_id or (
+        _latest_pointer_artifact_id("latest_research_decision") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--decision-id or --latest is required")
+    decision_dir = output_dir / resolved_id
+    return {
+        **_read_json(decision_dir / "research_decision_manifest.json"),
+        "decision_dir": str(decision_dir),
+    }
+
+
+def validate_research_decision_artifact(
+    *,
+    decision_id: str,
+    output_dir: Path = DEFAULT_RESEARCH_DECISION_DIR,
+) -> dict[str, Any]:
+    decision_dir = output_dir / decision_id
+    manifest = _read_optional_json(decision_dir / "research_decision_manifest.json") or {}
+    recommendation = _read_optional_json(decision_dir / "next_action_recommendations.json") or {}
+    checks = [
+        _check(
+            "manifest_exists",
+            (decision_dir / "research_decision_manifest.json").exists(),
+            decision_id,
+        ),
+        _check("report_exists", (decision_dir / "research_decision_report.md").exists(), ""),
+        _check(
+            "next_action_exists", (decision_dir / "next_action_recommendations.json").exists(), ""
+        ),
+        _check(
+            "reader_brief_section_exists", (decision_dir / "reader_brief_section.md").exists(), ""
+        ),
+        _check("decision_id_matches", manifest.get("decision_id") == decision_id, decision_id),
+        _check("recommendation_present", bool(recommendation.get("recommendation")), ""),
+        _check(
+            "production_candidate_not_generated",
+            manifest.get("production_candidate_generated") is False,
+            "research-only",
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_decision_validation",
+        "decision_id": decision_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
 
 
 def build_sweep_leaderboard_payload(
@@ -4752,21 +6180,52 @@ def _prepare_real_evaluation_context(
         raise DynamicV3ParameterResearchError(
             f"ETF price validation failed before real sweep evaluation: {etf_quality.status}"
         )
+    real_policy = load_dynamic_v3_real_evaluation_policy_config(
+        DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
+    )
+    v3_rescue_policy = load_dynamic_v3_rescue_policy_config()
+    dynamic_robustness_policy = load_dynamic_robustness_policy_config()
+    dynamic_policy = load_dynamic_allocation_policy_config()
+    failure_policy = load_dynamic_failure_diagnostics_policy_config()
+    fixed_cache = precompute_dynamic_v3_fixed_robustness_reports(
+        prices=prices,
+        etf_config=etf_config,
+        policy=real_policy,
+        dynamic_robustness_policy=dynamic_robustness_policy,
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
+        start=real_policy.market_regime.default_backtest_start,
+        end=config.data.end,
+        data_quality_status=quality_report.status,
+        data_quality_report=str(quality_output),
+        prices_path=prices_path,
+    )
+    fixed_cache_manifest = {key: value for key, value in fixed_cache.items() if key != "reports"}
+    _write_json(sweep_dir / "fixed_robustness_cache_manifest.json", fixed_cache_manifest)
+    _append_text(
+        sweep_dir / "run.log",
+        (
+            f"{datetime.now(UTC).isoformat()} "
+            "fixed robustness cache ready "
+            f"cache_id={fixed_cache_manifest.get('cache_id')} "
+            f"policy_count={len(fixed_cache_manifest.get('policy_ids', []))}\n"
+        ),
+    )
     return RealEvaluationContext(
         prices=prices,
         etf_config=etf_config,
-        real_policy=load_dynamic_v3_real_evaluation_policy_config(
-            DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
-        ),
-        v3_rescue_policy=load_dynamic_v3_rescue_policy_config(),
-        dynamic_robustness_policy=load_dynamic_robustness_policy_config(),
-        dynamic_policy=load_dynamic_allocation_policy_config(),
-        failure_policy=load_dynamic_failure_diagnostics_policy_config(),
+        real_policy=real_policy,
+        v3_rescue_policy=v3_rescue_policy,
+        dynamic_robustness_policy=dynamic_robustness_policy,
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
         data_quality_status=quality_report.status,
         data_quality_report_path=quality_output,
         prices_path=prices_path,
         real_evaluation_output_dir=real_evaluation_output_dir or sweep_dir / "real_evaluation",
         data_manifest_hash=data_manifest_hash,
+        precomputed_robustness_reports=dict(_mapping(fixed_cache.get("reports"))),
+        fixed_robustness_cache_manifest=fixed_cache_manifest,
     )
 
 
@@ -4797,6 +6256,7 @@ def _write_real_candidate_evaluation_artifact(
         data_quality_status=real_context.data_quality_status,
         data_quality_report=str(real_context.data_quality_report_path),
         prices_path=real_context.prices_path,
+        precomputed_robustness_reports=real_context.precomputed_robustness_reports,
     )
     report_id = "dynamic-v3-real-evaluation-report_" + _stable_id(
         "sweep-real",
@@ -5187,6 +6647,11 @@ def _sweep_manifest(
         "status": status,
         "evaluator_mode": config.execution.evaluator,
         "evaluator_version": _evaluator_version(config.execution.evaluator),
+        "execution": {
+            "workers": config.execution.workers,
+            "checkpoint_every_candidates": config.execution.checkpoint_every_candidates,
+            "continue_on_candidate_error": config.execution.continue_on_candidate_error,
+        },
         "search_space_version": _search_space_version(),
         "not_for_investment_decision": (config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY),
         "data_quality": _candidate_data_quality(
@@ -5215,6 +6680,29 @@ def _sweep_manifest(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def _annotate_sweep_profile(
+    *,
+    sweep_dir: Path,
+    profile: str,
+    profile_config_path: Path,
+    selected: SweepProfile,
+) -> None:
+    manifest_path = sweep_dir / "sweep_manifest.json"
+    manifest = _read_optional_json(manifest_path)
+    if not manifest:
+        return
+    manifest.update(
+        {
+            "profile": profile,
+            "profile_config_path": str(profile_config_path),
+            "profile_require_data_audit": selected.require_data_audit,
+            "profile_require_window_audit": selected.require_window_audit,
+            "profile_require_weight_path": selected.require_weight_path,
+        }
+    )
+    _write_json(manifest_path, manifest)
 
 
 def _data_manifest(
@@ -5405,6 +6893,393 @@ def _candidate_recommendation(result: Mapping[str, Any]) -> str:
     return "observe_only; eligible for walk-forward and robustness diagnostics"
 
 
+def _evidence_context(
+    *,
+    window_audit_dir: Path,
+    data_provenance_dir: Path,
+) -> dict[str, Any]:
+    data_path = _latest_data_provenance_path(data_provenance_dir)
+    return {
+        "window_audit": _latest_window_audit_evidence(window_audit_dir),
+        "data_provenance": _read_optional_json(data_path) or {},
+        "data_provenance_path": "" if data_path is None else str(data_path),
+    }
+
+
+def _candidate_evidence_row(
+    row: Mapping[str, Any],
+    *,
+    sweep_id: str,
+    sweep_manifest: Mapping[str, Any],
+    candidate_attribution_dir: Path,
+    overfit_dir: Path,
+    context: Mapping[str, Any],
+) -> dict[str, Any]:
+    candidate_id = _text(row.get("candidate_id"))
+    metrics = _mapping(row.get("metrics"))
+    data_quality = _text(
+        _mapping(row.get("data_quality")).get("status"),
+        _text(_mapping(sweep_manifest.get("data_quality")).get("status"), "MISSING"),
+    )
+    provenance = _mapping(context.get("data_provenance"))
+    provenance_status = _text(provenance.get("provenance_status"), "MISSING")
+    if _text(provenance.get("status")) == "FAIL":
+        provenance_status = "FAIL"
+    date_range_status = _text(
+        metrics.get("date_range_status"),
+        _text(
+            _mapping(row.get("backtest_window")).get("date_range_status"),
+            _text(_mapping(context.get("window_audit")).get("date_range_status"), "MISSING"),
+        ),
+    )
+    weight_path = _mapping(row.get("weight_path_metadata"))
+    weight_status = _text(weight_path.get("attribution_completeness"), "MISSING")
+    if weight_status == "MISSING":
+        weight_status = _weight_status_from_real_artifact(row)
+    attribution = _latest_candidate_attribution(candidate_id, candidate_attribution_dir)
+    attribution_status = _text(attribution.get("status"), "MISSING")
+    overfit = _latest_overfit_for_candidate(candidate_id, overfit_dir)
+    overfit_status = _text(
+        overfit.get("overfit_status"),
+        _text(metrics.get("overfit_status"), "MISSING"),
+    )
+    blocking = _evidence_blocking_reasons(
+        row=row,
+        data_quality=data_quality,
+        provenance_status=provenance_status,
+        date_range_status=date_range_status,
+        weight_status=weight_status,
+        attribution_status=attribution_status,
+        overfit_status=overfit_status,
+    )
+    score = _evidence_score(
+        data_quality=data_quality,
+        provenance_status=provenance_status,
+        date_range_status=date_range_status,
+        weight_status=weight_status,
+        attribution_status=attribution_status,
+        overfit_status=overfit_status,
+    )
+    recommendation = _evidence_recommendation(score, blocking)
+    promotion_status = _evidence_promotion_status(row, blocking, recommendation)
+    return {
+        "candidate_id": candidate_id,
+        "sweep_id": sweep_id,
+        "evaluator_mode": row.get("evaluator_mode", "UNKNOWN"),
+        "data_quality": data_quality,
+        "data_provenance_status": provenance_status,
+        "date_range_status": date_range_status,
+        "weight_path_status": weight_status,
+        "candidate_attribution_status": attribution_status,
+        "overfit_status": overfit_status,
+        "promotion_status": promotion_status,
+        "promotion_blocking_reasons": blocking,
+        "evidence_score": score,
+        "evidence_recommendation": recommendation,
+    }
+
+
+def _latest_data_provenance_path(data_provenance_dir: Path) -> Path | None:
+    pointer_path = None
+    if _is_default_dynamic_v3_research_artifact(data_provenance_dir):
+        pointer = _latest_pointer_payload("latest_data_provenance")
+        pointer_text = _text(pointer.get("path"))
+        if pointer_text:
+            pointer_path = Path(pointer_text)
+    direct = data_provenance_dir / "price_cache_provenance_report.json"
+    if pointer_path is not None and pointer_path.exists():
+        return pointer_path
+    if direct.exists():
+        return direct
+    return None
+
+
+def _weight_status_from_real_artifact(row: Mapping[str, Any]) -> str:
+    real_path = Path(_text(row.get("real_evaluation_artifact_path")))
+    if not _text(row.get("real_evaluation_artifact_path")) or not real_path.exists():
+        return "MISSING"
+    metadata = _read_optional_json(real_path.parent / "weight_path_metadata.json") or {}
+    return _text(metadata.get("attribution_completeness"), WEIGHT_PATH_INCOMPLETE)
+
+
+def _latest_candidate_attribution(candidate_id: str, output_dir: Path) -> dict[str, Any]:
+    direct = output_dir / candidate_id / "attribution_manifest.json"
+    if direct.exists():
+        return _read_optional_json(direct) or {}
+    candidates = []
+    for path in output_dir.glob("*/attribution_manifest.json"):
+        payload = _read_optional_json(path) or {}
+        if _text(payload.get("candidate_id")) == candidate_id:
+            candidates.append((path, payload))
+    if not candidates:
+        return {}
+    return max(candidates, key=lambda item: item[0].stat().st_mtime)[1]
+
+
+def _latest_overfit_for_candidate(candidate_id: str, output_dir: Path) -> dict[str, Any]:
+    path = _latest_overfit_manifest_for_candidate(candidate_id, output_dir)
+    return _read_optional_json(path) if path is not None else {}
+
+
+def _evidence_blocking_reasons(
+    *,
+    row: Mapping[str, Any],
+    data_quality: str,
+    provenance_status: str,
+    date_range_status: str,
+    weight_status: str,
+    attribution_status: str,
+    overfit_status: str,
+) -> list[str]:
+    reasons: list[str] = []
+    if row.get("evaluator_mode") == EVALUATOR_TINY_FIXTURE_PROXY:
+        reasons.append("TINY_FIXTURE_NOT_FOR_INVESTMENT")
+    if data_quality == "FAIL":
+        reasons.append("DATA_QUALITY_FAIL")
+    if provenance_status in {"MISSING", "FAIL", DATA_PROVENANCE_RECONSTRUCTED}:
+        reasons.append("DATA_PROVENANCE_INCOMPLETE")
+    if date_range_status in WINDOW_PROMOTION_BLOCKING_STATUSES or date_range_status == "MISSING":
+        reasons.append("BACKTEST_WINDOW_INCOMPLETE")
+    if weight_status in {"MISSING", WEIGHT_PATH_INCOMPLETE}:
+        reasons.append("MISSING_DAILY_WEIGHT_PATH")
+    elif weight_status == WEIGHT_PATH_PARTIAL:
+        reasons.append("WEIGHT_PATH_PARTIAL")
+    if attribution_status == "MISSING" or attribution_status == WEIGHT_PATH_INCOMPLETE:
+        reasons.append("ATTRIBUTION_INCOMPLETE")
+    elif attribution_status == WEIGHT_PATH_PARTIAL:
+        reasons.append("ATTRIBUTION_PARTIAL")
+    if overfit_status == "HIGH_RISK":
+        reasons.append("OVERFIT_HIGH_RISK")
+    elif overfit_status == "REVIEW_REQUIRED":
+        reasons.append("OVERFIT_REVIEW_REQUIRED")
+    return reasons
+
+
+def _evidence_score(
+    *,
+    data_quality: str,
+    provenance_status: str,
+    date_range_status: str,
+    weight_status: str,
+    attribution_status: str,
+    overfit_status: str,
+) -> float:
+    score = 0.0
+    score += EVIDENCE_SCORE_POINTS["data_quality"] * {
+        "PASS": 1.0,
+        "PASS_WITH_WARNINGS": 0.7,
+    }.get(data_quality, 0.0)
+    score += EVIDENCE_SCORE_POINTS["data_provenance"] * {
+        "PASS": 1.0,
+        "ORIGINAL_OR_VENDOR": 1.0,
+        DATA_PROVENANCE_RECONSTRUCTED: 0.45,
+    }.get(provenance_status, 0.0)
+    score += EVIDENCE_SCORE_POINTS["date_range"] * {
+        DATE_RANGE_PASS: 1.0,
+        DATE_RANGE_PASS_WITH_WARNINGS: 0.7,
+    }.get(date_range_status, 0.0)
+    score += EVIDENCE_SCORE_POINTS["weight_path"] * {
+        WEIGHT_PATH_COMPLETE: 1.0,
+        WEIGHT_PATH_PARTIAL: 0.6,
+    }.get(weight_status, 0.0)
+    score += EVIDENCE_SCORE_POINTS["candidate_attribution"] * {
+        WEIGHT_PATH_COMPLETE: 1.0,
+        WEIGHT_PATH_PARTIAL: 0.6,
+    }.get(attribution_status, 0.0)
+    score += EVIDENCE_SCORE_POINTS["overfit"] * {
+        "LOW_RISK": 1.0,
+        "REVIEW_REQUIRED": 0.5,
+    }.get(overfit_status, 0.0)
+    return round(score, 6)
+
+
+def _evidence_recommendation(score: float, blockers: Sequence[str]) -> str:
+    hard_blockers = {
+        "DATA_QUALITY_FAIL",
+        "BACKTEST_WINDOW_INCOMPLETE",
+        "MISSING_DAILY_WEIGHT_PATH",
+        "OVERFIT_HIGH_RISK",
+        "TINY_FIXTURE_NOT_FOR_INVESTMENT",
+    }
+    if any(reason in hard_blockers for reason in blockers):
+        return "not_usable"
+    if score >= EVIDENCE_USABLE_SCORE_FLOOR:
+        return "usable_for_research"
+    if score >= EVIDENCE_REVIEW_SCORE_FLOOR:
+        return "needs_review"
+    return "not_usable"
+
+
+def _evidence_promotion_status(
+    row: Mapping[str, Any],
+    blockers: Sequence[str],
+    recommendation: str,
+) -> str:
+    if recommendation == "not_usable":
+        return "incomplete"
+    if blockers:
+        return "manual_review_required"
+    gate = _text(row.get("gate"))
+    if gate == GATE_PROMOTE_CANDIDATE:
+        return GATE_PROMOTE_CANDIDATE
+    return "review_required"
+
+
+def _evidence_summary_reader_brief_section(
+    *,
+    status: str,
+    usable_count: int,
+    candidate_count: int,
+    blocking_counter: Counter[str],
+) -> str:
+    top_blocker = blocking_counter.most_common(1)[0][0] if blocking_counter else "none"
+    return (
+        "Dynamic Rescue Evidence Summary: "
+        f"status={status}; usable={usable_count}/{candidate_count}; "
+        f"top_blocker={top_blocker}; production_effect=none."
+    )
+
+
+def render_evidence_summary_markdown(
+    manifest: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    top_blockers = _records(manifest.get("top_blocking_reasons"))[:8]
+    requested_range = _mapping(manifest.get("requested_range"))
+    lines = [
+        "# Dynamic v3 Rescue Evidence Summary",
+        "",
+        f"- sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- market_regime: `{manifest.get('market_regime')}`",
+        f"- requested_range: `{requested_range.get('start')}` to `{requested_range.get('end')}`",
+        f"- status: `{manifest.get('status')}`",
+        f"- candidates: `{manifest.get('candidate_count')}`",
+        f"- usable_for_research: `{manifest.get('usable_for_research_count')}`",
+        f"- complete_evidence_count: `{manifest.get('complete_evidence_count')}`",
+        f"- partial_evidence_count: `{manifest.get('partial_evidence_count')}`",
+        f"- can_enter_medium_real: `{manifest.get('can_enter_medium_real')}`",
+        "",
+        "## Blocking Reasons",
+    ]
+    if top_blockers:
+        lines.extend(f"- `{row.get('reason')}`: {row.get('count')}" for row in top_blockers)
+    else:
+        lines.append("- none")
+    lines.extend(
+        [
+            "",
+            "## Evidence Matrix Preview",
+            "|candidate_id|data|window|weight_path|attribution|overfit|recommendation|",
+            "|---|---|---|---|---|---|---|",
+        ]
+    )
+    for row in rows[:20]:
+        lines.append(
+            "|"
+            + "|".join(
+                [
+                    _text(row.get("candidate_id")),
+                    _text(row.get("data_quality")),
+                    _text(row.get("date_range_status")),
+                    _text(row.get("weight_path_status")),
+                    _text(row.get("candidate_attribution_status")),
+                    _text(row.get("overfit_status")),
+                    _text(row.get("evidence_recommendation")),
+                ]
+            )
+            + "|"
+        )
+    lines.extend(["", "production_effect=none; broker_action=none."])
+    return "\n".join(lines) + "\n"
+
+
+def _latest_sweep_id_for_profile(
+    profile: str,
+    *,
+    sweep_output_dir: Path,
+) -> str | None:
+    candidates: list[tuple[float, str]] = []
+    for manifest_path in sweep_output_dir.glob("*/sweep_manifest.json"):
+        manifest = _read_optional_json(manifest_path) or {}
+        if manifest.get("profile") == profile:
+            candidates.append((manifest_path.stat().st_mtime, manifest_path.parent.name))
+    if candidates:
+        return max(candidates)[1]
+    latest = latest_sweep_id()
+    if latest and (sweep_output_dir / latest / "sweep_manifest.json").exists():
+        return latest
+    return None
+
+
+def _artifact_size_summary(path: Path) -> dict[str, Any]:
+    files = [item for item in path.rglob("*") if item.is_file()]
+    total = sum(item.stat().st_size for item in files)
+    return {
+        "file_count": len(files),
+        "total_bytes": total,
+        "total_mb": round(total / (1024 * 1024), 3),
+        "largest_files": [
+            {"path": str(item), "bytes": item.stat().st_size}
+            for item in sorted(files, key=lambda item: item.stat().st_size, reverse=True)[:10]
+        ],
+    }
+
+
+def _average_runtime_seconds(manifest: Mapping[str, Any], completed_count: int) -> float:
+    start = _parse_datetime(_text(manifest.get("started_at")))
+    end = _parse_datetime(_text(manifest.get("completed_at")))
+    if start is None or end is None or completed_count <= 0:
+        return 0.0
+    return round(max(0.0, (end - start).total_seconds()) / completed_count, 6)
+
+
+def _medium_real_next_action(
+    *,
+    manifest: Mapping[str, Any],
+    completed_count: int,
+    failed_count: int,
+    observe_only_count: int,
+) -> str:
+    if manifest.get("evaluator_mode") != EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        return "rerun_medium_real_with_real_dynamic_v3_rescue"
+    if failed_count:
+        return "inspect_candidate_errors_before_overnight"
+    if completed_count < 300:
+        return "record_medium_real_shortfall_or_expand_parameter_space"
+    if observe_only_count:
+        return "run_evidence_summary_regime_coverage_and_observe_pool"
+    return "review_reject_reasons_before_expanding_search"
+
+
+def render_medium_real_markdown(payload: Mapping[str, Any]) -> str:
+    runtime_seconds = payload.get("average_runtime_seconds_per_candidate")
+    lines = [
+        "# Dynamic v3 Rescue Medium Real Report",
+        "",
+        f"- sweep_id: `{payload.get('source_sweep_id')}`",
+        f"- status: `{payload.get('status')}`",
+        f"- evaluator_mode: `{payload.get('evaluator_mode')}`",
+        f"- candidate_count: `{payload.get('candidate_count')}`",
+        f"- completed_count: `{payload.get('completed_count')}`",
+        f"- failed_count: `{payload.get('failed_count')}`",
+        f"- rejected_count: `{payload.get('rejected_count')}`",
+        f"- review_required_count: `{payload.get('review_required_count')}`",
+        f"- observe_only_count: `{payload.get('observe_only_count')}`",
+        f"- promote_candidate_count: `{payload.get('promote_candidate_count')}`",
+        f"- average_runtime_seconds_per_candidate: `{runtime_seconds}`",
+        f"- artifact_total_mb: `{_mapping(payload.get('artifact_size_summary')).get('total_mb')}`",
+        f"- recommended_next_action: `{payload.get('recommended_next_action')}`",
+        "",
+        "## Top Candidates",
+        "|candidate_id|gate|score|",
+        "|---|---|---|",
+    ]
+    for row in _records(payload.get("top_candidates"))[:20]:
+        lines.append(f"|{row.get('candidate_id')}|{row.get('gate')}|{row.get('score')}|")
+    lines.extend(["", "production_effect=none; broker_action=none."])
+    return "\n".join(lines) + "\n"
+
+
 def _first_candidate_id(rows: Any) -> str:
     records = _records(rows)
     return _text(records[0].get("candidate_id"), "MISSING") if records else "MISSING"
@@ -5422,6 +7297,789 @@ def _candidate_result_from_rows(
         if row.get("candidate_id") == candidate_id:
             return dict(row)
     return None
+
+
+def _ranked_candidate_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(
+        [dict(row) for row in rows if row.get("score") is not None],
+        key=lambda row: (float(row.get("score") or 0.0), _text(row.get("candidate_id"))),
+        reverse=True,
+    )
+
+
+def _date_from_any(value: Any) -> date | None:
+    if isinstance(value, date):
+        return value
+    text = _text(value)
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
+def _regime_windows_from_prices(
+    *,
+    prices_path: Path,
+    start: date,
+    end: date,
+) -> list[dict[str, Any]]:
+    windows = [_base_regime_window("ai_after_chatgpt", start, end, "configured")]
+    if not prices_path.exists():
+        return [*windows, *_missing_price_regime_windows(start, end, "price_cache_missing")]
+    try:
+        frame = pd.read_csv(prices_path)
+    except Exception:  # noqa: BLE001
+        return [*windows, *_missing_price_regime_windows(start, end, "price_cache_unreadable")]
+    if not {"date", "ticker", "close"}.issubset(frame.columns):
+        return [*windows, *_missing_price_regime_windows(start, end, "price_cache_schema_missing")]
+    frame = frame.copy()
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame = frame[
+        (frame["date"].dt.date >= start)
+        & (frame["date"].dt.date <= end)
+        & frame["ticker"].isin(["QQQ", "SMH", "SOXX"])
+    ].sort_values(["ticker", "date"])
+    if frame.empty:
+        return [*windows, *_missing_price_regime_windows(start, end, "price_rows_missing")]
+    qqq = _ticker_window_features(frame, "QQQ")
+    semi = _ticker_window_features(frame, "SMH")
+    if semi.empty:
+        semi = _ticker_window_features(frame, "SOXX")
+    windows.extend(
+        [
+            _detected_regime_window(
+                "ai_strong_trend",
+                qqq,
+                qqq.get("rolling_return_63", pd.Series(dtype=float))
+                >= STRONG_TREND_RETURN_THRESHOLD,
+            ),
+            _detected_regime_window(
+                "tech_drawdown",
+                qqq,
+                qqq.get("drawdown", pd.Series(dtype=float)) <= REGIME_DRAWDOWN_THRESHOLD,
+            ),
+            _detected_regime_window(
+                "semiconductor_pullback",
+                semi,
+                semi.get("drawdown", pd.Series(dtype=float)) <= SEMICONDUCTOR_DRAWDOWN_THRESHOLD,
+            ),
+            _configured_overlap_window(
+                "high_rate_pressure",
+                start,
+                end,
+                date(2022, 12, 1),
+                date(2023, 10, 31),
+            ),
+            _detected_regime_window(
+                "sideways_choppy",
+                qqq,
+                (
+                    qqq.get("rolling_return_63", pd.Series(dtype=float)).abs()
+                    <= SIDEWAYS_ABS_RETURN_THRESHOLD
+                )
+                & (
+                    qqq.get("realized_vol_21", pd.Series(dtype=float))
+                    >= HIGH_VOL_ANNUALIZED_THRESHOLD
+                ),
+            ),
+            _detected_regime_window(
+                "high_volatility",
+                qqq,
+                qqq.get("realized_vol_21", pd.Series(dtype=float)) >= HIGH_VOL_ANNUALIZED_THRESHOLD,
+            ),
+            _detected_regime_window(
+                "strong_recovery",
+                qqq,
+                qqq.get("rolling_return_63", pd.Series(dtype=float))
+                >= STRONG_RECOVERY_RETURN_THRESHOLD,
+            ),
+        ]
+    )
+    return windows
+
+
+def _base_regime_window(
+    regime_id: str,
+    start: date,
+    end: date,
+    source: str,
+) -> dict[str, Any]:
+    return {
+        "regime_id": regime_id,
+        "status": "PRESENT" if end >= start else "MISSING",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "source": source,
+        "observation_count": 0,
+    }
+
+
+def _missing_price_regime_windows(
+    start: date,
+    end: date,
+    reason: str,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            **_base_regime_window(regime_id, start, end, "price_behavior"),
+            "status": "MISSING",
+            "missing_reason": reason,
+        }
+        for regime_id in (
+            "ai_strong_trend",
+            "tech_drawdown",
+            "semiconductor_pullback",
+            "high_rate_pressure",
+            "sideways_choppy",
+            "high_volatility",
+            "strong_recovery",
+        )
+    ]
+
+
+def _ticker_window_features(frame: pd.DataFrame, ticker: str) -> pd.DataFrame:
+    subset = frame[frame["ticker"] == ticker].copy()
+    if subset.empty:
+        return subset
+    subset["close"] = pd.to_numeric(subset["close"], errors="coerce")
+    subset = subset.dropna(subset=["close"])
+    subset["return"] = subset["close"].pct_change()
+    subset["rolling_return_63"] = subset["close"].pct_change(63)
+    subset["drawdown"] = subset["close"] / subset["close"].cummax() - 1.0
+    subset["realized_vol_21"] = subset["return"].rolling(21).std() * (252**0.5)
+    return subset
+
+
+def _detected_regime_window(
+    regime_id: str,
+    frame: pd.DataFrame,
+    mask: Any,
+) -> dict[str, Any]:
+    if frame.empty:
+        return {
+            "regime_id": regime_id,
+            "status": "MISSING",
+            "start": "",
+            "end": "",
+            "source": "price_behavior",
+            "observation_count": 0,
+            "missing_reason": "ticker_price_rows_missing",
+        }
+    selected = frame[mask.fillna(False) if hasattr(mask, "fillna") else mask]
+    if selected.empty:
+        return {
+            "regime_id": regime_id,
+            "status": "MISSING",
+            "start": "",
+            "end": "",
+            "source": "price_behavior",
+            "observation_count": 0,
+            "missing_reason": "condition_not_detected",
+        }
+    return {
+        "regime_id": regime_id,
+        "status": "PRESENT",
+        "start": selected["date"].min().date().isoformat(),
+        "end": selected["date"].max().date().isoformat(),
+        "source": "price_behavior",
+        "observation_count": int(len(selected)),
+    }
+
+
+def _configured_overlap_window(
+    regime_id: str,
+    requested_start: date,
+    requested_end: date,
+    configured_start: date,
+    configured_end: date,
+) -> dict[str, Any]:
+    start = max(requested_start, configured_start)
+    end = min(requested_end, configured_end)
+    if end < start:
+        return {
+            "regime_id": regime_id,
+            "status": "MISSING",
+            "start": "",
+            "end": "",
+            "source": "configured_proxy",
+            "observation_count": 0,
+            "missing_reason": "configured_window_outside_requested_range",
+        }
+    return _base_regime_window(regime_id, start, end, "configured_proxy")
+
+
+def _candidate_regime_result(
+    row: Mapping[str, Any],
+    *,
+    windows: Sequence[Mapping[str, Any]],
+    focus: str,
+) -> dict[str, Any]:
+    metrics = _mapping(row.get("metrics"))
+    drawdown_degradation = _float(metrics.get("drawdown_degradation_pp"))
+    dynamic_gap = _float(metrics.get("dynamic_vs_static_gap"))
+    regime_results = []
+    for window in windows:
+        regime_id = _text(window.get("regime_id"))
+        if window.get("status") != "PRESENT":
+            status = "MISSING_WINDOW"
+        elif regime_id in {"tech_drawdown", "semiconductor_pullback", "high_volatility"}:
+            status = (
+                "PASS"
+                if drawdown_degradation <= REGIME_DRAWDOWN_PROTECTION_MAX_DEGRADATION_PP
+                else "REVIEW_REQUIRED"
+            )
+        elif regime_id == "ai_strong_trend":
+            status = "PASS" if dynamic_gap <= 1.0 else "REVIEW_REQUIRED"
+        else:
+            status = "PASS"
+        regime_results.append(
+            {
+                "regime_id": regime_id,
+                "window_status": window.get("status"),
+                "candidate_status": status,
+                "drawdown_degradation_pp": drawdown_degradation,
+                "dynamic_vs_static_gap": dynamic_gap,
+                "return_delta": metrics.get("return_delta"),
+            }
+        )
+    stress_results = [
+        item
+        for item in regime_results
+        if item["regime_id"] in {"tech_drawdown", "semiconductor_pullback", "high_volatility"}
+    ]
+    stress_failures = sum(1 for item in stress_results if item["candidate_status"] != "PASS")
+    return {
+        "candidate_id": row.get("candidate_id"),
+        "source_sweep_id": row.get("source_sweep_id", ""),
+        "focus": focus,
+        "gate": row.get("gate"),
+        "score": row.get("score"),
+        "regime_results": regime_results,
+        "stress_window_review_required_count": stress_failures,
+        "ai_bull_market_only_signal": stress_failures == len(stress_results)
+        and bool(stress_results),
+    }
+
+
+def _regime_gap_report(
+    *,
+    windows: Sequence[Mapping[str, Any]],
+    candidate_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    required = {
+        "ai_after_chatgpt",
+        "ai_strong_trend",
+        "tech_drawdown",
+        "semiconductor_pullback",
+        "sideways_choppy",
+        "high_volatility",
+    }
+    present = {_text(row.get("regime_id")) for row in windows if row.get("status") == "PRESENT"}
+    missing = sorted(required - present)
+    ai_only_count = sum(1 for row in candidate_rows if row.get("ai_bull_market_only_signal"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_regime_gap_report",
+        "coverage_status": "PASS" if not missing else "PASS_WITH_WARNINGS",
+        "present_regimes": sorted(present),
+        "missing_regimes": missing,
+        "regime_gap_count": len(missing),
+        "ai_bull_market_only_candidate_count": ai_only_count,
+        "candidate_count": len(candidate_rows),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+
+
+def _coverage_status(gap_report: Mapping[str, Any]) -> str:
+    gap_count = int(gap_report.get("regime_gap_count") or 0)
+    if gap_count == 0:
+        return "PASS"
+    if gap_count <= 2:
+        return "PASS_WITH_WARNINGS"
+    return "FAIL"
+
+
+def _tech_semiconductor_relevance(gap_report: Mapping[str, Any]) -> str:
+    missing = set(_texts(gap_report.get("missing_regimes")))
+    if not {"tech_drawdown", "semiconductor_pullback"} & missing:
+        return "HIGH"
+    if {"tech_drawdown", "semiconductor_pullback"} <= missing:
+        return "LOW"
+    return "MEDIUM"
+
+
+def _ai_bull_market_overfit_risk(
+    gap_report: Mapping[str, Any],
+    candidate_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    if _tech_semiconductor_relevance(gap_report) == "LOW":
+        return "HIGH"
+    if any(row.get("ai_bull_market_only_signal") for row in candidate_rows):
+        return "REVIEW_REQUIRED"
+    return "LOW"
+
+
+def render_regime_coverage_markdown(
+    manifest: Mapping[str, Any],
+    windows: Sequence[Mapping[str, Any]],
+    gap_report: Mapping[str, Any],
+    candidate_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        "# Dynamic v3 Rescue Regime Coverage",
+        "",
+        f"- sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- coverage_status: `{manifest.get('coverage_status')}`",
+        f"- tech_semiconductor_relevance: `{manifest.get('tech_semiconductor_relevance')}`",
+        f"- ai_bull_market_overfit_risk: `{manifest.get('ai_bull_market_overfit_risk')}`",
+        f"- missing_regimes: `{', '.join(_texts(gap_report.get('missing_regimes'))) or 'none'}`",
+        "",
+        "## Windows",
+        "|regime|status|start|end|source|",
+        "|---|---|---|---|---|",
+    ]
+    for row in windows:
+        lines.append(
+            f"|{row.get('regime_id')}|{row.get('status')}|{row.get('start')}|"
+            f"{row.get('end')}|{row.get('source')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Candidate Stress Review",
+            "|candidate_id|gate|stress_reviews|ai_only|",
+            "|---|---|---|---|",
+        ]
+    )
+    for row in candidate_rows[:20]:
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('gate')}|"
+            f"{row.get('stress_window_review_required_count')}|"
+            f"{row.get('ai_bull_market_only_signal')}|"
+        )
+    lines.extend(["", "production_effect=none; broker_action=none."])
+    return "\n".join(lines) + "\n"
+
+
+def _latest_regime_coverage_for_sweep(
+    sweep_id: str,
+    output_dir: Path,
+) -> dict[str, Any]:
+    manifest = _latest_manifest_for_sweep(
+        sweep_id,
+        output_dir,
+        "regime_coverage_manifest.json",
+        "source_sweep_id",
+    )
+    if not manifest:
+        return {}
+    manifest_path = Path(_text(manifest.get("_manifest_path")))
+    rows_path = manifest_path.parent / "candidate_regime_results.jsonl"
+    return {"manifest": manifest, "candidate_rows": _read_jsonl(rows_path)}
+
+
+def _weight_path_interpretation(
+    row: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    real_path_text = _text(row.get("real_evaluation_artifact_path"))
+    if not real_path_text:
+        return [], []
+    daily_path = Path(real_path_text).parent / "daily_weights.csv"
+    if not daily_path.exists():
+        return [], []
+    try:
+        frame = pd.read_csv(daily_path)
+    except Exception:  # noqa: BLE001
+        return [], []
+    numeric_cols = [
+        col
+        for col in frame.columns
+        if col != "date"
+        and pd.api.types.is_numeric_dtype(pd.to_numeric(frame[col], errors="coerce"))
+    ]
+    summaries = []
+    for col in numeric_cols:
+        values = pd.to_numeric(frame[col], errors="coerce").dropna()
+        if values.empty:
+            continue
+        summaries.append(
+            {
+                "asset": col,
+                "min_weight": round(float(values.min()), 6),
+                "max_weight": round(float(values.max()), 6),
+                "avg_weight": round(float(values.mean()), 6),
+                "latest_weight": round(float(values.iloc[-1]), 6),
+            }
+        )
+    changes: list[dict[str, Any]] = []
+    if "date" in frame.columns and numeric_cols:
+        weights = frame[["date", *numeric_cols]].copy()
+        for col in numeric_cols:
+            weights[f"{col}_delta"] = pd.to_numeric(weights[col], errors="coerce").diff().abs()
+        delta_cols = [f"{col}_delta" for col in numeric_cols]
+        weights["max_delta"] = weights[delta_cols].max(axis=1)
+        for _, item in weights.sort_values("max_delta", ascending=False).head(10).iterrows():
+            if pd.isna(item.get("max_delta")):
+                continue
+            changes.append(
+                {
+                    "date": _text(item.get("date")),
+                    "max_abs_delta": round(float(item.get("max_delta")), 6),
+                }
+            )
+    return summaries, changes
+
+
+def _candidate_regime_summary(
+    candidate_id: str,
+    coverage: Mapping[str, Any],
+) -> dict[str, Any]:
+    for row in _records(coverage.get("candidate_rows")):
+        if _text(row.get("candidate_id")) == candidate_id:
+            return dict(row)
+    return {
+        "candidate_id": candidate_id,
+        "status": "MISSING",
+        "reason": "regime_coverage_candidate_result_missing",
+    }
+
+
+def _top_contribution_windows(
+    row: Mapping[str, Any],
+    *,
+    positive: bool,
+) -> list[dict[str, Any]]:
+    metrics = _mapping(row.get("metrics"))
+    value = _float(metrics.get("return_delta"))
+    return [
+        {
+            "window": "full_requested_ai_after_chatgpt",
+            "contribution": (
+                value if positive else -abs(_float(metrics.get("drawdown_degradation_pp")))
+            ),
+            "source": "candidate_metric_proxy",
+        }
+    ]
+
+
+def _drawdown_protection_text(row: Mapping[str, Any]) -> str:
+    degradation = _float(_mapping(row.get("metrics")).get("drawdown_degradation_pp"))
+    if degradation <= 0:
+        return "drawdown protection improved versus reference in candidate metrics"
+    if degradation <= REGIME_DRAWDOWN_PROTECTION_MAX_DEGRADATION_PP:
+        return "drawdown degradation is within review band"
+    return "drawdown degradation requires manual review"
+
+
+def _interpretation_recommendation(
+    row: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    regime_summary: Mapping[str, Any],
+) -> str:
+    if evidence.get("evidence_recommendation") == "not_usable":
+        return "rejected_or_incomplete_evidence"
+    if regime_summary.get("ai_bull_market_only_signal") is True:
+        return "review_required_for_ai_bull_market_overfit"
+    if row.get("gate") == GATE_OBSERVE_ONLY:
+        return "observe_only_candidate"
+    return _text(row.get("gate"), "review_required")
+
+
+def render_candidate_interpretation_markdown(payload: Mapping[str, Any]) -> str:
+    evidence = _mapping(payload.get("evidence_status"))
+    semiconductor_regime = _mapping(payload.get("tech_semiconductor_regime_behavior"))
+    lines = [
+        "# Candidate Interpretation",
+        "",
+        f"- candidate_id: `{payload.get('candidate_id')}`",
+        f"- rank: `{payload.get('rank')}`",
+        f"- gate_status: `{payload.get('gate_status')}`",
+        f"- evidence_recommendation: `{evidence.get('evidence_recommendation')}`",
+        f"- total_score: `{payload.get('total_score')}`",
+        f"- recommendation: `{payload.get('recommendation')}`",
+        "",
+        "## Parameters",
+    ]
+    for key, value in sorted(_mapping(payload.get("parameters")).items()):
+        lines.append(f"- `{key}`: `{value}`")
+    lines.extend(
+        [
+            "",
+            "## Behavior",
+            f"- turnover_source: `{payload.get('turnover_source')}`",
+            f"- drawdown_protection_behavior: {payload.get('drawdown_protection_behavior')}",
+            "- tech_semiconductor_regime_behavior: "
+            f"`{semiconductor_regime.get('status', 'AVAILABLE')}`",
+            "",
+            "## Major Weight Changes",
+        ]
+    )
+    changes = _records(payload.get("major_weight_changes"))
+    if changes:
+        lines.extend(
+            f"- `{row.get('date')}` max_abs_delta=`{row.get('max_abs_delta')}`"
+            for row in changes[:10]
+        )
+    else:
+        lines.append("- incomplete: daily weight path missing or unreadable")
+    lines.extend(["", "## Human Review Notes", "- manual_review_required"])
+    return "\n".join(lines) + "\n"
+
+
+def _read_csv_rows(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return [dict(row) for row in csv.DictReader(handle)]
+
+
+def _observe_pool_allowed(
+    *,
+    row: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    regime_status: Mapping[str, Any],
+) -> tuple[bool, list[str]]:
+    reasons: list[str] = []
+    if row.get("evaluator_mode") != EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        reasons.append("evaluator_not_real_dynamic_v3_rescue")
+    if evidence.get("data_quality") == "FAIL":
+        reasons.append("data_quality_fail")
+    if evidence.get("date_range_status") in {DATE_RANGE_FAIL, DATE_RANGE_INSUFFICIENT_DATA}:
+        reasons.append("date_range_fail_or_insufficient")
+    if evidence.get("weight_path_status") == "MISSING":
+        reasons.append("weight_path_missing")
+    if evidence.get("candidate_attribution_status") not in {
+        WEIGHT_PATH_COMPLETE,
+        WEIGHT_PATH_PARTIAL,
+    }:
+        reasons.append("candidate_attribution_not_complete_or_partial")
+    if evidence.get("overfit_status") == "HIGH_RISK":
+        reasons.append("overfit_high_risk")
+    if regime_status.get("tech_semiconductor_relevance") == "LOW":
+        reasons.append("tech_semiconductor_relevance_low")
+    if evidence.get("promotion_status") == FORBIDDEN_GATE:
+        reasons.append("production_status_forbidden")
+    warning_map = {
+        "PASS_WITH_WARNINGS": "data_quality_warning",
+        DATA_PROVENANCE_RECONSTRUCTED: "data_provenance_warning",
+        WEIGHT_PATH_PARTIAL: "WEIGHT_PATH_PARTIAL",
+    }
+    for value, reason in warning_map.items():
+        if value in {
+            evidence.get("data_quality"),
+            evidence.get("data_provenance_status"),
+            evidence.get("weight_path_status"),
+            evidence.get("candidate_attribution_status"),
+        }:
+            reasons.append(reason)
+    blocking = [
+        reason
+        for reason in reasons
+        if not reason.endswith("_warning")
+        and reason not in {"WEIGHT_PATH_PARTIAL", "ATTRIBUTION_PARTIAL"}
+    ]
+    return not blocking, reasons
+
+
+def render_observe_pool_markdown(
+    manifest: Mapping[str, Any],
+    candidates: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        "# Dynamic v3 Rescue Observe-only Candidate Pool",
+        "",
+        f"- pool_id: `{manifest.get('pool_id')}`",
+        f"- source_sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- status: `{manifest.get('status')}`",
+        f"- observe_candidate_count: `{manifest.get('observe_candidate_count')}`",
+        f"- manual_review_required_count: `{manifest.get('manual_review_required_count')}`",
+        f"- shadow_registry_sync_status: `{manifest.get('shadow_registry_sync_status')}`",
+        "",
+        "|candidate_id|score|overfit|manual_review_required|",
+        "|---|---|---|---|",
+    ]
+    for row in candidates:
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('score')}|"
+            f"{row.get('overfit_status')}|{row.get('manual_review_required')}|"
+        )
+    lines.extend(["", "production_effect=none; broker_action=none."])
+    return "\n".join(lines) + "\n"
+
+
+def _top_candidate_stability(rows: Sequence[Mapping[str, Any]]) -> str:
+    ranked = _ranked_candidate_rows(rows)
+    if len(ranked) < 2:
+        return "INSUFFICIENT_CANDIDATES"
+    first = _float(ranked[0].get("score"))
+    second = _float(ranked[1].get("score"))
+    return "REVIEW_REQUIRED" if abs(first - second) < 0.01 else "PASS"
+
+
+def _overfit_warning_rate(rows: Sequence[Mapping[str, Any]]) -> float:
+    if not rows:
+        return 0.0
+    count = sum(
+        1
+        for row in rows
+        if _mapping(row.get("metrics")).get("overfit_status") in {"REVIEW_REQUIRED", "HIGH_RISK"}
+    )
+    return round(count / len(rows), 6)
+
+
+def render_overnight_readiness_markdown(payload: Mapping[str, Any]) -> str:
+    projected_runtime_hours = payload.get("projected_overnight_runtime_hours")
+    lines = [
+        "# Dynamic v3 Rescue Overnight Real Readiness",
+        "",
+        f"- source_sweep_id: `{payload.get('source_sweep_id')}`",
+        f"- overnight_readiness: `{payload.get('overnight_readiness')}`",
+        f"- projected_overnight_runtime_hours: `{projected_runtime_hours}`",
+        f"- projected_artifact_size_gb: `{payload.get('projected_artifact_size_gb')}`",
+        f"- failure_rate: `{payload.get('failure_rate')}`",
+        f"- evidence_completeness_rate: `{payload.get('evidence_completeness_rate')}`",
+        f"- blocking_reasons: `{', '.join(_texts(payload.get('blocking_reasons'))) or 'none'}`",
+        f"- warnings: `{', '.join(_texts(payload.get('warnings'))) or 'none'}`",
+        "",
+        "This report does not start `overnight_real` automatically.",
+        "",
+        "production_effect=none; broker_action=none.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _latest_manifest_for_sweep(
+    sweep_id: str,
+    root: Path,
+    manifest_name: str,
+    sweep_key: str,
+) -> dict[str, Any]:
+    candidates: list[tuple[float, Path, dict[str, Any]]] = []
+    for path in root.glob(f"*/{manifest_name}"):
+        payload = _read_optional_json(path) or {}
+        if _text(payload.get(sweep_key)) == sweep_id:
+            payload["_manifest_path"] = str(path)
+            candidates.append((path.stat().st_mtime, path, payload))
+    if not candidates:
+        return {}
+    return max(candidates, key=lambda item: item[0])[2]
+
+
+def _research_decision_recommendation(
+    *,
+    evidence: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    observe_pool: Mapping[str, Any],
+    readiness: Mapping[str, Any],
+) -> dict[str, Any]:
+    reasons: list[str] = []
+    blockers: list[str] = []
+    recommendation = "manual_review_observe_pool"
+    if not evidence or evidence.get("status") == "FAIL":
+        recommendation = "fix_evidence_gaps"
+        blockers.append("evidence_summary_missing_or_fail")
+    elif regime.get("tech_semiconductor_relevance") == "LOW":
+        recommendation = "expand_stress_windows"
+        blockers.append("tech_semiconductor_relevance_low")
+    elif int(observe_pool.get("observe_candidate_count") or 0) == 0:
+        recommendation = "narrow_parameter_space"
+        reasons.append("no_observe_only_candidate")
+    elif readiness.get("overnight_readiness") == "READY":
+        recommendation = "run_overnight_real"
+        reasons.append("observe_pool_exists_and_overnight_ready")
+    elif readiness.get("overnight_readiness") == "READY_WITH_WARNINGS":
+        recommendation = "manual_review_observe_pool"
+        reasons.append("overnight_ready_with_warnings")
+    else:
+        recommendation = "rerun_medium_real"
+        blockers.append("overnight_not_ready_or_missing")
+    if not reasons:
+        reasons.append("research_decision_policy_applied")
+    priority = "HIGH" if blockers else "MEDIUM"
+    return {
+        "recommendation": recommendation,
+        "priority": priority,
+        "reasons": reasons,
+        "blocking_issues": blockers,
+        "suggested_codex_task": _suggested_codex_task(recommendation),
+    }
+
+
+def _suggested_codex_task(recommendation: str) -> str:
+    return {
+        "run_overnight_real": (
+            "Run overnight_real only after owner confirms runtime and disk budget."
+        ),
+        "rerun_medium_real": "Rerun medium_real after resolving readiness blockers.",
+        "narrow_parameter_space": (
+            "Inspect reject distribution and narrow policy-governed search axes."
+        ),
+        "expand_stress_windows": "Add or extend stress windows before promotion review.",
+        "fix_evidence_gaps": (
+            "Regenerate data/window/weight/attribution evidence and rerun summary."
+        ),
+        "manual_review_observe_pool": (
+            "Review observe_pool candidates and register selected candidates."
+        ),
+    }.get(recommendation, "Review research decision report.")
+
+
+def render_research_decision_reader_brief_section(
+    manifest: Mapping[str, Any],
+    recommendation: Mapping[str, Any],
+) -> str:
+    return (
+        "Dynamic Rescue Research Decision: "
+        f"recommendation={recommendation.get('recommendation')}; "
+        f"observe_candidates={manifest.get('observe_candidate_count')}; "
+        f"regime={manifest.get('tech_semiconductor_relevance')}; "
+        f"overnight={manifest.get('overnight_readiness')}; production_effect=none."
+    )
+
+
+def render_research_decision_markdown(
+    manifest: Mapping[str, Any],
+    recommendation: Mapping[str, Any],
+    *,
+    evidence: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    interpretation: Mapping[str, Any],
+    observe_pool: Mapping[str, Any],
+    readiness: Mapping[str, Any],
+) -> str:
+    blocking_issues = ", ".join(_texts(recommendation.get("blocking_issues"))) or "none"
+    lines = [
+        "# Dynamic v3 Rescue Research Decision",
+        "",
+        f"- sweep_id: `{manifest.get('source_sweep_id')}`",
+        f"- medium_real_success: `{manifest.get('medium_real_success')}`",
+        f"- research_value_candidate_found: `{manifest.get('research_value_candidate_found')}`",
+        f"- evidence_quality_status: `{manifest.get('evidence_quality_status')}`",
+        f"- regime_coverage_status: `{manifest.get('regime_coverage_status')}`",
+        f"- tech_semiconductor_relevance: `{manifest.get('tech_semiconductor_relevance')}`",
+        f"- ai_bull_market_overfit_risk: `{manifest.get('ai_bull_market_overfit_risk')}`",
+        f"- observe_candidate_count: `{manifest.get('observe_candidate_count')}`",
+        f"- overnight_readiness: `{manifest.get('overnight_readiness')}`",
+        f"- recommendation: `{recommendation.get('recommendation')}`",
+        f"- priority: `{recommendation.get('priority')}`",
+        "",
+        "## Source Artifacts",
+        f"- evidence_summary: `{evidence.get('_manifest_path', '')}`",
+        f"- regime_coverage: `{regime.get('_manifest_path', '')}`",
+        f"- interpretation_pack: `{interpretation.get('_manifest_path', '')}`",
+        f"- observe_pool: `{observe_pool.get('_manifest_path', '')}`",
+        f"- overnight_readiness: `{readiness.get('_manifest_path', '')}`",
+        "",
+        "## Next Action",
+        f"- reasons: `{', '.join(_texts(recommendation.get('reasons')))}`",
+        f"- blocking_issues: `{blocking_issues}`",
+        f"- suggested_codex_task: {recommendation.get('suggested_codex_task')}",
+        "",
+        "production_effect=none; broker_action=none.",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def walk_forward_windows(config: DynamicV3ParameterSweepConfig) -> list[dict[str, str]]:
@@ -7995,6 +10653,41 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pointer_name": "latest_promotion_pack",
             "pattern": "promotion/*/*/promotion_manifest.json",
             "id_keys": ("promotion_id",),
+        },
+        {
+            "pointer_name": "latest_evidence_summary",
+            "pattern": "evidence_summary/*/evidence_summary_manifest.json",
+            "id_keys": ("summary_id",),
+        },
+        {
+            "pointer_name": "latest_medium_real",
+            "pattern": "medium_real/*/medium_real_manifest.json",
+            "id_keys": ("medium_real_report_id",),
+        },
+        {
+            "pointer_name": "latest_regime_coverage",
+            "pattern": "regime_coverage/*/regime_coverage_manifest.json",
+            "id_keys": ("coverage_id",),
+        },
+        {
+            "pointer_name": "latest_interpretation_pack",
+            "pattern": "interpretation_pack/*/interpretation_manifest.json",
+            "id_keys": ("pack_id",),
+        },
+        {
+            "pointer_name": "latest_observe_pool",
+            "pattern": "observe_pool/*/observe_pool_manifest.json",
+            "id_keys": ("pool_id",),
+        },
+        {
+            "pointer_name": "latest_overnight_readiness",
+            "pattern": "overnight_readiness/*/overnight_readiness_manifest.json",
+            "id_keys": ("readiness_id",),
+        },
+        {
+            "pointer_name": "latest_research_decision",
+            "pattern": "research_decision/*/research_decision_manifest.json",
+            "id_keys": ("decision_id",),
         },
     )
 

@@ -1674,6 +1674,142 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_evidence_summary
+    title: ETF Dynamic v3 Rescue Candidate Evidence Summary
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue evidence-summary run --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_summary/*/evidence_summary_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_summary/*/candidate_evidence_matrix.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_summary/*/evidence_summary_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-114 summarizes candidate-level data, window, weight path,
+      attribution, overfit, provenance, and promotion evidence before medium_real
+      or observe-only interpretation.
+    owner_action: review_evidence_summary_before_observe_pool_or_overnight_real_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_medium_real_report
+    title: ETF Dynamic v3 Rescue Medium Real Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue medium-real report --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/medium_real/*/medium_real_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/medium_real/*/medium_real_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-115 records medium_real candidate count, completion/failure/reject
+      distribution, runtime, artifact size, and next action before larger
+      overnight research is considered.
+    owner_action: review_medium_real_report_before_overnight_readiness_or_search_expansion
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_regime_coverage
+    title: ETF Dynamic v3 Rescue Regime Coverage Gap Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue regime-coverage run --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_coverage/*/regime_coverage_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_coverage/*/regime_gap_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_coverage/*/regime_coverage_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-116 detects AI bull, drawdown, semiconductor stress, sideways,
+      high-volatility, and recovery coverage gaps so a single favorable regime
+      cannot be mistaken for broad robustness.
+    owner_action: review_regime_coverage_before_interpreting_medium_real_winners
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_interpretation_pack
+    title: ETF Dynamic v3 Rescue Candidate Interpretation Pack
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate interpretation-pack --candidate-id <candidate_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/interpretation/*/*/interpretation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/interpretation/*/*/candidate_interpretation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-117 turns top medium_real candidates into human-readable parameter,
+      weight path, turnover, drawdown protection, regime behavior, and evidence
+      interpretation packs.
+    owner_action: review_candidate_interpretation_before_manual_observe_pool_selection
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_observe_pool
+    title: ETF Dynamic v3 Rescue Observe-only Candidate Pool
+    group: shadow
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue observe-pool build --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/observe_pool/*/observe_pool_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/observe_pool/*/observe_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/observe_pool/*/observe_pool_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-118 writes an auditable observe-only candidate pool while keeping
+      shadow registry sync explicit and owner-controlled.
+    owner_action: owner_review_required_before_any_shadow_register_command
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_overnight_readiness
+    title: ETF Dynamic v3 Rescue Overnight Real Readiness
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue overnight-readiness run --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/overnight_readiness/*/overnight_readiness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overnight_readiness/*/overnight_readiness_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-119 estimates overnight_real runtime, disk size, failure rate,
+      evidence completeness, and stability before any owner-approved larger run.
+    owner_action: owner_confirm_runtime_and_disk_budget_before_overnight_real
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_research_decision
+    title: ETF Dynamic v3 Rescue Research Decision
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue research-decision run --sweep-id <sweep_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision/*/research_decision_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision/*/next_action_recommendations.json
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision/*/research_decision_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/research_decision/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-120 combines medium_real evidence, regime coverage, interpretation,
+      observe pool, and overnight readiness into a single owner-readable next
+      action recommendation.
+    owner_action: review_research_decision_before_next_codex_task_or_overnight_real
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

@@ -735,6 +735,19 @@ candidate attribution 使用这些路径把 explainability 标为 `COMPLETE`、`
 `INCOMPLETE`。Promotion pack 现在写出 `evidence_summary.json`，并在 window、weight
 path、candidate attribution 或 data provenance 不完整时阻断 `promote_candidate`；Reader
 Brief 只读展示这些 evidence status，不补跑上游审计。
+TRADING-114 到 TRADING-120 把 `medium_real` 候选发现整理成 owner-readable 研究包：
+`evidence-summary run/report` 汇总候选级 data/window/weight/attribution/overfit/provenance
+证据，`medium-real report` 记录 300 candidate 运行、reject 分布、runtime 和 artifact size，
+`regime-coverage run/report` 检查 AI bull、drawdown、semiconductor stress、sideways /
+high-vol / recovery 覆盖缺口，`candidate interpretation-pack` 为 top candidate 输出参数、
+weight path、turnover、drawdown protection 和 regime behavior，`observe-pool build/report`
+只写 observe-only pool artifact，默认不同步 shadow registry，`overnight-readiness run/report`
+只评估 runtime / disk / failure rate / evidence completeness，不启动 `overnight_real`，
+`research-decision run/report` 汇总 evidence、regime、interpretation、observe pool 和 readiness
+并给出下一步 Codex task。所有新增输出固定 `production_effect=none`、`broker_action=none`、
+`manual_review_required=true`，Reader Brief 只读 latest evidence summary、observe pool、
+overnight readiness 和 research decision，不运行上游、不生成 approval、shadow enrollment、
+production candidate、baseline mutation、official target weights mutation 或 broker action。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
