@@ -1,0 +1,126 @@
+policy_metadata:
+  version: heuristic_governance_v1
+  status: pilot
+  owner: system
+  rationale: "把投资解释路径中的 numeric literal 审计从人工 rg 固化为只读治理门禁；初版登记现有低风险或已治理例外，新增未登记数字比较必须解释或迁移到 policy config。"
+  validation: "由 tests/test_heuristic_governance.py 覆盖未登记数字比较、baseline 登记、policy metadata 缺失和默认仓库审计；CLI 由 tests/test_cli_direct.py 覆盖 direct dispatcher。"
+  review_after_reports: 8
+
+audit_scope:
+  source_paths:
+    - src/ai_trading_system/scoring
+    - src/ai_trading_system/backtest
+    - src/ai_trading_system/decision_outcomes.py
+    - src/ai_trading_system/prediction_ledger.py
+    - src/ai_trading_system/feedback_loop_review.py
+    - src/ai_trading_system/periodic_investment_review.py
+    - src/ai_trading_system/market_feedback_optimization.py
+
+allowed_numeric_literals:
+  scale_bounds:
+    - 0
+    - 1
+    - 100
+
+numeric_literal_baseline:
+  - path: src/ai_trading_system/backtest/engine.py
+    line_hint: 45
+    expression: "len(daily_returns) < 2"
+    category: statistical_minimum_sample
+    rationale: "Sharpe / Sortino 的标准差或下行波动率至少需要两个日收益观测；这是统计计算边界，不是投资解释阈值。"
+    validation: "tests/test_backtest.py 覆盖回测指标渲染和缺样本输出；该边界只返回 None，不生成 promotion 或仓位结论。"
+  - path: src/ai_trading_system/backtest/robustness.py
+    line_hint: 887
+    expression: "-1e-9 <= candidate <= 1.0 + 1e-9"
+    category: floating_point_tolerance
+    rationale: "校验 candidate weight ratio 位于 0..1 区间时允许浮点舍入误差；真实阈值仍是 0 和 1 的尺度边界。"
+    validation: "tests/test_backtest.py 覆盖 robustness 路径；该 epsilon 不改变 candidate ranking、veto 或 promotion policy。"
+  - path: src/ai_trading_system/backtest/robustness.py
+    line_hint: 989
+    expression: "len(base_returns) < 2"
+    category: statistical_minimum_sample
+    rationale: "bootstrap / comparison return series 少于两个观测时无法形成有意义的基础分布；这是统计计算边界。"
+    validation: "tests/test_backtest.py 覆盖 robustness summary 和低样本限制输出；该边界只限制统计计算。"
+  - path: src/ai_trading_system/decision_outcomes.py
+    line_hint: 410
+    expression: "len(returns) < 2"
+    category: statistical_minimum_sample
+    rationale: "realized volatility 使用样本标准差，少于两个收益观测只能输出 0.0，避免把单点收益解释为波动率。"
+    validation: "tests/test_decision_outcomes.py 覆盖 decision calibration 输出；score bucket 阈值已改为读取 config/scoring_rules.yaml。"
+  - path: src/ai_trading_system/feedback_loop_review.py
+    line_hint: 349
+    expression: "len(fields) < 4"
+    category: markdown_table_shape
+    rationale: "解析 task register Markdown 表格时要求至少 4 列才能读取 status；这是文档表格 schema 边界，不影响投资解释。"
+    validation: "tests/test_feedback_loop_review.py 覆盖 feedback loop review 报告；缺列只产生文档解析 warning。"
+  - path: src/ai_trading_system/scoring/daily.py
+    line_hint: 2094
+    expression: "abs(gate.max_position - final_max) < 1e-9"
+    category: floating_point_tolerance
+    rationale: "识别绑定 position gate 时使用 epsilon 处理浮点等值比较；实际 gate cap 来自配置或上游计算。"
+    validation: "tests/test_daily_scoring.py 覆盖 position gate 报告输出；epsilon 不改变配置阈值。"
+  - path: src/ai_trading_system/scoring/daily.py
+    line_hint: 2114
+    expression: "gate.max_position >= model_max - 1e-9"
+    category: floating_point_tolerance
+    rationale: "计算 gate 对模型上限影响时使用 epsilon 避免浮点误差造成 0pp 被误写为负影响；实际模型上限来自 scoring policy。"
+    validation: "tests/test_daily_scoring.py 覆盖日报 gate summary；epsilon 不改变仓位上限来源。"
+  - path: src/ai_trading_system/scoring/daily.py
+    line_hint: 2827
+    expression: "abs(weight_calibration.confidence_delta) < 1e-9"
+    category: floating_point_tolerance
+    rationale: "判断 approved calibration overlay 的 confidence delta 是否为零时使用 epsilon；delta 数值来自 overlay policy。"
+    validation: "tests/test_daily_scoring.py 和 calibration overlay 相关测试覆盖 overlay 应用路径；epsilon 只避免浮点噪声。"
+  - path: src/ai_trading_system/scoring/daily.py
+    line_hint: 2854
+    expression: "abs(weight_calibration.position_multiplier - 1.0) < 1e-9"
+    category: floating_point_tolerance
+    rationale: "判断 approved calibration overlay position multiplier 是否等于 1 时使用 epsilon；multiplier 本身来自 approved overlay。"
+    validation: "tests/test_daily_scoring.py 覆盖 calibration position gate；epsilon 不批准或改变 overlay。"
+  - path: src/ai_trading_system/scoring/daily.py
+    line_hint: 2862
+    expression: "max_position < score_band.max_position - 1e-9"
+    category: floating_point_tolerance
+    rationale: "判断 calibration overlay 是否实际收紧 score band 时使用 epsilon；score band 来自 config/scoring_rules.yaml。"
+    validation: "tests/test_daily_scoring.py 覆盖 calibration gate 输出；epsilon 只处理浮点边界。"
+  - path: src/ai_trading_system/scoring/daily.py
+    line_hint: 2881
+    expression: "adjusted_band.max_position < score_band.max_position - 1e-9"
+    category: floating_point_tolerance
+    rationale: "判断 confidence gate 是否实际收紧 score band 时使用 epsilon；confidence policy 来自 config/scoring_rules.yaml。"
+    validation: "tests/test_daily_scoring.py 覆盖 confidence gate 输出；epsilon 只处理浮点边界。"
+  - path: src/ai_trading_system/scoring/position_model.py
+    line_hint: 168
+    expression: "abs(position_bands[-1].min_score) > 1e-9"
+    category: floating_point_tolerance
+    rationale: "校验 position band 最后一档是否覆盖 0 分底线时使用 epsilon；position band 阈值来自 config/scoring_rules.yaml。"
+    validation: "tests/test_position_model.py 和 tests/test_config.py 覆盖 position band 加载与校验。"
+
+required_policy_metadata:
+  - path: config/feedback_sample_policy.yaml
+    section: ""
+    required_fields:
+      - version
+      - status
+      - owner
+      - rationale
+      - validation
+      - review_after_reports
+  - path: config/scoring_rules.yaml
+    section: policy_metadata
+    required_fields:
+      - version
+      - status
+      - owner
+      - rationale
+      - validation
+      - review_after_reports
+  - path: config/backtest_validation_policy.yaml
+    section: policy_metadata
+    required_fields:
+      - version
+      - status
+      - owner
+      - rationale
+      - validation
+      - review_after_reports

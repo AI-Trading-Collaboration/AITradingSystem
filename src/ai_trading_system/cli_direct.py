@@ -699,6 +699,19 @@ def _dispatch(args: list[str]) -> None:
             latest=_flag(args, "--latest"),
         )
         return
+    if args[:2] == ["docs", "heuristic-audit"]:
+        docs_cli.heuristic_governance_audit_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option_with_default(
+                args,
+                "--config-path",
+                docs_cli.DEFAULT_HEURISTIC_GOVERNANCE_CONFIG_PATH,
+            ),
+            output_path=_optional_path(args, "--output-path"),
+            json_output_path=_optional_path(args, "--json-output-path"),
+            fail_on_warning=_flag(args, "--fail-on-warning"),
+        )
+        return
     if args[:2] == ["sec-pit", "shadow-observe"]:
         sec_pit_cli.shadow_observe_command(
             start=_option(args, "--start"),

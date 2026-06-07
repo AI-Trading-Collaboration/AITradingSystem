@@ -3,6 +3,8 @@ status: pilot
 owner: system
 market_regime_id: ai_after_chatgpt
 effective_from: 2026-05-16
+rationale: "把 feedback / shadow / promotion 样本下限拆成 reporting、pilot、diagnostic、promotion 四层；当前 pilot 允许用已积累样本启动诊断和候选复核，但 promotion floor 仍保持较高门槛，避免低样本直接影响 production 权重、规则或仓位 gate。"
+validation: "由 tests/test_market_feedback_optimization.py、tests/test_decision_outcomes.py、tests/test_prediction_ledger.py、tests/test_feedback_loop_review.py 和 GOV-004 heuristic audit 覆盖；真实 2026-05-14 validation maturity 已验证低样本仅进入 READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW。"
 review_after_reports: 8
 notes:
   - "当前处于市场反馈优化 pilot 阶段，样本较少时允许启动复盘、因果链和候选规则整理。"

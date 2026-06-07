@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-13
+最后更新：2026-06-07
 
 关联任务：`GOV-004`
 
@@ -70,6 +70,17 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 - P1-B 第一批迁移已完成：`config/scoring_rules.yaml` 增加 `policy_metadata`、`position_bands`、`daily_conclusion`、`confidence_policy` 和完整 `source_type_confidence`；`WeightedScoreModel` 不再内置 score->position band，`score-daily`、回测评分和 robustness 信号族基线读取同一套配置；日报 `score_architecture_audit` 输出 scoring policy metadata。
 - P1-C 第一批迁移已完成：新增 `config/backtest_validation_policy.yaml`，管理 robustness 默认实验参数、解释阈值和 promotion gate 要求；`aits backtest` 未显式传入 robustness 参数时读取该 policy，robustness/promotion 报告输出 policy metadata；promotion 的 shadow outcome floor 继续读取 `config/feedback_sample_policy.yaml`。
 - Feature coverage 第一批迁移已完成：`backtest/daily.py` 的 data credibility 覆盖率阈值和 `aits backtest --minimum-component-coverage` 默认值读取 `config/backtest_validation_policy.yaml` 的 `data_credibility.component_coverage_min`。
+- P2 自动审计工具和已配置阈值 rationale 已完成：新增 `config/heuristic_governance.yaml` 与 `aits docs heuristic-audit`，默认扫描投资解释源码路径、校验关键 policy metadata，并输出 `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.md/json`；`config/feedback_sample_policy.yaml` 已补顶层 rationale / validation；`decision_outcomes.py` 的 score bucket 改为读取 `config/scoring_rules.yaml`，`backtest/lag_sensitivity.py` 的最小有效滞后天数改为读取 `config/backtest_validation_policy.yaml`。
+
+## 2026-06-07 实现计划
+
+本轮补齐 P2 自动审计工具和已配置阈值 rationale，保持 `production_effect=none`，不改变任何评分、回测、仓位或日报结论。
+
+1. 新增 `config/heuristic_governance.yaml`，登记审计范围、已知 numeric literal baseline、低风险例外边界和必须具备 governance metadata 的 policy 配置。
+2. 为 `config/feedback_sample_policy.yaml` 补充顶层 `rationale` 和 `validation`，使样本 floor 的 owner/status/review/rationale/validation 都可审计。
+3. 新增只读命令 `aits docs heuristic-audit`，扫描投资解释路径中的未登记数字比较，并校验关键 policy metadata；默认输出 Markdown/JSON 报告到 `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.*`。
+4. 新增单元测试覆盖未登记数字比较失败、baseline 登记通过、policy metadata 缺失失败、默认仓库配置通过和 CLI/direct dispatcher 行为。
+5. 同步更新 `docs/system_flow.md` 与 `docs/artifact_catalog.md`，把该命令记录为治理报告而非 production workflow。
 
 ## 迁移优先级
 
@@ -79,7 +90,7 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 |P1-B|Score band / confidence band / position band|直接影响仓位和日报动作语言|`position_model` 和 `scoring/daily` 不再用无解释数字字面量；配置记录 rationale 和适用市场阶段。|
 |P1-C|Backtest promotion / robustness threshold|影响是否把策略判断视为可晋级|promotion gate 读取 calibration protocol 或 promotion policy；报告列出每项阈值来源。|
 |P2|已配置化阈值补 rationale|风险低于代码硬编码，但仍影响解释|关键 YAML 增加 owner/status/rationale/validation_ref 或链接需求文档。|
-|P2|自动审计工具|当前靠人工 `rg`，容易漏项|新增只读 audit 命令或测试，发现新投资解释 numeric literal 时提示。|
+|P2|自动审计工具|当前靠人工 `rg`，容易漏项|新增只读 audit 命令或测试，发现新投资解释 numeric literal 时提示；初版使用 baseline 登记现有例外并阻断未登记新增项。|
 
 ## 例外边界
 
@@ -90,6 +101,12 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 - HTTP timeout、retry、UI 尺寸、文本格式精度。
 - 测试 fixture 中为了构造样例而出现的数字。
 
+## 后续增强候选
+
+2026-06-07 并发只读复核建议后续把当前 manifest 级 rationale 进一步扩展为 section 或 threshold 级 rationale map，例如 `position_bands`、`daily_conclusion`、`confidence_policy`、`robustness` 和 `promotion` 内部关键 numeric leaf 的 rationale / validation 对照表。该增强会增加配置审计深度，但不阻断本轮 `GOV-004` 自动审计工具进入验证。
+
+同一复核还指出 `src/ai_trading_system/backtest/pit_coverage.py` 的 PIT readiness 类阈值可纳入下一轮 audit scope。该路径不在初版 GOV-004 扫描范围内；若后续把它纳入，需要先判定阈值应归属 `backtest_validation_policy`、`data_quality` 还是单独 PIT coverage policy，再迁移或登记 rationale。
+
 ## 状态记录
 
 - 2026-05-13：新增任务和项目规则，原因：owner 要求 review 当前项目中类似 `30` 样本门槛的启发式硬编码，并把治理要求加入项目规则。
@@ -98,3 +115,6 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 - 2026-05-13：完成 P1-B 第一批迁移。评分到仓位、日报结论边界、confidence cutoff/cap、source type confidence 迁移到 `config/scoring_rules.yaml`；正式评分路径不再依赖散落的阈值 if/else，报告审计输出 policy metadata。
 - 2026-05-13：完成 P1-C 第一批迁移。新增 `config/backtest_validation_policy.yaml`，回测稳健性默认实验参数和 promotion gate 关键要求改为 policy 驱动；`backtest_robustness` 与 `model_promotion` 摘要输出 policy 信息。
 - 2026-05-13：完成 feature coverage 第一批迁移。Backtest Data Quality 的模块覆盖率阈值和 CLI 审计覆盖率默认值改为读取 `config/backtest_validation_policy.yaml`。
+- 2026-06-07：从 VALIDATING 改回 IN_PROGRESS，原因：继续推进 P2 自动审计工具和已配置阈值 rationale；本轮只新增 governance/reporting 层，不改变 production 评分、仓位、回测或日报结论。
+- 2026-06-07：从 IN_PROGRESS 改回 VALIDATING，原因：已实现 `aits docs heuristic-audit`、默认 governance config、baseline/rationale、policy metadata 校验、CLI/direct dispatcher、系统流图和产物目录更新；同时移除两个真实硬编码解释边界（decision outcome score bucket、lag sensitivity min days）。验证通过 focused pytest 44 passed、`heuristic-audit --fail-on-warning` PASS、ruff、docs freshness 和 documentation contract。
+- 2026-06-07：记录并发复核 follow-up：后续可增强逐阈值 rationale map，并评估是否把 `backtest/pit_coverage.py` 纳入 heuristic audit scope；本轮不临时扩 scope 或补白名单，避免未做归属判断就隐藏新的 policy 设计问题。

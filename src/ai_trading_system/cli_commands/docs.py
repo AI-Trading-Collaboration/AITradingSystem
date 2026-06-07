@@ -23,6 +23,14 @@ from ai_trading_system.documentation_contract import (
     write_documentation_contract_json,
     write_documentation_contract_report,
 )
+from ai_trading_system.heuristic_governance import (
+    DEFAULT_HEURISTIC_GOVERNANCE_CONFIG_PATH,
+    build_heuristic_governance_payload,
+    default_heuristic_governance_json_path,
+    default_heuristic_governance_report_path,
+    write_heuristic_governance_json,
+    write_heuristic_governance_report,
+)
 from ai_trading_system.reports.report_index import DEFAULT_REPORT_REGISTRY_PATH
 
 console = Console()
@@ -137,6 +145,71 @@ def documentation_contract_command(
         "只读文档契约"
     )
     if payload["status"] == "FAIL" or (fail_on_warning and payload["summary"]["warning_count"]):
+        raise typer.Exit(code=1)
+
+
+@docs_app.command("heuristic-audit")
+def heuristic_governance_audit_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Heuristic governance audit 日期。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option(help="heuristic_governance.yaml 路径。"),
+    ] = DEFAULT_HEURISTIC_GOVERNANCE_CONFIG_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Heuristic governance Markdown 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Heuristic governance JSON 输出路径。"),
+    ] = None,
+    fail_on_warning: Annotated[
+        bool,
+        typer.Option(help="存在 warning 时也以非零退出。"),
+    ] = False,
+) -> None:
+    """扫描投资解释路径的未登记 numeric literal，并校验 policy metadata。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    markdown_output = output_path or default_heuristic_governance_report_path(
+        reports_dir,
+        report_date,
+    )
+    json_output = json_output_path or default_heuristic_governance_json_path(
+        reports_dir,
+        report_date,
+    )
+    try:
+        payload = build_heuristic_governance_payload(
+            as_of=report_date,
+            config_path=config_path,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report_path = write_heuristic_governance_report(payload, markdown_output)
+    json_path = write_heuristic_governance_json(payload, json_output)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    if payload["status"] == "FAIL":
+        style = "red"
+    console.print(f"[{style}]Heuristic governance audit：{payload['status']}[/{style}]")
+    console.print(f"Heuristic governance report：{report_path}")
+    console.print(f"Heuristic governance JSON：{json_path}")
+    console.print(
+        f"numeric_literals={payload['summary']['numeric_literal_finding_count']}；"
+        f"unregistered={payload['summary']['unregistered_numeric_literal_count']}；"
+        f"policy_metadata_failures={payload['summary']['failed_policy_metadata_check_count']}；"
+        f"warnings={payload['summary']['warning_count']}；"
+        f"production_effect={payload['production_effect']}；"
+        "只读治理审计"
+    )
+    if payload["status"] == "FAIL" or (
+        fail_on_warning and payload["summary"]["warning_count"]
+    ):
         raise typer.Exit(code=1)
 
 

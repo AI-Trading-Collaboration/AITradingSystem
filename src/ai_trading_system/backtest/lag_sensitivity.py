@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 
 from ai_trading_system.backtest.daily import (
@@ -10,6 +11,7 @@ from ai_trading_system.backtest.daily import (
     build_backtest_data_credibility,
 )
 from ai_trading_system.backtest.engine import BacktestMetrics
+from ai_trading_system.config import load_backtest_validation_policy
 
 
 @dataclass(frozen=True)
@@ -260,11 +262,12 @@ def _interpretation_summary(report: BacktestLagSensitivityReport) -> list[str]:
     result = report.base_result
     credibility = build_backtest_data_credibility(result)
     base_effective = _is_effective(result.strategy_metrics)
+    minimum_lag_days = _minimum_lag_sensitivity_days()
     effective_lagged = [
         scenario
         for scenario in report.scenarios
         if scenario.result is not None
-        and max(scenario.feature_lag_days, scenario.universe_lag_days) >= 3
+        and max(scenario.feature_lag_days, scenario.universe_lag_days) >= minimum_lag_days
         and _is_effective(scenario.result.strategy_metrics)
     ]
     lines: list[str] = []
@@ -276,12 +279,18 @@ def _interpretation_summary(report: BacktestLagSensitivityReport) -> list[str]:
         lines.append("策略只在低滞后或 lag=0 场景有效，未来函数或过度依赖即时输入的风险较高。")
     elif effective_lagged:
         lines.append(
-            "至少一个 3 个交易日以上滞后场景仍保持正收益和正 Sharpe，可作为更可信研究线索。"
+            f"至少一个 {minimum_lag_days} 个交易日以上滞后场景仍保持正收益和正 Sharpe，"
+            "可作为更可信研究线索。"
         )
     else:
         lines.append("基础场景本身未达到正收益和正 Sharpe，有效性需要重新评估。")
     lines.append("完整生产信任仍需要更完整的 PIT 估值/风险事件覆盖、权重扰动和样本外验证。")
     return lines
+
+
+@lru_cache(maxsize=1)
+def _minimum_lag_sensitivity_days() -> int:
+    return load_backtest_validation_policy().promotion.min_lag_sensitivity_days
 
 
 def _lag_interpretation(metrics: BacktestMetrics) -> str:

@@ -543,7 +543,7 @@ def test_cli_direct_dispatches_reader_brief_date_and_latest(monkeypatch) -> None
     ]
 
 
-def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
+def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Path) -> None:
     calls: list[tuple[str, dict[str, object]]] = []
 
     def fake_validate_data(**kwargs: object) -> None:
@@ -557,6 +557,9 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
 
     def fake_docs_contract(**kwargs: object) -> None:
         calls.append(("docs_contract", kwargs))
+
+    def fake_heuristic_audit(**kwargs: object) -> None:
+        calls.append(("heuristic_audit", kwargs))
 
     def fake_shadow_observe(**kwargs: object) -> None:
         calls.append(("shadow_observe", kwargs))
@@ -580,6 +583,11 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
         "documentation_contract_command",
         fake_docs_contract,
     )
+    monkeypatch.setattr(
+        cli_direct.docs_cli,
+        "heuristic_governance_audit_command",
+        fake_heuristic_audit,
+    )
     monkeypatch.setattr(cli_direct.sec_pit_cli, "shadow_observe_command", fake_shadow_observe)
     monkeypatch.setattr(cli_direct.sec_pit_cli, "shadow_monitor_command", fake_shadow_monitor)
 
@@ -587,6 +595,24 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
     assert cli_direct.main(["pit-snapshots", "build-manifest", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["pit-snapshots", "validate", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["docs", "report-contract", "--latest"]) == 0
+    assert (
+        cli_direct.main(
+            [
+                "docs",
+                "heuristic-audit",
+                "--date",
+                "2026-06-07",
+                "--config-path",
+                str(tmp_path / "heuristic.yaml"),
+                "--output-path",
+                str(tmp_path / "audit.md"),
+                "--json-output-path",
+                str(tmp_path / "audit.json"),
+                "--fail-on-warning",
+            ]
+        )
+        == 0
+    )
     assert cli_direct.main(["sec-pit", "shadow-observe", "--latest", "--end", "2026-05-13"]) == 0
     assert cli_direct.main(["sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-13"]) == 0
 
@@ -595,6 +621,16 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
         ("build_manifest", {"as_of": "2026-05-13"}),
         ("validate_pit", {"as_of": "2026-05-13"}),
         ("docs_contract", {"as_of": None, "latest": True}),
+        (
+            "heuristic_audit",
+            {
+                "as_of": "2026-06-07",
+                "config_path": tmp_path / "heuristic.yaml",
+                "output_path": tmp_path / "audit.md",
+                "json_output_path": tmp_path / "audit.json",
+                "fail_on_warning": True,
+            },
+        ),
         ("shadow_observe", {"start": None, "end": "2026-05-13", "latest": True}),
         ("shadow_monitor", {"as_of": "2026-05-13", "latest": True}),
     ]

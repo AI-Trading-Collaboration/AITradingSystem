@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from statistics import median
 from typing import Any
@@ -14,7 +15,7 @@ from ai_trading_system.benchmark_policy import (
     BenchmarkPolicyReport,
     render_benchmark_policy_summary_section,
 )
-from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.config import PROJECT_ROOT, load_scoring_rules
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.feedback_sample_policy import (
     FeedbackSamplePolicy,
@@ -423,15 +424,25 @@ def _score_bucket(score: object) -> str:
     if score is None:
         return "unknown"
     value = float(score)
-    if value >= 80:
-        return "80_100"
-    if value >= 65:
-        return "65_80"
-    if value >= 50:
-        return "50_65"
-    if value >= 35:
-        return "35_50"
-    return "0_35"
+    for lower_bound, upper_bound in _score_bucket_bounds():
+        if value >= lower_bound:
+            return f"{_bucket_bound_label(lower_bound)}_{_bucket_bound_label(upper_bound)}"
+    return "unknown"
+
+
+@lru_cache(maxsize=1)
+def _score_bucket_bounds() -> tuple[tuple[float, float], ...]:
+    upper_bound = 100.0
+    bounds: list[tuple[float, float]] = []
+    for band in load_scoring_rules().position_bands:
+        lower_bound = float(band.min_score)
+        bounds.append((lower_bound, upper_bound))
+        upper_bound = lower_bound
+    return tuple(bounds)
+
+
+def _bucket_bound_label(value: float) -> str:
+    return str(int(value)) if value.is_integer() else f"{value:g}"
 
 
 def _manual_review_status(snapshot: dict[str, Any], review_name: str) -> str:
