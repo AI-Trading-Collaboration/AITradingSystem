@@ -5249,6 +5249,10 @@ def dynamic_v3_promotion_pack_command(
         Path,
         typer.Option("--data-provenance-dir", help="data provenance artifact root。"),
     ] = DEFAULT_DATA_PROVENANCE_DIR,
+    window_audit_dir: Annotated[
+        Path,
+        typer.Option("--window-audit-dir", help="window audit artifact root。"),
+    ] = DEFAULT_WINDOW_AUDIT_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="promotion artifact root。"),
@@ -5261,6 +5265,7 @@ def dynamic_v3_promotion_pack_command(
             registry_path=registry_path,
             candidate_attribution_dir=candidate_attribution_dir,
             data_provenance_dir=data_provenance_dir,
+            window_audit_dir=window_audit_dir,
             output_dir=output_dir,
         )
     except DynamicV3ParameterResearchError as exc:

@@ -4073,6 +4073,7 @@ def build_promotion_pack(
     overfit_dir: Path = DEFAULT_OVERFIT_DIR,
     candidate_attribution_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
     data_provenance_dir: Path = DEFAULT_DATA_PROVENANCE_DIR,
+    window_audit_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
     output_dir: Path = DEFAULT_PROMOTION_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -4086,6 +4087,7 @@ def build_promotion_pack(
         overfit_dir=overfit_dir,
         candidate_attribution_dir=candidate_attribution_dir,
         data_provenance_dir=data_provenance_dir,
+        window_audit_dir=window_audit_dir,
     )
     status, reasons = _promotion_status(evidence)
     candidate = _mapping(evidence.get("candidate_report"))
@@ -6084,6 +6086,7 @@ def _promotion_evidence(
     overfit_dir: Path,
     candidate_attribution_dir: Path,
     data_provenance_dir: Path,
+    window_audit_dir: Path,
 ) -> dict[str, Any]:
     registry = load_shadow_registry(registry_path)
     record = next(
@@ -6139,6 +6142,7 @@ def _promotion_evidence(
     )
     attribution_path = candidate_attribution_dir / candidate_id / "attribution_manifest.json"
     data_provenance_path = data_provenance_dir / "price_cache_provenance_report.json"
+    window_audit = _latest_window_audit_evidence(window_audit_dir)
     shadow = _shadow_candidate_report(record) if record else None
     return {
         "registry_record": record,
@@ -6174,6 +6178,9 @@ def _promotion_evidence(
         "candidate_attribution_path": str(attribution_path),
         "data_provenance": _read_optional_json(data_provenance_path),
         "data_provenance_path": str(data_provenance_path),
+        "window_audit": window_audit,
+        "window_audit_manifest_path": window_audit.get("manifest_path", ""),
+        "window_audit_report_path": window_audit.get("report_path", ""),
         "shadow_report": shadow,
     }
 
@@ -6197,8 +6204,7 @@ def _promotion_status(evidence: Mapping[str, Any]) -> tuple[str, list[str]]:
         EVALUATOR_TINY_FIXTURE_PROXY
     ):
         return "review_required", ["tiny_fixture_not_for_investment_decision"]
-    backtest_window = _mapping(candidate.get("backtest_window"))
-    if _text(backtest_window.get("date_range_status")) in WINDOW_PROMOTION_BLOCKING_STATUSES:
+    if _promotion_window_blocks_promotion(evidence):
         return "review_required", ["BACKTEST_WINDOW_INCOMPLETE"]
     weight_metadata = _mapping(evidence.get("weight_path_metadata"))
     if _text(weight_metadata.get("attribution_completeness")) == WEIGHT_PATH_INCOMPLETE:
@@ -6301,12 +6307,100 @@ def _promotion_risk_summary(
     }
 
 
+def _latest_window_audit_evidence(window_audit_dir: Path) -> dict[str, Any]:
+    manifest_path: Path | None = None
+    latest_pointer: dict[str, Any] = {}
+    if _is_default_window_audit_dir(window_audit_dir):
+        latest_pointer = _latest_pointer_payload("latest_window_audit")
+        pointer_path_text = _text(_mapping(latest_pointer).get("path"))
+        pointer_path = _resolve_project_path(Path(pointer_path_text)) if pointer_path_text else None
+        if (
+            pointer_path is not None
+            and pointer_path.exists()
+            and _is_default_dynamic_v3_research_artifact(pointer_path)
+        ):
+            manifest_path = pointer_path
+    if manifest_path is None:
+        latest_dir = _latest_child_dir(window_audit_dir)
+        candidate_path = None if latest_dir is None else latest_dir / "window_audit_manifest.json"
+        if candidate_path is not None and candidate_path.exists():
+            manifest_path = candidate_path
+    if manifest_path is None:
+        return {
+            "status": "MISSING",
+            "date_range_status": "MISSING",
+            "promotion_blocking": True,
+            "promotion_blocking_count": None,
+            "manifest_path": "",
+            "report_path": "",
+            "latest_pointer": latest_pointer,
+        }
+    manifest = _read_optional_json(manifest_path) or {}
+    status = _text(manifest.get("status"), "MISSING")
+    return {
+        "window_audit_id": _text(manifest.get("window_audit_id"), manifest_path.parent.name),
+        "status": status,
+        "date_range_status": status,
+        "configured_backtest_start": manifest.get("configured_backtest_start"),
+        "requested_start": manifest.get("requested_start"),
+        "requested_end": manifest.get("requested_end"),
+        "earliest_actual_evaluation_start": manifest.get("earliest_actual_evaluation_start"),
+        "promotion_blocking": (
+            status in WINDOW_PROMOTION_BLOCKING_STATUSES
+            or _float(manifest.get("promotion_blocking_count")) > 0
+        ),
+        "promotion_blocking_count": manifest.get("promotion_blocking_count"),
+        "artifact_count": manifest.get("artifact_count"),
+        "manifest_path": str(manifest_path),
+        "report_path": str(manifest_path.parent / "window_audit_report.md"),
+        "manifest": manifest,
+        "latest_pointer": latest_pointer,
+    }
+
+
+def _promotion_window_summary(evidence: Mapping[str, Any]) -> dict[str, Any]:
+    window_audit = _mapping(evidence.get("window_audit"))
+    candidate_window = _mapping(_mapping(evidence.get("candidate_report")).get("backtest_window"))
+    if window_audit:
+        return {
+            "source": "latest_window_audit",
+            "date_range_status": window_audit.get("date_range_status", "MISSING"),
+            "window_audit_id": window_audit.get("window_audit_id", ""),
+            "configured_backtest_start": window_audit.get("configured_backtest_start"),
+            "requested_start": window_audit.get("requested_start"),
+            "requested_end": window_audit.get("requested_end"),
+            "earliest_actual_evaluation_start": window_audit.get(
+                "earliest_actual_evaluation_start"
+            ),
+            "promotion_blocking": window_audit.get("promotion_blocking", True),
+            "promotion_blocking_count": window_audit.get("promotion_blocking_count"),
+            "manifest_path": window_audit.get("manifest_path", ""),
+            "report_path": window_audit.get("report_path", ""),
+            "candidate_backtest_window": candidate_window,
+        }
+    if candidate_window:
+        return {"source": "candidate_report", **candidate_window}
+    return {"source": "missing", "date_range_status": "MISSING", "promotion_blocking": True}
+
+
+def _promotion_window_blocks_promotion(evidence: Mapping[str, Any]) -> bool:
+    window = _promotion_window_summary(evidence)
+    status = _text(window.get("date_range_status"), "MISSING")
+    blocking_count = _float(window.get("promotion_blocking_count"))
+    return (
+        status == "MISSING"
+        or status in WINDOW_PROMOTION_BLOCKING_STATUSES
+        or window.get("promotion_blocking") is True
+        or blocking_count > 0
+    )
+
+
 def _promotion_evidence_summary(evidence: Mapping[str, Any]) -> dict[str, Any]:
     candidate = _mapping(evidence.get("candidate_report"))
     data_provenance = _mapping(evidence.get("data_provenance"))
     weight_path = _mapping(evidence.get("weight_path_metadata"))
     attribution = _mapping(evidence.get("candidate_attribution"))
-    window = _mapping(candidate.get("backtest_window"))
+    window = _promotion_window_summary(evidence)
     overfit = _mapping(evidence.get("overfit_manifest"))
     return {
         "data_quality": _mapping(candidate.get("data_quality")).get("status", "MISSING"),
@@ -6316,6 +6410,9 @@ def _promotion_evidence_summary(evidence: Mapping[str, Any]) -> dict[str, Any]:
         "data_provenance_warnings": data_provenance.get("warnings", []),
         "backtest_window_status": window.get("date_range_status", "MISSING"),
         "backtest_window": window,
+        "window_audit_id": window.get("window_audit_id", ""),
+        "window_audit_manifest_path": evidence.get("window_audit_manifest_path", ""),
+        "window_audit_report_path": evidence.get("window_audit_report_path", ""),
         "weight_path_status": weight_path.get("attribution_completeness", "MISSING"),
         "weight_path_metadata_path": evidence.get("weight_path_metadata_path", ""),
         "candidate_attribution_status": attribution.get("status", "MISSING"),
@@ -6327,9 +6424,7 @@ def _promotion_evidence_summary(evidence: Mapping[str, Any]) -> dict[str, Any]:
 
 def _promotion_blocking_flags(evidence: Mapping[str, Any]) -> list[str]:
     flags: list[str] = []
-    candidate = _mapping(evidence.get("candidate_report"))
-    window = _mapping(candidate.get("backtest_window"))
-    if _text(window.get("date_range_status")) in WINDOW_PROMOTION_BLOCKING_STATUSES:
+    if _promotion_window_blocks_promotion(evidence):
         flags.append("BACKTEST_WINDOW_INCOMPLETE")
     weight_path = _mapping(evidence.get("weight_path_metadata"))
     if (
@@ -6364,6 +6459,8 @@ def _promotion_linked_artifacts(evidence: Mapping[str, Any]) -> dict[str, Any]:
         "weight_path_metadata": evidence.get("weight_path_metadata_path", ""),
         "candidate_attribution": evidence.get("candidate_attribution_path", ""),
         "data_provenance": evidence.get("data_provenance_path", ""),
+        "window_audit": evidence.get("window_audit_manifest_path", ""),
+        "window_audit_report": evidence.get("window_audit_report_path", ""),
     }
 
 
@@ -7932,6 +8029,13 @@ def _is_default_dynamic_v3_research_artifact(path: Path) -> bool:
 def _is_default_latest_pointer_dir(path: Path) -> bool:
     try:
         return path.resolve(strict=False) == DEFAULT_LATEST_POINTER_DIR.resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+
+def _is_default_window_audit_dir(path: Path) -> bool:
+    try:
+        return path.resolve(strict=False) == DEFAULT_WINDOW_AUDIT_DIR.resolve(strict=False)
     except (OSError, RuntimeError, ValueError):
         return False
 

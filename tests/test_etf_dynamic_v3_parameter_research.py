@@ -209,17 +209,48 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         == "PASS"
     )
 
+    window_audit_dir = tmp_path / "window_audit"
+    latest_window_audit_dir = window_audit_dir / "window-audit-test"
+    latest_window_audit_dir.mkdir(parents=True)
+    (latest_window_audit_dir / "window_audit_manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_window_audit_manifest",
+                "window_audit_id": "window-audit-test",
+                "status": "FAIL",
+                "configured_backtest_start": "2022-12-01",
+                "requested_start": "2022-12-01",
+                "requested_end": "2026-06-05",
+                "earliest_actual_evaluation_start": "",
+                "artifact_count": 2,
+                "promotion_blocking_count": 2,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (latest_window_audit_dir / "window_audit_report.md").write_text(
+        "# Window audit\n",
+        encoding="utf-8",
+    )
+
     pack = build_promotion_pack(
         candidate_id=candidate_id,
         registry_path=registry_path,
         sweep_output_dir=sweep_output_dir,
         walk_forward_dir=tmp_path / "walk_forward",
         robustness_dir=tmp_path / "robustness",
+        window_audit_dir=window_audit_dir,
         output_dir=tmp_path / "promotion",
     )
     assert pack["pack"]["status"] in {"incomplete", "review_required", "reject"}
     assert "tiny_fixture_not_for_investment_decision" in pack["pack"]["decision_reasons"]
     assert pack["pack"]["production_candidate_generated"] is False
+    evidence_summary = pack["pack"]["evidence_summary"]
+    assert evidence_summary["backtest_window_status"] == "FAIL"
+    assert evidence_summary["window_audit_id"] == "window-audit-test"
+    assert "BACKTEST_WINDOW_INCOMPLETE" in evidence_summary["promotion_blocking_flags"]
+    assert pack["pack"]["linked_artifacts"]["window_audit"].endswith("window_audit_manifest.json")
     assert (
         validate_promotion_pack(
             candidate_id=candidate_id,

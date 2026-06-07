@@ -154,3 +154,22 @@ python -m pytest tests -q
   `aits docs report-contract --latest` 和 `git diff --check`。剩余限制是当前 window
   audit 真实结果 `status=FAIL` / `promotion_blocking_count=170`，需要 owner/系统决定是否
   重新跑完整窗口 real sweep / weight tuning 或接受继续阻断 promotion。
+- 2026-06-07：重新进入 `IN_PROGRESS`。复验当前 latest promotion pack 时发现历史
+  pack 缺 `evidence_summary.json`；按当前代码重新生成 pack 后结构校验 PASS，但
+  `evidence_summary.backtest_window_status=MISSING`，未消费 canonical latest window
+  audit `2eface90ec36f7bf` 的 `status=FAIL` / `promotion_blocking_count=170`。本轮修复
+  目标是让 promotion pack 显式读取 latest window audit evidence，并把 audit fail /
+  blocking findings 纳入 `BACKTEST_WINDOW_INCOMPLETE`，避免人工 promotion review 看到
+  “window missing” 或误以为 window gate 未执行。
+- 2026-06-07：修复完成并回到 `VALIDATING`。`promotion pack` 新增
+  `--window-audit-dir`，默认读取 canonical `latest_window_audit`，测试/临时目录读取最新
+  window audit 子目录；`evidence_summary.json` 和 `linked_artifacts.json` 现在披露
+  `window_audit_id`、manifest/report path、`backtest_window_status` 和
+  `promotion_blocking_count`，audit `FAIL` / `INCOMPLETE` / missing 会写入
+  `BACKTEST_WINDOW_INCOMPLETE`。当前本机重新生成 promotion pack
+  `4cb5deda6f6a9853` 后 `validate-promotion-pack` PASS，summary 正确显示
+  `backtest_window_status=FAIL`、`window_audit_id=2eface90ec36f7bf`、
+  `promotion_blocking_count=170`，并继续阻断 `promote_candidate`。验证通过
+  `pytest tests/test_etf_dynamic_v3_parameter_research.py`（16 passed）、
+  scheduler/daily/direct/dynamic-v3 组合测试（72 passed）、ruff、black、compileall、
+  docs freshness、docs report contract 和 `git diff --check`。
