@@ -1367,11 +1367,44 @@ def window_audit_report_payload(
     latest: bool = False,
     output_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
 ) -> dict[str, Any]:
-    resolved_id = audit_id or (_latest_pointer_artifact_id("latest_window_audit") if latest else "")
+    latest_pointer = (
+        _latest_pointer_payload("latest_window_audit") if latest and not audit_id else {}
+    )
+    resolved_id = audit_id or _text(_mapping(latest_pointer).get("artifact_id"))
     if not resolved_id:
         raise DynamicV3ParameterResearchError("--audit-id or --latest is required")
     audit_dir = output_dir / resolved_id
-    manifest = _read_json(audit_dir / "window_audit_manifest.json")
+    manifest_path = audit_dir / "window_audit_manifest.json"
+    if latest and not audit_id:
+        pointer_path_text = _text(_mapping(latest_pointer).get("path"))
+        pointer_path = _resolve_project_path(Path(pointer_path_text)) if pointer_path_text else None
+        if (
+            pointer_path is not None
+            and pointer_path.exists()
+            and _is_default_dynamic_v3_research_artifact(pointer_path)
+        ):
+            manifest_path = pointer_path
+            audit_dir = manifest_path.parent
+        else:
+            failure_reason = "latest_pointer_target_missing"
+            if pointer_path is not None and pointer_path.exists():
+                failure_reason = "latest_pointer_target_outside_canonical_root"
+            return {
+                "schema_version": SCHEMA_VERSION,
+                "report_type": "etf_dynamic_v3_window_audit_report_view",
+                "window_audit_id": resolved_id,
+                "status": "FAIL",
+                "failure_reason": failure_reason,
+                "configured_backtest_start": None,
+                "earliest_actual_evaluation_start": None,
+                "promotion_blocking_count": None,
+                "report_path": str(audit_dir / "window_audit_report.md"),
+                "latest_pointer": latest_pointer,
+                "manifest_path": str(manifest_path),
+                "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+                **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+            }
+    manifest = _read_json(manifest_path)
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_window_audit_report_view",
@@ -1381,6 +1414,7 @@ def window_audit_report_payload(
         "earliest_actual_evaluation_start": manifest.get("earliest_actual_evaluation_start"),
         "promotion_blocking_count": manifest.get("promotion_blocking_count"),
         "report_path": str(audit_dir / "window_audit_report.md"),
+        "manifest_path": str(manifest_path),
         "manifest": manifest,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
@@ -3429,6 +3463,7 @@ def validate_artifacts_payload(
 ) -> dict[str, Any]:
     pointers = artifacts_latest_payload(pointer_dir).get("pointers", {})
     checks = [_check("family_supported", family == STRATEGY_FAMILY, family)]
+    enforce_canonical_root = _is_default_latest_pointer_dir(pointer_dir)
     if require_pointers:
         checks.append(
             _check(
@@ -3440,8 +3475,20 @@ def validate_artifacts_payload(
     for name, pointer in _mapping(pointers).items():
         target_text = _text(_mapping(pointer).get("path"))
         checks.append(_check(f"{name}:pointer_path_present", bool(target_text), target_text))
-        target = Path(target_text) if target_text else Path("__missing_pointer_path__")
+        target = (
+            _resolve_project_path(Path(target_text))
+            if target_text
+            else Path("__missing_pointer_path__")
+        )
         checks.append(_check(f"{name}:pointer_target_exists", target.exists(), str(target)))
+        if enforce_canonical_root:
+            checks.append(
+                _check(
+                    f"{name}:pointer_target_in_canonical_root",
+                    _is_default_dynamic_v3_research_artifact(target),
+                    str(target),
+                )
+            )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -3450,6 +3497,86 @@ def validate_artifacts_payload(
         "status": status,
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def repair_latest_pointers_payload(
+    *,
+    pointer_dir: Path = DEFAULT_LATEST_POINTER_DIR,
+    artifact_root: Path = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+    write: bool = True,
+) -> dict[str, Any]:
+    repaired: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for spec in _latest_pointer_repair_specs():
+        candidates = sorted(
+            (path for path in artifact_root.glob(spec["pattern"]) if path.is_file()),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        if not candidates:
+            skipped.append(
+                {
+                    "pointer_name": spec["pointer_name"],
+                    "reason": "canonical_artifact_not_found",
+                    "pattern": str(artifact_root / spec["pattern"]),
+                }
+            )
+            continue
+        path = candidates[0]
+        payload = _read_optional_json(path) or {}
+        artifact_id = _latest_pointer_repair_artifact_id(
+            path=path,
+            payload=payload,
+            id_keys=spec.get("id_keys", ()),
+            constant_id=_text(spec.get("constant_id")),
+        )
+        if not artifact_id:
+            skipped.append(
+                {
+                    "pointer_name": spec["pointer_name"],
+                    "reason": "artifact_id_not_found",
+                    "path": str(path),
+                }
+            )
+            continue
+        if _is_default_latest_pointer_dir(
+            pointer_dir
+        ) and not _is_default_dynamic_v3_research_artifact(path):
+            skipped.append(
+                {
+                    "pointer_name": spec["pointer_name"],
+                    "reason": "canonical_root_violation",
+                    "path": str(path),
+                }
+            )
+            continue
+        if write:
+            _write_latest_pointer(pointer_dir, spec["pointer_name"], artifact_id, path)
+        repaired.append(
+            {
+                "pointer_name": spec["pointer_name"],
+                "artifact_id": artifact_id,
+                "path": str(path),
+            }
+        )
+    validation = validate_artifacts_payload(pointer_dir=pointer_dir) if write else None
+    status = _mapping(validation).get("status", "PASS") if validation else "PASS"
+    if skipped and status == "PASS":
+        status = "PASS_WITH_WARNINGS"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_latest_pointer_repair",
+        "status": status,
+        "pointer_dir": str(pointer_dir),
+        "artifact_root": str(artifact_root),
+        "repaired_count": len(repaired),
+        "skipped_count": len(skipped),
+        "repaired_pointers": repaired,
+        "skipped_pointers": skipped,
+        "validation": validation,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -5975,8 +6102,30 @@ def _promotion_evidence(
     )
     wf_id = _text(_mapping(record).get("source_walk_forward_id"))
     rob_id = _text(_mapping(record).get("source_robustness_id"))
-    wf_report = walk_forward_dir / wf_id / "wf_report.md" if wf_id else None
-    rob_report = robustness_dir / rob_id / "robustness_report.md" if rob_id else None
+    wf_manifest_path = (
+        walk_forward_dir / wf_id / "wf_manifest.json"
+        if wf_id
+        else _latest_walk_forward_manifest_for_candidate(candidate_id, walk_forward_dir)
+    )
+    if wf_manifest_path is not None and not wf_manifest_path.exists():
+        wf_manifest_path = _latest_walk_forward_manifest_for_candidate(
+            candidate_id, walk_forward_dir
+        )
+    if wf_manifest_path is not None:
+        wf_id = wf_manifest_path.parent.name
+    rob_manifest_path = (
+        robustness_dir / rob_id / "robustness_manifest.json"
+        if rob_id
+        else _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
+    )
+    if rob_manifest_path is not None and not rob_manifest_path.exists():
+        rob_manifest_path = _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
+    if rob_manifest_path is not None:
+        rob_id = rob_manifest_path.parent.name
+    wf_report = None if wf_manifest_path is None else wf_manifest_path.parent / "wf_report.md"
+    rob_report = (
+        None if rob_manifest_path is None else rob_manifest_path.parent / "robustness_report.md"
+    )
     overfit_manifest_path = _latest_overfit_manifest_for_candidate(candidate_id, overfit_dir)
     candidate_report_payload = (
         _read_optional_json(candidate_report_path) if candidate_report_path else None
@@ -5999,19 +6148,13 @@ def _promotion_evidence(
         ),
         "walk_forward_id": wf_id,
         "walk_forward_report_path": "" if wf_report is None else str(wf_report),
-        "walk_forward_manifest": (
-            _read_optional_json(walk_forward_dir / wf_id / "wf_manifest.json") if wf_id else None
-        ),
+        "walk_forward_manifest": _read_optional_json(wf_manifest_path),
         "walk_forward_leaderboard": (
             _read_optional_json(walk_forward_dir / wf_id / "wf_leaderboard.json") if wf_id else None
         ),
         "robustness_id": rob_id,
         "robustness_report_path": "" if rob_report is None else str(rob_report),
-        "robustness_manifest": (
-            _read_optional_json(robustness_dir / rob_id / "robustness_manifest.json")
-            if rob_id
-            else None
-        ),
+        "robustness_manifest": _read_optional_json(rob_manifest_path),
         "overfit_diagnostics": (
             _read_optional_json(robustness_dir / rob_id / "overfit_diagnostics.json")
             if rob_id
@@ -7561,8 +7704,12 @@ def _shadow_monitor_candidate_result(row: Mapping[str, Any], *, as_of: date) -> 
 
 
 def _latest_pointer_artifact_id(name: str) -> str:
-    pointer = _read_optional_json(DEFAULT_LATEST_POINTER_DIR / f"{name}.json")
+    pointer = _latest_pointer_payload(name)
     return _text(_mapping(pointer).get("artifact_id"))
+
+
+def _latest_pointer_payload(name: str) -> dict[str, Any]:
+    return _read_optional_json(DEFAULT_LATEST_POINTER_DIR / f"{name}.json") or {}
 
 
 def _is_weekly_last_trading_day(value: date) -> bool:
@@ -7629,14 +7776,41 @@ def _latest_overfit_manifest_for_candidate(candidate_id: str, output_dir: Path) 
     return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
 
 
+def _latest_walk_forward_manifest_for_candidate(candidate_id: str, output_dir: Path) -> Path | None:
+    candidates = []
+    for leaderboard_path in output_dir.glob("*/wf_leaderboard.json"):
+        leaderboard = _read_optional_json(leaderboard_path)
+        rows = _records(_mapping(leaderboard).get("candidates"))
+        if any(_text(row.get("candidate_id")) == candidate_id for row in rows):
+            manifest_path = leaderboard_path.parent / "wf_manifest.json"
+            if manifest_path.exists():
+                candidates.append(manifest_path)
+    return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
+
+
+def _latest_robustness_manifest_for_candidate(candidate_id: str, output_dir: Path) -> Path | None:
+    candidates = []
+    for manifest_path in output_dir.glob("*/robustness_manifest.json"):
+        manifest = _read_optional_json(manifest_path)
+        if _text(_mapping(manifest).get("candidate_id")) == candidate_id:
+            candidates.append(manifest_path)
+    return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
+
+
 def _resolve_project_path(path: Path) -> Path:
     return path if path.is_absolute() else PROJECT_ROOT / path
 
 
 def _update_latest_pointer(name: str, artifact_id: str, path: Path) -> None:
-    DEFAULT_LATEST_POINTER_DIR.mkdir(parents=True, exist_ok=True)
+    if not _is_default_dynamic_v3_research_artifact(path):
+        return
+    _write_latest_pointer(DEFAULT_LATEST_POINTER_DIR, name, artifact_id, path)
+
+
+def _write_latest_pointer(pointer_dir: Path, name: str, artifact_id: str, path: Path) -> None:
+    pointer_dir.mkdir(parents=True, exist_ok=True)
     _write_json(
-        DEFAULT_LATEST_POINTER_DIR / f"{name}.json",
+        pointer_dir / f"{name}.json",
         {
             "schema_version": SCHEMA_VERSION,
             "artifact_type": name.removeprefix("latest_"),
@@ -7646,6 +7820,120 @@ def _update_latest_pointer(name: str, artifact_id: str, path: Path) -> None:
             "exists": path.exists(),
         },
     )
+
+
+def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
+    return (
+        {
+            "pointer_name": "latest_sweep",
+            "pattern": "sweeps/*/sweep_manifest.json",
+            "id_keys": ("sweep_id",),
+        },
+        {
+            "pointer_name": "latest_data_audit",
+            "pattern": "data_audit/*/data_audit_manifest.json",
+            "id_keys": ("data_audit_id",),
+        },
+        {
+            "pointer_name": "latest_data_provenance",
+            "pattern": "data_provenance/price_cache_provenance_report.json",
+            "constant_id": "price_cache_provenance",
+        },
+        {
+            "pointer_name": "latest_window_audit",
+            "pattern": "window_audit/*/window_audit_manifest.json",
+            "id_keys": ("window_audit_id",),
+        },
+        {
+            "pointer_name": "latest_injection_audit",
+            "pattern": "injection_audit/*/injection_audit_manifest.json",
+            "id_keys": ("injection_audit_id", "audit_id"),
+        },
+        {
+            "pointer_name": "latest_candidate_attribution",
+            "pattern": "candidate_attribution/*/attribution_manifest.json",
+            "id_keys": ("candidate_id",),
+        },
+        {
+            "pointer_name": "latest_walk_forward_selection",
+            "pattern": "walk_forward_selection/*/wf_selection_manifest.json",
+            "id_keys": ("wf_selection_id", "walk_forward_selection_id"),
+        },
+        {
+            "pointer_name": "latest_walk_forward",
+            "pattern": "walk_forward/*/wf_manifest.json",
+            "id_keys": ("wf_id", "walk_forward_id"),
+        },
+        {
+            "pointer_name": "latest_robustness",
+            "pattern": "robustness/*/robustness_manifest.json",
+            "id_keys": ("robustness_id",),
+        },
+        {
+            "pointer_name": "latest_overfit",
+            "pattern": "overfit/*/overfit_manifest.json",
+            "id_keys": ("overfit_id",),
+        },
+        {
+            "pointer_name": "latest_shadow_monitor",
+            "pattern": "shadow_monitor/*/shadow_monitor_manifest.json",
+            "id_keys": ("monitor_id", "shadow_monitor_id"),
+        },
+        {
+            "pointer_name": "latest_shadow_report",
+            "pattern": "shadow/shadow_report_*.json",
+            "id_keys": ("candidate_id",),
+        },
+        {
+            "pointer_name": "latest_parameter_governance",
+            "pattern": "governance/parameter_governance_report.json",
+            "id_keys": ("search_space_version", "policy_id"),
+        },
+        {
+            "pointer_name": "latest_research_index",
+            "pattern": "index/research_index_manifest.json",
+            "constant_id": "research_index",
+        },
+        {
+            "pointer_name": "latest_promotion_pack",
+            "pattern": "promotion/*/*/promotion_manifest.json",
+            "id_keys": ("promotion_id",),
+        },
+    )
+
+
+def _latest_pointer_repair_artifact_id(
+    *,
+    path: Path,
+    payload: Mapping[str, Any],
+    id_keys: Sequence[Any],
+    constant_id: str = "",
+) -> str:
+    if constant_id:
+        return constant_id
+    for key in id_keys:
+        value = _text(payload.get(_text(key)))
+        if value:
+            return value
+    if path.parent.name:
+        return path.parent.name
+    return path.stem
+
+
+def _is_default_dynamic_v3_research_artifact(path: Path) -> bool:
+    try:
+        resolved_path = path.resolve(strict=False)
+        resolved_root = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT.resolve(strict=False)
+        return resolved_path == resolved_root or resolved_path.is_relative_to(resolved_root)
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+
+def _is_default_latest_pointer_dir(path: Path) -> bool:
+    try:
+        return path.resolve(strict=False) == DEFAULT_LATEST_POINTER_DIR.resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return False
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:

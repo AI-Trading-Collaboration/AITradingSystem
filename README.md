@@ -705,7 +705,7 @@ TRADING-093 到 TRADING-110 新增
 `candidate report/attribution`、`walk-forward run/report/select-run/selection-report`、
 `robustness run/report`、`overfit run/report`、`governance validate/report/diff`、
 `research index-build/query/compare/history`、`shadow register/list/report/monitor-run/monitor-report`、
-`artifacts latest/validate/stale`、`promotion review/pack` 和对应 validate 命令。
+`artifacts latest/validate/repair-latest/stale`、`promotion review/pack` 和对应 validate 命令。
 Runtime artifacts 写入 ignored `reports/etf_portfolio/dynamic_v3_rescue/`，observe-only
 registry 写入 `registry/etf_portfolio/dynamic_v3_rescue_shadow_candidates.yaml`。该平台先
 data audit 与 parameter governance gate，再 hard gate、soft ranking、candidate attribution、

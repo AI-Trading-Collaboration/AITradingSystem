@@ -9,6 +9,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+import ai_trading_system.etf_portfolio.dynamic_v3_parameter_research as dynamic_v3_research
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
 from ai_trading_system.config import configured_price_tickers, configured_rate_series, load_universe
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
@@ -28,6 +29,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     parameter_grid_candidates,
     preview_sweep_candidates,
     register_shadow_candidate,
+    repair_latest_pointers_payload,
     research_query_payload,
     run_candidate_attribution,
     run_data_audit,
@@ -215,7 +217,7 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         robustness_dir=tmp_path / "robustness",
         output_dir=tmp_path / "promotion",
     )
-    assert pack["pack"]["status"] in {"review_required", "reject"}
+    assert pack["pack"]["status"] in {"incomplete", "review_required", "reject"}
     assert "tiny_fixture_not_for_investment_decision" in pack["pack"]["decision_reasons"]
     assert pack["pack"]["production_candidate_generated"] is False
     assert (
@@ -535,6 +537,181 @@ def test_dynamic_v3_data_provenance_repair_and_validate(tmp_path: Path) -> None:
     )
     assert data_audit["report"]["prices_download_manifest_checksum_missing"] is False
     assert data_audit["report"]["provenance_status"] == "RECONSTRUCTED_MANIFEST"
+
+
+def test_dynamic_v3_latest_pointer_ignores_external_artifact_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    latest_dir = tmp_path / "latest"
+    canonical_root = tmp_path / "canonical_dynamic_v3_root"
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_LATEST_POINTER_DIR", latest_dir)
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_DYNAMIC_V3_RESEARCH_ROOT", canonical_root)
+
+    run_window_audit(
+        as_of=pd.Timestamp("2022-12-01").date(),
+        end=pd.Timestamp("2026-06-04").date(),
+        artifact_root=tmp_path / "external_artifacts",
+        output_dir=tmp_path / "external_window_audit",
+    )
+
+    assert not (latest_dir / "latest_window_audit.json").exists()
+
+    result = run_window_audit(
+        as_of=pd.Timestamp("2022-12-01").date(),
+        end=pd.Timestamp("2026-06-04").date(),
+        artifact_root=tmp_path / "canonical_artifacts",
+        output_dir=canonical_root / "window_audit",
+    )
+    pointer = json.loads((latest_dir / "latest_window_audit.json").read_text(encoding="utf-8"))
+    assert pointer["artifact_id"] == result["window_audit_id"]
+    assert Path(pointer["path"]).exists()
+
+
+def test_window_audit_latest_missing_target_is_structured_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    latest_dir = tmp_path / "latest"
+    latest_dir.mkdir()
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_LATEST_POINTER_DIR", latest_dir)
+    (latest_dir / "latest_window_audit.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifact_type": "window_audit",
+                "artifact_id": "missing_audit",
+                "path": str(tmp_path / "missing_audit" / "window_audit_manifest.json"),
+                "exists": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = window_audit_report_payload(latest=True, output_dir=tmp_path / "window_audit")
+
+    assert payload["status"] == "FAIL"
+    assert payload["failure_reason"] == "latest_pointer_target_missing"
+    assert payload["window_audit_id"] == "missing_audit"
+
+
+def test_window_audit_latest_rejects_external_pointer_target(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    latest_dir = tmp_path / "latest"
+    latest_dir.mkdir()
+    canonical_root = tmp_path / "canonical_dynamic_v3_root"
+    external_manifest = tmp_path / "external" / "window_audit_manifest.json"
+    external_manifest.parent.mkdir()
+    external_manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "etf_dynamic_v3_window_audit_manifest",
+                "window_audit_id": "external_audit",
+                "status": "PASS",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_LATEST_POINTER_DIR", latest_dir)
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_DYNAMIC_V3_RESEARCH_ROOT", canonical_root)
+    (latest_dir / "latest_window_audit.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifact_type": "window_audit",
+                "artifact_id": "external_audit",
+                "path": str(external_manifest),
+                "exists": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = window_audit_report_payload(latest=True, output_dir=canonical_root / "window_audit")
+
+    assert payload["status"] == "FAIL"
+    assert payload["failure_reason"] == "latest_pointer_target_outside_canonical_root"
+
+
+def test_artifact_validation_rejects_external_default_latest_pointer(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    latest_dir = tmp_path / "latest"
+    latest_dir.mkdir()
+    canonical_root = tmp_path / "canonical_dynamic_v3_root"
+    external_manifest = tmp_path / "external" / "sweep_manifest.json"
+    external_manifest.parent.mkdir()
+    external_manifest.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_LATEST_POINTER_DIR", latest_dir)
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_DYNAMIC_V3_RESEARCH_ROOT", canonical_root)
+    (latest_dir / "latest_sweep.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifact_type": "sweep",
+                "artifact_id": "external_sweep",
+                "path": str(external_manifest),
+                "exists": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_artifacts_payload(pointer_dir=latest_dir)
+
+    assert validation["status"] == "FAIL"
+    assert any(
+        check["check_id"] == "latest_sweep:pointer_target_in_canonical_root"
+        and check["passed"] is False
+        for check in validation["checks"]
+    )
+
+
+def test_repair_latest_pointers_rebinds_to_canonical_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    latest_dir = tmp_path / "latest"
+    latest_dir.mkdir()
+    canonical_root = tmp_path / "canonical_dynamic_v3_root"
+    sweep_manifest = canonical_root / "sweeps" / "sweep_canonical" / "sweep_manifest.json"
+    sweep_manifest.parent.mkdir(parents=True)
+    sweep_manifest.write_text(
+        json.dumps({"schema_version": 1, "sweep_id": "sweep_canonical"}),
+        encoding="utf-8",
+    )
+    external_manifest = tmp_path / "external" / "sweep_manifest.json"
+    external_manifest.parent.mkdir()
+    external_manifest.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_LATEST_POINTER_DIR", latest_dir)
+    monkeypatch.setattr(dynamic_v3_research, "DEFAULT_DYNAMIC_V3_RESEARCH_ROOT", canonical_root)
+    (latest_dir / "latest_sweep.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifact_type": "sweep",
+                "artifact_id": "external_sweep",
+                "path": str(external_manifest),
+                "exists": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = repair_latest_pointers_payload(
+        pointer_dir=latest_dir,
+        artifact_root=canonical_root,
+    )
+
+    pointer = json.loads((latest_dir / "latest_sweep.json").read_text(encoding="utf-8"))
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert pointer["artifact_id"] == "sweep_canonical"
+    assert pointer["path"] == str(sweep_manifest)
+    assert payload["validation"]["status"] == "PASS"
 
 
 def test_window_audit_detects_incomplete_actual_window(tmp_path: Path) -> None:

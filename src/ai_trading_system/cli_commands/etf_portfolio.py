@@ -301,6 +301,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     preview_sweep_candidates,
     promotion_review_payload,
     register_shadow_candidate,
+    repair_latest_pointers_payload,
     research_compare_payload,
     research_history_payload,
     research_query_payload,
@@ -3956,7 +3957,11 @@ def dynamic_v3_window_audit_report_command(
     typer.echo("earliest_actual_evaluation_start=" f"{payload['earliest_actual_evaluation_start']}")
     typer.echo(f"promotion_blocking_count={payload['promotion_blocking_count']}")
     typer.echo(f"report_path={payload['report_path']}")
+    if payload.get("failure_reason"):
+        typer.echo(f"failure_reason={payload['failure_reason']}")
     typer.echo("production_candidate_generated=false")
+    if payload.get("failure_reason"):
+        raise typer.Exit(code=1)
 
 
 @dynamic_v3_window_audit_app.command("inspect-artifact")
@@ -5101,6 +5106,34 @@ def dynamic_v3_artifacts_validate_command(
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_candidate_generated=false")
     if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_artifacts_app.command("repair-latest")
+def dynamic_v3_artifacts_repair_latest_command(
+    pointer_dir: Annotated[
+        Path,
+        typer.Option("--pointer-dir", help="latest pointer directory。"),
+    ] = DEFAULT_LATEST_POINTER_DIR,
+    artifact_root: Annotated[
+        Path,
+        typer.Option("--artifact-root", help="canonical dynamic-v3 artifact root。"),
+    ] = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+) -> None:
+    """从 canonical artifact root 重建 TRADING-099 latest pointers。"""
+    payload = repair_latest_pointers_payload(
+        pointer_dir=pointer_dir,
+        artifact_root=artifact_root,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"repaired_count={payload['repaired_count']}")
+    typer.echo(f"skipped_count={payload['skipped_count']}")
+    validation = _mapping_obj(payload.get("validation") or {})
+    if validation:
+        typer.echo(f"validation_status={validation.get('status')}")
+        typer.echo(f"validation_failed_check_count={validation.get('failed_check_count')}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] == "FAIL":
         raise typer.Exit(code=1)
 
 
