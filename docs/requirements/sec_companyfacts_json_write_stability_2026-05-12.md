@@ -2,7 +2,7 @@
 
 任务 ID：`FUND-002`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 最后更新：2026-06-07
 
@@ -50,3 +50,8 @@ ticker 的大 payload，本机 Windows/Python 3.11 出现 access violation。
   实际写入文件计算。验证通过 focused SEC companyfacts tests、ruff、compileall 和
   `git diff --check`；真实 daily-run 仍需后续观察是否越过 SEC companyfacts 并暴露下一道
   真实门禁。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：最新真实 `aits ops daily-run
+  --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中
+  `sec_companyfacts` step PASS，`sec_companyfacts_validation_2026-06-05.md` 为 PASS、
+  错误 0、警告 0；17/17 公司 companyfacts cache 存在，manifest 记录本次下载时间、
+  fact count 和 checksum，未再出现大型 JSON 写入导致的 Windows native crash。

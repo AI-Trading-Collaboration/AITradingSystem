@@ -2,7 +2,9 @@
 
 任务 ID：`DATA-017`
 
-最后更新：2026-05-17
+状态：`DONE`
+
+最后更新：2026-06-07
 
 ## 背景
 
@@ -66,3 +68,9 @@ src/ai_trading_system/fmp_forward_pit.py line 614 in _normalize_fmp_forward_pit_
 - 2026-05-12：真实 CLI 继续在首次/二次构造 normalized dataclass 时随机访问冲突。
   PIT CLI 改为 `include_normalized_rows=False`，只保留 raw payload 和 row count，
   normalized CSV 由 attached raw payload 流式写出，不再为 12411 行创建常驻 dataclass。
+- 2026-06-07：收口为 `DONE`。原因：最新真实 `aits ops daily-run --as-of
+  2026-06-05 --run-id codex_20260605_20260607103901` 中
+  `pit_snapshots_fetch_fmp_forward`、`pit_snapshots_build_manifest` 和
+  `pit_snapshots_validate` steps 均为 PASS；`fmp_forward_pit_fetch_2026-06-05.md`
+  记录 FMP raw payload 17、原始/标准化行 12411、错误 0、警告 0，
+  `pit_snapshots_validation_2026-06-05.md` 为 PASS，PIT manifest validation 正常。

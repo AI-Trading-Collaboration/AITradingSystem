@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-17
+最后更新：2026-06-07
 
 关联任务：`DATA-016`、`RISK-013`、`FUND-001`、`THESIS-002`、`PROD-004`、`PROD-006`
 
@@ -56,3 +56,14 @@
 - 2026-05-12：owner 批准短期放宽政策/地缘人工复核限制，允许 `score-daily` 在 OpenAI 预审成功后自动写入 LLM formal occurrence/attestation；full coverage `llm_formal_assessment` 置信度提升到 65%，用于解除 `policy_geopolitics` 低置信提示。该口径不伪造 manual_input，不单独触发 position gate，退出条件记录在 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`。
 - 2026-05-11：expanded universe 真实 `download-data --full-universe` 后，价格覆盖已补齐，但 `validate-data --as-of 2026-05-10 --full-universe` 暴露 `NOW` 2025-12-17/18 拆股窗口内主源/Marketstack raw close 口径差异。ServiceNow 官方 IR 公告确认 5-for-1 split，2025-12-18 开始 split-adjusted 交易；本轮将补 `NOW` 已知拆股事件，并把拆股窗口内比例匹配的二源 raw close 日期口径差异归入可审计 reconciliation，而不是静默忽略。
 - 2026-05-11：`NOW` 拆股窗口 reconciliation 已完成。`config/data_quality.yaml` 已记录 ServiceNow 官方 5-for-1 split，`validate-data` 新增 `known_split_raw_close_basis_difference` 分类，仅当主源/二源 raw close 比例匹配已配置拆股比例且落入 corporate-action window 时降级为 INFO。真实 `validate-data --as-of 2026-05-10 --full-universe` 为 PASS，错误 0、警告 0、信息 12；交易日 replay 内 `data_quality_2026-05-08` 同样 PASS。
+- 2026-06-07：`FUND-001` 收口归档。最新真实 `aits ops daily-run --as-of
+  2026-06-05 --run-id codex_20260605_20260607103901` 中
+  `merge-tsm-ir-sec-metrics` 和 `validate-sec-metrics` steps PASS；TSM Q1
+  `TSM-IR` 指标进入 `data/processed/sec_fundamentals_2026-06-05.csv`，
+  `sec_fundamentals_validation_2026-06-05.md` 的剩余警告为 AMZN R&D 覆盖，不是
+  TSM 被误判为美国 SEC companyfacts 缺口。
+- 2026-06-07：`DATA-016` 继续保持验证。最新真实 daily-run 的
+  `validate-data` 为 PASS、错误 0、警告 0，但本轮
+  `data_quality_2026-06-05_marketstack_reconciliation.csv` 只覆盖
+  QQQ/SMH/SOXX/SPY，未直接复现 NOW/full-universe
+  `known_split_raw_close_basis_difference` 证据；不能仅凭该有限样本归档。

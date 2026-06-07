@@ -1,8 +1,10 @@
 # Reader Brief Current Decision Summary
 
-最后更新：2026-06-04
+最后更新：2026-06-07
 
 任务 ID：OPS-016
+
+状态：DONE
 
 ## 背景
 
@@ -53,3 +55,12 @@ daily-run finalization 刷新。
   `wait_manual_review`、`40%-40%`、Data Gate PASS；`validate-reader-brief`
   failed=0，状态为 `LIMITED_READER_CONTEXT`，限制来自缺失/陈旧阅读上下文，不影响
   今日评分链路。
+- 2026-06-07：收口为 DONE。原因：最新真实 `aits ops daily-run --as-of
+  2026-06-05 --run-id codex_20260605_20260607103901` 31/31 steps PASS；最终
+  Reader Brief 的 `run_context.run_id`、`daily_decision_summary` 和
+  `daily_task_dashboard` 均绑定同一 run，Core Decision 显示 `maintain`、
+  `40%-40%`、Data Gate PASS、`production_effect=none`，不再保留旧失败 run 的
+  `missing` 结论。canonical run bundle 与 legacy `outputs/reports` mirror 的
+  Reader Brief、decision summary 和 task dashboard checksum 一致，Reader Brief
+  quality failed=0；`LIMITED_READER_CONTEXT` 仅来自缺少 trace bundle 的可追溯性限制，
+  不影响本任务 current-run summary/dashboard 验收。
