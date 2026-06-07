@@ -664,29 +664,33 @@ def _load_inputs(
     end: date | None,
     latest: bool,
 ) -> _ShadowObserveInputs:
+    if latest and end is None:
+        dated_input_bound = None
+    else:
+        dated_input_bound = end
     candidate_review_summary_path = _latest_dated_path(
         candidate_review_dir,
         "sec_pit_candidate_review_summary_",
         ".json",
-        None if latest else end,
+        dated_input_bound,
     )
     evaluation_summary_path = _latest_dated_path(
         evaluation_dir,
         "sec_pit_evaluation_summary_",
         ".json",
-        None if latest else end,
+        dated_input_bound,
     )
     comparison_summary_path = _latest_dated_path(
         comparison_dir,
         "sec_pit_baseline_comparison_summary_",
         ".json",
-        None if latest else end,
+        dated_input_bound,
     )
     diagnostics_summary_path = _latest_dated_path(
         diagnostics_dir,
         "sec_pit_real_run_diagnostics_",
         ".json",
-        None if latest else end,
+        dated_input_bound,
     )
     candidate_review_summary = _read_json_object(candidate_review_summary_path)
     evaluation_summary = _read_json_object(evaluation_summary_path)

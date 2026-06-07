@@ -158,6 +158,7 @@ class _MonitorPolicy:
 
 def run_sec_pit_shadow_monitor(
     *,
+    as_of: date | None = None,
     shadow_observe_dir: Path = DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
     baseline_coverage_dir: Path = DEFAULT_SEC_PIT_BASELINE_COVERAGE_OUTPUT_DIR,
     baseline_score_path: Path = DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH,
@@ -167,7 +168,7 @@ def run_sec_pit_shadow_monitor(
 ) -> SecPitShadowMonitorArtifacts:
     del latest
     output_dir.mkdir(parents=True, exist_ok=True)
-    monitor_date = _discover_monitor_date(shadow_observe_dir)
+    monitor_date = as_of or _discover_monitor_date(shadow_observe_dir)
     suffix = monitor_date.isoformat()
     summary_json_path = output_dir / f"sec_pit_shadow_monitor_summary_{suffix}.json"
     summary_markdown_path = output_dir / f"sec_pit_shadow_monitor_summary_{suffix}.md"
@@ -181,6 +182,7 @@ def run_sec_pit_shadow_monitor(
             baseline_coverage_dir=baseline_coverage_dir,
             baseline_score_path=baseline_score_path,
             monitor_date=monitor_date,
+            require_exact_shadow_observe=as_of is not None,
         )
         _validate_inputs(inputs)
         policy = _monitor_policy(inputs)
@@ -240,6 +242,7 @@ def run_sec_pit_shadow_monitor(
             baseline_coverage_dir=baseline_coverage_dir,
             baseline_score_path=baseline_score_path,
             monitor_date=monitor_date,
+            require_exact_shadow_observe=as_of is not None,
         )
         policy = _default_policy(inputs)
         rolling_metrics = _empty_frame(ROLLING_METRICS_COLUMNS)
@@ -377,42 +380,47 @@ def _load_inputs(
     baseline_coverage_dir: Path,
     baseline_score_path: Path,
     monitor_date: date,
+    require_exact_shadow_observe: bool = False,
 ) -> _MonitorInputs:
-    shadow_summary_path = _latest_dated_path(
+    shadow_summary_path = _shadow_observe_path(
         shadow_observe_dir,
         "sec_pit_shadow_observe_summary_",
         ".json",
         monitor_date,
+        exact=require_exact_shadow_observe,
     )
     shadow_summary = _read_json_object(shadow_summary_path)
     shadow_scores_path = _artifact_path(
         shadow_summary,
         "shadow_scores_csv",
-        _latest_dated_path(
+        _shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_scores_",
             ".csv",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
     )
     bucket_comparison_path = _artifact_path(
         shadow_summary,
         "bucket_comparison_csv",
-        _latest_dated_path(
+        _shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_bucket_comparison_",
             ".csv",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
     )
     monitoring_plan_path = _artifact_path(
         shadow_summary,
         "monitoring_plan_csv",
-        _latest_dated_path(
+        _shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_monitoring_plan_",
             ".csv",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
     )
     baseline_coverage_summary_path = _latest_dated_path(
@@ -444,32 +452,37 @@ def _failed_inputs(
     baseline_coverage_dir: Path,
     baseline_score_path: Path,
     monitor_date: date,
+    require_exact_shadow_observe: bool = False,
 ) -> _MonitorInputs:
     return _MonitorInputs(
         monitor_date=monitor_date,
-        shadow_summary_path=_latest_dated_path(
+        shadow_summary_path=_shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_observe_summary_",
             ".json",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
-        shadow_scores_path=_latest_dated_path(
+        shadow_scores_path=_shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_scores_",
             ".csv",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
-        bucket_comparison_path=_latest_dated_path(
+        bucket_comparison_path=_shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_bucket_comparison_",
             ".csv",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
-        monitoring_plan_path=_latest_dated_path(
+        monitoring_plan_path=_shadow_observe_path(
             shadow_observe_dir,
             "sec_pit_shadow_monitoring_plan_",
             ".csv",
             monitor_date,
+            exact=require_exact_shadow_observe,
         ),
         baseline_coverage_summary_path=_latest_dated_path(
             baseline_coverage_dir,
@@ -1120,6 +1133,19 @@ def _discover_monitor_date(shadow_observe_dir: Path) -> date:
     scores = _latest_dated_path(shadow_observe_dir, "sec_pit_shadow_scores_", ".csv", None)
     parsed = _date_from_prefixed_path(scores, "sec_pit_shadow_scores_")
     return parsed or date(1970, 1, 1)
+
+
+def _shadow_observe_path(
+    root: Path,
+    prefix: str,
+    suffix: str,
+    monitor_date: date,
+    *,
+    exact: bool,
+) -> Path:
+    if exact:
+        return root / f"{prefix}{monitor_date.isoformat()}{suffix}"
+    return _latest_dated_path(root, prefix, suffix, monitor_date)
 
 
 def _latest_dated_path(

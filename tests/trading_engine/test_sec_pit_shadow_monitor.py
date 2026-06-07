@@ -226,6 +226,64 @@ def test_sec_pit_shadow_monitor_cli_latest_mode(tmp_path: Path) -> None:
     assert (paths["monitor_dir"] / "sec_pit_shadow_monitor_summary_2023-01-05.json").exists()
 
 
+def test_sec_pit_shadow_monitor_cli_as_of_mode_binds_output_date(tmp_path: Path) -> None:
+    paths = _write_monitor_inputs(tmp_path, days=4, minimum_days=2, min_sample=4)
+
+    result = CliRunner().invoke(
+        sec_pit_cli.sec_pit_app,
+        [
+            "shadow-monitor",
+            "--latest",
+            "--as-of",
+            "2023-01-05",
+            "--shadow-observe-dir",
+            str(paths["shadow_observe_dir"]),
+            "--baseline-coverage-dir",
+            str(paths["baseline_coverage_dir"]),
+            "--baseline-score-path",
+            str(paths["baseline_score_path"]),
+            "--window-days",
+            "20",
+            "60",
+            "--output-dir",
+            str(paths["monitor_dir"]),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    summary_path = paths["monitor_dir"] / "sec_pit_shadow_monitor_summary_2023-01-05.json"
+    assert summary_path.exists()
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["monitor_date"] == "2023-01-05"
+    assert summary["input_artifacts"]["shadow_summary"].endswith(
+        "sec_pit_shadow_observe_summary_2023-01-05.json"
+    )
+
+
+def test_sec_pit_shadow_monitor_as_of_does_not_fall_back_to_older_observe(
+    tmp_path: Path,
+) -> None:
+    paths = _write_monitor_inputs(tmp_path, days=4, minimum_days=2, min_sample=4)
+
+    artifacts = run_sec_pit_shadow_monitor(
+        as_of=date(2023, 1, 6),
+        shadow_observe_dir=paths["shadow_observe_dir"],
+        baseline_coverage_dir=paths["baseline_coverage_dir"],
+        baseline_score_path=paths["baseline_score_path"],
+        window_days=(20, 60),
+        output_dir=paths["monitor_dir"],
+    )
+
+    assert artifacts.status == "FAILED_VALIDATION"
+    assert artifacts.summary_json_path.name == "sec_pit_shadow_monitor_summary_2023-01-06.json"
+    summary = json.loads(artifacts.summary_json_path.read_text(encoding="utf-8"))
+    assert summary["monitor_date"] == "2023-01-06"
+    assert summary["input_artifacts"]["shadow_summary"].endswith(
+        "sec_pit_shadow_observe_summary_2023-01-06.json"
+    )
+    assert any("validation failed" in item for item in summary["limitations"])
+
+
 def test_sec_pit_shadow_monitor_repeated_run_is_deterministic(tmp_path: Path) -> None:
     paths = _write_monitor_inputs(tmp_path, days=4, minimum_days=2, min_sample=4)
 
@@ -343,6 +401,7 @@ def _write_monitor_inputs(
     minimum_days: int,
     min_sample: int,
     wrong_direction: bool = False,
+    as_of: date | None = None,
 ) -> dict[str, Path]:
     shadow_observe_dir = tmp_path / "outputs" / "sec_pit_shadow_observe"
     baseline_coverage_dir = tmp_path / "outputs" / "sec_pit_baseline_coverage"
@@ -355,7 +414,7 @@ def _write_monitor_inputs(
         monitor_dir,
     ):
         path.mkdir(parents=True, exist_ok=True)
-    as_of = date(2023, 1, 5)
+    as_of = as_of or date(2023, 1, 5)
     scores_path = shadow_observe_dir / f"sec_pit_shadow_scores_{as_of.isoformat()}.csv"
     bucket_path = shadow_observe_dir / f"sec_pit_shadow_bucket_comparison_{as_of.isoformat()}.csv"
     plan_path = shadow_observe_dir / f"sec_pit_shadow_monitoring_plan_{as_of.isoformat()}.csv"

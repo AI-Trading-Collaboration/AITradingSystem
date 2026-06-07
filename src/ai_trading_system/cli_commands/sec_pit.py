@@ -888,6 +888,14 @@ def shadow_observe_command(
 
 @sec_pit_app.command("shadow-monitor")
 def shadow_monitor_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="固定 monitor 输出日期 YYYY-MM-DD；daily-run 用它绑定声明输出。",
+        ),
+    ] = None,
     shadow_observe_dir: Annotated[
         Path,
         typer.Option(
@@ -928,6 +936,7 @@ def shadow_monitor_command(
     """生成 SEC PIT observe-only shadow lane 的滚动监控报告。"""
     try:
         artifacts = run_sec_pit_shadow_monitor(
+            as_of=_parse_date(as_of) if as_of else None,
             shadow_observe_dir=shadow_observe_dir,
             baseline_coverage_dir=baseline_coverage_dir,
             baseline_score_path=baseline_score_path,

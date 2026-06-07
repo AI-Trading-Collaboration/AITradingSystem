@@ -64,7 +64,8 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits score-daily --as-of 2026-05-06" in markdown
     assert "--llm-request-profile risk_event_daily_official_precheck" in markdown
     assert "`aits reports dashboard --as-of 2026-05-06`" in markdown
-    assert "`aits sec-pit shadow-monitor --latest`" in markdown
+    assert "`aits sec-pit shadow-observe --latest --end 2026-05-06`" in markdown
+    assert "`aits sec-pit shadow-monitor --latest --as-of 2026-05-06`" in markdown
     assert "`aits reports score-change-attribution --latest`" in markdown
     assert "`aits reports market-panel --latest`" in markdown
     assert "`aits reports index --latest`" in markdown
@@ -344,8 +345,25 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
     assert dashboard_step.produced_paths[0].name == "evidence_dashboard_2026-05-06.html"
     assert dashboard_step.produced_paths[1].name == "evidence_dashboard_2026-05-06.json"
     assert next(
+        step for step in plan.steps if step.step_id == "sec_pit_shadow_observe"
+    ).command == (
+        "aits",
+        "sec-pit",
+        "shadow-observe",
+        "--latest",
+        "--end",
+        "2026-05-06",
+    )
+    assert next(
         step for step in plan.steps if step.step_id == "sec_pit_shadow_monitor"
-    ).command == ("aits", "sec-pit", "shadow-monitor", "--latest")
+    ).command == (
+        "aits",
+        "sec-pit",
+        "shadow-monitor",
+        "--latest",
+        "--as-of",
+        "2026-05-06",
+    )
     assert next(step for step in plan.steps if step.step_id == "market_data_freshness").command == (
         "aits",
         "data",
@@ -427,8 +445,8 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06" in markdown
     assert "valuation fetch-fmp --as-of 2026-05-06" in markdown
     assert "reports dashboard --as-of 2026-05-06" in markdown
-    assert "sec-pit shadow-observe --latest" in markdown
-    assert "sec-pit shadow-monitor --latest" in markdown
+    assert "sec-pit shadow-observe --latest --end 2026-05-06" in markdown
+    assert "sec-pit shadow-monitor --latest --as-of 2026-05-06" in markdown
     assert "reports score-change-attribution --latest" in markdown
     assert "reports market-panel --latest" in markdown
     assert "data freshness --latest" in markdown

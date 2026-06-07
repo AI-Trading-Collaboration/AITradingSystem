@@ -544,16 +544,16 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
     assert cli_direct.main(["pit-snapshots", "build-manifest", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["pit-snapshots", "validate", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["docs", "report-contract", "--latest"]) == 0
-    assert cli_direct.main(["sec-pit", "shadow-observe", "--latest"]) == 0
-    assert cli_direct.main(["sec-pit", "shadow-monitor", "--latest"]) == 0
+    assert cli_direct.main(["sec-pit", "shadow-observe", "--latest", "--end", "2026-05-13"]) == 0
+    assert cli_direct.main(["sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-13"]) == 0
 
     assert calls == [
         ("validate_data", {"as_of": "2026-05-13", "full_universe": False}),
         ("build_manifest", {"as_of": "2026-05-13"}),
         ("validate_pit", {"as_of": "2026-05-13"}),
         ("docs_contract", {"as_of": None, "latest": True}),
-        ("shadow_observe", {"latest": True}),
-        ("shadow_monitor", {"latest": True}),
+        ("shadow_observe", {"start": None, "end": "2026-05-13", "latest": True}),
+        ("shadow_monitor", {"as_of": "2026-05-13", "latest": True}),
     ]
 
 

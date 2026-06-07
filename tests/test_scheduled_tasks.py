@@ -200,8 +200,8 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
     )
     assert calls[score_index + 1 : score_index + 19] == [
         ("reports", "dashboard", "--as-of", "2026-05-06"),
-        ("sec-pit", "shadow-observe", "--latest"),
-        ("sec-pit", "shadow-monitor", "--latest"),
+        ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
+        ("sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-06"),
         ("reports", "score-change-attribution", "--latest"),
         ("reports", "market-panel", "--latest"),
         ("data", "freshness", "--latest"),

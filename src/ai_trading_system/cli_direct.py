@@ -672,10 +672,17 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["sec-pit", "shadow-observe"]:
-        sec_pit_cli.shadow_observe_command(latest=_flag(args, "--latest"))
+        sec_pit_cli.shadow_observe_command(
+            start=_option(args, "--start"),
+            end=_option(args, "--end"),
+            latest=_flag(args, "--latest"),
+        )
         return
     if args[:2] == ["sec-pit", "shadow-monitor"]:
-        sec_pit_cli.shadow_monitor_command(latest=_flag(args, "--latest"))
+        sec_pit_cli.shadow_monitor_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
         return
     if args[:2] == ["ops", "health"]:
         ops_cli.pipeline_health_command(

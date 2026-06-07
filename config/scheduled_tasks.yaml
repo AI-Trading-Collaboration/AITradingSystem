@@ -155,11 +155,12 @@ cadences:
       - task_id: daily_sec_pit_shadow_observe
         daily_plan_step_id: sec_pit_shadow_observe
         title: Refresh SEC PIT observe-only shadow lane
-        command: aits sec-pit shadow-observe --latest
+        command: aits sec-pit shadow-observe --latest --end {as_of}
         command_contains:
           - sec-pit
           - shadow-observe
           - --latest
+          - --end
         closed_market_behavior: skip_score_artifacts
         production_effect: none
         production_weight_write: false
@@ -168,11 +169,12 @@ cadences:
       - task_id: daily_sec_pit_shadow_monitor
         daily_plan_step_id: sec_pit_shadow_monitor
         title: Refresh SEC PIT shadow monitor
-        command: aits sec-pit shadow-monitor --latest
+        command: aits sec-pit shadow-monitor --latest --as-of {as_of}
         command_contains:
           - sec-pit
           - shadow-monitor
           - --latest
+          - --as-of
         closed_market_behavior: skip_score_artifacts
         production_effect: none
         production_weight_write: false

@@ -486,12 +486,8 @@ def build_daily_ops_plan(
     market_panel_json = default_market_panel_json_path(reports_dir, as_of)
     market_data_freshness_root = project_root / "artifacts" / "data_freshness"
     market_data_refresh_root = project_root / "artifacts" / "data_refresh"
-    portfolio_candidate_tracking_root = (
-        project_root / "artifacts" / "portfolio_candidate_tracking"
-    )
-    portfolio_tracking_review_root = (
-        project_root / "artifacts" / "portfolio_tracking_reviews"
-    )
+    portfolio_candidate_tracking_root = project_root / "artifacts" / "portfolio_candidate_tracking"
+    portfolio_tracking_review_root = project_root / "artifacts" / "portfolio_tracking_reviews"
     market_data_freshness_json = default_market_data_freshness_json_path(
         market_data_freshness_root,
         as_of,
@@ -540,15 +536,11 @@ def build_daily_ops_plan(
     etf_forward_dashboard_json = (
         etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.json"
     )
-    etf_forward_dashboard_md = (
-        etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.md"
-    )
+    etf_forward_dashboard_md = etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.md"
     etf_forward_watchlist_json = (
         etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.json"
     )
-    etf_forward_watchlist_md = (
-        etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.md"
-    )
+    etf_forward_watchlist_md = etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.md"
     report_index_html = default_report_index_html_path(reports_dir, as_of)
     report_index_json = default_report_index_json_path(reports_dir, as_of)
     documentation_contract_report = default_documentation_contract_report_path(reports_dir, as_of)
@@ -945,7 +937,16 @@ def build_daily_ops_plan(
                 step_id="sec_pit_shadow_observe",
                 title="生成 SEC PIT observe-only shadow lane",
                 command=(
-                    ("aits", "sec-pit", "shadow-observe", "--latest") if dashboard_enabled else ()
+                    (
+                        "aits",
+                        "sec-pit",
+                        "shadow-observe",
+                        "--latest",
+                        "--end",
+                        as_of_text,
+                    )
+                    if dashboard_enabled
+                    else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(
@@ -971,7 +972,16 @@ def build_daily_ops_plan(
                 step_id="sec_pit_shadow_monitor",
                 title="生成 SEC PIT shadow monitor",
                 command=(
-                    ("aits", "sec-pit", "shadow-monitor", "--latest") if dashboard_enabled else ()
+                    (
+                        "aits",
+                        "sec-pit",
+                        "shadow-monitor",
+                        "--latest",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if dashboard_enabled
+                    else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(
@@ -1048,9 +1058,7 @@ def build_daily_ops_plan(
                 step_id="market_data_recover_freshness",
                 title="执行 market data freshness recovery",
                 command=(
-                    ("aits", "data", "recover-freshness", "--latest")
-                    if dashboard_enabled
-                    else ()
+                    ("aits", "data", "recover-freshness", "--latest") if dashboard_enabled else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(
@@ -1141,9 +1149,7 @@ def build_daily_ops_plan(
                 step_id="etf_forward_update",
                 title="更新 ETF forward shadow simulation",
                 command=(
-                    ("aits", "etf", "forward", "update", "--latest")
-                    if dashboard_enabled
-                    else ()
+                    ("aits", "etf", "forward", "update", "--latest") if dashboard_enabled else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(etf_forward_update_json, etf_forward_update_md),
@@ -1160,9 +1166,7 @@ def build_daily_ops_plan(
                 step_id="etf_forward_dashboard",
                 title="生成 ETF forward simulation dashboard",
                 command=(
-                    ("aits", "etf", "forward", "dashboard", "--latest")
-                    if dashboard_enabled
-                    else ()
+                    ("aits", "etf", "forward", "dashboard", "--latest") if dashboard_enabled else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(etf_forward_dashboard_json, etf_forward_dashboard_md),
@@ -1179,9 +1183,7 @@ def build_daily_ops_plan(
                 step_id="etf_forward_watchlist",
                 title="生成 ETF forward simulation watchlist",
                 command=(
-                    ("aits", "etf", "forward", "watchlist", "--latest")
-                    if dashboard_enabled
-                    else ()
+                    ("aits", "etf", "forward", "watchlist", "--latest") if dashboard_enabled else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(etf_forward_watchlist_json, etf_forward_watchlist_md),

@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-11
+最后更新：2026-06-07
 
 关联任务：`RUN-002`
 
@@ -56,3 +56,22 @@ outputs/runs/daily/<executed_at_utc>/
 
 - 2026-05-11：新增并进入实现。owner 建议每日输出产物按执行时间戳整理到统一路径，并进一步明确需要归档记录的数据管理方式。
 - 2026-05-11：实现进入 `VALIDATING`。`daily-run` canonical bundle 已改为执行时间戳优先路径，manifest 增加 `execution_timestamp_utc`，runbook 和 system flow 已同步说明状态缓存与运行归档的职责边界；下一步观察真实 daily-run 产物是否符合新目录规范。
+- 2026-06-07：从 `VALIDATING` 回到 `IN_PROGRESS`。最新真实
+  `aits ops daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+  已写入 `outputs/runs/daily/20260607T013907Z/as_of_2026-06-05__codex_20260605_20260607103901/`
+  canonical bundle，manifest 记录 `execution_timestamp_utc`、`as_of`、`run_root`、
+  输入/输出 checksum 和 legacy mirror；但 manifest 中 `sec_pit_shadow_observe` /
+  `sec_pit_shadow_monitor` 声明的 2026-06-05 输出为 `exists=false`，而执行报告对应
+  steps 为 PASS。实际最新 SEC PIT shadow artifact 仍为 2026-05-26，说明 daily-run
+  的 `sec-pit shadow-* --latest` 未绑定本轮 `as_of`。归档契约新增要求：PASS step 的
+  声明输出必须真实存在，或在报告/manifest 中显式降级，不得让本轮 bundle 留下
+  PASS 但输出缺失的记录。
+- 2026-06-07：从 `IN_PROGRESS` 回到 `VALIDATING`。`daily-plan` 和
+  `config/scheduled_tasks.yaml` 现在对 SEC PIT shadow daily steps 显式传入
+  `--end {as_of}` / `--as-of {as_of}`；`cli_direct` 不再丢弃这些参数；`shadow-monitor`
+  在显式 `as_of` 模式下要求同日 `shadow-observe` summary，不能回退到旧 observe
+  artifact。验证通过 focused pytest、`compileall`、`validate-data --as-of 2026-06-05`、
+  真实 `sec-pit shadow-observe --latest --end 2026-06-05` 和
+  `sec-pit shadow-monitor --latest --as-of 2026-06-05`；2026-06-05 observe/monitor
+  summary JSON/Markdown 均已真实落盘。下一步仍需观察一次完整 `daily-run` manifest，
+  确认 PASS step 的 `produced_paths` 不再出现 `exists=false`。
