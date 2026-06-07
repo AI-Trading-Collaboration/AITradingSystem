@@ -482,6 +482,57 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     monkeypatch,
 ) -> None:
     run_output_root = tmp_path / "runs"
+    snapshot_dir = tmp_path / "data" / "processed" / "decision_snapshots"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "decision_snapshot_2026-05-06.json").write_text(
+        json.dumps(
+            {
+                "snapshot_id": "decision_snapshot:2026-05-06",
+                "signal_date": "2026-05-06",
+                "market_regime": {
+                    "regime_id": "ai_after_chatgpt",
+                    "start_date": "2022-12-01",
+                },
+                "scores": {
+                    "overall_score": 72.0,
+                    "confidence_score": 65.0,
+                    "confidence_level": "medium",
+                    "components": [
+                        {
+                            "component": "trend",
+                            "score": 72.0,
+                            "weight": 25.0,
+                            "coverage": 1.0,
+                            "confidence": 0.9,
+                        }
+                    ],
+                },
+                "positions": {
+                    "final_risk_asset_ai_band": {
+                        "min_position": 0.4,
+                        "max_position": 0.4,
+                        "label": "受限中配",
+                    },
+                    "final_total_risk_asset_band": {
+                        "min_position": 0.4,
+                        "max_position": 0.6,
+                    },
+                    "position_gates": [
+                        {
+                            "gate_id": "valuation",
+                            "label": "估值拥挤",
+                            "max_position": 0.4,
+                            "triggered": True,
+                        }
+                    ],
+                },
+                "quality": {"market_data_status": "PASS"},
+                "manual_review": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
     def fake_run_daily_ops_plan(
         plan,
@@ -577,6 +628,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
         )
 
     monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(ops_cli, "DEFAULT_DECISION_SNAPSHOT_DIR", snapshot_dir)
     monkeypatch.setattr(ops_cli, "run_daily_ops_plan", fake_run_daily_ops_plan)
 
     result = CliRunner().invoke(
