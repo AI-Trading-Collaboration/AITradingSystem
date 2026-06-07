@@ -1,8 +1,8 @@
 # Shadow 与 production 边界复核
 
-状态：VALIDATING
+状态：DONE
 
-最后更新：2026-05-16
+最后更新：2026-06-07
 
 关联任务：`CALIBRATION-013`、`CALIBRATION-007`、`CALIBRATION-008`、`CALIBRATION-011`、`CALIBRATION-012`
 
@@ -54,3 +54,7 @@ parameter search。它们都应保持 validation-only / `production_effect=none`
   2026-05-15，run id `daily_ops_run:2026-05-15:20260516T010851Z`，
   15/15 步 PASS；parameter_governance 现在为 `PASS_WITH_LIMITATIONS`，其中
   `validation_shadow` 条目仍为 `production_effect=none`。
+- 2026-06-07：从 VALIDATING 改为 DONE。原因：复验通过
+  `test_parameter_governance_accepts_validation_shadow_source_level`、
+  `tests/test_prediction_ledger.py` 和触达文件 ruff；`validation_shadow`
+  枚举、flow validation ledger 隔离和正式 prediction ledger 边界仍保持有效。
