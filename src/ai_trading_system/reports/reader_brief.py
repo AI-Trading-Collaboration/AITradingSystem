@@ -1487,6 +1487,92 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "shortlist_status",
+                        etf_dynamic_v3_parameter_research.get("shortlist_status"),
+                    ),
+                    (
+                        "shortlist_count",
+                        etf_dynamic_v3_parameter_research.get("shortlist_count"),
+                    ),
+                    (
+                        "candidate_cluster_count",
+                        etf_dynamic_v3_parameter_research.get("candidate_cluster_count"),
+                    ),
+                    (
+                        "candidate_cluster_representative_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_cluster_representative_count"
+                        ),
+                    ),
+                    (
+                        "candidate_cluster_weight_path_similarity_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_cluster_weight_path_similarity_status"
+                        ),
+                    ),
+                    (
+                        "shadow_shortlist_candidate_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_shortlist_candidate_count"
+                        ),
+                    ),
+                    (
+                        "shadow_shortlist_monitoring_ready",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_shortlist_monitoring_ready"
+                        ),
+                    ),
+                    (
+                        "position_advisory_status",
+                        etf_dynamic_v3_parameter_research.get("position_advisory_status"),
+                    ),
+                    (
+                        "position_advisory_consensus_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_consensus_status"
+                        ),
+                    ),
+                    (
+                        "position_advisory_recommended_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_recommended_action"
+                        ),
+                    ),
+                    (
+                        "position_advisory_owner_approval_required",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_owner_approval_required"
+                        ),
+                    ),
+                    (
+                        "position_advisory_broker_action_allowed",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_broker_action_allowed"
+                        ),
+                    ),
+                    (
+                        "shadow_observation_readiness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_observation_readiness"
+                        ),
+                    ),
+                    (
+                        "position_advisory_readiness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_readiness"
+                        ),
+                    ),
+                    (
+                        "production_readiness",
+                        etf_dynamic_v3_parameter_research.get("production_readiness"),
+                    ),
+                    (
+                        "position_review_recommended_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_review_recommended_next_action"
+                        ),
+                    ),
+                    (
                         "sweep_leaderboard",
                         etf_dynamic_v3_parameter_research.get("sweep_leaderboard"),
                     ),
@@ -1537,6 +1623,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "research_decision_update",
                         etf_dynamic_v3_parameter_research.get("research_decision_update"),
+                    ),
+                    (
+                        "shortlist",
+                        etf_dynamic_v3_parameter_research.get("shortlist"),
+                    ),
+                    (
+                        "candidate_cluster",
+                        etf_dynamic_v3_parameter_research.get("candidate_cluster"),
+                    ),
+                    (
+                        "shadow_shortlist",
+                        etf_dynamic_v3_parameter_research.get("shadow_shortlist"),
+                    ),
+                    (
+                        "position_advisory",
+                        etf_dynamic_v3_parameter_research.get("position_advisory"),
+                    ),
+                    (
+                        "position_review",
+                        etf_dynamic_v3_parameter_research.get("position_review"),
                     ),
                     (
                         "safety_status",
@@ -5337,6 +5443,26 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_research_decision_update",
     )
+    shortlist_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_shortlist",
+    )
+    candidate_cluster_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_candidate_cluster",
+    )
+    shadow_shortlist_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_shadow_shortlist",
+    )
+    position_advisory_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_position_advisory",
+    )
+    position_review_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_position_review",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     if not leaderboard:
         return _missing_etf_dynamic_v3_parameter_research_summary()
@@ -5373,6 +5499,21 @@ def _etf_dynamic_v3_parameter_research_summary(
     go_no_go_matrix = _read_optional_json(
         _research_decision_update_go_no_go_path(research_decision_update_path)
     )
+    shortlist = _read_optional_json(shortlist_path)
+    candidate_cluster = _read_optional_json(candidate_cluster_path)
+    shadow_shortlist = _read_optional_json(shadow_shortlist_path)
+    position_advisory = _read_optional_json(position_advisory_path)
+    position_advisory_actions = _read_optional_json(
+        position_advisory_path.parent / "advisory_actions.json"
+        if position_advisory_path is not None
+        else None
+    )
+    position_review = _read_optional_json(position_review_path)
+    position_review_decision = _read_optional_json(
+        position_review_path.parent / "go_no_go_decision.json"
+        if position_review_path is not None
+        else None
+    )
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
@@ -5397,6 +5538,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         gate_policy,
         candidate_recovery,
         research_decision_update,
+        shortlist,
+        candidate_cluster,
+        shadow_shortlist,
+        position_advisory,
+        position_advisory_actions,
+        position_review,
+        position_review_decision,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -5416,6 +5564,10 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"research_decision={research_decision.get('recommendation', 'MISSING')}; "
             f"go_no_go={research_decision_update.get('go_no_go', 'MISSING')}; "
             f"recovered={candidate_recovery.get('recovered_candidate_count', 'MISSING')}; "
+            f"shortlist={shortlist.get('shortlist_count', 'MISSING')}; "
+            f"shadow_shortlist={shadow_shortlist.get('shadow_candidate_count', 'MISSING')}; "
+            f"advisory={position_advisory.get('position_advisory_status', 'MISSING')}; "
+            f"production_readiness={position_review.get('production_readiness', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -5547,6 +5699,72 @@ def _etf_dynamic_v3_parameter_research_summary(
             research_decision_update_next_action.get("suggested_codex_task"),
             "MISSING",
         ),
+        "shortlist_status": _text(shortlist.get("status"), "MISSING"),
+        "shortlist_count": shortlist.get("shortlist_count", 0),
+        "shortlist_manual_review_required_count": shortlist.get(
+            "manual_review_required_count",
+            0,
+        ),
+        "candidate_cluster_status": _text(candidate_cluster.get("status"), "MISSING"),
+        "candidate_cluster_count": candidate_cluster.get("cluster_count", 0),
+        "candidate_cluster_representative_count": candidate_cluster.get(
+            "representative_count",
+            0,
+        ),
+        "candidate_cluster_weight_path_similarity_status": _text(
+            candidate_cluster.get("weight_path_similarity_status"),
+            "MISSING",
+        ),
+        "shadow_shortlist_status": _text(shadow_shortlist.get("status"), "MISSING"),
+        "shadow_shortlist_candidate_count": shadow_shortlist.get("shadow_candidate_count", 0),
+        "shadow_shortlist_monitoring_ready": shadow_shortlist.get(
+            "shadow_monitoring_ready",
+            False,
+        ),
+        "position_advisory_status": _text(
+            position_advisory.get("position_advisory_status"),
+            "MISSING",
+        ),
+        "position_advisory_consensus_status": _text(
+            position_advisory.get("consensus_target_weight_status"),
+            "MISSING",
+        ),
+        "position_advisory_recommended_action": _text(
+            position_advisory.get("recommended_action")
+            or position_advisory_actions.get("recommended_action"),
+            "MISSING",
+        ),
+        "position_advisory_owner_approval_required": (
+            position_advisory.get("owner_approval_required")
+            if "owner_approval_required" in position_advisory
+            else True
+        ),
+        "position_advisory_broker_action_allowed": (
+            position_advisory.get("broker_action_allowed")
+            if "broker_action_allowed" in position_advisory
+            else False
+        ),
+        "position_review_status": _text(position_review.get("status"), "MISSING"),
+        "shadow_observation_readiness": _text(
+            position_review.get("shadow_observation_readiness")
+            or position_review_decision.get("shadow_observation_readiness"),
+            "MISSING",
+        ),
+        "position_advisory_readiness": _text(
+            position_review.get("position_advisory_readiness")
+            or position_review_decision.get("position_advisory_readiness"),
+            "MISSING",
+        ),
+        "production_readiness": _text(
+            position_review.get("production_readiness")
+            or position_review_decision.get("production_readiness"),
+            "MISSING",
+        ),
+        "position_review_recommended_next_action": _text(
+            position_review.get("recommended_next_action")
+            or position_review_decision.get("recommended_next_action"),
+            "MISSING",
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
         "evidence_summary": "" if evidence_path is None else str(evidence_path),
@@ -5572,6 +5790,15 @@ def _etf_dynamic_v3_parameter_research_summary(
         "research_decision_update": (
             "" if research_decision_update_path is None else str(research_decision_update_path)
         ),
+        "shortlist": "" if shortlist_path is None else str(shortlist_path),
+        "candidate_cluster": (
+            "" if candidate_cluster_path is None else str(candidate_cluster_path)
+        ),
+        "shadow_shortlist": "" if shadow_shortlist_path is None else str(shadow_shortlist_path),
+        "position_advisory": (
+            "" if position_advisory_path is None else str(position_advisory_path)
+        ),
+        "position_review": "" if position_review_path is None else str(position_review_path),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -5586,6 +5813,13 @@ def _etf_dynamic_v3_parameter_research_summary(
                     gate_policy,
                     candidate_recovery,
                     research_decision_update,
+                    shortlist,
+                    candidate_cluster,
+                    shadow_shortlist,
+                    position_advisory,
+                    position_advisory_actions,
+                    position_review,
+                    position_review_decision,
                 ),
                 "production_candidate_generated",
             )
@@ -5600,6 +5834,13 @@ def _etf_dynamic_v3_parameter_research_summary(
                     gate_policy,
                     candidate_recovery,
                     research_decision_update,
+                    shortlist,
+                    candidate_cluster,
+                    shadow_shortlist,
+                    position_advisory,
+                    position_advisory_actions,
+                    position_review,
+                    position_review_decision,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -5614,6 +5855,13 @@ def _etf_dynamic_v3_parameter_research_summary(
                     gate_policy,
                     candidate_recovery,
                     research_decision_update,
+                    shortlist,
+                    candidate_cluster,
+                    shadow_shortlist,
+                    position_advisory,
+                    position_advisory_actions,
+                    position_review,
+                    position_review_decision,
                 ),
                 "shadow_enrollment_allowed",
             )
@@ -5683,6 +5931,26 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "research_decision_update_usable_candidates_after": 0,
         "research_decision_update_warnings": "MISSING",
         "research_decision_update_next_task": "MISSING",
+        "shortlist_status": "MISSING",
+        "shortlist_count": 0,
+        "shortlist_manual_review_required_count": 0,
+        "candidate_cluster_status": "MISSING",
+        "candidate_cluster_count": 0,
+        "candidate_cluster_representative_count": 0,
+        "candidate_cluster_weight_path_similarity_status": "MISSING",
+        "shadow_shortlist_status": "MISSING",
+        "shadow_shortlist_candidate_count": 0,
+        "shadow_shortlist_monitoring_ready": False,
+        "position_advisory_status": "MISSING",
+        "position_advisory_consensus_status": "MISSING",
+        "position_advisory_recommended_action": "MISSING",
+        "position_advisory_owner_approval_required": True,
+        "position_advisory_broker_action_allowed": False,
+        "position_review_status": "MISSING",
+        "shadow_observation_readiness": "MISSING",
+        "position_advisory_readiness": "MISSING",
+        "production_readiness": "MISSING",
+        "position_review_recommended_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
         "evidence_summary": "",
@@ -5696,6 +5964,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "gate_policy": "",
         "candidate_recovery": "",
         "research_decision_update": "",
+        "shortlist": "",
+        "candidate_cluster": "",
+        "shadow_shortlist": "",
+        "position_advisory": "",
+        "position_review": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

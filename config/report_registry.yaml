@@ -1916,6 +1916,111 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_shortlist
+    title: ETF Dynamic v3 Rescue Shadow Shortlist
+    group: shadow
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue shortlist build --observe-pool-id <pool_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/shortlist/*/shortlist_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shortlist/*/shortlist_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/shortlist/*/shortlist_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-126 compresses a large observe-only/manual-review pool into a
+      5-20 candidate shortlist using auditable hard exclusions, score
+      breakdowns, evidence status, regime status, stability, and diversity.
+    owner_action: owner_review_shortlist_before_candidate_clustering_or_shadow_monitoring
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_cluster
+    title: ETF Dynamic v3 Rescue Candidate Cluster Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-cluster run --shortlist-id <shortlist_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_cluster/*/cluster_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_cluster/*/candidate_clusters.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_cluster/*/cluster_representatives.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_cluster/*/candidate_cluster_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-127 explains parameter, weight-path, and metric similarity so
+      the shadow shortlist is not mistaken for diverse evidence when candidates
+      are near duplicates.
+    owner_action: owner_review_candidate_clusters_before_selecting_shadow_representatives
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_shadow_shortlist
+    title: ETF Dynamic v3 Rescue Shadow Shortlist Monitoring Pack
+    group: shadow
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue shadow-shortlist build --shortlist-id <shortlist_id> --cluster-id <cluster_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist/*/shadow_shortlist_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist/*/shadow_shortlist_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist/*/shadow_shortlist_monitoring_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-128 turns cluster representatives into owner-review shadow
+      monitoring candidates with explicit daily/weekly monitoring requirements
+      while keeping production mutation and broker action disabled.
+    owner_action: owner_review_shadow_shortlist_before_starting_shadow_observation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_position_advisory
+    title: ETF Dynamic v3 Rescue Position Advisory
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue position-advisory run --shadow-shortlist-id <shadow_shortlist_id> --config config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/position_advisory_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/candidate_target_weights.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/consensus_target_weights.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/advisory_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory/*/position_advisory_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-129 converts candidate target weights into TARGET_ONLY or
+      manual-review snapshot-delta advisory, always requiring owner approval
+      and always forbidding broker action.
+    owner_action: owner_review_position_advisory_before_including_in_daily_report
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_position_review
+    title: ETF Dynamic v3 Rescue Position Advisory Review Pack
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue position-review pack --shortlist-id <shortlist_id> --cluster-id <cluster_id> --shadow-shortlist-id <shadow_shortlist_id> --advisory-id <advisory_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/position_review/*/position_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_review/*/go_no_go_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_review/*/owner_review_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/position_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-130 combines shortlist, cluster, shadow shortlist, and position
+      advisory into owner review readiness while keeping
+      production_readiness=NOT_READY and broker_action_allowed=false.
+    owner_action: owner_review_position_pack_before_shadow_observation_or_daily_advisory
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

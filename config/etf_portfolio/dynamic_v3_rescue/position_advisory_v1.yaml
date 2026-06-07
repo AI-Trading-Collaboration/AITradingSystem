@@ -1,0 +1,44 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_position_advisory_v1
+  owner: project_owner
+  version: 2026-06-08
+  status: pilot_baseline
+  rationale: >
+    Convert shadow shortlist candidate target weights into manual-review position
+    advisory artifacts without broker action or production readiness.
+  intended_effect: >
+    Keep target-only and snapshot-delta recommendations bounded until owner review
+    accepts the shortlist, current-position source, and adjustment policy.
+  validation_evidence: focused tests and TRADING-126_to_130 review pack validation
+  review_condition: >
+    Recalibrate or replace after the first owner-reviewed shadow observation period.
+
+portfolio:
+  source: manual_snapshot
+  require_current_position_file: false
+  default_cash_symbol: CASH
+
+advisory_limits:
+  max_single_day_total_adjustment: 0.10
+  max_single_symbol_adjustment: 0.05
+  min_trade_threshold: 0.01
+  max_risk_asset_increase_without_confirmation: 0.05
+  max_risk_asset_decrease_without_confirmation: 0.10
+
+execution_mode:
+  advisory_only: true
+  broker_action_allowed: false
+  require_owner_approval: true
+
+consensus:
+  require_candidate_agreement: true
+  agreement_threshold: 0.60
+  max_symbol_dispersion: 0.20
+  disagreement_action: manual_review_required
+
+output:
+  include_no_trade_recommendation: true
+  include_stepwise_plan: true
+  include_risk_explanation: true

@@ -113,9 +113,28 @@ DEFAULT_GATE_IMPACT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_impact"
 DEFAULT_GATE_POLICY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_policy"
 DEFAULT_CANDIDATE_RECOVERY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_recovery"
 DEFAULT_RESEARCH_DECISION_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_decision_update"
+DEFAULT_SHORTLIST_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shortlist"
+DEFAULT_CANDIDATE_CLUSTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_cluster"
+DEFAULT_SHADOW_SHORTLIST_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_shortlist"
+DEFAULT_POSITION_ADVISORY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_advisory"
+DEFAULT_POSITION_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_review"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
+)
+DEFAULT_POSITION_ADVISORY_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "position_advisory_v1.yaml"
+)
+DEFAULT_CURRENT_PORTFOLIO_SNAPSHOT_EXAMPLE_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "current_portfolio_snapshot.example.yaml"
 )
 DEFAULT_RATES_CACHE_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
 
@@ -281,6 +300,33 @@ PARAMETER_EFFECT_FIELDS: dict[str, tuple[str, ...]] = {
         "materialization.drawdown_qqq_reduction_step",
     ),
 }
+
+# TRADING-126_to_130 pilot shortlist scoring policy. These weights only rank
+# manual-review candidates for owner review; they do not promote candidates or
+# create production readiness. The requirement doc records the exit condition
+# for replacing this baseline with calibrated owner-reviewed policy.
+SHORTLIST_SCORE_COMPONENT_WEIGHTS = {
+    "performance": 0.25,
+    "risk": 0.20,
+    "evidence": 0.20,
+    "regime": 0.15,
+    "stability": 0.10,
+    "diversity": 0.10,
+}
+SHORTLIST_DEFAULT_MIN_SIZE = 5
+SHORTLIST_DEFAULT_TARGET_SIZE = 10
+SHORTLIST_DEFAULT_MAX_SIZE = 20
+SHORTLIST_DIVERSITY_PARAMETER_FLOOR = 0.10
+
+# TRADING-127 pilot clustering policy. The threshold groups near-duplicate
+# candidate behavior for review-pack compression only; it is not a promotion
+# or trading rule.
+CANDIDATE_CLUSTER_SIMILARITY_THRESHOLD = 0.72
+CANDIDATE_CLUSTER_SECONDARY_REPRESENTATIVE_SIZE = 4
+
+POSITION_ADVISORY_TARGET_ONLY = "TARGET_ONLY"
+POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW = "READY_WITH_MANUAL_REVIEW"
+DYNAMIC_V3_WEIGHT_SYMBOLS = ("SPY", "QQQ", "SMH", "SOXX", "CASH")
 
 DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY: dict[str, Any] = {
     "observe_only": True,
@@ -3094,6 +3140,7 @@ def build_observe_pool(
                 "candidate_id": row.get("candidate_id"),
                 "source_sweep_id": sweep_id,
                 "parameters": row.get("parameters", {}),
+                "metrics": row.get("metrics", {}),
                 "evidence_status": evidence,
                 "regime_coverage_status": regime_status,
                 "overfit_status": evidence["overfit_status"],
@@ -3106,6 +3153,9 @@ def build_observe_pool(
                 ),
                 "warning_reasons": warning_reasons,
                 "score": row.get("score"),
+                "evaluator_mode": row.get("evaluator_mode", ""),
+                "real_evaluation_artifact_path": row.get("real_evaluation_artifact_path", ""),
+                "weight_path_metadata": row.get("weight_path_metadata", {}),
             }
         )
     pool_id = _stable_id("observe-pool", sweep_id, top_n, generated.isoformat())
@@ -3201,6 +3251,978 @@ def validate_observe_pool_artifact(
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_observe_pool_validation",
         "pool_id": pool_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def build_shadow_shortlist(
+    *,
+    observe_pool_id: str,
+    target_size: int = SHORTLIST_DEFAULT_TARGET_SIZE,
+    max_size: int = SHORTLIST_DEFAULT_MAX_SIZE,
+    min_size: int = SHORTLIST_DEFAULT_MIN_SIZE,
+    observe_pool_dir: Path = DEFAULT_OBSERVE_POOL_DIR,
+    output_dir: Path = DEFAULT_SHORTLIST_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    if min_size <= 0 or target_size <= 0 or max_size <= 0:
+        raise DynamicV3ParameterResearchError("shortlist sizes must be positive")
+    if min_size > target_size or target_size > max_size:
+        raise DynamicV3ParameterResearchError("shortlist sizes must satisfy min <= target <= max")
+    generated = generated_at or datetime.now(UTC)
+    pool_dir = observe_pool_dir / observe_pool_id
+    pool_manifest = _read_json(pool_dir / "observe_pool_manifest.json")
+    observe_rows = _read_jsonl(pool_dir / "observe_candidates.jsonl")
+    eligible: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for row in observe_rows:
+        hard_reasons = _shortlist_hard_reject_reasons(row)
+        breakdown = _shortlist_score_breakdown(row, diversity=0.0)
+        if hard_reasons:
+            rejected.append(
+                {
+                    "candidate_id": row.get("candidate_id"),
+                    "source_observe_pool_id": observe_pool_id,
+                    "shortlist_status": "rejected",
+                    "rejection_reasons": hard_reasons,
+                    "shortlist_score": _weighted_shortlist_score(breakdown),
+                    "shortlist_score_breakdown": breakdown,
+                }
+            )
+            continue
+        eligible.append(
+            {
+                **row,
+                "_base_shortlist_score_breakdown": breakdown,
+                "_base_shortlist_score": _weighted_shortlist_score(breakdown),
+            }
+        )
+    selected = _select_shortlist_candidates(eligible, target_size=target_size)
+    selected_ids = {_text(row.get("candidate_id")) for row in selected}
+    for row in eligible:
+        if _text(row.get("candidate_id")) in selected_ids:
+            continue
+        breakdown = dict(_mapping(row.get("_base_shortlist_score_breakdown")))
+        rejected.append(
+            {
+                "candidate_id": row.get("candidate_id"),
+                "source_observe_pool_id": observe_pool_id,
+                "shortlist_status": "rejected",
+                "rejection_reasons": ["not_in_top_shortlist_after_diversity_selection"],
+                "shortlist_score": row.get("_base_shortlist_score"),
+                "shortlist_score_breakdown": breakdown,
+            }
+        )
+    shortlist_candidates: list[dict[str, Any]] = []
+    for rank, row in enumerate(selected[:max_size], start=1):
+        breakdown = dict(_mapping(row.get("_shortlist_score_breakdown")))
+        score = _weighted_shortlist_score(breakdown)
+        clean = {key: value for key, value in row.items() if not key.startswith("_")}
+        warnings = sorted(set(_candidate_manual_review_warnings(clean)))
+        shortlist_candidates.append(
+            {
+                **clean,
+                "source_observe_pool_id": observe_pool_id,
+                "source_sweep_id": pool_manifest.get(
+                    "source_sweep_id",
+                    clean.get("source_sweep_id"),
+                ),
+                "shortlist_rank": rank,
+                "shortlist_status": "selected",
+                "manual_review_required": True,
+                "overfit_status": _candidate_overfit_status(clean),
+                "regime_coverage_status": _candidate_regime_status(clean),
+                "shortlist_score": round(score, 6),
+                "shortlist_score_breakdown": {
+                    key: round(_float(value), 6) for key, value in breakdown.items()
+                },
+                "selection_reasons": _shortlist_selection_reasons(breakdown, warnings),
+                "remaining_warnings": warnings,
+            }
+        )
+    shortlist_id = _stable_id(
+        "shadow-shortlist",
+        observe_pool_id,
+        target_size,
+        max_size,
+        generated.isoformat(),
+    )
+    shortlist_dir = _unique_dir(output_dir / shortlist_id)
+    shortlist_dir.mkdir(parents=True, exist_ok=False)
+    status = (
+        "PASS"
+        if len(shortlist_candidates) >= min_size and len(shortlist_candidates) <= max_size
+        else "PASS_WITH_WARNINGS"
+    )
+    score_breakdown = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shortlist_score_breakdown",
+        "shortlist_id": shortlist_dir.name,
+        "component_weights": dict(SHORTLIST_SCORE_COMPONENT_WEIGHTS),
+        "selected": [
+            {
+                "candidate_id": row["candidate_id"],
+                "shortlist_rank": row["shortlist_rank"],
+                "shortlist_score": row["shortlist_score"],
+                "shortlist_score_breakdown": row["shortlist_score_breakdown"],
+            }
+            for row in shortlist_candidates
+        ],
+        "rejected": rejected,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_shortlist_manifest",
+        "shortlist_id": shortlist_dir.name,
+        "source_observe_pool_id": observe_pool_id,
+        "source_sweep_id": pool_manifest.get("source_sweep_id", ""),
+        "source_recovery_id": pool_manifest.get("source_recovery_id", ""),
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "observe_pool_candidate_count": len(observe_rows),
+        "eligible_candidate_count": len(eligible),
+        "shortlist_count": len(shortlist_candidates),
+        "target_size": target_size,
+        "min_shortlist_size": min_size,
+        "max_shortlist_size": max_size,
+        "manual_review_required_count": len(shortlist_candidates),
+        "hard_rejected_candidate_count": sum(
+            1
+            for row in rejected
+            if "not_in_top_shortlist_after_diversity_selection"
+            not in _texts(row.get("rejection_reasons"))
+        ),
+        "shortlist_candidates_path": str(shortlist_dir / "shortlist_candidates.jsonl"),
+        "shortlist_rejected_candidates_path": str(
+            shortlist_dir / "shortlist_rejected_candidates.jsonl"
+        ),
+        "shortlist_score_breakdown_path": str(shortlist_dir / "shortlist_score_breakdown.json"),
+        "shortlist_report_path": str(shortlist_dir / "shortlist_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(shortlist_dir / "shortlist_manifest.json", manifest)
+    _write_jsonl(shortlist_dir / "shortlist_candidates.jsonl", shortlist_candidates)
+    _write_jsonl(shortlist_dir / "shortlist_rejected_candidates.jsonl", rejected)
+    _write_json(shortlist_dir / "shortlist_score_breakdown.json", score_breakdown)
+    _write_text(
+        shortlist_dir / "shortlist_report.md",
+        render_shortlist_markdown(manifest, shortlist_candidates, rejected),
+    )
+    _update_latest_pointer(
+        "latest_shortlist",
+        shortlist_dir.name,
+        shortlist_dir / "shortlist_manifest.json",
+    )
+    return {
+        "shortlist_id": shortlist_dir.name,
+        "shortlist_dir": shortlist_dir,
+        "manifest": manifest,
+        "candidates": shortlist_candidates,
+        "rejected_candidates": rejected,
+    }
+
+
+def shortlist_report_payload(
+    *,
+    shortlist_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SHORTLIST_DIR,
+) -> dict[str, Any]:
+    resolved_id = shortlist_id or (
+        _latest_pointer_artifact_id("latest_shortlist") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--shortlist-id or --latest is required")
+    shortlist_dir = output_dir / resolved_id
+    return {
+        **_read_json(shortlist_dir / "shortlist_manifest.json"),
+        "shortlist_dir": str(shortlist_dir),
+    }
+
+
+def validate_shortlist_artifact(
+    *,
+    shortlist_id: str,
+    output_dir: Path = DEFAULT_SHORTLIST_DIR,
+) -> dict[str, Any]:
+    shortlist_dir = output_dir / shortlist_id
+    manifest = _read_optional_json(shortlist_dir / "shortlist_manifest.json") or {}
+    rows = _read_jsonl(shortlist_dir / "shortlist_candidates.jsonl")
+    required = [
+        "shortlist_manifest.json",
+        "shortlist_candidates.jsonl",
+        "shortlist_rejected_candidates.jsonl",
+        "shortlist_score_breakdown.json",
+        "shortlist_report.md",
+    ]
+    selected_count = len(rows)
+    eligible_count = int(manifest.get("eligible_candidate_count") or selected_count)
+    min_size = int(manifest.get("min_shortlist_size") or SHORTLIST_DEFAULT_MIN_SIZE)
+    max_size = int(manifest.get("max_shortlist_size") or SHORTLIST_DEFAULT_MAX_SIZE)
+    checks = [
+        _check(f"artifact_exists:{name}", (shortlist_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "shortlist_id_matches",
+                manifest.get("shortlist_id") == shortlist_id,
+                shortlist_id,
+            ),
+            _check(
+                "shortlist_count_in_configured_range",
+                selected_count <= max_size
+                and (selected_count >= min_size or selected_count == eligible_count),
+                (
+                    f"selected={selected_count}, min={min_size}, max={max_size}, "
+                    f"eligible={eligible_count}"
+                ),
+            ),
+            _check(
+                "hard_fail_candidates_excluded",
+                all(not _shortlist_hard_reject_reasons(row) for row in rows),
+                "hard fail candidates excluded",
+            ),
+            _check(
+                "selection_reasons_present",
+                all(_texts(row.get("selection_reasons")) for row in rows),
+                "selected candidates explain why selected",
+            ),
+            _check(
+                "all_selected_manual_review_required",
+                all(row.get("manual_review_required") is True for row in rows),
+                "manual review remains required",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "shortlist is not production",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_shortlist_validation",
+        "shortlist_id": shortlist_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_candidate_clustering(
+    *,
+    shortlist_id: str,
+    shortlist_dir: Path = DEFAULT_SHORTLIST_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_CLUSTER_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_dir = shortlist_dir / shortlist_id
+    shortlist_manifest = _read_json(source_dir / "shortlist_manifest.json")
+    candidates = _read_jsonl(source_dir / "shortlist_candidates.jsonl")
+    parameter_matrix = _similarity_matrix_rows(candidates, _parameter_similarity)
+    weight_matrix = _weight_path_similarity_matrix(candidates)
+    metric_matrix = _similarity_matrix_rows(candidates, _metric_similarity)
+    clusters = _candidate_clusters(candidates, weight_matrix)
+    representatives = _cluster_representatives(clusters, candidates)
+    cluster_id = _stable_id("candidate-cluster", shortlist_id, generated.isoformat())
+    cluster_dir = _unique_dir(output_dir / cluster_id)
+    cluster_dir.mkdir(parents=True, exist_ok=False)
+    cluster_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_clusters",
+        "cluster_id": cluster_dir.name,
+        "source_shortlist_id": shortlist_id,
+        "clusters": clusters,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    incomplete_weight_pairs = sum(
+        1
+        for row in weight_matrix
+        for key, value in row.items()
+        if key != "candidate_id" and value == "INCOMPLETE"
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_cluster_manifest",
+        "cluster_id": cluster_dir.name,
+        "source_shortlist_id": shortlist_id,
+        "source_observe_pool_id": shortlist_manifest.get("source_observe_pool_id", ""),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if candidates and representatives else "PASS_WITH_WARNINGS",
+        "candidate_count": len(candidates),
+        "cluster_count": len(clusters),
+        "representative_count": len(representatives),
+        "weight_path_similarity_status": (
+            "INCOMPLETE" if incomplete_weight_pairs else "PASS"
+        ),
+        "parameter_similarity_matrix_path": str(cluster_dir / "parameter_similarity_matrix.csv"),
+        "weight_path_similarity_matrix_path": str(
+            cluster_dir / "weight_path_similarity_matrix.csv"
+        ),
+        "metric_similarity_matrix_path": str(cluster_dir / "metric_similarity_matrix.csv"),
+        "candidate_clusters_path": str(cluster_dir / "candidate_clusters.json"),
+        "cluster_representatives_path": str(cluster_dir / "cluster_representatives.jsonl"),
+        "candidate_cluster_report_path": str(cluster_dir / "candidate_cluster_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(cluster_dir / "cluster_manifest.json", manifest)
+    _write_csv(cluster_dir / "parameter_similarity_matrix.csv", parameter_matrix)
+    _write_csv(cluster_dir / "weight_path_similarity_matrix.csv", weight_matrix)
+    _write_csv(cluster_dir / "metric_similarity_matrix.csv", metric_matrix)
+    _write_json(cluster_dir / "candidate_clusters.json", cluster_payload)
+    _write_jsonl(cluster_dir / "cluster_representatives.jsonl", representatives)
+    _write_text(
+        cluster_dir / "candidate_cluster_report.md",
+        render_candidate_cluster_markdown(manifest, clusters, representatives),
+    )
+    _update_latest_pointer(
+        "latest_candidate_cluster",
+        cluster_dir.name,
+        cluster_dir / "cluster_manifest.json",
+    )
+    return {
+        "cluster_id": cluster_dir.name,
+        "cluster_dir": cluster_dir,
+        "manifest": manifest,
+        "clusters": clusters,
+        "representatives": representatives,
+    }
+
+
+def candidate_cluster_report_payload(
+    *,
+    cluster_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CANDIDATE_CLUSTER_DIR,
+) -> dict[str, Any]:
+    resolved_id = cluster_id or (
+        _latest_pointer_artifact_id("latest_candidate_cluster") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--cluster-id or --latest is required")
+    cluster_dir = output_dir / resolved_id
+    return {**_read_json(cluster_dir / "cluster_manifest.json"), "cluster_dir": str(cluster_dir)}
+
+
+def validate_candidate_cluster_artifact(
+    *,
+    cluster_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_CLUSTER_DIR,
+) -> dict[str, Any]:
+    cluster_dir = output_dir / cluster_id
+    manifest = _read_optional_json(cluster_dir / "cluster_manifest.json") or {}
+    clusters = _records(
+        _mapping(_read_optional_json(cluster_dir / "candidate_clusters.json") or {}).get(
+            "clusters"
+        )
+    )
+    representatives = _read_jsonl(cluster_dir / "cluster_representatives.jsonl")
+    required = [
+        "cluster_manifest.json",
+        "parameter_similarity_matrix.csv",
+        "weight_path_similarity_matrix.csv",
+        "metric_similarity_matrix.csv",
+        "candidate_clusters.json",
+        "cluster_representatives.jsonl",
+        "candidate_cluster_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (cluster_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check("cluster_id_matches", manifest.get("cluster_id") == cluster_id, cluster_id),
+            _check("clusters_present", bool(clusters), "candidate clusters are required"),
+            _check(
+                "representatives_present",
+                bool(representatives),
+                "cluster representatives are required",
+            ),
+            _check(
+                "representatives_reference_clusters",
+                all(_text(row.get("cluster_id")) for row in representatives),
+                "representatives include cluster id",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "cluster artifact is not production",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_cluster_validation",
+        "cluster_id": cluster_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def build_shadow_shortlist_monitoring_pack(
+    *,
+    shortlist_id: str,
+    cluster_id: str,
+    shortlist_dir: Path = DEFAULT_SHORTLIST_DIR,
+    cluster_dir: Path = DEFAULT_CANDIDATE_CLUSTER_DIR,
+    output_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_shortlist_dir = shortlist_dir / shortlist_id
+    shortlist_manifest = _read_json(source_shortlist_dir / "shortlist_manifest.json")
+    shortlist_rows = {
+        _text(row.get("candidate_id")): row
+        for row in _read_jsonl(source_shortlist_dir / "shortlist_candidates.jsonl")
+    }
+    source_cluster_dir = cluster_dir / cluster_id
+    cluster_manifest = _read_json(source_cluster_dir / "cluster_manifest.json")
+    representatives = _read_jsonl(source_cluster_dir / "cluster_representatives.jsonl")
+    shadow_rows: list[dict[str, Any]] = []
+    for rep in representatives:
+        candidate_id = _text(rep.get("candidate_id"))
+        source = shortlist_rows.get(candidate_id)
+        if source is None:
+            continue
+        shadow_rows.append(
+            {
+                "candidate_id": candidate_id,
+                "source_shortlist_id": shortlist_id,
+                "source_cluster_id": cluster_id,
+                "cluster_id": rep.get("cluster_id"),
+                "cluster_label": rep.get("cluster_label"),
+                "representative_type": rep.get("representative_type", "primary"),
+                "manual_review_required": True,
+                "monitoring_status": "ready_for_shadow_monitoring",
+                "monitoring_start_after_owner_review": True,
+                "monitoring_requirements": {
+                    "min_days": 30,
+                    "min_rebalance_count": 3,
+                    "track_live_vs_backtest_drift": True,
+                    "track_weight_path_stability": True,
+                    "track_regime_response": True,
+                },
+                "shortlist_rank": source.get("shortlist_rank"),
+                "shortlist_score": source.get("shortlist_score"),
+                "parameters": source.get("parameters", {}),
+                "metrics": source.get("metrics", {}),
+                "real_evaluation_artifact_path": source.get("real_evaluation_artifact_path", ""),
+                "remaining_warnings": sorted(
+                    set(_texts(source.get("remaining_warnings")) + _texts(rep.get("risks")))
+                ),
+            }
+        )
+    shadow_id = _stable_id("shadow-shortlist", shortlist_id, cluster_id, generated.isoformat())
+    shadow_dir = _unique_dir(output_dir / shadow_id)
+    shadow_dir.mkdir(parents=True, exist_ok=False)
+    monitoring_plan = _shadow_shortlist_monitoring_plan(shadow_id, shadow_rows)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_shortlist_monitoring_manifest",
+        "shadow_shortlist_id": shadow_dir.name,
+        "source_shortlist_id": shortlist_id,
+        "source_cluster_id": cluster_id,
+        "source_observe_pool_id": shortlist_manifest.get("source_observe_pool_id", ""),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if shadow_rows else "PASS_WITH_WARNINGS",
+        "shortlist_count": shortlist_manifest.get("shortlist_count", 0),
+        "cluster_count": cluster_manifest.get("cluster_count", 0),
+        "shadow_candidate_count": len(shadow_rows),
+        "manual_review_required_count": len(shadow_rows),
+        "shadow_monitoring_ready": bool(shadow_rows),
+        "shadow_shortlist_candidates_path": str(shadow_dir / "shadow_shortlist_candidates.jsonl"),
+        "shadow_shortlist_monitoring_plan_path": str(
+            shadow_dir / "shadow_shortlist_monitoring_plan.json"
+        ),
+        "shadow_shortlist_report_path": str(shadow_dir / "shadow_shortlist_report.md"),
+        "reader_brief_section_path": str(shadow_dir / "reader_brief_section.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    reader_brief = render_shadow_shortlist_reader_brief(manifest, shadow_rows)
+    _write_json(shadow_dir / "shadow_shortlist_manifest.json", manifest)
+    _write_jsonl(shadow_dir / "shadow_shortlist_candidates.jsonl", shadow_rows)
+    _write_json(shadow_dir / "shadow_shortlist_monitoring_plan.json", monitoring_plan)
+    _write_text(
+        shadow_dir / "shadow_shortlist_report.md",
+        render_shadow_shortlist_markdown(manifest, shadow_rows, monitoring_plan),
+    )
+    _write_text(shadow_dir / "reader_brief_section.md", reader_brief)
+    _update_latest_pointer(
+        "latest_shadow_shortlist",
+        shadow_dir.name,
+        shadow_dir / "shadow_shortlist_manifest.json",
+    )
+    return {
+        "shadow_shortlist_id": shadow_dir.name,
+        "shadow_shortlist_dir": shadow_dir,
+        "manifest": manifest,
+        "candidates": shadow_rows,
+        "monitoring_plan": monitoring_plan,
+    }
+
+
+def shadow_shortlist_report_payload(
+    *,
+    shadow_shortlist_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+) -> dict[str, Any]:
+    resolved_id = shadow_shortlist_id or (
+        _latest_pointer_artifact_id("latest_shadow_shortlist") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--shadow-shortlist-id or --latest is required")
+    shadow_dir = output_dir / resolved_id
+    return {
+        **_read_json(shadow_dir / "shadow_shortlist_manifest.json"),
+        "shadow_shortlist_dir": str(shadow_dir),
+    }
+
+
+def validate_shadow_shortlist_artifact(
+    *,
+    shadow_shortlist_id: str,
+    output_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+) -> dict[str, Any]:
+    shadow_dir = output_dir / shadow_shortlist_id
+    manifest = _read_optional_json(shadow_dir / "shadow_shortlist_manifest.json") or {}
+    rows = _read_jsonl(shadow_dir / "shadow_shortlist_candidates.jsonl")
+    required = [
+        "shadow_shortlist_manifest.json",
+        "shadow_shortlist_candidates.jsonl",
+        "shadow_shortlist_monitoring_plan.json",
+        "shadow_shortlist_report.md",
+        "reader_brief_section.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (shadow_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "shadow_shortlist_id_matches",
+                manifest.get("shadow_shortlist_id") == shadow_shortlist_id,
+                shadow_shortlist_id,
+            ),
+            _check(
+                "monitoring_requirements_present",
+                all(bool(_mapping(row.get("monitoring_requirements"))) for row in rows),
+                "each shadow candidate has monitoring requirements",
+            ),
+            _check(
+                "monitoring_waits_for_owner_review",
+                all(row.get("monitoring_start_after_owner_review") is True for row in rows),
+                "owner review required before monitoring starts",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "shadow shortlist is not production",
+            ),
+            _check(
+                "broker_action_none",
+                manifest.get("broker_action") == "none",
+                "no broker action",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_shortlist_validation",
+        "shadow_shortlist_id": shadow_shortlist_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def load_position_advisory_config(
+    path: Path | str = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+) -> dict[str, Any]:
+    raw = safe_load_yaml_path(Path(path))
+    if not isinstance(raw, Mapping):
+        raise DynamicV3ParameterResearchError("position advisory config must be a mapping")
+    execution = _mapping(raw.get("execution_mode"))
+    if execution.get("advisory_only") is not True:
+        raise DynamicV3ParameterResearchError("position advisory must be advisory_only")
+    if execution.get("broker_action_allowed") is not False:
+        raise DynamicV3ParameterResearchError("position advisory must forbid broker action")
+    if execution.get("require_owner_approval") is not True:
+        raise DynamicV3ParameterResearchError("position advisory must require owner approval")
+    return dict(raw)
+
+
+def run_position_advisory(
+    *,
+    shadow_shortlist_id: str,
+    config_path: Path = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    portfolio_snapshot_path: Path | None = None,
+    shadow_shortlist_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+    output_dir: Path = DEFAULT_POSITION_ADVISORY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_position_advisory_config(config_path)
+    source_dir = shadow_shortlist_dir / shadow_shortlist_id
+    shadow_manifest = _read_json(source_dir / "shadow_shortlist_manifest.json")
+    shadow_rows = _read_jsonl(source_dir / "shadow_shortlist_candidates.jsonl")
+    target_rows: list[dict[str, Any]] = []
+    for row in shadow_rows:
+        latest_weights = _candidate_latest_target_weights(row)
+        target_rows.append(
+            {
+                "candidate_id": row.get("candidate_id"),
+                "cluster_id": row.get("cluster_id"),
+                "cluster_label": row.get("cluster_label"),
+                "as_of": latest_weights["as_of"],
+                "target_weights": latest_weights["weights"],
+                "source_weight_path_artifact": latest_weights["source_weight_path_artifact"],
+                "weight_path_status": latest_weights["status"],
+            }
+        )
+    consensus_rows, consensus_status = _consensus_target_weights(target_rows, config)
+    snapshot = _load_portfolio_snapshot(portfolio_snapshot_path) if portfolio_snapshot_path else {}
+    delta_rows = (
+        _candidate_position_delta_rows(target_rows, snapshot, config) if snapshot else []
+    )
+    advisory_actions = _position_advisory_actions(
+        target_rows=target_rows,
+        delta_rows=delta_rows,
+        snapshot=snapshot,
+        consensus_status=consensus_status,
+        config=config,
+    )
+    advisory_id = _stable_id(
+        "position-advisory",
+        shadow_shortlist_id,
+        str(config_path),
+        str(portfolio_snapshot_path or ""),
+        generated.isoformat(),
+    )
+    advisory_dir = _unique_dir(output_dir / advisory_id)
+    advisory_dir.mkdir(parents=True, exist_ok=False)
+    status = "PASS" if target_rows else "PASS_WITH_WARNINGS"
+    advisory_status = advisory_actions["position_advisory_status"]
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_advisory_manifest",
+        "advisory_id": advisory_dir.name,
+        "source_shadow_shortlist_id": shadow_shortlist_id,
+        "source_shortlist_id": shadow_manifest.get("source_shortlist_id", ""),
+        "source_cluster_id": shadow_manifest.get("source_cluster_id", ""),
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "position_advisory_status": advisory_status,
+        "portfolio_snapshot_provided": bool(snapshot),
+        "portfolio_snapshot_path": (
+            "" if portfolio_snapshot_path is None else str(portfolio_snapshot_path)
+        ),
+        "candidate_count": len(target_rows),
+        "consensus_target_weight_status": consensus_status,
+        "recommended_action": advisory_actions["recommended_action"],
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "candidate_target_weights_path": str(advisory_dir / "candidate_target_weights.jsonl"),
+        "candidate_position_deltas_path": str(advisory_dir / "candidate_position_deltas.jsonl"),
+        "consensus_target_weights_path": str(advisory_dir / "consensus_target_weights.csv"),
+        "advisory_actions_path": str(advisory_dir / "advisory_actions.json"),
+        "position_advisory_report_path": str(advisory_dir / "position_advisory_report.md"),
+        "config_path": str(config_path),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(advisory_dir / "position_advisory_manifest.json", manifest)
+    _write_jsonl(advisory_dir / "candidate_target_weights.jsonl", target_rows)
+    _write_jsonl(advisory_dir / "candidate_position_deltas.jsonl", delta_rows)
+    _write_csv(advisory_dir / "consensus_target_weights.csv", consensus_rows)
+    _write_json(advisory_dir / "advisory_actions.json", advisory_actions)
+    _write_text(
+        advisory_dir / "position_advisory_report.md",
+        render_position_advisory_markdown(
+            manifest,
+            target_rows,
+            consensus_rows,
+            delta_rows,
+            advisory_actions,
+        ),
+    )
+    _update_latest_pointer(
+        "latest_position_advisory",
+        advisory_dir.name,
+        advisory_dir / "position_advisory_manifest.json",
+    )
+    return {
+        "advisory_id": advisory_dir.name,
+        "advisory_dir": advisory_dir,
+        "manifest": manifest,
+        "candidate_target_weights": target_rows,
+        "candidate_position_deltas": delta_rows,
+        "consensus_target_weights": consensus_rows,
+        "advisory_actions": advisory_actions,
+    }
+
+
+def position_advisory_report_payload(
+    *,
+    advisory_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_POSITION_ADVISORY_DIR,
+) -> dict[str, Any]:
+    resolved_id = advisory_id or (
+        _latest_pointer_artifact_id("latest_position_advisory") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--advisory-id or --latest is required")
+    advisory_dir = output_dir / resolved_id
+    return {
+        **_read_json(advisory_dir / "position_advisory_manifest.json"),
+        "advisory_dir": str(advisory_dir),
+    }
+
+
+def validate_position_advisory_artifact(
+    *,
+    advisory_id: str,
+    output_dir: Path = DEFAULT_POSITION_ADVISORY_DIR,
+) -> dict[str, Any]:
+    advisory_dir = output_dir / advisory_id
+    manifest = _read_optional_json(advisory_dir / "position_advisory_manifest.json") or {}
+    actions = _read_optional_json(advisory_dir / "advisory_actions.json") or {}
+    targets = _read_jsonl(advisory_dir / "candidate_target_weights.jsonl")
+    required = [
+        "position_advisory_manifest.json",
+        "candidate_target_weights.jsonl",
+        "candidate_position_deltas.jsonl",
+        "consensus_target_weights.csv",
+        "advisory_actions.json",
+        "position_advisory_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check("advisory_id_matches", manifest.get("advisory_id") == advisory_id, advisory_id),
+            _check("target_weights_present", bool(targets), "candidate target weights required"),
+            _check(
+                "owner_approval_required",
+                manifest.get("owner_approval_required") is True
+                and actions.get("owner_approval_required") is True,
+                "owner approval is required",
+            ),
+            _check(
+                "broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and actions.get("broker_action_allowed") is False,
+                "broker action is forbidden",
+            ),
+            _check(
+                "target_only_without_snapshot",
+                bool(manifest.get("portfolio_snapshot_provided"))
+                or manifest.get("position_advisory_status") == POSITION_ADVISORY_TARGET_ONLY,
+                "missing snapshot must produce TARGET_ONLY",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "advisory is not production",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_advisory_validation",
+        "advisory_id": advisory_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def build_position_review_pack(
+    *,
+    shortlist_id: str,
+    cluster_id: str,
+    shadow_shortlist_id: str,
+    advisory_id: str,
+    shortlist_dir: Path = DEFAULT_SHORTLIST_DIR,
+    cluster_dir: Path = DEFAULT_CANDIDATE_CLUSTER_DIR,
+    shadow_shortlist_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+    advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DIR,
+    output_dir: Path = DEFAULT_POSITION_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    shortlist = _read_json(shortlist_dir / shortlist_id / "shortlist_manifest.json")
+    cluster = _read_json(cluster_dir / cluster_id / "cluster_manifest.json")
+    shadow = _read_json(
+        shadow_shortlist_dir / shadow_shortlist_id / "shadow_shortlist_manifest.json"
+    )
+    advisory = _read_json(advisory_dir / advisory_id / "position_advisory_manifest.json")
+    actions = _read_optional_json(advisory_dir / advisory_id / "advisory_actions.json") or {}
+    decision = _position_review_decision(shortlist, cluster, shadow, advisory, actions)
+    review_id = _stable_id(
+        "position-review",
+        shortlist_id,
+        cluster_id,
+        shadow_shortlist_id,
+        advisory_id,
+        generated.isoformat(),
+    )
+    review_dir = _unique_dir(output_dir / review_id)
+    review_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_review_manifest",
+        "review_id": review_dir.name,
+        "source_shortlist_id": shortlist_id,
+        "source_cluster_id": cluster_id,
+        "source_shadow_shortlist_id": shadow_shortlist_id,
+        "source_advisory_id": advisory_id,
+        "generated_at": generated.isoformat(),
+        "status": (
+            "PASS"
+            if decision["shadow_observation_readiness"] != "NOT_READY"
+            else "PASS_WITH_WARNINGS"
+        ),
+        "shortlist_count": shortlist.get("shortlist_count", 0),
+        "cluster_count": cluster.get("cluster_count", 0),
+        "shadow_candidate_count": shadow.get("shadow_candidate_count", 0),
+        "position_advisory_status": advisory.get("position_advisory_status", ""),
+        "shadow_observation_readiness": decision["shadow_observation_readiness"],
+        "position_advisory_readiness": decision["position_advisory_readiness"],
+        "production_readiness": decision["production_readiness"],
+        "recommended_next_action": decision["recommended_next_action"],
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "go_no_go_decision_path": str(review_dir / "go_no_go_decision.json"),
+        "owner_review_checklist_path": str(review_dir / "owner_review_checklist.md"),
+        "position_review_report_path": str(review_dir / "position_review_report.md"),
+        "reader_brief_section_path": str(review_dir / "reader_brief_section.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(review_dir / "position_review_manifest.json", manifest)
+    _write_json(review_dir / "go_no_go_decision.json", decision)
+    _write_text(review_dir / "owner_review_checklist.md", render_owner_review_checklist(decision))
+    _write_text(
+        review_dir / "position_review_report.md",
+        render_position_review_markdown(manifest, shortlist, cluster, shadow, advisory, decision),
+    )
+    _write_text(
+        review_dir / "reader_brief_section.md",
+        render_position_review_reader_brief(manifest, decision),
+    )
+    _update_latest_pointer(
+        "latest_position_review",
+        review_dir.name,
+        review_dir / "position_review_manifest.json",
+    )
+    return {
+        "review_id": review_dir.name,
+        "review_dir": review_dir,
+        "manifest": manifest,
+        "go_no_go_decision": decision,
+    }
+
+
+def position_review_report_payload(
+    *,
+    review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_POSITION_REVIEW_DIR,
+) -> dict[str, Any]:
+    resolved_id = review_id or (
+        _latest_pointer_artifact_id("latest_position_review") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--review-id or --latest is required")
+    review_dir = output_dir / resolved_id
+    return {
+        **_read_json(review_dir / "position_review_manifest.json"),
+        "review_dir": str(review_dir),
+    }
+
+
+def validate_position_review_artifact(
+    *,
+    review_id: str,
+    output_dir: Path = DEFAULT_POSITION_REVIEW_DIR,
+) -> dict[str, Any]:
+    review_dir = output_dir / review_id
+    manifest = _read_optional_json(review_dir / "position_review_manifest.json") or {}
+    decision = _read_optional_json(review_dir / "go_no_go_decision.json") or {}
+    required = [
+        "position_review_manifest.json",
+        "go_no_go_decision.json",
+        "owner_review_checklist.md",
+        "position_review_report.md",
+        "reader_brief_section.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (review_dir / name).exists(), name) for name in required
+    ]
+    checks.extend(
+        [
+            _check("review_id_matches", manifest.get("review_id") == review_id, review_id),
+            _check(
+                "production_readiness_not_ready",
+                decision.get("production_readiness") == "NOT_READY",
+                "production readiness must remain NOT_READY",
+            ),
+            _check(
+                "broker_action_forbidden",
+                decision.get("broker_action_allowed") is False
+                and manifest.get("broker_action_allowed") is False,
+                "broker action is forbidden",
+            ),
+            _check(
+                "owner_approval_required",
+                decision.get("owner_approval_required") is True
+                and manifest.get("owner_approval_required") is True,
+                "owner approval is required",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "review pack is not production",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_review_validation",
+        "review_id": review_id,
         "status": status,
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
@@ -9616,6 +10638,1138 @@ def render_observe_pool_markdown(
     return "\n".join(lines) + "\n"
 
 
+def _candidate_evidence_status(row: Mapping[str, Any]) -> dict[str, Any]:
+    evidence = _mapping(row.get("evidence_status"))
+    if evidence:
+        return evidence
+    metrics = _mapping(row.get("metrics"))
+    return {
+        "data_quality": metrics.get(
+            "data_quality",
+            _mapping(row.get("data_quality")).get("status", "MISSING"),
+        ),
+        "data_provenance_status": metrics.get("data_provenance_status", "MISSING"),
+        "date_range_status": metrics.get(
+            "date_range_status",
+            _mapping(row.get("backtest_window")).get("date_range_status", "MISSING"),
+        ),
+        "weight_path_status": metrics.get(
+            "weight_path_status",
+            _mapping(row.get("weight_path_metadata")).get("attribution_completeness", "MISSING"),
+        ),
+        "candidate_attribution_status": metrics.get("candidate_attribution_status", "MISSING"),
+        "overfit_status": metrics.get("overfit_status", row.get("overfit_status", "MISSING")),
+        "promotion_status": row.get("gate", row.get("recovered_status", "")),
+        "evidence_score": metrics.get("evidence_score"),
+    }
+
+
+def _candidate_regime_status(row: Mapping[str, Any]) -> dict[str, Any]:
+    return _mapping(row.get("regime_coverage_status")) or _mapping(row.get("regime_status"))
+
+
+def _candidate_overfit_status(row: Mapping[str, Any]) -> str:
+    evidence = _candidate_evidence_status(row)
+    return _text(row.get("overfit_status"), _text(evidence.get("overfit_status"), "MISSING"))
+
+
+def _candidate_daily_weights_path(row: Mapping[str, Any]) -> Path | None:
+    real_path_text = _text(row.get("real_evaluation_artifact_path"))
+    if real_path_text:
+        daily_path = Path(real_path_text).parent / "daily_weights.csv"
+        if daily_path.exists():
+            return daily_path
+    metadata_path_text = _text(_mapping(row.get("weight_path_metadata")).get("metadata_path"))
+    if metadata_path_text:
+        daily_path = Path(metadata_path_text).parent / "daily_weights.csv"
+        if daily_path.exists():
+            return daily_path
+    source_path_text = _text(row.get("source_weight_path_artifact"))
+    if source_path_text and Path(source_path_text).exists():
+        return Path(source_path_text)
+    return None
+
+
+def _shortlist_hard_reject_reasons(row: Mapping[str, Any]) -> list[str]:
+    evidence = _candidate_evidence_status(row)
+    regime = _candidate_regime_status(row)
+    reasons: list[str] = []
+    if _text(evidence.get("data_quality")) == "FAIL":
+        reasons.append("data_quality_fail")
+    if _text(evidence.get("date_range_status")) in {DATE_RANGE_FAIL, DATE_RANGE_INSUFFICIENT_DATA}:
+        reasons.append("date_range_fail_or_insufficient")
+    real_path = Path(_text(row.get("real_evaluation_artifact_path")))
+    if not _text(row.get("real_evaluation_artifact_path")) or not real_path.exists():
+        reasons.append("missing_real_evaluation_artifact")
+    if _candidate_daily_weights_path(row) is None:
+        reasons.append("missing_daily_weights")
+    if _candidate_overfit_status(row) == "HIGH_RISK":
+        reasons.append("overfit_high_risk")
+    if _text(regime.get("tech_semiconductor_relevance")) == "LOW":
+        reasons.append("tech_semiconductor_relevance_low")
+    if row.get("production_candidate_generated") is True:
+        reasons.append("production_candidate_generated")
+    if (
+        _text(evidence.get("promotion_status")) == FORBIDDEN_GATE
+        or _text(row.get("gate")) == FORBIDDEN_GATE
+    ):
+        reasons.append("production_candidate_status_forbidden")
+    return reasons
+
+
+def _candidate_manual_review_warnings(row: Mapping[str, Any]) -> list[str]:
+    evidence = _candidate_evidence_status(row)
+    regime = _candidate_regime_status(row)
+    warnings = _texts(row.get("remaining_warnings")) + _texts(row.get("warning_reasons"))
+    if _text(evidence.get("data_quality")) == "PASS_WITH_WARNINGS":
+        warnings.append("data_quality_pass_with_warnings")
+    if _text(evidence.get("data_provenance_status")) == DATA_PROVENANCE_RECONSTRUCTED:
+        warnings.append("data_provenance_reconstructed")
+    if _text(evidence.get("candidate_attribution_status")) == WEIGHT_PATH_PARTIAL:
+        warnings.append("attribution_partial")
+    if _candidate_overfit_status(row) == "REVIEW_REQUIRED":
+        warnings.append("overfit_review_required")
+    if _text(regime.get("coverage_status")) == "PASS_WITH_WARNINGS":
+        warnings.append("regime_coverage_pass_with_warnings")
+    if row.get("manual_review_required") is True:
+        warnings.append("source_manual_review_required")
+    return sorted(set(warnings))
+
+
+def _shortlist_score_breakdown(row: Mapping[str, Any], *, diversity: float) -> dict[str, float]:
+    evidence = _candidate_evidence_status(row)
+    regime = _candidate_regime_status(row)
+    metrics = _mapping(row.get("metrics"))
+    params = _mapping(row.get("parameters"))
+    performance = _clamp01(_float(row.get("score"), _float(metrics.get("score"), 0.0)))
+    constraint_load = _metric_first(
+        metrics,
+        ("constraint_hits", "constraint_hit_count", "constraint_hit_rate"),
+    )
+    turnover = _metric_first(metrics, ("turnover", "annualized_turnover", "turnover_ratio"))
+    drawdown_gap = abs(
+        _metric_first(metrics, ("drawdown_degradation_pp", "max_drawdown_delta_vs_static_pp"))
+    )
+    static_gap = abs(_metric_first(metrics, ("dynamic_vs_static_gap", "dynamic_static_gap")))
+    risk = _avg(
+        [
+            1.0 / (1.0 + max(0.0, constraint_load)),
+            1.0 / (1.0 + max(0.0, turnover)),
+            1.0 / (1.0 + drawdown_gap * 100.0),
+            1.0 / (1.0 + static_gap * 10.0),
+        ]
+    )
+    evidence_score = evidence.get("evidence_score")
+    evidence_component = (
+        _clamp01(_float(evidence_score))
+        if evidence_score is not None
+        else _avg(
+            [
+                _status_score(evidence.get("data_quality")),
+                _status_score(evidence.get("date_range_status")),
+                _weight_status_score(evidence.get("weight_path_status")),
+                _weight_status_score(evidence.get("candidate_attribution_status")),
+                _overfit_status_score(_candidate_overfit_status(row)),
+            ]
+        )
+    )
+    regime_component = _avg(
+        [
+            _status_score(regime.get("coverage_status"), missing=0.5),
+            1.0
+            if _text(regime.get("tech_semiconductor_relevance")) in {"HIGH", "MEDIUM"}
+            else 0.5,
+            1.0
+            if _text(regime.get("ai_bull_market_overfit_risk")) not in {"HIGH_RISK", "FAIL"}
+            else 0.4,
+        ]
+    )
+    stability = _avg(
+        [
+            _weight_status_score(evidence.get("weight_path_status")),
+            1.0 / (1.0 + max(0.0, turnover)),
+            _clamp01(_float(params.get("turnover_penalty"))),
+            _clamp01(_float(params.get("rebalance_cooldown_days")) / 20.0),
+        ]
+    )
+    return {
+        "performance": performance,
+        "risk": _clamp01(risk),
+        "evidence": _clamp01(evidence_component),
+        "regime": _clamp01(regime_component),
+        "stability": _clamp01(stability),
+        "diversity": _clamp01(diversity),
+    }
+
+
+def _weighted_shortlist_score(breakdown: Mapping[str, Any]) -> float:
+    return round(
+        sum(
+            SHORTLIST_SCORE_COMPONENT_WEIGHTS[key] * _float(breakdown.get(key))
+            for key in SHORTLIST_SCORE_COMPONENT_WEIGHTS
+        ),
+        6,
+    )
+
+
+def _select_shortlist_candidates(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    target_size: int,
+) -> list[dict[str, Any]]:
+    remaining = [dict(row) for row in rows]
+    selected: list[dict[str, Any]] = []
+    while remaining and len(selected) < target_size:
+        scored: list[tuple[float, str, dict[str, Any]]] = []
+        for row in remaining:
+            diversity = (
+                1.0
+                if not selected
+                else max(
+                    SHORTLIST_DIVERSITY_PARAMETER_FLOOR,
+                    min(_parameter_distance(row, selected_row) for selected_row in selected),
+                )
+            )
+            breakdown = _shortlist_score_breakdown(row, diversity=diversity)
+            row["_shortlist_score_breakdown"] = breakdown
+            score = _weighted_shortlist_score(breakdown)
+            scored.append((score, _text(row.get("candidate_id")), row))
+        scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        best = scored[0][2]
+        selected.append(best)
+        best_id = _text(best.get("candidate_id"))
+        remaining = [row for row in remaining if _text(row.get("candidate_id")) != best_id]
+    return selected
+
+
+def _shortlist_selection_reasons(
+    breakdown: Mapping[str, Any],
+    warnings: Sequence[str],
+) -> list[str]:
+    reasons = []
+    for key in ("performance", "risk", "evidence", "regime", "stability", "diversity"):
+        if _float(breakdown.get(key)) >= 0.70:
+            reasons.append(f"strong_{key}_component")
+    if warnings:
+        reasons.append("selected_despite_manual_review_warnings")
+    return reasons or ["best_available_manual_review_candidate"]
+
+
+def render_shortlist_markdown(
+    manifest: Mapping[str, Any],
+    candidates: Sequence[Mapping[str, Any]],
+    rejected: Sequence[Mapping[str, Any]],
+) -> str:
+    hard_rejections = [
+        row
+        for row in rejected
+        if "not_in_top_shortlist_after_diversity_selection"
+        not in _texts(row.get("rejection_reasons"))
+    ]
+    lines = [
+        "# Dynamic Rescue Shadow Shortlist",
+        "",
+        "- market_regime: `ai_after_chatgpt`",
+        f"- source_observe_pool_id: `{manifest.get('source_observe_pool_id')}`",
+        f"- observe_pool_candidate_count: `{manifest.get('observe_pool_candidate_count')}`",
+        f"- shortlist_count: `{manifest.get('shortlist_count')}`",
+        f"- manual_review_required_count: `{manifest.get('manual_review_required_count')}`",
+        "",
+        "## Selected Candidates",
+        "",
+        "|rank|candidate_id|score|overfit|warnings|",
+        "|---|---|---|---|---|",
+    ]
+    for row in candidates:
+        lines.append(
+            f"|{row.get('shortlist_rank')}|{row.get('candidate_id')}|"
+            f"{row.get('shortlist_score')}|{row.get('overfit_status')}|"
+            f"{', '.join(_texts(row.get('remaining_warnings'))) or 'none'}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Required Questions",
+            "",
+            (
+                "1. 当前 observe pool 有 "
+                f"`{manifest.get('observe_pool_candidate_count')}` 个 candidates。"
+            ),
+            f"2. 最终 shortlist 选出 `{manifest.get('shortlist_count')}` 个 candidates。",
+            "3. 被选中 candidates 的共同特征是：综合 score、证据、风险和路径稳定性相对靠前。",
+            (
+                "4. 被排除 candidates 的主要原因是 hard gate 不满足或在 diversity-aware "
+                "排序后未进入目标规模。"
+            ),
+            (
+                "5. score 高但证据差的候选会保留在 rejected 或 warnings 中，不能静默进入 "
+                "production。"
+            ),
+            "6. 证据较好但表现一般的候选可因 diversity component 被保留为人工复核对象。",
+            "7. shortlist 通过 diversity component 为后续 clustering 保留多种策略行为。",
+            "8. 所有 shortlist candidates 仍然 `manual_review_required=true`。",
+            "",
+            f"- hard_rejected_candidate_count: `{len(hard_rejections)}`",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _similarity_matrix_rows(
+    candidates: Sequence[Mapping[str, Any]],
+    similarity_fn: Any,
+) -> list[dict[str, Any]]:
+    rows = []
+    ids = [_text(row.get("candidate_id")) for row in candidates]
+    for left in candidates:
+        left_id = _text(left.get("candidate_id"))
+        matrix_row: dict[str, Any] = {"candidate_id": left_id}
+        for right_id, right in zip(ids, candidates, strict=True):
+            matrix_row[right_id] = round(_float(similarity_fn(left, right)), 6)
+        rows.append(matrix_row)
+    return rows
+
+
+def _parameter_similarity(left: Mapping[str, Any], right: Mapping[str, Any]) -> float:
+    return 1.0 - _parameter_distance(left, right)
+
+
+def _parameter_distance(left: Mapping[str, Any], right: Mapping[str, Any]) -> float:
+    left_params = _mapping(left.get("parameters"))
+    right_params = _mapping(right.get("parameters"))
+    scales = {
+        "rescue_intensity": 1.0,
+        "smooth_window_days": 20.0,
+        "constraint_buffer_bps": 200.0,
+        "turnover_penalty": 1.0,
+        "risk_off_confirmation_days": 10.0,
+        "rebalance_cooldown_days": 30.0,
+    }
+    distances: list[float] = []
+    for parameter in REQUIRED_INJECTION_PARAMETERS:
+        left_value = left_params.get(parameter)
+        right_value = right_params.get(parameter)
+        if parameter == "drawdown_guard":
+            distances.append(0.0 if left_value == right_value else 1.0)
+            continue
+        scale = scales.get(parameter, 1.0)
+        distances.append(min(1.0, abs(_float(left_value) - _float(right_value)) / scale))
+    return _clamp01(_avg(distances))
+
+
+def _metric_similarity(left: Mapping[str, Any], right: Mapping[str, Any]) -> float:
+    left_metrics = _mapping(left.get("metrics"))
+    right_metrics = _mapping(right.get("metrics"))
+    fields = (
+        "constraint_hits",
+        "constraint_hit_rate",
+        "turnover",
+        "drawdown_degradation_pp",
+        "dynamic_vs_static_gap",
+        "false_risk_off_delta",
+        "return_delta",
+    )
+    distances = []
+    for field in fields:
+        left_value = _float(left_metrics.get(field))
+        right_value = _float(right_metrics.get(field))
+        scale = 1.0 + abs(left_value) + abs(right_value)
+        distances.append(abs(left_value - right_value) / scale)
+    if _candidate_overfit_status(left) != _candidate_overfit_status(right):
+        distances.append(0.5)
+    return _clamp01(1.0 - _avg(distances))
+
+
+def _weight_path_similarity_matrix(candidates: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    ids = [_text(row.get("candidate_id")) for row in candidates]
+    rows = []
+    for left in candidates:
+        matrix_row: dict[str, Any] = {"candidate_id": _text(left.get("candidate_id"))}
+        for right_id, right in zip(ids, candidates, strict=True):
+            matrix_row[right_id] = _weight_path_similarity(left, right)
+        rows.append(matrix_row)
+    return rows
+
+
+def _weight_path_similarity(left: Mapping[str, Any], right: Mapping[str, Any]) -> float | str:
+    left_path = _candidate_weight_path(left)
+    right_path = _candidate_weight_path(right)
+    if not left_path["dates"] or not right_path["dates"]:
+        return "INCOMPLETE"
+    diffs = []
+    for day in sorted(set(left_path["dates"]) & set(right_path["dates"])):
+        left_weights = left_path["dates"][day]
+        right_weights = right_path["dates"][day]
+        for symbol in sorted(set(left_weights) & set(right_weights)):
+            diffs.append(abs(_float(left_weights.get(symbol)) - _float(right_weights.get(symbol))))
+    if not diffs:
+        return "INCOMPLETE"
+    return round(1.0 - min(1.0, _avg(diffs)), 6)
+
+
+def _candidate_weight_path(row: Mapping[str, Any]) -> dict[str, Any]:
+    path = _candidate_daily_weights_path(row)
+    if path is None:
+        return {"status": "INCOMPLETE", "path": "", "dates": {}}
+    daily_rows = _read_csv_rows(path)
+    dates: dict[str, dict[str, float]] = {}
+    for daily in daily_rows:
+        day = _text(daily.get("date"), _text(daily.get("signal_date")))
+        if not day:
+            continue
+        if "symbol" in daily:
+            symbol = _text(daily.get("symbol"))
+            if symbol:
+                dates.setdefault(day, {})[symbol] = _float(
+                    daily.get("target_weight"), _float(daily.get("weight"))
+                )
+            continue
+        for symbol in DYNAMIC_V3_WEIGHT_SYMBOLS:
+            if symbol in daily:
+                dates.setdefault(day, {})[symbol] = _float(daily.get(symbol))
+    return {
+        "status": "COMPLETE" if dates else "INCOMPLETE",
+        "path": str(path),
+        "dates": dates,
+    }
+
+
+def _candidate_latest_target_weights(row: Mapping[str, Any]) -> dict[str, Any]:
+    path = _candidate_weight_path(row)
+    dates = _mapping(path.get("dates"))
+    if not dates:
+        return {
+            "status": "INCOMPLETE",
+            "as_of": "",
+            "weights": {},
+            "source_weight_path_artifact": path.get("path", ""),
+        }
+    latest_day = max(dates)
+    weights = {
+        symbol: round(_float(value), 6)
+        for symbol, value in sorted(_mapping(dates.get(latest_day)).items())
+    }
+    return {
+        "status": "COMPLETE",
+        "as_of": latest_day,
+        "weights": weights,
+        "source_weight_path_artifact": path.get("path", ""),
+    }
+
+
+def _candidate_clusters(
+    candidates: Sequence[Mapping[str, Any]],
+    weight_matrix: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    lookup = {
+        (_text(row.get("candidate_id")), key): value
+        for row in weight_matrix
+        for key, value in row.items()
+        if key != "candidate_id"
+    }
+    ordered = sorted(candidates, key=lambda row: int(row.get("shortlist_rank") or 9999))
+    assigned: set[str] = set()
+    clusters: list[dict[str, Any]] = []
+    for seed in ordered:
+        seed_id = _text(seed.get("candidate_id"))
+        if seed_id in assigned:
+            continue
+        members = [seed]
+        assigned.add(seed_id)
+        for candidate in ordered:
+            candidate_id = _text(candidate.get("candidate_id"))
+            if candidate_id in assigned:
+                continue
+            similarity = _composite_candidate_similarity(seed, candidate, lookup)
+            if similarity >= CANDIDATE_CLUSTER_SIMILARITY_THRESHOLD:
+                members.append(candidate)
+                assigned.add(candidate_id)
+        label = _cluster_label(members)
+        cluster_key = f"{label}_{len(clusters) + 1:02d}"
+        representative_ids = [
+            _text(row.get("candidate_id"))
+            for row in sorted(members, key=lambda item: int(item.get("shortlist_rank") or 9999))[
+                : _cluster_representative_limit(members)
+            ]
+        ]
+        clusters.append(
+            {
+                "cluster_id": cluster_key,
+                "label": label,
+                "candidate_count": len(members),
+                "candidates": [_text(row.get("candidate_id")) for row in members],
+                "representatives": representative_ids,
+                "common_traits": _cluster_common_traits(members),
+                "risks": _cluster_risks(members),
+            }
+        )
+    return clusters
+
+
+def _composite_candidate_similarity(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+    weight_lookup: Mapping[tuple[str, str], Any],
+) -> float:
+    left_id = _text(left.get("candidate_id"))
+    right_id = _text(right.get("candidate_id"))
+    parameter = _parameter_similarity(left, right)
+    metric = _metric_similarity(left, right)
+    weight = weight_lookup.get((left_id, right_id), "INCOMPLETE")
+    if weight == "INCOMPLETE":
+        return _avg([parameter, metric])
+    return _avg([parameter, metric, _float(weight)])
+
+
+def _cluster_representatives(
+    clusters: Sequence[Mapping[str, Any]],
+    candidates: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_id = {_text(row.get("candidate_id")): row for row in candidates}
+    reps = []
+    for cluster in clusters:
+        representatives = _texts(cluster.get("representatives"))
+        for idx, candidate_id in enumerate(representatives):
+            source = by_id.get(candidate_id, {})
+            reps.append(
+                {
+                    "cluster_id": cluster.get("cluster_id"),
+                    "cluster_label": cluster.get("label"),
+                    "candidate_id": candidate_id,
+                    "representative_type": "primary" if idx == 0 else "secondary",
+                    "shortlist_rank": source.get("shortlist_rank"),
+                    "shortlist_score": source.get("shortlist_score"),
+                    "selection_reasons": source.get("selection_reasons", []),
+                    "risks": cluster.get("risks", []),
+                }
+            )
+    return reps
+
+
+def _cluster_representative_limit(members: Sequence[Mapping[str, Any]]) -> int:
+    return 2 if len(members) >= CANDIDATE_CLUSTER_SECONDARY_REPRESENTATIVE_SIZE else 1
+
+
+def _cluster_label(members: Sequence[Mapping[str, Any]]) -> str:
+    params = [_mapping(row.get("parameters")) for row in members]
+    avg_rescue = _avg([_float(row.get("rescue_intensity")) for row in params])
+    avg_smooth = _avg([_float(row.get("smooth_window_days")) for row in params])
+    avg_buffer = _avg([_float(row.get("constraint_buffer_bps")) for row in params])
+    avg_turnover_penalty = _avg([_float(row.get("turnover_penalty")) for row in params])
+    guards = {_text(row.get("drawdown_guard")) for row in params}
+    if "hard" in guards:
+        return "drawdown_guard_focused"
+    if avg_turnover_penalty >= 0.30 or avg_smooth >= 10:
+        return "defensive_low_turnover"
+    if avg_rescue >= 0.80:
+        return "aggressive_rescue"
+    if avg_buffer >= 50:
+        return "high_constraint_buffer"
+    if avg_smooth >= 7:
+        return "smooth_transition"
+    return "balanced_candidate"
+
+
+def _cluster_common_traits(members: Sequence[Mapping[str, Any]]) -> list[str]:
+    label = _cluster_label(members)
+    trait_map = {
+        "drawdown_guard_focused": ["drawdown guard active", "risk reduction emphasis"],
+        "defensive_low_turnover": ["low turnover preference", "smoother transitions"],
+        "aggressive_rescue": ["higher rescue intensity", "faster risk response"],
+        "high_constraint_buffer": ["higher constraint buffer", "lower cap pressure"],
+        "smooth_transition": ["larger smooth window", "gradual target changes"],
+        "balanced_candidate": ["balanced parameter profile"],
+    }
+    return trait_map.get(label, ["balanced parameter profile"])
+
+
+def _cluster_risks(members: Sequence[Mapping[str, Any]]) -> list[str]:
+    label = _cluster_label(members)
+    risk_map = {
+        "drawdown_guard_focused": ["may lag strong rebound"],
+        "defensive_low_turnover": ["may underreact to fast regime changes"],
+        "aggressive_rescue": ["may create higher turnover"],
+        "high_constraint_buffer": ["may reduce upside capture"],
+        "smooth_transition": ["may lag abrupt drawdown"],
+        "balanced_candidate": ["requires manual evidence review"],
+    }
+    return risk_map.get(label, ["requires manual evidence review"])
+
+
+def render_candidate_cluster_markdown(
+    manifest: Mapping[str, Any],
+    clusters: Sequence[Mapping[str, Any]],
+    representatives: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Candidate Clustering",
+        "",
+        f"- cluster_id: `{manifest.get('cluster_id')}`",
+        f"- source_shortlist_id: `{manifest.get('source_shortlist_id')}`",
+        f"- candidate_count: `{manifest.get('candidate_count')}`",
+        f"- cluster_count: `{manifest.get('cluster_count')}`",
+        f"- representative_count: `{manifest.get('representative_count')}`",
+        f"- weight_path_similarity_status: `{manifest.get('weight_path_similarity_status')}`",
+        "",
+        "|cluster|label|candidate_count|representatives|",
+        "|---|---|---|---|",
+    ]
+    for cluster in clusters:
+        lines.append(
+            f"|{cluster.get('cluster_id')}|{cluster.get('label')}|"
+            f"{cluster.get('candidate_count')}|"
+            f"{', '.join(_texts(cluster.get('representatives')))}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Representatives",
+            "",
+            "|candidate_id|cluster|type|shortlist_rank|",
+            "|---|---|---|---|",
+        ]
+    )
+    for row in representatives:
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('cluster_id')}|"
+            f"{row.get('representative_type')}|{row.get('shortlist_rank')}|"
+        )
+    lines.extend(["", "production_effect=none; broker_action=none."])
+    return "\n".join(lines) + "\n"
+
+
+def _shadow_shortlist_monitoring_plan(
+    shadow_id: str,
+    candidates: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_shortlist_monitoring_plan",
+        "shadow_shortlist_id": shadow_id,
+        "candidate_count": len(candidates),
+        "daily_metrics": [
+            "daily_target_weights",
+            "weight_path_change",
+            "turnover_estimate",
+            "constraint_hits",
+            "current_regime_response",
+            "candidate_disagreement",
+        ],
+        "weekly_metrics": [
+            "live_vs_backtest_drift",
+            "drawdown_from_shadow_start",
+            "dynamic_vs_static_gap_since_shadow_start",
+            "weight_path_stability",
+        ],
+        "promotion_clock": {"min_days": 30, "min_rebalance_count": 3},
+        "drift_thresholds": {
+            "policy_source": "TRADING-126_to_130 pilot monitoring baseline",
+            "live_vs_backtest_drift_requires_review": True,
+        },
+        "downgrade_rules": [
+            "missing_daily_weight_path",
+            "unexpected_broker_action_signal",
+            "owner_review_rejected",
+            "data_quality_fail",
+        ],
+        "manual_review_requirements": [
+            "owner_accepts_shortlist",
+            "owner_accepts_cluster_representatives",
+            "owner_accepts_no_broker_action_boundary",
+        ],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def render_shadow_shortlist_reader_brief(
+    manifest: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    labels = sorted(
+        {
+            _text(row.get("cluster_label"))
+            for row in rows
+            if _text(row.get("cluster_label"))
+        }
+    )
+    return (
+        "## Dynamic Rescue Shadow Shortlist\n\n"
+        f"- shadow_shortlist_id: `{manifest.get('shadow_shortlist_id')}`\n"
+        f"- shadow_candidate_count: `{manifest.get('shadow_candidate_count')}`\n"
+        f"- cluster_labels: `{', '.join(labels) or 'none'}`\n"
+        "- ready_for_shadow_monitoring: "
+        f"`{manifest.get('shadow_monitoring_ready')}`\n"
+        "- manual_review_required: `true`\n"
+        "- production_effect=none; broker_action=none.\n"
+    )
+
+
+def render_shadow_shortlist_markdown(
+    manifest: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+    monitoring_plan: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Shadow Shortlist Monitoring Pack",
+        "",
+        f"- shadow_shortlist_id: `{manifest.get('shadow_shortlist_id')}`",
+        f"- source_shortlist_id: `{manifest.get('source_shortlist_id')}`",
+        f"- source_cluster_id: `{manifest.get('source_cluster_id')}`",
+        f"- shadow_candidate_count: `{manifest.get('shadow_candidate_count')}`",
+        f"- shadow_monitoring_ready: `{manifest.get('shadow_monitoring_ready')}`",
+        "",
+        "|candidate_id|cluster_label|representative_type|min_days|min_rebalance_count|",
+        "|---|---|---|---|---|",
+    ]
+    for row in rows:
+        requirements = _mapping(row.get("monitoring_requirements"))
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('cluster_label')}|"
+            f"{row.get('representative_type')}|{requirements.get('min_days')}|"
+            f"{requirements.get('min_rebalance_count')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Monitoring Plan",
+            "",
+            f"- daily_metrics: `{', '.join(_texts(monitoring_plan.get('daily_metrics')))}`",
+            f"- weekly_metrics: `{', '.join(_texts(monitoring_plan.get('weekly_metrics')))}`",
+            "- 不自动写入 production，不触发 broker action。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _load_portfolio_snapshot(path: Path | None) -> dict[str, Any]:
+    if path is None:
+        return {}
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, Mapping):
+        raise DynamicV3ParameterResearchError("portfolio snapshot must be a mapping")
+    weights = {
+        _text(row.get("symbol")): _float(row.get("weight"))
+        for row in _records(raw.get("positions"))
+        if _text(row.get("symbol"))
+    }
+    return {"as_of": _text(raw.get("as_of")), "weights": weights, "path": str(path)}
+
+
+def _consensus_target_weights(
+    target_rows: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], str]:
+    symbols = sorted(
+        {
+            symbol
+            for row in target_rows
+            for symbol in _mapping(row.get("target_weights")).keys()
+        }
+    )
+    consensus_config = _mapping(config.get("consensus"))
+    agreement_threshold = _float(consensus_config.get("agreement_threshold"), 0.60)
+    max_dispersion = _float(consensus_config.get("max_symbol_dispersion"), 0.20)
+    rows: list[dict[str, Any]] = []
+    disagreement = False
+    for symbol in symbols:
+        values = [_float(_mapping(row.get("target_weights")).get(symbol)) for row in target_rows]
+        if not values:
+            continue
+        center = _median(values)
+        dispersion = max(values) - min(values)
+        agreement = sum(
+            1 for value in values if abs(value - center) <= max_dispersion
+        ) / len(values)
+        if agreement < agreement_threshold or dispersion > max_dispersion:
+            disagreement = True
+        rows.append(
+            {
+                "symbol": symbol,
+                "mean_target_weight": round(sum(values) / len(values), 6),
+                "median_target_weight": round(center, 6),
+                "min_target_weight": round(min(values), 6),
+                "max_target_weight": round(max(values), 6),
+                "candidate_agreement_ratio": round(agreement, 6),
+                "dispersion": round(dispersion, 6),
+            }
+        )
+    if not rows:
+        return [], "MISSING_TARGET_WEIGHTS"
+    return rows, "DISAGREEMENT_REVIEW_REQUIRED" if disagreement else "PASS"
+
+
+def _candidate_position_delta_rows(
+    target_rows: Sequence[Mapping[str, Any]],
+    snapshot: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    current = _mapping(snapshot.get("weights"))
+    limits = _mapping(config.get("advisory_limits"))
+    max_total = _float(limits.get("max_single_day_total_adjustment"), 0.10)
+    max_symbol = _float(limits.get("max_single_symbol_adjustment"), 0.05)
+    min_trade = _float(limits.get("min_trade_threshold"), 0.01)
+    rows = []
+    for target in target_rows:
+        target_weights = _mapping(target.get("target_weights"))
+        symbols = sorted(set(current) | set(target_weights))
+        deltas = {
+            symbol: round(_float(target_weights.get(symbol)) - _float(current.get(symbol)), 6)
+            for symbol in symbols
+        }
+        total_abs = round(sum(abs(value) for value in deltas.values()), 6)
+        max_abs = max([abs(value) for value in deltas.values()] or [0.0])
+        if all(abs(value) < min_trade for value in deltas.values()):
+            status = "no_trade"
+        elif total_abs > max_total or max_abs > max_symbol:
+            status = "requires_manual_review"
+        else:
+            status = "within_limits"
+        rows.append(
+            {
+                "candidate_id": target.get("candidate_id"),
+                "current_weights": current,
+                "target_weights": target_weights,
+                "deltas": {key: value for key, value in deltas.items() if value != 0},
+                "total_abs_adjustment": total_abs,
+                "max_symbol_adjustment": round(max_abs, 6),
+                "advisory_status": status,
+            }
+        )
+    return rows
+
+
+def _position_advisory_actions(
+    *,
+    target_rows: Sequence[Mapping[str, Any]],
+    delta_rows: Sequence[Mapping[str, Any]],
+    snapshot: Mapping[str, Any],
+    consensus_status: str,
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    reasons = []
+    if consensus_status == "DISAGREEMENT_REVIEW_REQUIRED":
+        reasons.append("candidate_target_weight_disagreement")
+    if not snapshot:
+        advisory_status = POSITION_ADVISORY_TARGET_ONLY
+        recommended_action = "monitor"
+        reasons.append("current_portfolio_snapshot_missing")
+    elif any(row.get("advisory_status") == "requires_manual_review" for row in delta_rows):
+        advisory_status = POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
+        recommended_action = "manual_review"
+        reasons.append("adjustment_limit_exceeded")
+    elif all(row.get("advisory_status") == "no_trade" for row in delta_rows):
+        advisory_status = POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
+        recommended_action = "no_trade"
+        reasons.append("all_candidate_deltas_below_min_trade_threshold")
+    elif consensus_status == "DISAGREEMENT_REVIEW_REQUIRED":
+        advisory_status = POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
+        recommended_action = "manual_review"
+    else:
+        advisory_status = POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
+        recommended_action = "small_adjustment"
+    limits = _mapping(config.get("advisory_limits"))
+    step_adjustment = _float(
+        limits.get("max_risk_asset_increase_without_confirmation"),
+        _float(limits.get("max_single_symbol_adjustment"), 0.05),
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_advisory_actions",
+        "position_advisory_status": advisory_status,
+        "advisory_status": (
+            "manual_review_required"
+            if recommended_action in {"manual_review", "small_adjustment"}
+            else advisory_status
+        ),
+        "broker_action_allowed": False,
+        "owner_approval_required": True,
+        "recommended_action": recommended_action,
+        "stepwise_plan": [
+            {
+                "step": 1,
+                "description": "Owner review required before any real portfolio change.",
+                "max_total_adjustment": round(step_adjustment, 6),
+            }
+        ],
+        "reasons": sorted(set(reasons)),
+        "risks": [
+            "target weights are candidate research outputs",
+            "manual review remains required before any position change",
+        ],
+        "candidate_count": len(target_rows),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def render_position_advisory_markdown(
+    manifest: Mapping[str, Any],
+    targets: Sequence[Mapping[str, Any]],
+    consensus: Sequence[Mapping[str, Any]],
+    deltas: Sequence[Mapping[str, Any]],
+    actions: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Position Advisory",
+        "",
+        f"- advisory_id: `{manifest.get('advisory_id')}`",
+        f"- position_advisory_status: `{manifest.get('position_advisory_status')}`",
+        f"- portfolio_snapshot_provided: `{manifest.get('portfolio_snapshot_provided')}`",
+        f"- consensus_target_weight_status: `{manifest.get('consensus_target_weight_status')}`",
+        f"- recommended_action: `{manifest.get('recommended_action')}`",
+        f"- owner_approval_required: `{manifest.get('owner_approval_required')}`",
+        f"- broker_action_allowed: `{manifest.get('broker_action_allowed')}`",
+        "",
+        "## Candidate Target Weights",
+        "",
+        "|candidate_id|as_of|weight_path_status|target_weights|",
+        "|---|---|---|---|",
+    ]
+    for row in targets:
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('as_of')}|"
+            f"{row.get('weight_path_status')}|"
+            f"{json.dumps(row.get('target_weights'), sort_keys=True)}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Consensus",
+            "",
+            "|symbol|mean|median|agreement|dispersion|",
+            "|---|---|---|---|---|",
+        ]
+    )
+    for row in consensus:
+        lines.append(
+            f"|{row.get('symbol')}|{row.get('mean_target_weight')}|"
+            f"{row.get('median_target_weight')}|{row.get('candidate_agreement_ratio')}|"
+            f"{row.get('dispersion')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Required Questions",
+            "",
+            f"1. 当前是否提供真实持仓：`{manifest.get('portfolio_snapshot_provided')}`。",
+            (
+                "2. 如果没有，报告状态必须为 "
+                f"`{POSITION_ADVISORY_TARGET_ONLY}`；当前为 "
+                f"`{manifest.get('position_advisory_status')}`。"
+            ),
+            "3. shadow shortlist candidates 的当前目标权重见 Candidate Target Weights。",
+            f"4. 候选一致性状态：`{manifest.get('consensus_target_weight_status')}`。",
+            "5. 共识目标权重见 Consensus。",
+            f"6. delta rows: `{len(deltas)}`。",
+            "7. 单日 / 单票调整限制在 candidate_position_deltas.jsonl 中逐候选披露。",
+            f"8. recommended_action: `{actions.get('recommended_action')}`。",
+            f"9. owner_approval_required: `{actions.get('owner_approval_required')}`。",
+            f"10. broker_action_allowed: `{actions.get('broker_action_allowed')}`。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _position_review_decision(
+    shortlist: Mapping[str, Any],
+    cluster: Mapping[str, Any],
+    shadow: Mapping[str, Any],
+    advisory: Mapping[str, Any],
+    actions: Mapping[str, Any],
+) -> dict[str, Any]:
+    blocking = []
+    warnings = []
+    if int(shadow.get("shadow_candidate_count") or 0) <= 0:
+        blocking.append("shadow_shortlist_empty")
+    if _text(advisory.get("consensus_target_weight_status")) == "DISAGREEMENT_REVIEW_REQUIRED":
+        warnings.append("candidate_target_weight_disagreement")
+    shadow_ready = "READY_WITH_WARNINGS" if not blocking else "NOT_READY"
+    advisory_status = _text(advisory.get("position_advisory_status"))
+    if advisory_status == POSITION_ADVISORY_TARGET_ONLY:
+        advisory_ready = POSITION_ADVISORY_TARGET_ONLY
+        next_action = "provide_portfolio_snapshot"
+    elif advisory_status == POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW:
+        advisory_ready = POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
+        next_action = (
+            "start_shadow_monitoring"
+            if shadow_ready != "NOT_READY"
+            else "manual_review_shortlist"
+        )
+    else:
+        advisory_ready = "NOT_READY"
+        next_action = "manual_review_shortlist"
+    if blocking:
+        next_action = "manual_review_shortlist"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_review_go_no_go_decision",
+        "shadow_observation_readiness": shadow_ready,
+        "position_advisory_readiness": advisory_ready,
+        "production_readiness": "NOT_READY",
+        "broker_action_allowed": False,
+        "owner_approval_required": True,
+        "recommended_next_action": next_action,
+        "blocking_issues": blocking,
+        "warnings": warnings + _texts(actions.get("reasons")),
+        "shortlist_count": shortlist.get("shortlist_count"),
+        "cluster_count": cluster.get("cluster_count"),
+        "shadow_candidate_count": shadow.get("shadow_candidate_count"),
+        "position_advisory_status": advisory_status,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def render_owner_review_checklist(decision: Mapping[str, Any]) -> str:
+    items = [
+        "是否接受 shortlist candidates？",
+        "是否接受 cluster representatives？",
+        "是否接受所有候选仍 manual_review_required？",
+        "是否开始 30 天 shadow observation？",
+        "是否提供真实 portfolio snapshot？",
+        "是否允许 position advisory 进入日报？",
+        "是否禁止 broker action？",
+        "是否设置最大调仓建议幅度？",
+        "是否需要增加心理 / 税务 / 流动性约束？",
+        "是否准备后续 paper portfolio？",
+    ]
+    lines = [
+        "# Dynamic Rescue Position Advisory Owner Review Checklist",
+        "",
+        f"- recommended_next_action: `{decision.get('recommended_next_action')}`",
+        f"- production_readiness: `{decision.get('production_readiness')}`",
+        "",
+    ]
+    lines.extend(f"- [ ] {item}" for item in items)
+    lines.extend(["", "broker_action_allowed=false; owner_approval_required=true."])
+    return "\n".join(lines) + "\n"
+
+
+def render_position_review_markdown(
+    manifest: Mapping[str, Any],
+    shortlist: Mapping[str, Any],
+    cluster: Mapping[str, Any],
+    shadow: Mapping[str, Any],
+    advisory: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Position Advisory Readiness",
+        "",
+        f"- review_id: `{manifest.get('review_id')}`",
+        f"- shortlist_count: `{manifest.get('shortlist_count')}`",
+        f"- cluster_count: `{manifest.get('cluster_count')}`",
+        f"- shadow_candidate_count: `{manifest.get('shadow_candidate_count')}`",
+        f"- position_advisory_status: `{manifest.get('position_advisory_status')}`",
+        f"- shadow_observation_readiness: `{decision.get('shadow_observation_readiness')}`",
+        f"- position_advisory_readiness: `{decision.get('position_advisory_readiness')}`",
+        f"- production_readiness: `{decision.get('production_readiness')}`",
+        f"- recommended_next_action: `{decision.get('recommended_next_action')}`",
+        "",
+        "## Required Questions",
+        "",
+        (
+            "1. observe candidates 通过 shortlist scoring 和 hard-fail gate 从 "
+            f"`{shortlist.get('observe_pool_candidate_count')}` 压缩到 "
+            f"`{shortlist.get('shortlist_count')}`。"
+        ),
+        f"2. shortlist 聚类数量：`{cluster.get('cluster_count')}`。",
+        f"3. shadow shortlist representatives 数量：`{shadow.get('shadow_candidate_count')}`。",
+        f"4. 目标权重一致性：`{advisory.get('consensus_target_weight_status')}`。",
+        f"5. 是否可以进入 shadow monitoring：`{decision.get('shadow_observation_readiness')}`。",
+        f"6. 是否可用于实际仓位建议：`{decision.get('position_advisory_readiness')}`。",
+        "7. 如果只能 TARGET_ONLY，缺少 current portfolio snapshot。",
+        f"8. portfolio snapshot provided: `{advisory.get('portfolio_snapshot_provided')}`。",
+        "9. 是否允许自动交易：否，`broker_action_allowed=false`。",
+        f"10. 下一步：`{decision.get('recommended_next_action')}`。",
+        "",
+        "production_effect=none; broker_action=none.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def render_position_review_reader_brief(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    return (
+        "## Dynamic Rescue Position Advisory Readiness\n\n"
+        f"- review_id: `{manifest.get('review_id')}`\n"
+        f"- shortlist_count: `{manifest.get('shortlist_count')}`\n"
+        f"- shadow_candidate_count: `{manifest.get('shadow_candidate_count')}`\n"
+        f"- position_advisory_status: `{manifest.get('position_advisory_status')}`\n"
+        f"- shadow_observation_readiness: `{decision.get('shadow_observation_readiness')}`\n"
+        f"- position_advisory_readiness: `{decision.get('position_advisory_readiness')}`\n"
+        f"- production_readiness: `{decision.get('production_readiness')}`\n"
+        f"- recommended_next_action: `{decision.get('recommended_next_action')}`\n"
+        "- broker_action_allowed=false; owner_approval_required=true.\n"
+    )
+
+
+def _metric_first(metrics: Mapping[str, Any], keys: Sequence[str]) -> float:
+    for key in keys:
+        if key in metrics:
+            return _float(metrics.get(key))
+    return 0.0
+
+
+def _status_score(value: Any, *, missing: float = 0.0) -> float:
+    text = _text(value)
+    if text == "PASS":
+        return 1.0
+    if text == "PASS_WITH_WARNINGS":
+        return 0.7
+    if text in {"PARTIAL", "REVIEW_REQUIRED", "INCOMPLETE"}:
+        return 0.5
+    if not text or text == "MISSING":
+        return missing
+    return 0.0
+
+
+def _weight_status_score(value: Any) -> float:
+    text = _text(value)
+    if text == WEIGHT_PATH_COMPLETE:
+        return 1.0
+    if text == WEIGHT_PATH_PARTIAL:
+        return 0.6
+    if text in {WEIGHT_PATH_INCOMPLETE, "MISSING"}:
+        return 0.0
+    return _status_score(text)
+
+
+def _overfit_status_score(value: Any) -> float:
+    text = _text(value)
+    if text in {"LOW_RISK", "PASS"}:
+        return 1.0
+    if text == "REVIEW_REQUIRED":
+        return 0.5
+    if text == "HIGH_RISK":
+        return 0.0
+    return 0.4
+
+
+def _avg(values: Sequence[float]) -> float:
+    numbers = [float(value) for value in values if value is not None]
+    return sum(numbers) / len(numbers) if numbers else 0.0
+
+
+def _median(values: Sequence[float]) -> float:
+    ordered = sorted(float(value) for value in values)
+    if not ordered:
+        return 0.0
+    midpoint = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[midpoint]
+    return (ordered[midpoint - 1] + ordered[midpoint]) / 2.0
+
+
 def _top_candidate_stability(rows: Sequence[Mapping[str, Any]]) -> str:
     ranked = _ranked_candidate_rows(rows)
     if len(ranked) < 2:
@@ -12420,6 +14574,31 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pointer_name": "latest_research_decision_update",
             "pattern": "research_decision_update/*/decision_update_manifest.json",
             "id_keys": ("decision_update_id",),
+        },
+        {
+            "pointer_name": "latest_shortlist",
+            "pattern": "shortlist/*/shortlist_manifest.json",
+            "id_keys": ("shortlist_id",),
+        },
+        {
+            "pointer_name": "latest_candidate_cluster",
+            "pattern": "candidate_cluster/*/cluster_manifest.json",
+            "id_keys": ("cluster_id",),
+        },
+        {
+            "pointer_name": "latest_shadow_shortlist",
+            "pattern": "shadow_shortlist/*/shadow_shortlist_manifest.json",
+            "id_keys": ("shadow_shortlist_id",),
+        },
+        {
+            "pointer_name": "latest_position_advisory",
+            "pattern": "position_advisory/*/position_advisory_manifest.json",
+            "id_keys": ("advisory_id",),
+        },
+        {
+            "pointer_name": "latest_position_review",
+            "pattern": "position_review/*/position_review_manifest.json",
+            "id_keys": ("review_id",),
         },
     )
 

@@ -259,6 +259,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    DEFAULT_CANDIDATE_CLUSTER_DIR,
     DEFAULT_CANDIDATE_RECOVERY_DIR,
     DEFAULT_DATA_AUDIT_DIR,
     DEFAULT_DATA_PROVENANCE_DIR,
@@ -279,6 +280,9 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
     DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
     DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+    DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    DEFAULT_POSITION_ADVISORY_DIR,
+    DEFAULT_POSITION_REVIEW_DIR,
     DEFAULT_PROMOTION_DIR,
     DEFAULT_REGIME_COVERAGE_DIR,
     DEFAULT_RESEARCH_DECISION_DIR,
@@ -289,6 +293,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_SHADOW_MONITOR_DIR,
     DEFAULT_SHADOW_REGISTRY_PATH,
     DEFAULT_SHADOW_REPORT_DIR,
+    DEFAULT_SHADOW_SHORTLIST_DIR,
+    DEFAULT_SHORTLIST_DIR,
     DEFAULT_SWEEP_OUTPUT_DIR,
     DEFAULT_WALK_FORWARD_DIR,
     DEFAULT_WALK_FORWARD_SELECTION_DIR,
@@ -298,11 +304,15 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     artifacts_latest_payload,
     build_medium_real_report,
     build_observe_pool,
+    build_position_review_pack,
     build_promotion_pack,
     build_research_index,
+    build_shadow_shortlist,
+    build_shadow_shortlist_monitoring_pack,
     build_sweep_config_validation,
     build_sweep_leaderboard_payload,
     build_sweep_report_payload,
+    candidate_cluster_report_payload,
     candidate_recovery_report_payload,
     candidate_report_payload,
     data_audit_report_payload,
@@ -323,6 +333,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     observe_pool_report_payload,
     overfit_report_payload,
     overnight_readiness_report_payload,
+    position_advisory_report_payload,
+    position_review_report_payload,
     preview_sweep_candidates,
     promotion_review_payload,
     rebuild_observe_pool_from_recovery,
@@ -336,6 +348,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     research_query_payload,
     robustness_report_payload,
     run_candidate_attribution,
+    run_candidate_clustering,
     run_candidate_recovery,
     run_data_audit,
     run_evidence_diagnosis,
@@ -347,6 +360,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_overnight_readiness,
     run_parameter_sweep,
     run_parameter_sweep_profile,
+    run_position_advisory,
     run_regime_coverage,
     run_research_decision,
     run_robustness_diagnostics,
@@ -358,12 +372,15 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     shadow_list_payload,
     shadow_monitor_report_payload,
     shadow_report_payload,
+    shadow_shortlist_report_payload,
+    shortlist_report_payload,
     stale_artifacts_payload,
     sweep_profile_list_payload,
     sweep_status_payload,
     update_research_decision,
     validate_artifacts_payload,
     validate_candidate_attribution_artifact,
+    validate_candidate_cluster_artifact,
     validate_candidate_recovery_artifact,
     validate_data_audit_artifact,
     validate_evidence_diagnosis_artifact,
@@ -377,6 +394,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_overfit_artifact,
     validate_overnight_readiness_artifact,
     validate_parameter_governance,
+    validate_position_advisory_artifact,
+    validate_position_review_artifact,
     validate_promotion_pack,
     validate_regime_coverage_artifact,
     validate_research_decision_artifact,
@@ -384,6 +403,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_robustness_artifact,
     validate_shadow_monitor_artifact,
     validate_shadow_registry,
+    validate_shadow_shortlist_artifact,
+    validate_shortlist_artifact,
     validate_sweep_artifact,
     validate_sweep_profiles_payload,
     validate_walk_forward_artifact,
@@ -930,6 +951,26 @@ dynamic_v3_candidate_recovery_app = typer.Typer(
     help="Dynamic v3 rescue candidate recovery workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_shortlist_app = typer.Typer(
+    help="Dynamic v3 rescue shadow shortlist workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_candidate_cluster_app = typer.Typer(
+    help="Dynamic v3 rescue candidate clustering workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_shadow_shortlist_app = typer.Typer(
+    help="Dynamic v3 rescue shadow shortlist monitoring pack workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_position_advisory_app = typer.Typer(
+    help="Dynamic v3 rescue position advisory workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_position_review_app = typer.Typer(
+    help="Dynamic v3 rescue position review workflow。",
+    no_args_is_help=True,
+)
 dynamic_shadow_app = typer.Typer(
     help="ETF owner-approved dynamic candidate forward shadow workflow。",
     no_args_is_help=True,
@@ -999,6 +1040,11 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_evidence_diagnosis_app, name="evidenc
 dynamic_v3_rescue_app.add_typer(dynamic_v3_gate_impact_app, name="gate-impact")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_gate_policy_app, name="gate-policy")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_recovery_app, name="candidate-recovery")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_shortlist_app, name="shortlist")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_cluster_app, name="candidate-cluster")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_shortlist_app, name="shadow-shortlist")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_position_advisory_app, name="position-advisory")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
 etf_app.add_typer(governance_app, name="governance")
@@ -6250,6 +6296,417 @@ def dynamic_v3_validate_research_decision_update_command(
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_shortlist_app.command("build")
+def dynamic_v3_shortlist_build_command(
+    observe_pool_id: Annotated[str, typer.Option("--observe-pool-id", help="observe pool id。")],
+    target_size: Annotated[int, typer.Option("--target-size", help="target shortlist size。")] = 10,
+    max_size: Annotated[int, typer.Option("--max-size", help="max shortlist size。")] = 20,
+    min_size: Annotated[int, typer.Option("--min-size", help="min shortlist size。")] = 5,
+    observe_pool_dir: Annotated[
+        Path,
+        typer.Option("--observe-pool-dir", help="observe pool artifact root。"),
+    ] = DEFAULT_OBSERVE_POOL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shortlist artifact root。"),
+    ] = DEFAULT_SHORTLIST_DIR,
+) -> None:
+    """生成 TRADING-126 shadow shortlist。"""
+    result = build_shadow_shortlist(
+        observe_pool_id=observe_pool_id,
+        target_size=target_size,
+        max_size=max_size,
+        min_size=min_size,
+        observe_pool_dir=observe_pool_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"shortlist_id={result['shortlist_id']}")
+    typer.echo(f"shortlist_dir={result['shortlist_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"observe_pool_candidate_count={manifest['observe_pool_candidate_count']}")
+    typer.echo(f"shortlist_count={manifest['shortlist_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_shortlist_app.command("report")
+def dynamic_v3_shortlist_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest shortlist pointer。"),
+    ] = False,
+    shortlist_id: Annotated[
+        str | None,
+        typer.Option("--shortlist-id", help="shortlist id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shortlist artifact root。"),
+    ] = DEFAULT_SHORTLIST_DIR,
+) -> None:
+    """展示 TRADING-126 shortlist 摘要。"""
+    payload = shortlist_report_payload(
+        shortlist_id=shortlist_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"shortlist_id={payload['shortlist_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"shortlist_count={payload['shortlist_count']}")
+    typer.echo(f"report_path={payload['shortlist_report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-shortlist")
+def dynamic_v3_validate_shortlist_command(
+    shortlist_id: Annotated[str, typer.Option("--shortlist-id", help="shortlist id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shortlist artifact root。"),
+    ] = DEFAULT_SHORTLIST_DIR,
+) -> None:
+    """校验 TRADING-126 shortlist artifact。"""
+    payload = validate_shortlist_artifact(shortlist_id=shortlist_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_candidate_cluster_app.command("run")
+def dynamic_v3_candidate_cluster_run_command(
+    shortlist_id: Annotated[str, typer.Option("--shortlist-id", help="shortlist id。")],
+    shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shortlist-dir", help="shortlist artifact root。"),
+    ] = DEFAULT_SHORTLIST_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate cluster artifact root。"),
+    ] = DEFAULT_CANDIDATE_CLUSTER_DIR,
+) -> None:
+    """生成 TRADING-127 candidate cluster。"""
+    result = run_candidate_clustering(
+        shortlist_id=shortlist_id,
+        shortlist_dir=shortlist_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"cluster_id={result['cluster_id']}")
+    typer.echo(f"cluster_dir={result['cluster_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"cluster_count={manifest['cluster_count']}")
+    typer.echo(f"representative_count={manifest['representative_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_candidate_cluster_app.command("report")
+def dynamic_v3_candidate_cluster_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest candidate cluster pointer。"),
+    ] = False,
+    cluster_id: Annotated[str | None, typer.Option("--cluster-id", help="cluster id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate cluster artifact root。"),
+    ] = DEFAULT_CANDIDATE_CLUSTER_DIR,
+) -> None:
+    """展示 TRADING-127 candidate cluster 摘要。"""
+    payload = candidate_cluster_report_payload(
+        cluster_id=cluster_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"cluster_id={payload['cluster_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"cluster_count={payload['cluster_count']}")
+    typer.echo(f"report_path={payload['candidate_cluster_report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-candidate-cluster")
+def dynamic_v3_validate_candidate_cluster_command(
+    cluster_id: Annotated[str, typer.Option("--cluster-id", help="cluster id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate cluster artifact root。"),
+    ] = DEFAULT_CANDIDATE_CLUSTER_DIR,
+) -> None:
+    """校验 TRADING-127 candidate cluster artifact。"""
+    payload = validate_candidate_cluster_artifact(cluster_id=cluster_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_shadow_shortlist_app.command("build")
+def dynamic_v3_shadow_shortlist_build_command(
+    shortlist_id: Annotated[str, typer.Option("--shortlist-id", help="shortlist id。")],
+    cluster_id: Annotated[str, typer.Option("--cluster-id", help="cluster id。")],
+    shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shortlist-dir", help="shortlist artifact root。"),
+    ] = DEFAULT_SHORTLIST_DIR,
+    cluster_dir: Annotated[
+        Path,
+        typer.Option("--cluster-dir", help="candidate cluster artifact root。"),
+    ] = DEFAULT_CANDIDATE_CLUSTER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+) -> None:
+    """生成 TRADING-128 shadow shortlist monitoring pack。"""
+    result = build_shadow_shortlist_monitoring_pack(
+        shortlist_id=shortlist_id,
+        cluster_id=cluster_id,
+        shortlist_dir=shortlist_dir,
+        cluster_dir=cluster_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"shadow_shortlist_id={result['shadow_shortlist_id']}")
+    typer.echo(f"shadow_shortlist_dir={result['shadow_shortlist_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"shadow_candidate_count={manifest['shadow_candidate_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_shadow_shortlist_app.command("report")
+def dynamic_v3_shadow_shortlist_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest shadow shortlist pointer。"),
+    ] = False,
+    shadow_shortlist_id: Annotated[
+        str | None,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+) -> None:
+    """展示 TRADING-128 shadow shortlist 摘要。"""
+    payload = shadow_shortlist_report_payload(
+        shadow_shortlist_id=shadow_shortlist_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"shadow_shortlist_id={payload['shadow_shortlist_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"shadow_candidate_count={payload['shadow_candidate_count']}")
+    typer.echo(f"report_path={payload['shadow_shortlist_report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-shortlist")
+def dynamic_v3_validate_shadow_shortlist_command(
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+) -> None:
+    """校验 TRADING-128 shadow shortlist artifact。"""
+    payload = validate_shadow_shortlist_artifact(
+        shadow_shortlist_id=shadow_shortlist_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_position_advisory_app.command("run")
+def dynamic_v3_position_advisory_run_command(
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="position advisory config。"),
+    ] = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    portfolio_snapshot: Annotated[
+        Path | None,
+        typer.Option("--portfolio-snapshot", help="optional current portfolio snapshot YAML。"),
+    ] = None,
+    shadow_shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shadow-shortlist-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="position advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DIR,
+) -> None:
+    """生成 TRADING-129 position advisory。"""
+    result = run_position_advisory(
+        shadow_shortlist_id=shadow_shortlist_id,
+        config_path=config_path,
+        portfolio_snapshot_path=portfolio_snapshot,
+        shadow_shortlist_dir=shadow_shortlist_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"advisory_id={result['advisory_id']}")
+    typer.echo(f"advisory_dir={result['advisory_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"position_advisory_status={manifest['position_advisory_status']}")
+    typer.echo(f"recommended_action={manifest['recommended_action']}")
+    typer.echo("owner_approval_required=true")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_position_advisory_app.command("report")
+def dynamic_v3_position_advisory_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest position advisory pointer。"),
+    ] = False,
+    advisory_id: Annotated[str | None, typer.Option("--advisory-id", help="advisory id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="position advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DIR,
+) -> None:
+    """展示 TRADING-129 position advisory 摘要。"""
+    payload = position_advisory_report_payload(
+        advisory_id=advisory_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"advisory_id={payload['advisory_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"position_advisory_status={payload['position_advisory_status']}")
+    typer.echo(f"recommended_action={payload['recommended_action']}")
+    typer.echo(f"report_path={payload['position_advisory_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-position-advisory")
+def dynamic_v3_validate_position_advisory_command(
+    advisory_id: Annotated[str, typer.Option("--advisory-id", help="advisory id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="position advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DIR,
+) -> None:
+    """校验 TRADING-129 position advisory artifact。"""
+    payload = validate_position_advisory_artifact(advisory_id=advisory_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("owner_approval_required=true")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_position_review_app.command("pack")
+def dynamic_v3_position_review_pack_command(
+    shortlist_id: Annotated[str, typer.Option("--shortlist-id", help="shortlist id。")],
+    cluster_id: Annotated[str, typer.Option("--cluster-id", help="cluster id。")],
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    advisory_id: Annotated[str, typer.Option("--advisory-id", help="advisory id。")],
+    shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shortlist-dir", help="shortlist artifact root。"),
+    ] = DEFAULT_SHORTLIST_DIR,
+    cluster_dir: Annotated[
+        Path,
+        typer.Option("--cluster-dir", help="candidate cluster artifact root。"),
+    ] = DEFAULT_CANDIDATE_CLUSTER_DIR,
+    shadow_shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shadow-shortlist-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+    advisory_dir: Annotated[
+        Path,
+        typer.Option("--advisory-dir", help="position advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="position review artifact root。"),
+    ] = DEFAULT_POSITION_REVIEW_DIR,
+) -> None:
+    """生成 TRADING-130 position review pack。"""
+    result = build_position_review_pack(
+        shortlist_id=shortlist_id,
+        cluster_id=cluster_id,
+        shadow_shortlist_id=shadow_shortlist_id,
+        advisory_id=advisory_id,
+        shortlist_dir=shortlist_dir,
+        cluster_dir=cluster_dir,
+        shadow_shortlist_dir=shadow_shortlist_dir,
+        advisory_dir=advisory_dir,
+        output_dir=output_dir,
+    )
+    decision = result["go_no_go_decision"]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"review_dir={result['review_dir']}")
+    typer.echo(f"shadow_observation_readiness={decision['shadow_observation_readiness']}")
+    typer.echo(f"position_advisory_readiness={decision['position_advisory_readiness']}")
+    typer.echo(f"production_readiness={decision['production_readiness']}")
+    typer.echo(f"recommended_next_action={decision['recommended_next_action']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_position_review_app.command("report")
+def dynamic_v3_position_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest position review pointer。"),
+    ] = False,
+    review_id: Annotated[str | None, typer.Option("--review-id", help="review id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="position review artifact root。"),
+    ] = DEFAULT_POSITION_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-130 position review 摘要。"""
+    payload = position_review_report_payload(
+        review_id=review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"review_id={payload['review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"production_readiness={payload['production_readiness']}")
+    typer.echo(f"recommended_next_action={payload['recommended_next_action']}")
+    typer.echo(f"report_path={payload['position_review_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-position-review")
+def dynamic_v3_validate_position_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="position review artifact root。"),
+    ] = DEFAULT_POSITION_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-130 position review artifact。"""
+    payload = validate_position_review_artifact(review_id=review_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_allowed=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 
