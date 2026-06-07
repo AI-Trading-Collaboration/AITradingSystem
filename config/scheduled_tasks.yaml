@@ -379,6 +379,24 @@ cadences:
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false
+      - task_id: daily_dynamic_v3_rescue_schedule_observe
+        daily_plan_step_id: dynamic_v3_rescue_schedule_observe
+        title: Dynamic v3 rescue scheduled observation gate
+        command: aits etf dynamic-v3-rescue schedule observe --as-of {as_of}
+        command_contains:
+          - etf
+          - dynamic-v3-rescue
+          - schedule
+          - observe
+        closed_market_behavior: run
+        date_gate: "Daily scheduler may call only this lightweight gate; it self-skips unless the as-of date is the weekly last completed U.S. equity trading day."
+        trigger_condition: "On due dates, run latest pointer validation, stale detection, and optional observe-only shadow monitor when registry candidates exist; never run parameter sweeps or promotion packs."
+        data_quality_gate: "The daily validate_data step must have completed earlier in the same daily-run; real evaluator source artifacts must preserve their own cached data quality status."
+        manual_review_required: true
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_ops_health
         daily_plan_step_id: pipeline_health
         title: Run ops health
@@ -435,6 +453,46 @@ cadences:
       - task_id: weekly_etf_forward_review
         title: ETF forward simulation weekly review
         command: aits etf forward weekly-review --latest
+        production_effect: none
+      - task_id: weekly_dynamic_v3_rescue_artifact_validate
+        title: Dynamic v3 rescue artifact pointer validation
+        command: aits etf dynamic-v3-rescue artifacts validate
+        date_gate: "Weekly manual research review date; not run by daily-run."
+        trigger_condition: "Run after latest dynamic v3 rescue research artifacts exist or before owner promotion review."
+        data_quality_gate: "Reads existing artifacts only; source artifacts must disclose cached data quality status."
+        manual_review_required: true
+        production_effect: none
+      - task_id: weekly_dynamic_v3_rescue_artifact_stale
+        title: Dynamic v3 rescue artifact staleness review
+        command: aits etf dynamic-v3-rescue artifacts stale --config config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml
+        date_gate: "Weekly manual research review date; not run by daily-run."
+        trigger_condition: "Run after artifact pointer validation to flag stale latest sweep, leaderboard, robustness, shadow, and promotion evidence."
+        data_quality_gate: "Reads existing artifacts only; source artifacts must disclose cached data quality status."
+        manual_review_required: true
+        production_effect: none
+      - task_id: weekly_dynamic_v3_rescue_governance_validate
+        title: Dynamic v3 rescue parameter governance validation
+        command: aits etf dynamic-v3-rescue governance validate
+        date_gate: "Weekly manual research review date; not run by daily-run."
+        trigger_condition: "Run before interpreting any small_real, medium_real, or overnight_real parameter research result."
+        data_quality_gate: "Governance validation is config-only; any real evaluator run still requires cached data quality PASS before metrics are interpreted."
+        manual_review_required: true
+        production_effect: none
+      - task_id: weekly_dynamic_v3_rescue_research_index
+        title: Dynamic v3 rescue research index refresh
+        command: aits etf dynamic-v3-rescue research index-build
+        date_gate: "Weekly manual research review date; not run by daily-run."
+        trigger_condition: "Run after latest pointer validation and any completed manual research artifact chain."
+        data_quality_gate: "Reads existing artifacts only; source artifacts must disclose cached data quality status."
+        manual_review_required: true
+        production_effect: none
+      - task_id: weekly_dynamic_v3_rescue_shadow_monitor
+        title: Dynamic v3 rescue shadow monitor observation
+        command: aits etf dynamic-v3-rescue shadow monitor-run --as-of {as_of}
+        date_gate: "Weekly manual research review date after the daily data quality gate for the as-of date has passed."
+        trigger_condition: "Run only when observe-only dynamic v3 rescue shadow candidates are registered and artifact validation passes."
+        data_quality_gate: "Must use the same cached market/macro validation path as aits validate-data for the as-of date before interpreting monitor output."
+        manual_review_required: true
         production_effect: none
   biweekly:
     description: Biweekly manual review cadence; registered but not part of daily-run.
@@ -520,4 +578,68 @@ cadences:
       - task_id: ad_hoc_cache_only_replay_window
         title: Cache-only replay window
         command: aits ops replay-window --mode cache-only
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_data_audit
+        title: Dynamic v3 rescue data audit
+        command: aits etf dynamic-v3-rescue data-audit run --as-of {as_of} --end {as_of}
+        date_gate: "Owner-selected manual research date range; never dispatched by daily-run."
+        trigger_condition: "Run before any small_real, medium_real, or overnight_real real evaluator sweep."
+        data_quality_gate: "Must pass the cached market/macro validation path equivalent to aits validate-data before downstream metrics are interpreted."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_profile_validate
+        title: Dynamic v3 rescue profile validation
+        command: aits etf dynamic-v3-rescue sweep profile-validate
+        date_gate: "Owner-selected manual research date range; never dispatched by daily-run."
+        trigger_condition: "Run before any profile-based sweep execution."
+        data_quality_gate: "Config/profile validation is config-only; real evaluator execution still requires cached data quality PASS."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_small_real_sweep
+        title: Dynamic v3 rescue small_real sweep
+        command: aits etf dynamic-v3-rescue sweep run-profile --profile small_real --as-of {as_of} --end {as_of} --workers 1
+        date_gate: "Owner-selected manual research date range; never dispatched by daily-run."
+        trigger_condition: "Run only after data-audit and profile-validate PASS and when owner requests a small_real research smoke."
+        data_quality_gate: "Real evaluator candidates must pass cached market/macro validation and link metrics to real evaluation artifacts."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_injection_audit
+        title: Dynamic v3 rescue injection audit
+        command: aits etf dynamic-v3-rescue injection-audit run --as-of {as_of} --end {as_of} --max-candidates {max_candidates}
+        date_gate: "Owner-selected manual research date range; never dispatched by daily-run."
+        trigger_condition: "Run after a real evaluator sweep to confirm parameter injection and candidate coverage."
+        data_quality_gate: "Uses the same validated real evaluator artifact chain as the source sweep."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_candidate_attribution
+        title: Dynamic v3 rescue candidate attribution
+        command: aits etf dynamic-v3-rescue candidate attribution --sweep-id <sweep_id> --candidate-id <candidate_id>
+        date_gate: "Owner-selected manual research artifact review; never dispatched by daily-run."
+        trigger_condition: "Run only for a completed real evaluator candidate selected from the leaderboard."
+        data_quality_gate: "Candidate metrics must come from linked real evaluation artifacts with disclosed data quality status."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_walk_forward_selection
+        title: Dynamic v3 rescue walk-forward selection
+        command: aits etf dynamic-v3-rescue walk-forward select-run --sweep-id <sweep_id> --profile small_real
+        date_gate: "Owner-selected manual research artifact review; never dispatched by daily-run."
+        trigger_condition: "Run after leaderboard and candidate attribution identify candidates for OOS review."
+        data_quality_gate: "Uses the same validated real evaluator artifact chain as the source sweep."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_overfit
+        title: Dynamic v3 rescue overfit diagnostics
+        command: aits etf dynamic-v3-rescue overfit run --sweep-id <sweep_id> --candidate-id <candidate_id>
+        date_gate: "Owner-selected manual research artifact review; never dispatched by daily-run."
+        trigger_condition: "Run after candidate report and walk-forward selection exist for the candidate."
+        data_quality_gate: "Uses the same validated real evaluator artifact chain as the source sweep."
+        manual_review_required: true
+        production_effect: none
+      - task_id: ad_hoc_dynamic_v3_rescue_promotion_pack
+        title: Dynamic v3 rescue promotion pack
+        command: aits etf dynamic-v3-rescue promotion pack --candidate-id <candidate_id>
+        date_gate: "Owner-selected manual promotion review; never dispatched by daily-run."
+        trigger_condition: "Run only after sweep, leaderboard, attribution, walk-forward, robustness, overfit, shadow, and latest artifact validation evidence are present."
+        data_quality_gate: "Pack must preserve source real evaluator data quality status and fail closed when required evidence is missing."
+        manual_review_required: true
         production_effect: none

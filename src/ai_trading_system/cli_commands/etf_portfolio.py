@@ -264,6 +264,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
     DEFAULT_GOVERNANCE_DIR,
     DEFAULT_INJECTION_AUDIT_DIR,
+    DEFAULT_LATEST_POINTER_DIR,
     DEFAULT_OVERFIT_DIR,
     DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
     DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
@@ -271,6 +272,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_PROMOTION_DIR,
     DEFAULT_RESEARCH_INDEX_DIR,
     DEFAULT_ROBUSTNESS_DIR,
+    DEFAULT_SCHEDULE_OBSERVE_DIR,
     DEFAULT_SHADOW_MONITOR_DIR,
     DEFAULT_SHADOW_REGISTRY_PATH,
     DEFAULT_SHADOW_REPORT_DIR,
@@ -314,6 +316,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_walk_forward_selection,
     run_walk_forward_validation,
     run_window_audit,
+    scheduled_observe_payload,
     shadow_list_payload,
     shadow_monitor_report_payload,
     shadow_report_payload,
@@ -820,6 +823,10 @@ dynamic_v3_artifacts_app = typer.Typer(
     help="Dynamic v3 rescue artifact latest/validation workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_schedule_app = typer.Typer(
+    help="Dynamic v3 rescue scheduled observation gate。",
+    no_args_is_help=True,
+)
 dynamic_v3_promotion_app = typer.Typer(
     help="Dynamic v3 rescue promotion review pack workflow。",
     no_args_is_help=True,
@@ -887,6 +894,7 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_robustness_app, name="robustness")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_overfit_app, name="overfit")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_app, name="shadow")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_artifacts_app, name="artifacts")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_schedule_app, name="schedule")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_promotion_app, name="promotion")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_governance_app, name="governance")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_research_app, name="research")
@@ -3731,7 +3739,10 @@ def dynamic_v3_data_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data audit artifact root。"),
@@ -3808,7 +3819,10 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data provenance artifact root。"),
@@ -3825,8 +3839,7 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     typer.echo(f"download_manifest_status={payload['download_manifest_status']}")
     typer.echo(f"provenance_status={payload['provenance_status']}")
     typer.echo(
-        "prices_checksum_in_manifest="
-        f"{str(payload['prices_checksum_in_manifest']).lower()}"
+        "prices_checksum_in_manifest=" f"{str(payload['prices_checksum_in_manifest']).lower()}"
     )
     typer.echo("production_candidate_generated=false")
 
@@ -3844,7 +3857,10 @@ def dynamic_v3_data_provenance_repair_price_manifest_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
     try:
@@ -3871,7 +3887,10 @@ def dynamic_v3_data_provenance_validate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """校验 TRADING-113 price cache provenance。"""
     payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
@@ -3908,10 +3927,7 @@ def dynamic_v3_window_audit_run_command(
     typer.echo(f"window_audit_dir={result['window_audit_dir']}")
     typer.echo(f"status={report['status']}")
     typer.echo(f"configured_backtest_start={report['configured_backtest_start']}")
-    typer.echo(
-        "earliest_actual_evaluation_start="
-        f"{report['earliest_actual_evaluation_start']}"
-    )
+    typer.echo("earliest_actual_evaluation_start=" f"{report['earliest_actual_evaluation_start']}")
     typer.echo(f"promotion_blocking_count={report['promotion_blocking_count']}")
     typer.echo("production_candidate_generated=false")
 
@@ -3937,10 +3953,7 @@ def dynamic_v3_window_audit_report_command(
     typer.echo(f"window_audit_id={payload['window_audit_id']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"configured_backtest_start={payload['configured_backtest_start']}")
-    typer.echo(
-        "earliest_actual_evaluation_start="
-        f"{payload['earliest_actual_evaluation_start']}"
-    )
+    typer.echo("earliest_actual_evaluation_start=" f"{payload['earliest_actual_evaluation_start']}")
     typer.echo(f"promotion_blocking_count={payload['promotion_blocking_count']}")
     typer.echo(f"report_path={payload['report_path']}")
     typer.echo("production_candidate_generated=false")
@@ -4068,7 +4081,10 @@ def dynamic_v3_sweep_run_profile_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -4119,7 +4135,10 @@ def dynamic_v3_injection_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="injection audit artifact root。"),
@@ -5102,6 +5121,68 @@ def dynamic_v3_artifacts_stale_command(
     typer.echo(f"stale_after_days={payload['stale_after_days']}")
     typer.echo(f"stale_count={len(payload['stale_artifacts'])}")
     typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_schedule_app.command("observe")
+def dynamic_v3_schedule_observe_command(
+    as_of: Annotated[str, typer.Option("--as-of", help="scheduled observation as-of date。")],
+    family: Annotated[
+        str,
+        typer.Option("--family", help="artifact family。"),
+    ] = "dynamic_v3_rescue",
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    pointer_dir: Annotated[
+        Path,
+        typer.Option("--pointer-dir", help="latest pointer directory。"),
+    ] = DEFAULT_LATEST_POINTER_DIR,
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="scheduled observe artifact root。"),
+    ] = DEFAULT_SCHEDULE_OBSERVE_DIR,
+    run_shadow_monitor: Annotated[
+        bool,
+        typer.Option(
+            "--run-shadow-monitor/--skip-shadow-monitor",
+            help="Run observe-only shadow monitor when weekly due conditions pass。",
+        ),
+    ] = True,
+    force_due: Annotated[
+        bool,
+        typer.Option("--force-due", help="Force due=true for manual validation only。"),
+    ] = False,
+) -> None:
+    """运行 TRADING-099 daily scheduler lightweight observe gate。"""
+    if not as_of:
+        raise typer.BadParameter("--as-of is required")
+    try:
+        observation_date = date.fromisoformat(as_of)
+    except ValueError as exc:
+        raise typer.BadParameter("--as-of must use YYYY-MM-DD") from exc
+    payload = scheduled_observe_payload(
+        as_of=observation_date,
+        family=family,
+        config_path=config_path,
+        pointer_dir=pointer_dir,
+        registry_path=registry_path,
+        output_dir=output_dir,
+        run_shadow_monitor_on_due=run_shadow_monitor,
+        force_due=force_due,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"due_status={payload['due_status']}")
+    typer.echo(f"pointer_count={payload['pointer_count']}")
+    typer.echo(f"json={payload['output_artifacts']['json']}")
+    typer.echo(f"markdown={payload['output_artifacts']['markdown']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] == "FAIL":
+        raise typer.Exit(code=1)
 
 
 @dynamic_v3_promotion_app.command("review")

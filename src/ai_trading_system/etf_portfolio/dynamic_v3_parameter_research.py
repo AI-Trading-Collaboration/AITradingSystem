@@ -53,6 +53,7 @@ from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_PRICE_PATH,
     load_etf_config_bundle,
 )
+from ai_trading_system.trading_calendar import is_us_equity_trading_day, us_equity_market_session
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 STRATEGY_FAMILY = "dynamic_v3_rescue"
@@ -94,6 +95,7 @@ DEFAULT_SHADOW_MONITOR_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_monitor"
 DEFAULT_PROMOTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "promotion"
 DEFAULT_GOVERNANCE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "governance"
 DEFAULT_RESEARCH_INDEX_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "index"
+DEFAULT_SCHEDULE_OBSERVE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "schedule_observe"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
@@ -3423,11 +3425,22 @@ def validate_artifacts_payload(
     *,
     family: str = STRATEGY_FAMILY,
     pointer_dir: Path = DEFAULT_LATEST_POINTER_DIR,
+    require_pointers: bool = True,
 ) -> dict[str, Any]:
     pointers = artifacts_latest_payload(pointer_dir).get("pointers", {})
     checks = [_check("family_supported", family == STRATEGY_FAMILY, family)]
+    if require_pointers:
+        checks.append(
+            _check(
+                "latest_pointer_present",
+                bool(pointers),
+                f"pointer_dir={pointer_dir} pointer_count={len(pointers)}",
+            )
+        )
     for name, pointer in _mapping(pointers).items():
-        target = Path(_text(_mapping(pointer).get("path")))
+        target_text = _text(_mapping(pointer).get("path"))
+        checks.append(_check(f"{name}:pointer_path_present", bool(target_text), target_text))
+        target = Path(target_text) if target_text else Path("__missing_pointer_path__")
         checks.append(_check(f"{name}:pointer_target_exists", target.exists(), str(target)))
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
@@ -3440,6 +3453,210 @@ def validate_artifacts_payload(
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
+
+
+def scheduled_observe_report_paths(
+    *, output_dir: Path = DEFAULT_SCHEDULE_OBSERVE_DIR, as_of: date
+) -> tuple[Path, Path]:
+    stem = f"dynamic_v3_rescue_schedule_observe_{as_of.isoformat()}"
+    return output_dir / f"{stem}.json", output_dir / f"{stem}.md"
+
+
+def scheduled_observe_payload(
+    *,
+    as_of: date,
+    family: str = STRATEGY_FAMILY,
+    config_path: Path = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    pointer_dir: Path = DEFAULT_LATEST_POINTER_DIR,
+    registry_path: Path = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Path = DEFAULT_SCHEDULE_OBSERVE_DIR,
+    run_shadow_monitor_on_due: bool = True,
+    force_due: bool = False,
+    now: datetime | None = None,
+    write: bool = True,
+) -> dict[str, Any]:
+    generated_at = now or datetime.now(UTC)
+    session = us_equity_market_session(as_of)
+    due = force_due or _is_weekly_last_trading_day(as_of)
+    latest_payload = artifacts_latest_payload(pointer_dir)
+    pointer_count = len(_mapping(latest_payload.get("pointers")))
+    validation_payload = None
+    stale_payload = None
+    shadow_monitor = {
+        "status": "SKIPPED",
+        "reason": "not_due",
+        "monitor_id": None,
+        "monitor_dir": None,
+    }
+    checks = [
+        _check("family_supported", family == STRATEGY_FAMILY, family),
+        _check("production_effect_none", True, "production_effect=none"),
+        _check("manual_review_required", True, "manual review required"),
+        _check("no_real_sweep_execution", True, "schedule observe does not run profiles"),
+        _check("no_promotion_pack_execution", True, "schedule observe does not build pack"),
+    ]
+    if not session.is_trading_day and not force_due:
+        status = "PASS_WITH_SKIPS"
+        due_status = "CLOSED_MARKET"
+        due_reason = session.reason
+        skip_reason = "closed_market"
+    elif not due:
+        status = "PASS_WITH_SKIPS"
+        due_status = "NOT_DUE"
+        due_reason = "as_of is not the weekly last completed U.S. equity trading day"
+        skip_reason = "weekly_due_condition_not_met"
+    elif pointer_count == 0:
+        status = "PASS_WITH_SKIPS"
+        due_status = "DUE_NO_POINTERS"
+        due_reason = "weekly gate is due but no dynamic v3 rescue latest pointers exist"
+        skip_reason = "no_research_artifacts_registered"
+    else:
+        due_status = "DUE"
+        due_reason = "weekly last completed U.S. equity trading day"
+        skip_reason = None
+        validation_payload = validate_artifacts_payload(
+            family=family,
+            pointer_dir=pointer_dir,
+            require_pointers=True,
+        )
+        stale_payload = stale_artifacts_payload(
+            family=family,
+            config_path=config_path,
+            pointer_dir=pointer_dir,
+            now=generated_at,
+        )
+        checks.append(
+            _check(
+                "latest_pointer_validation_pass",
+                validation_payload.get("status") == "PASS",
+                str(validation_payload.get("status")),
+            )
+        )
+        checks.append(
+            _check(
+                "stale_artifacts_recorded",
+                stale_payload.get("status") in {"PASS", "STALE"},
+                str(stale_payload.get("status")),
+            )
+        )
+        if validation_payload.get("status") != "PASS":
+            status = "FAIL"
+        elif stale_payload.get("status") == "STALE":
+            status = "PASS_WITH_WARNINGS"
+        else:
+            status = "PASS"
+        if status.startswith("PASS") and run_shadow_monitor_on_due:
+            shadow_monitor = _run_scheduled_shadow_monitor(
+                as_of=as_of,
+                registry_path=registry_path,
+                output_dir=DEFAULT_SHADOW_MONITOR_DIR,
+            )
+            if shadow_monitor.get("status") == "FAIL":
+                status = "FAIL"
+                checks.append(
+                    _check(
+                        "shadow_monitor_run",
+                        False,
+                        _text(shadow_monitor.get("reason")),
+                    )
+                )
+            else:
+                checks.append(
+                    _check(
+                        "shadow_monitor_run",
+                        True,
+                        _text(shadow_monitor.get("status")),
+                    )
+                )
+        elif status.startswith("PASS"):
+            shadow_monitor = {
+                "status": "SKIPPED",
+                "reason": "shadow monitor disabled for this scheduled observe run",
+                "monitor_id": None,
+                "monitor_dir": None,
+            }
+    failed_check_count = sum(1 for check in checks if not check.get("passed"))
+    if failed_check_count and status.startswith("PASS"):
+        status = "FAIL"
+    json_path, markdown_path = scheduled_observe_report_paths(output_dir=output_dir, as_of=as_of)
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rescue_scheduled_observe",
+        "status": status,
+        "as_of": as_of.isoformat(),
+        "generated_at": generated_at.isoformat(),
+        "family": family,
+        "market_session": {
+            "is_trading_day": session.is_trading_day,
+            "reason": session.reason,
+            "previous_trading_day": session.previous_trading_day.isoformat(),
+        },
+        "due": due,
+        "due_status": due_status,
+        "due_reason": due_reason,
+        "skip_reason": skip_reason,
+        "pointer_dir": str(pointer_dir),
+        "pointer_count": pointer_count,
+        "latest": latest_payload,
+        "artifact_validation": validation_payload,
+        "stale_check": stale_payload,
+        "shadow_monitor": shadow_monitor,
+        "checks": checks,
+        "failed_check_count": failed_check_count,
+        "output_artifacts": {
+            "json": str(json_path),
+            "markdown": str(markdown_path),
+        },
+        "schedule_boundary": {
+            "daily_run_entry": True,
+            "non_daily_research_execution": False,
+            "real_sweep_execution_allowed": False,
+            "promotion_pack_execution_allowed": False,
+            "shadow_monitor_observe_only": True,
+        },
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    if write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(json_path, payload)
+        _write_text(markdown_path, render_scheduled_observe_markdown(payload))
+    return payload
+
+
+def render_scheduled_observe_markdown(payload: Mapping[str, Any]) -> str:
+    status = _text(payload.get("status")) or "UNKNOWN"
+    lines = [
+        "# Dynamic v3 Rescue Scheduled Observation Gate",
+        "",
+        f"- 状态：{status}",
+        f"- as_of：{_text(payload.get('as_of'))}",
+        f"- due_status：{_text(payload.get('due_status'))}",
+        f"- due_reason：{_text(payload.get('due_reason'))}",
+        f"- pointer_count：{payload.get('pointer_count')}",
+        f"- production_effect：{_text(payload.get('production_effect'))}",
+        f"- manual_review_required：{payload.get('manual_review_required')}",
+        f"- production_candidate_generated：{payload.get('production_candidate_generated')}",
+        "",
+        "## Gate Results",
+    ]
+    validation = _mapping(payload.get("artifact_validation"))
+    stale = _mapping(payload.get("stale_check"))
+    shadow_monitor = _mapping(payload.get("shadow_monitor"))
+    lines.extend(
+        [
+            f"- artifact_validation：{_text(validation.get('status')) or 'SKIPPED'}",
+            f"- stale_check：{_text(stale.get('status')) or 'SKIPPED'}",
+            f"- shadow_monitor：{_text(shadow_monitor.get('status')) or 'SKIPPED'}",
+            f"- shadow_monitor_reason：{_text(shadow_monitor.get('reason')) or 'n/a'}",
+            "",
+            "## Safety Boundary",
+            "- daily-run only executes this lightweight observation gate.",
+            "- The gate does not run `small_real`, `medium_real`, or `overnight_real` sweeps.",
+            "- The gate does not build promotion packs or generate production candidates.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def stale_artifacts_payload(
@@ -7346,6 +7563,61 @@ def _shadow_monitor_candidate_result(row: Mapping[str, Any], *, as_of: date) -> 
 def _latest_pointer_artifact_id(name: str) -> str:
     pointer = _read_optional_json(DEFAULT_LATEST_POINTER_DIR / f"{name}.json")
     return _text(_mapping(pointer).get("artifact_id"))
+
+
+def _is_weekly_last_trading_day(value: date) -> bool:
+    if not is_us_equity_trading_day(value):
+        return False
+    cursor = value + timedelta(days=1)
+    value_week = value.isocalendar()[:2]
+    while cursor.isocalendar()[:2] == value_week:
+        if is_us_equity_trading_day(cursor):
+            return False
+        cursor += timedelta(days=1)
+    return True
+
+
+def _run_scheduled_shadow_monitor(
+    *,
+    as_of: date,
+    registry_path: Path,
+    output_dir: Path,
+) -> dict[str, Any]:
+    if not registry_path.exists():
+        return {
+            "status": "SKIPPED",
+            "reason": f"shadow registry missing: {registry_path}",
+            "monitor_id": None,
+            "monitor_dir": None,
+        }
+    registry = load_shadow_registry(registry_path)
+    candidate_count = len(_records(registry.get("candidates")))
+    if candidate_count == 0:
+        return {
+            "status": "SKIPPED",
+            "reason": "shadow registry has no candidates",
+            "monitor_id": None,
+            "monitor_dir": None,
+        }
+    try:
+        result = run_shadow_monitor(
+            as_of=as_of,
+            registry_path=registry_path,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        return {
+            "status": "FAIL",
+            "reason": str(exc),
+            "monitor_id": None,
+            "monitor_dir": None,
+        }
+    return {
+        "status": "PASS",
+        "reason": "shadow monitor observe-only artifact generated",
+        "monitor_id": result.get("monitor_id"),
+        "monitor_dir": str(result.get("monitor_dir")),
+    }
 
 
 def _latest_overfit_manifest_for_candidate(candidate_id: str, output_dir: Path) -> Path | None:

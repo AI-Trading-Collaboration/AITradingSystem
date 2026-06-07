@@ -18,7 +18,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
-|TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
+|TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
 |TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|VALIDATING|
 
 ## 实施顺序
@@ -41,6 +41,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 - Tiny sweep 能生成完整 artifact 链路：sweep、leaderboard、candidate report、walk-forward、robustness、shadow report、promotion pack。
 - 所有业务阈值来自 `config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml`。
 - 所有历史 artifact 不覆盖；latest pointer 只保存指针。
+- `aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 只能执行 daily scheduler lightweight gate：周度 due 条件、latest pointer validation、stale 检查和可选 observe-only shadow monitor；不得自动运行 `run-profile`、真实 sweep、promotion pack 或生成 `production_candidate`。
 - data quality 失败时 sweep fail closed；tiny fixture 可使用显式可审计 fixture mode。
 - `production_candidate` 不得由自动命令产生。
 - Focused tests 覆盖 config、candidate_id、grid、tiny sweep、checkpoint/resume、ranking、reports、walk-forward、robustness、shadow registry、artifact latest/stale、promotion pack 和 existing CLI regression。
@@ -53,3 +54,5 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 - 2026-06-06：TRADING-101 扩展本平台的 evaluator contract。默认 CI / focused tests 继续使用 `tiny_fixture_proxy` 验证 artifact contract；manual research run 可用 `real_dynamic_v3_rescue` 生成 per-candidate TRADING-091 real evaluation artifacts。Tiny fixture promotion pack 被限制为 `review_required` / `reject`，不得进入 `promote_candidate`。
 - 2026-06-07：TRADING-097 从 VALIDATING 改回 IN_PROGRESS。审查确认当前 `robustness run` 即使读取 `real_dynamic_v3_rescue` sweep，也仍用 `_fixture_metrics` 生成邻近参数敏感性，manifest/report 未披露 real evaluation artifact、metrics source、data quality 或邻近真实候选覆盖。修复方向是复用同一 sweep 中已完成的 real candidate results 作为邻近敏感性证据；缺少真实邻近证据时保持 `REVIEW_REQUIRED`，不得把 proxy 结果提升为 PASS。
 - 2026-06-07：TRADING-097 real artifact-aware robustness 实现完成并转回 VALIDATING。`robustness run` 继承 source sweep evaluator provenance；real mode sensitivity 只读取同一 sweep 中已完成、`metrics_source=real_evaluation_artifact` 且 linked artifact 存在的 neighbor candidate；缺少 neighbor 或 bucket 证据时报告 `REVIEW_REQUIRED`，不回退 `_fixture_metrics`。Manifest/report/validation 新增 evaluator、metrics source、data quality、source real evaluation artifact、real neighbor count、missing neighbor count、stress evidence 和 regime evidence 字段。验证通过 dynamic-v3 focused tests、real evaluation tests、ruff、black 和 compileall。
+- 2026-06-07：TRADING-099 从 VALIDATING 改回 IN_PROGRESS。目标是把 Dynamic v3 rescue research latest/stale/validation 和 small_real 手动研究链登记进统一 `config/scheduled_tasks.yaml` 的非 daily cadence，并新增 `aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 作为 daily-run 可调用的轻量门控节点；该节点只做 due/skip/block 审计、latest pointer validation、stale 检查和可选 observe-only shadow monitor，不自动运行真实 sweep、promotion pack 或生成 `production_candidate`。
+- 2026-06-07：TRADING-099 实现完成并转回 VALIDATING。新增 `dynamic-v3-rescue schedule observe` CLI、daily-run `dynamic_v3_rescue_schedule_observe` 节点、direct CLI dispatcher、closed-market / not-due / due-no-pointer / broken-pointer 审计、dynamic-v3 scheduled_tasks 日期/条件/data-quality/manual-review 门控，以及 operations runbook、scheduled orchestration runbook、system flow、artifact catalog 和 README 同步。验证通过 `pytest tests/test_scheduled_tasks.py tests/test_ops_daily.py tests/test_cli_direct.py tests/test_etf_dynamic_v3_parameter_research.py -q`（67 passed）、`ruff check`、`black --check`、`compileall -q src`、`aits docs validate-freshness`、`aits docs report-contract --latest` 和 `git diff --check`。

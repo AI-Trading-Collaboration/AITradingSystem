@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -38,6 +39,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_walk_forward_selection,
     run_walk_forward_validation,
     run_window_audit,
+    scheduled_observe_payload,
     stable_candidate_id,
     validate_artifacts_payload,
     validate_candidate_attribution_artifact,
@@ -223,7 +225,69 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         )["status"]
         == "PASS"
     )
-    assert validate_artifacts_payload(pointer_dir=tmp_path / "latest")["status"] == "PASS"
+    pointer_dir = tmp_path / "latest"
+    assert validate_artifacts_payload(pointer_dir=pointer_dir)["status"] == "FAIL"
+    pointer_target = tmp_path / "pointer_target.json"
+    pointer_target.write_text("{}", encoding="utf-8")
+    _write_latest_pointer(pointer_dir, "latest_sweep", "sweep-test", pointer_target)
+    assert validate_artifacts_payload(pointer_dir=pointer_dir)["status"] == "PASS"
+
+
+def test_dynamic_v3_schedule_observe_gate_handles_due_and_pointer_failures(
+    tmp_path: Path,
+) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    pointer_dir = tmp_path / "latest"
+    output_dir = tmp_path / "schedule"
+    generated = datetime(2026, 5, 8, 21, 0, tzinfo=UTC)
+
+    not_due = scheduled_observe_payload(
+        as_of=datetime(2026, 5, 6, tzinfo=UTC).date(),
+        config_path=config_path,
+        pointer_dir=pointer_dir,
+        output_dir=output_dir,
+        now=generated,
+    )
+    assert not_due["status"] == "PASS_WITH_SKIPS"
+    assert not_due["due_status"] == "NOT_DUE"
+
+    due_no_pointers = scheduled_observe_payload(
+        as_of=datetime(2026, 5, 8, tzinfo=UTC).date(),
+        config_path=config_path,
+        pointer_dir=pointer_dir,
+        output_dir=output_dir,
+        now=generated,
+    )
+    assert due_no_pointers["status"] == "PASS_WITH_SKIPS"
+    assert due_no_pointers["due_status"] == "DUE_NO_POINTERS"
+    assert Path(due_no_pointers["output_artifacts"]["markdown"]).exists()
+
+    _write_latest_pointer(pointer_dir, "latest_sweep", "missing", tmp_path / "missing.json")
+    broken = scheduled_observe_payload(
+        as_of=datetime(2026, 5, 8, tzinfo=UTC).date(),
+        config_path=config_path,
+        pointer_dir=pointer_dir,
+        output_dir=output_dir,
+        now=generated,
+    )
+    assert broken["status"] == "FAIL"
+    assert broken["artifact_validation"]["status"] == "FAIL"
+
+    pointer_target = tmp_path / "sweep_manifest.json"
+    pointer_target.write_text("{}", encoding="utf-8")
+    _write_latest_pointer(pointer_dir, "latest_sweep", "sweep-ok", pointer_target, now=generated)
+    valid = scheduled_observe_payload(
+        as_of=datetime(2026, 5, 8, tzinfo=UTC).date(),
+        config_path=config_path,
+        pointer_dir=pointer_dir,
+        output_dir=output_dir,
+        registry_path=tmp_path / "missing_registry.yaml",
+        now=generated,
+    )
+    assert valid["status"] == "PASS"
+    assert valid["artifact_validation"]["status"] == "PASS"
+    assert valid["shadow_monitor"]["status"] == "SKIPPED"
+    assert valid["production_candidate_generated"] is False
 
 
 def test_dynamic_v3_parameter_research_cli_smoke(tmp_path: Path) -> None:
@@ -853,6 +917,30 @@ def _write_real_smoke_cache(tmp_path: Path) -> tuple[Path, Path, str]:
 
 def _jsonl(path: Path) -> list[dict[str, object]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
+def _write_latest_pointer(
+    pointer_dir: Path,
+    name: str,
+    artifact_id: str,
+    target: Path,
+    *,
+    now: datetime | None = None,
+) -> None:
+    pointer_dir.mkdir(parents=True, exist_ok=True)
+    (pointer_dir / f"{name}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifact_type": name.removeprefix("latest_"),
+                "artifact_id": artifact_id,
+                "path": str(target),
+                "updated_at": (now or datetime.now(UTC)).isoformat(),
+                "exists": target.exists(),
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _top_candidate_id(sweep_dir: Path) -> str:

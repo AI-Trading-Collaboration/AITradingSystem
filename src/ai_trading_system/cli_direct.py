@@ -425,6 +425,34 @@ def _dispatch(args: list[str]) -> None:
             markdown_path=_optional_path(args, "--markdown-path"),
         )
         return
+    if args[:4] == ["etf", "dynamic-v3-rescue", "schedule", "observe"]:
+        etf_cli.dynamic_v3_schedule_observe_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            family=_option(args, "--family", "dynamic_v3_rescue") or "dynamic_v3_rescue",
+            config_path=(
+                _optional_path(args, "--config-path")
+                or _optional_path(args, "--config")
+                or etf_cli.DEFAULT_PARAMETER_SWEEP_CONFIG_PATH
+            ),
+            pointer_dir=_path_option_with_default(
+                args,
+                "--pointer-dir",
+                etf_cli.DEFAULT_LATEST_POINTER_DIR,
+            ),
+            registry_path=(
+                _optional_path(args, "--registry-path")
+                or _optional_path(args, "--registry")
+                or etf_cli.DEFAULT_SHADOW_REGISTRY_PATH
+            ),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_SCHEDULE_OBSERVE_DIR,
+            ),
+            run_shadow_monitor=not _flag(args, "--skip-shadow-monitor"),
+            force_due=_flag(args, "--force-due"),
+        )
+        return
     if args[:3] == ["etf", "evidence-dashboard", "aggregate"]:
         etf_cli.evidence_dashboard_aggregate_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),

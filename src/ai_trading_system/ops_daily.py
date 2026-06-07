@@ -560,6 +560,15 @@ def build_daily_ops_plan(
         reports_dir,
         as_of,
     )
+    dynamic_v3_schedule_observe_root = (
+        project_root / "reports" / "etf_portfolio" / "dynamic_v3_rescue" / "schedule_observe"
+    )
+    dynamic_v3_schedule_observe_json = (
+        dynamic_v3_schedule_observe_root / f"dynamic_v3_rescue_schedule_observe_{as_of_text}.json"
+    )
+    dynamic_v3_schedule_observe_md = (
+        dynamic_v3_schedule_observe_root / f"dynamic_v3_rescue_schedule_observe_{as_of_text}.md"
+    )
 
     steps = [
         DailyOpsStep(
@@ -1281,6 +1290,29 @@ def build_daily_ops_plan(
                 blocks_downstream=True,
                 enabled=dashboard_enabled,
                 skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="dynamic_v3_rescue_schedule_observe",
+                title="Dynamic v3 rescue scheduled observation gate",
+                command=(
+                    "aits",
+                    "etf",
+                    "dynamic-v3-rescue",
+                    "schedule",
+                    "observe",
+                    "--as-of",
+                    as_of_text,
+                ),
+                required_env_vars=(),
+                produced_paths=(dynamic_v3_schedule_observe_json, dynamic_v3_schedule_observe_md),
+                quality_gate=(
+                    "只读执行 Dynamic v3 rescue weekly/ad hoc research 的轻量门控观察："
+                    "交易日和周度 due 条件、latest pointer validation、stale 检查和可选 "
+                    "observe-only shadow monitor；不运行 real sweep、不生成 promotion pack、"
+                    "不产生 production candidate。"
+                ),
+                blocks_downstream=False,
                 input_visibility="readonly",
             ),
             DailyOpsStep(

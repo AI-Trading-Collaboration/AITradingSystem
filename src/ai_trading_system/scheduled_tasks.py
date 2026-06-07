@@ -24,6 +24,10 @@ class ScheduledTask:
     daily_plan_step_id: str | None = None
     command_contains: tuple[str, ...] = ()
     closed_market_behavior: str | None = None
+    date_gate: str | None = None
+    trigger_condition: str | None = None
+    data_quality_gate: str | None = None
+    manual_review_required: bool = False
     production_weight_write: bool = False
     active_shadow_weight_write: bool = False
     broker_action: bool = False
@@ -53,6 +57,10 @@ class ScheduledTask:
                 "market-panel",
                 "weight candidate",
                 "weight promotion",
+                "dynamic-v3-rescue",
+                "dynamic v3 rescue",
+                "dynamic_v3_rescue",
+                "parameter research",
             )
         )
 
@@ -195,11 +203,22 @@ def _load_task(cadence_id: str, raw: Any) -> ScheduledTask:
             if raw.get("closed_market_behavior") is not None
             else None
         ),
+        date_gate=_optional_task_text(raw.get("date_gate")),
+        trigger_condition=_optional_task_text(raw.get("trigger_condition")),
+        data_quality_gate=_optional_task_text(raw.get("data_quality_gate")),
+        manual_review_required=bool(raw.get("manual_review_required", False)),
         production_weight_write=bool(raw.get("production_weight_write", False)),
         active_shadow_weight_write=bool(raw.get("active_shadow_weight_write", False)),
         broker_action=bool(raw.get("broker_action", False)),
         trading_action=bool(raw.get("trading_action", False)),
     )
+
+
+def _optional_task_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _validate_config(config: ScheduledTasksConfig) -> None:
@@ -226,6 +245,25 @@ def _validate_config(config: ScheduledTasksConfig) -> None:
                 raise ValueError(f"{task.task_id}: daily task requires closed_market_behavior")
             if not task.command_contains:
                 raise ValueError(f"{task.task_id}: daily task requires command_contains")
+        if "dynamic-v3-rescue" in task.command:
+            is_daily_schedule_observe = (
+                task.cadence == DAILY_CADENCE_ID
+                and "dynamic-v3-rescue schedule observe" in task.command
+            )
+            if task.cadence == DAILY_CADENCE_ID and not is_daily_schedule_observe:
+                raise ValueError(
+                    f"{task.task_id}: only dynamic-v3-rescue schedule observe may be daily"
+                )
+            if not task.date_gate:
+                raise ValueError(f"{task.task_id}: dynamic-v3-rescue requires date_gate")
+            if not task.trigger_condition:
+                raise ValueError(f"{task.task_id}: dynamic-v3-rescue requires trigger_condition")
+            if not task.data_quality_gate:
+                raise ValueError(f"{task.task_id}: dynamic-v3-rescue requires data_quality_gate")
+            if not task.manual_review_required:
+                raise ValueError(
+                    f"{task.task_id}: dynamic-v3-rescue requires manual_review_required"
+                )
     if duplicate_task_ids:
         raise ValueError(f"scheduled task ids must be unique: {sorted(duplicate_task_ids)}")
     if duplicate_daily_step_ids:

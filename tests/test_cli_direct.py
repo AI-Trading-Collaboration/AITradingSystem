@@ -403,6 +403,49 @@ def test_cli_direct_etf_ops_validate_writes_json_and_markdown(tmp_path: Path) ->
     assert "## Checks / 校验项" in markdown
 
 
+def test_cli_direct_dispatches_dynamic_v3_schedule_observe(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_schedule_observe_command(**kwargs: object) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "dynamic_v3_schedule_observe_command",
+        fake_schedule_observe_command,
+    )
+
+    exit_code = cli_direct.main(
+        [
+            "etf",
+            "dynamic-v3-rescue",
+            "schedule",
+            "observe",
+            "--as-of",
+            "2026-05-08",
+            "--pointer-dir",
+            str(tmp_path / "latest"),
+            "--registry-path",
+            str(tmp_path / "registry.yaml"),
+            "--output-dir",
+            str(tmp_path / "schedule"),
+            "--skip-shadow-monitor",
+            "--force-due",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["as_of"] == "2026-05-08"
+    assert captured["pointer_dir"] == tmp_path / "latest"
+    assert captured["registry_path"] == tmp_path / "registry.yaml"
+    assert captured["output_dir"] == tmp_path / "schedule"
+    assert captured["run_shadow_monitor"] is False
+    assert captured["force_due"] is True
+
+
 def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
     calls: list[tuple[str, dict[str, object]]] = []
 
@@ -850,6 +893,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         cli_direct.reports_cli,
         "validate_reader_brief_command",
         recorder("validate_reader_brief"),
+    )
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "dynamic_v3_schedule_observe_command",
+        recorder("dynamic_v3_rescue_schedule_observe"),
     )
     monkeypatch.setattr(
         cli_direct.ops_cli,

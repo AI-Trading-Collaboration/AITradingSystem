@@ -73,6 +73,7 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits reports research-governance-summary --latest`" in markdown
     assert "`aits reports reader-brief --latest`" in markdown
     assert "`aits reports validate-reader-brief --latest`" in markdown
+    assert "`aits etf dynamic-v3-rescue schedule observe --as-of 2026-05-06`" in markdown
     assert "`live_provider`" in markdown
     assert "`readonly`" in markdown
     assert "缺少关键环境变量时，后续真实执行器必须 fail closed" in markdown
@@ -333,6 +334,7 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "research_governance_summary",
         "reader_brief",
         "validate_reader_brief",
+        "dynamic_v3_rescue_schedule_observe",
         "pipeline_health",
     ]
 
@@ -406,6 +408,17 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "reader-brief",
         "--latest",
     )
+    assert next(
+        step for step in plan.steps if step.step_id == "dynamic_v3_rescue_schedule_observe"
+    ).command == (
+        "aits",
+        "etf",
+        "dynamic-v3-rescue",
+        "schedule",
+        "observe",
+        "--as-of",
+        "2026-05-06",
+    )
 
 
 def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
@@ -459,6 +472,7 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "reports research-governance-summary --latest" in markdown
     assert "reports reader-brief --latest" in markdown
     assert "reports validate-reader-brief --latest" in markdown
+    assert "etf dynamic-v3-rescue schedule observe --as-of 2026-05-06" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
 
@@ -786,6 +800,16 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert step_by_id["research_governance_summary"].enabled is False
     assert step_by_id["reader_brief"].enabled is False
     assert step_by_id["validate_reader_brief"].enabled is False
+    assert step_by_id["dynamic_v3_rescue_schedule_observe"].enabled is True
+    assert step_by_id["dynamic_v3_rescue_schedule_observe"].command == (
+        "aits",
+        "etf",
+        "dynamic-v3-rescue",
+        "schedule",
+        "observe",
+        "--as-of",
+        "2026-05-10",
+    )
     assert step_by_id["pit_snapshots_fetch_fmp_forward"].produced_paths[0] == (
         tmp_path / "data" / "raw" / "fmp_forward_pit"
     )
