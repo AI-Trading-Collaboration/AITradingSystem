@@ -1,6 +1,6 @@
 # Reader Brief UX Quality & Missing Artifact Impact Layer
 
-最后更新：2026-05-28
+最后更新：2026-06-09
 
 ## 背景
 
@@ -81,3 +81,15 @@ Market Situation 对真实市场信息披露有限，且主视图暴露了过长
   `validate-reader-brief` 和 quality JSON/Markdown 输出。验证通过目标 pytest、
   `tests/test_daily_task_dashboard.py`、全量 pytest、ruff、black，并生成
   `reader_brief_2026-05-27.*` 与 `reader_brief_quality_2026-05-27.*`。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。latest 真实 artifact 复核通过：
+  `reader_brief_2026-06-05.html/json` 为 `OK`、warnings=0、
+  `production_effect=none`；`reader_brief_quality_2026-06-05.json/md` 为 `OK`、
+  checks=10、failed=0、`production_effect=none`。JSON 字段级复核确认
+  narrative summary、`today_conclusion`、`production_effect_statement`、
+  contribution summary 和 market situation 均存在；Missing / Limited Artifact
+  Impact 当前为 `OK`，blocking_count=0、important_count=0、items=0，说明已生成的
+  reader-context artifacts 不再造成重要缺口；manual review queue items=53、
+  top_items=3、impact_groups=3，且每项均有 recommended action；HTML 保留
+  quality link 和 impact/manual-review 分组结构。缺失 artifact impact 与 registry
+  fallback 降级由专项测试覆盖；Reader Brief latest、quality、documentation
+  contract、docs freshness 和 focused tests 均通过。
