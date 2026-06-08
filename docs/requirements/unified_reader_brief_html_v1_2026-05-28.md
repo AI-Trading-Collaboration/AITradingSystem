@@ -1,6 +1,6 @@
 # Unified Reader Brief HTML v1
 
-最后更新：2026-05-28
+最后更新：2026-06-09
 
 关联任务：`REPORT-053`
 
@@ -80,3 +80,14 @@ Reader Brief。
   Task Cadence Calendar、Report Navigation、documentation contract summary、report
   freshness / research governance / docs contract manual review items，以及 Score &
   Decision Funnel `<details>` 展开解释；验证覆盖目标测试、ruff 和 black。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。latest 真实 artifact 复核通过：
+  `aits reports reader-brief --date 2026-06-05` 与 `--latest` 均生成
+  `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、
+  `production_effect=none`；JSON 字段级复核确认 `task_cadence_calendar`
+  覆盖 5 个 cadence groups / 166 个 registry reports，`manual_review_queue`
+  items=53，`report_navigation` items=142 / groups=4，documentation contract
+  status=`PASS`，calculation explainers source=`AVAILABLE`。HTML 包含 Executive
+  Summary、Market Situation、Score &amp; Decision Funnel、Task Cadence Calendar、
+  Manual Review Queue 和 Report Navigation，`<details>` count=424，并保留
+  `production_effect` 展示和详细 artifact links。专项测试、Reader Brief
+  quality、documentation contract 和 docs freshness 均通过。
