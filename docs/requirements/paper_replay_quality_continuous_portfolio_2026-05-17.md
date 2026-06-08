@@ -1,6 +1,6 @@
 # TRADING-004：Paper Replay Quality & Continuous Portfolio
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 关联任务：`TRADING-004`
 
@@ -82,3 +82,21 @@ market snapshot 数据来源透明度和质量标记。
   `git diff --check`、`python scripts/run_paper_trading_from_candidates.py --date
   2026-05-17` 和 `python scripts/run_paper_trading_replay.py --start 2026-05-01
   --end 2026-05-17 --mode daily-independent`。
+- 2026-06-09：系统验证收尾并归档为 DONE。当前复核中，candidate runner smoke
+  `python scripts/run_paper_trading_from_candidates.py --date 2026-05-17` 输出
+  `status=LIMITED`、`reconciliation_status=PASS`、`production_effect=none`；
+  daily-independent replay smoke
+  `python scripts/run_paper_trading_replay.py --start 2026-05-01 --end 2026-05-17
+  --mode daily-independent` 输出 `status=LIMITED`、17 个日期、17 个 candidates、
+  JSON/Markdown artifacts，并确认 replay JSON 顶层包含
+  `replay_mode=daily_independent`、`portfolio_carry_forward=false`、
+  `production_effect=none` 和 `quality_flags`。当前 smoke 的 candidates 未生成
+  orders，因此逐日 `market_snapshot_source=none` 且
+  `market_snapshot_source_counts` 为 0；replay summary 通过
+  `distributions.market_snapshot_source` 汇总来源分布，专项测试覆盖
+  `historical_ohlc` 和 `synthetic_limit_price` 路径。验证通过
+  `python -m pytest tests/trading_engine/test_paper_trading_replay.py -q`
+  （7 passed）、`python -m pytest tests/trading_engine -q`（939 passed）、
+  `python -m black --check scripts/run_paper_trading_from_candidates.py
+  scripts/run_paper_trading_replay.py` 和 scoped Ruff。真实 continuous portfolio
+  结转实现仍由 TRADING-007/TRADING-007A+ 承接，不作为 TRADING-004 未完成项。
