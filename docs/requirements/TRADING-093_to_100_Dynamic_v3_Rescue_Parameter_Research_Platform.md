@@ -18,7 +18,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|DONE|
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|DONE|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|DONE|
-|TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
+|TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|DONE|
 |TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|VALIDATING|
 
 ## 实施顺序
@@ -146,3 +146,18 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   basis 改为按 candidate 匹配，缺失时记录 `incomplete_observation_basis`。Focused
   tests 覆盖缺 candidate report、rejected candidate、incomplete basis 和 complete
   basis validation。
+- 2026-06-09：`TRADING-099` 从 `VALIDATING` 改为 `DONE`。Current canonical
+  latest pointer 复核通过：`artifacts latest` 为 PASS，latest pointer directory
+  当前包含 48 个 canonical dynamic-v3 pointers；`artifacts validate --family
+  dynamic_v3_rescue` 为 PASS、failed_check_count=0；`artifacts stale --config
+  config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml` 为 PASS、
+  stale_after_days=14、stale_count=0；`artifacts repair-latest` 为 PASS、
+  repaired_count=42、skipped_count=0、validation_status=PASS。Forced due gate
+  `schedule observe --as-of 2026-06-05 --force-due --skip-shadow-monitor` 为
+  PASS、due_status=DUE、pointer_count=48，artifact_validation=PASS、
+  stale_check=PASS、shadow_monitor=SKIPPED；generated schedule artifact 固定
+  `production_effect=none`、`broker_action=none`、`production_candidate_generated=false`，
+  并披露 `real_sweep_execution_allowed=false`、`promotion_pack_execution_allowed=false`
+  和 `non_daily_research_execution=false`。Scheduler / daily-run / direct CLI tests
+  覆盖 lightweight gate、closed-market / not-due / no-pointer / broken-pointer 审计、
+  canonical-root latest pointer validation 和非 daily cadence 隔离。
