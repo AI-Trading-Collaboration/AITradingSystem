@@ -1,6 +1,6 @@
 # TRADING-003：Paper Trading Flow Validation & Replay
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 关联任务：`TRADING-003`
 
@@ -70,3 +70,15 @@ summary。下一步不是扩展真实券商能力，而是验证 paper trading d
   `python -m pytest`、`python -m ruff check scripts src tests`、`git diff --check`、
   `python scripts/run_paper_trading_from_candidates.py --date 2026-05-17` 和
   `python scripts/run_paper_trading_replay.py --start 2026-05-01 --end 2026-05-17`。
+- 2026-06-09：系统验证收口并归档为 DONE。当前 `python
+  scripts\run_paper_trading_from_candidates.py --date 2026-05-17` 输出
+  runner status=`LIMITED`、reconciliation=`PASS`；`python
+  scripts\run_paper_trading_replay.py --start 2026-05-01 --end 2026-05-17`
+  输出 replay status=`LIMITED`、date_count=17、candidate_count=17，并生成
+  `outputs/reports/paper_trading_replay_2026-05-01_2026-05-17.json/md`。该
+  `LIMITED` 状态来自缺少真实上游候选，符合本任务要求的 fail-closed 降级；
+  不补造投资结论、不调用真实 broker、不改变 production 仓位建议。目标测试
+  `test_paper_trading_replay.py` 和 `test_daily_task_dashboard.py` 通过（29
+  passed），完整 `tests/trading_engine` 当前通过（939 passed, 330 warnings），
+  scoped Ruff 通过。后续 continuous-portfolio replay、paper signal quality 和
+  dashboard 深化由 TRADING-004+ / TRADING-007+ 任务承接。
