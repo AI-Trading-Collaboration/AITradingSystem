@@ -114,3 +114,12 @@ approximated、optional metadata reconstructed 等 non-hard warning。
   outcome `38f3b24513fc8229`、historical paper sim `278aaea770c9d106` 和
   replay performance review `f5a0d6edae45994f` 均保持 `INSUFFICIENT_DATA` 或
   `continue_forward_tracking`，不生成生产候选、不自动 promotion、不触发 broker。
+- 2026-06-09：full pytest 复验发现
+  `tests/test_backfill_outcome.py` 的 `INSUFFICIENT_DATA` fixture 仍使用
+  missing symbol 触发缺价；TRADING-146 hardening 后该 row 会先被标为
+  `PIT_UNSAFE` 并在 historical replay 阶段排除，不能再证明 backfill outcome
+  对已进入 replay 的样本正确区分 `INSUFFICIENT_DATA`。本轮已将 fixture 改为
+  inventory/replay 阶段有未来价格、backfill 窗口计算时缺少部分价格的样本，并
+  补齐缺失 window price fail-closed 行为，避免把 `NaN` return 误记为
+  `AVAILABLE`。验证通过 `tests/test_backfill_outcome.py`、scoped Black/Ruff
+  和全量 pytest（2270 passed, 330 warnings）。

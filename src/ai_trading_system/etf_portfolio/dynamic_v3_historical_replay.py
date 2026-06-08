@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
@@ -141,9 +142,7 @@ def build_replay_inventory(
         "ineligible_count": coverage["ineligible_count"],
         "config_path": str(config_path),
         "prices_path": str(prices_path),
-        "replay_artifact_inventory_path": str(
-            inventory_dir / "replay_artifact_inventory.jsonl"
-        ),
+        "replay_artifact_inventory_path": str(inventory_dir / "replay_artifact_inventory.jsonl"),
         "pit_safety_audit_path": str(inventory_dir / "pit_safety_audit.json"),
         "replay_coverage_summary_path": str(inventory_dir / "replay_coverage_summary.json"),
         "replay_inventory_report_path": str(inventory_dir / "replay_inventory_report.md"),
@@ -191,9 +190,7 @@ def replay_inventory_report_payload(
     )
     return {
         **_read_json(inventory_dir / "replay_inventory_manifest.json"),
-        "replay_artifact_inventory": _read_jsonl(
-            inventory_dir / "replay_artifact_inventory.jsonl"
-        ),
+        "replay_artifact_inventory": _read_jsonl(inventory_dir / "replay_artifact_inventory.jsonl"),
         "pit_safety_audit": _read_json(inventory_dir / "pit_safety_audit.json"),
         "replay_coverage_summary": _read_json(inventory_dir / "replay_coverage_summary.json"),
         "inventory_dir": str(inventory_dir),
@@ -507,9 +504,7 @@ def run_backfill_outcome(
         "source_replay_path": str(source_dir / "historical_replay_manifest.json"),
         "backfill_manifest_path": str(backfill_dir / "backfill_manifest.json"),
         "replay_outcome_windows_path": str(backfill_dir / "replay_outcome_windows.jsonl"),
-        "variant_performance_summary_path": str(
-            backfill_dir / "variant_performance_summary.json"
-        ),
+        "variant_performance_summary_path": str(backfill_dir / "variant_performance_summary.json"),
         "backfill_outcome_report_path": str(backfill_dir / "backfill_outcome_report.md"),
         "production_effect": "none",
         "broker_action_allowed": False,
@@ -636,16 +631,10 @@ def run_historical_paper_sim(
         "variant": variant,
         "outcome_mode": OUTCOME_MODE_HISTORICAL_REPLAY,
         "source_replay_path": str(source_dir / "historical_replay_manifest.json"),
-        "historical_paper_sim_manifest_path": str(
-            sim_dir / "historical_paper_sim_manifest.json"
-        ),
-        "simulated_paper_state_history_path": str(
-            sim_dir / "simulated_paper_state_history.jsonl"
-        ),
+        "historical_paper_sim_manifest_path": str(sim_dir / "historical_paper_sim_manifest.json"),
+        "simulated_paper_state_history_path": str(sim_dir / "simulated_paper_state_history.jsonl"),
         "simulated_trade_ledger_path": str(sim_dir / "simulated_trade_ledger.jsonl"),
-        "simulated_performance_summary_path": str(
-            sim_dir / "simulated_performance_summary.json"
-        ),
+        "simulated_performance_summary_path": str(sim_dir / "simulated_performance_summary.json"),
         "historical_paper_sim_report_path": str(sim_dir / "historical_paper_sim_report.md"),
         "production_effect": "none",
         "broker_action_allowed": False,
@@ -696,9 +685,7 @@ def historical_paper_sim_report_payload(
             sim_dir / "simulated_paper_state_history.jsonl"
         ),
         "simulated_trade_ledger": _read_jsonl(sim_dir / "simulated_trade_ledger.jsonl"),
-        "simulated_performance_summary": _read_json(
-            sim_dir / "simulated_performance_summary.json"
-        ),
+        "simulated_performance_summary": _read_json(sim_dir / "simulated_performance_summary.json"),
         "sim_dir": str(sim_dir),
     }
 
@@ -804,12 +791,8 @@ def run_replay_performance_review(
         "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
         "source_sim_path": str(source_sim_dir / "historical_paper_sim_manifest.json"),
         "replay_performance_manifest_path": str(review_dir / "replay_performance_manifest.json"),
-        "advisory_rule_effectiveness_path": str(
-            review_dir / "advisory_rule_effectiveness.json"
-        ),
-        "calibration_recommendations_path": str(
-            review_dir / "calibration_recommendations.json"
-        ),
+        "advisory_rule_effectiveness_path": str(review_dir / "advisory_rule_effectiveness.json"),
+        "calibration_recommendations_path": str(review_dir / "calibration_recommendations.json"),
         "replay_performance_review_path": str(review_dir / "replay_performance_review.md"),
         "reader_brief_section_path": str(review_dir / "reader_brief_section.md"),
         "production_effect": "none",
@@ -862,12 +845,8 @@ def replay_performance_review_report_payload(
     )
     return {
         **_read_json(review_dir / "replay_performance_manifest.json"),
-        "advisory_rule_effectiveness": _read_json(
-            review_dir / "advisory_rule_effectiveness.json"
-        ),
-        "calibration_recommendations": _read_json(
-            review_dir / "calibration_recommendations.json"
-        ),
+        "advisory_rule_effectiveness": _read_json(review_dir / "advisory_rule_effectiveness.json"),
+        "calibration_recommendations": _read_json(review_dir / "calibration_recommendations.json"),
         "review_dir": str(review_dir),
     }
 
@@ -948,9 +927,7 @@ def render_replay_inventory_report(
         if "MISSING_PRICE_DATA" in _texts(row.get("replay_limitations"))
     )
     hard_limitations = [
-        row
-        for row in rows
-        if HARD_PIT_LIMITATIONS & set(_texts(row.get("replay_limitations")))
+        row for row in rows if HARD_PIT_LIMITATIONS & set(_texts(row.get("replay_limitations")))
     ]
     hard_dates = ", ".join(sorted({_text(row.get("as_of")) for row in hard_limitations}))
     return "\n".join(
@@ -1014,9 +991,7 @@ def render_historical_replay_report(
     )
 
 
-def render_backfill_outcome_report(
-    manifest: Mapping[str, Any], summary: Mapping[str, Any]
-) -> str:
+def render_backfill_outcome_report(manifest: Mapping[str, Any], summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
             "# Dynamic v3 backfilled replay outcome",
@@ -1185,11 +1160,15 @@ def _inventory_row(
         ),
         "source_artifacts": {
             "shadow_monitor_run_id": source_shadow_monitor_id,
-            "shadow_monitor_manifest_path": str(
-                shadow_monitor_run_dir / source_shadow_monitor_id / "shadow_monitor_manifest.json"
-            )
-            if source_shadow_monitor_id
-            else "",
+            "shadow_monitor_manifest_path": (
+                str(
+                    shadow_monitor_run_dir
+                    / source_shadow_monitor_id
+                    / "shadow_monitor_manifest.json"
+                )
+                if source_shadow_monitor_id
+                else ""
+            ),
             "daily_advisory_id": daily_advisory_id,
             "daily_advisory_manifest_path": str(advisory_dir / "daily_advisory_manifest.json"),
             "consensus_drift_id": _text(consensus_drift.get("drift_id")),
@@ -1247,9 +1226,7 @@ def _historical_replay_event(row: Mapping[str, Any]) -> dict[str, Any]:
             if weights
             else 0.0
         )
-    missing = [
-        variant["variant"] for variant in variants if not _mapping(variant.get("weights"))
-    ]
+    missing = [variant["variant"] for variant in variants if not _mapping(variant.get("weights"))]
     replay_status = "READY_FOR_OUTCOME" if not missing else "PARTIAL"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -1328,26 +1305,33 @@ def _backfilled_outcome_rows(
                     "start_date": start.isoformat(),
                     "end_date": end.isoformat(),
                     "return": metrics["return"],
-                    "relative_to_no_trade": round(
-                        metrics["return"] - returns.get("no_trade", _missing_metrics())["return"],
-                        6,
-                    )
-                    if status == "AVAILABLE"
-                    else 0.0,
-                    "relative_to_consensus_target": round(
-                        metrics["return"]
-                        - returns.get("consensus_target", _missing_metrics())["return"],
-                        6,
-                    )
-                    if status == "AVAILABLE"
-                    else 0.0,
-                    "relative_to_limited_adjustment": round(
-                        metrics["return"]
-                        - returns.get("limited_adjustment", _missing_metrics())["return"],
-                        6,
-                    )
-                    if status == "AVAILABLE"
-                    else 0.0,
+                    "relative_to_no_trade": (
+                        round(
+                            metrics["return"]
+                            - returns.get("no_trade", _missing_metrics())["return"],
+                            6,
+                        )
+                        if status == "AVAILABLE"
+                        else 0.0
+                    ),
+                    "relative_to_consensus_target": (
+                        round(
+                            metrics["return"]
+                            - returns.get("consensus_target", _missing_metrics())["return"],
+                            6,
+                        )
+                        if status == "AVAILABLE"
+                        else 0.0
+                    ),
+                    "relative_to_limited_adjustment": (
+                        round(
+                            metrics["return"]
+                            - returns.get("limited_adjustment", _missing_metrics())["return"],
+                            6,
+                        )
+                        if status == "AVAILABLE"
+                        else 0.0
+                    ),
                     "max_drawdown": metrics["max_drawdown"],
                     "realized_volatility": metrics["realized_volatility"],
                     "turnover": _float(_mapping(variant).get("turnover")),
@@ -1468,16 +1452,12 @@ def _advisory_rule_effectiveness(
                 "event_count": len({_text(row.get("replay_event_id")) for row in action_rows}),
                 "avg_relative_to_no_trade_5d": round(_avg(rel_5), 6),
                 "avg_relative_to_no_trade_20d": round(_avg(rel_20), 6),
-                "false_alarm_rate": round(
-                    sum(1 for value in rel_5 if value <= 0) / len(rel_5), 6
-                )
-                if rel_5
-                else 0.0,
-                "missed_opportunity_rate": round(
-                    sum(1 for value in rel_5 if value > 0) / len(rel_5), 6
-                )
-                if rel_5
-                else 0.0,
+                "false_alarm_rate": (
+                    round(sum(1 for value in rel_5 if value <= 0) / len(rel_5), 6) if rel_5 else 0.0
+                ),
+                "missed_opportunity_rate": (
+                    round(sum(1 for value in rel_5 if value > 0) / len(rel_5), 6) if rel_5 else 0.0
+                ),
             }
         )
     variant_effectiveness = [
@@ -1486,9 +1466,11 @@ def _advisory_rule_effectiveness(
             "win_rate_vs_no_trade": row.get("win_rate_vs_no_trade_5d", 0.0),
             "avg_return_delta": row.get("avg_relative_to_no_trade_5d", 0.0),
             "drawdown_delta": row.get("avg_max_drawdown_20d", 0.0),
-            "turnover": sim_summary.get("turnover", 0.0)
-            if row.get("variant") == sim_summary.get("variant")
-            else row.get("avg_turnover", 0.0),
+            "turnover": (
+                sim_summary.get("turnover", 0.0)
+                if row.get("variant") == sim_summary.get("variant")
+                else row.get("avg_turnover", 0.0)
+            ),
         }
         for row in _records(variant_summary.get("summary"))
     ]
@@ -1587,11 +1569,9 @@ def _variant_performance_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str,
                 "avg_10d_return": round(_avg(_window_values(available, 10, "return")), 6),
                 "avg_20d_return": round(_avg(_window_values(available, 20, "return")), 6),
                 "avg_relative_to_no_trade_5d": round(_avg(rel_5), 6),
-                "win_rate_vs_no_trade_5d": round(
-                    sum(1 for value in rel_5 if value > 0) / len(rel_5), 6
-                )
-                if rel_5
-                else 0.0,
+                "win_rate_vs_no_trade_5d": (
+                    round(sum(1 for value in rel_5 if value > 0) / len(rel_5), 6) if rel_5 else 0.0
+                ),
                 "avg_max_drawdown_20d": round(
                     _avg(_window_values(available, 20, "max_drawdown")),
                     6,
@@ -1788,9 +1768,7 @@ def _pit_status_and_eligibility(limitations: Sequence[str]) -> tuple[str, str]:
 def _pit_safety_audit(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     counter = Counter(_text(row.get("pit_safety_status")) for row in rows)
     limitations = Counter(
-        limitation
-        for row in rows
-        for limitation in _texts(row.get("replay_limitations"))
+        limitation for row in rows for limitation in _texts(row.get("replay_limitations"))
     )
     hard_limitations = {
         limitation: count
@@ -1845,9 +1823,7 @@ def _replay_action_summary(
     action_counter = Counter(_text(row.get("recommended_action")) for row in events)
     skipped_reason_counter = Counter(_text(row.get("skip_reason")) for row in skipped)
     variant_counter = Counter(
-        _text(variant.get("variant"))
-        for row in events
-        for variant in _records(row.get("variants"))
+        _text(variant.get("variant")) for row in events for variant in _records(row.get("variants"))
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -2040,26 +2016,36 @@ def _portfolio_return_and_path(
     for symbol, weight in clean.items():
         if symbol == "CASH":
             continue
-        if symbol not in pivot.columns:
-            raise DynamicV3HistoricalReplayError(f"missing symbol price: {symbol}")
-        start_price = _float(pivot.loc[start_idx, symbol])
-        end_price = _float(pivot.loc[end, symbol])
-        if start_price <= 0 or end_price <= 0:
-            raise DynamicV3HistoricalReplayError(f"invalid price for {symbol}")
+        start_price = _portfolio_price(pivot, start_idx, symbol)
+        end_price = _portfolio_price(pivot, end, symbol)
         total_return += _float(weight) * (end_price / start_price - 1.0)
     daily_returns = []
     for left, right in zip(path_dates, path_dates[1:], strict=False):
         day_return = 0.0
         for symbol, weight in clean.items():
-            if symbol == "CASH" or symbol not in pivot.columns:
+            if symbol == "CASH":
                 continue
-            left_price = _float(pivot.loc[left, symbol])
-            right_price = _float(pivot.loc[right, symbol])
-            if left_price <= 0 or right_price <= 0:
-                continue
+            left_price = _portfolio_price(pivot, left, symbol)
+            right_price = _portfolio_price(pivot, right, symbol)
             day_return += _float(weight) * (right_price / left_price - 1.0)
         daily_returns.append(day_return)
     return total_return, daily_returns
+
+
+def _portfolio_price(pivot: pd.DataFrame, price_date: date, symbol: str) -> float:
+    if symbol not in pivot.columns:
+        raise DynamicV3HistoricalReplayError(f"missing symbol price: {symbol}")
+    try:
+        value = _float(pivot.loc[price_date, symbol], default=float("nan"))
+    except KeyError as exc:
+        raise DynamicV3HistoricalReplayError(
+            f"missing price date for {symbol}: {price_date.isoformat()}"
+        ) from exc
+    if not math.isfinite(value) or value <= 0:
+        raise DynamicV3HistoricalReplayError(
+            f"invalid price for {symbol}: {price_date.isoformat()}"
+        )
+    return value
 
 
 def _price_availability_index(prices_path: Path) -> dict[str, set[date]]:
