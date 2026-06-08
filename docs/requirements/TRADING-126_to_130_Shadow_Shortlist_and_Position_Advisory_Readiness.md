@@ -1,5 +1,7 @@
 # TRADING-126 to TRADING-130 Shadow Shortlist and Position Advisory Readiness
 
+最后更新：2026-06-08
+
 ## 背景
 
 TRADING-121_to_125 已基于 medium_real sweep `sweep_20260607T102300Z_ae5ae1d8`
