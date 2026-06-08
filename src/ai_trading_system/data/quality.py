@@ -447,13 +447,16 @@ def _validate_download_manifest(
         )
         return summary
 
-    if _manifest_is_reconstructed(manifest):
+    if _manifest_has_current_reconstructed_record(
+        manifest,
+        (price_summary, rate_summary, secondary_price_summary),
+    ):
         issues.append(
             DataQualityIssue(
                 Severity.WARNING,
                 "download_manifest_provenance_reconstructed",
                 (
-                    "下载审计清单由现有 cache 重建，不能证明原始下载事件；"
+                    "当前缓存文件的下载审计记录由现有 cache 重建，不能证明原始下载事件；"
                     "下游报告必须披露该 provenance 限制。"
                 ),
                 source="下载审计清单",
@@ -472,20 +475,31 @@ def _validate_download_manifest(
     return summary
 
 
-def _manifest_is_reconstructed(manifest: pd.DataFrame) -> bool:
-    provider_matches = manifest.get("provider", pd.Series(dtype=object)).astype(str).eq(
-        "cache_rebuild_from_existing_file"
-    )
-    if provider_matches.any():
-        return True
-    for value in manifest.get("request_parameters", pd.Series(dtype=object)).astype(str):
-        try:
-            parsed = json.loads(value)
-        except (TypeError, ValueError):
+def _manifest_has_current_reconstructed_record(
+    manifest: pd.DataFrame,
+    summaries: tuple[DataFileSummary | None, ...],
+) -> bool:
+    for summary in summaries:
+        if summary is None or not summary.exists or summary.sha256 is None:
             continue
-        if isinstance(parsed, dict) and parsed.get("provenance_status") == "RECONSTRUCTED_MANIFEST":
+        checksum_matches = manifest["checksum_sha256"].astype(str) == summary.sha256
+        if not checksum_matches.any():
+            continue
+        latest_match = manifest.loc[checksum_matches].iloc[-1]
+        if _manifest_row_is_reconstructed(latest_match):
             return True
     return False
+
+
+def _manifest_row_is_reconstructed(row: pd.Series) -> bool:
+    if str(row.get("provider", "")) == "cache_rebuild_from_existing_file":
+        return True
+    value = str(row.get("request_parameters", ""))
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        return False
+    return isinstance(parsed, dict) and parsed.get("provenance_status") == "RECONSTRUCTED_MANIFEST"
 
 
 def _check_manifest_covers_file(

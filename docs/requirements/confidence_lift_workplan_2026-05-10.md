@@ -67,6 +67,19 @@
   `data_quality_2026-06-05_marketstack_reconciliation.csv` 只覆盖
   QQQ/SMH/SOXX/SPY，未直接复现 NOW/full-universe
   `known_split_raw_close_basis_difference` 证据；不能仅凭该有限样本归档。
+- 2026-06-09：`DATA-016` 收口归档。先复跑
+  `validate-data --as-of 2026-06-05 --full-universe` 发现默认 core cache 缺
+  ASX，随后按正确路径执行 full-universe `download-data --start 2018-01-01
+  --end 2026-06-05 --full-universe` 刷新正式 cache，再复验
+  `validate-data --as-of 2026-06-05 --full-universe` 为 PASS、错误 0、警告
+  0、信息 12。companion reconciliation 覆盖 full universe，包含 NOW
+  2025-12-17 的 `known_split_raw_close_basis_difference`（主源 close
+  782.4，Marketstack close 156.478，close_diff_pct 0.8000025562372188），
+  同时记录 `marketstack_bad_point_primary_available=26` 和
+  `adjusted_close_dividend_basis_difference=9349`。本轮还修正
+  `validate-data` 的 download manifest provenance 判定：只有当前文件
+  checksum 的最新相关 manifest 记录为 `RECONSTRUCTED_MANIFEST` 时才输出
+  provenance warning；历史 reconstructed 行不会污染已重新下载的当前 cache。
 - 2026-06-07：`RISK-013` 收口归档。最新真实 daily-run 的
   OpenAI 预审、LLM formal occurrence/attestation 写入和日报政策/地缘模块均通过；
   `policy_geopolitics` 不再因 LLM formal full coverage 触发低置信提示，也未触发

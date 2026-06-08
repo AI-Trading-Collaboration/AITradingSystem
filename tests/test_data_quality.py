@@ -323,6 +323,84 @@ def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
     assert "宏观变化检查起点：2022-12-01" in markdown
 
 
+def test_validate_data_cache_ignores_stale_reconstructed_manifest_rows(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    old_prices_path = tmp_path / "old_prices_daily.csv"
+    old_prices_path.write_text(
+        "date,ticker,open,high,low,close,adj_close,volume\n",
+        encoding="utf-8",
+    )
+    manifest_path = tmp_path / "download_manifest.csv"
+    reconstructed = _manifest_row("reconstructed_prices", old_prices_path)
+    reconstructed.update(
+        {
+            "provider": "cache_rebuild_from_existing_file",
+            "request_parameters": (
+                '{"mode":"reconstruct_from_existing_cache",'
+                '"provenance_status":"RECONSTRUCTED_MANIFEST"}'
+            ),
+        }
+    )
+    pd.DataFrame(
+        [
+            reconstructed,
+            _manifest_row("prices", prices_path),
+            _manifest_row("rates", rates_path),
+        ]
+    ).to_csv(manifest_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        manifest_path=manifest_path,
+    )
+
+    assert report.status == "PASS"
+    assert "download_manifest_provenance_reconstructed" not in _issue_codes(report)
+
+
+def test_validate_data_cache_warns_when_current_manifest_row_is_reconstructed(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    manifest_path = tmp_path / "download_manifest.csv"
+    reconstructed = _manifest_row("reconstructed_prices", prices_path)
+    reconstructed.update(
+        {
+            "provider": "cache_rebuild_from_existing_file",
+            "request_parameters": (
+                '{"mode":"reconstruct_from_existing_cache",'
+                '"provenance_status":"RECONSTRUCTED_MANIFEST"}'
+            ),
+        }
+    )
+    pd.DataFrame(
+        [
+            reconstructed,
+            _manifest_row("rates", rates_path),
+        ]
+    ).to_csv(manifest_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        manifest_path=manifest_path,
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert "download_manifest_provenance_reconstructed" in _issue_codes(report)
+
+
 def test_validate_data_cache_checks_secondary_price_source(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path)
     secondary_path = tmp_path / "prices_marketstack_daily.csv"
