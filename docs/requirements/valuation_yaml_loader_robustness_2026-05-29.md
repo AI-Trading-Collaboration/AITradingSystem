@@ -2,7 +2,7 @@
 
 任务 ID：`DATA-021`
 
-最后更新：2026-05-29
+最后更新：2026-06-09
 
 ## 背景
 
@@ -69,3 +69,12 @@ loader 直接把打开的文本流传给 PyYAML。这个形态会让 PyYAML 的 
   234 项目标测试、全 `src/ai_trading_system` ruff、Black check、`git diff --check`，
   以及真实 `aits ops daily-run` as-of 2026-05-28；最终 run 中
   `pit_snapshots_validate`、`valuation_snapshots` 和 `score_daily` 均 PASS。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。当前代码复跑
+  `tests/test_valuation.py tests/test_daily_scoring.py -q` 为 40 passed；
+  `ruff check src/ai_trading_system/yaml_loader.py src/ai_trading_system/valuation.py
+  src/ai_trading_system/config.py tests/test_valuation.py tests/test_daily_scoring.py`
+  PASS；相关 compileall PASS。当前缓存上的
+  `aits score-daily --as-of 2026-06-05 --skip-risk-event-openai-precheck` 也能完成
+  估值、配置 YAML、数据质量和日报评分读取路径，状态为 `PASS_WITH_LIMITATIONS`，
+  数据质量报告为 `PASS`；本次 smoke 未触发 OpenAI 预审，完整 daily-run 证据仍以
+  2026-05-28 的 23/23 PASS 为归档依据。
