@@ -1,6 +1,6 @@
 # REPORT-058: Reader Brief Decision View
 
-最后更新：2026-05-29
+最后更新：2026-06-09
 
 ## 背景
 
@@ -85,3 +85,16 @@ Review Queue 对读者不够收敛。
   `aits reports validate-reader-brief --latest` 均为 `OK`。已同步当前 daily run bundle 的
   Reader Brief / quality artifact。浏览器自动化读取本地 `file://` 页面被安全策略拦截，
   已改用 HTML 结构校验确认关键模块存在，未做自动视觉截图。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。最新
+  `reader_brief_2026-06-05.html/json` 为 `OK` 且 `production_effect=none`；
+  字段级复核确认 `status_panel` 同时展示 `build_status=OK`、
+  `decision_usability=MANUAL_REVIEW_REQUIRED` 和
+  `research_promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，没有把 build OK
+  写成可直接投资行动。`action_checklist` 含 5 项，明确不新增 AI 风险资产仓位、
+  复核 40%-40% 仓位上限、不做 weight promotion 和只读/no broker 边界；
+  `missing_limited_artifact_impact.impact_summary` 区分今日评分链路 `PASS`、
+  阅读上下文 `LIMITED` 和研究/权重晋升链路
+  `BLOCKED_BY_MISSING_ARTIFACTS`；`manual_review_queue.top_items` 为 Top 3，
+  `impact_groups` 覆盖影响今日结论、影响研究晋升和仅审计/观察；funnel 7 个步骤均保留
+  人读 `current_value` 与审计 `audit_value`。`reader-brief --latest`、
+  `validate-reader-brief --latest` 和 `docs report-contract --latest` 通过。
