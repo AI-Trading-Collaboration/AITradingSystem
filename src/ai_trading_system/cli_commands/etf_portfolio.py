@@ -257,6 +257,28 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     load_json_artifact as load_dynamic_v3_failure_attribution_json_artifact,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
+    DEFAULT_BACKFILLED_OUTCOME_DIR,
+    DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+    DEFAULT_HISTORICAL_REPLAY_DIR,
+    DEFAULT_REPLAY_INVENTORY_DIR,
+    DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+    backfill_outcome_report_payload,
+    build_replay_inventory,
+    historical_paper_sim_report_payload,
+    historical_replay_report_payload,
+    replay_inventory_report_payload,
+    replay_performance_review_report_payload,
+    run_backfill_outcome,
+    run_historical_paper_sim,
+    run_historical_replay,
+    run_replay_performance_review,
+    validate_backfill_outcome_artifact,
+    validate_historical_paper_sim_artifact,
+    validate_historical_replay_artifact,
+    validate_replay_inventory_artifact,
+    validate_replay_performance_review_artifact,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_ADVISORY_OUTCOME_DIR,
     DEFAULT_OWNER_ATTRIBUTION_DIR,
@@ -1053,6 +1075,26 @@ dynamic_v3_weekly_advisory_review_app = typer.Typer(
     help="Dynamic v3 rescue weekly advisory review workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_replay_inventory_app = typer.Typer(
+    help="Dynamic v3 rescue historical replay inventory workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_historical_replay_app = typer.Typer(
+    help="Dynamic v3 rescue historical advisory replay workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_backfill_outcome_app = typer.Typer(
+    help="Dynamic v3 rescue backfilled outcome workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_historical_paper_sim_app = typer.Typer(
+    help="Dynamic v3 rescue historical paper portfolio simulation workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_replay_performance_review_app = typer.Typer(
+    help="Dynamic v3 rescue replay performance review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1141,6 +1183,14 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_aging_app, name="shadow-aging"
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_weekly_advisory_review_app,
     name="weekly-advisory-review",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_replay_inventory_app, name="replay-inventory")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_historical_replay_app, name="historical-replay")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_backfill_outcome_app, name="backfill-outcome")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_historical_paper_sim_app, name="historical-paper-sim")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_replay_performance_review_app,
+    name="replay-performance-review",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
@@ -7692,6 +7742,462 @@ def dynamic_v3_validate_weekly_advisory_review_command(
     )
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_replay_inventory_app.command("build")
+def dynamic_v3_replay_inventory_build_command(
+    start: Annotated[str, typer.Option("--start", help="replay inventory start date。")],
+    end: Annotated[str, typer.Option("--end", help="replay inventory end date。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay inventory artifact root。"),
+    ] = DEFAULT_REPLAY_INVENTORY_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    shadow_monitor_run_dir: Annotated[
+        Path,
+        typer.Option("--shadow-monitor-run-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    consensus_drift_dir: Annotated[
+        Path,
+        typer.Option("--consensus-drift-dir", help="consensus drift artifact root。"),
+    ] = DEFAULT_CONSENSUS_DRIFT_DIR,
+    owner_review_dir: Annotated[
+        Path,
+        typer.Option("--owner-review-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    paper_portfolio_dir: Annotated[
+        Path,
+        typer.Option("--paper-portfolio-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper portfolio config。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+) -> None:
+    """构建 TRADING-141 historical replay inventory 和 PIT safety audit。"""
+    result = build_replay_inventory(
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        consensus_drift_dir=consensus_drift_dir,
+        owner_review_dir=owner_review_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        prices_path=prices_path,
+        config_path=config_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"inventory_id={result['inventory_id']}")
+    typer.echo(f"inventory_dir={result['inventory_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"total_replay_events={manifest['total_replay_events']}")
+    typer.echo(f"pit_safe_count={manifest['pit_safe_count']}")
+    typer.echo(f"pit_warning_count={manifest['pit_warning_count']}")
+    typer.echo(f"pit_unsafe_count={manifest['pit_unsafe_count']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_replay_inventory_app.command("report")
+def dynamic_v3_replay_inventory_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest replay inventory。"),
+    ] = False,
+    inventory_id: Annotated[
+        str | None,
+        typer.Option("--inventory-id", help="replay inventory id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay inventory artifact root。"),
+    ] = DEFAULT_REPLAY_INVENTORY_DIR,
+) -> None:
+    """展示 TRADING-141 replay inventory 摘要。"""
+    payload = replay_inventory_report_payload(
+        inventory_id=inventory_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"inventory_id={payload['inventory_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"total_replay_events={payload['total_replay_events']}")
+    typer.echo(f"pit_safe_count={payload['pit_safe_count']}")
+    typer.echo(f"pit_warning_count={payload['pit_warning_count']}")
+    typer.echo(f"pit_unsafe_count={payload['pit_unsafe_count']}")
+    typer.echo(f"report_path={payload['replay_inventory_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-replay-inventory")
+def dynamic_v3_validate_replay_inventory_command(
+    inventory_id: Annotated[str, typer.Option("--inventory-id", help="inventory id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay inventory artifact root。"),
+    ] = DEFAULT_REPLAY_INVENTORY_DIR,
+) -> None:
+    """校验 TRADING-141 replay inventory artifact。"""
+    payload = validate_replay_inventory_artifact(inventory_id=inventory_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_historical_replay_app.command("run")
+def dynamic_v3_historical_replay_run_command(
+    inventory_id: Annotated[str, typer.Option("--inventory-id", help="inventory id。")],
+    include_pit_warning: Annotated[
+        bool,
+        typer.Option("--include-pit-warning", help="允许 PIT_WARNING 进入 replay。"),
+    ] = False,
+    inventory_dir: Annotated[
+        Path,
+        typer.Option("--inventory-dir", help="replay inventory artifact root。"),
+    ] = DEFAULT_REPLAY_INVENTORY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+) -> None:
+    """运行 TRADING-142 historical advisory replay。"""
+    result = run_historical_replay(
+        inventory_id=inventory_id,
+        include_pit_warning=include_pit_warning,
+        inventory_dir=inventory_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    summary = result["action_summary"]
+    typer.echo(f"replay_id={result['replay_id']}")
+    typer.echo(f"replay_dir={result['replay_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"replay_event_count={manifest['replay_event_count']}")
+    typer.echo(f"skipped_count={manifest['skipped_count']}")
+    typer.echo(f"generated_variants={','.join(manifest['generated_variants'])}")
+    typer.echo(f"broker_action_present={summary['broker_action_present']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_historical_replay_app.command("report")
+def dynamic_v3_historical_replay_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest historical replay。"),
+    ] = False,
+    replay_id: Annotated[str | None, typer.Option("--replay-id", help="replay id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+) -> None:
+    """展示 TRADING-142 historical replay 摘要。"""
+    payload = historical_replay_report_payload(
+        replay_id=replay_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("replay_action_summary"))
+    typer.echo(f"replay_id={payload['replay_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"replay_event_count={payload['replay_event_count']}")
+    typer.echo(f"skipped_count={payload['skipped_count']}")
+    typer.echo(f"broker_action_present={summary.get('broker_action_present')}")
+    typer.echo(f"report_path={payload['historical_replay_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-historical-replay")
+def dynamic_v3_validate_historical_replay_command(
+    replay_id: Annotated[str, typer.Option("--replay-id", help="replay id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+) -> None:
+    """校验 TRADING-142 historical replay artifact。"""
+    payload = validate_historical_replay_artifact(replay_id=replay_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backfill_outcome_app.command("run")
+def dynamic_v3_backfill_outcome_run_command(
+    replay_id: Annotated[str, typer.Option("--replay-id", help="replay id。")],
+    replay_dir: Annotated[
+        Path,
+        typer.Option("--replay-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="cached rates path。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper portfolio config。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+) -> None:
+    """运行 TRADING-143 backfilled outcome evaluation。"""
+    result = run_backfill_outcome(
+        replay_id=replay_id,
+        replay_dir=replay_dir,
+        output_dir=output_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        config_path=config_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"backfill_id={result['backfill_id']}")
+    typer.echo(f"backfill_dir={result['backfill_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"available_count={manifest['available_count']}")
+    typer.echo(f"pending_count={manifest['pending_count']}")
+    typer.echo(f"insufficient_data_count={manifest['insufficient_data_count']}")
+    typer.echo(f"best_variant={manifest['best_variant']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_backfill_outcome_app.command("report")
+def dynamic_v3_backfill_outcome_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backfilled outcome。"),
+    ] = False,
+    backfill_id: Annotated[
+        str | None,
+        typer.Option("--backfill-id", help="backfill id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+) -> None:
+    """展示 TRADING-143 backfilled outcome 摘要。"""
+    payload = backfill_outcome_report_payload(
+        backfill_id=backfill_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"backfill_id={payload['backfill_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"available_count={payload['available_count']}")
+    typer.echo(f"pending_count={payload['pending_count']}")
+    typer.echo(f"insufficient_data_count={payload['insufficient_data_count']}")
+    typer.echo(f"best_variant={payload['best_variant']}")
+    typer.echo(f"report_path={payload['backfill_outcome_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-backfill-outcome")
+def dynamic_v3_validate_backfill_outcome_command(
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="backfill id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+) -> None:
+    """校验 TRADING-143 backfilled outcome artifact。"""
+    payload = validate_backfill_outcome_artifact(backfill_id=backfill_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_historical_paper_sim_app.command("run")
+def dynamic_v3_historical_paper_sim_run_command(
+    replay_id: Annotated[str, typer.Option("--replay-id", help="replay id。")],
+    variant: Annotated[
+        str,
+        typer.Option("--variant", help="simulation variant。"),
+    ] = "limited_adjustment",
+    replay_dir: Annotated[
+        Path,
+        typer.Option("--replay-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="historical paper sim artifact root。"),
+    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+) -> None:
+    """运行 TRADING-144 historical paper portfolio simulation。"""
+    result = run_historical_paper_sim(
+        replay_id=replay_id,
+        variant=variant,
+        replay_dir=replay_dir,
+        output_dir=output_dir,
+        prices_path=prices_path,
+    )
+    summary = result["performance_summary"]
+    typer.echo(f"sim_id={result['sim_id']}")
+    typer.echo(f"sim_dir={result['sim_dir']}")
+    typer.echo(f"status={summary['simulation_status']}")
+    typer.echo(f"variant={summary['variant']}")
+    typer.echo(f"total_return={summary['total_return']}")
+    typer.echo(f"max_drawdown={summary['max_drawdown']}")
+    typer.echo(f"turnover={summary['turnover']}")
+    typer.echo(f"relative_to_no_trade={summary['relative_to_no_trade']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_historical_paper_sim_app.command("report")
+def dynamic_v3_historical_paper_sim_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest historical paper sim。"),
+    ] = False,
+    sim_id: Annotated[str | None, typer.Option("--sim-id", help="simulation id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="historical paper sim artifact root。"),
+    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+) -> None:
+    """展示 TRADING-144 historical paper sim 摘要。"""
+    payload = historical_paper_sim_report_payload(
+        sim_id=sim_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("simulated_performance_summary"))
+    typer.echo(f"sim_id={payload['sim_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant={summary.get('variant')}")
+    typer.echo(f"total_return={summary.get('total_return')}")
+    typer.echo(f"max_drawdown={summary.get('max_drawdown')}")
+    typer.echo(f"turnover={summary.get('turnover')}")
+    typer.echo(f"report_path={payload['historical_paper_sim_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-historical-paper-sim")
+def dynamic_v3_validate_historical_paper_sim_command(
+    sim_id: Annotated[str, typer.Option("--sim-id", help="simulation id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="historical paper sim artifact root。"),
+    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+) -> None:
+    """校验 TRADING-144 historical paper sim artifact。"""
+    payload = validate_historical_paper_sim_artifact(sim_id=sim_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_replay_performance_review_app.command("run")
+def dynamic_v3_replay_performance_review_run_command(
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="backfill id。")],
+    sim_id: Annotated[str, typer.Option("--sim-id", help="historical paper sim id。")],
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    sim_dir: Annotated[
+        Path,
+        typer.Option("--sim-dir", help="historical paper sim artifact root。"),
+    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay performance review artifact root。"),
+    ] = DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+) -> None:
+    """运行 TRADING-145 replay performance review。"""
+    result = run_replay_performance_review(
+        backfill_id=backfill_id,
+        sim_id=sim_id,
+        backfill_dir=backfill_dir,
+        sim_dir=sim_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    rec = result["calibration_recommendations"]["recommendations"][0]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"review_dir={result['review_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"best_variant={manifest['best_variant']}")
+    typer.echo(f"calibration_recommendation={rec['type']}")
+    typer.echo(f"requires_owner_approval={rec['requires_owner_approval']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_replay_performance_review_app.command("report")
+def dynamic_v3_replay_performance_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest replay performance review。"),
+    ] = False,
+    review_id: Annotated[str | None, typer.Option("--review-id", help="review id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay performance review artifact root。"),
+    ] = DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-145 replay performance review 摘要。"""
+    payload = replay_performance_review_report_payload(
+        review_id=review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    recs = _mapping_obj(payload.get("calibration_recommendations")).get("recommendations", [])
+    first = recs[0] if recs else {}
+    typer.echo(f"review_id={payload['review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"best_variant={payload['best_variant']}")
+    typer.echo(f"available_outcome_count={payload['available_outcome_count']}")
+    typer.echo(f"calibration_recommendation={first.get('type', 'MISSING')}")
+    typer.echo(f"report_path={payload['replay_performance_review_path']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-replay-performance-review")
+def dynamic_v3_validate_replay_performance_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay performance review artifact root。"),
+    ] = DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-145 replay performance review artifact。"""
+    payload = validate_replay_performance_review_artifact(
+        review_id=review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
     typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)

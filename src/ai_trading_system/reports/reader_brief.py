@@ -1716,6 +1716,225 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
+            "Dynamic Rescue Historical Replay Performance",
+            _definition_table(
+                [
+                    (
+                        "replay_inventory",
+                        etf_dynamic_v3_parameter_research.get("replay_inventory_id"),
+                    ),
+                    (
+                        "replay_inventory_status",
+                        etf_dynamic_v3_parameter_research.get("replay_inventory_status"),
+                    ),
+                    (
+                        "replay_inventory_events",
+                        etf_dynamic_v3_parameter_research.get("replay_inventory_total_events"),
+                    ),
+                    (
+                        "pit_safe_count",
+                        etf_dynamic_v3_parameter_research.get("replay_inventory_pit_safe_count"),
+                    ),
+                    (
+                        "pit_warning_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "replay_inventory_pit_warning_count"
+                        ),
+                    ),
+                    (
+                        "pit_unsafe_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "replay_inventory_pit_unsafe_count"
+                        ),
+                    ),
+                    (
+                        "historical_replay",
+                        etf_dynamic_v3_parameter_research.get("historical_replay_id"),
+                    ),
+                    (
+                        "historical_replay_status",
+                        etf_dynamic_v3_parameter_research.get("historical_replay_status"),
+                    ),
+                    (
+                        "historical_replay_event_count",
+                        etf_dynamic_v3_parameter_research.get("historical_replay_event_count"),
+                    ),
+                    (
+                        "historical_replay_skipped_count",
+                        etf_dynamic_v3_parameter_research.get("historical_replay_skipped_count"),
+                    ),
+                    (
+                        "generated_variants",
+                        etf_dynamic_v3_parameter_research.get(
+                            "historical_replay_generated_variants"
+                        ),
+                    ),
+                    (
+                        "backfilled_outcome",
+                        etf_dynamic_v3_parameter_research.get("backfilled_outcome_id"),
+                    ),
+                    (
+                        "backfilled_outcome_status",
+                        etf_dynamic_v3_parameter_research.get("backfilled_outcome_status"),
+                    ),
+                    (
+                        "data_quality_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "backfilled_outcome_data_quality_status"
+                        ),
+                    ),
+                    (
+                        "available_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "backfilled_outcome_available_count"
+                        ),
+                    ),
+                    (
+                        "pending_count",
+                        etf_dynamic_v3_parameter_research.get("backfilled_outcome_pending_count"),
+                    ),
+                    (
+                        "insufficient_data_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "backfilled_outcome_insufficient_data_count"
+                        ),
+                    ),
+                    (
+                        "best_variant",
+                        etf_dynamic_v3_parameter_research.get("backfilled_outcome_best_variant"),
+                    ),
+                    (
+                        "limited_adjustment_vs_no_trade_5d",
+                        etf_dynamic_v3_parameter_research.get(
+                            "limited_adjustment_vs_no_trade_5d"
+                        ),
+                    ),
+                    (
+                        "historical_paper_sim",
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim_id"),
+                    ),
+                    (
+                        "historical_paper_sim_status",
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim_status"),
+                    ),
+                    (
+                        "historical_paper_sim_variant",
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim_variant"),
+                    ),
+                    (
+                        "historical_paper_sim_total_return",
+                        etf_dynamic_v3_parameter_research.get(
+                            "historical_paper_sim_total_return"
+                        ),
+                    ),
+                    (
+                        "historical_paper_sim_max_drawdown",
+                        etf_dynamic_v3_parameter_research.get(
+                            "historical_paper_sim_max_drawdown"
+                        ),
+                    ),
+                    (
+                        "historical_paper_sim_turnover",
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim_turnover"),
+                    ),
+                    (
+                        "historical_paper_sim_relative_to_no_trade",
+                        etf_dynamic_v3_parameter_research.get(
+                            "historical_paper_sim_relative_to_no_trade"
+                        ),
+                    ),
+                    (
+                        "replay_performance_review",
+                        etf_dynamic_v3_parameter_research.get("replay_performance_review_id"),
+                    ),
+                    (
+                        "replay_performance_review_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "replay_performance_review_status"
+                        ),
+                    ),
+                    (
+                        "review_best_variant",
+                        etf_dynamic_v3_parameter_research.get("replay_performance_best_variant"),
+                    ),
+                    (
+                        "review_available_outcome_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "replay_performance_available_outcome_count"
+                        ),
+                    ),
+                    (
+                        "review_limited_adjustment_vs_no_trade",
+                        etf_dynamic_v3_parameter_research.get(
+                            "replay_performance_limited_adjustment_vs_no_trade"
+                        ),
+                    ),
+                    (
+                        "calibration_recommendation",
+                        etf_dynamic_v3_parameter_research.get("replay_calibration_recommendation"),
+                    ),
+                    (
+                        "calibration_priority",
+                        etf_dynamic_v3_parameter_research.get("replay_calibration_priority"),
+                    ),
+                    (
+                        "requires_owner_approval",
+                        etf_dynamic_v3_parameter_research.get(
+                            "replay_calibration_requires_owner_approval"
+                        ),
+                    ),
+                    ("next_action", etf_dynamic_v3_parameter_research.get("replay_next_action")),
+                    (
+                        "historical_replay_broker_action_present",
+                        etf_dynamic_v3_parameter_research.get(
+                            "historical_replay_broker_action_present"
+                        ),
+                    ),
+                    (
+                        "safety_status",
+                        etf_dynamic_v3_parameter_research.get("safety_status"),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_parameter_research.get("production_effect"),
+                    ),
+                    ("broker_action", etf_dynamic_v3_parameter_research.get("broker_action")),
+                    (
+                        "production_candidate_generated",
+                        etf_dynamic_v3_parameter_research.get("production_candidate_generated"),
+                    ),
+                    (
+                        "automatic_candidate_promotion",
+                        etf_dynamic_v3_parameter_research.get("automatic_candidate_promotion"),
+                    ),
+                    (
+                        "shadow_enrollment_allowed",
+                        etf_dynamic_v3_parameter_research.get("shadow_enrollment_allowed"),
+                    ),
+                    (
+                        "replay_inventory_path",
+                        etf_dynamic_v3_parameter_research.get("replay_inventory"),
+                    ),
+                    (
+                        "historical_replay_path",
+                        etf_dynamic_v3_parameter_research.get("historical_replay"),
+                    ),
+                    (
+                        "backfilled_outcome_path",
+                        etf_dynamic_v3_parameter_research.get("backfilled_outcome"),
+                    ),
+                    (
+                        "historical_paper_sim_path",
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim"),
+                    ),
+                    (
+                        "replay_performance_review_path",
+                        etf_dynamic_v3_parameter_research.get("replay_performance_review"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
             "Contribution Summary",
             _definition_table(
                 [
@@ -5463,112 +5682,217 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_promotion_pack",
     )
-    shadow_monitor_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_shadow_monitor_report",
+    shadow_monitor_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shadow_monitor_report",
+        ),
+        "shadow_monitor_manifest.json",
     )
-    candidate_evidence_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_evidence_summary",
+    candidate_evidence_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_evidence_summary",
+        ),
+        "evidence_summary_manifest.json",
     )
-    observe_pool_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_observe_pool",
+    observe_pool_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_observe_pool",
+        ),
+        "observe_pool_manifest.json",
     )
-    overnight_readiness_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_overnight_readiness",
+    overnight_readiness_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_overnight_readiness",
+        ),
+        "overnight_readiness_manifest.json",
     )
-    research_decision_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_research_decision",
+    research_decision_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_research_decision",
+        ),
+        "research_decision_manifest.json",
     )
-    evidence_diagnosis_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_evidence_diagnosis",
+    evidence_diagnosis_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_evidence_diagnosis",
+        ),
+        "diagnosis_manifest.json",
     )
-    gate_impact_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_gate_impact",
+    gate_impact_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_gate_impact",
+        ),
+        "gate_impact_manifest.json",
     )
-    gate_policy_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_gate_policy",
+    gate_policy_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_gate_policy",
+        ),
+        "gate_policy_manifest.json",
     )
-    candidate_recovery_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_candidate_recovery",
+    candidate_recovery_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_candidate_recovery",
+        ),
+        "recovery_manifest.json",
     )
-    research_decision_update_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_research_decision_update",
+    research_decision_update_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_research_decision_update",
+        ),
+        "decision_update_manifest.json",
     )
-    shortlist_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_shortlist",
+    shortlist_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shortlist",
+        ),
+        "shortlist_manifest.json",
     )
-    candidate_cluster_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_candidate_cluster",
+    candidate_cluster_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_candidate_cluster",
+        ),
+        "cluster_manifest.json",
     )
-    shadow_shortlist_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_shadow_shortlist",
+    shadow_shortlist_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shadow_shortlist",
+        ),
+        "shadow_shortlist_manifest.json",
     )
-    position_advisory_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_position_advisory",
+    position_advisory_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_position_advisory",
+        ),
+        "position_advisory_manifest.json",
     )
-    position_review_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_position_review",
+    position_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_position_review",
+        ),
+        "position_review_manifest.json",
     )
-    shadow_monitor_run_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_shadow_monitor_run",
+    shadow_monitor_run_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shadow_monitor_run",
+        ),
+        "shadow_monitor_manifest.json",
     )
-    portfolio_snapshot_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_portfolio_snapshot",
+    portfolio_snapshot_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_portfolio_snapshot",
+        ),
+        "snapshot_manifest.json",
     )
-    position_advisory_daily_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_position_advisory_daily",
+    position_advisory_daily_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_position_advisory_daily",
+        ),
+        "daily_advisory_manifest.json",
     )
-    consensus_drift_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_consensus_drift",
+    consensus_drift_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_consensus_drift",
+        ),
+        "consensus_drift_manifest.json",
     )
-    owner_review_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_owner_review",
+    owner_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_owner_review",
+        ),
+        "latest_owner_review.json",
     )
-    paper_portfolio_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_paper_portfolio",
+    paper_portfolio_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_portfolio",
+        ),
+        "paper_portfolio_manifest.json",
     )
-    advisory_outcome_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_advisory_outcome",
+    advisory_outcome_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_advisory_outcome",
+        ),
+        "advisory_outcome_manifest.json",
     )
-    owner_attribution_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_owner_attribution",
+    owner_attribution_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_owner_attribution",
+        ),
+        "owner_attribution_manifest.json",
     )
-    shadow_aging_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_shadow_aging",
+    shadow_aging_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shadow_aging",
+        ),
+        "shadow_aging_manifest.json",
     )
-    weekly_advisory_review_path = _report_index_artifact_path(
-        report_index,
-        "etf_dynamic_v3_weekly_advisory_review",
+    weekly_advisory_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_weekly_advisory_review",
+        ),
+        "weekly_review_manifest.json",
+    )
+    replay_inventory_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_replay_inventory",
+        ),
+        "replay_inventory_manifest.json",
+    )
+    historical_replay_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_historical_replay",
+        ),
+        "historical_replay_manifest.json",
+    )
+    backfilled_outcome_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_backfilled_outcome",
+        ),
+        "backfill_manifest.json",
+    )
+    historical_paper_sim_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_historical_paper_sim",
+        ),
+        "historical_paper_sim_manifest.json",
+    )
+    replay_performance_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_replay_performance_review",
+        ),
+        "replay_performance_manifest.json",
     )
     leaderboard = _read_optional_json(leaderboard_path)
-    if not leaderboard:
-        return _missing_etf_dynamic_v3_parameter_research_summary()
-    top = _records(leaderboard.get("top_eligible_candidates"))
-    first = top[0] if top else {}
-    common_reasons = _records(leaderboard.get("most_common_reject_reasons"))[:5]
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
         indexed_promotion_path
@@ -5659,6 +5983,74 @@ def _etf_dynamic_v3_parameter_research_summary(
         if weekly_advisory_review_path is not None
         else None
     )
+    replay_inventory = _read_optional_json(replay_inventory_path)
+    replay_inventory_coverage = _read_optional_json(
+        replay_inventory_path.parent / "replay_coverage_summary.json"
+        if replay_inventory_path is not None
+        else None
+    )
+    historical_replay = _read_optional_json(historical_replay_path)
+    replay_action_summary = _read_optional_json(
+        historical_replay_path.parent / "replay_action_summary.json"
+        if historical_replay_path is not None
+        else None
+    )
+    backfilled_outcome = _read_optional_json(backfilled_outcome_path)
+    variant_performance = _read_optional_json(
+        backfilled_outcome_path.parent / "variant_performance_summary.json"
+        if backfilled_outcome_path is not None
+        else None
+    )
+    historical_paper_sim = _read_optional_json(historical_paper_sim_path)
+    simulated_performance = _read_optional_json(
+        historical_paper_sim_path.parent / "simulated_performance_summary.json"
+        if historical_paper_sim_path is not None
+        else None
+    )
+    replay_performance_review = _read_optional_json(replay_performance_review_path)
+    replay_calibration = _read_optional_json(
+        replay_performance_review_path.parent / "calibration_recommendations.json"
+        if replay_performance_review_path is not None
+        else None
+    )
+    replay_recommendations = _records(replay_calibration.get("recommendations"))
+    replay_recommendation = replay_recommendations[0] if replay_recommendations else {}
+    if not leaderboard:
+        replay_payloads = (
+            replay_inventory,
+            replay_inventory_coverage,
+            historical_replay,
+            replay_action_summary,
+            backfilled_outcome,
+            variant_performance,
+            historical_paper_sim,
+            simulated_performance,
+            replay_performance_review,
+            replay_calibration,
+        )
+        if any(replay_payloads):
+            return _etf_dynamic_v3_parameter_research_replay_only_summary(
+                replay_inventory_path=replay_inventory_path,
+                replay_inventory=replay_inventory,
+                replay_inventory_coverage=replay_inventory_coverage,
+                historical_replay_path=historical_replay_path,
+                historical_replay=historical_replay,
+                replay_action_summary=replay_action_summary,
+                backfilled_outcome_path=backfilled_outcome_path,
+                backfilled_outcome=backfilled_outcome,
+                variant_performance=variant_performance,
+                historical_paper_sim_path=historical_paper_sim_path,
+                historical_paper_sim=historical_paper_sim,
+                simulated_performance=simulated_performance,
+                replay_performance_review_path=replay_performance_review_path,
+                replay_performance_review=replay_performance_review,
+                replay_calibration=replay_calibration,
+                replay_recommendation=replay_recommendation,
+            )
+        return _missing_etf_dynamic_v3_parameter_research_summary()
+    top = _records(leaderboard.get("top_eligible_candidates"))
+    first = top[0] if top else {}
+    common_reasons = _records(leaderboard.get("most_common_reject_reasons"))[:5]
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
@@ -5707,6 +6099,16 @@ def _etf_dynamic_v3_parameter_research_summary(
         shadow_aging_summary,
         weekly_advisory_review,
         weekly_owner_summary,
+        replay_inventory,
+        replay_inventory_coverage,
+        historical_replay,
+        replay_action_summary,
+        backfilled_outcome,
+        variant_performance,
+        historical_paper_sim,
+        simulated_performance,
+        replay_performance_review,
+        replay_calibration,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -5741,6 +6143,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"{shadow_aging_summary.get('eligible_for_review_count', 'MISSING')}; "
             f"weekly_advisory="
             f"{weekly_advisory_review.get('weekly_recommendation', 'MISSING')}; "
+            f"historical_replay={replay_performance_review.get('status', 'MISSING')}; "
+            f"best_replay_variant={variant_performance.get('best_variant', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -6043,6 +6447,90 @@ def _etf_dynamic_v3_parameter_research_summary(
         "weekly_advisory_next_actions": ", ".join(
             _texts(weekly_advisory_review.get("next_actions"))
         ),
+        "replay_inventory_id": _text(replay_inventory.get("inventory_id"), "MISSING"),
+        "replay_inventory_status": _text(replay_inventory.get("status"), "MISSING"),
+        "replay_inventory_total_events": replay_inventory.get("total_replay_events", 0),
+        "replay_inventory_pit_safe_count": replay_inventory.get("pit_safe_count", 0),
+        "replay_inventory_pit_warning_count": replay_inventory.get("pit_warning_count", 0),
+        "replay_inventory_pit_unsafe_count": replay_inventory.get("pit_unsafe_count", 0),
+        "replay_inventory_eligible_count": replay_inventory_coverage.get("eligible_count", 0),
+        "historical_replay_id": _text(historical_replay.get("replay_id"), "MISSING"),
+        "historical_replay_status": _text(historical_replay.get("status"), "MISSING"),
+        "historical_replay_event_count": historical_replay.get("replay_event_count", 0),
+        "historical_replay_skipped_count": historical_replay.get("skipped_count", 0),
+        "historical_replay_generated_variants": ", ".join(
+            _texts(historical_replay.get("generated_variants"))
+        ),
+        "historical_replay_broker_action_present": replay_action_summary.get(
+            "broker_action_present",
+            False,
+        ),
+        "backfilled_outcome_id": _text(backfilled_outcome.get("backfill_id"), "MISSING"),
+        "backfilled_outcome_status": _text(backfilled_outcome.get("status"), "MISSING"),
+        "backfilled_outcome_data_quality_status": _text(
+            backfilled_outcome.get("data_quality_status"),
+            "MISSING",
+        ),
+        "backfilled_outcome_available_count": backfilled_outcome.get("available_count", 0),
+        "backfilled_outcome_pending_count": backfilled_outcome.get("pending_count", 0),
+        "backfilled_outcome_insufficient_data_count": backfilled_outcome.get(
+            "insufficient_data_count",
+            0,
+        ),
+        "backfilled_outcome_best_variant": _text(
+            variant_performance.get("best_variant")
+            or backfilled_outcome.get("best_variant"),
+            "MISSING",
+        ),
+        "limited_adjustment_vs_no_trade_5d": variant_performance.get(
+            "limited_adjustment_vs_no_trade_5d",
+            0.0,
+        ),
+        "historical_paper_sim_id": _text(historical_paper_sim.get("sim_id"), "MISSING"),
+        "historical_paper_sim_status": _text(historical_paper_sim.get("status"), "MISSING"),
+        "historical_paper_sim_variant": _text(simulated_performance.get("variant"), "MISSING"),
+        "historical_paper_sim_total_return": simulated_performance.get("total_return", 0.0),
+        "historical_paper_sim_max_drawdown": simulated_performance.get("max_drawdown", 0.0),
+        "historical_paper_sim_turnover": simulated_performance.get("turnover", 0.0),
+        "historical_paper_sim_relative_to_no_trade": simulated_performance.get(
+            "relative_to_no_trade",
+            0.0,
+        ),
+        "replay_performance_review_id": _text(
+            replay_performance_review.get("review_id"),
+            "MISSING",
+        ),
+        "replay_performance_review_status": _text(
+            replay_performance_review.get("status"),
+            "MISSING",
+        ),
+        "replay_performance_best_variant": _text(
+            replay_performance_review.get("best_variant"),
+            "MISSING",
+        ),
+        "replay_performance_available_outcome_count": replay_performance_review.get(
+            "available_outcome_count",
+            0,
+        ),
+        "replay_performance_limited_adjustment_vs_no_trade": replay_performance_review.get(
+            "limited_adjustment_vs_no_trade",
+            0.0,
+        ),
+        "replay_calibration_recommendation": _text(
+            replay_recommendation.get("type"),
+            "MISSING",
+        ),
+        "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
+        "replay_calibration_requires_owner_approval": (
+            replay_recommendation.get("requires_owner_approval")
+            if "requires_owner_approval" in replay_recommendation
+            else True
+        ),
+        "replay_next_action": _text(
+            replay_performance_review.get("next_action")
+            or replay_recommendation.get("type"),
+            "MISSING",
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
         "evidence_summary": "" if evidence_path is None else str(evidence_path),
@@ -6097,6 +6585,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         "weekly_advisory_review": (
             "" if weekly_advisory_review_path is None else str(weekly_advisory_review_path)
         ),
+        "replay_inventory": "" if replay_inventory_path is None else str(replay_inventory_path),
+        "historical_replay": "" if historical_replay_path is None else str(historical_replay_path),
+        "backfilled_outcome": (
+            "" if backfilled_outcome_path is None else str(backfilled_outcome_path)
+        ),
+        "historical_paper_sim": (
+            "" if historical_paper_sim_path is None else str(historical_paper_sim_path)
+        ),
+        "replay_performance_review": (
+            "" if replay_performance_review_path is None else str(replay_performance_review_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -6135,6 +6634,16 @@ def _etf_dynamic_v3_parameter_research_summary(
                     shadow_aging_summary,
                     weekly_advisory_review,
                     weekly_owner_summary,
+                    replay_inventory,
+                    replay_inventory_coverage,
+                    historical_replay,
+                    replay_action_summary,
+                    backfilled_outcome,
+                    variant_performance,
+                    historical_paper_sim,
+                    simulated_performance,
+                    replay_performance_review,
+                    replay_calibration,
                 ),
                 "production_candidate_generated",
             )
@@ -6173,6 +6682,16 @@ def _etf_dynamic_v3_parameter_research_summary(
                     shadow_aging_summary,
                     weekly_advisory_review,
                     weekly_owner_summary,
+                    replay_inventory,
+                    replay_inventory_coverage,
+                    historical_replay,
+                    replay_action_summary,
+                    backfilled_outcome,
+                    variant_performance,
+                    historical_paper_sim,
+                    simulated_performance,
+                    replay_performance_review,
+                    replay_calibration,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -6211,10 +6730,258 @@ def _etf_dynamic_v3_parameter_research_summary(
                     shadow_aging_summary,
                     weekly_advisory_review,
                     weekly_owner_summary,
+                    replay_inventory,
+                    replay_inventory_coverage,
+                    historical_replay,
+                    replay_action_summary,
+                    backfilled_outcome,
+                    variant_performance,
+                    historical_paper_sim,
+                    simulated_performance,
+                    replay_performance_review,
+                    replay_calibration,
                 ),
                 "shadow_enrollment_allowed",
             )
         ),
+    }
+
+
+def _etf_dynamic_v3_parameter_research_replay_only_summary(
+    *,
+    replay_inventory_path: Path | None,
+    replay_inventory: Mapping[str, Any],
+    replay_inventory_coverage: Mapping[str, Any],
+    historical_replay_path: Path | None,
+    historical_replay: Mapping[str, Any],
+    replay_action_summary: Mapping[str, Any],
+    backfilled_outcome_path: Path | None,
+    backfilled_outcome: Mapping[str, Any],
+    variant_performance: Mapping[str, Any],
+    historical_paper_sim_path: Path | None,
+    historical_paper_sim: Mapping[str, Any],
+    simulated_performance: Mapping[str, Any],
+    replay_performance_review_path: Path | None,
+    replay_performance_review: Mapping[str, Any],
+    replay_calibration: Mapping[str, Any],
+    replay_recommendation: Mapping[str, Any],
+) -> dict[str, Any]:
+    replay_payloads = (
+        replay_inventory,
+        replay_inventory_coverage,
+        historical_replay,
+        replay_action_summary,
+        backfilled_outcome,
+        variant_performance,
+        historical_paper_sim,
+        simulated_performance,
+        replay_performance_review,
+        replay_calibration,
+    )
+    status = _text(
+        replay_performance_review.get("status")
+        or backfilled_outcome.get("status")
+        or historical_replay.get("status")
+        or replay_inventory.get("status"),
+        "UNKNOWN",
+    )
+    best_variant = _text(
+        replay_performance_review.get("best_variant")
+        or variant_performance.get("best_variant")
+        or backfilled_outcome.get("best_variant"),
+        "MISSING",
+    )
+    next_action = _text(
+        replay_performance_review.get("next_action") or replay_recommendation.get("type"),
+        "MISSING",
+    )
+    safety_status = _etf_dynamic_v3_parameter_research_safety_status(
+        _etf_dynamic_v3_parameter_research_safe_placeholder(),
+        *replay_payloads,
+    )
+    summary = _missing_etf_dynamic_v3_parameter_research_summary()
+    summary.update(
+        {
+            "availability": "PARTIAL",
+            "status": status,
+            "summary_sentence": (
+                "Dynamic Rescue Historical Replay Performance: "
+                f"inventory={replay_inventory.get('status', 'MISSING')}; "
+                f"replay={historical_replay.get('status', 'MISSING')}; "
+                f"backfill={backfilled_outcome.get('status', 'MISSING')}; "
+                f"paper_sim={historical_paper_sim.get('status', 'MISSING')}; "
+                f"review={status}; best_replay_variant={best_variant}; "
+                f"next_action={next_action}; "
+                "parameter_sweep_leaderboard=MISSING; manual-only replay evidence "
+                "is available."
+            ),
+            "not_for_investment_decision": True,
+            "data_quality": {
+                "status": _text(
+                    backfilled_outcome.get("data_quality_status"),
+                    "MISSING",
+                ),
+            },
+            "replay_inventory_id": _text(replay_inventory.get("inventory_id"), "MISSING"),
+            "replay_inventory_status": _text(replay_inventory.get("status"), "MISSING"),
+            "replay_inventory_total_events": replay_inventory.get("total_replay_events", 0),
+            "replay_inventory_pit_safe_count": replay_inventory.get("pit_safe_count", 0),
+            "replay_inventory_pit_warning_count": replay_inventory.get(
+                "pit_warning_count",
+                0,
+            ),
+            "replay_inventory_pit_unsafe_count": replay_inventory.get(
+                "pit_unsafe_count",
+                0,
+            ),
+            "replay_inventory_eligible_count": replay_inventory_coverage.get(
+                "eligible_count",
+                0,
+            ),
+            "historical_replay_id": _text(historical_replay.get("replay_id"), "MISSING"),
+            "historical_replay_status": _text(historical_replay.get("status"), "MISSING"),
+            "historical_replay_event_count": historical_replay.get("replay_event_count", 0),
+            "historical_replay_skipped_count": historical_replay.get("skipped_count", 0),
+            "historical_replay_generated_variants": ", ".join(
+                _texts(historical_replay.get("generated_variants"))
+            ),
+            "historical_replay_broker_action_present": replay_action_summary.get(
+                "broker_action_present",
+                False,
+            ),
+            "backfilled_outcome_id": _text(backfilled_outcome.get("backfill_id"), "MISSING"),
+            "backfilled_outcome_status": _text(backfilled_outcome.get("status"), "MISSING"),
+            "backfilled_outcome_data_quality_status": _text(
+                backfilled_outcome.get("data_quality_status"),
+                "MISSING",
+            ),
+            "backfilled_outcome_available_count": backfilled_outcome.get(
+                "available_count",
+                0,
+            ),
+            "backfilled_outcome_pending_count": backfilled_outcome.get("pending_count", 0),
+            "backfilled_outcome_insufficient_data_count": backfilled_outcome.get(
+                "insufficient_data_count",
+                0,
+            ),
+            "backfilled_outcome_best_variant": best_variant,
+            "limited_adjustment_vs_no_trade_5d": variant_performance.get(
+                "limited_adjustment_vs_no_trade_5d",
+                0.0,
+            ),
+            "historical_paper_sim_id": _text(historical_paper_sim.get("sim_id"), "MISSING"),
+            "historical_paper_sim_status": _text(
+                historical_paper_sim.get("status"),
+                "MISSING",
+            ),
+            "historical_paper_sim_variant": _text(
+                simulated_performance.get("variant"),
+                "MISSING",
+            ),
+            "historical_paper_sim_total_return": simulated_performance.get(
+                "total_return",
+                0.0,
+            ),
+            "historical_paper_sim_max_drawdown": simulated_performance.get(
+                "max_drawdown",
+                0.0,
+            ),
+            "historical_paper_sim_turnover": simulated_performance.get("turnover", 0.0),
+            "historical_paper_sim_relative_to_no_trade": simulated_performance.get(
+                "relative_to_no_trade",
+                0.0,
+            ),
+            "replay_performance_review_id": _text(
+                replay_performance_review.get("review_id"),
+                "MISSING",
+            ),
+            "replay_performance_review_status": _text(
+                replay_performance_review.get("status"),
+                "MISSING",
+            ),
+            "replay_performance_best_variant": best_variant,
+            "replay_performance_available_outcome_count": replay_performance_review.get(
+                "available_outcome_count",
+                0,
+            ),
+            "replay_performance_limited_adjustment_vs_no_trade": (
+                replay_performance_review.get("limited_adjustment_vs_no_trade", 0.0)
+            ),
+            "replay_calibration_recommendation": _text(
+                replay_recommendation.get("type"),
+                "MISSING",
+            ),
+            "replay_calibration_priority": _text(
+                replay_recommendation.get("priority"),
+                "MISSING",
+            ),
+            "replay_calibration_requires_owner_approval": (
+                replay_recommendation.get("requires_owner_approval")
+                if "requires_owner_approval" in replay_recommendation
+                else True
+            ),
+            "replay_next_action": next_action,
+            "replay_inventory": (
+                "" if replay_inventory_path is None else str(replay_inventory_path)
+            ),
+            "historical_replay": (
+                "" if historical_replay_path is None else str(historical_replay_path)
+            ),
+            "backfilled_outcome": (
+                "" if backfilled_outcome_path is None else str(backfilled_outcome_path)
+            ),
+            "historical_paper_sim": (
+                "" if historical_paper_sim_path is None else str(historical_paper_sim_path)
+            ),
+            "replay_performance_review": (
+                ""
+                if replay_performance_review_path is None
+                else str(replay_performance_review_path)
+            ),
+            "safety_status": safety_status,
+            "production_candidate_generated": _any_payload_flag_true(
+                replay_payloads,
+                "production_candidate_generated",
+            ),
+            "automatic_candidate_promotion": _any_payload_flag_true(
+                replay_payloads,
+                "automatic_candidate_promotion",
+            ),
+            "shadow_enrollment_allowed": _any_payload_flag_true(
+                replay_payloads,
+                "shadow_enrollment_allowed",
+            ),
+            "limitation": (
+                "Dynamic rescue parameter sweep artifact is missing; historical replay "
+                "evidence is reported as a partial, manual-review-only input."
+            ),
+        }
+    )
+    return summary
+
+
+def _etf_dynamic_v3_parameter_research_safe_placeholder() -> dict[str, Any]:
+    safety = {
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_state_mutated": False,
+        "baseline_config_mutated": False,
+        "official_target_weights_mutated": False,
+        "automatic_candidate_promotion": False,
+        "auto_enrollment_without_owner_approval": False,
+        "shadow_enrollment_allowed": False,
+        "automatic_enrollment_allowed": False,
+        "owner_approval_executed": False,
+        "production_candidate_generated": False,
+    }
+    return {
+        "safety": safety,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "shadow_enrollment_allowed": False,
     }
 
 
@@ -6334,6 +7101,43 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "weekly_advisory_review_id": "MISSING",
         "weekly_advisory_recommendation": "MISSING",
         "weekly_advisory_next_actions": "",
+        "replay_inventory_id": "MISSING",
+        "replay_inventory_status": "MISSING",
+        "replay_inventory_total_events": 0,
+        "replay_inventory_pit_safe_count": 0,
+        "replay_inventory_pit_warning_count": 0,
+        "replay_inventory_pit_unsafe_count": 0,
+        "replay_inventory_eligible_count": 0,
+        "historical_replay_id": "MISSING",
+        "historical_replay_status": "MISSING",
+        "historical_replay_event_count": 0,
+        "historical_replay_skipped_count": 0,
+        "historical_replay_generated_variants": "",
+        "historical_replay_broker_action_present": False,
+        "backfilled_outcome_id": "MISSING",
+        "backfilled_outcome_status": "MISSING",
+        "backfilled_outcome_data_quality_status": "MISSING",
+        "backfilled_outcome_available_count": 0,
+        "backfilled_outcome_pending_count": 0,
+        "backfilled_outcome_insufficient_data_count": 0,
+        "backfilled_outcome_best_variant": "MISSING",
+        "limited_adjustment_vs_no_trade_5d": 0.0,
+        "historical_paper_sim_id": "MISSING",
+        "historical_paper_sim_status": "MISSING",
+        "historical_paper_sim_variant": "MISSING",
+        "historical_paper_sim_total_return": 0.0,
+        "historical_paper_sim_max_drawdown": 0.0,
+        "historical_paper_sim_turnover": 0.0,
+        "historical_paper_sim_relative_to_no_trade": 0.0,
+        "replay_performance_review_id": "MISSING",
+        "replay_performance_review_status": "MISSING",
+        "replay_performance_best_variant": "MISSING",
+        "replay_performance_available_outcome_count": 0,
+        "replay_performance_limited_adjustment_vs_no_trade": 0.0,
+        "replay_calibration_recommendation": "MISSING",
+        "replay_calibration_priority": "MISSING",
+        "replay_calibration_requires_owner_approval": True,
+        "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
         "evidence_summary": "",
@@ -6362,6 +7166,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "owner_attribution": "",
         "shadow_aging": "",
         "weekly_advisory_review": "",
+        "replay_inventory": "",
+        "historical_replay": "",
+        "backfilled_outcome": "",
+        "historical_paper_sim": "",
+        "replay_performance_review": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -6382,6 +7191,17 @@ def _promotion_pack_manifest_path(path: Path | None) -> Path | None:
     if path.name == "promotion_manifest.json":
         return path
     sibling = path.parent / "promotion_manifest.json"
+    if sibling.exists():
+        return sibling
+    return path
+
+
+def _dynamic_v3_sibling_artifact_path(path: Path | None, artifact_name: str) -> Path | None:
+    if path is None:
+        return None
+    if path.name == artifact_name:
+        return path
+    sibling = path.parent / artifact_name
     if sibling.exists():
         return sibling
     return path

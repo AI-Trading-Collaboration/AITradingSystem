@@ -809,6 +809,22 @@ Reader Brief 只读 latest paper/outcome/attribution/aging/weekly review artifac
 `production_effect=none`、`broker_action=none`、`broker_action_allowed=false`、
 `broker_action_taken=false`、`production_candidate_generated=false`，eligible shadow
 candidate 也只能进入人工 promotion review。
+TRADING-141 到 TRADING-145 新增
+`src/ai_trading_system/etf_portfolio/dynamic_v3_historical_replay.py`，把已存在的
+historical daily advisory artifacts 转成 PIT-safe replay inventory、historical replay
+variants、backfilled outcome evaluation、historical paper simulation 和 replay performance
+review。新增 CLI 包括 `replay-inventory build/report`、`historical-replay run/report`、
+`backfill-outcome run/report`、`historical-paper-sim run/report`、
+`replay-performance-review run/report`，以及 `validate-replay-inventory`、
+`validate-historical-replay`、`validate-backfill-outcome`、
+`validate-historical-paper-sim`、`validate-replay-performance-review`。新增 artifacts
+位于
+`reports/etf_portfolio/dynamic_v3_rescue/replay_inventory|historical_replay|backfilled_outcome|historical_paper_sim|replay_performance_review/`，
+Reader Brief 只读 latest replay/backfill/sim/performance artifacts。`backfill-outcome run`
+默认先运行 cached market / macro data quality gate；historical replay 默认排除
+`PIT_UNSAFE`，`PIT_WARNING` 只有显式 `--include-pit-warning` 才进入 replay。该链路只做
+历史 outcome 复核和 calibration recommendation artifact，不写 config、不生成 production
+candidate、不自动 promotion、不改真实组合或 official target weights、不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

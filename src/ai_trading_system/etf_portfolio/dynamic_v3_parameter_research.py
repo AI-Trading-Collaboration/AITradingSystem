@@ -16569,6 +16569,31 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pattern": "weekly_advisory_review/*/weekly_review_manifest.json",
             "id_keys": ("weekly_review_id",),
         },
+        {
+            "pointer_name": "latest_replay_inventory",
+            "pattern": "replay_inventory/*/replay_inventory_manifest.json",
+            "id_keys": ("inventory_id",),
+        },
+        {
+            "pointer_name": "latest_historical_replay",
+            "pattern": "historical_replay/*/historical_replay_manifest.json",
+            "id_keys": ("replay_id",),
+        },
+        {
+            "pointer_name": "latest_backfilled_outcome",
+            "pattern": "backfilled_outcome/*/backfill_manifest.json",
+            "id_keys": ("backfill_id",),
+        },
+        {
+            "pointer_name": "latest_historical_paper_sim",
+            "pattern": "historical_paper_sim/*/historical_paper_sim_manifest.json",
+            "id_keys": ("sim_id",),
+        },
+        {
+            "pointer_name": "latest_replay_performance_review",
+            "pattern": "replay_performance_review/*/replay_performance_manifest.json",
+            "id_keys": ("review_id",),
+        },
     )
 
 
