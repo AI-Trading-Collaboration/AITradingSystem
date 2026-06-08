@@ -1,6 +1,6 @@
 # TRADING-093 to TRADING-100: Dynamic v3 Rescue Parameter Research Platform
 
-最后更新：2026-06-07
+最后更新：2026-06-09
 
 ## 背景
 
@@ -12,7 +12,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 
 |任务|阶段|目标|状态|
 |---|---|---|---|
-|TRADING-093|Parameter Sweep Config Schema|新增 `parameter_sweep_v1.yaml`、配置加载、schema validation、参数网格、稳定 `candidate_id` 和 preview CLI|VALIDATING|
+|TRADING-093|Parameter Sweep Config Schema|新增 `parameter_sweep_v1.yaml`、配置加载、schema validation、参数网格、稳定 `candidate_id` 和 preview CLI|DONE|
 |TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|VALIDATING|
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|VALIDATING|
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
@@ -57,3 +57,13 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 - 2026-06-07：TRADING-099 从 VALIDATING 改回 IN_PROGRESS。目标是把 Dynamic v3 rescue research latest/stale/validation 和 small_real 手动研究链登记进统一 `config/scheduled_tasks.yaml` 的非 daily cadence，并新增 `aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD` 作为 daily-run 可调用的轻量门控节点；该节点只做 due/skip/block 审计、latest pointer validation、stale 检查和可选 observe-only shadow monitor，不自动运行真实 sweep、promotion pack 或生成 `production_candidate`。
 - 2026-06-07：TRADING-099 实现完成并转回 VALIDATING。新增 `dynamic-v3-rescue schedule observe` CLI、daily-run `dynamic_v3_rescue_schedule_observe` 节点、direct CLI dispatcher、closed-market / not-due / due-no-pointer / broken-pointer 审计、dynamic-v3 scheduled_tasks 日期/条件/data-quality/manual-review 门控，以及 operations runbook、scheduled orchestration runbook、system flow、artifact catalog 和 README 同步。验证通过 `pytest tests/test_scheduled_tasks.py tests/test_ops_daily.py tests/test_cli_direct.py tests/test_etf_dynamic_v3_parameter_research.py -q`（67 passed）、`ruff check`、`black --check`、`compileall -q src`、`aits docs validate-freshness`、`aits docs report-contract --latest` 和 `git diff --check`。
 - 2026-06-07：TRADING-099 latest pointer hardening 补充完成。新增 `aits etf dynamic-v3-rescue artifacts repair-latest`，只扫描 canonical dynamic-v3 report root 下已有 artifact 并重建 latest pointers；默认 `artifacts validate` 新增 canonical-root 检查，测试临时目录或 canonical 根外 pointer 不能 PASS。当前本机 `repair-latest` 重建 15 个 pointers，`artifacts validate` PASS，`schedule observe --force-due --skip-shadow-monitor` PASS。
+- 2026-06-09：`TRADING-093` 从 `VALIDATING` 改为 `DONE`。默认
+  `parameter_sweep_v1.yaml` 复核通过：`aits etf dynamic-v3-rescue
+  sweep-config validate` 为 `PASS`，`candidate_preview_count=5000`、
+  `failed_check_count=0`、`production_candidate_generated=false`、
+  `production_effect=none`；`sweep-config preview --limit 3` 输出 5000 个候选并
+  展示稳定候选参数，重复 `preview --limit 5` 的 candidate_id 序列一致
+  `9864fc2ed46ed2e3,c382bc687da707c2,bfb41947bc1e7092,a3091ad304594cee,4c2ccf3a995fd903`。
+  `tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16 passed，覆盖
+  config validation、candidate_id、空 parameter_space、缺 hard constraints /
+  scoring 和 max_candidates fail-closed 行为。
