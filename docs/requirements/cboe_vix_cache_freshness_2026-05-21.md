@@ -1,10 +1,10 @@
 # Cboe VIX 请求缓存新鲜度修复
 
-最后更新：2026-05-21
+最后更新：2026-06-09
 
 - 任务 ID：DATA-019
 - 优先级：P0
-- 状态：VALIDATING
+- 状态：DONE
 - 创建日期：2026-05-21
 - 负责人：系统实现
 
@@ -51,3 +51,10 @@
   真实 `aits ops daily-run` 默认 as-of `2026-05-19` 已 15/15 PASS，Run ID 为
   `daily_ops_run:2026-05-19:20260520T165804Z`；`prices_daily.csv` 中 `^VIX` 最新观测为
   `2026-05-19`，`data_quality_2026-05-19.md` 为 PASS。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。当前主价格缓存中 `^VIX` 覆盖
+  `2018-01-02` 至 `2026-06-05`；`aits validate-data --as-of 2026-06-05`
+  为 `PASS`，错误 0、警告 0、信息 12；同日 `score-daily --as-of 2026-06-05
+  --skip-risk-event-openai-precheck` 未被 VIX stale 阻断。复跑
+  `tests/test_market_data.py tests/test_external_request_cache.py tests/test_data_download.py -q`
+  为 25 passed，相关 ruff 和 compileall 通过。该后续真实缓存证据确认旧
+  `VIX_History.csv` 响应不再把 `^VIX` 锁定在 2026-05-11。
