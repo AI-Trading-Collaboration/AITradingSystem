@@ -1,6 +1,6 @@
 # REPORT-056: Research Governance Summary Aggregator
 
-最后更新：2026-05-29
+最后更新：2026-06-09
 
 ## 背景
 
@@ -137,3 +137,22 @@ index 的同一 artifact 可重复展示。
   专项 pytest、`tests/trading_engine`、全量 pytest、ruff、black、diff check，以及
   真实 `--latest` 生成；`reader_brief_2026-05-27.json` 状态为 `OK`，
   `important_count=0`，`daily_decision_summary` 导航单行合并为 `limited/FRESH`。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。最新
+  `research_governance_summary_2026-06-05.md/json` 为
+  `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`，`production_effect=none`，
+  `promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，cards=19，source artifacts=19，
+  manual review queue=13，limitations=50，card/source artifact 空 production effect=0，
+  unsafe production effect=0。JSON 与 Markdown 覆盖 backtest、weight iteration、
+  shadow observe、SEC PIT、documentation、manual review queue、limitations 和
+  source artifacts；SEC PIT shadow observe / monitor 仍为 observe-only /
+  `OK_MONITORING` 且 `production_effect=none`。Reader Brief latest 为 `OK`，
+  `backtest_shadow_governance.source=research_governance_summary`，
+  narrative 展示 `research governance status = PASS_WITH_LIMITATIONS;
+  promotion_status = BLOCKED_BY_MISSING_ARTIFACTS`，Missing / Limited Artifact
+  Impact 的 `important_count=0` 且未把已生成的 `research_governance_summary`
+  计为缺口；Manual Review Queue 合并 14 个 research governance 相关复核项。
+  Report Navigation 的 `Governance / documentation` 组包含
+  `research_governance_summary`，同组 duplicate artifact_id=0，并保留 runtime /
+  registry `navigation_sources`。`research-governance-summary --latest`、
+  `reader-brief --latest`、`validate-reader-brief --latest` 和
+  `docs report-contract --latest` 通过。
