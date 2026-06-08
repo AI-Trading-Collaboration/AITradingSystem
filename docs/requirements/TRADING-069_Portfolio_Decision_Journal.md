@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-06-02
+最后更新：2026-06-09
 
 ## 背景
 
@@ -151,3 +151,15 @@ present.
   decision-journal validate`（PASS）。所有 outputs 保持 observe-only /
   candidate-only / manual-review-only，不写 production weights、不触发 broker
   action、不自动修改 candidate state。
+- 2026-06-09：系统验证复跑 `python -m ai_trading_system.cli etf
+  decision-journal list --json` 和 `python -m ai_trading_system.cli etf
+  decision-journal validate`。结果：默认
+  `data/simulation/etf_portfolio_decision_journal.json` 尚不存在，list 输出
+  `entries=[]`；validation gate 写出
+  `reports/etf_portfolio/decision_journal/validation/decision_journal_validation_2026-06-08.{json,md}`
+  并 PASS，payload 显示 `entry_count=0`、`journal_path_exists=false`、
+  `observe_only=true`、`candidate_only=true`、`production_effect=none`、
+  `broker_action=none` 和 `manual_review_required=true`。这只证明空状态
+  schema/safety gate 可运行，不能替代真实 weekly review action item 到
+  journal entry 的 owner review 样本；任务保持 `VALIDATING`，next owner 调整为
+  项目 owner + 系统验证，直到捕获并复核真实 weekly decision entry。
