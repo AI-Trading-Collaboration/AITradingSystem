@@ -1,6 +1,6 @@
 # REPORT-055: Score Change Attribution & Market Panel for Reader Brief
 
-最后更新：2026-05-29
+最后更新：2026-06-09
 
 ## 背景
 
@@ -39,3 +39,4 @@
 
 - 2026-05-29：新增并进入 `IN_PROGRESS`，先补齐任务登记和需求拆解，再实现 artifact 与 Reader Brief 集成。
 - 2026-05-29：实现完成并进入 `VALIDATING`。已补齐 score change attribution 读者字段和 `--date` / `--latest`，新增 `market_panel` builder/CLI/Markdown/JSON，Reader Brief 只读消费 market panel 与 score attribution，registry、artifact catalog、system flow 和专项测试已同步；market panel CLI 先运行 data quality gate，门禁失败时写出不含未验证涨跌的 `MISSING_MARKET_PRICE_DATA` 降级 artifact 并停止下游。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。latest 真实 artifact 复核通过：`score_change_attribution_2026-06-05.md/json` 为 `PASS`、`production_effect=none`、warnings=0，比较窗口为 2026-06-04 -> 2026-06-05，含 6 个 component attribution、8 个 gate attribution，且 `methodology.does_not_recompute_score=true`；`market_panel_2026-06-05.md/json` 为 `PASS_WITH_WARNINGS`、`production_effect=none`，SPY/QQQ/SMH/SOXX/^VIX/DGS10 六个 proxy 均有可用 1D/5D/20D movement；`reader_brief_2026-06-05.json` 中 score attribution 与 market situation 均为 `AVAILABLE`，Executive Summary 展示市场变化句，Missing Artifact Impact 的 `important_count=0` 且不再包含 `score_change_attribution` 或 `market_panel`。专项测试、Reader Brief latest/quality 和 documentation contract 均通过。
