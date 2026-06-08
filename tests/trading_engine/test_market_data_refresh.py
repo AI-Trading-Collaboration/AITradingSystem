@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -141,6 +141,7 @@ def test_audited_cache_refresh_registers_required_assets(
 ) -> None:
     target = date(2026, 1, 6)
     previous = date(2026, 1, 5)
+    history_start = previous - timedelta(days=1007)
     required_assets = ("GOOGL", "BRK.B", "SGOV")
     prices_path = _write_prices(tmp_path, {symbol: [previous] for symbol in required_assets})
     _write_freshness(
@@ -155,6 +156,13 @@ def test_audited_cache_refresh_registers_required_assets(
         "BRK.B": "BRK-B",
         "SGOV": "SGOV",
     }.items():
+        _write_audited_fmp_cache_rows(
+            tmp_path,
+            canonical_symbol=symbol,
+            source_symbol=source_symbol,
+            start=history_start,
+            end=previous,
+        )
         _write_audited_fmp_cache_row(
             tmp_path,
             canonical_symbol=symbol,
@@ -213,6 +221,9 @@ def test_audited_cache_refresh_registers_required_assets(
     assert set(refreshed.loc[refreshed["date"] == target.isoformat(), "ticker"]) == set(
         required_assets
     )
+    assert set(refreshed.loc[refreshed["date"] == history_start.isoformat(), "ticker"]) == set(
+        required_assets
+    )
     registry = json.loads(
         (tmp_path / "artifacts" / "data_registry" / "price_cache_registry.json").read_text(
             encoding="utf-8"
@@ -224,6 +235,64 @@ def test_audited_cache_refresh_registers_required_assets(
     assert registry["assets"]["SGOV"]["schema_status"] == "OK"
     assert run.payload["after"]["candidate_tracking_status"] == "active_tracking"
     assert run.payload["safety"]["synthetic_latest_bar_generated"] is False
+
+
+def test_target_only_audited_cache_does_not_claim_recovery(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    target = date(2026, 1, 6)
+    previous = date(2026, 1, 5)
+    prices_path = _write_prices(tmp_path, {"GOOGL": [previous]})
+    _write_freshness(
+        tmp_path,
+        target=target,
+        effective=previous,
+        status="STALE",
+        missing_expected=("GOOGL",),
+    )
+    _write_audited_fmp_cache_row(
+        tmp_path,
+        canonical_symbol="GOOGL",
+        source_symbol="GOOGL",
+        target=target,
+    )
+    config_path = _write_refresh_config(
+        tmp_path,
+        prices_path=prices_path,
+        required_assets=("GOOGL",),
+        allow_external_fetch=False,
+    )
+    monkeypatch.setattr(
+        market_data_refresh,
+        "run_market_data_freshness",
+        lambda **_: _Run(
+            {
+                "freshness": {"status": "MISSING", "reason": "history still incomplete"},
+                "data_dates": {"effective_data_date": previous.isoformat()},
+                "tracking_readiness": {"readiness": "cannot_track"},
+                "output_artifacts": {},
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        market_data_refresh,
+        "run_portfolio_candidate_tracking",
+        lambda **_: _Run({"candidate": {"tracking_status": "tracking_blocked"}}),
+    )
+
+    run = run_market_data_refresh(
+        as_of=target,
+        config_path=config_path,
+        generated_at=datetime(2026, 1, 7, 2, 0, tzinfo=UTC),
+    )
+
+    assert validate_market_data_refresh_payload(run.payload) == []
+    assert run.payload["metadata"]["status"] == "SOURCE_DELAYED"
+    assert run.payload["after"]["freshness_status"] == "MISSING"
+    assert run.payload["actions"]["updated_price_cache"] is False
+    refreshed = pd.read_csv(prices_path)
+    assert target.isoformat() not in set(refreshed["date"].astype(str))
 
 
 @dataclass(frozen=True)
@@ -357,26 +426,18 @@ def _write_refresh_config(
                 "assets": {"required": list(required_assets)},
                 "input": {
                     "prices_path": str(prices_path),
-                    "market_data_freshness_dir": str(
-                        tmp_path / "artifacts" / "data_freshness"
-                    ),
+                    "market_data_freshness_dir": str(tmp_path / "artifacts" / "data_freshness"),
                     "market_data_freshness_config_path": str(
                         tmp_path / "config" / "data" / "market_data_freshness.yaml"
                     ),
                     "portfolio_candidate_tracking_config_path": str(
-                        tmp_path
-                        / "config"
-                        / "portfolio"
-                        / "portfolio_candidate_tracking.yaml"
+                        tmp_path / "config" / "portfolio" / "portfolio_candidate_tracking.yaml"
                     ),
                     "external_request_cache_dir": str(
                         tmp_path / "data" / "raw" / "external_request_cache"
                     ),
                     "price_cache_registry_path": str(
-                        tmp_path
-                        / "artifacts"
-                        / "data_registry"
-                        / "price_cache_registry.json"
+                        tmp_path / "artifacts" / "data_registry" / "price_cache_registry.json"
                     ),
                 },
                 "output": {
@@ -409,6 +470,23 @@ def _write_audited_fmp_cache_row(
     source_symbol: str,
     target: date,
 ) -> None:
+    _write_audited_fmp_cache_rows(
+        tmp_path,
+        canonical_symbol=canonical_symbol,
+        source_symbol=source_symbol,
+        start=target,
+        end=target,
+    )
+
+
+def _write_audited_fmp_cache_rows(
+    tmp_path: Path,
+    *,
+    canonical_symbol: str,
+    source_symbol: str,
+    start: date,
+    end: date,
+) -> None:
     cache_dir = (
         tmp_path
         / "data"
@@ -417,25 +495,29 @@ def _write_audited_fmp_cache_row(
         / "Financial_Modeling_Prep"
         / "eod_daily_prices"
         / source_symbol
-        / "fixture"
+        / f"fixture_{start.isoformat()}_{end.isoformat()}"
     )
     cache_dir.mkdir(parents=True, exist_ok=True)
     body_path = cache_dir / "response.body"
+    rows = []
+    current = start
+    offset = 0
+    while current <= end:
+        rows.append(
+            {
+                "symbol": source_symbol,
+                "date": current.isoformat(),
+                "adjOpen": 101.0 + offset,
+                "adjHigh": 102.0 + offset,
+                "adjLow": 100.0 + offset,
+                "adjClose": 101.5 + offset,
+                "volume": 123456 + offset,
+            }
+        )
+        current += timedelta(days=1)
+        offset += 1
     body_path.write_text(
-        json.dumps(
-            [
-                {
-                    "symbol": source_symbol,
-                    "date": target.isoformat(),
-                    "adjOpen": 101.0,
-                    "adjHigh": 102.0,
-                    "adjLow": 100.0,
-                    "adjClose": 101.5,
-                    "volume": 123456,
-                }
-            ],
-            ensure_ascii=False,
-        ),
+        json.dumps(rows, ensure_ascii=False),
         encoding="utf-8",
     )
     (cache_dir / "metadata.json").write_text(
@@ -448,8 +530,8 @@ def _write_audited_fmp_cache_row(
                 "request_identity": {
                     "params": {
                         "symbol": source_symbol,
-                        "from": target.isoformat(),
-                        "to": target.isoformat(),
+                        "from": start.isoformat(),
+                        "to": end.isoformat(),
                     }
                 },
                 "canonical_symbol": canonical_symbol,

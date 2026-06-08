@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -36,6 +36,7 @@ from ai_trading_system.trading_engine.market_data_freshness import (
 )
 from ai_trading_system.trading_engine.parameters.parameter_loader import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    load_shadow_backtest_config,
     resolve_project_path,
 )
 from ai_trading_system.trading_engine.portfolio_candidate_tracking import (
@@ -107,17 +108,11 @@ def default_market_data_refresh_plan_path(output_root: Path, as_of: date) -> Pat
 
 
 def default_market_data_refresh_json_path(output_root: Path, as_of: date) -> Path:
-    return (
-        default_market_data_refresh_dir(output_root, as_of)
-        / "market_data_refresh_summary.json"
-    )
+    return default_market_data_refresh_dir(output_root, as_of) / "market_data_refresh_summary.json"
 
 
 def default_market_data_refresh_markdown_path(output_root: Path, as_of: date) -> Path:
-    return (
-        default_market_data_refresh_dir(output_root, as_of)
-        / "market_data_refresh_summary.md"
-    )
+    return default_market_data_refresh_dir(output_root, as_of) / "market_data_refresh_summary.md"
 
 
 def market_data_refresh_report_alias_paths(
@@ -296,8 +291,7 @@ def build_market_data_refresh_plan(
             "effective_data_date": str(data_dates.get("effective_data_date") or ""),
             "required_target_date": target_date.isoformat(),
             "tracking_readiness": str(
-                _mapping(freshness_payload.get("tracking_readiness")).get("readiness")
-                or "unknown"
+                _mapping(freshness_payload.get("tracking_readiness")).get("readiness") or "unknown"
             ),
         },
         "required_assets": list(required_assets),
@@ -396,6 +390,9 @@ def validate_market_data_refresh_payload(payload: dict[str, Any]) -> list[str]:
         issues.append("safety manual_review_required must be true")
     if safety.get("auto_promotion") is not False:
         issues.append("safety auto_promotion must be false")
+    after_status = str(_mapping(payload.get("after")).get("freshness_status") or "")
+    if status == REFRESH_OK and after_status and after_status != FRESHNESS_OK:
+        issues.append("refresh status OK requires after freshness OK")
     return issues
 
 
@@ -481,14 +478,12 @@ def render_market_data_refresh_markdown(payload: dict[str, Any]) -> str:
     lines.extend(["", "## 6. Registry Update", ""])
     artifacts = _mapping(payload.get("supporting_artifacts"))
     lines.append(
-        "- updated_price_cache_registry: "
-        f"`{actions.get('updated_price_cache_registry', False)}`"
+        "- updated_price_cache_registry: " f"`{actions.get('updated_price_cache_registry', False)}`"
     )
     lines.append(f"- registry: `{artifacts.get('price_cache_registry', '')}`")
     lines.extend(["", "## 7. Manifest Refresh", ""])
     lines.append(
-        "- refreshed_backtest_manifest: "
-        f"`{actions.get('refreshed_backtest_manifest', False)}`"
+        "- refreshed_backtest_manifest: " f"`{actions.get('refreshed_backtest_manifest', False)}`"
     )
     lines.append(f"- manifest: `{artifacts.get('backtest_input_manifest', '')}`")
     lines.extend(["", "## 8. Freshness Recovery", ""])
@@ -531,9 +526,7 @@ def _execute_market_data_refresh(
     price_cache_before_sha = _sha256_file(prices_path)
     if plan_status != REFRESH_PLANNED:
         status = (
-            plan_status
-            if plan_status in {REFRESH_NOT_NEEDED, REFRESH_BLOCKED}
-            else REFRESH_BLOCKED
+            plan_status if plan_status in {REFRESH_NOT_NEEDED, REFRESH_BLOCKED} else REFRESH_BLOCKED
         )
         payload = _summary_payload(
             status=status,
@@ -561,9 +554,28 @@ def _execute_market_data_refresh(
     fetched_frames: list[pd.DataFrame] = []
     source_records: dict[str, dict[str, Any]] = {}
     prices_before = _read_price_cache(prices_path)
+    required_start = _required_history_start_date(
+        config=config,
+        prices=prices_before,
+        required_assets=required_assets,
+        target_date=target_date,
+    )
+    expected_history_dates = _expected_history_dates(
+        prices_before,
+        required_assets=required_assets,
+        start_date=required_start,
+        target_date=target_date,
+    )
     for symbol in refresh_targets:
         source_symbol = source_symbol_for_price_repair(symbol)
-        if _asset_has_date(prices_before, symbol, source_symbol, target_date):
+        if _asset_has_required_history(
+            prices_before,
+            symbol,
+            source_symbol,
+            start_date=required_start,
+            target_date=target_date,
+            expected_dates=expected_history_dates,
+        ):
             result = _already_current_result(
                 prices_before,
                 symbol=symbol,
@@ -573,10 +585,14 @@ def _execute_market_data_refresh(
             asset_results.append(result)
             source_records[symbol] = result
             continue
-        result, frame = _fetch_target_bar(
+        result, frame = _fetch_required_price_history(
             symbol=symbol,
             source_symbol=source_symbol,
+            prices_before=prices_before,
+            required_assets=required_assets,
+            start_date=required_start,
             target_date=target_date,
+            expected_dates=expected_history_dates,
             config=config,
             generated_at=generated_at,
             price_providers=price_providers,
@@ -600,10 +616,12 @@ def _execute_market_data_refresh(
             _write_price_cache(prices_path, merged)
             updated_price_cache = True
         prices_after_write = _read_price_cache(prices_path)
-        all_ready = _all_required_assets_have_target_date(
+        all_ready = _all_required_assets_have_required_history(
             prices_after_write,
             required_assets,
-            target_date,
+            start_date=required_start,
+            target_date=target_date,
+            expected_dates=expected_history_dates,
         )
         should_update_registry = bool(fetched_frames) or all_ready
         if should_update_registry and bool(
@@ -657,6 +675,7 @@ def _execute_market_data_refresh(
         target_date=target_date,
         write_error=write_error,
         config=config,
+        freshness_after=freshness_after,
     )
     reason = _refresh_reason(
         status=status,
@@ -666,10 +685,9 @@ def _execute_market_data_refresh(
     )
     actions = {
         "fetched_assets": [
-            str(item.get("symbol"))
-            for item in asset_results
-            if item.get("status") == "FETCHED"
+            str(item.get("symbol")) for item in asset_results if item.get("status") == "FETCHED"
         ],
+        "required_start_date": required_start.isoformat(),
         "target_date": target_date.isoformat(),
         "source": _combined_source(asset_results),
         "updated_price_cache": updated_price_cache,
@@ -709,11 +727,15 @@ def _execute_market_data_refresh(
     )
 
 
-def _fetch_target_bar(
+def _fetch_required_price_history(
     *,
     symbol: str,
     source_symbol: str,
+    prices_before: pd.DataFrame,
+    required_assets: tuple[str, ...],
+    start_date: date,
     target_date: date,
+    expected_dates: list[date],
     config: dict[str, Any],
     generated_at: datetime,
     price_providers: dict[str, PriceDataProvider] | None,
@@ -727,11 +749,21 @@ def _fetch_target_bar(
             frame, artifact = _fetch_from_audited_fmp_raw_cache(
                 canonical_symbol=symbol,
                 source_symbol=source_symbol,
+                start_date=start_date,
                 target_date=target_date,
                 config=config,
                 generated_at=generated_at,
             )
-            if not frame.empty:
+            if _fetched_history_completes_asset(
+                prices_before,
+                frame,
+                required_assets=required_assets,
+                canonical_symbol=symbol,
+                source_symbol=source_symbol,
+                start_date=start_date,
+                target_date=target_date,
+                expected_dates=expected_dates,
+            ):
                 result = _asset_result(
                     symbol=symbol,
                     source_symbol=source_symbol,
@@ -742,11 +774,22 @@ def _fetch_target_bar(
                     source_artifacts=artifact,
                 )
                 return result, frame
+            if not frame.empty:
+                attempts.append(
+                    {
+                        "source": source,
+                        "status": REFRESH_SOURCE_DELAYED,
+                        "reason": "audited cache history does not cover required range",
+                        "rows_available": len(frame),
+                        "source_artifacts": artifact,
+                    }
+                )
+                continue
             attempts.append(
                 {
                     "source": source,
                     "status": REFRESH_SOURCE_DELAYED,
-                    "reason": "audited cache has no target date row",
+                    "reason": "audited cache has no required history rows",
                 }
             )
             continue
@@ -758,13 +801,23 @@ def _fetch_target_bar(
                 provider_name=source,
                 symbol=symbol,
                 source_symbol=source_symbol,
+                start_date=start_date,
                 target_date=target_date,
                 config=config,
                 generated_at=generated_at,
                 price_provider=None if price_providers is None else price_providers.get(source),
             )
             attempts.append(attempt)
-            if frame is not None and not frame.empty:
+            if frame is not None and _fetched_history_completes_asset(
+                prices_before,
+                frame,
+                required_assets=required_assets,
+                canonical_symbol=symbol,
+                source_symbol=source_symbol,
+                start_date=start_date,
+                target_date=target_date,
+                expected_dates=expected_dates,
+            ):
                 result = _asset_result(
                     symbol=symbol,
                     source_symbol=source_symbol,
@@ -775,6 +828,13 @@ def _fetch_target_bar(
                     source_artifacts=_records(attempt.get("source_artifacts")),
                 )
                 return result, frame
+            if frame is not None and not frame.empty:
+                attempts[-1] = {
+                    **attempt,
+                    "status": REFRESH_SOURCE_DELAYED,
+                    "reason": "provider history does not cover required range",
+                    "rows_available": len(frame),
+                }
     terminal_status = _terminal_asset_status(attempts)
     return (
         _asset_result(
@@ -794,6 +854,7 @@ def _fetch_from_audited_fmp_raw_cache(
     *,
     canonical_symbol: str,
     source_symbol: str,
+    start_date: date,
     target_date: date,
     config: dict[str, Any],
     generated_at: datetime,
@@ -803,7 +864,8 @@ def _fetch_from_audited_fmp_raw_cache(
         / _FMP_PROVIDER.replace(" ", "_")
         / _FMP_EOD_CACHE_FAMILY
     )
-    candidates: list[tuple[datetime, Path, dict[str, Any], pd.DataFrame]] = []
+    frames: list[pd.DataFrame] = []
+    artifacts: list[dict[str, Any]] = []
     if not root.exists():
         return pd.DataFrame(columns=PRICE_CACHE_OUTPUT_COLUMNS), []
     for metadata_path in root.rglob("metadata.json"):
@@ -823,28 +885,47 @@ def _fetch_from_audited_fmp_raw_cache(
             pd.DataFrame(payload),
             canonical_symbol=canonical_symbol,
             source_symbol=source_symbol,
+            start_date=start_date,
             target_date=target_date,
             updated_at=str(metadata.get("created_at") or generated_at.isoformat()),
         )
         if frame.empty:
             continue
         created = _parse_datetime(metadata.get("created_at")) or datetime.min.replace(tzinfo=UTC)
-        candidates.append((created, metadata_path, metadata, frame))
-    if not candidates:
+        body_path = _body_path(metadata, metadata_path)
+        frame["_source_created"] = created.isoformat()
+        frame["_source_metadata_path"] = str(metadata_path)
+        frames.append(frame)
+        date_range = _frame_date_range(frame)
+        artifacts.append(
+            {
+                "provider": _FMP_PROVIDER,
+                "endpoint": str(metadata.get("endpoint") or metadata.get("url") or ""),
+                "metadata_path": str(metadata_path),
+                "body_path": str(body_path),
+                "body_sha256": str(metadata.get("body_sha256") or _sha256_file(body_path)),
+                "row_count": len(frame),
+                "date_range": date_range,
+                "latest_date": date_range.get("end", ""),
+            }
+        )
+    if not frames:
         return pd.DataFrame(columns=PRICE_CACHE_OUTPUT_COLUMNS), []
-    candidates.sort(key=lambda item: (item[0], str(item[1])), reverse=True)
-    _, metadata_path, metadata, frame = candidates[0]
-    body_path = _body_path(metadata, metadata_path)
-    artifact = {
-        "provider": _FMP_PROVIDER,
-        "endpoint": str(metadata.get("endpoint") or metadata.get("url") or ""),
-        "metadata_path": str(metadata_path),
-        "body_path": str(body_path),
-        "body_sha256": str(metadata.get("body_sha256") or _sha256_file(body_path)),
-        "row_count": len(frame),
-        "latest_date": target_date.isoformat(),
-    }
-    return frame, [artifact]
+    combined = pd.concat(frames, ignore_index=True)
+    combined = (
+        combined.sort_values(["date", "_source_created", "_source_metadata_path"])
+        .drop_duplicates(subset=["date", "ticker"], keep="last")
+        .drop(columns=["_source_created", "_source_metadata_path"])
+        .reset_index(drop=True)
+    )
+    artifacts.sort(
+        key=lambda item: (
+            str(_mapping(item.get("date_range")).get("start") or ""),
+            str(_mapping(item.get("date_range")).get("end") or ""),
+            str(item.get("metadata_path") or ""),
+        )
+    )
+    return combined, artifacts
 
 
 def _fetch_from_provider(
@@ -852,6 +933,7 @@ def _fetch_from_provider(
     provider_name: str,
     symbol: str,
     source_symbol: str,
+    start_date: date,
     target_date: date,
     config: dict[str, Any],
     generated_at: datetime,
@@ -872,7 +954,7 @@ def _fetch_from_provider(
         downloaded = provider.download_prices(
             PriceRequest(
                 tickers=[source_symbol],
-                start=target_date,
+                start=start_date,
                 end=target_date,
                 interval="1d",
             )
@@ -883,7 +965,7 @@ def _fetch_from_provider(
             source_symbol=source_symbol,
             source=_provider_label(provider_name),
             updated_at=generated_at.isoformat(),
-            start=target_date,
+            start=start_date,
             end=target_date,
         )
         if normalized.empty:
@@ -893,7 +975,7 @@ def _fetch_from_provider(
                     "source": provider_name,
                     "status": REFRESH_SOURCE_DELAYED,
                     "rows_downloaded": len(downloaded),
-                    "error": "provider returned no target date row",
+                    "error": "provider returned no valid rows for required date range",
                 },
             )
         return (
@@ -1032,9 +1114,7 @@ def _write_price_cache_registry(
             "registered_at": generated_at.isoformat(),
         }
     registry_status = (
-        "OK"
-        if all(item["status"] == "REGISTERED" for item in assets.values())
-        else "LIMITED"
+        "OK" if all(item["status"] == "REGISTERED" for item in assets.values()) else "LIMITED"
     )
     payload = {
         "schema_version": 1,
@@ -1067,6 +1147,7 @@ def _normalize_audited_fmp_rows(
     *,
     canonical_symbol: str,
     source_symbol: str,
+    start_date: date,
     target_date: date,
     updated_at: str,
 ) -> pd.DataFrame:
@@ -1090,7 +1171,11 @@ def _normalize_audited_fmp_rows(
     if "volume" not in frame.columns:
         frame["volume"] = pd.NA
     frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
-    frame = frame.loc[frame["date"].dt.date == target_date].copy()
+    frame = frame.loc[
+        frame["date"].notna()
+        & (frame["date"].dt.date >= start_date)
+        & (frame["date"].dt.date <= target_date)
+    ].copy()
     for column in ("open", "high", "low", "close", "adj_close", "volume"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     frame = frame.loc[frame["close"].notna() & frame["adj_close"].notna()].copy()
@@ -1122,7 +1207,7 @@ def _refresh_actions(
         return []
     return [
         {
-            "action": "fetch_latest_daily_bar",
+            "action": "fetch_required_price_history",
             "target_date": target_date.isoformat(),
             "symbols": list(refresh_targets),
             "source_order": list(_source_order(config)),
@@ -1191,19 +1276,25 @@ def _refresh_status(
     target_date: date,
     write_error: str,
     config: dict[str, Any],
+    freshness_after: dict[str, Any],
 ) -> str:
     if write_error:
         return REFRESH_FAILED
-    if _all_required_assets_have_target_date(prices, required_assets, target_date):
-        return REFRESH_OK
     if not asset_results:
         return REFRESH_BLOCKED
     statuses = {str(item.get("status") or "") for item in asset_results}
     if REFRESH_BLOCKED in statuses:
         return REFRESH_BLOCKED
-    has_current_or_fetched = any(
-        status in {"FETCHED", "ALREADY_CURRENT"} for status in statuses
-    )
+    after_status = str(_mapping(freshness_after.get("freshness")).get("status") or "")
+    if after_status and after_status != FRESHNESS_OK:
+        if REFRESH_SOURCE_DELAYED in statuses:
+            return REFRESH_SOURCE_DELAYED
+        if REFRESH_FAILED in statuses:
+            return REFRESH_FAILED
+        return REFRESH_FAILED
+    if _all_required_assets_have_target_date(prices, required_assets, target_date):
+        return REFRESH_OK
+    has_current_or_fetched = any(status in {"FETCHED", "ALREADY_CURRENT"} for status in statuses)
     if REFRESH_FAILED in statuses and not has_current_or_fetched:
         return REFRESH_FAILED
     if bool(_mapping(config.get("refresh")).get("allow_partial_refresh", False)):
@@ -1239,9 +1330,7 @@ def _refresh_reason(
     ]
     if delayed:
         return (
-            "Market data source has not provided target date rows for "
-            + ", ".join(delayed)
-            + "."
+            "Market data source has not provided target date rows for " + ", ".join(delayed) + "."
         )
     after_status = str(_mapping(freshness_after.get("freshness")).get("status") or "")
     if after_status and after_status != FRESHNESS_OK:
@@ -1267,8 +1356,7 @@ def _remaining_limitations(
     ]
     if delayed:
         limitations.append(
-            "market data source has not provided target date rows for: "
-            + ", ".join(delayed)
+            "market data source has not provided target date rows for: " + ", ".join(delayed)
         )
     if tracking_error:
         limitations.append(f"candidate tracking rerun failed: {tracking_error}")
@@ -1485,6 +1573,158 @@ def _asset_has_date(
     return "_parsed_date" in rows.columns and target_date in set(rows["_parsed_date"])
 
 
+def _asset_has_required_history(
+    prices: pd.DataFrame,
+    canonical_symbol: str,
+    source_symbol: str,
+    *,
+    start_date: date,
+    target_date: date,
+    expected_dates: list[date],
+) -> bool:
+    dates = _valid_asset_history_dates(prices, canonical_symbol, source_symbol)
+    if not dates or target_date not in dates or min(dates) > start_date:
+        return False
+    if expected_dates and not set(expected_dates).issubset(dates):
+        return False
+    return True
+
+
+def _fetched_history_completes_asset(
+    prices_before: pd.DataFrame,
+    fetched: pd.DataFrame,
+    *,
+    required_assets: tuple[str, ...],
+    canonical_symbol: str,
+    source_symbol: str,
+    start_date: date,
+    target_date: date,
+    expected_dates: list[date],
+) -> bool:
+    if fetched is None or fetched.empty:
+        return False
+    combined = pd.concat([prices_before, fetched], ignore_index=True)
+    combined_expected = expected_dates or _expected_history_dates(
+        combined,
+        required_assets=required_assets,
+        start_date=start_date,
+        target_date=target_date,
+    )
+    return _asset_has_required_history(
+        combined,
+        canonical_symbol,
+        source_symbol,
+        start_date=start_date,
+        target_date=target_date,
+        expected_dates=combined_expected,
+    )
+
+
+def _all_required_assets_have_required_history(
+    prices: pd.DataFrame,
+    required_assets: tuple[str, ...],
+    *,
+    start_date: date,
+    target_date: date,
+    expected_dates: list[date],
+) -> bool:
+    if prices.empty:
+        return False
+    for symbol in required_assets:
+        source_symbol = source_symbol_for_price_repair(symbol)
+        if not _asset_has_required_history(
+            prices,
+            symbol,
+            source_symbol,
+            start_date=start_date,
+            target_date=target_date,
+            expected_dates=expected_dates,
+        ):
+            return False
+    return True
+
+
+def _valid_asset_history_dates(
+    prices: pd.DataFrame,
+    canonical_symbol: str,
+    source_symbol: str,
+) -> set[date]:
+    rows = _asset_rows(prices, canonical_symbol, source_symbol)
+    if rows.empty or "date" not in rows.columns:
+        return set()
+    parsed = pd.to_datetime(rows["date"], errors="coerce")
+    valid = rows.loc[parsed.notna()].copy()
+    if valid.empty:
+        return set()
+    valid["_parsed_history_date"] = parsed.loc[parsed.notna()].dt.date
+    if "adj_close" in valid.columns:
+        valid["_adj_close"] = pd.to_numeric(valid["adj_close"], errors="coerce")
+        valid = valid.loc[valid["_adj_close"].notna()]
+    return set(valid["_parsed_history_date"])
+
+
+def _expected_history_dates(
+    prices: pd.DataFrame,
+    *,
+    required_assets: tuple[str, ...],
+    start_date: date,
+    target_date: date,
+) -> list[date]:
+    dates = _observed_history_dates(
+        prices,
+        required_assets=required_assets,
+        start_date=start_date,
+        target_date=target_date,
+    )
+    if dates:
+        return dates
+    return [
+        start_date + timedelta(days=offset) for offset in range((target_date - start_date).days + 1)
+    ]
+
+
+def _observed_history_dates(
+    prices: pd.DataFrame,
+    *,
+    required_assets: tuple[str, ...],
+    start_date: date | None,
+    target_date: date,
+) -> list[date]:
+    dates: set[date] = set()
+    for symbol in required_assets:
+        source_symbol = source_symbol_for_price_repair(symbol)
+        for current in _valid_asset_history_dates(prices, symbol, source_symbol):
+            if (start_date is None or current >= start_date) and current <= target_date:
+                dates.add(current)
+    return sorted(dates)
+
+
+def _required_history_start_date(
+    *,
+    config: dict[str, Any],
+    prices: pd.DataFrame,
+    required_assets: tuple[str, ...],
+    target_date: date,
+) -> date:
+    min_history_days = _shadow_min_history_days(config)
+    observed_dates = _observed_history_dates(
+        prices,
+        required_assets=required_assets,
+        start_date=None,
+        target_date=target_date,
+    )
+    if len(observed_dates) >= min_history_days:
+        return observed_dates[-min_history_days]
+    if observed_dates:
+        return observed_dates[-1] - timedelta(days=min_history_days - 1)
+    return target_date - timedelta(days=min_history_days)
+
+
+def _shadow_min_history_days(config: dict[str, Any]) -> int:
+    shadow_config = load_shadow_backtest_config(_shadow_backtest_config_path(config))
+    return int(shadow_config.walk_forward.min_history_days)
+
+
 def _frame_date_range(frame: pd.DataFrame) -> dict[str, str]:
     if frame.empty or "date" not in frame.columns:
         return {"start": "", "end": ""}
@@ -1592,11 +1832,7 @@ def _market_data_freshness_root(config: dict[str, Any]) -> Path:
 
 def _market_data_freshness_config_path(config: dict[str, Any]) -> Path:
     raw = _input(config, "market_data_freshness_config_path")
-    return (
-        resolve_project_path(str(raw))
-        if raw
-        else DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH
-    )
+    return resolve_project_path(str(raw)) if raw else DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH
 
 
 def _shadow_backtest_config_path(config: dict[str, Any]) -> Path:
@@ -1607,9 +1843,7 @@ def _shadow_backtest_config_path(config: dict[str, Any]) -> Path:
 def _portfolio_candidate_tracking_config_path(config: dict[str, Any]) -> Path:
     raw = _input(config, "portfolio_candidate_tracking_config_path")
     return (
-        resolve_project_path(str(raw))
-        if raw
-        else DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH
+        resolve_project_path(str(raw)) if raw else DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH
     )
 
 

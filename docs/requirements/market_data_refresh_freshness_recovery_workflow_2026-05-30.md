@@ -1,6 +1,6 @@
 # TRADING-057A Market Data Refresh & Freshness Recovery Workflow
 
-最后更新：2026-06-07
+最后更新：2026-06-09
 
 ## 背景
 
@@ -58,7 +58,8 @@ fail-closed 的 market data refresh 与 freshness recovery 流程。
 1. 新增 `config/data/market_data_refresh.yaml`，记录 refresh mode、source order、
    required assets、registry/manifest 要求和安全字段。
 2. 新增 market data refresh module，负责读取 latest freshness report、生成 refresh plan、
-   获取 target date required asset bars、写入 primary price cache、更新 registry、
+   获取 target date required asset bars，并在 asset history 不足时按 shadow backtest
+   required history 覆盖补齐至 target date、写入 primary price cache、更新 registry、
    刷新 manifest、重跑 freshness 与 candidate tracking。
 3. 新增 CLI：
    - `aits data refresh-market --latest`
@@ -108,3 +109,11 @@ fail-closed 的 market data refresh 与 freshness recovery 流程。
   --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json`
   并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true`
   和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。
+- 2026-06-09：`DONE` 状态保持，并补强 recovery 缺陷。复验发现旧实现只按 target
+  date 单日 bar 判断恢复，可能在 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 只有 2026-06-05
+  一行时把 refresh summary 标为 `OK`，但 after freshness/manifest 仍为 `MISSING`。
+  当前实现改为合并 audited FMP raw cache 的历史段与单日段，只有补齐 shadow backtest
+  required history 且 rerun freshness 为 `OK` 时才允许 refresh summary 为 `OK`；target-only
+  cache 会保持 `SOURCE_DELAYED` / fail closed。真实 2026-06-05 recovery 写入三只资产各
+  1008 行（2022-05-31 至 2026-06-05），freshness、manifest、registry 和 candidate
+  tracking 均恢复 `OK` / `active_tracking`，production promotion 仍禁用。
