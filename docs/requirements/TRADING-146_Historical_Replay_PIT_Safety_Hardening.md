@@ -5,8 +5,8 @@
 ## 状态
 
 - 任务登记：`docs/task_register.md` 中 `TRADING-146`
-- 当前状态：VALIDATING
-- 下一责任方：系统验证
+- 当前状态：DONE
+- 下一责任方：无，系统验证已完成
 - 安全边界：no broker API、no automatic order、no production candidate、no owner auto approval、no official target weight mutation、no production config auto calibration
 
 ## 背景
@@ -61,3 +61,12 @@
   `INSUFFICIENT_DATA` 或 `continue_forward_tracking`，没有伪造 outcome 或
   calibration 结论。验证通过 focused pytest、五个 artifact validate、ruff、
   compileall、documentation contract 和 docs freshness。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。复跑系统验证确认 hard PIT
+  safety 收口：`pytest tests/test_dynamic_v3_historical_replay.py -q` 为
+  2 passed；`validate-replay-inventory --inventory-id 358d353576f86a47`、
+  `validate-historical-replay --replay-id 86b56e67308cdc50`、
+  `validate-backfill-outcome --backfill-id 38f3b24513fc8229`、
+  `validate-historical-paper-sim --sim-id 278aaea770c9d106` 和
+  `validate-replay-performance-review --review-id f5a0d6edae45994f` 均
+  `PASS`，并保持 `broker_action_taken=false` / `production_effect=none`；
+  相关 ruff、compileall、documentation contract 和 docs freshness 均通过。
