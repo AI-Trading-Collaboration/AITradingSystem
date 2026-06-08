@@ -68,6 +68,12 @@ def test_default_report_registry_loads() -> None:
     )
     assert any(item["report_id"] == "etf_dynamic_shadow_validation" for item in registry["reports"])
     assert all("freshness_rationale" in item for item in registry["reports"])
+    dynamic_v3_leaderboard = next(
+        item
+        for item in registry["reports"]
+        if item["report_id"] == "etf_dynamic_v3_parameter_sweep_leaderboard"
+    )
+    assert dynamic_v3_leaderboard["artifact_selection_policy"] == "latest_available"
 
 
 @pytest.mark.parametrize("value", [None, "missing"])
@@ -81,6 +87,16 @@ def test_report_registry_rejects_missing_freshness_sla_days(tmp_path: Path, valu
     registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
 
     with pytest.raises(ValueError, match="freshness_sla_days"):
+        load_report_registry(registry_path)
+
+
+def test_report_registry_rejects_unknown_artifact_selection_policy(tmp_path: Path) -> None:
+    registry_path = _write_registry(tmp_path)
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    registry["reports"][0]["artifact_selection_policy"] = "future_artifacts_for_everyone"
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="artifact_selection_policy"):
         load_report_registry(registry_path)
 
 
@@ -123,6 +139,39 @@ def test_report_index_classifies_latest_artifacts_and_freshness(tmp_path: Path) 
     assert not reports["backtest_daily"]["latest_artifact_name"].startswith("backtest_robustness")
     assert any("missing_required_required_missing" in item for item in payload["warnings"])
     assert "Report Registry & Cadence Calendar" in html
+
+
+def test_report_index_latest_available_policy_can_select_after_as_of_artifact(
+    tmp_path: Path,
+) -> None:
+    registry_path = _write_registry(tmp_path)
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    registry["reports"][0]["artifact_selection_policy"] = "latest_available"
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+    reports_dir = tmp_path / "outputs" / "reports"
+    reports_dir.mkdir(parents=True)
+    (reports_dir / "daily_score_2026-05-06.md").write_text("# Daily Score\n", encoding="utf-8")
+    _write_json(
+        reports_dir / "evidence_dashboard_2026-05-06.json",
+        {"report_type": "evidence_dashboard", "status": "PASS", "production_effect": "none"},
+    )
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 4),
+        project_root=tmp_path,
+        registry_path=registry_path,
+    )
+    reports = {item["report_id"]: item for item in payload["reports"]}
+
+    assert reports["daily_score"]["latest_artifact_name"] == "daily_score_2026-05-06.md"
+    assert reports["daily_score"]["artifact_date"] == "2026-05-06"
+    assert reports["daily_score"]["artifact_selection_policy"] == "latest_available"
+    assert reports["daily_score"]["artifact_temporal_relation"] == "AFTER_AS_OF"
+    assert reports["daily_score"]["artifact_after_as_of"] is True
+    assert reports["daily_score"]["age_days"] == 0
+    assert reports["daily_score"]["freshness_status"] == "FRESH"
+    assert reports["evidence_dashboard"]["freshness_status"] == "MISSING"
+    assert reports["evidence_dashboard"]["artifact_selection_policy"] == "as_of_or_unknown"
 
 
 def test_reports_index_cli_writes_html_and_json(tmp_path: Path) -> None:

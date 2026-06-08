@@ -1374,6 +1374,7 @@ reports:
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/leaderboard.json
       - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/leaderboard.md
+    artifact_selection_policy: latest_available
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-093 to TRADING-101 parameter research uses configured hard gates

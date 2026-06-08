@@ -14,7 +14,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |---|---|---|---|
 |TRADING-093|Parameter Sweep Config Schema|新增 `parameter_sweep_v1.yaml`、配置加载、schema validation、参数网格、稳定 `candidate_id` 和 preview CLI|DONE|
 |TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|DONE|
-|TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|VALIDATING|
+|TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|DONE|
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
@@ -80,3 +80,30 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   `sweep_20260606T024119Z_98fa3c81` 可作为历史样例，但因后续 validator
   增加 `evaluator_mode` 要求，不再作为当前收口证据。Focused tests 16 passed，
   覆盖 checkpoint/resume、candidate error isolation 和 validation contract。
+- 2026-06-09：`TRADING-095` 验证发现 Reader Brief / report index 集成缺口。
+  当前 canonical real sweep `sweep_20260607T102300Z_ae5ae1d8` 的 leaderboard、
+  sweep report 和 candidate report 可运行，但 `aits reports index --latest` 以
+  latest decision snapshot `2026-06-05` 作为 as_of，默认 as-of artifact 过滤会把
+  2026-06-07 的 sweep leaderboard 视为未来 artifact 排除，导致 Reader Brief
+  Dynamic Rescue Parameter Sweep 区块降级为 replay-only。该问题不是用手工
+  `--as-of 2026-06-07` 绕过；修复方向是在 `config/report_registry.yaml` 为
+  明确的 ad-hoc latest research entry 增加 `artifact_selection_policy=latest_available`，
+  同时让 report index 输出 `artifact_selection_policy`、`artifact_temporal_relation`
+  和 `artifact_after_as_of`，只对该 entry 放宽选择，不全局改变 daily / PIT
+  artifact 过滤。
+- 2026-06-09：`TRADING-095` 从 `VALIDATING` 改为 `DONE`。当前 canonical
+  real sweep `sweep_20260607T102300Z_ae5ae1d8` 的 `sweep leaderboard`、
+  `sweep report` 和 `candidate report` 均可运行；top candidate 为
+  `a72139edcaef7d22`，gate=`review_required`，score=`0.460619`，
+  `production_candidate_generated=false`。字段级复核确认 leaderboard 包含
+  `top_eligible_candidates`、`most_common_reject_reasons`、`metric_distributions`
+  和 `recommended_next_actions`；本轮真实结果没有 hard rejected candidates，
+  因此 reject reason aggregation 为空但字段存在。Candidate report 包含 7 个参数、
+  3 个 gate reasons、27 个 metrics、7 项 score breakdown、3 个 artifact links 和
+  recommendation。`aits reports index --latest` 现在将该 leaderboard 标记为
+  `FRESH`、`artifact_selection_policy=latest_available`、`artifact_temporal_relation=AFTER_AS_OF`；
+  `aits reports reader-brief --latest` 展示 Dynamic Rescue Parameter Sweep 为
+  `AVAILABLE/PASS`，candidate_count=300、top_candidate=`a72139edcaef7d22`。
+  验证通过 `tests/test_etf_dynamic_v3_parameter_research.py tests/test_report_index.py
+  tests/test_reader_brief.py -q`（31 passed）、Reader Brief quality、documentation
+  contract、docs freshness 和 diff check。

@@ -16,6 +16,13 @@ SCHEMA_VERSION = 1
 REPORT_TYPE = "report_index"
 PRODUCTION_EFFECT = "none"
 DEFAULT_REPORT_REGISTRY_PATH = PROJECT_ROOT / "config" / "report_registry.yaml"
+DEFAULT_ARTIFACT_SELECTION_POLICY = "as_of_or_unknown"
+ARTIFACT_SELECTION_POLICIES = frozenset(
+    {
+        DEFAULT_ARTIFACT_SELECTION_POLICY,
+        "latest_available",
+    }
+)
 
 STATUS_KEYS: tuple[str, ...] = (
     "status",
@@ -82,6 +89,15 @@ def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str,
         sla = entry.get("freshness_sla_days")
         if not isinstance(sla, int) or isinstance(sla, bool) or sla < 0:
             raise ValueError(f"report registry {report_id} freshness_sla_days must be >= 0")
+        artifact_selection_policy = _string(
+            entry.get("artifact_selection_policy"),
+            DEFAULT_ARTIFACT_SELECTION_POLICY,
+        )
+        if artifact_selection_policy not in ARTIFACT_SELECTION_POLICIES:
+            raise ValueError(
+                f"report registry {report_id} artifact_selection_policy must be one of "
+                f"{sorted(ARTIFACT_SELECTION_POLICIES)}"
+            )
     return raw
 
 
@@ -224,16 +240,27 @@ def _report_record(
     project_root: Path,
     defaults: Mapping[str, Any],
 ) -> dict[str, Any]:
+    artifact_selection_policy = _artifact_selection_policy(entry, defaults)
     latest = _latest_artifact(
         report_id=_string(entry.get("report_id")),
         artifact_globs=_strings(entry.get("artifact_globs")),
         project_root=project_root,
         as_of=as_of,
+        artifact_selection_policy=artifact_selection_policy,
     )
     path = latest["path"]
     exists = path is not None and path.exists()
     artifact_date = latest["artifact_date"]
-    age_days = (as_of - artifact_date).days if artifact_date is not None else None
+    age_days = _artifact_age_days(
+        as_of=as_of,
+        artifact_date=artifact_date,
+        artifact_selection_policy=artifact_selection_policy,
+    )
+    artifact_temporal_relation = _artifact_temporal_relation(
+        as_of=as_of,
+        artifact_date=artifact_date,
+        exists=exists,
+    )
     freshness_status = _freshness_status(
         exists=exists,
         age_days=age_days,
@@ -260,6 +287,9 @@ def _report_record(
         "latest_artifact_path": "" if path is None else str(path),
         "latest_artifact_name": "" if path is None else path.name,
         "artifact_date": "" if artifact_date is None else artifact_date.isoformat(),
+        "artifact_selection_policy": artifact_selection_policy,
+        "artifact_temporal_relation": artifact_temporal_relation,
+        "artifact_after_as_of": artifact_temporal_relation == "AFTER_AS_OF",
         "exists": exists,
         "freshness_status": freshness_status,
         "freshness_sla_days": entry.get("freshness_sla_days"),
@@ -283,8 +313,10 @@ def _latest_artifact(
     artifact_globs: Sequence[str],
     project_root: Path,
     as_of: date,
+    artifact_selection_policy: str,
 ) -> dict[str, Any]:
     candidates: list[tuple[date, float, Path]] = []
+    include_after_as_of = artifact_selection_policy == "latest_available"
     for raw_pattern in artifact_globs:
         pattern_path = Path(raw_pattern)
         pattern = str(pattern_path if pattern_path.is_absolute() else project_root / pattern_path)
@@ -297,7 +329,7 @@ def _latest_artifact(
             ):
                 continue
             artifact_date = _date_from_path(path)
-            if artifact_date is not None and artifact_date > as_of:
+            if artifact_date is not None and artifact_date > as_of and not include_after_as_of:
                 continue
             sort_date = artifact_date or date.min
             candidates.append((sort_date, path.stat().st_mtime, path))
@@ -305,6 +337,49 @@ def _latest_artifact(
         return {"path": None, "artifact_date": None}
     artifact_date, _, path = max(candidates, key=lambda item: (item[0], item[1], item[2].name))
     return {"path": path, "artifact_date": None if artifact_date == date.min else artifact_date}
+
+
+def _artifact_selection_policy(
+    entry: Mapping[str, Any],
+    defaults: Mapping[str, Any],
+) -> str:
+    raw_policy = (
+        _string(entry.get("artifact_selection_policy"))
+        or _string(defaults.get("artifact_selection_policy"))
+        or DEFAULT_ARTIFACT_SELECTION_POLICY
+    )
+    if raw_policy not in ARTIFACT_SELECTION_POLICIES:
+        return DEFAULT_ARTIFACT_SELECTION_POLICY
+    return raw_policy
+
+
+def _artifact_age_days(
+    *,
+    as_of: date,
+    artifact_date: date | None,
+    artifact_selection_policy: str,
+) -> int | None:
+    if artifact_date is None:
+        return None
+    age_days = (as_of - artifact_date).days
+    if artifact_selection_policy == "latest_available" and age_days < 0:
+        return 0
+    return age_days
+
+
+def _artifact_temporal_relation(
+    *,
+    as_of: date,
+    artifact_date: date | None,
+    exists: bool,
+) -> str:
+    if not exists:
+        return "MISSING"
+    if artifact_date is None:
+        return "DATE_UNKNOWN"
+    if artifact_date > as_of:
+        return "AFTER_AS_OF"
+    return "ON_OR_BEFORE_AS_OF"
 
 
 def _glob_paths(pattern: str) -> list[Path]:
@@ -389,6 +464,15 @@ def _group_counts(reports: Sequence[Mapping[str, Any]]) -> dict[str, int]:
 
 def _report_row(report: Mapping[str, Any]) -> str:
     artifact = _string(report.get("latest_artifact_name")) or "MISSING"
+    artifact_metadata = " / ".join(
+        item
+        for item in (
+            _string(report.get("artifact_date")),
+            _string(report.get("artifact_temporal_relation")),
+            _string(report.get("artifact_selection_policy")),
+        )
+        if item
+    )
     return (
         "<tr>"
         f"<td><strong>{_escape(report.get('title'))}</strong><br>"
@@ -397,7 +481,7 @@ def _report_row(report: Mapping[str, Any]) -> str:
         f"<td>{_escape(report.get('cadence'))}</td>"
         f"<td>{_badge(report.get('freshness_status'))}</td>"
         f"<td><code>{_escape(artifact)}</code><br>"
-        f"<small>{_escape(report.get('artifact_date'))}</small></td>"
+        f"<small>{_escape(artifact_metadata)}</small></td>"
         f"<td>{_escape(report.get('artifact_status'))}</td>"
         f"<td>{_escape(report.get('owner_action'))}</td>"
         "</tr>"
