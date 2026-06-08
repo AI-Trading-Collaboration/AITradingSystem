@@ -1,6 +1,6 @@
 # ARCH-002：workflow 与 artifact 契约重构
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 关联任务：`ARCH-002`
 
@@ -42,3 +42,4 @@
 - 2026-05-17：新增任务和需求文档，进入第一阶段实现。当前选择 run manifest artifact 记录作为最小行为保持重构切片。
 - 2026-05-17：第一阶段实现完成并进入 VALIDATING。新增 `ai_trading_system.core` 契约模块，`run_artifacts` 改为通过 `ArtifactRef` 生成 manifest artifact 记录；新增模块边界和 workflow contract 文档，并同步 `docs/system_flow.md` 与 `docs/artifact_catalog.md`。验证通过目标测试、ruff、mypy、docs freshness、diff check 和全量 pytest。
 - 2026-05-17：第二阶段适配层完成。`ops_daily` 新增 `daily_ops_step_to_workflow_step()` 和 `daily_ops_step_result_to_workflow_step_result()`，把既有 daily-run step/result 显式映射到通用 workflow contract；不改变 daily-run 执行器、metadata 或报告输出。目标测试、ruff 和目标 mypy 通过。
+- 2026-06-09：系统验证收口并归档为 DONE。当前 `ai_trading_system.core` 继续暴露 `ArtifactRef`、`ProductionEffect`、`WorkflowStep` 和 `WorkflowStepResult`；`run_artifacts` 仍通过 `ArtifactRef` 生成 manifest artifact 记录；`ops_daily` 适配函数仍覆盖 daily-run step/result 到通用 workflow contract。后续 dashboard / shadow / replay 的渐进接入不再作为 ARCH-002 交付条件，由 ARCH-003 或后续重构任务承接。验证通过 `python -m pytest tests/test_core_contracts.py tests/test_ops_daily.py tests/test_run_artifacts.py -q`（40 passed）和 `python -m ruff check src\ai_trading_system\core src\ai_trading_system\run_artifacts.py src\ai_trading_system\ops_daily.py tests\test_core_contracts.py tests\test_ops_daily.py tests\test_run_artifacts.py`。
