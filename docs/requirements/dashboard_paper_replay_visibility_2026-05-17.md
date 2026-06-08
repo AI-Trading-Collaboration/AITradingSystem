@@ -1,6 +1,6 @@
 # TRADING-005：Dashboard Paper Replay Visibility
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 关联任务：`TRADING-005`
 
@@ -70,3 +70,16 @@ market snapshot source 和质量指标。daily task dashboard 已有基础 Paper
   `python -m ruff check src tests scripts`、`python -m black --check
   src/ai_trading_system/daily_task_dashboard.py tests/test_daily_task_dashboard.py`
   和 `git diff --check`。
+- 2026-06-09：系统验证收尾并归档为 DONE。当前 latest
+  `daily_task_dashboard_2026-06-05.json/html` 字段级复核确认 Paper Trading Trend
+  包含 7/14/30 窗口、`production_effect=none`、`replay_mode=daily_independent`、
+  `portfolio_carry_forward=false`、只读 execution boundary、synthetic snapshot
+  summary、top `blocked_by` 和 top `reason_code`。该 latest run 的 run-bundle
+  reports 目录缺少对应 paper summaries，因此趋势按设计为 `LIMITED`，所有缺失日
+  记录仍显式写入 `production_effect=none`，不反推、不补造、不运行 runner 或
+  replay。验证通过 `python -m pytest tests/test_daily_task_dashboard.py -q`
+  （22 passed）、`python -m pytest tests/trading_engine -q`（939 passed）、
+  `python -m black --check src/ai_trading_system/daily_task_dashboard.py
+  tests/test_daily_task_dashboard.py` 和 scoped Ruff。后续 paper signal quality、
+  continuous replay visibility 与真实 daily flow 观察由 TRADING-006/TRADING-007A+
+  承接，不作为 TRADING-005 未完成项。
