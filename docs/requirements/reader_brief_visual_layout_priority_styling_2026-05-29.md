@@ -1,6 +1,6 @@
 # Reader Brief Visual Layout & Priority Styling
 
-最后更新：2026-05-29
+最后更新：2026-06-09
 
 关联任务：`REPORT-057`
 
@@ -83,3 +83,14 @@ shadow weights、score configs、promotion gate 或 trading decisions。
   review severity 分组、Missing / Limited Artifact Impact impact 分区，并保留
   `<details>` 审计信息。验证覆盖 Reader Brief 目标测试、全量 pytest、ruff、black、
   `reader-brief --latest` 和 `validate-reader-brief --latest`。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。最新
+  `reader_brief_2026-06-05.html/json` 为 `OK` 且 `production_effect=none`；
+  Playwright 桌面 1440x1200 与移动 390x900 视口均可渲染本地 HTML，首屏可见三层状态、
+  行动清单、summary cards、binding gate 高亮和 production effect badge。HTML
+  结构复核确认 `summary-card-grid`、final action、final AI position、binding gate、
+  market movement、manual review、production effect 六类 cards 均存在；status badge
+  可见，Market Situation 有 6 个 compact cards（SPY、QQQ、SMH、SOXX、^VIX、DGS10），
+  funnel flow 与 binding node 存在，manual review critical/warning 分组和
+  recommended action 突出显示，Missing / Limited Artifact Impact summary grid 存在，
+  `<details>` 审计块 424 个。`reader-brief --latest`、
+  `validate-reader-brief --latest` 和 `docs report-contract --latest` 通过。
