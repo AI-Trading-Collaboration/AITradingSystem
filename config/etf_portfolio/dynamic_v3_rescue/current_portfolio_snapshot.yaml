@@ -24,4 +24,4 @@ positions:
 metadata:
   owner_reviewed: false
   broker_imported: false
-  notes: "Manual snapshot for advisory only"
+  notes: "Manual placeholder snapshot for advisory validation; not broker-imported"

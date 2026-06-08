@@ -116,8 +116,13 @@ DEFAULT_RESEARCH_DECISION_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "resea
 DEFAULT_SHORTLIST_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shortlist"
 DEFAULT_CANDIDATE_CLUSTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_cluster"
 DEFAULT_SHADOW_SHORTLIST_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_shortlist"
+DEFAULT_SHADOW_MONITOR_RUN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_monitor_runs"
+DEFAULT_PORTFOLIO_SNAPSHOT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "portfolio_snapshot"
 DEFAULT_POSITION_ADVISORY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_advisory"
+DEFAULT_POSITION_ADVISORY_DAILY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_advisory_daily"
+DEFAULT_CONSENSUS_DRIFT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "consensus_drift"
 DEFAULT_POSITION_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_review"
+DEFAULT_OWNER_REVIEW_JOURNAL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_review_journal"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
@@ -135,6 +140,13 @@ DEFAULT_CURRENT_PORTFOLIO_SNAPSHOT_EXAMPLE_PATH = (
     / "etf_portfolio"
     / "dynamic_v3_rescue"
     / "current_portfolio_snapshot.example.yaml"
+)
+DEFAULT_CURRENT_PORTFOLIO_SNAPSHOT_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "current_portfolio_snapshot.yaml"
 )
 DEFAULT_RATES_CACHE_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
 
@@ -326,7 +338,26 @@ CANDIDATE_CLUSTER_SECONDARY_REPRESENTATIVE_SIZE = 4
 
 POSITION_ADVISORY_TARGET_ONLY = "TARGET_ONLY"
 POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW = "READY_WITH_MANUAL_REVIEW"
-DYNAMIC_V3_WEIGHT_SYMBOLS = ("SPY", "QQQ", "SMH", "SOXX", "CASH")
+POSITION_ADVISORY_SNAPSHOT_DELTA = "SNAPSHOT_DELTA"
+PORTFOLIO_SNAPSHOT_WEIGHT_SUM_TOLERANCE = 0.005
+PORTFOLIO_SNAPSHOT_VALUE_TOLERANCE = 0.01
+PORTFOLIO_SNAPSHOT_ALLOWED_CURRENCIES = {"USD"}
+OWNER_REVIEW_DECISIONS = {
+    "monitor",
+    "no_trade",
+    "paper_adjustment",
+    "manual_adjustment",
+    "reject_advisory",
+    "needs_more_data",
+}
+CONSENSUS_DRIFT_STATUSES = {
+    "CONSENSUS",
+    "MODERATE_DISAGREEMENT",
+    "HIGH_DISAGREEMENT",
+    "INSUFFICIENT_DATA",
+}
+DYNAMIC_V3_DEFENSIVE_SYMBOLS = {"CASH", "TLT"}
+DYNAMIC_V3_WEIGHT_SYMBOLS = ("SPY", "QQQ", "SMH", "SOXX", "TLT", "CASH")
 
 DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY: dict[str, Any] = {
     "observe_only": True,
@@ -3874,6 +3905,21 @@ def load_position_advisory_config(
         raise DynamicV3ParameterResearchError("position advisory must forbid broker action")
     if execution.get("require_owner_approval") is not True:
         raise DynamicV3ParameterResearchError("position advisory must require owner approval")
+    consensus = _mapping(raw.get("consensus"))
+    required_consensus_thresholds = (
+        "agreement_threshold",
+        "max_symbol_dispersion",
+        "high_symbol_dispersion",
+        "max_risk_asset_exposure_dispersion",
+        "high_risk_asset_exposure_dispersion",
+        "max_cash_exposure_dispersion",
+        "high_cash_exposure_dispersion",
+    )
+    missing = [key for key in required_consensus_thresholds if key not in consensus]
+    if missing:
+        raise DynamicV3ParameterResearchError(
+            "position advisory consensus thresholds missing: " + ", ".join(sorted(missing))
+        )
     return dict(raw)
 
 
@@ -4222,6 +4268,973 @@ def validate_position_review_artifact(
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_position_review_validation",
+        "review_id": review_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def activate_shadow_monitoring(
+    *,
+    shadow_shortlist_id: str,
+    shadow_shortlist_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_dir = shadow_shortlist_dir / shadow_shortlist_id
+    shadow_manifest = _read_json(source_dir / "shadow_shortlist_manifest.json")
+    shadow_rows = _read_jsonl(source_dir / "shadow_shortlist_candidates.jsonl")
+    activation_id = _stable_id(
+        "shadow-monitor-activation",
+        shadow_shortlist_id,
+        generated.isoformat(),
+    )
+    activation_dir = _unique_dir(output_dir / activation_id)
+    activation_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_activation_manifest",
+        "activation_id": activation_dir.name,
+        "shadow_shortlist_id": shadow_shortlist_id,
+        "source_shortlist_id": shadow_manifest.get("source_shortlist_id", ""),
+        "source_cluster_id": shadow_manifest.get("source_cluster_id", ""),
+        "activated_at": generated.isoformat(),
+        "status": "PASS" if shadow_rows else "PASS_WITH_WARNINGS",
+        "monitoring_status": "active" if shadow_rows else "empty_shortlist",
+        "candidate_count": len(shadow_rows),
+        "manual_review_required": True,
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "activation_report_path": str(activation_dir / "shadow_monitor_activation_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(activation_dir / "shadow_monitor_activation_manifest.json", manifest)
+    _write_text(
+        activation_dir / "shadow_monitor_activation_report.md",
+        render_shadow_monitor_activation_markdown(manifest),
+    )
+    _update_latest_pointer(
+        "latest_shadow_monitor_activation",
+        activation_dir.name,
+        activation_dir / "shadow_monitor_activation_manifest.json",
+    )
+    return {
+        "activation_id": activation_dir.name,
+        "activation_dir": activation_dir,
+        "manifest": manifest,
+    }
+
+
+def run_shadow_shortlist_monitor(
+    *,
+    shadow_shortlist_id: str,
+    as_of: date,
+    shadow_shortlist_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_dir = shadow_shortlist_dir / shadow_shortlist_id
+    shadow_manifest = _read_json(source_dir / "shadow_shortlist_manifest.json")
+    shadow_rows = _read_jsonl(source_dir / "shadow_shortlist_candidates.jsonl")
+    previous_weights = _previous_shadow_monitor_weights(
+        shadow_shortlist_id=shadow_shortlist_id,
+        as_of=as_of,
+        output_dir=output_dir,
+    )
+    daily_rows = [
+        _shadow_shortlist_daily_result(row, as_of=as_of, previous_weights=previous_weights)
+        for row in shadow_rows
+    ]
+    weekly_rows = [_shadow_shortlist_weekly_summary(row) for row in daily_rows]
+    max_disagreement = _max_target_weight_disagreement(daily_rows)
+    drift_scores = [
+        _float(_mapping(row.get("live_vs_backtest_drift")).get("drift_score"))
+        for row in daily_rows
+    ]
+    active_count = sum(1 for row in daily_rows if row.get("monitoring_status") == "active")
+    downgrade_count = sum(
+        1
+        for row in daily_rows
+        if row.get("recommendation") in {"required_downgrade", "remove_from_shadow"}
+    )
+    promotion_count = sum(
+        1
+        for row in daily_rows
+        if _mapping(row.get("promotion_clock")).get("status") == "eligible_for_review"
+    )
+    summary_recommendation = (
+        "pause_monitoring"
+        if active_count == 0
+        else "manual_review_required"
+        if downgrade_count
+        else "continue_monitoring"
+    )
+    summary = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_summary",
+        "monitor_run_id": "",
+        "shadow_shortlist_id": shadow_shortlist_id,
+        "as_of": as_of.isoformat(),
+        "candidate_count": len(daily_rows),
+        "active_count": active_count,
+        "manual_review_required_count": sum(
+            1 for row in daily_rows if row.get("manual_review_required") is True
+        ),
+        "downgrade_recommended_count": downgrade_count,
+        "promotion_review_eligible_count": promotion_count,
+        "average_drift_score": round(_avg(drift_scores), 6),
+        "max_candidate_disagreement": round(max_disagreement, 6),
+        "summary_recommendation": summary_recommendation,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    monitor_run_id = _stable_id(
+        "shadow-monitor-run",
+        shadow_shortlist_id,
+        as_of.isoformat(),
+        generated.isoformat(),
+    )
+    monitor_dir = _unique_dir(output_dir / monitor_run_id)
+    monitor_dir.mkdir(parents=True, exist_ok=False)
+    summary["monitor_run_id"] = monitor_dir.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_run_manifest",
+        "monitor_run_id": monitor_dir.name,
+        "shadow_shortlist_id": shadow_shortlist_id,
+        "source_shortlist_id": shadow_manifest.get("source_shortlist_id", ""),
+        "source_cluster_id": shadow_manifest.get("source_cluster_id", ""),
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if daily_rows else "PASS_WITH_WARNINGS",
+        "candidate_count": len(daily_rows),
+        "active_count": active_count,
+        "summary_recommendation": summary_recommendation,
+        "manual_review_required": True,
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "shadow_candidate_daily_results_path": str(
+            monitor_dir / "shadow_candidate_daily_results.jsonl"
+        ),
+        "shadow_candidate_weekly_summary_path": str(
+            monitor_dir / "shadow_candidate_weekly_summary.jsonl"
+        ),
+        "shadow_monitor_summary_path": str(monitor_dir / "shadow_monitor_summary.json"),
+        "shadow_monitor_report_path": str(monitor_dir / "shadow_monitor_report.md"),
+        "reader_brief_section_path": str(monitor_dir / "reader_brief_section.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    reader_brief = render_shadow_monitor_run_reader_brief(summary)
+    _write_json(monitor_dir / "shadow_monitor_manifest.json", manifest)
+    _write_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl", daily_rows)
+    _write_jsonl(monitor_dir / "shadow_candidate_weekly_summary.jsonl", weekly_rows)
+    _write_json(monitor_dir / "shadow_monitor_summary.json", summary)
+    _write_text(
+        monitor_dir / "shadow_monitor_report.md",
+        render_shadow_monitor_run_markdown(manifest, summary, daily_rows),
+    )
+    _write_text(monitor_dir / "reader_brief_section.md", reader_brief)
+    _update_latest_pointer(
+        "latest_shadow_monitor_run",
+        monitor_dir.name,
+        monitor_dir / "shadow_monitor_manifest.json",
+    )
+    return {
+        "monitor_run_id": monitor_dir.name,
+        "monitor_run_dir": monitor_dir,
+        "manifest": manifest,
+        "daily_results": daily_rows,
+        "weekly_summary": weekly_rows,
+        "summary": summary,
+    }
+
+
+def shadow_monitor_run_report_payload(
+    *,
+    monitor_run_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+) -> dict[str, Any]:
+    resolved_id = monitor_run_id or (
+        _latest_pointer_artifact_id("latest_shadow_monitor_run") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--monitor-run-id or --latest is required")
+    monitor_dir = output_dir / resolved_id
+    return {
+        **_read_json(monitor_dir / "shadow_monitor_manifest.json"),
+        "shadow_monitor_summary": _read_optional_json(
+            monitor_dir / "shadow_monitor_summary.json"
+        )
+        or {},
+        "monitor_run_dir": str(monitor_dir),
+    }
+
+
+def validate_shadow_monitor_run_artifact(
+    *,
+    monitor_run_id: str,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+) -> dict[str, Any]:
+    monitor_dir = output_dir / monitor_run_id
+    manifest = _read_optional_json(monitor_dir / "shadow_monitor_manifest.json") or {}
+    summary = _read_optional_json(monitor_dir / "shadow_monitor_summary.json") or {}
+    rows = _read_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl")
+    required = [
+        "shadow_monitor_manifest.json",
+        "shadow_candidate_daily_results.jsonl",
+        "shadow_candidate_weekly_summary.jsonl",
+        "shadow_monitor_summary.json",
+        "shadow_monitor_report.md",
+        "reader_brief_section.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (monitor_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "monitor_run_id_matches",
+                manifest.get("monitor_run_id") == monitor_run_id
+                and summary.get("monitor_run_id") == monitor_run_id,
+                monitor_run_id,
+            ),
+            _check(
+                "daily_result_count_matches",
+                int(manifest.get("candidate_count") or 0) == len(rows),
+                f"manifest={manifest.get('candidate_count')} rows={len(rows)}",
+            ),
+            _check(
+                "broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and summary.get("broker_action_allowed") is False,
+                "broker action is forbidden",
+            ),
+            _check(
+                "broker_action_not_taken",
+                manifest.get("broker_action_taken") is False
+                and summary.get("broker_action_taken") is False,
+                "broker action was not taken",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "monitor run is not production",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_run_validation",
+        "monitor_run_id": monitor_run_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def write_portfolio_snapshot_artifact(
+    *,
+    snapshot_path: Path,
+    output_dir: Path = DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    normalized = _normalize_portfolio_snapshot(snapshot_path, strict=True)
+    snapshot_id = _stable_id(
+        "portfolio-snapshot",
+        snapshot_path,
+        normalized.get("as_of"),
+        generated.isoformat(),
+    )
+    snapshot_dir = _unique_dir(output_dir / snapshot_id)
+    snapshot_dir.mkdir(parents=True, exist_ok=False)
+    status = "PASS" if normalized["failed_check_count"] == 0 else "FAIL"
+    exposure = _portfolio_exposure_summary(normalized)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_portfolio_snapshot_manifest",
+        "snapshot_id": snapshot_dir.name,
+        "snapshot_path": str(snapshot_path),
+        "as_of": normalized.get("as_of", ""),
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "failed_check_count": normalized["failed_check_count"],
+        "manual_review_required": normalized.get("manual_review_required", True),
+        "owner_reviewed": normalized.get("owner_reviewed", False),
+        "broker_imported": normalized.get("broker_imported", False),
+        "broker_action_allowed": False,
+        "normalized_positions_path": str(snapshot_dir / "normalized_positions.json"),
+        "portfolio_exposure_summary_path": str(
+            snapshot_dir / "portfolio_exposure_summary.json"
+        ),
+        "snapshot_validation_report_path": str(
+            snapshot_dir / "snapshot_validation_report.md"
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(snapshot_dir / "snapshot_manifest.json", manifest)
+    _write_json(snapshot_dir / "normalized_positions.json", normalized)
+    _write_json(snapshot_dir / "portfolio_exposure_summary.json", exposure)
+    _write_text(
+        snapshot_dir / "snapshot_validation_report.md",
+        render_portfolio_snapshot_validation_markdown(manifest, normalized, exposure),
+    )
+    _update_latest_pointer(
+        "latest_portfolio_snapshot",
+        snapshot_dir.name,
+        snapshot_dir / "snapshot_manifest.json",
+    )
+    return {
+        "snapshot_id": snapshot_dir.name,
+        "snapshot_dir": snapshot_dir,
+        "manifest": manifest,
+        "normalized_positions": normalized,
+        "portfolio_exposure_summary": exposure,
+    }
+
+
+def portfolio_snapshot_report_payload(
+    *,
+    snapshot_path: Path | None = None,
+    snapshot_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
+) -> dict[str, Any]:
+    if snapshot_path is not None:
+        return write_portfolio_snapshot_artifact(snapshot_path=snapshot_path, output_dir=output_dir)
+    resolved_id = snapshot_id or (
+        _latest_pointer_artifact_id("latest_portfolio_snapshot") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--snapshot, --snapshot-id, or --latest is required")
+    snapshot_dir = output_dir / resolved_id
+    return {
+        **_read_json(snapshot_dir / "snapshot_manifest.json"),
+        "normalized_positions": _read_optional_json(snapshot_dir / "normalized_positions.json")
+        or {},
+        "portfolio_exposure_summary": _read_optional_json(
+            snapshot_dir / "portfolio_exposure_summary.json"
+        )
+        or {},
+        "snapshot_dir": str(snapshot_dir),
+    }
+
+
+def validate_portfolio_snapshot_file(
+    *,
+    snapshot_path: Path,
+    output_dir: Path = DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
+) -> dict[str, Any]:
+    artifact = write_portfolio_snapshot_artifact(snapshot_path=snapshot_path, output_dir=output_dir)
+    normalized = artifact["normalized_positions"]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_portfolio_snapshot_validation",
+        "snapshot_id": artifact["snapshot_id"],
+        "snapshot_path": str(snapshot_path),
+        "status": artifact["manifest"]["status"],
+        "checks": normalized["checks"],
+        "failed_check_count": normalized["failed_check_count"],
+        "snapshot_dir": str(artifact["snapshot_dir"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_position_advisory_daily(
+    *,
+    shadow_monitor_run_id: str,
+    config_path: Path = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    portfolio_snapshot_path: Path | None = None,
+    shadow_monitor_run_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    consensus_drift_dir: Path = DEFAULT_CONSENSUS_DRIFT_DIR,
+    output_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_position_advisory_config(config_path)
+    monitor_dir = shadow_monitor_run_dir / shadow_monitor_run_id
+    monitor_manifest = _read_json(monitor_dir / "shadow_monitor_manifest.json")
+    monitor_rows = _read_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl")
+    target_rows = [_daily_target_row_from_monitor(row) for row in monitor_rows]
+    consensus_rows, consensus_status = _daily_consensus_target_weights(target_rows, config)
+    drift = _latest_consensus_drift_for_monitor(
+        shadow_monitor_run_id=shadow_monitor_run_id,
+        output_dir=consensus_drift_dir,
+    )
+    disagreement_status = _text(drift.get("disagreement_status"), consensus_status)
+    snapshot = (
+        _normalize_portfolio_snapshot(portfolio_snapshot_path, strict=True)
+        if portfolio_snapshot_path is not None
+        else {}
+    )
+    if snapshot and snapshot.get("failed_check_count"):
+        failed = ", ".join(
+            check["name"]
+            for check in _records(snapshot.get("checks"))
+            if check.get("passed") is False
+        )
+        raise DynamicV3ParameterResearchError(f"portfolio snapshot validation failed: {failed}")
+    delta_rows = _daily_position_delta_rows(target_rows, snapshot, config) if snapshot else []
+    actions = _daily_position_advisory_actions(
+        daily_advisory_id="",
+        as_of=_text(monitor_manifest.get("as_of")),
+        target_rows=target_rows,
+        delta_rows=delta_rows,
+        snapshot=snapshot,
+        consensus_status=consensus_status,
+        disagreement_status=disagreement_status,
+        config=config,
+    )
+    daily_advisory_id = _stable_id(
+        "position-advisory-daily",
+        shadow_monitor_run_id,
+        str(config_path),
+        str(portfolio_snapshot_path or ""),
+        generated.isoformat(),
+    )
+    advisory_dir = _unique_dir(output_dir / daily_advisory_id)
+    advisory_dir.mkdir(parents=True, exist_ok=False)
+    actions["daily_advisory_id"] = advisory_dir.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_advisory_daily_manifest",
+        "daily_advisory_id": advisory_dir.name,
+        "source_shadow_monitor_run_id": shadow_monitor_run_id,
+        "source_shadow_shortlist_id": monitor_manifest.get("shadow_shortlist_id", ""),
+        "as_of": monitor_manifest.get("as_of", ""),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if target_rows else "PASS_WITH_WARNINGS",
+        "mode": actions["mode"],
+        "candidate_count": len(target_rows),
+        "consensus_status": actions["consensus_status"],
+        "disagreement_status": disagreement_status,
+        "recommended_action": actions["recommended_action"],
+        "manual_review_required": True,
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "portfolio_snapshot_provided": bool(snapshot),
+        "portfolio_snapshot_path": (
+            "" if portfolio_snapshot_path is None else str(portfolio_snapshot_path)
+        ),
+        "daily_candidate_targets_path": str(advisory_dir / "daily_candidate_targets.jsonl"),
+        "daily_consensus_weights_path": str(advisory_dir / "daily_consensus_weights.csv"),
+        "daily_position_deltas_path": str(advisory_dir / "daily_position_deltas.jsonl"),
+        "daily_advisory_actions_path": str(advisory_dir / "daily_advisory_actions.json"),
+        "daily_position_advisory_report_path": str(
+            advisory_dir / "daily_position_advisory_report.md"
+        ),
+        "reader_brief_section_path": str(advisory_dir / "reader_brief_section.md"),
+        "config_path": str(config_path),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    reader_brief = render_daily_position_advisory_reader_brief(actions, delta_rows)
+    _write_json(advisory_dir / "daily_advisory_manifest.json", manifest)
+    _write_jsonl(advisory_dir / "daily_candidate_targets.jsonl", target_rows)
+    _write_csv(advisory_dir / "daily_consensus_weights.csv", consensus_rows)
+    _write_jsonl(advisory_dir / "daily_position_deltas.jsonl", delta_rows)
+    _write_json(advisory_dir / "daily_advisory_actions.json", actions)
+    _write_text(
+        advisory_dir / "daily_position_advisory_report.md",
+        render_daily_position_advisory_markdown(
+            manifest,
+            target_rows,
+            consensus_rows,
+            delta_rows,
+            actions,
+        ),
+    )
+    _write_text(advisory_dir / "reader_brief_section.md", reader_brief)
+    _update_latest_pointer(
+        "latest_position_advisory_daily",
+        advisory_dir.name,
+        advisory_dir / "daily_advisory_manifest.json",
+    )
+    return {
+        "daily_advisory_id": advisory_dir.name,
+        "daily_advisory_dir": advisory_dir,
+        "manifest": manifest,
+        "daily_candidate_targets": target_rows,
+        "daily_consensus_weights": consensus_rows,
+        "daily_position_deltas": delta_rows,
+        "daily_advisory_actions": actions,
+    }
+
+
+def position_advisory_daily_report_payload(
+    *,
+    daily_advisory_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> dict[str, Any]:
+    resolved_id = daily_advisory_id or (
+        _latest_pointer_artifact_id("latest_position_advisory_daily") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--daily-advisory-id or --latest is required")
+    advisory_dir = output_dir / resolved_id
+    return {
+        **_read_json(advisory_dir / "daily_advisory_manifest.json"),
+        "daily_advisory_dir": str(advisory_dir),
+    }
+
+
+def validate_position_advisory_daily_artifact(
+    *,
+    daily_advisory_id: str,
+    output_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> dict[str, Any]:
+    advisory_dir = output_dir / daily_advisory_id
+    manifest = _read_optional_json(advisory_dir / "daily_advisory_manifest.json") or {}
+    actions = _read_optional_json(advisory_dir / "daily_advisory_actions.json") or {}
+    targets = _read_jsonl(advisory_dir / "daily_candidate_targets.jsonl")
+    required = [
+        "daily_advisory_manifest.json",
+        "daily_candidate_targets.jsonl",
+        "daily_consensus_weights.csv",
+        "daily_position_deltas.jsonl",
+        "daily_advisory_actions.json",
+        "daily_position_advisory_report.md",
+        "reader_brief_section.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "daily_advisory_id_matches",
+                manifest.get("daily_advisory_id") == daily_advisory_id
+                and actions.get("daily_advisory_id") == daily_advisory_id,
+                daily_advisory_id,
+            ),
+            _check("target_weights_present", bool(targets), "candidate targets required"),
+            _check(
+                "owner_approval_required",
+                manifest.get("owner_approval_required") is True
+                and actions.get("owner_approval_required") is True,
+                "owner approval is required",
+            ),
+            _check(
+                "broker_action_forbidden",
+                manifest.get("broker_action_allowed") is False
+                and actions.get("broker_action_allowed") is False,
+                "broker action is forbidden",
+            ),
+            _check(
+                "broker_action_not_taken",
+                manifest.get("broker_action_taken") is False,
+                "broker action was not taken",
+            ),
+            _check(
+                "target_only_without_snapshot",
+                bool(manifest.get("portfolio_snapshot_provided"))
+                or manifest.get("mode") == POSITION_ADVISORY_TARGET_ONLY,
+                "missing snapshot must produce TARGET_ONLY",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_position_advisory_daily_validation",
+        "daily_advisory_id": daily_advisory_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_consensus_drift(
+    *,
+    shadow_monitor_run_id: str,
+    config_path: Path = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    shadow_monitor_run_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    output_dir: Path = DEFAULT_CONSENSUS_DRIFT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_position_advisory_config(config_path)
+    monitor_dir = shadow_monitor_run_dir / shadow_monitor_run_id
+    monitor_manifest = _read_json(monitor_dir / "shadow_monitor_manifest.json")
+    monitor_rows = _read_jsonl(monitor_dir / "shadow_candidate_daily_results.jsonl")
+    target_rows = [_daily_target_row_from_monitor(row) for row in monitor_rows]
+    symbol_rows = _symbol_weight_dispersion_rows(target_rows)
+    pairwise_rows = _candidate_pairwise_disagreement_rows(target_rows)
+    exposure = _exposure_disagreement_summary(target_rows)
+    previous_change = _daily_consensus_change_vs_previous(
+        shadow_monitor_run_id=shadow_monitor_run_id,
+        shadow_shortlist_id=_text(monitor_manifest.get("shadow_shortlist_id")),
+        as_of=date.fromisoformat(_text(monitor_manifest.get("as_of"))),
+        current_symbol_rows=symbol_rows,
+        monitor_output_dir=shadow_monitor_run_dir,
+    )
+    disagreement_status = _disagreement_status(
+        candidate_count=len(target_rows),
+        symbol_rows=symbol_rows,
+        exposure=exposure,
+        config=config,
+    )
+    implication = (
+        "manual_review_required"
+        if disagreement_status in {"HIGH_DISAGREEMENT", "INSUFFICIENT_DATA"}
+        else "monitor"
+        if disagreement_status == "MODERATE_DISAGREEMENT"
+        else "continue_monitoring"
+    )
+    drift_id = _stable_id(
+        "consensus-drift",
+        shadow_monitor_run_id,
+        str(config_path),
+        generated.isoformat(),
+    )
+    drift_dir = _unique_dir(output_dir / drift_id)
+    drift_dir.mkdir(parents=True, exist_ok=False)
+    max_symbol_dispersion = max([_float(row.get("dispersion")) for row in symbol_rows] or [0.0])
+    summary = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_consensus_drift_summary",
+        "drift_id": drift_dir.name,
+        "shadow_monitor_run_id": shadow_monitor_run_id,
+        "as_of": monitor_manifest.get("as_of", ""),
+        "candidate_count": len(target_rows),
+        "disagreement_status": disagreement_status,
+        "max_symbol_dispersion": round(max_symbol_dispersion, 6),
+        "risk_asset_exposure_dispersion": exposure["risk_asset_exposure_dispersion"],
+        "cash_exposure_dispersion": exposure["cash_exposure_dispersion"],
+        "defensive_exposure_dispersion": exposure["defensive_exposure_dispersion"],
+        "daily_consensus_change_vs_previous": previous_change,
+        "position_advisory_implication": implication,
+        "broker_action_allowed": False,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_consensus_drift_manifest",
+        "drift_id": drift_dir.name,
+        "source_shadow_monitor_run_id": shadow_monitor_run_id,
+        "as_of": monitor_manifest.get("as_of", ""),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if target_rows else "PASS_WITH_WARNINGS",
+        "candidate_count": len(target_rows),
+        "disagreement_status": disagreement_status,
+        "position_advisory_implication": implication,
+        "candidate_pairwise_disagreement_path": str(
+            drift_dir / "candidate_pairwise_disagreement.csv"
+        ),
+        "symbol_weight_dispersion_path": str(drift_dir / "symbol_weight_dispersion.csv"),
+        "consensus_drift_summary_path": str(drift_dir / "consensus_drift_summary.json"),
+        "consensus_drift_report_path": str(drift_dir / "consensus_drift_report.md"),
+        "config_path": str(config_path),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(drift_dir / "consensus_drift_manifest.json", manifest)
+    _write_csv(drift_dir / "candidate_pairwise_disagreement.csv", pairwise_rows)
+    _write_csv(drift_dir / "symbol_weight_dispersion.csv", symbol_rows)
+    _write_json(drift_dir / "consensus_drift_summary.json", summary)
+    _write_text(
+        drift_dir / "consensus_drift_report.md",
+        render_consensus_drift_markdown(manifest, summary, symbol_rows, pairwise_rows),
+    )
+    _update_latest_pointer(
+        "latest_consensus_drift",
+        drift_dir.name,
+        drift_dir / "consensus_drift_manifest.json",
+    )
+    return {
+        "drift_id": drift_dir.name,
+        "drift_dir": drift_dir,
+        "manifest": manifest,
+        "summary": summary,
+        "symbol_weight_dispersion": symbol_rows,
+        "candidate_pairwise_disagreement": pairwise_rows,
+    }
+
+
+def consensus_drift_report_payload(
+    *,
+    drift_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CONSENSUS_DRIFT_DIR,
+) -> dict[str, Any]:
+    resolved_id = drift_id or (
+        _latest_pointer_artifact_id("latest_consensus_drift") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--drift-id or --latest is required")
+    drift_dir = output_dir / resolved_id
+    return {
+        **_read_json(drift_dir / "consensus_drift_manifest.json"),
+        "consensus_drift_summary": _read_optional_json(
+            drift_dir / "consensus_drift_summary.json"
+        )
+        or {},
+        "drift_dir": str(drift_dir),
+    }
+
+
+def validate_consensus_drift_artifact(
+    *,
+    drift_id: str,
+    output_dir: Path = DEFAULT_CONSENSUS_DRIFT_DIR,
+) -> dict[str, Any]:
+    drift_dir = output_dir / drift_id
+    manifest = _read_optional_json(drift_dir / "consensus_drift_manifest.json") or {}
+    summary = _read_optional_json(drift_dir / "consensus_drift_summary.json") or {}
+    required = [
+        "consensus_drift_manifest.json",
+        "candidate_pairwise_disagreement.csv",
+        "symbol_weight_dispersion.csv",
+        "consensus_drift_summary.json",
+        "consensus_drift_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (drift_dir / name).exists(), name)
+        for name in required
+    ]
+    checks.extend(
+        [
+            _check(
+                "drift_id_matches",
+                manifest.get("drift_id") == drift_id and summary.get("drift_id") == drift_id,
+                drift_id,
+            ),
+            _check(
+                "disagreement_status_valid",
+                summary.get("disagreement_status") in CONSENSUS_DRIFT_STATUSES,
+                _text(summary.get("disagreement_status")),
+            ),
+            _check(
+                "broker_action_forbidden",
+                summary.get("broker_action_allowed") is False,
+                "broker action is forbidden",
+            ),
+            _check(
+                "production_candidate_not_generated",
+                manifest.get("production_candidate_generated") is False,
+                "consensus drift is not production",
+            ),
+        ]
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_consensus_drift_validation",
+        "drift_id": drift_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def create_owner_review(
+    *,
+    daily_advisory_id: str,
+    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    advisory_dir = daily_advisory_dir / daily_advisory_id
+    manifest = _read_json(advisory_dir / "daily_advisory_manifest.json")
+    actions = _read_json(advisory_dir / "daily_advisory_actions.json")
+    review_id = _stable_id("owner-review", daily_advisory_id, generated.isoformat())
+    record = {
+        "schema_version": SCHEMA_VERSION,
+        "review_id": review_id,
+        "daily_advisory_id": daily_advisory_id,
+        "as_of": manifest.get("as_of", ""),
+        "recommended_action": actions.get("recommended_action", ""),
+        "owner_decision": "pending",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "paper_action": {"enabled": False, "notes": ""},
+        "manual_notes": "",
+        "created_at": generated.isoformat(),
+        "updated_at": generated.isoformat(),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    _append_jsonl(output_dir / "owner_review_journal.jsonl", record)
+    _write_json(output_dir / "latest_owner_review.json", record)
+    _write_text(
+        output_dir / "owner_review_report.md",
+        render_owner_review_report_markdown(owner_review_summary(output_dir=output_dir)),
+    )
+    _update_latest_pointer(
+        "latest_owner_review",
+        review_id,
+        output_dir / "latest_owner_review.json",
+    )
+    return {"review_id": review_id, "review": record, "journal_dir": output_dir}
+
+
+def record_owner_review_decision(
+    *,
+    review_id: str,
+    decision: str,
+    manual_notes: str = "",
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    if decision not in OWNER_REVIEW_DECISIONS:
+        raise DynamicV3ParameterResearchError(f"unsupported owner decision: {decision}")
+    generated = generated_at or datetime.now(UTC)
+    journal_path = output_dir / "owner_review_journal.jsonl"
+    records = _read_jsonl(journal_path)
+    updated: dict[str, Any] | None = None
+    for row in records:
+        if row.get("review_id") != review_id:
+            continue
+        row["owner_decision"] = decision
+        row["manual_notes"] = manual_notes
+        row["updated_at"] = generated.isoformat()
+        row["broker_action_allowed"] = False
+        row["broker_action_taken"] = False
+        if decision == "paper_adjustment":
+            paper = _paper_action_record(
+                review=row,
+                output_dir=output_dir,
+                daily_advisory_dir=daily_advisory_dir,
+                generated_at=generated,
+            )
+            row["paper_action"] = {
+                "enabled": True,
+                "paper_action_id": paper["paper_action_id"],
+                "notes": "Paper only, no broker action",
+            }
+        updated = dict(row)
+        break
+    if updated is None:
+        raise DynamicV3ParameterResearchError(f"owner review not found: {review_id}")
+    _write_jsonl(journal_path, records)
+    _write_json(output_dir / "latest_owner_review.json", updated)
+    _write_text(
+        output_dir / "owner_review_report.md",
+        render_owner_review_report_markdown(owner_review_summary(output_dir=output_dir)),
+    )
+    _update_latest_pointer(
+        "latest_owner_review",
+        review_id,
+        output_dir / "latest_owner_review.json",
+    )
+    return {"review_id": review_id, "review": updated, "journal_dir": output_dir}
+
+
+def owner_review_summary(
+    *,
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> dict[str, Any]:
+    records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    paper_actions = _read_jsonl(output_dir / "paper_action_log.jsonl")
+    latest = records[-1] if records else {}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_review_summary",
+        "status": "PASS" if records else "MISSING",
+        "review_count": len(records),
+        "pending_owner_review_count": sum(
+            1 for row in records if row.get("owner_decision") == "pending"
+        ),
+        "latest_review_id": latest.get("review_id", ""),
+        "latest_daily_advisory_id": latest.get("daily_advisory_id", ""),
+        "latest_recommended_action": latest.get("recommended_action", ""),
+        "latest_owner_decision": latest.get("owner_decision", ""),
+        "paper_action_count": len(paper_actions),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "paper_action_only": True,
+        "manual_review_required_count": sum(
+            1
+            for row in records
+            if row.get("recommended_action") == "manual_review"
+            and row.get("owner_decision") == "pending"
+        ),
+        "owner_review_report_path": str(output_dir / "owner_review_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def owner_review_report_payload(
+    *,
+    latest: bool = False,
+    review_id: str | None = None,
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> dict[str, Any]:
+    records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    selected = records[-1] if latest and records else {}
+    if review_id:
+        selected = next((row for row in records if row.get("review_id") == review_id), {})
+    summary = owner_review_summary(output_dir=output_dir)
+    if not selected and (latest or review_id):
+        raise DynamicV3ParameterResearchError("owner review not found")
+    return {**summary, "review": selected, "journal_dir": str(output_dir)}
+
+
+def validate_owner_review_artifact(
+    *,
+    review_id: str,
+    output_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> dict[str, Any]:
+    records = _read_jsonl(output_dir / "owner_review_journal.jsonl")
+    record = next((row for row in records if row.get("review_id") == review_id), {})
+    checks = [
+        _check(
+            "owner_review_journal_exists",
+            (output_dir / "owner_review_journal.jsonl").exists(),
+            str(output_dir),
+        ),
+        _check("review_record_present", bool(record), review_id),
+        _check(
+            "broker_action_forbidden",
+            record.get("broker_action_allowed") is False,
+            "broker action is forbidden",
+        ),
+        _check(
+            "broker_action_not_taken",
+            record.get("broker_action_taken") is False,
+            "broker action was not taken",
+        ),
+        _check(
+            "owner_decision_valid",
+            record.get("owner_decision") == "pending"
+            or record.get("owner_decision") in OWNER_REVIEW_DECISIONS,
+            _text(record.get("owner_decision")),
+        ),
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_review_validation",
         "review_id": review_id,
         "status": status,
         "checks": checks,
@@ -11349,15 +12362,21 @@ def render_shadow_shortlist_markdown(
 def _load_portfolio_snapshot(path: Path | None) -> dict[str, Any]:
     if path is None:
         return {}
-    raw = safe_load_yaml_path(path)
-    if not isinstance(raw, Mapping):
-        raise DynamicV3ParameterResearchError("portfolio snapshot must be a mapping")
-    weights = {
-        _text(row.get("symbol")): _float(row.get("weight"))
-        for row in _records(raw.get("positions"))
-        if _text(row.get("symbol"))
+    normalized = _normalize_portfolio_snapshot(path, strict=False)
+    if normalized.get("failed_check_count"):
+        failed = ", ".join(
+            check["name"]
+            for check in _records(normalized.get("checks"))
+            if check.get("passed") is False
+        )
+        raise DynamicV3ParameterResearchError(f"portfolio snapshot validation failed: {failed}")
+    return {
+        "as_of": normalized.get("as_of", ""),
+        "weights": _mapping(normalized.get("weights")),
+        "path": str(path),
+        "owner_reviewed": normalized.get("owner_reviewed", False),
+        "manual_review_required": normalized.get("manual_review_required", True),
     }
-    return {"as_of": _text(raw.get("as_of")), "weights": weights, "path": str(path)}
 
 
 def _consensus_target_weights(
@@ -11711,6 +12730,931 @@ def render_position_review_reader_brief(
         f"- recommended_next_action: `{decision.get('recommended_next_action')}`\n"
         "- broker_action_allowed=false; owner_approval_required=true.\n"
     )
+
+
+def render_shadow_monitor_activation_markdown(manifest: Mapping[str, Any]) -> str:
+    lines = [
+        "# Dynamic Rescue Shadow Monitor Activation",
+        "",
+        f"- activation_id: `{manifest.get('activation_id')}`",
+        f"- shadow_shortlist_id: `{manifest.get('shadow_shortlist_id')}`",
+        f"- monitoring_status: `{manifest.get('monitoring_status')}`",
+        f"- candidate_count: `{manifest.get('candidate_count')}`",
+        f"- owner_approval_required: `{manifest.get('owner_approval_required')}`",
+        f"- broker_action_allowed: `{manifest.get('broker_action_allowed')}`",
+        "",
+        "该 activation 只表示 shadow shortlist 可以进入人工复核后的持续观察；不执行交易。",
+        "",
+        "production_effect=none; broker_action=none.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def render_shadow_monitor_run_reader_brief(summary: Mapping[str, Any]) -> str:
+    return (
+        "## Dynamic Rescue Shadow Monitor\n\n"
+        f"- monitor_run_id: `{summary.get('monitor_run_id')}`\n"
+        f"- as_of: `{summary.get('as_of')}`\n"
+        f"- active_count: `{summary.get('active_count')}`\n"
+        f"- downgrade_recommended_count: `{summary.get('downgrade_recommended_count')}`\n"
+        f"- promotion_review_eligible_count: `{summary.get('promotion_review_eligible_count')}`\n"
+        f"- max_candidate_disagreement: `{summary.get('max_candidate_disagreement')}`\n"
+        f"- summary_recommendation: `{summary.get('summary_recommendation')}`\n"
+        "- broker_action_allowed=false; broker_action_taken=false.\n"
+    )
+
+
+def render_shadow_monitor_run_markdown(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    ordered = sorted(
+        rows,
+        key=lambda row: _float(row.get("total_abs_weight_change")),
+        reverse=True,
+    )
+    lines = [
+        "# Dynamic Rescue Shadow Monitor Run",
+        "",
+        f"- monitor_run_id: `{manifest.get('monitor_run_id')}`",
+        f"- shadow_shortlist_id: `{manifest.get('shadow_shortlist_id')}`",
+        f"- as_of: `{manifest.get('as_of')}`",
+        f"- active_count: `{summary.get('active_count')}`",
+        f"- summary_recommendation: `{summary.get('summary_recommendation')}`",
+        f"- broker_action_allowed: `{manifest.get('broker_action_allowed')}`",
+        "",
+        "## Candidate Daily Results",
+        "",
+        "|candidate_id|cluster_label|weight_change|drift|promotion_clock|recommendation|",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in ordered:
+        drift = _mapping(row.get("live_vs_backtest_drift"))
+        promotion = _mapping(row.get("promotion_clock"))
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('cluster_label')}|"
+            f"{row.get('total_abs_weight_change')}|{drift.get('status')}|"
+            f"{promotion.get('status')}|{row.get('recommendation')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Required Questions",
+            "",
+            f"1. 当前 active candidates: `{summary.get('active_count')}`。",
+            (
+                "2. 今日目标权重变化最大的 candidates 见 Candidate Daily Results "
+                "的 weight_change 排序。"
+            ),
+            (
+                "3. live vs backtest drift 状态由每个 candidate 的 "
+                "`live_vs_backtest_drift.status` 披露。"
+            ),
+            f"4. downgrade recommended count: `{summary.get('downgrade_recommended_count')}`。",
+            (
+                "5. promotion clock eligible count: "
+                f"`{summary.get('promotion_review_eligible_count')}`。"
+            ),
+            f"6. 当前建议: `{summary.get('summary_recommendation')}`。",
+            "7. 是否有 broker action: 否，`broker_action_allowed=false`。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_portfolio_snapshot_validation_markdown(
+    manifest: Mapping[str, Any],
+    normalized: Mapping[str, Any],
+    exposure: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Portfolio Snapshot Validation",
+        "",
+        f"- snapshot_id: `{manifest.get('snapshot_id')}`",
+        f"- status: `{manifest.get('status')}`",
+        f"- as_of: `{manifest.get('as_of')}`",
+        f"- owner_reviewed: `{manifest.get('owner_reviewed')}`",
+        f"- broker_imported: `{manifest.get('broker_imported')}`",
+        f"- manual_review_required: `{manifest.get('manual_review_required')}`",
+        f"- weight_sum: `{normalized.get('weight_sum')}`",
+        f"- value_sum: `{normalized.get('value_sum')}`",
+        f"- risk_asset_weight: `{exposure.get('risk_asset_weight')}`",
+        f"- defensive_weight: `{exposure.get('defensive_weight')}`",
+        "",
+        "## Checks",
+        "",
+        "|check|passed|detail|",
+        "|---|---|---|",
+    ]
+    for check in _records(normalized.get("checks")):
+        lines.append(f"|{check.get('name')}|{check.get('passed')}|{check.get('detail')}|")
+    lines.extend(["", "broker_action_allowed=false; source=manual."])
+    return "\n".join(lines) + "\n"
+
+
+def render_daily_position_advisory_reader_brief(
+    actions: Mapping[str, Any],
+    delta_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    top_delta = _top_delta_summary(delta_rows)
+    return (
+        "## Dynamic Rescue Daily Position Advisory\n\n"
+        f"- daily_advisory_id: `{actions.get('daily_advisory_id')}`\n"
+        f"- position_advisory_mode: `{actions.get('mode')}`\n"
+        f"- consensus_status: `{actions.get('consensus_status')}`\n"
+        f"- recommended_action: `{actions.get('recommended_action')}`\n"
+        f"- manual_review_required: `{actions.get('manual_review_required')}`\n"
+        f"- broker_action_allowed: `{actions.get('broker_action_allowed')}`\n"
+        f"- top_weight_deltas: `{top_delta}`\n"
+        f"- candidate_disagreement: `{actions.get('disagreement_status')}`\n"
+    )
+
+
+def render_daily_position_advisory_markdown(
+    manifest: Mapping[str, Any],
+    targets: Sequence[Mapping[str, Any]],
+    consensus: Sequence[Mapping[str, Any]],
+    deltas: Sequence[Mapping[str, Any]],
+    actions: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Daily Position Advisory",
+        "",
+        f"- daily_advisory_id: `{manifest.get('daily_advisory_id')}`",
+        f"- mode: `{actions.get('mode')}`",
+        f"- consensus_status: `{actions.get('consensus_status')}`",
+        f"- disagreement_status: `{actions.get('disagreement_status')}`",
+        f"- recommended_action: `{actions.get('recommended_action')}`",
+        f"- owner_approval_required: `{actions.get('owner_approval_required')}`",
+        f"- broker_action_allowed: `{actions.get('broker_action_allowed')}`",
+        "",
+        "## Candidate Targets",
+        "",
+        "|candidate_id|as_of|target_weights|",
+        "|---|---|---|",
+    ]
+    for row in targets:
+        lines.append(
+            f"|{row.get('candidate_id')}|{row.get('as_of')}|"
+            f"{json.dumps(row.get('target_weights'), sort_keys=True)}|"
+        )
+    lines.extend(["", "## Consensus", "", "|symbol|mean|median|dispersion|", "|---|---|---|---|"])
+    for row in consensus:
+        lines.append(
+            f"|{row.get('symbol')}|{row.get('mean_target_weight')}|"
+            f"{row.get('median_target_weight')}|{row.get('dispersion')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Required Questions",
+            "",
+            f"1. 当前模式：`{actions.get('mode')}`。",
+            "2. shadow candidates 今日目标权重共识见 Consensus。",
+            f"3. candidate disagreement: `{actions.get('disagreement_status')}`。",
+            f"4. portfolio snapshot delta rows: `{len(deltas)}`。",
+            f"5. recommended_action: `{actions.get('recommended_action')}`。",
+            "6. 是否有任何交易动作：否，`broker_action_allowed=false`。",
+            "7. 是否需要 owner approval：是，`owner_approval_required=true`。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_consensus_drift_markdown(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    symbol_rows: Sequence[Mapping[str, Any]],
+    pairwise_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        "# Dynamic Rescue Consensus Drift",
+        "",
+        f"- drift_id: `{manifest.get('drift_id')}`",
+        f"- shadow_monitor_run_id: `{manifest.get('source_shadow_monitor_run_id')}`",
+        f"- disagreement_status: `{summary.get('disagreement_status')}`",
+        f"- position_advisory_implication: `{summary.get('position_advisory_implication')}`",
+        f"- max_symbol_dispersion: `{summary.get('max_symbol_dispersion')}`",
+        f"- risk_asset_exposure_dispersion: `{summary.get('risk_asset_exposure_dispersion')}`",
+        f"- cash_exposure_dispersion: `{summary.get('cash_exposure_dispersion')}`",
+        "",
+        "## Symbol Dispersion",
+        "",
+        "|symbol|mean|median|min|max|dispersion|",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in symbol_rows:
+        lines.append(
+            f"|{row.get('symbol')}|{row.get('mean_target_weight')}|"
+            f"{row.get('median_target_weight')}|{row.get('min_target_weight')}|"
+            f"{row.get('max_target_weight')}|{row.get('dispersion')}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Candidate Pairwise Disagreement",
+            "",
+            f"- pair_count: `{len(pairwise_rows)}`",
+            "",
+            "HIGH_DISAGREEMENT 会强制 daily position advisory 输出 manual_review。",
+            "",
+            "production_effect=none; broker_action=none.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_owner_review_report_markdown(summary: Mapping[str, Any]) -> str:
+    lines = [
+        "# Dynamic Rescue Owner Review Journal",
+        "",
+        f"- review_count: `{summary.get('review_count')}`",
+        f"- pending_owner_review_count: `{summary.get('pending_owner_review_count')}`",
+        f"- latest_daily_advisory_id: `{summary.get('latest_daily_advisory_id')}`",
+        f"- latest_recommended_action: `{summary.get('latest_recommended_action')}`",
+        f"- latest_owner_decision: `{summary.get('latest_owner_decision')}`",
+        f"- manual_review_required_count: `{summary.get('manual_review_required_count')}`",
+        f"- paper_action_count: `{summary.get('paper_action_count')}`",
+        f"- broker_action_taken: `{summary.get('broker_action_taken')}`",
+        "",
+        "paper action 只记录纸面动作，不影响真实仓位、broker state 或 production weights。",
+        "",
+        "production_effect=none; broker_action=none.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _candidate_target_weights_for_as_of(row: Mapping[str, Any], as_of: date) -> dict[str, Any]:
+    path = _candidate_weight_path(row)
+    dates = _mapping(path.get("dates"))
+    valid_days = []
+    for day in dates:
+        try:
+            parsed = date.fromisoformat(day)
+        except ValueError:
+            continue
+        if parsed <= as_of:
+            valid_days.append(day)
+    if not valid_days:
+        return {
+            "status": "INCOMPLETE",
+            "as_of": "",
+            "weights": {},
+            "source_weight_path_artifact": path.get("path", ""),
+        }
+    latest_day = max(valid_days)
+    return {
+        "status": "COMPLETE",
+        "as_of": latest_day,
+        "weights": {
+            symbol: round(_float(value), 6)
+            for symbol, value in sorted(_mapping(dates.get(latest_day)).items())
+        },
+        "source_weight_path_artifact": path.get("path", ""),
+    }
+
+
+def _previous_shadow_monitor_weights(
+    *,
+    shadow_shortlist_id: str,
+    as_of: date,
+    output_dir: Path,
+) -> dict[str, dict[str, float]]:
+    if not output_dir.exists():
+        return {}
+    candidates: list[tuple[date, Path]] = []
+    for child in output_dir.iterdir():
+        if not child.is_dir():
+            continue
+        manifest = _read_optional_json(child / "shadow_monitor_manifest.json") or {}
+        if manifest.get("shadow_shortlist_id") != shadow_shortlist_id:
+            continue
+        try:
+            previous_as_of = date.fromisoformat(_text(manifest.get("as_of")))
+        except ValueError:
+            continue
+        if previous_as_of < as_of:
+            candidates.append((previous_as_of, child))
+    if not candidates:
+        return {}
+    _, previous_dir = max(candidates, key=lambda item: item[0])
+    return {
+        _text(row.get("candidate_id")): {
+            symbol: _float(value)
+            for symbol, value in _mapping(row.get("target_weights")).items()
+        }
+        for row in _read_jsonl(previous_dir / "shadow_candidate_daily_results.jsonl")
+    }
+
+
+def _shadow_shortlist_daily_result(
+    row: Mapping[str, Any],
+    *,
+    as_of: date,
+    previous_weights: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    candidate_id = _text(row.get("candidate_id"))
+    latest = _candidate_target_weights_for_as_of(row, as_of)
+    target_weights = _mapping(latest.get("weights"))
+    previous = dict(_mapping(previous_weights.get(candidate_id)))
+    deltas = {
+        symbol: round(_float(target_weights.get(symbol)) - _float(previous.get(symbol)), 6)
+        for symbol in sorted(set(target_weights) | set(previous))
+        if previous
+    }
+    total_abs = round(sum(abs(value) for value in deltas.values()), 6)
+    requirements = _mapping(row.get("monitoring_requirements"))
+    min_days = int(requirements.get("min_days") or 0)
+    min_rebalances = int(requirements.get("min_rebalance_count") or 0)
+    days_observed = 0
+    rebalance_count = 1 if total_abs > 0 else 0
+    drift_status = "PASS" if latest.get("status") == "COMPLETE" else "REVIEW_REQUIRED"
+    reasons = [] if drift_status == "PASS" else ["target_weight_path_incomplete"]
+    if total_abs > 0:
+        reasons.append("target_weight_changed_vs_previous_monitor")
+    promotion_status = (
+        "eligible_for_review"
+        if days_observed >= min_days and rebalance_count >= min_rebalances
+        else "not_eligible"
+    )
+    recommendation = "continue_observe" if drift_status == "PASS" else "manual_review"
+    return {
+        "candidate_id": candidate_id,
+        "as_of": as_of.isoformat(),
+        "cluster_id": row.get("cluster_id", ""),
+        "cluster_label": row.get("cluster_label", ""),
+        "monitoring_status": "active",
+        "manual_review_required": True,
+        "target_weights": target_weights,
+        "previous_target_weights": previous,
+        "daily_weight_delta": deltas,
+        "total_abs_weight_change": total_abs,
+        "estimated_turnover": round(total_abs / 2.0, 6),
+        "constraint_hit_count": int(_mapping(row.get("metrics")).get("constraint_hits") or 0),
+        "risk_bucket": "unknown",
+        "regime": "unknown",
+        "live_vs_backtest_drift": {
+            "status": drift_status,
+            "drift_score": total_abs,
+            "reasons": reasons,
+        },
+        "promotion_clock": {
+            "days_observed": days_observed,
+            "rebalance_count_observed": rebalance_count,
+            "min_days_required": min_days,
+            "min_rebalance_count_required": min_rebalances,
+            "status": promotion_status,
+        },
+        "recommendation": recommendation,
+    }
+
+
+def _shadow_shortlist_weekly_summary(row: Mapping[str, Any]) -> dict[str, Any]:
+    drift = _mapping(row.get("live_vs_backtest_drift"))
+    promotion = _mapping(row.get("promotion_clock"))
+    return {
+        "candidate_id": row.get("candidate_id"),
+        "as_of": row.get("as_of"),
+        "cluster_id": row.get("cluster_id"),
+        "cluster_label": row.get("cluster_label"),
+        "weekly_status": "active",
+        "latest_drift_status": drift.get("status"),
+        "latest_drift_score": drift.get("drift_score"),
+        "promotion_clock_status": promotion.get("status"),
+        "recommendation": row.get("recommendation"),
+        "broker_action_allowed": False,
+    }
+
+
+def _max_target_weight_disagreement(rows: Sequence[Mapping[str, Any]]) -> float:
+    targets = [_daily_target_row_from_monitor(row) for row in rows]
+    pairwise = _candidate_pairwise_disagreement_rows(targets)
+    return max([_float(row.get("pairwise_distance")) for row in pairwise] or [0.0])
+
+
+def _normalize_portfolio_snapshot(path: Path | None, *, strict: bool) -> dict[str, Any]:
+    if path is None:
+        return {}
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, Mapping):
+        raise DynamicV3ParameterResearchError("portfolio snapshot must be a mapping")
+    metadata = _mapping(raw.get("metadata"))
+    cash_raw = _mapping(raw.get("cash"))
+    raw_positions = _records(raw.get("positions"))
+    cash_symbol = _text(cash_raw.get("symbol"), "CASH")
+    raw_symbols = [_text(item.get("symbol")) for item in raw_positions if _text(item.get("symbol"))]
+    if cash_raw and cash_symbol:
+        raw_symbols.append(cash_symbol)
+    positions: list[dict[str, Any]] = []
+    cash = {
+        "symbol": cash_symbol,
+        "weight": _float(cash_raw.get("weight")),
+        "value": _float(cash_raw.get("value")),
+        "currency": _text(cash_raw.get("currency"), _text(raw.get("base_currency"), "USD")),
+    }
+    if not cash_raw:
+        for item in raw_positions:
+            if _text(item.get("symbol")) == "CASH":
+                cash = {
+                    "symbol": "CASH",
+                    "weight": _float(item.get("weight")),
+                    "value": _float(item.get("value")),
+                    "currency": _text(item.get("currency"), "USD"),
+                }
+                break
+    for item in raw_positions:
+        symbol = _text(item.get("symbol"))
+        if not symbol or symbol == cash["symbol"]:
+            continue
+        positions.append(
+            {
+                "symbol": symbol,
+                "weight": _float(item.get("weight")),
+                "value": _float(item.get("value")),
+                "currency": _text(item.get("currency"), _text(raw.get("base_currency"), "USD")),
+            }
+        )
+    symbols = [row["symbol"] for row in positions]
+    if cash.get("symbol"):
+        symbols.append(_text(cash.get("symbol")))
+    weight_sum = round(
+        sum(_float(row.get("weight")) for row in positions) + _float(cash.get("weight")),
+        6,
+    )
+    value_sum = round(
+        sum(_float(row.get("value")) for row in positions) + _float(cash.get("value")),
+        6,
+    )
+    total_equity_present = "total_equity" in raw
+    total_equity = _float(raw.get("total_equity"))
+    currencies = {_text(row.get("currency")) for row in positions}
+    if cash.get("currency"):
+        currencies.add(_text(cash.get("currency")))
+    owner_reviewed = metadata.get("owner_reviewed") is True
+    broker_imported = metadata.get("broker_imported") is True
+    checks = [
+        _check(
+            "schema_version_supported",
+            raw.get("schema_version") == SCHEMA_VERSION,
+            raw.get("schema_version"),
+        ),
+        _check("as_of_present", bool(_text(raw.get("as_of"))), _text(raw.get("as_of"))),
+        _check(
+            "base_currency_supported",
+            not strict or _text(raw.get("base_currency")) in PORTFOLIO_SNAPSHOT_ALLOWED_CURRENCIES,
+            _text(raw.get("base_currency")),
+        ),
+        _check("total_equity_present", (not strict) or total_equity_present, "total_equity"),
+        _check(
+            "weight_sum_within_tolerance",
+            abs(weight_sum - 1.0) <= PORTFOLIO_SNAPSHOT_WEIGHT_SUM_TOLERANCE,
+            f"weight_sum={weight_sum}",
+        ),
+        _check(
+            "value_sum_matches_total_equity",
+            (not total_equity_present)
+            or abs(value_sum - total_equity) <= PORTFOLIO_SNAPSHOT_VALUE_TOLERANCE,
+            f"value_sum={value_sum}, total_equity={total_equity}",
+        ),
+        _check(
+            "symbol_not_duplicated",
+            len(raw_symbols) == len(set(raw_symbols)),
+            ",".join(raw_symbols),
+        ),
+        _check(
+            "non_negative_weights",
+            all(_float(row.get("weight")) >= 0 for row in positions + [cash]),
+            "weights must be non-negative",
+        ),
+        _check(
+            "non_negative_values",
+            all(_float(row.get("value")) >= 0 for row in positions + [cash]),
+            "values must be non-negative",
+        ),
+        _check(
+            "currencies_supported",
+            all(currency in PORTFOLIO_SNAPSHOT_ALLOWED_CURRENCIES for currency in currencies),
+            ",".join(sorted(currencies)),
+        ),
+        _check("broker_imported_false", broker_imported is False, str(broker_imported)),
+    ]
+    weights = {row["symbol"]: _float(row.get("weight")) for row in positions}
+    weights[_text(cash.get("symbol"), "CASH")] = _float(cash.get("weight"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_normalized_portfolio_snapshot",
+        "source_path": str(path),
+        "as_of": _text(raw.get("as_of")),
+        "base_currency": _text(raw.get("base_currency"), "USD"),
+        "account_type": _text(raw.get("account_type"), "manual_snapshot"),
+        "source": _text(raw.get("source"), "manual"),
+        "total_equity": total_equity,
+        "cash": cash,
+        "positions": positions,
+        "weights": weights,
+        "weight_sum": weight_sum,
+        "value_sum": value_sum,
+        "owner_reviewed": owner_reviewed,
+        "broker_imported": broker_imported,
+        "manual_review_required": not owner_reviewed,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _portfolio_exposure_summary(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    weights = _mapping(snapshot.get("weights"))
+    cash_weight = _float(weights.get("CASH"))
+    defensive = sum(
+        _float(weights.get(symbol))
+        for symbol in DYNAMIC_V3_DEFENSIVE_SYMBOLS
+        if symbol in weights
+    )
+    risk = sum(
+        _float(value)
+        for symbol, value in weights.items()
+        if symbol not in DYNAMIC_V3_DEFENSIVE_SYMBOLS
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_portfolio_exposure_summary",
+        "as_of": snapshot.get("as_of", ""),
+        "risk_asset_weight": round(risk, 6),
+        "cash_weight": round(cash_weight, 6),
+        "defensive_weight": round(defensive, 6),
+        "position_count": len(_records(snapshot.get("positions"))),
+        "broker_action_allowed": False,
+    }
+
+
+def _daily_target_row_from_monitor(row: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "candidate_id": row.get("candidate_id"),
+        "cluster_id": row.get("cluster_id"),
+        "cluster_label": row.get("cluster_label"),
+        "as_of": row.get("as_of"),
+        "target_weights": _mapping(row.get("target_weights")),
+        "weight_path_status": _text(
+            _mapping(row.get("live_vs_backtest_drift")).get("status"),
+            "UNKNOWN",
+        ),
+    }
+
+
+def _daily_consensus_target_weights(
+    target_rows: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], str]:
+    rows = _symbol_weight_dispersion_rows(target_rows)
+    if not rows:
+        return [], "INSUFFICIENT_DATA"
+    consensus_config = _mapping(config.get("consensus"))
+    agreement_threshold = _float(consensus_config.get("agreement_threshold"))
+    max_dispersion = _float(consensus_config.get("max_symbol_dispersion"))
+    disagreement = False
+    for row in rows:
+        values = _records(row.get("_candidate_values"))
+        agreement = _float(row.get("candidate_agreement_ratio"))
+        if agreement < agreement_threshold or _float(row.get("dispersion")) > max_dispersion:
+            disagreement = True
+        row.pop("_candidate_values", None)
+        row["candidate_count"] = len(values)
+    return rows, "DISAGREEMENT_REVIEW_REQUIRED" if disagreement else "CONSENSUS"
+
+
+def _symbol_weight_dispersion_rows(
+    target_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    symbols = sorted(
+        {
+            symbol
+            for row in target_rows
+            for symbol in _mapping(row.get("target_weights")).keys()
+        }
+    )
+    rows: list[dict[str, Any]] = []
+    for symbol in symbols:
+        values = [
+            _float(_mapping(row.get("target_weights")).get(symbol))
+            for row in target_rows
+            if _mapping(row.get("target_weights"))
+        ]
+        if not values:
+            continue
+        center = _median(values)
+        dispersion = max(values) - min(values)
+        agreement = sum(1 for value in values if abs(value - center) <= dispersion) / len(values)
+        rows.append(
+            {
+                "symbol": symbol,
+                "mean_target_weight": round(sum(values) / len(values), 6),
+                "median_target_weight": round(center, 6),
+                "min_target_weight": round(min(values), 6),
+                "max_target_weight": round(max(values), 6),
+                "dispersion": round(dispersion, 6),
+                "candidate_agreement_ratio": round(agreement, 6),
+                "_candidate_values": [{"value": value} for value in values],
+            }
+        )
+    return rows
+
+
+def _candidate_pairwise_disagreement_rows(
+    target_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    ordered = list(target_rows)
+    for left_idx, left in enumerate(ordered):
+        left_weights = _mapping(left.get("target_weights"))
+        for right in ordered[left_idx + 1 :]:
+            right_weights = _mapping(right.get("target_weights"))
+            symbols = sorted(set(left_weights) | set(right_weights))
+            distance = sum(
+                abs(_float(left_weights.get(symbol)) - _float(right_weights.get(symbol)))
+                for symbol in symbols
+            ) / 2.0
+            rows.append(
+                {
+                    "left_candidate_id": left.get("candidate_id"),
+                    "right_candidate_id": right.get("candidate_id"),
+                    "pairwise_distance": round(distance, 6),
+                    "symbol_count": len(symbols),
+                }
+            )
+    return rows
+
+
+def _exposure_disagreement_summary(target_rows: Sequence[Mapping[str, Any]]) -> dict[str, float]:
+    risk_values = []
+    cash_values = []
+    defensive_values = []
+    for row in target_rows:
+        weights = _mapping(row.get("target_weights"))
+        risk_values.append(
+            sum(
+                _float(value)
+                for symbol, value in weights.items()
+                if symbol not in DYNAMIC_V3_DEFENSIVE_SYMBOLS
+            )
+        )
+        cash_values.append(_float(weights.get("CASH")))
+        defensive_values.append(
+            sum(
+                _float(weights.get(symbol))
+                for symbol in DYNAMIC_V3_DEFENSIVE_SYMBOLS
+                if symbol in weights
+            )
+        )
+    return {
+        "risk_asset_exposure_dispersion": round(_range(risk_values), 6),
+        "cash_exposure_dispersion": round(_range(cash_values), 6),
+        "defensive_exposure_dispersion": round(_range(defensive_values), 6),
+    }
+
+
+def _range(values: Sequence[float]) -> float:
+    return max(values) - min(values) if values else 0.0
+
+
+def _disagreement_status(
+    *,
+    candidate_count: int,
+    symbol_rows: Sequence[Mapping[str, Any]],
+    exposure: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> str:
+    if candidate_count < 2 or not symbol_rows:
+        return "INSUFFICIENT_DATA"
+    consensus = _mapping(config.get("consensus"))
+    max_symbol = max([_float(row.get("dispersion")) for row in symbol_rows] or [0.0])
+    risk_dispersion = _float(exposure.get("risk_asset_exposure_dispersion"))
+    cash_dispersion = _float(exposure.get("cash_exposure_dispersion"))
+    if (
+        max_symbol > _float(consensus.get("high_symbol_dispersion"))
+        or risk_dispersion > _float(consensus.get("high_risk_asset_exposure_dispersion"))
+        or cash_dispersion > _float(consensus.get("high_cash_exposure_dispersion"))
+    ):
+        return "HIGH_DISAGREEMENT"
+    if (
+        max_symbol > _float(consensus.get("max_symbol_dispersion"))
+        or risk_dispersion > _float(consensus.get("max_risk_asset_exposure_dispersion"))
+        or cash_dispersion > _float(consensus.get("max_cash_exposure_dispersion"))
+    ):
+        return "MODERATE_DISAGREEMENT"
+    return "CONSENSUS"
+
+
+def _daily_consensus_change_vs_previous(
+    *,
+    shadow_monitor_run_id: str,
+    shadow_shortlist_id: str,
+    as_of: date,
+    current_symbol_rows: Sequence[Mapping[str, Any]],
+    monitor_output_dir: Path,
+) -> dict[str, Any]:
+    previous_weights = _previous_shadow_monitor_weights(
+        shadow_shortlist_id=shadow_shortlist_id,
+        as_of=as_of,
+        output_dir=monitor_output_dir,
+    )
+    if not previous_weights:
+        return {"status": "NO_PRIOR_MONITOR_RUN", "max_mean_weight_delta": 0.0}
+    previous_targets = [
+        {"candidate_id": candidate_id, "target_weights": weights}
+        for candidate_id, weights in previous_weights.items()
+    ]
+    previous_rows = {
+        _text(row.get("symbol")): row for row in _symbol_weight_dispersion_rows(previous_targets)
+    }
+    deltas = []
+    for row in current_symbol_rows:
+        symbol = _text(row.get("symbol"))
+        previous = previous_rows.get(symbol, {})
+        deltas.append(
+            abs(
+                _float(row.get("mean_target_weight"))
+                - _float(previous.get("mean_target_weight"))
+            )
+        )
+    return {
+        "status": "PASS",
+        "source_shadow_monitor_run_id": shadow_monitor_run_id,
+        "max_mean_weight_delta": round(max(deltas or [0.0]), 6),
+    }
+
+
+def _latest_consensus_drift_for_monitor(
+    *,
+    shadow_monitor_run_id: str,
+    output_dir: Path,
+) -> dict[str, Any]:
+    if not output_dir.exists():
+        return {}
+    candidates = []
+    for child in output_dir.iterdir():
+        if not child.is_dir():
+            continue
+        manifest = _read_optional_json(child / "consensus_drift_manifest.json") or {}
+        if manifest.get("source_shadow_monitor_run_id") == shadow_monitor_run_id:
+            candidates.append(child)
+    if not candidates:
+        return {}
+    latest = max(candidates, key=lambda path: path.stat().st_mtime)
+    return _read_optional_json(latest / "consensus_drift_summary.json") or {}
+
+
+def _daily_position_delta_rows(
+    target_rows: Sequence[Mapping[str, Any]],
+    snapshot: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    current = _mapping(snapshot.get("weights"))
+    limits = _mapping(config.get("advisory_limits"))
+    max_total = _float(limits.get("max_single_day_total_adjustment"))
+    max_symbol = _float(limits.get("max_single_symbol_adjustment"))
+    min_trade = _float(limits.get("min_trade_threshold"))
+    rows = []
+    for target in target_rows:
+        target_weights = _mapping(target.get("target_weights"))
+        symbols = sorted(set(current) | set(target_weights))
+        deltas = {
+            symbol: round(_float(target_weights.get(symbol)) - _float(current.get(symbol)), 6)
+            for symbol in symbols
+        }
+        total_abs = round(sum(abs(value) for value in deltas.values()), 6)
+        max_abs = max([abs(value) for value in deltas.values()] or [0.0])
+        status = (
+            "no_trade"
+            if all(abs(value) < min_trade for value in deltas.values())
+            else "requires_manual_review"
+            if total_abs > max_total or max_abs > max_symbol
+            else "within_limits"
+        )
+        rows.append(
+            {
+                "candidate_id": target.get("candidate_id"),
+                "current_weights": current,
+                "target_weights": target_weights,
+                "deltas": {key: value for key, value in deltas.items() if value != 0},
+                "total_abs_adjustment": total_abs,
+                "max_symbol_adjustment": round(max_abs, 6),
+                "advisory_status": status,
+            }
+        )
+    return rows
+
+
+def _daily_position_advisory_actions(
+    *,
+    daily_advisory_id: str,
+    as_of: str,
+    target_rows: Sequence[Mapping[str, Any]],
+    delta_rows: Sequence[Mapping[str, Any]],
+    snapshot: Mapping[str, Any],
+    consensus_status: str,
+    disagreement_status: str,
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    reasons = []
+    risks = [
+        "candidate target weights are research outputs",
+        "manual owner review is required before any real portfolio change",
+    ]
+    mode = POSITION_ADVISORY_SNAPSHOT_DELTA if snapshot else POSITION_ADVISORY_TARGET_ONLY
+    if consensus_status != "CONSENSUS":
+        reasons.append("candidate_target_weight_consensus_not_confirmed")
+    if disagreement_status == "HIGH_DISAGREEMENT":
+        reasons.append("high_candidate_disagreement_forces_manual_review")
+    if disagreement_status == "HIGH_DISAGREEMENT":
+        recommended_action = "manual_review"
+    elif not snapshot:
+        reasons.append("current_portfolio_snapshot_missing")
+        recommended_action = "monitor" if target_rows else "manual_review"
+    elif not snapshot.get("owner_reviewed"):
+        reasons.append("portfolio_snapshot_owner_review_pending")
+        recommended_action = "manual_review"
+    elif any(row.get("advisory_status") == "requires_manual_review" for row in delta_rows):
+        reasons.append("position_delta_exceeds_review_limit")
+        recommended_action = "manual_review"
+    elif delta_rows and all(row.get("advisory_status") == "no_trade" for row in delta_rows):
+        reasons.append("all_deltas_below_min_trade_threshold")
+        recommended_action = "no_trade"
+    elif delta_rows:
+        recommended_action = "small_adjustment_review_only"
+    else:
+        recommended_action = "manual_review"
+    max_adjustment = max([_float(row.get("total_abs_adjustment")) for row in delta_rows] or [0.0])
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_daily_position_advisory_actions",
+        "daily_advisory_id": daily_advisory_id,
+        "as_of": as_of,
+        "mode": mode,
+        "broker_action_allowed": False,
+        "owner_approval_required": True,
+        "manual_review_required": True,
+        "consensus_status": (
+            "DISAGREEMENT_REVIEW_REQUIRED"
+            if disagreement_status == "HIGH_DISAGREEMENT"
+            else consensus_status
+        ),
+        "disagreement_status": disagreement_status,
+        "recommended_action": recommended_action,
+        "max_suggested_total_adjustment": round(max_adjustment, 6),
+        "reasons": sorted(set(reasons)),
+        "risks": risks,
+        "candidate_count": len(target_rows),
+        "config_policy_id": _text(
+            _mapping(config.get("policy_metadata")).get("policy_id")
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _top_delta_summary(delta_rows: Sequence[Mapping[str, Any]]) -> str:
+    if not delta_rows:
+        return "none"
+    row = max(delta_rows, key=lambda item: _float(item.get("total_abs_adjustment")))
+    return f"{row.get('candidate_id')}:{row.get('total_abs_adjustment')}"
+
+
+def _paper_action_record(
+    *,
+    review: Mapping[str, Any],
+    output_dir: Path,
+    daily_advisory_dir: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    daily_advisory_id = _text(review.get("daily_advisory_id"))
+    delta_rows = _read_jsonl(daily_advisory_dir / daily_advisory_id / "daily_position_deltas.jsonl")
+    proposed = {
+        _text(row.get("candidate_id")): _mapping(row.get("deltas"))
+        for row in delta_rows
+        if _mapping(row.get("deltas"))
+    }
+    paper_action_id = _stable_id("paper-action", review.get("review_id"), generated_at.isoformat())
+    record = {
+        "schema_version": SCHEMA_VERSION,
+        "paper_action_id": paper_action_id,
+        "review_id": review.get("review_id"),
+        "as_of": review.get("as_of"),
+        "action_type": "paper_adjustment",
+        "proposed_deltas": proposed,
+        "paper_portfolio_after": {},
+        "broker_action_taken": False,
+        "notes": "Paper only, no broker action",
+        "created_at": generated_at.isoformat(),
+    }
+    _append_jsonl(output_dir / "paper_action_log.jsonl", record)
+    return record
 
 
 def _metric_first(metrics: Mapping[str, Any], keys: Sequence[str]) -> float:

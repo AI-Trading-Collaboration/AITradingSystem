@@ -1573,6 +1573,66 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "shadow_monitor_run_active_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_monitor_run_active_count"
+                        ),
+                    ),
+                    (
+                        "shadow_monitor_run_recommendation",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_monitor_run_recommendation"
+                        ),
+                    ),
+                    (
+                        "portfolio_snapshot_status",
+                        etf_dynamic_v3_parameter_research.get("portfolio_snapshot_status"),
+                    ),
+                    (
+                        "position_advisory_daily_mode",
+                        etf_dynamic_v3_parameter_research.get("position_advisory_daily_mode"),
+                    ),
+                    (
+                        "position_advisory_daily_consensus_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_daily_consensus_status"
+                        ),
+                    ),
+                    (
+                        "position_advisory_daily_recommended_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_daily_recommended_action"
+                        ),
+                    ),
+                    (
+                        "position_advisory_daily_broker_action_allowed",
+                        etf_dynamic_v3_parameter_research.get(
+                            "position_advisory_daily_broker_action_allowed"
+                        ),
+                    ),
+                    (
+                        "consensus_drift_disagreement_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "consensus_drift_disagreement_status"
+                        ),
+                    ),
+                    (
+                        "consensus_drift_advisory_implication",
+                        etf_dynamic_v3_parameter_research.get(
+                            "consensus_drift_advisory_implication"
+                        ),
+                    ),
+                    (
+                        "owner_review_decision",
+                        etf_dynamic_v3_parameter_research.get("owner_review_decision"),
+                    ),
+                    (
+                        "owner_review_broker_action_taken",
+                        etf_dynamic_v3_parameter_research.get(
+                            "owner_review_broker_action_taken"
+                        ),
+                    ),
+                    (
                         "sweep_leaderboard",
                         etf_dynamic_v3_parameter_research.get("sweep_leaderboard"),
                     ),
@@ -5463,6 +5523,26 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_position_review",
     )
+    shadow_monitor_run_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_shadow_monitor_run",
+    )
+    portfolio_snapshot_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_portfolio_snapshot",
+    )
+    position_advisory_daily_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_position_advisory_daily",
+    )
+    consensus_drift_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_consensus_drift",
+    )
+    owner_review_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_owner_review",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     if not leaderboard:
         return _missing_etf_dynamic_v3_parameter_research_summary()
@@ -5514,6 +5594,26 @@ def _etf_dynamic_v3_parameter_research_summary(
         if position_review_path is not None
         else None
     )
+    shadow_monitor_run = _read_optional_json(shadow_monitor_run_path)
+    shadow_monitor_run_summary = _read_optional_json(
+        shadow_monitor_run_path.parent / "shadow_monitor_summary.json"
+        if shadow_monitor_run_path is not None
+        else None
+    )
+    portfolio_snapshot = _read_optional_json(portfolio_snapshot_path)
+    position_advisory_daily = _read_optional_json(position_advisory_daily_path)
+    position_advisory_daily_actions = _read_optional_json(
+        position_advisory_daily_path.parent / "daily_advisory_actions.json"
+        if position_advisory_daily_path is not None
+        else None
+    )
+    consensus_drift = _read_optional_json(consensus_drift_path)
+    consensus_drift_summary = _read_optional_json(
+        consensus_drift_path.parent / "consensus_drift_summary.json"
+        if consensus_drift_path is not None
+        else None
+    )
+    owner_review = _read_optional_json(owner_review_path)
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
@@ -5545,6 +5645,14 @@ def _etf_dynamic_v3_parameter_research_summary(
         position_advisory_actions,
         position_review,
         position_review_decision,
+        shadow_monitor_run,
+        shadow_monitor_run_summary,
+        portfolio_snapshot,
+        position_advisory_daily,
+        position_advisory_daily_actions,
+        consensus_drift,
+        consensus_drift_summary,
+        owner_review,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -5568,6 +5676,10 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"shadow_shortlist={shadow_shortlist.get('shadow_candidate_count', 'MISSING')}; "
             f"advisory={position_advisory.get('position_advisory_status', 'MISSING')}; "
             f"production_readiness={position_review.get('production_readiness', 'MISSING')}; "
+            f"daily_monitor={shadow_monitor_run_summary.get('summary_recommendation', 'MISSING')}; "
+            f"daily_advisory={position_advisory_daily.get('recommended_action', 'MISSING')}; "
+            f"consensus_drift={consensus_drift_summary.get('disagreement_status', 'MISSING')}; "
+            f"owner_decision={owner_review.get('owner_decision', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -5765,6 +5877,67 @@ def _etf_dynamic_v3_parameter_research_summary(
             or position_review_decision.get("recommended_next_action"),
             "MISSING",
         ),
+        "shadow_monitor_run_status": _text(shadow_monitor_run.get("status"), "MISSING"),
+        "shadow_monitor_run_active_count": shadow_monitor_run_summary.get("active_count", 0),
+        "shadow_monitor_run_recommendation": _text(
+            shadow_monitor_run_summary.get("summary_recommendation"),
+            "MISSING",
+        ),
+        "shadow_monitor_run_broker_action_allowed": (
+            shadow_monitor_run.get("broker_action_allowed")
+            if "broker_action_allowed" in shadow_monitor_run
+            else False
+        ),
+        "portfolio_snapshot_status": _text(portfolio_snapshot.get("status"), "MISSING"),
+        "portfolio_snapshot_manual_review_required": (
+            portfolio_snapshot.get("manual_review_required")
+            if "manual_review_required" in portfolio_snapshot
+            else True
+        ),
+        "portfolio_snapshot_broker_imported": portfolio_snapshot.get(
+            "broker_imported",
+            False,
+        ),
+        "position_advisory_daily_status": _text(
+            position_advisory_daily.get("status"),
+            "MISSING",
+        ),
+        "position_advisory_daily_mode": _text(
+            position_advisory_daily.get("mode")
+            or position_advisory_daily_actions.get("mode"),
+            "MISSING",
+        ),
+        "position_advisory_daily_consensus_status": _text(
+            position_advisory_daily.get("consensus_status")
+            or position_advisory_daily_actions.get("consensus_status"),
+            "MISSING",
+        ),
+        "position_advisory_daily_recommended_action": _text(
+            position_advisory_daily.get("recommended_action")
+            or position_advisory_daily_actions.get("recommended_action"),
+            "MISSING",
+        ),
+        "position_advisory_daily_broker_action_allowed": (
+            position_advisory_daily.get("broker_action_allowed")
+            if "broker_action_allowed" in position_advisory_daily
+            else False
+        ),
+        "consensus_drift_status": _text(consensus_drift.get("status"), "MISSING"),
+        "consensus_drift_disagreement_status": _text(
+            consensus_drift_summary.get("disagreement_status"),
+            "MISSING",
+        ),
+        "consensus_drift_advisory_implication": _text(
+            consensus_drift_summary.get("position_advisory_implication"),
+            "MISSING",
+        ),
+        "owner_review_id": _text(owner_review.get("review_id"), "MISSING"),
+        "owner_review_decision": _text(owner_review.get("owner_decision"), "MISSING"),
+        "owner_review_broker_action_taken": (
+            owner_review.get("broker_action_taken")
+            if "broker_action_taken" in owner_review
+            else False
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
         "evidence_summary": "" if evidence_path is None else str(evidence_path),
@@ -5799,6 +5972,17 @@ def _etf_dynamic_v3_parameter_research_summary(
             "" if position_advisory_path is None else str(position_advisory_path)
         ),
         "position_review": "" if position_review_path is None else str(position_review_path),
+        "shadow_monitor_run": (
+            "" if shadow_monitor_run_path is None else str(shadow_monitor_run_path)
+        ),
+        "portfolio_snapshot": (
+            "" if portfolio_snapshot_path is None else str(portfolio_snapshot_path)
+        ),
+        "position_advisory_daily": (
+            "" if position_advisory_daily_path is None else str(position_advisory_daily_path)
+        ),
+        "consensus_drift": "" if consensus_drift_path is None else str(consensus_drift_path),
+        "owner_review": "" if owner_review_path is None else str(owner_review_path),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -5820,6 +6004,14 @@ def _etf_dynamic_v3_parameter_research_summary(
                     position_advisory_actions,
                     position_review,
                     position_review_decision,
+                    shadow_monitor_run,
+                    shadow_monitor_run_summary,
+                    portfolio_snapshot,
+                    position_advisory_daily,
+                    position_advisory_daily_actions,
+                    consensus_drift,
+                    consensus_drift_summary,
+                    owner_review,
                 ),
                 "production_candidate_generated",
             )
@@ -5841,6 +6033,14 @@ def _etf_dynamic_v3_parameter_research_summary(
                     position_advisory_actions,
                     position_review,
                     position_review_decision,
+                    shadow_monitor_run,
+                    shadow_monitor_run_summary,
+                    portfolio_snapshot,
+                    position_advisory_daily,
+                    position_advisory_daily_actions,
+                    consensus_drift,
+                    consensus_drift_summary,
+                    owner_review,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -5862,6 +6062,14 @@ def _etf_dynamic_v3_parameter_research_summary(
                     position_advisory_actions,
                     position_review,
                     position_review_decision,
+                    shadow_monitor_run,
+                    shadow_monitor_run_summary,
+                    portfolio_snapshot,
+                    position_advisory_daily,
+                    position_advisory_daily_actions,
+                    consensus_drift,
+                    consensus_drift_summary,
+                    owner_review,
                 ),
                 "shadow_enrollment_allowed",
             )
@@ -5951,6 +6159,24 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "position_advisory_readiness": "MISSING",
         "production_readiness": "MISSING",
         "position_review_recommended_next_action": "MISSING",
+        "shadow_monitor_run_status": "MISSING",
+        "shadow_monitor_run_active_count": 0,
+        "shadow_monitor_run_recommendation": "MISSING",
+        "shadow_monitor_run_broker_action_allowed": False,
+        "portfolio_snapshot_status": "MISSING",
+        "portfolio_snapshot_manual_review_required": True,
+        "portfolio_snapshot_broker_imported": False,
+        "position_advisory_daily_status": "MISSING",
+        "position_advisory_daily_mode": "MISSING",
+        "position_advisory_daily_consensus_status": "MISSING",
+        "position_advisory_daily_recommended_action": "MISSING",
+        "position_advisory_daily_broker_action_allowed": False,
+        "consensus_drift_status": "MISSING",
+        "consensus_drift_disagreement_status": "MISSING",
+        "consensus_drift_advisory_implication": "MISSING",
+        "owner_review_id": "MISSING",
+        "owner_review_decision": "MISSING",
+        "owner_review_broker_action_taken": False,
         "sweep_leaderboard": "",
         "promotion_manifest": "",
         "evidence_summary": "",
@@ -5969,6 +6195,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "shadow_shortlist": "",
         "position_advisory": "",
         "position_review": "",
+        "shadow_monitor_run": "",
+        "portfolio_snapshot": "",
+        "position_advisory_daily": "",
+        "consensus_drift": "",
+        "owner_review": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

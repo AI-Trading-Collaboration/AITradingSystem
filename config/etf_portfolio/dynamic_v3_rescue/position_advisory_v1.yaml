@@ -36,6 +36,11 @@ consensus:
   require_candidate_agreement: true
   agreement_threshold: 0.60
   max_symbol_dispersion: 0.20
+  high_symbol_dispersion: 0.30
+  max_risk_asset_exposure_dispersion: 0.15
+  high_risk_asset_exposure_dispersion: 0.25
+  max_cash_exposure_dispersion: 0.10
+  high_cash_exposure_dispersion: 0.20
   disagreement_action: manual_review_required
 
 output:

@@ -777,6 +777,21 @@ Reader Brief 只读 latest artifacts，report registry 已登记对应 report id
 `production_effect=none`、`broker_action=none`、`broker_action_allowed=false`、
 `owner_approval_required=true`、`production_candidate_generated=false`、`production_readiness=NOT_READY`；
 position advisory 不是交易指令，不写 official target weights、不修改 baseline/production state、不触发 broker。
+TRADING-131 到 TRADING-135 把上述一次性 shadow shortlist / position review pack 接入持续
+manual-review observation：`shadow-monitor activate/run/report` 从 shadow shortlist 生成 daily target
+weights、weekly summary、promotion clock 和 recommendation；`portfolio-snapshot validate/report/normalize`
+只接受 manual YAML snapshot，并 fail closed 校验权重和值一致性、重复 symbol、负值、currency、
+`as_of` 和 `metadata.broker_imported=false`；`position-advisory daily-run/daily-report` 基于 monitor run
+输出 `TARGET_ONLY` 或 `SNAPSHOT_DELTA` daily advisory；`consensus-drift run/report` 计算 symbol
+dispersion、pairwise disagreement、risk/cash/defensive exposure disagreement，`HIGH_DISAGREEMENT`
+强制 daily advisory `manual_review`；`owner-review create/list/report/record-decision` 记录 owner
+decision 和 paper-only action。新增 artifacts 位于
+`reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs|portfolio_snapshot|position_advisory_daily|consensus_drift|owner_review_journal/`，
+Reader Brief 只读 latest monitor/advisory/drift/owner review artifacts。所有输出继续固定
+`production_effect=none`、`broker_action=none`、`broker_action_allowed=false`、
+`broker_action_taken=false`、`owner_approval_required=true` 和 `manual_review_required=true`；
+manual snapshot 不是 broker import，daily advisory 不是 order ticket，owner review journal 也不写
+official target weights、baseline/production state 或 broker state。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

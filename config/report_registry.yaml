@@ -2021,6 +2021,111 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_shadow_monitor_run
+    title: ETF Dynamic v3 Rescue Shadow Monitor Run
+    group: shadow
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue shadow-monitor run --shadow-shortlist-id <shadow_shortlist_id> --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs/*/shadow_monitor_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs/*/shadow_candidate_daily_results.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs/*/shadow_candidate_weekly_summary.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs/*/shadow_monitor_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs/*/shadow_monitor_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-131 records daily/weekly target weights, weight deltas, drift,
+      promotion clock, and downgrade recommendation for the active shadow
+      shortlist without broker action.
+    owner_action: review_shadow_monitor_run_before_using_daily_advisory
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_portfolio_snapshot
+    title: ETF Dynamic v3 Rescue Manual Portfolio Snapshot
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue portfolio-snapshot validate --snapshot config/etf_portfolio/dynamic_v3_rescue/current_portfolio_snapshot.yaml
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_snapshot/*/snapshot_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_snapshot/*/normalized_positions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_snapshot/*/portfolio_exposure_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_snapshot/*/snapshot_validation_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-132 validates manual portfolio snapshots before SNAPSHOT_DELTA
+      advisory, including weight/value consistency and no broker import.
+    owner_action: owner_review_manual_snapshot_before_snapshot_delta_advisory
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_position_advisory_daily
+    title: ETF Dynamic v3 Rescue Daily Position Advisory
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue position-advisory daily-run --shadow-monitor-run-id <monitor_run_id> --config config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_advisory_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_candidate_targets.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_consensus_weights.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/daily_advisory_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-133 converts latest shadow monitor targets into TARGET_ONLY or
+      SNAPSHOT_DELTA manual-review advisory and keeps owner approval required.
+    owner_action: owner_review_daily_position_advisory_before_any_position_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_consensus_drift
+    title: ETF Dynamic v3 Rescue Consensus Drift
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue consensus-drift run --shadow-monitor-run-id <monitor_run_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_drift/*/consensus_drift_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_drift/*/candidate_pairwise_disagreement.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_drift/*/symbol_weight_dispersion.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_drift/*/consensus_drift_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_drift/*/consensus_drift_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-134 exposes candidate disagreement and consensus drift so HIGH
+      DISAGREEMENT can force manual_review in daily advisory.
+    owner_action: review_consensus_drift_before_accepting_daily_advisory
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_owner_review
+    title: ETF Dynamic v3 Rescue Owner Review Journal
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue owner-review create --daily-advisory-id <daily_advisory_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/latest_owner_review.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/owner_review_journal.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/paper_action_log.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_review_journal/owner_review_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-135 records owner decision and paper-only actions for daily
+      advisory while keeping broker_action_taken=false.
+    owner_action: record_owner_decision_for_daily_position_advisory
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

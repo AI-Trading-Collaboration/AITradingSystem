@@ -261,6 +261,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
     DEFAULT_CANDIDATE_CLUSTER_DIR,
     DEFAULT_CANDIDATE_RECOVERY_DIR,
+    DEFAULT_CONSENSUS_DRIFT_DIR,
     DEFAULT_DATA_AUDIT_DIR,
     DEFAULT_DATA_PROVENANCE_DIR,
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
@@ -277,10 +278,13 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_OBSERVE_POOL_DIR,
     DEFAULT_OVERFIT_DIR,
     DEFAULT_OVERNIGHT_READINESS_DIR,
+    DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
     DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
     DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
     DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+    DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
     DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    DEFAULT_POSITION_ADVISORY_DAILY_DIR,
     DEFAULT_POSITION_ADVISORY_DIR,
     DEFAULT_POSITION_REVIEW_DIR,
     DEFAULT_PROMOTION_DIR,
@@ -291,6 +295,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_ROBUSTNESS_DIR,
     DEFAULT_SCHEDULE_OBSERVE_DIR,
     DEFAULT_SHADOW_MONITOR_DIR,
+    DEFAULT_SHADOW_MONITOR_RUN_DIR,
     DEFAULT_SHADOW_REGISTRY_PATH,
     DEFAULT_SHADOW_REPORT_DIR,
     DEFAULT_SHADOW_SHORTLIST_DIR,
@@ -300,6 +305,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_WALK_FORWARD_SELECTION_DIR,
     DEFAULT_WINDOW_AUDIT_DIR,
     DynamicV3ParameterResearchError,
+    activate_shadow_monitoring,
     apply_evidence_gate_policy,
     artifacts_latest_payload,
     build_medium_real_report,
@@ -315,6 +321,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     candidate_cluster_report_payload,
     candidate_recovery_report_payload,
     candidate_report_payload,
+    consensus_drift_report_payload,
+    create_owner_review,
     data_audit_report_payload,
     data_provenance_inspect_price_cache,
     data_provenance_repair_price_manifest,
@@ -333,11 +341,16 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     observe_pool_report_payload,
     overfit_report_payload,
     overnight_readiness_report_payload,
+    owner_review_report_payload,
+    owner_review_summary,
+    portfolio_snapshot_report_payload,
+    position_advisory_daily_report_payload,
     position_advisory_report_payload,
     position_review_report_payload,
     preview_sweep_candidates,
     promotion_review_payload,
     rebuild_observe_pool_from_recovery,
+    record_owner_review_decision,
     regime_coverage_report_payload,
     register_shadow_candidate,
     repair_latest_pointers_payload,
@@ -350,6 +363,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_candidate_attribution,
     run_candidate_clustering,
     run_candidate_recovery,
+    run_consensus_drift,
     run_data_audit,
     run_evidence_diagnosis,
     run_evidence_summary,
@@ -361,16 +375,19 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_parameter_sweep,
     run_parameter_sweep_profile,
     run_position_advisory,
+    run_position_advisory_daily,
     run_regime_coverage,
     run_research_decision,
     run_robustness_diagnostics,
     run_shadow_monitor,
+    run_shadow_shortlist_monitor,
     run_walk_forward_selection,
     run_walk_forward_validation,
     run_window_audit,
     scheduled_observe_payload,
     shadow_list_payload,
     shadow_monitor_report_payload,
+    shadow_monitor_run_report_payload,
     shadow_report_payload,
     shadow_shortlist_report_payload,
     shortlist_report_payload,
@@ -382,6 +399,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_candidate_attribution_artifact,
     validate_candidate_cluster_artifact,
     validate_candidate_recovery_artifact,
+    validate_consensus_drift_artifact,
     validate_data_audit_artifact,
     validate_evidence_diagnosis_artifact,
     validate_evidence_gate_policy,
@@ -393,8 +411,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_observe_pool_artifact,
     validate_overfit_artifact,
     validate_overnight_readiness_artifact,
+    validate_owner_review_artifact,
     validate_parameter_governance,
+    validate_portfolio_snapshot_file,
     validate_position_advisory_artifact,
+    validate_position_advisory_daily_artifact,
     validate_position_review_artifact,
     validate_promotion_pack,
     validate_regime_coverage_artifact,
@@ -402,6 +423,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_research_decision_update_artifact,
     validate_robustness_artifact,
     validate_shadow_monitor_artifact,
+    validate_shadow_monitor_run_artifact,
     validate_shadow_registry,
     validate_shadow_shortlist_artifact,
     validate_shortlist_artifact,
@@ -415,6 +437,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     walk_forward_selection_report_payload,
     weight_path_report_payload,
     window_audit_report_payload,
+    write_portfolio_snapshot_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
@@ -963,8 +986,24 @@ dynamic_v3_shadow_shortlist_app = typer.Typer(
     help="Dynamic v3 rescue shadow shortlist monitoring pack workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_shadow_monitor_run_app = typer.Typer(
+    help="Dynamic v3 rescue shadow shortlist daily/weekly monitor workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_portfolio_snapshot_app = typer.Typer(
+    help="Dynamic v3 rescue manual portfolio snapshot workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_advisory_app = typer.Typer(
     help="Dynamic v3 rescue position advisory workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_consensus_drift_app = typer.Typer(
+    help="Dynamic v3 rescue candidate consensus drift workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_owner_review_app = typer.Typer(
+    help="Dynamic v3 rescue owner review journal workflow。",
     no_args_is_help=True,
 )
 dynamic_v3_position_review_app = typer.Typer(
@@ -1043,7 +1082,11 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_recovery_app, name="candida
 dynamic_v3_rescue_app.add_typer(dynamic_v3_shortlist_app, name="shortlist")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_cluster_app, name="candidate-cluster")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_shortlist_app, name="shadow-shortlist")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_monitor_run_app, name="shadow-monitor")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_portfolio_snapshot_app, name="portfolio-snapshot")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_advisory_app, name="position-advisory")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_consensus_drift_app, name="consensus-drift")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_owner_review_app, name="owner-review")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
@@ -6531,6 +6574,191 @@ def dynamic_v3_validate_shadow_shortlist_command(
         raise typer.Exit(code=1)
 
 
+@dynamic_v3_shadow_monitor_run_app.command("activate")
+def dynamic_v3_shadow_monitor_activate_command(
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    shadow_shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shadow-shortlist-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+) -> None:
+    """激活 TRADING-131 shadow shortlist monitoring。"""
+    result = activate_shadow_monitoring(
+        shadow_shortlist_id=shadow_shortlist_id,
+        shadow_shortlist_dir=shadow_shortlist_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"activation_id={result['activation_id']}")
+    typer.echo(f"activation_dir={result['activation_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"monitoring_status={manifest['monitoring_status']}")
+    typer.echo(f"candidate_count={manifest['candidate_count']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_shadow_monitor_run_app.command("run")
+def dynamic_v3_shadow_monitor_run_from_shortlist_command(
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    as_of: Annotated[str, typer.Option("--as-of", help="monitor as-of date。")],
+    shadow_shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shadow-shortlist-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+) -> None:
+    """生成 TRADING-131 shadow monitor daily / weekly artifact。"""
+    result = run_shadow_shortlist_monitor(
+        shadow_shortlist_id=shadow_shortlist_id,
+        as_of=_parse_date(as_of),
+        shadow_shortlist_dir=shadow_shortlist_dir,
+        output_dir=output_dir,
+    )
+    summary = result["summary"]
+    typer.echo(f"monitor_run_id={result['monitor_run_id']}")
+    typer.echo(f"monitor_run_dir={result['monitor_run_dir']}")
+    typer.echo(f"active_count={summary['active_count']}")
+    typer.echo(f"summary_recommendation={summary['summary_recommendation']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_shadow_monitor_run_app.command("report")
+def dynamic_v3_shadow_monitor_run_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest shadow monitor run。"),
+    ] = False,
+    monitor_run_id: Annotated[
+        str | None,
+        typer.Option("--monitor-run-id", help="monitor run id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+) -> None:
+    """展示 TRADING-131 shadow monitor run 摘要。"""
+    payload = shadow_monitor_run_report_payload(
+        monitor_run_id=monitor_run_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("shadow_monitor_summary"))
+    typer.echo(f"monitor_run_id={payload['monitor_run_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"active_count={summary.get('active_count')}")
+    typer.echo(f"summary_recommendation={summary.get('summary_recommendation')}")
+    typer.echo(f"report_path={payload['shadow_monitor_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-monitor-run")
+def dynamic_v3_validate_shadow_monitor_run_command(
+    monitor_run_id: Annotated[
+        str,
+        typer.Option("--monitor-run-id", help="monitor run id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+) -> None:
+    """校验 TRADING-131 shadow monitor run artifact。"""
+    payload = validate_shadow_monitor_run_artifact(
+        monitor_run_id=monitor_run_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_portfolio_snapshot_app.command("validate")
+def dynamic_v3_portfolio_snapshot_validate_command(
+    snapshot: Annotated[Path, typer.Option("--snapshot", help="portfolio snapshot YAML。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="portfolio snapshot artifact root。"),
+    ] = DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
+) -> None:
+    """校验 TRADING-132 manual portfolio snapshot。"""
+    payload = validate_portfolio_snapshot_file(snapshot_path=snapshot, output_dir=output_dir)
+    typer.echo(f"snapshot_id={payload['snapshot_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo(f"snapshot_dir={payload['snapshot_dir']}")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_portfolio_snapshot_app.command("report")
+def dynamic_v3_portfolio_snapshot_report_command(
+    snapshot: Annotated[
+        Path | None,
+        typer.Option("--snapshot", help="portfolio snapshot YAML。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest portfolio snapshot artifact。"),
+    ] = False,
+    snapshot_id: Annotated[
+        str | None,
+        typer.Option("--snapshot-id", help="snapshot artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="portfolio snapshot artifact root。"),
+    ] = DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
+) -> None:
+    """生成或展示 TRADING-132 portfolio snapshot report。"""
+    payload = portfolio_snapshot_report_payload(
+        snapshot_path=snapshot,
+        snapshot_id=snapshot_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"snapshot_id={payload['snapshot_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"manual_review_required={payload['manual_review_required']}")
+    typer.echo(f"report_path={payload['snapshot_validation_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_portfolio_snapshot_app.command("normalize")
+def dynamic_v3_portfolio_snapshot_normalize_command(
+    snapshot: Annotated[Path, typer.Option("--snapshot", help="portfolio snapshot YAML。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="portfolio snapshot artifact root。"),
+    ] = DEFAULT_PORTFOLIO_SNAPSHOT_DIR,
+) -> None:
+    """输出 TRADING-132 normalized portfolio snapshot artifact。"""
+    result = write_portfolio_snapshot_artifact(snapshot_path=snapshot, output_dir=output_dir)
+    manifest = result["manifest"]
+    typer.echo(f"snapshot_id={result['snapshot_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"normalized_positions_path={manifest['normalized_positions_path']}")
+    typer.echo("broker_action_allowed=false")
+    if manifest["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_position_advisory_app.command("run")
 def dynamic_v3_position_advisory_run_command(
     shadow_shortlist_id: Annotated[
@@ -6612,6 +6840,300 @@ def dynamic_v3_validate_position_advisory_command(
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("owner_approval_required=true")
     typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_position_advisory_app.command("daily-run")
+def dynamic_v3_position_advisory_daily_run_command(
+    shadow_monitor_run_id: Annotated[
+        str,
+        typer.Option("--shadow-monitor-run-id", help="shadow monitor run id。"),
+    ],
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="position advisory config。"),
+    ] = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    portfolio_snapshot: Annotated[
+        Path | None,
+        typer.Option("--portfolio-snapshot", help="optional current portfolio snapshot YAML。"),
+    ] = None,
+    shadow_monitor_run_dir: Annotated[
+        Path,
+        typer.Option("--shadow-monitor-run-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    consensus_drift_dir: Annotated[
+        Path,
+        typer.Option("--consensus-drift-dir", help="consensus drift artifact root。"),
+    ] = DEFAULT_CONSENSUS_DRIFT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> None:
+    """生成 TRADING-133 daily position advisory。"""
+    result = run_position_advisory_daily(
+        shadow_monitor_run_id=shadow_monitor_run_id,
+        config_path=config_path,
+        portfolio_snapshot_path=portfolio_snapshot,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        consensus_drift_dir=consensus_drift_dir,
+        output_dir=output_dir,
+    )
+    actions = result["daily_advisory_actions"]
+    typer.echo(f"daily_advisory_id={result['daily_advisory_id']}")
+    typer.echo(f"daily_advisory_dir={result['daily_advisory_dir']}")
+    typer.echo(f"mode={actions['mode']}")
+    typer.echo(f"recommended_action={actions['recommended_action']}")
+    typer.echo("owner_approval_required=true")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_position_advisory_app.command("daily-report")
+def dynamic_v3_position_advisory_daily_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest daily advisory。"),
+    ] = False,
+    daily_advisory_id: Annotated[
+        str | None,
+        typer.Option("--daily-advisory-id", help="daily advisory id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> None:
+    """展示 TRADING-133 daily position advisory 摘要。"""
+    payload = position_advisory_daily_report_payload(
+        daily_advisory_id=daily_advisory_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"daily_advisory_id={payload['daily_advisory_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"mode={payload['mode']}")
+    typer.echo(f"recommended_action={payload['recommended_action']}")
+    typer.echo(f"report_path={payload['daily_position_advisory_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-position-advisory-daily")
+def dynamic_v3_validate_position_advisory_daily_command(
+    daily_advisory_id: Annotated[
+        str,
+        typer.Option("--daily-advisory-id", help="daily advisory id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> None:
+    """校验 TRADING-133 daily position advisory artifact。"""
+    payload = validate_position_advisory_daily_artifact(
+        daily_advisory_id=daily_advisory_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("owner_approval_required=true")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_consensus_drift_app.command("run")
+def dynamic_v3_consensus_drift_run_command(
+    shadow_monitor_run_id: Annotated[
+        str,
+        typer.Option("--shadow-monitor-run-id", help="shadow monitor run id。"),
+    ],
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="position advisory config。"),
+    ] = DEFAULT_POSITION_ADVISORY_CONFIG_PATH,
+    shadow_monitor_run_dir: Annotated[
+        Path,
+        typer.Option("--shadow-monitor-run-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus drift artifact root。"),
+    ] = DEFAULT_CONSENSUS_DRIFT_DIR,
+) -> None:
+    """生成 TRADING-134 consensus drift artifact。"""
+    result = run_consensus_drift(
+        shadow_monitor_run_id=shadow_monitor_run_id,
+        config_path=config_path,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        output_dir=output_dir,
+    )
+    summary = result["summary"]
+    typer.echo(f"drift_id={result['drift_id']}")
+    typer.echo(f"drift_dir={result['drift_dir']}")
+    typer.echo(f"disagreement_status={summary['disagreement_status']}")
+    typer.echo(f"position_advisory_implication={summary['position_advisory_implication']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_consensus_drift_app.command("report")
+def dynamic_v3_consensus_drift_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest consensus drift。"),
+    ] = False,
+    drift_id: Annotated[str | None, typer.Option("--drift-id", help="drift id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus drift artifact root。"),
+    ] = DEFAULT_CONSENSUS_DRIFT_DIR,
+) -> None:
+    """展示 TRADING-134 consensus drift 摘要。"""
+    payload = consensus_drift_report_payload(
+        drift_id=drift_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("consensus_drift_summary"))
+    typer.echo(f"drift_id={payload['drift_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"disagreement_status={summary.get('disagreement_status')}")
+    typer.echo(f"position_advisory_implication={summary.get('position_advisory_implication')}")
+    typer.echo(f"report_path={payload['consensus_drift_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-consensus-drift")
+def dynamic_v3_validate_consensus_drift_command(
+    drift_id: Annotated[str, typer.Option("--drift-id", help="drift id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus drift artifact root。"),
+    ] = DEFAULT_CONSENSUS_DRIFT_DIR,
+) -> None:
+    """校验 TRADING-134 consensus drift artifact。"""
+    payload = validate_consensus_drift_artifact(drift_id=drift_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_owner_review_app.command("create")
+def dynamic_v3_owner_review_create_command(
+    daily_advisory_id: Annotated[
+        str,
+        typer.Option("--daily-advisory-id", help="daily advisory id。"),
+    ],
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> None:
+    """创建 TRADING-135 owner review record。"""
+    result = create_owner_review(
+        daily_advisory_id=daily_advisory_id,
+        daily_advisory_dir=daily_advisory_dir,
+        output_dir=output_dir,
+    )
+    review = result["review"]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"owner_decision={review['owner_decision']}")
+    typer.echo(f"journal_dir={result['journal_dir']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_owner_review_app.command("list")
+def dynamic_v3_owner_review_list_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> None:
+    """列出 TRADING-135 owner review journal 摘要。"""
+    payload = owner_review_summary(output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"review_count={payload['review_count']}")
+    typer.echo(f"pending_owner_review_count={payload['pending_owner_review_count']}")
+    typer.echo(f"latest_review_id={payload['latest_review_id']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_owner_review_app.command("report")
+def dynamic_v3_owner_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest owner review。"),
+    ] = False,
+    review_id: Annotated[str | None, typer.Option("--review-id", help="owner review id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> None:
+    """展示 TRADING-135 owner review report。"""
+    payload = owner_review_report_payload(
+        latest=latest,
+        review_id=review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"latest_review_id={payload['latest_review_id']}")
+    typer.echo(f"latest_owner_decision={payload['latest_owner_decision']}")
+    typer.echo(f"pending_owner_review_count={payload['pending_owner_review_count']}")
+    typer.echo(f"report_path={payload['owner_review_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_owner_review_app.command("record-decision")
+def dynamic_v3_owner_review_record_decision_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="owner review id。")],
+    decision: Annotated[str, typer.Option("--decision", help="owner decision。")],
+    manual_notes: Annotated[
+        str,
+        typer.Option("--manual-notes", help="manual owner notes。"),
+    ] = "",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> None:
+    """记录 TRADING-135 owner decision。"""
+    result = record_owner_review_decision(
+        review_id=review_id,
+        decision=decision,
+        manual_notes=manual_notes,
+        output_dir=output_dir,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    review = result["review"]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"owner_decision={review['owner_decision']}")
+    typer.echo(f"broker_action_taken={review['broker_action_taken']}")
+
+
+@dynamic_v3_rescue_app.command("validate-owner-review")
+def dynamic_v3_validate_owner_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="owner review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+) -> None:
+    """校验 TRADING-135 owner review record。"""
+    payload = validate_owner_review_artifact(review_id=review_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 
