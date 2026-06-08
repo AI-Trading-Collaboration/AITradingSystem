@@ -144,6 +144,8 @@ def test_research_governance_summary_missing_artifacts_blocks_promotion(
         for item in payload["manual_review_queue"]
     )
     assert payload["production_effect"] == "none"
+    assert all(card["production_effect"] == "none" for card in payload["cards"])
+    assert all(source["production_effect"] == "none" for source in payload["source_artifacts"])
 
 
 def test_research_governance_summary_source_order_is_deterministic(tmp_path: Path) -> None:

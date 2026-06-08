@@ -44,7 +44,7 @@
 |1|`REPORT-048` Calculation Explainer Registry|VALIDATING|`docs/calculation_logic.md`、现有 score / snapshot / trace 字段|关键 metric 有 formula、inputs、source artifacts、PIT policy、limitations；缺失解释可被测试捕获。|
 |2|`REPORT-047` Unified Reader Brief|VALIDATING|`daily_score`、`evidence_dashboard`、`daily_task_dashboard`、`daily_decision_summary`、阶段 1 explainer|生成 `reader_brief_YYYY-MM-DD.html/json`，作为每日首选读者入口，只读汇总结论、市场状态、gate、data/PIT、backtest/shadow/weight 和人工复核队列。|
 |3|`REPORT-050` Score Change Attribution|DONE|连续交易日 score / snapshot / gate / confidence artifacts|生成今日 vs 上一交易日变化归因，拆分 component、weight、coverage、gate、confidence 和 data quality 变化。|
-|4|`REPORT-051` Research Governance Summary Cards|VALIDATING|SEC PIT、backtest、shadow、weight governance 已有 artifacts|生成统一 research governance summary，明确哪些结果影响 production、哪些仅 observe-only / research-only。|
+|4|`REPORT-051` Research Governance Summary Cards|DONE|SEC PIT、backtest、shadow、weight governance 已有 artifacts|生成统一 research governance summary，明确哪些结果影响 production、哪些仅 observe-only / research-only。|
 |5|`REPORT-049` Report Registry & Cadence Calendar|DONE|Reader Brief 首版字段稳定|新增 report registry / index，按 cadence、freshness、owner action 和 production effect 管理报告。|
 |6|`REPORT-052` Documentation Hygiene & Generated Catalog|DONE|report registry 稳定、artifact catalog 生成规则明确|已新增 documentation contract 生成/校验链路；后续再评估 `docs/artifacts/*` 生成索引和 completed task 月度归档。|
 
@@ -73,6 +73,20 @@
   生成/质量校验和 documentation contract 作为收口验证。
 - 2026-05-28：`REPORT-051` 进入 IN_PROGRESS。实现方向限定为统一只读 collector，读取已存在的 backtest / SEC PIT / shadow / weight governance artifacts，按 production-active、observe-only、candidate / research-only、blocked / insufficient data、rollback / warning 分组；缺失 artifact 只进入 `MISSING` / `LIMITED`，不得运行上游任务或补造 research 结论。
 - 2026-05-28：`REPORT-051` 进入 VALIDATING。新增 `src/ai_trading_system/reports/research_governance_summary.py`、`aits reports research-governance-summary`、Markdown/JSON artifact、direct dispatcher、Reader Brief 接入和 daily task dashboard 只读卡片；summary 只读取 latest backtest / SEC PIT / shadow / weight governance artifacts，输出分组 card、source task、status、candidate_id、production_effect、manual_review_required 和 next action。缺失或受限 artifact 只进入 warning / `MISSING` / `LIMITED`，固定 `production_effect=none`，不运行上游任务、不修改 production scoring、weights、position gates 或 trading 行为。
+- 2026-06-09：`REPORT-051` latest 字段级验证发现
+  `weight_adjustment_candidates` 与 `daily_weight_adjustment_summary` 两张 missing
+  cards 的 card-level `production_effect` 为空字符串。汇总层仍固定
+  `production_effect=none`，但每张治理 card 也必须显式披露只读边界；本轮先把
+  `REPORT-051` 拉回 `IN_PROGRESS` 修复该 schema/safety 缺口，再重新验收。
+- 2026-06-09：`REPORT-051` 从 `IN_PROGRESS` 改为 `DONE`。missing JSON
+  artifact 现在也显式写入 card/source artifact `production_effect=none`；
+  latest `research_governance_summary_2026-06-05.md/json` 为
+  `PASS_WITH_LIMITATIONS` / `PASS_WITH_WARNINGS`，`promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`，
+  cards 19、manual review items 13、production effect risk 0、card/source
+  empty production effect 0。该结果按设计阻断 promotion，只读暴露 backtest、
+  SEC PIT、shadow observe、weight governance、documentation / registry 的缺失、
+  warning 和 manual-review 状态；Reader Brief / daily task dashboard focused tests、
+  latest Reader Brief quality 和 documentation contract 作为收口验证。
 - 2026-05-28：`REPORT-049` 进入 IN_PROGRESS。实现方向限定为只读 report registry / cadence index：`config/report_registry.yaml` 作为 report index 的输入，不替代 `docs/artifact_catalog.md`；`aits reports index` 只扫描已有 artifact，不运行上游报告命令、不补造 freshness 或 owner action。
 - 2026-05-28：`REPORT-049` 进入 VALIDATING。新增 `config/report_registry.yaml`、`src/ai_trading_system/reports/report_index.py`、`aits reports index`、HTML/JSON artifact、direct dispatcher 和 Reader Brief freshness 摘要接入；registry 记录 cadence、freshness SLA rationale、owner action、audience、production_effect 和下游可见性。报告 index 只读扫描 latest artifact，输出 missing/stale/required_missing 和 owner action，不运行上游命令、不替代 artifact catalog。
 - 2026-06-09：`REPORT-049` latest 验证发现 `etf_shadow_candidates`

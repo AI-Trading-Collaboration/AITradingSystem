@@ -1373,7 +1373,7 @@ def _artifact_status(payload: Mapping[str, Any], *, exists: bool) -> str:
 
 def _production_effect(payload: Mapping[str, Any], spec: GovernanceArtifactSpec) -> str:
     if not payload:
-        return "none" if spec.filename_suffix != ".json" else ""
+        return PRODUCTION_EFFECT
     safety = _mapping(payload.get("safety"))
     execution = _mapping(payload.get("execution_boundary"))
     return _first_non_empty(
