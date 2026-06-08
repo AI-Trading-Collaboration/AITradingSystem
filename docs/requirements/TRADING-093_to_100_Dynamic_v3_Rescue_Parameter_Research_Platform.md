@@ -19,7 +19,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|DONE|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|DONE|
 |TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|DONE|
-|TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|VALIDATING|
+|TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|DONE|
 
 ## 实施顺序
 
@@ -161,3 +161,22 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   和 `non_daily_research_execution=false`。Scheduler / daily-run / direct CLI tests
   覆盖 lightweight gate、closed-market / not-due / no-pointer / broken-pointer 审计、
   canonical-root latest pointer validation 和非 daily cadence 隔离。
+- 2026-06-09：`TRADING-100` 从 `VALIDATING` 改为 `DONE`。Current canonical
+  candidate `a72139edcaef7d22` 的 promotion review 为 `READY_FOR_PACK`；本轮补齐
+  candidate attribution artifact，status=`PARTIAL` 且 `validate-candidate-attribution`
+  PASS；补齐 overfit review `55a47d96c3d97d8f`，status=`REVIEW_REQUIRED` 且
+  `validate-overfit` PASS。重新生成 promotion pack `c119dfa9c9cbfbc0` 后
+  `validate-promotion-pack --candidate-id a72139edcaef7d22` 为 PASS、
+  failed_check_count=0。Pack 绑定 source sweep
+  `sweep_20260607T102300Z_ae5ae1d8`、candidate report、walk-forward
+  `c49f65c76e2b9b73`、robustness `6df822e705e15a42`、overfit
+  `55a47d96c3d97d8f`、real evaluation report
+  `dynamic-v3-real-evaluation-report_62654d689df29588`、weight path metadata、
+  candidate attribution、data provenance 和 window audit `2eface90ec36f7bf`。
+  Pack status=`review_required`，decision_reasons=`BACKTEST_WINDOW_INCOMPLETE`，
+  evidence flags 包含 `BACKTEST_WINDOW_INCOMPLETE`、`WEIGHT_PATH_PARTIAL`、
+  `ATTRIBUTION_INCOMPLETE`、`DATA_PROVENANCE_INCOMPLETE` 和
+  `OVERFIT_REVIEW_REQUIRED`；固定 `production_candidate_generated=false`、
+  `manual_review_required=true`、`production_effect=none`、`broker_action=none`。
+  Dynamic-v3 artifact validation、stale check、report index、Reader Brief 和
+  Reader Brief quality 复核均可运行。
