@@ -1,6 +1,6 @@
 # TRADING-001：Paper Trading Engine MVP
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 关联任务：`TRADING-001`
 
@@ -120,3 +120,14 @@ OrderIntent -> PreTradeRiskChecker -> ExecutionService -> PaperBroker -> AuditLo
   `intent_id` 回放 approved、rejected、filled、open 审计轨迹；验证通过 audit
   integrity 测试、trading_engine 测试、全量 pytest、ruff、目标 mypy、diff check
   和 demo smoke。
+- 2026-06-09：系统验证收口并归档为 DONE。当前完整 `tests/trading_engine`
+  目录测试通过（939 passed, 330 warnings），覆盖后续 trading engine 任务后仍未
+  破坏 TRADING-001 的 paper-only、安全边界和审计契约；TRADING-001 聚焦测试
+  `test_order_intent_schema.py`、`test_pre_trade_checker.py`、
+  `test_paper_broker.py`、`test_execution_service.py`、`test_demo.py`、
+  `test_safety_boundaries.py` 和 `test_audit_integrity.py` 通过（35 passed）；
+  `python scripts\run_paper_trading_demo.py --date 2026-05-17` 生成 3 个
+  `OrderIntent`、风控通过/拒绝 2/1、提交 paper 订单 2、成交/未成交 1/1、
+  reconciliation PASS，并输出 `reports/trading_daily/2026-05-17.md`。后续
+  OrderIntent adapter、IBKR paper read-only / order lifecycle、continuous replay
+  和 dashboard 可见性已由 TRADING-002 及后续任务承接，不再作为本 MVP 的未完成项。
