@@ -1,6 +1,6 @@
 # RUN-002 每日运行输出归档路径
 
-状态：VALIDATING
+状态：DONE
 
 最后更新：2026-06-09
 
@@ -90,3 +90,14 @@ outputs/runs/daily/<executed_at_utc>/
   metadata 仍会记录其 checksum。验证通过 `tests/test_ops_daily.py`
   / `tests/test_run_artifacts.py` focused tests、Ruff、Black check 和 `compileall`。
   下一步观察一次完整真实 `daily-run` manifest，确认 PASS run 不再出现失败诊断缺失项。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`。已按 operations runbook 执行默认
+  `daily-plan --fail-on-missing-env`，解析为 `as_of=2026-06-05` 且状态 `READY`；
+  随后执行默认完整
+  `aits ops daily-run --run-id run-002-manifest-validation-20260609`，run bundle 为
+  `outputs/runs/daily/20260608T180032Z/as_of_2026-06-05__run-002-manifest-validation-20260609/`。
+  本轮 `daily-run` 返回 `PASS`、32/32 steps 通过，manifest 和 metadata 均为
+  `PASS`；manifest `output_artifacts=50`、`legacy_output_artifacts=78`，metadata
+  `produced_artifacts=71`，均未出现 `exists=false`；`download_data_diagnostics`
+  在 `produced_artifacts` 中出现次数为 0。唯一 `exists=false` 是 pre-run input
+  `data/external/trades`，不是 PASS step 声明输出。RUN-002 归档路径、manifest
+  checksum、legacy mirror、SEC PIT 同日输出和失败专用诊断路径语义均已验收闭合。
