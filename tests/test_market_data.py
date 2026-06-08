@@ -221,8 +221,7 @@ def test_cboe_vix_price_provider_reads_official_csv() -> None:
 def test_cboe_vix_price_provider_cache_identity_includes_requested_window(tmp_path: Path) -> None:
     fake_requests = _SequencedTextRequests(
         [
-            "DATE,OPEN,HIGH,LOW,CLOSE\n"
-            "05/11/2026,18.21,18.47,17.90,18.38\n",
+            "DATE,OPEN,HIGH,LOW,CLOSE\n" "05/11/2026,18.21,18.47,17.90,18.38\n",
             "DATE,OPEN,HIGH,LOW,CLOSE\n"
             "05/11/2026,18.21,18.47,17.90,18.38\n"
             "05/19/2026,18.01,18.36,17.66,18.06\n",
@@ -252,8 +251,7 @@ def test_cboe_vix_price_provider_cache_identity_includes_requested_window(tmp_pa
 def test_cboe_vix_price_provider_refetches_stale_cached_window(tmp_path: Path) -> None:
     fake_requests = _SequencedTextRequests(
         [
-            "DATE,OPEN,HIGH,LOW,CLOSE\n"
-            "05/11/2026,18.21,18.47,17.90,18.38\n",
+            "DATE,OPEN,HIGH,LOW,CLOSE\n" "05/11/2026,18.21,18.47,17.90,18.38\n",
             "DATE,OPEN,HIGH,LOW,CLOSE\n"
             "05/11/2026,18.21,18.47,17.90,18.38\n"
             "05/19/2026,18.01,18.36,17.66,18.06\n",
