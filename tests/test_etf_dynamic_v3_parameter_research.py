@@ -173,6 +173,24 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         sweep_output_dir=sweep_output_dir,
         output_dir=tmp_path / "walk_forward",
     )
+    source_leaderboard = json.loads(
+        (sweep_output_dir / sweep_id / "leaderboard.json").read_text(encoding="utf-8")
+    )
+    wf_leaderboard = json.loads(
+        (
+            tmp_path
+            / "walk_forward"
+            / wf["walk_forward_id"]
+            / "wf_leaderboard.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert wf["report"]["source_sweep_id"] == sweep_id
+    assert wf["report"]["holdout_start"]
+    assert wf["report"]["holdout_end"]
+    assert wf["report"]["oos_summary"]["oos_recommendation"] == "continue_to_robustness"
+    assert [row["candidate_id"] for row in wf_leaderboard["candidates"]] == [
+        row["candidate_id"] for row in source_leaderboard["top_eligible_candidates"][:3]
+    ]
     assert (
         validate_walk_forward_artifact(
             walk_forward_id=wf["walk_forward_id"],
@@ -269,6 +287,15 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         )["status"]
         == "PASS"
     )
+    (tmp_path / "walk_forward" / wf["walk_forward_id"] / "wf_report.md").unlink()
+    broken_wf_validation = validate_walk_forward_artifact(
+        walk_forward_id=wf["walk_forward_id"],
+        output_dir=tmp_path / "walk_forward",
+    )
+    assert broken_wf_validation["status"] == "FAIL"
+    assert "artifact_exists:wf_report.md" in {
+        check["check_id"] for check in broken_wf_validation["checks"] if not check["passed"]
+    }
     pointer_dir = tmp_path / "latest"
     assert validate_artifacts_payload(pointer_dir=pointer_dir)["status"] == "FAIL"
     pointer_target = tmp_path / "pointer_target.json"

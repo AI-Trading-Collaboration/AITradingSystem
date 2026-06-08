@@ -15,7 +15,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-093|Parameter Sweep Config Schema|新增 `parameter_sweep_v1.yaml`、配置加载、schema validation、参数网格、稳定 `candidate_id` 和 preview CLI|DONE|
 |TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|DONE|
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|DONE|
-|TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
+|TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|DONE|
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
 |TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
@@ -107,3 +107,14 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   验证通过 `tests/test_etf_dynamic_v3_parameter_research.py tests/test_report_index.py
   tests/test_reader_brief.py -q`（31 passed）、Reader Brief quality、documentation
   contract、docs freshness 和 diff check。
+- 2026-06-09：`TRADING-096` 从 `VALIDATING` 改为 `DONE`。当前 canonical
+  real sweep `sweep_20260607T102300Z_ae5ae1d8` 已生成 walk-forward artifact
+  `c49f65c76e2b9b73`：`walk-forward run --top-n 20` 输出 status=`PASS`、
+  `production_candidate_generated=false`；manifest 绑定 current sweep，
+  candidate_count=20、min_windows=2，candidate results 为 40 行，对应 20 个
+  sweep leaderboard top candidates x 2 个 walk-forward windows。`walk-forward report`
+  披露 holdout `2024-01-01` 到 `2026-06-05`、OOS pass_count=20 和
+  recommendation=`continue_to_robustness`；`validate-walk-forward` 为 `PASS`、
+  `failed_check_count=0`。Focused test 补充 top-N 来源、holdout/OOS recommendation
+  和删除 `wf_report.md` 后 validation fail-closed 断言；后续 robustness /
+  overfit 仍由 TRADING-097 继续验证。
