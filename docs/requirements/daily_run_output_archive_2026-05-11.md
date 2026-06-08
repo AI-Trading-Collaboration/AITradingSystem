@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-06-07
+最后更新：2026-06-09
 
 关联任务：`RUN-002`
 
@@ -75,3 +75,18 @@ outputs/runs/daily/<executed_at_utc>/
   `sec-pit shadow-monitor --latest --as-of 2026-06-05`；2026-06-05 observe/monitor
   summary JSON/Markdown 均已真实落盘。下一步仍需观察一次完整 `daily-run` manifest，
   确认 PASS step 的 `produced_paths` 不再出现 `exists=false`。
+- 2026-06-09：从 `VALIDATING` 回到 `IN_PROGRESS`。默认完整 daily-run
+  `aits ops daily-run --run-id ops-011-default-smoke-20260609` 已证明 SEC PIT
+  shadow observe/monitor 同日输出存在，但 run manifest 和 metadata 仍把
+  `outputs/reports/download_data_diagnostics_2026-06-05.md` 记录为
+  `produced_artifacts` / legacy output 且 `exists=false`。该文件只应在
+  `download_data` 失败时生成；本轮 `download_data` 为 PASS，`diagnostic_path=null`。
+  下一步修正 daily-run 计划/metadata 语义，把失败专用诊断路径和正常实际产物路径分离，
+  避免 PASS run 的实际产物清单继续出现失败诊断缺失项。
+- 2026-06-09：从 `IN_PROGRESS` 回到 `VALIDATING`。`DailyOpsStep` 新增
+  `failure_diagnostic_paths`，`download_data_diagnostics_YYYY-MM-DD.md` 保留在
+  daily plan 的失败诊断说明中，但成功步骤不再把该失败专用路径写入
+  metadata/manifest produced artifacts；若 `download_data` 失败且该诊断文件真实生成，
+  metadata 仍会记录其 checksum。验证通过 `tests/test_ops_daily.py`
+  / `tests/test_run_artifacts.py` focused tests、Ruff、Black check 和 `compileall`。
+  下一步观察一次完整真实 `daily-run` manifest，确认 PASS run 不再出现失败诊断缺失项。

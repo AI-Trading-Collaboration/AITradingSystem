@@ -123,6 +123,7 @@ class DailyOpsStep:
     produced_paths: tuple[Path, ...]
     quality_gate: str
     blocks_downstream: bool
+    failure_diagnostic_paths: tuple[Path, ...] = ()
     enabled: bool = True
     skip_reason: str | None = None
     input_visibility: str = "local_or_readonly"
@@ -581,6 +582,8 @@ def build_daily_ops_plan(
                 raw_dir / "prices_marketstack_daily.csv",
                 raw_dir / "rates_daily.csv",
                 raw_dir / "download_manifest.csv",
+            ),
+            failure_diagnostic_paths=(
                 default_download_failure_report_path(reports_dir, download_end),
             ),
             quality_gate=(
@@ -1712,7 +1715,7 @@ def render_daily_ops_plan(
         required_env = ", ".join(f"`{item}`" for item in step.required_env_vars) or ""
         step_missing = ", ".join(f"`{item}`" for item in missing_by_step.get(step.step_id, ()))
         command = _command_cell(step)
-        outputs = "<br/>".join(f"`{path}`" for path in step.produced_paths)
+        outputs = "<br/>".join(_step_output_cells(step))
         lines.append(
             "| "
             f"{index} | "
@@ -1739,6 +1742,12 @@ def render_daily_ops_plan(
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _step_output_cells(step: DailyOpsStep) -> tuple[str, ...]:
+    normal_outputs = tuple(f"`{path}`" for path in step.produced_paths)
+    failure_outputs = tuple(f"`{path}` (失败诊断)" for path in step.failure_diagnostic_paths)
+    return (*normal_outputs, *failure_outputs)
 
 
 def write_daily_ops_plan(
@@ -2265,7 +2274,19 @@ def _build_daily_ops_run_metadata(
     produced_paths = tuple(
         dict.fromkeys(
             (
-                *(path for step in plan.steps for path in step.produced_paths),
+                *(
+                    path
+                    for result in results
+                    if result.status != "SKIPPED"
+                    for path in result.produced_paths
+                ),
+                *(
+                    path
+                    for step in plan.steps
+                    if _step_result_status(results, step.step_id) == "FAIL"
+                    for path in step.failure_diagnostic_paths
+                    if path.exists()
+                ),
                 *(
                     result.diagnostic_path
                     for result in results
@@ -2306,12 +2327,23 @@ def _build_daily_ops_run_metadata(
     )
 
 
+def _step_result_status(
+    results: tuple[DailyOpsStepResult, ...],
+    step_id: str,
+) -> str | None:
+    for result in results:
+        if result.step_id == step_id:
+            return result.status
+    return None
+
+
 def _metadata_command_record(step: DailyOpsStep) -> Mapping[str, object]:
     return {
         "step_id": step.step_id,
         "enabled": step.enabled,
         "command": _join_command(step.command) if step.command else "",
         "required_env_vars": list(step.required_env_vars),
+        "failure_diagnostic_paths": [str(path) for path in step.failure_diagnostic_paths],
         "blocks_downstream": step.blocks_downstream,
         "skip_reason": step.skip_reason,
         "input_visibility": step.input_visibility,

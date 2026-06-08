@@ -11,6 +11,7 @@ import ai_trading_system.cli_commands.ops as ops_cli
 from ai_trading_system.cli import app
 from ai_trading_system.core import ProductionEffect
 from ai_trading_system.ops_daily import (
+    DailyOpsPlan,
     DailyOpsRunMetadata,
     DailyOpsRunReport,
     DailyOpsStep,
@@ -27,6 +28,7 @@ from ai_trading_system.ops_daily import (
     run_daily_ops_plan,
     write_daily_ops_run_report,
 )
+from ai_trading_system.trading_calendar import us_equity_market_session
 
 
 def test_daily_ops_plan_reports_missing_required_env() -> None:
@@ -279,6 +281,92 @@ def test_daily_ops_step_result_adapter_maps_status_and_artifacts(tmp_path: Path)
     assert workflow_result.finished_at == ended_at
     assert workflow_result.artifacts[0].path == output_path
     assert workflow_result.production_effect is ProductionEffect.NONE
+
+
+def test_daily_ops_metadata_omits_failure_only_diagnostic_on_success(tmp_path: Path) -> None:
+    output_path = tmp_path / "data" / "raw" / "prices_daily.csv"
+    failure_report = tmp_path / "outputs" / "reports" / "download_data_diagnostics_2026-05-06.md"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("date,ticker,close\n", encoding="utf-8")
+    step = DailyOpsStep(
+        step_id="download_data",
+        title="更新市场和宏观缓存",
+        command=("aits", "download-data", "--start", "2018-01-01", "--end", "2026-05-06"),
+        required_env_vars=(),
+        produced_paths=(output_path,),
+        failure_diagnostic_paths=(failure_report,),
+        quality_gate="失败时写入脱敏 download_data_diagnostics 报告并停止下游。",
+        blocks_downstream=True,
+        input_visibility="live_provider",
+    )
+    plan = DailyOpsPlan(
+        as_of=date(2026, 5, 6),
+        generated_at=datetime(2026, 5, 6, 20, 0, tzinfo=UTC),
+        steps=(step,),
+        market_session=us_equity_market_session(date(2026, 5, 6)),
+    )
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+        visibility_latest_completed_trading_day=date(2026, 5, 6),
+    )
+    produced_paths = {artifact.path for artifact in report.metadata.produced_artifacts}
+
+    assert "download_data_diagnostics_2026-05-06.md" in render_daily_ops_plan(plan)
+    assert report.status == "PASS"
+    assert output_path in produced_paths
+    assert failure_report not in produced_paths
+
+
+def test_daily_ops_metadata_records_failure_only_diagnostic_when_generated(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "data" / "raw" / "prices_daily.csv"
+    failure_report = tmp_path / "outputs" / "reports" / "download_data_diagnostics_2026-05-06.md"
+    step = DailyOpsStep(
+        step_id="download_data",
+        title="更新市场和宏观缓存",
+        command=("aits", "download-data", "--start", "2018-01-01", "--end", "2026-05-06"),
+        required_env_vars=(),
+        produced_paths=(output_path,),
+        failure_diagnostic_paths=(failure_report,),
+        quality_gate="失败时写入脱敏 download_data_diagnostics 报告并停止下游。",
+        blocks_downstream=True,
+        input_visibility="live_provider",
+    )
+    plan = DailyOpsPlan(
+        as_of=date(2026, 5, 6),
+        generated_at=datetime(2026, 5, 6, 20, 0, tzinfo=UTC),
+        steps=(step,),
+        market_session=us_equity_market_session(date(2026, 5, 6)),
+    )
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        failure_report.parent.mkdir(parents=True, exist_ok=True)
+        failure_report.write_text("# 下载诊断\n", encoding="utf-8")
+        return subprocess.CompletedProcess(command, 1, stdout="", stderr="failed")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+        visibility_latest_completed_trading_day=date(2026, 5, 6),
+    )
+    produced_paths = {artifact.path for artifact in report.metadata.produced_artifacts}
+
+    assert report.status == "FAIL"
+    assert failure_report in produced_paths
+    assert report.failed_step is not None
+    assert report.failed_step.diagnostic_path in produced_paths
 
 
 def test_daily_ops_step_result_adapter_maps_summary_statuses_to_workflow_statuses() -> None:
