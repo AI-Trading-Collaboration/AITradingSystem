@@ -16544,6 +16544,31 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pattern": "position_review/*/position_review_manifest.json",
             "id_keys": ("review_id",),
         },
+        {
+            "pointer_name": "latest_paper_portfolio",
+            "pattern": "paper_portfolio/*/paper_portfolio_manifest.json",
+            "id_keys": ("paper_portfolio_id",),
+        },
+        {
+            "pointer_name": "latest_advisory_outcome",
+            "pattern": "advisory_outcome/*/advisory_outcome_manifest.json",
+            "id_keys": ("outcome_id",),
+        },
+        {
+            "pointer_name": "latest_owner_attribution",
+            "pattern": "owner_attribution/*/owner_attribution_manifest.json",
+            "id_keys": ("attribution_id",),
+        },
+        {
+            "pointer_name": "latest_shadow_aging",
+            "pattern": "shadow_aging/*/shadow_aging_manifest.json",
+            "id_keys": ("aging_id",),
+        },
+        {
+            "pointer_name": "latest_weekly_advisory_review",
+            "pattern": "weekly_advisory_review/*/weekly_review_manifest.json",
+            "id_keys": ("weekly_review_id",),
+        },
     )
 
 

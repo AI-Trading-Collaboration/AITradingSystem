@@ -5543,6 +5543,26 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_owner_review",
     )
+    paper_portfolio_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_paper_portfolio",
+    )
+    advisory_outcome_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_advisory_outcome",
+    )
+    owner_attribution_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_owner_attribution",
+    )
+    shadow_aging_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_shadow_aging",
+    )
+    weekly_advisory_review_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_weekly_advisory_review",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     if not leaderboard:
         return _missing_etf_dynamic_v3_parameter_research_summary()
@@ -5614,6 +5634,31 @@ def _etf_dynamic_v3_parameter_research_summary(
         else None
     )
     owner_review = _read_optional_json(owner_review_path)
+    paper_portfolio = _read_optional_json(paper_portfolio_path)
+    paper_portfolio_state = _read_optional_json(
+        paper_portfolio_path.parent / "paper_portfolio_state.json"
+        if paper_portfolio_path is not None
+        else None
+    )
+    advisory_outcome = _read_optional_json(advisory_outcome_path)
+    owner_attribution = _read_optional_json(owner_attribution_path)
+    owner_attribution_summary = _read_optional_json(
+        owner_attribution_path.parent / "owner_decision_summary.json"
+        if owner_attribution_path is not None
+        else None
+    )
+    shadow_aging = _read_optional_json(shadow_aging_path)
+    shadow_aging_summary = _read_optional_json(
+        shadow_aging_path.parent / "promotion_clock_v2_summary.json"
+        if shadow_aging_path is not None
+        else None
+    )
+    weekly_advisory_review = _read_optional_json(weekly_advisory_review_path)
+    weekly_owner_summary = _read_optional_json(
+        weekly_advisory_review_path.parent / "weekly_owner_decision_summary.json"
+        if weekly_advisory_review_path is not None
+        else None
+    )
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
@@ -5653,6 +5698,15 @@ def _etf_dynamic_v3_parameter_research_summary(
         consensus_drift,
         consensus_drift_summary,
         owner_review,
+        paper_portfolio,
+        paper_portfolio_state,
+        advisory_outcome,
+        owner_attribution,
+        owner_attribution_summary,
+        shadow_aging,
+        shadow_aging_summary,
+        weekly_advisory_review,
+        weekly_owner_summary,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -5680,6 +5734,13 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"daily_advisory={position_advisory_daily.get('recommended_action', 'MISSING')}; "
             f"consensus_drift={consensus_drift_summary.get('disagreement_status', 'MISSING')}; "
             f"owner_decision={owner_review.get('owner_decision', 'MISSING')}; "
+            f"paper_portfolio={paper_portfolio_state.get('state_status', 'MISSING')}; "
+            f"advisory_outcome={advisory_outcome.get('status', 'MISSING')}; "
+            f"owner_attribution={owner_attribution.get('status', 'MISSING')}; "
+            f"shadow_aging_eligible="
+            f"{shadow_aging_summary.get('eligible_for_review_count', 'MISSING')}; "
+            f"weekly_advisory="
+            f"{weekly_advisory_review.get('weekly_recommendation', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -5938,6 +5999,50 @@ def _etf_dynamic_v3_parameter_research_summary(
             if "broker_action_taken" in owner_review
             else False
         ),
+        "paper_portfolio_id": _text(
+            paper_portfolio_state.get("paper_portfolio_id")
+            or paper_portfolio.get("paper_portfolio_id"),
+            "MISSING",
+        ),
+        "paper_portfolio_status": _text(
+            paper_portfolio_state.get("state_status") or paper_portfolio.get("status"),
+            "MISSING",
+        ),
+        "paper_portfolio_broker_action_taken": (
+            paper_portfolio_state.get("broker_action_taken")
+            if "broker_action_taken" in paper_portfolio_state
+            else False
+        ),
+        "advisory_outcome_id": _text(advisory_outcome.get("outcome_id"), "MISSING"),
+        "advisory_outcome_status": _text(advisory_outcome.get("status"), "MISSING"),
+        "advisory_outcome_data_quality_status": _text(
+            advisory_outcome.get("data_quality_status"),
+            "MISSING",
+        ),
+        "owner_attribution_id": _text(owner_attribution.get("attribution_id"), "MISSING"),
+        "owner_attribution_status": _text(owner_attribution.get("status"), "MISSING"),
+        "owner_attribution_total_reviews": owner_attribution_summary.get("total_reviews", 0),
+        "shadow_aging_id": _text(shadow_aging.get("aging_id"), "MISSING"),
+        "shadow_aging_status": _text(shadow_aging.get("status"), "MISSING"),
+        "shadow_aging_eligible_for_review_count": shadow_aging_summary.get(
+            "eligible_for_review_count",
+            0,
+        ),
+        "shadow_aging_downgrade_recommended_count": shadow_aging_summary.get(
+            "downgrade_recommended_count",
+            0,
+        ),
+        "weekly_advisory_review_id": _text(
+            weekly_advisory_review.get("weekly_review_id"),
+            "MISSING",
+        ),
+        "weekly_advisory_recommendation": _text(
+            weekly_advisory_review.get("weekly_recommendation"),
+            "MISSING",
+        ),
+        "weekly_advisory_next_actions": ", ".join(
+            _texts(weekly_advisory_review.get("next_actions"))
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
         "evidence_summary": "" if evidence_path is None else str(evidence_path),
@@ -5983,6 +6088,15 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "consensus_drift": "" if consensus_drift_path is None else str(consensus_drift_path),
         "owner_review": "" if owner_review_path is None else str(owner_review_path),
+        "paper_portfolio": "" if paper_portfolio_path is None else str(paper_portfolio_path),
+        "advisory_outcome": "" if advisory_outcome_path is None else str(advisory_outcome_path),
+        "owner_attribution": (
+            "" if owner_attribution_path is None else str(owner_attribution_path)
+        ),
+        "shadow_aging": "" if shadow_aging_path is None else str(shadow_aging_path),
+        "weekly_advisory_review": (
+            "" if weekly_advisory_review_path is None else str(weekly_advisory_review_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -6012,6 +6126,15 @@ def _etf_dynamic_v3_parameter_research_summary(
                     consensus_drift,
                     consensus_drift_summary,
                     owner_review,
+                    paper_portfolio,
+                    paper_portfolio_state,
+                    advisory_outcome,
+                    owner_attribution,
+                    owner_attribution_summary,
+                    shadow_aging,
+                    shadow_aging_summary,
+                    weekly_advisory_review,
+                    weekly_owner_summary,
                 ),
                 "production_candidate_generated",
             )
@@ -6041,6 +6164,15 @@ def _etf_dynamic_v3_parameter_research_summary(
                     consensus_drift,
                     consensus_drift_summary,
                     owner_review,
+                    paper_portfolio,
+                    paper_portfolio_state,
+                    advisory_outcome,
+                    owner_attribution,
+                    owner_attribution_summary,
+                    shadow_aging,
+                    shadow_aging_summary,
+                    weekly_advisory_review,
+                    weekly_owner_summary,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -6070,6 +6202,15 @@ def _etf_dynamic_v3_parameter_research_summary(
                     consensus_drift,
                     consensus_drift_summary,
                     owner_review,
+                    paper_portfolio,
+                    paper_portfolio_state,
+                    advisory_outcome,
+                    owner_attribution,
+                    owner_attribution_summary,
+                    shadow_aging,
+                    shadow_aging_summary,
+                    weekly_advisory_review,
+                    weekly_owner_summary,
                 ),
                 "shadow_enrollment_allowed",
             )
@@ -6177,6 +6318,22 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "owner_review_id": "MISSING",
         "owner_review_decision": "MISSING",
         "owner_review_broker_action_taken": False,
+        "paper_portfolio_id": "MISSING",
+        "paper_portfolio_status": "MISSING",
+        "paper_portfolio_broker_action_taken": False,
+        "advisory_outcome_id": "MISSING",
+        "advisory_outcome_status": "MISSING",
+        "advisory_outcome_data_quality_status": "MISSING",
+        "owner_attribution_id": "MISSING",
+        "owner_attribution_status": "MISSING",
+        "owner_attribution_total_reviews": 0,
+        "shadow_aging_id": "MISSING",
+        "shadow_aging_status": "MISSING",
+        "shadow_aging_eligible_for_review_count": 0,
+        "shadow_aging_downgrade_recommended_count": 0,
+        "weekly_advisory_review_id": "MISSING",
+        "weekly_advisory_recommendation": "MISSING",
+        "weekly_advisory_next_actions": "",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
         "evidence_summary": "",
@@ -6200,6 +6357,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "position_advisory_daily": "",
         "consensus_drift": "",
         "owner_review": "",
+        "paper_portfolio": "",
+        "advisory_outcome": "",
+        "owner_attribution": "",
+        "shadow_aging": "",
+        "weekly_advisory_review": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

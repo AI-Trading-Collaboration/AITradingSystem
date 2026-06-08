@@ -257,6 +257,33 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     load_json_artifact as load_dynamic_v3_failure_attribution_json_artifact,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
+    DEFAULT_ADVISORY_OUTCOME_DIR,
+    DEFAULT_OWNER_ATTRIBUTION_DIR,
+    DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    DEFAULT_PAPER_PORTFOLIO_DIR,
+    DEFAULT_RATES_CACHE_PATH,
+    DEFAULT_SHADOW_AGING_DIR,
+    DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
+    advisory_outcome_report_payload,
+    apply_owner_review_to_paper_portfolio,
+    init_paper_portfolio,
+    owner_attribution_report_payload,
+    paper_portfolio_report_payload,
+    paper_portfolio_state_payload,
+    run_owner_attribution,
+    run_shadow_aging,
+    run_weekly_advisory_review,
+    shadow_aging_report_payload,
+    track_advisory_outcome,
+    update_advisory_outcome,
+    validate_advisory_outcome_artifact,
+    validate_owner_attribution_artifact,
+    validate_paper_portfolio_artifact,
+    validate_shadow_aging_artifact,
+    validate_weekly_advisory_review_artifact,
+    weekly_advisory_review_report_payload,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
     DEFAULT_CANDIDATE_CLUSTER_DIR,
@@ -1006,6 +1033,26 @@ dynamic_v3_owner_review_app = typer.Typer(
     help="Dynamic v3 rescue owner review journal workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_portfolio_app = typer.Typer(
+    help="Dynamic v3 rescue paper portfolio workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_advisory_outcome_app = typer.Typer(
+    help="Dynamic v3 rescue advisory outcome workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_owner_attribution_app = typer.Typer(
+    help="Dynamic v3 rescue owner attribution workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_shadow_aging_app = typer.Typer(
+    help="Dynamic v3 rescue shadow aging workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weekly_advisory_review_app = typer.Typer(
+    help="Dynamic v3 rescue weekly advisory review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1087,6 +1134,14 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_portfolio_snapshot_app, name="portfol
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_advisory_app, name="position-advisory")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_consensus_drift_app, name="consensus-drift")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_owner_review_app, name="owner-review")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_paper_portfolio_app, name="paper-portfolio")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_advisory_outcome_app, name="advisory-outcome")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_owner_attribution_app, name="owner-attribution")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_aging_app, name="shadow-aging")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weekly_advisory_review_app,
+    name="weekly-advisory-review",
+)
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
@@ -1304,8 +1359,7 @@ def baseline_review_eligibility_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="eligibility JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
-    / "eligibility",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "eligibility",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -1372,8 +1426,7 @@ def baseline_review_matrix_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence matrix JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
-    / "matrix",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "matrix",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -2020,10 +2073,7 @@ def trend_calibration_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2640,10 +2690,7 @@ def dynamic_robustness_report_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2868,10 +2915,7 @@ def dynamic_rescue_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3406,10 +3450,7 @@ def dynamic_v3_rescue_real_evaluate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3527,7 +3568,7 @@ def dynamic_v3_rescue_real_evaluate_command(
     typer.echo(f"promotion_gate_decision={payload['promotion_gate_decision']}")
     typer.echo(f"best_candidate={best.get('policy_id')}")
     typer.echo(
-        "constraint_hit_reduction_vs_v0_4=" f"{summary.get('constraint_hit_reduction_vs_v0_4')}"
+        f"constraint_hit_reduction_vs_v0_4={summary.get('constraint_hit_reduction_vs_v0_4')}"
     )
     typer.echo(f"false_risk_off_delta_vs_v0_4={summary.get('false_risk_off_delta_vs_v0_4')}")
     typer.echo(f"data_quality_status={summary.get('data_quality_status')}")
@@ -3625,10 +3666,7 @@ def dynamic_v3_rescue_failure_attribution_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认使用 real evaluation end date。"),
@@ -3746,8 +3784,7 @@ def dynamic_v3_rescue_failure_attribution_command(
         )
         if not etf_quality.passed:
             raise DynamicV3FailureAttributionError(
-                "ETF price validation failed before v0.3 failure attribution: "
-                f"{etf_quality.status}"
+                f"ETF price validation failed before v0.3 failure attribution: {etf_quality.status}"
             )
         payload = build_dynamic_v3_failure_attribution_report(
             prices=prices,
@@ -3929,10 +3966,7 @@ def dynamic_v3_data_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data audit artifact root。"),
@@ -4009,10 +4043,7 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data provenance artifact root。"),
@@ -4028,9 +4059,7 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     typer.echo(f"prices_sha256={_mapping_obj(payload.get('prices')).get('sha256')}")
     typer.echo(f"download_manifest_status={payload['download_manifest_status']}")
     typer.echo(f"provenance_status={payload['provenance_status']}")
-    typer.echo(
-        "prices_checksum_in_manifest=" f"{str(payload['prices_checksum_in_manifest']).lower()}"
-    )
+    typer.echo(f"prices_checksum_in_manifest={str(payload['prices_checksum_in_manifest']).lower()}")
     typer.echo("production_candidate_generated=false")
 
 
@@ -4047,10 +4076,7 @@ def dynamic_v3_data_provenance_repair_price_manifest_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
     try:
@@ -4077,10 +4103,7 @@ def dynamic_v3_data_provenance_validate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """校验 TRADING-113 price cache provenance。"""
     payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
@@ -4117,7 +4140,7 @@ def dynamic_v3_window_audit_run_command(
     typer.echo(f"window_audit_dir={result['window_audit_dir']}")
     typer.echo(f"status={report['status']}")
     typer.echo(f"configured_backtest_start={report['configured_backtest_start']}")
-    typer.echo("earliest_actual_evaluation_start=" f"{report['earliest_actual_evaluation_start']}")
+    typer.echo(f"earliest_actual_evaluation_start={report['earliest_actual_evaluation_start']}")
     typer.echo(f"promotion_blocking_count={report['promotion_blocking_count']}")
     typer.echo("production_candidate_generated=false")
 
@@ -4143,7 +4166,7 @@ def dynamic_v3_window_audit_report_command(
     typer.echo(f"window_audit_id={payload['window_audit_id']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"configured_backtest_start={payload['configured_backtest_start']}")
-    typer.echo("earliest_actual_evaluation_start=" f"{payload['earliest_actual_evaluation_start']}")
+    typer.echo(f"earliest_actual_evaluation_start={payload['earliest_actual_evaluation_start']}")
     typer.echo(f"promotion_blocking_count={payload['promotion_blocking_count']}")
     typer.echo(f"report_path={payload['report_path']}")
     if payload.get("failure_reason"):
@@ -4275,10 +4298,7 @@ def dynamic_v3_sweep_run_profile_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -4329,10 +4349,7 @@ def dynamic_v3_injection_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="injection audit artifact root。"),
@@ -4438,10 +4455,7 @@ def dynamic_v3_sweep_run_command(
             "--rates-path",
             help="real evaluator FRED rates cache for validate-data gate。",
         ),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option(
@@ -7138,6 +7152,551 @@ def dynamic_v3_validate_owner_review_command(
         raise typer.Exit(code=1)
 
 
+@dynamic_v3_paper_portfolio_app.command("init")
+def dynamic_v3_paper_portfolio_init_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper portfolio config。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+) -> None:
+    """初始化 TRADING-136 paper portfolio state。"""
+    result = init_paper_portfolio(config_path=config_path, output_dir=output_dir)
+    state = result["state"]
+    typer.echo(f"paper_portfolio_id={result['paper_portfolio_id']}")
+    typer.echo(f"paper_portfolio_dir={result['paper_portfolio_dir']}")
+    typer.echo(f"state_status={state['state_status']}")
+    typer.echo(f"total_weight={state['total_weight']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_paper_portfolio_app.command("apply-review")
+def dynamic_v3_paper_portfolio_apply_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="owner review id。")],
+    paper_portfolio_id: Annotated[
+        str | None,
+        typer.Option("--paper-portfolio-id", help="optional paper portfolio id。"),
+    ] = None,
+    manual_deltas_json: Annotated[
+        str,
+        typer.Option("--manual-deltas-json", help="manual adjustment deltas JSON。"),
+    ] = "",
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper portfolio config。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+    owner_review_dir: Annotated[
+        Path,
+        typer.Option("--owner-review-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+) -> None:
+    """把 owner review 决策应用到 paper-only portfolio ledger。"""
+    manual_deltas: Mapping[str, Any] | None = None
+    if manual_deltas_json:
+        parsed = json.loads(manual_deltas_json)
+        if not isinstance(parsed, Mapping):
+            raise typer.BadParameter("--manual-deltas-json must be a JSON object")
+        manual_deltas = parsed
+    result = apply_owner_review_to_paper_portfolio(
+        review_id=review_id,
+        paper_portfolio_id=paper_portfolio_id,
+        manual_deltas=manual_deltas,
+        config_path=config_path,
+        output_dir=output_dir,
+        owner_review_dir=owner_review_dir,
+        daily_advisory_dir=daily_advisory_dir,
+    )
+    state = result["state"]
+    typer.echo(f"paper_portfolio_id={result['paper_portfolio_id']}")
+    typer.echo(f"paper_action_id={result['paper_action_id']}")
+    typer.echo(f"state_status={state['state_status']}")
+    typer.echo(f"total_weight={state['total_weight']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_paper_portfolio_app.command("state")
+def dynamic_v3_paper_portfolio_state_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest paper portfolio。"),
+    ] = False,
+    paper_portfolio_id: Annotated[
+        str | None,
+        typer.Option("--paper-portfolio-id", help="paper portfolio id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+) -> None:
+    """展示 TRADING-136 paper portfolio latest state。"""
+    payload = paper_portfolio_state_payload(
+        paper_portfolio_id=paper_portfolio_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"paper_portfolio_id={payload['paper_portfolio_id']}")
+    typer.echo(f"state_status={payload['state_status']}")
+    typer.echo(f"as_of={payload['as_of']}")
+    typer.echo(f"total_weight={payload['total_weight']}")
+    typer.echo(f"positions={json.dumps(payload['positions'], sort_keys=True)}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_paper_portfolio_app.command("report")
+def dynamic_v3_paper_portfolio_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest paper portfolio。"),
+    ] = False,
+    paper_portfolio_id: Annotated[
+        str | None,
+        typer.Option("--paper-portfolio-id", help="paper portfolio id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+) -> None:
+    """展示 TRADING-136 paper portfolio report 摘要。"""
+    payload = paper_portfolio_report_payload(
+        paper_portfolio_id=paper_portfolio_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    state = _mapping_obj(payload.get("paper_portfolio_state"))
+    typer.echo(f"paper_portfolio_id={payload['paper_portfolio_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"state_status={state.get('state_status')}")
+    typer.echo(f"paper_action_count={payload['paper_action_count']}")
+    typer.echo(f"report_path={payload['paper_portfolio_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-portfolio")
+def dynamic_v3_validate_paper_portfolio_command(
+    paper_portfolio_id: Annotated[
+        str,
+        typer.Option("--paper-portfolio-id", help="paper portfolio id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+) -> None:
+    """校验 TRADING-136 paper portfolio artifact。"""
+    payload = validate_paper_portfolio_artifact(
+        paper_portfolio_id=paper_portfolio_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_advisory_outcome_app.command("track")
+def dynamic_v3_advisory_outcome_track_command(
+    daily_advisory_id: Annotated[
+        str,
+        typer.Option("--daily-advisory-id", help="daily advisory id。"),
+    ],
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper portfolio config。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    paper_portfolio_dir: Annotated[
+        Path,
+        typer.Option("--paper-portfolio-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+) -> None:
+    """创建 TRADING-137 advisory outcome tracker。"""
+    result = track_advisory_outcome(
+        daily_advisory_id=daily_advisory_id,
+        config_path=config_path,
+        output_dir=output_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"outcome_id={result['outcome_id']}")
+    typer.echo(f"outcome_dir={result['outcome_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"tracked_windows={','.join(str(item) for item in manifest['tracked_windows'])}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_advisory_outcome_app.command("update")
+def dynamic_v3_advisory_outcome_update_command(
+    as_of: Annotated[str, typer.Option("--as-of", help="update as-of date。")],
+    outcome_id: Annotated[
+        str | None,
+        typer.Option("--outcome-id", help="optional outcome id；default latest。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    paper_portfolio_dir: Annotated[
+        Path,
+        typer.Option("--paper-portfolio-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="cached rates path。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    """更新 TRADING-137 advisory outcome windows。"""
+    result = update_advisory_outcome(
+        as_of=_parse_date(as_of),
+        outcome_id=outcome_id,
+        output_dir=output_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"outcome_id={result['outcome_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_advisory_outcome_app.command("report")
+def dynamic_v3_advisory_outcome_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest advisory outcome。"),
+    ] = False,
+    outcome_id: Annotated[str | None, typer.Option("--outcome-id", help="outcome id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+) -> None:
+    """展示 TRADING-137 advisory outcome 摘要。"""
+    payload = advisory_outcome_report_payload(
+        outcome_id=outcome_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"outcome_id={payload['outcome_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"report_path={payload['advisory_outcome_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-advisory-outcome")
+def dynamic_v3_validate_advisory_outcome_command(
+    outcome_id: Annotated[str, typer.Option("--outcome-id", help="outcome id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+) -> None:
+    """校验 TRADING-137 advisory outcome artifact。"""
+    payload = validate_advisory_outcome_artifact(outcome_id=outcome_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_owner_attribution_app.command("run")
+def dynamic_v3_owner_attribution_run_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner attribution artifact root。"),
+    ] = DEFAULT_OWNER_ATTRIBUTION_DIR,
+    owner_review_dir: Annotated[
+        Path,
+        typer.Option("--owner-review-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+) -> None:
+    """生成 TRADING-138 owner attribution report。"""
+    result = run_owner_attribution(
+        output_dir=output_dir,
+        owner_review_dir=owner_review_dir,
+        outcome_dir=outcome_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"attribution_id={result['attribution_id']}")
+    typer.echo(f"attribution_dir={result['attribution_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"total_reviews={manifest['total_reviews']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_owner_attribution_app.command("report")
+def dynamic_v3_owner_attribution_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest owner attribution。"),
+    ] = False,
+    attribution_id: Annotated[
+        str | None,
+        typer.Option("--attribution-id", help="attribution id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner attribution artifact root。"),
+    ] = DEFAULT_OWNER_ATTRIBUTION_DIR,
+) -> None:
+    """展示 TRADING-138 owner attribution 摘要。"""
+    payload = owner_attribution_report_payload(
+        attribution_id=attribution_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"attribution_id={payload['attribution_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"total_reviews={payload['total_reviews']}")
+    typer.echo(f"report_path={payload['owner_attribution_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-owner-attribution")
+def dynamic_v3_validate_owner_attribution_command(
+    attribution_id: Annotated[str, typer.Option("--attribution-id", help="attribution id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner attribution artifact root。"),
+    ] = DEFAULT_OWNER_ATTRIBUTION_DIR,
+) -> None:
+    """校验 TRADING-138 owner attribution artifact。"""
+    payload = validate_owner_attribution_artifact(
+        attribution_id=attribution_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_shadow_aging_app.command("run")
+def dynamic_v3_shadow_aging_run_command(
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper portfolio config。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow aging artifact root。"),
+    ] = DEFAULT_SHADOW_AGING_DIR,
+    shadow_shortlist_dir: Annotated[
+        Path,
+        typer.Option("--shadow-shortlist-dir", help="shadow shortlist artifact root。"),
+    ] = DEFAULT_SHADOW_SHORTLIST_DIR,
+    shadow_monitor_run_dir: Annotated[
+        Path,
+        typer.Option("--shadow-monitor-run-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    consensus_drift_dir: Annotated[
+        Path,
+        typer.Option("--consensus-drift-dir", help="consensus drift artifact root。"),
+    ] = DEFAULT_CONSENSUS_DRIFT_DIR,
+    advisory_outcome_dir: Annotated[
+        Path,
+        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+) -> None:
+    """生成 TRADING-139 shadow candidate aging v2。"""
+    result = run_shadow_aging(
+        shadow_shortlist_id=shadow_shortlist_id,
+        config_path=config_path,
+        output_dir=output_dir,
+        shadow_shortlist_dir=shadow_shortlist_dir,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        consensus_drift_dir=consensus_drift_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+    )
+    summary = result["promotion_clock_v2_summary"]
+    typer.echo(f"aging_id={result['aging_id']}")
+    typer.echo(f"aging_dir={result['aging_dir']}")
+    typer.echo(f"eligible_for_review_count={summary['eligible_for_review_count']}")
+    typer.echo(f"downgrade_recommended_count={summary['downgrade_recommended_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_shadow_aging_app.command("report")
+def dynamic_v3_shadow_aging_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest shadow aging。"),
+    ] = False,
+    aging_id: Annotated[str | None, typer.Option("--aging-id", help="aging id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow aging artifact root。"),
+    ] = DEFAULT_SHADOW_AGING_DIR,
+) -> None:
+    """展示 TRADING-139 shadow aging 摘要。"""
+    payload = shadow_aging_report_payload(aging_id=aging_id, latest=latest, output_dir=output_dir)
+    summary = _mapping_obj(payload.get("promotion_clock_v2_summary"))
+    typer.echo(f"aging_id={payload['aging_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"eligible_for_review_count={summary.get('eligible_for_review_count')}")
+    typer.echo(f"downgrade_recommended_count={summary.get('downgrade_recommended_count')}")
+    typer.echo(f"report_path={payload['shadow_aging_report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-aging")
+def dynamic_v3_validate_shadow_aging_command(
+    aging_id: Annotated[str, typer.Option("--aging-id", help="aging id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow aging artifact root。"),
+    ] = DEFAULT_SHADOW_AGING_DIR,
+) -> None:
+    """校验 TRADING-139 shadow aging artifact。"""
+    payload = validate_shadow_aging_artifact(aging_id=aging_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weekly_advisory_review_app.command("run")
+def dynamic_v3_weekly_advisory_review_run_command(
+    week_ending: Annotated[str, typer.Option("--week-ending", help="week ending date。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly advisory review artifact root。"),
+    ] = DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
+    shadow_monitor_run_dir: Annotated[
+        Path,
+        typer.Option("--shadow-monitor-run-dir", help="shadow monitor run artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    owner_review_dir: Annotated[
+        Path,
+        typer.Option("--owner-review-dir", help="owner review journal root。"),
+    ] = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    paper_portfolio_dir: Annotated[
+        Path,
+        typer.Option("--paper-portfolio-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+    advisory_outcome_dir: Annotated[
+        Path,
+        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    shadow_aging_dir: Annotated[
+        Path,
+        typer.Option("--shadow-aging-dir", help="shadow aging artifact root。"),
+    ] = DEFAULT_SHADOW_AGING_DIR,
+) -> None:
+    """生成 TRADING-140 weekly advisory review。"""
+    result = run_weekly_advisory_review(
+        week_ending=_parse_date(week_ending),
+        output_dir=output_dir,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        owner_review_dir=owner_review_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        shadow_aging_dir=shadow_aging_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"weekly_review_id={result['weekly_review_id']}")
+    typer.echo(f"weekly_review_dir={result['weekly_review_dir']}")
+    typer.echo(f"weekly_recommendation={manifest['weekly_recommendation']}")
+    typer.echo(f"paper_portfolio_status={manifest['paper_portfolio_status']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_weekly_advisory_review_app.command("report")
+def dynamic_v3_weekly_advisory_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest weekly advisory review。"),
+    ] = False,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="weekly review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly advisory review artifact root。"),
+    ] = DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-140 weekly advisory review 摘要。"""
+    payload = weekly_advisory_review_report_payload(
+        weekly_review_id=weekly_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"weekly_review_id={payload['weekly_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"weekly_recommendation={payload['weekly_recommendation']}")
+    typer.echo(f"paper_portfolio_status={payload['paper_portfolio_status']}")
+    typer.echo(f"report_path={payload['weekly_review_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-weekly-advisory-review")
+def dynamic_v3_validate_weekly_advisory_review_command(
+    weekly_review_id: Annotated[
+        str,
+        typer.Option("--weekly-review-id", help="weekly review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly advisory review artifact root。"),
+    ] = DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-140 weekly advisory review artifact。"""
+    payload = validate_weekly_advisory_review_artifact(
+        weekly_review_id=weekly_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_position_review_app.command("pack")
 def dynamic_v3_position_review_pack_command(
     shortlist_id: Annotated[str, typer.Option("--shortlist-id", help="shortlist id。")],
@@ -7604,10 +8163,7 @@ def dynamic_shadow_update_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     registry_path: Annotated[
         Path,
         typer.Option("--registry-path", help="dynamic shadow candidate registry path。"),
@@ -9284,8 +9840,7 @@ def governance_summary_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出目录。"),
-    ] = DEFAULT_ETF_REPORT_DIR
-    / "governance",
+    ] = DEFAULT_ETF_REPORT_DIR / "governance",
 ) -> None:
     """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
     config = load_etf_config_bundle()
@@ -9682,9 +10237,7 @@ def experiments_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT
-    / "config"
-    / "report_registry.yaml",
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
 ) -> None:
     """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
     generated = datetime.now(UTC)
@@ -9891,9 +10444,7 @@ def forward_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT
-    / "config"
-    / "report_registry.yaml",
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
     output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
         DEFAULT_ETF_FORWARD_REPORT_DIR / "validation"
     ),
@@ -12073,11 +12624,7 @@ def p2_derive_edgar_events_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "sec_edgar"
-    / "filing_timeline.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Canonical edgar_text_events 输出路径，默认读取 p2.yaml。"),
@@ -12122,27 +12669,15 @@ def p2_fetch_edgar_text_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "sec_edgar"
-    / "filing_timeline.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
     document_dir: Annotated[
         Path,
         typer.Option(help="SEC filing 文本缓存目录。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents",
     output_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index 输出路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
     manifest_path: Annotated[Path, typer.Option(help="P2 source manifest 输出路径。")] = (
         DEFAULT_ETF_P2_MANIFEST_PATH
     ),
@@ -12196,11 +12731,7 @@ def p2_edgar_topics_command(
     input_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index CSV。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
     date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
     output_dir: Annotated[Path, typer.Option(help="EDGAR topic audit 输出目录。")] = (
         DEFAULT_ETF_REPORT_DIR / "p2"

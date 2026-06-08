@@ -2126,6 +2126,116 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_portfolio
+    title: ETF Dynamic v3 Rescue Paper Portfolio
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-portfolio report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_portfolio/*/paper_portfolio_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_portfolio/*/paper_portfolio_state.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_portfolio/*/paper_action_ledger.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_portfolio/*/paper_position_history.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_portfolio/*/paper_portfolio_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-136 tracks owner-reviewed paper-only advisory simulation state
+      and immutable action ledger without mutating the real portfolio.
+    owner_action: review_paper_portfolio_state_before_outcome_or_weekly_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_advisory_outcome
+    title: ETF Dynamic v3 Rescue Advisory Outcome
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue advisory-outcome report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_outcome_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_event.json
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/outcome_windows.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_counterfactuals.json
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_outcome/*/advisory_outcome_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-137 evaluates paper action, no_trade, baseline, and consensus
+      counterfactual windows after daily advisory while preserving pending and
+      insufficient-data states.
+    owner_action: review_advisory_outcome_before_adjusting_advisory_rules
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_owner_attribution
+    title: ETF Dynamic v3 Rescue Owner Attribution
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue owner-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_decision_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/advisory_acceptance_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/decision_outcome_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_attribution/*/owner_attribution_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-138 attributes owner decisions against advisory recommendations
+      and available outcome windows without fabricating conclusions when
+      outcomes are pending.
+    owner_action: review_owner_attribution_before_rule_or_process_changes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_shadow_aging
+    title: ETF Dynamic v3 Rescue Shadow Aging v2
+    group: shadow
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue shadow-aging report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/shadow_aging_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/candidate_aging_status.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/promotion_clock_v2_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_aging/*/shadow_aging_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-139 combines observation age, rebalance count, drift warnings,
+      disagreement, downgrade warnings, and outcome score into manual
+      promotion-review or downgrade guidance only.
+    owner_action: review_shadow_aging_before_manual_promotion_or_downgrade_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weekly_advisory_review
+    title: ETF Dynamic v3 Rescue Weekly Advisory Review
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weekly-advisory-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_advisory_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_owner_decision_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_paper_portfolio_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_shadow_candidate_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/weekly_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_advisory_review/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-140 aggregates shadow monitoring, daily advisory, owner review,
+      paper portfolio, outcome, and shadow aging evidence into a weekly manual
+      review package.
+    owner_action: review_weekly_advisory_summary_before_next_shadow_or_snapshot_action
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

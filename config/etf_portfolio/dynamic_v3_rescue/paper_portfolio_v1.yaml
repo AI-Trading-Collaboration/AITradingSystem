@@ -1,0 +1,60 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_paper_portfolio_v1
+  owner: project_owner
+  version: 2026-06-08
+  status: pilot_baseline
+  rationale: >
+    Track owner-reviewed position advisory decisions in an advisory-simulation-only
+    paper portfolio so advisory outcomes can be evaluated without broker action.
+  intended_effect: >
+    Make paper state, paper ledger, advisory outcomes, owner attribution,
+    shadow aging, and weekly advisory review auditable while preserving the
+    manual-review-only safety boundary.
+  validation_evidence: focused tests and TRADING-136_to_140 validation chain
+  review_condition: >
+    Recalibrate thresholds after the first owner-reviewed weekly advisory review
+    period with enough AVAILABLE outcome windows.
+
+paper_portfolio:
+  enabled: true
+  mode: advisory_simulation_only
+  base_currency: USD
+  initial_source: manual_snapshot
+  initial_snapshot_path: config/etf_portfolio/dynamic_v3_rescue/current_portfolio_snapshot.example.yaml
+
+safety:
+  broker_action_allowed: false
+  broker_action_taken: false
+  require_owner_review: true
+  allow_auto_apply_advisory: false
+
+simulation:
+  price_source: existing_price_cache
+  use_adjusted_close: true
+  transaction_cost_bps: 0
+  slippage_bps: 0
+  min_trade_threshold: 0.01
+  max_single_day_total_adjustment: 0.10
+  max_single_symbol_adjustment: 0.05
+
+outcome_tracking:
+  windows_trading_days: [1, 5, 10, 20]
+  compare_to:
+    - no_trade
+    - paper_action
+    - candidate_consensus_target
+    - limited_adjustment
+
+promotion_clock_v2:
+  minimum_days_observed: 30
+  minimum_rebalance_count: 3
+  max_drift_warning_count: 1
+  max_high_disagreement_count: 1
+  minimum_outcome_score: -0.01
+  downgrade_outcome_score_floor: -0.02
+
+ledger:
+  immutable_events: true
+  allow_rebuild_from_events: true
