@@ -1,6 +1,6 @@
 # TRADING-064 ETF Portfolio Calibration Experiment Pack
 
-最后更新：2026-06-01
+最后更新：2026-06-09
 
 ## 背景
 
@@ -69,3 +69,16 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline，TRADING-063 已
 - 2026-06-01: TRADING-064J 完成。新增 `aits etf experiments validate --pack etf_calibration_v1`，输出 `reports/etf_portfolio/experiments/validation/*_experiment_validation.json/md`，逐项验证 experiment registry、pack、batch runner、comparison report、`risk_adjusted_v1` ranking policy、`shadow_only_manual_review` candidate gate、shadow enrollment runtime safety、`weekly_shadow_review_v1` weekly review、report registry / Reader Brief 可见性、safety fields 和 P2/live production-input block。命令在当前配置下 PASS，固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_promotion_allowed=false`；失败场景覆盖 unsafe experiment、missing ranking policy、missing candidate gate 和 unsafe pack production effect。TRADING-064A~J baseline implementation 完成，下一步进入真实 experiment/shadow artifacts 的验证观察和 owner review。
 - 2026-06-01: 推送后 GitHub Actions Test 仍失败，但未认证日志只暴露 exit code，无法定位失败用例。CI workflow 改为写出 `pytest-results.xml`，并在失败时把 JUnit failure/error case 转成 GitHub check annotations；该诊断只影响 CI 可观测性，不改变项目运行逻辑、测试断言、报告输出或投资解释。
 - 2026-06-01: CI annotations 定位剩余失败为 Linux runner 差异：`Path().glob()` 不支持绝对 glob pattern，导致 report index 扫描 ETF backtest summary 失败；Rich/Typer help 在 Ubuntu runner 的默认宽度/ANSI 输出下裁剪了选项文本，导致两个 help 文本断言误报。已将 report index glob 切换为 `glob.glob`，并让相关 CLI help 测试使用无颜色、固定宽度输出。
+- 2026-06-09: 系统验证复跑 `python -m ai_trading_system.cli etf
+  experiments validate --pack etf_calibration_v1`，写出
+  `reports/etf_portfolio/experiments/validation/2026-06-08_etf_calibration_v1_experiment_validation.{json,md}`；
+  status 为 `PASS`，11 项 checks 全部 `PASS`，`safe_for_shadow_observation=true`，
+  `production_effect=none`、`broker_action=none`、
+  `manual_review_required=true`、`production_promotion_allowed=false`。同时读取
+  `data/simulation/etf_shadow_candidates.json`，当前 `candidate_count=0`；
+  刷新 `2026-06-05` report index / Reader Brief 后，Reader Brief 仍显示
+  experiment run manifest、candidate selection、weekly review 和 top candidate 为
+  `MISSING`，仅 shadow registry 可见且 active shadow candidates 为 0。该证据证明
+  TRADING-064 基础设施 gate 仍可运行，但真实 experiment batch、candidate
+  selection、shadow observation、weekly review 和 owner review 尚未完成；任务保持
+  `VALIDATING`，next owner 调整为项目 owner + 系统验证。
