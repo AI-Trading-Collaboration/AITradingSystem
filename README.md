@@ -822,7 +822,10 @@ review。新增 CLI 包括 `replay-inventory build/report`、`historical-replay 
 `reports/etf_portfolio/dynamic_v3_rescue/replay_inventory|historical_replay|backfilled_outcome|historical_paper_sim|replay_performance_review/`，
 Reader Brief 只读 latest replay/backfill/sim/performance artifacts。`backfill-outcome run`
 默认先运行 cached market / macro data quality gate；historical replay 默认排除
-`PIT_UNSAFE`，`PIT_WARNING` 只有显式 `--include-pit-warning` 才进入 replay。该链路只做
+`PIT_UNSAFE`，`PIT_WARNING` 只有显式 `--include-pit-warning` 才进入 replay。
+`ADVISORY_GENERATED_AFTER_AS_OF_DATE`、`MISSING_PRICE_DATA` 和缺少 target weights
+属于 hard PIT limitations，会归入 `PIT_UNSAFE` / `INELIGIBLE`，即使显式
+`--include-pit-warning` 也不得进入 replay。该链路只做
 历史 outcome 复核和 calibration recommendation artifact，不写 config、不生成 production
 candidate、不自动 promotion、不改真实组合或 official target weights、不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected

@@ -71,8 +71,12 @@
 - candidate selected after replay date
 - missing source artifact and using current config to infer past decision
 - cannot prove what was known at `as_of`
+- advisory artifact generated after replay `as_of`
+- missing price coverage needed to evaluate outcome windows
 
-`PIT_UNSAFE` 不允许进入默认 historical replay。
+`PIT_UNSAFE` 不允许进入默认 historical replay，也不能被
+`--include-pit-warning` 纳入；该参数只适用于 owner decision missing、snapshot
+approximated、optional metadata reconstructed 等 non-hard warning。
 
 ## 验收标准
 
@@ -100,3 +104,13 @@
   dynamic-v3 root validation、dynamic-v3 family artifact validation、
   documentation contract、report index、Reader Brief quality、focused pytest、
   ruff 和 compileall。
+- 2026-06-09：TRADING-146 hardening 补充 PIT safety 解释：advisory artifact
+  generated after replay `as_of`、missing outcome price coverage 和 missing target
+  weights 都属于 hard PIT limitations，必须归为 `PIT_UNSAFE` / `INELIGIBLE`；
+  `--include-pit-warning` 不得纳入这些 rows。
+- 2026-06-09：TRADING-146 hardening 后重建 latest replay chain。新 inventory
+  `358d353576f86a47` 把原 2 个 warning events 改为 `PIT_UNSAFE`；
+  historical replay `86b56e67308cdc50` 输出 0 events / 2 skipped；backfilled
+  outcome `38f3b24513fc8229`、historical paper sim `278aaea770c9d106` 和
+  replay performance review `f5a0d6edae45994f` 均保持 `INSUFFICIENT_DATA` 或
+  `continue_forward_tracking`，不生成生产候选、不自动 promotion、不触发 broker。

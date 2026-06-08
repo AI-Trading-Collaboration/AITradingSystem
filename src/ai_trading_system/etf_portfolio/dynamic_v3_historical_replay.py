@@ -48,6 +48,17 @@ DEFAULT_PAPER_PORTFOLIO_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfoli
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
 PIT_SAFE_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
+HARD_PIT_LIMITATIONS = {
+    "MISSING_TARGET_WEIGHTS",
+    "MISSING_PRICE_DATA",
+    "ADVISORY_GENERATED_AFTER_AS_OF_DATE",
+}
+WARNING_PIT_LIMITATIONS = {
+    "OWNER_DECISION_MISSING",
+    "PORTFOLIO_SNAPSHOT_APPROXIMATED_FROM_BASELINE",
+    "PORTFOLIO_SNAPSHOT_APPROXIMATED_FROM_PAPER_STATE",
+    "CONSENSUS_WEIGHTS_RECONSTRUCTED_FROM_TARGETS",
+}
 REPLAY_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -229,6 +240,18 @@ def validate_replay_inventory_artifact(
                 if row.get("pit_safety_status") == "PIT_UNSAFE"
             ),
             "PIT_UNSAFE rows must be ineligible",
+        ),
+        _check(
+            "hard_limitations_are_pit_unsafe",
+            all(
+                not (HARD_PIT_LIMITATIONS & set(_texts(row.get("replay_limitations"))))
+                or (
+                    row.get("pit_safety_status") == "PIT_UNSAFE"
+                    and row.get("replay_eligibility") == "INELIGIBLE"
+                )
+                for row in rows
+            ),
+            "hard PIT limitations must be PIT_UNSAFE / INELIGIBLE",
         ),
         _check(
             "broker_action_forbidden",
@@ -708,7 +731,11 @@ def validate_historical_paper_sim_artifact(
         ),
         _check("report_exists", (sim_dir / "historical_paper_sim_report.md").exists(), ""),
         _check("sim_id_matches", manifest.get("sim_id") == sim_id, sim_id),
-        _check("state_history_present", bool(history), "state history"),
+        _check(
+            "state_history_present_or_insufficient_data",
+            bool(history) or manifest.get("status") == "INSUFFICIENT_DATA",
+            "state history or explicit insufficient data",
+        ),
         _check(
             "ledger_broker_action_not_taken",
             all(row.get("broker_action_taken") is False for row in ledger),
@@ -920,6 +947,12 @@ def render_replay_inventory_report(
         for row in rows
         if "MISSING_PRICE_DATA" in _texts(row.get("replay_limitations"))
     )
+    hard_limitations = [
+        row
+        for row in rows
+        if HARD_PIT_LIMITATIONS & set(_texts(row.get("replay_limitations")))
+    ]
+    hard_dates = ", ".join(sorted({_text(row.get("as_of")) for row in hard_limitations}))
     return "\n".join(
         [
             "# Dynamic v3 historical replay inventory",
@@ -934,9 +967,12 @@ def render_replay_inventory_report(
             f"- 可重放日期：{dates or 'none'}",
             f"- 缺少 target weights 日期：{missing_targets or 'none'}",
             f"- 缺少价格数据日期：{missing_prices or 'none'}",
+            f"- hard PIT limitation events：{len(hard_limitations)}",
+            f"- hard PIT limitation dates：{hard_dates or 'none'}",
             f"- eligible / partial / ineligible：{coverage.get('eligible_count')} / "
             f"{coverage.get('partial_count')} / {coverage.get('ineligible_count')}",
-            "- 默认 replay 不允许 PIT_UNSAFE 进入 outcome 链路。",
+            "- 默认 replay 不允许 PIT_UNSAFE 进入 outcome 链路；"
+            "--include-pit-warning 不会覆盖 hard PIT limitations。",
             "- production_effect=none；broker_action_taken=false。",
             "",
         ]
@@ -952,6 +988,9 @@ def render_historical_replay_report(
     variants = ", ".join(_texts(manifest.get("generated_variants")))
     pit_counts = Counter(_text(row.get("pit_safety_status")) for row in events)
     skipped_reasons = Counter(_text(row.get("skip_reason")) for row in skipped)
+    skipped_pit_unsafe = sum(
+        1 for row in skipped if _text(row.get("pit_safety_status")) == "PIT_UNSAFE"
+    )
     return "\n".join(
         [
             "# Dynamic v3 historical advisory replay",
@@ -961,8 +1000,11 @@ def render_historical_replay_report(
             f"- replay events：{manifest.get('replay_event_count')}",
             f"- skipped events：{manifest.get('skipped_count')}",
             f"- generated variants：{variants}",
-            f"- PIT_SAFE / PIT_WARNING：{pit_counts.get('PIT_SAFE', 0)} / "
-            f"{pit_counts.get('PIT_WARNING', 0)}",
+            f"- include_pit_warning：{manifest.get('include_pit_warning')}",
+            f"- PIT_SAFE / PIT_WARNING / PIT_UNSAFE in replay："
+            f"{pit_counts.get('PIT_SAFE', 0)} / {pit_counts.get('PIT_WARNING', 0)} / "
+            f"{pit_counts.get('PIT_UNSAFE', 0)}",
+            f"- skipped PIT_UNSAFE events：{skipped_pit_unsafe}",
             f"- skipped reasons：{dict(skipped_reasons) or 'none'}",
             f"- broker action present：{summary.get('broker_action_present')}",
             "- outcome_mode=HISTORICAL_REPLAY。",
@@ -1735,17 +1777,10 @@ def _consensus_drift_for_monitor(
 
 
 def _pit_status_and_eligibility(limitations: Sequence[str]) -> tuple[str, str]:
-    if "MISSING_TARGET_WEIGHTS" in limitations:
+    limitation_set = set(limitations)
+    if HARD_PIT_LIMITATIONS & limitation_set:
         return "PIT_UNSAFE", "INELIGIBLE"
-    warning_prefixes = {
-        "OWNER_DECISION_MISSING",
-        "PORTFOLIO_SNAPSHOT_APPROXIMATED_FROM_BASELINE",
-        "PORTFOLIO_SNAPSHOT_APPROXIMATED_FROM_PAPER_STATE",
-        "CONSENSUS_WEIGHTS_RECONSTRUCTED_FROM_TARGETS",
-        "MISSING_PRICE_DATA",
-        "ADVISORY_GENERATED_AFTER_AS_OF_DATE",
-    }
-    if any(item in warning_prefixes for item in limitations):
+    if WARNING_PIT_LIMITATIONS & limitation_set:
         return "PIT_WARNING", "PARTIAL"
     return "PIT_SAFE", "ELIGIBLE"
 
@@ -1757,6 +1792,11 @@ def _pit_safety_audit(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         for row in rows
         for limitation in _texts(row.get("replay_limitations"))
     )
+    hard_limitations = {
+        limitation: count
+        for limitation, count in sorted(limitations.items())
+        if limitation in HARD_PIT_LIMITATIONS
+    }
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_replay_pit_safety_audit",
@@ -1765,6 +1805,8 @@ def _pit_safety_audit(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "pit_safe_count": counter.get("PIT_SAFE", 0),
         "pit_warning_count": counter.get("PIT_WARNING", 0),
         "pit_unsafe_count": counter.get("PIT_UNSAFE", 0),
+        "hard_pit_limitation_count": sum(hard_limitations.values()),
+        "hard_pit_limitations": hard_limitations,
         "top_limitations": [
             {"limitation": limitation, "count": count}
             for limitation, count in limitations.most_common()
@@ -1801,6 +1843,7 @@ def _replay_action_summary(
     events: Sequence[Mapping[str, Any]], skipped: Sequence[Mapping[str, Any]]
 ) -> dict[str, Any]:
     action_counter = Counter(_text(row.get("recommended_action")) for row in events)
+    skipped_reason_counter = Counter(_text(row.get("skip_reason")) for row in skipped)
     variant_counter = Counter(
         _text(variant.get("variant"))
         for row in events
@@ -1812,6 +1855,8 @@ def _replay_action_summary(
         "replay_event_count": len(events),
         "skipped_count": len(skipped),
         "recommended_action_counts": dict(sorted(action_counter.items())),
+        "skipped_reason_counts": dict(sorted(skipped_reason_counter.items())),
+        "skipped_events": list(skipped),
         "variant_counts": dict(sorted(variant_counter.items())),
         "broker_action_present": any(row.get("broker_action_taken") is True for row in events),
         "production_effect": "none",
