@@ -5025,6 +5025,14 @@ def dynamic_v3_shadow_register_command(
         Path,
         typer.Option("--sweep-output-dir", help="sweep artifact root。"),
     ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    walk_forward_dir: Annotated[
+        Path,
+        typer.Option("--walk-forward-dir", help="walk-forward artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_DIR,
+    robustness_dir: Annotated[
+        Path,
+        typer.Option("--robustness-dir", help="robustness artifact root。"),
+    ] = DEFAULT_ROBUSTNESS_DIR,
 ) -> None:
     """登记 TRADING-098 observe-only shadow candidate。"""
     try:
@@ -5033,6 +5041,8 @@ def dynamic_v3_shadow_register_command(
             candidate_id=candidate_id,
             registry_path=registry_path,
             sweep_output_dir=sweep_output_dir,
+            walk_forward_dir=walk_forward_dir,
+            robustness_dir=robustness_dir,
         )
     except DynamicV3ParameterResearchError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -5177,11 +5187,21 @@ def dynamic_v3_validate_shadow_registry_command(
         Path,
         typer.Option("--sweep-output-dir", help="sweep artifact root。"),
     ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    walk_forward_dir: Annotated[
+        Path,
+        typer.Option("--walk-forward-dir", help="walk-forward artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_DIR,
+    robustness_dir: Annotated[
+        Path,
+        typer.Option("--robustness-dir", help="robustness artifact root。"),
+    ] = DEFAULT_ROBUSTNESS_DIR,
 ) -> None:
     """校验 TRADING-098 shadow registry。"""
     payload = validate_shadow_registry(
         registry_path=registry_path,
         sweep_output_dir=sweep_output_dir,
+        walk_forward_dir=walk_forward_dir,
+        robustness_dir=robustness_dir,
     )
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")

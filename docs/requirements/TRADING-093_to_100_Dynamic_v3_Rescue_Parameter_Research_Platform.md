@@ -17,7 +17,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|DONE|
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|DONE|
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|DONE|
-|TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
+|TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|DONE|
 |TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
 |TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|VALIDATING|
 
@@ -133,3 +133,16 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   status=`MIXED`，regime bucket evidence 为 `PASS` / regime_count=6。Focused
   tests 补充 data quality、stress/regime evidence 和删除 `robustness_report.md`
   后 validation fail-closed 断言。
+- 2026-06-09：`TRADING-098` 从 `VALIDATING` 改为 `DONE`。当前 canonical
+  real candidate `a72139edcaef7d22` 已通过 `shadow register` 写入 observe-only
+  registry，绑定 source sweep `sweep_20260607T102300Z_ae5ae1d8`、walk-forward
+  `c49f65c76e2b9b73`、robustness `6df822e705e15a42`、metrics source
+  `real_evaluation_artifact`，observation_basis_status=`complete`。`shadow report
+  --candidate-id a72139edcaef7d22` 为 PASS；`shadow report --all` 为 PASS、
+  report_count=3；`validate-shadow-registry` 为 PASS、failed_check_count=0。
+  本轮修复 `shadow register` 自动补造 candidate report 的缺口：register 现在只消费
+  既有 candidate report，缺 report、source_sweep_id / candidate_id mismatch、缺
+  hard_gate_status 或 rejected candidate 均 fail closed；walk-forward / robustness
+  basis 改为按 candidate 匹配，缺失时记录 `incomplete_observation_basis`。Focused
+  tests 覆盖缺 candidate report、rejected candidate、incomplete basis 和 complete
+  basis validation。

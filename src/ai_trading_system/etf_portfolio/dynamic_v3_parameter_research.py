@@ -7736,26 +7736,34 @@ def register_shadow_candidate(
     candidate_id: str,
     registry_path: Path = DEFAULT_SHADOW_REGISTRY_PATH,
     sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
+    robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     sweep_dir = sweep_output_dir / sweep_id
-    report = candidate_report_payload(
-        sweep_id=sweep_id,
-        candidate_id=candidate_id,
-        output_dir=sweep_output_dir,
-        write=True,
-    )
-    if report["hard_gate_status"] == GATE_REJECT:
-        raise DynamicV3ParameterResearchError("rejected candidate cannot be registered")
     candidate_report_path = sweep_dir / "candidates" / candidate_id / "candidate_report.json"
     if not candidate_report_path.exists():
         raise DynamicV3ParameterResearchError("candidate report is required before registration")
+    report = _read_json(candidate_report_path)
+    if _text(report.get("source_sweep_id")) != sweep_id:
+        raise DynamicV3ParameterResearchError("candidate report source_sweep_id mismatch")
+    if _text(report.get("candidate_id")) != candidate_id:
+        raise DynamicV3ParameterResearchError("candidate report candidate_id mismatch")
+    hard_gate_status = _text(report.get("hard_gate_status"))
+    if not hard_gate_status:
+        raise DynamicV3ParameterResearchError("candidate report hard_gate_status is required")
+    if hard_gate_status == GATE_REJECT:
+        raise DynamicV3ParameterResearchError("rejected candidate cannot be registered")
     config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
     registry = load_shadow_registry(registry_path)
     candidates = _records(registry.get("candidates"))
     existing = next((row for row in candidates if row.get("candidate_id") == candidate_id), None)
-    basis = _shadow_observation_basis(candidate_id)
+    basis = _shadow_observation_basis(
+        candidate_id,
+        walk_forward_dir=walk_forward_dir,
+        robustness_dir=robustness_dir,
+    )
     record = {
         "candidate_id": candidate_id,
         "strategy_family": STRATEGY_FAMILY,
@@ -7983,6 +7991,8 @@ def validate_shadow_registry(
     *,
     registry_path: Path = DEFAULT_SHADOW_REGISTRY_PATH,
     sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
+    robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
 ) -> dict[str, Any]:
     registry = load_shadow_registry(registry_path)
     checks: list[dict[str, Any]] = [
@@ -8024,6 +8034,53 @@ def validate_shadow_registry(
                 "shadow registry is observe_only",
             )
         )
+        basis_status = _text(
+            row.get("observation_basis_status"), "incomplete_observation_basis"
+        )
+        source_walk_forward_id = _text(row.get("source_walk_forward_id"))
+        source_robustness_id = _text(row.get("source_robustness_id"))
+        wf_manifest_path = walk_forward_dir / source_walk_forward_id / "wf_manifest.json"
+        robustness_manifest_path = (
+            robustness_dir / source_robustness_id / "robustness_manifest.json"
+        )
+        checks.append(
+            _check(
+                f"{candidate_id}:observation_basis_status_valid",
+                basis_status in {"complete", "incomplete_observation_basis"},
+                basis_status,
+            )
+        )
+        if basis_status == "complete":
+            checks.append(
+                _check(
+                    f"{candidate_id}:source_walk_forward_id_present",
+                    bool(source_walk_forward_id),
+                    "complete basis requires walk-forward id",
+                )
+            )
+            checks.append(
+                _check(
+                    f"{candidate_id}:source_robustness_id_present",
+                    bool(source_robustness_id),
+                    "complete basis requires robustness id",
+                )
+            )
+        if source_walk_forward_id:
+            checks.append(
+                _check(
+                    f"{candidate_id}:source_walk_forward_exists",
+                    wf_manifest_path.exists(),
+                    str(wf_manifest_path),
+                )
+            )
+        if source_robustness_id:
+            checks.append(
+                _check(
+                    f"{candidate_id}:source_robustness_exists",
+                    robustness_manifest_path.exists(),
+                    str(robustness_manifest_path),
+                )
+            )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -14495,11 +14552,16 @@ def _sensitivity_evidence_summary(
     }
 
 
-def _shadow_observation_basis(candidate_id: str) -> dict[str, str]:
-    wf_pointer = _read_optional_json(DEFAULT_LATEST_POINTER_DIR / "latest_walk_forward.json")
-    rob_pointer = _read_optional_json(DEFAULT_LATEST_POINTER_DIR / "latest_robustness.json")
-    wf_id = _text(_mapping(wf_pointer).get("artifact_id"))
-    rob_id = _text(_mapping(rob_pointer).get("artifact_id"))
+def _shadow_observation_basis(
+    candidate_id: str,
+    *,
+    walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
+    robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
+) -> dict[str, str]:
+    wf_manifest = _latest_walk_forward_manifest_for_candidate(candidate_id, walk_forward_dir)
+    rob_manifest = _latest_robustness_manifest_for_candidate(candidate_id, robustness_dir)
+    wf_id = _text(_mapping(_read_optional_json(wf_manifest)).get("walk_forward_id"))
+    rob_id = _text(_mapping(_read_optional_json(rob_manifest)).get("robustness_id"))
     status = "complete" if wf_id and rob_id else "incomplete_observation_basis"
     return {
         "status": status,

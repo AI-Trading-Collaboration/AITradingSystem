@@ -228,12 +228,19 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         candidate_id=candidate_id,
         registry_path=registry_path,
         sweep_output_dir=sweep_output_dir,
+        walk_forward_dir=tmp_path / "walk_forward",
+        robustness_dir=tmp_path / "robustness",
     )
     assert registered["status"] == "PASS"
+    assert registered["candidate"]["observation_basis_status"] == "complete"
+    assert registered["candidate"]["source_walk_forward_id"] == wf["walk_forward_id"]
+    assert registered["candidate"]["source_robustness_id"] == robustness["robustness_id"]
     assert (
         validate_shadow_registry(
             registry_path=registry_path,
             sweep_output_dir=sweep_output_dir,
+            walk_forward_dir=tmp_path / "walk_forward",
+            robustness_dir=tmp_path / "robustness",
         )["status"]
         == "PASS"
     )
@@ -302,6 +309,75 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
     pointer_target.write_text("{}", encoding="utf-8")
     _write_latest_pointer(pointer_dir, "latest_sweep", "sweep-test", pointer_target)
     assert validate_artifacts_payload(pointer_dir=pointer_dir)["status"] == "PASS"
+
+
+def test_shadow_registry_requires_candidate_report_and_rejects_hard_reject(
+    tmp_path: Path,
+) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    sweep_output_dir = tmp_path / "sweeps"
+    sweep = run_parameter_sweep(config_path=config_path, output_dir=sweep_output_dir)
+    sweep_id = sweep["sweep_id"]
+    sweep_dir = sweep_output_dir / sweep_id
+    candidate_id = _top_candidate_id(sweep_dir)
+    registry_path = tmp_path / DEFAULT_SHADOW_REGISTRY_PATH.name
+
+    with pytest.raises(DynamicV3ParameterResearchError, match="candidate report is required"):
+        register_shadow_candidate(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            registry_path=registry_path,
+            sweep_output_dir=sweep_output_dir,
+            walk_forward_dir=tmp_path / "missing_walk_forward",
+            robustness_dir=tmp_path / "missing_robustness",
+        )
+
+    candidate_report_payload(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        output_dir=sweep_output_dir,
+        write=True,
+    )
+    registered = register_shadow_candidate(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        registry_path=registry_path,
+        sweep_output_dir=sweep_output_dir,
+        walk_forward_dir=tmp_path / "missing_walk_forward",
+        robustness_dir=tmp_path / "missing_robustness",
+    )
+    assert registered["candidate"]["observation_basis_status"] == "incomplete_observation_basis"
+    assert registered["candidate"]["source_walk_forward_id"] == ""
+    assert registered["candidate"]["source_robustness_id"] == ""
+    assert (
+        validate_shadow_registry(
+            registry_path=registry_path,
+            sweep_output_dir=sweep_output_dir,
+            walk_forward_dir=tmp_path / "missing_walk_forward",
+            robustness_dir=tmp_path / "missing_robustness",
+        )["status"]
+        == "PASS"
+    )
+
+    rejected = next(
+        row for row in _jsonl(sweep_dir / "candidate_results.jsonl") if row["gate"] == "reject"
+    )
+    rejected_candidate_id = str(rejected["candidate_id"])
+    candidate_report_payload(
+        sweep_id=sweep_id,
+        candidate_id=rejected_candidate_id,
+        output_dir=sweep_output_dir,
+        write=True,
+    )
+    with pytest.raises(DynamicV3ParameterResearchError, match="rejected candidate"):
+        register_shadow_candidate(
+            sweep_id=sweep_id,
+            candidate_id=rejected_candidate_id,
+            registry_path=registry_path,
+            sweep_output_dir=sweep_output_dir,
+            walk_forward_dir=tmp_path / "missing_walk_forward",
+            robustness_dir=tmp_path / "missing_robustness",
+        )
 
 
 def test_dynamic_v3_schedule_observe_gate_handles_due_and_pointer_failures(
