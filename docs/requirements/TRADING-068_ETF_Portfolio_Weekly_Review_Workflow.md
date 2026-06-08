@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-06-02
+最后更新：2026-06-09
 
 ## 背景
 
@@ -96,3 +96,19 @@ auto_reject_without_review
   `candidate_only=true`、`production_effect=none`、`broker_action=none`、
   `manual_review_required=true`，不写 production weights、不触发 broker action、
   不允许 automatic promotion 或 rejection。
+- 2026-06-09：系统验证复跑 `python -m ai_trading_system.cli etf weekly-review
+  validate`（PASS），并先执行 `python -m ai_trading_system.cli validate-data
+  --as-of 2026-06-05`，数据质量状态 `PASS_WITH_WARNINGS`。随后生成真实
+  `2026-06-05` weekly review package：
+  `reports/etf_portfolio/weekly_review/weekly_review_2026-06-05.{json,md}` 和
+  `aggregation/weekly_review_aggregation_2026-06-05.json`；report status 为
+  `stable_observe`，aggregation status 为 `PASS_WITH_WARNINGS`，
+  `source_report_count=11`，manual review actions 从 2026-05-29 package 的 10
+  个降至 6 个，全部仍为 open `review_data_gap`。刷新 `python -m
+  ai_trading_system.cli reports index --as-of 2026-06-05` 与 `python -m
+  ai_trading_system.cli reports reader-brief --as-of 2026-06-05` 后，Reader
+  Brief `Weekly Portfolio Review` 已指向
+  `weekly_review_2026-06-05.json`，显示 `manual_review_actions=6`。该证据证明
+  真实周度 package 和 Reader Brief 可见性已推进，但仍缺 owner 对 6 个 open
+  action 的人工复核，以及后续 decision journal entry；任务保持 `VALIDATING`，
+  next owner 调整为项目 owner + 系统验证。
