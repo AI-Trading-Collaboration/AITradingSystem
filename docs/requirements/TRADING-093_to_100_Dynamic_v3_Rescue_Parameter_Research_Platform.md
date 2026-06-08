@@ -13,7 +13,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |任务|阶段|目标|状态|
 |---|---|---|---|
 |TRADING-093|Parameter Sweep Config Schema|新增 `parameter_sweep_v1.yaml`、配置加载、schema validation、参数网格、稳定 `candidate_id` 和 preview CLI|DONE|
-|TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|VALIDATING|
+|TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|DONE|
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|VALIDATING|
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|VALIDATING|
 |TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
@@ -67,3 +67,16 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   `tests/test_etf_dynamic_v3_parameter_research.py -q` 为 16 passed，覆盖
   config validation、candidate_id、空 parameter_space、缺 hard constraints /
   scoring 和 max_candidates fail-closed 行为。
+- 2026-06-09：`TRADING-094` 从 `VALIDATING` 改为 `DONE`。当前 canonical
+  real sweep `sweep_20260607T102300Z_ae5ae1d8` 通过 current validator：
+  `aits etf dynamic-v3-rescue sweep validate --sweep-id sweep_20260607T102300Z_ae5ae1d8`
+  为 `PASS`、`failed_check_count=0`、`evaluator_mode=real_dynamic_v3_rescue`、
+  `production_candidate_generated=false`；`sweep status` 显示 status=`completed`、
+  candidate_count=300、completed_count=300、failed_count=0。字段级复核确认
+  `sweep_manifest.json`、`sweep_config.normalized.yaml`、`data_manifest.json`、
+  `candidates.jsonl`、`candidate_results.jsonl`、`candidate_errors.jsonl`、
+  `checkpoint.json`、`gate_summary.json`、`leaderboard.json/md`、`sweep_report.md`
+  和 `run.log` 均存在，manifest `production_effect=none`。旧
+  `sweep_20260606T024119Z_98fa3c81` 可作为历史样例，但因后续 validator
+  增加 `evaluator_mode` 要求，不再作为当前收口证据。Focused tests 16 passed，
+  覆盖 checkpoint/resume、candidate error isolation 和 validation contract。
