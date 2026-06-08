@@ -473,20 +473,40 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     sensitivity = pd.read_csv(robustness_dir / "sensitivity_matrix.csv")
     assert robustness_manifest["evaluator_mode"] == "real_dynamic_v3_rescue"
     assert robustness_manifest["metrics_source"] == "real_evaluation_artifact"
+    assert robustness_manifest["data_quality"]["status"] in {"PASS", "PASS_WITH_WARNINGS"}
     assert robustness_manifest["source_real_evaluation_artifact_path"] == str(first_artifact)
     assert robustness_manifest["source_real_evaluation_artifact_exists"] is True
     assert robustness_manifest["real_neighbor_count"] >= 1
     assert robustness_manifest["missing_real_neighbor_count"] == 0
+    assert robustness_manifest["stress_evidence_status"] in {
+        "PASS",
+        "PARTIAL_REAL_STRESS_EVIDENCE",
+    }
+    assert robustness_manifest["regime_evidence_status"] == "PASS"
     assert robustness_diagnostics["sensitivity_evidence_status"] == "PASS"
+    assert (
+        robustness_diagnostics["stress_evidence_status"]
+        == robustness_manifest["stress_evidence_status"]
+    )
+    assert robustness_diagnostics["regime_evidence_status"] == "PASS"
     assert set(sensitivity["sensitivity_evidence_source"]) == {"real_evaluation_artifact"}
     assert "tiny_fixture_proxy" not in set(sensitivity["metrics_source"].astype(str))
-    assert (
-        validate_robustness_artifact(
-            robustness_id=robustness["robustness_id"],
-            output_dir=tmp_path / "real_robustness",
-        )["status"]
-        == "PASS"
+    robustness_validation = validate_robustness_artifact(
+        robustness_id=robustness["robustness_id"],
+        output_dir=tmp_path / "real_robustness",
     )
+    assert robustness_validation["status"] == "PASS"
+    (robustness_dir / "robustness_report.md").unlink()
+    broken_robustness_validation = validate_robustness_artifact(
+        robustness_id=robustness["robustness_id"],
+        output_dir=tmp_path / "real_robustness",
+    )
+    assert broken_robustness_validation["status"] == "FAIL"
+    assert "artifact_exists:robustness_report.md" in {
+        check["check_id"]
+        for check in broken_robustness_validation["checks"]
+        if not check["passed"]
+    }
 
     (sweep_dir / "candidate_results.jsonl").write_text(
         json.dumps(results[0], sort_keys=True) + "\n",

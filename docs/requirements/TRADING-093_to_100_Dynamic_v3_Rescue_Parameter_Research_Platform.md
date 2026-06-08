@@ -16,7 +16,7 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
 |TRADING-094|Batch Parameter Backtest Runner|新增 sweep run/status/validate，生成不可变 sweep artifacts、checkpoint、resume、candidate error isolation 和 latest pointer|DONE|
 |TRADING-095|Candidate Ranking / Leaderboard / Reports|实现 hard gate、soft score、leaderboard、sweep report、candidate report 和 Reader Brief sweep 摘要|DONE|
 |TRADING-096|Walk-forward / OOS Validation|对 top candidates 生成 walk-forward windows、window results、OOS summary、leaderboard/report/validation|DONE|
-|TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|VALIDATING|
+|TRADING-097|Robustness / Sensitivity / Overfit Diagnostics|生成邻近参数敏感性、stress/regime bucket、overfit diagnostics、robustness report/validation；real sweep 必须绑定真实 evaluator artifact 和邻近 real candidate evidence|DONE|
 |TRADING-098|Shadow Candidate Registry|新增 observe-only shadow registry、register/list/report/validate CLI，拒绝 rejected candidate 和缺失 source artifact|VALIDATING|
 |TRADING-099|Scheduled Evaluation / Artifact Retention / Latest Pointer|新增 artifact latest/validate/stale CLI、daily scheduler lightweight observe gate，文档化 retention policy 和 scheduled observation runbook|VALIDATING|
 |TRADING-100|Promotion Review Pack|生成 promotion review / pack / validation，缺失证据 fail closed，最多自动到 `promote_candidate + manual_review_required`|VALIDATING|
@@ -118,3 +118,18 @@ TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constrain
   `failed_check_count=0`。Focused test 补充 top-N 来源、holdout/OOS recommendation
   和删除 `wf_report.md` 后 validation fail-closed 断言；后续 robustness /
   overfit 仍由 TRADING-097 继续验证。
+- 2026-06-09：`TRADING-097` 从 `VALIDATING` 改为 `DONE`。当前 canonical
+  real sweep `sweep_20260607T102300Z_ae5ae1d8` 的 top candidate
+  `a72139edcaef7d22` 已生成 robustness artifact `6df822e705e15a42`：
+  `robustness run` 输出 status=`REVIEW_REQUIRED`、overfit_status=`REVIEW_REQUIRED`、
+  `production_candidate_generated=false`；`validate-robustness` 为 `PASS`、
+  `failed_check_count=0`。Manifest 绑定 `evaluator_mode=real_dynamic_v3_rescue`、
+  `metrics_source=real_evaluation_artifact`、source real evaluation report
+  `dynamic-v3-real-evaluation-report_62654d689df29588` 和 data quality
+  `PASS_WITH_WARNINGS`。Sensitivity matrix 共有 8 个
+  `AVAILABLE_REAL_NEIGHBOR_EVALUATION` 和 1 个 `MISSING_REAL_NEIGHBOR_EVALUATION`，
+  因 `sensitivity_evidence_status=PARTIAL_REAL_NEIGHBOR_EVIDENCE` 保持
+  fail-closed review；stress bucket evidence 为 `PASS` 但 pass_ratio=0.5 /
+  status=`MIXED`，regime bucket evidence 为 `PASS` / regime_count=6。Focused
+  tests 补充 data quality、stress/regime evidence 和删除 `robustness_report.md`
+  后 validation fail-closed 断言。
