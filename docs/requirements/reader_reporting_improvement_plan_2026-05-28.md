@@ -1,6 +1,6 @@
 # 读者视角报告体系与计算解释升级
 
-最后更新：2026-05-28
+最后更新：2026-06-09
 
 关联任务：`REPORT-047`、`REPORT-048`、`REPORT-049`、`REPORT-050`、`REPORT-051`、`REPORT-052`
 
@@ -45,8 +45,8 @@
 |2|`REPORT-047` Unified Reader Brief|VALIDATING|`daily_score`、`evidence_dashboard`、`daily_task_dashboard`、`daily_decision_summary`、阶段 1 explainer|生成 `reader_brief_YYYY-MM-DD.html/json`，作为每日首选读者入口，只读汇总结论、市场状态、gate、data/PIT、backtest/shadow/weight 和人工复核队列。|
 |3|`REPORT-050` Score Change Attribution|VALIDATING|连续交易日 score / snapshot / gate / confidence artifacts|生成今日 vs 上一交易日变化归因，拆分 component、weight、coverage、gate、confidence 和 data quality 变化。|
 |4|`REPORT-051` Research Governance Summary Cards|VALIDATING|SEC PIT、backtest、shadow、weight governance 已有 artifacts|生成统一 research governance summary，明确哪些结果影响 production、哪些仅 observe-only / research-only。|
-|5|`REPORT-049` Report Registry & Cadence Calendar|VALIDATING|Reader Brief 首版字段稳定|新增 report registry / index，按 cadence、freshness、owner action 和 production effect 管理报告。|
-|6|`REPORT-052` Documentation Hygiene & Generated Catalog|VALIDATING|report registry 稳定、artifact catalog 生成规则明确|已新增 documentation contract 生成/校验链路；后续再评估 `docs/artifacts/*` 生成索引和 completed task 月度归档。|
+|5|`REPORT-049` Report Registry & Cadence Calendar|DONE|Reader Brief 首版字段稳定|新增 report registry / index，按 cadence、freshness、owner action 和 production effect 管理报告。|
+|6|`REPORT-052` Documentation Hygiene & Generated Catalog|DONE|report registry 稳定、artifact catalog 生成规则明确|已新增 documentation contract 生成/校验链路；后续再评估 `docs/artifacts/*` 生成索引和 completed task 月度归档。|
 
 ## 开放问题
 
@@ -65,5 +65,18 @@
 - 2026-05-28：`REPORT-051` 进入 VALIDATING。新增 `src/ai_trading_system/reports/research_governance_summary.py`、`aits reports research-governance-summary`、Markdown/JSON artifact、direct dispatcher、Reader Brief 接入和 daily task dashboard 只读卡片；summary 只读取 latest backtest / SEC PIT / shadow / weight governance artifacts，输出分组 card、source task、status、candidate_id、production_effect、manual_review_required 和 next action。缺失或受限 artifact 只进入 warning / `MISSING` / `LIMITED`，固定 `production_effect=none`，不运行上游任务、不修改 production scoring、weights、position gates 或 trading 行为。
 - 2026-05-28：`REPORT-049` 进入 IN_PROGRESS。实现方向限定为只读 report registry / cadence index：`config/report_registry.yaml` 作为 report index 的输入，不替代 `docs/artifact_catalog.md`；`aits reports index` 只扫描已有 artifact，不运行上游报告命令、不补造 freshness 或 owner action。
 - 2026-05-28：`REPORT-049` 进入 VALIDATING。新增 `config/report_registry.yaml`、`src/ai_trading_system/reports/report_index.py`、`aits reports index`、HTML/JSON artifact、direct dispatcher 和 Reader Brief freshness 摘要接入；registry 记录 cadence、freshness SLA rationale、owner action、audience、production_effect 和下游可见性。报告 index 只读扫描 latest artifact，输出 missing/stale/required_missing 和 owner action，不运行上游命令、不替代 artifact catalog。
+- 2026-06-09：`REPORT-049` latest 验证发现 `etf_shadow_candidates`
+  registry entry 的 `freshness_sla_days` 为 null，虽然 index 可生成，但不满足
+  “每个 registry report 记录 freshness SLA”的验收口径。本轮先修正该
+  presence-only runtime state 的显式 SLA，并补默认 registry 契约测试，防止后续
+  新增 entry 静默缺少 SLA。
+- 2026-06-09：`REPORT-049` 从 `VALIDATING` 改为 `DONE`。`etf_shadow_candidates`
+  已补显式 90 天审计 SLA，`load_report_registry()` 对缺失或非整数
+  `freshness_sla_days` fail closed。最新 `aits reports index --latest` 输出
+  `report_index_2026-06-05.html/json`，状态 `PASS_WITH_WARNINGS`，
+  `production_effect=none`、registry reports 166、required missing 0、
+  production effect risk 0、bad SLA 0；warnings 仅暴露可选/ad hoc missing 与
+  stale artifacts。`aits docs report-contract --latest` 为 PASS，Reader Brief
+  生成与 `validate-reader-brief --latest` 均为 OK。
 - 2026-05-28：`REPORT-052` 进入 IN_PROGRESS。详细拆解迁移到 `docs/requirements/documentation_hygiene_generated_catalog_2026-05-28.md`；第一阶段限定为只读 documentation contract，读取 report registry 与 artifact catalog，生成 `documentation_contract_YYYY-MM-DD.md/json`，用于发现 registry report 缺少文档覆盖、`production_effect` 或 common misread 的问题；暂不拆分现有长文档。
 - 2026-05-28：`REPORT-052` 进入 VALIDATING。已完成 documentation contract builder、`aits docs report-contract`、Markdown/JSON writer、默认 registry 覆盖测试、report registry 登记、artifact catalog 和 system flow 更新；默认 `config/report_registry.yaml` 与 `docs/artifact_catalog.md` 契约检查为 PASS，验证通过 report/docs 目标 pytest 75 passed、ruff 和 black。

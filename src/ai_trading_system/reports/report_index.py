@@ -75,8 +75,12 @@ def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str,
                 raise ValueError(f"report registry {report_id} missing required field: {field}")
         if not isinstance(entry.get("artifact_globs"), list) or not entry["artifact_globs"]:
             raise ValueError(f"report registry {report_id} artifact_globs must be a non-empty list")
+        if "freshness_sla_days" not in entry:
+            raise ValueError(
+                f"report registry {report_id} missing required field: freshness_sla_days"
+            )
         sla = entry.get("freshness_sla_days")
-        if sla is not None and (not isinstance(sla, int) or isinstance(sla, bool) or sla < 0):
+        if not isinstance(sla, int) or isinstance(sla, bool) or sla < 0:
             raise ValueError(f"report registry {report_id} freshness_sla_days must be >= 0")
     return raw
 

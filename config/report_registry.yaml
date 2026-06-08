@@ -328,8 +328,8 @@ reports:
     command: aits etf experiments enroll-shadow --latest --top N
     artifact_globs:
       - data/simulation/etf_shadow_candidates.json
-    freshness_sla_days:
-    freshness_rationale: Shadow registry is runtime state; presence matters more than filename date.
+    freshness_sla_days: 90
+    freshness_rationale: Shadow registry is ad hoc runtime state; presence matters first, and a 90-day SLA keeps long-idle shadow records visible for manual review instead of silently current.
     owner_action: enroll_eligible_etf_experiment_candidate_for_shadow_observation
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false

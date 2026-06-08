@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -22,6 +23,12 @@ def test_default_report_registry_loads() -> None:
 
     assert registry["schema_version"] == 1
     assert registry["policy_version"] == "report_registry_v1"
+    assert all(
+        isinstance(item.get("freshness_sla_days"), int)
+        and not isinstance(item.get("freshness_sla_days"), bool)
+        and item["freshness_sla_days"] >= 0
+        for item in registry["reports"]
+    )
     assert any(item["report_id"] == "reader_brief" for item in registry["reports"])
     assert any(item["report_id"] == "etf_portfolio_brief" for item in registry["reports"])
     assert any(item["report_id"] == "etf_backtest_summary" for item in registry["reports"])
@@ -51,19 +58,30 @@ def test_default_report_registry_loads() -> None:
     )
     assert any(item["report_id"] == "etf_dynamic_robustness_report" for item in registry["reports"])
     assert any(
-        item["report_id"] == "etf_dynamic_robustness_validation"
-        for item in registry["reports"]
+        item["report_id"] == "etf_dynamic_robustness_validation" for item in registry["reports"]
     )
     assert any(
-        item["report_id"] == "etf_dynamic_shadow_review_package"
-        for item in registry["reports"]
+        item["report_id"] == "etf_dynamic_shadow_review_package" for item in registry["reports"]
     )
     assert any(
-        item["report_id"] == "etf_dynamic_shadow_weekly_review"
-        for item in registry["reports"]
+        item["report_id"] == "etf_dynamic_shadow_weekly_review" for item in registry["reports"]
     )
     assert any(item["report_id"] == "etf_dynamic_shadow_validation" for item in registry["reports"])
     assert all("freshness_rationale" in item for item in registry["reports"])
+
+
+@pytest.mark.parametrize("value", [None, "missing"])
+def test_report_registry_rejects_missing_freshness_sla_days(tmp_path: Path, value: object) -> None:
+    registry_path = _write_registry(tmp_path)
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    if value == "missing":
+        registry["reports"][0].pop("freshness_sla_days")
+    else:
+        registry["reports"][0]["freshness_sla_days"] = value
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="freshness_sla_days"):
+        load_report_registry(registry_path)
 
 
 def test_report_index_classifies_latest_artifacts_and_freshness(tmp_path: Path) -> None:
