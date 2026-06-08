@@ -1,6 +1,6 @@
 # ETF Portfolio Credibility Validation
 
-最后更新：2026-06-01
+最后更新：2026-06-09
 
 ## 背景
 
@@ -143,3 +143,12 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063J 完成。新增 `config/etf_portfolio/governance.yaml`、`etf_portfolio/governance.py` 和 `aits etf governance summary`，输出稳定 `etf_parameter_governance` JSON/Markdown schema；promotion gate 覆盖 tests/shadow/sample/benchmark/turnover/drawdown/no-lookahead/manual-review/production-effect/P2-live self-promotion，全部通过时仅返回 `ELIGIBLE_FOR_MANUAL_REVIEW`。报告已登记到 report registry、artifact catalog 和 system flow；目标测试覆盖 required blockers、pass case 和 schema stability；`aits etf governance summary --date 2026-06-01` smoke 输出 `NO_CANDIDATE` 且 `production_effect=none`。
 - 2026-06-01: TRADING-063K 进入实现。需要新增单一 credibility gate 聚合 runtime artifact hygiene、benchmark suite、no-lookahead、toy accounting、risk constraints、allocation stability、simulation schema、backtest metrics、brief explainability、parameter governance 和 P2/live safety，并输出 fail-closed JSON/Markdown 摘要。
 - 2026-06-01: TRADING-063K 完成。新增 `etf_portfolio/credibility.py` 与 `aits etf credibility validate`，输出 `TRADING-063K` JSON/Markdown gate，聚合 11 项 subcheck、per-check source/blockers、`production_effect=none`、`manual_review_required=true` 和 `broker_action=none`。测试覆盖 all-pass、no-lookahead failure、P2/live safety violation、benchmark missing、simulation schema invalid 和 JSON/Markdown 输出；真实 `aits etf credibility validate --date 2026-06-01` smoke 为 PASS。
+- 2026-06-09: 系统验证复跑 `python -m ai_trading_system.cli etf credibility
+  validate --date 2026-06-01`，输出
+  `reports/etf_portfolio/credibility/2026-06-01_credibility_gate.{json,md}`，
+  status 仍为 `PASS`，11 项 checks 均为 `PASS`，`production_effect=none`、
+  `broker_action=none`、`manual_review_required=true`、
+  `safe_for_shadow_evaluation=true`。该 gate 只证明 ETF allocation foundation
+  可信到可以继续 shadow evaluation；它不是 production approval，也不能替代后续
+  shadow-evaluation artifacts 和 owner review。任务保持 `VALIDATING`，next
+  owner 调整为项目 owner + 系统验证。
