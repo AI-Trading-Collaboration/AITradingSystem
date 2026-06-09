@@ -1,8 +1,8 @@
 # 系统设计 Review 采纳计划
 
-状态：IN_PROGRESS
+状态：DONE
 
-最后更新：2026-06-07
+最后更新：2026-06-09
 
 关联任务：`OPS-008`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`
 
@@ -34,7 +34,7 @@
 |3. Canonical run bundle|BASELINE_DONE|先实现 `outputs/runs/YYYY-MM-DD/<run_id>/` 基础版；后续 `RUN-002` 已升级为 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<run_id>/`|`daily-run` 支持 `--run-output-root`、`--run-id`、`--legacy-output-mode`；manifest 记录输入、输出、checksum、legacy mirror、visibility cutoff 和执行时间戳。|
 |4. Decision Card v2|BASELINE_DONE|扩展现有“今日结论卡”|顶部展示 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks；不改变正式评分、仓位或 execution policy。|
 |5. 文档新鲜度门禁|BASELINE_DONE|新增 `aits docs validate-freshness` 并接入 CI|缺少 `最后更新` 或状态记录日期晚于最后更新时失败；测试覆盖通过和失败样本。|
-|6. CLI 分包路线|VALIDATING|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm`、ETF compatibility alias、`signals`、`fundamentals`、`portfolio`、`parameters`、主系统 `data`、`risk-events`、`ops`、`reports`、`feedback`、根级 `download-data` / `validate-data`、根级 utility `explain` / `score-example`、根级 `review-trades`、根级 `build-features`、根级 `backtest` / `backtest-gate-attribution` / `backtest-input-gaps` / `backtest-pit-coverage` 命令簇，以及 `score-daily` 默认日报评分 callback 和 `score-daily backfill-baseline`；`ai_trading_system.cli:app` 现在只保留 Typer app 注册和入口 callback，命令名、参数和退出码保持兼容；下一步观察真实 daily-run / replay / report 调度是否仍有命令边界漂移。|
+|6. CLI 分包路线|DONE|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm`、ETF compatibility alias、`signals`、`fundamentals`、`portfolio`、`parameters`、主系统 `data`、`risk-events`、`ops`、`reports`、`feedback`、根级 `download-data` / `validate-data`、根级 utility `explain` / `score-example`、根级 `review-trades`、根级 `build-features`、根级 `backtest` / `backtest-gate-attribution` / `backtest-input-gaps` / `backtest-pit-coverage` 命令簇，以及 `score-daily` 默认日报评分 callback 和 `score-daily backfill-baseline`；`ai_trading_system.cli:app` 现在只保留 Typer app 注册和入口 callback，命令名、参数和退出码保持兼容；最终复验覆盖 CLI direct、ops、daily scoring、pipeline health、historical replay、run artifacts、ETF alias、backtest/gate attribution、CLI help smoke、文档新鲜度和 documentation contract。|
 
 ## 实施边界
 
@@ -83,3 +83,8 @@
 - 2026-06-07：`ARCH-001` 第二十六批低耦合命令迁移完成，根级 `aits build-features` 迁入 `src/ai_trading_system/cli_commands/market_features.py`；验证通过 build-features help smoke 和 market features CLI focused test；数据质量门禁、PIT feature availability gate、市场特征计算、特征 CSV/摘要输出、评分、回测和日报投资解释语义保持兼容。
 - 2026-06-07：`ARCH-001` 第二十七批低耦合命令迁移完成，根级 `aits backtest` / `aits backtest-gate-attribution` / `aits backtest-input-gaps` / `aits backtest-pit-coverage` 迁入 `src/ai_trading_system/cli_commands/backtest.py`，共享 trace config path helper 抽入 `src/ai_trading_system/cli_commands/trace_config.py`；验证通过 root backtest 命令 help smoke、`tests/test_backtest.py` 24 passed、`tests/test_gate_attribution.py` 3 passed、`tests/test_etf_cli_aliases.py` 5 passed、`tests/test_cli_direct.py` 19 passed、score-daily trace focused test、Ruff、Black、compileall、文档新鲜度和 documentation contract；数据质量门禁、PIT feature availability gate、回测输入审计、gate/event attribution、input gaps、PIT coverage、score-daily trace config、评分和日报投资解释语义保持兼容。
 - 2026-06-07：`ARCH-001` 第二十八批低耦合命令迁移完成，`aits score-daily` 默认日报评分 callback 和 `aits score-daily backfill-baseline` 迁入 `src/ai_trading_system/cli_commands/score_daily.py`，`cli_direct` 的 daily-run `score-daily` 路径改为调用 `score_daily_cli`；验证通过 `score-daily` / `score-daily backfill-baseline` help smoke、`tests/test_cli_direct.py` 19 passed、daily scoring focused test、baseline backfill tests、risk-event OpenAI precheck help test、ETF alias tests、Ruff、Black、compileall、文档新鲜度和 documentation contract；数据质量门禁、PIT feature availability gate、日报评分、SEC/TSM 基本面处理、估值/风险/thesis/交易复核、prediction ledger、decision snapshot、belief_state、trace bundle、research backfill、评分和日报投资解释语义保持兼容。
+- 2026-06-09：`ARCH-001` 从 VALIDATING 改为 DONE，原因：`src/ai_trading_system/cli.py`
+  现在只保留 Typer app 注册和入口 callback，已迁移命令组均由 `cli_commands`
+  承载，direct dispatcher 调用边界保持兼容；最终复验通过 focused pytest
+  140 passed、CLI help smoke、文档新鲜度、documentation contract、Ruff、repo-wide
+  Black check、`compileall`、active done 检查和 `git diff --check`。
