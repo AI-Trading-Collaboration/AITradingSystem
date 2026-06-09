@@ -1,8 +1,8 @@
 # TRADING-051 Signal Ablation & Contribution Validation
 
-状态：VALIDATING
+状态：DONE
 优先级：P1
-最后更新：2026-05-30
+最后更新：2026-06-09
 
 ## 背景
 
@@ -123,3 +123,4 @@ v0.1 默认实现 `remove_one_signal`：
 - 2026-05-30：完成 v0.1 remove-one-signal ablation 核心实现、CLI、JSON/Markdown artifact、report alias、Dashboard/Reader Brief 接入、shadow promotion decision supporting artifact、system flow、artifact catalog 和 report registry 更新。
 - 2026-05-30：真实 `aits signals ablation --latest` 生成 2026-05-28 `LIMITED` summary；`positive_signals=0`、`negative_signals=0`、`fallback_signals=3`、`promotion_credit_signals=0`，candidate promotion 仍 disabled。
 - 2026-05-30：验证通过 `aits reports signal-ablation --latest`、`aits signals validate-ablation --latest`、`aits parameters shadow-backtest --latest --dry-run`、`python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts` 和 `git diff --check`，进入 VALIDATING。
+- 2026-06-09：从 VALIDATING 改为 DONE，原因：后续 `TRADING-051A`、`TRADING-052`、`TRADING-053` 和 `TRADING-054` 已消费该 ablation summary 并完成下一阶段决策；复验 `signals validate-ablation --latest` 为 `LIMITED`、diagnostics present、real signals used in score、classification reasons present，`reports signal-ablation --latest` 可读，promotion credit 仍为 0，`production_effect=none`。验证通过 signal ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、signal calibration focused pytest 7 passed、shadow backtest dry-run、CLI smoke、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。

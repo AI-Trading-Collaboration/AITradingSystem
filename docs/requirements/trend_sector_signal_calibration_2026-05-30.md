@@ -1,12 +1,12 @@
 # TRADING-052 Trend/Sector Signal Calibration
 
-最后更新：2026-05-30
+最后更新：2026-06-09
 
 ## 状态
 
 - task id: `TRADING-052`
 - priority: `P1`
-- status: `VALIDATING`
+- status: `DONE`
 - owner: system
 - started: 2026-05-30
 
@@ -46,12 +46,13 @@
 - 不修改 `config/parameters/production/current.yaml`。
 - 专项测试、`python -m pytest -q`、ruff、compileall 和 `git diff --check` 通过。
 
-## 开放问题
+## 已处理问题
 
-- 若 best profile 仍然只改变 score/portfolio 但贡献低于阈值，下一步应进入 `TRADING-053 Portfolio Sensitivity Diagnostics`，而不是继续只补 signal formula。
+- 2026-06-09：best profile 仍只改善部分 real signal diagnostics，candidate promotion 仍 disabled；该后续判断已进入并完成 `TRADING-053 Portfolio Sensitivity Diagnostics` 与 `TRADING-054 Portfolio Construction Candidate Profiles`，不再作为本任务开放项保留。
 
 ## 进展记录
 
 - 2026-05-30: 完成 v0.1 实现和验收。`aits signals calibrate --latest` 生成 2026-05-28 calibration summary，`best_profile=trend_long_bias`，整体 `status=LIMITED`，`can_support_candidate_promotion=false`。
 - 2026-05-30: `aits reports signal-calibration --latest` 可读取 latest summary 并写 `outputs/reports` alias；`aits parameters shadow-backtest --latest --dry-run` 仍为 `promotion_status=rejected`，promotion reason 只读引用 calibration artifact，安全字段保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`。
 - 2026-05-30: `python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts` 和 `git diff --check` 均通过；未修改 `config/parameters/production/current.yaml`。
+- 2026-06-09: 从 VALIDATING 改为 DONE，原因：复验 `reports signal-calibration --latest` 可读取 2026-05-28 summary，`signals calibrate --latest --dry-run` 可生成 2026-06-08 dry-run summary 且 `best_profile=trend_long_bias`、`can_support_candidate_promotion=false`；`parameters shadow-backtest --latest --dry-run` 仍为 `promotion_status=rejected`、`production_effect=none`。后续 portfolio sensitivity / construction candidate 判断已由 `TRADING-053/054` 完成。验证通过 signal calibration focused pytest 7 passed、signal ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。

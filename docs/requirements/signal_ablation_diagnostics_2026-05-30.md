@@ -1,8 +1,8 @@
 # TRADING-051A Ablation Validation & Signal Contribution Diagnostics
 
-状态：VALIDATING
+状态：DONE
 优先级：P1
-最后更新：2026-05-30
+最后更新：2026-06-09
 
 ## 背景
 
@@ -46,3 +46,4 @@ TRADING-051 v0.1 已实现 signal ablation 框架、CLI、Dashboard、Reader Bri
 - 2026-05-30：完成 `diagnostic_status`、`classification_reason`、signal usage diagnostics、score impact、portfolio impact、threshold diagnostics、`--debug` / `explain-ablation` CLI、Dashboard 和 Reader Brief no-credit reason。
 - 2026-05-30：真实 `aits signals ablation --latest --debug` 确认 2026-05-28 `trend_momentum` 与 `sector_strength` 均 `used_in_score=yes`，score 和 portfolio impact 均 non-zero；二者仍为 `BELOW_THRESHOLD`，所以 `promotion_credit_signals=0` 的主要原因是 real signal contribution below threshold。
 - 2026-05-30：验证通过 `aits signals explain-ablation --latest`、`aits signals validate-ablation --latest`、`aits reports signal-ablation --latest`、`aits parameters shadow-backtest --latest --dry-run`、`python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts` 和 `git diff --check`，进入 VALIDATING。
+- 2026-06-09：从 VALIDATING 改为 DONE，原因：复验 `signals explain-ablation --latest` 可输出 snapshot -> score -> portfolio -> metrics -> classification 诊断链路，`trend_momentum` 与 `sector_strength` 仍为 `BELOW_THRESHOLD` 而非接线缺失；后续 `TRADING-052` 已据此进入 trend/sector calibration，`TRADING-053/054` 已完成 portfolio sensitivity / candidate 后续判断。验证通过 signal ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。
