@@ -1042,9 +1042,12 @@ def _source_report_from_config(
     registry_record = _registry_record(report_registry, source.report_id)
     path = _source_path(index_record, registry_record, report_registry_path)
     exists = bool(index_record.get("exists")) and not path.startswith("config/")
-    payload = _read_json_object(Path(path)) if exists and path.endswith(".json") else {}
+    payload = _read_report_payload(Path(path)) if exists else {}
     freshness_status = _text(index_record.get("freshness_status"), "MISSING")
-    artifact_status = _text(index_record.get("artifact_status"), "MISSING")
+    artifact_status = _artifact_status_from_payload(
+        payload,
+        fallback=_text(index_record.get("artifact_status"), "MISSING"),
+    )
     age_days = _int_or_none(index_record.get("age_days"))
     data_quality_status = _extract_data_quality_status(payload)
     validation_status = _validation_status(
@@ -1282,7 +1285,12 @@ def _overall_status(cards: Sequence[StrategyEvidenceCard]) -> EvidenceStatus:
 
 
 def _data_quality_overlay(cards: Sequence[StrategyEvidenceCard]) -> dict[str, Any]:
-    blocked = [card.category for card in cards if _is_blocked_status(card.data_quality_status)]
+    blocked = [
+        card.category
+        for card in cards
+        if _is_blocked_status(card.data_quality_status)
+        or (card.category == "data_quality" and card.status in {"blocked", "invalid"})
+    ]
     stale = [card.category for card in cards if card.status == "stale"]
     unknown = [
         card.category
@@ -1368,6 +1376,37 @@ def _read_json_object(path: Path | None) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _read_report_payload(path: Path | None) -> dict[str, Any]:
+    if path is None:
+        return {}
+    payload = _read_json_object(path)
+    if payload:
+        return payload
+    if path.suffix.lower() in {".md", ".markdown", ".html"}:
+        return _read_json_object(path.with_suffix(".json"))
+    return {}
+
+
+def _artifact_status_from_payload(payload: Mapping[str, Any], *, fallback: str) -> str:
+    if _is_blocked_status(fallback):
+        return fallback
+    for path in (
+        "status",
+        "overall_status",
+        "report_status",
+        "dashboard_status",
+        "gate_status",
+        "evidence_status",
+        "summary.status",
+        "proposal_summary.status",
+        "candidate_summary.status",
+    ):
+        status = _text(_get_path(payload, path))
+        if status:
+            return status
+    return fallback or "UNKNOWN"
 
 
 def _extract_data_quality_status(payload: Mapping[str, Any]) -> str:

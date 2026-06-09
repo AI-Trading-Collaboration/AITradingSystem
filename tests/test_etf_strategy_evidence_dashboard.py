@@ -224,6 +224,49 @@ def test_strategy_evidence_cards_include_required_categories_and_quality_context
     )
     assert {card.category: card for card in cards}["data_quality"].status == "blocked"
 
+    data_quality_json = tmp_path / f"etf_data_quality_governance_report_{RUN_DATE}.json"
+    data_quality_md = data_quality_json.with_suffix(".md")
+    data_quality_json.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_data_quality_governance_report",
+                "status": "BLOCKED",
+                "blocking_failures": [{"finding_id": "required_artifact"}],
+                "warning_count": 2,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    data_quality_md.write_text("# ETF Data Quality\n", encoding="utf-8")
+    reports["etf_data_quality_governance_report"]["latest_artifact_path"] = str(data_quality_md)
+    reports["etf_data_quality_governance_report"]["latest_artifact_name"] = data_quality_md.name
+    reports["etf_data_quality_governance_report"]["artifact_status"] = "PASS"
+    cards = build_strategy_evidence_cards(
+        build_strategy_evidence_aggregation(
+            as_of=RUN_DATE,
+            config=config,
+            report_index=report_index,
+            generated_at=GENERATED_AT,
+        ),
+        config=config,
+    )
+    data_quality_card = {card.category: card for card in cards}["data_quality"]
+    assert data_quality_card.status == "blocked"
+    assert data_quality_card.metrics["data_quality_governance_report.artifact_status"] == "BLOCKED"
+    dashboard = build_strategy_evidence_dashboard(
+        as_of=RUN_DATE,
+        config=config,
+        report_index=report_index,
+        generated_at=GENERATED_AT,
+    )
+    assert dashboard.data_quality_overlay["status"] == "blocked"
+    assert "data_quality" in dashboard.data_quality_overlay["blocked_categories"]
+
 
 def test_candidate_evidence_ranking_is_deterministic_and_quality_aware() -> None:
     forward = _card("forward_simulation", "strong_support", sample_count=12)
