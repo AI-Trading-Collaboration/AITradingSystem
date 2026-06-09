@@ -90,6 +90,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 ReplayCommandRunner = subprocess.run
 RISK_EVENT_PREREVIEW_QUEUE_NAME = "risk_event_prereview_queue.json"
 OPENAI_REPLAY_POLICIES = {"disabled", "cache-only"}
+REPLAY_BLOCKING_INPUT_STATUSES = {"FAIL", "MISSING"}
 
 
 @dataclass(frozen=True)
@@ -586,7 +587,22 @@ def render_historical_replay_run(replay_run: HistoricalReplayRun) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _replay_input_blocker_records(
+    replay_run: HistoricalReplayRun,
+) -> tuple[ReplayInputRecord, ...]:
+    return tuple(
+        record
+        for record in replay_run.input_records
+        if record.status in REPLAY_BLOCKING_INPUT_STATUSES
+    )
+
+
 def render_historical_replay_window_run(window_run: HistoricalReplayWindowRun) -> str:
+    failed_runs = [
+        replay_run
+        for replay_run in window_run.day_runs
+        if replay_run.status not in {"PASS", "PASS_INVENTORY"}
+    ]
     lines = [
         "# 历史交易日批量回放报告",
         "",
@@ -607,11 +623,62 @@ def render_historical_replay_window_run(window_run: HistoricalReplayWindowRun) -
         "- 周末和 NYSE 常规整日休市日默认跳过，并在本报告中记录原因。",
         "- 每个交易日仍输出独立 replay bundle；窗口报告只做索引和结构化汇总。",
         "",
-        "## 单日回放结果",
-        "",
-        "| Date | Status | Run ID | Diff | Bundle | Report |",
-        "|---|---|---|---|---|---|",
     ]
+    if failed_runs:
+        lines.extend(
+            [
+                "## 失败原因摘要",
+                "",
+            ]
+        )
+        for replay_run in failed_runs:
+            failed = replay_run.failed_step
+            blockers = _replay_input_blocker_records(replay_run)
+            lines.extend(
+                [
+                    f"### {replay_run.as_of.isoformat()}",
+                    "",
+                    f"- 状态：{replay_run.status}",
+                    f"- Input blockers：{len(replay_run.errors)}",
+                    f"- Blocker artifacts：{len(blockers)}",
+                ]
+            )
+            if failed is not None:
+                lines.extend(
+                    [
+                        f"- Failed step：`{failed.step_id}` {failed.title}",
+                        f"- Failed command：`{_escape_table(_join_command(failed.command))}`",
+                    ]
+                )
+            if replay_run.errors:
+                lines.extend(["", "| Input blocker |", "|---|"])
+                for error in replay_run.errors:
+                    lines.append(f"| {_escape_table(error)} |")
+            if blockers:
+                lines.extend(
+                    [
+                        "",
+                        "| Artifact | Class | Status | Reason |",
+                        "|---|---|---|---|",
+                    ]
+                )
+                for record in blockers:
+                    lines.append(
+                        "| "
+                        f"`{_escape_table(record.artifact_id)}` | "
+                        f"{_escape_table(record.artifact_class)} | "
+                        f"{record.status} | "
+                        f"{_escape_table(record.reason)} |"
+                    )
+            lines.append("")
+    lines.extend(
+        [
+            "## 单日回放结果",
+            "",
+            "| Date | Status | Run ID | Diff | Bundle | Report |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
     if not window_run.day_runs:
         lines.append("|  |  |  |  |  |  |")
     for replay_run in window_run.day_runs:
@@ -2294,26 +2361,9 @@ def _prepare_openai_replay_cache(
                 errors=errors,
             ),
         ]
-    if not report_source.exists():
+    source_report_required = report_source.exists()
+    if not source_report_required:
         errors.append(f"risk_event_openai_prereview_report 不存在：{report_source}")
-        return [
-            policy_record,
-            _copy_required_json_file(
-                artifact_id="risk_event_openai_prereview_queue",
-                artifact_class="openai_replay_cache",
-                source_path=queue_source,
-                replay_path=queue_replay,
-                errors=errors,
-            ),
-            ReplayInputRecord(
-                artifact_id="risk_event_openai_prereview_report",
-                artifact_class="openai_replay_cache",
-                source_path=str(report_source),
-                replay_path=str(report_replay),
-                status="MISSING",
-                reason="required OpenAI replay cache report missing",
-            ),
-        ]
 
     queue_record, report_record = _filter_openai_prereview_queue_for_replay(
         queue_source=queue_source,
@@ -2325,6 +2375,7 @@ def _prepare_openai_replay_cache(
         as_of=as_of,
         visible_at=visible_at,
         errors=errors,
+        source_report_required=source_report_required,
     )
     return [
         policy_record,
@@ -2344,7 +2395,32 @@ def _filter_openai_prereview_queue_for_replay(
     as_of: date,
     visible_at: datetime,
     errors: list[str],
+    source_report_required: bool = True,
 ) -> tuple[ReplayInputRecord, ReplayInputRecord]:
+    def missing_report_record() -> ReplayInputRecord:
+        return ReplayInputRecord(
+            artifact_id="risk_event_openai_prereview_report",
+            artifact_class="openai_replay_cache",
+            source_path=str(report_source),
+            replay_path=str(report_replay),
+            status="MISSING",
+            reason=(
+                "required OpenAI replay cache report missing; queue was filtered by replay "
+                "visibility before fail-closed"
+            ),
+        )
+
+    def report_record_for_queue_failure() -> ReplayInputRecord:
+        if source_report_required:
+            return _copy_required_file(
+                artifact_id="risk_event_openai_prereview_report",
+                artifact_class="openai_replay_cache",
+                source_path=report_source,
+                replay_path=report_replay,
+                errors=errors,
+            )
+        return missing_report_record()
+
     try:
         raw_payload = json.loads(queue_source.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -2358,13 +2434,7 @@ def _filter_openai_prereview_queue_for_replay(
                 status="FAIL",
                 reason="OpenAI replay cache queue is not valid JSON",
             ),
-            _copy_required_file(
-                artifact_id="risk_event_openai_prereview_report",
-                artifact_class="openai_replay_cache",
-                source_path=report_source,
-                replay_path=report_replay,
-                errors=errors,
-            ),
+            report_record_for_queue_failure(),
         )
     if not isinstance(raw_payload, dict):
         errors.append(f"risk_event_openai_prereview_queue 顶层结构不是 object：{queue_source}")
@@ -2377,13 +2447,7 @@ def _filter_openai_prereview_queue_for_replay(
                 status="FAIL",
                 reason="OpenAI replay cache queue top-level JSON is not an object",
             ),
-            _copy_required_file(
-                artifact_id="risk_event_openai_prereview_report",
-                artifact_class="openai_replay_cache",
-                source_path=report_source,
-                replay_path=report_replay,
-                errors=errors,
-            ),
+            report_record_for_queue_failure(),
         )
 
     raw_records = raw_payload.get("records")
@@ -2398,13 +2462,7 @@ def _filter_openai_prereview_queue_for_replay(
                 status="FAIL",
                 reason="OpenAI replay cache queue missing records list",
             ),
-            _copy_required_file(
-                artifact_id="risk_event_openai_prereview_report",
-                artifact_class="openai_replay_cache",
-                source_path=report_source,
-                replay_path=report_replay,
-                errors=errors,
-            ),
+            report_record_for_queue_failure(),
         )
 
     included: list[dict[str, Any]] = []
@@ -2460,25 +2518,43 @@ def _filter_openai_prereview_queue_for_replay(
         "as_of": as_of.isoformat(),
         "visibility_cutoff": visible_at.isoformat(),
         "source_report_path": str(report_source),
-        "source_report_checksum_sha256": _sha256_file(report_source),
+        "source_report_status": "PRESENT" if source_report_required else "MISSING",
+        "source_report_checksum_sha256": (
+            _sha256_file(report_source) if source_report_required else None
+        ),
         "source_record_count": len(raw_records),
         "included_count": len(included),
         "excluded_count": len(excluded),
         "excluded_records": excluded,
     }
     _write_json(queue_replay, filtered_payload)
-    _write_openai_replay_filter_report(
-        report_path=report_replay,
-        queue_source=queue_source,
-        queue_replay=queue_replay,
-        report_source=report_source,
-        as_of=as_of,
-        visible_at=visible_at,
-        source_record_count=len(raw_records),
-        included_count=len(included),
-        excluded=excluded,
-    )
     status = "PASS_WITH_EXCLUSIONS" if excluded else "PASS"
+    if source_report_required:
+        _write_openai_replay_filter_report(
+            report_path=report_replay,
+            queue_source=queue_source,
+            queue_replay=queue_replay,
+            report_source=report_source,
+            as_of=as_of,
+            visible_at=visible_at,
+            source_record_count=len(raw_records),
+            included_count=len(included),
+            excluded=excluded,
+        )
+        report_record = ReplayInputRecord(
+            artifact_id="risk_event_openai_prereview_report",
+            artifact_class="openai_replay_cache",
+            source_path=str(report_source),
+            replay_path=str(report_replay),
+            status=status,
+            row_count=len(raw_records),
+            included_count=len(included),
+            excluded_count=len(excluded),
+            sha256=_sha256_file(report_replay),
+            reason="generated replay cache-only visibility report from source prereview report",
+        )
+    else:
+        report_record = missing_report_record()
     return (
         ReplayInputRecord(
             artifact_id="risk_event_openai_prereview_queue",
@@ -2497,51 +2573,7 @@ def _filter_openai_prereview_queue_for_replay(
                 "created/request time) <= effective OpenAI replay cutoff"
             ),
         ),
-        ReplayInputRecord(
-            artifact_id="risk_event_openai_prereview_report",
-            artifact_class="openai_replay_cache",
-            source_path=str(report_source),
-            replay_path=str(report_replay),
-            status=status,
-            row_count=len(raw_records),
-            included_count=len(included),
-            excluded_count=len(excluded),
-            sha256=_sha256_file(report_replay),
-            reason="generated replay cache-only visibility report from source prereview report",
-        ),
-    )
-
-
-def _copy_required_json_file(
-    *,
-    artifact_id: str,
-    artifact_class: str,
-    source_path: Path,
-    replay_path: Path,
-    errors: list[str],
-) -> ReplayInputRecord:
-    record = _copy_required_file(
-        artifact_id=artifact_id,
-        artifact_class=artifact_class,
-        source_path=source_path,
-        replay_path=replay_path,
-        errors=errors,
-    )
-    if record.status != "PASS":
-        return record
-    return ReplayInputRecord(
-        artifact_id=record.artifact_id,
-        artifact_class=record.artifact_class,
-        source_path=record.source_path,
-        replay_path=record.replay_path,
-        status=record.status,
-        row_count=_json_record_count(replay_path),
-        included_count=_json_record_count(replay_path),
-        excluded_count=0,
-        sha256=record.sha256,
-        min_timestamp=record.min_timestamp,
-        max_timestamp=record.max_timestamp,
-        reason=record.reason,
+        report_record,
     )
 
 
@@ -3000,24 +3032,6 @@ def _csv_row_count(path: Path) -> int:
         return sum(1 for _ in csv.DictReader(handle))
 
 
-def _json_record_count(path: Path) -> int | None:
-    if not path.exists():
-        return None
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    if isinstance(raw, list):
-        return len(raw)
-    if isinstance(raw, dict):
-        for key in ("records", "items", "queue", "prereview_records"):
-            value = raw.get(key)
-            if isinstance(value, list):
-                return len(value)
-        return len(raw)
-    return None
-
-
 def _sha256_file(path: Path) -> str | None:
     if not path.exists() or not path.is_file():
         return None
@@ -3258,6 +3272,38 @@ def _replay_run_to_json(replay_run: HistoricalReplayRun) -> dict[str, Any]:
     }
 
 
+def _replay_failure_summary_to_json(replay_run: HistoricalReplayRun) -> dict[str, Any]:
+    failed = replay_run.failed_step
+    blockers = _replay_input_blocker_records(replay_run)
+    return {
+        "input_blocker_count": len(replay_run.errors),
+        "errors": list(replay_run.errors),
+        "failed_step": (
+            None
+            if failed is None
+            else {
+                "step_id": failed.step_id,
+                "title": failed.title,
+                "return_code": failed.return_code,
+                "command": list(failed.command),
+                "error": failed.error,
+            }
+        ),
+        "blocker_artifact_count": len(blockers),
+        "blocker_artifacts": [
+            {
+                "artifact_id": record.artifact_id,
+                "artifact_class": record.artifact_class,
+                "status": record.status,
+                "reason": record.reason,
+                "source_path": record.source_path,
+                "replay_path": record.replay_path,
+            }
+            for record in blockers
+        ],
+    }
+
+
 def _production_diff_to_json(diff: ReplayProductionDiff) -> dict[str, Any]:
     return {
         "status": diff.status,
@@ -3298,6 +3344,7 @@ def _replay_window_to_json(window_run: HistoricalReplayWindowRun) -> dict[str, A
                     if replay_run.production_diff is None
                     else str(replay_run.production_diff.report_path)
                 ),
+                "failure_summary": _replay_failure_summary_to_json(replay_run),
             }
             for replay_run in window_run.day_runs
         ],

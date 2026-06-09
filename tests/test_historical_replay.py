@@ -402,6 +402,37 @@ def test_replay_day_cache_only_openai_policy_filters_archived_prereview_by_cutof
     assert "PASS_WITH_EXCLUSIONS" in replay_report_path.read_text(encoding="utf-8")
 
 
+def test_replay_day_cache_only_filters_queue_when_prereview_report_missing(
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "project"
+    _write_replay_fixture(project_root)
+
+    replay = run_historical_day_replay(
+        as_of=date(2026, 5, 7),
+        project_root=project_root,
+        output_root=tmp_path / "replays",
+        run_id="unit_replay_openai_missing_report",
+        inventory_only=True,
+        openai_replay_policy="cache-only",
+    )
+
+    assert replay.status == "FAIL"
+    records = {record.artifact_id: record for record in replay.input_records}
+    assert records["risk_event_openai_prereview_queue"].status == "PASS_WITH_EXCLUSIONS"
+    assert records["risk_event_openai_prereview_queue"].included_count == 0
+    assert records["risk_event_openai_prereview_queue"].excluded_count == 3
+    assert records["risk_event_openai_prereview_report"].status == "MISSING"
+
+    replay_queue_path = replay.paths.data_processed_dir / "risk_event_prereview_queue.json"
+    replay_queue = json.loads(replay_queue_path.read_text(encoding="utf-8"))
+    assert replay_queue["records"] == []
+    assert replay_queue["replay_filter"]["source_report_status"] == "MISSING"
+    assert replay_queue["replay_filter"]["source_report_checksum_sha256"] is None
+    assert replay_queue["replay_filter"]["excluded_count"] == 3
+    assert "risk_event_openai_prereview_report 不存在" in "\n".join(replay.errors)
+
+
 def test_replay_window_inventory_skips_non_trading_days(tmp_path: Path) -> None:
     project_root = tmp_path / "project"
     _write_replay_fixture(project_root)
@@ -424,6 +455,42 @@ def test_replay_window_inventory_skips_non_trading_days(tmp_path: Path) -> None:
     assert window.day_runs[0].run_id == "window_unit_20260508"
     assert window.report_path.exists()
     assert window.json_path.exists()
+
+
+def test_replay_window_summarizes_failed_day_input_blockers(tmp_path: Path) -> None:
+    project_root = tmp_path / "project"
+    _write_replay_fixture(project_root)
+
+    window = run_historical_replay_window(
+        start=date(2026, 5, 7),
+        end=date(2026, 5, 8),
+        project_root=project_root,
+        output_root=tmp_path / "replays",
+        run_id="window_failed_summary",
+        inventory_only=True,
+        openai_replay_policy="cache-only",
+        continue_on_failure=True,
+    )
+
+    assert window.status == "FAIL"
+    window_json = json.loads(window.json_path.read_text(encoding="utf-8"))
+    failed_day = window_json["day_runs"][0]
+    assert failed_day["as_of"] == "2026-05-07"
+    assert failed_day["status"] == "FAIL"
+    assert failed_day["failure_summary"]["input_blocker_count"] > 0
+    assert {
+        artifact["artifact_id"] for artifact in failed_day["failure_summary"]["blocker_artifacts"]
+    } >= {
+        "pit_manifest",
+        "fmp_forward_pit_normalized",
+        "risk_event_openai_prereview_report",
+    }
+    assert window_json["day_runs"][1]["status"] == "PASS_INVENTORY"
+
+    window_markdown = window.report_path.read_text(encoding="utf-8")
+    assert "## 失败原因摘要" in window_markdown
+    assert "2026-05-07" in window_markdown
+    assert "risk_event_openai_prereview_report" in window_markdown
 
 
 def test_replay_window_inventory_cli_writes_window_report(tmp_path: Path) -> None:
