@@ -1,6 +1,10 @@
 # 报告学习链路与产物目录
 
-最后更新：2026-06-07
+状态：DONE
+
+最后更新：2026-06-09
+
+关联任务：`DOCS-LEARN-001`
 
 ## 背景
 
@@ -26,7 +30,7 @@
 
 ### 阶段 1：学习入口与产物目录
 
-状态：VALIDATING
+状态：DONE
 
 交付：
 
@@ -41,7 +45,7 @@
 
 ### 阶段 2：日报学习卡片
 
-状态：VALIDATING
+状态：DONE
 
 交付：
 
@@ -58,7 +62,7 @@
 
 ### 阶段 3：字段和 shadow 解释
 
-状态：VALIDATING
+状态：DONE
 
 交付：
 
@@ -73,7 +77,7 @@
 
 ### 阶段 4：零金融背景计算逻辑
 
-状态：VALIDATING
+状态：DONE
 
 交付：
 
@@ -89,7 +93,7 @@
 
 ### 阶段 5：解释命令和 dashboard 分层
 
-状态：VALIDATING
+状态：DONE
 
 交付：
 
@@ -102,10 +106,13 @@
 - 命令行可以回答字段、日期、gate 和 artifact 的来源解释。
 - dashboard 的读者模式不改变 Markdown 日报和 trace bundle 的审计责任。
 
-## 开放问题
+## 已处理设计边界
 
-- `aits explain` 是否先做静态文档查询，还是直接解析 trace bundle，需要等字段字典稳定后决定。
-- `system_flow.md` 拆分前需要避免总览和子流程形成双源维护。
+- `aits explain` 首版已选择静态字段字典、gate explainer 和 artifact catalog
+  查询。动态解析 trace bundle 不属于本任务完成范围；如后续需要，应新建任务并
+  先定义 trace schema coverage 和 stale artifact 行为。
+- `docs/system_flow.md` 本轮不拆分。当前单一 source-of-truth 比多文件双源维护更
+  安全；后续若拆成 `docs/flows/*`，必须先建立生成或校验机制，并以独立任务推进。
 
 ## 进展记录
 
@@ -114,3 +121,10 @@
 - 2026-05-16：根据 owner 反馈补充阶段 4，要求面向无金融背景读者说明输入数据到输出数据的计算逻辑、原因和设计思路；范围仍限定为文档学习层，不改变任何 production 计算。
 - 2026-05-16：阶段 4 基础实现进入 VALIDATING。新增 `docs/calculation_logic.md`，并从 README、`docs/learning_path.md`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 建立入口；验证通过 `tests/test_daily_scoring.py` + `tests/test_shadow_weight_profiles.py` 共 40 passed、`ruff check src tests` 和 `git diff --check`；`docs validate-freshness` 仍因 11 个既有无关需求文档 stale/missing metadata 失败，本任务新增/更新文档不在失败清单中。
 - 2026-06-07：阶段 5 基础实现进入 VALIDATING。新增 `aits explain` 只读解释入口，可从字段字典、gate explainer 和产物目录查询字段、gate 与 artifact 的含义、上游、下游、production_effect 和常见误解；确认 evidence dashboard 已有快速读者、投资复核者、系统审计者三层读者模式；同步 README、学习路径、产物目录和系统流图。`docs/system_flow.md` 暂不拆分，原因是当前作为 source-of-truth 仍比多文件双源维护更安全，后续若拆分需先建立生成或校验机制。
+- 2026-06-09：从 VALIDATING 改为 DONE，原因：阶段 1-5 的学习入口、产物目录、
+  日报解释卡、字段字典、Trial Card、计算逻辑、`aits explain` 只读入口和分层阅读
+  路径均已复核闭合；`system_flow.md` 拆分已作为设计边界处理，不继续阻塞本任务。
+  验证通过 `tests/test_explain.py`、`tests/test_daily_scoring.py`、
+  `tests/test_shadow_weight_profiles.py`、`tests/test_reader_brief.py`、
+  `tests/test_docs_freshness.py` 和 `tests/test_documentation_contract.py` 共 61 passed，
+  以及文档新鲜度和 documentation contract。
