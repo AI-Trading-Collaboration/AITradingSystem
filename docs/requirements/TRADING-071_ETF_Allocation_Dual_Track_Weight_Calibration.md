@@ -1,6 +1,8 @@
 # TRADING-071 ETF Allocation Dual-Track Weight Calibration
 
-最后更新：2026-06-02
+状态：BASELINE_DONE
+
+最后更新：2026-06-09
 
 ## Context
 
@@ -187,3 +189,28 @@ command.
   `manual_review_required=true`。TRADING-071A-K baseline workflow 完成，父任务进入
   `VALIDATING`，原因：candidate initial weights 仍需真实 forward evidence 滚动观察和
   owner manual review，不能自动改 baseline。
+- 2026-06-09: 最终归档前复验并推进只读运行态。先执行 `python -m
+  ai_trading_system.cli validate-data --as-of 2026-06-08`，数据质量为
+  `PASS_WITH_WARNINGS`（0 errors）；`aits etf weight-calibration validate-config`
+  通过，`search_id=etf_initial_weight_search_v1`、universe=`SPY,QQQ,SMH,SOXX,CASH`、
+  `grid_step=0.0500`、`max_candidate_count=1000`、安全字段固定；`aits etf
+  weight-calibration validate` 为 `PASS`，`tests\test_etf_weight_calibration.py`
+  为 111 passed。基于 latest historical search
+  `etf-weight-search-20260603T144553Z` 登记 5 个 candidate-only weight set，并
+  将前 3 个登记为 forward observation enrollment；输出确认
+  `shared_shadow_registry_mutated=false`、`production_weights_mutated=false`、
+  `production_effect=none`、`broker_action=none`。随后 `aggregate-evidence --as-of
+  2026-06-08 --latest-search` 生成 3 条 evidence record，状态
+  `needs_more_forward_data`；`overfit-diagnostics --latest-search` 生成 5 个
+  candidate diagnostics，risk_counts 为 medium=2、high=3；`generate-proposals`
+  生成 5 个 proposal，全部为 `defer_until_more_forward_data`，没有 manual baseline
+  review 或 production action。`report --latest --as-of 2026-06-08` 输出
+  `status=needs_more_forward_data`、`candidate_count=5`、`proposal_count=5`；
+  Reader Brief `ETF Weight Calibration` 显示 `availability=AVAILABLE`、
+  `candidate_count=5`、`forward_evidence_status=needs_more_forward_data`、
+  `overfit_risk=high`，安全字段仍为 observe-only / candidate-only / no broker /
+  manual review required。TRADING-071 从 `VALIDATING` 归档为 `BASELINE_DONE`：
+  双轨校准基础设施、candidate-only registry、forward observation enrollment、
+  diagnostics、proposal-only report、Reader Brief visibility 和 validation gate 已完成；
+  真实 forward observation 样本积累和 owner manual review 仍是后续依赖，不能自动
+  改 baseline 或 promotion。
