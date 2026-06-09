@@ -1,8 +1,8 @@
 # TRADING-070 ETF Allocation Parameter Review from Forward Evidence
 
-状态：VALIDATING
+状态：BASELINE_DONE
 
-最后更新：2026-06-02
+最后更新：2026-06-09
 
 ## 背景
 
@@ -155,3 +155,20 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   Brief registry visibility、source links 和 unsafe action blocking；固定安全字段，失败时
   fail closed，不应用参数变更。TRADING-070 父任务进入 `VALIDATING`，等待真实 forward
   evidence 和 owner manual review 继续滚动验证。
+- 2026-06-09：最终归档前复验当前真实 evidence 边界。`python -m
+  ai_trading_system.cli etf parameter-review aggregate --as-of 2026-06-08`、
+  `report --as-of 2026-06-08` 和 `run --as-of 2026-06-08` 均可运行，并全部输出
+  `status=needs_more_data`、`candidate_count=0`、`eligible_for_manual_review_count=0`；
+  aggregation 明确 `reason=INSUFFICIENT_FORWARD_EVIDENCE`、`evidence_record_count=0`、
+  source reports=13、warnings=12。`python -m ai_trading_system.cli etf
+  parameter-review validate` 为 `PASS`，`python -m pytest
+  tests\test_etf_parameter_review.py -q` 为 47 passed。刷新 `reports index
+  --as-of 2026-06-08` 和 `reports reader-brief --as-of 2026-06-08` 后，Reader
+  Brief `ETF Parameter Review` 显示 `availability=AVAILABLE`、
+  `status=needs_more_data`、`main_reason=INSUFFICIENT_FORWARD_EVIDENCE`、
+  `candidate_count=0`、`eligible_for_manual_review_count=0`，安全字段仍为
+  observe-only / candidate-only / no broker / manual review required。TRADING-070
+  从 `VALIDATING` 归档为 `BASELINE_DONE`：proposal-only 基础设施、source
+  traceability、Reader Brief visibility 和 validation gate 已完成；真实 forward
+  evidence、owner decision journal 样本和 proposal quality 仍需后续人工/forward
+  observation 链路提供，不能由系统补造。
