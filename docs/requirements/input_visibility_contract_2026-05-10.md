@@ -57,6 +57,7 @@ available_time <= visibility_cutoff
 |4. OpenAI cache-only row 级可见性过滤|VALIDATING|`replay-day --openai-replay-policy cache-only` 只复用 `request_timestamp/cache_created_at` 可证明不晚于有效 replay cutoff 的 prereview 记录；晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。|
 |5. 手工输入 replay 隔离视图|VALIDATING|`replay-day` 生成 `input/data/external/trade_theses` 和 `input/data/external/trades` 过滤视图；`score-daily` 通过 path override 只读取 replay 路径；future thesis/trade 记录进入 input freeze manifest 的排除审计，不再由生产目录或下游校验泄漏到 replay。|
 |6. market/macro raw cache replay 过滤|VALIDATING|`replay-day` 生成 as-of 过滤后的 `prices_daily.csv`、`prices_marketstack_daily.csv`、`rates_daily.csv` 和 replay download manifest；`score-daily` / `ops health` 只读取 replay raw 路径，不能因生产缓存含未来行情而在历史日期误触发 `prices_future_dates` / `rates_future_dates`。|
+|6B. full-universe replay 期望集合冻结|VALIDATING|`replay-day --full-universe` 必须从 replay 可见价格缓存冻结本次评分可审计的 expected ticker 集合，并在 input freeze manifest 中记录当前配置 ticker 的 included/excluded 数量与原因；缺少 replay 可见价格的 ticker 不得静默纳入数据质量期望，也不得补造历史价格。生产 `score-daily --full-universe` 仍必须使用当前配置完整集合并 fail closed。|
 |7. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
 
 ## 决策
@@ -68,6 +69,7 @@ available_time <= visibility_cutoff
 - `replay-day --openai-replay-policy cache-only` 可以复用本地历史 OpenAI prereview 缓存，但复用条件是缓存记录的可证明生成/请求时间不晚于有效 `visibility_cutoff`；不能证明时间的缓存记录不得进入严格复现输入。
 - `trade_theses` 在 replay 中按 thesis 及其验证指标、证伪条件、风险事件和状态字段的可见日期整条过滤；任一未来状态会排除该 thesis，而不是让下游校验先读取 production 手工输入。
 - `trades` 在 replay 中必须以交易记录可见时间为边界；缺少可证明记录时间的交易记录不能被当作严格 PIT 输入。未来平仓信息不得进入早于平仓日的 replay。
+- `replay-day --full-universe` 的期望 ticker 集合是 replay 输入的一部分，必须冻结、写入 bundle 并可审计；当前配置中没有 replay 可见价格的 ticker 只能作为 replay universe exclusion 记录，不得通过伪造价格或放宽生产门禁来绕过。
 
 ## 进展记录
 
@@ -81,3 +83,5 @@ available_time <= visibility_cutoff
 - 2026-05-11：阶段 6 进入 `IN_PROGRESS`。`replay-window --start 2026-05-01 --end 2026-05-10 --full-universe --openai-replay-policy cache-only --continue-on-failure` 暴露 2026-05-05 至 2026-05-07 的 `score-daily` 仍读取完整生产 `prices_daily.csv` / `rates_daily.csv`，数据质量门禁因 2026-05-08 未来行 fail closed；需要把市场和宏观 raw cache 纳入 replay as-of 过滤视图。
 - 2026-05-11：阶段 6 进入 `VALIDATING`。`replay-day` 已生成 replay-scoped `prices_daily.csv`、`prices_marketstack_daily.csv`、`rates_daily.csv` 和 replay download manifest，并把 `score-daily` / `ops health` 指向该隔离 raw cache；复跑 2026-05-01 至 2026-05-10 后，2026-05-05、2026-05-06、2026-05-07、2026-05-08 均 PASS，周末 2026-05-02/03/09/10 正确跳过；剩余 2026-05-01 和 2026-05-04 为归档输入缺口，非未来行情过滤逻辑阻塞。
 - 2026-06-09：关联任务 `VAL-001` / `RISK-014` 从 `VALIDATING` 归档为 `DONE`。验证：focused PIT tests 4 passed；`aits valuation validate --as-of 2026-05-08`、`aits valuation review --as-of 2026-05-08` 和 `aits risk-events validate-occurrences --as-of 2026-05-08` 均为 `PASS_WITH_WARNINGS` 且错误数 0，未来估值快照和风险事件记录只进入 warning 审计；`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy cache-only --compare-to-production` 为 PASS。Direct historical `score-daily --as-of 2026-05-08 --skip-risk-event-openai-precheck` 被当前生产 market/macro cache 的 `prices_future_dates` / `rates_future_dates` 门禁阻断，按本契约应继续使用 replay 隔离入口，不作为估值或风险事件可见性失败。
+- 2026-06-09：阶段 6B 进入 `IN_PROGRESS`。复跑 `aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy cache-only --compare-to-production --full-universe` 时，`score_daily` 数据质量门禁因当前 full-universe 配置包含 `ASX` 而失败；本地 2026-05-08 replay raw price cache 对 `ASX` 没有可见历史行。阻断不是应补造 `ASX` 历史价，而是 replay 未冻结 full-universe 期望 ticker 集合；本轮修复限定为 replay universe freeze + exclusion audit，生产 full-universe 门禁保持 fail closed。
+- 2026-06-09：阶段 6B 进入 `VALIDATING`。新增 replay expected ticker manifest 和 `score-daily --expected-price-tickers-path` 显式输入；真实 `2026-05-08 --full-universe` replay PASS，`input/config/expected_price_tickers.csv` 记录 `ASX` 为 `excluded`、原因 `full_universe_ticker_not_visible_in_replay_price_cache`，数据质量报告 PASS 且 expected 价格标的不含 `ASX`。`replay-window --start 2026-05-01 --end 2026-05-10 --full-universe --continue-on-failure` 仍因既有 2026-05-01/04 归档输入缺口整体 FAIL，但 2026-05-05 至 2026-05-08 均 PASS，周末正确跳过。

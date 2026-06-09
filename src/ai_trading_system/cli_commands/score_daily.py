@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 import json
 import os
+from collections.abc import Iterable
 from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Annotated, Literal
@@ -744,6 +746,15 @@ def score_daily(
         str,
         typer.Option(help="逗号分隔的日报交易复盘归因基准标的。"),
     ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
+    expected_price_tickers_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "显式 expected price ticker manifest；用于 replay 等已冻结输入场景，"
+                "未提供时按当前 universe 配置计算。"
+            ),
+        ),
+    ] = None,
     full_universe: Annotated[
         bool,
         typer.Option(
@@ -812,9 +823,13 @@ def score_daily(
             "[red]未找到适用于 score-daily 的 production rule card，已停止日报评分。[/red]"
         )
         raise typer.Exit(code=1)
-    expected_price_tickers = configured_price_tickers(
-        universe,
-        include_full_ai_chain=full_universe,
+    expected_price_tickers = (
+        _load_expected_price_tickers_manifest(expected_price_tickers_path)
+        if expected_price_tickers_path is not None
+        else configured_price_tickers(
+            universe,
+            include_full_ai_chain=full_universe,
+        )
     )
     expected_price_tickers = list(dict.fromkeys([*expected_price_tickers, *benchmark_tickers]))
     expected_rate_series = configured_rate_series(universe)
@@ -2253,6 +2268,57 @@ def _parse_datetime(value: str) -> datetime:
 
 def _parse_csv_items(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _load_expected_price_tickers_manifest(path: Path) -> list[str]:
+    if not path.exists():
+        raise typer.BadParameter(f"expected price ticker manifest 不存在：{path}")
+    if path.suffix.lower() == ".json":
+        return _load_expected_price_tickers_json(path)
+    return _load_expected_price_tickers_csv(path)
+
+
+def _load_expected_price_tickers_json(path: Path) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise typer.BadParameter(f"无法读取 expected price ticker manifest：{path}") from exc
+    if isinstance(payload, list):
+        return _dedupe_expected_price_tickers(str(item) for item in payload)
+    if isinstance(payload, dict):
+        tickers = payload.get("expected_price_tickers")
+        if isinstance(tickers, list):
+            return _dedupe_expected_price_tickers(str(item) for item in tickers)
+    raise typer.BadParameter(
+        "JSON expected price ticker manifest 必须是 ticker list，"
+        "或包含 expected_price_tickers list。"
+    )
+
+
+def _load_expected_price_tickers_csv(path: Path) -> list[str]:
+    try:
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+    except OSError as exc:
+        raise typer.BadParameter(f"无法读取 expected price ticker manifest：{path}") from exc
+    if not rows:
+        raise typer.BadParameter(f"expected price ticker manifest 为空：{path}")
+    if "ticker" not in (rows[0].keys() if rows else ()):
+        raise typer.BadParameter("CSV expected price ticker manifest 必须包含 ticker 列。")
+    included = (
+        str(row.get("ticker", ""))
+        for row in rows
+        if str(row.get("status", "included")).strip().lower()
+        in {"", "include", "included", "expected"}
+    )
+    return _dedupe_expected_price_tickers(included)
+
+
+def _dedupe_expected_price_tickers(tickers: Iterable[str]) -> list[str]:
+    result = list(dict.fromkeys(ticker.strip().upper() for ticker in tickers if ticker.strip()))
+    if not result:
+        raise typer.BadParameter("expected price ticker manifest 没有 included ticker。")
+    return result
 
 
 def _parse_positive_int_csv(value: str, label: str) -> list[int]:

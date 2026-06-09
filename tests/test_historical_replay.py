@@ -9,6 +9,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.cli_commands.score_daily import _load_expected_price_tickers_manifest
 from ai_trading_system.historical_replay import (
     run_historical_day_replay,
     run_historical_replay_window,
@@ -169,6 +170,52 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     secret_command = replay.command_results[3].command
     assert "--scan-paths" in secret_command
     assert str(replay.paths.root) in secret_command
+
+
+def test_replay_day_full_universe_freezes_expected_ticker_manifest(
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "project"
+    _write_replay_fixture(project_root)
+    _write_replay_universe_config(project_root)
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="ok\n", stderr="")
+
+    replay = run_historical_day_replay(
+        as_of=date(2026, 5, 8),
+        project_root=project_root,
+        output_root=tmp_path / "replays",
+        run_id="unit_replay_full_universe",
+        full_universe=True,
+        runner=fake_runner,
+    )
+
+    assert replay.status == "PASS"
+    record = next(
+        record for record in replay.input_records if record.artifact_id == "expected_price_tickers"
+    )
+    assert record.status == "PASS_WITH_EXCLUSIONS"
+    assert record.excluded_count == 1
+    manifest_path = Path(record.replay_path)
+    rows = {row["ticker"]: row for row in _read_csv(manifest_path)}
+    assert rows["AMD"]["status"] == "included"
+    assert rows["FUTURE"]["status"] == "excluded"
+    assert rows["FUTURE"]["reason"] == "full_universe_ticker_not_visible_in_replay_price_cache"
+    assert _load_expected_price_tickers_manifest(manifest_path) == [
+        "AMD",
+        "SPY",
+        "QQQ",
+        "SMH",
+        "SOXX",
+    ]
+
+    score_command = calls[0]
+    assert "--full-universe" in score_command
+    assert "--expected-price-tickers-path" in score_command
+    assert str(manifest_path) in score_command
 
 
 def test_replay_day_inventory_cli_writes_bundle(tmp_path: Path) -> None:
@@ -649,6 +696,39 @@ def _write_replay_fixture(project_root: Path) -> None:
                 "visibility_cutoff": "2026-05-08T12:00:00+00:00",
                 "visibility_cutoff_source": "daily_run_finished_at_utc",
             }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_replay_universe_config(project_root: Path) -> None:
+    config_dir = project_root / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "universe.yaml").write_text(
+        "\n".join(
+            [
+                "market:",
+                "  decision_frequency: daily",
+                "  benchmarks: []",
+                "  defensive: []",
+                "macro:",
+                "  volatility: []",
+                "  rates:",
+                "    - DGS10",
+                "  currency: []",
+                "ai_chain:",
+                "  core_watchlist:",
+                "    - AMD",
+                "  future_extension:",
+                "    - FUTURE",
+                "scoring_weights:",
+                "  trend: 25",
+                "  fundamentals: 25",
+                "  macro_liquidity: 15",
+                "  risk_sentiment: 15",
+                "  valuation: 10",
+                "  policy_geopolitics: 10",
+            ]
         ),
         encoding="utf-8",
     )

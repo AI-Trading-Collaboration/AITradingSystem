@@ -19,11 +19,17 @@ from ai_trading_system.alerts import (
     default_alert_report_path,
     default_pipeline_health_alert_report_path,
 )
+from ai_trading_system.backtest.daily import DEFAULT_BENCHMARK_TICKERS
 from ai_trading_system.belief_state import (
     DEFAULT_BELIEF_STATE_HISTORY_PATH,
     default_belief_state_path,
 )
-from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.config import (
+    DEFAULT_CONFIG_PATH,
+    PROJECT_ROOT,
+    configured_price_tickers,
+    load_universe,
+)
 from ai_trading_system.data.quality import default_quality_report_path
 from ai_trading_system.decision_snapshots import (
     DEFAULT_DECISION_SNAPSHOT_DIR,
@@ -282,6 +288,7 @@ def run_historical_day_replay(
         project_root=project_root,
         paths=replay_paths,
         openai_replay_policy=openai_replay_policy,
+        full_universe=full_universe,
     )
     _write_input_manifest(input_records, replay_paths)
 
@@ -804,6 +811,7 @@ def _prepare_replay_inputs(
     project_root: Path,
     paths: ReplayPaths,
     openai_replay_policy: str,
+    full_universe: bool,
 ) -> tuple[list[ReplayInputRecord], list[str]]:
     records: list[ReplayInputRecord] = []
     errors: list[str] = []
@@ -852,6 +860,14 @@ def _prepare_replay_inputs(
             as_of=as_of,
         )
     )
+    if full_universe:
+        records.append(
+            _write_replay_expected_price_tickers(
+                project_root=project_root,
+                prices_path=paths.data_raw_dir / "prices_daily.csv",
+                replay_path=_expected_price_tickers_path(paths),
+            )
+        )
 
     records.append(
         _filter_pit_manifest(
@@ -1128,7 +1144,13 @@ def _score_daily_command(
         "--skip-risk-event-openai-precheck",
     ]
     if full_universe:
-        command.append("--full-universe")
+        command.extend(
+            [
+                "--full-universe",
+                "--expected-price-tickers-path",
+                str(_expected_price_tickers_path(paths)),
+            ]
+        )
     return tuple(command)
 
 
@@ -1474,6 +1496,102 @@ def _write_replay_download_manifest(
             "artifacts; original vendor manifest remains referenced as source"
         ),
     )
+
+
+def _write_replay_expected_price_tickers(
+    *,
+    project_root: Path,
+    prices_path: Path,
+    replay_path: Path,
+) -> ReplayInputRecord:
+    universe_path = project_root / "config" / "universe.yaml"
+    universe = load_universe(universe_path if universe_path.exists() else DEFAULT_CONFIG_PATH)
+    baseline_tickers = {
+        ticker.upper() for ticker in configured_price_tickers(universe, include_full_ai_chain=False)
+    }
+    benchmark_tickers = {ticker.upper() for ticker in DEFAULT_BENCHMARK_TICKERS}
+    configured_tickers = list(
+        dict.fromkeys(
+            ticker.upper()
+            for ticker in [
+                *configured_price_tickers(universe, include_full_ai_chain=True),
+                *DEFAULT_BENCHMARK_TICKERS,
+            ]
+        )
+    )
+    visible_tickers = _visible_price_tickers(prices_path)
+
+    rows: list[dict[str, str]] = []
+    included = 0
+    excluded = 0
+    for ticker in configured_tickers:
+        required = ticker in baseline_tickers or ticker in benchmark_tickers
+        visible = ticker in visible_tickers
+        if required:
+            status = "included"
+            reason = (
+                "required_baseline_or_benchmark_visible_in_replay_price_cache"
+                if visible
+                else "required_baseline_or_benchmark_missing_replay_price_fail_closed"
+            )
+            included += 1
+        elif visible:
+            status = "included"
+            reason = "full_universe_ticker_visible_in_replay_price_cache"
+            included += 1
+        else:
+            status = "excluded"
+            reason = "full_universe_ticker_not_visible_in_replay_price_cache"
+            excluded += 1
+        rows.append(
+            {
+                "ticker": ticker,
+                "status": status,
+                "required_scope": (
+                    "baseline_or_benchmark" if required else "full_universe_extension"
+                ),
+                "visible_in_replay_price_cache": "true" if visible else "false",
+                "reason": reason,
+            }
+        )
+
+    _write_csv_dicts(
+        replay_path,
+        rows,
+        fieldnames=(
+            "ticker",
+            "status",
+            "required_scope",
+            "visible_in_replay_price_cache",
+            "reason",
+        ),
+    )
+    return ReplayInputRecord(
+        artifact_id="expected_price_tickers",
+        artifact_class="replay_universe_manifest",
+        source_path=str(universe_path if universe_path.exists() else DEFAULT_CONFIG_PATH),
+        replay_path=str(replay_path),
+        status="PASS_WITH_EXCLUSIONS" if excluded else "PASS",
+        row_count=len(rows),
+        included_count=included,
+        excluded_count=excluded,
+        sha256=_sha256_file(replay_path),
+        reason=(
+            "generated replay expected ticker manifest from configured full universe; "
+            "baseline/benchmark tickers remain included for fail-closed quality gates, "
+            "full-universe extension tickers without replay-visible prices are excluded"
+        ),
+    )
+
+
+def _visible_price_tickers(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    return {
+        str(row.get("ticker", "")).strip().upper()
+        for row in _read_csv_dicts(path)
+        if str(row.get("ticker", "")).strip()
+    }
 
 
 def _filter_fmp_forward_pit_normalized(
@@ -3210,6 +3328,10 @@ def _decision_snapshot_path(paths: ReplayPaths, as_of: date) -> Path:
         paths.output_root / DEFAULT_DECISION_SNAPSHOT_DIR.relative_to(PROJECT_ROOT),
         as_of,
     )
+
+
+def _expected_price_tickers_path(paths: ReplayPaths) -> Path:
+    return paths.input_root / "config" / "expected_price_tickers.csv"
 
 
 def _dashboard_html_path(paths: ReplayPaths, as_of: date) -> Path:
