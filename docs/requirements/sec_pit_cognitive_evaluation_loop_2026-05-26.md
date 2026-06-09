@@ -1,6 +1,6 @@
 # TRADING-040 SEC PIT Cognitive Evaluation Loop
 
-最后更新：2026-05-26
+最后更新：2026-06-09
 
 关联任务：`TRADING-040`
 
@@ -137,3 +137,11 @@ Dashboard 只读读取 `sec_pit_evaluation_summary_*.json`，不运行 evaluatio
   和全量 `python -m ruff check config src tests scripts docs`；本次触达 Python 文件 black
   check 通过。全仓 `python -m black --check config src tests scripts docs` 仍仅被既有
   `tests/test_market_data.py` baseline 阻断。
+- 2026-06-09：复验后继续保持 `VALIDATING`，原因：工程目标测试仍通过
+  `tests/trading_engine/test_sec_pit_evaluation.py` 与 `tests/test_daily_task_dashboard.py`
+  共 34 passed，但真实 `aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26`
+  在当前本机 cache 上被数据质量门禁阻断为 `DATA_QUALITY_FAILED`。阻断项是
+  `prices_future_dates` 与 `rates_future_dates`，即当前 `data/raw/prices_daily.csv` 和
+  `data/raw/rates_daily.csv` 含 2026-05-26 之后的数据；这属于历史 evaluation 输入可见性问题，
+  不能绕过 `aits validate-data`。下一步需要使用 replay/quality-as-of 安全输入或补 CLI 的
+  historical quality-as-of 路径后再归档。
