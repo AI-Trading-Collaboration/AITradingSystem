@@ -1,6 +1,6 @@
 # 输入可见性与 PIT 复现契约
 
-状态：VALIDATING
+状态：DONE
 
 最后更新：2026-06-09
 
@@ -51,14 +51,14 @@ available_time <= visibility_cutoff
 
 |阶段|状态|验收标准|
 |---|---|---|
-|1. daily-run 历史 as-of 前置阻断|VALIDATING|`run_daily_ops_plan` 对历史 `as_of` 返回 `BLOCKED_VISIBILITY`，不执行 download/PIT/SEC/valuation/score/dashboard 等子命令；报告说明阻断原因和 replay 入口。|
-|2. replay-day 接入 dashboard|VALIDATING|cache-only replay 在 `score_daily` 成功后生成 replay-scoped `evidence_dashboard_YYYY-MM-DD.html/json`，所有输入路径指向 replay bundle，不读取生产 canonical 输出。|
-|3. 文档和测试|VALIDATING|README、runbook、system flow 说明入口边界；测试覆盖历史 daily-run 前置阻断、replay dashboard 命令和原最近交易日 replay 验证。|
-|4. OpenAI cache-only row 级可见性过滤|VALIDATING|`replay-day --openai-replay-policy cache-only` 只复用 `request_timestamp/cache_created_at` 可证明不晚于有效 replay cutoff 的 prereview 记录；晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。|
-|5. 手工输入 replay 隔离视图|VALIDATING|`replay-day` 生成 `input/data/external/trade_theses` 和 `input/data/external/trades` 过滤视图；`score-daily` 通过 path override 只读取 replay 路径；future thesis/trade 记录进入 input freeze manifest 的排除审计，不再由生产目录或下游校验泄漏到 replay。|
-|6. market/macro raw cache replay 过滤|VALIDATING|`replay-day` 生成 as-of 过滤后的 `prices_daily.csv`、`prices_marketstack_daily.csv`、`rates_daily.csv` 和 replay download manifest；`score-daily` / `ops health` 只读取 replay raw 路径，不能因生产缓存含未来行情而在历史日期误触发 `prices_future_dates` / `rates_future_dates`。|
-|6B. full-universe replay 期望集合冻结|VALIDATING|`replay-day --full-universe` 必须从 replay 可见价格缓存冻结本次评分可审计的 expected ticker 集合，并在 input freeze manifest 中记录当前配置 ticker 的 included/excluded 数量与原因；缺少 replay 可见价格的 ticker 不得静默纳入数据质量期望，也不得补造历史价格。生产 `score-daily --full-universe` 仍必须使用当前配置完整集合并 fail closed。|
-|6C. replay-window 失败原因结构化摘要|VALIDATING|`replay-window` 必须在窗口 JSON 和 Markdown 中汇总每个失败交易日的 input blockers、失败步骤和 blocker artifact/status/reason 摘要；窗口层不能只给 `FAIL` 状态，必须让 2026-05-01/04 这类归档输入缺口可从窗口报告直接审计。OpenAI cache-only 在 prereview report 缺失时仍必须先按 replay cutoff 过滤 queue，再因 report 缺失 fail closed，不得把未来 OpenAI 队列原样写入 replay 视图。|
+|1. daily-run 历史 as-of 前置阻断|DONE|`run_daily_ops_plan` 对历史 `as_of` 返回 `BLOCKED_VISIBILITY`，不执行 download/PIT/SEC/valuation/score/dashboard 等子命令；报告说明阻断原因和 replay 入口。|
+|2. replay-day 接入 dashboard|DONE|cache-only replay 在 `score_daily` 成功后生成 replay-scoped `evidence_dashboard_YYYY-MM-DD.html/json`，所有输入路径指向 replay bundle，不读取生产 canonical 输出。|
+|3. 文档和测试|DONE|README、runbook、system flow 说明入口边界；测试覆盖历史 daily-run 前置阻断、replay dashboard 命令和原最近交易日 replay 验证。|
+|4. OpenAI cache-only row 级可见性过滤|DONE|`replay-day --openai-replay-policy cache-only` 只复用 `request_timestamp/cache_created_at` 可证明不晚于有效 replay cutoff 的 prereview 记录；晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。|
+|5. 手工输入 replay 隔离视图|DONE|`replay-day` 生成 `input/data/external/trade_theses` 和 `input/data/external/trades` 过滤视图；`score-daily` 通过 path override 只读取 replay 路径；future thesis/trade 记录进入 input freeze manifest 的排除审计，不再由生产目录或下游校验泄漏到 replay。|
+|6. market/macro raw cache replay 过滤|DONE|`replay-day` 生成 as-of 过滤后的 `prices_daily.csv`、`prices_marketstack_daily.csv`、`rates_daily.csv` 和 replay download manifest；`score-daily` / `ops health` 只读取 replay raw 路径，不能因生产缓存含未来行情而在历史日期误触发 `prices_future_dates` / `rates_future_dates`。|
+|6B. full-universe replay 期望集合冻结|DONE|`replay-day --full-universe` 必须从 replay 可见价格缓存冻结本次评分可审计的 expected ticker 集合，并在 input freeze manifest 中记录当前配置 ticker 的 included/excluded 数量与原因；缺少 replay 可见价格的 ticker 不得静默纳入数据质量期望，也不得补造历史价格。生产 `score-daily --full-universe` 仍必须使用当前配置完整集合并 fail closed。|
+|6C. replay-window 失败原因结构化摘要|DONE|`replay-window` 必须在窗口 JSON 和 Markdown 中汇总每个失败交易日的 input blockers、失败步骤和 blocker artifact/status/reason 摘要；窗口层不能只给 `FAIL` 状态，必须让 2026-05-01/04 这类归档输入缺口可从窗口报告直接审计。OpenAI cache-only 在 prereview report 缺失时仍必须先按 replay cutoff 过滤 queue，再因 report 缺失 fail closed，不得把未来 OpenAI 队列原样写入 replay 视图。|
 |7. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
 
 ## 决策
@@ -88,3 +88,4 @@ available_time <= visibility_cutoff
 - 2026-06-09：阶段 6B 进入 `VALIDATING`。新增 replay expected ticker manifest 和 `score-daily --expected-price-tickers-path` 显式输入；真实 `2026-05-08 --full-universe` replay PASS，`input/config/expected_price_tickers.csv` 记录 `ASX` 为 `excluded`、原因 `full_universe_ticker_not_visible_in_replay_price_cache`，数据质量报告 PASS 且 expected 价格标的不含 `ASX`。`replay-window --start 2026-05-01 --end 2026-05-10 --full-universe --continue-on-failure` 仍因既有 2026-05-01/04 归档输入缺口整体 FAIL，但 2026-05-05 至 2026-05-08 均 PASS，周末正确跳过。
 - 2026-06-09：阶段 6C 进入 `IN_PROGRESS`。复核 `vis-001-window-20260609-fixed` 后确认窗口层只列出失败日期和 bundle/report 路径，未把单日 `replay_run.errors` 和 input freeze blocker artifacts 汇总到 `replay_window.json/md`；本轮修复限定为可审计诊断增强，不补造 2026-05-01/04 缺失的 PIT、OpenAI、SEC 或 valuation 归档输入。
 - 2026-06-09：阶段 6C 进入 `VALIDATING`。`replay_window.json/md` 现在为每个失败交易日写入 `failure_summary`、input blocker 明细、failed step 和 blocker artifacts。同步修复 OpenAI cache-only report 缺失分支：即使 `risk_event_prereview_openai_YYYY-MM-DD.md` 缺失，`risk_event_prereview_queue.json` 也先按 replay cutoff 过滤并写入 `source_report_status=MISSING` 审计，再因必需 report 缺失 fail closed。真实 `vis-001-window-20260609-summary` 复测仍整体 FAIL；5/1 暴露 7 个 blockers（PIT manifest/normalized/report、valuation、SEC、OpenAI report），5/4 暴露 4 个 blockers（PIT normalized/report、OpenAI report）；5/5-5/8 PASS，周末跳过。
+- 2026-06-09：阶段 1-6C 从 `VALIDATING` 归档为 `DONE`。刷新验证确认，直接 `aits validate-data --as-of 2026-05-08` 会被当前生产 market/macro cache 中的 2026-06 价格与 FRED 未来行正确阻断；严格历史复现应使用 replay 隔离入口。`aits ops replay-day --mode cache-only --as-of 2026-05-08 --openai-replay-policy cache-only --compare-to-production --full-universe --run-id vis-001-replay-day-20260609-final-refresh` 为 PASS，`prices_daily`、`rates_daily`、`trade_theses`、`risk_event_openai_prereview_queue` 和 `expected_price_tickers` 均按 replay cutoff 过滤并记录排除审计。`aits ops replay-window --start 2026-05-01 --end 2026-05-10 --mode cache-only --openai-replay-policy cache-only --full-universe --continue-on-failure --run-id vis-001-window-20260609-summary-refresh` 仍整体 FAIL，但失败仅来自 2026-05-01 和 2026-05-04 的既有归档输入缺口，窗口报告已结构化披露 input blockers、failed step 和 blocker artifact/status/reason；2026-05-05 至 2026-05-08 PASS，周末正确跳过。阶段 7 保持 `READY`，作为未来通用可见性 schema 扩展，不阻塞当前 replay 合同完成。
