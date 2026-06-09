@@ -10,7 +10,9 @@ metadata:
     TRADING-060 found that TRADING-059 candidates were too aggressive and were
     rejected by turnover / cost drag guardrails. This profile keeps the same
     guardrails and production safety boundary, but requires candidate weights to
-    remain close to the production baseline before backtesting.
+    remain close to the production baseline before backtesting. Fallback signal
+    weights are fixed at the current production baseline values so the fixed
+    rule prevents free tuning without forcing the search away from baseline.
   intended_effect: >
     Produce advisory stable shadow weight candidates for manual review only.
     This profile must not lower turnover guardrails, change the cost model,
@@ -20,7 +22,7 @@ metadata:
     delta rejection, trend/sector cap rejection, turnover prefilter rejection,
     turnover and cost drag objective penalties, summary/report output,
     Dashboard/Reader Brief display, shadow backtest supporting-artifact
-    references, and safety fields.
+    references, baseline-feasible candidate generation, and safety fields.
   review_condition: >
     Review before any stable candidate is promoted to a new tracking workflow,
     and expire this pilot when signal quality leaves LIMITED or a stronger
@@ -68,11 +70,11 @@ tuning_scope:
         - LIMITED
   fixed_weights:
     earnings_quality:
-      value: 0.05
-      reason: "neutral fallback signal; not eligible for free tuning"
+      value: 0.15
+      reason: "neutral fallback signal; fixed to current production baseline, not eligible for free tuning"
     event_risk:
-      value: 0.05
-      reason: "neutral fallback signal; not eligible for free tuning"
+      value: 0.10
+      reason: "neutral fallback signal; fixed to current production baseline, not eligible for free tuning"
   capped_weights:
     valuation_risk:
       min: 0.05
@@ -99,10 +101,10 @@ stability_constraints:
   fallback_signals:
     earnings_quality:
       fixed: true
-      value: 0.05
+      value: 0.15
     event_risk:
       fixed: true
-      value: 0.05
+      value: 0.10
   valuation_risk:
     min: 0.05
     max: 0.15

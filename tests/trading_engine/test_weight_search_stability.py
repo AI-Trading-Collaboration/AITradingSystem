@@ -30,6 +30,12 @@ def test_loads_stability_config_and_preserves_safety() -> None:
     assert config["metadata"]["manual_review_required"] is True
     assert config["metadata"]["auto_promotion"] is False
     assert config["safety"]["forbid_free_fallback_weight_tuning"] is True
+    assert config["tuning_scope"]["fixed_weights"]["earnings_quality"]["value"] == pytest.approx(
+        BASELINE_WEIGHTS["earnings_quality"],
+    )
+    assert config["tuning_scope"]["fixed_weights"]["event_risk"]["value"] == pytest.approx(
+        BASELINE_WEIGHTS["event_risk"],
+    )
     assert config["guardrails"]["turnover_relative_increase_limit"] == pytest.approx(0.30)
 
 
@@ -123,8 +129,14 @@ def test_stable_candidate_generation_reports_stability_and_prefilter_counts() ->
     generation = generate_restricted_grid_candidate_diagnostics(config, BASELINE_WEIGHTS)
 
     assert generation["candidates_generated"] > 0
+    assert generation["accepted_candidates"]
     assert generation["candidates_rejected_by_stability"] > 0
     assert generation["candidates_rejected_by_turnover_prefilter"] >= 0
+    assert any(
+        candidate["l1_distance_from_baseline"] == pytest.approx(0.0)
+        and candidate["max_single_signal_delta"] == pytest.approx(0.0)
+        for candidate in generation["accepted_candidates"]
+    )
     first = generation["candidate_diagnostics"][0]
     assert "stability" in first
     assert "turnover_prefilter" in first

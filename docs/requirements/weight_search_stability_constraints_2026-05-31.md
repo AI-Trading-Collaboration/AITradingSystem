@@ -38,13 +38,15 @@ production/current.yaml unchanged
 - 不自动 promotion。
 - 不绕过 walk-forward。
 - 不使用 mock 数据替代真实 cached inputs。
+- fallback signals 可以被固定，但固定值必须对齐当前 production baseline；固定规则的目的
+  是禁止 fallback 自由调参，不应把 neutral fallback 人为降到远离 baseline 的权重。
 
 ## 阶段拆解
 
 |阶段|状态|验收标准|
 |---|---|---|
 |1. 配置与候选诊断|DONE|新增 `config/parameters/weight_tuning_v0_2_stability.yaml`；候选输出 L1、max single delta、trend/sector combined、turnover prefilter 和 rejection reasons。|
-|2. 稳定搜索执行|VALIDATING|`aits parameters tune-weights-stable --latest` 生成 `artifacts/weight_stability/YYYY-MM-DD/weight_stability_summary.json/md` 与 `stable_weight_candidates.json`；2026-05-28 latest 因 upstream freshness / signal snapshot readiness 未满足而停在 `INSUFFICIENT_DATA`，未进入 candidate backtest。|
+|2. 稳定搜索执行|DONE|`aits parameters tune-weights-stable --latest` 生成 `artifacts/weight_stability/YYYY-MM-DD/weight_stability_summary.json/md` 与 `stable_weight_candidates.json`；2026-06-08 latest 已进入 candidate backtest，`candidates_backtested=166`、`candidates_passed_guardrails=17`，recommended candidate 为 shadow-only `watch`。|
 |3. 报告与展示|DONE|`aits parameters validate-weight-stability --latest` 和 `aits reports weight-stability --latest` 可读取；Dashboard/Reader Brief 展示 Weight Search Stability。|
 |4. Shadow backtest 引用|DONE|`aits parameters shadow-backtest --latest --dry-run` 的 supporting artifacts 引用 `weight_stability_summary.json`，promotion 仍 rejected。|
 |5. 验证|DONE|专项 pytest、全量 pytest、ruff、compileall、diff check 通过；production config 未修改。|
@@ -86,3 +88,26 @@ production/current.yaml unchanged
   `validate-weight-stability-readiness --latest`、`reports weight-stability --latest`、
   `reports weight-stability-readiness --latest`、shadow backtest dry-run 和 focused pytest
   20 passed；production 参数、turnover guardrail、cost model 和 fallback signal policy 未修改。
+- 2026-06-09：从 `VALIDATING` 改回 `IN_PROGRESS`。按 readiness recovery plan 运行
+  `aits signals build-snapshot --latest` 后生成 2026-06-08 signal snapshot，`validate-snapshot`
+  和 `reports signal-snapshot --latest` 均可读取；`diagnose-weight-stability-inputs --latest`
+  已恢复为 `status=LIMITED_READY`、`can_run=true`、`blocking_checks=none`。随后
+  `tune-weights-stable --latest` 仍显示 `candidates_backtested=0`，新的原因不是 input
+  readiness，而是 v0.2 配置把 `earnings_quality` / `event_risk` 固定到 `0.05 / 0.05`，
+  相对 production baseline `0.15 / 0.10` 已产生 0.15 L1 偏离；归一化后最接近 baseline
+  的候选 L1 至少为 0.30，必然超过 `max_total_l1_distance_from_baseline=0.25` 和
+  turnover prefilter `0.25`。修复方向是把固定 fallback 权重对齐当前 production baseline，
+  保持 fallback 不自由调参、实际 turnover guardrail 和 cost model 不变。
+- 2026-06-09：从 `IN_PROGRESS` 改为 `DONE`。`config/parameters/weight_tuning_v0_2_stability.yaml`
+  将固定 fallback 权重改为 production baseline：`earnings_quality=0.15`、
+  `event_risk=0.10`；测试新增 baseline-feasible candidate 覆盖。真实
+  `aits parameters tune-weights-stable --latest` 生成 2026-06-08 artifact：
+  `status=LIMITED`、`candidate_status=watch`、`candidates_generated=357`、
+  `candidates_backtested=166`、`candidates_passed_guardrails=17`、
+  `candidates_rejected_by_stability=31`；recommended candidate `wts-0017` 的
+  `stability_status=PASS`、`turnover_prefilter_status=PASS`，并生成
+  `recommended_stable_shadow_weights.yaml`。readiness 为 `LIMITED_READY`、
+  `can_run=true`、`blocking_checks=none`；promotion 仍为
+  `can_support_candidate_promotion=false`，原因是 signal quality 仍 `LIMITED` 且需要人工复核。
+  production 参数、actual turnover guardrail、cost model、fallback free tuning、broker/trading
+  action 均未修改。
