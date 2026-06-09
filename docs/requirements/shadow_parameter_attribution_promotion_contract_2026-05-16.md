@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-16
+最后更新：2026-06-09
 
 关联任务：`CALIBRATION-015`、`CALIBRATION-016`、`CALIBRATION-017`、`CALIBRATION-014`
 
@@ -39,8 +39,8 @@ weight/gate factorial attribution，并把短样本最优降级为 diagnostic-le
 |阶段|状态|验收|
 |---|---|---|
 |1. 任务登记和需求文档|VALIDATING|新增本需求文档和 `CALIBRATION-015/016/017` 任务登记。|
-|2. Cap-level attribution|VALIDATING|搜索报告、manifest 和测试包含单 cap ablation、primary gate cap 和最终仓位变化解释。|
-|3. Promotion contract|VALIDATING|新增 contract 配置和 CLI；无 eligible best、样本不足、gate 主导或缺 forward shadow 时不得进入 owner review。|
+|2. Cap-level attribution|DONE|搜索报告、manifest 和测试包含单 cap ablation、primary gate cap 和最终仓位变化解释。|
+|3. Promotion contract|DONE|新增 contract 配置和 CLI；无 eligible best、样本不足、gate 主导或缺 forward shadow 时不得进入 owner review。|
 |4. Objective regularization 与 lineage|VALIDATING|objective 支持 gate relaxation、weight distance、changed dimension penalty 和 production-nearby 限制；manifest 记录新增 checksum/version/commit/dirty 状态。|
 |5. 验证|VALIDATING|目标测试、ruff、diff check 和当前样本 CLI smoke 通过，或记录真实阻塞。|
 
@@ -72,3 +72,12 @@ weight/gate factorial attribution，并把短样本最优降级为 diagnostic-le
 - 2026-05-16：验证补充。`python -m pytest -q` 通过 551 项，`python -m ruff check
   src tests` 通过，`git diff --check` 仅提示 `docs/task_register.md` 行尾将由
   CRLF 转 LF；未发现 whitespace error。
+- 2026-06-09：`CALIBRATION-015` 与 `CALIBRATION-016` 从 `VALIDATING` 归档为
+  `DONE`。当前 bundle `current_20260504_20260514_cap_promotion_v3` 仍为
+  `PASS_WITH_LIMITATIONS` / `production_effect=none`，报告直接披露 primary driver 为
+  `gate`、primary gate cap 为 `valuation`、position change attribution 和 lineage 字段；
+  复跑 `evaluate-shadow-parameter-promotion` 输出 `NOT_PROMOTABLE`，原因仍是无 eligible
+  best、available=8 低于 contract floor 30、缺 forward shadow outcome。验证通过
+  `tests/test_shadow_weight_profiles.py` 15 passed、Ruff 和 repo-wide Black check。
+  `CALIBRATION-017` 的 objective regularization 与 lineage 观察继续保留为独立
+  `VALIDATING` 行。
