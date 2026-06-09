@@ -9999,7 +9999,7 @@ def _latest_portfolio_candidates_path(as_of: date) -> Path | None:
             candidates.append((candidate_date, path))
     if not candidates:
         return None
-    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+    return max(candidates, key=lambda item: item[0])[1]
 
 
 def _latest_portfolio_candidate_review_path(as_of: date) -> Path | None:

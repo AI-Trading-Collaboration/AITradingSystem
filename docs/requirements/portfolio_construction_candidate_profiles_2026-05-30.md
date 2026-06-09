@@ -1,12 +1,12 @@
 # TRADING-054 Portfolio Construction Candidate Profiles
 
-最后更新：2026-05-30
+最后更新：2026-06-09
 
 ## 状态
 
 - task id: `TRADING-054`
 - priority: `P1`
-- status: `VALIDATING`
+- status: `DONE`
 - owner: system
 - started: 2026-05-30
 
@@ -70,14 +70,15 @@ Portfolio sensitivity summary 必须可读取，并应显示 `primary_bottleneck
 - `aits parameters shadow-backtest --latest --dry-run` 仍保持 `promotion_status=rejected`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`，且 promotion decision supporting artifacts 可引用 `portfolio_candidates_summary.json`。
 - Dashboard 展示 Portfolio Candidate Profiles 卡片。
 - Reader Brief 展示 3-5 行 portfolio candidate 摘要。
+- Dashboard / Reader Brief 读取 candidate summary 时必须选择不晚于 report `as_of` 的最大 artifact 日期，不得按文件修改时间选择旧 artifact。
 - 不修改 `config/parameters/production/current.yaml`。
 - 专项测试、`python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts` 和 `git diff --check` 通过。
 
-## 开放问题
+## 后续跟踪
 
 - 如果 recommended candidate 明显改善 transmission 且 guardrails 通过，下一步进入 `TRADING-055 Portfolio Candidate Manual Review Workflow`，仍不自动 production。
 - 如果 candidate 改善有限或 guardrails 不通过，下一步回到 signal quality，优先评估 valuation risk 或 macro liquidity proxy 升级。
-- 需要继续观察更多真实窗口；在 signal snapshot quality 仍为 `LIMITED` 时，candidate profile 不得支持 promotion。
+- `TRADING-055`、`TRADING-056` 和 `TRADING-058` 继续承接人工 review、shadow tracking 和后续 performance review；在 signal snapshot quality 仍为 `LIMITED` 时，candidate profile 不得支持 production promotion。
 
 ## 进展记录
 
@@ -85,3 +86,5 @@ Portfolio sensitivity summary 必须可读取，并应显示 `primary_bottleneck
 - 2026-05-30: 实现 TRADING-054 v0.1 并进入 `VALIDATING`。已完成 `config/portfolio/portfolio_candidate_profiles.yaml`、`ai_trading_system.trading_engine.portfolio_candidates`、`aits portfolio candidates / validate-candidates`、`aits reports portfolio-candidates`、JSON/Markdown/recommended candidate artifact、Dashboard、Reader Brief、shadow promotion supporting artifact、report registry、system flow / artifact catalog 和专项测试。
 - 2026-05-30: 真实 latest 验收完成。`aits portfolio candidates --latest` 生成 `artifacts/portfolio_candidates/2026-05-28/portfolio_candidates_summary.json/md` 和 `recommended_portfolio_candidate.yaml`，`status=LIMITED`、`data_gate=OK`、`best_profile=lower_rebalance_threshold_2pct`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`。`aits parameters shadow-backtest --latest --dry-run` 已引用 `portfolio_candidates` supporting artifact，promotion 仍 `rejected`。
 - 2026-05-30: 验证通过 `python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts` 和 `git diff --check`；`config/parameters/production/current.yaml` SHA256 前后保持 `CBF180EC0607BBB2B804CE7C388E0BF89789968B2082D1BC11F0953EE7A0D830`。
+- 2026-06-09: 从 `VALIDATING` 改回 `IN_PROGRESS`。真实 latest cache 先因 `market_data=2026-06-08` / `manifest=2026-06-05` 和 `GOOGL`、`BRK.B`、`SGOV` read-path 缺行触发 candidate data gate fail-closed；执行既有 `aits data recover-freshness --latest` 后，`validate-data` 为 `PASS_WITH_WARNINGS` / 错误数 0，`inspect-registry --latest` 和 `validate-backtest-manifest --latest` 均恢复 OK，`aits portfolio candidates --latest` 生成 `artifacts/portfolio_candidates/2026-06-08/portfolio_candidates_summary.json/md`，`status=LIMITED`、`data_gate=OK`、`best_profile=softmax_mapping`、`guardrail_status=PASS`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；`portfolio validate-candidates --latest`、`reports portfolio-candidates --latest` 和 `parameters shadow-backtest --latest --dry-run` 也通过且 promotion 仍 rejected。随后完整 `aits ops daily-run --as-of 2026-06-08` 暴露 Dashboard/Reader Brief candidate selector 按 mtime 误选较晚修改的 2026-06-05 FAILED summary，导致 2026-06-08 展示仍显示 `portfolio_candidates_status=FAILED`；下一步修复 selector 为按 artifact 日期选择不晚于 report `as_of` 的最大日期，并补回归测试。
+- 2026-06-09: 从 `IN_PROGRESS` 改为 `DONE`。Dashboard 和 Reader Brief candidate summary selector 已改为按不晚于 report `as_of` 的最大 artifact 日期选择，不再按 mtime 误选旧 artifact；补充回归测试覆盖 2026-06-05 `FAILED` artifact 的 mtime 晚于 2026-06-08 `LIMITED` artifact 时仍选择 2026-06-08。复验显示 2026-06-08 Dashboard candidate card 为 `LIMITED`、`best_profile=softmax_mapping`、`data_gate=OK`，Reader Brief 同步展示 `LIMITED` / `softmax_mapping`，shadow backtest dry-run 仍 `promotion_status=rejected`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；`config/parameters/production/current.yaml` 未修改。最终验证通过 `python -m pytest -q`（2272 passed）、`python -m ruff check scripts src tests`、`python -m compileall src scripts`、`python -m ai_trading_system.cli docs validate-freshness` 和 `git diff --check`。

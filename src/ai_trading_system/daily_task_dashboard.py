@@ -2679,7 +2679,7 @@ def _latest_portfolio_candidates_path(report: DailyTaskDashboardReport) -> Path 
             candidates.append((as_of, path))
     if not candidates:
         return None
-    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+    return max(candidates, key=lambda item: item[0])[1]
 
 
 def _portfolio_candidate_review_summary(report: DailyTaskDashboardReport) -> TraceRecord:
