@@ -1,6 +1,6 @@
 # TRADING-017：Weight Promotion Gate
 
-最后更新：2026-05-18
+最后更新：2026-06-09
 
 关联任务：`TRADING-017`
 
@@ -83,3 +83,13 @@ Candidate 级和顶层 `promotion_gate_status` 只允许：
   和 black check。
 - 2026-05-18：push 后 GitHub Actions CI run `25997552867` 已对 commit
   `a86fde5a207a6fffa3471dde46dcc664def184ce` 完成且通过。
+- 2026-06-09：从 VALIDATING 改为 DONE。原因：本轮 `aits validate-data` 为
+  `PASS_WITH_WARNINGS` / 错误数 0；默认缺输入 smoke 输出 `INSUFFICIENT_DATA`、
+  candidate_count 0、ready_for_manual_review_count 0、blocked_count 0、
+  `main_blocked_by=missing_weight_candidate_evaluation`、`production_effect=none`。
+  字段级复核确认 `market_regime=ai_after_chatgpt`、
+  `gate_mode=manual_review_only`、`production_effect=none`，安全边界不写 production
+  profile、不写 reviewed profile、不调用 IBKR / PaperBroker / real broker、不跑 replay
+  runner、不触发交易；目标 + dashboard pytest 32 passed，`tests/trading_engine`
+  939 passed，scoped safety scan 未命中敏感输出或 forbidden production promotion 语义，
+  归档前代码基线 GitHub Actions run `27179645657` success。
