@@ -4,7 +4,7 @@
 
 关联任务：`TRADING-040`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 ## 背景
 
@@ -145,3 +145,13 @@ Dashboard 只读读取 `sec_pit_evaluation_summary_*.json`，不运行 evaluatio
   `data/raw/rates_daily.csv` 含 2026-05-26 之后的数据；这属于历史 evaluation 输入可见性问题，
   不能绕过 `aits validate-data`。下一步需要使用 replay/quality-as-of 安全输入或补 CLI 的
   historical quality-as-of 路径后再归档。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`，原因：复验确认 CLI 已有合规
+  `--quality-as-of` 路径；真实命令
+  `aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --quality-as-of 2026-06-08
+  --tickers NVDA --tickers MSFT --tickers AMD --tickers AVGO --tickers GOOGL --tickers META
+  --tickers AMZN` 返回 `PASS`。输出 `data_quality_status=PASS`、`valid_rows=28968`、
+  `pit_violation_count=0`、`missing_available_time=0`、`production_effect=none`，并写出
+  summary JSON/Markdown、feature effectiveness、signal attribution、shadow candidate weights、
+  `data_quality_2026-06-08.md` 和 run.log；目标测试仍为 34 passed。runbook 和 system flow
+  已补充 historical evaluation 必须显式使用 quality-as-of，避免把完整当前 cache 误按
+  evaluation end date 校验。

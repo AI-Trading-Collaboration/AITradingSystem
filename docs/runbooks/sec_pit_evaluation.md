@@ -9,6 +9,7 @@
 aits sec-pit evaluate \
   --start 2023-01-01 \
   --end 2026-05-26 \
+  --quality-as-of 2026-06-08 \
   --feature-panel data/processed/sec_edgar/sec_pit_feature_panel.csv \
   --universe config/sec_companies.yaml \
   --benchmark QQQ \
@@ -18,11 +19,16 @@ aits sec-pit evaluate \
 可选覆盖 universe：
 
 ```bash
-aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA,MSFT,AMD,AVGO,GOOGL,META,AMZN
+aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --quality-as-of 2026-06-08 --tickers NVDA,MSFT,AMD,AVGO,GOOGL,META,AMZN
 ```
 
 `GOOGL` 会通过 `config/ticker_aliases.yaml` 解析为 SEC canonical ticker `GOOG`，前提是
 `config/sec_companies.yaml` 中存在 `GOOG`。
+
+历史 evaluation 的 `--end` 是 feature / decision evaluation window 结束日期；当当前
+market / macro cache 已包含 `--end` 之后的 outcome label 数据时，必须显式传入
+`--quality-as-of`，让 `validate_data_cache` 按实际可审计 cache 截止日执行质量门禁。不得因为
+默认 `--end` 触发 `prices_future_dates` / `rates_future_dates` 而绕过数据质量门禁。
 
 ## 必须检查
 
