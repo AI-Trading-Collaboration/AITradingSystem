@@ -2346,6 +2346,113 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_replay_diagnosis
+    title: ETF Dynamic v3 Rescue Replay Result Diagnosis
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue replay-diagnosis report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_diagnosis_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_coverage_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_pending_reason_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_artifact_health_matrix.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis/*/replay_diagnosis_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-146_to_150 diagnosis explains why historical replay remains
+      PARTIAL, PENDING, or INSUFFICIENT_DATA before any variant comparison or
+      calibration proposal is interpreted.
+    owner_action: review_replay_pending_reasons_before_backfill_repair_or_calibration
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backfill_repair
+    title: ETF Dynamic v3 Rescue Backfilled Outcome Repair
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backfill-repair report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/backfill_repair_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/repair_actions.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/repaired_outcome_windows.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/backfill_availability_delta.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backfill_repair/*/backfill_repair_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-147 repair records calendar/date alignment and price-cache lookup
+      repairs without overwriting the original backfilled outcome artifact or
+      using future prices as replay decision input.
+    owner_action: review_repair_delta_and_future_data_safety_before_variant_comparison
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_variant_comparison
+    title: ETF Dynamic v3 Rescue Variant Performance Comparison
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue variant-comparison report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_comparison_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_window_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_pairwise_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_rank_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_comparison/*/variant_comparison_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-148 comparison ranks replay variants only from available outcome
+      windows and marks insufficient samples as INSUFFICIENT_DATA.
+    owner_action: review_variant_comparison_before_any_rule_calibration_proposal
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_rule_calibration
+    title: ETF Dynamic v3 Rescue Rule Calibration Proposal
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue rule-calibration report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/rule_calibration_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/advisory_rule_diagnostics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/proposed_policy_adjustments.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/calibration_safety_checks.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_calibration/*/rule_calibration_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-149 calibration is proposal-only; it must disclose auto_apply=false,
+      owner approval requirement, and no production or broker effect.
+    owner_action: review_calibration_proposals_before_any_manual_policy_edit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_replay_forward_bridge
+    title: ETF Dynamic v3 Rescue Replay-to-Forward Bridge
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue replay-forward-bridge report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/bridge_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/forward_tracking_focus.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/weekly_review_updates.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/replay_forward_bridge_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_forward_bridge/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-150 bridges replay diagnosis and calibration proposals back to
+      forward tracking focus and weekly review questions without policy mutation.
+    owner_action: review_forward_focus_before_next_weekly_advisory_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from hashlib import sha256
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,11 @@ DEFAULT_HISTORICAL_PAPER_SIM_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "historica
 DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay_performance_review"
 )
+DEFAULT_REPLAY_DIAGNOSIS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay_diagnosis"
+DEFAULT_BACKFILL_REPAIR_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "backfill_repair"
+DEFAULT_VARIANT_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_comparison"
+DEFAULT_RULE_CALIBRATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rule_calibration"
+DEFAULT_REPLAY_FORWARD_BRIDGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay_forward_bridge"
 DEFAULT_PAPER_PORTFOLIO_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
 
 OUTCOME_MODE_HISTORICAL_REPLAY = "HISTORICAL_REPLAY"
@@ -70,6 +76,20 @@ REPLAY_VARIANTS = (
 SIM_VARIANTS = ("no_trade_baseline", *REPLAY_VARIANTS[1:])
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
+PENDING_REASON_ACTIONS = {
+    "future_window_not_reached": "wait_or_use_older_replay_events",
+    "missing_price_data": "repair_price_cache_or_keep_insufficient_data",
+    "missing_target_weights": "extend_pit_safe_source_artifacts",
+    "pit_unsafe": "exclude_from_replay_or_collect_pit_safe_source",
+    "insufficient_replay_events": "extend_replay_inventory",
+    "no_available_outcome_windows": "wait_or_replay_older_events",
+    "paper_sim_insufficient_data": "review_replay_event_coverage",
+    "review_waiting_for_backfill": "complete_backfill_before_review",
+    "unknown": "manual_investigation_required",
+}
+# Pilot baseline from docs/requirements/TRADING-146_to_150_*.md; it only sizes
+# forward confirmation watchlists and does not authorize policy or broker action.
+FORWARD_CONFIRMATION_REQUIRED_EVENTS = 10
 
 
 class DynamicV3HistoricalReplayError(ValueError):
@@ -909,6 +929,957 @@ def validate_replay_performance_review_artifact(
     )
 
 
+def run_replay_diagnosis(
+    *,
+    inventory_id: str,
+    replay_id: str,
+    backfill_id: str,
+    sim_id: str,
+    review_id: str,
+    inventory_dir: Path = DEFAULT_REPLAY_INVENTORY_DIR,
+    replay_dir: Path = DEFAULT_HISTORICAL_REPLAY_DIR,
+    backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    sim_dir: Path = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+    review_dir: Path = DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+    output_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_inventory_dir = inventory_dir / inventory_id
+    source_replay_dir = replay_dir / replay_id
+    source_backfill_dir = backfill_dir / backfill_id
+    source_sim_dir = sim_dir / sim_id
+    source_review_dir = review_dir / review_id
+
+    inventory_manifest = _read_json(source_inventory_dir / "replay_inventory_manifest.json")
+    inventory_rows = _read_jsonl(source_inventory_dir / "replay_artifact_inventory.jsonl")
+    inventory_coverage = (
+        _read_optional_json(source_inventory_dir / "replay_coverage_summary.json") or {}
+    )
+    replay_manifest = _read_json(source_replay_dir / "historical_replay_manifest.json")
+    replay_events = _read_jsonl(source_replay_dir / "replay_events.jsonl")
+    replay_summary = _read_optional_json(source_replay_dir / "replay_action_summary.json") or {}
+    backfill_manifest = _read_json(source_backfill_dir / "backfill_manifest.json")
+    outcome_rows = _read_jsonl(source_backfill_dir / "replay_outcome_windows.jsonl")
+    sim_manifest = _read_json(source_sim_dir / "historical_paper_sim_manifest.json")
+    sim_state_history = _read_jsonl(source_sim_dir / "simulated_paper_state_history.jsonl")
+    sim_summary = _read_optional_json(source_sim_dir / "simulated_performance_summary.json") or {}
+    review_manifest = _read_json(source_review_dir / "replay_performance_manifest.json")
+    calibration = _read_optional_json(source_review_dir / "calibration_recommendations.json") or {}
+
+    pending_reasons = _replay_pending_reason_summary(
+        inventory_rows=inventory_rows,
+        replay_summary=replay_summary,
+        backfill_manifest=backfill_manifest,
+        outcome_rows=outcome_rows,
+        sim_summary=sim_summary,
+        review_manifest=review_manifest,
+    )
+    blocking_reasons = [
+        row["reason"] for row in pending_reasons["pending_reasons"] if row.get("blocking")
+    ]
+    coverage = _replay_diagnosis_coverage_breakdown(
+        inventory_manifest=inventory_manifest,
+        inventory_coverage=inventory_coverage,
+        replay_manifest=replay_manifest,
+        replay_summary=replay_summary,
+        backfill_manifest=backfill_manifest,
+        sim_manifest=sim_manifest,
+        sim_summary=sim_summary,
+        sim_event_count=len(sim_state_history),
+        review_manifest=review_manifest,
+        calibration=calibration,
+    )
+    artifact_health = [
+        _artifact_health_row(
+            "replay_inventory",
+            inventory_id,
+            source_inventory_dir / "replay_inventory_manifest.json",
+            inventory_manifest,
+            len(inventory_rows),
+        ),
+        _artifact_health_row(
+            "historical_replay",
+            replay_id,
+            source_replay_dir / "historical_replay_manifest.json",
+            replay_manifest,
+            len(replay_events),
+        ),
+        _artifact_health_row(
+            "backfilled_outcome",
+            backfill_id,
+            source_backfill_dir / "backfill_manifest.json",
+            backfill_manifest,
+            len(outcome_rows),
+        ),
+        _artifact_health_row(
+            "historical_paper_sim",
+            sim_id,
+            source_sim_dir / "historical_paper_sim_manifest.json",
+            sim_manifest,
+            len(sim_state_history),
+        ),
+        _artifact_health_row(
+            "replay_performance_review",
+            review_id,
+            source_review_dir / "replay_performance_manifest.json",
+            review_manifest,
+            len(_records(calibration.get("recommendations"))),
+        ),
+    ]
+    status = "PASS" if not blocking_reasons else "PASS_WITH_WARNINGS"
+    if not inventory_rows and not replay_events and not outcome_rows:
+        status = "INSUFFICIENT_DATA"
+    diagnosis_id = _stable_id(
+        "replay-diagnosis",
+        inventory_id,
+        replay_id,
+        backfill_id,
+        sim_id,
+        review_id,
+        generated.isoformat(),
+    )
+    diagnosis_dir = _unique_dir(output_dir / diagnosis_id)
+    diagnosis_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_replay_diagnosis_manifest",
+        "diagnosis_id": diagnosis_dir.name,
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "inventory_id": inventory_id,
+        "replay_id": replay_id,
+        "backfill_id": backfill_id,
+        "sim_id": sim_id,
+        "review_id": review_id,
+        "blocking_pending_reasons": blocking_reasons,
+        "can_enter_variant_comparison": coverage["backfill"]["available_windows"] > 0,
+        "source_inventory_path": str(source_inventory_dir / "replay_inventory_manifest.json"),
+        "source_replay_path": str(source_replay_dir / "historical_replay_manifest.json"),
+        "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
+        "source_sim_path": str(source_sim_dir / "historical_paper_sim_manifest.json"),
+        "source_review_path": str(source_review_dir / "replay_performance_manifest.json"),
+        "replay_diagnosis_manifest_path": str(diagnosis_dir / "replay_diagnosis_manifest.json"),
+        "replay_coverage_breakdown_path": str(diagnosis_dir / "replay_coverage_breakdown.json"),
+        "replay_pending_reason_summary_path": str(
+            diagnosis_dir / "replay_pending_reason_summary.json"
+        ),
+        "replay_artifact_health_matrix_path": str(
+            diagnosis_dir / "replay_artifact_health_matrix.jsonl"
+        ),
+        "replay_diagnosis_report_path": str(diagnosis_dir / "replay_diagnosis_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(diagnosis_dir / "replay_diagnosis_manifest.json", manifest)
+    _write_json(diagnosis_dir / "replay_coverage_breakdown.json", coverage)
+    _write_json(diagnosis_dir / "replay_pending_reason_summary.json", pending_reasons)
+    _write_jsonl(diagnosis_dir / "replay_artifact_health_matrix.jsonl", artifact_health)
+    _write_text(
+        diagnosis_dir / "replay_diagnosis_report.md",
+        render_replay_diagnosis_report(manifest, coverage, pending_reasons, artifact_health),
+    )
+    _update_latest_pointer(
+        "latest_replay_diagnosis",
+        diagnosis_dir.name,
+        diagnosis_dir / "replay_diagnosis_manifest.json",
+    )
+    return {
+        "diagnosis_id": diagnosis_dir.name,
+        "diagnosis_dir": diagnosis_dir,
+        "manifest": manifest,
+        "coverage_breakdown": coverage,
+        "pending_reason_summary": pending_reasons,
+        "artifact_health_matrix": artifact_health,
+    }
+
+
+def replay_diagnosis_report_payload(
+    *,
+    diagnosis_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+) -> dict[str, Any]:
+    diagnosis_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=diagnosis_id if not latest else None,
+        pointer_name="latest_replay_diagnosis",
+    )
+    return {
+        **_read_json(diagnosis_dir / "replay_diagnosis_manifest.json"),
+        "replay_coverage_breakdown": _read_json(diagnosis_dir / "replay_coverage_breakdown.json"),
+        "replay_pending_reason_summary": _read_json(
+            diagnosis_dir / "replay_pending_reason_summary.json"
+        ),
+        "replay_artifact_health_matrix": _read_jsonl(
+            diagnosis_dir / "replay_artifact_health_matrix.jsonl"
+        ),
+        "diagnosis_dir": str(diagnosis_dir),
+    }
+
+
+def validate_replay_diagnosis_artifact(
+    *,
+    diagnosis_id: str,
+    output_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+) -> dict[str, Any]:
+    diagnosis_dir = output_dir / diagnosis_id
+    manifest = _read_optional_json(diagnosis_dir / "replay_diagnosis_manifest.json") or {}
+    reasons = _read_optional_json(diagnosis_dir / "replay_pending_reason_summary.json") or {}
+    health = _read_jsonl(diagnosis_dir / "replay_artifact_health_matrix.jsonl")
+    valid_reasons = set(PENDING_REASON_ACTIONS)
+    checks = [
+        _check("manifest_exists", (diagnosis_dir / "replay_diagnosis_manifest.json").exists(), ""),
+        _check(
+            "coverage_breakdown_exists",
+            (diagnosis_dir / "replay_coverage_breakdown.json").exists(),
+            "",
+        ),
+        _check(
+            "pending_reason_summary_exists",
+            (diagnosis_dir / "replay_pending_reason_summary.json").exists(),
+            "",
+        ),
+        _check(
+            "artifact_health_matrix_exists",
+            (diagnosis_dir / "replay_artifact_health_matrix.jsonl").exists(),
+            "",
+        ),
+        _check("report_exists", (diagnosis_dir / "replay_diagnosis_report.md").exists(), ""),
+        _check("diagnosis_id_matches", manifest.get("diagnosis_id") == diagnosis_id, diagnosis_id),
+        _check(
+            "pending_reasons_known",
+            all(
+                row.get("reason") in valid_reasons
+                for row in _records(reasons.get("pending_reasons"))
+            ),
+            "known pending reasons",
+        ),
+        _check(
+            "artifact_health_has_sources",
+            all(row.get("exists") is True and row.get("artifact_id") for row in health),
+            "source artifacts",
+        ),
+        _check(
+            "production_mutation_forbidden",
+            manifest.get("production_candidate_generated") is False
+            and manifest.get("automatic_candidate_promotion") is False
+            and manifest.get("official_target_weights_mutated") is False
+            and manifest.get("baseline_config_mutated") is False,
+            "no production mutation",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_replay_diagnosis_validation",
+        artifact_id_key="diagnosis_id",
+        artifact_id=diagnosis_id,
+        checks=checks,
+    )
+
+
+def run_backfill_repair(
+    *,
+    backfill_id: str,
+    diagnosis_id: str,
+    backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    diagnosis_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    replay_dir: Path = DEFAULT_HISTORICAL_REPLAY_DIR,
+    output_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    enforce_data_quality_gate: bool = True,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_backfill_dir = backfill_dir / backfill_id
+    source_diagnosis_dir = diagnosis_dir / diagnosis_id
+    backfill_manifest = _read_json(source_backfill_dir / "backfill_manifest.json")
+    diagnosis_manifest = _read_json(source_diagnosis_dir / "replay_diagnosis_manifest.json")
+    original_rows = _read_jsonl(source_backfill_dir / "replay_outcome_windows.jsonl")
+    replay_id = _text(backfill_manifest.get("replay_id"))
+    source_replay_dir = replay_dir / replay_id
+    replay_events = _read_jsonl(source_replay_dir / "replay_events.jsonl")
+
+    repair_id = _stable_id("backfill-repair", backfill_id, diagnosis_id, generated.isoformat())
+    repair_dir = _unique_dir(output_dir / repair_id)
+    repair_dir.mkdir(parents=True, exist_ok=False)
+    quality_status = "SKIPPED_EXPLICIT_TEST_FIXTURE"
+    quality_report_path = ""
+    if enforce_data_quality_gate:
+        quality_report = repair_dir / "validate_data_quality_report.md"
+        quality = _run_cached_data_quality_gate(
+            as_of=generated.date(),
+            prices_path=prices_path,
+            rates_path=rates_path,
+            report_path=quality_report,
+        )
+        quality_status = quality.status
+        quality_report_path = str(quality_report)
+        if not quality.passed:
+            raise DynamicV3HistoricalReplayError(
+                f"backfill repair data quality gate failed: {quality.status}"
+            )
+    prices = _load_prices_for_replay(prices_path, replay_events)
+    price_dates = _available_price_dates(prices)
+    event_map = {_text(event.get("replay_event_id")): event for event in replay_events}
+    repaired_rows, actions = _repair_outcome_rows(
+        original_rows=original_rows,
+        event_map=event_map,
+        prices=prices,
+        price_dates=price_dates,
+        generated_date=generated.date(),
+    )
+    before = _availability_counts(original_rows)
+    after = _availability_counts(repaired_rows)
+    repaired_count = sum(
+        1
+        for action in actions
+        if action.get("original_status") != action.get("new_status")
+        and action.get("new_status") == "AVAILABLE"
+    )
+    delta = {
+        "before": before,
+        "after": after,
+        "repaired_count": repaired_count,
+        "still_pending_count": after["pending"],
+        "still_insufficient_count": after["insufficient_data"],
+    }
+    status = "PASS" if repaired_count else "PASS_WITH_WARNINGS"
+    if not repaired_rows or after["available"] == 0:
+        status = "INSUFFICIENT_DATA" if not after["pending"] else "PENDING"
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_backfill_repair_manifest",
+        "repair_id": repair_dir.name,
+        "backfill_id": backfill_id,
+        "diagnosis_id": diagnosis_id,
+        "replay_id": replay_id,
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "data_quality_status": quality_status,
+        "data_quality_report_path": quality_report_path,
+        "future_data_used_in_decision": False,
+        "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
+        "source_diagnosis_path": str(source_diagnosis_dir / "replay_diagnosis_manifest.json"),
+        "source_replay_path": str(source_replay_dir / "historical_replay_manifest.json"),
+        "backfill_repair_manifest_path": str(repair_dir / "backfill_repair_manifest.json"),
+        "repair_actions_path": str(repair_dir / "repair_actions.jsonl"),
+        "repaired_outcome_windows_path": str(repair_dir / "repaired_outcome_windows.jsonl"),
+        "backfill_availability_delta_path": str(repair_dir / "backfill_availability_delta.json"),
+        "backfill_repair_report_path": str(repair_dir / "backfill_repair_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(repair_dir / "backfill_repair_manifest.json", manifest)
+    _write_jsonl(repair_dir / "repair_actions.jsonl", actions)
+    _write_jsonl(repair_dir / "repaired_outcome_windows.jsonl", repaired_rows)
+    _write_json(repair_dir / "backfill_availability_delta.json", delta)
+    _write_text(
+        repair_dir / "backfill_repair_report.md",
+        render_backfill_repair_report(manifest, delta, actions),
+    )
+    _update_latest_pointer(
+        "latest_backfill_repair",
+        repair_dir.name,
+        repair_dir / "backfill_repair_manifest.json",
+    )
+    return {
+        "repair_id": repair_dir.name,
+        "repair_dir": repair_dir,
+        "manifest": manifest,
+        "repair_actions": actions,
+        "repaired_outcome_windows": repaired_rows,
+        "backfill_availability_delta": delta,
+        "diagnosis_manifest": diagnosis_manifest,
+    }
+
+
+def backfill_repair_report_payload(
+    *,
+    repair_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> dict[str, Any]:
+    repair_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=repair_id if not latest else None,
+        pointer_name="latest_backfill_repair",
+    )
+    return {
+        **_read_json(repair_dir / "backfill_repair_manifest.json"),
+        "repair_actions": _read_jsonl(repair_dir / "repair_actions.jsonl"),
+        "repaired_outcome_windows": _read_jsonl(repair_dir / "repaired_outcome_windows.jsonl"),
+        "backfill_availability_delta": _read_json(repair_dir / "backfill_availability_delta.json"),
+        "repair_dir": str(repair_dir),
+    }
+
+
+def validate_backfill_repair_artifact(
+    *,
+    repair_id: str,
+    output_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> dict[str, Any]:
+    repair_dir = output_dir / repair_id
+    manifest = _read_optional_json(repair_dir / "backfill_repair_manifest.json") or {}
+    actions = _read_jsonl(repair_dir / "repair_actions.jsonl")
+    rows = _read_jsonl(repair_dir / "repaired_outcome_windows.jsonl")
+    checks = [
+        _check("manifest_exists", (repair_dir / "backfill_repair_manifest.json").exists(), ""),
+        _check("repair_actions_exists", (repair_dir / "repair_actions.jsonl").exists(), ""),
+        _check(
+            "repaired_windows_exists",
+            (repair_dir / "repaired_outcome_windows.jsonl").exists(),
+            "",
+        ),
+        _check(
+            "availability_delta_exists",
+            (repair_dir / "backfill_availability_delta.json").exists(),
+            "",
+        ),
+        _check("report_exists", (repair_dir / "backfill_repair_report.md").exists(), ""),
+        _check("repair_id_matches", manifest.get("repair_id") == repair_id, repair_id),
+        _check(
+            "window_status_valid",
+            all(row.get("outcome_status") in OUTCOME_STATUSES for row in rows),
+            "outcome status",
+        ),
+        _check(
+            "no_future_data_used_in_decision",
+            manifest.get("future_data_used_in_decision") is False
+            and all(action.get("future_data_used_in_decision") is False for action in actions),
+            "future data must not enter replay decision input",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_backfill_repair_validation",
+        artifact_id_key="repair_id",
+        artifact_id=repair_id,
+        checks=checks,
+    )
+
+
+def run_variant_comparison(
+    *,
+    backfill_id: str,
+    repair_id: str | None = None,
+    backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    repair_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+    output_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_backfill_dir = backfill_dir / backfill_id
+    backfill_manifest = _read_json(source_backfill_dir / "backfill_manifest.json")
+    source_repair_dir = repair_dir / repair_id if repair_id else None
+    repair_manifest = (
+        _read_json(source_repair_dir / "backfill_repair_manifest.json")
+        if source_repair_dir is not None
+        else {}
+    )
+    rows = (
+        _read_jsonl(source_repair_dir / "repaired_outcome_windows.jsonl")
+        if source_repair_dir is not None
+        else _read_jsonl(source_backfill_dir / "replay_outcome_windows.jsonl")
+    )
+    metrics = _variant_window_metrics(rows)
+    pairwise = _variant_pairwise_comparison(rows)
+    ranking = _variant_rank_summary(metrics)
+    comparison_id = _stable_id(
+        "variant-comparison",
+        backfill_id,
+        repair_id or "source-backfill",
+        generated.isoformat(),
+    )
+    comparison_dir = _unique_dir(output_dir / comparison_id)
+    comparison_dir.mkdir(parents=True, exist_ok=False)
+    status = (
+        "PASS"
+        if ranking["recommendation_confidence"] != "INSUFFICIENT_DATA"
+        else "INSUFFICIENT_DATA"
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_variant_comparison_manifest",
+        "comparison_id": comparison_dir.name,
+        "backfill_id": backfill_id,
+        "repair_id": repair_id or "",
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "best_variant": ranking["best_variant"],
+        "recommendation_confidence": ranking["recommendation_confidence"],
+        "source_backfill_path": str(source_backfill_dir / "backfill_manifest.json"),
+        "source_repair_path": (
+            ""
+            if source_repair_dir is None
+            else str(source_repair_dir / "backfill_repair_manifest.json")
+        ),
+        "variant_comparison_manifest_path": str(
+            comparison_dir / "variant_comparison_manifest.json"
+        ),
+        "variant_window_metrics_path": str(comparison_dir / "variant_window_metrics.jsonl"),
+        "variant_pairwise_comparison_path": str(
+            comparison_dir / "variant_pairwise_comparison.json"
+        ),
+        "variant_rank_summary_path": str(comparison_dir / "variant_rank_summary.json"),
+        "variant_comparison_report_path": str(comparison_dir / "variant_comparison_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(comparison_dir / "variant_comparison_manifest.json", manifest)
+    _write_jsonl(comparison_dir / "variant_window_metrics.jsonl", metrics)
+    _write_json(comparison_dir / "variant_pairwise_comparison.json", pairwise)
+    _write_json(comparison_dir / "variant_rank_summary.json", ranking)
+    _write_text(
+        comparison_dir / "variant_comparison_report.md",
+        render_variant_comparison_report(manifest, metrics, pairwise, ranking),
+    )
+    _update_latest_pointer(
+        "latest_variant_comparison",
+        comparison_dir.name,
+        comparison_dir / "variant_comparison_manifest.json",
+    )
+    return {
+        "comparison_id": comparison_dir.name,
+        "comparison_dir": comparison_dir,
+        "manifest": manifest,
+        "variant_window_metrics": metrics,
+        "variant_pairwise_comparison": pairwise,
+        "variant_rank_summary": ranking,
+        "backfill_manifest": backfill_manifest,
+        "repair_manifest": repair_manifest,
+    }
+
+
+def variant_comparison_report_payload(
+    *,
+    comparison_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
+) -> dict[str, Any]:
+    comparison_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=comparison_id if not latest else None,
+        pointer_name="latest_variant_comparison",
+    )
+    return {
+        **_read_json(comparison_dir / "variant_comparison_manifest.json"),
+        "variant_window_metrics": _read_jsonl(comparison_dir / "variant_window_metrics.jsonl"),
+        "variant_pairwise_comparison": _read_json(
+            comparison_dir / "variant_pairwise_comparison.json"
+        ),
+        "variant_rank_summary": _read_json(comparison_dir / "variant_rank_summary.json"),
+        "comparison_dir": str(comparison_dir),
+    }
+
+
+def validate_variant_comparison_artifact(
+    *,
+    comparison_id: str,
+    output_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
+) -> dict[str, Any]:
+    comparison_dir = output_dir / comparison_id
+    manifest = _read_optional_json(comparison_dir / "variant_comparison_manifest.json") or {}
+    metrics = _read_jsonl(comparison_dir / "variant_window_metrics.jsonl")
+    ranking = _read_optional_json(comparison_dir / "variant_rank_summary.json") or {}
+    checks = [
+        _check(
+            "manifest_exists", (comparison_dir / "variant_comparison_manifest.json").exists(), ""
+        ),
+        _check("metrics_exists", (comparison_dir / "variant_window_metrics.jsonl").exists(), ""),
+        _check(
+            "pairwise_exists",
+            (comparison_dir / "variant_pairwise_comparison.json").exists(),
+            "",
+        ),
+        _check("ranking_exists", (comparison_dir / "variant_rank_summary.json").exists(), ""),
+        _check("report_exists", (comparison_dir / "variant_comparison_report.md").exists(), ""),
+        _check(
+            "comparison_id_matches",
+            manifest.get("comparison_id") == comparison_id,
+            comparison_id,
+        ),
+        _check(
+            "known_variants_present",
+            {row.get("variant") for row in metrics}.issubset(set(REPLAY_VARIANTS)),
+            "known replay variants",
+        ),
+        _check(
+            "insufficient_data_marked",
+            bool(ranking.get("ranking"))
+            or ranking.get("recommendation_confidence") == "INSUFFICIENT_DATA",
+            "empty ranking must be insufficient data",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_variant_comparison_validation",
+        artifact_id_key="comparison_id",
+        artifact_id=comparison_id,
+        checks=checks,
+    )
+
+
+def run_rule_calibration(
+    *,
+    comparison_id: str,
+    comparison_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
+    output_dir: Path = DEFAULT_RULE_CALIBRATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_comparison_dir = comparison_dir / comparison_id
+    comparison_manifest = _read_json(source_comparison_dir / "variant_comparison_manifest.json")
+    ranking = _read_json(source_comparison_dir / "variant_rank_summary.json")
+    metrics = _read_jsonl(source_comparison_dir / "variant_window_metrics.jsonl")
+    diagnostics = _advisory_rule_diagnostics_from_comparison(comparison_manifest, ranking, metrics)
+    proposals = _policy_adjustment_proposals_from_diagnostics(
+        comparison_manifest,
+        ranking,
+        diagnostics,
+    )
+    safety = {
+        "auto_apply": False,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "owner_approval_required": True,
+        "sufficient_sample_size": ranking.get("recommendation_confidence") != "INSUFFICIENT_DATA",
+        "requires_forward_confirmation": True,
+    }
+    calibration_id = _stable_id("rule-calibration", comparison_id, generated.isoformat())
+    calibration_dir = _unique_dir(output_dir / calibration_id)
+    calibration_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rule_calibration_manifest",
+        "calibration_id": calibration_dir.name,
+        "comparison_id": comparison_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "proposal_count": len(proposals["proposals"]),
+        "auto_apply": False,
+        "owner_approval_required": True,
+        "source_comparison_path": str(source_comparison_dir / "variant_comparison_manifest.json"),
+        "rule_calibration_manifest_path": str(calibration_dir / "rule_calibration_manifest.json"),
+        "advisory_rule_diagnostics_path": str(calibration_dir / "advisory_rule_diagnostics.json"),
+        "proposed_policy_adjustments_path": str(
+            calibration_dir / "proposed_policy_adjustments.json"
+        ),
+        "calibration_safety_checks_path": str(calibration_dir / "calibration_safety_checks.json"),
+        "rule_calibration_report_path": str(calibration_dir / "rule_calibration_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(calibration_dir / "rule_calibration_manifest.json", manifest)
+    _write_json(calibration_dir / "advisory_rule_diagnostics.json", diagnostics)
+    _write_json(calibration_dir / "proposed_policy_adjustments.json", proposals)
+    _write_json(calibration_dir / "calibration_safety_checks.json", safety)
+    _write_text(
+        calibration_dir / "rule_calibration_report.md",
+        render_rule_calibration_report(manifest, diagnostics, proposals, safety),
+    )
+    _update_latest_pointer(
+        "latest_rule_calibration",
+        calibration_dir.name,
+        calibration_dir / "rule_calibration_manifest.json",
+    )
+    return {
+        "calibration_id": calibration_dir.name,
+        "calibration_dir": calibration_dir,
+        "manifest": manifest,
+        "advisory_rule_diagnostics": diagnostics,
+        "proposed_policy_adjustments": proposals,
+        "calibration_safety_checks": safety,
+    }
+
+
+def rule_calibration_report_payload(
+    *,
+    calibration_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RULE_CALIBRATION_DIR,
+) -> dict[str, Any]:
+    calibration_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=calibration_id if not latest else None,
+        pointer_name="latest_rule_calibration",
+    )
+    return {
+        **_read_json(calibration_dir / "rule_calibration_manifest.json"),
+        "advisory_rule_diagnostics": _read_json(calibration_dir / "advisory_rule_diagnostics.json"),
+        "proposed_policy_adjustments": _read_json(
+            calibration_dir / "proposed_policy_adjustments.json"
+        ),
+        "calibration_safety_checks": _read_json(calibration_dir / "calibration_safety_checks.json"),
+        "calibration_dir": str(calibration_dir),
+    }
+
+
+def validate_rule_calibration_artifact(
+    *,
+    calibration_id: str,
+    output_dir: Path = DEFAULT_RULE_CALIBRATION_DIR,
+) -> dict[str, Any]:
+    calibration_dir = output_dir / calibration_id
+    manifest = _read_optional_json(calibration_dir / "rule_calibration_manifest.json") or {}
+    proposals = _read_optional_json(calibration_dir / "proposed_policy_adjustments.json") or {}
+    safety = _read_optional_json(calibration_dir / "calibration_safety_checks.json") or {}
+    checks = [
+        _check(
+            "manifest_exists", (calibration_dir / "rule_calibration_manifest.json").exists(), ""
+        ),
+        _check(
+            "diagnostics_exists",
+            (calibration_dir / "advisory_rule_diagnostics.json").exists(),
+            "",
+        ),
+        _check(
+            "proposals_exists",
+            (calibration_dir / "proposed_policy_adjustments.json").exists(),
+            "",
+        ),
+        _check(
+            "safety_checks_exists",
+            (calibration_dir / "calibration_safety_checks.json").exists(),
+            "",
+        ),
+        _check("report_exists", (calibration_dir / "rule_calibration_report.md").exists(), ""),
+        _check(
+            "calibration_id_matches",
+            manifest.get("calibration_id") == calibration_id,
+            calibration_id,
+        ),
+        _check(
+            "proposals_are_manual_only",
+            all(
+                row.get("auto_apply") is False and row.get("requires_owner_approval") is True
+                for row in _records(proposals.get("proposals"))
+            ),
+            "manual-only proposals",
+        ),
+        _check(
+            "safety_blocks_auto_apply",
+            safety.get("auto_apply") is False
+            and safety.get("broker_action_allowed") is False
+            and safety.get("owner_approval_required") is True,
+            "auto apply disabled",
+        ),
+        _check(
+            "production_mutation_forbidden",
+            manifest.get("production_candidate_generated") is False
+            and manifest.get("automatic_candidate_promotion") is False
+            and manifest.get("official_target_weights_mutated") is False
+            and manifest.get("baseline_config_mutated") is False,
+            "no production mutation",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_rule_calibration_validation",
+        artifact_id_key="calibration_id",
+        artifact_id=calibration_id,
+        checks=checks,
+    )
+
+
+def run_replay_forward_bridge(
+    *,
+    diagnosis_id: str,
+    comparison_id: str,
+    calibration_id: str,
+    diagnosis_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    comparison_dir: Path = DEFAULT_VARIANT_COMPARISON_DIR,
+    calibration_dir: Path = DEFAULT_RULE_CALIBRATION_DIR,
+    output_dir: Path = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_diagnosis_dir = diagnosis_dir / diagnosis_id
+    source_comparison_dir = comparison_dir / comparison_id
+    source_calibration_dir = calibration_dir / calibration_id
+    diagnosis_manifest = _read_json(source_diagnosis_dir / "replay_diagnosis_manifest.json")
+    pending_reasons = _read_json(source_diagnosis_dir / "replay_pending_reason_summary.json")
+    comparison_manifest = _read_json(source_comparison_dir / "variant_comparison_manifest.json")
+    ranking = _read_json(source_comparison_dir / "variant_rank_summary.json")
+    calibration_manifest = _read_json(source_calibration_dir / "rule_calibration_manifest.json")
+    proposals = _read_json(source_calibration_dir / "proposed_policy_adjustments.json")
+
+    focus = _forward_tracking_focus_from_replay(
+        diagnosis_manifest=diagnosis_manifest,
+        pending_reasons=pending_reasons,
+        comparison_manifest=comparison_manifest,
+        ranking=ranking,
+        proposals=proposals,
+    )
+    weekly_updates = _weekly_review_updates_from_focus(focus)
+    bridge_id = _stable_id(
+        "replay-forward-bridge",
+        diagnosis_id,
+        comparison_id,
+        calibration_id,
+        generated.isoformat(),
+    )
+    bridge_dir = _unique_dir(output_dir / bridge_id)
+    bridge_dir.mkdir(parents=True, exist_ok=False)
+    next_action = focus["next_actions"][0] if focus["next_actions"] else "continue_forward_tracking"
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_replay_forward_bridge_manifest",
+        "bridge_id": bridge_dir.name,
+        "diagnosis_id": diagnosis_id,
+        "comparison_id": comparison_id,
+        "calibration_id": calibration_id,
+        "generated_at": generated.isoformat(),
+        "status": focus["forward_tracking_status"],
+        "historical_replay_status": diagnosis_manifest.get("status", "MISSING"),
+        "best_variant": comparison_manifest.get("best_variant", "MISSING"),
+        "calibration_confidence": comparison_manifest.get(
+            "recommendation_confidence",
+            "INSUFFICIENT_DATA",
+        ),
+        "next_action": next_action,
+        "source_diagnosis_path": str(source_diagnosis_dir / "replay_diagnosis_manifest.json"),
+        "source_comparison_path": str(source_comparison_dir / "variant_comparison_manifest.json"),
+        "source_calibration_path": str(source_calibration_dir / "rule_calibration_manifest.json"),
+        "bridge_manifest_path": str(bridge_dir / "bridge_manifest.json"),
+        "forward_tracking_focus_path": str(bridge_dir / "forward_tracking_focus.json"),
+        "weekly_review_updates_path": str(bridge_dir / "weekly_review_updates.json"),
+        "replay_forward_bridge_report_path": str(bridge_dir / "replay_forward_bridge_report.md"),
+        "reader_brief_section_path": str(bridge_dir / "reader_brief_section.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(bridge_dir / "bridge_manifest.json", manifest)
+    _write_json(bridge_dir / "forward_tracking_focus.json", focus)
+    _write_json(bridge_dir / "weekly_review_updates.json", weekly_updates)
+    _write_text(
+        bridge_dir / "replay_forward_bridge_report.md",
+        render_replay_forward_bridge_report(manifest, focus, weekly_updates, proposals),
+    )
+    _write_text(
+        bridge_dir / "reader_brief_section.md",
+        render_replay_forward_bridge_reader_brief(manifest, focus),
+    )
+    _update_latest_pointer(
+        "latest_replay_forward_bridge",
+        bridge_dir.name,
+        bridge_dir / "bridge_manifest.json",
+    )
+    return {
+        "bridge_id": bridge_dir.name,
+        "bridge_dir": bridge_dir,
+        "manifest": manifest,
+        "forward_tracking_focus": focus,
+        "weekly_review_updates": weekly_updates,
+        "calibration_manifest": calibration_manifest,
+    }
+
+
+def replay_forward_bridge_report_payload(
+    *,
+    bridge_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+) -> dict[str, Any]:
+    bridge_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=bridge_id if not latest else None,
+        pointer_name="latest_replay_forward_bridge",
+    )
+    return {
+        **_read_json(bridge_dir / "bridge_manifest.json"),
+        "forward_tracking_focus": _read_json(bridge_dir / "forward_tracking_focus.json"),
+        "weekly_review_updates": _read_json(bridge_dir / "weekly_review_updates.json"),
+        "bridge_dir": str(bridge_dir),
+    }
+
+
+def validate_replay_forward_bridge_artifact(
+    *,
+    bridge_id: str,
+    output_dir: Path = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+) -> dict[str, Any]:
+    bridge_dir = output_dir / bridge_id
+    manifest = _read_optional_json(bridge_dir / "bridge_manifest.json") or {}
+    focus = _read_optional_json(bridge_dir / "forward_tracking_focus.json") or {}
+    checks = [
+        _check("manifest_exists", (bridge_dir / "bridge_manifest.json").exists(), ""),
+        _check("focus_exists", (bridge_dir / "forward_tracking_focus.json").exists(), ""),
+        _check("weekly_updates_exists", (bridge_dir / "weekly_review_updates.json").exists(), ""),
+        _check("report_exists", (bridge_dir / "replay_forward_bridge_report.md").exists(), ""),
+        _check("reader_brief_exists", (bridge_dir / "reader_brief_section.md").exists(), ""),
+        _check("bridge_id_matches", manifest.get("bridge_id") == bridge_id, bridge_id),
+        _check(
+            "focus_items_present",
+            bool(_records(focus.get("focus_items"))),
+            "forward focus items",
+        ),
+        _check(
+            "no_auto_policy_or_broker",
+            manifest.get("production_candidate_generated") is False
+            and manifest.get("automatic_candidate_promotion") is False
+            and manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "bridge is observation-only",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_replay_forward_bridge_validation",
+        artifact_id_key="bridge_id",
+        artifact_id=bridge_id,
+        checks=checks,
+    )
+
+
 def render_replay_inventory_report(
     manifest: Mapping[str, Any],
     audit: Mapping[str, Any],
@@ -1088,6 +2059,861 @@ def render_replay_performance_reader_brief(
             "",
         ]
     )
+
+
+def render_replay_diagnosis_report(
+    manifest: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    pending_reasons: Mapping[str, Any],
+    artifact_health: Sequence[Mapping[str, Any]],
+) -> str:
+    inventory = _mapping(coverage.get("inventory"))
+    replay = _mapping(coverage.get("replay"))
+    backfill = _mapping(coverage.get("backfill"))
+    review = _mapping(coverage.get("review"))
+    reasons = _records(pending_reasons.get("pending_reasons"))
+    top_reasons = ", ".join(f"{row.get('reason')}={row.get('count')}" for row in reasons[:5])
+    return "\n".join(
+        [
+            f"# Replay Coverage Diagnosis {manifest.get('diagnosis_id')}",
+            "",
+            "## 结论",
+            "",
+            f"- diagnosis_status：{manifest.get('status')}",
+            f"- can_enter_variant_comparison：{manifest.get('can_enter_variant_comparison')}",
+            f"- top_pending_reasons：{top_reasons or 'MISSING'}",
+            "",
+            "## 覆盖率",
+            "",
+            f"- inventory_events：{inventory.get('total_events')}",
+            f"- PIT_SAFE / PIT_WARNING / PIT_UNSAFE："
+            f"{inventory.get('pit_safe')} / {inventory.get('pit_warning')} / "
+            f"{inventory.get('pit_unsafe')}",
+            f"- replayed_events / skipped_events："
+            f"{replay.get('replayed_events')} / {replay.get('skipped_events')}",
+            f"- AVAILABLE / PENDING / INSUFFICIENT_DATA："
+            f"{backfill.get('available_windows')} / {backfill.get('pending_windows')} / "
+            f"{backfill.get('insufficient_data_windows')}",
+            f"- review_status：{review.get('review_status')}",
+            "",
+            "## Artifact Health",
+            "",
+            *[
+                f"- {row.get('artifact_type')} {row.get('artifact_id')}: "
+                f"exists={row.get('exists')}; status={row.get('status')}; "
+                f"records={row.get('record_count')}"
+                for row in artifact_health
+            ],
+            "",
+            "## 判断",
+            "",
+            "- 如果 blocking reason 主要是 pit_unsafe 或 insufficient_replay_events，"
+            "应扩展 replay inventory 或重新收集 PIT-safe source artifact。",
+            "- 如果主要是 future_window_not_reached，"
+            "应等待窗口到期或改用更早的 historical replay event。",
+            "- 如果主要是 missing_price_data，应先修复 price cache，再解释 backfilled outcome。",
+            "- 本报告只诊断，不修改 replay、backfill、policy、production 或 broker state。",
+            "",
+        ]
+    )
+
+
+def render_backfill_repair_report(
+    manifest: Mapping[str, Any],
+    delta: Mapping[str, Any],
+    actions: Sequence[Mapping[str, Any]],
+) -> str:
+    before = _mapping(delta.get("before"))
+    after = _mapping(delta.get("after"))
+    action_counter = Counter(_text(row.get("repair_action")) for row in actions)
+    return "\n".join(
+        [
+            f"# Backfill Repair {manifest.get('repair_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}",
+            f"- before AVAILABLE / PENDING / INSUFFICIENT_DATA："
+            f"{before.get('available')} / {before.get('pending')} / "
+            f"{before.get('insufficient_data')}",
+            f"- after AVAILABLE / PENDING / INSUFFICIENT_DATA："
+            f"{after.get('available')} / {after.get('pending')} / "
+            f"{after.get('insufficient_data')}",
+            f"- repaired_count：{delta.get('repaired_count')}",
+            f"- still_pending_count：{delta.get('still_pending_count')}",
+            f"- still_insufficient_count：{delta.get('still_insufficient_count')}",
+            f"- repair_actions：{dict(sorted(action_counter.items()))}",
+            "- future_data_used_in_decision：false",
+            "- 不覆写原始 backfilled outcome，不修改 replay decision input。",
+            "",
+        ]
+    )
+
+
+def render_variant_comparison_report(
+    manifest: Mapping[str, Any],
+    metrics: Sequence[Mapping[str, Any]],
+    pairwise: Mapping[str, Any],
+    ranking: Mapping[str, Any],
+) -> str:
+    limited_pair = _limited_adjustment_vs_no_trade_pair(pairwise)
+    return "\n".join(
+        [
+            f"# Variant Performance Comparison {manifest.get('comparison_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- best_variant：{ranking.get('best_variant')}",
+            f"- recommendation_confidence：{ranking.get('recommendation_confidence')}",
+            f"- limited_adjustment_vs_no_trade："
+            f"{limited_pair.get('limited_adjustment_conclusion', 'INSUFFICIENT_DATA')}",
+            "",
+            "## Window Metrics",
+            "",
+            *[
+                f"- {row.get('variant')} {row.get('window_days')}d: "
+                f"available={row.get('available_count')}; "
+                f"avg_return={row.get('avg_return')}; "
+                f"avg_relative_to_no_trade={row.get('avg_relative_to_no_trade')}; "
+                f"status={row.get('status')}"
+                for row in metrics
+            ],
+            "",
+            "## 解读",
+            "",
+            "- 样本不足时标记 INSUFFICIENT_DATA，不生成强结论。",
+            "- ranking 的 overall_score 等于 avg_relative_to_no_trade 的透明诊断值，"
+            "不是 production policy score。",
+            "- owner_decision 和 paper_action 只作为人工复核参考，"
+            "不代表 broker 或 production action。",
+            "",
+        ]
+    )
+
+
+def _limited_adjustment_vs_no_trade_pair(pairwise: Mapping[str, Any]) -> dict[str, Any]:
+    for row in _records(pairwise.get("comparisons")):
+        variant_a = _text(row.get("variant_a"))
+        variant_b = _text(row.get("variant_b"))
+        if {variant_a, variant_b} != {"limited_adjustment", "no_trade"}:
+            continue
+        normalized = dict(row)
+        conclusion = _text(row.get("conclusion"), "insufficient_data")
+        if variant_a == "limited_adjustment":
+            normalized["limited_adjustment_conclusion"] = conclusion
+            normalized["limited_adjustment_avg_return_delta"] = row.get("avg_return_delta", 0.0)
+        else:
+            if conclusion == "variant_a_better":
+                limited_conclusion = "no_trade_better"
+            elif conclusion == "variant_b_better":
+                limited_conclusion = "limited_adjustment_better"
+            else:
+                limited_conclusion = conclusion
+            normalized["limited_adjustment_conclusion"] = limited_conclusion
+            normalized["limited_adjustment_avg_return_delta"] = -_float(
+                row.get("avg_return_delta")
+            )
+        return normalized
+    return {
+        "limited_adjustment_conclusion": "INSUFFICIENT_DATA",
+        "limited_adjustment_avg_return_delta": 0.0,
+    }
+
+
+def render_rule_calibration_report(
+    manifest: Mapping[str, Any],
+    diagnostics: Mapping[str, Any],
+    proposals: Mapping[str, Any],
+    safety: Mapping[str, Any],
+) -> str:
+    proposal_rows = _records(proposals.get("proposals"))
+    return "\n".join(
+        [
+            f"# Rule Calibration {manifest.get('calibration_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- current_policy：{diagnostics.get('current_policy')}",
+            f"- auto_apply：{safety.get('auto_apply')}",
+            f"- owner_approval_required：{safety.get('owner_approval_required')}",
+            f"- requires_forward_confirmation：{safety.get('requires_forward_confirmation')}",
+            "",
+            "## Diagnostics",
+            "",
+            *[
+                f"- {key}：{value}"
+                for key, value in sorted(_mapping(diagnostics.get("diagnostics")).items())
+            ],
+            "",
+            "## Proposals",
+            "",
+            *[
+                f"- {row.get('proposal_id')}：{row.get('change_type')}；"
+                f"auto_apply={row.get('auto_apply')}；"
+                f"requires_owner_approval={row.get('requires_owner_approval')}；"
+                f"reason={row.get('reason')}"
+                for row in proposal_rows
+            ],
+            "",
+            "- 本报告只输出 proposal，不自动修改 position_advisory_v1.yaml。",
+            "- production_effect=none；broker_action_allowed=false。",
+            "",
+        ]
+    )
+
+
+def render_replay_forward_bridge_report(
+    manifest: Mapping[str, Any],
+    focus: Mapping[str, Any],
+    weekly_updates: Mapping[str, Any],
+    proposals: Mapping[str, Any],
+) -> str:
+    proposal_types = ", ".join(
+        row.get("change_type", "") for row in _records(proposals.get("proposals"))
+    )
+    return "\n".join(
+        [
+            f"# Replay-to-Forward Bridge {manifest.get('bridge_id')}",
+            "",
+            f"- historical_replay_status：{manifest.get('historical_replay_status')}",
+            f"- best_variant：{manifest.get('best_variant')}",
+            f"- calibration_confidence：{manifest.get('calibration_confidence')}",
+            f"- forward_tracking_status：{focus.get('forward_tracking_status')}",
+            f"- next_action：{manifest.get('next_action')}",
+            f"- calibration_proposals：{proposal_types or 'MISSING'}",
+            "",
+            "## Forward Focus",
+            "",
+            *[
+                f"- {row.get('item')}：priority={row.get('priority')}；"
+                f"windows={row.get('tracking_windows')}；"
+                f"required_future_events={row.get('required_future_events')}；"
+                f"reason={row.get('reason')}"
+                for row in _records(focus.get("focus_items"))
+            ],
+            "",
+            "## Weekly Review Updates",
+            "",
+            *[f"- add_section：{item}" for item in _texts(weekly_updates.get("add_sections"))],
+            *[
+                f"- question：{item}"
+                for item in _texts(weekly_updates.get("recommended_weekly_questions"))
+            ],
+            "",
+            "- 该 bridge 只指导 forward tracking 和 weekly review，"
+            "不修改 policy、不生产、不触发 broker。",
+            "",
+        ]
+    )
+
+
+def render_replay_forward_bridge_reader_brief(
+    manifest: Mapping[str, Any], focus: Mapping[str, Any]
+) -> str:
+    focus_items = _records(focus.get("focus_items"))
+    primary = focus_items[0] if focus_items else {}
+    return "\n".join(
+        [
+            "## Dynamic Rescue Replay-to-Forward Bridge",
+            "",
+            f"- historical_replay_status: {manifest.get('historical_replay_status')}",
+            f"- best_variant: {manifest.get('best_variant')}",
+            f"- calibration_confidence: {manifest.get('calibration_confidence')}",
+            f"- forward_tracking_focus: {primary.get('item', 'MISSING')}",
+            f"- next_action: {manifest.get('next_action')}",
+            "- production_effect: none",
+            "- broker_action_taken: false",
+            "",
+        ]
+    )
+
+
+def _replay_diagnosis_coverage_breakdown(
+    *,
+    inventory_manifest: Mapping[str, Any],
+    inventory_coverage: Mapping[str, Any],
+    replay_manifest: Mapping[str, Any],
+    replay_summary: Mapping[str, Any],
+    backfill_manifest: Mapping[str, Any],
+    sim_manifest: Mapping[str, Any],
+    sim_summary: Mapping[str, Any],
+    sim_event_count: int,
+    review_manifest: Mapping[str, Any],
+    calibration: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "inventory_id": inventory_manifest.get("inventory_id", ""),
+        "replay_id": replay_manifest.get("replay_id", ""),
+        "backfill_id": backfill_manifest.get("backfill_id", ""),
+        "sim_id": sim_manifest.get("sim_id", ""),
+        "review_id": review_manifest.get("review_id", ""),
+        "inventory": {
+            "total_events": inventory_manifest.get("total_replay_events", 0),
+            "pit_safe": inventory_manifest.get("pit_safe_count", 0),
+            "pit_warning": inventory_manifest.get("pit_warning_count", 0),
+            "pit_unsafe": inventory_manifest.get("pit_unsafe_count", 0),
+            "eligible": inventory_coverage.get("eligible_count", 0),
+            "partial": inventory_coverage.get("partial_count", 0),
+            "ineligible": inventory_coverage.get("ineligible_count", 0),
+        },
+        "replay": {
+            "replayed_events": replay_manifest.get("replay_event_count", 0),
+            "skipped_events": replay_manifest.get("skipped_count", 0),
+            "generated_variants": sum(
+                _int(value) for value in _mapping(replay_summary.get("variant_counts")).values()
+            ),
+        },
+        "backfill": {
+            "available_windows": backfill_manifest.get("available_count", 0),
+            "pending_windows": backfill_manifest.get("pending_count", 0),
+            "insufficient_data_windows": backfill_manifest.get("insufficient_data_count", 0),
+        },
+        "paper_sim": {
+            "simulation_status": sim_summary.get(
+                "simulation_status",
+                sim_manifest.get("status", "MISSING"),
+            ),
+            "event_count": sim_event_count,
+            "date_range": {
+                "start": sim_summary.get("start_date", ""),
+                "end": sim_summary.get("end_date", ""),
+            },
+        },
+        "review": {
+            "review_status": review_manifest.get("status", "MISSING"),
+            "reason": [
+                row.get("type")
+                for row in _records(calibration.get("recommendations"))
+                if row.get("type")
+            ],
+        },
+    }
+
+
+def _replay_pending_reason_summary(
+    *,
+    inventory_rows: Sequence[Mapping[str, Any]],
+    replay_summary: Mapping[str, Any],
+    backfill_manifest: Mapping[str, Any],
+    outcome_rows: Sequence[Mapping[str, Any]],
+    sim_summary: Mapping[str, Any],
+    review_manifest: Mapping[str, Any],
+) -> dict[str, Any]:
+    counter: Counter[str] = Counter()
+    for row in inventory_rows:
+        limitations = set(_texts(row.get("replay_limitations")))
+        if row.get("pit_safety_status") == "PIT_UNSAFE":
+            counter["pit_unsafe"] += 1
+        if "MISSING_TARGET_WEIGHTS" in limitations:
+            counter["missing_target_weights"] += 1
+        if "MISSING_PRICE_DATA" in limitations:
+            counter["missing_price_data"] += 1
+    if _int(replay_summary.get("replay_event_count")) == 0:
+        counter["insufficient_replay_events"] += 1
+    for row in outcome_rows:
+        status = _text(row.get("outcome_status"))
+        if status == "PENDING":
+            counter["future_window_not_reached"] += 1
+        elif status == "INSUFFICIENT_DATA":
+            counter["missing_price_data"] += 1
+    if _int(backfill_manifest.get("available_count")) == 0:
+        counter["no_available_outcome_windows"] += 1
+    if _text(sim_summary.get("simulation_status")) == "INSUFFICIENT_DATA":
+        counter["paper_sim_insufficient_data"] += 1
+    if (
+        _text(review_manifest.get("status")) in {"PENDING", "INSUFFICIENT_DATA"}
+        and _int(backfill_manifest.get("available_count")) == 0
+    ):
+        counter["review_waiting_for_backfill"] += 1
+    if not counter:
+        counter["unknown"] += 1
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_replay_pending_reason_summary",
+        "pending_reasons": [
+            {
+                "reason": reason,
+                "count": count,
+                "blocking": reason
+                in {
+                    "missing_price_data",
+                    "missing_target_weights",
+                    "pit_unsafe",
+                    "insufficient_replay_events",
+                    "no_available_outcome_windows",
+                    "paper_sim_insufficient_data",
+                    "review_waiting_for_backfill",
+                    "unknown",
+                },
+                "recommended_action": PENDING_REASON_ACTIONS[reason],
+            }
+            for reason, count in counter.most_common()
+        ],
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _artifact_health_row(
+    artifact_type: str,
+    artifact_id: str,
+    path: Path,
+    payload: Mapping[str, Any],
+    record_count: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "artifact_type": artifact_type,
+        "artifact_id": artifact_id,
+        "path": str(path),
+        "exists": path.exists(),
+        "status": payload.get("status", "MISSING"),
+        "record_count": record_count,
+        "production_effect": payload.get("production_effect", "none"),
+        "broker_action_allowed": payload.get("broker_action_allowed", False),
+        "broker_action_taken": payload.get("broker_action_taken", False),
+        "production_candidate_generated": payload.get("production_candidate_generated", False),
+    }
+
+
+def _availability_counts(rows: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    counter = Counter(_text(row.get("outcome_status")) for row in rows)
+    return {
+        "available": counter.get("AVAILABLE", 0),
+        "pending": counter.get("PENDING", 0),
+        "insufficient_data": counter.get("INSUFFICIENT_DATA", 0),
+    }
+
+
+def _repair_outcome_rows(
+    *,
+    original_rows: Sequence[Mapping[str, Any]],
+    event_map: Mapping[str, Mapping[str, Any]],
+    prices: pd.DataFrame,
+    price_dates: Sequence[date],
+    generated_date: date,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    recomputed: dict[tuple[str, int, str], Mapping[str, Any]] = {}
+    for replay_event_id, event in event_map.items():
+        windows = sorted(
+            {
+                _int(row.get("window_days"))
+                for row in original_rows
+                if _text(row.get("replay_event_id")) == replay_event_id
+            }
+        )
+        for row in _backfilled_outcome_rows(
+            event=event,
+            windows=[window for window in windows if window > 0],
+            prices=prices,
+            price_dates=price_dates,
+            generated_date=generated_date,
+        ):
+            key = (
+                _text(row.get("replay_event_id")),
+                _int(row.get("window_days")),
+                _text(row.get("variant")),
+            )
+            recomputed[key] = row
+    repaired_rows: list[dict[str, Any]] = []
+    actions: list[dict[str, Any]] = []
+    for original in original_rows:
+        key = (
+            _text(original.get("replay_event_id")),
+            _int(original.get("window_days")),
+            _text(original.get("variant")),
+        )
+        candidate = dict(recomputed.get(key, original))
+        original_status = _text(original.get("outcome_status"), "MISSING")
+        new_status = _text(candidate.get("outcome_status"), original_status)
+        if original_status == "AVAILABLE":
+            candidate = dict(original)
+            new_status = "AVAILABLE"
+            repair_action = "no_change"
+            reason = "original window already available"
+        elif key not in recomputed:
+            candidate = dict(original)
+            repair_action = "no_change"
+            reason = "source replay event unavailable"
+        elif original_status != new_status and new_status == "AVAILABLE":
+            repair_action = "price_cache_lookup"
+            reason = "price cache now contains enough historical prices for this window"
+        elif original_status == "PENDING" and _text(original.get("end_date")) != _text(
+            candidate.get("end_date")
+        ):
+            repair_action = "calendar_recompute"
+            reason = "outcome window end date was recomputed from available trading dates"
+        elif new_status == "INSUFFICIENT_DATA":
+            repair_action = "price_date_alignment"
+            reason = "window is due but price path remains incomplete"
+        else:
+            repair_action = "no_change"
+            reason = "window remains pending or unchanged"
+        repaired_rows.append(candidate)
+        actions.append(
+            {
+                "replay_event_id": original.get("replay_event_id"),
+                "variant": original.get("variant"),
+                "window_days": original.get("window_days"),
+                "original_status": original_status,
+                "new_status": new_status,
+                "repair_action": repair_action,
+                "reason": reason,
+                "future_data_used_in_decision": False,
+            }
+        )
+    return repaired_rows, actions
+
+
+def _variant_window_metrics(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    result = []
+    for variant in REPLAY_VARIANTS:
+        for window in OUTCOME_WINDOWS:
+            window_rows = [
+                row
+                for row in rows
+                if _text(row.get("variant")) == variant
+                and _int(row.get("window_days")) == window
+                and row.get("outcome_status") == "AVAILABLE"
+            ]
+            returns = [_float(row.get("return")) for row in window_rows]
+            rel = [_float(row.get("relative_to_no_trade")) for row in window_rows]
+            result.append(
+                {
+                    "variant": variant,
+                    "window_days": window,
+                    "available_count": len(window_rows),
+                    "avg_return": round(_avg(returns), 6),
+                    "median_return": round(_median(returns), 6),
+                    "avg_relative_to_no_trade": round(_avg(rel), 6),
+                    "median_relative_to_no_trade": round(_median(rel), 6),
+                    "win_rate_vs_no_trade": (
+                        round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else 0.0
+                    ),
+                    "avg_max_drawdown": round(
+                        _avg([_float(row.get("max_drawdown")) for row in window_rows]),
+                        6,
+                    ),
+                    "avg_realized_volatility": round(
+                        _avg([_float(row.get("realized_volatility")) for row in window_rows]),
+                        6,
+                    ),
+                    "avg_turnover": round(
+                        _avg([_float(row.get("turnover")) for row in window_rows]),
+                        6,
+                    ),
+                    "status": "PASS" if window_rows else "INSUFFICIENT_DATA",
+                }
+            )
+    return result
+
+
+def _variant_pairwise_comparison(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    available = [row for row in rows if row.get("outcome_status") == "AVAILABLE"]
+    by_key = {
+        (
+            _text(row.get("replay_event_id")),
+            _int(row.get("window_days")),
+            _text(row.get("variant")),
+        ): row
+        for row in available
+    }
+    comparisons_out = []
+    for variant_a, variant_b in combinations(REPLAY_VARIANTS, 2):
+        for window in OUTCOME_WINDOWS:
+            deltas = []
+            drawdowns = []
+            turnovers = []
+            for event_id in sorted({_text(row.get("replay_event_id")) for row in available}):
+                left = by_key.get((event_id, window, variant_a))
+                right = by_key.get((event_id, window, variant_b))
+                if not left or not right:
+                    continue
+                deltas.append(_float(left.get("return")) - _float(right.get("return")))
+                drawdowns.append(
+                    _float(left.get("max_drawdown")) - _float(right.get("max_drawdown"))
+                )
+                turnovers.append(_float(left.get("turnover")) - _float(right.get("turnover")))
+            avg_delta = round(_avg(deltas), 6)
+            drawdown_delta = round(_avg(drawdowns), 6)
+            turnover_delta = round(_avg(turnovers), 6)
+            conclusion = "insufficient_data"
+            if deltas:
+                if avg_delta > 0 and drawdown_delta >= 0:
+                    conclusion = "variant_a_better"
+                elif avg_delta < 0 and drawdown_delta <= 0:
+                    conclusion = "variant_b_better"
+                else:
+                    conclusion = "mixed"
+            comparisons_out.append(
+                {
+                    "variant_a": variant_a,
+                    "variant_b": variant_b,
+                    "window_days": window,
+                    "event_count": len(deltas),
+                    "avg_return_delta": avg_delta,
+                    "win_rate": (
+                        round(sum(1 for value in deltas if value > 0) / len(deltas), 6)
+                        if deltas
+                        else 0.0
+                    ),
+                    "drawdown_delta": drawdown_delta,
+                    "turnover_delta": turnover_delta,
+                    "conclusion": conclusion,
+                }
+            )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_variant_pairwise_comparison",
+        "comparisons": comparisons_out,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _variant_rank_summary(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    rows = []
+    for variant in REPLAY_VARIANTS:
+        variant_rows = [row for row in metrics if row.get("variant") == variant]
+        available = [row for row in variant_rows if _int(row.get("available_count")) > 0]
+        avg_relative = _avg([_float(row.get("avg_relative_to_no_trade")) for row in available])
+        avg_return = _avg([_float(row.get("avg_return")) for row in available])
+        avg_drawdown = _avg([_float(row.get("avg_max_drawdown")) for row in available])
+        avg_turnover = _avg([_float(row.get("avg_turnover")) for row in available])
+        rows.append(
+            {
+                "variant": variant,
+                "overall_score": round(avg_relative, 6),
+                "return_score": round(avg_return, 6),
+                "drawdown_score": round(avg_drawdown, 6),
+                "stability_score": sum(_int(row.get("available_count")) for row in available),
+                "turnover_penalty": round(-avg_turnover, 6),
+                "status": "PASS_WITH_WARNINGS" if available else "INSUFFICIENT_DATA",
+            }
+        )
+    ranked = sorted(
+        [row for row in rows if row["status"] != "INSUFFICIENT_DATA"],
+        key=lambda row: (row["overall_score"], row["return_score"], row["drawdown_score"]),
+        reverse=True,
+    )
+    ranking = [{**row, "rank": index + 1} for index, row in enumerate(ranked)]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_variant_rank_summary",
+        "ranking": ranking,
+        "best_variant": ranking[0]["variant"] if ranking else "MISSING",
+        "recommendation_confidence": "LOW" if ranking else "INSUFFICIENT_DATA",
+        "ranking_method": "overall_score_is_avg_relative_to_no_trade_diagnostic",
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _advisory_rule_diagnostics_from_comparison(
+    comparison_manifest: Mapping[str, Any],
+    ranking: Mapping[str, Any],
+    metrics: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    best = _text(ranking.get("best_variant"), "MISSING")
+    confidence = _text(ranking.get("recommendation_confidence"), "INSUFFICIENT_DATA")
+    limited = _metric_for(metrics, "limited_adjustment", 5)
+    consensus = _metric_for(metrics, "consensus_target", 5)
+    no_trade = _metric_for(metrics, "no_trade", 5)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_advisory_rule_diagnostics",
+        "current_policy": "position_advisory_v1.yaml",
+        "diagnostics": {
+            "monitor_too_conservative": best not in {"MISSING", "no_trade"}
+            and confidence != "INSUFFICIENT_DATA",
+            "manual_review_too_frequent": False,
+            "limited_adjustment_supported": best == "limited_adjustment",
+            "consensus_target_too_aggressive": (
+                _float(consensus.get("avg_max_drawdown")) < _float(no_trade.get("avg_max_drawdown"))
+            ),
+            "candidate_disagreement_rule_effective": True,
+            "insufficient_data": confidence == "INSUFFICIENT_DATA",
+        },
+        "evidence": [
+            {
+                "comparison_id": comparison_manifest.get("comparison_id"),
+                "best_variant": best,
+                "recommendation_confidence": confidence,
+                "limited_adjustment_avg_relative_to_no_trade_5d": limited.get(
+                    "avg_relative_to_no_trade",
+                    0.0,
+                ),
+                "consensus_target_avg_relative_to_no_trade_5d": consensus.get(
+                    "avg_relative_to_no_trade",
+                    0.0,
+                ),
+            }
+        ],
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _policy_adjustment_proposals_from_diagnostics(
+    comparison_manifest: Mapping[str, Any],
+    ranking: Mapping[str, Any],
+    diagnostics: Mapping[str, Any],
+) -> dict[str, Any]:
+    best = _text(ranking.get("best_variant"), "MISSING")
+    confidence = _text(ranking.get("recommendation_confidence"), "INSUFFICIENT_DATA")
+    diag = _mapping(diagnostics.get("diagnostics"))
+    if confidence == "INSUFFICIENT_DATA":
+        proposal = {
+            "proposal_id": "require_more_forward_data",
+            "change_type": "require_more_forward_data",
+            "reason": "historical replay comparison has insufficient available outcome windows",
+            "expected_effect": (
+                "avoid over-calibrating advisory rules from unavailable replay outcomes"
+            ),
+        }
+    elif best == "no_trade":
+        proposal = {
+            "proposal_id": "tighten_adjustment_when_no_trade_leads",
+            "change_type": "tighten_adjustment",
+            "reason": "no_trade ranks first in available historical replay comparison",
+            "expected_effect": (
+                "reduce adjustment frequency until forward outcomes improve evidence"
+            ),
+        }
+    elif best == "limited_adjustment":
+        proposal = {
+            "proposal_id": "keep_current_limited_adjustment_watch",
+            "change_type": "keep_current_rules",
+            "reason": "limited_adjustment ranks first in available historical replay comparison",
+            "expected_effect": "keep current rules while collecting forward confirmation",
+        }
+    elif diag.get("consensus_target_too_aggressive"):
+        proposal = {
+            "proposal_id": "increase_consensus_requirement",
+            "change_type": "increase_consensus_requirement",
+            "reason": "consensus_target shows weaker drawdown profile than no_trade",
+            "expected_effect": "require stronger consensus before full target moves",
+        }
+    else:
+        proposal = {
+            "proposal_id": "continue_forward_tracking",
+            "change_type": "require_more_forward_data",
+            "reason": f"best variant is {best}; forward confirmation is still required",
+            "expected_effect": "defer policy mutation until FORWARD_OUTCOME evidence arrives",
+        }
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_proposed_policy_adjustments",
+        "comparison_id": comparison_manifest.get("comparison_id"),
+        "proposals": [
+            {
+                **proposal,
+                "affected_config": "position_advisory_v1.yaml",
+                "current_value": None,
+                "proposed_value": None,
+                "risk": "historical replay evidence may be sparse or regime-specific",
+                "requires_owner_approval": True,
+                "auto_apply": False,
+            }
+        ],
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _forward_tracking_focus_from_replay(
+    *,
+    diagnosis_manifest: Mapping[str, Any],
+    pending_reasons: Mapping[str, Any],
+    comparison_manifest: Mapping[str, Any],
+    ranking: Mapping[str, Any],
+    proposals: Mapping[str, Any],
+) -> dict[str, Any]:
+    confidence = _text(
+        comparison_manifest.get("recommendation_confidence"),
+        _text(ranking.get("recommendation_confidence"), "INSUFFICIENT_DATA"),
+    )
+    proposal_types = [_text(row.get("change_type")) for row in _records(proposals.get("proposals"))]
+    status = "CONTINUE"
+    if confidence == "INSUFFICIENT_DATA":
+        status = "INSUFFICIENT_DATA"
+    elif "require_more_forward_data" in proposal_types:
+        status = "INCREASE_FOCUS"
+    top_reason = _records(pending_reasons.get("pending_reasons"))
+    reason_text = top_reason[0]["reason"] if top_reason else "unknown"
+    next_actions = proposal_types or ["continue_forward_tracking"]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_tracking_focus",
+        "focus_items": [
+            {
+                "item": "limited_adjustment_vs_no_trade",
+                "priority": "HIGH",
+                "reason": (
+                    "historical replay needs forward confirmation for limited adjustment edge"
+                ),
+                "tracking_windows": list(OUTCOME_WINDOWS),
+                "required_future_events": FORWARD_CONFIRMATION_REQUIRED_EVENTS,
+            },
+            {
+                "item": "pending_reason_resolution",
+                "priority": "HIGH" if diagnosis_manifest.get("status") != "PASS" else "MEDIUM",
+                "reason": f"top replay diagnosis reason is {reason_text}",
+                "tracking_windows": list(OUTCOME_WINDOWS),
+                "required_future_events": FORWARD_CONFIRMATION_REQUIRED_EVENTS,
+            },
+            {
+                "item": "consensus_target_risk",
+                "priority": "MEDIUM",
+                "reason": "consensus_target return and drawdown need weekly review visibility",
+                "tracking_windows": list(OUTCOME_WINDOWS),
+                "required_future_events": FORWARD_CONFIRMATION_REQUIRED_EVENTS,
+            },
+        ],
+        "forward_tracking_status": status,
+        "next_actions": next_actions,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _weekly_review_updates_from_focus(focus: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weekly_review_updates",
+        "add_sections": [
+            "Historical Replay Performance",
+            "Replay Calibration Watchlist",
+            "Forward Confirmation Targets",
+        ],
+        "recommended_weekly_questions": [
+            "Did limited_adjustment outperform no_trade in new forward outcomes?",
+            "Did high consensus remain predictive?",
+            "Did manual_review frequency decrease?",
+            "Were prior PENDING or INSUFFICIENT_DATA replay reasons resolved?",
+        ],
+        "forward_tracking_status": focus.get("forward_tracking_status", "MISSING"),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _metric_for(metrics: Sequence[Mapping[str, Any]], variant: str, window: int) -> dict[str, Any]:
+    return next(
+        (
+            dict(row)
+            for row in metrics
+            if row.get("variant") == variant and _int(row.get("window_days")) == window
+        ),
+        {},
+    )
+
+
+def _median(values: Sequence[float]) -> float:
+    clean = sorted(value for value in values if pd.notna(value))
+    if not clean:
+        return 0.0
+    midpoint = len(clean) // 2
+    if len(clean) % 2:
+        return clean[midpoint]
+    return (clean[midpoint - 1] + clean[midpoint]) / 2
 
 
 def _inventory_row(

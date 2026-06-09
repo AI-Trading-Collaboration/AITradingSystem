@@ -16606,6 +16606,31 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pattern": "replay_performance_review/*/replay_performance_manifest.json",
             "id_keys": ("review_id",),
         },
+        {
+            "pointer_name": "latest_replay_diagnosis",
+            "pattern": "replay_diagnosis/*/replay_diagnosis_manifest.json",
+            "id_keys": ("diagnosis_id",),
+        },
+        {
+            "pointer_name": "latest_backfill_repair",
+            "pattern": "backfill_repair/*/backfill_repair_manifest.json",
+            "id_keys": ("repair_id",),
+        },
+        {
+            "pointer_name": "latest_variant_comparison",
+            "pattern": "variant_comparison/*/variant_comparison_manifest.json",
+            "id_keys": ("comparison_id",),
+        },
+        {
+            "pointer_name": "latest_rule_calibration",
+            "pattern": "rule_calibration/*/rule_calibration_manifest.json",
+            "id_keys": ("calibration_id",),
+        },
+        {
+            "pointer_name": "latest_replay_forward_bridge",
+            "pattern": "replay_forward_bridge/*/bridge_manifest.json",
+            "id_keys": ("bridge_id",),
+        },
     )
 
 

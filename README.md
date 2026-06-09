@@ -828,6 +828,21 @@ Reader Brief 只读 latest replay/backfill/sim/performance artifacts。`backfill
 `--include-pit-warning` 也不得进入 replay。该链路只做
 历史 outcome 复核和 calibration recommendation artifact，不写 config、不生成 production
 candidate、不自动 promotion、不改真实组合或 official target weights、不触发 broker。
+TRADING-146 到 TRADING-150 在上述 artifacts 上新增 replay result diagnosis 和
+manual-only advisory rule calibration。新增 CLI 包括 `replay-diagnosis run/report`、
+`backfill-repair run/report`、`variant-comparison run/report`、`rule-calibration run/report`、
+`replay-forward-bridge run/report`，以及 `validate-replay-diagnosis`、
+`validate-backfill-repair`、`validate-variant-comparison`、`validate-rule-calibration` 和
+`validate-replay-forward-bridge`。新增 artifacts 位于
+`reports/etf_portfolio/dynamic_v3_rescue/replay_diagnosis|backfill_repair|variant_comparison|rule_calibration|replay_forward_bridge/`。
+`replay-diagnosis` 解释 `PARTIAL` / `PENDING` 原因；`backfill-repair` 只在当前 price cache
+已有足够历史价格时把 due window 重算为 `AVAILABLE`，不覆写原 backfill；`variant-comparison`
+比较 `no_trade`、`consensus_target`、`limited_adjustment`、`owner_decision`、`paper_action`；
+`rule-calibration` 只输出 owner approval required proposals，`auto_apply=false`；`replay-forward-bridge`
+把 replay 结论接回 forward tracking、weekly review 和 Reader Brief。该阶段继续固定
+`production_effect=none`、`broker_action_allowed=false`，不自动修改
+`position_advisory_v1.yaml`、official target weights、paper/real portfolio、baseline/production state
+或 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

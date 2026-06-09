@@ -5892,6 +5892,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "replay_performance_manifest.json",
     )
+    replay_forward_bridge_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_replay_forward_bridge",
+        ),
+        "bridge_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -6013,6 +6020,12 @@ def _etf_dynamic_v3_parameter_research_summary(
         if replay_performance_review_path is not None
         else None
     )
+    replay_forward_bridge = _read_optional_json(replay_forward_bridge_path)
+    replay_forward_focus = _read_optional_json(
+        replay_forward_bridge_path.parent / "forward_tracking_focus.json"
+        if replay_forward_bridge_path is not None
+        else None
+    )
     replay_recommendations = _records(replay_calibration.get("recommendations"))
     replay_recommendation = replay_recommendations[0] if replay_recommendations else {}
     if not leaderboard:
@@ -6027,6 +6040,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             simulated_performance,
             replay_performance_review,
             replay_calibration,
+            replay_forward_bridge,
+            replay_forward_focus,
         )
         if any(replay_payloads):
             return _etf_dynamic_v3_parameter_research_replay_only_summary(
@@ -6046,6 +6061,9 @@ def _etf_dynamic_v3_parameter_research_summary(
                 replay_performance_review=replay_performance_review,
                 replay_calibration=replay_calibration,
                 replay_recommendation=replay_recommendation,
+                replay_forward_bridge_path=replay_forward_bridge_path,
+                replay_forward_bridge=replay_forward_bridge,
+                replay_forward_focus=replay_forward_focus,
             )
         return _missing_etf_dynamic_v3_parameter_research_summary()
     top = _records(leaderboard.get("top_eligible_candidates"))
@@ -6109,6 +6127,8 @@ def _etf_dynamic_v3_parameter_research_summary(
         simulated_performance,
         replay_performance_review,
         replay_calibration,
+        replay_forward_bridge,
+        replay_forward_focus,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -6145,6 +6165,7 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"{weekly_advisory_review.get('weekly_recommendation', 'MISSING')}; "
             f"historical_replay={replay_performance_review.get('status', 'MISSING')}; "
             f"best_replay_variant={variant_performance.get('best_variant', 'MISSING')}; "
+            f"replay_forward_bridge={replay_forward_bridge.get('status', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -6520,6 +6541,18 @@ def _etf_dynamic_v3_parameter_research_summary(
             replay_recommendation.get("type"),
             "MISSING",
         ),
+        "replay_forward_bridge_status": _text(
+            replay_forward_bridge.get("status"),
+            "MISSING",
+        ),
+        "replay_forward_focus": _text(
+            (_records(replay_forward_focus.get("focus_items")) or [{}])[0].get("item"),
+            "MISSING",
+        ),
+        "replay_forward_next_action": _text(
+            replay_forward_bridge.get("next_action"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -6527,7 +6560,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             else True
         ),
         "replay_next_action": _text(
-            replay_performance_review.get("next_action")
+            replay_forward_bridge.get("next_action")
+            or replay_performance_review.get("next_action")
             or replay_recommendation.get("type"),
             "MISSING",
         ),
@@ -6765,6 +6799,9 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
     replay_performance_review: Mapping[str, Any],
     replay_calibration: Mapping[str, Any],
     replay_recommendation: Mapping[str, Any],
+    replay_forward_bridge_path: Path | None,
+    replay_forward_bridge: Mapping[str, Any],
+    replay_forward_focus: Mapping[str, Any],
 ) -> dict[str, Any]:
     replay_payloads = (
         replay_inventory,
@@ -6777,6 +6814,8 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
         simulated_performance,
         replay_performance_review,
         replay_calibration,
+        replay_forward_bridge,
+        replay_forward_focus,
     )
     status = _text(
         replay_performance_review.get("status")
@@ -6792,9 +6831,12 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
         "MISSING",
     )
     next_action = _text(
-        replay_performance_review.get("next_action") or replay_recommendation.get("type"),
+        replay_forward_bridge.get("next_action")
+        or replay_performance_review.get("next_action")
+        or replay_recommendation.get("type"),
         "MISSING",
     )
+    forward_focus_items = _records(replay_forward_focus.get("focus_items"))
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(
         _etf_dynamic_v3_parameter_research_safe_placeholder(),
         *replay_payloads,
@@ -6810,7 +6852,9 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 f"replay={historical_replay.get('status', 'MISSING')}; "
                 f"backfill={backfilled_outcome.get('status', 'MISSING')}; "
                 f"paper_sim={historical_paper_sim.get('status', 'MISSING')}; "
-                f"review={status}; best_replay_variant={best_variant}; "
+                f"review={status}; "
+                f"replay_forward_bridge={replay_forward_bridge.get('status', 'MISSING')}; "
+                f"best_replay_variant={best_variant}; "
                 f"next_action={next_action}; "
                 "parameter_sweep_leaderboard=MISSING; manual-only replay evidence "
                 "is available."
@@ -6911,6 +6955,18 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 replay_recommendation.get("type"),
                 "MISSING",
             ),
+            "replay_forward_bridge_status": _text(
+                replay_forward_bridge.get("status"),
+                "MISSING",
+            ),
+            "replay_forward_focus": _text(
+                (forward_focus_items or [{}])[0].get("item"),
+                "MISSING",
+            ),
+            "replay_forward_next_action": _text(
+                replay_forward_bridge.get("next_action"),
+                "MISSING",
+            ),
             "replay_calibration_priority": _text(
                 replay_recommendation.get("priority"),
                 "MISSING",
@@ -6937,6 +6993,9 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 ""
                 if replay_performance_review_path is None
                 else str(replay_performance_review_path)
+            ),
+            "replay_forward_bridge": (
+                "" if replay_forward_bridge_path is None else str(replay_forward_bridge_path)
             ),
             "safety_status": safety_status,
             "production_candidate_generated": _any_payload_flag_true(
@@ -7137,6 +7196,9 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "replay_calibration_recommendation": "MISSING",
         "replay_calibration_priority": "MISSING",
         "replay_calibration_requires_owner_approval": True,
+        "replay_forward_bridge_status": "MISSING",
+        "replay_forward_focus": "MISSING",
+        "replay_forward_next_action": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -7171,6 +7233,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "backfilled_outcome": "",
         "historical_paper_sim": "",
         "replay_performance_review": "",
+        "replay_forward_bridge": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

@@ -258,26 +258,46 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     load_json_artifact as load_dynamic_v3_failure_attribution_json_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
+    DEFAULT_BACKFILL_REPAIR_DIR,
     DEFAULT_BACKFILLED_OUTCOME_DIR,
     DEFAULT_HISTORICAL_PAPER_SIM_DIR,
     DEFAULT_HISTORICAL_REPLAY_DIR,
+    DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
     DEFAULT_REPLAY_INVENTORY_DIR,
     DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+    DEFAULT_RULE_CALIBRATION_DIR,
+    DEFAULT_VARIANT_COMPARISON_DIR,
     backfill_outcome_report_payload,
+    backfill_repair_report_payload,
     build_replay_inventory,
     historical_paper_sim_report_payload,
     historical_replay_report_payload,
+    replay_diagnosis_report_payload,
+    replay_forward_bridge_report_payload,
     replay_inventory_report_payload,
     replay_performance_review_report_payload,
+    rule_calibration_report_payload,
     run_backfill_outcome,
+    run_backfill_repair,
     run_historical_paper_sim,
     run_historical_replay,
+    run_replay_diagnosis,
+    run_replay_forward_bridge,
     run_replay_performance_review,
+    run_rule_calibration,
+    run_variant_comparison,
     validate_backfill_outcome_artifact,
+    validate_backfill_repair_artifact,
     validate_historical_paper_sim_artifact,
     validate_historical_replay_artifact,
+    validate_replay_diagnosis_artifact,
+    validate_replay_forward_bridge_artifact,
     validate_replay_inventory_artifact,
     validate_replay_performance_review_artifact,
+    validate_rule_calibration_artifact,
+    validate_variant_comparison_artifact,
+    variant_comparison_report_payload,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_ADVISORY_OUTCOME_DIR,
@@ -1095,6 +1115,26 @@ dynamic_v3_replay_performance_review_app = typer.Typer(
     help="Dynamic v3 rescue replay performance review workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_replay_diagnosis_app = typer.Typer(
+    help="Dynamic v3 rescue replay result diagnosis workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_backfill_repair_app = typer.Typer(
+    help="Dynamic v3 rescue backfilled outcome repair workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_variant_comparison_app = typer.Typer(
+    help="Dynamic v3 rescue replay variant comparison workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_rule_calibration_app = typer.Typer(
+    help="Dynamic v3 rescue advisory rule calibration workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_replay_forward_bridge_app = typer.Typer(
+    help="Dynamic v3 rescue replay-to-forward bridge workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1191,6 +1231,14 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_historical_paper_sim_app, name="histo
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_replay_performance_review_app,
     name="replay-performance-review",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_replay_diagnosis_app, name="replay-diagnosis")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_backfill_repair_app, name="backfill-repair")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_comparison_app, name="variant-comparison")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_rule_calibration_app, name="rule-calibration")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_replay_forward_bridge_app,
+    name="replay-forward-bridge",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
@@ -8253,6 +8301,479 @@ def dynamic_v3_validate_replay_performance_review_command(
         review_id=review_id,
         output_dir=output_dir,
     )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_replay_diagnosis_app.command("run")
+def dynamic_v3_replay_diagnosis_run_command(
+    inventory_id: Annotated[str, typer.Option("--inventory-id", help="inventory id。")],
+    replay_id: Annotated[str, typer.Option("--replay-id", help="replay id。")],
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="backfill id。")],
+    sim_id: Annotated[str, typer.Option("--sim-id", help="historical paper sim id。")],
+    review_id: Annotated[str, typer.Option("--review-id", help="replay performance review id。")],
+    inventory_dir: Annotated[
+        Path,
+        typer.Option("--inventory-dir", help="replay inventory artifact root。"),
+    ] = DEFAULT_REPLAY_INVENTORY_DIR,
+    replay_dir: Annotated[
+        Path,
+        typer.Option("--replay-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    sim_dir: Annotated[
+        Path,
+        typer.Option("--sim-dir", help="historical paper sim artifact root。"),
+    ] = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+    review_dir: Annotated[
+        Path,
+        typer.Option("--review-dir", help="replay performance review artifact root。"),
+    ] = DEFAULT_REPLAY_PERFORMANCE_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay diagnosis artifact root。"),
+    ] = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+) -> None:
+    """运行 TRADING-146_to_150 replay coverage diagnosis。"""
+    result = run_replay_diagnosis(
+        inventory_id=inventory_id,
+        replay_id=replay_id,
+        backfill_id=backfill_id,
+        sim_id=sim_id,
+        review_id=review_id,
+        inventory_dir=inventory_dir,
+        replay_dir=replay_dir,
+        backfill_dir=backfill_dir,
+        sim_dir=sim_dir,
+        review_dir=review_dir,
+        output_dir=output_dir,
+    )
+    coverage = result["coverage_breakdown"]
+    pending = result["pending_reason_summary"]["pending_reasons"]
+    top_reason = pending[0]["reason"] if pending else "MISSING"
+    typer.echo(f"diagnosis_id={result['diagnosis_id']}")
+    typer.echo(f"diagnosis_dir={result['diagnosis_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"pit_safe_count={coverage['inventory']['pit_safe']}")
+    typer.echo(f"pit_warning_count={coverage['inventory']['pit_warning']}")
+    typer.echo(f"pit_unsafe_count={coverage['inventory']['pit_unsafe']}")
+    typer.echo(f"available_windows={coverage['backfill']['available_windows']}")
+    typer.echo(f"pending_windows={coverage['backfill']['pending_windows']}")
+    typer.echo(f"insufficient_data_windows={coverage['backfill']['insufficient_data_windows']}")
+    typer.echo(f"top_pending_reason={top_reason}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_replay_diagnosis_app.command("report")
+def dynamic_v3_replay_diagnosis_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest replay diagnosis。"),
+    ] = False,
+    diagnosis_id: Annotated[
+        str | None, typer.Option("--diagnosis-id", help="diagnosis id。")
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay diagnosis artifact root。"),
+    ] = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+) -> None:
+    """展示 replay diagnosis 摘要。"""
+    payload = replay_diagnosis_report_payload(
+        diagnosis_id=diagnosis_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    coverage = payload["replay_coverage_breakdown"]
+    pending = payload["replay_pending_reason_summary"]["pending_reasons"]
+    typer.echo(f"diagnosis_id={payload['diagnosis_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"pit_safe_count={coverage['inventory']['pit_safe']}")
+    typer.echo(f"pit_warning_count={coverage['inventory']['pit_warning']}")
+    typer.echo(f"pit_unsafe_count={coverage['inventory']['pit_unsafe']}")
+    typer.echo(f"available_windows={coverage['backfill']['available_windows']}")
+    typer.echo(f"pending_windows={coverage['backfill']['pending_windows']}")
+    typer.echo(f"top_pending_reason={pending[0]['reason'] if pending else 'MISSING'}")
+    typer.echo(f"report_path={payload['replay_diagnosis_report_path']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-replay-diagnosis")
+def dynamic_v3_validate_replay_diagnosis_command(
+    diagnosis_id: Annotated[str, typer.Option("--diagnosis-id", help="diagnosis id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay diagnosis artifact root。"),
+    ] = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+) -> None:
+    """校验 TRADING-146_to_150 replay diagnosis artifact。"""
+    payload = validate_replay_diagnosis_artifact(diagnosis_id=diagnosis_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backfill_repair_app.command("run")
+def dynamic_v3_backfill_repair_run_command(
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="backfill id。")],
+    diagnosis_id: Annotated[str, typer.Option("--diagnosis-id", help="diagnosis id。")],
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    diagnosis_dir: Annotated[
+        Path,
+        typer.Option("--diagnosis-dir", help="replay diagnosis artifact root。"),
+    ] = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    replay_dir: Annotated[
+        Path,
+        typer.Option("--replay-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="cached rates path。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    """运行 TRADING-147 backfilled outcome availability repair。"""
+    result = run_backfill_repair(
+        backfill_id=backfill_id,
+        diagnosis_id=diagnosis_id,
+        backfill_dir=backfill_dir,
+        diagnosis_dir=diagnosis_dir,
+        replay_dir=replay_dir,
+        output_dir=output_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    delta = result["backfill_availability_delta"]
+    typer.echo(f"repair_id={result['repair_id']}")
+    typer.echo(f"repair_dir={result['repair_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"repaired_count={delta['repaired_count']}")
+    typer.echo(f"still_pending_count={delta['still_pending_count']}")
+    typer.echo(f"still_insufficient_count={delta['still_insufficient_count']}")
+    typer.echo("future_data_used_in_decision=false")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_backfill_repair_app.command("report")
+def dynamic_v3_backfill_repair_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backfill repair。"),
+    ] = False,
+    repair_id: Annotated[str | None, typer.Option("--repair-id", help="repair id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> None:
+    """展示 backfill repair 摘要。"""
+    payload = backfill_repair_report_payload(
+        repair_id=repair_id, latest=latest, output_dir=output_dir
+    )
+    delta = payload["backfill_availability_delta"]
+    typer.echo(f"repair_id={payload['repair_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"repaired_count={delta['repaired_count']}")
+    typer.echo(f"still_pending_count={delta['still_pending_count']}")
+    typer.echo(f"still_insufficient_count={delta['still_insufficient_count']}")
+    typer.echo(f"report_path={payload['backfill_repair_report_path']}")
+    typer.echo("future_data_used_in_decision=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backfill-repair")
+def dynamic_v3_validate_backfill_repair_command(
+    repair_id: Annotated[str, typer.Option("--repair-id", help="repair id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> None:
+    """校验 TRADING-147 backfill repair artifact。"""
+    payload = validate_backfill_repair_artifact(repair_id=repair_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("future_data_used_in_decision=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_variant_comparison_app.command("run")
+def dynamic_v3_variant_comparison_run_command(
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="backfill id。")],
+    repair_id: Annotated[
+        str | None, typer.Option("--repair-id", help="optional repair id。")
+    ] = None,
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    repair_dir: Annotated[
+        Path,
+        typer.Option("--repair-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="variant comparison artifact root。"),
+    ] = DEFAULT_VARIANT_COMPARISON_DIR,
+) -> None:
+    """运行 TRADING-148 replay variant performance comparison。"""
+    result = run_variant_comparison(
+        backfill_id=backfill_id,
+        repair_id=repair_id,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+        output_dir=output_dir,
+    )
+    rank = result["variant_rank_summary"]
+    typer.echo(f"comparison_id={result['comparison_id']}")
+    typer.echo(f"comparison_dir={result['comparison_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"best_variant={rank['best_variant']}")
+    typer.echo(f"recommendation_confidence={rank['recommendation_confidence']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_variant_comparison_app.command("report")
+def dynamic_v3_variant_comparison_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest variant comparison。"),
+    ] = False,
+    comparison_id: Annotated[
+        str | None,
+        typer.Option("--comparison-id", help="comparison id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="variant comparison artifact root。"),
+    ] = DEFAULT_VARIANT_COMPARISON_DIR,
+) -> None:
+    """展示 variant comparison 摘要。"""
+    payload = variant_comparison_report_payload(
+        comparison_id=comparison_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    rank = payload["variant_rank_summary"]
+    typer.echo(f"comparison_id={payload['comparison_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"best_variant={rank['best_variant']}")
+    typer.echo(f"recommendation_confidence={rank['recommendation_confidence']}")
+    typer.echo(f"report_path={payload['variant_comparison_report_path']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-variant-comparison")
+def dynamic_v3_validate_variant_comparison_command(
+    comparison_id: Annotated[str, typer.Option("--comparison-id", help="comparison id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="variant comparison artifact root。"),
+    ] = DEFAULT_VARIANT_COMPARISON_DIR,
+) -> None:
+    """校验 TRADING-148 variant comparison artifact。"""
+    payload = validate_variant_comparison_artifact(
+        comparison_id=comparison_id, output_dir=output_dir
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_rule_calibration_app.command("run")
+def dynamic_v3_rule_calibration_run_command(
+    comparison_id: Annotated[str, typer.Option("--comparison-id", help="comparison id。")],
+    comparison_dir: Annotated[
+        Path,
+        typer.Option("--comparison-dir", help="variant comparison artifact root。"),
+    ] = DEFAULT_VARIANT_COMPARISON_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="rule calibration artifact root。"),
+    ] = DEFAULT_RULE_CALIBRATION_DIR,
+) -> None:
+    """运行 TRADING-149 historical replay rule calibration proposal。"""
+    result = run_rule_calibration(
+        comparison_id=comparison_id,
+        comparison_dir=comparison_dir,
+        output_dir=output_dir,
+    )
+    proposals = result["proposed_policy_adjustments"]["proposals"]
+    first = proposals[0] if proposals else {}
+    typer.echo(f"calibration_id={result['calibration_id']}")
+    typer.echo(f"calibration_dir={result['calibration_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"proposal={first.get('change_type', 'MISSING')}")
+    typer.echo("auto_apply=false")
+    typer.echo("owner_approval_required=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rule_calibration_app.command("report")
+def dynamic_v3_rule_calibration_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest rule calibration。"),
+    ] = False,
+    calibration_id: Annotated[
+        str | None,
+        typer.Option("--calibration-id", help="calibration id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="rule calibration artifact root。"),
+    ] = DEFAULT_RULE_CALIBRATION_DIR,
+) -> None:
+    """展示 rule calibration 摘要。"""
+    payload = rule_calibration_report_payload(
+        calibration_id=calibration_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    proposals = payload["proposed_policy_adjustments"]["proposals"]
+    first = proposals[0] if proposals else {}
+    typer.echo(f"calibration_id={payload['calibration_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"proposal={first.get('change_type', 'MISSING')}")
+    typer.echo(f"report_path={payload['rule_calibration_report_path']}")
+    typer.echo("auto_apply=false")
+    typer.echo("owner_approval_required=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-rule-calibration")
+def dynamic_v3_validate_rule_calibration_command(
+    calibration_id: Annotated[str, typer.Option("--calibration-id", help="calibration id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="rule calibration artifact root。"),
+    ] = DEFAULT_RULE_CALIBRATION_DIR,
+) -> None:
+    """校验 TRADING-149 rule calibration artifact。"""
+    payload = validate_rule_calibration_artifact(
+        calibration_id=calibration_id, output_dir=output_dir
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_replay_forward_bridge_app.command("run")
+def dynamic_v3_replay_forward_bridge_run_command(
+    diagnosis_id: Annotated[str, typer.Option("--diagnosis-id", help="diagnosis id。")],
+    comparison_id: Annotated[str, typer.Option("--comparison-id", help="comparison id。")],
+    calibration_id: Annotated[str, typer.Option("--calibration-id", help="calibration id。")],
+    diagnosis_dir: Annotated[
+        Path,
+        typer.Option("--diagnosis-dir", help="replay diagnosis artifact root。"),
+    ] = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    comparison_dir: Annotated[
+        Path,
+        typer.Option("--comparison-dir", help="variant comparison artifact root。"),
+    ] = DEFAULT_VARIANT_COMPARISON_DIR,
+    calibration_dir: Annotated[
+        Path,
+        typer.Option("--calibration-dir", help="rule calibration artifact root。"),
+    ] = DEFAULT_RULE_CALIBRATION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay forward bridge artifact root。"),
+    ] = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+) -> None:
+    """运行 TRADING-150 replay-to-forward tracking bridge。"""
+    result = run_replay_forward_bridge(
+        diagnosis_id=diagnosis_id,
+        comparison_id=comparison_id,
+        calibration_id=calibration_id,
+        diagnosis_dir=diagnosis_dir,
+        comparison_dir=comparison_dir,
+        calibration_dir=calibration_dir,
+        output_dir=output_dir,
+    )
+    focus = result["forward_tracking_focus"]
+    typer.echo(f"bridge_id={result['bridge_id']}")
+    typer.echo(f"bridge_dir={result['bridge_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"best_variant={result['manifest']['best_variant']}")
+    typer.echo(f"forward_tracking_status={focus['forward_tracking_status']}")
+    typer.echo(f"next_action={result['manifest']['next_action']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_replay_forward_bridge_app.command("report")
+def dynamic_v3_replay_forward_bridge_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest replay forward bridge。"),
+    ] = False,
+    bridge_id: Annotated[str | None, typer.Option("--bridge-id", help="bridge id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay forward bridge artifact root。"),
+    ] = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+) -> None:
+    """展示 replay-to-forward bridge 摘要。"""
+    payload = replay_forward_bridge_report_payload(
+        bridge_id=bridge_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    focus = payload["forward_tracking_focus"]
+    typer.echo(f"bridge_id={payload['bridge_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"best_variant={payload['best_variant']}")
+    typer.echo(f"forward_tracking_status={focus['forward_tracking_status']}")
+    typer.echo(f"next_action={payload['next_action']}")
+    typer.echo(f"report_path={payload['replay_forward_bridge_report_path']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-replay-forward-bridge")
+def dynamic_v3_validate_replay_forward_bridge_command(
+    bridge_id: Annotated[str, typer.Option("--bridge-id", help="bridge id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay forward bridge artifact root。"),
+    ] = DEFAULT_REPLAY_FORWARD_BRIDGE_DIR,
+) -> None:
+    """校验 TRADING-150 replay-to-forward bridge artifact。"""
+    payload = validate_replay_forward_bridge_artifact(bridge_id=bridge_id, output_dir=output_dir)
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_effect=none")

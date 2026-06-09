@@ -43,6 +43,11 @@ def prepare_replay_test_environment(tmp_path: Path, monkeypatch: Any) -> dict[st
         "backfill_dir": tmp_path / "backfilled_outcome",
         "paper_sim_dir": tmp_path / "historical_paper_sim",
         "performance_review_dir": tmp_path / "replay_performance_review",
+        "diagnosis_dir": tmp_path / "replay_diagnosis",
+        "backfill_repair_dir": tmp_path / "backfill_repair",
+        "variant_comparison_dir": tmp_path / "variant_comparison",
+        "rule_calibration_dir": tmp_path / "rule_calibration",
+        "replay_forward_bridge_dir": tmp_path / "replay_forward_bridge",
         "prices_path": prices_path,
         "rates_path": rates_path,
         "config_path": config_path,
@@ -215,6 +220,67 @@ def build_replay_inventory(paths: dict[str, Path], *, start: date, end: date) ->
     )
 
 
+def build_replay_review_chain(
+    paths: dict[str, Path],
+    *,
+    backfill_generated_at: datetime = datetime(2026, 6, 4, tzinfo=UTC),
+    chain_generated_at: datetime = datetime(2026, 7, 20, tzinfo=UTC),
+) -> dict[str, Any]:
+    write_replay_daily_advisory(
+        paths["daily_advisory_dir"],
+        daily_advisory_id="first",
+        as_of="2026-06-03",
+        target_weights={"QQQ": 0.45, "SMH": 0.30, "SOXX": 0.10, "CASH": 0.15},
+    )
+    write_replay_daily_advisory(
+        paths["daily_advisory_dir"],
+        daily_advisory_id="second",
+        as_of="2026-06-10",
+        target_weights={"QQQ": 0.40, "SMH": 0.35, "SOXX": 0.10, "CASH": 0.15},
+    )
+    write_owner_reviews(paths["owner_review_dir"], ["first", "second"])
+    inventory = build_replay_inventory(paths, start=date(2026, 6, 1), end=date(2026, 6, 30))
+    historical_replay = replay.run_historical_replay(
+        inventory_id=inventory["inventory_id"],
+        inventory_dir=paths["inventory_dir"],
+        output_dir=paths["historical_replay_dir"],
+        generated_at=datetime(2026, 6, 30, tzinfo=UTC),
+    )
+    backfill = replay.run_backfill_outcome(
+        replay_id=historical_replay["replay_id"],
+        replay_dir=paths["historical_replay_dir"],
+        output_dir=paths["backfill_dir"],
+        prices_path=paths["prices_path"],
+        rates_path=paths["rates_path"],
+        config_path=paths["config_path"],
+        enforce_data_quality_gate=False,
+        generated_at=backfill_generated_at,
+    )
+    sim = replay.run_historical_paper_sim(
+        replay_id=historical_replay["replay_id"],
+        variant="limited_adjustment",
+        replay_dir=paths["historical_replay_dir"],
+        output_dir=paths["paper_sim_dir"],
+        prices_path=paths["prices_path"],
+        generated_at=chain_generated_at,
+    )
+    review = replay.run_replay_performance_review(
+        backfill_id=backfill["backfill_id"],
+        sim_id=sim["sim_id"],
+        backfill_dir=paths["backfill_dir"],
+        sim_dir=paths["paper_sim_dir"],
+        output_dir=paths["performance_review_dir"],
+        generated_at=chain_generated_at,
+    )
+    return {
+        "inventory": inventory,
+        "replay": historical_replay,
+        "backfill": backfill,
+        "sim": sim,
+        "review": review,
+    }
+
+
 def build_minimal_leaderboard(path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -242,41 +308,51 @@ def report_index_for_dynamic_v3(
     artifacts: dict[str, Any],
 ) -> dict[str, Any]:
     leaderboard_path = build_minimal_leaderboard(paths["inventory_dir"] / "leaderboard.json")
+    reports = [
+        {
+            "report_id": "etf_dynamic_v3_parameter_sweep_leaderboard",
+            "latest_artifact_path": str(leaderboard_path),
+        },
+        {
+            "report_id": "etf_dynamic_v3_replay_inventory",
+            "latest_artifact_path": str(
+                artifacts["inventory"]["inventory_dir"] / "replay_inventory_report.md"
+            ),
+        },
+        {
+            "report_id": "etf_dynamic_v3_historical_replay",
+            "latest_artifact_path": str(
+                artifacts["replay"]["replay_dir"] / "replay_action_summary.json"
+            ),
+        },
+        {
+            "report_id": "etf_dynamic_v3_backfilled_outcome",
+            "latest_artifact_path": str(
+                artifacts["backfill"]["backfill_dir"] / "variant_performance_summary.json"
+            ),
+        },
+        {
+            "report_id": "etf_dynamic_v3_historical_paper_sim",
+            "latest_artifact_path": str(
+                artifacts["sim"]["sim_dir"] / "historical_paper_sim_report.md"
+            ),
+        },
+        {
+            "report_id": "etf_dynamic_v3_replay_performance_review",
+            "latest_artifact_path": str(
+                artifacts["review"]["review_dir"] / "reader_brief_section.md"
+            ),
+        },
+    ]
+    if "bridge" in artifacts:
+        reports.append(
+            {
+                "report_id": "etf_dynamic_v3_replay_forward_bridge",
+                "latest_artifact_path": str(
+                    artifacts["bridge"]["bridge_dir"] / "reader_brief_section.md"
+                ),
+            }
+        )
     return {
-        "reports": [
-            {
-                "report_id": "etf_dynamic_v3_parameter_sweep_leaderboard",
-                "latest_artifact_path": str(leaderboard_path),
-            },
-            {
-                "report_id": "etf_dynamic_v3_replay_inventory",
-                "latest_artifact_path": str(
-                    artifacts["inventory"]["inventory_dir"] / "replay_inventory_report.md"
-                ),
-            },
-            {
-                "report_id": "etf_dynamic_v3_historical_replay",
-                "latest_artifact_path": str(
-                    artifacts["replay"]["replay_dir"] / "replay_action_summary.json"
-                ),
-            },
-            {
-                "report_id": "etf_dynamic_v3_backfilled_outcome",
-                "latest_artifact_path": str(
-                    artifacts["backfill"]["backfill_dir"] / "variant_performance_summary.json"
-                ),
-            },
-            {
-                "report_id": "etf_dynamic_v3_historical_paper_sim",
-                "latest_artifact_path": str(
-                    artifacts["sim"]["sim_dir"] / "historical_paper_sim_report.md"
-                ),
-            },
-            {
-                "report_id": "etf_dynamic_v3_replay_performance_review",
-                "latest_artifact_path": str(
-                    artifacts["review"]["review_dir"] / "reader_brief_section.md"
-                ),
-            },
-        ],
+        "reports": reports,
     }
