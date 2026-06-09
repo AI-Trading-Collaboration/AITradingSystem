@@ -1,6 +1,8 @@
 # TRADING-074 Portfolio Operations Runbook and Scheduler Review
 
-最后更新：2026-06-03
+状态：BASELINE_DONE
+
+最后更新：2026-06-09
 
 ## 背景
 
@@ -73,3 +75,24 @@ paid data provider dependency
 - 2026-06-03: TRADING-074I 完成。新增 `build_operations_health_report`、`etf_operations_health_report_v1` 报告 schema、`render_operations_health_report_markdown`、`write_operations_health_report`、`aits etf ops report --cadence ... --as-of ...` CLI 和 direct dispatcher 路由；report 复用 command graph、freshness checker、failure policy、owner checklist 和 scheduler dry-run，生成 JSON / Markdown operations health report，显式展示 safety banner、run metadata、pipeline schedule、command graph summary、artifact freshness summary、dependency status、failures / warnings、owner review checklist、expected next run 和 source artifacts，并固定 `commands_executed=false`、`production_state_mutated=false`。专项测试覆盖 daily/weekly/monthly report、optional warning、JSON / Markdown writer、Markdown stability 和 CLI JSON/Markdown 写入。
 - 2026-06-03: TRADING-074J 完成。新增 Reader Brief `Operations Health` 区块和 `etf_operations_health_report` registry entry；Reader Brief 只读 report index 指向的 latest `etf_operations_health_report_v1`，展示 cadence/status、blocking failures、warnings、stale/missing artifacts、next owner review、safety posture、detailed report link、`production_effect=none` 和 `broker_action=none`。缺失 operations health report 时显示 section-level `MISSING`，不运行上游 ops report CLI、不补造 health 状态。专项测试覆盖 Reader Brief payload/HTML/CLI、pass/warning/blocked 状态、stale/missing artifacts、missing graceful path 和 default registry visibility。
 - 2026-06-03: TRADING-074K 完成。新增 `build_operations_validation_report`、`etf_operations_validation_v1` 报告 schema、`render_operations_validation_report_markdown`、`write_operations_validation_report`、`aits etf ops validate --as-of ...` CLI 和 direct dispatcher 路由；validation gate 复用 schedule spec、daily/weekly/biweekly/monthly graph、deterministic freshness probes、failure policy、owner checklist、scheduler dry-run、operations health report 和 Reader Brief operations health registry integration，fail-closed 校验 invalid schedule、required step missing、dependency cycle、unsafe `production_effect` / `broker_action` / missing `manual_review_required`、A-J workflow availability 和固定 safety boundary。专项测试覆盖完整 workflow PASS、invalid schedule、required step missing、dependency cycle、unsafe production effect、unsafe broker action、JSON / Markdown writer 和 CLI JSON/Markdown 写入。
+- 2026-06-09: 最终归档前按 operations runbook 复验 scheduler / cadence 边界。先读取
+  `docs/operations/operations_runbook.md`，确认 daily scheduler trigger 仍是统一外部入口，
+  TRADING-074 dry-run / report / validate 只规划、校验和展示，不执行 planned commands，
+  不写 production state，不自动 dispatch cadence。随后执行 `python -m
+  ai_trading_system.cli validate-data --as-of 2026-06-08`，数据质量为
+  `PASS_WITH_WARNINGS`（0 errors）；`aits etf ops validate --as-of 2026-06-08`
+  输出 `status=PASS`、`failed_check_count=0`、`warning_check_count=0`、
+  `commands_executed=false`、`production_state_mutated=false`、`production_effect=none`、
+  `broker_action=none`。四个 cadence dry-run 均只读生成 artifact：daily
+  `planned_step_count=11` / `blocking_failure_count=8` / `warning_count=2`，weekly
+  `9/5/1`，biweekly `4/2/0`，monthly `6/2/2`；所有 dry-run 均 `status=blocked`，
+  `commands_executed=false`、`production_state_mutated=false`。四个 operations health
+  report 也生成成功并按真实 artifact freshness fail-closed：daily blockers=10 /
+  warnings=2，weekly 17/1，biweekly 6/0，monthly 10/2。刷新 `reports index --as-of
+  2026-06-08` 和 `reports reader-brief --as-of 2026-06-08` 后，Reader Brief
+  `Operations Health` 指向 monthly health report，显示 `availability=AVAILABLE`、
+  `status=blocked`、missing required artifacts、owner checklist blocked 和固定 safety
+  posture。`tests\test_etf_operations.py` 为 79 passed。TRADING-074 从
+  `VALIDATING` 归档为 `BASELINE_DONE`：operations schedule / graph / freshness /
+  failure policy / checklist / dry-run / report / Reader Brief / validation gate 已完成；
+  真实 cadence dispatch 和 owner review 仍是后续运行观察依赖，不由本任务自动调度或部署。
