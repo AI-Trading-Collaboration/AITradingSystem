@@ -1,6 +1,6 @@
 # TRADING-015：Weight Adjustment Candidate Generator
 
-最后更新：2026-05-18
+最后更新：2026-06-09
 
 关联任务：`TRADING-015`
 
@@ -96,3 +96,21 @@ observe-only 权重调节候选生成层，帮助后续人工复核。
   tests/trading_engine`、`python -m pytest tests/test_daily_task_dashboard.py`、
   `python -m pytest`、`python -m ruff check scripts src tests` 和
   `python -m black --check scripts src tests`。
+- 2026-06-09：`TRADING-015` 从 VALIDATING 归档为 DONE。归档复核确认候选生成层仍为
+  observe-only，后续 `TRADING-016` / `TRADING-017` / `TRADING-018` 已在同一链路上
+  消费其产物，`TRADING-018A` / `TRADING-018B` 继续承担 scheduler dry-run 和 shadow
+  iteration 观察；本任务不再把真实 daily/paper/shadow 输入观察作为自身收口前置。
+  本轮先运行 `python -m ai_trading_system.cli validate-data`，数据质量状态
+  `PASS_WITH_WARNINGS`、错误数 0；默认缺输入 smoke 使用
+  `python scripts/run_weight_adjustment_candidates.py --date 2026-05-18 --reports-dir
+  outputs/reports/trading015_check` 输出 `gate_status=LIMITED`、candidate_count 1、
+  `top_candidate_id=weight_adjustment_candidate:2026-05-18:limited_input`、
+  `main_blocked_by=missing_daily_decision_summary`、`production_effect=none`。字段级复核
+  确认 `market_regime=ai_after_chatgpt`、candidate blocked、candidate
+  `production_effect=none`、blocked_by 包含缺 daily summary / paper signal quality /
+  shadow impact / continuous replay / manual approval，且 safety boundary 固定
+  `writes_production_profile=false`、`runs_replay=false`、`calls_real_broker=false`、
+  `triggers_trade=false`。验证通过
+  `python -m pytest tests/trading_engine/test_weight_adjustment_candidates.py
+  tests/test_daily_task_dashboard.py -q`（29 passed）、scoped safety scan 和归档前代码基线
+  GitHub Actions `CI` run `27177416285` success。
