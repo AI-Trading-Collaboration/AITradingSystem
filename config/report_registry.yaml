@@ -2453,6 +2453,112 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_outcome_due
+    title: ETF Dynamic v3 Rescue Outcome Due Scan
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue outcome-due report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/outcome_due_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/due_window_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/pending_window_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/update_ready_list.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_due/*/outcome_due_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-151 identifies forward outcome windows that are due, not due,
+      price-missing, or update-ready after the cached data quality gate.
+    owner_action: review_update_ready_list_before_any_outcome_update_execution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_replay_sample_expansion
+    title: ETF Dynamic v3 Rescue Replay Sample Expansion
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue replay-sample-expansion report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/expansion_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/candidate_source_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/expanded_replay_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/pit_classification_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/replay_sample_expansion/*/replay_sample_expansion_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-152 expands replay samples only from existing artifacts and keeps
+      PIT_UNSAFE rows ineligible for downstream replay interpretation.
+    owner_action: review_pit_classification_before_using_expanded_replay_samples
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_outcome_dashboard
+    title: ETF Dynamic v3 Rescue Outcome Availability Dashboard
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue outcome-dashboard report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_dashboard_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_availability_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_mode_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/pending_reason_dashboard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/outcome_dashboard_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/outcome_dashboard/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-153 aggregates forward, historical replay, and simulation outcome
+      availability without running upstream jobs or masking pending reasons.
+    owner_action: review_outcome_availability_before_interpreting_replay_or_advisory_results
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_limited_vs_notrade
+    title: ETF Dynamic v3 Rescue Limited Adjustment vs No-Trade Evaluation
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue limited-vs-notrade report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/limited_vs_notrade_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/sample_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/window_comparison_metrics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/regime_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_vs_notrade/*/limited_vs_notrade_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-154 evaluates limited_adjustment versus no_trade only from
+      available outcome samples and never applies policy automatically.
+    owner_action: review_sample_count_confidence_and_recommendation_before_any_manual_policy_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_consensus_risk
+    title: ETF Dynamic v3 Rescue Consensus Risk Review
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue consensus-risk report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_risk_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_exposure_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_drawdown_risk.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_turnover_risk.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_risk/*/consensus_risk_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-155 reviews consensus target exposure, drawdown, and turnover risk
+      without generating a default consensus execution or broker action.
+    owner_action: review_consensus_risk_before_any_manual_consensus_or_position_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

@@ -1100,10 +1100,46 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    outcome_dashboard_dir = tmp_path / "outcome_dashboard" / "dashboard123"
+    outcome_dashboard_dir.mkdir(parents=True)
+    outcome_dashboard_path = outcome_dashboard_dir / "outcome_dashboard_manifest.json"
+    outcome_dashboard_path.write_text(
+        json.dumps(
+            {
+                "dashboard_id": "dashboard123",
+                "status": "PASS_WITH_WARNINGS",
+                "available_count": 11,
+                "pending_count": 34,
+                "insufficient_data_count": 1,
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (outcome_dashboard_dir / "outcome_availability_matrix.json").write_text(
+        json.dumps({"summary": {}}),
+        encoding="utf-8",
+    )
+    (outcome_dashboard_dir / "pending_reason_dashboard.json").write_text(
+        json.dumps(
+            {
+                "top_pending_reasons": [
+                    {"reason": "future_window_not_reached", "count": 22}
+                ],
+                "next_action": "continue_forward_tracking",
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
             _report_record("etf_dynamic_v3_promotion_pack", evidence_path),
+            _report_record("etf_dynamic_v3_outcome_dashboard", outcome_dashboard_path),
         ]
     }
 
@@ -1124,6 +1160,13 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     )
     assert summary["promotion_manifest"] == str(promotion_path)
     assert summary["evidence_summary"] == str(evidence_path)
+    assert summary["outcome_dashboard_status"] == "PASS_WITH_WARNINGS"
+    assert summary["outcome_dashboard_available_count"] == 11
+    assert summary["outcome_dashboard_pending_count"] == 34
+    assert summary["outcome_dashboard_insufficient_count"] == 1
+    assert summary["outcome_dashboard_top_pending_reason"] == "future_window_not_reached"
+    assert summary["outcome_dashboard_next_action"] == "continue_forward_tracking"
+    assert summary["outcome_dashboard"] == str(outcome_dashboard_path)
     assert summary["production_candidate_generated"] is False
 
 

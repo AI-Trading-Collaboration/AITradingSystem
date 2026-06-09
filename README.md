@@ -843,6 +843,23 @@ manual-only advisory rule calibration。新增 CLI 包括 `replay-diagnosis run/
 `production_effect=none`、`broker_action_allowed=false`，不自动修改
 `position_advisory_v1.yaml`、official target weights、paper/real portfolio、baseline/production state
 或 broker。
+TRADING-151 到 TRADING-155 继续补齐 forward outcome accumulation 和 replay sample
+expansion。新增 CLI 包括 `outcome-due scan/report/update-ready`、
+`replay-sample-expansion run/report`、`outcome-dashboard build/report`、
+`limited-vs-notrade run/report`、`consensus-risk run/report`，以及
+`validate-outcome-due`、`validate-replay-sample-expansion`、
+`validate-outcome-dashboard`、`validate-limited-vs-notrade` 和
+`validate-consensus-risk`。新增 artifacts 位于
+`reports/etf_portfolio/dynamic_v3_rescue/outcome_due|replay_sample_expansion|outcome_dashboard|limited_vs_notrade|consensus_risk/`。
+`outcome-due scan` 必须先通过 cached data quality gate；`replay-sample-expansion`
+保留 PIT classification 并排除 `PIT_UNSAFE`；`outcome-dashboard` 只聚合
+forward / historical / simulation outcome availability 和 pending reasons，Reader Brief
+只读该 dashboard；`limited-vs-notrade` 只在样本足够时比较 `limited_adjustment`
+与 `no_trade`；`consensus-risk` 只输出 consensus exposure、drawdown 和 turnover
+risk review，不生成 default consensus execution。该阶段继续固定
+`production_effect=none`、`broker_action_allowed=false`、`broker_action_taken=false`、
+`production_candidate_generated=false`、`automatic_candidate_promotion=false`，不修改
+policy、official target weights、paper/real portfolio、baseline/production state 或 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

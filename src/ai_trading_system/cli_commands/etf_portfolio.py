@@ -299,6 +299,29 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
     validate_variant_comparison_artifact,
     variant_comparison_report_payload,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_outcome_accumulation import (
+    DEFAULT_CONSENSUS_RISK_DIR,
+    DEFAULT_LIMITED_VS_NOTRADE_DIR,
+    DEFAULT_OUTCOME_DASHBOARD_DIR,
+    DEFAULT_OUTCOME_DUE_DIR,
+    DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
+    build_outcome_dashboard,
+    consensus_risk_report_payload,
+    limited_vs_notrade_report_payload,
+    outcome_dashboard_report_payload,
+    outcome_due_report_payload,
+    outcome_due_update_ready,
+    replay_sample_expansion_report_payload,
+    run_consensus_risk_review,
+    run_limited_vs_notrade_evaluation,
+    run_outcome_due_scan,
+    run_replay_sample_expansion,
+    validate_consensus_risk_artifact,
+    validate_limited_vs_notrade_artifact,
+    validate_outcome_dashboard_artifact,
+    validate_outcome_due_artifact,
+    validate_replay_sample_expansion_artifact,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_ADVISORY_OUTCOME_DIR,
     DEFAULT_OWNER_ATTRIBUTION_DIR,
@@ -1135,6 +1158,26 @@ dynamic_v3_replay_forward_bridge_app = typer.Typer(
     help="Dynamic v3 rescue replay-to-forward bridge workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_outcome_due_app = typer.Typer(
+    help="Dynamic v3 rescue forward outcome due-window workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_replay_sample_expansion_app = typer.Typer(
+    help="Dynamic v3 rescue replay sample expansion workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_outcome_dashboard_app = typer.Typer(
+    help="Dynamic v3 rescue outcome availability dashboard workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_limited_vs_notrade_app = typer.Typer(
+    help="Dynamic v3 rescue limited adjustment versus no-trade workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_consensus_risk_app = typer.Typer(
+    help="Dynamic v3 rescue consensus target risk review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1240,6 +1283,14 @@ dynamic_v3_rescue_app.add_typer(
     dynamic_v3_replay_forward_bridge_app,
     name="replay-forward-bridge",
 )
+dynamic_v3_rescue_app.add_typer(dynamic_v3_outcome_due_app, name="outcome-due")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_replay_sample_expansion_app,
+    name="replay-sample-expansion",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_outcome_dashboard_app, name="outcome-dashboard")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_limited_vs_notrade_app, name="limited-vs-notrade")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_consensus_risk_app, name="consensus-risk")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
@@ -8778,6 +8829,505 @@ def dynamic_v3_validate_replay_forward_bridge_command(
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_effect=none")
     typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+def _parse_dynamic_v3_outcome_date(value: str, option_name: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise typer.BadParameter(f"{option_name} must use YYYY-MM-DD") from exc
+
+
+@dynamic_v3_outcome_due_app.command("scan")
+def dynamic_v3_outcome_due_scan_command(
+    as_of: Annotated[str, typer.Option("--as-of", help="扫描到期窗口的 as-of 日期。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome due artifact root。"),
+    ] = DEFAULT_OUTCOME_DUE_DIR,
+    advisory_outcome_dir: Annotated[
+        Path,
+        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="cached rates path。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    """扫描 forward advisory outcome 已到期窗口。"""
+    as_of_date = _parse_dynamic_v3_outcome_date(as_of, "--as-of")
+    result = run_outcome_due_scan(
+        as_of=as_of_date,
+        output_dir=output_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    summary = result["pending_window_summary"]
+    typer.echo(f"due_id={result['due_id']}")
+    typer.echo(f"due_dir={result['due_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"total_pending_windows={summary['total_pending_windows']}")
+    typer.echo(f"due_windows={summary['due_windows']}")
+    typer.echo(f"update_ready_count={summary['update_ready_count']}")
+    typer.echo(f"price_missing_count={summary['price_missing_windows']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_outcome_due_app.command("report")
+def dynamic_v3_outcome_due_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest outcome due scan。"),
+    ] = False,
+    due_id: Annotated[str | None, typer.Option("--due-id", help="due id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome due artifact root。"),
+    ] = DEFAULT_OUTCOME_DUE_DIR,
+) -> None:
+    """展示 outcome due 摘要。"""
+    payload = outcome_due_report_payload(due_id=due_id, latest=latest, output_dir=output_dir)
+    summary = payload["pending_window_summary"]
+    typer.echo(f"due_id={payload['due_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"total_pending_windows={summary['total_pending_windows']}")
+    typer.echo(f"due_windows={summary['due_windows']}")
+    typer.echo(f"update_ready_count={summary['update_ready_count']}")
+    typer.echo(f"price_missing_count={summary['price_missing_windows']}")
+    typer.echo(f"report_path={payload['outcome_due_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_outcome_due_app.command("update-ready")
+def dynamic_v3_outcome_due_update_ready_command(
+    due_id: Annotated[str, typer.Option("--due-id", help="due id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome due artifact root。"),
+    ] = DEFAULT_OUTCOME_DUE_DIR,
+    advisory_outcome_dir: Annotated[
+        Path,
+        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    paper_portfolio_dir: Annotated[
+        Path,
+        typer.Option("--paper-portfolio-dir", help="paper portfolio artifact root。"),
+    ] = DEFAULT_PAPER_PORTFOLIO_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="cached rates path。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    """更新 outcome due scan 中 can_update=true 的 outcome。"""
+    result = outcome_due_update_ready(
+        due_id=due_id,
+        output_dir=output_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    execution = result["execution"]
+    typer.echo(f"due_id={due_id}")
+    typer.echo(f"ready_window_count={execution['ready_window_count']}")
+    typer.echo(f"updated_outcome_count={execution['updated_outcome_count']}")
+    typer.echo("not_due_windows_updated=false")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-outcome-due")
+def dynamic_v3_validate_outcome_due_command(
+    due_id: Annotated[str, typer.Option("--due-id", help="due id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome due artifact root。"),
+    ] = DEFAULT_OUTCOME_DUE_DIR,
+) -> None:
+    """校验 TRADING-151 outcome due artifact。"""
+    payload = validate_outcome_due_artifact(due_id=due_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_replay_sample_expansion_app.command("run")
+def dynamic_v3_replay_sample_expansion_run_command(
+    start: Annotated[str, typer.Option("--start", help="AI regime replay scan start。")],
+    end: Annotated[str, typer.Option("--end", help="replay scan end。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay sample expansion artifact root。"),
+    ] = DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    replay_inventory_dir: Annotated[
+        Path,
+        typer.Option("--replay-inventory-dir", help="replay inventory artifact root。"),
+    ] = DEFAULT_REPLAY_INVENTORY_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="cached ETF price path。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+) -> None:
+    """扩展 historical replay candidate 样本。"""
+    start_date = _parse_dynamic_v3_outcome_date(start, "--start")
+    end_date = _parse_dynamic_v3_outcome_date(end, "--end")
+    result = run_replay_sample_expansion(
+        start=start_date,
+        end=end_date,
+        output_dir=output_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        replay_inventory_dir=replay_inventory_dir,
+        prices_path=prices_path,
+    )
+    summary = result["pit_classification_summary"]
+    typer.echo(f"expansion_id={result['expansion_id']}")
+    typer.echo(f"expansion_dir={result['expansion_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"new_replay_events={summary['total_expanded_events']}")
+    typer.echo(f"pit_safe_count={summary['pit_safe_count']}")
+    typer.echo(f"pit_warning_count={summary['pit_warning_count']}")
+    typer.echo(f"pit_unsafe_count={summary['pit_unsafe_count']}")
+    typer.echo("pit_unsafe_allowed_in_default_replay=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_replay_sample_expansion_app.command("report")
+def dynamic_v3_replay_sample_expansion_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest replay sample expansion。"),
+    ] = False,
+    expansion_id: Annotated[
+        str | None,
+        typer.Option("--expansion-id", help="expansion id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay sample expansion artifact root。"),
+    ] = DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
+) -> None:
+    """展示 replay sample expansion 摘要。"""
+    payload = replay_sample_expansion_report_payload(
+        expansion_id=expansion_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["pit_classification_summary"]
+    typer.echo(f"expansion_id={payload['expansion_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"new_replay_events={summary['total_expanded_events']}")
+    typer.echo(f"pit_safe_count={summary['pit_safe_count']}")
+    typer.echo(f"pit_warning_count={summary['pit_warning_count']}")
+    typer.echo(f"pit_unsafe_count={summary['pit_unsafe_count']}")
+    typer.echo(f"report_path={payload['replay_sample_expansion_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-replay-sample-expansion")
+def dynamic_v3_validate_replay_sample_expansion_command(
+    expansion_id: Annotated[str, typer.Option("--expansion-id", help="expansion id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="replay sample expansion artifact root。"),
+    ] = DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR,
+) -> None:
+    """校验 TRADING-152 replay sample expansion artifact。"""
+    payload = validate_replay_sample_expansion_artifact(
+        expansion_id=expansion_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_outcome_dashboard_app.command("build")
+def dynamic_v3_outcome_dashboard_build_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome dashboard artifact root。"),
+    ] = DEFAULT_OUTCOME_DASHBOARD_DIR,
+    advisory_outcome_dir: Annotated[
+        Path,
+        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    repair_dir: Annotated[
+        Path,
+        typer.Option("--repair-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> None:
+    """构建 outcome availability dashboard。"""
+    result = build_outcome_dashboard(
+        output_dir=output_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+    )
+    matrix = result["outcome_availability_matrix"]["summary"]
+    typer.echo(f"dashboard_id={result['dashboard_id']}")
+    typer.echo(f"dashboard_dir={result['dashboard_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"forward_outcome={matrix['forward_outcome']}")
+    typer.echo(f"historical_replay={matrix['historical_replay']}")
+    typer.echo(f"backtest_simulation={matrix['backtest_simulation']}")
+    typer.echo(f"top_pending_reason={result['reader_brief']['top_pending_reason']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_outcome_dashboard_app.command("report")
+def dynamic_v3_outcome_dashboard_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest outcome dashboard。"),
+    ] = False,
+    dashboard_id: Annotated[
+        str | None,
+        typer.Option("--dashboard-id", help="dashboard id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome dashboard artifact root。"),
+    ] = DEFAULT_OUTCOME_DASHBOARD_DIR,
+) -> None:
+    """展示 outcome dashboard 摘要。"""
+    payload = outcome_dashboard_report_payload(
+        dashboard_id=dashboard_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    matrix = payload["outcome_availability_matrix"]["summary"]
+    pending = payload["pending_reason_dashboard"]
+    top = pending["top_pending_reasons"][0] if pending["top_pending_reasons"] else {}
+    typer.echo(f"dashboard_id={payload['dashboard_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"forward_outcome={matrix['forward_outcome']}")
+    typer.echo(f"historical_replay={matrix['historical_replay']}")
+    typer.echo(f"backtest_simulation={matrix['backtest_simulation']}")
+    typer.echo(f"top_pending_reason={top.get('reason', 'MISSING')}")
+    typer.echo(f"report_path={payload['outcome_dashboard_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-outcome-dashboard")
+def dynamic_v3_validate_outcome_dashboard_command(
+    dashboard_id: Annotated[str, typer.Option("--dashboard-id", help="dashboard id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="outcome dashboard artifact root。"),
+    ] = DEFAULT_OUTCOME_DASHBOARD_DIR,
+) -> None:
+    """校验 TRADING-153 outcome dashboard artifact。"""
+    payload = validate_outcome_dashboard_artifact(
+        dashboard_id=dashboard_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_limited_vs_notrade_app.command("run")
+def dynamic_v3_limited_vs_notrade_run_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="limited-vs-notrade artifact root。"),
+    ] = DEFAULT_LIMITED_VS_NOTRADE_DIR,
+    advisory_outcome_dir: Annotated[
+        Path,
+        typer.Option("--advisory-outcome-dir", help="advisory outcome artifact root。"),
+    ] = DEFAULT_ADVISORY_OUTCOME_DIR,
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    repair_dir: Annotated[
+        Path,
+        typer.Option("--repair-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> None:
+    """运行 limited_adjustment vs no_trade 专项评估。"""
+    result = run_limited_vs_notrade_evaluation(
+        output_dir=output_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+    )
+    comparison = result["window_comparison_metrics"]
+    first = comparison["by_window"][0]
+    typer.echo(f"focus_id={result['focus_id']}")
+    typer.echo(f"focus_dir={result['focus_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"available_count={result['manifest']['available_count']}")
+    typer.echo(f"win_rate={first['win_rate']}")
+    typer.echo(f"avg_relative_return={first['avg_relative_return']}")
+    typer.echo(f"confidence={first['confidence']}")
+    typer.echo(f"recommendation={comparison['overall_recommendation']}")
+    typer.echo("auto_policy_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_limited_vs_notrade_app.command("report")
+def dynamic_v3_limited_vs_notrade_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest limited-vs-notrade artifact。"),
+    ] = False,
+    focus_id: Annotated[str | None, typer.Option("--focus-id", help="focus id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="limited-vs-notrade artifact root。"),
+    ] = DEFAULT_LIMITED_VS_NOTRADE_DIR,
+) -> None:
+    """展示 limited_adjustment vs no_trade 摘要。"""
+    payload = limited_vs_notrade_report_payload(
+        focus_id=focus_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    comparison = payload["window_comparison_metrics"]
+    first = comparison["by_window"][0]
+    typer.echo(f"focus_id={payload['focus_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"available_count={payload['available_count']}")
+    typer.echo(f"win_rate={first['win_rate']}")
+    typer.echo(f"avg_relative_return={first['avg_relative_return']}")
+    typer.echo(f"confidence={first['confidence']}")
+    typer.echo(f"recommendation={comparison['overall_recommendation']}")
+    typer.echo(f"report_path={payload['limited_vs_notrade_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-limited-vs-notrade")
+def dynamic_v3_validate_limited_vs_notrade_command(
+    focus_id: Annotated[str, typer.Option("--focus-id", help="focus id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="limited-vs-notrade artifact root。"),
+    ] = DEFAULT_LIMITED_VS_NOTRADE_DIR,
+) -> None:
+    """校验 TRADING-154 limited-vs-notrade artifact。"""
+    payload = validate_limited_vs_notrade_artifact(focus_id=focus_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("auto_policy_apply=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_consensus_risk_app.command("run")
+def dynamic_v3_consensus_risk_run_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus risk artifact root。"),
+    ] = DEFAULT_CONSENSUS_RISK_DIR,
+    daily_advisory_dir: Annotated[
+        Path,
+        typer.Option("--daily-advisory-dir", help="daily advisory artifact root。"),
+    ] = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    historical_replay_dir: Annotated[
+        Path,
+        typer.Option("--historical-replay-dir", help="historical replay artifact root。"),
+    ] = DEFAULT_HISTORICAL_REPLAY_DIR,
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="backfilled outcome artifact root。"),
+    ] = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    repair_dir: Annotated[
+        Path,
+        typer.Option("--repair-dir", help="backfill repair artifact root。"),
+    ] = DEFAULT_BACKFILL_REPAIR_DIR,
+) -> None:
+    """运行 consensus_target 风险审查。"""
+    result = run_consensus_risk_review(
+        output_dir=output_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        historical_replay_dir=historical_replay_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+    )
+    exposure = result["consensus_exposure_summary"]
+    drawdown = result["consensus_drawdown_risk"]["window_results"][0]
+    turnover = result["consensus_turnover_risk"]
+    typer.echo(f"risk_id={result['risk_id']}")
+    typer.echo(f"risk_dir={result['risk_dir']}")
+    typer.echo(f"consensus_target_risk={result['manifest']['consensus_target_risk']}")
+    typer.echo(f"risk_asset_exposure={exposure['risk_asset_exposure']}")
+    typer.echo(f"drawdown_risk={drawdown['risk_status']}")
+    typer.echo(f"turnover_risk={turnover['turnover_status']}")
+    typer.echo("consensus_target_default_execution_recommended=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_consensus_risk_app.command("report")
+def dynamic_v3_consensus_risk_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest consensus risk artifact。"),
+    ] = False,
+    risk_id: Annotated[str | None, typer.Option("--risk-id", help="risk id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus risk artifact root。"),
+    ] = DEFAULT_CONSENSUS_RISK_DIR,
+) -> None:
+    """展示 consensus_target risk 摘要。"""
+    payload = consensus_risk_report_payload(risk_id=risk_id, latest=latest, output_dir=output_dir)
+    exposure = payload["consensus_exposure_summary"]
+    drawdown = payload["consensus_drawdown_risk"]["window_results"][0]
+    turnover = payload["consensus_turnover_risk"]
+    typer.echo(f"risk_id={payload['risk_id']}")
+    typer.echo(f"consensus_target_risk={payload['consensus_target_risk']}")
+    typer.echo(f"risk_asset_exposure={exposure['risk_asset_exposure']}")
+    typer.echo(f"drawdown_risk={drawdown['risk_status']}")
+    typer.echo(f"turnover_risk={turnover['turnover_status']}")
+    typer.echo(f"report_path={payload['consensus_risk_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-consensus-risk")
+def dynamic_v3_validate_consensus_risk_command(
+    risk_id: Annotated[str, typer.Option("--risk-id", help="risk id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus risk artifact root。"),
+    ] = DEFAULT_CONSENSUS_RISK_DIR,
+) -> None:
+    """校验 TRADING-155 consensus risk artifact。"""
+    payload = validate_consensus_risk_artifact(risk_id=risk_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("consensus_target_default_execution_recommended=false")
+    typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

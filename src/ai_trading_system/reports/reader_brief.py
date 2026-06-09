@@ -5899,6 +5899,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "bridge_manifest.json",
     )
+    outcome_dashboard_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_outcome_dashboard",
+        ),
+        "outcome_dashboard_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -6026,6 +6033,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if replay_forward_bridge_path is not None
         else None
     )
+    outcome_dashboard = _read_optional_json(outcome_dashboard_path)
+    outcome_availability_matrix = _read_optional_json(
+        outcome_dashboard_path.parent / "outcome_availability_matrix.json"
+        if outcome_dashboard_path is not None
+        else None
+    )
+    pending_reason_dashboard = _read_optional_json(
+        outcome_dashboard_path.parent / "pending_reason_dashboard.json"
+        if outcome_dashboard_path is not None
+        else None
+    )
     replay_recommendations = _records(replay_calibration.get("recommendations"))
     replay_recommendation = replay_recommendations[0] if replay_recommendations else {}
     if not leaderboard:
@@ -6042,6 +6060,9 @@ def _etf_dynamic_v3_parameter_research_summary(
             replay_calibration,
             replay_forward_bridge,
             replay_forward_focus,
+            outcome_dashboard,
+            outcome_availability_matrix,
+            pending_reason_dashboard,
         )
         if any(replay_payloads):
             return _etf_dynamic_v3_parameter_research_replay_only_summary(
@@ -6064,6 +6085,10 @@ def _etf_dynamic_v3_parameter_research_summary(
                 replay_forward_bridge_path=replay_forward_bridge_path,
                 replay_forward_bridge=replay_forward_bridge,
                 replay_forward_focus=replay_forward_focus,
+                outcome_dashboard_path=outcome_dashboard_path,
+                outcome_dashboard=outcome_dashboard,
+                outcome_availability_matrix=outcome_availability_matrix,
+                pending_reason_dashboard=pending_reason_dashboard,
             )
         return _missing_etf_dynamic_v3_parameter_research_summary()
     top = _records(leaderboard.get("top_eligible_candidates"))
@@ -6553,6 +6578,24 @@ def _etf_dynamic_v3_parameter_research_summary(
             replay_forward_bridge.get("next_action"),
             "MISSING",
         ),
+        "outcome_dashboard_id": _text(outcome_dashboard.get("dashboard_id"), "MISSING"),
+        "outcome_dashboard_status": _text(outcome_dashboard.get("status"), "MISSING"),
+        "outcome_dashboard_available_count": outcome_dashboard.get("available_count", 0),
+        "outcome_dashboard_pending_count": outcome_dashboard.get("pending_count", 0),
+        "outcome_dashboard_insufficient_count": outcome_dashboard.get(
+            "insufficient_data_count",
+            0,
+        ),
+        "outcome_dashboard_top_pending_reason": _text(
+            (_records(pending_reason_dashboard.get("top_pending_reasons")) or [{}])[0].get(
+                "reason"
+            ),
+            "MISSING",
+        ),
+        "outcome_dashboard_next_action": _text(
+            pending_reason_dashboard.get("next_action"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -6630,6 +6673,12 @@ def _etf_dynamic_v3_parameter_research_summary(
         "replay_performance_review": (
             "" if replay_performance_review_path is None else str(replay_performance_review_path)
         ),
+        "replay_forward_bridge": (
+            "" if replay_forward_bridge_path is None else str(replay_forward_bridge_path)
+        ),
+        "outcome_dashboard": (
+            "" if outcome_dashboard_path is None else str(outcome_dashboard_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -6678,6 +6727,11 @@ def _etf_dynamic_v3_parameter_research_summary(
                     simulated_performance,
                     replay_performance_review,
                     replay_calibration,
+                    replay_forward_bridge,
+                    replay_forward_focus,
+                    outcome_dashboard,
+                    outcome_availability_matrix,
+                    pending_reason_dashboard,
                 ),
                 "production_candidate_generated",
             )
@@ -6726,6 +6780,11 @@ def _etf_dynamic_v3_parameter_research_summary(
                     simulated_performance,
                     replay_performance_review,
                     replay_calibration,
+                    replay_forward_bridge,
+                    replay_forward_focus,
+                    outcome_dashboard,
+                    outcome_availability_matrix,
+                    pending_reason_dashboard,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -6774,6 +6833,11 @@ def _etf_dynamic_v3_parameter_research_summary(
                     simulated_performance,
                     replay_performance_review,
                     replay_calibration,
+                    replay_forward_bridge,
+                    replay_forward_focus,
+                    outcome_dashboard,
+                    outcome_availability_matrix,
+                    pending_reason_dashboard,
                 ),
                 "shadow_enrollment_allowed",
             )
@@ -6802,6 +6866,10 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
     replay_forward_bridge_path: Path | None,
     replay_forward_bridge: Mapping[str, Any],
     replay_forward_focus: Mapping[str, Any],
+    outcome_dashboard_path: Path | None,
+    outcome_dashboard: Mapping[str, Any],
+    outcome_availability_matrix: Mapping[str, Any],
+    pending_reason_dashboard: Mapping[str, Any],
 ) -> dict[str, Any]:
     replay_payloads = (
         replay_inventory,
@@ -6816,9 +6884,13 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
         replay_calibration,
         replay_forward_bridge,
         replay_forward_focus,
+        outcome_dashboard,
+        outcome_availability_matrix,
+        pending_reason_dashboard,
     )
     status = _text(
-        replay_performance_review.get("status")
+        outcome_dashboard.get("status")
+        or replay_performance_review.get("status")
         or backfilled_outcome.get("status")
         or historical_replay.get("status")
         or replay_inventory.get("status"),
@@ -6832,11 +6904,13 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
     )
     next_action = _text(
         replay_forward_bridge.get("next_action")
+        or pending_reason_dashboard.get("next_action")
         or replay_performance_review.get("next_action")
         or replay_recommendation.get("type"),
         "MISSING",
     )
     forward_focus_items = _records(replay_forward_focus.get("focus_items"))
+    top_pending = (_records(pending_reason_dashboard.get("top_pending_reasons")) or [{}])[0]
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(
         _etf_dynamic_v3_parameter_research_safe_placeholder(),
         *replay_payloads,
@@ -6854,6 +6928,7 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 f"paper_sim={historical_paper_sim.get('status', 'MISSING')}; "
                 f"review={status}; "
                 f"replay_forward_bridge={replay_forward_bridge.get('status', 'MISSING')}; "
+                f"outcome_dashboard={outcome_dashboard.get('status', 'MISSING')}; "
                 f"best_replay_variant={best_variant}; "
                 f"next_action={next_action}; "
                 "parameter_sweep_leaderboard=MISSING; manual-only replay evidence "
@@ -6967,6 +7042,22 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 replay_forward_bridge.get("next_action"),
                 "MISSING",
             ),
+            "outcome_dashboard_id": _text(outcome_dashboard.get("dashboard_id"), "MISSING"),
+            "outcome_dashboard_status": _text(outcome_dashboard.get("status"), "MISSING"),
+            "outcome_dashboard_available_count": outcome_dashboard.get("available_count", 0),
+            "outcome_dashboard_pending_count": outcome_dashboard.get("pending_count", 0),
+            "outcome_dashboard_insufficient_count": outcome_dashboard.get(
+                "insufficient_data_count",
+                0,
+            ),
+            "outcome_dashboard_top_pending_reason": _text(
+                top_pending.get("reason"),
+                "MISSING",
+            ),
+            "outcome_dashboard_next_action": _text(
+                pending_reason_dashboard.get("next_action"),
+                "MISSING",
+            ),
             "replay_calibration_priority": _text(
                 replay_recommendation.get("priority"),
                 "MISSING",
@@ -6996,6 +7087,9 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
             ),
             "replay_forward_bridge": (
                 "" if replay_forward_bridge_path is None else str(replay_forward_bridge_path)
+            ),
+            "outcome_dashboard": (
+                "" if outcome_dashboard_path is None else str(outcome_dashboard_path)
             ),
             "safety_status": safety_status,
             "production_candidate_generated": _any_payload_flag_true(
@@ -7199,6 +7293,13 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "replay_forward_bridge_status": "MISSING",
         "replay_forward_focus": "MISSING",
         "replay_forward_next_action": "MISSING",
+        "outcome_dashboard_id": "MISSING",
+        "outcome_dashboard_status": "MISSING",
+        "outcome_dashboard_available_count": 0,
+        "outcome_dashboard_pending_count": 0,
+        "outcome_dashboard_insufficient_count": 0,
+        "outcome_dashboard_top_pending_reason": "MISSING",
+        "outcome_dashboard_next_action": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -7234,6 +7335,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "historical_paper_sim": "",
         "replay_performance_review": "",
         "replay_forward_bridge": "",
+        "outcome_dashboard": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
