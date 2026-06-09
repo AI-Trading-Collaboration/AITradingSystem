@@ -38,11 +38,11 @@ weight/gate factorial attribution，并把短样本最优降级为 diagnostic-le
 
 |阶段|状态|验收|
 |---|---|---|
-|1. 任务登记和需求文档|VALIDATING|新增本需求文档和 `CALIBRATION-015/016/017` 任务登记。|
+|1. 任务登记和需求文档|DONE|新增本需求文档和 `CALIBRATION-015/016/017` 任务登记。|
 |2. Cap-level attribution|DONE|搜索报告、manifest 和测试包含单 cap ablation、primary gate cap 和最终仓位变化解释。|
 |3. Promotion contract|DONE|新增 contract 配置和 CLI；无 eligible best、样本不足、gate 主导或缺 forward shadow 时不得进入 owner review。|
-|4. Objective regularization 与 lineage|VALIDATING|objective 支持 gate relaxation、weight distance、changed dimension penalty 和 production-nearby 限制；manifest 记录新增 checksum/version/commit/dirty 状态。|
-|5. 验证|VALIDATING|目标测试、ruff、diff check 和当前样本 CLI smoke 通过，或记录真实阻塞。|
+|4. Objective regularization 与 lineage|DONE|objective 支持 gate relaxation、weight distance、changed dimension penalty 和 production-nearby 限制；manifest 记录新增 checksum/version/commit/dirty 状态。|
+|5. 验证|DONE|目标测试、ruff、diff check 和当前样本 CLI smoke 通过，或记录真实阻塞。|
 
 ## 生产边界
 
@@ -81,3 +81,16 @@ weight/gate factorial attribution，并把短样本最优降级为 diagnostic-le
   `tests/test_shadow_weight_profiles.py` 15 passed、Ruff 和 repo-wide Black check。
   `CALIBRATION-017` 的 objective regularization 与 lineage 观察继续保留为独立
   `VALIDATING` 行。
+- 2026-06-09：`CALIBRATION-017` 从 `VALIDATING` 归档为 `DONE`。当前 bundle
+  `current_20260504_20260514_cap_promotion_v3` 的 manifest 记录 objective checksum、
+  source weight checksum、prices checksum、decision snapshot aggregate checksum、
+  resolver version、git commit sha 和 dirty worktree 标记，`production_effect=none`；
+  `trials.csv` 记录 `objective_score`、`gate_relaxation_distance`、
+  `weight_l1_distance_from_production`、`changed_dimension_count`、
+  `max_single_factor_step`、`eligible` 和 `ineligibility_reason`。当前样本 top trial 仍为
+  gate-only `source_current__grid_gate_0217`，全部 51,612 trials 因
+  `available_samples_below_objective_floor` 无 eligible 候选，符合 fail-closed
+  边界，不产生 production 参数或仓位 gate 变更。验证通过
+  `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide Black check 和
+  `compileall`。后续真实样本 tie/outcome 观察由 forward shadow / 成熟度任务继续承接，
+  不阻塞本 objective regularization 与 lineage 实现完成。
