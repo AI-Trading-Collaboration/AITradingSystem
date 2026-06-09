@@ -1,8 +1,8 @@
 # TRADING-006：Paper Signal Quality Evaluation
 
-状态：`VALIDATING`
+状态：`BASELINE_DONE`
 
-最后更新：2026-06-07
+最后更新：2026-06-09
 
 关联任务：`TRADING-006`
 
@@ -88,3 +88,11 @@ id、version、status、阈值和配置路径。该 policy 是 pilot baseline，
   目标 paper signal quality tests、dashboard tests、ruff 和目标文件 Black check 通过。
   全仓 `python -m black --check src tests scripts` 仍受既有无关文件 baseline 阻断，
   不在本任务中重排无关模块。
+- 2026-06-09：从 `VALIDATING` 改为 `BASELINE_DONE`。原因：本轮按 operations
+  runbook 先执行数据质量门，结果为 `PASS_WITH_WARNINGS` / 错误数 0；isolated
+  缺输入 smoke 输出 `INSUFFICIENT_DATA`、`sample_count=0`、`candidate_count=0`、
+  `filled_count=0`，并保持 `market_regime=ai_after_chatgpt`、`production_effect=none`、
+  `observe_only=true`、`PAPER_ONLY_SIMULATION` / `DAILY_INDEPENDENT_ONLY` warning、
+  不调用 broker、不运行 replay、不改变参数晋级；目标 paper signal quality + dashboard
+  pytest 25 passed，Ruff 和触达文件 Black check 通过。剩余真实 daily dashboard 连续
+  观察已拆分为 `TRADING-006B`，repo-wide formatter baseline 已拆分为 `DEV-001`。

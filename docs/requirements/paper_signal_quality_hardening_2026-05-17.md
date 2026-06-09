@@ -1,6 +1,8 @@
 # TRADING-006A：Paper Signal Quality Hardening
 
-最后更新：2026-05-17
+状态：`BASELINE_DONE`
+
+最后更新：2026-06-09
 
 关联任务：`TRADING-006A`
 
@@ -69,3 +71,9 @@ TRADING-006 已新增只读 paper signal quality evaluation。当前加固目标
   `python -m ruff check src tests scripts` 通过；本次目标/改动文件 Black check 通过。
   全仓 `python -m black --check src tests scripts` 在当前环境下仍报告 125 个既有无关
   文件 would reformat，本轮未为通过该命令重排无关文件。
+- 2026-06-09：从 `VALIDATING` 改为 `BASELINE_DONE`。原因：本轮 isolated smoke
+  和字段级复核确认 allowed status、policy snapshot、evaluation gate explanation、
+  `DAILY_INDEPENDENT_ONLY` / `PAPER_ONLY_SIMULATION` warning、dashboard 只读摘要和
+  `production_effect=none` 安全边界均保持；forbidden live / promotion 语义只出现在测试
+  禁止清单中。目标 paper signal quality + dashboard pytest 25 passed，Ruff 和触达文件
+  Black check 通过。剩余全仓 Black baseline 已拆分为 `DEV-001`，不再阻塞本任务基线归档。
