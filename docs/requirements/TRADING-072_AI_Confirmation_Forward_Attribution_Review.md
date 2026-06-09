@@ -1,6 +1,8 @@
 # TRADING-072 AI Confirmation Forward Attribution Review
 
-最后更新：2026-06-02
+状态：BASELINE_DONE
+
+最后更新：2026-06-09
 
 ## 背景
 
@@ -136,3 +138,20 @@ TRADING-072 不得标记完成，除非 AI attribution validation gate 与全量
   `python -m ai_trading_system.cli etf ai-attribution validate`（PASS）。
   父任务保持 `VALIDATING`，直到真实 forward samples 和 owner manual review 支持
   下一阶段 AI confirmation overlay 解释或 policy review。
+- 2026-06-09: 最终归档前复验当前真实 forward sample 边界。先执行 `python -m
+  ai_trading_system.cli validate-data --as-of 2026-06-08`，数据质量为
+  `PASS_WITH_WARNINGS`（0 errors）；随后执行 `aits etf ai-attribution build
+  --as-of 2026-06-08`、`report --as-of 2026-06-08` 和 `validate`。Dataset 输出
+  `record_count=0`、`available_sample_count=0`、`evaluation_only=true`；report 输出
+  `status=needs_more_data`，Markdown 披露 market regime `ai_after_chatgpt`、
+  requested date range `2022-12-01` 至 `2026-06-08`、forward windows
+  `1D/5D/20D/60D`、forward return usage 为 attribution/reporting only，安全字段
+  仍为 observe-only / candidate-only / no broker / manual review required。
+  Validation gate `status=PASS`、`failed_check_count=0`，`tests\test_etf_ai_attribution.py`
+  为 9 passed。刷新 `reports index --as-of 2026-06-08` 和 `reports reader-brief
+  --as-of 2026-06-08` 后，Reader Brief `AI Attribution Review` 显示
+  `availability=AVAILABLE`、`status=needs_more_data`、`redundancy_status=unknown_insufficient_data`
+  和“继续 observe-only 积累样本；不得把当前结果写成交易结论”。TRADING-072 从
+  `VALIDATING` 归档为 `BASELINE_DONE`：attribution-only 基础设施、Reader Brief
+  可见性和 fail-closed gate 已完成；真实 forward samples 和 owner policy review
+  仍是后续依赖，不能自动扩大 AI confirmation overlay 或形成交易结论。
