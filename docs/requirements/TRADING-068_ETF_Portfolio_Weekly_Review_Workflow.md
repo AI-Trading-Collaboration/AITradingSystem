@@ -1,6 +1,6 @@
 # TRADING-068 ETF Portfolio Weekly Review Workflow
 
-状态：VALIDATING
+状态：BASELINE_DONE
 
 最后更新：2026-06-09
 
@@ -112,3 +112,20 @@ auto_reject_without_review
   真实周度 package 和 Reader Brief 可见性已推进，但仍缺 owner 对 6 个 open
   action 的人工复核，以及后续 decision journal entry；任务保持 `VALIDATING`，
   next owner 调整为项目 owner + 系统验证。
+- 2026-06-09：最终归档前复验当前缓存窗口。由于本地 price cache 已推进到
+  `2026-06-08`，直接 `validate-data --as-of 2026-06-05` 被未来价格行正确阻断为
+  `FAIL`，因此最终 gate 改用当前缓存覆盖的最新交易日 `2026-06-08`。验证结果：
+  `python -m ai_trading_system.cli validate-data --as-of 2026-06-08`
+  为 `PASS_WITH_WARNINGS`（0 errors），`python -m ai_trading_system.cli etf
+  weekly-review validate` 为 `PASS`，`python -m pytest
+  tests\test_etf_weekly_review.py -q` 为 6 passed。随后生成
+  `weekly_review_2026-06-08.{json,md}` 和
+  `aggregation/weekly_review_aggregation_2026-06-08.json`；report status
+  `stable_observe`，aggregation status `PASS_WITH_WARNINGS`，source reports=15，
+  loaded sections=11，missing sections=4，manual_review_actions=6 且全部
+  `open`，安全字段仍为 observe-only / candidate-only / no broker / manual review
+  required。刷新 report index 和 Reader Brief 后，Reader Brief `ETF weekly review`
+  指向 `weekly_review_2026-06-08.json` 并显示 `manual_review_actions=6`。
+  TRADING-068 从 `VALIDATING` 归档为 `BASELINE_DONE`：weekly review 基础设施、
+  可见性和 fail-closed gate 已完成，剩余 6 个 open action 的 owner 复核和后续
+  decision journal entry 是人工决策链依赖，不由系统伪造。
