@@ -80,5 +80,14 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline，TRADING-063 已
   experiment run manifest、candidate selection、weekly review 和 top candidate 为
   `MISSING`，仅 shadow registry 可见且 active shadow candidates 为 0。该证据证明
   TRADING-064 基础设施 gate 仍可运行，但真实 experiment batch、candidate
-  selection、shadow observation、weekly review 和 owner review 尚未完成；任务保持
-  `VALIDATING`，next owner 调整为项目 owner + 系统验证。
+  selection、shadow observation、weekly review 和 owner review 尚未完成。
+- 2026-06-09: 刷新验证 `python -m ai_trading_system.cli etf experiments
+  validate --pack etf_calibration_v1` 仍为 `PASS`，11 项 checks 全部 `PASS`，
+  `safe_for_shadow_observation=true`、`production_effect=none`、`broker_action=none`、
+  `manual_review_required=true`、`production_promotion_allowed=false`；
+  `tests/test_etf_experiments.py` 57 passed。TRADING-064 从 `VALIDATING`
+  归档为 `BASELINE_DONE`，原因是受控 experiment pack、runner、ranking、
+  candidate gate、shadow enrollment、weekly review、Reader Brief/report index 和
+  final validation gate 已完成；真实 experiment batch、candidate selection、
+  shadow observation、weekly review 样本和 owner review 仍作为后续观察/owner
+  决策依赖继续推进，不作为本基础设施任务的未完成代码缺口。
