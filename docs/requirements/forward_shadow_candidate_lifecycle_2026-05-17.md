@@ -1,6 +1,6 @@
 # Forward Shadow Candidate Lifecycle
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 ## 背景
 
@@ -59,3 +59,14 @@ weight review。
   run-shadow registry 幂等保护和 production safety 测试；验证通过目标 shadow iteration
   测试、daily task dashboard 相关测试、全量 `ruff check src tests`、全量 `pytest -q`
   572 passed 和 `git diff --check`。
+- 2026-06-09：`CALIBRATION-019` 从 `VALIDATING` 归档为 `DONE`。当前 registry
+  smoke 先确认 `source_current__grid_gate_0217` 为 `FORWARD_SHADOW_ACTIVE`，
+  随后运行 `aits feedback evaluate-forward-shadow --as-of 2026-05-19` 输出
+  `forward_shadow_evaluation_2026-05-19.json/md`，状态 `PASS`，evaluated_count=1，
+  action_counts 为 `REVIEW_GATE_POLICY=1`、`REVIEW_WEIGHT_CANDIDATE=0`；
+  gate-only candidate 从 `FORWARD_SHADOW_ACTIVE` 进入 `REVIEW_PENDING`，且报告声明
+  `production_effect=none`、production parameters unchanged。验证通过
+  `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py` 32 passed、
+  Ruff、repo-wide Black check 和 `compileall`。本任务完成的是 lifecycle command
+  / state machine / safety boundary，长期 outcome 样本成熟度继续由 forward shadow
+  观察任务承接。

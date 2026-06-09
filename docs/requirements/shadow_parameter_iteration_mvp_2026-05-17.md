@@ -1,6 +1,6 @@
 # Shadow Parameter Iteration MVP
 
-最后更新：2026-05-17
+最后更新：2026-06-09
 
 ## 背景
 
@@ -85,3 +85,12 @@ P2 不是本轮要启用的 production mutation，而是必须继续保持禁止
   `quality_as_of=2026-05-15` 后数据质量报告 PASS，回测状态
   `PASS_WITH_LIMITATIONS`。P2 继续作为 production mutation guardrails，不启用
   production 权重、gate、approved overlay、approved_hard 或 shrinkage proposal 修改。
+- 2026-06-09：`CALIBRATION-018` 从 `VALIDATING` 归档为 `DONE`。当前
+  `shadow_iteration_2026-05-17` artifact 仍显示 `PASS_WITH_LIMITATIONS`、
+  `production_effect=none`、production parameters unchanged；候选分类为
+  `weight_only` / `gate_only` / `weight_gate_bundle`，其中 gate-only
+  `source_current__grid_gate_0217` 保持 forward shadow / gate policy review 路径，
+  不作为权重晋级候选。验证通过 `tests/test_shadow_iteration.py`
+  + `tests/test_daily_task_dashboard.py` 32 passed、Ruff、repo-wide Black check 和
+  `compileall`。后续真实 forward outcome 成熟度继续由生命周期/成熟度任务观察，
+  不影响本 MVP 完成状态。
