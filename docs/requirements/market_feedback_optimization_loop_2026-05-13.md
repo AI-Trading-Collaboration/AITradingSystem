@@ -149,7 +149,7 @@ aits feedback evaluate-shadow-parameter-promotion --search-output-dir outputs/pa
 |9B. Shadow weight profile 长期观察|IN_PROGRESS|维护若干套隔离测试权重参数，初始值参考生产 `weight_profile_current.yaml`，每日从 production decision snapshot 计算 shadow score / model band / gated band，并可选写入隔离 prediction ledger 进入 outcome 观察；不得替换生产权重。|
 |9C. 当前样本 validation 门槛|VALIDATING|把 diagnostic/validation 门槛放宽到当前已积累 outcome 样本可启动后续验证，但 production promotion floor 不降低；shadow maturity 区分 validation review 和 promotion/governance review，低样本 validation 只能进入 `READY_FOR_VALIDATION_REVIEW`。|
 |9D. Shadow weight 表现优选|VALIDATING|按 gate 后仓位把 shadow 权重与主线转成可比的 position-weighted return、drawdown、turnover 和成本；当前三套 shadow profile 与主线 gate 后仓位一致，未找到正向 excess profile；不得自动替换生产权重。|
-|9E. Shadow gate 参数实验|VALIDATING|新增隔离 hard gate / confidence / risk budget cap profile，允许与 shadow weight profile 组合观察 gate 后仓位和表现差异；profile 只覆盖 validation ledger，不修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved overlay 或日报仓位 gate。|
+|9E. Shadow gate 参数实验|DONE|新增隔离 hard gate / confidence / risk budget cap profile，允许与 shadow weight profile 组合观察 gate 后仓位和表现差异；profile 只覆盖 validation ledger，不修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved overlay 或日报仓位 gate。|
 |9F. Shadow 参数搜索器|DONE|新增可复现搜索入口，按指定区间枚举或采样 shadow weight/gate 组合，输出 trial registry、Pareto front 和 best profile YAML；结论只代表当前回测区间 in-sample 最优候选，不能直接生产替换。|
 |9G. Shadow 参数验证收紧|DONE|搜索报告输出 weight-only / gate-only / combined 的 factorial attribution；默认 objective 要求验证级样本和正 excess；短样本结果只能作为 diagnostic-leading，不得写成 eligible best 或 production 候选。|
 |9H. Cap-level attribution 与仓位解释|DONE|在搜索报告中拆出单个 gate cap 的边际贡献，并按日期披露 production/candidate 最终仓位、binding gate 和 return impact；仍只作为 validation 解释。|
@@ -228,3 +228,16 @@ aits feedback evaluate-shadow-parameter-promotion --search-output-dir outputs/pa
   `compileall`。更严格 objective、factorial attribution、promotion contract、lineage、
   shadow iteration 和 forward lifecycle 已由 `CALIBRATION-014` 至 `CALIBRATION-019`
   独立任务完成或承接，因此不再阻塞 9F 搜索器基础任务完成。
+- 2026-06-09：`CALIBRATION-011` 从 `VALIDATING` 归档为 `DONE`。当前
+  `config/weights/shadow_position_gate_profiles.yaml` 保留三套 validation-only gate
+  profile，均声明 `production_effect=none` 与 `isolation=shadow_only`；真实
+  `shadow_weight_performance_2026-05-14.md/csv` 仍为 `PASS` / `production_effect=none`，
+  报告披露 observation ledger、profile 组合、收益、回撤、换手、beat rate 和“不修改生产
+  `weight_profile_current.yaml`、approved overlay、正式 prediction ledger、日报结论或仓位
+  gate”的边界。Observation ledger 记录 `gate_profile_id`、`gate_cap_overrides_json`、
+  `gate_cap_sources`、production/shadow model target position 和 gated target position；
+  return-leading profile 仍为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，
+  available=8、pending=1、missing=2，shadow total return 8.31%、production total
+  return 4.74%、excess 3.58%。验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、
+  Ruff、repo-wide Black check 和 `compileall`。production gate 替换仍需 promotion floor、
+  forward shadow、owner approval 和 rollback condition，由后续治理流程承接。
