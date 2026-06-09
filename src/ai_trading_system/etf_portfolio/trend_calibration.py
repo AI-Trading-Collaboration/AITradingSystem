@@ -39,9 +39,7 @@ DEFAULT_TREND_CALIBRATION_REPORT_ROOT = (
 DEFAULT_TREND_CALIBRATION_DATASET_DIR = DEFAULT_TREND_CALIBRATION_REPORT_ROOT / "datasets"
 DEFAULT_TREND_CALIBRATION_REPORT_DIR = DEFAULT_TREND_CALIBRATION_REPORT_ROOT / "reports"
 DEFAULT_TREND_CALIBRATION_REGISTRY_DIR = DEFAULT_TREND_CALIBRATION_REPORT_ROOT / "registry"
-DEFAULT_TREND_CALIBRATION_VALIDATION_DIR = (
-    DEFAULT_TREND_CALIBRATION_REPORT_ROOT / "validation"
-)
+DEFAULT_TREND_CALIBRATION_VALIDATION_DIR = DEFAULT_TREND_CALIBRATION_REPORT_ROOT / "validation"
 
 TREND_CALIBRATION_POLICY_SCHEMA_VERSION = "etf_trend_calibration_policy_v1"
 TREND_SIGNAL_DATASET_SCHEMA_VERSION = "etf_trend_signal_dataset_v1"
@@ -440,8 +438,7 @@ def compute_trend_scores(
             ),
             "EventRiskAdjustedTrendScore": round(
                 _clamp_score(
-                    composite
-                    - (event_risk - 50.0) * float(weights.get("EventRiskScore", 0.0))
+                    composite - (event_risk - 50.0) * float(weights.get("EventRiskScore", 0.0))
                 ),
                 6,
             ),
@@ -532,12 +529,8 @@ def build_trend_score_bucket_forward_attribution(
                 "bucket": band.band_id,
                 "sample_count": len(rows),
                 "mean_score": _mean([row.get("CompositeTrendScore") for row in rows]),
-                "QQQ_forward_return_mean": _mean(
-                    [row.get("QQQ_forward_return") for row in rows]
-                ),
-                "SMH_forward_return_mean": _mean(
-                    [row.get("SMH_forward_return") for row in rows]
-                ),
+                "QQQ_forward_return_mean": _mean([row.get("QQQ_forward_return") for row in rows]),
+                "SMH_forward_return_mean": _mean([row.get("SMH_forward_return") for row in rows]),
                 "QQQ_SPY_relative_return_mean": _mean(
                     [row.get("QQQ_SPY_relative_return") for row in rows]
                 ),
@@ -701,9 +694,7 @@ def build_trend_signal_regime_stability_review(
                     else "limited"
                 ),
                 "mean_score": _mean([row.get("CompositeTrendScore") for row in values]),
-                "QQQ_forward_return_mean": _mean(
-                    [row.get("QQQ_forward_return") for row in values]
-                ),
+                "QQQ_forward_return_mean": _mean([row.get("QQQ_forward_return") for row in values]),
                 "QQQ_forward_drawdown_mean": _mean(
                     [row.get("QQQ_forward_drawdown") for row in values]
                 ),
@@ -993,13 +984,15 @@ def build_trend_calibration_validation_report(
                 )
                 > 0,
                 "search_runner_available": bool(_records(search.get("ranked_configs"))),
-                "bucket_attribution_available": bool(
-                    _records(
-                        _mapping(first_ranked.get("bucket_attribution")).get("bucket_rows")
+                "bucket_attribution_available": (
+                    bool(
+                        _records(
+                            _mapping(first_ranked.get("bucket_attribution")).get("bucket_rows")
+                        )
                     )
-                )
-                if first_ranked
-                else False,
+                    if first_ranked
+                    else False
+                ),
                 "redundancy_diagnostics_available": bool(
                     _records(_mapping(search.get("redundancy_diagnostics")).get("pairs"))
                 ),
@@ -1824,9 +1817,7 @@ def _coerce_datetime(value: datetime) -> datetime:
 
 
 def _stable_id(prefix: str, *parts: object) -> str:
-    digest = sha256(
-        "|".join(str(part) for part in parts).encode("utf-8")
-    ).hexdigest()[:12]
+    digest = sha256("|".join(str(part) for part in parts).encode("utf-8")).hexdigest()[:12]
     return f"{prefix}:{digest}"
 
 

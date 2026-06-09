@@ -63,9 +63,7 @@ def record_simulation_snapshot(
     else:
         output = new_rows
     output = _sort_ledger(output)
-    raise_for_no_lookahead_violations(
-        validate_no_lookahead_records(simulation_records=output)
-    )
+    raise_for_no_lookahead_violations(validate_no_lookahead_records(simulation_records=output))
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
     output.to_csv(ledger_path, index=False)
     return ledger_path
@@ -118,9 +116,7 @@ def evaluate_simulation_ledger(
     evaluated["schema_version"] = SIMULATION_LEDGER_SCHEMA_VERSION
     evaluated["decision_record_id"] = evaluated.apply(_decision_record_id_from_row, axis=1)
     key_cols = ["date", "model_version", "symbol", "evaluation_as_of_date"]
-    evaluation_keys = {
-        tuple(row[column] for column in key_cols) for _, row in evaluated.iterrows()
-    }
+    evaluation_keys = {tuple(row[column] for column in key_cols) for _, row in evaluated.iterrows()}
     retained = ledger.loc[
         ~(
             (ledger["record_type"] == EVALUATION_RECORD_TYPE)
@@ -128,9 +124,7 @@ def evaluate_simulation_ledger(
         )
     ]
     output = _sort_ledger(pd.concat([retained, evaluated], ignore_index=True))
-    raise_for_no_lookahead_violations(
-        validate_no_lookahead_records(simulation_records=output)
-    )
+    raise_for_no_lookahead_violations(validate_no_lookahead_records(simulation_records=output))
     output.to_csv(ledger_path, index=False)
     return ledger_path
 
@@ -209,9 +203,7 @@ def summarize_simulation_for_brief(
     ]
     for version, group in decision_rows.groupby("model_version", sort=True):
         latest_date = pd.to_datetime(group["date"], errors="coerce").max()
-        latest_label = (
-            latest_date.date().isoformat() if pd.notna(latest_date) else "n/a"
-        )
+        latest_label = latest_date.date().isoformat() if pd.notna(latest_date) else "n/a"
         evaluation_group = evaluation_rows.loc[evaluation_rows["model_version"] == version]
         hit_rate = _hit_rate(evaluation_group)
         lines.append(
@@ -497,9 +489,7 @@ def _snapshot_hash(group: pd.DataFrame, columns: list[str]) -> str:
     records: list[dict[str, object]] = []
     available_columns = [column for column in columns if column in group.columns]
     for _, row in group.sort_values("symbol").iterrows():
-        records.append(
-            {column: _json_scalar(row.get(column)) for column in available_columns}
-        )
+        records.append({column: _json_scalar(row.get(column)) for column in available_columns})
     encoded = json.dumps(records, ensure_ascii=False, sort_keys=True, default=str)
     return sha256(encoded.encode("utf-8")).hexdigest()
 

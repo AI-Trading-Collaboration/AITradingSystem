@@ -84,17 +84,23 @@ def default_data_registry_consistency_dir(output_root: Path, as_of: date) -> Pat
 
 
 def default_data_registry_consistency_json_path(output_root: Path, as_of: date) -> Path:
-    return default_data_registry_consistency_dir(
-        output_root,
-        as_of,
-    ) / "data_registry_consistency.json"
+    return (
+        default_data_registry_consistency_dir(
+            output_root,
+            as_of,
+        )
+        / "data_registry_consistency.json"
+    )
 
 
 def default_data_registry_consistency_markdown_path(output_root: Path, as_of: date) -> Path:
-    return default_data_registry_consistency_dir(
-        output_root,
-        as_of,
-    ) / "data_registry_consistency.md"
+    return (
+        default_data_registry_consistency_dir(
+            output_root,
+            as_of,
+        )
+        / "data_registry_consistency.md"
+    )
 
 
 def run_data_registry_consistency(
@@ -337,9 +343,7 @@ def render_data_registry_consistency_markdown(payload: dict[str, Any]) -> str:
         ]
     )
     blocking = [
-        str(asset.get("error_code"))
-        + ": "
-        + str(asset.get("diagnosis"))
+        str(asset.get("error_code")) + ": " + str(asset.get("diagnosis"))
         for asset in asset_registry
         if str(asset.get("error_code", "OK")) != "OK"
     ]
@@ -730,12 +734,12 @@ def _latest_resolution(
     return {
         "requested": requested_label,
         "resolved_artifact_date": "" if artifact_date is None else artifact_date.isoformat(),
-        "resolved_market_data_date": ""
-        if market_data_date is None
-        else market_data_date.isoformat(),
-        "resolved_backtest_manifest_date": ""
-        if manifest_date is None
-        else manifest_date.isoformat(),
+        "resolved_market_data_date": (
+            "" if market_data_date is None else market_data_date.isoformat()
+        ),
+        "resolved_backtest_manifest_date": (
+            "" if manifest_date is None else manifest_date.isoformat()
+        ),
         "status": status,
         "warning": warning,
     }

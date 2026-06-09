@@ -31,9 +31,7 @@ DYNAMIC_V3_RESCUE_VALIDATION_REPORT_TYPE = "etf_dynamic_v3_rescue_validation"
 DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_constraint_aware_rescue.yaml"
 )
-DEFAULT_DYNAMIC_V3_RESCUE_ROOT = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
-)
+DEFAULT_DYNAMIC_V3_RESCUE_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
 DEFAULT_DYNAMIC_V3_RESCUE_REPORT_DIR = DEFAULT_DYNAMIC_V3_RESCUE_ROOT / "reports"
 DEFAULT_DYNAMIC_V3_RESCUE_VALIDATION_DIR = DEFAULT_DYNAMIC_V3_RESCUE_ROOT / "validation"
 
@@ -370,9 +368,8 @@ def apply_soft_constraint_penalty_and_smoothing(
     cash_soft_cap = max(0.0, policy.normalization_policy.cash_max_target - buffer)
     if penalty["CASH"] > cash_soft_cap:
         excess = (
-            (penalty["CASH"] - cash_soft_cap)
-            * policy.soft_constraint_penalties.penalty_strength
-        )
+            penalty["CASH"] - cash_soft_cap
+        ) * policy.soft_constraint_penalties.penalty_strength
         penalty["CASH"] -= excess
         penalty["SPY"] += excess
         reason_codes.append("SOFT_PENALTY_CASH_CAP_PROXIMITY")
@@ -462,9 +459,11 @@ def evaluate_emergency_risk_off(
         policy.emergency_risk_off.enabled
         and len(confirmations) >= policy.emergency_risk_off.min_independent_confirmations
     )
-    reason_codes = ["EMERGENCY_RISK_OFF_TRIGGERED"] if triggered else [
-        "EMERGENCY_RISK_OFF_NOT_TRIGGERED_INSUFFICIENT_CONFIRMATION"
-    ]
+    reason_codes = (
+        ["EMERGENCY_RISK_OFF_TRIGGERED"]
+        if triggered
+        else ["EMERGENCY_RISK_OFF_NOT_TRIGGERED_INSUFFICIENT_CONFIRMATION"]
+    )
     payload = {
         "emergency_risk_off_triggered": triggered,
         "confirmation_count": len(confirmations),
@@ -613,9 +612,7 @@ def build_dynamic_v3_rescue_evaluation_report(
         "market_regime": resolved_policy.market_regime.model_dump(mode="json"),
         "safety_banner": _safety_status(resolved_policy.safety.model_dump(mode="json")),
         "v0_4_blocker_summary": {
-            "candidate": _mapping(v04_review_package.get("candidate_evidence")).get(
-                "candidate_id"
-            ),
+            "candidate": _mapping(v04_review_package.get("candidate_evidence")).get("candidate_id"),
             "blockers": _texts(v04_review_package.get("blockers")),
             "constraint_hit_delta": root_cause.get("constraint_hit_delta"),
             "drawdown_root_cause": root_cause.get("drawdown_root_cause"),
@@ -789,8 +786,7 @@ def build_dynamic_v3_rescue_validation_report(
     _append_check(
         checks,
         "reader_brief_integration_available",
-        "Dynamic v0.3 Rescue" in reader_text
-        and "_etf_dynamic_v3_rescue_summary" in reader_text,
+        "Dynamic v0.3 Rescue" in reader_text and "_etf_dynamic_v3_rescue_summary" in reader_text,
         "Reader Brief has Dynamic v0.3 Rescue section",
     )
     cli_text = _safe_read_text(cli_path)
@@ -1585,8 +1581,7 @@ def _normalize_sum(weights: Mapping[str, float]) -> dict[str, float]:
     if total <= 0:
         raise DynamicV3RescueError("cannot normalize zero weights")
     normalized = {
-        symbol: max(0.0, _float(weights.get(symbol))) / total
-        for symbol in WEIGHT_SYMBOLS
+        symbol: max(0.0, _float(weights.get(symbol))) / total for symbol in WEIGHT_SYMBOLS
     }
     return _round_weights(normalized)
 

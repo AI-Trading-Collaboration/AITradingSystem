@@ -38,9 +38,7 @@ def test_shadow_ready_review_policy_loads_and_rejects_unsafe(tmp_path: Path) -> 
     assert policy.review_thresholds.min_shadow_ready_appearances == 2
     assert policy.enrollment_limits.max_enroll_per_review > 0
 
-    raw = yaml.safe_load(
-        DEFAULT_SHADOW_READY_REVIEW_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_SHADOW_READY_REVIEW_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["safety"]["production_effect"] = "mutate_config"
     unsafe_path = tmp_path / "unsafe_shadow_review.yaml"
     unsafe_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
@@ -48,9 +46,7 @@ def test_shadow_ready_review_policy_loads_and_rejects_unsafe(tmp_path: Path) -> 
     with pytest.raises(ShadowReadyReviewError):
         load_shadow_ready_review_policy_config(unsafe_path)
 
-    raw = yaml.safe_load(
-        DEFAULT_SHADOW_READY_REVIEW_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_SHADOW_READY_REVIEW_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["ranking_weights"]["balanced_exposure_score"] = 0.15
     invalid_path = tmp_path / "invalid_weights.yaml"
     invalid_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")

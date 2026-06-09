@@ -78,9 +78,10 @@ def test_replay_performance_review_feeds_reader_brief_without_promotion(
     assert review["manifest"]["automatic_candidate_promotion"] is False
     assert review["manifest"]["baseline_config_mutated"] is False
     assert review["calibration_recommendations"]["automatic_config_update"] is False
-    assert review["calibration_recommendations"]["recommendations"][0][
-        "requires_owner_approval"
-    ] is True
+    assert (
+        review["calibration_recommendations"]["recommendations"][0]["requires_owner_approval"]
+        is True
+    )
     assert "Dynamic Rescue Historical Replay Performance" in (
         review["review_dir"] / "reader_brief_section.md"
     ).read_text(encoding="utf-8")
@@ -104,9 +105,10 @@ def test_replay_performance_review_feeds_reader_brief_without_promotion(
     summary = reader_brief._etf_dynamic_v3_parameter_research_summary(report_index)
     assert summary["replay_performance_review_id"] == review["review_id"]
     assert summary["backfilled_outcome_id"] == backfill["backfill_id"]
-    assert summary["replay_performance_available_outcome_count"] == review["manifest"][
-        "available_outcome_count"
-    ]
+    assert (
+        summary["replay_performance_available_outcome_count"]
+        == review["manifest"]["available_outcome_count"]
+    )
     assert summary["production_candidate_generated"] is False
     assert summary["automatic_candidate_promotion"] is False
     assert summary["shadow_enrollment_allowed"] is False
@@ -118,9 +120,7 @@ def test_replay_performance_review_feeds_reader_brief_without_promotion(
             if row["report_id"] != "etf_dynamic_v3_parameter_sweep_leaderboard"
         ],
     }
-    replay_only_summary = reader_brief._etf_dynamic_v3_parameter_research_summary(
-        replay_only_index
-    )
+    replay_only_summary = reader_brief._etf_dynamic_v3_parameter_research_summary(replay_only_index)
     assert replay_only_summary["availability"] == "PARTIAL"
     assert replay_only_summary["replay_inventory_id"] == inventory["inventory_id"]
     assert replay_only_summary["historical_replay_id"] == replay["replay_id"]

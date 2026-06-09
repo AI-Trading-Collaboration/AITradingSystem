@@ -93,15 +93,13 @@ def default_market_data_freshness_dir(output_root: Path, as_of: date) -> Path:
 
 def default_market_data_freshness_json_path(output_root: Path, as_of: date) -> Path:
     return (
-        default_market_data_freshness_dir(output_root, as_of)
-        / "market_data_freshness_summary.json"
+        default_market_data_freshness_dir(output_root, as_of) / "market_data_freshness_summary.json"
     )
 
 
 def default_market_data_freshness_markdown_path(output_root: Path, as_of: date) -> Path:
     return (
-        default_market_data_freshness_dir(output_root, as_of)
-        / "market_data_freshness_summary.md"
+        default_market_data_freshness_dir(output_root, as_of) / "market_data_freshness_summary.md"
     )
 
 
@@ -280,24 +278,24 @@ def build_market_data_freshness_payload(
         "calendar": calendar,
         "data_dates": {
             "tracking_date": tracking_date.isoformat(),
-            "expected_data_date": ""
-            if expected_data_date is None
-            else expected_data_date.isoformat(),
-            "effective_data_date": ""
-            if effective_data_date is None
-            else effective_data_date.isoformat(),
-            "latest_raw_price_date": ""
-            if raw_latest_price_date is None
-            else raw_latest_price_date.isoformat(),
-            "latest_required_asset_common_date": ""
-            if latest_common_date is None
-            else latest_common_date.isoformat(),
-            "latest_registry_date": ""
-            if latest_registry_date is None
-            else latest_registry_date.isoformat(),
-            "latest_manifest_date": ""
-            if latest_manifest_date is None
-            else latest_manifest_date.isoformat(),
+            "expected_data_date": (
+                "" if expected_data_date is None else expected_data_date.isoformat()
+            ),
+            "effective_data_date": (
+                "" if effective_data_date is None else effective_data_date.isoformat()
+            ),
+            "latest_raw_price_date": (
+                "" if raw_latest_price_date is None else raw_latest_price_date.isoformat()
+            ),
+            "latest_required_asset_common_date": (
+                "" if latest_common_date is None else latest_common_date.isoformat()
+            ),
+            "latest_registry_date": (
+                "" if latest_registry_date is None else latest_registry_date.isoformat()
+            ),
+            "latest_manifest_date": (
+                "" if latest_manifest_date is None else latest_manifest_date.isoformat()
+            ),
         },
         "freshness": {
             "status": status,
@@ -725,23 +723,17 @@ def _asset_coverage_payload(
             resolution.canonical_symbol,
             resolution.source_symbol,
         )
-        has_effective = (
-            effective_data_date is not None
-            and _asset_has_date(
-                prices,
-                resolution.canonical_symbol,
-                resolution.source_symbol,
-                effective_data_date,
-            )
+        has_effective = effective_data_date is not None and _asset_has_date(
+            prices,
+            resolution.canonical_symbol,
+            resolution.source_symbol,
+            effective_data_date,
         )
-        has_expected = (
-            expected_data_date is not None
-            and _asset_has_date(
-                prices,
-                resolution.canonical_symbol,
-                resolution.source_symbol,
-                expected_data_date,
-            )
+        has_expected = expected_data_date is not None and _asset_has_date(
+            prices,
+            resolution.canonical_symbol,
+            resolution.source_symbol,
+            expected_data_date,
         )
         if not has_effective:
             missing_effective.append(symbol)

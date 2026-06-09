@@ -421,12 +421,8 @@ def build_etf_replacement_plan(
     candidate = dict(base)
     constraints = policy_config.risk_constraints
     stocks = {stock.ticker: stock for stock in enabled_satellite_stocks(universe_config)}
-    eligible = [
-        row for row in eligibility_records if row.get("status") == "eligible"
-    ]
-    eligible.sort(
-        key=lambda item: (-float(item.get("score_value", 0.0)), str(item.get("ticker")))
-    )
+    eligible = [row for row in eligibility_records if row.get("status") == "eligible"]
+    eligible.sort(key=lambda item: (-float(item.get("score_value", 0.0)), str(item.get("ticker"))))
     sleeve_counts: dict[str, int] = {}
     sleeve_replaced: dict[str, float] = {}
     etf_replaced: dict[str, float] = {}
@@ -471,9 +467,7 @@ def build_etf_replacement_plan(
         total_replaced += allocation
         sleeve_counts[stock.sleeve] = sleeve_counts.get(stock.sleeve, 0) + 1
         sleeve_replaced[stock.sleeve] = sleeve_replaced.get(stock.sleeve, 0.0) + allocation
-        etf_replaced[stock.benchmark_etf] = (
-            etf_replaced.get(stock.benchmark_etf, 0.0) + allocation
-        )
+        etf_replaced[stock.benchmark_etf] = etf_replaced.get(stock.benchmark_etf, 0.0) + allocation
         satellite_allocations.append(
             {
                 "ticker": ticker,
@@ -703,9 +697,7 @@ def latest_satellite_report_path(
         return None
     candidates = sorted(report_dir.glob("satellite_replacement_report_*.json"))
     if as_of is not None:
-        candidates = [
-            path for path in candidates if path.stem.endswith(as_of.isoformat())
-        ]
+        candidates = [path for path in candidates if path.stem.endswith(as_of.isoformat())]
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -998,8 +990,7 @@ def render_satellite_shadow_experiment_markdown(payload: Mapping[str, Any]) -> s
     ]
     for symbol in sorted(set(before) | set(after)):
         lines.append(
-            f"| {symbol} | {_fmt_pct(before.get(symbol))} | "
-            f"{_fmt_pct(after.get(symbol))} |"
+            f"| {symbol} | {_fmt_pct(before.get(symbol))} | " f"{_fmt_pct(after.get(symbol))} |"
         )
     lines.extend(
         [
@@ -1159,8 +1150,7 @@ def _satellite_score_row(
         for window in FEATURE_RETURN_WINDOWS
     ]
     stock_returns = [
-        _float_or_none(feature.get(f"stock_return_{window}d"))
-        for window in FEATURE_RETURN_WINDOWS
+        _float_or_none(feature.get(f"stock_return_{window}d")) for window in FEATURE_RETURN_WINDOWS
     ]
     component_scores = {
         "relative_strength_score": _return_component(
@@ -1282,9 +1272,7 @@ def _eligibility_row(
             blockers.append(
                 "UNSAFE_PRODUCTION_EFFECT"
                 if key == "production_effect"
-                else "BROKER_ACTION_NOT_NONE"
-                if key == "broker_action"
-                else f"UNSAFE_{key.upper()}"
+                else "BROKER_ACTION_NOT_NONE" if key == "broker_action" else f"UNSAFE_{key.upper()}"
             )
 
     blocker_set = sorted(set(blockers))

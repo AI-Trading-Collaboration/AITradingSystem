@@ -25,16 +25,10 @@ DEFAULT_STRATEGY_EVIDENCE_CONFIG_PATH = (
 DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "evidence_dashboard"
 )
-DEFAULT_STRATEGY_EVIDENCE_AGGREGATION_DIR = (
-    DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR / "aggregation"
-)
-DEFAULT_STRATEGY_EVIDENCE_VALIDATION_DIR = (
-    DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR / "validation"
-)
+DEFAULT_STRATEGY_EVIDENCE_AGGREGATION_DIR = DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR / "aggregation"
+DEFAULT_STRATEGY_EVIDENCE_VALIDATION_DIR = DEFAULT_STRATEGY_EVIDENCE_REPORT_DIR / "validation"
 
-STRATEGY_EVIDENCE_REGISTRY_SCHEMA_VERSION = (
-    "etf_strategy_evidence_dashboard_registry_v1"
-)
+STRATEGY_EVIDENCE_REGISTRY_SCHEMA_VERSION = "etf_strategy_evidence_dashboard_registry_v1"
 STRATEGY_EVIDENCE_DASHBOARD_SCHEMA_VERSION = "etf_strategy_evidence_dashboard_v1"
 STRATEGY_EVIDENCE_AGGREGATION_SCHEMA_VERSION = "etf_strategy_evidence_aggregation_v1"
 STRATEGY_EVIDENCE_VALIDATION_SCHEMA_VERSION = "etf_strategy_evidence_validation_v1"
@@ -400,23 +394,15 @@ def build_strategy_evidence_aggregation(
         for source in source_reports
         if source.load_status in {"missing", "optional_missing"}
     ]
-    stale_sources = [
-        source.source_id for source in source_reports if source.load_status == "stale"
-    ]
+    stale_sources = [source.source_id for source in source_reports if source.load_status == "stale"]
     blocked_sources = [
         source.source_id for source in source_reports if source.load_status == "blocked"
     ]
     loaded_sources = [
         source.source_id for source in source_reports if source.load_status == "loaded"
     ]
-    warnings = [
-        warning
-        for source in source_reports
-        for warning in source.warnings
-    ]
-    aggregation_status = (
-        "blocked" if blocked_sources else ("warning" if warnings else "loaded")
-    )
+    warnings = [warning for source in source_reports for warning in source.warnings]
+    aggregation_status = "blocked" if blocked_sources else ("warning" if warnings else "loaded")
     return {
         "schema_version": STRATEGY_EVIDENCE_AGGREGATION_SCHEMA_VERSION,
         "aggregation_id": _stable_id("strategy-evidence-aggregation", run_date.isoformat()),
@@ -428,9 +414,7 @@ def build_strategy_evidence_aggregation(
         "stale_sources": stale_sources,
         "blocked_sources": blocked_sources,
         "warnings": warnings,
-        "source_report_paths": [
-            source.source_report_path for source in source_reports
-        ],
+        "source_report_paths": [source.source_report_path for source in source_reports],
         "source_reports": [source.model_dump(mode="json") for source in source_reports],
         "safety": dict(STRATEGY_EVIDENCE_SAFETY),
         **STRATEGY_EVIDENCE_SAFETY,
@@ -471,9 +455,12 @@ def build_candidate_evidence_rankings(
     cards: Sequence[StrategyEvidenceCard],
 ) -> list[StrategyCandidateEvidenceRanking]:
     by_category = {card.category: card for card in cards}
-    journal_bonus = 5.0 if by_category.get("decision_journal", None) and (
-        by_category["decision_journal"].status in {"supportive", "strong_support"}
-    ) else 0.0
+    journal_bonus = (
+        5.0
+        if by_category.get("decision_journal", None)
+        and (by_category["decision_journal"].status in {"supportive", "strong_support"})
+        else 0.0
+    )
     candidates: list[StrategyCandidateEvidenceRanking] = []
     for category, candidate_type in _CANDIDATE_CATEGORY_TYPES.items():
         card = by_category.get(category)
@@ -516,10 +503,7 @@ def build_candidate_evidence_rankings(
             )
         )
     ordered = sorted(candidates, key=lambda item: (-item.evidence_score, item.candidate_id))
-    return [
-        item.model_copy(update={"rank": index})
-        for index, item in enumerate(ordered, start=1)
-    ]
+    return [item.model_copy(update={"rank": index}) for index, item in enumerate(ordered, start=1)]
 
 
 def build_evidence_conflicts(
@@ -650,9 +634,7 @@ def build_manual_review_priorities(
                 for item in [*ranking.supporting_evidence, *ranking.blocking_evidence]
             ]
             action: ManualReviewAction = (
-                "request_more_data"
-                if ranking.status == "needs_more_data"
-                else "review_candidate"
+                "request_more_data" if ranking.status == "needs_more_data" else "review_candidate"
             )
             priorities.append(
                 _manual_priority(
@@ -1265,8 +1247,7 @@ def _category_status(
     if missing_required or blockers:
         return "blocked"
     if any(
-        _is_blocked_status(source.data_quality_status)
-        or _is_blocked_status(source.artifact_status)
+        _is_blocked_status(source.data_quality_status) or _is_blocked_status(source.artifact_status)
         for source in sources
     ):
         return "blocked"
@@ -1301,9 +1282,7 @@ def _overall_status(cards: Sequence[StrategyEvidenceCard]) -> EvidenceStatus:
 
 
 def _data_quality_overlay(cards: Sequence[StrategyEvidenceCard]) -> dict[str, Any]:
-    blocked = [
-        card.category for card in cards if _is_blocked_status(card.data_quality_status)
-    ]
+    blocked = [card.category for card in cards if _is_blocked_status(card.data_quality_status)]
     stale = [card.category for card in cards if card.status == "stale"]
     unknown = [
         card.category
@@ -1651,8 +1630,7 @@ def _manual_priority(
         issue=issue,
         recommended_review_action=action,
         evidence_links=(
-            _unique_strings(evidence_links)
-            or [f"config/report_registry.yaml#{source_component}"]
+            _unique_strings(evidence_links) or [f"config/report_registry.yaml#{source_component}"]
         ),
         created_at=created_at,
     )
@@ -1888,8 +1866,7 @@ def _registry_has_strategy_evidence_dashboard(path: Path) -> bool:
     except Exception:
         return False
     reports = {
-        _text(report.get("report_id")): report
-        for report in _records(registry.get("reports"))
+        _text(report.get("report_id")): report for report in _records(registry.get("reports"))
     }
     report = reports.get(STRATEGY_EVIDENCE_REPORT_REGISTRY_ID)
     validation = reports.get(STRATEGY_EVIDENCE_VALIDATION_REGISTRY_ID)

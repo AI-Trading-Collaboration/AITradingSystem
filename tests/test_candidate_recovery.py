@@ -47,12 +47,14 @@ def test_candidate_recovery_rebuilds_manual_review_observe_pool(tmp_path):
     )
 
     assert recovery["manifest"]["recovered_candidate_count"] > 0
-    assert recovery["manifest"]["manual_review_required_count"] == recovery["manifest"][
-        "recovered_candidate_count"
-    ]
-    assert pool["manifest"]["observe_candidate_count"] == recovery["manifest"][
-        "recovered_candidate_count"
-    ]
+    assert (
+        recovery["manifest"]["manual_review_required_count"]
+        == recovery["manifest"]["recovered_candidate_count"]
+    )
+    assert (
+        pool["manifest"]["observe_candidate_count"]
+        == recovery["manifest"]["recovered_candidate_count"]
+    )
     assert (
         validate_candidate_recovery_artifact(
             recovery_id=recovery["recovery_id"],

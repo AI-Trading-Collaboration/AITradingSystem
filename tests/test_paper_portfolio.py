@@ -89,10 +89,7 @@ def test_paper_adjustment_changes_paper_state_only_and_ledger_rebuilds(
         / "paper_portfolio_state.json"
     )
     ledger_path = (
-        tmp_path
-        / "paper_portfolio"
-        / portfolio["paper_portfolio_id"]
-        / "paper_action_ledger.jsonl"
+        tmp_path / "paper_portfolio" / portfolio["paper_portfolio_id"] / "paper_action_ledger.jsonl"
     )
     assert result["state"]["positions"] != portfolio["state"]["positions"]
     assert result["state"]["broker_action_taken"] is False

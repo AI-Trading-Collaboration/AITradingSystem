@@ -128,11 +128,7 @@ DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
 )
 DEFAULT_POSITION_ADVISORY_CONFIG_PATH = (
-    PROJECT_ROOT
-    / "config"
-    / "etf_portfolio"
-    / "dynamic_v3_rescue"
-    / "position_advisory_v1.yaml"
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "position_advisory_v1.yaml"
 )
 DEFAULT_CURRENT_PORTFOLIO_SNAPSHOT_EXAMPLE_PATH = (
     PROJECT_ROOT
@@ -3597,9 +3593,7 @@ def run_candidate_clustering(
         "candidate_count": len(candidates),
         "cluster_count": len(clusters),
         "representative_count": len(representatives),
-        "weight_path_similarity_status": (
-            "INCOMPLETE" if incomplete_weight_pairs else "PASS"
-        ),
+        "weight_path_similarity_status": ("INCOMPLETE" if incomplete_weight_pairs else "PASS"),
         "parameter_similarity_matrix_path": str(cluster_dir / "parameter_similarity_matrix.csv"),
         "weight_path_similarity_matrix_path": str(
             cluster_dir / "weight_path_similarity_matrix.csv"
@@ -3658,9 +3652,7 @@ def validate_candidate_cluster_artifact(
     cluster_dir = output_dir / cluster_id
     manifest = _read_optional_json(cluster_dir / "cluster_manifest.json") or {}
     clusters = _records(
-        _mapping(_read_optional_json(cluster_dir / "candidate_clusters.json") or {}).get(
-            "clusters"
-        )
+        _mapping(_read_optional_json(cluster_dir / "candidate_clusters.json") or {}).get("clusters")
     )
     representatives = _read_jsonl(cluster_dir / "cluster_representatives.jsonl")
     required = [
@@ -3673,8 +3665,7 @@ def validate_candidate_cluster_artifact(
         "candidate_cluster_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (cluster_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (cluster_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -3847,8 +3838,7 @@ def validate_shadow_shortlist_artifact(
         "reader_brief_section.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (shadow_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (shadow_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -3953,9 +3943,7 @@ def run_position_advisory(
         )
     consensus_rows, consensus_status = _consensus_target_weights(target_rows, config)
     snapshot = _load_portfolio_snapshot(portfolio_snapshot_path) if portfolio_snapshot_path else {}
-    delta_rows = (
-        _candidate_position_delta_rows(target_rows, snapshot, config) if snapshot else []
-    )
+    delta_rows = _candidate_position_delta_rows(target_rows, snapshot, config) if snapshot else []
     advisory_actions = _position_advisory_actions(
         target_rows=target_rows,
         delta_rows=delta_rows,
@@ -4069,8 +4057,7 @@ def validate_position_advisory_artifact(
         "position_advisory_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -4355,8 +4342,7 @@ def run_shadow_shortlist_monitor(
     weekly_rows = [_shadow_shortlist_weekly_summary(row) for row in daily_rows]
     max_disagreement = _max_target_weight_disagreement(daily_rows)
     drift_scores = [
-        _float(_mapping(row.get("live_vs_backtest_drift")).get("drift_score"))
-        for row in daily_rows
+        _float(_mapping(row.get("live_vs_backtest_drift")).get("drift_score")) for row in daily_rows
     ]
     active_count = sum(1 for row in daily_rows if row.get("monitoring_status") == "active")
     downgrade_count = sum(
@@ -4372,9 +4358,7 @@ def run_shadow_shortlist_monitor(
     summary_recommendation = (
         "pause_monitoring"
         if active_count == 0
-        else "manual_review_required"
-        if downgrade_count
-        else "continue_monitoring"
+        else "manual_review_required" if downgrade_count else "continue_monitoring"
     )
     summary = {
         "schema_version": SCHEMA_VERSION,
@@ -4474,9 +4458,7 @@ def shadow_monitor_run_report_payload(
     monitor_dir = output_dir / resolved_id
     return {
         **_read_json(monitor_dir / "shadow_monitor_manifest.json"),
-        "shadow_monitor_summary": _read_optional_json(
-            monitor_dir / "shadow_monitor_summary.json"
-        )
+        "shadow_monitor_summary": _read_optional_json(monitor_dir / "shadow_monitor_summary.json")
         or {},
         "monitor_run_dir": str(monitor_dir),
     }
@@ -4500,8 +4482,7 @@ def validate_shadow_monitor_run_artifact(
         "reader_brief_section.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (monitor_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (monitor_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -4580,12 +4561,8 @@ def write_portfolio_snapshot_artifact(
         "broker_imported": normalized.get("broker_imported", False),
         "broker_action_allowed": False,
         "normalized_positions_path": str(snapshot_dir / "normalized_positions.json"),
-        "portfolio_exposure_summary_path": str(
-            snapshot_dir / "portfolio_exposure_summary.json"
-        ),
-        "snapshot_validation_report_path": str(
-            snapshot_dir / "snapshot_validation_report.md"
-        ),
+        "portfolio_exposure_summary_path": str(snapshot_dir / "portfolio_exposure_summary.json"),
+        "snapshot_validation_report_path": str(snapshot_dir / "snapshot_validation_report.md"),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -4817,8 +4794,7 @@ def validate_position_advisory_daily_artifact(
         "reader_brief_section.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (advisory_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -4900,9 +4876,7 @@ def run_consensus_drift(
     implication = (
         "manual_review_required"
         if disagreement_status in {"HIGH_DISAGREEMENT", "INSUFFICIENT_DATA"}
-        else "monitor"
-        if disagreement_status == "MODERATE_DISAGREEMENT"
-        else "continue_monitoring"
+        else "monitor" if disagreement_status == "MODERATE_DISAGREEMENT" else "continue_monitoring"
     )
     drift_id = _stable_id(
         "consensus-drift",
@@ -4989,9 +4963,7 @@ def consensus_drift_report_payload(
     drift_dir = output_dir / resolved_id
     return {
         **_read_json(drift_dir / "consensus_drift_manifest.json"),
-        "consensus_drift_summary": _read_optional_json(
-            drift_dir / "consensus_drift_summary.json"
-        )
+        "consensus_drift_summary": _read_optional_json(drift_dir / "consensus_drift_summary.json")
         or {},
         "drift_dir": str(drift_dir),
     }
@@ -5013,8 +4985,7 @@ def validate_consensus_drift_artifact(
         "consensus_drift_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (drift_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (drift_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -6136,9 +6107,7 @@ def apply_evidence_gate_policy(
         "manual_review_reason_distribution": [
             {"reason": reason, "count": count}
             for reason, count in Counter(
-                reason
-                for row in calibrated
-                for reason in _texts(row.get("manual_review_reasons"))
+                reason for row in calibrated for reason in _texts(row.get("manual_review_reasons"))
             ).most_common()
         ],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -8034,9 +8003,7 @@ def validate_shadow_registry(
                 "shadow registry is observe_only",
             )
         )
-        basis_status = _text(
-            row.get("observation_basis_status"), "incomplete_observation_basis"
-        )
+        basis_status = _text(row.get("observation_basis_status"), "incomplete_observation_basis")
         source_walk_forward_id = _text(row.get("source_walk_forward_id"))
         source_robustness_id = _text(row.get("source_robustness_id"))
         wf_manifest_path = walk_forward_dir / source_walk_forward_id / "wf_manifest.json"
@@ -11846,12 +11813,12 @@ def _shortlist_score_breakdown(row: Mapping[str, Any], *, diversity: float) -> d
     regime_component = _avg(
         [
             _status_score(regime.get("coverage_status"), missing=0.5),
-            1.0
-            if _text(regime.get("tech_semiconductor_relevance")) in {"HIGH", "MEDIUM"}
-            else 0.5,
-            1.0
-            if _text(regime.get("ai_bull_market_overfit_risk")) not in {"HIGH_RISK", "FAIL"}
-            else 0.4,
+            1.0 if _text(regime.get("tech_semiconductor_relevance")) in {"HIGH", "MEDIUM"} else 0.5,
+            (
+                1.0
+                if _text(regime.get("ai_bull_market_overfit_risk")) not in {"HIGH_RISK", "FAIL"}
+                else 0.4
+            ),
         ]
     )
     stability = _avg(
@@ -12359,11 +12326,7 @@ def render_shadow_shortlist_reader_brief(
     rows: Sequence[Mapping[str, Any]],
 ) -> str:
     labels = sorted(
-        {
-            _text(row.get("cluster_label"))
-            for row in rows
-            if _text(row.get("cluster_label"))
-        }
+        {_text(row.get("cluster_label")) for row in rows if _text(row.get("cluster_label"))}
     )
     return (
         "## Dynamic Rescue Shadow Shortlist\n\n"
@@ -12441,11 +12404,7 @@ def _consensus_target_weights(
     config: Mapping[str, Any],
 ) -> tuple[list[dict[str, Any]], str]:
     symbols = sorted(
-        {
-            symbol
-            for row in target_rows
-            for symbol in _mapping(row.get("target_weights")).keys()
-        }
+        {symbol for row in target_rows for symbol in _mapping(row.get("target_weights")).keys()}
     )
     consensus_config = _mapping(config.get("consensus"))
     agreement_threshold = _float(consensus_config.get("agreement_threshold"), 0.60)
@@ -12458,9 +12417,9 @@ def _consensus_target_weights(
             continue
         center = _median(values)
         dispersion = max(values) - min(values)
-        agreement = sum(
-            1 for value in values if abs(value - center) <= max_dispersion
-        ) / len(values)
+        agreement = sum(1 for value in values if abs(value - center) <= max_dispersion) / len(
+            values
+        )
         if agreement < agreement_threshold or dispersion > max_dispersion:
             disagreement = True
         rows.append(
@@ -12674,9 +12633,7 @@ def _position_review_decision(
     elif advisory_status == POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW:
         advisory_ready = POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
         next_action = (
-            "start_shadow_monitoring"
-            if shadow_ready != "NOT_READY"
-            else "manual_review_shortlist"
+            "start_shadow_monitoring" if shadow_ready != "NOT_READY" else "manual_review_shortlist"
         )
     else:
         advisory_ready = "NOT_READY"
@@ -13102,8 +13059,7 @@ def _previous_shadow_monitor_weights(
     _, previous_dir = max(candidates, key=lambda item: item[0])
     return {
         _text(row.get("candidate_id")): {
-            symbol: _float(value)
-            for symbol, value in _mapping(row.get("target_weights")).items()
+            symbol: _float(value) for symbol, value in _mapping(row.get("target_weights")).items()
         }
         for row in _read_jsonl(previous_dir / "shadow_candidate_daily_results.jsonl")
     }
@@ -13330,9 +13286,7 @@ def _portfolio_exposure_summary(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     weights = _mapping(snapshot.get("weights"))
     cash_weight = _float(weights.get("CASH"))
     defensive = sum(
-        _float(weights.get(symbol))
-        for symbol in DYNAMIC_V3_DEFENSIVE_SYMBOLS
-        if symbol in weights
+        _float(weights.get(symbol)) for symbol in DYNAMIC_V3_DEFENSIVE_SYMBOLS if symbol in weights
     )
     risk = sum(
         _float(value)
@@ -13390,11 +13344,7 @@ def _symbol_weight_dispersion_rows(
     target_rows: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     symbols = sorted(
-        {
-            symbol
-            for row in target_rows
-            for symbol in _mapping(row.get("target_weights")).keys()
-        }
+        {symbol for row in target_rows for symbol in _mapping(row.get("target_weights")).keys()}
     )
     rows: list[dict[str, Any]] = []
     for symbol in symbols:
@@ -13433,10 +13383,13 @@ def _candidate_pairwise_disagreement_rows(
         for right in ordered[left_idx + 1 :]:
             right_weights = _mapping(right.get("target_weights"))
             symbols = sorted(set(left_weights) | set(right_weights))
-            distance = sum(
-                abs(_float(left_weights.get(symbol)) - _float(right_weights.get(symbol)))
-                for symbol in symbols
-            ) / 2.0
+            distance = (
+                sum(
+                    abs(_float(left_weights.get(symbol)) - _float(right_weights.get(symbol)))
+                    for symbol in symbols
+                )
+                / 2.0
+            )
             rows.append(
                 {
                     "left_candidate_id": left.get("candidate_id"),
@@ -13535,10 +13488,7 @@ def _daily_consensus_change_vs_previous(
         symbol = _text(row.get("symbol"))
         previous = previous_rows.get(symbol, {})
         deltas.append(
-            abs(
-                _float(row.get("mean_target_weight"))
-                - _float(previous.get("mean_target_weight"))
-            )
+            abs(_float(row.get("mean_target_weight")) - _float(previous.get("mean_target_weight")))
         )
     return {
         "status": "PASS",
@@ -13590,9 +13540,11 @@ def _daily_position_delta_rows(
         status = (
             "no_trade"
             if all(abs(value) < min_trade for value in deltas.values())
-            else "requires_manual_review"
-            if total_abs > max_total or max_abs > max_symbol
-            else "within_limits"
+            else (
+                "requires_manual_review"
+                if total_abs > max_total or max_abs > max_symbol
+                else "within_limits"
+            )
         )
         rows.append(
             {
@@ -13668,9 +13620,7 @@ def _daily_position_advisory_actions(
         "reasons": sorted(set(reasons)),
         "risks": risks,
         "candidate_count": len(target_rows),
-        "config_policy_id": _text(
-            _mapping(config.get("policy_metadata")).get("policy_id")
-        ),
+        "config_policy_id": _text(_mapping(config.get("policy_metadata")).get("policy_id")),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }

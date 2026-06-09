@@ -256,8 +256,7 @@ def _evaluation_field_marker_issues(
                 severity="ERROR",
                 code="future_field_without_evaluation_only_marker",
                 message=(
-                    "ETF future evaluation fields are allowed only when "
-                    "evaluation_only=true."
+                    "ETF future evaluation fields are allowed only when " "evaluation_only=true."
                 ),
                 scope=scope,
                 row=row_number,

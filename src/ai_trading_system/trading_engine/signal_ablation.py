@@ -391,9 +391,7 @@ def build_signal_ablation_payload(
             "diagnostic_report": str(diagnostic_run.json_path),
             "backtest_mode": backtest_mode,
             "signal_snapshot_status": snapshot_summary.get("status", "UNKNOWN"),
-            "can_run_shadow_backtest": _diagnostic_can_run_shadow_backtest(
-                diagnostic_run.payload
-            ),
+            "can_run_shadow_backtest": _diagnostic_can_run_shadow_backtest(diagnostic_run.payload),
             "can_promote_candidate": _diagnostic_can_promote_candidate(diagnostic_run.payload),
         },
         "signal_snapshot": {
@@ -742,10 +740,7 @@ def render_signal_ablation_diagnostics(payload: dict[str, Any]) -> str:
             "score_to_portfolio_disconnect: "
             f"{_yes_no(diagnostics.get('any_score_to_portfolio_disconnect'))}"
         ),
-        (
-            "no_promotion_credit_reason: "
-            f"{summary.get('no_promotion_credit_reason', '')}"
-        ),
+        ("no_promotion_credit_reason: " f"{summary.get('no_promotion_credit_reason', '')}"),
         "",
     ]
     for contribution in _records(payload.get("signal_contributions")):
@@ -755,10 +750,7 @@ def render_signal_ablation_diagnostics(payload: dict[str, Any]) -> str:
         lines.extend(
             [
                 f"{contribution.get('signal', 'UNKNOWN')}:",
-                (
-                    "  used_in_score: "
-                    f"{_yes_no(usage.get('used_in_score_calculation'))}"
-                ),
+                ("  used_in_score: " f"{_yes_no(usage.get('used_in_score_calculation'))}"),
                 f"  effective_weight: {_format_metric(usage.get('effective_weight'))}",
                 (
                     "  non_neutral_value_ratio: "
@@ -1023,9 +1015,7 @@ def _signal_contribution(
         portfolio_weight_delta_epsilon=portfolio_weight_delta_epsilon,
     )
     promotion_credit_allowed = (
-        quality == "price_derived"
-        and overall_class == "positive"
-        and diagnostic_status == "VALID"
+        quality == "price_derived" and overall_class == "positive" and diagnostic_status == "VALID"
     )
     return {
         "signal": signal,
@@ -1275,10 +1265,7 @@ def _diagnostic_status(
         return "NOT_USED_IN_SCORE"
     if _as_float(score_impact.get("max_abs_score_delta")) <= score_delta_epsilon:
         return "NO_SCORE_IMPACT"
-    if (
-        _as_float(portfolio_impact.get("max_abs_weight_delta"))
-        <= portfolio_weight_delta_epsilon
-    ):
+    if _as_float(portfolio_impact.get("max_abs_weight_delta")) <= portfolio_weight_delta_epsilon:
         return "NO_PORTFOLIO_IMPACT"
     if contribution_class == "neutral":
         return "BELOW_THRESHOLD"
@@ -1428,29 +1415,23 @@ def _signal_warnings(
 
 
 def _diagnostics_summary(contributions: list[dict[str, Any]]) -> dict[str, Any]:
-    real_contributions = [
-        item for item in contributions if item.get("quality") == "price_derived"
-    ]
+    real_contributions = [item for item in contributions if item.get("quality") == "price_derived"]
     implementation_warnings = [
         f"{item.get('signal')}: {warning}"
         for item in contributions
         for warning in _strings(item.get("warnings"))
-        if "implementation" in warning.lower()
-        or "not used in score calculation" in warning.lower()
+        if "implementation" in warning.lower() or "not used in score calculation" in warning.lower()
     ]
     return {
         "all_real_signals_used_in_score": bool(real_contributions)
-        and all(
-            item.get("used_in_score_calculation") is True for item in real_contributions
-        ),
+        and all(item.get("used_in_score_calculation") is True for item in real_contributions),
         "all_ablation_runs_changed_scores": bool(contributions)
         and all(
             _as_float(_mapping(item.get("score_impact")).get("max_abs_score_delta")) > 0.0
             for item in contributions
         ),
         "any_score_to_portfolio_disconnect": any(
-            item.get("diagnostic_status") == "NO_PORTFOLIO_IMPACT"
-            for item in contributions
+            item.get("diagnostic_status") == "NO_PORTFOLIO_IMPACT" for item in contributions
         ),
         "implementation_warnings": implementation_warnings,
         "classification_reasons_present": bool(contributions)
@@ -1462,9 +1443,7 @@ def _diagnostics_summary(contributions: list[dict[str, Any]]) -> dict[str, Any]:
 def _no_promotion_credit_reason(contributions: list[dict[str, Any]]) -> str:
     if any(item.get("promotion_credit_allowed") is True for item in contributions):
         return "Promotion-credit signals are present but still require manual review."
-    real_contributions = [
-        item for item in contributions if item.get("quality") == "price_derived"
-    ]
+    real_contributions = [item for item in contributions if item.get("quality") == "price_derived"]
     if not real_contributions:
         return "No promotion-credit signals because no price-derived real signals were evaluated."
     statuses = {str(item.get("diagnostic_status")) for item in real_contributions}

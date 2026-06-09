@@ -25,34 +25,22 @@ DEFAULT_SHADOW_READY_REVIEW_POLICY_CONFIG_PATH = (
 DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "shadow_ready_review"
 )
-DEFAULT_SHADOW_READY_REVIEW_PACKAGE_DIR = (
-    DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "packages"
-)
-DEFAULT_SHADOW_READY_REVIEW_APPROVAL_DIR = (
-    DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "approvals"
-)
-DEFAULT_SHADOW_READY_REVIEW_ENROLLMENT_DIR = (
-    DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "enrollments"
-)
-DEFAULT_SHADOW_READY_REVIEW_VALIDATION_DIR = (
-    DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "validation"
-)
+DEFAULT_SHADOW_READY_REVIEW_PACKAGE_DIR = DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "packages"
+DEFAULT_SHADOW_READY_REVIEW_APPROVAL_DIR = DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "approvals"
+DEFAULT_SHADOW_READY_REVIEW_ENROLLMENT_DIR = DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "enrollments"
+DEFAULT_SHADOW_READY_REVIEW_VALIDATION_DIR = DEFAULT_SHADOW_READY_REVIEW_REPORT_DIR / "validation"
 DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "weight_calibration" / "search_diagnostics"
 )
 
 SHADOW_READY_REVIEW_POLICY_SCHEMA_VERSION = "etf_shadow_ready_review_policy_v1"
 SHADOW_READY_REVIEW_ARTIFACTS_SCHEMA_VERSION = "etf_shadow_ready_review_artifacts_v1"
-SHADOW_READY_REVIEW_AGGREGATION_SCHEMA_VERSION = (
-    "etf_shadow_ready_candidate_aggregation_v1"
-)
+SHADOW_READY_REVIEW_AGGREGATION_SCHEMA_VERSION = "etf_shadow_ready_candidate_aggregation_v1"
 SHADOW_READY_REVIEW_RANKING_SCHEMA_VERSION = "etf_shadow_ready_review_ranking_v1"
 SHADOW_READY_REVIEW_NEAR_SHADOW_SCHEMA_VERSION = "etf_near_shadow_review_summary_v1"
 SHADOW_READY_REVIEW_PACKAGE_SCHEMA_VERSION = "etf_shadow_candidate_review_package_v1"
 SHADOW_READY_REVIEW_APPROVAL_SCHEMA_VERSION = "etf_shadow_candidate_owner_approval_v1"
-SHADOW_READY_REVIEW_ENROLLMENT_SCHEMA_VERSION = (
-    "etf_shadow_candidate_approved_enrollment_v1"
-)
+SHADOW_READY_REVIEW_ENROLLMENT_SCHEMA_VERSION = "etf_shadow_candidate_approved_enrollment_v1"
 SHADOW_READY_REVIEW_VALIDATION_SCHEMA_VERSION = "etf_shadow_candidate_review_validation_v1"
 
 SHADOW_READY_REVIEW_PACKAGE_REPORT_TYPE = "etf_shadow_candidate_review_package"
@@ -201,8 +189,7 @@ class ShadowReadyReviewPolicyConfig(BaseModel):
         missing = REQUIRED_HARD_BLOCKERS - set(self.hard_blockers)
         if missing:
             raise ValueError(
-                "shadow-ready review hard blockers missing: "
-                + ", ".join(sorted(missing))
+                "shadow-ready review hard blockers missing: " + ", ".join(sorted(missing))
             )
         if self.safety.model_dump(mode="json") != SHADOW_READY_REVIEW_SAFETY:
             raise ValueError("shadow-ready review safety fields are unsafe")
@@ -524,9 +511,9 @@ def build_shadow_candidate_review_package(
             [row for row in ranked if row.get("review_status") != "blocked"]
         ),
         "blocked_count": len([row for row in ranked if row.get("review_status") == "blocked"]),
-        "top_candidate": _text(top_candidates[0].get("shape_id"), "MISSING")
-        if top_candidates
-        else "MISSING",
+        "top_candidate": (
+            _text(top_candidates[0].get("shape_id"), "MISSING") if top_candidates else "MISSING"
+        ),
         "approved_enrollment_count": 0,
         "owner_approval_status": "owner_approval_required",
     }
@@ -1724,8 +1711,7 @@ def _coerce_datetime(value: datetime) -> datetime:
 def _stable_id(prefix: str, *parts: object) -> str:
     digest = sha256(
         "|".join(
-            part.isoformat() if isinstance(part, (date, datetime)) else str(part)
-            for part in parts
+            part.isoformat() if isinstance(part, (date, datetime)) else str(part) for part in parts
         ).encode("utf-8")
     ).hexdigest()[:12]
     return f"{prefix}:{digest}"

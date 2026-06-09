@@ -1,6 +1,6 @@
 # DEV-001：Repo-wide Black Formatter Baseline
 
-状态：`READY`
+状态：`DONE`
 
 最后更新：2026-06-09
 
@@ -38,3 +38,12 @@
 - 2026-06-09：新增并进入 `READY`。原因：`TRADING-006/006A` 已验证触达文件 Black
   通过，但历史全仓 Black baseline 仍是跨任务遗留问题，应从 paper signal quality 任务中
   独立出来治理。
+- 2026-06-09：从 `READY` 进入 `IN_PROGRESS`。本机版本固定为 Black `26.5.0`
+  / CPython `3.14.4`；`python -m black --check src tests scripts` 显示 128 个
+  Python 文件 would reformat、521 个文件 already formatted。本轮只做独立 formatter
+  baseline，不混入业务逻辑或 generated artifacts。
+- 2026-06-09：从 `IN_PROGRESS` 改为 `DONE`。已对 `src tests scripts` 执行 repo-wide
+  Black baseline，128 个 Python 文件仅发生格式化变更；复跑 `python -m black --check
+  src tests scripts` 通过，649 个文件 unchanged。验证通过 Ruff、`compileall`、docs
+  freshness、documentation contract、`git diff --check` 和触达 ETF/trading-engine
+  regression pytest（1548 passed）。

@@ -439,9 +439,7 @@ def _summary_payload(
     metadata_status = (
         "OK"
         if data_quality_status == "OK"
-        else "LIMITED"
-        if data_quality_status == "LIMITED"
-        else "DEGRADED"
+        else "LIMITED" if data_quality_status == "LIMITED" else "DEGRADED"
     )
     metadata = {
         "run_id": f"shadow-backtest-{as_of.isoformat()}",
@@ -736,8 +734,7 @@ def _promotion_decision_payload(
     review_status = _portfolio_candidate_review_status(review_path)
     if review_status == "watch" and "manual watch" not in reason.lower():
         payload["reason"] = (
-            reason.rstrip(".")
-            + ". Portfolio candidate is under manual watch. Candidate improves "
+            reason.rstrip(".") + ". Portfolio candidate is under manual watch. Candidate improves "
             "responsiveness but signal quality remains LIMITED."
         )
         reason = str(payload.get("reason") or "")
@@ -813,11 +810,7 @@ def _promotion_decision_payload(
                     f"Shadow candidate tracking review is {tracking_review_status}; "
                     "this review is advisory only and cannot enable production promotion."
                 )
-            payload["reason"] = (
-                reason.rstrip(".")
-                + ". "
-                + review_reason
-            )
+            payload["reason"] = reason.rstrip(".") + ". " + review_reason
             reason = str(payload.get("reason") or "")
     weight_tuning = _weight_tuning_details(weight_tuning_path)
     weight_status = str(weight_tuning.get("status") or "")
@@ -852,8 +845,7 @@ def _promotion_decision_payload(
         payload["weight_tuning_failure_root_cause"] = failure_root
         if "failure attribution" not in reason.lower():
             payload["reason"] = (
-                reason.rstrip(".")
-                + ". Restricted weight tuning failure attribution identifies "
+                reason.rstrip(".") + ". Restricted weight tuning failure attribution identifies "
                 f"{failure_root} as the main blocker; production parameters remain unchanged."
             )
             reason = str(payload.get("reason") or "")
@@ -903,24 +895,21 @@ def _promotion_decision_payload(
         payload["portfolio_turnover_attribution_root_cause"] = turnover_root
         if "turnover attribution" not in reason.lower():
             payload["reason"] = (
-                reason.rstrip(".")
-                + ". Portfolio turnover attribution identifies "
+                reason.rstrip(".") + ". Portfolio turnover attribution identifies "
                 f"{turnover_root} as the turnover/cost blocker; promotion remains rejected."
             )
             reason = str(payload.get("reason") or "")
     freshness_status = _market_data_freshness_status(freshness_path)
     if freshness_status and "market data freshness" not in reason.lower():
         payload["reason"] = (
-            reason.rstrip(".")
-            + f". Market data freshness is {freshness_status}; it is supporting "
+            reason.rstrip(".") + f". Market data freshness is {freshness_status}; it is supporting "
             "readiness evidence only and does not enable production promotion."
         )
         reason = str(payload.get("reason") or "")
     refresh_status = _market_data_refresh_status(refresh_path)
     if refresh_status and "market data refresh" not in reason.lower():
         payload["reason"] = (
-            reason.rstrip(".")
-            + f". Market data refresh is {refresh_status}; production promotion "
+            reason.rstrip(".") + f". Market data refresh is {refresh_status}; production promotion "
             "remains disabled."
         )
     return payload
@@ -1230,9 +1219,7 @@ def _weight_tuning_failure_details(path: Path | None) -> dict[str, object]:
         return {}
     if not isinstance(payload, dict):
         return {}
-    root_cause = (
-        payload.get("root_cause") if isinstance(payload.get("root_cause"), dict) else {}
-    )
+    root_cause = payload.get("root_cause") if isinstance(payload.get("root_cause"), dict) else {}
     metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
     return {
         "status": str(metadata.get("status") or ""),
@@ -1279,13 +1266,11 @@ def _weight_stability_readiness_details(path: Path | None) -> dict[str, object]:
     return {
         "status": str(metadata.get("status") or eligibility.get("status") or ""),
         "can_run": eligibility.get("can_run") is True,
-        "blocking_checks": [
-            str(item)
-            for item in eligibility.get("blocking_checks", [])
-            if str(item)
-        ]
-        if isinstance(eligibility.get("blocking_checks"), list)
-        else [],
+        "blocking_checks": (
+            [str(item) for item in eligibility.get("blocking_checks", []) if str(item)]
+            if isinstance(eligibility.get("blocking_checks"), list)
+            else []
+        ),
         "reason": str(eligibility.get("reason") or metadata.get("reason") or ""),
     }
 
@@ -1299,9 +1284,7 @@ def _portfolio_turnover_attribution_details(path: Path | None) -> dict[str, obje
         return {}
     if not isinstance(payload, dict):
         return {}
-    root_cause = (
-        payload.get("root_cause") if isinstance(payload.get("root_cause"), dict) else {}
-    )
+    root_cause = payload.get("root_cause") if isinstance(payload.get("root_cause"), dict) else {}
     metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
     return {
         "status": str(metadata.get("status") or ""),

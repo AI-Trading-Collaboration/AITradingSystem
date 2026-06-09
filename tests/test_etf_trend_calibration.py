@@ -37,9 +37,7 @@ def test_trend_calibration_policy_loads_and_rejects_unsafe(tmp_path: Path) -> No
     assert policy.market_regime.regime_id == "ai_after_chatgpt"
     assert policy.search.preset_weight_sets
 
-    raw = yaml.safe_load(
-        DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["safety"]["production_effect"] = "mutate_config"
     unsafe_path = tmp_path / "unsafe_trend_calibration.yaml"
     unsafe_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
@@ -47,9 +45,7 @@ def test_trend_calibration_policy_loads_and_rejects_unsafe(tmp_path: Path) -> No
     with pytest.raises(TrendCalibrationError):
         load_trend_calibration_policy_config(unsafe_path)
 
-    raw = yaml.safe_load(
-        DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["search"]["preset_weight_sets"][0]["weights"]["price_trend"] = 0.90
     invalid_path = tmp_path / "invalid_trend_weights.yaml"
     invalid_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")

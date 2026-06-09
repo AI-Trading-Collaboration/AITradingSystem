@@ -77,9 +77,10 @@ def test_satellite_attribution_dataset_marks_insufficient_forward_window() -> No
     row_60d = next(record for record in dataset["records"] if record["forward_window"] == "60D")
     assert row_60d["sample_available"] is False
     assert row_60d["evaluation_only"] is True
-    assert "insufficient" in row_60d["insufficient_data_reason"] or "after" in row_60d[
-        "insufficient_data_reason"
-    ]
+    assert (
+        "insufficient" in row_60d["insufficient_data_reason"]
+        or "after" in row_60d["insufficient_data_reason"]
+    )
 
 
 def test_satellite_score_bucket_assignment() -> None:
@@ -148,9 +149,9 @@ def test_satellite_attribution_report_writes_json_and_markdown(tmp_path: Path) -
     )
 
     assert json.loads(paths["json"].read_text(encoding="utf-8"))["evaluation_only"] is True
-    assert "Satellite Replacement Forward Attribution Review" in paths[
-        "markdown"
-    ].read_text(encoding="utf-8")
+    assert "Satellite Replacement Forward Attribution Review" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
     assert "production_effect=none" in render_satellite_attribution_report_markdown(report)
     assert dataset_paths["csv"].exists()
 
@@ -192,9 +193,7 @@ def test_satellite_attribution_validation_gate_passes_and_fails_registry(tmp_pat
         output_dir=tmp_path / "validation",
     )
     assert paths["json"].exists()
-    assert "Satellite Attribution Validation Gate" in paths["markdown"].read_text(
-        encoding="utf-8"
-    )
+    assert "Satellite Attribution Validation Gate" in paths["markdown"].read_text(encoding="utf-8")
 
     failing = build_satellite_attribution_validation_report(
         report_registry={"reports": []},
@@ -203,8 +202,7 @@ def test_satellite_attribution_validation_gate_passes_and_fails_registry(tmp_pat
     )
     assert failing["status"] == "FAIL"
     assert any(
-        check["check_id"] == "report_registry_integration_available"
-        and check["status"] == "FAIL"
+        check["check_id"] == "report_registry_integration_available" and check["status"] == "FAIL"
         for check in failing["checks"]
     )
 

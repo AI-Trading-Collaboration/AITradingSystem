@@ -85,9 +85,7 @@ def test_etf_parameter_governance_summary_schema_is_stable(tmp_path: Path) -> No
     assert json.loads(json_path.read_text(encoding="utf-8"))["report_type"] == (
         "etf_parameter_governance"
     )
-    assert "Promotion Status: ELIGIBLE_FOR_MANUAL_REVIEW" in md_path.read_text(
-        encoding="utf-8"
-    )
+    assert "Promotion Status: ELIGIBLE_FOR_MANUAL_REVIEW" in md_path.read_text(encoding="utf-8")
 
 
 def _summary(candidate: dict[str, object]) -> dict[str, object]:

@@ -277,9 +277,7 @@ def normalize_repaired_price_history(
 
     frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
     frame = frame.loc[
-        frame["date"].notna()
-        & (frame["date"].dt.date >= start)
-        & (frame["date"].dt.date <= end)
+        frame["date"].notna() & (frame["date"].dt.date >= start) & (frame["date"].dt.date <= end)
     ].copy()
     for column in ("open", "high", "low", "close", "adj_close", "volume"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
@@ -481,9 +479,7 @@ def _existing_price_dates(path: Path, *, start: date, end: date) -> tuple[date, 
         return ()
     parsed = pd.to_datetime(frame["date"], errors="coerce").dropna()
     observed = {
-        pd.Timestamp(item).date()
-        for item in parsed
-        if start <= pd.Timestamp(item).date() <= end
+        pd.Timestamp(item).date() for item in parsed if start <= pd.Timestamp(item).date() <= end
     }
     return tuple(sorted(observed))
 

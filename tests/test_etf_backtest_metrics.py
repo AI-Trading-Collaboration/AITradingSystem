@@ -94,10 +94,7 @@ def test_standardized_metrics_explain_null_volatility_for_insufficient_sample() 
     payload = _standardized_payload_for_returns([0.01])
 
     assert payload["annualized_volatility"] is None
-    assert (
-        payload["metric_null_reasons"]["annualized_volatility"]
-        == "insufficient_return_sample"
-    )
+    assert payload["metric_null_reasons"]["annualized_volatility"] == "insufficient_return_sample"
 
 
 def _standardized_payload_for_returns(returns: list[float]) -> dict[str, object]:

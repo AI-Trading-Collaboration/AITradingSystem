@@ -21,9 +21,7 @@ DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH = (
 DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "ai_confirmation_policy.yaml"
 )
-DEFAULT_AI_CONFIRMATION_REPORT_DIR = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_confirmation"
-)
+DEFAULT_AI_CONFIRMATION_REPORT_DIR = PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_confirmation"
 DEFAULT_AI_CONFIRMATION_FEATURE_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "features"
 DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "reports"
 DEFAULT_AI_CONFIRMATION_OVERLAY_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "overlays"
@@ -200,9 +198,7 @@ class AISemiconductorRelativeStrengthPolicy(BaseModel):
     def validate_weights_and_components(self) -> Self:
         total = sum(self.component_weights.values())
         if abs(total - 1.0) > 1e-6:
-            raise ValueError(
-                f"AI semiconductor relative strength weights must sum to 1.0: {total}"
-            )
+            raise ValueError(f"AI semiconductor relative strength weights must sum to 1.0: {total}")
         if any(weight < 0 for weight in self.component_weights.values()):
             raise ValueError("AI semiconductor relative strength weights must be non-negative")
         pair_components = {pair.component for pair in [*self.required_pairs, *self.optional_pairs]}
@@ -371,8 +367,10 @@ def validate_ai_confirmation_data_availability(
     group_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     available = {symbol.strip().upper() for symbol in available_symbols}
-    selected_group_ids = tuple(group_ids) if group_ids is not None else tuple(
-        sorted(config.ai_confirmation_universe)
+    selected_group_ids = (
+        tuple(group_ids)
+        if group_ids is not None
+        else tuple(sorted(config.ai_confirmation_universe))
     )
     group_reports: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -394,13 +392,9 @@ def validate_ai_confirmation_data_availability(
             if symbol.optional and symbol.ticker not in available
         ]
         if missing_required and group.required_data_level == "strict":
-            errors.extend(
-                f"{group_id}:missing_required:{symbol}" for symbol in missing_required
-            )
+            errors.extend(f"{group_id}:missing_required:{symbol}" for symbol in missing_required)
         elif missing_required:
-            warnings.extend(
-                f"{group_id}:missing_required:{symbol}" for symbol in missing_required
-            )
+            warnings.extend(f"{group_id}:missing_required:{symbol}" for symbol in missing_required)
         if missing_optional:
             warnings.extend(f"{group_id}:missing_optional:{symbol}" for symbol in missing_optional)
         symbol_count = len(enabled_symbols)
@@ -445,9 +439,7 @@ def build_ai_confirmation_breadth_features(
         available_symbols,
         group_ids=selected_group_ids,
     )
-    availability_by_group = {
-        str(item["group_id"]): item for item in availability["group_reports"]
-    }
+    availability_by_group = {str(item["group_id"]): item for item in availability["group_reports"]}
     records: list[dict[str, Any]] = []
     for group_id in sorted(selected_group_ids):
         group = config.ai_confirmation_universe.get(group_id)
@@ -485,9 +477,7 @@ def ai_confirmation_breadth_records_to_frame(records: list[dict[str, Any]]) -> p
         feature_values = dict(record.get("feature_values") or {})
         warnings = list(record.get("warnings") or [])
         row = {
-            key: value
-            for key, value in record.items()
-            if key not in {"feature_values", "warnings"}
+            key: value for key, value in record.items() if key not in {"feature_values", "warnings"}
         }
         row.update(feature_values)
         row["feature_values_json"] = json.dumps(
@@ -631,9 +621,7 @@ def build_ai_semiconductor_relative_strength_score(
     for pair in policy.required_pairs:
         features = _relative_strength_pair_features(frame, pair, policy)
         if features is None:
-            warnings.append(
-                f"required_pair_missing:{pair.numerator}/{pair.denominator}"
-            )
+            warnings.append(f"required_pair_missing:{pair.numerator}/{pair.denominator}")
             continue
         features["optional"] = False
         pair_features.append(features)
@@ -718,9 +706,9 @@ def build_ai_event_risk_overlay(
             recent_events.append(event)
     score = _event_risk_score(active_events, policy)
     affected_groups = _affected_event_groups(active_events, universe_config)
-    reason_codes = [
-        f"{event['event_type']}:{event['severity']}" for event in active_events
-    ] or ["no_active_ai_event_risk"]
+    reason_codes = [f"{event['event_type']}:{event['severity']}" for event in active_events] or [
+        "no_active_ai_event_risk"
+    ]
     return {
         "date": run_date.isoformat(),
         "event_risk_score": score,
@@ -1156,9 +1144,9 @@ def build_ai_confirmation_validation_report(
         "PASS" if report_payload else "FAIL",
         "AI / semiconductor breadth features can be built on deterministic fixture.",
         {
-            "record_count": 1
-            if report_payload and _mapping(report_payload.get("semiconductor_breadth"))
-            else 0
+            "record_count": (
+                1 if report_payload and _mapping(report_payload.get("semiconductor_breadth")) else 0
+            )
         },
         [] if report_payload else [toy_error or "BREADTH_FEATURE_BUILD_FAILED"],
     )
@@ -1458,10 +1446,7 @@ def _report_drivers(
     positive: bool,
 ) -> list[str]:
     key = "top_positive_drivers" if positive else "top_negative_drivers"
-    drivers = [
-        f"MegaCapAIScore:{driver}"
-        for driver in _string_list(mega_cap_score.get(key))
-    ]
+    drivers = [f"MegaCapAIScore:{driver}" for driver in _string_list(mega_cap_score.get(key))]
     drivers.extend(
         f"AISemiconductorRelativeStrengthScore:{driver}"
         for driver in _string_list(relative_strength_score.get(key))
@@ -1600,8 +1585,7 @@ def _assert_ai_confirmation_score_safe(score_payload: Mapping[str, Any]) -> None
         actual = score_payload.get(key)
         if actual != expected:
             raise ValueError(
-                f"unsafe AI confirmation score payload: {key}={actual!r}, "
-                f"expected {expected!r}"
+                f"unsafe AI confirmation score payload: {key}={actual!r}, " f"expected {expected!r}"
             )
 
 
@@ -1755,9 +1739,7 @@ def _add_to_symbols(
     existing_total = sum(weights.get(symbol, 0.0) for symbol in eligible)
     for symbol in eligible:
         share = (
-            weights.get(symbol, 0.0) / existing_total
-            if existing_total > 0
-            else 1.0 / len(eligible)
+            weights.get(symbol, 0.0) / existing_total if existing_total > 0 else 1.0 / len(eligible)
         )
         weights[symbol] = weights.get(symbol, 0.0) + amount * share
 
@@ -1828,9 +1810,7 @@ def _symbol_breadth_stats(frame: pd.DataFrame, ticker: str) -> dict[str, Any]:
             stats[f"return_{window}d"] = None
             continue
         stats[f"return_{window}d"] = float(current / float(closes.iloc[-window - 1]) - 1.0)
-    stats["return_1d"] = (
-        float(current / float(closes.iloc[-2]) - 1.0) if len(closes) > 1 else None
-    )
+    stats["return_1d"] = float(current / float(closes.iloc[-2]) - 1.0) if len(closes) > 1 else None
     return stats
 
 
@@ -2135,17 +2115,13 @@ def _relative_strength_pair_features(
     for window in (50, 200):
         moving_average = ratio.rolling(window=window, min_periods=window).mean().iloc[-1]
         features[f"relative_price_above_{window}d_ma"] = (
-            bool(ratio.iloc[-1] > moving_average)
-            if _is_finite_number(moving_average)
-            else None
+            bool(ratio.iloc[-1] > moving_average) if _is_finite_number(moving_average) else None
         )
     relative_drawdown = _series_drawdown(ratio, window=60)
     features["relative_drawdown"] = relative_drawdown
     if returns_for_score:
         average_relative_return = float(np.mean(returns_for_score))
-        normalized = 50.0 + (
-            average_relative_return / policy.relative_return_full_scale
-        ) * 50.0
+        normalized = 50.0 + (average_relative_return / policy.relative_return_full_scale) * 50.0
         features["relative_momentum_score"] = _clamp_score(normalized)
     else:
         features["relative_momentum_score"] = None
@@ -2260,9 +2236,9 @@ def _affected_event_groups(
         for group_id, group in universe_config.ai_confirmation_universe.items():
             if not group.enabled or group_id == AI_CONFIRMATION_EVENT_GROUP_ID:
                 continue
-            group_symbols = {symbol.ticker for symbol in enabled_symbols_for_group(
-                universe_config, group_id
-            )}
+            group_symbols = {
+                symbol.ticker for symbol in enabled_symbols_for_group(universe_config, group_id)
+            }
             if related_symbols & group_symbols:
                 affected.add(group_id)
     return sorted(affected)

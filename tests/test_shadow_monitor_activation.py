@@ -32,8 +32,7 @@ def test_shadow_monitor_activation_and_run(tmp_path: Path) -> None:
     )
 
     assert (
-        result["summary"]["active_count"]
-        == fixture["shadow"]["manifest"]["shadow_candidate_count"]
+        result["summary"]["active_count"] == fixture["shadow"]["manifest"]["shadow_candidate_count"]
     )
     assert result["summary"]["summary_recommendation"] == "continue_monitoring"
     assert result["manifest"]["broker_action_allowed"] is False

@@ -43,14 +43,11 @@ def generate_regime_for_date(
     qqq_rs_spy = _float_value(qqq, "rs_vs_spy_60d")
     smh_rs_qqq = _float_value(smh, "rs_vs_qqq_60d")
 
-    risk_off_condition = (
-        (spy_above_200 is False and qqq_above_200 is False)
-        or (
-            spy_dd_63 is not None
-            and qqq_dd_63 is not None
-            and spy_dd_63 <= rules.risk_off_spy_drawdown_63d
-            and qqq_dd_63 <= rules.risk_off_qqq_drawdown_63d
-        )
+    risk_off_condition = (spy_above_200 is False and qqq_above_200 is False) or (
+        spy_dd_63 is not None
+        and qqq_dd_63 is not None
+        and spy_dd_63 <= rules.risk_off_spy_drawdown_63d
+        and qqq_dd_63 <= rules.risk_off_qqq_drawdown_63d
     )
     risk_on_condition = (
         spy_above_200 is True
@@ -69,19 +66,16 @@ def generate_regime_for_date(
         and qqq_dd_63 > rules.risk_off_qqq_drawdown_63d
     )
     overheated_condition = (
-        (
-            _bool_value(qqq, "above_ma_50") is True
-            and qqq_ret_20 is not None
-            and qqq_distance_ma_50 is not None
-            and qqq_ret_20 >= rules.overheated_qqq_ret_20d
-            and qqq_distance_ma_50 >= rules.overheated_qqq_distance_ma_50
-        )
-        or (
-            smh_ret_20 is not None
-            and smh_dd_63 is not None
-            and smh_ret_20 >= rules.overheated_smh_ret_20d
-            and smh_dd_63 >= rules.overheated_smh_drawdown_63d_min
-        )
+        _bool_value(qqq, "above_ma_50") is True
+        and qqq_ret_20 is not None
+        and qqq_distance_ma_50 is not None
+        and qqq_ret_20 >= rules.overheated_qqq_ret_20d
+        and qqq_distance_ma_50 >= rules.overheated_qqq_distance_ma_50
+    ) or (
+        smh_ret_20 is not None
+        and smh_dd_63 is not None
+        and smh_ret_20 >= rules.overheated_smh_ret_20d
+        and smh_dd_63 >= rules.overheated_smh_drawdown_63d_min
     )
 
     if risk_off_condition:

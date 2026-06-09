@@ -138,9 +138,7 @@ def render_allocation_stability_markdown(payload: dict[str, object]) -> str:
     by_asset = holding.get("by_asset_days", {}) if isinstance(holding, dict) else {}
     if isinstance(exposure_time, dict):
         for symbol, value in sorted(exposure_time.items()):
-            lines.append(
-                f"| {symbol} | {_fmt_pct(value)} | {_fmt_number(by_asset.get(symbol))} |"
-            )
+            lines.append(f"| {symbol} | {_fmt_pct(value)} | {_fmt_number(by_asset.get(symbol))} |")
     return "\n".join(lines) + "\n"
 
 
@@ -232,9 +230,9 @@ def _constraint_summary(
     signal_day_count = len(signal_dates)
     return {
         "constraint_hit_count": len(hit_dates),
-        "constraint_hit_rate": _round(len(hit_dates) / signal_day_count)
-        if signal_day_count
-        else 0.0,
+        "constraint_hit_rate": (
+            _round(len(hit_dates) / signal_day_count) if signal_day_count else 0.0
+        ),
         "constraint_hit_by_id": dict(sorted(hit_by_id.items())),
     }
 

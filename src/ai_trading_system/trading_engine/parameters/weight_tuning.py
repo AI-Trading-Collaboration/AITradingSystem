@@ -549,18 +549,18 @@ def build_weight_tuning_payload(
         **_stable_search_counts(generation),
     }
     summary_limit = int(config.get("summary_candidate_limit", 10))
-    payload["candidate_ranking"] = [
-        _candidate_ranking_row(row) for row in ranked[:summary_limit]
-    ]
+    payload["candidate_ranking"] = [_candidate_ranking_row(row) for row in ranked[:summary_limit]]
     payload["recommended_candidate"] = recommended
     payload["walk_forward"] = {
         "windows": list(_mapping(recommended).get("walk_forward_windows", [])),
-        "non_worse_window_ratio": _mapping(recommended.get("relative_metrics")).get(
-            "non_worse_walk_forward_ratio",
-            0.0,
-        )
-        if isinstance(recommended, dict)
-        else 0.0,
+        "non_worse_window_ratio": (
+            _mapping(recommended.get("relative_metrics")).get(
+                "non_worse_walk_forward_ratio",
+                0.0,
+            )
+            if isinstance(recommended, dict)
+            else 0.0
+        ),
     }
     _attach_stability_payload(payload, config, generation)
     candidates_payload = _candidates_payload(payload, ranked)
@@ -740,35 +740,59 @@ def calculate_weight_stability(
     trend_sector_weight = trend_weight + sector_weight
     reasons: list[str] = []
     if stability:
-        if max_single_delta > _float_value(
-            stability.get("max_single_signal_delta_from_baseline"),
-            default=2.0,
-        ) + 1e-12:
+        if (
+            max_single_delta
+            > _float_value(
+                stability.get("max_single_signal_delta_from_baseline"),
+                default=2.0,
+            )
+            + 1e-12
+        ):
             reasons.append("single_signal_delta_too_high")
-        if l1_distance > _float_value(
-            stability.get("max_total_l1_distance_from_baseline"),
-            default=2.0,
-        ) + 1e-12:
+        if (
+            l1_distance
+            > _float_value(
+                stability.get("max_total_l1_distance_from_baseline"),
+                default=2.0,
+            )
+            + 1e-12
+        ):
             reasons.append("l1_distance_too_high")
-        if trend_sector_weight > _float_value(
-            stability.get("max_combined_trend_sector_weight"),
-            default=2.0,
-        ) + 1e-12:
+        if (
+            trend_sector_weight
+            > _float_value(
+                stability.get("max_combined_trend_sector_weight"),
+                default=2.0,
+            )
+            + 1e-12
+        ):
             reasons.append("trend_sector_combined_weight_too_high")
-        if trend_weight > _float_value(
-            stability.get("max_trend_momentum_weight"),
-            default=2.0,
-        ) + 1e-12:
+        if (
+            trend_weight
+            > _float_value(
+                stability.get("max_trend_momentum_weight"),
+                default=2.0,
+            )
+            + 1e-12
+        ):
             reasons.append("trend_momentum_weight_too_high")
-        if sector_weight > _float_value(
-            stability.get("max_sector_strength_weight"),
-            default=2.0,
-        ) + 1e-12:
+        if (
+            sector_weight
+            > _float_value(
+                stability.get("max_sector_strength_weight"),
+                default=2.0,
+            )
+            + 1e-12
+        ):
             reasons.append("sector_strength_weight_too_high")
-        if macro_weight < _float_value(
-            stability.get("min_macro_liquidity_weight"),
-            default=0.0,
-        ) - 1e-12:
+        if (
+            macro_weight
+            < _float_value(
+                stability.get("min_macro_liquidity_weight"),
+                default=0.0,
+            )
+            - 1e-12
+        ):
             reasons.append("macro_liquidity_weight_too_low")
         valuation = _mapping(stability.get("valuation_risk"))
         if valuation and (
@@ -817,8 +841,7 @@ def estimate_turnover_prefilter(
     return {
         "estimated_turnover_relative_increase": _round_float(l1_distance),
         "method": str(
-            controls.get("estimated_turnover_method")
-            or "candidate_weight_l1_distance_proxy"
+            controls.get("estimated_turnover_method") or "candidate_weight_l1_distance_proxy"
         ),
         "threshold": _round_float(threshold),
         "status": "FAIL" if reasons else "PASS",
@@ -1219,9 +1242,7 @@ def _simulation_context(
             (price_panel.index.date >= start) & (price_panel.index.date <= end)
         ].copy()
     returns = (
-        price_panel.pct_change().fillna(0.0)
-        if len(price_panel.index) >= 3
-        else pd.DataFrame()
+        price_panel.pct_change().fillna(0.0) if len(price_panel.index) >= 3 else pd.DataFrame()
     )
     features = (
         _feature_frame(price_panel, returns, signal_frames=signal_frames)
@@ -1304,9 +1325,7 @@ def _simulate_weight_context(
         [asset for asset in context.tradable_assets if asset in shifted_actual.columns],
     ]
     exposure_series = (
-        exposure.sum(axis=1)
-        if not exposure.empty
-        else pd.Series(0.0, index=context.returns.index)
+        exposure.sum(axis=1) if not exposure.empty else pd.Series(0.0, index=context.returns.index)
     )
     metrics = calculate_portfolio_metrics(
         strategy_returns,
@@ -1456,12 +1475,10 @@ def _relative_metrics(
             - baseline_metrics.get("cumulative_return", 0.0)
         ),
         "max_drawdown_delta": _round_float(
-            candidate_metrics.get("max_drawdown", 0.0)
-            - baseline_metrics.get("max_drawdown", 0.0)
+            candidate_metrics.get("max_drawdown", 0.0) - baseline_metrics.get("max_drawdown", 0.0)
         ),
         "sharpe_ratio_delta": _round_float(
-            candidate_metrics.get("sharpe_ratio", 0.0)
-            - baseline_metrics.get("sharpe_ratio", 0.0)
+            candidate_metrics.get("sharpe_ratio", 0.0) - baseline_metrics.get("sharpe_ratio", 0.0)
         ),
         "turnover_delta": _round_float(
             candidate_metrics.get("turnover", 0.0) - baseline_metrics.get("turnover", 0.0)
@@ -1506,10 +1523,8 @@ def _objective_breakdown(
     objective = (
         _float_value(weights.get("sharpe_improvement"), default=0.0) * sharpe
         + _float_value(weights.get("max_drawdown_improvement"), default=0.0) * drawdown
-        + _float_value(weights.get("annualized_return_improvement"), default=0.0)
-        * annualized
-        + _float_value(weights.get("signal_transmission_improvement"), default=0.0)
-        * transmission
+        + _float_value(weights.get("annualized_return_improvement"), default=0.0) * annualized
+        + _float_value(weights.get("signal_transmission_improvement"), default=0.0) * transmission
         - _float_value(weights.get("turnover_penalty"), default=0.0) * turnover
         - _float_value(weights.get("cost_drag_penalty"), default=0.0) * cost_drag
     )
@@ -1539,9 +1554,7 @@ def _average_objective_breakdown(
             "objective_score": 0.0,
         }
     averaged = {
-        key: _round_float(
-            sum(_float_value(item.get(key)) for item in breakdowns) / len(breakdowns)
-        )
+        key: _round_float(sum(_float_value(item.get(key)) for item in breakdowns) / len(breakdowns))
         for key in (
             "sharpe_improvement_score",
             "drawdown_improvement_score",
@@ -1848,9 +1861,9 @@ def _base_payload(
             "status": data_quality_status,
             "data_gate_status": data_gate.get("status", "UNKNOWN"),
             "data_gate": dict(data_gate),
-            "quality_report_path": ""
-            if data_quality_report_path is None
-            else str(data_quality_report_path),
+            "quality_report_path": (
+                "" if data_quality_report_path is None else str(data_quality_report_path)
+            ),
             "backtest_manifest": str(_manifest_path_from_data_gate(dict(data_gate)) or ""),
         },
         "freshness": dict(freshness or {"status": "MISSING"}),

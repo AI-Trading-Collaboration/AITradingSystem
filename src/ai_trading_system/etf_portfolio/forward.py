@@ -406,9 +406,7 @@ def build_forward_weekly_review_payload(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(tz=UTC)
-    rows = _records(
-        dashboard_payload.get("candidate_summary_table") if dashboard_payload else []
-    )
+    rows = _records(dashboard_payload.get("candidate_summary_table") if dashboard_payload else [])
     actions = [_weekly_action(row) for row in rows]
     performers = sorted(
         rows,
@@ -510,9 +508,7 @@ def build_forward_watchlist_payload(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(tz=UTC)
-    rows = _records(
-        dashboard_payload.get("candidate_summary_table") if dashboard_payload else []
-    )
+    rows = _records(dashboard_payload.get("candidate_summary_table") if dashboard_payload else [])
     items = []
     for row in rows:
         items.extend(_watchlist_items_for_row(row))
@@ -1076,13 +1072,10 @@ def _lifecycle_status(
         or 0.0
     )
     drawdown_gap = candidate_dd - baseline_dd
-    reject_drawdown_gap = float(
-        thresholds.get("reject_drawdown_worse_than_baseline") or 0.05
-    )
+    reject_drawdown_gap = float(thresholds.get("reject_drawdown_worse_than_baseline") or 0.05)
     if drawdown_gap > reject_drawdown_gap:
         reasons.append(
-            "drawdown_worse_than_baseline:"
-            f"{drawdown_gap:.4f}>{reject_drawdown_gap:.4f}"
+            "drawdown_worse_than_baseline:" f"{drawdown_gap:.4f}>{reject_drawdown_gap:.4f}"
         )
     turnover = _optional_float(metrics.get("turnover_since_enrollment"))
     max_turnover = float(thresholds.get("max_turnover_since_enrollment") or 2.0)
@@ -1306,9 +1299,11 @@ def _config_validation(path: Path | str) -> tuple[bool, str, dict[str, Any]]:
         config = load_forward_simulation_config(path)
     except Exception as exc:  # noqa: BLE001 - validation gate records the failure.
         return False, f"Forward config invalid: {exc}", {"path": str(path)}
-    return True, "Forward config and safety policy are valid.", {
-        "version": _text(config.get("policy_metadata"))
-    }
+    return (
+        True,
+        "Forward config and safety policy are valid.",
+        {"version": _text(config.get("policy_metadata"))},
+    )
 
 
 def _state_validation(path: Path) -> tuple[bool, str, dict[str, Any]]:
@@ -1319,26 +1314,34 @@ def _state_validation(path: Path) -> tuple[bool, str, dict[str, Any]]:
         validate_shadow_candidate_registry(payload)
     except Exception as exc:  # noqa: BLE001 - validation gate records the failure.
         return False, f"Shadow state invalid: {exc}", {"path": str(path)}
-    return True, "Shadow state schema and safety invariants are valid.", {
-        "candidate_count": payload.get("candidate_count")
-    }
+    return (
+        True,
+        "Shadow state schema and safety invariants are valid.",
+        {"candidate_count": payload.get("candidate_count")},
+    )
 
 
 def _decision_ledger_validation(path: Path) -> tuple[bool, str, dict[str, Any]]:
     if not path.exists():
-        return True, "Decision ledger is absent; no evaluation leakage detected.", {
-            "path": str(path)
-        }
+        return (
+            True,
+            "Decision ledger is absent; no evaluation leakage detected.",
+            {"path": str(path)},
+        )
     try:
         frame = pd.read_csv(path)
         result = validate_no_lookahead_records(allocation_records=frame)
         raise_for_no_lookahead_violations(result)
     except Exception as exc:  # noqa: BLE001 - validation gate records the failure.
         return False, f"Decision/evaluation separation failed: {exc}", {"path": str(path)}
-    return True, "Decision ledger has no evaluation-only leakage.", {
-        "path": str(path),
-        "row_count": len(frame),
-    }
+    return (
+        True,
+        "Decision ledger has no evaluation-only leakage.",
+        {
+            "path": str(path),
+            "row_count": len(frame),
+        },
+    )
 
 
 def _report_registry_validation(path: Path) -> tuple[bool, str, dict[str, Any]]:
@@ -1368,9 +1371,11 @@ def _unsafe_action_validation(path: Path | str) -> tuple[bool, str, dict[str, An
     unsafe = sorted(action_values & UNSAFE_ACTIONS)
     if unsafe:
         return False, "Unsafe production/broker action is configured.", {"unsafe": unsafe}
-    return True, "No production promotion or broker action is configured.", {
-        "allowed_actions": sorted(action_values)
-    }
+    return (
+        True,
+        "No production promotion or broker action is configured.",
+        {"allowed_actions": sorted(action_values)},
+    )
 
 
 def _validation_check(

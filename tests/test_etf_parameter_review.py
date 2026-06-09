@@ -74,9 +74,9 @@ def test_parameter_review_schema_invalid_date_range_fails() -> None:
 def test_parameter_review_metrics_allow_null_with_reason() -> None:
     record = _evidence_record()
     record["metrics"]["excess_return_vs_SPY"] = None
-    record["metrics"]["metric_null_reasons"]["excess_return_vs_SPY"] = (
-        "SPY benchmark unavailable in forward dashboard."
-    )
+    record["metrics"]["metric_null_reasons"][
+        "excess_return_vs_SPY"
+    ] = "SPY benchmark unavailable in forward dashboard."
 
     assert validate_parameter_review_evidence_record(record) == []
 
@@ -173,8 +173,7 @@ def test_parameter_review_aggregator_preserves_source_paths_and_safety(tmp_path)
     )
 
     paths = {
-        source["report_id"]: source["source_report_path"]
-        for source in payload["source_reports"]
+        source["report_id"]: source["source_report_path"] for source in payload["source_reports"]
     }
     assert paths["etf_forward_dashboard"].endswith("forward_dashboard_2026-06-01.json")
     assert payload["observe_only"] is True
@@ -518,9 +517,7 @@ def test_parameter_review_governance_scoring_is_deterministic(tmp_path) -> None:
         generated_at=datetime(2026, 6, 2, tzinfo=UTC),
     )
 
-    assert first["scorecards"][0]["proposal_score"] == second["scorecards"][0][
-        "proposal_score"
-    ]
+    assert first["scorecards"][0]["proposal_score"] == second["scorecards"][0]["proposal_score"]
     assert first["scorecards"][0]["governance_status"] == "eligible_for_manual_review"
 
 

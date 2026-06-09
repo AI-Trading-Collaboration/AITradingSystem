@@ -104,9 +104,7 @@ def test_baseline_review_forward_sample_and_safety_blockers(tmp_path: Path) -> N
         generated_at=GENERATED_AT,
     )
     assert needs_more["eligibility_status"] == "needs_more_data"
-    assert "FORWARD_SAMPLE_TOO_SMALL" in {
-        item["blocker_id"] for item in needs_more["blockers"]
-    }
+    assert "FORWARD_SAMPLE_TOO_SMALL" in {item["blocker_id"] for item in needs_more["blockers"]}
 
     report_index = baseline_review._sample_report_index(tmp_path / "unsafe", RUN_DATE)
     _patch_source_payload(
@@ -134,9 +132,7 @@ def test_baseline_review_forward_sample_and_safety_blockers(tmp_path: Path) -> N
         generated_at=GENERATED_AT,
     )
     assert unsupported["eligibility_status"] == "blocked"
-    assert "UNSUPPORTED_CANDIDATE_TYPE" in {
-        item["blocker_id"] for item in unsupported["blockers"]
-    }
+    assert "UNSUPPORTED_CANDIDATE_TYPE" in {item["blocker_id"] for item in unsupported["blockers"]}
 
 
 def test_evidence_matrix_and_review_package_preserve_source_links(tmp_path: Path) -> None:

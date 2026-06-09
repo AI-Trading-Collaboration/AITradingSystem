@@ -34,6 +34,4 @@ def test_portfolio_tracking_review_report_alias_reads_summary(tmp_path: Path) ->
     alias_payload = json.loads(alias_json.read_text(encoding="utf-8"))
     assert alias_payload["report_type"] == "portfolio_tracking_review_report"
     assert alias_payload["recommendation"]["status"] == "needs_more_data"
-    assert "Portfolio Tracking Review Summary" in alias_markdown.read_text(
-        encoding="utf-8"
-    )
+    assert "Portfolio Tracking Review Summary" in alias_markdown.read_text(encoding="utf-8")

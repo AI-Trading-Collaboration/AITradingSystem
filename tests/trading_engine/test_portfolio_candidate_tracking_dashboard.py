@@ -100,6 +100,6 @@ def test_reader_brief_displays_portfolio_candidate_tracking_summary(
     review = payload["parameter_shadow_review"]
     assert review["portfolio_candidate_tracking_status"] == "active_tracking"
     assert "actively tracked" in review["portfolio_candidate_tracking_summary"]
-    assert review["portfolio_candidate_tracking_effective_data_date"] == fixture[
-        "as_of"
-    ].isoformat()
+    assert (
+        review["portfolio_candidate_tracking_effective_data_date"] == fixture["as_of"].isoformat()
+    )

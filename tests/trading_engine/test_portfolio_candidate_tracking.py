@@ -74,9 +74,7 @@ def test_tracking_starts_from_eligible_review_decision(
     assert sha256_file(fixture["baseline_path"]) == baseline_before
 
     state = json.loads(run.active_state_path.read_text(encoding="utf-8"))
-    assert state["active_candidates"][0]["profile_name"] == run.payload["candidate"][
-        "profile_name"
-    ]
+    assert state["active_candidates"][0]["profile_name"] == run.payload["candidate"]["profile_name"]
     assert state["active_candidates"][0]["status"] == "active_tracking"
 
 
@@ -105,9 +103,7 @@ def test_ineligible_review_decision_cannot_start_tracking(
 
     assert run.payload["metadata"]["status"] == "NOT_STARTED"
     assert run.payload["candidate"]["tracking_status"] == "not_started"
-    assert "review_status_not_eligible" in run.payload["date_roll_forward"][
-        "block_reasons"
-    ][0]
+    assert "review_status_not_eligible" in run.payload["date_roll_forward"]["block_reasons"][0]
     assert run.payload["promotion_impact"]["can_support_candidate_promotion"] is False
 
 
@@ -135,12 +131,8 @@ def test_roll_forward_latest_valid_review_decision_and_degraded_data(
 
     assert run.payload["candidate"]["tracking_status"] == "degraded_tracking"
     assert run.payload["date_resolution"]["tracking_date"] == next_day.isoformat()
-    assert run.payload["date_resolution"]["review_decision_date"] == fixture[
-        "as_of"
-    ].isoformat()
-    assert run.payload["date_resolution"]["effective_data_date"] == fixture[
-        "as_of"
-    ].isoformat()
+    assert run.payload["date_resolution"]["review_decision_date"] == fixture["as_of"].isoformat()
+    assert run.payload["date_resolution"]["effective_data_date"] == fixture["as_of"].isoformat()
     assert run.payload["date_resolution"]["roll_forward_status"] == "ROLLED_FORWARD"
     assert "rolled forward" in run.payload["date_resolution"]["reason"].lower()
 
@@ -170,9 +162,7 @@ def test_production_hash_change_blocks_tracking(tmp_path: Path) -> None:
 
     assert run.payload["candidate"]["tracking_status"] == "tracking_blocked"
     assert run.payload["date_resolution"]["roll_forward_status"] == "BLOCKED"
-    assert "production_config_hash_changed" in run.payload["date_roll_forward"][
-        "block_reasons"
-    ]
+    assert "production_config_hash_changed" in run.payload["date_roll_forward"]["block_reasons"]
     assert run.payload["safety"]["production_config_modified"] is True
 
 
@@ -280,26 +270,16 @@ def _write_portfolio_candidate_tracking_config(
                     "portfolio_sensitivity_dir": str(
                         tmp_path / "artifacts" / "portfolio_sensitivity"
                     ),
-                    "market_data_freshness_dir": str(
-                        tmp_path / "artifacts" / "data_freshness"
-                    ),
-                    "market_data_refresh_dir": str(
-                        tmp_path / "artifacts" / "data_refresh"
-                    ),
+                    "market_data_freshness_dir": str(tmp_path / "artifacts" / "data_freshness"),
+                    "market_data_refresh_dir": str(tmp_path / "artifacts" / "data_refresh"),
                     "signal_snapshot_dir": str(tmp_path / "artifacts" / "signal_snapshots"),
-                    "backtest_snapshot_dir": str(
-                        tmp_path / "artifacts" / "backtest_snapshots"
-                    ),
+                    "backtest_snapshot_dir": str(tmp_path / "artifacts" / "backtest_snapshots"),
                     "price_cache_registry_path": str(
                         tmp_path / "artifacts" / "data_registry" / "price_cache_registry.json"
                     ),
                     "shadow_backtest_dir": str(tmp_path / "artifacts" / "shadow_backtest"),
                     "shadow_backtest_dry_run_dir": str(
-                        tmp_path
-                        / "outputs"
-                        / "dry_runs"
-                        / "shadow_backtest"
-                        / "shadow_backtest"
+                        tmp_path / "outputs" / "dry_runs" / "shadow_backtest" / "shadow_backtest"
                     ),
                     "production_parameters_path": str(
                         tmp_path / "config" / "parameters" / "production" / "current.yaml"

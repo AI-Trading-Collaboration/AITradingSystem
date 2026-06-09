@@ -326,12 +326,12 @@ def build_portfolio_turnover_attribution_payload(
         "weight_tuning_summary": str(weight_tuning_path),
         "weight_tuning_candidates": str(candidates_path),
         "weight_tuning_failure": str(failure_path),
-        "portfolio_candidates_summary": ""
-        if latest_candidates_path is None
-        else str(latest_candidates_path),
-        "portfolio_sensitivity_summary": ""
-        if latest_sensitivity_path is None
-        else str(latest_sensitivity_path),
+        "portfolio_candidates_summary": (
+            "" if latest_candidates_path is None else str(latest_candidates_path)
+        ),
+        "portfolio_sensitivity_summary": (
+            "" if latest_sensitivity_path is None else str(latest_sensitivity_path)
+        ),
         "signal_snapshot": str(inputs.get("signal_snapshot") or ""),
         "backtest_input_manifest": str(inputs.get("backtest_input_manifest") or ""),
         "weight_tuning_config": str(
@@ -340,8 +340,7 @@ def build_portfolio_turnover_attribution_payload(
             or DEFAULT_WEIGHT_TUNING_CONFIG_PATH
         ),
         "portfolio_candidate_profiles": str(
-            inputs.get("portfolio_candidate_profiles")
-            or DEFAULT_PORTFOLIO_CANDIDATE_PROFILES_PATH
+            inputs.get("portfolio_candidate_profiles") or DEFAULT_PORTFOLIO_CANDIDATE_PROFILES_PATH
         ),
         "production_parameters": str(
             inputs.get("baseline_parameters") or DEFAULT_PRODUCTION_PARAMETERS_PATH
@@ -378,9 +377,9 @@ def build_portfolio_turnover_attribution_payload(
                 "most_common_guardrail_failure",
                 "",
             ),
-            "recommended_next_action": _mapping(
-                failure_payload.get("recommended_next_action")
-            ).get("action", ""),
+            "recommended_next_action": _mapping(failure_payload.get("recommended_next_action")).get(
+                "action", ""
+            ),
         },
         "summary": {
             "root_cause_category": root_cause.get("category", "mixed"),
@@ -580,8 +579,7 @@ def render_portfolio_turnover_attribution_explanation(payload: Mapping[str, Any]
             f"root_cause_category={root.get('category', 'mixed')}",
             f"root_cause_confidence={root.get('confidence', 'LOW')}",
             f"top_failure_reason={summary.get('top_failure_reason', '')}",
-            "most_common_guardrail_failure="
-            f"{summary.get('most_common_guardrail_failure', '')}",
+            "most_common_guardrail_failure=" f"{summary.get('most_common_guardrail_failure', '')}",
             f"failed_by_turnover={candidate_summary.get('total_failed_by_turnover', 0)}",
             "avg_turnover_relative_increase="
             f"{candidate_summary.get('avg_turnover_relative_increase', 0.0)}",
@@ -893,12 +891,14 @@ def _blocked_payload(
             "turnover_failed_candidates": 0,
             "near_miss_candidates": 0,
             "portfolio_profile": "",
-            "data_quality_status": _mapping(_mapping(summary).get("data_quality")).get(
-                "status",
-                "UNKNOWN",
-            )
-            if summary
-            else "UNKNOWN",
+            "data_quality_status": (
+                _mapping(_mapping(summary).get("data_quality")).get(
+                    "status",
+                    "UNKNOWN",
+                )
+                if summary
+                else "UNKNOWN"
+            ),
         },
         "candidate_turnover_summary": {
             "total_failed_by_turnover": 0,
@@ -1111,9 +1111,7 @@ def _near_miss_source_candidates(
     if not near_miss_ids:
         return list(candidates[:NEAR_MISS_LIMIT])
     return [
-        candidate
-        for candidate in candidates
-        if str(candidate.get("candidate_id")) in near_miss_ids
+        candidate for candidate in candidates if str(candidate.get("candidate_id")) in near_miss_ids
     ]
 
 
@@ -1295,8 +1293,11 @@ def _asset_contribution_from_frames(
     if candidate_actual.empty:
         return []
     candidate_delta = candidate_actual.diff().abs().fillna(candidate_actual.abs())
-    baseline_delta = baseline_actual.reindex_like(candidate_actual).diff().abs().fillna(
-        baseline_actual.reindex_like(candidate_actual).abs()
+    baseline_delta = (
+        baseline_actual.reindex_like(candidate_actual)
+        .diff()
+        .abs()
+        .fillna(baseline_actual.reindex_like(candidate_actual).abs())
     )
     contribution = candidate_delta.sum(axis=0).sort_values(ascending=False)
     total = float(contribution.sum())
@@ -1333,8 +1334,11 @@ def _rebalance_from_frames(
     if candidate_actual.empty:
         return {}
     candidate_delta = candidate_actual.diff().abs().fillna(candidate_actual.abs())
-    baseline_delta = baseline_actual.reindex_like(candidate_actual).diff().abs().fillna(
-        baseline_actual.reindex_like(candidate_actual).abs()
+    baseline_delta = (
+        baseline_actual.reindex_like(candidate_actual)
+        .diff()
+        .abs()
+        .fillna(baseline_actual.reindex_like(candidate_actual).abs())
     )
     daily_candidate = candidate_delta.sum(axis=1)
     daily_baseline = baseline_delta.sum(axis=1)
@@ -1424,9 +1428,9 @@ def _asset_turnover_contribution(
             bucket["rebalance_count"] = int(bucket["rebalance_count"]) + _int_value(
                 item.get("rebalance_count")
             )
-            bucket["avg_weight_change_sum"] = float(
-                bucket["avg_weight_change_sum"]
-            ) + _float_value(item.get("avg_weight_change"))
+            bucket["avg_weight_change_sum"] = float(bucket["avg_weight_change_sum"]) + _float_value(
+                item.get("avg_weight_change")
+            )
             bucket["count"] = int(bucket["count"]) + 1
     total = sum(float(item["turnover_contribution"]) for item in counter.values())
     rows: list[dict[str, Any]] = []
@@ -1538,9 +1542,7 @@ def _rebalance_attribution(
     rebalance_days = [float(_int_value(row.get("rebalance_days"))) for row in rows]
     baseline_days = [float(_int_value(row.get("baseline_rebalance_days"))) for row in rows]
     extra_days = [float(_int_value(row.get("extra_rebalance_days"))) for row in rows]
-    changed_avg = [
-        _float_value(row.get("avg_assets_changed_per_rebalance")) for row in rows
-    ]
+    changed_avg = [_float_value(row.get("avg_assets_changed_per_rebalance")) for row in rows]
     changed_max = [_int_value(row.get("max_assets_changed_per_rebalance")) for row in rows]
     small_ratios = [_float_value(row.get("small_trade_ratio")) for row in rows]
     warning = ""
@@ -1686,8 +1688,8 @@ def _turnover_root_cause(
             "summary": "No turnover-rejected candidate was available for attribution.",
         }
     portfolio_profile = str(_mapping(summary.get("inputs")).get("portfolio_profile") or "")
-    top_asset_share = (
-        max((_float_value(item.get("turnover_share")) for item in asset_contribution), default=0.0)
+    top_asset_share = max(
+        (_float_value(item.get("turnover_share")) for item in asset_contribution), default=0.0
     )
     avg_l1 = _mean([_float_value(row.get("l1_distance_from_baseline")) for row in candidate_rows])
     extra_rebalance_days = _int_value(rebalance_attribution.get("extra_rebalance_days"))
@@ -1717,8 +1719,7 @@ def _turnover_root_cause(
             "category": "score_volatility_too_high",
             "confidence": "MEDIUM",
             "summary": (
-                "Candidate weights amplify score changes that flow into frequent "
-                "rebalances."
+                "Candidate weights amplify score changes that flow into frequent " "rebalances."
             ),
         }
     if avg_l1 >= WEIGHT_SEARCH_L1_DISTANCE_WARNING:

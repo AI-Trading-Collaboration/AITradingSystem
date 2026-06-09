@@ -61,18 +61,14 @@ def test_toy_two_asset_rebalance_cash_cost_and_contributions_are_hand_verifiable
         starting_equity=first.ending_equity,
     )
 
-    assert first.asset_contributions == pytest.approx(
-        {"SPY": -0.04, "QQQ": 0.05, "CASH": 0.0}
-    )
+    assert first.asset_contributions == pytest.approx({"SPY": -0.04, "QQQ": 0.05, "CASH": 0.0})
     assert first.gross_return == pytest.approx(0.01)
     assert first.turnover == pytest.approx(0.90)
     assert first.transaction_cost == pytest.approx(0.0009)
     assert first.strategy_return == pytest.approx(0.0091)
     assert first.ending_equity == pytest.approx(1.0091)
 
-    assert second.asset_contributions == pytest.approx(
-        {"SPY": 0.0, "QQQ": 0.07, "CASH": 0.0}
-    )
+    assert second.asset_contributions == pytest.approx({"SPY": 0.0, "QQQ": 0.07, "CASH": 0.0})
     assert second.turnover == pytest.approx(0.40)
     assert second.transaction_cost == pytest.approx(0.0004)
     assert second.strategy_return == pytest.approx(0.0696)

@@ -69,8 +69,7 @@ def default_stable_weight_candidates_path(output_root: Path, as_of: date) -> Pat
 
 def default_recommended_stable_shadow_weights_path(output_root: Path, as_of: date) -> Path:
     return (
-        default_weight_stability_dir(output_root, as_of)
-        / "recommended_stable_shadow_weights.yaml"
+        default_weight_stability_dir(output_root, as_of) / "recommended_stable_shadow_weights.yaml"
     )
 
 
@@ -246,17 +245,16 @@ def write_recommended_stable_shadow_weights(payload: dict[str, Any], output_path
             "stability_profile": metadata.get("policy_version", ""),
         },
         "weights": {
-            key: float(value)
-            for key, value in _mapping(recommended.get("weights")).items()
+            key: float(value) for key, value in _mapping(recommended.get("weights")).items()
         },
         "constraints": {
             "stability_status": _mapping(recommended.get("stability")).get(
                 "stability_status",
                 "UNKNOWN",
             ),
-            "turnover_prefilter_status": _mapping(
-                recommended.get("turnover_prefilter")
-            ).get("status", "UNKNOWN"),
+            "turnover_prefilter_status": _mapping(recommended.get("turnover_prefilter")).get(
+                "status", "UNKNOWN"
+            ),
             "production_write_allowed": False,
             "promotion_allowed": False,
         },
@@ -398,15 +396,15 @@ def render_weight_stability_markdown(payload: Mapping[str, Any]) -> str:
         "## 1. 执行摘要",
         "",
         f"- run_id: `{metadata.get('run_id', 'UNKNOWN')}`",
-            f"- status: `{metadata.get('status', 'UNKNOWN')}`",
-            f"- reason: `{metadata.get('reason', '')}`",
-            f"- production_effect: `{metadata.get('production_effect', 'none')}`",
+        f"- status: `{metadata.get('status', 'UNKNOWN')}`",
+        f"- reason: `{metadata.get('reason', '')}`",
+        f"- production_effect: `{metadata.get('production_effect', 'none')}`",
         f"- manual_review_required: `{metadata.get('manual_review_required', True)}`",
         f"- auto_promotion: `{metadata.get('auto_promotion', False)}`",
         f"- recommended_status: `{recommended.get('status', 'UNKNOWN')}`",
-            f"- reason: {recommended.get('reason', '')}",
-            f"- input_readiness_status: `{readiness.get('status', 'UNKNOWN')}`",
-            f"- input_readiness_report: `{readiness.get('report', '')}`",
+        f"- reason: {recommended.get('reason', '')}",
+        f"- input_readiness_status: `{readiness.get('status', 'UNKNOWN')}`",
+        f"- input_readiness_report: `{readiness.get('report', '')}`",
         "",
         "## 2. TRADING-060 输入背景",
         "",

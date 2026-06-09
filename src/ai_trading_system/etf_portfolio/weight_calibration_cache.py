@@ -607,8 +607,7 @@ def build_price_returns_matrix_cache_lookup(
     if frame.empty:
         raise WeightCalibrationCacheError("no price rows available for requested cache window")
     trading_calendar = [
-        pd.Timestamp(item).date().isoformat()
-        for item in sorted(frame["_date"].dropna().unique())
+        pd.Timestamp(item).date().isoformat() for item in sorted(frame["_date"].dropna().unique())
     ]
     data_hash = weight_calibration_dataframe_hash(frame.drop(columns=["_date"]))
     trading_calendar_hash = weight_calibration_input_hash(trading_calendar)
@@ -697,11 +696,7 @@ def run_weight_calibration_parallel_tasks(
                     results[index] = dict(future.result())
                 except Exception as exc:  # noqa: BLE001 - worker exceptions are report data.
                     exceptions.append(_worker_exception(index, task, exc))
-    ordered_results = [
-        results[index]
-        for index in range(len(indexed_tasks))
-        if index in results
-    ]
+    ordered_results = [results[index] for index in range(len(indexed_tasks)) if index in results]
     return {
         "status": "PASS" if not exceptions else "PARTIAL",
         "worker_count": workers,

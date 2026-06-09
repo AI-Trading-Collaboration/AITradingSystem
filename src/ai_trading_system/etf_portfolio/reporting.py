@@ -167,8 +167,7 @@ def render_daily_brief(
             "",
             "## Actionability Note",
             "",
-            "- Actionability note: 本报告是 ETF decision-support explanation，"
-            "不是交易指令。",
+            "- Actionability note: 本报告是 ETF decision-support explanation，" "不是交易指令。",
             "- 人工复核重点：确认 data quality、regime、drivers、constraints、"
             "benchmark context 和 simulation status 后再决定是否记录人工意见。",
             "- Broker boundary: no broker action；不得把 target weights 当成 order ticket。",
@@ -515,13 +514,11 @@ def _p2_live_boundary_rows(config: ETFConfigBundle) -> list[str]:
         "- P2/live candidate-only note: candidate_only = true; observe_only = true; "
         "production_effect = none",
         f"- ML ranking candidate_only: {str(p2.ml_ranking.candidate_only).lower()}",
-        f"- Weight optimizer candidate_only: "
-        f"{str(p2.weight_optimizer.candidate_only).lower()}",
+        f"- Weight optimizer candidate_only: " f"{str(p2.weight_optimizer.candidate_only).lower()}",
         f"- Ensemble candidate_only: {str(p2.ensemble.candidate_only).lower()}",
         f"- Live interface enabled: {str(p2.live_interface.enabled).lower()}",
         f"- Live interface read_only: {str(p2.live_interface.read_only).lower()}",
-        f"- broker_routing_allowed: "
-        f"{str(p2.live_interface.broker_routing_allowed).lower()}",
+        f"- broker_routing_allowed: " f"{str(p2.live_interface.broker_routing_allowed).lower()}",
         "- Boundary: manual review only; no broker action.",
     ]
 
@@ -545,10 +542,14 @@ def _main_risks(
     cash = allocation.loc[allocation["symbol"] == "CASH", "target_weight"]
     cash_weight = float(cash.iloc[0]) if not cash.empty else 0.0
     risks.append(f"- Volatility risk: cash buffer is {cash_weight:.1%}.")
-    semiconductor_weight = allocation.loc[
-        allocation["symbol"].isin(["SMH", "SOXX"]),
-        "target_weight",
-    ].astype(float).sum()
+    semiconductor_weight = (
+        allocation.loc[
+            allocation["symbol"].isin(["SMH", "SOXX"]),
+            "target_weight",
+        ]
+        .astype(float)
+        .sum()
+    )
     risks.append(f"- Concentration risk: semiconductor sleeve is {semiconductor_weight:.1%}.")
     risks.append(f"- Data risk: data quality status is {quality_report.status}.")
     risks.append("- Event risk: P0 only reports basic event-risk placeholder.")

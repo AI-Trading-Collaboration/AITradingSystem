@@ -876,10 +876,9 @@ def test_daily_report_contains_required_sections() -> None:
         )
     )
     allocation_frame["previous_weight"] = allocation_frame["symbol"].map(previous_weights)
-    allocation_frame["trade_delta"] = (
-        allocation_frame["target_weight"].astype(float)
-        - allocation_frame["previous_weight"].astype(float)
-    )
+    allocation_frame["trade_delta"] = allocation_frame["target_weight"].astype(
+        float
+    ) - allocation_frame["previous_weight"].astype(float)
     allocation_frame["constraints_applied"] = json.dumps(
         ["MAX_DAILY_TURNOVER"],
         ensure_ascii=False,
@@ -993,9 +992,10 @@ def test_p1_confirmation_scores_are_observe_only() -> None:
         "MegaCapConfirmationScore",
     }
     assert set(scores["production_effect"]) == {"none"}
-    assert scores.loc[
-        scores["score_id"] == "AIConfirmationScore", "model_stage"
-    ].iloc[0] == "observe_only"
+    assert (
+        scores.loc[scores["score_id"] == "AIConfirmationScore", "model_stage"].iloc[0]
+        == "observe_only"
+    )
 
 
 def test_p1_satellite_candidates_do_not_change_production_weights() -> None:
@@ -1935,14 +1935,20 @@ def test_p2_risk_ml_ensemble_and_live_preflight_are_observe_only(tmp_path: Path)
     assert abs(float(optimizer["candidate_weight"].sum()) - 1.0) < 1e-8
     assert set(optimizer["model_stage"]) == {"candidate_only"}
     assert set(optimizer["production_effect"]) == {"none"}
-    assert optimizer.loc[
-        optimizer["symbol"] != "CASH",
-        "candidate_weight",
-    ].max() <= config.p2.weight_optimizer.max_candidate_weight + 1e-9
-    assert optimizer.loc[
-        optimizer["symbol"] == "CASH",
-        "candidate_weight",
-    ].iloc[0] >= config.p2.weight_optimizer.min_cash_weight - 1e-9
+    assert (
+        optimizer.loc[
+            optimizer["symbol"] != "CASH",
+            "candidate_weight",
+        ].max()
+        <= config.p2.weight_optimizer.max_candidate_weight + 1e-9
+    )
+    assert (
+        optimizer.loc[
+            optimizer["symbol"] == "CASH",
+            "candidate_weight",
+        ].iloc[0]
+        >= config.p2.weight_optimizer.min_cash_weight - 1e-9
+    )
     assert set(ensemble["model_stage"]) == {"candidate_only"}
     assert preflight.iloc[0]["status"] == "BLOCKED_BY_POLICY"
     assert bool(preflight.iloc[0]["broker_order_route_called"]) is False

@@ -99,9 +99,7 @@ def test_repairs_brk_b_with_source_symbol_mapping(tmp_path: Path) -> None:
 
     assert source_symbol_for_price_repair("BRK.B") == "BRK-B"
     assert provider.requested_symbols == ["BRK-B"]
-    assert run.symbol_mapping == {
-        "BRK.B": {"source_symbol": "BRK-B", "canonical_symbol": "BRK.B"}
-    }
+    assert run.symbol_mapping == {"BRK.B": {"source_symbol": "BRK-B", "canonical_symbol": "BRK.B"}}
     prices = pd.read_csv(fixture["prices_path"])
     repaired_rows = prices.loc[prices["ticker"] == "BRK.B"]
     assert set(repaired_rows["source_symbol"]) == {"BRK-B"}

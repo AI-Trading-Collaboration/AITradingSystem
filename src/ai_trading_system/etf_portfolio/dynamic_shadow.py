@@ -153,9 +153,7 @@ class DynamicShadowOwnerApprovalPolicy(BaseModel):
     require_owner_approval: Literal[True]
     require_decision_journal_link_for_approval: Literal[True]
     allowed_decisions: list[AllowedDynamicShadowOwnerDecision] = Field(min_length=1)
-    rationale_required_for: list[AllowedDynamicShadowOwnerDecision] = Field(
-        default_factory=list
-    )
+    rationale_required_for: list[AllowedDynamicShadowOwnerDecision] = Field(default_factory=list)
     disallowed_decisions: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -307,9 +305,7 @@ def build_dynamic_shadow_review_package(
         "source_artifacts": {
             "dynamic_robustness_report": paths.get("dynamic_robustness_report", ""),
             "dynamic_calibration_report": paths.get("dynamic_calibration_report", ""),
-            "dynamic_calibration_validation": paths.get(
-                "dynamic_calibration_validation", ""
-            ),
+            "dynamic_calibration_validation": paths.get("dynamic_calibration_validation", ""),
             "dynamic_robustness_validation": paths.get("dynamic_robustness_validation", ""),
             "operations_validation": paths.get("operations_validation", ""),
             "data_quality_report": _text(
@@ -1156,9 +1152,7 @@ def _dynamic_candidate_review_row(
             "dynamic_calibration_validation": source_paths.get(
                 "dynamic_calibration_validation", ""
             ),
-            "dynamic_robustness_validation": source_paths.get(
-                "dynamic_robustness_validation", ""
-            ),
+            "dynamic_robustness_validation": source_paths.get("dynamic_robustness_validation", ""),
             "operations_validation": source_paths.get("operations_validation", ""),
         },
     }
@@ -1268,9 +1262,8 @@ def _forward_metrics(report: Mapping[str, Any]) -> dict[str, Any]:
         "drawdown": dynamic.get("max_drawdown"),
         "turnover": dynamic.get("turnover"),
         "regime_switch_count": int(_float(daily.get("regime_switch_count"))),
-        "false_signal_count": int(_float(false_off.get("event_count"))) + int(
-            _float(false_on.get("event_count"))
-        ),
+        "false_signal_count": int(_float(false_off.get("event_count")))
+        + int(_float(false_on.get("event_count"))),
         "constraint_hit_count": int(_float(daily.get("constraint_hit_count"))),
     }
 

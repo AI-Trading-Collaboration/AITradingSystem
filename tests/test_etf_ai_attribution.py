@@ -82,9 +82,10 @@ def test_ai_attribution_dataset_marks_insufficient_forward_window() -> None:
     row_60d = next(record for record in dataset["records"] if record["forward_window"] == "60D")
     assert row_60d["sample_available"] is False
     assert row_60d["evaluation_only"] is True
-    assert "insufficient" in row_60d["insufficient_data_reason"] or "after" in row_60d[
-        "insufficient_data_reason"
-    ]
+    assert (
+        "insufficient" in row_60d["insufficient_data_reason"]
+        or "after" in row_60d["insufficient_data_reason"]
+    )
 
 
 def test_score_and_event_risk_bucket_assignment() -> None:
@@ -203,8 +204,7 @@ def test_ai_attribution_validation_gate_passes_and_fails_registry(tmp_path: Path
     )
     assert failing["status"] == "FAIL"
     assert any(
-        check["check_id"] == "report_registry_integration_available"
-        and check["status"] == "FAIL"
+        check["check_id"] == "report_registry_integration_available" and check["status"] == "FAIL"
         for check in failing["checks"]
     )
 

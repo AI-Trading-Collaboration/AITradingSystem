@@ -52,9 +52,10 @@ def resolve_symbol(
     normalized = canonical_symbol.strip()
     source = _manifest_source_symbol(normalized, manifest_mapping) or source_symbol_for(normalized)
     status = "OK"
-    if normalized in DEFAULT_PRICE_SYMBOL_ALIASES and source != DEFAULT_PRICE_SYMBOL_ALIASES[
-        normalized
-    ]:
+    if (
+        normalized in DEFAULT_PRICE_SYMBOL_ALIASES
+        and source != DEFAULT_PRICE_SYMBOL_ALIASES[normalized]
+    ):
         status = "SYMBOL_MAPPING_MISSING"
     return SymbolResolution(
         canonical_symbol=normalized,

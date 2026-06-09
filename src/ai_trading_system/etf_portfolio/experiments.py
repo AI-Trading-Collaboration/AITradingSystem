@@ -35,9 +35,7 @@ from ai_trading_system.etf_portfolio.models import (
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-DEFAULT_ETF_EXPERIMENTS_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "etf_portfolio" / "experiments.yaml"
-)
+DEFAULT_ETF_EXPERIMENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "etf_portfolio" / "experiments.yaml"
 DEFAULT_ETF_EXPERIMENT_PACKS_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "experiment_packs.yaml"
 )
@@ -151,8 +149,7 @@ class ETFExperimentConfig(BaseModel):
         unknown = sorted(set(self.overrides) - ALLOWED_EXPERIMENT_OVERRIDE_KEYS)
         if unknown:
             raise ValueError(
-                "ETF experiment override contains unsupported keys: "
-                f"{', '.join(unknown)}"
+                "ETF experiment override contains unsupported keys: " f"{', '.join(unknown)}"
             )
         _validate_override_scalar(self.overrides, "semiconductor_sleeve_max_weight")
         _validate_override_scalar(self.overrides, "min_rebalance_delta")
@@ -230,9 +227,7 @@ class ETFExperimentPolicyRef(BaseModel):
             "rejected_hard_rejection_rules",
             self.rejected_hard_rejection_rules,
         )
-        overlap = set(self.blocked_hard_rejection_rules) & set(
-            self.rejected_hard_rejection_rules
-        )
+        overlap = set(self.blocked_hard_rejection_rules) & set(self.rejected_hard_rejection_rules)
         if overlap:
             raise ValueError(
                 "ETF experiment promotion policy cannot classify the same hard "
@@ -564,11 +559,7 @@ def build_experiment_comparison_report(run_dir: Path) -> dict[str, Any]:
         for item in metrics_summary.get("metrics", [])
         if isinstance(item, Mapping)
     }
-    results = [
-        item
-        for item in experiment_results.get("results", [])
-        if isinstance(item, Mapping)
-    ]
+    results = [item for item in experiment_results.get("results", []) if isinstance(item, Mapping)]
     baseline = _baseline_context(metrics_summary)
     metrics_rows = [
         _comparison_metric_row(
@@ -737,8 +728,7 @@ def build_weekly_experiment_review(
     candidates = [
         dict(candidate)
         for candidate in registry.get("candidates", [])
-        if isinstance(candidate, Mapping)
-        and str(candidate.get("status")) in OPEN_SHADOW_STATUSES
+        if isinstance(candidate, Mapping) and str(candidate.get("status")) in OPEN_SHADOW_STATUSES
     ]
     rows = [
         _weekly_review_candidate_row(
@@ -960,11 +950,7 @@ def build_experiment_validation_report(
             "check_count": len(checks),
             "passed_count": len(checks) - len(failed),
             "failed_count": len(failed),
-            "blockers": [
-                blocker
-                for check in failed
-                for blocker in check.get("blockers", [])
-            ],
+            "blockers": [blocker for check in failed for blocker in check.get("blockers", [])],
         },
         "checks": checks,
         "safe_for_shadow_observation": status == "PASS",
@@ -1038,12 +1024,8 @@ def build_candidate_selection_report(
         "promotion_policy_id": promotion_policy_id,
         "selection_thresholds": {
             "min_candidate_score": min_candidate_score,
-            "blocked_hard_rejection_rules": list(
-                promotion_policy.blocked_hard_rejection_rules
-            ),
-            "rejected_hard_rejection_rules": list(
-                promotion_policy.rejected_hard_rejection_rules
-            ),
+            "blocked_hard_rejection_rules": list(promotion_policy.blocked_hard_rejection_rules),
+            "rejected_hard_rejection_rules": list(promotion_policy.rejected_hard_rejection_rules),
         },
         "selection_summary": summary,
         "candidates": candidates,
@@ -1869,22 +1851,15 @@ def _hard_rejection_flags(
     flags: list[str] = []
     if row.get("candidate_status") == "failed":
         flags.append("CREDIBILITY_GATE_FAILED")
-    if row.get("excess_return_vs_QQQ") is None or row.get(
-        "excess_return_vs_baseline"
-    ) is None:
+    if row.get("excess_return_vs_QQQ") is None or row.get("excess_return_vs_baseline") is None:
         flags.append("NO_BENCHMARK_COMPARISON")
     turnover = _optional_float(row.get("turnover"))
     max_turnover = float(thresholds["max_turnover"])
     if turnover is None or turnover > max_turnover:
         flags.append("TURNOVER_TOO_HIGH")
-    drawdown_reduction_vs_baseline = _optional_float(
-        row.get("drawdown_reduction_vs_baseline")
-    )
+    drawdown_reduction_vs_baseline = _optional_float(row.get("drawdown_reduction_vs_baseline"))
     max_worsening = float(thresholds["max_drawdown_worsening_vs_baseline"])
-    if (
-        drawdown_reduction_vs_baseline is None
-        or drawdown_reduction_vs_baseline < -max_worsening
-    ):
+    if drawdown_reduction_vs_baseline is None or drawdown_reduction_vs_baseline < -max_worsening:
         flags.append("DRAWDOWN_TOO_HIGH")
     constraint_hit_rate = _optional_float(row.get("constraint_hit_rate")) or 0.0
     if constraint_hit_rate > 1.0:
@@ -2067,11 +2042,7 @@ def _candidate_selection_summary(candidates: list[dict[str, Any]]) -> dict[str, 
     elif counts["blocked_count"] > 0:
         status = "BLOCKED"
         blockers = sorted(
-            {
-                str(blocker)
-                for candidate in candidates
-                for blocker in candidate.get("blockers", [])
-            }
+            {str(blocker) for candidate in candidates for blocker in candidate.get("blockers", [])}
         )
     else:
         status = "NO_ELIGIBLE_CANDIDATE"
@@ -2234,9 +2205,7 @@ def _weekly_review_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "continue_shadow_count": actions.count("continue_shadow"),
         "needs_more_data_count": actions.count("needs_more_data"),
         "reject_candidate_count": actions.count("reject_candidate"),
-        "promote_to_longer_observation_count": actions.count(
-            "promote_to_longer_observation"
-        ),
+        "promote_to_longer_observation_count": actions.count("promote_to_longer_observation"),
     }
     if not rows:
         status = "NO_ACTIVE_SHADOW_CANDIDATES"
@@ -2307,9 +2276,7 @@ def _raise_if_shadow_candidate_unsafe(candidate: Mapping[str, Any]) -> None:
     if candidate.get("observe_only") is not True:
         raise ValueError(f"ETF shadow candidate must keep observe_only=true: {candidate_id}")
     if candidate.get("production_effect") != "none":
-        raise ValueError(
-            f"ETF shadow candidate must keep production_effect=none: {candidate_id}"
-        )
+        raise ValueError(f"ETF shadow candidate must keep production_effect=none: {candidate_id}")
     if candidate.get("broker_action") != "none":
         raise ValueError(f"ETF shadow candidate must keep broker_action=none: {candidate_id}")
     if candidate.get("manual_review_required") is not True:
@@ -2318,8 +2285,7 @@ def _raise_if_shadow_candidate_unsafe(candidate: Mapping[str, Any]) -> None:
         )
     if candidate.get("production_promotion_allowed") is not False:
         raise ValueError(
-            "ETF shadow candidate must keep production_promotion_allowed=false: "
-            f"{candidate_id}"
+            "ETF shadow candidate must keep production_promotion_allowed=false: " f"{candidate_id}"
         )
 
 

@@ -106,9 +106,10 @@ def test_reader_brief_displays_portfolio_sensitivity_summary(
 
     review = payload["parameter_shadow_review"]
     assert review["portfolio_sensitivity_status"] == "LIMITED"
-    assert review["portfolio_sensitivity_best_profile"] == sensitivity_run.payload["ranking"][
-        "best_profile"
-    ]
+    assert (
+        review["portfolio_sensitivity_best_profile"]
+        == sensitivity_run.payload["ranking"]["best_profile"]
+    )
     assert review["portfolio_sensitivity_primary_bottleneck"]
     assert review["portfolio_sensitivity_data_registry"] in {"OK", "LIMITED"}
     assert "Portfolio sensitivity diagnostics" in review["portfolio_sensitivity_summary"]

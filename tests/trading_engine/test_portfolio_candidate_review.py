@@ -134,9 +134,7 @@ def test_data_gate_not_ok_prevents_shadow_candidate_approval(tmp_path: Path) -> 
 
     assert run.decision_payload["decision"]["status"] == "rejected"
     assert "data_gate_not_ok" in run.decision_payload["hard_rejections"]
-    assert run.decision_payload["decision"]["requested_status"] == (
-        "approved_for_shadow_candidate"
-    )
+    assert run.decision_payload["decision"]["requested_status"] == ("approved_for_shadow_candidate")
 
 
 def test_production_modified_prevents_shadow_candidate_approval(tmp_path: Path) -> None:
@@ -229,14 +227,10 @@ def _write_portfolio_candidate_review_config(
                     "portfolio_sensitivity_dir": str(
                         tmp_path / "artifacts" / "portfolio_sensitivity"
                     ),
-                    "signal_calibration_dir": str(
-                        tmp_path / "artifacts" / "signal_calibration"
-                    ),
+                    "signal_calibration_dir": str(tmp_path / "artifacts" / "signal_calibration"),
                     "signal_ablation_dir": str(tmp_path / "artifacts" / "signal_ablation"),
                     "signal_snapshot_dir": str(tmp_path / "artifacts" / "signal_snapshots"),
-                    "backtest_snapshot_dir": str(
-                        tmp_path / "artifacts" / "backtest_snapshots"
-                    ),
+                    "backtest_snapshot_dir": str(tmp_path / "artifacts" / "backtest_snapshots"),
                     "price_cache_reconcile_dir": str(tmp_path / "artifacts" / "data_quality"),
                     "shadow_backtest_dir": str(tmp_path / "artifacts" / "shadow_backtest"),
                     "production_parameters_path": str(production_path),

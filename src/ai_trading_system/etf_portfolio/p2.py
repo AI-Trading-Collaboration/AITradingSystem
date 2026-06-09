@@ -245,11 +245,7 @@ def derive_edgar_text_events_from_timeline(
         "available_date",
         "available_for_signal_date",
     ]
-    missing_columns = sorted(
-        column
-        for column in required
-        if column not in timeline.columns
-    )
+    missing_columns = sorted(column for column in required if column not in timeline.columns)
     if not any(column in timeline.columns for column in available_candidates):
         missing_columns.append("available_time_utc|acceptance_datetime_utc|available_date")
 
@@ -297,8 +293,7 @@ def derive_edgar_text_events_from_timeline(
 
     as_of_date = pd.Timestamp(run_date).date()
     eligible = frame.loc[
-        (frame["_as_of"].dt.date <= as_of_date)
-        & (frame["_available_at"].dt.date <= as_of_date)
+        (frame["_as_of"].dt.date <= as_of_date) & (frame["_available_at"].dt.date <= as_of_date)
     ].copy()
 
     rows = []
@@ -499,8 +494,7 @@ def fetch_edgar_text_documents_from_timeline(
     ].copy()
     as_of_date = pd.Timestamp(run_date).date()
     eligible = frame.loc[
-        (frame["_as_of"].dt.date <= as_of_date)
-        & (frame["_available_at"].dt.date <= as_of_date)
+        (frame["_as_of"].dt.date <= as_of_date) & (frame["_available_at"].dt.date <= as_of_date)
     ].copy()
     if "accession_number" in eligible.columns:
         eligible = eligible.drop_duplicates(["ticker", "form", "accession_number"])
@@ -543,9 +537,7 @@ def fetch_edgar_text_documents_from_timeline(
         ).reset_index(drop=True)
     index.to_csv(output, index=False)
     output_checksum = _file_sha256(output)
-    fetched_count = int(
-        (run_index.get("fetch_status", pd.Series(dtype=str)) == "FETCHED").sum()
-    )
+    fetched_count = int((run_index.get("fetch_status", pd.Series(dtype=str)) == "FETCHED").sum())
     failed_count = len(run_index) - fetched_count
     if len(run_index) == 0:
         status = "EMPTY"
@@ -1442,26 +1434,20 @@ def normalize_news_theme_source(
         summary = str(row[summary_col]).strip()
         published = _parse_timestamp(row[published_col])
         available = (
-            _parse_timestamp(row[available_col])
-            if available_col
-            else pd.Timestamp(downloaded)
+            _parse_timestamp(row[available_col]) if available_col else pd.Timestamp(downloaded)
         )
         if not symbol or symbol.lower() == "nan" or not theme or not summary:
             continue
         if pd.isna(published) or pd.isna(available):
             continue
         sentiment = (
-            _parse_score(row[sentiment_col], lower=-1.0, upper=1.0)
-            if sentiment_col
-            else None
+            _parse_score(row[sentiment_col], lower=-1.0, upper=1.0) if sentiment_col else None
         )
         if sentiment is None:
             sentiment = p2_config.news_themes.neutral_sentiment_score
             used_default_sentiment = True
         relevance = (
-            _parse_score(row[relevance_col], lower=0.0, upper=1.0)
-            if relevance_col
-            else None
+            _parse_score(row[relevance_col], lower=0.0, upper=1.0) if relevance_col else None
         )
         if relevance is None:
             relevance = p2_config.news_themes.default_relevance_score
@@ -1723,9 +1709,9 @@ def build_holdings_lookthrough_report(
             {
                 "date": _date_text(run_date),
                 "module": "etf_holdings",
-                "status": "PASS_WITH_LIMITATIONS"
-                if source.provider_status != "connected"
-                else "PASS",
+                "status": (
+                    "PASS_WITH_LIMITATIONS" if source.provider_status != "connected" else "PASS"
+                ),
                 "etf_symbol": etf_symbol,
                 "holding_count": len(valid),
                 "weight_sum": float(valid["_weight"].sum()),
@@ -1799,9 +1785,7 @@ def build_walk_forward_readiness_report(
 ) -> pd.DataFrame:
     summaries = _backtest_summaries(backtest_dir)
     versions = {
-        str(item.get("model_version", ""))
-        for item in summaries
-        if item.get("model_version")
+        str(item.get("model_version", "")) for item in summaries if item.get("model_version")
     }
     status = "READY"
     reasons = []
@@ -1885,9 +1869,7 @@ def build_weight_optimizer_candidates(
     ]
     pivot = _price_pivot(prices)
     pivot = pivot.loc[pivot.index <= pd.Timestamp(run_date)].copy()
-    returns = pivot[tradeable_symbols].pct_change().dropna(how="all").tail(
-        optimizer.lookback_days
-    )
+    returns = pivot[tradeable_symbols].pct_change().dropna(how="all").tail(optimizer.lookback_days)
     history_counts = returns.count()
     eligible_symbols = [
         symbol
@@ -2353,14 +2335,7 @@ def _find_column(frame: pd.DataFrame, aliases: tuple[str, ...]) -> str | None:
 
 
 def _normalize_column_name(value: object) -> str:
-    return (
-        str(value)
-        .strip()
-        .lower()
-        .replace("_", "")
-        .replace("-", "")
-        .replace(" ", "")
-    )
+    return str(value).strip().lower().replace("_", "").replace("-", "").replace(" ", "")
 
 
 def _parse_weight(value: object) -> float | None:
@@ -2721,9 +2696,9 @@ def _min_max_component(values: pd.Series) -> dict[str, float]:
     if abs(maximum - minimum) < 1e-12:
         return {str(index): 0.5 if pd.notna(value) else 0.0 for index, value in values.items()}
     return {
-        str(index): _clamp01((float(value) - minimum) / (maximum - minimum))
-        if pd.notna(value)
-        else 0.0
+        str(index): (
+            _clamp01((float(value) - minimum) / (maximum - minimum)) if pd.notna(value) else 0.0
+        )
         for index, value in values.items()
     }
 
@@ -2742,8 +2717,7 @@ def _candidate_weights_from_scores(
             break
         capped_symbols = set()
         allocations = {
-            symbol: remaining_budget * scores[symbol] / total_score
-            for symbol in remaining
+            symbol: remaining_budget * scores[symbol] / total_score for symbol in remaining
         }
         for symbol, allocation in allocations.items():
             available_cap = max(0.0, caps.get(symbol, 0.0) - weights[symbol])

@@ -47,9 +47,9 @@ def test_tracking_blocked_when_market_data_freshness_is_stale(tmp_path: Path) ->
 
     assert run.payload["candidate"]["tracking_status"] == "tracking_blocked"
     assert run.payload["market_data_freshness"]["status"] == "STALE"
-    assert "market_data_freshness_not_ready:STALE" in run.payload["date_roll_forward"][
-        "block_reasons"
-    ]
+    assert (
+        "market_data_freshness_not_ready:STALE" in run.payload["date_roll_forward"]["block_reasons"]
+    )
 
 
 def test_tracking_degraded_when_market_data_lag_is_acceptable(tmp_path: Path) -> None:

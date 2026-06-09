@@ -217,20 +217,24 @@ def build_weight_stability_readiness_payload(
         latest_func=None,
     )
     if as_of is None and not diagnostics_source.exists():
-        diagnostics_source = _latest_path(
-            root / "artifacts" / "data_quality",
-            "backtest_input_diagnostics.json",
-        ) or diagnostics_source
+        diagnostics_source = (
+            _latest_path(
+                root / "artifacts" / "data_quality",
+                "backtest_input_diagnostics.json",
+            )
+            or diagnostics_source
+        )
     if as_of is None and not stable_source.exists():
-        stable_source = _latest_path(
-            root / "artifacts" / "weight_stability",
-            "weight_stability_summary.json",
-        ) or stable_source
+        stable_source = (
+            _latest_path(
+                root / "artifacts" / "weight_stability",
+                "weight_stability_summary.json",
+            )
+            or stable_source
+        )
 
     freshness_payload = (
-        load_market_data_freshness_payload(freshness_source)
-        if freshness_source.exists()
-        else {}
+        load_market_data_freshness_payload(freshness_source) if freshness_source.exists() else {}
     )
     refresh_payload = (
         load_market_data_refresh_payload(refresh_source) if refresh_source.exists() else {}
@@ -239,9 +243,7 @@ def build_weight_stability_readiness_payload(
         load_signal_snapshot_payload(snapshot_source) if snapshot_source.exists() else {}
     )
     diagnostics_payload = (
-        load_backtest_input_diagnostics(diagnostics_source)
-        if diagnostics_source.exists()
-        else {}
+        load_backtest_input_diagnostics(diagnostics_source) if diagnostics_source.exists() else {}
     )
     stable_payload = _load_json(stable_source) if stable_source.exists() else {}
 
@@ -680,9 +682,7 @@ def _freshness_readiness(payload: Mapping[str, Any], source_path: Path) -> dict[
         "effective_data_date": str(data_dates.get("effective_data_date") or ""),
         "latest_manifest_date": str(data_dates.get("latest_manifest_date") or ""),
         "tracking_readiness": str(
-            tracking.get("readiness")
-            or tracking.get("tracking_status_recommendation")
-            or "unknown"
+            tracking.get("readiness") or tracking.get("tracking_status_recommendation") or "unknown"
         ),
         "can_continue": can_continue,
         "reason": reason,
@@ -1137,10 +1137,7 @@ def _previous_stable_tuning_context(
         "previous_stable_tuning_status": str(metadata.get("status") or "UNKNOWN"),
         "previous_candidates_backtested": _int_value(search.get("candidates_backtested")),
         "previous_reason": str(
-            metadata.get("reason")
-            or search.get("reason")
-            or recommended.get("reason")
-            or ""
+            metadata.get("reason") or search.get("reason") or recommended.get("reason") or ""
         ),
         "previous_artifact": str(source_path),
     }

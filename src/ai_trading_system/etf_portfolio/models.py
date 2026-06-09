@@ -448,9 +448,7 @@ class ETFP2EdgarTextAnalysisConfig(BaseModel):
             if not str(topic).strip():
                 raise ValueError("ETF P2 EDGAR text analysis topics must not be blank")
             if not keywords or any(not str(keyword).strip() for keyword in keywords):
-                raise ValueError(
-                    "ETF P2 EDGAR text analysis keywords must be non-empty strings"
-                )
+                raise ValueError("ETF P2 EDGAR text analysis keywords must be non-empty strings")
         return self
 
 

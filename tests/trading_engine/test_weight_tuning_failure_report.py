@@ -31,9 +31,9 @@ def test_weight_tuning_failure_report_alias_is_auditable(tmp_path: Path) -> None
 
     assert validate_weight_tuning_failure_payload(payload) == []
     assert report_date == as_of
-    assert "Weight Tuning Failure Attribution Summary" in source_path.with_suffix(
-        ".md"
-    ).read_text(encoding="utf-8")
+    assert "Weight Tuning Failure Attribution Summary" in source_path.with_suffix(".md").read_text(
+        encoding="utf-8"
+    )
     alias_payload = json.loads(alias_json.read_text(encoding="utf-8"))
     assert alias_payload["report_type"] == WEIGHT_TUNING_FAILURE_ALIAS_REPORT_TYPE
     assert alias_payload["source_report_type"] == WEIGHT_TUNING_FAILURE_REPORT_TYPE

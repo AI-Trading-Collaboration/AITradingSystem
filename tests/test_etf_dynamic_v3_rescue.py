@@ -123,9 +123,10 @@ def test_dynamic_v3_normalization_penalty_smoothing_guardrail_and_emergency() ->
         policy,
     )
     assert weak_guardrail["guardrail_triggered"] is False
-    assert "GUARDRAIL_NOT_TRIGGERED_INSUFFICIENT_CONFIRMATION" in weak_guardrail[
-        "guardrail_reason_codes"
-    ]
+    assert (
+        "GUARDRAIL_NOT_TRIGGERED_INSUFFICIENT_CONFIRMATION"
+        in weak_guardrail["guardrail_reason_codes"]
+    )
 
     strong_guardrail = apply_drawdown_guardrail_overlay(
         smoothed["smoothed_target_weights"],

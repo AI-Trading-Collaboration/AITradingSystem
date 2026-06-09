@@ -44,9 +44,7 @@ def test_signal_ablation_remove_one_signal_writes_summary(tmp_path: Path) -> Non
     assert payload["metadata"]["manual_review_required"] is True
     assert payload["metadata"]["auto_promotion"] is False
     assert payload["metadata"]["backtest_mode"] == "full_signal_backtest_limited"
-    assert {item["signal"] for item in payload["signal_contributions"]} == set(
-        REQUIRED_SIGNALS
-    )
+    assert {item["signal"] for item in payload["signal_contributions"]} == set(REQUIRED_SIGNALS)
 
     trend = _contribution(payload, "trend_momentum")
     sector = _contribution(payload, "sector_strength")

@@ -264,9 +264,7 @@ def build_weight_tuning_failure_payload(
         root_cause = {
             "category": "mixed",
             "confidence": "LOW",
-            "summary": (
-                "候选级拒绝字段不足，当前只能确认没有候选通过，无法稳定分解失败分布。"
-            ),
+            "summary": ("候选级拒绝字段不足，当前只能确认没有候选通过，无法稳定分解失败分布。"),
         }
         next_action = {
             "action": "improve_weight_tuning_candidate_diagnostics",
@@ -358,9 +356,7 @@ def build_weight_tuning_failure_payload(
         "recommended_next_action": next_action,
         "promotion_impact": {
             "can_support_candidate_promotion": False,
-            "reason": (
-                "No valid weight candidate exists. Production parameters remain unchanged."
-            ),
+            "reason": ("No valid weight candidate exists. Production parameters remain unchanged."),
         },
         "diagnostic_quality": {
             "candidate_level_details_available": detail_sufficient,
@@ -599,9 +595,7 @@ def render_weight_tuning_failure_markdown(payload: Mapping[str, Any]) -> str:
         ]
     )
     for item in _records(performance.get("reasons")):
-        lines.append(
-            f"- `{item.get('reason')}`: {item.get('affected_candidates', 0)} candidates"
-        )
+        lines.append(f"- `{item.get('reason')}`: {item.get('affected_candidates', 0)} candidates")
     if not _records(performance.get("reasons")):
         lines.append("- 未识别出单一 performance failure 主因。")
     lines.extend(
@@ -751,17 +745,21 @@ def _blocked_payload(
     metadata = _mapping(_mapping(summary).get("metadata")) if summary else {}
     tuning_result = {
         "result": metadata.get("status", "UNKNOWN"),
-        "candidate_status": _mapping(_mapping(summary).get("recommended_candidate")).get(
-            "status",
-            "UNKNOWN",
-        )
-        if summary
-        else "UNKNOWN",
-        "guardrail_status": _mapping(
-            _mapping(_mapping(summary).get("recommended_candidate")).get("guardrails")
-        ).get("status", "UNKNOWN")
-        if summary
-        else "UNKNOWN",
+        "candidate_status": (
+            _mapping(_mapping(summary).get("recommended_candidate")).get(
+                "status",
+                "UNKNOWN",
+            )
+            if summary
+            else "UNKNOWN"
+        ),
+        "guardrail_status": (
+            _mapping(
+                _mapping(_mapping(summary).get("recommended_candidate")).get("guardrails")
+            ).get("status", "UNKNOWN")
+            if summary
+            else "UNKNOWN"
+        ),
     }
     return {
         "schema_version": WEIGHT_TUNING_FAILURE_SCHEMA_VERSION,

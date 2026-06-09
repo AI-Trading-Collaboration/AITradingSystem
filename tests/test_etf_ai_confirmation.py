@@ -314,9 +314,10 @@ def test_ai_confirmation_breadth_median_return_and_no_lookahead() -> None:
     for symbol in ["NVDA", "MSFT"]:
         series = prices.loc[prices["symbol"] == symbol, "adj_close"].reset_index(drop=True)
         expected_returns.append(series.iloc[-1] / series.iloc[-21] - 1.0)
-    expected_median = sorted(expected_returns)[0] + (
-        sorted(expected_returns)[1] - sorted(expected_returns)[0]
-    ) / 2
+    expected_median = (
+        sorted(expected_returns)[0]
+        + (sorted(expected_returns)[1] - sorted(expected_returns)[0]) / 2
+    )
 
     assert baseline["feature_values"]["median_20d_return"] == pytest.approx(expected_median)
     assert with_future["feature_values"] == baseline["feature_values"]
@@ -370,7 +371,8 @@ def test_ai_confirmation_features_cli_writes_json_and_csv(tmp_path: Path) -> Non
     output_dir = tmp_path / "features"
     universe_path = tmp_path / "ai_universe.yaml"
     universe_path.write_text(
-        Path("config/etf_portfolio/ai_confirmation_universe.yaml").read_text(encoding="utf-8")
+        Path("config/etf_portfolio/ai_confirmation_universe.yaml")
+        .read_text(encoding="utf-8")
         .replace("required_data_level: strict", "required_data_level: warning", 1),
         encoding="utf-8",
     )
@@ -421,26 +423,22 @@ def test_ai_confirmation_policy_loads_and_score_bands_map() -> None:
 
 def test_mega_cap_ai_score_increases_when_leaders_trend_above_ma() -> None:
     strong_score = _mega_score({"NVDA": 1.0, "MSFT": 0.8, "AMD": 0.7, "QQQ": 0.2, "SPY": 0.1})
-    weak_score = _mega_score(
-        {"NVDA": -0.6, "MSFT": -0.5, "AMD": -0.4, "QQQ": 0.2, "SPY": 0.1}
-    )
+    weak_score = _mega_score({"NVDA": -0.6, "MSFT": -0.5, "AMD": -0.4, "QQQ": 0.2, "SPY": 0.1})
 
     assert strong_score["score_value"] > weak_score["score_value"]
-    assert strong_score["component_scores"]["mega_cap_trend_score"] > weak_score[
-        "component_scores"
-    ]["mega_cap_trend_score"]
-    assert strong_score["component_scores"]["mega_cap_momentum_score"] > weak_score[
-        "component_scores"
-    ]["mega_cap_momentum_score"]
+    assert (
+        strong_score["component_scores"]["mega_cap_trend_score"]
+        > weak_score["component_scores"]["mega_cap_trend_score"]
+    )
+    assert (
+        strong_score["component_scores"]["mega_cap_momentum_score"]
+        > weak_score["component_scores"]["mega_cap_momentum_score"]
+    )
 
 
 def test_mega_cap_ai_score_relative_strength_vs_qqq_affects_score() -> None:
-    outperforming = _mega_score(
-        {"NVDA": 1.0, "MSFT": 0.9, "AMD": 0.8, "QQQ": 0.1, "SPY": 0.1}
-    )
-    underperforming = _mega_score(
-        {"NVDA": 0.1, "MSFT": 0.1, "AMD": 0.1, "QQQ": 1.0, "SPY": 0.1}
-    )
+    outperforming = _mega_score({"NVDA": 1.0, "MSFT": 0.9, "AMD": 0.8, "QQQ": 0.1, "SPY": 0.1})
+    underperforming = _mega_score({"NVDA": 0.1, "MSFT": 0.1, "AMD": 0.1, "QQQ": 1.0, "SPY": 0.1})
 
     assert outperforming["component_scores"]["mega_cap_relative_strength_vs_QQQ"] > (
         underperforming["component_scores"]["mega_cap_relative_strength_vs_QQQ"]
@@ -453,9 +451,10 @@ def test_mega_cap_ai_score_drawdown_penalty_reduces_score() -> None:
     drawdown_prices = _make_drawdown_price_frame(["NVDA", "MSFT", "AMD", "QQQ", "SPY"])
     drawdown = _mega_score_from_prices(drawdown_prices)
 
-    assert drawdown["component_scores"]["mega_cap_drawdown_penalty"] < steady[
-        "component_scores"
-    ]["mega_cap_drawdown_penalty"]
+    assert (
+        drawdown["component_scores"]["mega_cap_drawdown_penalty"]
+        < steady["component_scores"]["mega_cap_drawdown_penalty"]
+    )
     assert drawdown["score_value"] < steady["score_value"]
 
 
@@ -482,18 +481,20 @@ def test_ai_semiconductor_relative_strength_score_rewards_smh_vs_qqq() -> None:
     weak = _relative_strength_score({"SPY": 0.2, "QQQ": 0.9, "SMH": 0.1, "SOXX": 0.1})
 
     assert strong["score_value"] > weak["score_value"]
-    assert strong["component_scores"]["semiconductor_vs_growth"] > weak[
-        "component_scores"
-    ]["semiconductor_vs_growth"]
+    assert (
+        strong["component_scores"]["semiconductor_vs_growth"]
+        > weak["component_scores"]["semiconductor_vs_growth"]
+    )
 
 
 def test_ai_semiconductor_relative_strength_growth_vs_market_component() -> None:
     growth_leads = _relative_strength_score({"SPY": 0.1, "QQQ": 1.0, "SMH": 0.9, "SOXX": 0.8})
     growth_lags = _relative_strength_score({"SPY": 1.0, "QQQ": 0.1, "SMH": 0.2, "SOXX": 0.2})
 
-    assert growth_leads["component_scores"]["growth_vs_market"] > growth_lags[
-        "component_scores"
-    ]["growth_vs_market"]
+    assert (
+        growth_leads["component_scores"]["growth_vs_market"]
+        > growth_lags["component_scores"]["growth_vs_market"]
+    )
 
 
 def test_ai_semiconductor_relative_strength_optional_pairs_do_not_block() -> None:
@@ -517,9 +518,10 @@ def test_ai_semiconductor_relative_strength_drawdown_penalty_works() -> None:
         run_date=date.fromisoformat(str(drawdown_prices["date"].max())),
     )
 
-    assert drawdown["component_scores"]["relative_drawdown_penalty"] < steady[
-        "component_scores"
-    ]["relative_drawdown_penalty"]
+    assert (
+        drawdown["component_scores"]["relative_drawdown_penalty"]
+        < steady["component_scores"]["relative_drawdown_penalty"]
+    )
 
 
 def test_ai_semiconductor_relative_strength_score_band_and_pair_schema() -> None:
@@ -763,7 +765,8 @@ def test_ai_confirmation_report_cli_writes_json_and_markdown(tmp_path: Path) -> 
     output_dir = tmp_path / "reports"
     universe_path = tmp_path / "ai_universe.yaml"
     universe_path.write_text(
-        Path("config/etf_portfolio/ai_confirmation_universe.yaml").read_text(encoding="utf-8")
+        Path("config/etf_portfolio/ai_confirmation_universe.yaml")
+        .read_text(encoding="utf-8")
         .replace("required_data_level: strict", "required_data_level: warning", 1),
         encoding="utf-8",
     )

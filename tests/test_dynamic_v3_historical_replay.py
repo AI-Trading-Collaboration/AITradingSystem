@@ -124,9 +124,9 @@ def test_dynamic_v3_historical_replay_marks_hard_pit_limitations_unsafe(
     assert rows["safe"]["pit_safety_status"] == "PIT_SAFE"
     assert rows["generated-after-as-of"]["pit_safety_status"] == "PIT_UNSAFE"
     assert rows["generated-after-as-of"]["replay_eligibility"] == "INELIGIBLE"
-    assert "ADVISORY_GENERATED_AFTER_AS_OF_DATE" in rows["generated-after-as-of"][
-        "replay_limitations"
-    ]
+    assert (
+        "ADVISORY_GENERATED_AFTER_AS_OF_DATE" in rows["generated-after-as-of"]["replay_limitations"]
+    )
     assert rows["missing-future-price"]["pit_safety_status"] == "PIT_UNSAFE"
     assert rows["missing-future-price"]["replay_eligibility"] == "INELIGIBLE"
     assert "MISSING_PRICE_DATA" in rows["missing-future-price"]["replay_limitations"]

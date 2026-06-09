@@ -34,9 +34,6 @@ def test_reader_brief_displays_portfolio_turnover_attribution_root_cause(
 
     review = payload["parameter_shadow_review"]
     assert review["portfolio_turnover_attribution_status"] == "TURNOVER_FAILURE_EXPLAINED"
-    assert (
-        review["portfolio_turnover_attribution_root_cause"]
-        == "rebalance_threshold_too_low"
-    )
+    assert review["portfolio_turnover_attribution_root_cause"] == "rebalance_threshold_too_low"
     assert "turnover" in review["portfolio_turnover_attribution_summary"].lower()
     assert review["portfolio_turnover_next_action"]

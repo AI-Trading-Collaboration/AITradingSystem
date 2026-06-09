@@ -600,9 +600,7 @@ def signal_correlation_diagnostics(
     correlation = joined["trend_momentum"].corr(joined["sector_strength"])
     if pd.isna(correlation):
         correlation = 0.0
-    result: dict[str, Any] = {
-        "trend_momentum_vs_sector_strength": round(float(correlation), 6)
-    }
+    result: dict[str, Any] = {"trend_momentum_vs_sector_strength": round(float(correlation), 6)}
     abs_correlation = abs(float(correlation))
     if abs_correlation >= very_high:
         result["warning"] = "Very high correlation may make trend and sector signals redundant."
@@ -1149,10 +1147,7 @@ def _ranking_metrics(
         ]
     )
     neutral_ratio = _mean(
-        [
-            _float_value(item.get("neutral_ratio_0_45_to_0_55"))
-            for item in distribution.values()
-        ]
+        [_float_value(item.get("neutral_ratio_0_45_to_0_55")) for item in distribution.values()]
     )
     correlation_value = abs(
         _float_value(correlation.get("trend_momentum_vs_sector_strength"), default=0.0)

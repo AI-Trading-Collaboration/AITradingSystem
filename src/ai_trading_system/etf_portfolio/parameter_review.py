@@ -17,13 +17,9 @@ from ai_trading_system.reports.report_index import (
 PARAMETER_REVIEW_EVIDENCE_SCHEMA_VERSION = "etf_parameter_review_evidence_v1"
 PARAMETER_REVIEW_AGGREGATION_SCHEMA_VERSION = "etf_parameter_review_aggregation_v1"
 PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION = "etf_parameter_review_candidate_comparison_v1"
-PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION = (
-    "etf_parameter_review_journal_linkage_v1"
-)
+PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION = "etf_parameter_review_journal_linkage_v1"
 PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION = "etf_parameter_review_proposals_v1"
-PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION = (
-    "etf_parameter_review_governance_scorecard_v1"
-)
+PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION = "etf_parameter_review_governance_scorecard_v1"
 PARAMETER_REVIEW_REPORT_SCHEMA_VERSION = "etf_parameter_review_report_v1"
 PARAMETER_REVIEW_VALIDATION_SCHEMA_VERSION = "etf_parameter_review_validation_v1"
 
@@ -156,9 +152,7 @@ PARAMETER_REVIEW_HUMAN_SUPPORT_STATUSES = frozenset(
 )
 
 SUPPORTIVE_DECISION_STATUSES = frozenset({"accept_recommendation", "continue_observation"})
-NEGATIVE_DECISION_STATUSES = frozenset(
-    {"reject_recommendation", "archive_candidate_after_review"}
-)
+NEGATIVE_DECISION_STATUSES = frozenset({"reject_recommendation", "archive_candidate_after_review"})
 NEUTRAL_DECISION_STATUSES = frozenset(
     {"defer_decision", "mark_watch", "request_more_data", "start_new_experiment"}
 )
@@ -366,8 +360,7 @@ def build_parameter_review_aggregation(
         for report_id in AGGREGATION_SOURCE_REPORT_IDS
     ]
     source_payloads = {
-        _text(record.get("report_id")): _mapping(record.get("payload"))
-        for record in source_reports
+        _text(record.get("report_id")): _mapping(record.get("payload")) for record in source_reports
     }
     forward_dashboard = source_payloads.get("etf_forward_dashboard", {})
     candidate_rows = _records(forward_dashboard.get("candidate_summary_table"))
@@ -966,9 +959,9 @@ def build_parameter_review_report(
         "proposal_scorecard": scorecard,
         "manual_review_requirements": _manual_review_requirements(scorecard, proposals),
         "next_steps": _parameter_review_next_steps(scorecard),
-        "source_report_links": [_source_report_public(source) for source in _records(
-            aggregation.get("source_reports")
-        )],
+        "source_report_links": [
+            _source_report_public(source) for source in _records(aggregation.get("source_reports"))
+        ],
         "safety": dict(PARAMETER_REVIEW_SAFETY),
         **PARAMETER_REVIEW_SAFETY,
     }
@@ -1784,20 +1777,16 @@ def _risk_reason_codes(
     if (
         turnover_delta is not None
         and turnover_delta > float(policy["high_turnover_delta_vs_baseline"])
-    ) or (
-        turnover is not None and turnover > float(policy["high_turnover_since_enrollment"])
-    ):
+    ) or (turnover is not None and turnover > float(policy["high_turnover_since_enrollment"])):
         reasons.append("HIGH_TURNOVER")
     drawdown_reduction = _float_or_none(metrics.get("drawdown_reduction"))
-    if (
-        drawdown_reduction is not None
-        and drawdown_reduction < float(policy["high_drawdown_worsening_vs_baseline"])
+    if drawdown_reduction is not None and drawdown_reduction < float(
+        policy["high_drawdown_worsening_vs_baseline"]
     ):
         reasons.append("HIGH_DRAWDOWN")
     constraint_hit_rate = _float_or_none(metrics.get("constraint_hit_delta"))
-    if (
-        constraint_hit_rate is not None
-        and constraint_hit_rate > float(policy["high_constraint_hit_rate"])
+    if constraint_hit_rate is not None and constraint_hit_rate > float(
+        policy["high_constraint_hit_rate"]
     ):
         reasons.append("HIGH_CONSTRAINT_HITS")
     return reasons
@@ -1872,9 +1861,9 @@ def _candidate_journal_linkage(
             "rationale_summary": _rationale_summary(entries),
             "confidence_distribution": confidence_summary,
             "follow_up_tasks": [
-                _text(entry.get("follow_up_task")) for entry in entries if _text(
-                    entry.get("follow_up_task")
-                )
+                _text(entry.get("follow_up_task"))
+                for entry in entries
+                if _text(entry.get("follow_up_task"))
             ],
             "accepted_count": int(status_counts.get("accept_recommendation", 0)),
             "rejected_count": int(status_counts.get("reject_recommendation", 0)),
@@ -1940,9 +1929,7 @@ def _proposal_type_for_evidence(
 ) -> str:
     status = _text(comparison_item.get("status"))
     human_status = _text(journal_evidence.get("human_support_status"), "insufficient_review")
-    conflict_flags = {
-        _text(item) for item in journal_evidence.get("decision_conflict_flags") or []
-    }
+    conflict_flags = {_text(item) for item in journal_evidence.get("decision_conflict_flags") or []}
     if status == "outperforming_with_acceptable_risk":
         if human_status == "supportive" and "CONFLICTING_HUMAN_DECISIONS" not in conflict_flags:
             return "propose_baseline_parameter_review"
@@ -2025,7 +2012,10 @@ def _proposal_risk_summary(comparison_item: Mapping[str, Any]) -> dict[str, Any]
     metrics = _mapping(comparison_item.get("comparison_metrics"))
     reason_codes = [_text(item) for item in comparison_item.get("reason_codes") or []]
     risk_flags = [
-        reason for reason in reason_codes if reason in {
+        reason
+        for reason in reason_codes
+        if reason
+        in {
             "HIGH_TURNOVER",
             "HIGH_DRAWDOWN",
             "HIGH_CONSTRAINT_HITS",
@@ -2122,9 +2112,8 @@ def _manual_review_requirements(
     proposals: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     proposals_by_id = {
-        _text(proposal.get("proposal_id")): proposal for proposal in _records(
-            proposals.get("proposals")
-        )
+        _text(proposal.get("proposal_id")): proposal
+        for proposal in _records(proposals.get("proposals"))
     }
     requirements = []
     for item in _records(scorecard.get("scorecards")):
@@ -2255,9 +2244,8 @@ def _proposal_markdown_rows(
     scorecard: Mapping[str, Any] | None = None,
 ) -> list[str]:
     score_by_id = {
-        _text(item.get("proposal_id")): item for item in _records(
-            _mapping(scorecard).get("scorecards")
-        )
+        _text(item.get("proposal_id")): item
+        for item in _records(_mapping(scorecard).get("scorecards"))
     }
     lines = ["| Candidate | Proposal Type | Status |", "|---|---|---|"]
     rows = []
@@ -2332,8 +2320,7 @@ def _proposal_hard_blockers(
     if proposal.get("broker_action") != "none":
         blockers.add("BROKER_ACTION_NOT_NONE")
     reason_codes = {
-        _text(item.get("reason_code"))
-        for item in _records(proposal.get("blocking_evidence"))
+        _text(item.get("reason_code")) for item in _records(proposal.get("blocking_evidence"))
     }
     for reason in reason_codes:
         if reason.startswith("INSUFFICIENT_FORWARD_DAYS"):
@@ -2347,8 +2334,7 @@ def _proposal_hard_blockers(
         elif reason == "VALIDATION_GATE_BLOCKED":
             blockers.add("FORWARD_VALIDATION_FAILED")
     risk_flags = {
-        _text(item)
-        for item in _mapping(proposal.get("risk_summary")).get("risk_flags") or []
+        _text(item) for item in _mapping(proposal.get("risk_summary")).get("risk_flags") or []
     }
     if "HIGH_TURNOVER" in risk_flags:
         blockers.add("HIGH_TURNOVER")
@@ -2543,9 +2529,9 @@ def _confidence_distribution(entries: Sequence[Mapping[str, Any]]) -> dict[str, 
 
 
 def _rationale_summary(entries: Sequence[Mapping[str, Any]]) -> str:
-    rationales = [_text(entry.get("rationale")) for entry in entries if _text(
-        entry.get("rationale")
-    )]
+    rationales = [
+        _text(entry.get("rationale")) for entry in entries if _text(entry.get("rationale"))
+    ]
     return "; ".join(rationales)
 
 
@@ -2603,9 +2589,7 @@ def _comparison_summary(comparisons: Sequence[Mapping[str, Any]]) -> dict[str, A
     return {
         "candidate_count": len(comparisons),
         "status_counts": counts,
-        "eligible_manual_review_candidate_count": counts[
-            "outperforming_with_acceptable_risk"
-        ],
+        "eligible_manual_review_candidate_count": counts["outperforming_with_acceptable_risk"],
         "risky_outperformer_count": counts["outperforming_but_risky"],
         "needs_more_data_count": counts["needs_more_data"],
         "underperforming_count": counts["underperforming"],
@@ -2703,7 +2687,9 @@ def _source_report_public(record: Mapping[str, Any]) -> dict[str, Any]:
     return {
         key: value
         for key, value in record.items()
-        if key not in {"payload"} and key in {
+        if key not in {"payload"}
+        and key
+        in {
             "report_id",
             "source_type",
             "status",
@@ -2765,12 +2751,16 @@ def _evidence_record_from_forward_row(
         or "UNKNOWN_BASELINE_CONFIG_HASH"
     )
     forward_days = _int_or_default(row.get("days_since_enrollment"), 0)
-    review_end = _safe_date(row.get("last_evaluated_date")) or _safe_date(
-        source_payloads.get("etf_forward_dashboard", {}).get("as_of")
-    ) or as_of
-    review_start = _safe_date(shadow_candidate.get("enrollment_date")) or _safe_date(
-        shadow_candidate.get("start_date")
-    ) or review_end - timedelta(days=max(forward_days, 0))
+    review_end = (
+        _safe_date(row.get("last_evaluated_date"))
+        or _safe_date(source_payloads.get("etf_forward_dashboard", {}).get("as_of"))
+        or as_of
+    )
+    review_start = (
+        _safe_date(shadow_candidate.get("enrollment_date"))
+        or _safe_date(shadow_candidate.get("start_date"))
+        or review_end - timedelta(days=max(forward_days, 0))
+    )
     metrics = _metrics_from_forward_row(
         row,
         forward_days=forward_days,
@@ -2861,9 +2851,7 @@ def _metrics_from_forward_row(
         "excess_return_vs_QQQ": _float_or_none(row.get("excess_return_vs_QQQ")),
         "excess_return_vs_SPY": _float_or_none(row.get("excess_return_vs_SPY")),
         "excess_return_vs_SMH": _float_or_none(row.get("excess_return_vs_SMH")),
-        "max_drawdown_since_enrollment": _float_or_none(
-            row.get("max_drawdown_since_enrollment")
-        ),
+        "max_drawdown_since_enrollment": _float_or_none(row.get("max_drawdown_since_enrollment")),
         "baseline_max_drawdown_since_enrollment": _float_or_none(
             row.get("baseline_max_drawdown_since_enrollment")
         ),
@@ -3013,9 +3001,7 @@ def _weekly_review_links_for_candidate(
             candidate_id=candidate_id,
             experiment_id=experiment_id,
         )
-        if not (
-            matches_candidate or row_experiment == experiment_id
-        ):
+        if not (matches_candidate or row_experiment == experiment_id):
             continue
         links.append(
             {
@@ -3036,11 +3022,14 @@ def _candidate_metadata(
     candidate_key: str = "candidates",
 ) -> dict[str, Any]:
     for candidate in _records(payload.get(candidate_key)):
-        if _candidate_matches(
-            _text(candidate.get("candidate_id")),
-            candidate_id=candidate_id,
-            experiment_id=experiment_id,
-        ) or _text(candidate.get("experiment_id")) == experiment_id:
+        if (
+            _candidate_matches(
+                _text(candidate.get("candidate_id")),
+                candidate_id=candidate_id,
+                experiment_id=experiment_id,
+            )
+            or _text(candidate.get("experiment_id")) == experiment_id
+        ):
             return candidate
     return {}
 
@@ -3230,9 +3219,7 @@ def _safety_issues(payload: Mapping[str, Any], *, owner_id: str) -> list[dict[st
     issues: list[dict[str, Any]] = []
     for field, expected in PARAMETER_REVIEW_SAFETY.items():
         if payload.get(field) != expected:
-            issues.append(
-                _issue(field, f"{owner_id} safety field {field} must be {expected!r}")
-            )
+            issues.append(_issue(field, f"{owner_id} safety field {field} must be {expected!r}"))
     return issues
 
 

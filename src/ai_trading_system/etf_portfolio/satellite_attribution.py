@@ -19,12 +19,8 @@ from ai_trading_system.etf_portfolio.satellite import (
 DEFAULT_SATELLITE_ATTRIBUTION_REPORT_ROOT = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "satellite_attribution"
 )
-DEFAULT_SATELLITE_ATTRIBUTION_DATASET_DIR = (
-    DEFAULT_SATELLITE_ATTRIBUTION_REPORT_ROOT / "datasets"
-)
-DEFAULT_SATELLITE_ATTRIBUTION_REVIEW_DIR = (
-    DEFAULT_SATELLITE_ATTRIBUTION_REPORT_ROOT / "reports"
-)
+DEFAULT_SATELLITE_ATTRIBUTION_DATASET_DIR = DEFAULT_SATELLITE_ATTRIBUTION_REPORT_ROOT / "datasets"
+DEFAULT_SATELLITE_ATTRIBUTION_REVIEW_DIR = DEFAULT_SATELLITE_ATTRIBUTION_REPORT_ROOT / "reports"
 DEFAULT_SATELLITE_ATTRIBUTION_VALIDATION_DIR = (
     DEFAULT_SATELLITE_ATTRIBUTION_REPORT_ROOT / "validation"
 )
@@ -851,8 +847,7 @@ def render_satellite_attribution_report_markdown(payload: Mapping[str, Any]) -> 
         f"- risk_adjusted_alpha：{_fmt_number(risk.get('risk_adjusted_alpha'))}",
         f"- high_volatility_failure_rate："
         f"{_fmt_number(risk.get('high_volatility_failure_rate'))}",
-        f"- drawdown_saved_by_fallback："
-        f"{_fmt_number(risk.get('drawdown_saved_by_fallback'))}",
+        f"- drawdown_saved_by_fallback：" f"{_fmt_number(risk.get('drawdown_saved_by_fallback'))}",
         f"- drawdown_added_by_eligible_replacement："
         f"{_fmt_number(risk.get('drawdown_added_by_eligible_replacement'))}",
         "",
@@ -1224,9 +1219,7 @@ def _dataset_record_for_satellite(
             component_scores.get("ai_confirmation_support_score")
         ),
         "AIConfirmationScore": _float_or_none(ai_context.get("AIConfirmationScore")),
-        "SemiconductorBreadthScore": _float_or_none(
-            ai_context.get("SemiconductorBreadthScore")
-        ),
+        "SemiconductorBreadthScore": _float_or_none(ai_context.get("SemiconductorBreadthScore")),
         "MegaCapAIScore": _float_or_none(ai_context.get("MegaCapAIScore")),
         "EventRiskScore": event_risk_score,
         "replacement_weight": replacement_weight,
@@ -1302,9 +1295,7 @@ def _symbol_forward_path(
     window: int,
 ) -> dict[str, Any]:
     history = (
-        price_frame.loc[price_frame["symbol"] == symbol]
-        .sort_values("_date")
-        .reset_index(drop=True)
+        price_frame.loc[price_frame["symbol"] == symbol].sort_values("_date").reset_index(drop=True)
     )
     if history.empty:
         return _missing_forward_result("missing_symbol")
@@ -1374,16 +1365,14 @@ def _satellite_forward_metric_summary(
             _float_or_none(row.get("benchmark_forward_return")) for row in records
         ),
         "mean_stock_minus_benchmark": _mean(
-            _float_or_none(row.get("stock_minus_benchmark_forward_return"))
-            for row in records
+            _float_or_none(row.get("stock_minus_benchmark_forward_return")) for row in records
         ),
         "hit_rate_stock_outperforms_benchmark": _share(
             (_float_or_none(row.get("stock_minus_benchmark_forward_return")) or 0.0) > 0.0
             for row in records
         ),
         "mean_replacement_minus_ETF": _mean(
-            _float_or_none(row.get("replacement_minus_ETF_forward_return"))
-            for row in records
+            _float_or_none(row.get("replacement_minus_ETF_forward_return")) for row in records
         ),
         "mean_forward_drawdown": _mean(
             _float_or_none(row.get("forward_drawdown")) for row in records
@@ -1404,12 +1393,10 @@ def _stock_metric_summary(
     return {
         "sample_count": len(records),
         "mean_stock_minus_benchmark": _mean(
-            _float_or_none(row.get("stock_minus_benchmark_forward_return"))
-            for row in records
+            _float_or_none(row.get("stock_minus_benchmark_forward_return")) for row in records
         ),
         "median_stock_minus_benchmark": _median(
-            _float_or_none(row.get("stock_minus_benchmark_forward_return"))
-            for row in records
+            _float_or_none(row.get("stock_minus_benchmark_forward_return")) for row in records
         ),
         "hit_rate_outperformance": _share(
             (_float_or_none(row.get("stock_minus_benchmark_forward_return")) or 0.0) > 0.0
@@ -1445,15 +1432,13 @@ def _fallback_metric_summary(
     return {
         "fallback_sample_count": len(records),
         "fallback_stock_minus_benchmark_forward": _mean(
-            _float_or_none(row.get("stock_minus_benchmark_forward_return"))
-            for row in records
+            _float_or_none(row.get("stock_minus_benchmark_forward_return")) for row in records
         ),
         "fallback_saved_loss_rate": _share(record in saved_loss for record in records),
         "fallback_missed_gain_rate": _share(record in missed_gain for record in records),
         "mean_saved_drawdown": _mean(_saved_drawdown(row) for row in saved_loss),
         "mean_missed_upside": _mean(
-            _float_or_none(row.get("stock_minus_benchmark_forward_return"))
-            for row in missed_gain
+            _float_or_none(row.get("stock_minus_benchmark_forward_return")) for row in missed_gain
         ),
         "confidence_warning": "insufficient_sample" if len(records) < min_sample_count else "none",
     }
@@ -1467,16 +1452,14 @@ def _score_bucket_metric_summary(
     return {
         "sample_count": len(records),
         "mean_stock_minus_benchmark": _mean(
-            _float_or_none(row.get("stock_minus_benchmark_forward_return"))
-            for row in records
+            _float_or_none(row.get("stock_minus_benchmark_forward_return")) for row in records
         ),
         "hit_rate_outperformance": _share(
             (_float_or_none(row.get("stock_minus_benchmark_forward_return")) or 0.0) > 0.0
             for row in records
         ),
         "mean_replacement_minus_ETF": _mean(
-            _float_or_none(row.get("replacement_minus_ETF_forward_return"))
-            for row in records
+            _float_or_none(row.get("replacement_minus_ETF_forward_return")) for row in records
         ),
         "mean_drawdown_delta": _mean(
             _float_or_none(row.get("drawdown_delta_vs_benchmark")) for row in records
@@ -1518,8 +1501,10 @@ def _risk_metric_summary(
             if row.get("event_window_flag") is True
         ),
         "high_volatility_failure_rate": _share(
-            ((_float_or_none(row.get("volatility_delta_vs_benchmark")) or 0.0)
-            > SATELLITE_HIGH_RISK_VOLATILITY_DELTA)
+            (
+                (_float_or_none(row.get("volatility_delta_vs_benchmark")) or 0.0)
+                > SATELLITE_HIGH_RISK_VOLATILITY_DELTA
+            )
             and ((_float_or_none(row.get("stock_minus_benchmark_forward_return")) or 0.0) < 0.0)
             for row in records
         ),
@@ -1527,14 +1512,10 @@ def _risk_metric_summary(
             None if mean_alpha is None else float(mean_alpha - positive_vol_penalty)
         ),
         "drawdown_saved_by_fallback": _mean(
-            _saved_drawdown(row)
-            for row in records
-            if row.get("fallback_to_etf") is True
+            _saved_drawdown(row) for row in records if row.get("fallback_to_etf") is True
         ),
         "drawdown_added_by_eligible_replacement": _mean(
-            _added_drawdown(row)
-            for row in records
-            if _eligibility_bucket(row) == "eligible"
+            _added_drawdown(row) for row in records if _eligibility_bucket(row) == "eligible"
         ),
         "confidence_warning": "insufficient_sample" if len(records) < min_sample_count else "none",
     }
@@ -1581,8 +1562,7 @@ def _interaction_metric_summary(
             min_sample_count=min_sample_count,
         )["fallback_saved_loss_rate"],
         "replacement_minus_ETF_by_ai_bucket": _mean(
-            _float_or_none(row.get("replacement_minus_ETF_forward_return"))
-            for row in records
+            _float_or_none(row.get("replacement_minus_ETF_forward_return")) for row in records
         ),
         "drawdown_delta_by_ai_bucket": _mean(
             _float_or_none(row.get("drawdown_delta_vs_benchmark")) for row in records
@@ -1616,9 +1596,7 @@ def _ai_context_for_date(
     components = _mapping(score.get("component_scores"))
     event = _mapping(selected.get("event_risk_overlay")) if selected else {}
     return {
-        "AIConfirmationScore": _float_or_none(
-            score.get("score_value", direct.get("score_value"))
-        ),
+        "AIConfirmationScore": _float_or_none(score.get("score_value", direct.get("score_value"))),
         "SemiconductorBreadthScore": _float_or_none(components.get("semiconductor_breadth")),
         "MegaCapAIScore": _float_or_none(components.get("mega_cap_ai")),
         "EventRiskScore": _float_or_none(
@@ -1780,9 +1758,7 @@ def _worst_window(window_metrics: Sequence[Mapping[str, Any]]) -> str:
 
 def _best_entity(rows: Sequence[Mapping[str, Any]]) -> str:
     valid = [
-        row
-        for row in rows
-        if _float_or_none(row.get("mean_stock_minus_benchmark")) is not None
+        row for row in rows if _float_or_none(row.get("mean_stock_minus_benchmark")) is not None
     ]
     if not valid:
         return "unknown"
@@ -1795,9 +1771,7 @@ def _best_entity(rows: Sequence[Mapping[str, Any]]) -> str:
 
 def _worst_entity(rows: Sequence[Mapping[str, Any]]) -> str:
     valid = [
-        row
-        for row in rows
-        if _float_or_none(row.get("mean_stock_minus_benchmark")) is not None
+        row for row in rows if _float_or_none(row.get("mean_stock_minus_benchmark")) is not None
     ]
     if not valid:
         return "unknown"
@@ -1839,9 +1813,9 @@ def _score_bucket_lift(score_attribution: Mapping[str, Any]) -> float | None:
 
 def _risk_status(risk_attribution: Mapping[str, Any]) -> str:
     vol = _float_or_none(risk_attribution.get("replacement_volatility_delta_vs_ETF")) or 0.0
-    added_drawdown = _float_or_none(
-        risk_attribution.get("drawdown_added_by_eligible_replacement")
-    ) or 0.0
+    added_drawdown = (
+        _float_or_none(risk_attribution.get("drawdown_added_by_eligible_replacement")) or 0.0
+    )
     if vol > SATELLITE_HIGH_RISK_VOLATILITY_DELTA or (
         added_drawdown > SATELLITE_DRAWDOWN_SEVERITY_THRESHOLD
     ):

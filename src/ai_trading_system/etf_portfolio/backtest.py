@@ -94,9 +94,7 @@ def run_portfolio_backtest(
     )
     close_pivot = _price_pivot(prices, settings.price_field)
     trading_dates = [
-        item.date()
-        for item in close_pivot.index
-        if run_start <= item.date() <= run_end
+        item.date() for item in close_pivot.index if run_start <= item.date() <= run_end
     ]
     if fast:
         trading_dates = trading_dates[-90:]
@@ -218,8 +216,7 @@ def run_portfolio_backtest(
             trade_rows.append(
                 {
                     **common,
-                    "trade_required": abs(trade_delta)
-                    >= config.strategy.model.min_rebalance_delta,
+                    "trade_required": abs(trade_delta) >= config.strategy.model.min_rebalance_delta,
                     "turnover": accounting.turnover,
                     "transaction_cost": accounting.transaction_cost,
                 }

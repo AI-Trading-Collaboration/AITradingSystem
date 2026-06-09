@@ -790,9 +790,7 @@ def _source_profile_metrics(
     artifacts = _mapping(tracking_payload.get("supporting_artifacts"))
     candidates_path = str(artifacts.get("portfolio_candidates") or "")
     candidates_payload = (
-        _load_json(resolve_project_path(candidates_path))
-        if candidates_path
-        else {}
+        _load_json(resolve_project_path(candidates_path)) if candidates_path else {}
     )
     baseline_profile = _mapping(candidates_payload.get("baseline"))
     candidate_profile = {}
@@ -866,8 +864,7 @@ def _performance_review(
             )
         ),
         "drawdown_delta": _round_float(
-            _float_value(candidate.get("max_drawdown"))
-            - _float_value(baseline.get("max_drawdown"))
+            _float_value(candidate.get("max_drawdown")) - _float_value(baseline.get("max_drawdown"))
         ),
         "turnover_delta": _round_float(
             _float_value(candidate.get("turnover")) - _float_value(baseline.get("turnover"))
@@ -1147,9 +1144,7 @@ def _tracking_window_safety(config: dict[str, Any]) -> dict[str, bool]:
         "forbid_backfilled_tracking_days": bool(
             policy.get("forbid_backfilled_tracking_days", True)
         ),
-        "forbid_synthetic_tracking_days": bool(
-            policy.get("forbid_synthetic_tracking_days", True)
-        ),
+        "forbid_synthetic_tracking_days": bool(policy.get("forbid_synthetic_tracking_days", True)),
     }
 
 
@@ -1157,9 +1152,10 @@ def _tracking_window_policy(config: dict[str, Any]) -> dict[str, Any]:
     raw_policy = _mapping(config.get("tracking_window_policy"))
     policy_path = str(config.get("tracking_window_policy_path") or "").strip()
     if not raw_policy:
-        raw_path = policy_path or str(
-            _mapping(config.get("input")).get("tracking_window_policy_path") or ""
-        ).strip()
+        raw_path = (
+            policy_path
+            or str(_mapping(config.get("input")).get("tracking_window_policy_path") or "").strip()
+        )
         if raw_path:
             resolved_path = resolve_project_path(raw_path)
             if not resolved_path.exists():
@@ -1276,7 +1272,9 @@ def _daily_return_series(observations: list[dict[str, Any]], side: str) -> list[
         current = _metrics_for(observation, side)
         if previous_metrics is None:
             tracking_key = "tracking_baseline" if side == "baseline" else "tracking_candidate"
-            returns.append(_float_value(_mapping(observation.get(tracking_key)).get("daily_return")))
+            returns.append(
+                _float_value(_mapping(observation.get(tracking_key)).get("daily_return"))
+            )
         else:
             returns.append(
                 _relative_change(
@@ -1494,8 +1492,7 @@ def _validate_config(config: dict[str, Any]) -> None:
     if _mapping(config.get("safety")).get("production_write_allowed") is not False:
         raise ValueError("portfolio tracking review production writes must be disabled")
     configured_recommendations = {
-        str(item)
-        for item in _records(config.get("performance_review_recommendation"))
+        str(item) for item in _records(config.get("performance_review_recommendation"))
     }
     if not RECOMMENDATIONS.issubset(configured_recommendations):
         raise ValueError("portfolio tracking review config missing recommendation statuses")
@@ -1522,8 +1519,7 @@ def _validate_tracking_window_config(config: dict[str, Any]) -> None:
     missing_stages = TRACKING_REVIEW_STAGES - set(stages)
     if missing_stages:
         raise ValueError(
-            "portfolio tracking review windows missing stages: "
-            + ", ".join(sorted(missing_stages))
+            "portfolio tracking review windows missing stages: " + ", ".join(sorted(missing_stages))
         )
     safety = _mapping(config.get("safety"))
     if safety.get("production_effect") != "none":

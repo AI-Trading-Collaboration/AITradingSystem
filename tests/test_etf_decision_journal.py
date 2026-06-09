@@ -259,9 +259,7 @@ def test_decision_journal_cli_report_analytics_proposal_validate(tmp_path: Path)
     )
     assert analytics.exit_code == 0, analytics.output
     analytics_payload = json.loads(
-        (output_dir / "decision_journal_analytics_2026-06-02.json").read_text(
-            encoding="utf-8"
-        )
+        (output_dir / "decision_journal_analytics_2026-06-02.json").read_text(encoding="utf-8")
     )
     assert analytics_payload["decision_status_counts"]["continue_observation"] == 1
 

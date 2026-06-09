@@ -320,9 +320,7 @@ def signal_snapshot_summary(payload: dict[str, Any]) -> dict[str, Any]:
         signal for signal in REQUIRED_SIGNALS if signal not in signals
     ]
     failed = _strings(overall.get("failed_signals")) or [
-        signal
-        for signal, item in signals.items()
-        if _mapping(item).get("status") == "FAILED"
+        signal for signal, item in signals.items() if _mapping(item).get("status") == "FAILED"
     ]
     status = str(
         overall.get("status") or _status_from_signal_groups(missing, failed, fallback, proxy)
@@ -509,8 +507,7 @@ def _overall_quality(signals: dict[str, Any]) -> dict[str, Any]:
     real = [
         signal
         for signal, item in signals.items()
-        if _mapping(item).get("status") == "OK"
-        and _mapping(item).get("quality") == "price_derived"
+        if _mapping(item).get("status") == "OK" and _mapping(item).get("quality") == "price_derived"
     ]
     proxy = [
         signal

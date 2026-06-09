@@ -58,9 +58,7 @@ def test_weight_tuning_summary_alias_and_shadow_weights_are_auditable(
     assert json_path.exists()
     assert markdown_path.exists()
     assert candidates_path.exists()
-    assert "Restricted Backtest Weight Tuning Summary" in markdown_path.read_text(
-        encoding="utf-8"
-    )
+    assert "Restricted Backtest Weight Tuning Summary" in markdown_path.read_text(encoding="utf-8")
 
     recommended_yaml = yaml.safe_load(recommended_path.read_text(encoding="utf-8"))
     assert recommended_yaml["metadata"]["production_effect"] == "none"
@@ -72,6 +70,4 @@ def test_weight_tuning_summary_alias_and_shadow_weights_are_auditable(
     alias_payload = json.loads(alias_json.read_text(encoding="utf-8"))
     assert alias_payload["report_type"] == WEIGHT_TUNING_ALIAS_REPORT_TYPE
     assert alias_payload["source_report_type"] == WEIGHT_TUNING_REPORT_TYPE
-    assert "Restricted Backtest Weight Tuning Summary" in alias_markdown.read_text(
-        encoding="utf-8"
-    )
+    assert "Restricted Backtest Weight Tuning Summary" in alias_markdown.read_text(encoding="utf-8")

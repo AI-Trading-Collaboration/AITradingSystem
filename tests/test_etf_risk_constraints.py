@@ -202,9 +202,7 @@ def test_etf_signal_risk_score_applies_volatility_and_drawdown_penalties() -> No
 
     assert stable_score == 100.0
     assert stressed_score == 100.0 - (
-        mapping.vol_max_penalty
-        + mapping.drawdown_max_penalty
-        + mapping.below_ma_200_penalty
+        mapping.vol_max_penalty + mapping.drawdown_max_penalty + mapping.below_ma_200_penalty
     )
     assert "VOLATILITY_STABLE" in stable_reasons
     assert "DRAWDOWN_CONTAINED" in stable_reasons

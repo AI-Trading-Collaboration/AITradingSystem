@@ -37,9 +37,7 @@ DYNAMIC_V2_REVIEW_VALIDATION_REPORT_TYPE = "etf_dynamic_v2_review_validation"
 DEFAULT_DYNAMIC_V2_REVIEW_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v2_review.yaml"
 )
-DEFAULT_DYNAMIC_V2_REVIEW_ROOT = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v2_review"
-)
+DEFAULT_DYNAMIC_V2_REVIEW_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v2_review"
 DEFAULT_DYNAMIC_V2_REVIEW_PACKAGE_DIR = DEFAULT_DYNAMIC_V2_REVIEW_ROOT / "packages"
 DEFAULT_DYNAMIC_V2_REVIEW_VALIDATION_DIR = DEFAULT_DYNAMIC_V2_REVIEW_ROOT / "validation"
 
@@ -223,9 +221,7 @@ def build_v04_candidate_evidence(
     )
     before_constraint_count = _constraint_count_before(rescue_report)
     after_constraint_count = _int(
-        _mapping(candidate_robustness_report.get("daily_path_summary")).get(
-            "constraint_hit_count"
-        ),
+        _mapping(candidate_robustness_report.get("daily_path_summary")).get("constraint_hit_count"),
         before_constraint_count - _int(candidate_row.get("constraint_hit_reduction")),
     )
     source_report_paths = _source_report_paths(
@@ -248,9 +244,7 @@ def build_v04_candidate_evidence(
             rescue_summary.get("excess_vs_static_base"),
             _float(candidate_row.get("underperformance_vs_static")),
         ),
-        "static_delta_improvement": _float(
-            candidate_row.get("return_vs_static_delta_improvement")
-        ),
+        "static_delta_improvement": _float(candidate_row.get("return_vs_static_delta_improvement")),
         "false_risk_off_before": before_false_off,
         "false_risk_off_after": after_false_off,
         "false_risk_off_reduction": before_false_off - after_false_off,
@@ -343,9 +337,11 @@ def build_constraint_hit_decomposition(
         after_by_type.setdefault(key, 0)
     after_count = _int(evidence.get("constraint_hit_count_after"))
     before_count = _int(evidence.get("constraint_hit_count_before"))
-    row_count_after = max(1, len(after_rows) or _int(_mapping(
-        candidate_robustness_report.get("daily_path_summary")
-    ).get("row_count")))
+    row_count_after = max(
+        1,
+        len(after_rows)
+        or _int(_mapping(candidate_robustness_report.get("daily_path_summary")).get("row_count")),
+    )
     row_count_before = max(1, len(before_rows))
     delta = _int(evidence.get("constraint_hit_delta"))
     decomposition = {
@@ -443,9 +439,9 @@ def build_regime_robustness_review(
                 "return_vs_static": source.get("excess_vs_static_base"),
                 "drawdown": source.get("max_drawdown"),
                 "turnover": source.get("turnover"),
-                "constraint_hit_rate": 0.0
-                if trading_days <= 0
-                else constraint_count / trading_days,
+                "constraint_hit_rate": (
+                    0.0 if trading_days <= 0 else constraint_count / trading_days
+                ),
                 "false_risk_off_count": false_by_regime.get(regime, {}).get(
                     "false_risk_off_count",
                     0,
@@ -736,8 +732,7 @@ def build_dynamic_v2_review_validation_report(
                 "eligibility_gate_blocks_v04",
                 gate.get("status") == "not_shadow_ready"
                 and "CONSTRAINT_HIT_WORSENED" in _texts(gate.get("blocking_reason_codes"))
-                and "DRAWDOWN_PRESERVATION_FAILED"
-                in _texts(gate.get("blocking_reason_codes")),
+                and "DRAWDOWN_PRESERVATION_FAILED" in _texts(gate.get("blocking_reason_codes")),
                 "v0.4 improvements are recognized but blockers prevent shadow-ready status",
             )
             _append_check(
@@ -768,8 +763,7 @@ def build_dynamic_v2_review_validation_report(
     _append_check(
         checks,
         "reader_brief_integration_available",
-        "Dynamic v0.2 Review" in reader_text
-        and "_etf_dynamic_v2_review_summary" in reader_text,
+        "Dynamic v0.2 Review" in reader_text and "_etf_dynamic_v2_review_summary" in reader_text,
         "Reader Brief has Dynamic v0.2 Review section",
     )
     cli_text = _safe_read_text(cli_path)
@@ -879,9 +873,9 @@ def load_latest_review_inputs(
     shadow = load_json_artifact(resolved_shadow, label="dynamic shadow package")
     source_paths = {
         "dynamic_rescue_report": "" if resolved_rescue is None else str(resolved_rescue),
-        "dynamic_robustness_report": ""
-        if resolved_robustness is None
-        else str(resolved_robustness),
+        "dynamic_robustness_report": (
+            "" if resolved_robustness is None else str(resolved_robustness)
+        ),
         "dynamic_shadow_package": "" if resolved_shadow is None else str(resolved_shadow),
     }
     return rescue, robustness, shadow, source_paths

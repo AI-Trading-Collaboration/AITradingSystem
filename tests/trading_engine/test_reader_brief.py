@@ -92,11 +92,7 @@ def test_reader_brief_displays_etf_backtest_summary(
     monkeypatch.setattr(reader_brief, "PROJECT_ROOT", tmp_path)
     snapshot_path = _write_decision_snapshot(tmp_path)
     summary_dir = (
-        tmp_path
-        / "reports"
-        / "etf_portfolio"
-        / "backtests"
-        / "etf-backtest-20260504T000000Z"
+        tmp_path / "reports" / "etf_portfolio" / "backtests" / "etf-backtest-20260504T000000Z"
     )
     summary_dir.mkdir(parents=True)
     (summary_dir / "summary.json").write_text(

@@ -333,10 +333,13 @@ def _simulation_ledger_check(frame: pd.DataFrame | None) -> CredibilityCheck:
     ledger = frame if frame is not None else _valid_simulation_ledger_frame()
     missing = tuple(column for column in REQUIRED_SIMULATION_COLUMNS if column not in ledger)
     blockers: list[str] = list(f"missing_column:{column}" for column in missing)
-    if "schema_version" in ledger and not (
-        pd.to_numeric(ledger["schema_version"], errors="coerce")
-        == SIMULATION_LEDGER_SCHEMA_VERSION
-    ).all():
+    if (
+        "schema_version" in ledger
+        and not (
+            pd.to_numeric(ledger["schema_version"], errors="coerce")
+            == SIMULATION_LEDGER_SCHEMA_VERSION
+        ).all()
+    ):
         blockers.append("schema_version_mismatch")
     if "record_type" in ledger:
         allowed = {DECISION_RECORD_TYPE, EVALUATION_RECORD_TYPE}

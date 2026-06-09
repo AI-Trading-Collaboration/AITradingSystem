@@ -44,9 +44,7 @@ def generate_signals_for_date(
                 composite_score=round(_clamp_score(composite), 4),
                 direction=direction,
                 confidence=confidence,
-                reason_codes=tuple(
-                    [*trend_reasons, *momentum_reasons, *rs_reasons, *risk_reasons]
-                ),
+                reason_codes=tuple([*trend_reasons, *momentum_reasons, *rs_reasons, *risk_reasons]),
                 model_version=strategy.model.version,
                 feature_version=FEATURE_VERSION,
                 created_at=datetime.now(UTC),

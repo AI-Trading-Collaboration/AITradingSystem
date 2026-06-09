@@ -31,9 +31,7 @@ def test_price_only_mode_caps_candidate_promotion() -> None:
 
     assert constrained.status == "rejected"
     assert "signal snapshot is missing" in constrained.reason
-    assert "price_only_shadow_backtest_signal_snapshot_missing" in (
-        constrained.manual_review_items
-    )
+    assert "price_only_shadow_backtest_signal_snapshot_missing" in (constrained.manual_review_items)
 
 
 def test_dashboard_displays_price_only_mode_and_disabled_promotion(tmp_path: Path) -> None:
@@ -155,9 +153,7 @@ def _write_price_only_shadow_summary(tmp_path: Path, as_of: date) -> Path:
                         "are available."
                     ),
                     "hard_rejections": [],
-                    "manual_review_items": [
-                        "price_only_shadow_backtest_signal_snapshot_missing"
-                    ],
+                    "manual_review_items": ["price_only_shadow_backtest_signal_snapshot_missing"],
                 },
                 "promotion_constraints": {
                     "max_promotion_status": "rejected",

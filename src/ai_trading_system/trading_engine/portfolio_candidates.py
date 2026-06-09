@@ -86,16 +86,12 @@ def default_portfolio_candidates_dir(output_root: Path, as_of: date) -> Path:
 
 def default_portfolio_candidates_json_path(output_root: Path, as_of: date) -> Path:
     return (
-        default_portfolio_candidates_dir(output_root, as_of)
-        / "portfolio_candidates_summary.json"
+        default_portfolio_candidates_dir(output_root, as_of) / "portfolio_candidates_summary.json"
     )
 
 
 def default_portfolio_candidates_markdown_path(output_root: Path, as_of: date) -> Path:
-    return (
-        default_portfolio_candidates_dir(output_root, as_of)
-        / "portfolio_candidates_summary.md"
-    )
+    return default_portfolio_candidates_dir(output_root, as_of) / "portfolio_candidates_summary.md"
 
 
 def default_recommended_portfolio_candidate_path(output_root: Path, as_of: date) -> Path:
@@ -222,9 +218,7 @@ def build_portfolio_candidates_payload(
     profile_map = _mapping(config.get("profiles"))
     selected_profiles = _selected_profiles(profile_map, profile_names)
     baseline_profile_name = str(config.get("baseline_profile") or "baseline_current")
-    simulation_profile_names = tuple(
-        dict.fromkeys([baseline_profile_name, *selected_profiles])
-    )
+    simulation_profile_names = tuple(dict.fromkeys([baseline_profile_name, *selected_profiles]))
     baseline_path = resolve_project_path(shadow_config.baseline_parameters_path)
     try:
         baseline = load_production_parameters(baseline_path)
@@ -416,9 +410,7 @@ def build_portfolio_candidates_payload(
     ranking = _rank_profiles(profile_payloads, baseline_profile_name, config, data_gate)
     baseline_payload = _baseline_payload(profile_payloads[baseline_profile_name])
     candidate_payloads = [
-        profile_payloads[name]
-        for name in selected_profiles
-        if name != baseline_profile_name
+        profile_payloads[name] for name in selected_profiles if name != baseline_profile_name
     ]
     best_profile = str(ranking.get("best_profile") or baseline_profile_name)
     calibration_path = latest_signal_calibration_path_on_or_before(resolved_as_of)

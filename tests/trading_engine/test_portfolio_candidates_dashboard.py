@@ -85,12 +85,11 @@ def test_reader_brief_displays_portfolio_candidates_summary(
 
     review = payload["parameter_shadow_review"]
     assert review["portfolio_candidates_status"] == "LIMITED"
-    assert review["portfolio_candidates_best_profile"] == candidates_run.payload["ranking"][
-        "best_profile"
-    ]
-    assert review["portfolio_candidates_profiles_tested"] == len(
-        candidates_run.payload["profiles"]
+    assert (
+        review["portfolio_candidates_best_profile"]
+        == candidates_run.payload["ranking"]["best_profile"]
     )
+    assert review["portfolio_candidates_profiles_tested"] == len(candidates_run.payload["profiles"])
     assert review["portfolio_candidates_guardrail_status"] in {"PASS", "FAIL", "UNKNOWN"}
     assert review["portfolio_candidates_promotion_eligibility"] is False
     assert "Portfolio candidate evaluation" in review["portfolio_candidates_summary"]

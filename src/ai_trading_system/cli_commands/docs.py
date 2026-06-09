@@ -207,9 +207,7 @@ def heuristic_governance_audit_command(
         f"production_effect={payload['production_effect']}；"
         "只读治理审计"
     )
-    if payload["status"] == "FAIL" or (
-        fail_on_warning and payload["summary"]["warning_count"]
-    ):
+    if payload["status"] == "FAIL" or (fail_on_warning and payload["summary"]["warning_count"]):
         raise typer.Exit(code=1)
 
 

@@ -79,18 +79,14 @@ DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH = (
 DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR / "forward_enrollments.json"
 )
-DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR = (
-    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "evidence"
-)
+DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "evidence"
 DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_diagnostics"
 )
 DEFAULT_WEIGHT_TOP_CANDIDATE_EXPORT_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "top_candidates"
 )
-DEFAULT_WEIGHT_CANDIDATE_COMPARISON_DIR = (
-    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "comparison"
-)
+DEFAULT_WEIGHT_CANDIDATE_COMPARISON_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "comparison"
 DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "regime_robustness"
 )
@@ -102,9 +98,7 @@ DEFAULT_WEIGHT_INITIAL_RECOMMENDATION_DIR = (
 )
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
-DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
-    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "validation"
-)
+DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "validation"
 DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "search_diagnostics"
 )
@@ -114,17 +108,13 @@ WEIGHT_CALIBRATION_PRESET_SCHEMA_VERSION = "etf_weight_calibration_presets_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
 CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION = "etf_candidate_weight_registry_v1"
 WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION = "etf_weight_forward_enrollment_v1"
-WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
-    "etf_weight_backtest_forward_evidence_v1"
-)
+WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = "etf_weight_backtest_forward_evidence_v1"
 WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
 WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION = "etf_weight_top_candidate_export_v1"
 WEIGHT_CANDIDATE_COMPARISON_SCHEMA_VERSION = "etf_weight_candidate_comparison_v1"
 WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION = "etf_weight_regime_robustness_v1"
 WEIGHT_OVERFIT_EXPLANATION_SCHEMA_VERSION = "etf_weight_overfit_explanation_v1"
-WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION = (
-    "etf_weight_initial_recommendation_report_v1"
-)
+WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION = "etf_weight_initial_recommendation_report_v1"
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
@@ -582,9 +572,7 @@ def load_weight_calibration_preset(
     try:
         return registry.presets[preset_id]
     except KeyError as exc:
-        raise WeightCalibrationError(
-            f"unknown ETF weight calibration preset: {preset_id}"
-        ) from exc
+        raise WeightCalibrationError(f"unknown ETF weight calibration preset: {preset_id}") from exc
 
 
 def validate_weight_calibration_preset_registry(
@@ -605,8 +593,7 @@ def validate_weight_calibration_preset_registry(
             )
         if preset.benchmark_set not in benchmark_sets:
             issues.append(
-                f"{preset.preset_id} references unknown benchmark_set: "
-                f"{preset.benchmark_set}"
+                f"{preset.preset_id} references unknown benchmark_set: " f"{preset.benchmark_set}"
             )
     if issues:
         raise WeightCalibrationError("; ".join(issues))
@@ -725,8 +712,7 @@ def generate_weight_candidates(
                 return
             candidate_units = {**current, "CASH": cash_units}
             candidate = {
-                symbol: round(candidate_units[symbol] / units, 10)
-                for symbol in search.universe
+                symbol: round(candidate_units[symbol] / units, 10) for symbol in search.universe
             }
             if not _candidate_satisfies_sleeves(
                 candidate,
@@ -1167,24 +1153,16 @@ def run_historical_weight_search(
             robustness_score=float(robustness["summary"]["stability_score"]),
             robustness_summary=robustness["summary"],
         )
-        metric_row["candidate_backtest_cache_status"] = result[
-            "candidate_backtest_cache_status"
-        ]
-        metric_row["regime_robustness_cache_status"] = result[
-            "regime_robustness_cache_status"
-        ]
+        metric_row["candidate_backtest_cache_status"] = result["candidate_backtest_cache_status"]
+        metric_row["regime_robustness_cache_status"] = result["regime_robustness_cache_status"]
         robustness_payloads.append(robustness)
         candidate_weight_sets.append(
             {
                 "candidate_id": candidate_id,
                 "weights": weights,
                 "robustness_summary": robustness["summary"],
-                "candidate_backtest_cache_status": result[
-                    "candidate_backtest_cache_status"
-                ],
-                "regime_robustness_cache_status": result[
-                    "regime_robustness_cache_status"
-                ],
+                "candidate_backtest_cache_status": result["candidate_backtest_cache_status"],
+                "regime_robustness_cache_status": result["regime_robustness_cache_status"],
                 "safety": dict(WEIGHT_CALIBRATION_SAFETY),
                 **WEIGHT_CALIBRATION_SAFETY,
             }
@@ -1198,12 +1176,8 @@ def run_historical_weight_search(
                 "hard_blockers": metric_row["hard_blockers"],
                 "ranking_reason": metric_row["ranking_reason"],
                 "weights": weights,
-                "candidate_backtest_cache_status": result[
-                    "candidate_backtest_cache_status"
-                ],
-                "regime_robustness_cache_status": result[
-                    "regime_robustness_cache_status"
-                ],
+                "candidate_backtest_cache_status": result["candidate_backtest_cache_status"],
+                "regime_robustness_cache_status": result["regime_robustness_cache_status"],
                 "observe_only": True,
                 "candidate_only": True,
                 "production_effect": "none",
@@ -2085,8 +2059,7 @@ def register_candidate_weight_sets(
         weight_set_ids=weight_set_ids,
     )
     existing = {
-        str(record.get("weight_set_id")): record
-        for record in _records(registry.get("weight_sets"))
+        str(record.get("weight_set_id")): record for record in _records(registry.get("weight_sets"))
     }
     generated = created_at or datetime.now(UTC)
     for ranked in selected:
@@ -3468,8 +3441,7 @@ def build_historical_weight_search_diagnostics_report(
         schema_version=WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
     )
     run_manifest_id = (
-        resume_run_id
-        or f"etf-weight-diagnostics-{generated.strftime('%Y%m%dT%H%M%SZ')}"
+        resume_run_id or f"etf-weight-diagnostics-{generated.strftime('%Y%m%dT%H%M%SZ')}"
     )
     planned_steps = [
         "load_prices",
@@ -3692,9 +3664,7 @@ def build_historical_weight_search_diagnostics_report(
                 timing = timing_by_candidate.get(str(candidate.get("source_candidate_id")))
                 if timing is not None:
                     timing["rank"] = candidate_record.get("rank")
-                    timing["readiness_status"] = candidate_record.get(
-                        "forward_readiness_status"
-                    )
+                    timing["readiness_status"] = candidate_record.get("forward_readiness_status")
                     timing["overfit_risk"] = candidate_record.get("overfit_risk")
             for row in _records(regime_payload.get("matrix")):
                 enriched = dict(row)
@@ -3888,9 +3858,7 @@ def validate_historical_weight_search_diagnostics_report(
         issues.append("production_weights_mutated")
     if payload.get("applied_weight_set") is not None:
         issues.append("applied_weight_set")
-    if int(payload.get("preset_result_count") or 0) != len(
-        _records(payload.get("preset_results"))
-    ):
+    if int(payload.get("preset_result_count") or 0) != len(_records(payload.get("preset_results"))):
         issues.append("preset_result_count")
     if int(payload.get("candidate_observation_count") or 0) != sum(
         int(result.get("top_candidate_count") or 0)
@@ -4501,8 +4469,7 @@ def render_dual_track_weight_calibration_report_markdown(payload: Mapping[str, A
     )
     for source in _records(payload.get("source_report_links")):
         lines.append(
-            f"| {source.get('source_type')} | `{source.get('path')}` | "
-            f"{source.get('exists')} |"
+            f"| {source.get('source_type')} | `{source.get('path')}` | " f"{source.get('exists')} |"
         )
     if not _records(payload.get("source_report_links")):
         lines.append("| none | n/a | false |")
@@ -4561,8 +4528,7 @@ def build_dual_track_weight_calibration_validation_report(
     sample_error = ""
     if search_registry is None or not bounded_pass:
         sample_error = (
-            "Sample pipeline skipped because the weight search config is invalid "
-            "or unbounded."
+            "Sample pipeline skipped because the weight search config is invalid " "or unbounded."
         )
     else:
         try:
@@ -4781,8 +4747,7 @@ def render_dual_track_weight_calibration_validation_markdown(
     ]
     for check in _records(payload.get("checks")):
         lines.append(
-            f"| {check.get('check_id')} | {check.get('status')} | "
-            f"{check.get('message')} |"
+            f"| {check.get('check_id')} | {check.get('status')} | " f"{check.get('message')} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -4946,13 +4911,9 @@ def build_historical_weight_calibration_usability_validation_report(
         else enrollment_payload
     )
     checks.extend(
-        _weight_usability_recommendation_payload_validation_checks(
-            recommendation_to_validate
-        )
+        _weight_usability_recommendation_payload_validation_checks(recommendation_to_validate)
     )
-    checks.extend(
-        _weight_usability_enrollment_payload_validation_checks(enrollment_to_validate)
-    )
+    checks.extend(_weight_usability_enrollment_payload_validation_checks(enrollment_to_validate))
 
     status = "PASS" if all(check.get("status") == "PASS" for check in checks) else "FAIL"
     payload = {
@@ -5077,8 +5038,7 @@ def render_historical_weight_calibration_usability_validation_markdown(
     ]
     for check in _records(payload.get("checks")):
         lines.append(
-            f"| {check.get('check_id')} | {check.get('status')} | "
-            f"{check.get('message')} |"
+            f"| {check.get('check_id')} | {check.get('status')} | " f"{check.get('message')} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -5211,8 +5171,7 @@ def _weight_calibration_usability_validation_sample_pipeline(
     )
     if not quality_report.passed:
         raise WeightCalibrationError(
-            "ETF weight calibration usability sample price quality failed: "
-            + quality_report.status
+            "ETF weight calibration usability sample price quality failed: " + quality_report.status
         )
     available_dates = pd.to_datetime(prices["date"], errors="coerce").dropna()
     if available_dates.empty:
@@ -6123,11 +6082,7 @@ def summarize_weight_robustness(
         if float(item.get("drawdown_reduction_vs_baseline") or 0.0) < -drawdown_tolerance
     ) / len(valid)
     dispersion_score = _penalty_score(dispersion, dispersion_scale)
-    stability_score = (
-        0.50 * positive_ratio
-        + 0.30 * drawdown_ok_ratio
-        + 0.20 * dispersion_score
-    )
+    stability_score = 0.50 * positive_ratio + 0.30 * drawdown_ok_ratio + 0.20 * dispersion_score
     weakest = min(
         valid,
         key=lambda item: (
@@ -6625,8 +6580,7 @@ def _backtest_from_cache_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
         issues.append("daily_records")
     if issues:
         raise WeightCalibrationError(
-            "ETF weight candidate backtest cache validation failed: "
-            + ", ".join(issues)
+            "ETF weight candidate backtest cache validation failed: " + ", ".join(issues)
         )
     return {
         "daily": pd.DataFrame(records),
@@ -6679,8 +6633,7 @@ def _robustness_from_cache_payload(payload: Mapping[str, Any]) -> dict[str, Any]
         issues.append("robustness")
     if issues:
         raise WeightCalibrationError(
-            "ETF weight regime robustness cache validation failed: "
-            + ", ".join(issues)
+            "ETF weight regime robustness cache validation failed: " + ", ".join(issues)
         )
     return robustness
 
@@ -6977,11 +6930,7 @@ def _run_static_weight_backtest(
     end: date,
 ) -> dict[str, Any]:
     close_pivot = _price_pivot(prices, config.backtest.backtest.price_field)
-    trading_dates = [
-        item.date()
-        for item in close_pivot.index
-        if start <= item.date() <= end
-    ]
+    trading_dates = [item.date() for item in close_pivot.index if start <= item.date() <= end]
     signal_lag_days = int(config.backtest.backtest.signal_lag_days)
     if len(trading_dates) < signal_lag_days + 2:
         raise WeightCalibrationError("ETF weight search has too few trading dates")
@@ -7116,9 +7065,7 @@ def _candidate_metric_row(
         for symbol in set(weights) | set(baseline_weights)
     )
     excess_return = candidate_metrics.total_return - baseline_metrics.total_return
-    drawdown_reduction = abs(baseline_metrics.max_drawdown) - abs(
-        candidate_metrics.max_drawdown
-    )
+    drawdown_reduction = abs(baseline_metrics.max_drawdown) - abs(candidate_metrics.max_drawdown)
     component_scores = _historical_component_scores(
         candidate_metrics=candidate_metrics,
         excess_return=excess_return,
@@ -7223,9 +7170,9 @@ def _selected_candidate_weight_records(
             if str(record.get("weight_set_id")) in requested
             or str(record.get("source_candidate_id")) in requested
         ]
-        matched = {
-            str(record.get("weight_set_id")) for record in selected
-        } | {str(record.get("source_candidate_id")) for record in selected}
+        matched = {str(record.get("weight_set_id")) for record in selected} | {
+            str(record.get("source_candidate_id")) for record in selected
+        }
         missing = sorted(requested - matched)
         if missing:
             raise WeightCalibrationError(
@@ -7256,9 +7203,9 @@ def _selected_top_export_candidates(
             if str(candidate.get("weight_set_id")) in requested
             or str(candidate.get("source_candidate_id")) in requested
         ]
-        matched = {
-            str(candidate.get("weight_set_id")) for candidate in selected
-        } | {str(candidate.get("source_candidate_id")) for candidate in selected}
+        matched = {str(candidate.get("weight_set_id")) for candidate in selected} | {
+            str(candidate.get("source_candidate_id")) for candidate in selected
+        }
         missing = sorted(requested - matched)
         if missing:
             raise WeightCalibrationError(
@@ -7286,9 +7233,7 @@ def _candidate_weight_record_from_shadow_ready_top_candidate(
             f"shadow_ready: {weight_set_id}"
         )
     if top_candidate.get("blockers"):
-        raise WeightCalibrationError(
-            f"blocked top weight candidate cannot enroll: {weight_set_id}"
-        )
+        raise WeightCalibrationError(f"blocked top weight candidate cannot enroll: {weight_set_id}")
     ranked = _ranked_row_for_top_candidate(search_payload, top_candidate)
     if not ranked:
         raise WeightCalibrationError(
@@ -7331,14 +7276,12 @@ def _weight_forward_enrollment_result(
     result = {
         "enrollment_id": enrollment.get("enrollment_id") or enrollment.get("shadow_id"),
         "weight_set_id": enrollment.get("weight_set_id"),
-        "shadow_candidate_id": enrollment.get("shadow_candidate_id")
-        or enrollment.get("shadow_id"),
+        "shadow_candidate_id": enrollment.get("shadow_candidate_id") or enrollment.get("shadow_id"),
         "status": enrollment.get("status"),
         "blockers": [str(item) for item in enrollment.get("blockers") or []],
         "warnings": [str(item) for item in enrollment.get("warnings") or []],
         "source_links": dict(
-            _mapping(enrollment.get("source_links"))
-            or _mapping(candidate.get("source_links"))
+            _mapping(enrollment.get("source_links")) or _mapping(candidate.get("source_links"))
         ),
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
         **WEIGHT_CALIBRATION_SAFETY,
@@ -7797,8 +7740,7 @@ def _weight_overfit_candidate_diagnostics(
     }
     weights = _mapping(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["component_weights"])
     risk_score = sum(
-        float(weights[key]) * float(component_diagnostics[key]["risk_score"])
-        for key in weights
+        float(weights[key]) * float(component_diagnostics[key]["risk_score"]) for key in weights
     )
     risk_score = round(max(0.0, min(1.0, risk_score)), 6)
     reason_codes = [
@@ -8594,8 +8536,7 @@ def _weight_shape_key(weights: Mapping[str, Any]) -> str:
     if not normalized:
         return "missing"
     return "|".join(
-        f"{symbol}={float(normalized.get(symbol, 0.0)):.2f}"
-        for symbol in sorted(normalized)
+        f"{symbol}={float(normalized.get(symbol, 0.0)):.2f}" for symbol in sorted(normalized)
     )
 
 
@@ -8736,9 +8677,7 @@ def _weight_search_regime_failure_summary(
     missing = [row for row in regime_rows if row.get("status") == "MISSING"]
     threshold = float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["severe_regime_drawdown_threshold"])
     severe = [
-        row
-        for row in available
-        if (_float_or_none(row.get("max_drawdown")) or 0.0) <= threshold
+        row for row in available if (_float_or_none(row.get("max_drawdown")) or 0.0) <= threshold
     ]
     by_regime: dict[str, int] = {}
     for row in severe:
@@ -8811,9 +8750,7 @@ def _weight_search_rescue_suggestions(
     semi = float(_float_or_none(candidate.get("semiconductor_exposure")) or 0.0)
     cash = float(_float_or_none(candidate.get("cash_exposure")) or 0.0)
     warnings = {str(item) for item in candidate.get("warnings") or []}
-    failure_regimes = {
-        str(failure.get("regime")) for failure in _records(regime.get("failures"))
-    }
+    failure_regimes = {str(failure.get("regime")) for failure in _records(regime.get("failures"))}
     if semi >= float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["semiconductor_rescue_threshold"]):
         suggestions.append("test_lower_semiconductor_cap_0_15_or_0_20")
     if cash < float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["cash_rescue_floor"]):
@@ -8848,9 +8785,9 @@ def _selected_ranked_candidates(
             if str(row.get("candidate_id")) in requested
             or _weight_set_id(search_payload, row) in requested
         ]
-        matched = {
-            str(row.get("candidate_id")) for row in selected
-        } | {_weight_set_id(search_payload, row) for row in selected}
+        matched = {str(row.get("candidate_id")) for row in selected} | {
+            _weight_set_id(search_payload, row) for row in selected
+        }
         missing = sorted(requested - matched)
         if missing:
             raise WeightCalibrationError(
@@ -8898,10 +8835,7 @@ def _candidate_weight_record_from_search(
             "component_scores": metrics.get("component_scores"),
         },
         "robustness_summary": dict(
-            _mapping(
-                candidate.get("robustness_summary")
-                or metrics.get("robustness_summary")
-            )
+            _mapping(candidate.get("robustness_summary") or metrics.get("robustness_summary"))
         ),
         "blockers": blockers,
         "selection_reason": (
@@ -8965,17 +8899,14 @@ def _weight_top_candidate_export_record(
         "sortino": _float_or_none(metrics.get("Sortino")),
         "calmar": _float_or_none(metrics.get("Calmar")),
         "turnover": _float_or_none(metrics.get("turnover")),
-        "semiconductor_exposure": float(weights.get("SMH", 0.0))
-        + float(weights.get("SOXX", 0.0)),
+        "semiconductor_exposure": float(weights.get("SMH", 0.0)) + float(weights.get("SOXX", 0.0)),
         "cash_exposure": float(weights.get("CASH", 0.0)),
         "benchmark_excess_return": _float_or_none(
             qqq_comparison.get("excess_return")
             if qqq_comparison
             else metrics.get("excess_return_vs_baseline")
         ),
-        "drawdown_reduction_vs_QQQ": _float_or_none(
-            qqq_comparison.get("drawdown_reduction")
-        ),
+        "drawdown_reduction_vs_QQQ": _float_or_none(qqq_comparison.get("drawdown_reduction")),
         "overfit_risk": overfit_band,
         "overfit_risk_score": _float_or_none(overfit.get("overfit_risk_score")),
         "forward_readiness_status": _weight_forward_readiness_status(
@@ -9402,13 +9333,11 @@ def _weight_initial_recommendation_manual_notes(
     blocked = [
         str(candidate.get("weight_set_id"))
         for candidate in candidates
-        if candidate.get("forward_readiness_status") != "shadow_ready"
-        or candidate.get("blockers")
+        if candidate.get("forward_readiness_status") != "shadow_ready" or candidate.get("blockers")
     ]
     if blocked:
         notes.append(
-            "以下候选不可 enroll，需先处理 blockers 或 overfit risk: "
-            + ", ".join(blocked)
+            "以下候选不可 enroll，需先处理 blockers 或 overfit risk: " + ", ".join(blocked)
         )
     return notes
 
@@ -9441,9 +9370,7 @@ def _weight_forward_readiness_status(
 ) -> str:
     status = str(candidate.get("status") or "")
     if any(
-        "DATA_QUALITY" in blocker
-        or "NO_LOOKAHEAD" in blocker
-        or "CREDIBILITY" in blocker
+        "DATA_QUALITY" in blocker or "NO_LOOKAHEAD" in blocker or "CREDIBILITY" in blocker
         for blocker in blockers
     ):
         return "blocked_by_data_quality"
@@ -9548,13 +9475,10 @@ def _weight_search_diagnostics_candidate_record(
         "cagr": _float_or_none(candidate.get("cagr")),
         "max_drawdown": _float_or_none(candidate.get("max_drawdown")),
         "turnover": _float_or_none(candidate.get("turnover")),
-        "semiconductor_exposure": _float_or_none(candidate.get("semiconductor_exposure"))
-        or 0.0,
+        "semiconductor_exposure": _float_or_none(candidate.get("semiconductor_exposure")) or 0.0,
         "cash_exposure": _float_or_none(candidate.get("cash_exposure")) or 0.0,
         "benchmark_excess_return": _float_or_none(candidate.get("benchmark_excess_return")),
-        "drawdown_reduction_vs_QQQ": _float_or_none(
-            candidate.get("drawdown_reduction_vs_QQQ")
-        ),
+        "drawdown_reduction_vs_QQQ": _float_or_none(candidate.get("drawdown_reduction_vs_QQQ")),
         "overfit_risk": candidate.get("overfit_risk"),
         "overfit_risk_score": _float_or_none(candidate.get("overfit_risk_score")),
         "forward_readiness_status": candidate.get("forward_readiness_status"),
@@ -10220,9 +10144,7 @@ def _weight_regime_robustness_row(
         "regime": regime,
         "status": status,
         "return": _float_or_none(slice_metrics.get("return")),
-        "excess_return_vs_baseline": _float_or_none(
-            slice_metrics.get("excess_return_vs_baseline")
-        ),
+        "excess_return_vs_baseline": _float_or_none(slice_metrics.get("excess_return_vs_baseline")),
         "max_drawdown": _float_or_none(slice_metrics.get("max_drawdown")),
         "volatility": _float_or_none(slice_metrics.get("volatility")),
         "Sharpe": _float_or_none(slice_metrics.get("Sharpe")),
@@ -10404,9 +10326,7 @@ def _metrics_for_slice(
                 float(weights.get(symbol, 0.0)) for symbol in semiconductor_symbols
             ),
             "constraint_hit_rate": None,
-            "metric_null_reasons": {
-                "slice": "insufficient rows for robustness slice metrics"
-            },
+            "metric_null_reasons": {"slice": "insufficient rows for robustness slice metrics"},
         }
     returns = [
         float(value)
@@ -10503,9 +10423,7 @@ def _daily_with_slice_features(daily: pd.DataFrame) -> pd.DataFrame:
     smh = [item.get("SMH", 0.0) for item in asset_returns]
     soxx = [item.get("SOXX", 0.0) for item in asset_returns]
     broad = [(left + right) / 2.0 for left, right in zip(spy, qqq, strict=True)]
-    semiconductor = [
-        (left + right) / 2.0 for left, right in zip(smh, soxx, strict=True)
-    ]
+    semiconductor = [(left + right) / 2.0 for left, right in zip(smh, soxx, strict=True)]
     abs_broad = [abs(value) for value in broad]
     vol_cutoff = _median(abs_broad)
     risk_proxy = []
@@ -10595,9 +10513,7 @@ def _benchmark_comparison(
         comparison[benchmark_id] = {
             "benchmark_name": benchmark.get("benchmark_name"),
             "excess_return": candidate_metrics.total_return - benchmark_return,
-            "drawdown_reduction": abs(benchmark_drawdown) - abs(
-                candidate_metrics.max_drawdown
-            ),
+            "drawdown_reduction": abs(benchmark_drawdown) - abs(candidate_metrics.max_drawdown),
         }
     return comparison
 
@@ -10645,10 +10561,7 @@ def _candidate_selection_key(
 
 
 def _default_weights(config: ETFConfigBundle, universe: list[str]) -> dict[str, float]:
-    weights = {
-        symbol: float(config.assets.assets[symbol].default_weight)
-        for symbol in universe
-    }
+    weights = {symbol: float(config.assets.assets[symbol].default_weight) for symbol in universe}
     total = sum(weights.values())
     if abs(total - 1.0) > 1e-6:
         raise WeightCalibrationError("ETF default weights must sum to 1.0 for search universe")
@@ -10780,8 +10693,7 @@ def _text(value: object) -> str:
 def _artifact_stem(value: object) -> str:
     text = str(value).strip().replace(":", "_").replace("/", "_").replace("\\", "_")
     return "".join(
-        character if character.isalnum() or character in "._-" else "_"
-        for character in text
+        character if character.isalnum() or character in "._-" else "_" for character in text
     )
 
 

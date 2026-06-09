@@ -35,8 +35,7 @@ def test_weekly_review_aggregator_loads_sources_and_marks_missing_required(
     assert "etf_forward_dashboard" in aggregation["loaded_sections"]
     assert aggregation["portfolio_state"]["market_regime"] == "Overheated"
     assert any(
-        item["report_id"] == "etf_portfolio_brief"
-        and item["reason_code"] == "REPORT_NOT_FOUND"
+        item["report_id"] == "etf_portfolio_brief" and item["reason_code"] == "REPORT_NOT_FOUND"
         for item in aggregation["missing_sections"]
     )
     source = next(

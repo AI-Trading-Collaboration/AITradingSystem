@@ -38,9 +38,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_BASELINE_REVIEW_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "baseline_review.yaml"
 )
-DEFAULT_BASELINE_REVIEW_REPORT_DIR = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "baseline_review"
-)
+DEFAULT_BASELINE_REVIEW_REPORT_DIR = PROJECT_ROOT / "reports" / "etf_portfolio" / "baseline_review"
 DEFAULT_BASELINE_REVIEW_PACKAGE_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "packages"
 DEFAULT_BASELINE_REVIEW_DECISION_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "decisions"
 DEFAULT_BASELINE_REVIEW_PROPOSAL_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "proposals"
@@ -587,12 +585,12 @@ def build_baseline_review_package(
         "recommended_decision_options": list(policy.decision_capture_policy.allowed_decisions),
         "source_report_links": eligibility["source_report_links"],
         "review_summary": {
-            "eligible_count": 1
-            if eligibility["eligibility_status"] == "eligible_for_owner_review"
-            else 0,
-            "needs_more_data_count": 1
-            if eligibility["eligibility_status"] == "needs_more_data"
-            else 0,
+            "eligible_count": (
+                1 if eligibility["eligibility_status"] == "eligible_for_owner_review" else 0
+            ),
+            "needs_more_data_count": (
+                1 if eligibility["eligibility_status"] == "needs_more_data" else 0
+            ),
             "blocked_count": 1 if eligibility["eligibility_status"] == "blocked" else 0,
             "proposal_draft_count": 0,
             "manual_review_required": True,
@@ -1767,7 +1765,9 @@ def _outcome_status_for(
         "reject_candidate": "rejected",
         "defer_review": "deferred",
         "request_new_experiment": "deferred",
-    }.get(_text(decision.get("owner_decision")), "review_pending")  # type: ignore[return-value]
+    }.get(
+        _text(decision.get("owner_decision")), "review_pending"
+    )  # type: ignore[return-value]
 
 
 def _workflow_probe(
@@ -1841,17 +1841,14 @@ def _workflow_probe(
                 "eligibility_gate_available": eligibility["eligibility_status"]
                 == "eligible_for_owner_review",
                 "evidence_matrix_available": bool(
-                    _records(
-                        _mapping(eligibility.get("evidence_requirement_matrix")).get("rows")
-                    )
+                    _records(_mapping(eligibility.get("evidence_requirement_matrix")).get("rows"))
                 ),
                 "review_package_generator_available": bool(package.get("source_report_links")),
                 "owner_decision_capture_available": linked["decision_journal_linkage"]["status"]
                 == "linked",
                 "decision_journal_integration_available": (temp / "journal.json").exists(),
                 "proposal_draft_generator_available": proposal["proposal_is_draft_only"] is True,
-                "outcome_tracker_available": outcome["latest_review_status"]
-                == "proposal_drafted",
+                "outcome_tracker_available": outcome["latest_review_status"] == "proposal_drafted",
                 "automatic_production_promotion_blocked": unsafe_decision_blocked,
                 "proposal_does_not_mutate_config": proposal["baseline_config_mutated"] is False
                 and proposal["target_weights_mutated"] is False,
@@ -2118,8 +2115,7 @@ def _hash_json(value: Mapping[str, Any]) -> str:
 def _stable_id(prefix: str, *parts: object) -> str:
     digest = sha256(
         "|".join(
-            part.isoformat() if isinstance(part, (date, datetime)) else str(part)
-            for part in parts
+            part.isoformat() if isinstance(part, (date, datetime)) else str(part) for part in parts
         ).encode("utf-8")
     ).hexdigest()[:12]
     return f"{prefix}:{digest}"

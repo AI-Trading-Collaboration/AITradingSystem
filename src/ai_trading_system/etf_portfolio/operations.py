@@ -122,9 +122,7 @@ _GRAPH_PIPELINE_FIELD_BY_CADENCE: dict[OperationsGraphCadence, str] = {
 OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION = "etf_operations_command_graph_v1"
 OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION = "etf_operations_artifact_freshness_v1"
 OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION = "etf_operations_failure_policy_v1"
-OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION = (
-    "etf_operations_owner_review_checklist_v1"
-)
+OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION = "etf_operations_owner_review_checklist_v1"
 OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION = "etf_operations_scheduler_dry_run_v1"
 OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION = "etf_operations_health_report_v1"
 OPERATIONS_VALIDATION_SCHEMA_VERSION = "etf_operations_validation_v1"
@@ -347,24 +345,16 @@ class ETFOperationsScheduleConfig(BaseModel):
         if missing_dependencies:
             missing = ", ".join(sorted(missing_dependencies))
             raise ValueError(
-                "ETF operations schedule dependencies reference unknown steps: "
-                f"{missing}"
+                "ETF operations schedule dependencies reference unknown steps: " f"{missing}"
             )
 
         return self
 
     def pipelines(self) -> dict[str, tuple[ETFOperationsScheduleStep, ...]]:
-        return {
-            field_name: tuple(getattr(self, field_name))
-            for field_name in _PIPELINE_FIELDS
-        }
+        return {field_name: tuple(getattr(self, field_name)) for field_name in _PIPELINE_FIELDS}
 
     def steps(self) -> tuple[ETFOperationsScheduleStep, ...]:
-        return tuple(
-            step
-            for field_name in _PIPELINE_FIELDS
-            for step in getattr(self, field_name)
-        )
+        return tuple(step for field_name in _PIPELINE_FIELDS for step in getattr(self, field_name))
 
     def step_by_id(self) -> dict[str, ETFOperationsScheduleStep]:
         return {step.step_id: step for step in self.steps()}
@@ -517,8 +507,7 @@ class ETFOperationsFailurePolicyReport(BaseModel):
         for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
             if getattr(self.safety, field) != expected:
                 raise ValueError(
-                    "ETF operations failure policy report safety "
-                    f"{field} must be {expected!r}"
+                    "ETF operations failure policy report safety " f"{field} must be {expected!r}"
                 )
         return self
 
@@ -571,8 +560,7 @@ class ETFOperationsOwnerReviewChecklist(BaseModel):
         for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
             if getattr(self.safety, field) != expected:
                 raise ValueError(
-                    "ETF operations owner review checklist safety "
-                    f"{field} must be {expected!r}"
+                    "ETF operations owner review checklist safety " f"{field} must be {expected!r}"
                 )
         item_ids = [item.item_id for item in self.items]
         duplicate_item_ids = sorted(
@@ -581,8 +569,7 @@ class ETFOperationsOwnerReviewChecklist(BaseModel):
         if duplicate_item_ids:
             duplicates = ", ".join(duplicate_item_ids)
             raise ValueError(
-                "ETF operations owner review checklist item IDs must be unique: "
-                f"{duplicates}"
+                "ETF operations owner review checklist item IDs must be unique: " f"{duplicates}"
             )
         return self
 
@@ -640,9 +627,7 @@ class ETFOperationsSchedulerDryRunReport(BaseModel):
         if self.commands_executed:
             raise ValueError("ETF operations scheduler dry-run must not execute commands")
         if self.production_state_mutated:
-            raise ValueError(
-                "ETF operations scheduler dry-run must not mutate production state"
-            )
+            raise ValueError("ETF operations scheduler dry-run must not mutate production state")
         if [step.step_id for step in self.planned_steps] != self.execution_order:
             raise ValueError(
                 "ETF operations scheduler dry-run planned steps must match execution_order"
@@ -655,8 +640,7 @@ class ETFOperationsSchedulerDryRunReport(BaseModel):
         for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
             if getattr(self.safety, field) != expected:
                 raise ValueError(
-                    "ETF operations scheduler dry-run safety "
-                    f"{field} must be {expected!r}"
+                    "ETF operations scheduler dry-run safety " f"{field} must be {expected!r}"
                 )
         return self
 
@@ -697,9 +681,7 @@ class ETFOperationsHealthReport(BaseModel):
     warnings: list[dict[str, Any]] = Field(default_factory=list)
     owner_review_checklist: dict[str, Any] | None = None
     expected_next_run: dict[str, Any]
-    source_artifacts: list[ETFOperationsHealthSourceArtifact] = Field(
-        default_factory=list
-    )
+    source_artifacts: list[ETFOperationsHealthSourceArtifact] = Field(default_factory=list)
     source_schema_versions: dict[str, str]
     source_dry_run_id: str = Field(min_length=1)
     source_dry_run_status: OperationsSchedulerDryRunStatus
@@ -709,19 +691,15 @@ class ETFOperationsHealthReport(BaseModel):
         if self.commands_executed:
             raise ValueError("ETF operations health report must not execute commands")
         if self.production_state_mutated:
-            raise ValueError(
-                "ETF operations health report must not mutate production state"
-            )
+            raise ValueError("ETF operations health report must not mutate production state")
         for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
             if getattr(self.safety, field) != expected:
                 raise ValueError(
-                    "ETF operations health report safety "
-                    f"{field} must be {expected!r}"
+                    "ETF operations health report safety " f"{field} must be {expected!r}"
                 )
             if self.safety_banner.get(field) != expected:
                 raise ValueError(
-                    "ETF operations health report safety banner "
-                    f"{field} must be {expected!r}"
+                    "ETF operations health report safety banner " f"{field} must be {expected!r}"
                 )
         if self.source_schema_versions.get("dry_run") != (
             OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
@@ -738,12 +716,8 @@ class ETFOperationsValidationCheck(BaseModel):
 
 
 class ETFOperationsValidationReport(BaseModel):
-    schema_version: Literal["etf_operations_validation_v1"] = (
-        OPERATIONS_VALIDATION_SCHEMA_VERSION
-    )
-    report_type: Literal["etf_operations_validation"] = (
-        OPERATIONS_VALIDATION_REPORT_TYPE
-    )
+    schema_version: Literal["etf_operations_validation_v1"] = OPERATIONS_VALIDATION_SCHEMA_VERSION
+    report_type: Literal["etf_operations_validation"] = OPERATIONS_VALIDATION_REPORT_TYPE
     report_id: str = Field(min_length=1)
     as_of_date: date
     generated_at: datetime
@@ -767,17 +741,13 @@ class ETFOperationsValidationReport(BaseModel):
         if self.commands_executed:
             raise ValueError("ETF operations validation report must not execute commands")
         if self.production_state_mutated:
-            raise ValueError(
-                "ETF operations validation report must not mutate production state"
-            )
+            raise ValueError("ETF operations validation report must not mutate production state")
         if self.production_effect != "none":
             raise ValueError("ETF operations validation report production_effect must be none")
         if self.broker_action != "none":
             raise ValueError("ETF operations validation report broker_action must be none")
         if not self.manual_review_required:
-            raise ValueError(
-                "ETF operations validation report must require manual review"
-            )
+            raise ValueError("ETF operations validation report must require manual review")
         for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
             if self.safety_banner.get(field) != expected:
                 raise ValueError(
@@ -789,8 +759,7 @@ class ETFOperationsValidationReport(BaseModel):
         duplicates = sorted({check_id for check_id in check_ids if check_ids.count(check_id) > 1})
         if duplicates:
             raise ValueError(
-                "ETF operations validation check IDs must be unique: "
-                f"{', '.join(duplicates)}"
+                "ETF operations validation check IDs must be unique: " f"{', '.join(duplicates)}"
             )
         actual_failed = len([check for check in self.checks if check.status == "FAIL"])
         actual_warnings = len([check for check in self.checks if check.status == "WARNING"])
@@ -975,12 +944,8 @@ def check_operations_artifact_freshness(
             for artifact in artifacts
             if artifact.dependency_status == "optional"
         ],
-        freshness_summary=_status_counts(
-            artifact.freshness_status for artifact in artifacts
-        ),
-        dependency_summary=_status_counts(
-            artifact.dependency_status for artifact in artifacts
-        ),
+        freshness_summary=_status_counts(artifact.freshness_status for artifact in artifacts),
+        dependency_summary=_status_counts(artifact.dependency_status for artifact in artifacts),
     )
 
 
@@ -1018,12 +983,8 @@ def evaluate_operations_failure_policy(
             for event in events
             if event.blocks_pipeline or event.blocks_dependent_steps
         ],
-        warning_events=[
-            event.event_id for event in events if event.severity == "warning"
-        ],
-        manual_review_events=[
-            event.event_id for event in events if event.requires_manual_review
-        ],
+        warning_events=[event.event_id for event in events if event.severity == "warning"],
+        manual_review_events=[event.event_id for event in events if event.requires_manual_review],
         severity_summary=_status_counts_with_defaults(
             (event.severity for event in events),
             allowed=("info", "warning", "error", "critical"),
@@ -1093,9 +1054,7 @@ def build_operations_owner_review_checklist(
         items=items,
         required_items=[item.item_id for item in items if item.required],
         blocking_items=[item.item_id for item in items if item.blocking],
-        warning_items=[
-            item.item_id for item in items if item.category == "warning_event"
-        ],
+        warning_items=[item.item_id for item in items if item.category == "warning_event"],
         manual_review_items=[
             item.item_id for item in items if item.category == "manual_review_event"
         ],
@@ -1508,9 +1467,11 @@ def build_operations_validation_report(
         _operations_validation_check(
             "schedule_safety_boundary",
             "PASS" if _operations_safety_matches(schedule.safety) else "FAIL",
-            "schedule safety boundary matches observe-only policy"
-            if _operations_safety_matches(schedule.safety)
-            else "schedule safety boundary is unsafe",
+            (
+                "schedule safety boundary matches observe-only policy"
+                if _operations_safety_matches(schedule.safety)
+                else "schedule safety boundary is unsafe"
+            ),
             evidence=_operations_safety_banner(schedule.safety),
         )
     )
@@ -1520,9 +1481,11 @@ def build_operations_validation_report(
         _operations_validation_check(
             "required_steps_present",
             "PASS" if not missing_required_by_cadence else "FAIL",
-            "required operations steps are present for every cadence"
-            if not missing_required_by_cadence
-            else "one or more required operations steps are missing",
+            (
+                "required operations steps are present for every cadence"
+                if not missing_required_by_cadence
+                else "one or more required operations steps are missing"
+            ),
             evidence={"missing_required_by_cadence": missing_required_by_cadence},
         )
     )
@@ -1555,8 +1518,7 @@ def build_operations_validation_report(
         graphs[cadence] = graph
         source_schema_versions[f"{cadence}_graph"] = graph.schema_version
         missing_graph_nodes = sorted(
-            _REQUIRED_OPERATION_NODE_IDS_BY_CADENCE[cadence]
-            - set(graph.execution_order)
+            _REQUIRED_OPERATION_NODE_IDS_BY_CADENCE[cadence] - set(graph.execution_order)
         )
         graph_safe = (
             graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
@@ -1569,9 +1531,11 @@ def build_operations_validation_report(
             _operations_validation_check(
                 check_id,
                 "PASS" if graph_safe else "FAIL",
-                f"{cadence} operations command graph is valid"
-                if graph_safe
-                else f"{cadence} operations command graph is unsafe or incomplete",
+                (
+                    f"{cadence} operations command graph is valid"
+                    if graph_safe
+                    else f"{cadence} operations command graph is unsafe or incomplete"
+                ),
                 evidence={
                     "cadence": cadence,
                     "schema_version": graph.schema_version,
@@ -1621,8 +1585,7 @@ def build_operations_validation_report(
                 )
                 source_schema_versions["freshness"] = missing_freshness.schema_version
                 freshness_safe = (
-                    missing_freshness.schema_version
-                    == OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION
+                    missing_freshness.schema_version == OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION
                     and missing_freshness.read_only
                     and not missing_freshness.commands_executed
                     and _operations_safety_matches(missing_freshness.safety)
@@ -1631,15 +1594,15 @@ def build_operations_validation_report(
                     _operations_validation_check(
                         "freshness_checker_available",
                         "PASS" if freshness_safe else "FAIL",
-                        "freshness checker is available and read-only"
-                        if freshness_safe
-                        else "freshness checker produced unsafe output",
+                        (
+                            "freshness checker is available and read-only"
+                            if freshness_safe
+                            else "freshness checker produced unsafe output"
+                        ),
                         evidence={
                             "schema_version": missing_freshness.schema_version,
                             "artifact_count": len(missing_freshness.artifacts),
-                            "blocking_artifact_count": len(
-                                missing_freshness.blocking_artifacts
-                            ),
+                            "blocking_artifact_count": len(missing_freshness.blocking_artifacts),
                         },
                     )
                 )
@@ -1654,12 +1617,12 @@ def build_operations_validation_report(
                     _operations_validation_check(
                         "required_missing_blocks",
                         "PASS" if required_missing_blocks else "FAIL",
-                        "required missing artifacts block dependent operations"
-                        if required_missing_blocks
-                        else "required missing artifacts did not block dependent operations",
-                        evidence={
-                            "required_missing_blocking_artifacts": required_missing_blocks
-                        },
+                        (
+                            "required missing artifacts block dependent operations"
+                            if required_missing_blocks
+                            else "required missing artifacts did not block dependent operations"
+                        ),
+                        evidence={"required_missing_blocking_artifacts": required_missing_blocks},
                     )
                 )
             except Exception as exc:  # noqa: BLE001 - collect gate failure.
@@ -1711,16 +1674,16 @@ def build_operations_validation_report(
                     for artifact in optional_freshness.artifacts
                     if artifact.required and artifact.dependency_status == "blocking"
                 ]
-                optional_warning_ok = (
-                    bool(optional_warning_artifacts) and not required_blockers
-                )
+                optional_warning_ok = bool(optional_warning_artifacts) and not required_blockers
                 checks.append(
                     _operations_validation_check(
                         "optional_missing_warns",
                         "PASS" if optional_warning_ok else "FAIL",
-                        "optional missing artifacts warn without blocking required flow"
-                        if optional_warning_ok
-                        else "optional missing artifacts did not warn cleanly",
+                        (
+                            "optional missing artifacts warn without blocking required flow"
+                            if optional_warning_ok
+                            else "optional missing artifacts did not warn cleanly"
+                        ),
                         evidence={
                             "optional_warning_artifacts": optional_warning_artifacts,
                             "required_blockers": required_blockers,
@@ -1755,8 +1718,7 @@ def build_operations_validation_report(
                 )
                 source_schema_versions["failure_policy"] = failure_report.schema_version
                 failure_policy_available = (
-                    failure_report.schema_version
-                    == OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION
+                    failure_report.schema_version == OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION
                     and failure_report.read_only
                     and not failure_report.commands_executed
                     and failure_report.pipeline_status == "blocked"
@@ -1767,9 +1729,11 @@ def build_operations_validation_report(
                     _operations_validation_check(
                         "failure_policy_available",
                         "PASS" if failure_policy_available else "FAIL",
-                        "failure policy is available and blocks unsafe missing inputs"
-                        if failure_policy_available
-                        else "failure policy did not block unsafe missing inputs",
+                        (
+                            "failure policy is available and blocks unsafe missing inputs"
+                            if failure_policy_available
+                            else "failure policy did not block unsafe missing inputs"
+                        ),
                         evidence={
                             "schema_version": failure_report.schema_version,
                             "pipeline_status": failure_report.pipeline_status,
@@ -1820,9 +1784,11 @@ def build_operations_validation_report(
                     _operations_validation_check(
                         "owner_checklist_available",
                         "PASS" if checklist_available else "FAIL",
-                        "owner checklist is available and requires signoff"
-                        if checklist_available
-                        else "owner checklist did not enforce signoff",
+                        (
+                            "owner checklist is available and requires signoff"
+                            if checklist_available
+                            else "owner checklist did not enforce signoff"
+                        ),
                         evidence={
                             "schema_version": owner_checklist.schema_version,
                             "checklist_status": owner_checklist.checklist_status,
@@ -1862,9 +1828,11 @@ def build_operations_validation_report(
                 _operations_validation_check(
                     "dry_run_available",
                     "PASS" if dry_run_available else "FAIL",
-                    "scheduler dry-run is available and non-executing"
-                    if dry_run_available
-                    else "scheduler dry-run output is unsafe or incomplete",
+                    (
+                        "scheduler dry-run is available and non-executing"
+                        if dry_run_available
+                        else "scheduler dry-run output is unsafe or incomplete"
+                    ),
                     evidence={
                         "root_path": str(Path(root_path)),
                         "schema_version": dry_run.schema_version,
@@ -1905,9 +1873,11 @@ def build_operations_validation_report(
                 _operations_validation_check(
                     "ops_report_generator_available",
                     "PASS" if report_available else "FAIL",
-                    "operations health report generator is available"
-                    if report_available
-                    else "operations health report output is unsafe or incomplete",
+                    (
+                        "operations health report generator is available"
+                        if report_available
+                        else "operations health report output is unsafe or incomplete"
+                    ),
                     evidence={
                         "root_path": str(Path(root_path)),
                         "schema_version": health_report.schema_version,
@@ -1951,9 +1921,11 @@ def build_operations_validation_report(
             _operations_validation_check(
                 "reader_brief_integration_available",
                 "PASS" if reader_brief_integration_ok else "FAIL",
-                "Reader Brief operations health registry integration is available"
-                if reader_brief_integration_ok
-                else "Reader Brief operations health registry integration is missing",
+                (
+                    "Reader Brief operations health registry integration is available"
+                    if reader_brief_integration_ok
+                    else "Reader Brief operations health registry integration is missing"
+                ),
                 evidence={
                     "report_registry_path": str(report_registry_path),
                     "report_id": OPERATIONS_HEALTH_REPORT_REGISTRY_ID,
@@ -1992,9 +1964,11 @@ def build_operations_validation_report(
         _operations_validation_check(
             "safety_fields_intact",
             "PASS" if not unsafe_components else "FAIL",
-            "all operations validation components preserve safety boundary"
-            if not unsafe_components
-            else "one or more operations validation components are unsafe",
+            (
+                "all operations validation components preserve safety boundary"
+                if not unsafe_components
+                else "one or more operations validation components are unsafe"
+            ),
             evidence={
                 "unsafe_components": unsafe_components,
                 "required_safety": dict(OPERATIONS_SCHEDULE_SAFETY),
@@ -2200,8 +2174,7 @@ def _operations_validation_unsafe_components(
 
 def _operations_safety_matches(safety: ETFOperationsScheduleSafety) -> bool:
     return all(
-        getattr(safety, field) == expected
-        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items()
+        getattr(safety, field) == expected for field, expected in OPERATIONS_SCHEDULE_SAFETY.items()
     )
 
 
@@ -2294,15 +2267,12 @@ def _build_operations_command_graph(
     optional_node_ids = _OPTIONAL_OPERATION_NODE_IDS_BY_CADENCE[cadence]
     must_be_required_node_ids = required_node_ids - optional_node_ids
     unexpected_required = sorted(
-        step_id
-        for step_id in must_be_required_node_ids
-        if not cadence_step_by_id[step_id].required
+        step_id for step_id in must_be_required_node_ids if not cadence_step_by_id[step_id].required
     )
     if unexpected_required:
         unexpected = ", ".join(unexpected_required)
         raise OperationsCommandGraphError(
-            f"{cadence} operations graph required nodes must be marked required: "
-            f"{unexpected}"
+            f"{cadence} operations graph required nodes must be marked required: " f"{unexpected}"
         )
 
     skipped = set(skipped_optional_step_ids or set())
@@ -2620,8 +2590,7 @@ def _validate_owner_checklist_failure_report(
         )
     if cadence != "incident" and failure_report.cadence != cadence:
         raise OperationsCommandGraphError(
-            "ETF operations owner review checklist cadence must match "
-            "failure report cadence"
+            "ETF operations owner review checklist cadence must match " "failure report cadence"
         )
 
 
@@ -2629,9 +2598,7 @@ def _owner_review_step_for_cadence(
     schedule: ETFOperationsScheduleConfig,
     cadence: OperationsOwnerReviewCadence,
 ) -> ETFOperationsScheduleStep:
-    matching_steps = [
-        step for step in schedule.manual_review_steps if step.cadence == cadence
-    ]
+    matching_steps = [step for step in schedule.manual_review_steps if step.cadence == cadence]
     if len(matching_steps) != 1:
         raise OperationsCommandGraphError(
             "ETF operations schedule must define exactly one owner review step "
@@ -2763,24 +2730,16 @@ def _owner_review_signoff_item(
     cadence: OperationsOwnerReviewCadence,
     failure_report: ETFOperationsFailurePolicyReport | None,
 ) -> ETFOperationsOwnerReviewChecklistItem:
-    blocking = (
-        failure_report is not None
-        and failure_report.pipeline_status == "blocked"
-    )
+    blocking = failure_report is not None and failure_report.pipeline_status == "blocked"
     if blocking:
         owner_action = "record_blocker_and_do_not_approve_dependent_outputs"
         description = (
             "Pipeline or dependent-step blockers remain open; owner must record the "
             "blocker and recovery condition before any downstream interpretation."
         )
-    elif (
-        failure_report is not None
-        and failure_report.pipeline_status == "manual_review_required"
-    ):
+    elif failure_report is not None and failure_report.pipeline_status == "manual_review_required":
         owner_action = "complete_manual_review_before_downstream_interpretation"
-        description = (
-            "Manual review is required before downstream interpretation or report use."
-        )
+        description = "Manual review is required before downstream interpretation or report use."
     else:
         owner_action = "record_owner_signoff_or_limitations"
         description = (
@@ -2913,17 +2872,11 @@ def _operations_dry_run_status(
 ) -> OperationsSchedulerDryRunStatus:
     if failure_report.pipeline_status == "blocked":
         return "blocked"
-    if (
-        owner_checklist is not None
-        and owner_checklist.checklist_status == "blocked"
-    ):
+    if owner_checklist is not None and owner_checklist.checklist_status == "blocked":
         return "blocked"
     if failure_report.pipeline_status == "manual_review_required":
         return "manual_review_required"
-    if (
-        owner_checklist is not None
-        and owner_checklist.checklist_status == "manual_review_required"
-    ):
+    if owner_checklist is not None and owner_checklist.checklist_status == "manual_review_required":
         return "manual_review_required"
     if failure_report.pipeline_status == "warning":
         return "warning"
@@ -3213,9 +3166,7 @@ def _dry_run_planned_step(
             for event in events
             if event.blocks_pipeline or event.blocks_dependent_steps
         ],
-        warning_event_ids=[
-            event.event_id for event in events if event.severity == "warning"
-        ],
+        warning_event_ids=[event.event_id for event in events if event.severity == "warning"],
         manual_review_event_ids=[
             event.event_id for event in events if event.requires_manual_review
         ],

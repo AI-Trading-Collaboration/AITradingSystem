@@ -27,15 +27,11 @@ def build_relative_strength_table(
         numerator = selected.get(numerator_symbol)
         denominator = selected.get(denominator_symbol)
         if numerator is None or denominator is None:
-            rows.append(
-                _missing_pair_row(run_date, numerator_symbol, denominator_symbol, meaning)
-            )
+            rows.append(_missing_pair_row(run_date, numerator_symbol, denominator_symbol, meaning))
             continue
         ratio = _safe_ratio(numerator.get("adj_close"), denominator.get("adj_close"))
         ratio_returns = {
-            window: _optional_float(
-                numerator.get(f"rs_vs_{denominator_symbol.lower()}_{window}d")
-            )
+            window: _optional_float(numerator.get(f"rs_vs_{denominator_symbol.lower()}_{window}d"))
             for window in config.strategy.relative_strength.windows
         }
         score_source = ratio_returns.get(60)
@@ -88,9 +84,11 @@ def build_confirmation_scores(
                 "date": run_date.isoformat(),
                 "score_id": score_id,
                 "score": score,
-                "status": "positive"
-                if score >= p1_config.confirmation.score_positive_min
-                else "neutral_or_limited",
+                "status": (
+                    "positive"
+                    if score >= p1_config.confirmation.score_positive_min
+                    else "neutral_or_limited"
+                ),
                 "production_effect": "none",
                 "model_stage": "observe_only",
             }
@@ -198,9 +196,7 @@ def build_portfolio_attribution(
         weight = float(row["target_weight"])
         trade_delta = _optional_float(row.get("trade_delta")) or 0.0
         asset_return = (
-            0.0
-            if symbol == "CASH"
-            else _asset_return(pivot, symbol, previous_date, current_date)
+            0.0 if symbol == "CASH" else _asset_return(pivot, symbol, previous_date, current_date)
         )
         risk_contribution = (
             0.0 if symbol == "CASH" else weight * _realized_volatility(pivot, symbol, current_date)

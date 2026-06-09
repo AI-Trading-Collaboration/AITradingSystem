@@ -33,9 +33,9 @@ def test_portfolio_turnover_attribution_report_alias_is_auditable(
 
     assert validate_portfolio_turnover_attribution_payload(payload) == []
     assert report_date == as_of
-    assert "Portfolio Turnover Attribution Summary" in source_path.with_suffix(
-        ".md"
-    ).read_text(encoding="utf-8")
+    assert "Portfolio Turnover Attribution Summary" in source_path.with_suffix(".md").read_text(
+        encoding="utf-8"
+    )
     alias_payload = json.loads(alias_json.read_text(encoding="utf-8"))
     assert alias_payload["report_type"] == PORTFOLIO_TURNOVER_ATTRIBUTION_ALIAS_REPORT_TYPE
     assert alias_payload["source_report_type"] == PORTFOLIO_TURNOVER_ATTRIBUTION_REPORT_TYPE

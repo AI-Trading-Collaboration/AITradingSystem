@@ -136,9 +136,7 @@ def _write_backtest_manifest(
         "status": status,
         "production_effect": "none",
         "assets": list(assets),
-        "symbol_mapping": {
-            "BRK.B": {"canonical_symbol": "BRK.B", "source_symbol": "BRK-B"}
-        },
+        "symbol_mapping": {"BRK.B": {"canonical_symbol": "BRK.B", "source_symbol": "BRK-B"}},
         "date_range": {"start": "2026-01-01", "end": as_of.isoformat()},
         "price_data_files": [str(prices_path)],
         "signal_snapshot_files": [],

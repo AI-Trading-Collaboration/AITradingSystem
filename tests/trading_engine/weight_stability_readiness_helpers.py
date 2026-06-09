@@ -52,13 +52,11 @@ def sample_weight_stability_readiness_payload(
             "recover_freshness": {
                 "status": "COMPLETED_BUT_NOT_RECOVERED" if not can_run else "MISSING",
                 "after_freshness_status": "MISSING" if not can_run else "",
-                "remaining_limitations": ["market data freshness remains MISSING"]
-                if not can_run
-                else [],
+                "remaining_limitations": (
+                    ["market data freshness remains MISSING"] if not can_run else []
+                ),
                 "can_continue": can_run,
-                "reason": "recover_freshness_completed_but_freshness_not_ok"
-                if not can_run
-                else "",
+                "reason": "recover_freshness_completed_but_freshness_not_ok" if not can_run else "",
             },
             "signal_snapshot": {
                 "status": "LIMITED",
@@ -84,9 +82,7 @@ def sample_weight_stability_readiness_payload(
                 "status": "FAILED" if not can_run else "OK",
                 "can_continue": can_run,
                 "reason": "price_missing_ratio_too_high" if not can_run else "",
-                "high_missing_ratio_symbols": ["GOOGL", "BRK.B", "SGOV"]
-                if not can_run
-                else [],
+                "high_missing_ratio_symbols": ["GOOGL", "BRK.B", "SGOV"] if not can_run else [],
                 "missing_symbols": [],
                 "special_findings": ["SINGLE_DAY_PRICE_CACHE"] if not can_run else [],
             },
@@ -98,22 +94,24 @@ def sample_weight_stability_readiness_payload(
             "blocking_checks": checks if not can_run else [],
             "reason": "price_missing_ratio_too_high" if not can_run else "ready",
         },
-        "blocking_errors": [
-            {"check": check, "status": "FAILED", "reason": "blocked"} for check in checks
-        ]
-        if not can_run
-        else [],
-        "recovery_plan": [
-            {
-                "step": 1,
-                "action": "diagnose_backtest_inputs",
-                "command": "aits data diagnose-backtest-inputs --latest",
-                "reason": "Confirm can_run_shadow_backtest=true.",
-                "auto_executed": False,
-            }
-        ]
-        if not can_run
-        else [],
+        "blocking_errors": (
+            [{"check": check, "status": "FAILED", "reason": "blocked"} for check in checks]
+            if not can_run
+            else []
+        ),
+        "recovery_plan": (
+            [
+                {
+                    "step": 1,
+                    "action": "diagnose_backtest_inputs",
+                    "command": "aits data diagnose-backtest-inputs --latest",
+                    "reason": "Confirm can_run_shadow_backtest=true.",
+                    "auto_executed": False,
+                }
+            ]
+            if not can_run
+            else []
+        ),
         "promotion_impact": {
             "can_support_candidate_promotion": False,
             "reason": "Stable weight tuning has not entered a valid backtest.",

@@ -154,8 +154,7 @@ def ensure_cash_prices(prices: pd.DataFrame) -> pd.DataFrame:
     existing_cash_dates: set[str] = set()
     if "symbol" in prices.columns:
         existing_cash_dates = set(
-            str(value)
-            for value in prices.loc[prices["symbol"] == "CASH", "date"].dropna().unique()
+            str(value) for value in prices.loc[prices["symbol"] == "CASH", "date"].dropna().unique()
         )
     synthetic_created_at = _synthetic_cash_created_at(prices)
     cash_rows = [
@@ -183,9 +182,7 @@ def _synthetic_cash_created_at(prices: pd.DataFrame) -> str:
     if "created_at" not in prices.columns:
         return MISSING_PRICE_METADATA_CREATED_AT
     values = sorted(
-        str(value).strip()
-        for value in prices["created_at"].dropna().unique()
-        if str(value).strip()
+        str(value).strip() for value in prices["created_at"].dropna().unique() if str(value).strip()
     )
     return values[-1] if values else MISSING_PRICE_METADATA_CREATED_AT
 
@@ -256,9 +253,9 @@ def validate_price_data(
         frame[f"_{column}"] = pd.to_numeric(frame[column], errors="coerce")
 
     price_columns = ["_open", "_high", "_low", "_close", "_adj_close"]
-    invalid_prices = frame[price_columns].isna().any(axis=1) | (
-        frame[price_columns] <= 0
-    ).any(axis=1)
+    invalid_prices = frame[price_columns].isna().any(axis=1) | (frame[price_columns] <= 0).any(
+        axis=1
+    )
     if invalid_prices.any():
         issues.append(
             ETFValidationIssue(
@@ -372,9 +369,7 @@ def _append_return_issues(
     data["_ret_1d"] = data.groupby("symbol")["_adj_close"].pct_change()
     abs_return = data["_ret_1d"].abs()
     extreme = abs_return > strategy.data_quality.extreme_daily_return_abs
-    suspicious = (
-        abs_return > strategy.data_quality.suspicious_daily_return_abs
-    ) & ~extreme
+    suspicious = (abs_return > strategy.data_quality.suspicious_daily_return_abs) & ~extreme
     if extreme.any():
         issues.append(
             ETFValidationIssue(
@@ -434,8 +429,12 @@ def _quality_report(
         if "symbol" in prices.columns
         else ()
     )
-    status = "FAIL" if any(issue.severity == "ERROR" for issue in issues) else (
-        "PASS_WITH_WARNINGS" if any(issue.severity == "WARNING" for issue in issues) else "PASS"
+    status = (
+        "FAIL"
+        if any(issue.severity == "ERROR" for issue in issues)
+        else (
+            "PASS_WITH_WARNINGS" if any(issue.severity == "WARNING" for issue in issues) else "PASS"
+        )
     )
     return ETFQualityReport(
         checked_at=datetime.now(UTC),

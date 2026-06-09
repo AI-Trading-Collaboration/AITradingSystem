@@ -1409,7 +1409,8 @@ def baseline_review_eligibility_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="eligibility JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "eligibility",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
+    / "eligibility",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -1476,7 +1477,8 @@ def baseline_review_matrix_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence matrix JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "matrix",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
+    / "matrix",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -2123,7 +2125,10 @@ def trend_calibration_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2740,7 +2745,10 @@ def dynamic_robustness_report_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2965,7 +2973,10 @@ def dynamic_rescue_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3500,7 +3511,10 @@ def dynamic_v3_rescue_real_evaluate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3716,7 +3730,10 @@ def dynamic_v3_rescue_failure_attribution_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认使用 real evaluation end date。"),
@@ -4016,7 +4033,10 @@ def dynamic_v3_data_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data audit artifact root。"),
@@ -4093,7 +4113,10 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data provenance artifact root。"),
@@ -4126,7 +4149,10 @@ def dynamic_v3_data_provenance_repair_price_manifest_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
     try:
@@ -4153,7 +4179,10 @@ def dynamic_v3_data_provenance_validate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """校验 TRADING-113 price cache provenance。"""
     payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
@@ -4348,7 +4377,10 @@ def dynamic_v3_sweep_run_profile_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -4399,7 +4431,10 @@ def dynamic_v3_injection_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="injection audit artifact root。"),
@@ -4505,7 +4540,10 @@ def dynamic_v3_sweep_run_command(
             "--rates-path",
             help="real evaluator FRED rates cache for validate-data gate。",
         ),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option(
@@ -8689,7 +8727,10 @@ def dynamic_shadow_update_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     registry_path: Annotated[
         Path,
         typer.Option("--registry-path", help="dynamic shadow candidate registry path。"),
@@ -10366,7 +10407,8 @@ def governance_summary_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出目录。"),
-    ] = DEFAULT_ETF_REPORT_DIR / "governance",
+    ] = DEFAULT_ETF_REPORT_DIR
+    / "governance",
 ) -> None:
     """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
     config = load_etf_config_bundle()
@@ -10763,7 +10805,9 @@ def experiments_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+    ] = PROJECT_ROOT
+    / "config"
+    / "report_registry.yaml",
 ) -> None:
     """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
     generated = datetime.now(UTC)
@@ -10970,7 +11014,9 @@ def forward_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+    ] = PROJECT_ROOT
+    / "config"
+    / "report_registry.yaml",
     output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
         DEFAULT_ETF_FORWARD_REPORT_DIR / "validation"
     ),
@@ -13150,7 +13196,11 @@ def p2_derive_edgar_events_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "sec_edgar"
+    / "filing_timeline.csv",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Canonical edgar_text_events 输出路径，默认读取 p2.yaml。"),
@@ -13195,15 +13245,27 @@ def p2_fetch_edgar_text_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "sec_edgar"
+    / "filing_timeline.csv",
     document_dir: Annotated[
         Path,
         typer.Option(help="SEC filing 文本缓存目录。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents",
     output_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index 输出路径。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents.csv",
     manifest_path: Annotated[Path, typer.Option(help="P2 source manifest 输出路径。")] = (
         DEFAULT_ETF_P2_MANIFEST_PATH
     ),
@@ -13257,7 +13319,11 @@ def p2_edgar_topics_command(
     input_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index CSV。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents.csv",
     date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
     output_dir: Annotated[Path, typer.Option(help="EDGAR topic audit 输出目录。")] = (
         DEFAULT_ETF_REPORT_DIR / "p2"

@@ -248,9 +248,7 @@ def test_candidate_evidence_ranking_is_deterministic_and_quality_aware() -> None
     assert by_candidate["ai_confirmation:aggregate"].evidence_score == 0
     assert by_candidate["parameter_review:aggregate"].status == "needs_more_data"
     assert all(
-        item.manual_review_priority != "critical"
-        for item in first
-        if item.status != "blocked"
+        item.manual_review_priority != "critical" for item in first if item.status != "blocked"
     )
 
 
@@ -373,16 +371,8 @@ def test_strategy_evidence_report_and_validation_cli_generate_json_and_markdown(
         terminal_width=160,
     )
     assert validate_result.exit_code == 0, validate_result.output
-    validation_json = (
-        tmp_path
-        / "validation"
-        / "strategy_evidence_validation_2026-06-03.json"
-    )
-    validation_md = (
-        tmp_path
-        / "validation"
-        / "strategy_evidence_validation_2026-06-03.md"
-    )
+    validation_json = tmp_path / "validation" / "strategy_evidence_validation_2026-06-03.json"
+    validation_md = tmp_path / "validation" / "strategy_evidence_validation_2026-06-03.md"
     validation = json.loads(validation_json.read_text(encoding="utf-8"))
     assert validation["status"] == "PASS"
     assert validation_md.exists()

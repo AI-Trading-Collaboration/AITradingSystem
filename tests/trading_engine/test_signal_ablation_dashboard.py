@@ -77,7 +77,5 @@ def test_reader_brief_displays_signal_ablation_summary(
     assert review["signal_ablation_status"] == "LIMITED"
     assert "Signal ablation" in review["signal_ablation_summary"]
     assert "promotion" in review["signal_ablation_summary"]
-    assert "No promotion-credit signals" in review[
-        "signal_ablation_no_promotion_credit_reason"
-    ]
+    assert "No promotion-credit signals" in review["signal_ablation_no_promotion_credit_reason"]
     assert isinstance(review["signal_ablation_negative_signals"], list)

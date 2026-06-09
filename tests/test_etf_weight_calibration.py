@@ -220,9 +220,7 @@ def test_weight_search_benchmark_ids_exist_in_etf_backtest_config() -> None:
 
 def test_weight_search_safety_fields_are_required() -> None:
     raw = _raw_registry()
-    del raw["weight_searches"]["etf_initial_weight_search_v1"]["safety"][
-        "manual_review_required"
-    ]
+    del raw["weight_searches"]["etf_initial_weight_search_v1"]["safety"]["manual_review_required"]
 
     with pytest.raises(ValueError, match="manual_review_required"):
         ETFWeightSearchRegistry.model_validate(raw)
@@ -501,18 +499,18 @@ def test_historical_weight_search_candidate_and_regime_cache_hits(
     first = run_historical_weight_search(**kwargs).payload
     second = run_historical_weight_search(**kwargs).payload
 
-    assert {
-        row["candidate_backtest_cache_status"] for row in first["candidate_weight_sets"]
-    } == {"miss_written"}
-    assert {
-        row["regime_robustness_cache_status"] for row in first["candidate_weight_sets"]
-    } == {"miss_written"}
-    assert {
-        row["candidate_backtest_cache_status"] for row in second["candidate_weight_sets"]
-    } == {"hit"}
-    assert {
-        row["regime_robustness_cache_status"] for row in second["candidate_weight_sets"]
-    } == {"hit"}
+    assert {row["candidate_backtest_cache_status"] for row in first["candidate_weight_sets"]} == {
+        "miss_written"
+    }
+    assert {row["regime_robustness_cache_status"] for row in first["candidate_weight_sets"]} == {
+        "miss_written"
+    }
+    assert {row["candidate_backtest_cache_status"] for row in second["candidate_weight_sets"]} == {
+        "hit"
+    }
+    assert {row["regime_robustness_cache_status"] for row in second["candidate_weight_sets"]} == {
+        "hit"
+    }
     assert without_cache_status(second["ranking"]) == without_cache_status(first["ranking"])
     assert without_cache_status(second["metrics"]) == without_cache_status(first["metrics"])
     assert second["runtime_cache"]["cache_hit_count"] == 8
@@ -561,12 +559,12 @@ def test_historical_weight_search_rebuilds_regime_cache_from_candidate_cache(
     shutil.rmtree(cache_root / "regime_robustness")
     second = run_historical_weight_search(**kwargs).payload
 
-    assert {
-        row["candidate_backtest_cache_status"] for row in second["candidate_weight_sets"]
-    } == {"hit"}
-    assert {
-        row["regime_robustness_cache_status"] for row in second["candidate_weight_sets"]
-    } == {"miss_written"}
+    assert {row["candidate_backtest_cache_status"] for row in second["candidate_weight_sets"]} == {
+        "hit"
+    }
+    assert {row["regime_robustness_cache_status"] for row in second["candidate_weight_sets"]} == {
+        "miss_written"
+    }
     assert without_cache_status(second["ranking"]) == without_cache_status(first["ranking"])
     assert without_cache_status(second["metrics"]) == without_cache_status(first["metrics"])
     assert second["robustness_evaluation"] == first["robustness_evaluation"]
@@ -769,9 +767,7 @@ def test_weight_top_candidate_export_writes_json_csv_markdown(tmp_path: Path) ->
     assert paths["json"].exists()
     assert paths["csv"].exists()
     assert paths["markdown"].exists()
-    assert "ETF Weight Top-N Candidate Export" in paths["markdown"].read_text(
-        encoding="utf-8"
-    )
+    assert "ETF Weight Top-N Candidate Export" in paths["markdown"].read_text(encoding="utf-8")
     csv_text = paths["csv"].read_text(encoding="utf-8")
     assert "forward_readiness_status" in csv_text
     assert "production_effect" in csv_text
@@ -849,8 +845,7 @@ def test_weight_candidate_comparison_includes_benchmarks_and_top_candidates() ->
         "buy_hold_SMH",
     ]
     assert any(
-        row["row_type"] == "static_reference_candidate"
-        for row in payload["comparison_rows"]
+        row["row_type"] == "static_reference_candidate" for row in payload["comparison_rows"]
     )
     top_rows = [
         row for row in payload["comparison_rows"] if row["row_type"] == "top_N_weight_candidate"
@@ -872,9 +867,7 @@ def test_weight_candidate_comparison_handles_missing_metric_with_reason() -> Non
     comparison = build_weight_candidate_comparison_table(payload, top=1)
 
     top_row = next(
-        row
-        for row in comparison["comparison_rows"]
-        if row["row_type"] == "top_N_weight_candidate"
+        row for row in comparison["comparison_rows"] if row["row_type"] == "top_N_weight_candidate"
     )
     assert top_row["Sharpe"] is None
     assert top_row["metric_null_reasons"]["Sharpe"] == "metric_not_available"
@@ -888,9 +881,7 @@ def test_weight_candidate_comparison_writes_json_csv_markdown(tmp_path: Path) ->
     assert paths["json"].exists()
     assert paths["csv"].exists()
     assert paths["markdown"].exists()
-    assert "ETF Weight Candidate Comparison Table" in paths["markdown"].read_text(
-        encoding="utf-8"
-    )
+    assert "ETF Weight Candidate Comparison Table" in paths["markdown"].read_text(encoding="utf-8")
     csv_text = paths["csv"].read_text(encoding="utf-8")
     assert "current_baseline" in csv_text
     assert "buy_hold_QQQ" in csv_text
@@ -1948,9 +1939,7 @@ def test_overfit_diagnostics_flags_forward_divergence(tmp_path: Path) -> None:
     )
 
     diagnostic = payload["candidate_diagnostics"][0]
-    assert diagnostic["component_diagnostics"]["forward_backtest_divergence"][
-        "risk_score"
-    ] >= 0.8
+    assert diagnostic["component_diagnostics"]["forward_backtest_divergence"]["risk_score"] >= 0.8
     assert "FORWARD_BACKTEST_DIVERGENCE" in diagnostic["reason_codes"]
 
 
@@ -2593,9 +2582,7 @@ def test_weight_calibration_usability_validate_cli_writes_json_and_markdown(
     assert list(
         (tmp_path / "validation").glob("historical_calibration_usability_validation_*.json")
     )
-    assert list(
-        (tmp_path / "validation").glob("historical_calibration_usability_validation_*.md")
-    )
+    assert list((tmp_path / "validation").glob("historical_calibration_usability_validation_*.md"))
 
 
 def test_historical_weight_search_diagnostics_report_generates_stability_and_rescue(
@@ -2666,12 +2653,10 @@ def test_historical_weight_search_diagnostics_report_generates_stability_and_res
     assert paths["markdown"].exists()
     assert paths["stable_shapes_csv"].exists()
     assert paths["near_shadow_csv"].exists()
-    assert "ETF Historical Weight Search Diagnostics" in paths[
-        "markdown"
-    ].read_text(encoding="utf-8")
-    assert "cross_preset_stability_score" in paths["stable_shapes_csv"].read_text(
+    assert "ETF Historical Weight Search Diagnostics" in paths["markdown"].read_text(
         encoding="utf-8"
     )
+    assert "cross_preset_stability_score" in paths["stable_shapes_csv"].read_text(encoding="utf-8")
 
 
 def test_historical_weight_search_diagnostics_aggregation_cache_hits(
@@ -2729,9 +2714,7 @@ def test_historical_weight_search_diagnostics_aggregation_cache_hits(
     assert list((tmp_path / "cache" / "price_returns_matrix").glob("*/payload.json"))
     assert resumed["cache_summary"]["resume_status"] == "resumed"
     assert resumed["run_manifest"]["run_id"] == "trading080-resume-test"
-    assert (
-        tmp_path / "cache" / "runs" / "trading080-resume-test" / "run_manifest.json"
-    ).exists()
+    assert (tmp_path / "cache" / "runs" / "trading080-resume-test" / "run_manifest.json").exists()
     validate_historical_weight_search_diagnostics_report(second)
 
 
@@ -2775,14 +2758,10 @@ def test_weight_calibration_diagnostics_cli_writes_report(tmp_path: Path) -> Non
     assert list((tmp_path / "diagnostics").glob("historical_weight_search_diagnostics_*.json"))
     assert list((tmp_path / "diagnostics").glob("historical_weight_search_diagnostics_*.md"))
     assert list(
-        (tmp_path / "diagnostics").glob(
-            "historical_weight_search_diagnostics_*_stable_shapes.csv"
-        )
+        (tmp_path / "diagnostics").glob("historical_weight_search_diagnostics_*_stable_shapes.csv")
     )
     assert list(
-        (tmp_path / "diagnostics").glob(
-            "historical_weight_search_diagnostics_*_near_shadow.csv"
-        )
+        (tmp_path / "diagnostics").glob("historical_weight_search_diagnostics_*_near_shadow.csv")
     )
     assert (tmp_path / "profiling" / "profiling_report.json").exists()
     assert (tmp_path / "profiling" / "candidate_hotspots.csv").exists()

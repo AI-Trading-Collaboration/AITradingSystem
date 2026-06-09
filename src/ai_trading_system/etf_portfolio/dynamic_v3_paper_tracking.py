@@ -581,9 +581,9 @@ def update_advisory_outcome(
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 **metrics,
-                "outcome_status": "AVAILABLE"
-                if metrics["status"] == "AVAILABLE"
-                else "INSUFFICIENT_DATA",
+                "outcome_status": (
+                    "AVAILABLE" if metrics["status"] == "AVAILABLE" else "INSUFFICIENT_DATA"
+                ),
             }
         )
     status = _rollup_outcome_status(rows)
@@ -1038,9 +1038,11 @@ def run_weekly_advisory_review(
         "week_start": week_start.isoformat(),
         "week_ending": week_ending.isoformat(),
         "generated_at": generated.isoformat(),
-        "status": "PASS"
-        if monitor_manifests or advisory_manifests or owner_records
-        else "INSUFFICIENT_DATA",
+        "status": (
+            "PASS"
+            if monitor_manifests or advisory_manifests or owner_records
+            else "INSUFFICIENT_DATA"
+        ),
         "weekly_recommendation": weekly_recommendation,
         "next_actions": next_actions,
         "paper_portfolio_status": latest_paper.get("state_status", "MISSING"),

@@ -813,23 +813,26 @@ def render_portfolio_candidate_review_alias_markdown(payload: dict[str, Any]) ->
     candidate = _mapping(decision_payload.get("candidate"))
     evidence = _mapping(package_payload.get("evidence_summary"))
     decision_metadata = _mapping(decision_payload.get("metadata"))
-    return "\n".join(
-        [
-            "# Portfolio Candidate Review Report",
-            "",
-            "## Summary",
-            "",
-            f"- decision: `{decision.get('status', '')}`",
-            f"- candidate: `{candidate.get('profile_name', '')}`",
-            f"- reviewer: `{decision.get('reviewer', '')}`",
-            f"- signal_quality: `{evidence.get('signal_snapshot_status', 'UNKNOWN')}`",
-            f"- production_effect: `{decision_metadata.get('production_effect', 'none')}`",
-            "",
-            "## Decision Reason",
-            "",
-            str(decision.get("reason") or ""),
-        ]
-    ).rstrip() + "\n"
+    return (
+        "\n".join(
+            [
+                "# Portfolio Candidate Review Report",
+                "",
+                "## Summary",
+                "",
+                f"- decision: `{decision.get('status', '')}`",
+                f"- candidate: `{candidate.get('profile_name', '')}`",
+                f"- reviewer: `{decision.get('reviewer', '')}`",
+                f"- signal_quality: `{evidence.get('signal_snapshot_status', 'UNKNOWN')}`",
+                f"- production_effect: `{decision_metadata.get('production_effect', 'none')}`",
+                "",
+                "## Decision Reason",
+                "",
+                str(decision.get("reason") or ""),
+            ]
+        ).rstrip()
+        + "\n"
+    )
 
 
 @dataclass(frozen=True)
@@ -855,9 +858,13 @@ def _resolve_candidate_artifact(
         summary_path = latest_portfolio_candidates_path(candidates_root)
     else:
         exact = candidates_root / as_of.isoformat() / "portfolio_candidates_summary.json"
-        summary_path = exact if exact.exists() else latest_portfolio_candidates_path_on_or_before(
-            as_of,
-            candidates_root,
+        summary_path = (
+            exact
+            if exact.exists()
+            else latest_portfolio_candidates_path_on_or_before(
+                as_of,
+                candidates_root,
+            )
         )
     if summary_path is None:
         return _CandidateArtifact(as_of, None, None)
@@ -1031,8 +1038,7 @@ def _recommended_next_step(
     if hard_rejections:
         return "rejected"
     default_recommendation = str(
-        _mapping(config.get("decision_rules")).get("default_recommendation_when_limited")
-        or "watch"
+        _mapping(config.get("decision_rules")).get("default_recommendation_when_limited") or "watch"
     )
     if (
         evidence.get("data_gate") == "OK"
@@ -1111,9 +1117,7 @@ def _fallback_signals_present(supporting: dict[str, Any]) -> bool:
 def _output_root(config: dict[str, Any]) -> Path:
     output = _mapping(config.get("output"))
     raw_root = output.get("portfolio_candidate_reviews_dir")
-    return resolve_project_path(
-        str(raw_root or default_portfolio_candidate_reviews_root())
-    )
+    return resolve_project_path(str(raw_root or default_portfolio_candidate_reviews_root()))
 
 
 def _input_root(config: dict[str, Any], key: str) -> Path:

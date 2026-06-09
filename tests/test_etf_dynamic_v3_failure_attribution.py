@@ -78,17 +78,11 @@ def test_dynamic_v3_failure_attribution_report_and_reader_brief(tmp_path: Path) 
         output_dir=tmp_path / "reports",
     )
     summary = reader_brief._etf_dynamic_v3_failure_attribution_summary(
-        {
-            "reports": [
-                _report_record("etf_dynamic_v3_failure_attribution_report", paths["json"])
-            ]
-        }
+        {"reports": [_report_record("etf_dynamic_v3_failure_attribution_report", paths["json"])]}
     )
     assert summary["availability"] == "AVAILABLE"
     assert summary["v0_4_promotion_review"] == report["summary"]["v0_4_promotion_review"]
-    assert summary["v0_5_design_recommendation"] == report["summary"][
-        "v0_5_design_recommendation"
-    ]
+    assert summary["v0_5_design_recommendation"] == report["summary"]["v0_5_design_recommendation"]
     assert summary["shadow_enrollment_allowed"] is False
 
     missing = reader_brief._etf_dynamic_v3_failure_attribution_summary({"reports": []})

@@ -34,9 +34,7 @@ from ai_trading_system.etf_portfolio.dynamic_shadow import (
 from ai_trading_system.etf_portfolio.models import ETFConfigBundle, PolicyMetadata
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_SCHEMA_VERSION = (
-    "etf_dynamic_failure_diagnostics_policy_v1"
-)
+DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_SCHEMA_VERSION = "etf_dynamic_failure_diagnostics_policy_v1"
 DYNAMIC_FAILURE_DATASET_SCHEMA_VERSION = "etf_dynamic_failure_dataset_v1"
 DYNAMIC_RESCUE_REPORT_SCHEMA_VERSION = "etf_dynamic_rescue_evaluation_report_v1"
 DYNAMIC_RESCUE_VALIDATION_SCHEMA_VERSION = "etf_dynamic_rescue_validation_v1"
@@ -320,15 +318,16 @@ def build_layer1_signal_failure_attribution(
         )
     )
     weak_signals = [
-        item["signal_id"] for item in false_off_contributors + false_on_contributors
+        item["signal_id"]
+        for item in false_off_contributors + false_on_contributors
         if item["event_count"] > 0
     ]
     useful_signals = [
-        "CompositeTrendScore"
-        if return_lift > 0
-        else "RiskRegimeScore"
-        if drawdown_lift >= 0
-        else ""
+        (
+            "CompositeTrendScore"
+            if return_lift > 0
+            else "RiskRegimeScore" if drawdown_lift >= 0 else ""
+        )
     ]
     useful_signals = [item for item in useful_signals if item]
     recommendations = _layer1_recommendations(
@@ -563,8 +562,7 @@ def apply_dynamic_rescue_template(
         for field_name, value in changes.event_risk_overlay_overrides.items():
             if field_name == "reductions":
                 candidate.event_risk_overlay.reductions = {
-                    str(symbol): float(reduction)
-                    for symbol, reduction in _mapping(value).items()
+                    str(symbol): float(reduction) for symbol, reduction in _mapping(value).items()
                 }
             elif hasattr(candidate.event_risk_overlay, field_name):
                 setattr(candidate.event_risk_overlay, field_name, value)
@@ -822,9 +820,7 @@ def build_dynamic_rescue_validation_report(
             _append_check(checks, "sample_report_safety", True, "sample report is safe")
         except Exception as exc:  # noqa: BLE001
             _append_check(checks, "validation_sample_workflow", False, str(exc))
-    registry_text = (PROJECT_ROOT / "config" / "report_registry.yaml").read_text(
-        encoding="utf-8"
-    )
+    registry_text = (PROJECT_ROOT / "config" / "report_registry.yaml").read_text(encoding="utf-8")
     _append_check(
         checks,
         "report_registry_visibility",
@@ -1104,8 +1100,7 @@ def _failure_dataset_rows(
                 code for code in _json_list(record.get("reason_codes_json")) if _is_constraint(code)
             ]
         comparison = {
-            key: _mapping(path.get(return_date))
-            for key, path in comparison_paths.items()
+            key: _mapping(path.get(return_date)) for key, path in comparison_paths.items()
         }
         dynamic_return = _float(record.get("strategy_return"))
         static_return = _float(
@@ -1356,9 +1351,7 @@ def _signal_contributors(
         >= thresholds.event_risk_high_min,
         "relative_strength_weak": lambda scores: _float(scores.get("GrowthLeadershipScore"))
         <= thresholds.weak_score_max,
-        "AI_confirmation_weak": lambda scores: _float(
-            scores.get("SemiconductorLeadershipScore")
-        )
+        "AI_confirmation_weak": lambda scores: _float(scores.get("SemiconductorLeadershipScore"))
         <= thresholds.weak_score_max,
     }
     output: list[dict[str, Any]] = []
@@ -1504,8 +1497,7 @@ def _turnover_sources(row: Mapping[str, Any], previous_regime: str) -> list[str]
     if any("EVENT_RISK" in reason for reason in reasons):
         sources.append("turnover_from_event_risk_overlay")
     if any(
-        ("GROWTH" in reason or "SEMICONDUCTOR" in reason or "WEAK_" in reason)
-        for reason in reasons
+        ("GROWTH" in reason or "SEMICONDUCTOR" in reason or "WEAK_" in reason) for reason in reasons
     ):
         sources.append("turnover_from_trend_overlay")
     if any(_is_constraint(reason) for reason in reasons):
@@ -1621,9 +1613,7 @@ def _improvement_summary(
         "candidate_count": len(results),
         "best_candidate": best.get("policy_id", "MISSING"),
         "best_status": best.get("evaluation_status", "MISSING"),
-        "best_return_vs_static_delta_improvement": best.get(
-            "return_vs_static_delta_improvement"
-        ),
+        "best_return_vs_static_delta_improvement": best.get("return_vs_static_delta_improvement"),
         "best_false_risk_off_reduction": best.get("false_risk_off_reduction"),
         "best_turnover_reduction": best.get("turnover_reduction"),
         "best_constraint_hit_reduction": best.get("constraint_hit_reduction"),
@@ -1920,9 +1910,7 @@ def _stable_id(prefix: str, *parts: Any) -> str:
 
 def _stable_hash(value: Any) -> str:
     return sha256(
-        json.dumps(value, ensure_ascii=False, sort_keys=True, default=_json_default).encode(
-            "utf-8"
-        )
+        json.dumps(value, ensure_ascii=False, sort_keys=True, default=_json_default).encode("utf-8")
     ).hexdigest()
 
 

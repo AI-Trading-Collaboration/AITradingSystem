@@ -47,8 +47,7 @@ def test_weight_calibration_cache_policy_loads_default() -> None:
     assert settings.parallel.max_workers == 8
     assert settings.safety.production_effect == "none"
     assert (
-        resolve_weight_calibration_worker_count("auto", policy=policy, available_cpu_count=16)
-        == 8
+        resolve_weight_calibration_worker_count("auto", policy=policy, available_cpu_count=16) == 8
     )
 
 

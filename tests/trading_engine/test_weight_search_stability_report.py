@@ -73,6 +73,4 @@ def test_weight_stability_report_alias_and_shadow_weights_are_auditable(
     alias_payload = json.loads(alias_json.read_text(encoding="utf-8"))
     assert alias_payload["report_type"] == WEIGHT_STABILITY_ALIAS_REPORT_TYPE
     assert alias_payload["source_report_type"] == WEIGHT_STABILITY_REPORT_TYPE
-    assert "Weight Search Stability Summary" in alias_markdown.read_text(
-        encoding="utf-8"
-    )
+    assert "Weight Search Stability Summary" in alias_markdown.read_text(encoding="utf-8")

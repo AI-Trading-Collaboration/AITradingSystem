@@ -418,13 +418,13 @@ def render_backtest_input_diagnostics_markdown(payload: dict[str, Any]) -> str:
             "snapshot, but candidate promotion remains disabled until signal quality is OK."
             if summary.get("backtest_mode") == "full_signal_backtest_limited"
             else (
-            "- Price-only shadow backtest may run, but candidate promotion remains disabled "
-            "until full signal snapshots are available."
-            if summary.get("backtest_mode") == "price_only_shadow_backtest"
-            else (
-                "- Shadow backtest input gate failed or is limited; repair cached inputs "
-                "before interpreting candidate performance."
-            )
+                "- Price-only shadow backtest may run, but candidate promotion remains disabled "
+                "until full signal snapshots are available."
+                if summary.get("backtest_mode") == "price_only_shadow_backtest"
+                else (
+                    "- Shadow backtest input gate failed or is limited; repair cached inputs "
+                    "before interpreting candidate performance."
+                )
             )
         )
     )

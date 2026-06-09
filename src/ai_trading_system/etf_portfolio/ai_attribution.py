@@ -12,9 +12,7 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 
-DEFAULT_AI_ATTRIBUTION_REPORT_ROOT = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_attribution"
-)
+DEFAULT_AI_ATTRIBUTION_REPORT_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_attribution"
 DEFAULT_AI_ATTRIBUTION_DATASET_DIR = DEFAULT_AI_ATTRIBUTION_REPORT_ROOT / "datasets"
 DEFAULT_AI_ATTRIBUTION_REVIEW_DIR = DEFAULT_AI_ATTRIBUTION_REPORT_ROOT / "reports"
 DEFAULT_AI_ATTRIBUTION_VALIDATION_DIR = DEFAULT_AI_ATTRIBUTION_REPORT_ROOT / "validation"
@@ -380,9 +378,7 @@ def build_component_level_attribution(
                 "targets": target_results,
                 "forward_drawdown_relationship": drawdown_relationship,
                 "stability_warning": (
-                    "insufficient_sample"
-                    if len(component_records) < min_sample_count
-                    else "none"
+                    "insufficient_sample" if len(component_records) < min_sample_count else "none"
                 ),
             }
         )
@@ -480,12 +476,10 @@ def build_event_risk_attribution(
                 "event_risk_bucket": bucket_id,
                 "sample_count": len(bucket_records),
                 "forward_max_drawdown": _mean(
-                    _float_or_none(record.get("max_drawdown_forward"))
-                    for record in bucket_records
+                    _float_or_none(record.get("max_drawdown_forward")) for record in bucket_records
                 ),
                 "forward_volatility": _mean(
-                    _float_or_none(record.get("realized_vol_forward"))
-                    for record in bucket_records
+                    _float_or_none(record.get("realized_vol_forward")) for record in bucket_records
                 ),
                 "negative_return_hit_rate": _share(
                     (_float_or_none(record.get("QQQ_forward_return")) or 0.0) < 0
@@ -586,20 +580,18 @@ def build_redundancy_diagnostics(
         "task": "TRADING-072F",
         "as_of_date": dataset_payload.get("as_of_date"),
         "correlation_matrix": rows,
-        "rank_correlation": {
-            row["comparison_signal"]: row["rank_correlation"] for row in rows
-        },
+        "rank_correlation": {row["comparison_signal"]: row["rank_correlation"] for row in rows},
         "incremental_bucket_lift": incremental_bucket_lift,
         "residual_signal_summary": _residual_signal_summary(records),
         "redundancy_band": redundancy_band,
         "overlap_warning": (
             "high_overlap_with_existing_signals"
             if redundancy_band == "high"
-            else "medium_overlap_with_existing_signals"
-            if redundancy_band == "medium"
-            else "none"
-            if redundancy_band == "low"
-            else "unknown_insufficient_data"
+            else (
+                "medium_overlap_with_existing_signals"
+                if redundancy_band == "medium"
+                else "none" if redundancy_band == "low" else "unknown_insufficient_data"
+            )
         ),
         "policy": {
             "medium_correlation": REDUNDANCY_MEDIUM_CORRELATION,
@@ -1115,8 +1107,8 @@ def _dataset_record_for_report(
     data_coverage_score = _float_or_none(component_scores.get("data_coverage"))
     if data_coverage_score is None:
         data_coverage_score = (
-            (_float_or_none(data_coverage.get("composite_data_coverage_ratio")) or 0.0) * 100.0
-        )
+            _float_or_none(data_coverage.get("composite_data_coverage_ratio")) or 0.0
+        ) * 100.0
     record = {
         "record_id": _stable_id(
             "ai-attribution-record",
@@ -1130,9 +1122,7 @@ def _dataset_record_for_report(
         "forward_window_days": forward_window,
         "forward_window_end_date": forward.get("forward_window_end_date"),
         "AIConfirmationScore": score_value,
-        "SemiconductorBreadthScore": _float_or_none(
-            component_scores.get("semiconductor_breadth")
-        ),
+        "SemiconductorBreadthScore": _float_or_none(component_scores.get("semiconductor_breadth")),
         "MegaCapAIScore": _float_or_none(component_scores.get("mega_cap_ai")),
         "AISemiconductorRelativeStrengthScore": _float_or_none(
             component_scores.get("ai_relative_strength")
@@ -1232,12 +1222,8 @@ def _forward_window_metrics(
     smh = symbol_returns.get("SMH_forward_return")
     return {
         **symbol_returns,
-        "SMH_minus_QQQ_forward_return": (
-            None if smh is None or qqq is None else float(smh - qqq)
-        ),
-        "QQQ_minus_SPY_forward_return": (
-            None if qqq is None or spy is None else float(qqq - spy)
-        ),
+        "SMH_minus_QQQ_forward_return": (None if smh is None or qqq is None else float(smh - qqq)),
+        "QQQ_minus_SPY_forward_return": (None if qqq is None or spy is None else float(qqq - spy)),
         "max_drawdown_forward": _worst_drawdown(paths) if sample_available else None,
         "realized_vol_forward": _mean_realized_vol(paths) if sample_available else None,
         "forward_window_end_date": max(end_dates).isoformat() if end_dates else "",
@@ -1255,9 +1241,7 @@ def _symbol_forward_path(
     window: int,
 ) -> dict[str, Any]:
     history = (
-        price_frame.loc[price_frame["symbol"] == symbol]
-        .sort_values("_date")
-        .reset_index(drop=True)
+        price_frame.loc[price_frame["symbol"] == symbol].sort_values("_date").reset_index(drop=True)
     )
     if history.empty:
         return _missing_forward_result("missing_symbol")
@@ -1299,8 +1283,7 @@ def _momentum(
 ) -> float | None:
     history = (
         price_frame.loc[
-            (price_frame["symbol"] == symbol)
-            & (price_frame["_date"] <= pd.Timestamp(score_date))
+            (price_frame["symbol"] == symbol) & (price_frame["_date"] <= pd.Timestamp(score_date))
         ]
         .sort_values("_date")
         .reset_index(drop=True)
@@ -1548,13 +1531,9 @@ def _component_target_score(
 
 def _event_risk_evidence_score(event_risk_attribution: Mapping[str, Any]) -> float:
     rows = _records(event_risk_attribution.get("event_risk_bucket_metrics"))
-    high = [
-        row for row in rows if row.get("event_risk_bucket") in {"high", "critical"}
-    ]
+    high = [row for row in rows if row.get("event_risk_bucket") in {"high", "critical"}]
     low = [row for row in rows if row.get("event_risk_bucket") in {"low", "medium"}]
-    high_drawdown = _mean(
-        _drawdown_severity(row.get("forward_max_drawdown")) for row in high
-    )
+    high_drawdown = _mean(_drawdown_severity(row.get("forward_max_drawdown")) for row in high)
     low_drawdown = _mean(_drawdown_severity(row.get("forward_max_drawdown")) for row in low)
     if high_drawdown is None or low_drawdown is None:
         return 40.0
@@ -1575,9 +1554,7 @@ def _regime_stability_score(regime_attribution: Mapping[str, Any]) -> float:
     if not rows:
         return 40.0
     positive = [
-        row
-        for row in rows
-        if (_float_or_none(row.get("mean_excess_vs_baseline")) or 0.0) > 0
+        row for row in rows if (_float_or_none(row.get("mean_excess_vs_baseline")) or 0.0) > 0
     ]
     return float(len(positive) / len(rows) * 100.0)
 
@@ -1788,10 +1765,7 @@ def _dataset_windows(dataset_payload: Mapping[str, Any]) -> list[str]:
     if windows:
         return windows
     return sorted(
-        {
-            _text(record.get("forward_window"))
-            for record in _records(dataset_payload.get("records"))
-        }
+        {_text(record.get("forward_window")) for record in _records(dataset_payload.get("records"))}
     )
 
 

@@ -82,12 +82,13 @@ def test_portfolio_candidates_run_profiles_and_write_recommended(tmp_path: Path)
     }
 
     profiles = {item["profile_name"]: item for item in run.payload["profiles"]}
-    assert profiles["lower_rebalance_threshold_3pct"]["profile_config"][
-        "rebalance_threshold"
-    ] == 0.03
-    assert profiles["higher_score_sensitivity"]["profile_config"][
-        "score_sensitivity_multiplier"
-    ] == 1.5
+    assert (
+        profiles["lower_rebalance_threshold_3pct"]["profile_config"]["rebalance_threshold"] == 0.03
+    )
+    assert (
+        profiles["higher_score_sensitivity"]["profile_config"]["score_sensitivity_multiplier"]
+        == 1.5
+    )
     assert profiles["softmax_mapping"]["profile_config"]["score_to_weight_method"] == "softmax"
     for candidate in run.payload["candidates"]:
         assert set(candidate["signal_transmission"]) >= {
@@ -192,9 +193,7 @@ def test_portfolio_candidates_shadow_backtest_reference_does_not_promote(
     decision = shadow_run.payload["promotion_decision"]
     assert decision["status"] in {"rejected", "watch"}
     assert "portfolio candidate" in decision["reason"].lower()
-    assert decision["supporting_artifacts"]["portfolio_candidates"] == str(
-        candidates_run.json_path
-    )
+    assert decision["supporting_artifacts"]["portfolio_candidates"] == str(candidates_run.json_path)
     assert shadow_run.payload["promotion_constraints"]["allow_candidate"] is False
     assert shadow_run.payload["candidate_parameters"]["promotion_eligible"] is False
     assert shadow_run.payload["safety"]["auto_promotion"] is False

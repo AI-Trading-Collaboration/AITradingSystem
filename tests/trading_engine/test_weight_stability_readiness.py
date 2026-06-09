@@ -242,9 +242,9 @@ def _refresh_payload(as_of: date, *, after_status: str) -> dict[str, object]:
         },
         "after": {"freshness_status": after_status},
         "actions": {"refreshed_backtest_manifest": True},
-        "remaining_limitations": ["market data freshness remains MISSING"]
-        if after_status != "OK"
-        else [],
+        "remaining_limitations": (
+            ["market data freshness remains MISSING"] if after_status != "OK" else []
+        ),
     }
 
 
@@ -300,13 +300,15 @@ def _diagnostics_payload(as_of: date, *, ok: bool) -> dict[str, object]:
             "overall_status": "LIMITED" if ok else "FAILED",
             "backtest_mode": "full_signal_backtest_limited" if ok else "blocked",
             "can_run_shadow_backtest": ok,
-            "blocking_reasons": []
-            if ok
-            else [
-                "Insufficient date coverage: required 2022-05-23 to 2026-05-29, "
-                "available 2026-05-29 to 2026-05-29.",
-                "Price missing ratio is too high for GOOGL, BRK.B, SGOV.",
-            ],
+            "blocking_reasons": (
+                []
+                if ok
+                else [
+                    "Insufficient date coverage: required 2022-05-23 to 2026-05-29, "
+                    "available 2026-05-29 to 2026-05-29.",
+                    "Price missing ratio is too high for GOOGL, BRK.B, SGOV.",
+                ]
+            ),
         },
         "checks": {
             "asset_coverage": {"status": "OK", "missing_assets": []},

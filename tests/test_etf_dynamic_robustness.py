@@ -32,9 +32,7 @@ def test_dynamic_robustness_policy_loads_and_rejects_unsafe(tmp_path: Path) -> N
     assert policy.market_regime.regime_id == "ai_after_chatgpt"
     assert policy.price_backtest.warmup_days >= 30
 
-    raw = yaml.safe_load(
-        DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["safety"]["automatic_candidate_promotion"] = True
     unsafe_path = tmp_path / "unsafe_dynamic_robustness.yaml"
     unsafe_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
@@ -42,9 +40,7 @@ def test_dynamic_robustness_policy_loads_and_rejects_unsafe(tmp_path: Path) -> N
     with pytest.raises(DynamicRobustnessError):
         load_dynamic_robustness_policy_config(unsafe_path)
 
-    raw = yaml.safe_load(
-        DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["score_model"]["event_risk_negative_trend_weight"] = 0.50
     invalid_path = tmp_path / "invalid_dynamic_robustness.yaml"
     invalid_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")

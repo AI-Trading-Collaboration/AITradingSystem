@@ -31,12 +31,8 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_ETF_DATA_QUALITY_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "data_quality.yaml"
 )
-DEFAULT_ETF_DATA_QUALITY_REPORT_DIR = (
-    DEFAULT_ETF_REPORT_DIR / "data_quality" / "governance"
-)
-DEFAULT_ETF_DATA_QUALITY_VALIDATION_DIR = (
-    DEFAULT_ETF_REPORT_DIR / "data_quality" / "validation"
-)
+DEFAULT_ETF_DATA_QUALITY_REPORT_DIR = DEFAULT_ETF_REPORT_DIR / "data_quality" / "governance"
+DEFAULT_ETF_DATA_QUALITY_VALIDATION_DIR = DEFAULT_ETF_REPORT_DIR / "data_quality" / "validation"
 
 DATA_QUALITY_POLICY_SCHEMA_VERSION = "etf_data_quality_policy_v1"
 DATA_QUALITY_REPORT_SCHEMA_VERSION = "etf_data_quality_report_v1"
@@ -231,11 +227,7 @@ def check_price_freshness(
                 expected,
                 holidays=set(settings.price_freshness.market_holidays),
             )
-            status = (
-                "fresh"
-                if lag <= settings.price_freshness.max_trading_day_lag
-                else "stale"
-            )
+            status = "fresh" if lag <= settings.price_freshness.max_trading_day_lag else "stale"
         blocking_status = _blocking_status(
             required=required,
             failed=status in {"missing", "stale"},
@@ -282,9 +274,7 @@ def check_missing_bar_coverage(
     records: list[dict[str, Any]] = []
     for symbol, required in _policy_assets(settings.price_freshness):
         symbol_dates = {
-            item
-            for item in _symbol_dates(frame, symbol, as_of=as_of)
-            if item in expected_set
+            item for item in _symbol_dates(frame, symbol, as_of=as_of) if item in expected_set
         }
         missing_dates = sorted(expected_set - symbol_dates)
         available = len(symbol_dates)
@@ -413,9 +403,7 @@ def check_return_outliers(
                 "known_event_explanation_if_available": explanation,
                 "blocking_status": "block" if critical else "warn",
                 "severity": (
-                    settings.return_outliers.severity_on_critical
-                    if critical
-                    else "warning"
+                    settings.return_outliers.severity_on_critical if critical else "warning"
                 ),
             }
         )
@@ -500,9 +488,7 @@ def check_evidence_completeness(
             sample_count = 0
         else:
             available_fields = [
-                field
-                for field in evidence.required_fields
-                if _path_exists(payload, field)
+                field for field in evidence.required_fields if _path_exists(payload, field)
             ]
             sample_count = _sample_count(payload, evidence.sample_count_paths)
             if len(available_fields) < len(evidence.required_fields):
@@ -563,13 +549,12 @@ def check_validation_gate_freshness(
         payload = _read_json_object(path)
         artifact_date = _date_or_none(report.get("artifact_date"))
         generated_at = _datetime_or_none(_first_nested_value(payload, ("generated_at",)))
-        latest_as_of = _date_or_none(
-            _first_nested_value(payload, ("as_of_date", "as_of", "date"))
-        ) or artifact_date
+        latest_as_of = (
+            _date_or_none(_first_nested_value(payload, ("as_of_date", "as_of", "date")))
+            or artifact_date
+        )
         latest_status = str(
-            _first_nested_value(payload, _STATUS_KEYS)
-            or report.get("artifact_status")
-            or "MISSING"
+            _first_nested_value(payload, _STATUS_KEYS) or report.get("artifact_status") or "MISSING"
         )
         max_age = gate.max_allowed_age_days
         if max_age is None:
@@ -606,9 +591,7 @@ def check_validation_gate_freshness(
                 "freshness_status": freshness_status,
                 "blocking_status": _blocking_status(required=gate.required, failed=failed),
                 "severity": (
-                    "critical"
-                    if failed
-                    else ("warning" if freshness_status != "fresh" else "info")
+                    "critical" if failed else ("warning" if freshness_status != "fresh" else "info")
                 ),
             }
         )
@@ -634,9 +617,7 @@ def check_report_staleness(
         path = _path_from_report_record(report)
         freshness = str(report.get("freshness_status") or "MISSING")
         age_days = _int_or_none(report.get("age_days"))
-        stale_by_policy = (
-            age_days is not None and age_days > settings.max_allowed_age_days
-        )
+        stale_by_policy = age_days is not None and age_days > settings.max_allowed_age_days
         missing = path is None or not path.exists()
         stale = freshness.upper() == "STALE" or stale_by_policy
         if missing:
@@ -680,9 +661,7 @@ def check_reader_brief_links(
     reader_path = _path_from_report_record(reader_report)
     reader_payload = _read_json_object(reader_path)
     reader_text = (
-        json.dumps(reader_payload, ensure_ascii=False, sort_keys=True)
-        if reader_payload
-        else ""
+        json.dumps(reader_payload, ensure_ascii=False, sort_keys=True) if reader_payload else ""
     )
     records: list[dict[str, Any]] = []
     for report_id, required in _required_optional_ids(
@@ -717,9 +696,7 @@ def check_reader_brief_links(
                 "link_status": link_status,
                 "blocking_status": _blocking_status(required=required, failed=failed),
                 "severity": (
-                    "critical"
-                    if failed
-                    else ("warning" if link_status != "fresh" else "info")
+                    "critical" if failed else ("warning" if link_status != "fresh" else "info")
                 ),
             }
         )
@@ -1002,9 +979,11 @@ def build_data_quality_validation_report(
             _validation_check(
                 "report_generator_available",
                 "PASS" if report_available else "FAIL",
-                "data quality report generator is available and non-mutating"
-                if report_available
-                else "data quality report generator produced unsafe output",
+                (
+                    "data quality report generator is available and non-mutating"
+                    if report_available
+                    else "data quality report generator produced unsafe output"
+                ),
                 {
                     "schema_version": report.get("schema_version"),
                     "status": report.get("status"),
@@ -1039,9 +1018,11 @@ def build_data_quality_validation_report(
             _validation_check(
                 "reader_brief_integration_available",
                 "PASS" if integration_ok else "FAIL",
-                "Reader Brief data quality registry integration is available"
-                if integration_ok
-                else "Reader Brief data quality registry integration is missing",
+                (
+                    "Reader Brief data quality registry integration is available"
+                    if integration_ok
+                    else "Reader Brief data quality registry integration is missing"
+                ),
                 {
                     "report_id": DATA_QUALITY_REPORT_REGISTRY_ID,
                     "validation_report_id": DATA_QUALITY_VALIDATION_REGISTRY_ID,
@@ -1065,9 +1046,11 @@ def build_data_quality_validation_report(
         _validation_check(
             "safety_fields_intact",
             "PASS" if _safety_matches(safety) else "FAIL",
-            "data quality workflow preserves safety boundary"
-            if _safety_matches(safety)
-            else "data quality workflow safety boundary is unsafe",
+            (
+                "data quality workflow preserves safety boundary"
+                if _safety_matches(safety)
+                else "data quality workflow safety boundary is unsafe"
+            ),
             {"required_safety": dict(DATA_QUALITY_SAFETY), "actual_safety": safety},
         )
     )
@@ -1327,9 +1310,11 @@ def _add_checker_probe(
             _validation_check(
                 check_id,
                 "PASS" if passed else "FAIL",
-                f"{check_id} probe completed"
-                if passed
-                else f"{check_id} probe returned incomplete summary",
+                (
+                    f"{check_id} probe completed"
+                    if passed
+                    else f"{check_id} probe returned incomplete summary"
+                ),
                 {"summary": summary},
             )
         )

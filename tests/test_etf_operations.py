@@ -257,9 +257,7 @@ def test_daily_operations_command_graph_missing_required_node_fails() -> None:
     ]
     for step in raw["daily_pipeline"]:
         step["dependencies"] = [
-            dependency
-            for dependency in step["dependencies"]
-            if dependency != "etf_daily_run"
+            dependency for dependency in step["dependencies"] if dependency != "etf_daily_run"
         ]
     config = ETFOperationsScheduleConfig.model_validate(raw)
 
@@ -392,9 +390,7 @@ def test_weekly_operations_command_graph_allows_optional_parameter_review_to_ski
 def test_weekly_operations_command_graph_missing_weekly_review_blocks_dependents() -> None:
     raw = _raw_schedule()
     raw["weekly_pipeline"] = [
-        step
-        for step in raw["weekly_pipeline"]
-        if step["step_id"] != "weekly_review_generate"
+        step for step in raw["weekly_pipeline"] if step["step_id"] != "weekly_review_generate"
     ]
     for step in raw["weekly_pipeline"]:
         step["dependencies"] = [
@@ -524,12 +520,10 @@ def test_monthly_operations_command_graph_marks_heavy_search_slow_cadence() -> N
     assert weight_search.owner_review_required is True
     assert "weight_calibration_search" not in build_daily_operations_command_graph().execution_order
     assert (
-        "weight_calibration_search"
-        not in build_weekly_operations_command_graph().execution_order
+        "weight_calibration_search" not in build_weekly_operations_command_graph().execution_order
     )
     assert (
-        "weight_calibration_search"
-        not in build_biweekly_operations_command_graph().execution_order
+        "weight_calibration_search" not in build_biweekly_operations_command_graph().execution_order
     )
 
 
@@ -550,9 +544,7 @@ def test_monthly_operations_command_graph_manual_review_for_parameter_proposals(
 def test_monthly_operations_command_graph_missing_required_node_fails() -> None:
     raw = _raw_schedule()
     raw["monthly_pipeline"] = [
-        step
-        for step in raw["monthly_pipeline"]
-        if step["step_id"] != "weight_calibration_search"
+        step for step in raw["monthly_pipeline"] if step["step_id"] != "weight_calibration_search"
     ]
     for step in raw["monthly_pipeline"]:
         step["dependencies"] = [
@@ -723,8 +715,10 @@ def test_operations_artifact_freshness_resolves_dynamic_run_id_glob(
     artifact = _artifact_by_id(report, "weight_calibration_search:1")
 
     assert artifact.freshness_status == "fresh"
-    assert Path(artifact.path).as_posix().endswith(
-        "reports/etf_portfolio/weight_calibration/run_123/summary.json"
+    assert (
+        Path(artifact.path)
+        .as_posix()
+        .endswith("reports/etf_portfolio/weight_calibration/run_123/summary.json")
     )
 
 
@@ -793,8 +787,7 @@ def test_operations_failure_policy_optional_missing_artifact_warns(
     )
     _write_json_artifact(
         tmp_path,
-        "reports/etf_portfolio/ai_confirmation/reports/"
-        "ai_confirmation_report_2026-06-03.json",
+        "reports/etf_portfolio/ai_confirmation/reports/" "ai_confirmation_report_2026-06-03.json",
         {
             "generated_at": "2026-06-03T10:30:00+00:00",
             "as_of_date": "2026-06-03",
@@ -937,17 +930,18 @@ def test_operations_owner_review_checklist_daily_uses_manual_review_step(
     assert checklist.checklist_step_id == "daily_owner_review"
     assert checklist.checklist_command == "manual_review:daily_quick_check"
     assert checklist.checklist_dependencies == ["operations_health_check"]
-    assert checklist.checklist_expected_outputs == [
-        "manual_review_checklist:daily_quick_check"
-    ]
+    assert checklist.checklist_expected_outputs == ["manual_review_checklist:daily_quick_check"]
     assert checklist.checklist_status == "blocked"
     assert checklist.source_pipeline_status == "blocked"
     assert checklist.read_only is True
     assert checklist.commands_executed is False
-    assert _checklist_item_by_id(
-        checklist,
-        "safety:operations_boundary",
-    ).owner_action == "confirm_no_production_or_broker_action"
+    assert (
+        _checklist_item_by_id(
+            checklist,
+            "safety:operations_boundary",
+        ).owner_action
+        == "confirm_no_production_or_broker_action"
+    )
 
 
 def test_operations_owner_review_checklist_includes_blocking_failure_event(
@@ -995,8 +989,7 @@ def test_operations_owner_review_checklist_includes_optional_warning_event(
     )
     _write_json_artifact(
         tmp_path,
-        "reports/etf_portfolio/ai_confirmation/reports/"
-        "ai_confirmation_report_2026-06-03.json",
+        "reports/etf_portfolio/ai_confirmation/reports/" "ai_confirmation_report_2026-06-03.json",
         {
             "generated_at": "2026-06-03T10:30:00+00:00",
             "as_of_date": "2026-06-03",
@@ -1068,10 +1061,13 @@ def test_operations_owner_review_checklist_monthly_template_without_failure_repo
     assert checklist.checklist_status == "ready"
     assert checklist.source_pipeline_status is None
     assert checklist.source_event_count == 0
-    assert _checklist_item_by_id(
-        checklist,
-        "cadence:monthly:entry_gate",
-    ).owner_action == "confirm_monthly_governance_and_slow_cadence_scope"
+    assert (
+        _checklist_item_by_id(
+            checklist,
+            "cadence:monthly:entry_gate",
+        ).owner_action
+        == "confirm_monthly_governance_and_slow_cadence_scope"
+    )
 
 
 def test_operations_owner_review_checklist_incident_template_is_stable() -> None:
@@ -1090,13 +1086,14 @@ def test_operations_owner_review_checklist_incident_template_is_stable() -> None
 
     assert first_checklist.checklist_step_id == "incident_review"
     assert first_checklist.checklist_status == "manual_review_required"
-    assert _checklist_item_by_id(
-        first_checklist,
-        "cadence:incident:entry_gate",
-    ).owner_action == "confirm_incident_scope_and_recovery_boundary"
-    assert first_checklist.model_dump(mode="json") == second_checklist.model_dump(
-        mode="json"
+    assert (
+        _checklist_item_by_id(
+            first_checklist,
+            "cadence:incident:entry_gate",
+        ).owner_action
+        == "confirm_incident_scope_and_recovery_boundary"
     )
+    assert first_checklist.model_dump(mode="json") == second_checklist.model_dump(mode="json")
 
 
 def test_operations_owner_review_checklist_rejects_cadence_mismatch(
@@ -1200,9 +1197,7 @@ def test_operations_scheduler_dry_run_missing_required_artifact_blocks(
     data_gate = _dry_run_step_by_id(dry_run, "data_freshness_check")
 
     assert data_gate.status == "blocked"
-    assert data_gate.blocking_event_ids == [
-        "data_freshness_check:1:artifact_missing"
-    ]
+    assert data_gate.blocking_event_ids == ["data_freshness_check:1:artifact_missing"]
     assert "data_freshness_check:1:artifact_missing" in dry_run.blocking_failures
 
 
@@ -1221,8 +1216,7 @@ def test_operations_scheduler_dry_run_optional_missing_artifact_warns(
     )
     _write_json_artifact(
         tmp_path,
-        "reports/etf_portfolio/ai_confirmation/reports/"
-        "ai_confirmation_report_2026-06-03.json",
+        "reports/etf_portfolio/ai_confirmation/reports/" "ai_confirmation_report_2026-06-03.json",
         {
             "generated_at": "2026-06-03T10:30:00+00:00",
             "as_of_date": "2026-06-03",
@@ -1238,9 +1232,7 @@ def test_operations_scheduler_dry_run_optional_missing_artifact_warns(
     attribution = _dry_run_step_by_id(dry_run, "ai_attribution_update")
 
     assert attribution.status == "warning"
-    assert attribution.warning_event_ids == [
-        "ai_attribution_update:1:artifact_missing"
-    ]
+    assert attribution.warning_event_ids == ["ai_attribution_update:1:artifact_missing"]
     assert "ai_attribution_update:1:artifact_missing" in dry_run.warnings
 
 
@@ -1331,9 +1323,7 @@ def test_operations_health_report_daily_includes_required_sections(
     assert report.owner_review_checklist["checklist_status"] == "blocked"
     assert report.expected_next_run["production_scheduler_entry"] == "aits ops daily-run"
     assert report.source_artifacts
-    assert report.source_schema_versions["dry_run"] == (
-        OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
-    )
+    assert report.source_schema_versions["dry_run"] == (OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION)
 
 
 def test_operations_health_report_tracks_optional_warning(
@@ -1351,8 +1341,7 @@ def test_operations_health_report_tracks_optional_warning(
     )
     _write_json_artifact(
         tmp_path,
-        "reports/etf_portfolio/ai_confirmation/reports/"
-        "ai_confirmation_report_2026-06-03.json",
+        "reports/etf_portfolio/ai_confirmation/reports/" "ai_confirmation_report_2026-06-03.json",
         {
             "generated_at": "2026-06-03T10:30:00+00:00",
             "as_of_date": "2026-06-03",
@@ -1392,8 +1381,7 @@ def test_operations_health_report_weekly_includes_owner_checklist(
     assert report.owner_review_checklist["checklist_step_id"] == "weekly_owner_review"
     assert report.expected_next_run["source"] == "docs/operations/operations_runbook.md"
     assert any(
-        artifact.source_step == "weekly_review_generate"
-        for artifact in report.source_artifacts
+        artifact.source_step == "weekly_review_generate" for artifact in report.source_artifacts
     )
 
 
@@ -1497,9 +1485,7 @@ def test_operations_validation_fails_when_required_step_missing(
 ) -> None:
     raw = _raw_schedule()
     raw["daily_pipeline"] = [
-        step
-        for step in raw["daily_pipeline"]
-        if step["step_id"] != "operations_health_check"
+        step for step in raw["daily_pipeline"] if step["step_id"] != "operations_health_check"
     ]
     for field_name in (
         "weekly_pipeline",

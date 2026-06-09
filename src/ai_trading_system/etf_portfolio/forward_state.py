@@ -14,9 +14,7 @@ DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH = (
     PROJECT_ROOT / "data" / "simulation" / "etf_shadow_candidates.json"
 )
 
-OPEN_SHADOW_STATUSES = frozenset(
-    {"active", "needs_more_data", "watch", "reject_pending_review"}
-)
+OPEN_SHADOW_STATUSES = frozenset({"active", "needs_more_data", "watch", "reject_pending_review"})
 TERMINAL_SHADOW_STATUSES = frozenset({"rejected", "archived"})
 ALLOWED_SHADOW_STATUSES = OPEN_SHADOW_STATUSES | TERMINAL_SHADOW_STATUSES
 LEGACY_STATUS_MAP = {
@@ -215,8 +213,7 @@ def validate_shadow_candidate_registry(payload: Mapping[str, Any]) -> None:
         if status in OPEN_SHADOW_STATUSES:
             if candidate_id in active_candidate_ids:
                 raise ValueError(
-                    "ETF shadow candidate duplicate active candidate_id: "
-                    f"{candidate_id}"
+                    "ETF shadow candidate duplicate active candidate_id: " f"{candidate_id}"
                 )
             active_candidate_ids.add(candidate_id)
     expected_count = len(candidates)
@@ -227,9 +224,7 @@ def validate_shadow_candidate_registry(payload: Mapping[str, Any]) -> None:
 def validate_shadow_candidate_record(candidate: Mapping[str, Any]) -> None:
     missing = [field for field in REQUIRED_CANDIDATE_FIELDS if field not in candidate]
     if missing:
-        raise ValueError(
-            "ETF shadow candidate missing required field(s): " + ", ".join(missing)
-        )
+        raise ValueError("ETF shadow candidate missing required field(s): " + ", ".join(missing))
     for field in (
         "shadow_id",
         "candidate_id",
@@ -262,9 +257,7 @@ def validate_shadow_candidate_record(candidate: Mapping[str, Any]) -> None:
     if candidate.get("manual_review_required") is not True:
         raise ValueError("ETF shadow candidate must keep manual_review_required=true")
     if candidate.get("production_promotion_allowed") is not False:
-        raise ValueError(
-            "ETF shadow candidate must keep production_promotion_allowed=false"
-        )
+        raise ValueError("ETF shadow candidate must keep production_promotion_allowed=false")
     if not isinstance(candidate.get("ranking_summary"), Mapping):
         raise ValueError("ETF shadow candidate ranking_summary must be a mapping")
     if not isinstance(candidate.get("evaluation_schedule"), Mapping):
@@ -289,9 +282,7 @@ def update_shadow_candidate_evaluation_state(
             candidate = {
                 **candidate,
                 "status": _canonical_status(update.get("status", candidate.get("status"))),
-                "last_evaluated_at": _none_or_string(
-                    update.get("last_evaluated_at", timestamp)
-                ),
+                "last_evaluated_at": _none_or_string(update.get("last_evaluated_at", timestamp)),
                 "last_evaluated_date": _none_or_string(update.get("last_evaluated_date")),
                 "notes": _string_list(update.get("notes", candidate.get("notes"))),
             }
@@ -322,9 +313,7 @@ def _validate_top_level_safety(payload: Mapping[str, Any]) -> None:
     if payload.get("broker_action") != "none":
         raise ValueError("ETF shadow candidate registry must keep broker_action=none")
     if payload.get("manual_review_required") is not True:
-        raise ValueError(
-            "ETF shadow candidate registry must keep manual_review_required=true"
-        )
+        raise ValueError("ETF shadow candidate registry must keep manual_review_required=true")
     if payload.get("production_promotion_allowed") is not False:
         raise ValueError(
             "ETF shadow candidate registry must keep production_promotion_allowed=false"
@@ -339,9 +328,7 @@ def _reject_explicit_top_level_unsafe_values(payload: Mapping[str, Any]) -> None
     if "broker_action" in payload and payload.get("broker_action") != "none":
         raise ValueError("ETF shadow candidate registry must keep broker_action=none")
     if "manual_review_required" in payload and payload.get("manual_review_required") is not True:
-        raise ValueError(
-            "ETF shadow candidate registry must keep manual_review_required=true"
-        )
+        raise ValueError("ETF shadow candidate registry must keep manual_review_required=true")
     if (
         "production_promotion_allowed" in payload
         and payload.get("production_promotion_allowed") is not False

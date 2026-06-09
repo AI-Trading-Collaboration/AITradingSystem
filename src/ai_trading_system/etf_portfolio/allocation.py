@@ -153,9 +153,7 @@ def _apply_constraints(
             applied.append(f"{symbol}_ASSET_CAP")
             diagnostics.append(
                 _constraint_diagnostic(
-                    constraint_id=(
-                        "asset_weight_floor" if capped > before else "asset_weight_cap"
-                    ),
+                    constraint_id=("asset_weight_floor" if capped > before else "asset_weight_cap"),
                     asset_or_sleeve=symbol,
                     before=before,
                     after=capped,
@@ -180,9 +178,7 @@ def _apply_constraints(
             diagnostics.append(
                 _constraint_diagnostic(
                     constraint_id=(
-                        "semiconductor_sleeve_cap"
-                        if group == "semiconductor"
-                        else "risk_group_cap"
+                        "semiconductor_sleeve_cap" if group == "semiconductor" else "risk_group_cap"
                     ),
                     asset_or_sleeve=group,
                     before=before_total,

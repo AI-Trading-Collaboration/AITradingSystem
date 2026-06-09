@@ -83,8 +83,7 @@ class ETFParameterGovernancePolicy(BaseModel):
         missing = required - set(self.model_states)
         if missing:
             raise ValueError(
-                "ETF parameter governance missing model states: "
-                f"{', '.join(sorted(missing))}"
+                "ETF parameter governance missing model states: " f"{', '.join(sorted(missing))}"
             )
         return self
 
@@ -149,9 +148,7 @@ def evaluate_parameter_candidate(
 
 def render_parameter_governance_summary(payload: Mapping[str, Any]) -> str:
     blockers = payload.get("promotion_blockers")
-    blocker_lines = (
-        ["- none"] if not blockers else [f"- {blocker}" for blocker in blockers]
-    )
+    blocker_lines = ["- none"] if not blockers else [f"- {blocker}" for blocker in blockers]
     sample = payload.get("sample_period")
     sample_text = json.dumps(sample, ensure_ascii=False, sort_keys=True)
     benchmark = json.dumps(
@@ -354,9 +351,7 @@ def _no_lookahead_status(candidate: Mapping[str, Any] | None) -> str:
 
 def _requested_production_effect(candidate: Mapping[str, Any]) -> str:
     return str(
-        candidate.get("requested_production_effect")
-        or candidate.get("production_effect")
-        or "none"
+        candidate.get("requested_production_effect") or candidate.get("production_effect") or "none"
     )
 
 

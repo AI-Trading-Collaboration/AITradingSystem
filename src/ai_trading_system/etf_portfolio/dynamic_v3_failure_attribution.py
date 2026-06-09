@@ -55,9 +55,7 @@ DYNAMIC_V3_FAILURE_ATTRIBUTION_VALIDATION_SCHEMA_VERSION = (
     "etf_dynamic_v3_failure_attribution_validation_v1"
 )
 
-DYNAMIC_V3_FAILURE_ATTRIBUTION_REPORT_TYPE = (
-    "etf_dynamic_v3_failure_attribution_report"
-)
+DYNAMIC_V3_FAILURE_ATTRIBUTION_REPORT_TYPE = "etf_dynamic_v3_failure_attribution_report"
 DYNAMIC_V3_FAILURE_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
     "etf_dynamic_v3_failure_attribution_validation"
 )
@@ -155,9 +153,7 @@ class DynamicV3ConstraintAttributionConfig(BaseModel):
 
 class DynamicV3V04PromotionReviewConfig(BaseModel):
     promote_v0_4_status: Literal["promote_v0_4"]
-    observe_v0_4_with_constraint_guard_status: Literal[
-        "observe_v0_4_with_constraint_guard"
-    ]
+    observe_v0_4_with_constraint_guard_status: Literal["observe_v0_4_with_constraint_guard"]
     do_not_promote_v0_4_status: Literal["do_not_promote_v0_4"]
     max_promotable_constraint_hit_rate: float = Field(ge=0, le=1)
     max_promotable_overfit_failed_findings: int = Field(ge=0)
@@ -314,11 +310,7 @@ def build_dynamic_v3_failure_attribution_report(
     )
     policies = _mapping(materialized.get("policies"))
     groups = _mapping(materialized.get("groups"))
-    missing = [
-        item
-        for item in (best_v0_3_policy_id, v0_4_policy_id)
-        if item not in policies
-    ]
+    missing = [item for item in (best_v0_3_policy_id, v0_4_policy_id) if item not in policies]
     if missing:
         raise DynamicV3FailureAttributionError(
             "attribution policy set missing required policies: " + ", ".join(missing)
@@ -504,12 +496,8 @@ def build_dynamic_v3_failure_attribution_report(
                 DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
             ),
             "v3_rescue_policy_config": str(DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH),
-            "dynamic_robustness_policy_config": str(
-                DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH
-            ),
-            "dynamic_allocation_policy_config": str(
-                DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH
-            ),
+            "dynamic_robustness_policy_config": str(DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH),
+            "dynamic_allocation_policy_config": str(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH),
             "failure_diagnostics_policy_config": str(
                 DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH
             ),
@@ -538,8 +526,9 @@ def build_dynamic_v3_failure_attribution_validation_report(
     v3_rescue_config_path: Path | str = DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH,
     dynamic_robustness_config_path: Path | str = DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH,
     dynamic_allocation_config_path: Path | str = DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
-    failure_diagnostics_config_path: Path
-    | str = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
+    failure_diagnostics_config_path: (
+        Path | str
+    ) = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
     report_registry_path: Path = PROJECT_ROOT / "config" / "report_registry.yaml",
     reader_brief_path: Path = PROJECT_ROOT
     / "src"
@@ -967,9 +956,7 @@ def _dynamic_row_from_robustness(
     robustness_report: Mapping[str, Any],
 ) -> dict[str, Any]:
     comparison = _records(robustness_report.get("comparison_table"))
-    dynamic_row = next(
-        row for row in comparison if row.get("comparison_id") == "dynamic_candidate"
-    )
+    dynamic_row = next(row for row in comparison if row.get("comparison_id") == "dynamic_candidate")
     static_row = next(
         row for row in comparison if row.get("comparison_id") == "static_base_candidate"
     )
@@ -1003,18 +990,14 @@ def _dynamic_row_from_robustness(
         "walk_forward_pass_ratio": _float(walk_forward.get("pass_ratio")),
         "overfit_status": overfit.get("status"),
         "overfit_failed_finding_count": _int(overfit.get("failed_finding_count")),
-        "single_window_return_share": _overfit_finding_value(
-            overfit, "single_period_dependency"
-        ),
+        "single_window_return_share": _overfit_finding_value(overfit, "single_period_dependency"),
         "regime_return_concentration": _float(regime.get("max_positive_return_share")),
     }
 
 
 def _static_row_from_robustness(robustness_report: Mapping[str, Any]) -> dict[str, Any]:
     comparison = _records(robustness_report.get("comparison_table"))
-    row = next(
-        item for item in comparison if item.get("comparison_id") == "static_base_candidate"
-    )
+    row = next(item for item in comparison if item.get("comparison_id") == "static_base_candidate")
     return {
         "policy_id": "static_base_candidate",
         "total_return": _float(row.get("total_return")),
@@ -1063,10 +1046,12 @@ def _metric_delta_table(
             "delta_v0_3_minus_v0_4": abs(_float(v0_3_row.get("max_drawdown")))
             - abs(_float(v0_4_row.get("max_drawdown"))),
             "direction": "lower_is_better",
-            "interpretation": "v0.3 drawdown is less severe than v0.4"
-            if abs(_float(v0_3_row.get("max_drawdown")))
-            <= abs(_float(v0_4_row.get("max_drawdown")))
-            else "v0.3 drawdown is more severe than v0.4",
+            "interpretation": (
+                "v0.3 drawdown is less severe than v0.4"
+                if abs(_float(v0_3_row.get("max_drawdown")))
+                <= abs(_float(v0_4_row.get("max_drawdown")))
+                else "v0.3 drawdown is more severe than v0.4"
+            ),
         }
     )
     return rows
@@ -1328,8 +1313,7 @@ def _drawdown_attribution(
             "drawdown protection 被牺牲。"
             if degradation <= 0
             else (
-                "v0.3 相对 v0.4 的 max drawdown 更深，需要复核 smoothing "
-                "是否延迟风险暴露调整。"
+                "v0.3 相对 v0.4 的 max drawdown 更深，需要复核 smoothing " "是否延迟风险暴露调整。"
             )
         ),
     }
@@ -1356,9 +1340,9 @@ def _worst_drawdown_event(records: Sequence[Mapping[str, Any]]) -> dict[str, Any
         "trough_signal_date": worst_row.get("signal_date") if worst_row else "",
         "max_drawdown": worst,
         "selected_regime": worst_row.get("selected_regime") if worst_row else "",
-        "target_weights": _parse_json_mapping(worst_row.get("target_weights_json"))
-        if worst_row
-        else {},
+        "target_weights": (
+            _parse_json_mapping(worst_row.get("target_weights_json")) if worst_row else {}
+        ),
         "reason_codes": _parse_json_list(worst_row.get("reason_codes_json")) if worst_row else [],
     }
 
@@ -1423,9 +1407,7 @@ def _v0_4_advantage_source(
     v04_vs_v03_static_gap_delta = _float(v0_4_row.get("dynamic_vs_static_gap")) - _float(
         v0_3_row.get("dynamic_vs_static_gap")
     )
-    path_gap_tolerance = (
-        policy.v0_4_promotion_review.max_static_gap_loss_vs_v0_3_for_path_edge
-    )
+    path_gap_tolerance = policy.v0_4_promotion_review.max_static_gap_loss_vs_v0_3_for_path_edge
     drawdown_tolerance = policy.v0_4_promotion_review.max_drawdown_degradation_vs_v0_3
     v04_has_path_edge = (
         v04_vs_v02_turnover_delta < 0
@@ -1445,10 +1427,7 @@ def _v0_4_advantage_source(
             "和 dynamic-vs-static gap，相对 v0.3 的 static-gap 损失仍在配置容忍内，"
             "因此可保留 v0.4 exposure path 并优先设计 constraint guard。"
             if v04_has_path_edge
-            else (
-                "v0.4 优势更多依赖 turnover 下降，exposure path 仍需 v0.5 "
-                "重新设计验证。"
-            )
+            else ("v0.4 优势更多依赖 turnover 下降，exposure path 仍需 v0.5 " "重新设计验证。")
         ),
     }
 

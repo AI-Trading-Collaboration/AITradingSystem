@@ -49,9 +49,7 @@ def build_standardized_backtest_metrics(
     last_signal_date = _frame_date_at(daily, "signal_date", -1)
     final_nav = _final_nav(daily, initial_nav, strategy_metrics.total_return)
     average_cash_weight = _average_cash_weight(daily)
-    average_equity_exposure = (
-        None if average_cash_weight is None else 1.0 - average_cash_weight
-    )
+    average_equity_exposure = None if average_cash_weight is None else 1.0 - average_cash_weight
     if average_cash_weight is None:
         metric_null_reasons["average_cash_weight"] = "target_weights_missing"
         metric_null_reasons["average_equity_exposure"] = "target_weights_missing"
@@ -67,9 +65,7 @@ def build_standardized_backtest_metrics(
         standardized_volatility = None
         metric_null_reasons["annualized_volatility"] = "insufficient_return_sample"
 
-    monthly_strategy = [
-        row for row in monthly_returns if row.get("strategy_return") is not None
-    ]
+    monthly_strategy = [row for row in monthly_returns if row.get("strategy_return") is not None]
     if monthly_strategy:
         best_row = max(monthly_strategy, key=lambda row: float(row["strategy_return"]))
         worst_row = min(monthly_strategy, key=lambda row: float(row["strategy_return"]))
@@ -104,13 +100,9 @@ def build_standardized_backtest_metrics(
         if benchmark_total_return is None:
             metric_null_reasons["benchmark_excess_return"] = "primary_benchmark_metric_missing"
         else:
-            benchmark_excess_return = strategy_metrics.total_return - float(
-                benchmark_total_return
-            )
+            benchmark_excess_return = strategy_metrics.total_return - float(benchmark_total_return)
         if benchmark_max_drawdown is None:
-            metric_null_reasons[
-                "benchmark_drawdown_reduction"
-            ] = "primary_benchmark_metric_missing"
+            metric_null_reasons["benchmark_drawdown_reduction"] = "primary_benchmark_metric_missing"
         else:
             benchmark_drawdown_reduction = abs(float(benchmark_max_drawdown)) - abs(
                 strategy_metrics.max_drawdown
@@ -168,9 +160,7 @@ def build_monthly_return_table(
         strategy_return = _compound_return(strategy_returns) if strategy_returns else None
         benchmark_return = _compound_benchmark_return(group, benchmark_weights)
         average_equity_exposure = _average_equity_exposure_for_group(group)
-        max_drawdown = (
-            _max_drawdown_from_returns(strategy_returns) if strategy_returns else None
-        )
+        max_drawdown = _max_drawdown_from_returns(strategy_returns) if strategy_returns else None
         row: dict[str, object] = {
             "month": str(month),
             "strategy_return": strategy_return,
@@ -260,9 +250,7 @@ def _average_cash_weight(daily: pd.DataFrame) -> float | None:
 def _average_equity_exposure_for_group(group: pd.DataFrame) -> float | None:
     cash_weights = [
         weights.get("CASH")
-        for weights in (
-            _json_mapping(value) for value in group.get("target_weights_json", [])
-        )
+        for weights in (_json_mapping(value) for value in group.get("target_weights_json", []))
     ]
     numeric = [float(value) for value in cash_weights if value is not None]
     return None if not numeric else 1.0 - mean(numeric)

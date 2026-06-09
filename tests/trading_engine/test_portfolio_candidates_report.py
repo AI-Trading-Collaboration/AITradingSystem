@@ -65,6 +65,4 @@ def test_portfolio_candidates_report_alias_reads_source_summary(tmp_path: Path) 
     assert alias_payload["report_type"] == "portfolio_candidates_report"
     assert alias_payload["source_report_type"] == "portfolio_candidates"
     assert alias_payload["ranking"]["best_profile"] == source_payload["ranking"]["best_profile"]
-    assert "Portfolio Construction Candidate Summary" in alias_markdown.read_text(
-        encoding="utf-8"
-    )
+    assert "Portfolio Construction Candidate Summary" in alias_markdown.read_text(encoding="utf-8")

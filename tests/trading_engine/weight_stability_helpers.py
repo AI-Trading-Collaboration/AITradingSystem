@@ -61,8 +61,7 @@ def sample_weight_stability_payload(
                 "artifacts/weight_stability/2026-05-28/stable_weight_candidates.json"
             ),
             "recommended_stable_shadow_weights": (
-                "artifacts/weight_stability/2026-05-28/"
-                "recommended_stable_shadow_weights.yaml"
+                "artifacts/weight_stability/2026-05-28/" "recommended_stable_shadow_weights.yaml"
                 if candidate_found
                 else ""
             ),

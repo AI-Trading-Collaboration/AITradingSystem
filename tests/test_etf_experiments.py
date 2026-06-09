@@ -527,9 +527,7 @@ def test_etf_experiment_comparison_can_apply_ranking_policy() -> None:
     )
 
     assert ranked_report["ranking_policy_status"] == "APPLIED:risk_adjusted_v1"
-    assert ranked_report["top_candidates_by_ranking_policy"][0]["experiment_id"] == (
-        "candidate_a"
-    )
+    assert ranked_report["top_candidates_by_ranking_policy"][0]["experiment_id"] == ("candidate_a")
 
 
 def test_etf_experiment_candidate_selection_marks_eligible_shadow_candidate() -> None:
@@ -932,9 +930,7 @@ def test_etf_experiment_validation_fails_when_candidate_gate_missing() -> None:
     )
 
     assert report["status"] == "FAIL"
-    assert "CANDIDATE_GATE_MISSING:shadow_only_manual_review" in (
-        report["summary"]["blockers"]
-    )
+    assert "CANDIDATE_GATE_MISSING:shadow_only_manual_review" in (report["summary"]["blockers"])
 
 
 def test_etf_experiment_validation_fails_when_pack_production_effect_is_unsafe() -> None:
@@ -1082,9 +1078,7 @@ def _write_eligible_experiment_run(tmp_path: Path) -> Path:
         },
         "benchmark_results.json": {
             "benchmarks": {
-                "base_ai_growth": {
-                    "B002": {"total_return": 0.10, "max_drawdown": -0.12}
-                }
+                "base_ai_growth": {"B002": {"total_return": 0.10, "max_drawdown": -0.12}}
             }
         },
         "metrics_summary.json": {

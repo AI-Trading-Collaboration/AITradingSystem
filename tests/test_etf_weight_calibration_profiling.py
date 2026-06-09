@@ -79,9 +79,9 @@ def test_candidate_hotspot_table_outputs_json_csv_markdown(tmp_path: Path) -> No
     assert payload["hotspots"][0]["cache_status"] == "miss_written"
     assert paths["json"].exists()
     assert "weight_set_0002" in paths["csv"].read_text(encoding="utf-8")
-    assert "ETF Weight Calibration Candidate Hotspots" in paths[
-        "markdown"
-    ].read_text(encoding="utf-8")
+    assert "ETF Weight Calibration Candidate Hotspots" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
 
 
 def test_cprofile_mode_creates_top_function_artifacts(tmp_path: Path) -> None:
@@ -94,9 +94,9 @@ def test_cprofile_mode_creates_top_function_artifacts(tmp_path: Path) -> None:
 
     assert paths["stats"].exists()
     assert payload["functions"]
-    assert "ETF Weight Calibration cProfile Top Functions" in paths[
-        "markdown"
-    ].read_text(encoding="utf-8")
+    assert "ETF Weight Calibration cProfile Top Functions" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
 
 
 def test_cache_worker_vectorization_and_regime_assessments() -> None:
@@ -115,9 +115,7 @@ def test_cache_worker_vectorization_and_regime_assessments() -> None:
     assert candidate_cache["hit_count"] == 1
     assert candidate_cache["miss_count"] == 1
     assert worker["workers"][0]["worker_id"] == "main"
-    assert any(
-        row["recommended_action"] == "already_vectorized" for row in audit["areas"]
-    )
+    assert any(row["recommended_action"] == "already_vectorized" for row in audit["areas"])
     assert any(row["recommend_precompute"] is True for row in regime["regimes"])
     assert all(row["native_extension_needed"] is False for row in audit["areas"])
 
@@ -142,9 +140,9 @@ def test_profiling_report_generator_and_validation_cli(tmp_path: Path) -> None:
         row["category"] for row in report["optimization_recommendations"]
     }
     assert paths["json"].exists()
-    assert "ETF Weight Calibration Profiling Report" in paths[
-        "markdown"
-    ].read_text(encoding="utf-8")
+    assert "ETF Weight Calibration Profiling Report" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
 
     validation = build_weight_calibration_profiling_validation_report(
         generated_at=datetime(2026, 6, 4, tzinfo=UTC),

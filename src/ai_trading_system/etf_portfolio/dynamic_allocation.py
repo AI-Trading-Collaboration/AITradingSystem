@@ -219,8 +219,7 @@ class DynamicAllocationPolicyConfig(BaseModel):
         missing = expected_regimes - set(self.regime_weight_targets)
         if missing:
             raise ValueError(
-                "dynamic allocation policy missing regime targets: "
-                + ", ".join(sorted(missing))
+                "dynamic allocation policy missing regime targets: " + ", ".join(sorted(missing))
             )
         missing_rules = expected_regimes - set(self.regime_selection_rules)
         if missing_rules:
@@ -360,16 +359,12 @@ def select_dynamic_regime_state(
     if _score(input_scores, event_rule.score_id or "EventRiskScore") >= (event_rule.threshold or 0):
         return "event_risk_high", event_rule.rationale
     risk_off = rules["risk_off"]
-    if (
-        _score(input_scores, "RiskRegimeScore") <= (risk_off.risk_regime_score_max or 0)
-        or _score(input_scores, "CompositeTrendScore")
-        <= (risk_off.composite_trend_score_max or 0)
-    ):
+    if _score(input_scores, "RiskRegimeScore") <= (risk_off.risk_regime_score_max or 0) or _score(
+        input_scores, "CompositeTrendScore"
+    ) <= (risk_off.composite_trend_score_max or 0):
         return "risk_off", risk_off.rationale
     growth = rules["growth_underperformance"]
-    if _score(input_scores, "GrowthLeadershipScore") <= (
-        growth.growth_leadership_score_max or 0
-    ):
+    if _score(input_scores, "GrowthLeadershipScore") <= (growth.growth_leadership_score_max or 0):
         return "growth_underperformance", growth.rationale
     semi = rules["semiconductor_leadership"]
     if _score(input_scores, "SemiconductorLeadershipScore") >= (
@@ -377,11 +372,9 @@ def select_dynamic_regime_state(
     ):
         return "semiconductor_leadership", semi.rationale
     risk_on = rules["risk_on"]
-    if (
-        _score(input_scores, "CompositeTrendScore")
-        >= (risk_on.composite_trend_score_min or 100)
-        and _score(input_scores, "RiskRegimeScore") >= (risk_on.risk_regime_score_min or 100)
-    ):
+    if _score(input_scores, "CompositeTrendScore") >= (
+        risk_on.composite_trend_score_min or 100
+    ) and _score(input_scores, "RiskRegimeScore") >= (risk_on.risk_regime_score_min or 100):
         return "risk_on", risk_on.rationale
     return "neutral", rules["neutral"].rationale
 
@@ -701,7 +694,8 @@ def build_dynamic_allocation_validation_report(
         try:
             report = build_dynamic_allocation_report(
                 policy=policy,
-                decision_records=sample_records[:1] or [
+                decision_records=sample_records[:1]
+                or [
                     build_dynamic_allocation_decision_record(
                         policy=policy,
                         decision_date=date(2024, 1, 2),
@@ -1003,15 +997,19 @@ def _apply_semiconductor_cap(
     adjusted["CASH"] = adjusted.get("CASH", 0.0) + (before - cap)
     adjusted = _normalise_weights(adjusted)
     after = adjusted.get("SMH", 0.0) + adjusted.get("SOXX", 0.0)
-    return adjusted, ["SEMICONDUCTOR_SLEEVE_CAP"], [
-        _constraint_diagnostic(
-            "semiconductor_sleeve_cap",
-            "SMH+SOXX",
-            before,
-            after,
-            "Configured semiconductor sleeve cap applied.",
-        )
-    ]
+    return (
+        adjusted,
+        ["SEMICONDUCTOR_SLEEVE_CAP"],
+        [
+            _constraint_diagnostic(
+                "semiconductor_sleeve_cap",
+                "SMH+SOXX",
+                before,
+                after,
+                "Configured semiconductor sleeve cap applied.",
+            )
+        ],
+    )
 
 
 def _apply_cash_bounds(
@@ -1090,9 +1088,10 @@ def _apply_rebalance_caps(
     before_turnover = turnover
     factor = rebalance_policy.weekly_turnover_cap / turnover if turnover > 0 else 0
     for symbol in WEIGHT_SYMBOLS:
-        adjusted[symbol] = previous.get(symbol, 0.0) + (
-            adjusted.get(symbol, 0.0) - previous.get(symbol, 0.0)
-        ) * factor
+        adjusted[symbol] = (
+            previous.get(symbol, 0.0)
+            + (adjusted.get(symbol, 0.0) - previous.get(symbol, 0.0)) * factor
+        )
     adjusted = _normalise_weights(adjusted)
     diagnostics.append(
         _constraint_diagnostic(
@@ -1185,15 +1184,13 @@ def _score_change(
         return 100.0
     keys = set(scores) | set(previous_scores)
     return max(
-        abs(float(scores.get(key, 50.0)) - float(previous_scores.get(key, 50.0)))
-        for key in keys
+        abs(float(scores.get(key, 50.0)) - float(previous_scores.get(key, 50.0))) for key in keys
     )
 
 
 def _turnover(weights: dict[str, float], previous: dict[str, float]) -> float:
     return sum(
-        abs(weights.get(symbol, 0.0) - previous.get(symbol, 0.0))
-        for symbol in WEIGHT_SYMBOLS
+        abs(weights.get(symbol, 0.0) - previous.get(symbol, 0.0)) for symbol in WEIGHT_SYMBOLS
     )
 
 

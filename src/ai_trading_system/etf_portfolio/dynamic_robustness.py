@@ -35,9 +35,7 @@ DYNAMIC_ROBUSTNESS_VALIDATION_SCHEMA_VERSION = "etf_dynamic_robustness_validatio
 DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_robustness.yaml"
 )
-DEFAULT_DYNAMIC_ROBUSTNESS_ROOT = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_robustness"
-)
+DEFAULT_DYNAMIC_ROBUSTNESS_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_robustness"
 DEFAULT_DYNAMIC_ROBUSTNESS_REPORT_DIR = DEFAULT_DYNAMIC_ROBUSTNESS_ROOT / "reports"
 DEFAULT_DYNAMIC_ROBUSTNESS_VALIDATION_DIR = DEFAULT_DYNAMIC_ROBUSTNESS_ROOT / "validation"
 
@@ -146,9 +144,7 @@ class DynamicRobustnessScoreModelConfig(BaseModel):
         if self.return_score_floor >= self.return_score_ceiling:
             raise ValueError("return_score_floor must be below return_score_ceiling")
         if self.relative_strength_floor >= self.relative_strength_ceiling:
-            raise ValueError(
-                "relative_strength_floor must be below relative_strength_ceiling"
-            )
+            raise ValueError("relative_strength_floor must be below relative_strength_ceiling")
         if self.volatility_low >= self.volatility_high:
             raise ValueError("volatility_low must be below volatility_high")
         if self.drawdown_low <= self.drawdown_high:
@@ -522,9 +518,7 @@ def build_dynamic_robustness_validation_report(
         except Exception as exc:  # noqa: BLE001
             _append_check(checks, "sample_report_safety", False, str(exc))
 
-    registry_text = (PROJECT_ROOT / "config" / "report_registry.yaml").read_text(
-        encoding="utf-8"
-    )
+    registry_text = (PROJECT_ROOT / "config" / "report_registry.yaml").read_text(encoding="utf-8")
     _append_check(
         checks,
         "report_registry_visibility",
@@ -532,9 +526,7 @@ def build_dynamic_robustness_validation_report(
         and "etf_dynamic_robustness_validation" in registry_text,
         "report registry includes TRADING-086 report and validation artifacts",
     )
-    reader_brief_path = (
-        PROJECT_ROOT / "src" / "ai_trading_system" / "reports" / "reader_brief.py"
-    )
+    reader_brief_path = PROJECT_ROOT / "src" / "ai_trading_system" / "reports" / "reader_brief.py"
     reader_brief_text = reader_brief_path.read_text(encoding="utf-8")
     _append_check(
         checks,
@@ -678,10 +670,7 @@ def render_dynamic_robustness_report_markdown(payload: dict[str, Any]) -> str:
                 f"{_fmt_pct(false_off.get('total_opportunity_cost'))}"
             ),
             f"- False Risk-On Count: {false_on.get('event_count')}",
-            (
-                "- False Risk-On Drawdown Cost: "
-                f"{_fmt_pct(false_on.get('total_drawdown_cost'))}"
-            ),
+            ("- False Risk-On Drawdown Cost: " f"{_fmt_pct(false_on.get('total_drawdown_cost'))}"),
             "",
             "## Walk Forward",
             "",
@@ -727,8 +716,7 @@ def render_dynamic_robustness_validation_markdown(payload: dict[str, Any]) -> st
     ]
     for check in _records(payload.get("checks")):
         lines.append(
-            f"| {check.get('check_id')} | {check.get('status')} | "
-            f"{check.get('message')} |"
+            f"| {check.get('check_id')} | {check.get('status')} | " f"{check.get('message')} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -1006,8 +994,7 @@ def _walk_forward_review(
 
 def _regime_attribution(dynamic_daily: pd.DataFrame, static_daily: pd.DataFrame) -> dict[str, Any]:
     static_by_date = {
-        str(row["return_date"]): float(row["strategy_return"])
-        for _, row in static_daily.iterrows()
+        str(row["return_date"]): float(row["strategy_return"]) for _, row in static_daily.iterrows()
     }
     regimes: list[dict[str, Any]] = []
     for regime, group in dynamic_daily.groupby("selected_regime", sort=True):
@@ -1040,8 +1027,7 @@ def _regime_attribution(dynamic_daily: pd.DataFrame, static_daily: pd.DataFrame)
     max_share = 0.0
     if total_abs_positive > 0:
         max_share = max(
-            max(0.0, float(row["total_return"])) / total_abs_positive
-            for row in regimes
+            max(0.0, float(row["total_return"])) / total_abs_positive for row in regimes
         )
     return {
         "regime_count": len(regimes),
@@ -1077,12 +1063,9 @@ def _false_signal_diagnostics(
         dynamic_drawdown = _max_drawdown_from_returns(dynamic_returns[idx : idx + horizon])
         static_drawdown = _max_drawdown_from_returns(static_returns[idx : idx + horizon])
         if (
-            (
-                cash_diff >= cfg.cash_overweight_threshold
-                or growth_diff <= cfg.growth_underweight_threshold
-            )
-            and benchmark_forward >= cfg.market_up_threshold
-        ):
+            cash_diff >= cfg.cash_overweight_threshold
+            or growth_diff <= cfg.growth_underweight_threshold
+        ) and benchmark_forward >= cfg.market_up_threshold:
             false_off_events.append(
                 {
                     "signal_date": str(dynamic_daily.iloc[idx]["signal_date"]),
@@ -1190,9 +1173,7 @@ def _ai_semiconductor_attribution(dynamic_daily: pd.DataFrame) -> dict[str, Any]
             contribution_by_symbol[str(symbol)] = contribution_by_symbol.get(
                 str(symbol), 0.0
             ) + _float(value)
-    semiconductor = contribution_by_symbol.get("SMH", 0.0) + contribution_by_symbol.get(
-        "SOXX", 0.0
-    )
+    semiconductor = contribution_by_symbol.get("SMH", 0.0) + contribution_by_symbol.get("SOXX", 0.0)
     growth = contribution_by_symbol.get("QQQ", 0.0)
     return {
         "source": "price_return_contribution_by_dynamic_candidate_weight",
@@ -1460,9 +1441,7 @@ def _resolve_dynamic_candidate(
     return {
         "candidate_id": requested,
         "source_status": (
-            "FOUND_IN_DYNAMIC_CALIBRATION_REPORT"
-            if selected
-            else "NOT_FOUND_OR_NOT_PROVIDED"
+            "FOUND_IN_DYNAMIC_CALIBRATION_REPORT" if selected else "NOT_FOUND_OR_NOT_PROVIDED"
         ),
         "trend_signal_config_id": _text(selected.get("trend_signal_config_id")),
         "allocation_profile_id": _text(selected.get("allocation_profile_id")),
@@ -1725,8 +1704,7 @@ def _return_series(daily: pd.DataFrame | None) -> list[float]:
     if daily is None or daily.empty:
         return []
     return [
-        float(value)
-        for value in pd.to_numeric(daily["strategy_return"], errors="coerce").dropna()
+        float(value) for value in pd.to_numeric(daily["strategy_return"], errors="coerce").dropna()
     ]
 
 

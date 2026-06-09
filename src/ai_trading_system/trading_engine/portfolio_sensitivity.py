@@ -99,15 +99,13 @@ def default_portfolio_sensitivity_dir(output_root: Path, as_of: date) -> Path:
 
 def default_portfolio_sensitivity_json_path(output_root: Path, as_of: date) -> Path:
     return (
-        default_portfolio_sensitivity_dir(output_root, as_of)
-        / "portfolio_sensitivity_summary.json"
+        default_portfolio_sensitivity_dir(output_root, as_of) / "portfolio_sensitivity_summary.json"
     )
 
 
 def default_portfolio_sensitivity_markdown_path(output_root: Path, as_of: date) -> Path:
     return (
-        default_portfolio_sensitivity_dir(output_root, as_of)
-        / "portfolio_sensitivity_summary.md"
+        default_portfolio_sensitivity_dir(output_root, as_of) / "portfolio_sensitivity_summary.md"
     )
 
 
@@ -1215,20 +1213,14 @@ def _target_weights_from_scores(
     if defensive is not None:
         target.loc[:, defensive] = residual
     constrained_assets = Counter(
-        {
-            str(asset): int(count)
-            for asset, count in single_asset_counts.items()
-            if int(count) > 0
-        }
+        {str(asset): int(count) for asset, count in single_asset_counts.items() if int(count) > 0}
     )
     constrained_assets.update(sector_binding["asset_counts"])
     return target.fillna(0.0), {
         "single_asset_cap_binding_days": int(single_binding_mask.sum()),
         "sector_cap_binding_days": int(sector_binding["sector_cap_binding_days"]),
         "cash_floor_binding_days": int(cash_floor_mask.sum()),
-        "most_constrained_assets": [
-            asset for asset, _count in constrained_assets.most_common(5)
-        ],
+        "most_constrained_assets": [asset for asset, _count in constrained_assets.most_common(5)],
     }
 
 
@@ -1431,11 +1423,15 @@ def _diagnosis(
         {},
     )
     best_metrics = _mapping(best.get("ranking_metrics"))
-    too_insensitive = primary in {
-        "rebalance_threshold",
-        "score_to_weight_mapping",
-        "position_or_sector_constraints",
-    } and _float_value(best_metrics.get("actual_rebalance_effectiveness")) > 0.0
+    too_insensitive = (
+        primary
+        in {
+            "rebalance_threshold",
+            "score_to_weight_mapping",
+            "position_or_sector_constraints",
+        }
+        and _float_value(best_metrics.get("actual_rebalance_effectiveness")) > 0.0
+    )
     if primary == "none":
         reason = (
             "Portfolio sensitivity diagnostics did not find a major score-to-weight "

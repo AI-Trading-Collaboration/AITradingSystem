@@ -29,9 +29,7 @@ def test_dynamic_allocation_policy_loads_and_rejects_unsafe(tmp_path: Path) -> N
     assert policy.market_regime.regime_id == "ai_after_chatgpt"
     assert policy.regime_weight_targets["neutral"].weights["CASH"] == pytest.approx(0.10)
 
-    raw = yaml.safe_load(
-        DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["safety"]["official_target_weights_mutated"] = True
     unsafe_path = tmp_path / "unsafe_dynamic_allocation.yaml"
     unsafe_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
@@ -39,9 +37,7 @@ def test_dynamic_allocation_policy_loads_and_rejects_unsafe(tmp_path: Path) -> N
     with pytest.raises(DynamicAllocationError):
         load_dynamic_allocation_policy_config(unsafe_path)
 
-    raw = yaml.safe_load(
-        DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    raw = yaml.safe_load(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH.read_text(encoding="utf-8"))
     raw["regime_weight_targets"]["risk_on"]["weights"]["QQQ"] = 0.90
     invalid_path = tmp_path / "invalid_dynamic_weights.yaml"
     invalid_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")

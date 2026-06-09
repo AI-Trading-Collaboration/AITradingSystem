@@ -204,9 +204,7 @@ def test_shadow_backtest_references_portfolio_turnover_attribution_artifact(
     )
 
     decision = run.payload["promotion_decision"]
-    assert decision["supporting_artifacts"]["portfolio_turnover_attribution"] == str(
-        artifact_path
-    )
+    assert decision["supporting_artifacts"]["portfolio_turnover_attribution"] == str(artifact_path)
     assert decision["status"] == "rejected"
     assert run.payload["metadata"]["production_effect"] == "none"
     assert "portfolio_turnover_attribution_root_cause" in decision

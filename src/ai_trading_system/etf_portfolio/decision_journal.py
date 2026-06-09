@@ -16,8 +16,8 @@ DECISION_JOURNAL_VALIDATION_SCHEMA_VERSION = "etf_portfolio_decision_journal_val
 DECISION_JOURNAL_ANALYTICS_SCHEMA_VERSION = "etf_portfolio_decision_journal_analytics_v1"
 DECISION_STATE_PROPOSAL_SCHEMA_VERSION = "etf_portfolio_decision_state_proposal_v1"
 
-DEFAULT_DECISION_JOURNAL_PATH = PROJECT_ROOT / "data" / "simulation" / (
-    "etf_portfolio_decision_journal.json"
+DEFAULT_DECISION_JOURNAL_PATH = (
+    PROJECT_ROOT / "data" / "simulation" / ("etf_portfolio_decision_journal.json")
 )
 DEFAULT_DECISION_JOURNAL_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "decision_journal"
@@ -375,9 +375,7 @@ def build_decision_journal_analytics(
         if _text(entry.get("follow_up_task")):
             follow_up_count += 1
     average_confidence = (
-        round(sum(confidence_values) / len(confidence_values), 6)
-        if confidence_values
-        else None
+        round(sum(confidence_values) / len(confidence_values), 6) if confidence_values else None
     )
     return {
         "schema_version": DECISION_JOURNAL_ANALYTICS_SCHEMA_VERSION,
@@ -610,7 +608,7 @@ def render_decision_journal_html(payload: Mapping[str, Any]) -> str:
     escaped = html.escape(markdown)
     title = html.escape(f"ETF Portfolio Decision Journal {payload.get('as_of')}")
     return (
-        "<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">"
+        '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
         f"<title>{title}</title>"
         "<style>body{font-family:Arial,sans-serif;max-width:1040px;margin:32px auto;"
         "line-height:1.5;color:#1f2937}pre{white-space:pre-wrap;background:#f8fafc;"
@@ -776,9 +774,7 @@ def _validate_baseline_review_entry_links(entry: Mapping[str, Any]) -> list[dict
     if _text(package.get("review_package_id")) != _text(entry.get("review_id")):
         issues.append(_issue("review_id", "FAIL", "review_id does not match package ID"))
     if _text(package.get("candidate_id")) != _text(entry.get("linked_candidate")):
-        issues.append(
-            _issue("linked_candidate", "FAIL", "linked_candidate does not match package")
-        )
+        issues.append(_issue("linked_candidate", "FAIL", "linked_candidate does not match package"))
     if issues:
         raise DecisionJournalError(_format_issues(issues))
     return issues

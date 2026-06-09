@@ -147,9 +147,7 @@ def test_underperformance_with_drawdown_breach_retires_candidate(tmp_path: Path)
     )
 
     assert run.payload["metadata"]["status"] == "OK"
-    assert "max_drawdown_worse_than_baseline_limit" in run.payload["risk_guardrails"][
-        "warnings"
-    ]
+    assert "max_drawdown_worse_than_baseline_limit" in run.payload["risk_guardrails"]["warnings"]
     assert run.payload["recommendation"]["status"] == "retire_candidate"
 
 
@@ -259,8 +257,7 @@ def _clone_tracking_days(
     for index in range(count):
         item = json.loads(json.dumps(payload))
         item["metadata"]["run_id"] = (
-            "portfolio-candidate-tracking-"
-            f"{(base_date + timedelta(days=index)).isoformat()}"
+            "portfolio-candidate-tracking-" f"{(base_date + timedelta(days=index)).isoformat()}"
         )
         item["metadata"]["status"] = "OK"
         item["candidate"]["tracking_status"] = "active_tracking"
@@ -353,9 +350,7 @@ def _write_portfolio_tracking_review_config(
                     "portfolio_candidates_dir": str(
                         tmp_path / "artifacts" / "portfolio_candidates"
                     ),
-                    "market_data_freshness_dir": str(
-                        tmp_path / "artifacts" / "data_freshness"
-                    ),
+                    "market_data_freshness_dir": str(tmp_path / "artifacts" / "data_freshness"),
                     "market_data_refresh_dir": str(tmp_path / "artifacts" / "data_refresh"),
                     "backtest_snapshot_dir": str(tmp_path / "artifacts" / "backtest_snapshots"),
                     "production_parameters_path": str(

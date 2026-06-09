@@ -65,8 +65,7 @@ def test_position_advisory_with_snapshot_requires_manual_review(tmp_path: Path) 
     )
 
     assert (
-        result["manifest"]["position_advisory_status"]
-        == POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
+        result["manifest"]["position_advisory_status"] == POSITION_ADVISORY_READY_WITH_MANUAL_REVIEW
     )
     assert result["advisory_actions"]["broker_action_allowed"] is False
     assert result["advisory_actions"]["owner_approval_required"] is True

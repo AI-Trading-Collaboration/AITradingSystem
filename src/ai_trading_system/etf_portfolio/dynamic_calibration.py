@@ -654,9 +654,7 @@ def render_dynamic_calibration_validation_markdown(payload: dict[str, Any]) -> s
     ]
     for check in _records(payload.get("checks")):
         status = "PASS" if check.get("passed") else "FAIL"
-        lines.append(
-            f"- {check.get('check_id')}: {status} - {check.get('detail')}"
-        )
+        lines.append(f"- {check.get('check_id')}: {status} - {check.get('detail')}")
     return "\n".join(lines) + "\n"
 
 

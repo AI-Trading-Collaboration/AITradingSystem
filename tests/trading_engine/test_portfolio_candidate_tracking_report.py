@@ -58,6 +58,4 @@ def test_portfolio_candidate_tracking_report_alias_reads_summary(
     assert alias_payload["report_type"] == "portfolio_candidate_tracking_report"
     assert alias_payload["candidate"]["tracking_status"] == "active_tracking"
     assert alias_payload["candidate"]["profile_name"]
-    assert "Portfolio Candidate Tracking Summary" in alias_markdown.read_text(
-        encoding="utf-8"
-    )
+    assert "Portfolio Candidate Tracking Summary" in alias_markdown.read_text(encoding="utf-8")

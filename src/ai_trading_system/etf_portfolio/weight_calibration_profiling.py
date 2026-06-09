@@ -30,15 +30,9 @@ DEFAULT_WEIGHT_CALIBRATION_PROFILING_VALIDATION_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "weight_calibration" / "validation"
 )
 
-WEIGHT_CALIBRATION_PROFILING_POLICY_SCHEMA_VERSION = (
-    "etf_weight_calibration_profiling_policy_v1"
-)
-WEIGHT_CALIBRATION_PROFILING_REPORT_SCHEMA_VERSION = (
-    "etf_weight_calibration_profiling_report_v1"
-)
-WEIGHT_CALIBRATION_CANDIDATE_HOTSPOT_SCHEMA_VERSION = (
-    "etf_weight_calibration_candidate_hotspots_v1"
-)
+WEIGHT_CALIBRATION_PROFILING_POLICY_SCHEMA_VERSION = "etf_weight_calibration_profiling_policy_v1"
+WEIGHT_CALIBRATION_PROFILING_REPORT_SCHEMA_VERSION = "etf_weight_calibration_profiling_report_v1"
+WEIGHT_CALIBRATION_CANDIDATE_HOTSPOT_SCHEMA_VERSION = "etf_weight_calibration_candidate_hotspots_v1"
 WEIGHT_CALIBRATION_PROFILING_VALIDATION_SCHEMA_VERSION = (
     "etf_weight_calibration_profiling_validation_v1"
 )
@@ -193,10 +187,7 @@ class WeightCalibrationRuntimeProfiler:
         finally:
             duration = perf_counter() - started_perf
             ended_at = datetime.now(UTC)
-            slow = (
-                duration
-                >= self.policy.weight_calibration_profiling.thresholds.slow_step_seconds
-            )
+            slow = duration >= self.policy.weight_calibration_profiling.thresholds.slow_step_seconds
             self._records.append(
                 StepTimingRecord(
                     step_id=step_id,
@@ -390,8 +381,7 @@ def validate_weight_calibration_candidate_hotspot_table(payload: Mapping[str, An
             issues.append("hotspots.total_candidate_seconds")
     if issues:
         raise WeightCalibrationProfilingError(
-            "weight calibration candidate hotspot table validation failed: "
-            + ", ".join(issues)
+            "weight calibration candidate hotspot table validation failed: " + ", ".join(issues)
         )
 
 
@@ -528,12 +518,14 @@ def build_worker_timing_breakdown(
                 "completed_candidate_count": len(completed),
                 "failed_candidate_count": len(failed),
                 "runtime_seconds": round(sum(durations), 6),
-                "mean_candidate_seconds": round(
-                    sum(durations) / len(durations),
-                    6,
-                )
-                if durations
-                else 0.0,
+                "mean_candidate_seconds": (
+                    round(
+                        sum(durations) / len(durations),
+                        6,
+                    )
+                    if durations
+                    else 0.0
+                ),
                 "max_candidate_seconds": round(max(durations), 6) if durations else 0.0,
                 "cache_hit_count": sum(
                     1 for row in rows if "hit" in _text(row.get("cache_status"))
@@ -757,9 +749,7 @@ def build_weight_calibration_profiling_report(
         "market_regime": diagnostics_payload.get("market_regime"),
         "data_quality_status": diagnostics_payload.get("data_quality_status"),
         "total_runtime_seconds": _float(
-            _mapping(diagnostics_payload.get("performance_report")).get(
-                "total_runtime_seconds"
-            )
+            _mapping(diagnostics_payload.get("performance_report")).get("total_runtime_seconds")
         )
         or _float(profiling.get("total_runtime_seconds")),
         "step_timing": step_summary,
@@ -1504,8 +1494,10 @@ def _count_status(events: Sequence[Mapping[str, Any]], status: str) -> int:
 
 
 def _event_seconds(event: Mapping[str, Any]) -> float:
-    return _float(event.get("duration_seconds")) or _float(event.get("read_seconds")) or _float(
-        event.get("write_seconds")
+    return (
+        _float(event.get("duration_seconds"))
+        or _float(event.get("read_seconds"))
+        or _float(event.get("write_seconds"))
     )
 
 
@@ -1570,9 +1562,11 @@ def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
         for row in rows:
             writer.writerow(
                 {
-                    key: json.dumps(value, ensure_ascii=False, sort_keys=True)
-                    if isinstance(value, (dict, list))
-                    else value
+                    key: (
+                        json.dumps(value, ensure_ascii=False, sort_keys=True)
+                        if isinstance(value, (dict, list))
+                        else value
+                    )
                     for key, value in row.items()
                 }
             )

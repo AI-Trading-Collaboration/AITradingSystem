@@ -43,9 +43,7 @@ def test_dashboard_reads_portfolio_candidate_review_decision(tmp_path: Path) -> 
     assert card["exists"] is True
     assert card["status"] == "watch"
     assert card["reviewer"] == "manual"
-    assert card["candidate_profile"] == decision_run.decision_payload["candidate"][
-        "profile_name"
-    ]
+    assert card["candidate_profile"] == decision_run.decision_payload["candidate"]["profile_name"]
     assert card["production_effect"] == "none"
     assert card["production_config_modified"] is False
     assert "Portfolio Candidate Review" in html

@@ -320,9 +320,7 @@ def build_portfolio_decision_summary(
     if not weights:
         return {
             "summary_status": "insufficient_data",
-            "key_findings": [
-                "ETF target weights are missing; weekly portfolio state is limited."
-            ],
+            "key_findings": ["ETF target weights are missing; weekly portfolio state is limited."],
             "portfolio_state": state,
             "weight_change_summary": {
                 "changed_symbol_count": 0,
@@ -382,10 +380,11 @@ def build_shadow_candidate_review_section(
     experiment_weekly = _mapping(sources.get("etf_experiment_weekly_review"))
     shadow_registry = _mapping(sources.get("etf_shadow_candidates"))
     dashboard_rows = _records(dashboard.get("candidate_summary_table"))
-    active_candidates = dashboard_rows or _records(
-        forward_weekly.get("active_candidates")
-    ) or _records(experiment_weekly.get("active_shadow_candidates")) or _records(
-        shadow_registry.get("candidates")
+    active_candidates = (
+        dashboard_rows
+        or _records(forward_weekly.get("active_candidates"))
+        or _records(experiment_weekly.get("active_shadow_candidates"))
+        or _records(shadow_registry.get("candidates"))
     )
     status_changes = _records(forward_weekly.get("candidate_status_changes"))
     source_path = _source_path(aggregation_payload, "etf_forward_dashboard")
@@ -398,8 +397,7 @@ def build_shadow_candidate_review_section(
     weak = [
         row
         for row in reviews
-        if _text(row.get("recommended_observation_action"))
-        in {"watch", "reject_pending_review"}
+        if _text(row.get("recommended_observation_action")) in {"watch", "reject_pending_review"}
     ]
     strong = [
         row
@@ -431,9 +429,9 @@ def build_shadow_candidate_review_section(
 def build_ai_confirmation_review_section(
     aggregation_payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    report = _mapping(_mapping(aggregation_payload.get("source_payloads")).get(
-        "etf_ai_confirmation_report"
-    ))
+    report = _mapping(
+        _mapping(aggregation_payload.get("source_payloads")).get("etf_ai_confirmation_report")
+    )
     source_path = _source_path(aggregation_payload, "etf_ai_confirmation_report")
     if not report:
         return {
@@ -453,12 +451,17 @@ def build_ai_confirmation_review_section(
         }
     score = _mapping(report.get("AIConfirmationScore"))
     action_hint = _text(score.get("action_hint"), "insufficient_data")
-    status = action_hint if action_hint in {
-        "supports_ai_overweight_candidate",
-        "supports_neutral_ai_exposure",
-        "warns_against_ai_overweight",
-        "insufficient_data",
-    } else "insufficient_data"
+    status = (
+        action_hint
+        if action_hint
+        in {
+            "supports_ai_overweight_candidate",
+            "supports_neutral_ai_exposure",
+            "warns_against_ai_overweight",
+            "insufficient_data",
+        }
+        else "insufficient_data"
+    )
     return {
         "section_status": status,
         "AIConfirmationScore": score.get("score_value"),
@@ -467,9 +470,7 @@ def build_ai_confirmation_review_section(
         "component_score_changes": "not_available_in_latest_report",
         "semiconductor_breadth": dict(_mapping(report.get("semiconductor_breadth"))),
         "mega_cap_ai_score": dict(_mapping(report.get("mega_cap_ai_confirmation"))),
-        "relative_strength_score": dict(
-            _mapping(report.get("ai_semiconductor_relative_strength"))
-        ),
+        "relative_strength_score": dict(_mapping(report.get("ai_semiconductor_relative_strength"))),
         "event_risk": dict(_mapping(report.get("event_risk_overlay"))),
         "data_coverage": dict(_mapping(report.get("data_coverage"))),
         "interpretation": _ai_interpretation(status),
@@ -493,9 +494,9 @@ def build_ai_confirmation_review_section(
 def build_satellite_replacement_review_section(
     aggregation_payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    report = _mapping(_mapping(aggregation_payload.get("source_payloads")).get(
-        "etf_satellite_replacement_report"
-    ))
+    report = _mapping(
+        _mapping(aggregation_payload.get("source_payloads")).get("etf_satellite_replacement_report")
+    )
     source_path = _source_path(aggregation_payload, "etf_satellite_replacement_report")
     if not report:
         return {
@@ -775,8 +776,7 @@ def build_weekly_review_validation_report(
     )
     registry = _safe_report_registry(report_registry_path)
     registry_ids = {
-        _text(entry.get("report_id"))
-        for entry in _records(_mapping(registry).get("reports"))
+        _text(entry.get("report_id")) for entry in _records(_mapping(registry).get("reports"))
     }
     _append_validation_check(
         checks,
@@ -1214,8 +1214,7 @@ def _target_weight_record(row: pd.Series) -> dict[str, Any]:
 def _weight_change_summary(weights: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     rows = list(weights)
     deltas = [
-        (_text(row.get("symbol")), _float_or_default(row.get("trade_delta"), 0.0))
-        for row in rows
+        (_text(row.get("symbol")), _float_or_default(row.get("trade_delta"), 0.0)) for row in rows
     ]
     changed = [(symbol, delta) for symbol, delta in deltas if abs(delta) > 1e-12]
     largest = max(deltas, key=lambda item: abs(item[1])) if deltas else ("MISSING", 0.0)
@@ -1223,10 +1222,7 @@ def _weight_change_summary(weights: Sequence[Mapping[str, Any]]) -> dict[str, An
         "changed_symbol_count": len(changed),
         "largest_change": f"{largest[0]} {largest[1]:+.2%}",
         "total_abs_trade_delta": round(sum(abs(delta) for _, delta in deltas), 8),
-        "changes": [
-            {"symbol": symbol, "trade_delta": delta}
-            for symbol, delta in changed
-        ],
+        "changes": [{"symbol": symbol, "trade_delta": delta} for symbol, delta in changed],
     }
 
 
@@ -1236,8 +1232,7 @@ def _benchmark_context(weights: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     return {
         "status": "available" if benchmarks else "missing_benchmark_symbols",
         "primary_context": (
-            "ETF baseline reviewed against SPY / QQQ / SMH where artifacts provide "
-            "comparisons."
+            "ETF baseline reviewed against SPY / QQQ / SMH where artifacts provide " "comparisons."
         ),
         "symbols": benchmarks,
     }
@@ -1312,9 +1307,7 @@ def _matching_status_change(
 
 def _new_shadow_candidates(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     return [
-        dict(row)
-        for row in rows
-        if (_float_or_none(row.get("days_since_enrollment")) or 9999) <= 7
+        dict(row) for row in rows if (_float_or_none(row.get("days_since_enrollment")) or 9999) <= 7
     ]
 
 
@@ -1347,9 +1340,9 @@ def _satellite_event_risk_context(report: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _forward_watchlist_items(aggregation_payload: Mapping[str, Any]) -> list[dict[str, Any]]:
-    watchlist = _mapping(_mapping(aggregation_payload.get("source_payloads")).get(
-        "etf_forward_watchlist"
-    ))
+    watchlist = _mapping(
+        _mapping(aggregation_payload.get("source_payloads")).get("etf_forward_watchlist")
+    )
     source_path = _source_path(aggregation_payload, "etf_forward_watchlist")
     items = []
     for index, item in enumerate(_records(watchlist.get("attention_required")), start=1):
@@ -1534,9 +1527,9 @@ def _constraint_hits(
     aggregation_payload: Mapping[str, Any],
     satellite_review: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
-    dashboard = _mapping(_mapping(aggregation_payload.get("source_payloads")).get(
-        "etf_forward_dashboard"
-    ))
+    dashboard = _mapping(
+        _mapping(aggregation_payload.get("source_payloads")).get("etf_forward_dashboard")
+    )
     hits: list[dict[str, Any]] = []
     constraint_summary = _mapping(dashboard.get("constraint_hit_summary"))
     if constraint_summary:
@@ -1941,9 +1934,7 @@ def _safe_config_bundle() -> Any | None:
 
 def _model_version(portfolio_state: Mapping[str, Any], config: Any | None) -> str:
     model = (
-        getattr(getattr(config, "strategy", None), "model", None)
-        if config is not None
-        else None
+        getattr(getattr(config, "strategy", None), "model", None) if config is not None else None
     )
     return _text(
         portfolio_state.get("model_version"),

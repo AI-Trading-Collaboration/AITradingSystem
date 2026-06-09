@@ -327,9 +327,9 @@ def build_portfolio_candidate_tracking_payload(
             "profile_name": candidate_profile,
             "review_status": review_status,
             "review_decision_date": "" if review_date is None else review_date.isoformat(),
-            "candidate_artifact_date": ""
-            if candidate_artifact_date is None
-            else candidate_artifact_date.isoformat(),
+            "candidate_artifact_date": (
+                "" if candidate_artifact_date is None else candidate_artifact_date.isoformat()
+            ),
             "candidate_hash": candidate_hash,
             "source_artifact": str(candidate_artifact_path),
             "tracking_status": tracking_status,
@@ -337,19 +337,19 @@ def build_portfolio_candidate_tracking_payload(
         },
         "date_resolution": {
             "tracking_date": tracking_date.isoformat(),
-            "effective_data_date": ""
-            if effective_data_date is None
-            else effective_data_date.isoformat(),
+            "effective_data_date": (
+                "" if effective_data_date is None else effective_data_date.isoformat()
+            ),
             "review_decision_date": "" if review_date is None else review_date.isoformat(),
-            "candidate_artifact_date": ""
-            if candidate_artifact_date is None
-            else candidate_artifact_date.isoformat(),
-            "latest_manifest_date": ""
-            if manifest.manifest_date is None
-            else manifest.manifest_date.isoformat(),
-            "latest_market_data_date": ""
-            if latest_market_data_date is None
-            else latest_market_data_date.isoformat(),
+            "candidate_artifact_date": (
+                "" if candidate_artifact_date is None else candidate_artifact_date.isoformat()
+            ),
+            "latest_manifest_date": (
+                "" if manifest.manifest_date is None else manifest.manifest_date.isoformat()
+            ),
+            "latest_market_data_date": (
+                "" if latest_market_data_date is None else latest_market_data_date.isoformat()
+            ),
             "roll_forward_status": roll_forward_status,
             "status": roll_forward_status,
             "reason": reason,
@@ -357,9 +357,9 @@ def build_portfolio_candidate_tracking_payload(
         "data_gate": {
             "status": data_gate.get("status", "UNKNOWN"),
             "manifest": data_gate.get("manifest", ""),
-            "manifest_date": ""
-            if manifest.manifest_date is None
-            else manifest.manifest_date.isoformat(),
+            "manifest_date": (
+                "" if manifest.manifest_date is None else manifest.manifest_date.isoformat()
+            ),
             "latest_resolution_status": data_gate.get("latest_resolution_status", "UNKNOWN"),
             "price_cache_registry_status": data_gate.get("price_cache_registry", "UNKNOWN"),
             "symbol_mapping": data_gate.get("symbol_mapping", "UNKNOWN"),
@@ -383,9 +383,9 @@ def build_portfolio_candidate_tracking_payload(
         "market_data_refresh": market_data_refresh,
         "daily_tracking": {
             "date": tracking_date.isoformat(),
-            "effective_data_date": ""
-            if effective_data_date is None
-            else effective_data_date.isoformat(),
+            "effective_data_date": (
+                "" if effective_data_date is None else effective_data_date.isoformat()
+            ),
             **tracking_metrics.get("daily_tracking", {}),
         },
         "tracking_metrics": tracking_metrics,
@@ -1060,8 +1060,7 @@ def _date_resolution_reason(
     parts: list[str] = []
     if review_date is not None and review_date < tracking_date:
         parts.append(
-            "Latest eligible review decision was rolled forward from "
-            f"{review_date.isoformat()}."
+            "Latest eligible review decision was rolled forward from " f"{review_date.isoformat()}."
         )
     if effective_data_date is not None and effective_data_date < tracking_date:
         parts.append(
@@ -1085,9 +1084,7 @@ def _tracking_metrics(
 ) -> dict[str, Any]:
     baseline_raw = _raw_metrics(baseline_profile)
     candidate_raw = _raw_metrics(candidate_profile)
-    start_metrics = _mapping(
-        (previous_record or {}).get("tracking_start_metrics")
-    )
+    start_metrics = _mapping((previous_record or {}).get("tracking_start_metrics"))
     last_metrics = _mapping((previous_record or {}).get("last_observed_metrics"))
     baseline_start = _mapping(start_metrics.get("baseline")) or baseline_raw
     candidate_start = _mapping(start_metrics.get("candidate")) or candidate_raw
@@ -1198,8 +1195,7 @@ def _profile_payload(payload: dict[str, Any], profile_name: str) -> dict[str, An
 
 def _risk_status(candidate_profile: dict[str, Any]) -> str:
     return str(
-        _mapping(candidate_profile.get("risk_guardrails")).get("guardrail_status")
-        or "UNKNOWN"
+        _mapping(candidate_profile.get("risk_guardrails")).get("guardrail_status") or "UNKNOWN"
     )
 
 
@@ -1260,9 +1256,7 @@ def _started_at(
         if str(item.get("candidate_id") or "") == candidate_id:
             return str(item.get("started_at") or date_resolution.get("review_decision_date") or "")
     return str(
-        date_resolution.get("review_decision_date")
-        or date_resolution.get("tracking_date")
-        or ""
+        date_resolution.get("review_decision_date") or date_resolution.get("tracking_date") or ""
     )
 
 
@@ -1289,9 +1283,7 @@ def _production_hash_changed(
         str(rollback.get("production_path") or package_production.get("path") or "")
     )
     expected_hash = str(
-        rollback.get("production_sha256_before_review")
-        or package_production.get("sha256")
-        or ""
+        rollback.get("production_sha256_before_review") or package_production.get("sha256") or ""
     )
     current_hash = _sha256_if_exists(production_path)
     return bool(expected_hash and current_hash and expected_hash != current_hash)
@@ -1338,11 +1330,7 @@ def _market_data_freshness_root(config: dict[str, Any]) -> Path:
 
 def _market_data_refresh_root(config: dict[str, Any]) -> Path:
     raw = _input(config, "market_data_refresh_dir")
-    return (
-        resolve_project_path(str(raw))
-        if raw
-        else PROJECT_ROOT / "artifacts" / "data_refresh"
-    )
+    return resolve_project_path(str(raw)) if raw else PROJECT_ROOT / "artifacts" / "data_refresh"
 
 
 def _input(config: dict[str, Any], key: str) -> object:

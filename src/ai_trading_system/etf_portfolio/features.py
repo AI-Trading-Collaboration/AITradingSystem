@@ -45,14 +45,13 @@ def build_feature_store(
             enriched[f"pct_vs_ma_{window}"] = (history["_adj_close"] / ma) - 1.0
         slope_window = strategy.trend_features.slope_window
         if "ma_20" in enriched.columns:
-            enriched["ma_20_slope"] = enriched["ma_20"] / enriched["ma_20"].shift(
-                slope_window
-            ) - 1.0
-        for window in sorted(windows["vol"]):
-            enriched[f"realized_vol_{window}d"] = (
-                history["_adj_close"].pct_change().rolling(window=window, min_periods=window).std()
-                * np.sqrt(252)
+            enriched["ma_20_slope"] = (
+                enriched["ma_20"] / enriched["ma_20"].shift(slope_window) - 1.0
             )
+        for window in sorted(windows["vol"]):
+            enriched[f"realized_vol_{window}d"] = history["_adj_close"].pct_change().rolling(
+                window=window, min_periods=window
+            ).std() * np.sqrt(252)
         for window in sorted(windows["drawdown"]):
             rolling_max = history["_adj_close"].rolling(window=window, min_periods=window).max()
             enriched[f"drawdown_{window}d"] = history["_adj_close"] / rolling_max - 1.0

@@ -237,9 +237,7 @@ def write_market_cache(
         if name == "DTWEXBGS":
             value = 120.0
         for day_value in dates:
-            rate_rows.append(
-                {"date": day_value.date().isoformat(), "series": name, "value": value}
-            )
+            rate_rows.append({"date": day_value.date().isoformat(), "series": name, "value": value})
     prices_path = tmp_path / "prices_daily.csv"
     rates_path = tmp_path / "rates_daily.csv"
     pd.DataFrame(price_rows).to_csv(prices_path, index=False)
@@ -270,8 +268,7 @@ def write_shadow_shortlist_and_monitoring(
         encoding="utf-8",
     )
     (shortlist_dir / "shadow_shortlist_candidates.jsonl").write_text(
-        "\n".join(json.dumps({"candidate_id": item}, sort_keys=True) for item in candidates)
-        + "\n",
+        "\n".join(json.dumps({"candidate_id": item}, sort_keys=True) for item in candidates) + "\n",
         encoding="utf-8",
     )
     monitor_root = tmp_path / "shadow_monitor_runs"

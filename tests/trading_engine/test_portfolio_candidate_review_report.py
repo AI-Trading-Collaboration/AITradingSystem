@@ -29,9 +29,7 @@ def test_portfolio_candidate_review_report_alias_reads_decision(
         config_path=review_config,
     )
 
-    decision_payload = load_portfolio_candidate_review_payload(
-        decision_run.decision_json_path
-    )
+    decision_payload = load_portfolio_candidate_review_payload(decision_run.decision_json_path)
     assert validate_portfolio_candidate_review_decision_payload(decision_payload) == []
     report_date = portfolio_candidate_review_payload_date(
         decision_payload,
@@ -50,6 +48,4 @@ def test_portfolio_candidate_review_report_alias_reads_decision(
     assert alias_payload["report_type"] == "portfolio_candidate_review_report"
     assert alias_payload["decision"]["decision"]["status"] == "watch"
     assert alias_payload["package"]["candidate"]["profile_name"]
-    assert "Portfolio Candidate Review Report" in alias_markdown.read_text(
-        encoding="utf-8"
-    )
+    assert "Portfolio Candidate Review Report" in alias_markdown.read_text(encoding="utf-8")

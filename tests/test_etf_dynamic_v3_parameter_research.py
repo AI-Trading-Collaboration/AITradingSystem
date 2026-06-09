@@ -177,12 +177,9 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         (sweep_output_dir / sweep_id / "leaderboard.json").read_text(encoding="utf-8")
     )
     wf_leaderboard = json.loads(
-        (
-            tmp_path
-            / "walk_forward"
-            / wf["walk_forward_id"]
-            / "wf_leaderboard.json"
-        ).read_text(encoding="utf-8")
+        (tmp_path / "walk_forward" / wf["walk_forward_id"] / "wf_leaderboard.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert wf["report"]["source_sweep_id"] == sweep_id
     assert wf["report"]["holdout_start"]
@@ -579,9 +576,7 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     )
     assert broken_robustness_validation["status"] == "FAIL"
     assert "artifact_exists:robustness_report.md" in {
-        check["check_id"]
-        for check in broken_robustness_validation["checks"]
-        if not check["passed"]
+        check["check_id"] for check in broken_robustness_validation["checks"] if not check["passed"]
     }
 
     (sweep_dir / "candidate_results.jsonl").write_text(

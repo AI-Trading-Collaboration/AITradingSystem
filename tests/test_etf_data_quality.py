@@ -125,10 +125,7 @@ def test_return_outlier_detects_warning_critical_and_adjacent_reversal() -> None
     )
 
     result = check_return_outliers(prices, policy=policy, as_of=date(2026, 1, 6))
-    statuses = [
-        (item["asset"], item["outlier_status"])
-        for item in result["records"]
-    ]
+    statuses = [(item["asset"], item["outlier_status"]) for item in result["records"]]
 
     assert ("SPY", "warning_outlier") in statuses
     assert ("QQQ", "possible_adjustment_issue") in statuses
@@ -287,9 +284,7 @@ def test_data_quality_validation_gate_passes_and_writes_reports(tmp_path: Path) 
     assert payload["schema_version"] == DATA_QUALITY_VALIDATION_SCHEMA_VERSION
     assert payload["status"] == "PASS"
     assert payload["failed_check_count"] == 0
-    assert "reader_brief_integration_available" in {
-        item["check_id"] for item in payload["checks"]
-    }
+    assert "reader_brief_integration_available" in {item["check_id"] for item in payload["checks"]}
     assert "Safety" not in markdown or "production_effect" in markdown
     assert paths["json"].exists()
     assert paths["markdown"].exists()
@@ -319,9 +314,7 @@ def test_reader_brief_data_quality_section_summarizes_latest_report(tmp_path: Pa
                 "summary": {"blocking_count": 0, "warning_count": 0}
             },
             "evidence_completeness": {"summary": {"blocking_count": 0, "warning_count": 0}},
-            "validation_gate_freshness": {
-                "summary": {"blocking_count": 0, "warning_count": 0}
-            },
+            "validation_gate_freshness": {"summary": {"blocking_count": 0, "warning_count": 0}},
             "report_staleness": {"summary": {"blocking_count": 0, "warning_count": 1}},
             "reader_brief_links": {"summary": {"blocking_count": 0, "warning_count": 0}},
         },
