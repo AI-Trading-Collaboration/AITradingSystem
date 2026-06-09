@@ -150,5 +150,8 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
   `broker_action=none`、`manual_review_required=true`、
   `safe_for_shadow_evaluation=true`。该 gate 只证明 ETF allocation foundation
   可信到可以继续 shadow evaluation；它不是 production approval，也不能替代后续
-  shadow-evaluation artifacts 和 owner review。任务保持 `VALIDATING`，next
-  owner 调整为项目 owner + 系统验证。
+  shadow-evaluation artifacts 和 owner review。2026-06-09 刷新验证
+  `python -m ai_trading_system.cli etf credibility validate --date 2026-06-01`
+  仍为 PASS，`tests/test_etf_credibility.py` 6 passed。TRADING-063 从
+  `VALIDATING` 归档为 `DONE`；后续真实 shadow evaluation artifacts、forward
+  observation 和 owner review 由 TRADING-064+ / TRADING-070+ 链路继续承接。
