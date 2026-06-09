@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-16
+最后更新：2026-06-09
 
 关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`CALIBRATION-011`、`CALIBRATION-012`、`CALIBRATION-014`、`CALIBRATION-015`、`CALIBRATION-016`、`CALIBRATION-017`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
@@ -150,11 +150,11 @@ aits feedback evaluate-shadow-parameter-promotion --search-output-dir outputs/pa
 |9C. 当前样本 validation 门槛|VALIDATING|把 diagnostic/validation 门槛放宽到当前已积累 outcome 样本可启动后续验证，但 production promotion floor 不降低；shadow maturity 区分 validation review 和 promotion/governance review，低样本 validation 只能进入 `READY_FOR_VALIDATION_REVIEW`。|
 |9D. Shadow weight 表现优选|VALIDATING|按 gate 后仓位把 shadow 权重与主线转成可比的 position-weighted return、drawdown、turnover 和成本；当前三套 shadow profile 与主线 gate 后仓位一致，未找到正向 excess profile；不得自动替换生产权重。|
 |9E. Shadow gate 参数实验|VALIDATING|新增隔离 hard gate / confidence / risk budget cap profile，允许与 shadow weight profile 组合观察 gate 后仓位和表现差异；profile 只覆盖 validation ledger，不修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved overlay 或日报仓位 gate。|
-|9F. Shadow 参数搜索器|VALIDATING|新增可复现搜索入口，按指定区间枚举或采样 shadow weight/gate 组合，输出 trial registry、Pareto front 和 best profile YAML；结论只代表当前回测区间 in-sample 最优候选，不能直接生产替换。|
-|9G. Shadow 参数验证收紧|VALIDATING|搜索报告输出 weight-only / gate-only / combined 的 factorial attribution；默认 objective 要求验证级样本和正 excess；短样本结果只能作为 diagnostic-leading，不得写成 eligible best 或 production 候选。|
-|9H. Cap-level attribution 与仓位解释|VALIDATING|在搜索报告中拆出单个 gate cap 的边际贡献，并按日期披露 production/candidate 最终仓位、binding gate 和 return impact；仍只作为 validation 解释。|
-|9I. Shadow 参数 promotion contract|VALIDATING|新增独立 contract 与 CLI，把 search ranking 和生产晋级拆开；缺 eligible best、forward shadow、owner approval 或 rollback 时不得进入 production。|
-|9J. Objective regularization 与 lineage|VALIDATING|objective 增加 gate relaxation、weight distance、changed dimension penalty 和生产邻近性限制；search manifest 记录价格、快照、权重、resolver 和 git commit lineage。|
+|9F. Shadow 参数搜索器|DONE|新增可复现搜索入口，按指定区间枚举或采样 shadow weight/gate 组合，输出 trial registry、Pareto front 和 best profile YAML；结论只代表当前回测区间 in-sample 最优候选，不能直接生产替换。|
+|9G. Shadow 参数验证收紧|DONE|搜索报告输出 weight-only / gate-only / combined 的 factorial attribution；默认 objective 要求验证级样本和正 excess；短样本结果只能作为 diagnostic-leading，不得写成 eligible best 或 production 候选。|
+|9H. Cap-level attribution 与仓位解释|DONE|在搜索报告中拆出单个 gate cap 的边际贡献，并按日期披露 production/candidate 最终仓位、binding gate 和 return impact；仍只作为 validation 解释。|
+|9I. Shadow 参数 promotion contract|DONE|新增独立 contract 与 CLI，把 search ranking 和生产晋级拆开；缺 eligible best、forward shadow、owner approval 或 rollback 时不得进入 production。|
+|9J. Objective regularization 与 lineage|DONE|objective 增加 gate relaxation、weight distance、changed dimension penalty 和生产邻近性限制；search manifest 记录价格、快照、权重、resolver 和 git commit lineage。|
 |10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
 |11. Overlay target weights 与冲突治理|VALIDATING|approved overlay 支持 `target_weights` 模式、priority、mutual exclusion group 和冲突审计；approved overlay 的未知 signal、非法权重或同组优先级冲突必须 fail closed。|
 |12. Benchmark 扩展与反过拟合证据|VALIDATING|robustness 增加 same-exposure random、vol-targeted/fixed exposure、no-gate、alpha-only/risk-state-only 等 benchmark，并把关键 benchmark 结果接入 candidate 证据摘要。|
@@ -217,3 +217,14 @@ aits feedback evaluate-shadow-parameter-promotion --search-output-dir outputs/pa
 - 2026-05-16：CALIBRATION-014 进入 VALIDATING。`search-shadow-parameters` 报告和 manifest 已输出 factorial attribution；默认 objective 现要求 `min_available_samples=13` 且 `require_positive_excess=true`。完整当前样本搜索 `current_20260504_20260514_validation_v3` 评估 51,612 trials，结果为 `PASS_WITH_LIMITATIONS`，没有 eligible best trial；诊断领先项为 `grid_weight_0118__grid_gate_0217`，factorial attribution 显示 `weight_only` excess delta 0.00%、`gate_only` 约 4.29%、`combined` 约 4.45%，primary driver 为 `gate`。
 - 2026-05-16：新增 CALIBRATION-015、CALIBRATION-016 和 CALIBRATION-017。原因：最新评估指出下一步应继续拆解 gate 主导效应、把 search ranking 与 promotion contract 分层，并强化 objective risk-awareness、生产邻近性和 lineage。实现已让 `search-shadow-parameters` 输出 cap-level attribution、最终仓位变化解释、source weight / price / decision snapshot checksum、resolver version、git commit sha 和 dirty worktree 标记；新增 `config/weights/shadow_parameter_promotion_contract.yaml` 与 `aits feedback evaluate-shadow-parameter-promotion`，默认 contract 仍要求 eligible best、30 个 available、正 excess、回撤/换手约束、cap review、forward shadow、owner approval、rollback condition，并保持 `approved_hard_allowed=false`。目标测试已通过，生产权重、正式 gate、approved overlay、正式 prediction ledger 和日报结论未改变。
 - 2026-05-16：CALIBRATION-015/016/017 当前样本 smoke 通过。`current_20260504_20260514_cap_promotion_v3` 为 `PASS_WITH_LIMITATIONS`，51,612 trials，无 eligible best；diagnostic-leading 为 `source_current__grid_gate_0217`，excess 4.29%，factorial primary driver 为 `gate`。Cap-level attribution 显示 primary gate cap 为 `valuation`，valuation cap-only excess delta 约 2.42%、thesis 约 0.76%、其他 cap 约 0%；position change 表展示 2026-05-04 至 2026-05-14 每日 production/candidate 最终仓位和 return impact。`evaluate-shadow-parameter-promotion` 对同一 bundle 输出 `NOT_PROMOTABLE`，因为没有 eligible best、available=8 低于 contract floor 30，且缺 forward shadow outcome。
+- 2026-06-09：`CALIBRATION-012` 从 `VALIDATING` 归档为 `DONE`。当前修正版搜索器
+  artifact `current_20260504_20260514_grid_v2` 仍为 `PASS` / `production_effect=none`，
+  manifest 记录 search space checksum、objective checksum、204 个 weight candidates、
+  253 个 gate candidates 和 51,612 个 trials；报告披露 `weight_grid=on`、
+  `gate_grid=on`、`exhaustive_grid_with_optional_manifest_seeds`、45,288 个 Pareto front
+  trials、best trial `grid_weight_0118__grid_gate_0217` 和不得写 production weight、
+  approved overlay、正式 prediction ledger、日报结论或仓位 gate 的边界。验证通过
+  `tests/test_shadow_weight_profiles.py` 15 passed、Ruff、repo-wide Black check 和
+  `compileall`。更严格 objective、factorial attribution、promotion contract、lineage、
+  shadow iteration 和 forward lifecycle 已由 `CALIBRATION-014` 至 `CALIBRATION-019`
+  独立任务完成或承接，因此不再阻塞 9F 搜索器基础任务完成。
