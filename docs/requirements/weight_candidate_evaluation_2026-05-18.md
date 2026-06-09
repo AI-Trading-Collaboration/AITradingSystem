@@ -1,6 +1,6 @@
 # TRADING-016：Weight Candidate Evaluation
 
-最后更新：2026-05-18
+最后更新：2026-06-09
 
 关联任务：`TRADING-016`
 
@@ -74,3 +74,22 @@ Candidate 级 `evaluation_status` 只允许：
   `tests/test_daily_task_dashboard.py`、全量 pytest、ruff 和 black check。
 - 2026-05-18：push 后 GitHub Actions CI run `25996830767` 已对 commit
   `aa84423e756428c2531a58fc77bd2252b379a31e` 完成且通过。
+- 2026-06-09：`TRADING-016` 从 VALIDATING 归档为 DONE。归档复核确认本任务仍是
+  observe-only candidate evaluation 层，后续真实 TRADING-015 / paper / shadow / replay
+  输入观察继续由 `TRADING-017` / `TRADING-018` / `TRADING-018A` / `TRADING-018B`
+  下游链路承接，不作为本任务收口前置。本轮先运行
+  `python -m ai_trading_system.cli validate-data`，数据质量状态 `PASS_WITH_WARNINGS`、
+  错误数 0；默认缺输入 smoke 使用
+  `python scripts/run_weight_candidate_evaluation.py --date 2026-05-18 --reports-dir
+  outputs/reports/trading016_check` 输出 `evaluation_status=INSUFFICIENT_DATA`、
+  `candidate_count=0`、`evaluable_candidate_count=0`、
+  `main_blocked_by=missing_weight_adjustment_candidates`、`production_effect=none`。
+  字段级复核确认 `market_regime=ai_after_chatgpt`、`evaluation_mode=observe_only`、
+  7 / 14 / 30 日窗口均为 candidate_count 0 且
+  `main_blocked_by=missing_weight_adjustment_candidates`，safety boundary 固定
+  `writes_production_profile=false`、`runs_replay_runner=false`、
+  `calls_real_broker=false`、`triggers_trade=false`。验证通过
+  `python -m pytest tests/trading_engine/test_weight_candidate_evaluation.py
+  tests/test_daily_task_dashboard.py -q`（32 passed）、
+  `python -m pytest tests/trading_engine -q`（939 passed）、scoped safety scan 和归档前
+  代码基线 GitHub Actions `CI` run `27178454712` success。
