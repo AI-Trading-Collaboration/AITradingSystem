@@ -1,11 +1,11 @@
 # TRADING-075 Data Quality and Staleness Governance Upgrade
 
-最后更新：2026-06-03
+最后更新：2026-06-09
 
 ## 状态
 
 - 父任务：TRADING-075
-- 当前状态：VALIDATING
+- 当前状态：BASELINE_DONE
 - 优先级：P0
 - 下一责任方：系统验证 + 项目 owner
 - 安全边界：`observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`
@@ -82,3 +82,4 @@ python -m ai_trading_system.cli etf ops validate --as-of 2026-06-03
 
 - 2026-06-03: 新增任务文档并进入 IN_PROGRESS，原因：owner 提供 TRADING-075 开发计划，要求在 TRADING-074 operations workflow 后新增数据质量与 staleness governance baseline。
 - 2026-06-03: 从 IN_PROGRESS 改为 VALIDATING，原因：TRADING-075A~K baseline 已完成；新增 policy config、checkers、report/validation CLI、Reader Brief data-quality section、operations daily graph step、report registry/catalog/system-flow/runbook/README integration 和专项测试。最终验证通过全量 pytest、ruff、compileall、diff check、`aits etf data-quality validate` 和 `aits etf ops validate`；下一步观察真实 daily runs、artifact freshness、Reader Brief links 和 owner manual review。
+- 2026-06-09: 从 VALIDATING 归档为 BASELINE_DONE。归档前先读取 `docs/operations/operations_runbook.md`，确认 TRADING-075 只读检查 price freshness、calendar coverage、return outliers、config/model drift、evidence completeness、validation gate freshness、report staleness 和 Reader Brief links，且 Reader Brief 不补跑上游。执行 `python -m ai_trading_system.cli validate-data --as-of 2026-06-08` 得到 `PASS_WITH_WARNINGS`（0 errors）；`aits etf data-quality validate --as-of 2026-06-08` 得到 `status=PASS`、`failed_check_count=0`；`aits etf data-quality report --as-of 2026-06-08` 生成 JSON/Markdown 并按真实 artifact 状态 fail-closed 为 `status=BLOCKED`，包含 7 个 blocking failures 和 24 个 warnings，`commands_executed=false`、`production_state_mutated=false`；`reports index --as-of 2026-06-08` 和 `reports reader-brief --as-of 2026-06-08` 确认 Reader Brief `ETF Data Quality` 为 `availability=AVAILABLE`、`status=BLOCKED`、`blocking_failure_count=7`、`warning_count=24`，并链接详细治理报告；`aits etf ops validate --as-of 2026-06-08` 仍为 PASS。专项 `tests\test_etf_data_quality.py` 为 13 passed。后续真实 daily observation、artifact freshness 修复和 owner manual review 继续作为运行观察依赖承接，不由本任务伪造或自动解除 blockers。
