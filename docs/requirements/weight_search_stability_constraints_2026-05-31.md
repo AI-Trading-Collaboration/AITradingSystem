@@ -1,6 +1,6 @@
 # TRADING-061 Weight Search Stability Constraints
 
-最后更新：2026-05-31
+最后更新：2026-06-09
 
 ## 背景
 
@@ -75,3 +75,14 @@ production/current.yaml unchanged
 
 - 2026-05-31：新增任务并进入 `IN_PROGRESS`。需求来自 owner 提供的 TRADING-061 规格，目标是在不降低 guardrail、不修改 production、不放开 fallback signals 的前提下收敛 TRADING-059 的 aggressive search。
 - 2026-05-31：从 `IN_PROGRESS` 改为 `VALIDATING`。已完成 stable profile、engine diagnostics、CLI/report alias、Dashboard、Reader Brief、shadow backtest supporting artifact 和测试；真实 `aits parameters tune-weights-stable --latest` 生成 2026-05-28 artifact，但 `status=INSUFFICIENT_DATA`、`candidates_backtested=0`，原因是 upstream freshness / signal snapshot readiness 未满足，未把该结果解释为候选质量失败。`validate-weight-stability`、`reports weight-stability`、shadow backtest dry-run、全量 pytest、ruff、compileall 和 diff check 均通过。
+- 2026-06-09：继续保持 `VALIDATING`，原因：当前真实 `aits parameters tune-weights-stable
+  --latest` 已生成 2026-06-08 artifact，`status=LIMITED`、
+  `recommended_status=no_candidate`、`candidates_generated=360`、
+  `candidates_rejected_by_stability=193`、`candidates_backtested=0`。输入 readiness 已从
+  2026-05-29 的多项 blocker 收窄为 `status=BLOCKED`、`can_run=false`、
+  `reason=signal_snapshot_date_mismatch`，其中 freshness 为 OK、price coverage 为 OK、
+  backtest manifest 为 LIMITED，但 signal snapshot 仍 DATE_MISMATCH；因此 stable tuning
+  仍未进入有效 candidate backtest，不能归档。验证通过 `validate-weight-stability --latest`、
+  `validate-weight-stability-readiness --latest`、`reports weight-stability --latest`、
+  `reports weight-stability-readiness --latest`、shadow backtest dry-run 和 focused pytest
+  20 passed；production 参数、turnover guardrail、cost model 和 fallback signal policy 未修改。
