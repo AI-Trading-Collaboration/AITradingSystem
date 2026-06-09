@@ -1,6 +1,8 @@
 # TRADING-059A Weight Tuning Failure Attribution & Guardrail Diagnostics
 
-最后更新：2026-05-30
+最后更新：2026-06-09
+
+状态：DONE
 
 ## 背景
 
@@ -60,7 +62,7 @@ TRADING-059A 读取 latest 或指定日期的 `weight_tuning_summary.json` 与 `
 |3. Attribution core|DONE|缺 summary/candidates 时输出 `BLOCKED`；存在 artifact 时统计 candidate rejection、failure ranking、near miss、root cause 和 next action。|
 |4. CLI/report|DONE|新增 explain/validate/report CLI，生成 JSON/Markdown 和 report alias。|
 |5. Dashboard/Reader Brief/shadow backtest|DONE|Dashboard 与 Reader Brief 展示 failure attribution 摘要；shadow backtest promotion decision 引用 failure artifact 且保持 rejected。|
-|6. Validation|VALIDATING|专项测试覆盖 missing artifact、guardrail/performance/walk-forward/search root cause、Markdown、Dashboard、Reader Brief、shadow backtest safety；全量 pytest、ruff、compileall、diff check 正在最终复验。|
+|6. Validation|DONE|专项测试覆盖 missing artifact、guardrail/performance/walk-forward/search root cause、Markdown、Dashboard、Reader Brief、shadow backtest safety；文档检查、ruff、compileall、diff check 已复验。|
 
 ## Root Cause 分类
 
@@ -113,3 +115,4 @@ git diff --check
 
 - 2026-05-30：新增 TRADING-059A 并进入 `IN_PROGRESS`。目标是把 TRADING-059 的 `NO_CANDIDATE / guardrail_status=FAIL` 转为可审计、可排序、可用于下一步任务选择的失败归因报告。
 - 2026-05-30：从 `IN_PROGRESS` 改为 `VALIDATING`。已完成 failure attribution core、TRADING-059 candidate diagnostics 增强、CLI/report alias、Dashboard、Reader Brief、shadow backtest supporting artifact 和专项测试；真实 latest 2026-05-28 failure attribution 为 `NO_CANDIDATE_EXPLAINED`，root cause 为 `portfolio_turnover_too_high`，top failure reason 为 `cost_drag_too_high`，most common guardrail failure 为 `turnover_guardrail_failed`，recommended next action 为 `review_portfolio_turnover_constraints`；production 参数 hash 不变。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`，原因：latest failure attribution 仍为 `NO_CANDIDATE_EXPLAINED`、`root_cause_category=portfolio_turnover_too_high`、`top_failure_reason=cost_drag_too_high`、`most_common_guardrail_failure=turnover_guardrail_failed`，并已由 TRADING-060 turnover attribution 进一步定位为 aggressive weight search；shadow backtest dry-run 仍 rejected。验证通过 `validate-weight-tuning-failure --latest`、`reports weight-tuning-failure --latest`、`explain-weight-tuning-failure --latest`、Reader Brief、focused pytest 24 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。

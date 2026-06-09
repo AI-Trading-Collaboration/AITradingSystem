@@ -1,6 +1,8 @@
 # TRADING-060 Portfolio Turnover & Cost Drag Attribution for Weight Candidates
 
-最后更新：2026-05-31
+最后更新：2026-06-09
+
+状态：DONE
 
 ## 背景
 
@@ -171,3 +173,12 @@ git diff --check
   `top_failure_reason=cost_drag_too_high`、`failed_by_turnover=240`。Reader Brief 已展示
   turnover 摘要，shadow backtest dry-run 仍 `promotion_status=rejected` 并引用
   turnover attribution artifact；`config/parameters/production/current.yaml` 未修改。
+- 2026-06-09：从 `VALIDATING` 改为 `DONE`，原因：latest turnover attribution 仍为
+  `TURNOVER_FAILURE_EXPLAINED`，`root_cause_category=weight_search_too_aggressive`、
+  `top_failure_reason=cost_drag_too_high`、`failed_by_turnover=240`，
+  `recommended_next_action=tighten_weight_search_l1_distance`；该结论已由 TRADING-061
+  search stability constraints 承接，且不降低 guardrail、不修改 cost model、不启用 rejected
+  candidate。验证通过 `validate-turnover-attribution --latest`、`reports
+  portfolio-turnover-attribution --latest`、`explain-turnover --latest`、Reader Brief、
+  shadow backtest dry-run、focused pytest 24 passed、文档检查、Ruff、repo-wide Black
+  check、`compileall` 和 `git diff --check`。

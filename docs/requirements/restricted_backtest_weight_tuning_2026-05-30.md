@@ -1,6 +1,8 @@
 # TRADING-059 Restricted Backtest Weight Tuning
 
-最后更新：2026-05-30
+最后更新：2026-06-09
+
+状态：BASELINE_DONE
 
 ## 背景
 
@@ -99,3 +101,4 @@ dry-run 写入 `outputs/dry_runs/weight_tuning/`。
 
 - 2026-05-30：新增 TRADING-059 并进入 `IN_PROGRESS`。目标是在 TRADING-058A 的 active tracking / needs_more_data 状态之后，补齐受限 signal weight tuning 的 advisory shadow 闭环。
 - 2026-05-30：从 `IN_PROGRESS` 改为 `VALIDATING`。已完成 v0.1 实现、配置、CLI、报告、Dashboard、Reader Brief、shadow backtest supporting artifact 接入和专项测试；真实 `aits parameters tune-weights --latest` 生成 2026-05-28 artifact，结果为 `NO_CANDIDATE`、`candidate_status=rejected`、`candidates_evaluated=240`、`guardrail_status=FAIL`，因此 baseline 仍是参考配置，不修改 production 参数、不自动 promotion。验证通过 `aits parameters validate-weight-tuning --latest`、`aits reports weight-tuning --latest`、`aits parameters explain-weight-tuning --latest`、`aits parameters shadow-backtest --latest --dry-run`、专项 pytest、全量 `python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts` 和 `git diff --check`。
+- 2026-06-09：从 `VALIDATING` 改为 `BASELINE_DONE`，原因：受限调参闭环、report alias、Dashboard/Reader Brief 和 shadow backtest 只读引用已稳定复验；latest 仍为 `NO_CANDIDATE` / `candidate_status=rejected` / `candidates_evaluated=240`，因此不形成 production 或 shadow promotion candidate。失败原因已由 TRADING-059A/TRADING-060 解释并交给 TRADING-061 stability constraints 继续处理。验证通过 `validate-weight-tuning --latest`、`reports weight-tuning --latest`、`explain-weight-tuning --latest`、Reader Brief、shadow backtest dry-run、focused pytest 24 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。
