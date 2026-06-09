@@ -1727,6 +1727,8 @@ def _portfolio_return_and_path(
     daily_returns = []
     total_return = 0.0
     for symbol, weight in clean.items():
+        if symbol == "CASH":
+            continue
         if symbol not in pivot.columns:
             raise DynamicV3PaperTrackingError(f"missing symbol price: {symbol}")
         start_price = _float(pivot.loc[start_idx, symbol])
@@ -1737,6 +1739,8 @@ def _portfolio_return_and_path(
     for left, right in zip(dates, dates[1:], strict=False):
         day_ret = 0.0
         for symbol, weight in clean.items():
+            if symbol == "CASH":
+                continue
             left_price = _float(pivot.loc[left, symbol])
             right_price = _float(pivot.loc[right, symbol])
             if left_price <= 0 or right_price <= 0:

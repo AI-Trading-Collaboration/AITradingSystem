@@ -5,7 +5,7 @@ import json
 import math
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -30,7 +30,17 @@ from ai_trading_system.etf_portfolio.dynamic_v3_historical_replay import (
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import (
     DEFAULT_ADVISORY_OUTCOME_DIR,
+    DEFAULT_OWNER_ATTRIBUTION_DIR,
+    DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    DEFAULT_PAPER_PORTFOLIO_DIR,
     DEFAULT_RATES_CACHE_PATH,
+    DEFAULT_SHADOW_AGING_DIR,
+    DEFAULT_SHADOW_SHORTLIST_DIR,
+    DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
+    render_advisory_outcome_report,
+    run_owner_attribution,
+    run_shadow_aging,
+    run_weekly_advisory_review,
     update_advisory_outcome,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
@@ -51,6 +61,15 @@ DEFAULT_REPLAY_SAMPLE_EXPANSION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "replay
 DEFAULT_OUTCOME_DASHBOARD_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_dashboard"
 DEFAULT_LIMITED_VS_NOTRADE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_vs_notrade"
 DEFAULT_CONSENSUS_RISK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "consensus_risk"
+DEFAULT_OUTCOME_UPDATE_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_update_review"
+DEFAULT_OUTCOME_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "outcome_update"
+DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "rolling_evidence_refresh"
+)
+DEFAULT_EVIDENCE_TREND_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_trend"
+DEFAULT_FORWARD_OUTCOME_DECISION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_outcome_decision"
+)
 
 OUTCOME_WINDOWS = (1, 5, 10, 20)
 OUTCOME_WINDOW_STATUSES = {"AVAILABLE", "PENDING", "INSUFFICIENT_DATA"}
@@ -64,6 +83,13 @@ OUTCOME_DUE_STATUSES = {
 PIT_SAFETY_STATUSES = {"PIT_SAFE", "PIT_WARNING", "PIT_UNSAFE"}
 REPLAY_ELIGIBILITY_STATUSES = {"ELIGIBLE", "PARTIAL", "INELIGIBLE"}
 OUTCOME_MODES = {"FORWARD_OUTCOME", "HISTORICAL_REPLAY", "BACKTEST_SIMULATION"}
+OUTCOME_UPDATE_REVIEW_STATUSES = {"READY_TO_UPDATE", "NEEDS_REVIEW", "BLOCKED"}
+OUTCOME_UPDATE_SKIP_REASONS = {
+    "NOT_DUE",
+    "PRICE_MISSING",
+    "BLOCKED_BY_REVIEW",
+    "INSUFFICIENT_DATA",
+}
 REPLAY_VARIANTS = {
     "no_trade",
     "consensus_target",
@@ -1032,6 +1058,931 @@ def validate_consensus_risk_artifact(
     )
 
 
+def run_outcome_update_review(
+    *,
+    due_id: str,
+    output_dir: Path = DEFAULT_OUTCOME_UPDATE_REVIEW_DIR,
+    outcome_due_dir: Path = DEFAULT_OUTCOME_DUE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    due_dir = outcome_due_dir / due_id
+    due_manifest = _read_json(due_dir / "outcome_due_manifest.json")
+    due_rows = _read_jsonl(due_dir / "due_window_inventory.jsonl")
+    review_rows = [_outcome_update_review_row(row) for row in due_rows]
+    safety_checks = _outcome_update_safety_checks(review_rows)
+    impact_preview = _outcome_update_impact_preview(review_rows)
+    review_id = _stable_id("outcome-update-review", due_id, generated.isoformat())
+    review_dir = _unique_dir(output_dir / review_id)
+    review_dir.mkdir(parents=True, exist_ok=False)
+    status = "PASS"
+    if not review_rows:
+        status = "INSUFFICIENT_DATA"
+    elif safety_checks["blocked_count"]:
+        status = "PASS_WITH_WARNINGS" if safety_checks["ready_to_update_count"] else "BLOCKED"
+    elif not safety_checks["ready_to_update_count"]:
+        status = "INSUFFICIENT_DATA"
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_review_manifest",
+        "update_review_id": review_dir.name,
+        "due_id": due_id,
+        "as_of": _text(due_manifest.get("as_of")),
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "ready_to_update_count": safety_checks["ready_to_update_count"],
+        "blocked_count": safety_checks["blocked_count"],
+        "price_missing_count": sum(
+            1 for row in review_rows if row.get("price_data_available") is False
+        ),
+        "future_data_used_in_decision": False,
+        "outcome_update_review_manifest_path": str(
+            review_dir / "outcome_update_review_manifest.json"
+        ),
+        "update_ready_review_matrix_path": str(
+            review_dir / "update_ready_review_matrix.jsonl"
+        ),
+        "update_impact_preview_path": str(review_dir / "update_impact_preview.json"),
+        "update_safety_checks_path": str(review_dir / "update_safety_checks.json"),
+        "outcome_update_review_report_path": str(
+            review_dir / "outcome_update_review_report.md"
+        ),
+        "requires_owner_review": True,
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(review_dir / "outcome_update_review_manifest.json", manifest)
+    _write_jsonl(review_dir / "update_ready_review_matrix.jsonl", review_rows)
+    _write_json(review_dir / "update_impact_preview.json", impact_preview)
+    _write_json(review_dir / "update_safety_checks.json", safety_checks)
+    _write_text(
+        review_dir / "outcome_update_review_report.md",
+        render_outcome_update_review_report(manifest, safety_checks, impact_preview),
+    )
+    _update_latest_pointer(
+        "latest_outcome_update_review",
+        review_dir.name,
+        review_dir / "outcome_update_review_manifest.json",
+    )
+    return {
+        "update_review_id": review_dir.name,
+        "review_dir": review_dir,
+        "manifest": manifest,
+        "update_ready_review_matrix": review_rows,
+        "update_impact_preview": impact_preview,
+        "update_safety_checks": safety_checks,
+    }
+
+
+def outcome_update_review_report_payload(
+    *,
+    review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OUTCOME_UPDATE_REVIEW_DIR,
+) -> dict[str, Any]:
+    review_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=review_id if not latest else None,
+        pointer_name="latest_outcome_update_review",
+    )
+    return {
+        **_read_json(review_dir / "outcome_update_review_manifest.json"),
+        "update_ready_review_matrix": _read_jsonl(
+            review_dir / "update_ready_review_matrix.jsonl"
+        ),
+        "update_impact_preview": _read_json(review_dir / "update_impact_preview.json"),
+        "update_safety_checks": _read_json(review_dir / "update_safety_checks.json"),
+        "review_dir": str(review_dir),
+    }
+
+
+def validate_outcome_update_review_artifact(
+    *, review_id: str, output_dir: Path = DEFAULT_OUTCOME_UPDATE_REVIEW_DIR
+) -> dict[str, Any]:
+    review_dir = output_dir / review_id
+    manifest = _read_optional_json(review_dir / "outcome_update_review_manifest.json") or {}
+    rows = _read_jsonl(review_dir / "update_ready_review_matrix.jsonl")
+    safety = _read_optional_json(review_dir / "update_safety_checks.json") or {}
+    checks = [
+        _check(
+            "manifest_exists",
+            (review_dir / "outcome_update_review_manifest.json").exists(),
+            review_id,
+        ),
+        _check(
+            "review_matrix_exists",
+            (review_dir / "update_ready_review_matrix.jsonl").exists(),
+            review_id,
+        ),
+        _check(
+            "impact_preview_exists",
+            (review_dir / "update_impact_preview.json").exists(),
+            review_id,
+        ),
+        _check(
+            "safety_checks_exists",
+            (review_dir / "update_safety_checks.json").exists(),
+            review_id,
+        ),
+        _check(
+            "report_exists",
+            (review_dir / "outcome_update_review_report.md").exists(),
+            review_id,
+        ),
+        _check("review_id_matches", manifest.get("update_review_id") == review_id, review_id),
+        _check(
+            "all_windows_have_review_status",
+            bool(rows)
+            and all(row.get("review_status") in OUTCOME_UPDATE_REVIEW_STATUSES for row in rows),
+            "review_status",
+        ),
+        _check(
+            "future_data_not_used_in_decision",
+            all(row.get("future_data_used_in_decision") is False for row in rows)
+            and safety.get("future_data_used_in_decision") is False,
+            "future data decision leakage forbidden",
+        ),
+        _check(
+            "ready_rows_are_due_and_pending",
+            all(
+                row.get("due_status") == "DUE"
+                and row.get("existing_status") == "PENDING"
+                and row.get("can_update") is True
+                for row in rows
+                if row.get("review_status") == "READY_TO_UPDATE"
+            ),
+            "ready rows",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_outcome_update_review_validation",
+        artifact_id_key="review_id",
+        artifact_id=review_id,
+        checks=checks,
+    )
+
+
+def run_outcome_update(
+    *,
+    update_review_id: str,
+    output_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR,
+    review_dir: Path = DEFAULT_OUTCOME_UPDATE_REVIEW_DIR,
+    advisory_outcome_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
+    paper_portfolio_dir: Path | None = None,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    review_artifact_dir = review_dir / update_review_id
+    review_manifest = _read_json(review_artifact_dir / "outcome_update_review_manifest.json")
+    review_rows = _read_jsonl(review_artifact_dir / "update_ready_review_matrix.jsonl")
+    as_of = _date_from_any(review_manifest.get("as_of"))
+    if as_of is None:
+        raise DynamicV3OutcomeAccumulationError("outcome update review missing as_of")
+    before_rows = _forward_outcome_rows(advisory_outcome_dir)
+    before_by_window = _forward_rows_by_outcome_window(before_rows)
+    ready_rows = [row for row in review_rows if row.get("review_status") == "READY_TO_UPDATE"]
+    ready_outcome_ids = sorted({_text(row.get("outcome_id")) for row in ready_rows})
+    ready_keys = {
+        (_text(row.get("outcome_id")), _int(row.get("window_days"))) for row in ready_rows
+    }
+    for outcome_id in ready_outcome_ids:
+        outcome_dir = advisory_outcome_dir / outcome_id
+        prior_windows = _read_jsonl(outcome_dir / "outcome_windows.jsonl")
+        update_advisory_outcome(
+            as_of=as_of,
+            outcome_id=outcome_id,
+            output_dir=advisory_outcome_dir,
+            paper_portfolio_dir=(
+                DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_portfolio"
+                if paper_portfolio_dir is None
+                else paper_portfolio_dir
+            ),
+            prices_path=prices_path,
+            rates_path=rates_path,
+            generated_at=generated,
+        )
+        _restore_non_ready_outcome_windows(
+            outcome_dir=outcome_dir,
+            outcome_id=outcome_id,
+            ready_keys=ready_keys,
+            prior_windows=prior_windows,
+        )
+    after_rows = _forward_outcome_rows(advisory_outcome_dir)
+    after_by_window = _forward_rows_by_outcome_window(after_rows)
+    updated_windows: list[dict[str, Any]] = []
+    skipped_windows: list[dict[str, Any]] = []
+    for row in review_rows:
+        outcome_id = _text(row.get("outcome_id"))
+        window_days = _int(row.get("window_days"))
+        key = (outcome_id, window_days)
+        before = before_by_window.get(key, {})
+        after = after_by_window.get(key, before)
+        if row.get("review_status") != "READY_TO_UPDATE":
+            skipped_windows.append(_skipped_outcome_update_row(row, before))
+            continue
+        if _text(after.get("outcome_status")) == "AVAILABLE":
+            updated_windows.append(_updated_outcome_window_row(row, before, after))
+        else:
+            skipped_windows.append(
+                {
+                    "daily_advisory_id": _text(row.get("daily_advisory_id")),
+                    "outcome_id": outcome_id,
+                    "window_days": window_days,
+                    "old_status": _text(before.get("outcome_status"), "PENDING"),
+                    "skip_reason": "INSUFFICIENT_DATA",
+                    "review_status": "READY_TO_UPDATE",
+                    "new_status": _text(after.get("outcome_status"), "INSUFFICIENT_DATA"),
+                    "broker_action_taken": False,
+                }
+            )
+    before_counts = _forward_status_summary(before_rows)
+    after_counts = _forward_status_summary(after_rows)
+    status_delta = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_status_delta",
+        "before": before_counts,
+        "after": after_counts,
+        "updated_count": len(updated_windows),
+        "skipped_count": len(skipped_windows),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    update_id = _stable_id("outcome-update", update_review_id, generated.isoformat())
+    update_dir = _unique_dir(output_dir / update_id)
+    update_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_manifest",
+        "outcome_update_id": update_dir.name,
+        "update_review_id": update_review_id,
+        "due_id": _text(review_manifest.get("due_id")),
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if updated_windows else "INSUFFICIENT_DATA",
+        "updated_count": len(updated_windows),
+        "skipped_count": len(skipped_windows),
+        "future_data_used_in_decision": False,
+        "downstream_refresh_required": True,
+        "outcome_update_manifest_path": str(update_dir / "outcome_update_manifest.json"),
+        "updated_windows_path": str(update_dir / "updated_windows.jsonl"),
+        "skipped_windows_path": str(update_dir / "skipped_windows.jsonl"),
+        "outcome_status_delta_path": str(update_dir / "outcome_status_delta.json"),
+        "outcome_update_report_path": str(update_dir / "outcome_update_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(update_dir / "outcome_update_manifest.json", manifest)
+    _write_jsonl(update_dir / "updated_windows.jsonl", updated_windows)
+    _write_jsonl(update_dir / "skipped_windows.jsonl", skipped_windows)
+    _write_json(update_dir / "outcome_status_delta.json", status_delta)
+    _write_text(
+        update_dir / "outcome_update_report.md",
+        render_outcome_update_report(manifest, status_delta, updated_windows, skipped_windows),
+    )
+    _update_latest_pointer(
+        "latest_outcome_update",
+        update_dir.name,
+        update_dir / "outcome_update_manifest.json",
+    )
+    return {
+        "outcome_update_id": update_dir.name,
+        "outcome_update_dir": update_dir,
+        "manifest": manifest,
+        "updated_windows": updated_windows,
+        "skipped_windows": skipped_windows,
+        "outcome_status_delta": status_delta,
+    }
+
+
+def outcome_update_report_payload(
+    *,
+    update_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR,
+) -> dict[str, Any]:
+    update_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=update_id if not latest else None,
+        pointer_name="latest_outcome_update",
+    )
+    return {
+        **_read_json(update_dir / "outcome_update_manifest.json"),
+        "updated_windows": _read_jsonl(update_dir / "updated_windows.jsonl"),
+        "skipped_windows": _read_jsonl(update_dir / "skipped_windows.jsonl"),
+        "outcome_status_delta": _read_json(update_dir / "outcome_status_delta.json"),
+        "outcome_update_dir": str(update_dir),
+    }
+
+
+def validate_outcome_update_artifact(
+    *, update_id: str, output_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR
+) -> dict[str, Any]:
+    update_dir = output_dir / update_id
+    manifest = _read_optional_json(update_dir / "outcome_update_manifest.json") or {}
+    updated = _read_jsonl(update_dir / "updated_windows.jsonl")
+    skipped = _read_jsonl(update_dir / "skipped_windows.jsonl")
+    delta = _read_optional_json(update_dir / "outcome_status_delta.json") or {}
+    checks = [
+        _check(
+            "manifest_exists", (update_dir / "outcome_update_manifest.json").exists(), update_id
+        ),
+        _check(
+            "updated_windows_exists",
+            (update_dir / "updated_windows.jsonl").exists(),
+            update_id,
+        ),
+        _check(
+            "skipped_windows_exists",
+            (update_dir / "skipped_windows.jsonl").exists(),
+            update_id,
+        ),
+        _check(
+            "status_delta_exists", (update_dir / "outcome_status_delta.json").exists(), update_id
+        ),
+        _check("report_exists", (update_dir / "outcome_update_report.md").exists(), update_id),
+        _check("update_id_matches", manifest.get("outcome_update_id") == update_id, update_id),
+        _check(
+            "updated_rows_available",
+            all(
+                row.get("old_status") == "PENDING"
+                and row.get("new_status") == "AVAILABLE"
+                and row.get("future_data_used_in_decision") is False
+                for row in updated
+            ),
+            "updated rows",
+        ),
+        _check(
+            "skipped_reason_valid",
+            all(row.get("skip_reason") in OUTCOME_UPDATE_SKIP_REASONS for row in skipped),
+            "skip reasons",
+        ),
+        _check(
+            "delta_counts_match_manifest",
+            _int(delta.get("updated_count")) == _int(manifest.get("updated_count"))
+            and _int(delta.get("skipped_count")) == _int(manifest.get("skipped_count")),
+            "delta counts",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_outcome_update_validation",
+        artifact_id_key="update_id",
+        artifact_id=update_id,
+        checks=checks,
+    )
+
+
+def run_rolling_evidence_refresh(
+    *,
+    outcome_update_id: str,
+    output_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
+    outcome_update_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR,
+    outcome_dashboard_dir: Path = DEFAULT_OUTCOME_DASHBOARD_DIR,
+    limited_vs_notrade_dir: Path = DEFAULT_LIMITED_VS_NOTRADE_DIR,
+    consensus_risk_dir: Path = DEFAULT_CONSENSUS_RISK_DIR,
+    owner_attribution_dir: Path = DEFAULT_OWNER_ATTRIBUTION_DIR,
+    shadow_aging_dir: Path = DEFAULT_SHADOW_AGING_DIR,
+    weekly_advisory_review_dir: Path = DEFAULT_WEEKLY_ADVISORY_REVIEW_DIR,
+    advisory_outcome_dir: Path = DEFAULT_ADVISORY_OUTCOME_DIR,
+    daily_advisory_dir: Path = DEFAULT_POSITION_ADVISORY_DAILY_DIR,
+    owner_review_dir: Path = DEFAULT_OWNER_REVIEW_JOURNAL_DIR,
+    shadow_shortlist_dir: Path = DEFAULT_SHADOW_SHORTLIST_DIR,
+    shadow_monitor_run_dir: Path = DEFAULT_SHADOW_MONITOR_RUN_DIR,
+    consensus_drift_dir: Path = DEFAULT_CONSENSUS_DRIFT_DIR,
+    paper_portfolio_dir: Path = DEFAULT_PAPER_PORTFOLIO_DIR,
+    backfill_dir: Path = DEFAULT_BACKFILLED_OUTCOME_DIR,
+    repair_dir: Path = DEFAULT_BACKFILL_REPAIR_DIR,
+    historical_replay_dir: Path = DEFAULT_HISTORICAL_REPLAY_DIR,
+    paper_sim_dir: Path = DEFAULT_HISTORICAL_PAPER_SIM_DIR,
+    diagnosis_dir: Path = DEFAULT_REPLAY_DIAGNOSIS_DIR,
+    outcome_due_dir: Path = DEFAULT_OUTCOME_DUE_DIR,
+    config_path: Path = DEFAULT_PAPER_PORTFOLIO_CONFIG_PATH,
+    shadow_shortlist_id: str | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    update_payload = outcome_update_report_payload(
+        update_id=outcome_update_id,
+        output_dir=outcome_update_dir,
+    )
+    as_of = _date_from_any(update_payload.get("as_of")) or generated.date()
+    before_limited = _latest_limited_vs_notrade_summary(limited_vs_notrade_dir)
+    before_consensus = _latest_consensus_risk_summary(consensus_risk_dir)
+    before_dashboard = _mapping(_mapping(update_payload.get("outcome_status_delta")).get("before"))
+    dashboard = build_outcome_dashboard(
+        output_dir=outcome_dashboard_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+        paper_sim_dir=paper_sim_dir,
+        diagnosis_dir=diagnosis_dir,
+        outcome_due_dir=outcome_due_dir,
+        generated_at=generated,
+    )
+    limited = run_limited_vs_notrade_evaluation(
+        output_dir=limited_vs_notrade_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+        generated_at=generated,
+    )
+    consensus = run_consensus_risk_review(
+        output_dir=consensus_risk_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        historical_replay_dir=historical_replay_dir,
+        backfill_dir=backfill_dir,
+        repair_dir=repair_dir,
+        generated_at=generated,
+    )
+    owner = run_owner_attribution(
+        output_dir=owner_attribution_dir,
+        owner_review_dir=owner_review_dir,
+        outcome_dir=advisory_outcome_dir,
+        generated_at=generated,
+    )
+    resolved_shadow_shortlist_id = shadow_shortlist_id or _resolve_shadow_shortlist_id(
+        shadow_aging_dir
+    )
+    shadow: dict[str, Any] | None = None
+    if resolved_shadow_shortlist_id:
+        shadow = run_shadow_aging(
+            shadow_shortlist_id=resolved_shadow_shortlist_id,
+            config_path=config_path,
+            output_dir=shadow_aging_dir,
+            shadow_shortlist_dir=shadow_shortlist_dir,
+            shadow_monitor_run_dir=shadow_monitor_run_dir,
+            consensus_drift_dir=consensus_drift_dir,
+            advisory_outcome_dir=advisory_outcome_dir,
+            generated_at=generated,
+        )
+    weekly = run_weekly_advisory_review(
+        week_ending=as_of,
+        output_dir=weekly_advisory_review_dir,
+        shadow_monitor_run_dir=shadow_monitor_run_dir,
+        daily_advisory_dir=daily_advisory_dir,
+        owner_review_dir=owner_review_dir,
+        paper_portfolio_dir=paper_portfolio_dir,
+        advisory_outcome_dir=advisory_outcome_dir,
+        shadow_aging_dir=shadow_aging_dir,
+        generated_at=generated,
+    )
+    refreshed = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_refreshed_artifacts",
+        "outcome_dashboard_id": dashboard["dashboard_id"],
+        "limited_vs_notrade_id": limited["focus_id"],
+        "consensus_risk_id": consensus["risk_id"],
+        "owner_attribution_id": owner["attribution_id"],
+        "shadow_aging_id": "" if shadow is None else shadow["aging_id"],
+        "shadow_aging_status": "SKIPPED_NO_SHADOW_SHORTLIST" if shadow is None else "REFRESHED",
+        "weekly_advisory_review_id": weekly["weekly_review_id"],
+        "reader_brief_updated": True,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+    evidence_delta = _rolling_evidence_delta_summary(
+        before_dashboard=before_dashboard,
+        before_limited=before_limited,
+        before_consensus=before_consensus,
+        dashboard=dashboard,
+        limited=limited,
+        consensus=consensus,
+    )
+    refresh_id = _stable_id("rolling-evidence-refresh", outcome_update_id, generated.isoformat())
+    refresh_dir = _unique_dir(output_dir / refresh_id)
+    refresh_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_rolling_refresh_manifest",
+        "refresh_id": refresh_dir.name,
+        "outcome_update_id": outcome_update_id,
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "material_change": evidence_delta["material_change"],
+        "rolling_refresh_manifest_path": str(refresh_dir / "rolling_refresh_manifest.json"),
+        "refreshed_artifacts_path": str(refresh_dir / "refreshed_artifacts.json"),
+        "evidence_delta_summary_path": str(refresh_dir / "evidence_delta_summary.json"),
+        "rolling_evidence_refresh_report_path": str(
+            refresh_dir / "rolling_evidence_refresh_report.md"
+        ),
+        "reader_brief_section_path": str(refresh_dir / "reader_brief_section.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(refresh_dir / "rolling_refresh_manifest.json", manifest)
+    _write_json(refresh_dir / "refreshed_artifacts.json", refreshed)
+    _write_json(refresh_dir / "evidence_delta_summary.json", evidence_delta)
+    _write_text(
+        refresh_dir / "rolling_evidence_refresh_report.md",
+        render_rolling_evidence_refresh_report(manifest, refreshed, evidence_delta),
+    )
+    _write_text(
+        refresh_dir / "reader_brief_section.md",
+        render_rolling_refresh_reader_brief(manifest, evidence_delta),
+    )
+    _update_latest_pointer(
+        "latest_rolling_evidence_refresh",
+        refresh_dir.name,
+        refresh_dir / "rolling_refresh_manifest.json",
+    )
+    return {
+        "refresh_id": refresh_dir.name,
+        "refresh_dir": refresh_dir,
+        "manifest": manifest,
+        "refreshed_artifacts": refreshed,
+        "evidence_delta_summary": evidence_delta,
+    }
+
+
+def rolling_evidence_refresh_report_payload(
+    *,
+    refresh_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
+) -> dict[str, Any]:
+    refresh_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=refresh_id if not latest else None,
+        pointer_name="latest_rolling_evidence_refresh",
+    )
+    return {
+        **_read_json(refresh_dir / "rolling_refresh_manifest.json"),
+        "refreshed_artifacts": _read_json(refresh_dir / "refreshed_artifacts.json"),
+        "evidence_delta_summary": _read_json(refresh_dir / "evidence_delta_summary.json"),
+        "reader_brief_section": _read_text(refresh_dir / "reader_brief_section.md"),
+        "refresh_dir": str(refresh_dir),
+    }
+
+
+def validate_rolling_evidence_refresh_artifact(
+    *, refresh_id: str, output_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR
+) -> dict[str, Any]:
+    refresh_dir = output_dir / refresh_id
+    manifest = _read_optional_json(refresh_dir / "rolling_refresh_manifest.json") or {}
+    refreshed = _read_optional_json(refresh_dir / "refreshed_artifacts.json") or {}
+    delta = _read_optional_json(refresh_dir / "evidence_delta_summary.json") or {}
+    checks = [
+        _check(
+            "manifest_exists",
+            (refresh_dir / "rolling_refresh_manifest.json").exists(),
+            refresh_id,
+        ),
+        _check(
+            "refreshed_artifacts_exists",
+            (refresh_dir / "refreshed_artifacts.json").exists(),
+            refresh_id,
+        ),
+        _check(
+            "evidence_delta_exists",
+            (refresh_dir / "evidence_delta_summary.json").exists(),
+            refresh_id,
+        ),
+        _check(
+            "report_exists",
+            (refresh_dir / "rolling_evidence_refresh_report.md").exists(),
+            refresh_id,
+        ),
+        _check(
+            "reader_brief_exists",
+            (refresh_dir / "reader_brief_section.md").exists(),
+            refresh_id,
+        ),
+        _check("refresh_id_matches", manifest.get("refresh_id") == refresh_id, refresh_id),
+        _check(
+            "core_artifact_ids_present",
+            all(
+                _text(refreshed.get(key))
+                for key in (
+                    "outcome_dashboard_id",
+                    "limited_vs_notrade_id",
+                    "consensus_risk_id",
+                    "owner_attribution_id",
+                    "weekly_advisory_review_id",
+                )
+            ),
+            "core refreshed ids",
+        ),
+        _check(
+            "delta_before_after_present",
+            bool(_mapping(delta.get("before"))) and bool(_mapping(delta.get("after"))),
+            "delta before/after",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_rolling_evidence_refresh_validation",
+        artifact_id_key="refresh_id",
+        artifact_id=refresh_id,
+        checks=checks,
+    )
+
+
+def run_evidence_trend(
+    *,
+    output_dir: Path = DEFAULT_EVIDENCE_TREND_DIR,
+    rolling_refresh_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    timeseries = _evidence_trend_timeseries(rolling_refresh_dir)
+    summary = _confidence_trend_summary(timeseries)
+    trend_id = _stable_id("evidence-trend", len(timeseries), generated.isoformat())
+    trend_dir = _unique_dir(output_dir / trend_id)
+    trend_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_trend_manifest",
+        "trend_id": trend_dir.name,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if timeseries else "INSUFFICIENT_DATA",
+        "refresh_count": len(timeseries),
+        "trend_status": summary["trend_status"],
+        "evidence_trend_manifest_path": str(trend_dir / "evidence_trend_manifest.json"),
+        "evidence_trend_timeseries_path": str(trend_dir / "evidence_trend_timeseries.jsonl"),
+        "confidence_trend_summary_path": str(trend_dir / "confidence_trend_summary.json"),
+        "evidence_trend_report_path": str(trend_dir / "evidence_trend_report.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(trend_dir / "evidence_trend_manifest.json", manifest)
+    _write_jsonl(trend_dir / "evidence_trend_timeseries.jsonl", timeseries)
+    _write_json(trend_dir / "confidence_trend_summary.json", summary)
+    _write_text(
+        trend_dir / "evidence_trend_report.md",
+        render_evidence_trend_report(manifest, summary, timeseries),
+    )
+    _update_latest_pointer(
+        "latest_evidence_trend",
+        trend_dir.name,
+        trend_dir / "evidence_trend_manifest.json",
+    )
+    return {
+        "trend_id": trend_dir.name,
+        "trend_dir": trend_dir,
+        "manifest": manifest,
+        "evidence_trend_timeseries": timeseries,
+        "confidence_trend_summary": summary,
+    }
+
+
+def evidence_trend_report_payload(
+    *,
+    trend_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_EVIDENCE_TREND_DIR,
+) -> dict[str, Any]:
+    trend_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=trend_id if not latest else None,
+        pointer_name="latest_evidence_trend",
+    )
+    return {
+        **_read_json(trend_dir / "evidence_trend_manifest.json"),
+        "evidence_trend_timeseries": _read_jsonl(trend_dir / "evidence_trend_timeseries.jsonl"),
+        "confidence_trend_summary": _read_json(trend_dir / "confidence_trend_summary.json"),
+        "trend_dir": str(trend_dir),
+    }
+
+
+def validate_evidence_trend_artifact(
+    *, trend_id: str, output_dir: Path = DEFAULT_EVIDENCE_TREND_DIR
+) -> dict[str, Any]:
+    trend_dir = output_dir / trend_id
+    manifest = _read_optional_json(trend_dir / "evidence_trend_manifest.json") or {}
+    rows = _read_jsonl(trend_dir / "evidence_trend_timeseries.jsonl")
+    summary = _read_optional_json(trend_dir / "confidence_trend_summary.json") or {}
+    checks = [
+        _check("manifest_exists", (trend_dir / "evidence_trend_manifest.json").exists(), trend_id),
+        _check(
+            "timeseries_exists", (trend_dir / "evidence_trend_timeseries.jsonl").exists(), trend_id
+        ),
+        _check(
+            "summary_exists", (trend_dir / "confidence_trend_summary.json").exists(), trend_id
+        ),
+        _check("report_exists", (trend_dir / "evidence_trend_report.md").exists(), trend_id),
+        _check("trend_id_matches", manifest.get("trend_id") == trend_id, trend_id),
+        _check(
+            "refresh_ids_present",
+            all(_text(row.get("refresh_id")) for row in rows) or not rows,
+            "refresh ids",
+        ),
+        _check(
+            "insufficient_history_explicit",
+            len(rows) >= 2 or summary.get("trend_status") == "INSUFFICIENT_HISTORY",
+            "single refresh trend must be insufficient history",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_evidence_trend_validation",
+        artifact_id_key="trend_id",
+        artifact_id=trend_id,
+        checks=checks,
+    )
+
+
+def run_forward_outcome_decision(
+    *,
+    week_ending: date,
+    output_dir: Path = DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
+    outcome_update_dir: Path = DEFAULT_OUTCOME_UPDATE_DIR,
+    rolling_refresh_dir: Path = DEFAULT_ROLLING_EVIDENCE_REFRESH_DIR,
+    evidence_trend_dir: Path = DEFAULT_EVIDENCE_TREND_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    update = _latest_outcome_update_summary(outcome_update_dir)
+    refresh = _latest_refresh_summary(rolling_refresh_dir)
+    trend = _latest_evidence_trend_summary(evidence_trend_dir)
+    matrix = _forward_go_no_go_matrix(
+        week_ending=week_ending,
+        update=update,
+        refresh=refresh,
+        trend=trend,
+    )
+    next_actions = _forward_next_actions(matrix)
+    decision_id = _stable_id(
+        "forward-outcome-decision",
+        week_ending.isoformat(),
+        generated.isoformat(),
+    )
+    decision_dir = _unique_dir(output_dir / decision_id)
+    decision_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_decision_manifest",
+        "decision_id": decision_dir.name,
+        "week_ending": week_ending.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "recommended_action": matrix["recommended_action"],
+        "rule_calibration_readiness": matrix["rule_calibration_readiness"],
+        "forward_decision_manifest_path": str(decision_dir / "forward_decision_manifest.json"),
+        "forward_go_no_go_matrix_path": str(decision_dir / "forward_go_no_go_matrix.json"),
+        "forward_next_actions_path": str(decision_dir / "forward_next_actions.json"),
+        "forward_outcome_decision_report_path": str(
+            decision_dir / "forward_outcome_decision_report.md"
+        ),
+        "reader_brief_section_path": str(decision_dir / "reader_brief_section.md"),
+        "production_effect": "none",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "auto_policy_apply": False,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(decision_dir / "forward_decision_manifest.json", manifest)
+    _write_json(decision_dir / "forward_go_no_go_matrix.json", matrix)
+    _write_json(decision_dir / "forward_next_actions.json", next_actions)
+    _write_text(
+        decision_dir / "forward_outcome_decision_report.md",
+        render_forward_outcome_decision_report(manifest, matrix, next_actions),
+    )
+    _write_text(
+        decision_dir / "reader_brief_section.md",
+        render_forward_decision_reader_brief(matrix, next_actions),
+    )
+    _update_latest_pointer(
+        "latest_forward_outcome_decision",
+        decision_dir.name,
+        decision_dir / "forward_decision_manifest.json",
+    )
+    return {
+        "decision_id": decision_dir.name,
+        "decision_dir": decision_dir,
+        "manifest": manifest,
+        "forward_go_no_go_matrix": matrix,
+        "forward_next_actions": next_actions,
+    }
+
+
+def forward_outcome_decision_report_payload(
+    *,
+    decision_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FORWARD_OUTCOME_DECISION_DIR,
+) -> dict[str, Any]:
+    decision_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=decision_id if not latest else None,
+        pointer_name="latest_forward_outcome_decision",
+    )
+    return {
+        **_read_json(decision_dir / "forward_decision_manifest.json"),
+        "forward_go_no_go_matrix": _read_json(decision_dir / "forward_go_no_go_matrix.json"),
+        "forward_next_actions": _read_json(decision_dir / "forward_next_actions.json"),
+        "reader_brief_section": _read_text(decision_dir / "reader_brief_section.md"),
+        "decision_dir": str(decision_dir),
+    }
+
+
+def validate_forward_outcome_decision_artifact(
+    *, decision_id: str, output_dir: Path = DEFAULT_FORWARD_OUTCOME_DECISION_DIR
+) -> dict[str, Any]:
+    decision_dir = output_dir / decision_id
+    manifest = _read_optional_json(decision_dir / "forward_decision_manifest.json") or {}
+    matrix = _read_optional_json(decision_dir / "forward_go_no_go_matrix.json") or {}
+    checks = [
+        _check(
+            "manifest_exists",
+            (decision_dir / "forward_decision_manifest.json").exists(),
+            decision_id,
+        ),
+        _check(
+            "go_no_go_exists",
+            (decision_dir / "forward_go_no_go_matrix.json").exists(),
+            decision_id,
+        ),
+        _check(
+            "next_actions_exists",
+            (decision_dir / "forward_next_actions.json").exists(),
+            decision_id,
+        ),
+        _check(
+            "report_exists",
+            (decision_dir / "forward_outcome_decision_report.md").exists(),
+            decision_id,
+        ),
+        _check(
+            "reader_brief_exists",
+            (decision_dir / "reader_brief_section.md").exists(),
+            decision_id,
+        ),
+        _check("decision_id_matches", manifest.get("decision_id") == decision_id, decision_id),
+        _check(
+            "not_ready_does_not_auto_calibrate",
+            matrix.get("rule_calibration_readiness") != "NOT_READY"
+            or matrix.get("recommended_action") != "calibrate_rules_later",
+            "rule calibration readiness",
+        ),
+        _check(
+            "broker_action_forbidden",
+            manifest.get("broker_action_allowed") is False
+            and matrix.get("broker_action_allowed") is False
+            and manifest.get("broker_action_taken") is False,
+            "broker action forbidden",
+        ),
+        _check(
+            "production_effect_none",
+            manifest.get("production_effect") == "none"
+            and matrix.get("production_effect") == "none",
+            "production effect",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_forward_outcome_decision_validation",
+        artifact_id_key="decision_id",
+        artifact_id=decision_id,
+        checks=checks,
+    )
+
+
 def render_outcome_due_report(
     manifest: Mapping[str, Any],
     summary: Mapping[str, Any],
@@ -1210,6 +2161,762 @@ def render_consensus_risk_report(
         )
         + "\n"
     )
+
+
+def render_outcome_update_review_report(
+    manifest: Mapping[str, Any],
+    safety: Mapping[str, Any],
+    impact: Mapping[str, Any],
+) -> str:
+    return (
+        "\n".join(
+            [
+                "# Outcome Update Ready Review",
+                "",
+                f"- update_review_id: `{manifest.get('update_review_id')}`",
+                f"- due_id: `{manifest.get('due_id')}`",
+                f"- status: {manifest.get('status')}",
+                f"- ready_to_update_count: {safety.get('ready_to_update_count')}",
+                f"- blocked_count: {safety.get('blocked_count')}",
+                f"- price_data_available: {safety.get('price_data_available')}",
+                f"- future_data_used_in_decision: {safety.get('future_data_used_in_decision')}",
+                (
+                    "- expected_forward_available_delta: "
+                    f"{impact.get('expected_forward_available_delta')}"
+                ),
+                f"- affected_artifacts: {', '.join(_texts(impact.get('affected_artifacts')))}",
+                f"- outcome_update_recommended: {_outcome_update_recommended(safety)}",
+                "",
+                "本审核包只给出人工复核输入，不触发 outcome update、broker 或 production action。",
+            ]
+        )
+        + "\n"
+    )
+
+
+def render_outcome_update_report(
+    manifest: Mapping[str, Any],
+    delta: Mapping[str, Any],
+    updated: Sequence[Mapping[str, Any]],
+    skipped: Sequence[Mapping[str, Any]],
+) -> str:
+    before = _mapping(delta.get("before"))
+    after = _mapping(delta.get("after"))
+    return (
+        "\n".join(
+            [
+                "# Safe Outcome Update",
+                "",
+                f"- outcome_update_id: `{manifest.get('outcome_update_id')}`",
+                f"- update_review_id: `{manifest.get('update_review_id')}`",
+                f"- status: {manifest.get('status')}",
+                f"- updated_count: {len(updated)}",
+                f"- skipped_count: {len(skipped)}",
+                (
+                    "- forward_available before / after: "
+                    f"{before.get('forward_available')} / {after.get('forward_available')}"
+                ),
+                (
+                    "- forward_pending before / after: "
+                    f"{before.get('forward_pending')} / {after.get('forward_pending')}"
+                ),
+                f"- future_data_used_in_decision: {manifest.get('future_data_used_in_decision')}",
+                f"- downstream_refresh_required: {manifest.get('downstream_refresh_required')}",
+                "",
+                "本次更新只处理 review_status=READY_TO_UPDATE 的窗口，并写入 audit artifact。",
+            ]
+        )
+        + "\n"
+    )
+
+
+def _outcome_update_recommended(safety: Mapping[str, Any]) -> bool:
+    return _int(safety.get("ready_to_update_count")) > 0 and _int(safety.get("blocked_count")) == 0
+
+
+def render_rolling_evidence_refresh_report(
+    manifest: Mapping[str, Any],
+    refreshed: Mapping[str, Any],
+    delta: Mapping[str, Any],
+) -> str:
+    before = _mapping(delta.get("before"))
+    after = _mapping(delta.get("after"))
+    return (
+        "\n".join(
+            [
+                "# Rolling Evidence Refresh",
+                "",
+                f"- refresh_id: `{manifest.get('refresh_id')}`",
+                f"- outcome_update_id: `{manifest.get('outcome_update_id')}`",
+                f"- outcome_dashboard_id: `{refreshed.get('outcome_dashboard_id')}`",
+                f"- limited_vs_notrade_id: `{refreshed.get('limited_vs_notrade_id')}`",
+                f"- consensus_risk_id: `{refreshed.get('consensus_risk_id')}`",
+                f"- owner_attribution_id: `{refreshed.get('owner_attribution_id')}`",
+                f"- shadow_aging_id: `{refreshed.get('shadow_aging_id')}`",
+                f"- weekly_advisory_review_id: `{refreshed.get('weekly_advisory_review_id')}`",
+                (
+                    "- forward_available before / after: "
+                    f"{before.get('forward_available')} / {after.get('forward_available')}"
+                ),
+                (
+                    "- limited_vs_notrade_available_count before / after: "
+                    f"{before.get('limited_vs_notrade_available_count')} / "
+                    f"{after.get('limited_vs_notrade_available_count')}"
+                ),
+                (
+                    "- consensus_target_risk before / after: "
+                    f"{before.get('consensus_target_risk')} / {after.get('consensus_target_risk')}"
+                ),
+                f"- material_change: {delta.get('material_change')}",
+                f"- recommended_action: {after.get('recommended_action')}",
+                "",
+                "刷新只更新 evidence artifacts；不修改 advisory policy、不触发 broker。",
+            ]
+        )
+        + "\n"
+    )
+
+
+def render_rolling_refresh_reader_brief(
+    manifest: Mapping[str, Any], delta: Mapping[str, Any]
+) -> str:
+    after = _mapping(delta.get("after"))
+    return (
+        "\n".join(
+            [
+                "## Dynamic Rescue Rolling Evidence Refresh",
+                "",
+                f"- refresh_id: {manifest.get('refresh_id')}",
+                f"- forward_available: {after.get('forward_available')}",
+                f"- forward_pending: {after.get('forward_pending')}",
+                (
+                    "- limited_vs_notrade_confidence: "
+                    f"{after.get('limited_vs_notrade_confidence')}"
+                ),
+                f"- consensus_target_risk: {after.get('consensus_target_risk')}",
+                f"- material_change: {delta.get('material_change')}",
+                f"- recommended_action: {after.get('recommended_action')}",
+            ]
+        )
+        + "\n"
+    )
+
+
+def render_evidence_trend_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    timeseries: Sequence[Mapping[str, Any]],
+) -> str:
+    latest = timeseries[-1] if timeseries else {}
+    return (
+        "\n".join(
+            [
+                "# Advisory Evidence Trend",
+                "",
+                f"- trend_id: `{manifest.get('trend_id')}`",
+                f"- refresh_count: {len(timeseries)}",
+                f"- trend_status: {summary.get('trend_status')}",
+                f"- available_sample_growth: {summary.get('available_sample_growth')}",
+                f"- confidence_change: {summary.get('confidence_change')}",
+                f"- limited_vs_notrade_signal: {summary.get('limited_vs_notrade_signal')}",
+                f"- consensus_risk_signal: {summary.get('consensus_risk_signal')}",
+                f"- next_action: {summary.get('next_action')}",
+                f"- latest_recommended_action: {latest.get('recommended_action', 'MISSING')}",
+                "",
+                "历史 refresh 不足时，本报告只支持 continue_tracking，不支持规则调整。",
+            ]
+        )
+        + "\n"
+    )
+
+
+def render_forward_outcome_decision_report(
+    manifest: Mapping[str, Any],
+    matrix: Mapping[str, Any],
+    next_actions: Mapping[str, Any],
+) -> str:
+    action_lines = [
+        (
+            f"- {row.get('priority')}: {row.get('action')} - "
+            f"{row.get('reason', row.get('target_date', ''))}"
+        )
+        for row in _records(next_actions.get("next_actions"))
+    ]
+    return (
+        "\n".join(
+            [
+                "# Weekly Forward Outcome Decision Pack",
+                "",
+                f"- decision_id: `{manifest.get('decision_id')}`",
+                f"- week_ending: {matrix.get('week_ending')}",
+                f"- outcome_update_status: {matrix.get('outcome_update_status')}",
+                f"- forward_available: {matrix.get('forward_available')}",
+                f"- forward_pending: {matrix.get('forward_pending')}",
+                f"- limited_vs_notrade_confidence: {matrix.get('limited_vs_notrade_confidence')}",
+                f"- consensus_target_risk: {matrix.get('consensus_target_risk')}",
+                f"- evidence_trend_status: {matrix.get('evidence_trend_status')}",
+                f"- rule_calibration_readiness: {matrix.get('rule_calibration_readiness')}",
+                f"- recommended_action: {matrix.get('recommended_action')}",
+                f"- broker_action_allowed: {matrix.get('broker_action_allowed')}",
+                f"- production_effect: {matrix.get('production_effect')}",
+                "",
+                "## Next Actions",
+                "",
+                *action_lines,
+                "",
+                "证据不足时不得自动调整 advisory 规则；本包不触发 broker 或 production action。",
+            ]
+        )
+        + "\n"
+    )
+
+
+def render_forward_decision_reader_brief(
+    matrix: Mapping[str, Any], next_actions: Mapping[str, Any]
+) -> str:
+    actions = _records(next_actions.get("next_actions"))
+    next_due = ""
+    for action in actions:
+        if action.get("action") == "run_next_due_scan":
+            next_due = _text(action.get("target_date"))
+            break
+    return (
+        "\n".join(
+            [
+                "## Dynamic Rescue Forward Outcome Decision",
+                "",
+                f"- week_ending: {matrix.get('week_ending')}",
+                f"- forward_available: {matrix.get('forward_available')}",
+                f"- forward_pending: {matrix.get('forward_pending')}",
+                f"- limited_vs_notrade_confidence: {matrix.get('limited_vs_notrade_confidence')}",
+                f"- consensus_target_risk: {matrix.get('consensus_target_risk')}",
+                f"- recommended_action: {matrix.get('recommended_action')}",
+                f"- next_due_scan_date: {next_due}",
+            ]
+        )
+        + "\n"
+    )
+
+
+def _outcome_update_review_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    due_status = _text(row.get("due_status"), "INSUFFICIENT_DATA")
+    existing_status = _text(row.get("current_outcome_status"), "INSUFFICIENT_DATA")
+    can_update = row.get("can_update") is True
+    price_data_available = due_status != "PRICE_MISSING" and bool(row.get("latest_price_date"))
+    review_reasons: list[str] = []
+    review_status = "NEEDS_REVIEW"
+    expected_new_status = existing_status
+    if due_status == "DUE" and can_update and price_data_available and existing_status == "PENDING":
+        review_status = "READY_TO_UPDATE"
+        expected_new_status = "AVAILABLE"
+    elif due_status in {"NOT_DUE", "PRICE_MISSING", "ALREADY_AVAILABLE"}:
+        review_status = "BLOCKED"
+        review_reasons.append(due_status)
+    else:
+        review_reasons.append(due_status or "INSUFFICIENT_DATA")
+    if not price_data_available:
+        review_reasons.append("price_data_unavailable")
+    return {
+        "daily_advisory_id": _text(row.get("daily_advisory_id")),
+        "outcome_id": _text(row.get("outcome_id")),
+        "window_days": _int(row.get("window_days")),
+        "window_start": _text(row.get("window_start") or row.get("as_of")),
+        "expected_window_end": _text(row.get("expected_window_end")),
+        "latest_price_date": _text(row.get("latest_price_date")),
+        "due_status": due_status,
+        "can_update": can_update,
+        "price_data_available": price_data_available,
+        "future_data_used_in_decision": False,
+        "existing_status": existing_status,
+        "expected_new_status": expected_new_status,
+        "review_status": review_status,
+        "review_reasons": sorted(set(review_reasons)),
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _outcome_update_safety_checks(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    ready = [row for row in rows if row.get("review_status") == "READY_TO_UPDATE"]
+    blocked = [
+        row
+        for row in rows
+        if row.get("review_status") == "BLOCKED"
+        and row.get("due_status") not in {"NOT_DUE", "ALREADY_AVAILABLE"}
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_safety_checks",
+        "future_data_used_in_decision": False,
+        "price_data_available": all(row.get("price_data_available") is not False for row in ready),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "production_effect": "none",
+        "all_ready_windows_reviewed": all(
+            row.get("review_status") in OUTCOME_UPDATE_REVIEW_STATUSES for row in ready
+        ),
+        "blocked_count": len(blocked),
+        "ready_to_update_count": len(ready),
+    }
+
+
+def _outcome_update_impact_preview(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    ready_count = sum(1 for row in rows if row.get("review_status") == "READY_TO_UPDATE")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_outcome_update_impact_preview",
+        "expected_forward_available_delta": ready_count,
+        "expected_forward_pending_delta": -ready_count,
+        "affected_artifacts": [
+            "advisory_outcome",
+            "outcome_dashboard",
+            "limited_vs_notrade",
+            "consensus_risk",
+            "weekly_advisory_review",
+            "reader_brief",
+        ],
+        "requires_owner_review": True,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _forward_rows_by_outcome_window(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[tuple[str, int], dict[str, Any]]:
+    return {
+        (_text(row.get("outcome_id")), _int(row.get("window_days"))): dict(row)
+        for row in rows
+    }
+
+
+def _forward_status_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    counts = _status_counts(rows)
+    return {
+        "forward_available": counts["available"],
+        "forward_pending": counts["pending"],
+        "forward_insufficient": counts["insufficient_data"],
+    }
+
+
+def _updated_outcome_window_row(
+    review: Mapping[str, Any], before: Mapping[str, Any], after: Mapping[str, Any]
+) -> dict[str, Any]:
+    return {
+        "daily_advisory_id": _text(review.get("daily_advisory_id")),
+        "outcome_id": _text(review.get("outcome_id")),
+        "window_days": _int(review.get("window_days")),
+        "old_status": _text(before.get("outcome_status"), "PENDING"),
+        "new_status": _text(after.get("outcome_status"), "AVAILABLE"),
+        "return": _float(after.get("paper_portfolio_return")),
+        "relative_to_no_trade": _float(after.get("relative_to_no_trade")),
+        "relative_to_baseline": _float(after.get("relative_to_baseline")),
+        "max_drawdown": _float(after.get("max_drawdown")),
+        "realized_volatility": _float(after.get("realized_volatility")),
+        "price_start_date": _text(after.get("start_date") or review.get("window_start")),
+        "price_end_date": _text(after.get("end_date") or review.get("expected_window_end")),
+        "future_data_used_in_decision": False,
+        "broker_action_taken": False,
+    }
+
+
+def _skipped_outcome_update_row(
+    review: Mapping[str, Any], before: Mapping[str, Any]
+) -> dict[str, Any]:
+    due_status = _text(review.get("due_status"), "INSUFFICIENT_DATA")
+    skip_reason = "BLOCKED_BY_REVIEW"
+    if due_status in {"NOT_DUE", "PRICE_MISSING", "INSUFFICIENT_DATA"}:
+        skip_reason = due_status
+    return {
+        "daily_advisory_id": _text(review.get("daily_advisory_id")),
+        "outcome_id": _text(review.get("outcome_id")),
+        "window_days": _int(review.get("window_days")),
+        "old_status": _text(before.get("outcome_status"), _text(review.get("existing_status"))),
+        "skip_reason": skip_reason,
+        "review_status": _text(review.get("review_status")),
+        "broker_action_taken": False,
+    }
+
+
+def _restore_non_ready_outcome_windows(
+    *,
+    outcome_dir: Path,
+    outcome_id: str,
+    ready_keys: set[tuple[str, int]],
+    prior_windows: Sequence[Mapping[str, Any]],
+) -> None:
+    manifest = _read_json(outcome_dir / "advisory_outcome_manifest.json")
+    event = _read_json(outcome_dir / "advisory_event.json")
+    updated_windows = {
+        _int(row.get("window_days")): dict(row)
+        for row in _read_jsonl(outcome_dir / "outcome_windows.jsonl")
+    }
+    merged = []
+    for prior in prior_windows:
+        window_days = _int(prior.get("window_days"))
+        if (outcome_id, window_days) in ready_keys:
+            merged.append(updated_windows.get(window_days, dict(prior)))
+        else:
+            merged.append(dict(prior))
+    manifest["status"] = _rollup_forward_rows_status(merged)
+    manifest["broker_action_allowed"] = False
+    manifest["broker_action_taken"] = False
+    _write_json(outcome_dir / "advisory_outcome_manifest.json", manifest)
+    _write_jsonl(outcome_dir / "outcome_windows.jsonl", merged)
+    _write_text(
+        outcome_dir / "advisory_outcome_report.md",
+        render_advisory_outcome_report(manifest, event, merged),
+    )
+
+
+def _rollup_forward_rows_status(rows: Sequence[Mapping[str, Any]]) -> str:
+    statuses = {_text(row.get("outcome_status")) for row in rows}
+    if statuses == {"AVAILABLE"}:
+        return "AVAILABLE"
+    if "PENDING" in statuses:
+        return "PENDING"
+    if "AVAILABLE" in statuses and "INSUFFICIENT_DATA" in statuses:
+        return "PARTIAL"
+    return "INSUFFICIENT_DATA"
+
+
+def _latest_limited_vs_notrade_summary(output_dir: Path) -> dict[str, Any]:
+    try:
+        payload = limited_vs_notrade_report_payload(latest=True, output_dir=output_dir)
+    except DynamicV3OutcomeAccumulationError:
+        return {
+            "available_count": 0,
+            "confidence": "INSUFFICIENT_DATA",
+            "win_rate": 0.0,
+            "avg_relative_return": 0.0,
+            "recommendation": "insufficient_data",
+        }
+    metrics = _records(_mapping(payload.get("window_comparison_metrics")).get("by_window"))
+    first = metrics[0] if metrics else {}
+    return {
+        "available_count": _int(payload.get("available_count")),
+        "confidence": _text(first.get("confidence"), "INSUFFICIENT_DATA"),
+        "win_rate": _float(first.get("win_rate")),
+        "avg_relative_return": _float(first.get("avg_relative_return")),
+        "recommendation": _text(
+            _mapping(payload.get("window_comparison_metrics")).get("overall_recommendation"),
+            "insufficient_data",
+        ),
+    }
+
+
+def _latest_consensus_risk_summary(output_dir: Path) -> dict[str, Any]:
+    try:
+        payload = consensus_risk_report_payload(latest=True, output_dir=output_dir)
+    except DynamicV3OutcomeAccumulationError:
+        return {"consensus_target_risk": "INSUFFICIENT_DATA"}
+    return {
+        "consensus_target_risk": _text(
+            payload.get("consensus_target_risk"), "INSUFFICIENT_DATA"
+        )
+    }
+
+
+def _rolling_evidence_delta_summary(
+    *,
+    before_dashboard: Mapping[str, Any],
+    before_limited: Mapping[str, Any],
+    before_consensus: Mapping[str, Any],
+    dashboard: Mapping[str, Any],
+    limited: Mapping[str, Any],
+    consensus: Mapping[str, Any],
+) -> dict[str, Any]:
+    matrix = _mapping(_mapping(dashboard.get("outcome_availability_matrix")).get("summary"))
+    forward = _mapping(matrix.get("forward_outcome"))
+    historical = _mapping(matrix.get("historical_replay"))
+    limited_summary = _latest_limited_from_result(limited)
+    consensus_status = _text(
+        _mapping(consensus.get("manifest")).get("consensus_target_risk"),
+        "INSUFFICIENT_DATA",
+    )
+    before = {
+        "forward_available": _int(before_dashboard.get("forward_available")),
+        "forward_pending": _int(before_dashboard.get("forward_pending")),
+        "limited_vs_notrade_available_count": _int(before_limited.get("available_count")),
+        "limited_vs_notrade_confidence": _text(
+            before_limited.get("confidence"), "INSUFFICIENT_DATA"
+        ),
+        "consensus_target_risk": _text(
+            before_consensus.get("consensus_target_risk"), "INSUFFICIENT_DATA"
+        ),
+    }
+    after = {
+        "forward_available": _int(forward.get("available")),
+        "forward_pending": _int(forward.get("pending")),
+        "historical_replay_available": _int(historical.get("available")),
+        "historical_replay_pending": _int(historical.get("pending")),
+        "limited_vs_notrade_available_count": limited_summary["available_count"],
+        "limited_vs_notrade_win_rate": limited_summary["win_rate"],
+        "limited_vs_notrade_avg_relative_return": limited_summary["avg_relative_return"],
+        "limited_vs_notrade_confidence": limited_summary["confidence"],
+        "consensus_target_risk": consensus_status,
+        "recommended_action": (
+            "continue_tracking"
+            if limited_summary["confidence"] in {"LOW", "INSUFFICIENT_DATA"}
+            else limited_summary["recommendation"]
+        ),
+    }
+    material_reasons = []
+    if before["limited_vs_notrade_confidence"] != after["limited_vs_notrade_confidence"]:
+        material_reasons.append("limited_vs_notrade_confidence_changed")
+    if before["consensus_target_risk"] != after["consensus_target_risk"]:
+        material_reasons.append("consensus_target_risk_changed")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_delta_summary",
+        "before": before,
+        "after": after,
+        "material_change": bool(material_reasons),
+        "material_change_reasons": material_reasons,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _latest_limited_from_result(result: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _records(_mapping(result.get("window_comparison_metrics")).get("by_window"))
+    first = metrics[0] if metrics else {}
+    return {
+        "available_count": _int(_mapping(result.get("manifest")).get("available_count")),
+        "confidence": _text(first.get("confidence"), "INSUFFICIENT_DATA"),
+        "win_rate": _float(first.get("win_rate")),
+        "avg_relative_return": _float(first.get("avg_relative_return")),
+        "recommendation": _text(
+            _mapping(result.get("window_comparison_metrics")).get("overall_recommendation"),
+            "insufficient_data",
+        ),
+    }
+
+
+def _resolve_shadow_shortlist_id(shadow_aging_dir: Path) -> str:
+    children = _artifact_children(shadow_aging_dir)
+    for child in reversed(children):
+        manifest = _read_optional_json(child / "shadow_aging_manifest.json") or {}
+        shadow_shortlist_id = _text(manifest.get("shadow_shortlist_id"))
+        if shadow_shortlist_id:
+            return shadow_shortlist_id
+    return ""
+
+
+def _evidence_trend_timeseries(rolling_refresh_dir: Path) -> list[dict[str, Any]]:
+    rows = []
+    for child in _artifact_children(rolling_refresh_dir):
+        manifest = _read_optional_json(child / "rolling_refresh_manifest.json") or {}
+        delta = _read_optional_json(child / "evidence_delta_summary.json") or {}
+        after = _mapping(delta.get("after"))
+        if not manifest:
+            continue
+        rows.append(
+            {
+                "refresh_id": _text(manifest.get("refresh_id"), child.name),
+                "as_of": _text(manifest.get("as_of")),
+                "forward_available": _int(after.get("forward_available")),
+                "forward_pending": _int(after.get("forward_pending")),
+                "historical_replay_available": _int(after.get("historical_replay_available")),
+                "historical_replay_pending": _int(after.get("historical_replay_pending")),
+                "limited_vs_notrade_available_count": _int(
+                    after.get("limited_vs_notrade_available_count")
+                ),
+                "limited_vs_notrade_win_rate": _float(after.get("limited_vs_notrade_win_rate")),
+                "limited_vs_notrade_avg_relative_return": _float(
+                    after.get("limited_vs_notrade_avg_relative_return")
+                ),
+                "limited_vs_notrade_confidence": _text(
+                    after.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA"
+                ),
+                "consensus_target_risk": _text(
+                    after.get("consensus_target_risk"), "INSUFFICIENT_DATA"
+                ),
+                "recommended_action": _text(
+                    after.get("recommended_action"), "continue_tracking"
+                ),
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        )
+    return sorted(rows, key=lambda row: (_text(row.get("as_of")), _text(row.get("refresh_id"))))
+
+
+def _confidence_trend_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    if len(rows) < 2:
+        trend_status = "INSUFFICIENT_HISTORY"
+        growth = _int(rows[-1].get("forward_available")) if rows else 0
+        confidence_change = "NO_CHANGE"
+    else:
+        first = rows[0]
+        last = rows[-1]
+        growth = _int(last.get("forward_available")) - _int(first.get("forward_available"))
+        confidence_change = _confidence_change(
+            _text(first.get("limited_vs_notrade_confidence")),
+            _text(last.get("limited_vs_notrade_confidence")),
+        )
+        if growth > 0 or confidence_change == "IMPROVED":
+            trend_status = "IMPROVING"
+        elif growth < 0 or confidence_change == "DETERIORATED":
+            trend_status = "DETERIORATING"
+        else:
+            trend_status = "STABLE"
+    latest = rows[-1] if rows else {}
+    confidence = _text(latest.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA")
+    avg_return = _float(latest.get("limited_vs_notrade_avg_relative_return"))
+    limited_signal = "INSUFFICIENT_DATA"
+    if confidence in {"LOW", "MEDIUM", "HIGH"}:
+        limited_signal = "EARLY_POSITIVE" if avg_return > 0 else "MIXED"
+    consensus_risk = _text(latest.get("consensus_target_risk"), "INSUFFICIENT_DATA")
+    consensus_signal = (
+        consensus_risk
+        if consensus_risk in {"HIGH_RISK", "REVIEW_REQUIRED"}
+        else "INSUFFICIENT_DATA"
+    )
+    next_action = "continue_tracking"
+    if trend_status == "DETERIORATING" or consensus_risk == "REVIEW_REQUIRED":
+        next_action = "manual_review"
+    elif trend_status == "INSUFFICIENT_HISTORY":
+        next_action = "continue_tracking"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confidence_trend_summary",
+        "trend_status": trend_status,
+        "available_sample_growth": growth,
+        "confidence_change": confidence_change,
+        "limited_vs_notrade_signal": limited_signal,
+        "consensus_risk_signal": consensus_signal,
+        "next_action": next_action,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
+
+
+def _confidence_change(before: str, after: str) -> str:
+    order = {"INSUFFICIENT_DATA": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3}
+    before_rank = order.get(before, 0)
+    after_rank = order.get(after, 0)
+    if after_rank > before_rank:
+        return "IMPROVED"
+    if after_rank < before_rank:
+        return "DETERIORATED"
+    return "NO_CHANGE"
+
+
+def _latest_outcome_update_summary(output_dir: Path) -> dict[str, Any]:
+    try:
+        payload = outcome_update_report_payload(latest=True, output_dir=output_dir)
+    except DynamicV3OutcomeAccumulationError:
+        return {"updated_count": 0, "skipped_count": 0, "status": "NO_DUE_WINDOWS"}
+    delta = _mapping(payload.get("outcome_status_delta"))
+    after = _mapping(delta.get("after"))
+    return {
+        "updated_count": _int(payload.get("updated_count")),
+        "skipped_count": _int(payload.get("skipped_count")),
+        "status": _text(payload.get("status")),
+        "forward_available": _int(after.get("forward_available")),
+        "forward_pending": _int(after.get("forward_pending")),
+    }
+
+
+def _latest_refresh_summary(output_dir: Path) -> dict[str, Any]:
+    try:
+        payload = rolling_evidence_refresh_report_payload(latest=True, output_dir=output_dir)
+    except DynamicV3OutcomeAccumulationError:
+        return {}
+    after = _mapping(_mapping(payload.get("evidence_delta_summary")).get("after"))
+    return dict(after)
+
+
+def _latest_evidence_trend_summary(output_dir: Path) -> dict[str, Any]:
+    try:
+        payload = evidence_trend_report_payload(latest=True, output_dir=output_dir)
+    except DynamicV3OutcomeAccumulationError:
+        return {"trend_status": "INSUFFICIENT_HISTORY"}
+    return _mapping(payload.get("confidence_trend_summary"))
+
+
+def _forward_go_no_go_matrix(
+    *,
+    week_ending: date,
+    update: Mapping[str, Any],
+    refresh: Mapping[str, Any],
+    trend: Mapping[str, Any],
+) -> dict[str, Any]:
+    update_status = "UPDATED" if _int(update.get("updated_count")) else "NO_DUE_WINDOWS"
+    if _int(update.get("updated_count")) and _int(update.get("skipped_count")):
+        update_status = "PARTIAL"
+    confidence = _text(refresh.get("limited_vs_notrade_confidence"), "INSUFFICIENT_DATA")
+    consensus = _text(refresh.get("consensus_target_risk"), "INSUFFICIENT_DATA")
+    trend_status = _text(trend.get("trend_status"), "INSUFFICIENT_HISTORY")
+    readiness = "NOT_READY"
+    if confidence == "HIGH" and consensus in {"PASS", "PASS_WITH_WARNINGS"}:
+        readiness = "READY_WITH_WARNINGS" if consensus == "PASS_WITH_WARNINGS" else "READY"
+    recommended = "continue_tracking"
+    if update_status == "NO_DUE_WINDOWS":
+        recommended = "wait_for_more_outcomes"
+    elif readiness == "NOT_READY":
+        recommended = "continue_tracking"
+    elif readiness == "READY_WITH_WARNINGS":
+        recommended = "manual_review"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_go_no_go_matrix",
+        "week_ending": week_ending.isoformat(),
+        "outcome_update_status": update_status,
+        "forward_available": _int(
+            refresh.get("forward_available"),
+            _int(update.get("forward_available")),
+        ),
+        "forward_pending": _int(
+            refresh.get("forward_pending"),
+            _int(update.get("forward_pending")),
+        ),
+        "limited_vs_notrade_confidence": confidence,
+        "consensus_target_risk": consensus,
+        "evidence_trend_status": trend_status,
+        "rule_calibration_readiness": readiness,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        "recommended_action": recommended,
+    }
+
+
+def _forward_next_actions(matrix: Mapping[str, Any]) -> dict[str, Any]:
+    week_ending = _date_from_any(matrix.get("week_ending")) or date.today()
+    next_due_scan = week_ending + timedelta(days=7)
+    actions = [
+        {
+            "action": "continue_tracking",
+            "priority": "HIGH",
+            "reason": "forward outcome sample still too small",
+        },
+        {
+            "action": "run_next_due_scan",
+            "priority": "HIGH",
+            "target_date": next_due_scan.isoformat(),
+        },
+        {
+            "action": "do_not_change_policy",
+            "priority": "HIGH",
+            "reason": "limited_vs_notrade confidence remains below rule calibration readiness",
+        },
+    ]
+    if matrix.get("recommended_action") == "manual_review":
+        actions.append(
+            {
+                "action": "manual_review",
+                "priority": "HIGH",
+                "reason": "evidence trend or consensus risk requires owner review",
+            }
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_next_actions",
+        "next_actions": actions,
+        "production_effect": "none",
+        "broker_action_taken": False,
+    }
 
 
 def _due_inventory_row(

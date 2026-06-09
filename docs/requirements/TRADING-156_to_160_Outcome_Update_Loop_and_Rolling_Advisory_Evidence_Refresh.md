@@ -1,0 +1,93 @@
+# TRADING-156 to TRADING-160: Outcome Update Loop and Rolling Advisory Evidence Refresh
+
+## 背景
+
+TRADING-151_to_155 已经能扫描 forward outcome due windows，并在真实链路中识别
+`update_ready_count=1`。当前限制是系统只生成了 `update_ready_list.json`，尚未提供
+人工可读 review pack、安全 update audit、下游 evidence refresh、跨轮 trend 和每周
+decision pack。
+
+本阶段目标是在不触发 broker、不进入 production、不自动改 policy 的前提下，把已到期
+且通过复核的 outcome windows 从 `PENDING` 安全推进到 `AVAILABLE`，并刷新
+outcome dashboard、focused evaluation、consensus risk、weekly review 和 Reader Brief。
+
+## 子任务
+
+|ID|范围|状态|验收标准|
+|---|---|---|---|
+|TRADING-156|Outcome Update Ready Review Pack|VALIDATING|`outcome-update-review run/report` 和 `validate-outcome-update-review` 可运行；所有 due window 都有 `review_status`；`future_data_used_in_decision=false`；报告回答 ready count、price missing、future leakage、expected delta、affected artifacts 和是否建议执行 safe update。|
+|TRADING-157|Safe Outcome Update Runner|VALIDATING|`outcome-update run/report` 和 `validate-outcome-update` 可运行；只更新 `READY_TO_UPDATE` windows；生成 updated/skipped audit 和 before/after status delta；不更新 NOT_DUE、PRICE_MISSING 或 BLOCKED windows。canonical `2026-06-14` due artifact 仍需到该日期后复跑，当前 future-as-of 防护正确阻止真实 mutation。|
+|TRADING-158|Rolling Evidence Refresh|VALIDATING|`rolling-evidence-refresh run/report` 和 `validate-rolling-evidence-refresh` 可运行；刷新 outcome dashboard、limited-vs-notrade、consensus-risk、owner-attribution、shadow-aging、weekly-advisory-review 和 Reader Brief section；输出 evidence delta。|
+|TRADING-159|Advisory Evidence Trend Report|VALIDATING|`evidence-trend run/report` 和 `validate-evidence-trend` 可运行；从 rolling refresh artifacts 构建 timeseries；历史不足时标记 `INSUFFICIENT_HISTORY`。|
+|TRADING-160|Weekly Forward Outcome Decision Pack|VALIDATING|`forward-outcome-decision run/report` 和 `validate-forward-outcome-decision` 可运行；样本不足时 `rule_calibration_readiness=NOT_READY`，不得建议自动调规则；`broker_action_allowed=false`、`production_effect=none`。|
+
+## CLI
+
+```bash
+aits etf dynamic-v3-rescue outcome-update-review run --due-id <due_id>
+aits etf dynamic-v3-rescue outcome-update-review report --latest
+aits etf dynamic-v3-rescue validate-outcome-update-review --review-id <update_review_id>
+
+aits etf dynamic-v3-rescue outcome-update run --update-review-id <update_review_id>
+aits etf dynamic-v3-rescue outcome-update report --latest
+aits etf dynamic-v3-rescue validate-outcome-update --update-id <outcome_update_id>
+
+aits etf dynamic-v3-rescue rolling-evidence-refresh run --outcome-update-id <outcome_update_id>
+aits etf dynamic-v3-rescue rolling-evidence-refresh report --latest
+aits etf dynamic-v3-rescue validate-rolling-evidence-refresh --refresh-id <refresh_id>
+
+aits etf dynamic-v3-rescue evidence-trend run
+aits etf dynamic-v3-rescue evidence-trend report --latest
+aits etf dynamic-v3-rescue validate-evidence-trend --trend-id <trend_id>
+
+aits etf dynamic-v3-rescue forward-outcome-decision run --week-ending YYYY-MM-DD
+aits etf dynamic-v3-rescue forward-outcome-decision report --latest
+aits etf dynamic-v3-rescue validate-forward-outcome-decision --decision-id <decision_id>
+```
+
+## Artifacts
+
+```text
+reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review/<update_review_id>/
+reports/etf_portfolio/dynamic_v3_rescue/outcome_update/<outcome_update_id>/
+reports/etf_portfolio/dynamic_v3_rescue/rolling_evidence_refresh/<refresh_id>/
+reports/etf_portfolio/dynamic_v3_rescue/evidence_trend/<trend_id>/
+reports/etf_portfolio/dynamic_v3_rescue/forward_outcome_decision/<decision_id>/
+```
+
+## 设计决策
+
+1. update-ready review 需要人工复核，因为 due scan 只说明价格窗口已到期；执行更新前还必须明确价格是否完整、future data 是否仅用于 outcome measurement、更新会影响哪些下游报告，以及是否存在需要 owner 判断的异常。
+2. outcome update 只能通过 review pack 的 `READY_TO_UPDATE` 行执行。NOT_DUE、PRICE_MISSING、NEEDS_REVIEW 或 BLOCKED 行必须进入 skipped audit，不能由 runner 静默处理。
+3. future price 只能用于到期后 outcome measurement，不得作为原始 daily advisory decision input。review 和 update artifacts 都必须写明 `future_data_used_in_decision=false`。
+4. rolling evidence refresh 只刷新 evidence artifacts，不修改 `position_advisory_v1.yaml`、official target weights、baseline/production state 或 real portfolio。
+5. evidence trend 只比较多轮 refresh 结果。单轮或历史不足时必须输出 `INSUFFICIENT_HISTORY`，不能把早期正收益写成规则调整依据。
+6. weekly forward outcome decision pack 是人工下一步建议包；样本不足或 risk 仍不足时只能建议 `continue_tracking` / `wait_for_more_outcomes` / `do_not_change_policy`。
+7. `CASH` 在 outcome return path 中按零收益处理，不要求 price cache 提供 `CASH` 行；这与 due scan 对 `CASH` 不要求价格的规则一致，避免把现金权重误判为 `INSUFFICIENT_DATA`。
+
+## 数据质量与安全边界
+
+- 依赖 cached market data 的 update 仍通过 `update_advisory_outcome` 的数据质量门禁执行。
+- 所有 artifacts 固定 `production_effect=none`、`broker_action_allowed=false`、
+  `broker_action_taken=false`、`production_candidate_generated=false`、
+  `manual_review_required=true`。
+- 本阶段不接入 broker API、不自动下单、不生成 automatic production candidate、不自动 owner approval、
+  不修改 official target weights、baseline/production state、real portfolio 或 advisory policy config。
+
+## 验收链路
+
+```bash
+aits etf dynamic-v3-rescue outcome-due scan --as-of 2026-06-14
+aits etf dynamic-v3-rescue outcome-update-review run --due-id <due_id>
+aits etf dynamic-v3-rescue outcome-update run --update-review-id <update_review_id>
+aits etf dynamic-v3-rescue rolling-evidence-refresh run --outcome-update-id <outcome_update_id>
+aits etf dynamic-v3-rescue evidence-trend run
+aits etf dynamic-v3-rescue forward-outcome-decision run --week-ending 2026-06-14
+```
+
+## 进展记录
+
+- 2026-06-10：任务登记与需求文档创建，进入实现阶段。下一步新增核心模块扩展、CLI、validators、focused tests、report registry、artifact catalog、system flow、operations runbook、README 和 Reader Brief integration。
+- 2026-06-10：baseline 实现完成并进入 VALIDATING。新增 `outcome-update-review`、`outcome-update`、`rolling-evidence-refresh`、`evidence-trend`、`forward-outcome-decision` CLI/report/validator、registry/catalog/docs/Reader Brief integration 和 focused tests；修复 `CASH` 无价格行时 outcome return path 应按零收益处理的问题。
+- 2026-06-10：真实链路使用 existing due artifact `9d344a0a7c24b676`（`as_of=2026-06-14`）生成 review `3afeeb97f9be39e9`，ready=1、blocked=0、future_data=false；safe update `aaa8a4781e74934d` 因当前日期仍早于 2026-06-14，被底层 future-as-of 防护保持 updated=0、skipped=4、forward_available 0->0、forward_pending 4->4。该结果不是 workaround；解除条件是在 2026-06-14 不再是未来日期且 cached data quality gate 通过后复跑。
+- 2026-06-10：no-update 状态下验证下游命令可运行：rolling refresh `e3fda052b073d586` material_change=false，trend `d3f74685ebf39711` 为 `INSUFFICIENT_HISTORY` / `NO_CHANGE` / `continue_tracking`，forward decision `f2a5bd5b43036fa6` 为 `wait_for_more_outcomes`、`NOT_READY`、next_due_scan=`2026-06-21`；新增 artifact validators、root dynamic-v3 validation、family artifact validation、focused pytest、ruff、compileall 和 git diff check 均通过；full pytest 运行 15 分钟超时，无失败明细。

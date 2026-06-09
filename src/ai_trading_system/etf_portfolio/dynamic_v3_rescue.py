@@ -782,6 +782,19 @@ def build_dynamic_v3_rescue_validation_report(
         and DYNAMIC_V3_RESCUE_VALIDATION_REPORT_TYPE in registry_text,
         "report registry exposes dynamic v0.3 rescue report and validation",
     )
+    outcome_loop_report_ids = (
+        "etf_dynamic_v3_outcome_update_review",
+        "etf_dynamic_v3_outcome_update",
+        "etf_dynamic_v3_rolling_evidence_refresh",
+        "etf_dynamic_v3_evidence_trend",
+        "etf_dynamic_v3_forward_outcome_decision",
+    )
+    _append_check(
+        checks,
+        "outcome_loop_report_registry_visibility",
+        all(report_id in registry_text for report_id in outcome_loop_report_ids),
+        "report registry exposes outcome update loop artifacts",
+    )
     reader_text = _safe_read_text(reader_brief_path)
     _append_check(
         checks,
@@ -789,12 +802,34 @@ def build_dynamic_v3_rescue_validation_report(
         "Dynamic v0.3 Rescue" in reader_text and "_etf_dynamic_v3_rescue_summary" in reader_text,
         "Reader Brief has Dynamic v0.3 Rescue section",
     )
+    _append_check(
+        checks,
+        "outcome_loop_reader_brief_integration_available",
+        "outcome_update_review_status" in reader_text
+        and "forward_outcome_decision_action" in reader_text,
+        "Reader Brief exposes outcome update loop summary fields",
+    )
     cli_text = _safe_read_text(cli_path)
     _append_check(
         checks,
         "cli_namespace_available",
         "dynamic-v3-rescue" in cli_text and "dynamic_v3_rescue_app" in cli_text,
         "CLI exposes dynamic-v3-rescue namespace",
+    )
+    _append_check(
+        checks,
+        "outcome_loop_cli_namespace_available",
+        all(
+            command in cli_text
+            for command in (
+                "outcome-update-review",
+                "outcome-update",
+                "rolling-evidence-refresh",
+                "evidence-trend",
+                "forward-outcome-decision",
+            )
+        ),
+        "CLI exposes outcome update loop namespaces",
     )
     failed = [check for check in checks if check["status"] != "PASS"]
     payload = {

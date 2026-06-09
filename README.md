@@ -860,6 +860,23 @@ risk review，不生成 default consensus execution。该阶段继续固定
 `production_effect=none`、`broker_action_allowed=false`、`broker_action_taken=false`、
 `production_candidate_generated=false`、`automatic_candidate_promotion=false`，不修改
 policy、official target weights、paper/real portfolio、baseline/production state 或 broker。
+TRADING-156 到 TRADING-160 把 due outcome 从“可更新清单”推进为可审计的滚动证据闭环。
+新增 CLI 包括 `outcome-update-review run/report`、`outcome-update run/report`、
+`rolling-evidence-refresh run/report`、`evidence-trend run/report`、
+`forward-outcome-decision run/report`，以及 `validate-outcome-update-review`、
+`validate-outcome-update`、`validate-rolling-evidence-refresh`、`validate-evidence-trend`
+和 `validate-forward-outcome-decision`。新增 artifacts 位于
+`reports/etf_portfolio/dynamic_v3_rescue/outcome_update_review|outcome_update|rolling_evidence_refresh|evidence_trend|forward_outcome_decision/`。
+`outcome-update-review` 在执行更新前生成人工复核包，检查 price availability、
+future-data decision safety 和 downstream impact；`outcome-update` 只保留
+`READY_TO_UPDATE` window 的实际 mutation，并把 NOT_DUE / PRICE_MISSING / review-blocked
+window 写入 skipped audit；`rolling-evidence-refresh` 刷新 outcome dashboard、
+limited-vs-notrade、consensus-risk、owner-attribution、shadow-aging、weekly review 和
+Reader Brief section；`evidence-trend` 在历史不足时固定 `INSUFFICIENT_HISTORY`；
+`forward-outcome-decision` 生成 weekly go/no-go matrix、next actions 和 Reader Brief
+`Dynamic Rescue Forward Outcome Decision` 区块。该阶段继续固定 no broker、no production、
+no owner auto approval、no official target weight mutation、no real portfolio mutation、
+no baseline mutation 和 no policy auto apply。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

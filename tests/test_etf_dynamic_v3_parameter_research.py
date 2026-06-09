@@ -1135,11 +1135,172 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    update_review_dir = tmp_path / "outcome_update_review" / "review123"
+    update_review_dir.mkdir(parents=True)
+    update_review_path = update_review_dir / "outcome_update_review_manifest.json"
+    update_review_path.write_text(
+        json.dumps(
+            {
+                "update_review_id": "review123",
+                "status": "PASS",
+                "ready_to_update_count": 1,
+                "blocked_count": 0,
+                "future_data_used_in_decision": False,
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (update_review_dir / "update_safety_checks.json").write_text(
+        json.dumps({"production_effect": "none", "broker_action_taken": False}),
+        encoding="utf-8",
+    )
+    (update_review_dir / "update_impact_preview.json").write_text(
+        json.dumps({"expected_forward_available_delta": 1, "production_effect": "none"}),
+        encoding="utf-8",
+    )
+    update_dir = tmp_path / "outcome_update" / "update123"
+    update_dir.mkdir(parents=True)
+    update_path = update_dir / "outcome_update_manifest.json"
+    update_path.write_text(
+        json.dumps(
+            {
+                "outcome_update_id": "update123",
+                "status": "PASS",
+                "updated_count": 1,
+                "skipped_count": 3,
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (update_dir / "outcome_status_delta.json").write_text(
+        json.dumps(
+            {
+                "before": {"forward_available": 0, "forward_pending": 4},
+                "after": {"forward_available": 1, "forward_pending": 3},
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    refresh_dir = tmp_path / "rolling_evidence_refresh" / "refresh123"
+    refresh_dir.mkdir(parents=True)
+    refresh_path = refresh_dir / "rolling_refresh_manifest.json"
+    refresh_path.write_text(
+        json.dumps(
+            {
+                "refresh_id": "refresh123",
+                "status": "PASS",
+                "material_change": False,
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (refresh_dir / "evidence_delta_summary.json").write_text(
+        json.dumps(
+            {
+                "before": {
+                    "limited_vs_notrade_available_count": 2,
+                    "consensus_target_risk": "INSUFFICIENT_DATA",
+                },
+                "after": {
+                    "limited_vs_notrade_available_count": 3,
+                    "consensus_target_risk": "INSUFFICIENT_DATA",
+                },
+                "material_change": False,
+                "production_effect": "none",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (refresh_dir / "refreshed_artifacts.json").write_text(
+        json.dumps({"weekly_advisory_review_id": "weekly123", "production_effect": "none"}),
+        encoding="utf-8",
+    )
+    trend_dir = tmp_path / "evidence_trend" / "trend123"
+    trend_dir.mkdir(parents=True)
+    trend_path = trend_dir / "evidence_trend_manifest.json"
+    trend_path.write_text(
+        json.dumps(
+            {
+                "trend_id": "trend123",
+                "status": "PASS",
+                "trend_status": "INSUFFICIENT_HISTORY",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (trend_dir / "confidence_trend_summary.json").write_text(
+        json.dumps(
+            {
+                "trend_status": "INSUFFICIENT_HISTORY",
+                "confidence_change": "NO_CHANGE",
+                "next_action": "continue_tracking",
+                "production_effect": "none",
+            }
+        ),
+        encoding="utf-8",
+    )
+    decision_dir = tmp_path / "forward_outcome_decision" / "decision123"
+    decision_dir.mkdir(parents=True)
+    decision_path = decision_dir / "forward_decision_manifest.json"
+    decision_path.write_text(
+        json.dumps(
+            {
+                "decision_id": "decision123",
+                "status": "PASS",
+                "recommended_action": "continue_tracking",
+                "rule_calibration_readiness": "NOT_READY",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (decision_dir / "forward_go_no_go_matrix.json").write_text(
+        json.dumps(
+            {
+                "recommended_action": "continue_tracking",
+                "rule_calibration_readiness": "NOT_READY",
+                "production_effect": "none",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (decision_dir / "forward_next_actions.json").write_text(
+        json.dumps(
+            {
+                "next_actions": [
+                    {"action": "run_next_due_scan", "target_date": "2026-06-21"}
+                ],
+                "production_effect": "none",
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
             _report_record("etf_dynamic_v3_promotion_pack", evidence_path),
             _report_record("etf_dynamic_v3_outcome_dashboard", outcome_dashboard_path),
+            _report_record("etf_dynamic_v3_outcome_update_review", update_review_path),
+            _report_record("etf_dynamic_v3_outcome_update", update_path),
+            _report_record("etf_dynamic_v3_rolling_evidence_refresh", refresh_path),
+            _report_record("etf_dynamic_v3_evidence_trend", trend_path),
+            _report_record("etf_dynamic_v3_forward_outcome_decision", decision_path),
         ]
     }
 
@@ -1167,6 +1328,24 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["outcome_dashboard_top_pending_reason"] == "future_window_not_reached"
     assert summary["outcome_dashboard_next_action"] == "continue_forward_tracking"
     assert summary["outcome_dashboard"] == str(outcome_dashboard_path)
+    assert summary["outcome_update_review_status"] == "PASS"
+    assert summary["outcome_update_review_ready_count"] == 1
+    assert summary["outcome_update_review_future_data_used"] is False
+    assert summary["outcome_update_status"] == "PASS"
+    assert summary["outcome_update_updated_count"] == 1
+    assert summary["outcome_update_skipped_count"] == 3
+    assert summary["outcome_update_forward_available_after"] == 1
+    assert summary["rolling_evidence_refresh_status"] == "PASS"
+    assert summary["rolling_limited_vs_notrade_count_before"] == 2
+    assert summary["rolling_limited_vs_notrade_count_after"] == 3
+    assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
+    assert summary["rolling_weekly_advisory_review_id"] == "weekly123"
+    assert summary["evidence_trend_status"] == "INSUFFICIENT_HISTORY"
+    assert summary["evidence_trend_confidence_change"] == "NO_CHANGE"
+    assert summary["forward_outcome_decision_action"] == "continue_tracking"
+    assert summary["forward_rule_calibration_readiness"] == "NOT_READY"
+    assert summary["forward_next_due_scan_date"] == "2026-06-21"
+    assert summary["forward_outcome_decision"] == str(decision_path)
     assert summary["production_candidate_generated"] is False
 
 

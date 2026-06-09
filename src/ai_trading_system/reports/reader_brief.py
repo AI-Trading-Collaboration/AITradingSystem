@@ -1885,6 +1885,94 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     ("next_action", etf_dynamic_v3_parameter_research.get("replay_next_action")),
                     (
+                        "outcome_update_review_status",
+                        etf_dynamic_v3_parameter_research.get("outcome_update_review_status"),
+                    ),
+                    (
+                        "outcome_update_ready_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "outcome_update_review_ready_count"
+                        ),
+                    ),
+                    (
+                        "outcome_update_review_future_data_used",
+                        etf_dynamic_v3_parameter_research.get(
+                            "outcome_update_review_future_data_used"
+                        ),
+                    ),
+                    (
+                        "outcome_update_status",
+                        etf_dynamic_v3_parameter_research.get("outcome_update_status"),
+                    ),
+                    (
+                        "outcome_update_updated_count",
+                        etf_dynamic_v3_parameter_research.get("outcome_update_updated_count"),
+                    ),
+                    (
+                        "outcome_update_skipped_count",
+                        etf_dynamic_v3_parameter_research.get("outcome_update_skipped_count"),
+                    ),
+                    (
+                        "outcome_update_forward_available_before_after",
+                        (
+                            f"{etf_dynamic_v3_parameter_research.get('outcome_update_forward_available_before')}"
+                            " / "
+                            f"{etf_dynamic_v3_parameter_research.get('outcome_update_forward_available_after')}"
+                        ),
+                    ),
+                    (
+                        "rolling_refresh_material_change",
+                        etf_dynamic_v3_parameter_research.get(
+                            "rolling_evidence_refresh_material_change"
+                        ),
+                    ),
+                    (
+                        "rolling_limited_vs_notrade_count_before_after",
+                        (
+                            f"{etf_dynamic_v3_parameter_research.get('rolling_limited_vs_notrade_count_before')}"
+                            " / "
+                            f"{etf_dynamic_v3_parameter_research.get('rolling_limited_vs_notrade_count_after')}"
+                        ),
+                    ),
+                    (
+                        "rolling_consensus_risk_before_after",
+                        (
+                            f"{etf_dynamic_v3_parameter_research.get('rolling_consensus_risk_before')}"
+                            " / "
+                            f"{etf_dynamic_v3_parameter_research.get('rolling_consensus_risk_after')}"
+                        ),
+                    ),
+                    (
+                        "evidence_trend_status",
+                        etf_dynamic_v3_parameter_research.get("evidence_trend_status"),
+                    ),
+                    (
+                        "evidence_trend_confidence_change",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_trend_confidence_change"
+                        ),
+                    ),
+                    (
+                        "evidence_trend_next_action",
+                        etf_dynamic_v3_parameter_research.get("evidence_trend_next_action"),
+                    ),
+                    (
+                        "forward_outcome_decision_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "forward_outcome_decision_action"
+                        ),
+                    ),
+                    (
+                        "forward_rule_calibration_readiness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "forward_rule_calibration_readiness"
+                        ),
+                    ),
+                    (
+                        "forward_next_due_scan_date",
+                        etf_dynamic_v3_parameter_research.get("forward_next_due_scan_date"),
+                    ),
+                    (
                         "historical_replay_broker_action_present",
                         etf_dynamic_v3_parameter_research.get(
                             "historical_replay_broker_action_present"
@@ -1930,6 +2018,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "replay_performance_review_path",
                         etf_dynamic_v3_parameter_research.get("replay_performance_review"),
+                    ),
+                    (
+                        "outcome_update_review_path",
+                        etf_dynamic_v3_parameter_research.get("outcome_update_review"),
+                    ),
+                    (
+                        "outcome_update_path",
+                        etf_dynamic_v3_parameter_research.get("outcome_update"),
+                    ),
+                    (
+                        "rolling_evidence_refresh_path",
+                        etf_dynamic_v3_parameter_research.get("rolling_evidence_refresh"),
+                    ),
+                    (
+                        "evidence_trend_path",
+                        etf_dynamic_v3_parameter_research.get("evidence_trend"),
+                    ),
+                    (
+                        "forward_outcome_decision_path",
+                        etf_dynamic_v3_parameter_research.get("forward_outcome_decision"),
                     ),
                 ]
             ),
@@ -5906,6 +6014,41 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "outcome_dashboard_manifest.json",
     )
+    outcome_update_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_outcome_update_review",
+        ),
+        "outcome_update_review_manifest.json",
+    )
+    outcome_update_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_outcome_update",
+        ),
+        "outcome_update_manifest.json",
+    )
+    rolling_evidence_refresh_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_rolling_evidence_refresh",
+        ),
+        "rolling_refresh_manifest.json",
+    )
+    evidence_trend_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_evidence_trend",
+        ),
+        "evidence_trend_manifest.json",
+    )
+    forward_outcome_decision_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_forward_outcome_decision",
+        ),
+        "forward_decision_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -6044,6 +6187,66 @@ def _etf_dynamic_v3_parameter_research_summary(
         if outcome_dashboard_path is not None
         else None
     )
+    outcome_update_review = _read_optional_json(outcome_update_review_path)
+    outcome_update_safety = _read_optional_json(
+        outcome_update_review_path.parent / "update_safety_checks.json"
+        if outcome_update_review_path is not None
+        else None
+    )
+    outcome_update_impact = _read_optional_json(
+        outcome_update_review_path.parent / "update_impact_preview.json"
+        if outcome_update_review_path is not None
+        else None
+    )
+    outcome_update = _read_optional_json(outcome_update_path)
+    outcome_status_delta = _read_optional_json(
+        outcome_update_path.parent / "outcome_status_delta.json"
+        if outcome_update_path is not None
+        else None
+    )
+    rolling_evidence_refresh = _read_optional_json(rolling_evidence_refresh_path)
+    rolling_evidence_delta = _read_optional_json(
+        rolling_evidence_refresh_path.parent / "evidence_delta_summary.json"
+        if rolling_evidence_refresh_path is not None
+        else None
+    )
+    refreshed_artifacts = _read_optional_json(
+        rolling_evidence_refresh_path.parent / "refreshed_artifacts.json"
+        if rolling_evidence_refresh_path is not None
+        else None
+    )
+    evidence_trend = _read_optional_json(evidence_trend_path)
+    confidence_trend_summary = _read_optional_json(
+        evidence_trend_path.parent / "confidence_trend_summary.json"
+        if evidence_trend_path is not None
+        else None
+    )
+    forward_outcome_decision = _read_optional_json(forward_outcome_decision_path)
+    forward_go_no_go_matrix = _read_optional_json(
+        forward_outcome_decision_path.parent / "forward_go_no_go_matrix.json"
+        if forward_outcome_decision_path is not None
+        else None
+    )
+    forward_next_actions = _read_optional_json(
+        forward_outcome_decision_path.parent / "forward_next_actions.json"
+        if forward_outcome_decision_path is not None
+        else None
+    )
+    outcome_loop_payloads = (
+        outcome_update_review,
+        outcome_update_safety,
+        outcome_update_impact,
+        outcome_update,
+        outcome_status_delta,
+        rolling_evidence_refresh,
+        rolling_evidence_delta,
+        refreshed_artifacts,
+        evidence_trend,
+        confidence_trend_summary,
+        forward_outcome_decision,
+        forward_go_no_go_matrix,
+        forward_next_actions,
+    )
     replay_recommendations = _records(replay_calibration.get("recommendations"))
     replay_recommendation = replay_recommendations[0] if replay_recommendations else {}
     if not leaderboard:
@@ -6063,6 +6266,7 @@ def _etf_dynamic_v3_parameter_research_summary(
             outcome_dashboard,
             outcome_availability_matrix,
             pending_reason_dashboard,
+            *outcome_loop_payloads,
         )
         if any(replay_payloads):
             return _etf_dynamic_v3_parameter_research_replay_only_summary(
@@ -6089,6 +6293,24 @@ def _etf_dynamic_v3_parameter_research_summary(
                 outcome_dashboard=outcome_dashboard,
                 outcome_availability_matrix=outcome_availability_matrix,
                 pending_reason_dashboard=pending_reason_dashboard,
+                outcome_update_review_path=outcome_update_review_path,
+                outcome_update_review=outcome_update_review,
+                outcome_update_safety=outcome_update_safety,
+                outcome_update_impact=outcome_update_impact,
+                outcome_update_path=outcome_update_path,
+                outcome_update=outcome_update,
+                outcome_status_delta=outcome_status_delta,
+                rolling_evidence_refresh_path=rolling_evidence_refresh_path,
+                rolling_evidence_refresh=rolling_evidence_refresh,
+                rolling_evidence_delta=rolling_evidence_delta,
+                refreshed_artifacts=refreshed_artifacts,
+                evidence_trend_path=evidence_trend_path,
+                evidence_trend=evidence_trend,
+                confidence_trend_summary=confidence_trend_summary,
+                forward_outcome_decision_path=forward_outcome_decision_path,
+                forward_outcome_decision=forward_outcome_decision,
+                forward_go_no_go_matrix=forward_go_no_go_matrix,
+                forward_next_actions=forward_next_actions,
             )
         return _missing_etf_dynamic_v3_parameter_research_summary()
     top = _records(leaderboard.get("top_eligible_candidates"))
@@ -6154,10 +6376,24 @@ def _etf_dynamic_v3_parameter_research_summary(
         replay_calibration,
         replay_forward_bridge,
         replay_forward_focus,
+        outcome_dashboard,
+        outcome_availability_matrix,
+        pending_reason_dashboard,
+        *outcome_loop_payloads,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
     not_for_investment = leaderboard.get("not_for_investment_decision") is True
+    outcome_delta_before = _mapping(outcome_status_delta.get("before"))
+    outcome_delta_after = _mapping(outcome_status_delta.get("after"))
+    rolling_delta_before = _mapping(rolling_evidence_delta.get("before"))
+    rolling_delta_after = _mapping(rolling_evidence_delta.get("after"))
+    forward_actions = _records(forward_next_actions.get("next_actions"))
+    forward_next_due_scan_date = "MISSING"
+    for action in forward_actions:
+        if action.get("action") == "run_next_due_scan":
+            forward_next_due_scan_date = _text(action.get("target_date"), "MISSING")
+            break
     return {
         "availability": "AVAILABLE",
         "status": _text(leaderboard.get("status"), "UNKNOWN"),
@@ -6191,6 +6427,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"historical_replay={replay_performance_review.get('status', 'MISSING')}; "
             f"best_replay_variant={variant_performance.get('best_variant', 'MISSING')}; "
             f"replay_forward_bridge={replay_forward_bridge.get('status', 'MISSING')}; "
+            f"outcome_update={outcome_update.get('status', 'MISSING')}; "
+            f"rolling_refresh={rolling_evidence_refresh.get('status', 'MISSING')}; "
+            f"evidence_trend={confidence_trend_summary.get('trend_status', 'MISSING')}; "
+            f"forward_decision="
+            f"{forward_go_no_go_matrix.get('recommended_action', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -6596,6 +6837,110 @@ def _etf_dynamic_v3_parameter_research_summary(
             pending_reason_dashboard.get("next_action"),
             "MISSING",
         ),
+        "outcome_update_review_id": _text(
+            outcome_update_review.get("update_review_id"),
+            "MISSING",
+        ),
+        "outcome_update_review_status": _text(
+            outcome_update_review.get("status"),
+            "MISSING",
+        ),
+        "outcome_update_review_ready_count": outcome_update_review.get(
+            "ready_to_update_count",
+            0,
+        ),
+        "outcome_update_review_blocked_count": outcome_update_review.get(
+            "blocked_count",
+            0,
+        ),
+        "outcome_update_review_future_data_used": outcome_update_review.get(
+            "future_data_used_in_decision",
+            False,
+        ),
+        "outcome_update_review_expected_available_delta": outcome_update_impact.get(
+            "expected_forward_available_delta",
+            0,
+        ),
+        "outcome_update_id": _text(outcome_update.get("outcome_update_id"), "MISSING"),
+        "outcome_update_status": _text(outcome_update.get("status"), "MISSING"),
+        "outcome_update_updated_count": outcome_update.get("updated_count", 0),
+        "outcome_update_skipped_count": outcome_update.get("skipped_count", 0),
+        "outcome_update_forward_available_before": outcome_delta_before.get(
+            "forward_available",
+            0,
+        ),
+        "outcome_update_forward_available_after": outcome_delta_after.get(
+            "forward_available",
+            0,
+        ),
+        "outcome_update_forward_pending_before": outcome_delta_before.get(
+            "forward_pending",
+            0,
+        ),
+        "outcome_update_forward_pending_after": outcome_delta_after.get(
+            "forward_pending",
+            0,
+        ),
+        "rolling_evidence_refresh_id": _text(
+            rolling_evidence_refresh.get("refresh_id"),
+            "MISSING",
+        ),
+        "rolling_evidence_refresh_status": _text(
+            rolling_evidence_refresh.get("status"),
+            "MISSING",
+        ),
+        "rolling_evidence_refresh_material_change": rolling_evidence_refresh.get(
+            "material_change",
+            False,
+        ),
+        "rolling_limited_vs_notrade_count_before": rolling_delta_before.get(
+            "limited_vs_notrade_available_count",
+            0,
+        ),
+        "rolling_limited_vs_notrade_count_after": rolling_delta_after.get(
+            "limited_vs_notrade_available_count",
+            0,
+        ),
+        "rolling_consensus_risk_before": _text(
+            rolling_delta_before.get("consensus_target_risk"),
+            "MISSING",
+        ),
+        "rolling_consensus_risk_after": _text(
+            rolling_delta_after.get("consensus_target_risk"),
+            "MISSING",
+        ),
+        "rolling_weekly_advisory_review_id": _text(
+            refreshed_artifacts.get("weekly_advisory_review_id"),
+            "MISSING",
+        ),
+        "evidence_trend_id": _text(evidence_trend.get("trend_id"), "MISSING"),
+        "evidence_trend_status": _text(
+            confidence_trend_summary.get("trend_status") or evidence_trend.get("trend_status"),
+            "MISSING",
+        ),
+        "evidence_trend_confidence_change": _text(
+            confidence_trend_summary.get("confidence_change"),
+            "MISSING",
+        ),
+        "evidence_trend_next_action": _text(
+            confidence_trend_summary.get("next_action"),
+            "MISSING",
+        ),
+        "forward_outcome_decision_id": _text(
+            forward_outcome_decision.get("decision_id"),
+            "MISSING",
+        ),
+        "forward_outcome_decision_action": _text(
+            forward_go_no_go_matrix.get("recommended_action")
+            or forward_outcome_decision.get("recommended_action"),
+            "MISSING",
+        ),
+        "forward_rule_calibration_readiness": _text(
+            forward_go_no_go_matrix.get("rule_calibration_readiness")
+            or forward_outcome_decision.get("rule_calibration_readiness"),
+            "MISSING",
+        ),
+        "forward_next_due_scan_date": forward_next_due_scan_date,
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -6679,6 +7024,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         "outcome_dashboard": (
             "" if outcome_dashboard_path is None else str(outcome_dashboard_path)
         ),
+        "outcome_update_review": (
+            "" if outcome_update_review_path is None else str(outcome_update_review_path)
+        ),
+        "outcome_update": "" if outcome_update_path is None else str(outcome_update_path),
+        "rolling_evidence_refresh": (
+            "" if rolling_evidence_refresh_path is None else str(rolling_evidence_refresh_path)
+        ),
+        "evidence_trend": "" if evidence_trend_path is None else str(evidence_trend_path),
+        "forward_outcome_decision": (
+            "" if forward_outcome_decision_path is None else str(forward_outcome_decision_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -6732,6 +7088,7 @@ def _etf_dynamic_v3_parameter_research_summary(
                     outcome_dashboard,
                     outcome_availability_matrix,
                     pending_reason_dashboard,
+                    *outcome_loop_payloads,
                 ),
                 "production_candidate_generated",
             )
@@ -6785,6 +7142,7 @@ def _etf_dynamic_v3_parameter_research_summary(
                     outcome_dashboard,
                     outcome_availability_matrix,
                     pending_reason_dashboard,
+                    *outcome_loop_payloads,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -6838,6 +7196,7 @@ def _etf_dynamic_v3_parameter_research_summary(
                     outcome_dashboard,
                     outcome_availability_matrix,
                     pending_reason_dashboard,
+                    *outcome_loop_payloads,
                 ),
                 "shadow_enrollment_allowed",
             )
@@ -6870,6 +7229,24 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
     outcome_dashboard: Mapping[str, Any],
     outcome_availability_matrix: Mapping[str, Any],
     pending_reason_dashboard: Mapping[str, Any],
+    outcome_update_review_path: Path | None,
+    outcome_update_review: Mapping[str, Any],
+    outcome_update_safety: Mapping[str, Any],
+    outcome_update_impact: Mapping[str, Any],
+    outcome_update_path: Path | None,
+    outcome_update: Mapping[str, Any],
+    outcome_status_delta: Mapping[str, Any],
+    rolling_evidence_refresh_path: Path | None,
+    rolling_evidence_refresh: Mapping[str, Any],
+    rolling_evidence_delta: Mapping[str, Any],
+    refreshed_artifacts: Mapping[str, Any],
+    evidence_trend_path: Path | None,
+    evidence_trend: Mapping[str, Any],
+    confidence_trend_summary: Mapping[str, Any],
+    forward_outcome_decision_path: Path | None,
+    forward_outcome_decision: Mapping[str, Any],
+    forward_go_no_go_matrix: Mapping[str, Any],
+    forward_next_actions: Mapping[str, Any],
 ) -> dict[str, Any]:
     replay_payloads = (
         replay_inventory,
@@ -6887,6 +7264,19 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
         outcome_dashboard,
         outcome_availability_matrix,
         pending_reason_dashboard,
+        outcome_update_review,
+        outcome_update_safety,
+        outcome_update_impact,
+        outcome_update,
+        outcome_status_delta,
+        rolling_evidence_refresh,
+        rolling_evidence_delta,
+        refreshed_artifacts,
+        evidence_trend,
+        confidence_trend_summary,
+        forward_outcome_decision,
+        forward_go_no_go_matrix,
+        forward_next_actions,
     )
     status = _text(
         outcome_dashboard.get("status")
@@ -6911,6 +7301,16 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
     )
     forward_focus_items = _records(replay_forward_focus.get("focus_items"))
     top_pending = (_records(pending_reason_dashboard.get("top_pending_reasons")) or [{}])[0]
+    outcome_delta_before = _mapping(outcome_status_delta.get("before"))
+    outcome_delta_after = _mapping(outcome_status_delta.get("after"))
+    rolling_delta_before = _mapping(rolling_evidence_delta.get("before"))
+    rolling_delta_after = _mapping(rolling_evidence_delta.get("after"))
+    forward_actions = _records(forward_next_actions.get("next_actions"))
+    forward_next_due_scan_date = "MISSING"
+    for action in forward_actions:
+        if action.get("action") == "run_next_due_scan":
+            forward_next_due_scan_date = _text(action.get("target_date"), "MISSING")
+            break
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(
         _etf_dynamic_v3_parameter_research_safe_placeholder(),
         *replay_payloads,
@@ -6929,6 +7329,11 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 f"review={status}; "
                 f"replay_forward_bridge={replay_forward_bridge.get('status', 'MISSING')}; "
                 f"outcome_dashboard={outcome_dashboard.get('status', 'MISSING')}; "
+                f"outcome_update={outcome_update.get('status', 'MISSING')}; "
+                f"rolling_refresh={rolling_evidence_refresh.get('status', 'MISSING')}; "
+                f"evidence_trend={confidence_trend_summary.get('trend_status', 'MISSING')}; "
+                f"forward_decision="
+                f"{forward_go_no_go_matrix.get('recommended_action', 'MISSING')}; "
                 f"best_replay_variant={best_variant}; "
                 f"next_action={next_action}; "
                 "parameter_sweep_leaderboard=MISSING; manual-only replay evidence "
@@ -7058,6 +7463,110 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
                 pending_reason_dashboard.get("next_action"),
                 "MISSING",
             ),
+            "outcome_update_review_id": _text(
+                outcome_update_review.get("update_review_id"),
+                "MISSING",
+            ),
+            "outcome_update_review_status": _text(
+                outcome_update_review.get("status"),
+                "MISSING",
+            ),
+            "outcome_update_review_ready_count": outcome_update_review.get(
+                "ready_to_update_count",
+                0,
+            ),
+            "outcome_update_review_blocked_count": outcome_update_review.get(
+                "blocked_count",
+                0,
+            ),
+            "outcome_update_review_future_data_used": outcome_update_review.get(
+                "future_data_used_in_decision",
+                False,
+            ),
+            "outcome_update_review_expected_available_delta": outcome_update_impact.get(
+                "expected_forward_available_delta",
+                0,
+            ),
+            "outcome_update_id": _text(outcome_update.get("outcome_update_id"), "MISSING"),
+            "outcome_update_status": _text(outcome_update.get("status"), "MISSING"),
+            "outcome_update_updated_count": outcome_update.get("updated_count", 0),
+            "outcome_update_skipped_count": outcome_update.get("skipped_count", 0),
+            "outcome_update_forward_available_before": outcome_delta_before.get(
+                "forward_available",
+                0,
+            ),
+            "outcome_update_forward_available_after": outcome_delta_after.get(
+                "forward_available",
+                0,
+            ),
+            "outcome_update_forward_pending_before": outcome_delta_before.get(
+                "forward_pending",
+                0,
+            ),
+            "outcome_update_forward_pending_after": outcome_delta_after.get(
+                "forward_pending",
+                0,
+            ),
+            "rolling_evidence_refresh_id": _text(
+                rolling_evidence_refresh.get("refresh_id"),
+                "MISSING",
+            ),
+            "rolling_evidence_refresh_status": _text(
+                rolling_evidence_refresh.get("status"),
+                "MISSING",
+            ),
+            "rolling_evidence_refresh_material_change": rolling_evidence_refresh.get(
+                "material_change",
+                False,
+            ),
+            "rolling_limited_vs_notrade_count_before": rolling_delta_before.get(
+                "limited_vs_notrade_available_count",
+                0,
+            ),
+            "rolling_limited_vs_notrade_count_after": rolling_delta_after.get(
+                "limited_vs_notrade_available_count",
+                0,
+            ),
+            "rolling_consensus_risk_before": _text(
+                rolling_delta_before.get("consensus_target_risk"),
+                "MISSING",
+            ),
+            "rolling_consensus_risk_after": _text(
+                rolling_delta_after.get("consensus_target_risk"),
+                "MISSING",
+            ),
+            "rolling_weekly_advisory_review_id": _text(
+                refreshed_artifacts.get("weekly_advisory_review_id"),
+                "MISSING",
+            ),
+            "evidence_trend_id": _text(evidence_trend.get("trend_id"), "MISSING"),
+            "evidence_trend_status": _text(
+                confidence_trend_summary.get("trend_status") or evidence_trend.get("trend_status"),
+                "MISSING",
+            ),
+            "evidence_trend_confidence_change": _text(
+                confidence_trend_summary.get("confidence_change"),
+                "MISSING",
+            ),
+            "evidence_trend_next_action": _text(
+                confidence_trend_summary.get("next_action"),
+                "MISSING",
+            ),
+            "forward_outcome_decision_id": _text(
+                forward_outcome_decision.get("decision_id"),
+                "MISSING",
+            ),
+            "forward_outcome_decision_action": _text(
+                forward_go_no_go_matrix.get("recommended_action")
+                or forward_outcome_decision.get("recommended_action"),
+                "MISSING",
+            ),
+            "forward_rule_calibration_readiness": _text(
+                forward_go_no_go_matrix.get("rule_calibration_readiness")
+                or forward_outcome_decision.get("rule_calibration_readiness"),
+                "MISSING",
+            ),
+            "forward_next_due_scan_date": forward_next_due_scan_date,
             "replay_calibration_priority": _text(
                 replay_recommendation.get("priority"),
                 "MISSING",
@@ -7090,6 +7599,19 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
             ),
             "outcome_dashboard": (
                 "" if outcome_dashboard_path is None else str(outcome_dashboard_path)
+            ),
+            "outcome_update_review": (
+                "" if outcome_update_review_path is None else str(outcome_update_review_path)
+            ),
+            "outcome_update": "" if outcome_update_path is None else str(outcome_update_path),
+            "rolling_evidence_refresh": (
+                "" if rolling_evidence_refresh_path is None else str(rolling_evidence_refresh_path)
+            ),
+            "evidence_trend": "" if evidence_trend_path is None else str(evidence_trend_path),
+            "forward_outcome_decision": (
+                ""
+                if forward_outcome_decision_path is None
+                else str(forward_outcome_decision_path)
             ),
             "safety_status": safety_status,
             "production_candidate_generated": _any_payload_flag_true(
@@ -7300,6 +7822,36 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "outcome_dashboard_insufficient_count": 0,
         "outcome_dashboard_top_pending_reason": "MISSING",
         "outcome_dashboard_next_action": "MISSING",
+        "outcome_update_review_id": "MISSING",
+        "outcome_update_review_status": "MISSING",
+        "outcome_update_review_ready_count": 0,
+        "outcome_update_review_blocked_count": 0,
+        "outcome_update_review_future_data_used": False,
+        "outcome_update_review_expected_available_delta": 0,
+        "outcome_update_id": "MISSING",
+        "outcome_update_status": "MISSING",
+        "outcome_update_updated_count": 0,
+        "outcome_update_skipped_count": 0,
+        "outcome_update_forward_available_before": 0,
+        "outcome_update_forward_available_after": 0,
+        "outcome_update_forward_pending_before": 0,
+        "outcome_update_forward_pending_after": 0,
+        "rolling_evidence_refresh_id": "MISSING",
+        "rolling_evidence_refresh_status": "MISSING",
+        "rolling_evidence_refresh_material_change": False,
+        "rolling_limited_vs_notrade_count_before": 0,
+        "rolling_limited_vs_notrade_count_after": 0,
+        "rolling_consensus_risk_before": "MISSING",
+        "rolling_consensus_risk_after": "MISSING",
+        "rolling_weekly_advisory_review_id": "MISSING",
+        "evidence_trend_id": "MISSING",
+        "evidence_trend_status": "MISSING",
+        "evidence_trend_confidence_change": "MISSING",
+        "evidence_trend_next_action": "MISSING",
+        "forward_outcome_decision_id": "MISSING",
+        "forward_outcome_decision_action": "MISSING",
+        "forward_rule_calibration_readiness": "MISSING",
+        "forward_next_due_scan_date": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -7336,6 +7888,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "replay_performance_review": "",
         "replay_forward_bridge": "",
         "outcome_dashboard": "",
+        "outcome_update_review": "",
+        "outcome_update": "",
+        "rolling_evidence_refresh": "",
+        "evidence_trend": "",
+        "forward_outcome_decision": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
