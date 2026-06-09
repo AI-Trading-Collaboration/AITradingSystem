@@ -1,8 +1,8 @@
 # 启发式硬编码治理与初版审计
 
-状态：VALIDATING
+状态：DONE
 
-最后更新：2026-06-07
+最后更新：2026-06-09
 
 关联任务：`GOV-004`
 
@@ -105,6 +105,8 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
 
 2026-06-07 并发只读复核建议后续把当前 manifest 级 rationale 进一步扩展为 section 或 threshold 级 rationale map，例如 `position_bands`、`daily_conclusion`、`confidence_policy`、`robustness` 和 `promotion` 内部关键 numeric leaf 的 rationale / validation 对照表。该增强会增加配置审计深度，但不阻断本轮 `GOV-004` 自动审计工具进入验证。
 
+2026-06-09：逐阈值 rationale map 增强已拆分为 `GOV-005`，详见 `docs/requirements/heuristic_threshold_rationale_map_2026-06-09.md`。`GOV-004` 的完成范围收口为：项目规则、初版静态审计、P1-A/P1-B/P1-C/feature coverage 第一批迁移、只读 heuristic audit 工具、关键 policy metadata 校验、函数默认参数 numeric literal 审计，以及 PIT coverage / gate attribution 等漏检阈值迁移。
+
 同一复核还指出 `src/ai_trading_system/backtest/pit_coverage.py` 的 PIT readiness 类阈值可纳入下一轮 audit scope。复核后确认该路径已在 `src/ai_trading_system/backtest` scope 内，真实缺口是初版 audit 未扫描函数默认参数；本轮已判定 PIT coverage readiness 默认阈值归属 `backtest_validation_policy.pit_coverage`，gate/event attribution 左尾阈值归属 `backtest_validation_policy.gate_attribution`，不再用 baseline 掩盖。
 
 ## 状态记录
@@ -129,3 +131,11 @@ rg -n "(>=|<=|<|>)\s*(5|10|20|30|40|50|55|60|65|70|75|80|90|95|100|0\.[0-9]+)" `
   `config/backtest_validation_policy.yaml`；验证通过 focused pytest 49 passed、
   `heuristic-audit --fail-on-warning` PASS、Ruff、Black、compileall、docs freshness、
   documentation contract 和 `git diff --check`。
+- 2026-06-09：从 VALIDATING 改为 DONE，原因：当前完成范围已复核闭合，`aits docs
+  heuristic-audit --fail-on-warning` 仍为 PASS（numeric_literals=13、unregistered=0、
+  policy_metadata_failures=0、warnings=0、`production_effect=none`）；未完成的逐阈值
+  rationale map 深化已拆分为 `GOV-005`，不继续挂在已归档任务上。验证通过
+  `tests/test_heuristic_governance.py`、`tests/test_cli_direct.py`、
+  `tests/test_docs_freshness.py` 和 `tests/test_documentation_contract.py` 共 33 passed，
+  以及文档新鲜度、documentation contract、Ruff、repo-wide Black check、`compileall`
+  和 `git diff --check`。
