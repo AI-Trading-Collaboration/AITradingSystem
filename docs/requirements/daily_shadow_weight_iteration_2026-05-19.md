@@ -1,6 +1,6 @@
 # TRADING-018B：Daily Shadow Weight Iteration State and Reports
 
-最后更新：2026-05-20
+最后更新：2026-06-09
 
 关联任务：`TRADING-018B`
 
@@ -153,3 +153,17 @@ python -m black --check scripts src tests
 - 2026-05-20：提交前 hardening。原因：将 confidence 默认值和 conservative 初始化
   权重纳入 policy 输出；policy 缺失和 TRADING-018A scheduler dry-run `report_type`
   不匹配均阻断 shadow update；新增对应单元测试。
+- 2026-06-09：从 VALIDATING 改为 BASELINE_DONE。原因：本轮已按 operations runbook
+  复核 daily / scheduler 链路边界，`aits validate-data` 为 `PASS_WITH_WARNINGS` /
+  错误数 0；默认缺输入 smoke 输出 `INSUFFICIENT_DATA`，缺失输入为
+  `TRADING-015`、`TRADING-016`、`TRADING-017`、`TRADING-018`、`TRADING-018A`，
+  `production_effect=none`、`manual_review_only=true`、`mode=shadow_only`、
+  `current_state_updated=false`；首次 isolated smoke 只初始化独立 shadow current，
+  `initialization_source=production_profile_snapshot`、权重和为 1.0，未写 history
+  UPDATE。字段级复核确认 `pipeline_contract` 不写 production profile、不写 approved profile、
+  不自动 promotion、不改变 dashboard 主结论、不触发交易、不运行上游 pipeline；目标 +
+  dashboard pytest 33 passed，`tests/trading_engine` 939 passed，scoped safety scan 未命中
+  敏感输出或 forbidden production promotion 语义，当前代码基线 GitHub Actions
+  `7da9850e` public badge/checks success。真实 TRADING-015/016/017/018/018A artifact 下
+  UPDATE / NO_UPDATE / SAFETY_BLOCKED 的多日观察尚无样本，本轮已拆分为 `TRADING-018B1`
+  继续跟踪，避免把运行期观察伪装成已完成。
