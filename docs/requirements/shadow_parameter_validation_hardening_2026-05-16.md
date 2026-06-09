@@ -1,8 +1,8 @@
 # Shadow 参数验证收紧计划
 
-状态：VALIDATING
+状态：DONE
 
-最后更新：2026-05-16
+最后更新：2026-06-09
 
 关联任务：`CALIBRATION-014`、`CALIBRATION-012`、`CALIBRATION-013`、`CALIBRATION-015`、`CALIBRATION-016`、`CALIBRATION-017`
 
@@ -37,11 +37,11 @@ objective 和 approved hard overlay 的生产边界。
 
 |阶段|状态|验收|
 |---|---|---|
-|1. 任务登记与需求文档|VALIDATING|新增本需求文档和 `CALIBRATION-014` 任务登记，明确验收标准和生产边界。|
-|2. Factorial attribution|VALIDATING|`search-shadow-parameters` 报告、manifest 和测试能显示 weight-only、gate-only、combined 与 baseline 的差异。|
-|3. Objective 收紧|VALIDATING|默认 objective 配置要求验证级样本和正 excess；当前 8 个 available 样本不得被写成 eligible best trial。|
-|4. Approved hard fail-closed|VALIDATING|带 hard effect 的 `approved_hard` overlay 在 production resolver 中报错，测试覆盖错误信息。|
-|5. 流图和验证|VALIDATING|系统流图、目标测试、ruff、diff check 和当前样本 CLI smoke 通过，或记录真实数据阻塞。|
+|1. 任务登记与需求文档|DONE|新增本需求文档和 `CALIBRATION-014` 任务登记，明确验收标准和生产边界。|
+|2. Factorial attribution|DONE|`search-shadow-parameters` 报告、manifest 和测试能显示 weight-only、gate-only、combined 与 baseline 的差异。|
+|3. Objective 收紧|DONE|默认 objective 配置要求验证级样本和正 excess；当前 8 个 available 样本不得被写成 eligible best trial。|
+|4. Approved hard fail-closed|DONE|带 hard effect 的 `approved_hard` overlay 在 production resolver 中报错，测试覆盖错误信息。|
+|5. 流图和验证|DONE|系统流图、目标测试、ruff、diff check 和当前样本 CLI smoke 通过，或记录真实数据阻塞。|
 
 ## 生产边界
 
@@ -68,3 +68,17 @@ objective 和 approved hard overlay 的生产边界。
   `docs/requirements/shadow_parameter_attribution_promotion_contract_2026-05-16.md`。
   该后续任务补 cap-level attribution、独立 promotion contract、objective regularization
   和 search lineage，仍保持 validation-only。
+- 2026-06-09：`CALIBRATION-014` 从 `VALIDATING` 归档为 `DONE`。当前样本
+  `current_20260504_20260514_validation_v3` 仍为 `PASS_WITH_LIMITATIONS` /
+  `production_effect=none`，报告显示当前没有 eligible trial，diagnostic-leading
+  `grid_weight_0118__grid_gate_0217` 未达 objective 准入，原因是
+  `available_samples_below_objective_floor`；Factorial Attribution 仍披露 selected
+  status 为 `diagnostic_only_not_eligible`、primary driver 为 `gate`，并拆出
+  `weight_only`、`gate_only`、`combined` 与 baseline 的 post-gate 表现。当前
+  `shadow_parameter_objective_v1` 要求 `min_available_samples=13` 和
+  `require_positive_excess=true`，`weight_profile_current.yaml` metadata 显示生产权重已通过
+  score-daily/backtest effective weight resolver 生效；`approved_hard` hard effect 在执行链路
+  未接入前保持 fail-closed。验证通过 `tests/test_shadow_weight_profiles.py` +
+  `tests/test_weight_calibration.py` 31 passed、Ruff、repo-wide Black check 和
+  `compileall`。后续真实样本观察、promotion floor、forward shadow、owner approval 和 rollback
+  condition 由独立后续任务/治理流程承接，不阻塞本验证收紧基线完成。
