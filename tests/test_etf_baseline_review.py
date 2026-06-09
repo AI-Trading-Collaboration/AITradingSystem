@@ -135,6 +135,101 @@ def test_baseline_review_forward_sample_and_safety_blockers(tmp_path: Path) -> N
     assert "UNSUPPORTED_CANDIDATE_TYPE" in {item["blocker_id"] for item in unsupported["blockers"]}
 
 
+def test_baseline_review_does_not_label_missing_forward_drawdown_as_high_drawdown(
+    tmp_path: Path,
+) -> None:
+    report_index = baseline_review._sample_report_index(tmp_path, RUN_DATE)
+    _patch_source_payload(report_index, "etf_forward_dashboard", {"sample_count": 0})
+    _patch_candidate(
+        report_index,
+        "etf_forward_dashboard",
+        {"forward_days": 0, "sample_count": 0},
+    )
+
+    blocked = build_baseline_review_eligibility(
+        candidate_id=CANDIDATE_ID,
+        as_of=RUN_DATE,
+        report_index=report_index,
+        root_path=tmp_path,
+        generated_at=GENERATED_AT,
+    )
+    blocker_ids = {item["blocker_id"] for item in blocked["blockers"]}
+    assert "FORWARD_SAMPLE_TOO_SMALL" in blocker_ids
+    assert "HIGH_DRAWDOWN" not in blocker_ids
+
+
+def test_baseline_review_reads_markdown_json_sidecar_source_payloads(tmp_path: Path) -> None:
+    report_index = baseline_review._sample_report_index(tmp_path, RUN_DATE)
+    sidecar_candidate = "candidate_weight_set_sidecar"
+    forward_path = _path_for_report(report_index, "etf_forward_dashboard")
+    payload = json.loads(forward_path.read_text(encoding="utf-8"))
+    payload["candidates"] = [
+        {
+            "candidate_id": sidecar_candidate,
+            "weight_set_id": sidecar_candidate,
+            "candidate_type": "weight_calibration_candidate",
+            "status": "supportive",
+            "forward_days": 25,
+            "sample_count": 25,
+            "turnover_delta": 0.05,
+            "drawdown_delta": 0.01,
+            "weights": {"SPY": 0.25, "QQQ": 0.35, "SMH": 0.25, "CASH": 0.15},
+        }
+    ]
+    forward_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_path = forward_path.with_suffix(".md")
+    markdown_path.write_text("# Forward dashboard\n", encoding="utf-8")
+    _point_report_to_path(report_index, "etf_forward_dashboard", markdown_path)
+
+    eligibility = build_baseline_review_eligibility(
+        candidate_id=sidecar_candidate,
+        as_of=RUN_DATE,
+        report_index=report_index,
+        root_path=tmp_path,
+        generated_at=GENERATED_AT,
+    )
+
+    assert eligibility["candidate_context"]["candidate_exists"] is True
+    assert "CANDIDATE_NOT_FOUND" not in {item["blocker_id"] for item in eligibility["blockers"]}
+    assert str(markdown_path) in eligibility["candidate_context"]["source_paths"]
+
+
+def test_baseline_review_normalizes_weight_calibration_proposal_types(tmp_path: Path) -> None:
+    report_index = baseline_review._sample_report_index(tmp_path, RUN_DATE)
+    proposal_candidate = "weight_set_proposal_only"
+    calibration_path = _path_for_report(report_index, "etf_weight_dual_track_calibration_report")
+    payload = json.loads(calibration_path.read_text(encoding="utf-8"))
+    payload["proposals"] = [
+        {
+            "weight_set_id": proposal_candidate,
+            "proposal_type": "defer_until_more_forward_data",
+            "status": "needs_more_forward_data",
+            "production_effect": "none",
+            "broker_action": "none",
+            "manual_review_required": True,
+            "weights": {"SPY": 0.25, "QQQ": 0.35, "SMH": 0.25, "CASH": 0.15},
+        }
+    ]
+    calibration_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    eligibility = build_baseline_review_eligibility(
+        candidate_id=proposal_candidate,
+        as_of=RUN_DATE,
+        report_index=report_index,
+        root_path=tmp_path,
+        generated_at=GENERATED_AT,
+    )
+
+    assert eligibility["candidate_context"]["candidate_type"] == "weight_calibration_candidate"
+    assert eligibility["candidate_type"] == "weight_calibration_candidate"
+    assert "UNSUPPORTED_CANDIDATE_TYPE" not in {
+        item["blocker_id"] for item in eligibility["blockers"]
+    }
+
+
 def test_evidence_matrix_and_review_package_preserve_source_links(tmp_path: Path) -> None:
     report_index = baseline_review._sample_report_index(tmp_path, RUN_DATE)
 
@@ -390,6 +485,15 @@ def _path_for_report(report_index: dict[str, object], report_id: str) -> Path:
     for record in report_index["reports"]:  # type: ignore[index]
         if record["report_id"] == report_id:
             return Path(record["latest_artifact_path"])
+    raise AssertionError(f"missing report_id: {report_id}")
+
+
+def _point_report_to_path(report_index: dict[str, object], report_id: str, path: Path) -> None:
+    for record in report_index["reports"]:  # type: ignore[index]
+        if record["report_id"] == report_id:
+            record["latest_artifact_path"] = str(path)
+            record["latest_artifact_name"] = path.name
+            return
     raise AssertionError(f"missing report_id: {report_id}")
 
 

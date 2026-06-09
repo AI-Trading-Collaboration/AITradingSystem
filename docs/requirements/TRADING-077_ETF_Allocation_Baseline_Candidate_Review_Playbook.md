@@ -1,13 +1,13 @@
 # TRADING-077 ETF Allocation Baseline Candidate Review Playbook
 
-最后更新：2026-06-03
+最后更新：2026-06-09
 
 ## 状态
 
 - 父任务：TRADING-077
-- 当前状态：VALIDATING
+- 当前状态：BASELINE_DONE
 - 优先级：P0
-- 下一责任方：系统实现
+- 下一责任方：项目 owner + 后续 source artifact refresh / manual review cycle
 - 安全边界：`observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`
 
 ## 背景
@@ -34,16 +34,16 @@ When is an ETF allocation candidate ready for human baseline review?
 
 |子任务|状态|验收标准|
 |---|---|---|
-|TRADING-077A Baseline Review Policy Config|VALIDATING|`config/etf_portfolio/baseline_review.yaml` 存在并可验证；required sections、thresholds、blocking policy 和 safety fields mandatory。|
-|TRADING-077B Candidate Review Eligibility Gate|VALIDATING|`aits etf baseline-review eligibility --candidate ...` 生成 fail-closed eligibility report，解释 blockers、warnings、missing evidence 和 source links。|
-|TRADING-077C Evidence Requirement Matrix|VALIDATING|为 candidate 生成 required evidence matrix，包含 required/status/source/freshness/sample/blocking/notes。|
-|TRADING-077D Baseline Review Package Generator|VALIDATING|`aits etf baseline-review package --candidate ...` 输出 JSON / Markdown manual review package，包含 safety banner、candidate、evidence、matrix、blockers、checklist、decision options 和 source links。|
-|TRADING-077E Owner Review Checklist and Decision Capture|VALIDATING|结构化捕获 owner decision；拒绝 unsafe / disallowed decision；不修改 production state。|
-|TRADING-077F Decision Journal Integration|VALIDATING|baseline review decision 可链接到 decision journal，保留 review package、candidate、evidence matrix 和 audit trail。|
-|TRADING-077G Baseline Change Proposal Draft Generator|VALIDATING|仅在 `approve_for_proposal_draft` owner decision 后生成 proposal draft；仍固定 `production_effect=none`。|
-|TRADING-077H Candidate Review Outcome Tracker|VALIDATING|记录 latest review status、decision/proposal linkage、history、next review due 和 follow-up tasks。|
-|TRADING-077I Reader Brief Baseline Review Section|VALIDATING|Reader Brief 只读展示 baseline review status、eligible/needs-more/blocked counts、latest decision、proposal count、安全边界和 detail link。|
-|TRADING-077J Baseline Review Playbook Validation Gate|VALIDATING|`aits etf baseline-review validate` fail-closed 校验 A-I workflow、source links 和 safety boundary。|
+|TRADING-077A Baseline Review Policy Config|DONE|`config/etf_portfolio/baseline_review.yaml` 存在并可验证；required sections、thresholds、blocking policy 和 safety fields mandatory。|
+|TRADING-077B Candidate Review Eligibility Gate|DONE|`aits etf baseline-review eligibility --candidate ...` 生成 fail-closed eligibility report，解释 blockers、warnings、missing evidence 和 source links。|
+|TRADING-077C Evidence Requirement Matrix|DONE|为 candidate 生成 required evidence matrix，包含 required/status/source/freshness/sample/blocking/notes。|
+|TRADING-077D Baseline Review Package Generator|DONE|`aits etf baseline-review package --candidate ...` 输出 JSON / Markdown manual review package，包含 safety banner、candidate、evidence、matrix、blockers、checklist、decision options 和 source links。|
+|TRADING-077E Owner Review Checklist and Decision Capture|DONE|结构化捕获 owner decision；拒绝 unsafe / disallowed decision；不修改 production state。|
+|TRADING-077F Decision Journal Integration|DONE|baseline review decision 可链接到 decision journal，保留 review package、candidate、evidence matrix 和 audit trail。|
+|TRADING-077G Baseline Change Proposal Draft Generator|DONE|仅在 `approve_for_proposal_draft` owner decision 后生成 proposal draft；仍固定 `production_effect=none`。|
+|TRADING-077H Candidate Review Outcome Tracker|DONE|记录 latest review status、decision/proposal linkage、history、next review due 和 follow-up tasks。|
+|TRADING-077I Reader Brief Baseline Review Section|DONE|Reader Brief 只读展示 baseline review status、eligible/needs-more/blocked counts、latest decision、proposal count、安全边界和 detail link。|
+|TRADING-077J Baseline Review Playbook Validation Gate|DONE|`aits etf baseline-review validate` fail-closed 校验 A-I workflow、source links 和 safety boundary。|
 
 ## 设计决策
 
@@ -52,6 +52,7 @@ When is an ETF allocation candidate ready for human baseline review?
 3. Critical blocker fail closed，包括 evidence dashboard blocked、critical data quality、ops validation failed、forward sample too small、unsafe production effect、broker action、stale validation gate 和 missing required journal link。
 4. Proposal draft 只是草案，必须要求 explicit owner decision 和 decision journal linkage；不得写 baseline config 或 target weights。
 5. Reader Brief 只读 latest baseline review artifacts，不运行 `baseline-review` CLI。
+6. Baseline review 读取 report index / evidence dashboard 中的 Markdown 或 HTML latest artifact 时，必须读取同名 JSON sidecar；weight calibration 的 proposal action type 不能被误当作 candidate type。
 
 ## 验收命令
 
@@ -70,3 +71,4 @@ python -m ai_trading_system.cli etf baseline-review validate
 - 2026-06-03: 新增任务文档并进入 IN_PROGRESS，原因：owner 提供 TRADING-077 开发计划，要求在 TRADING-076 evidence dashboard 之后建立 manual baseline candidate review playbook；本阶段固定 observe-only / candidate-only / manual-review-only，不应用 baseline change，不触发 broker action。
 - 2026-06-03: TRADING-077A-J 基础闭环进入 VALIDATING，原因：新增 baseline review policy、eligibility gate、evidence matrix、review package generator、owner decision capture、decision journal baseline-review link validation、proposal-only draft generator、outcome tracker、Reader Brief section、report registry entries 和 validation gate；专项测试与 `aits etf baseline-review validate --as-of 2026-06-03` 已通过，下一步等待真实 owner review cycle 观察。
 - 2026-06-03: 全量验证通过，命令包括 `python -m pytest tests -q`（2064 passed）、`python -m ruff check config src tests scripts docs`、`python -m compileall -q src tests scripts`、`git diff --check` 和 `python -m ai_trading_system.cli etf baseline-review validate`（PASS）。TRADING-077 保持 VALIDATING，原因是真实 candidate evidence、owner decision 和 proposal draft review cycle 仍需运行观察。
+- 2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：按 runbook 在真实 2026-06-08 artifacts 上复验通过；`validate-data --as-of 2026-06-08` 为 `PASS_WITH_WARNINGS`（0 errors），`aits etf baseline-review validate --as-of 2026-06-08` 为 PASS，真实 `weight_set_0009` review package 可生成并正确停在 `eligibility_status=blocked`，blockers 包含 evidence dashboard blocked、forward sample too small、parameter/weekly evidence insufficient、data quality blocked、ops blocked 和 missing decision journal link；Reader Brief 显示 `etf_baseline_review.availability=AVAILABLE`、`status=blocked`、latest package detail link、decision/proposal/outcome 仍为 `MISSING`。本轮修复 baseline review 读取 Markdown/HTML latest artifact 的 JSON sidecar、weight calibration proposal type 误作 candidate type、forward sample 不足误标 `HIGH_DRAWDOWN` 的解释问题；最终 focused pytest 21 passed，docs freshness / report-contract / ruff / black / compileall / diff check 通过；后续 source refresh、owner decision 和 proposal draft cycle 由人工复核承接。

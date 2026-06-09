@@ -44,6 +44,7 @@ DEFAULT_BASELINE_REVIEW_DECISION_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "dec
 DEFAULT_BASELINE_REVIEW_PROPOSAL_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "proposals"
 DEFAULT_BASELINE_REVIEW_OUTCOME_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "outcomes"
 DEFAULT_BASELINE_REVIEW_VALIDATION_DIR = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "validation"
+JSON_SIDECAR_SUFFIXES = {".md", ".markdown", ".html", ".htm"}
 
 BASELINE_REVIEW_POLICY_SCHEMA_VERSION = "etf_baseline_review_policy_v1"
 BASELINE_REVIEW_MATRIX_SCHEMA_VERSION = "etf_baseline_review_evidence_matrix_v1"
@@ -1514,6 +1515,11 @@ def _normalize_candidate_type(value: str) -> str:
         "satellite_replacement_candidate": "satellite_adjusted_candidate",
         "satellite_candidate": "satellite_adjusted_candidate",
         "ai_overlay_candidate": "AI_overlay_candidate",
+        "continue_forward_observation": "weight_calibration_candidate",
+        "defer_until_more_forward_data": "weight_calibration_candidate",
+        "propose_extended_shadow": "weight_calibration_candidate",
+        "propose_manual_baseline_review": "weight_calibration_candidate",
+        "reject_weight_set": "weight_calibration_candidate",
     }
     text = _text(value)
     return mapping.get(text, text)
@@ -1591,6 +1597,16 @@ def _row_note(
 
 
 def _blocker_id_for_row(row: BaselineReviewEvidenceMatrixRow) -> str:
+    if row.status == "needs_more_data":
+        if row.evidence_id in {"forward_performance", "drawdown_control"}:
+            return "FORWARD_SAMPLE_TOO_SMALL"
+        return "REQUIRED_EVIDENCE_MISSING"
+    if row.status in {"missing", "stale"}:
+        if row.evidence_id == "validation_gates":
+            return "VALIDATION_GATE_STALE"
+        if row.evidence_id == "decision_journal":
+            return "NO_DECISION_JOURNAL_LINK"
+        return "REQUIRED_EVIDENCE_MISSING"
     if row.evidence_id == "data_quality":
         return "DATA_QUALITY_CRITICAL"
     if row.evidence_id == "ops_health":
@@ -2175,14 +2191,31 @@ def _append_check(
     )
 
 
+def _json_candidate_paths(path: Path | None) -> list[Path]:
+    if path is None:
+        return []
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        return [path]
+    if suffix in JSON_SIDECAR_SUFFIXES:
+        return [path.with_suffix(".json")]
+    return []
+
+
 def _read_json_object(path: Path | None) -> dict[str, Any]:
-    if path is None or not path.exists() or path.suffix.lower() != ".json":
+    candidate_paths = _json_candidate_paths(path)
+    if not candidate_paths:
         return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return dict(payload) if isinstance(payload, Mapping) else {}
+    for candidate_path in candidate_paths:
+        if not candidate_path.exists():
+            continue
+        try:
+            payload = json.loads(candidate_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, Mapping):
+            return dict(payload)
+    return {}
 
 
 def _write_json(payload: Mapping[str, Any], path: Path) -> None:
