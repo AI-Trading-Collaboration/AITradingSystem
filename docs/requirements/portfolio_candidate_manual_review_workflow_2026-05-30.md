@@ -1,6 +1,8 @@
 # TRADING-055 Portfolio Candidate Manual Review Workflow
 
-最后更新：2026-05-30
+最后更新：2026-06-09
+
+状态：DONE
 
 ## 背景
 
@@ -111,3 +113,11 @@ review / watch / shadow tracking 审计流程。
   仍为 `promotion_status=rejected`，并引用
   `portfolio_candidate_review_decision.json`；`config/parameters/production/current.yaml`
   SHA256 前后一致。
+- 2026-06-09: 从 VALIDATING 改为 DONE，原因：复验 latest review decision 仍为
+  `watch` / `allowed_next_step=continue_shadow_tracking`，`portfolio validate-review
+  --latest`、`reports portfolio-candidate-review --latest` 和 shadow backtest dry-run
+  均保持 `production_effect=none`、`manual_review_required=true`、
+  `auto_promotion=false` 且 promotion rejected；后续 tracking 已由 TRADING-056
+  承接。验证通过 candidate review / tracking / tracking review focused pytest
+  52 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和
+  `git diff --check`。

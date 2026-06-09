@@ -1,6 +1,8 @@
 # TRADING-058 Shadow Candidate Performance Review
 
-最后更新：2026-05-30
+最后更新：2026-06-09
+
+状态：DONE
 
 ## 背景
 
@@ -128,3 +130,12 @@ auto_promotion=false
 - `python -m compileall -q src scripts`：通过。
 - `git diff --check`：通过。
 - `config/parameters/production/current.yaml`：未修改。
+- 2026-06-09：从 VALIDATING 改为 DONE，原因：latest
+  `portfolio_tracking_reviews/2026-06-08` 已达到 `tracking_days=7`、
+  `stage=short_window_review`、`recommendation=continue_tracking`、
+  `done_condition_met=true`；`portfolio validate-tracking-review --latest` 和
+  `reports portfolio-tracking-review --latest` 均为 OK，shadow backtest dry-run
+  继续 `promotion_status=rejected`，所有 production/broker/trading action 安全字段
+  保持 false/none。验证通过 candidate review / tracking / tracking review
+  focused pytest 52 passed、文档检查、Ruff、repo-wide Black check、`compileall`
+  和 `git diff --check`。

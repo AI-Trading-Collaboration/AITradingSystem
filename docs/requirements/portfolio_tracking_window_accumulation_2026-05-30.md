@@ -1,6 +1,8 @@
 # TRADING-058A Tracking Window Accumulation & Scheduled Review
 
-最后更新：2026-05-30
+最后更新：2026-06-09
+
+状态：DONE
 
 ## 背景
 
@@ -135,3 +137,11 @@ production_effect=none
 - `python -m compileall src scripts`：通过。
 - `git diff --check`：通过。
 - `config/parameters/production/current.yaml`：未修改。
+- 2026-06-09：从 VALIDATING 改为 DONE，原因：tracking window policy、
+  CLI、Dashboard/Reader Brief 展示和 shadow backtest reason 已完成，latest
+  `tracking_window` 已从 `initial_observation` 推进到 `short_window_review`，
+  `days_until_short_review=0`、`days_until_extended_review=13`、
+  `done_condition_met=true`；extended review 继续作为后续观察窗口，不阻塞本
+  window visibility / scheduled review 机制任务归档。验证通过 candidate review /
+  tracking / tracking review focused pytest 52 passed、文档检查、Ruff、
+  repo-wide Black check、`compileall` 和 `git diff --check`。
