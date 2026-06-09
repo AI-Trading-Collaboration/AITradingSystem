@@ -3,8 +3,42 @@ policy_metadata:
   status: pilot
   owner: system
   rationale: "将既有评分、仓位、日报结论和置信度边界迁入可审计配置；初始数值保持迁移前行为不变，后续由 market feedback optimization 回测与复盘迭代。"
-  validation: "配置加载由 tests/test_config.py 覆盖；评分路径由 tests/test_position_model.py 与 tests/test_daily_scoring.py 覆盖；权重和阈值迭代跟踪 CALIBRATION-003/GOV-004。"
+  validation: "配置加载由 tests/test_config.py 覆盖；评分路径由 tests/test_position_model.py 与 tests/test_daily_scoring.py 覆盖；权重和阈值迭代跟踪 CALIBRATION-003/GOV-004/GOV-005。"
   review_after_reports: 8
+
+threshold_rationale_map:
+  position_bands:
+    target_path: position_bands
+    status: pilot
+    owner: system
+    rationale: "将 score 到建议仓位区间的既有边界保留为可审计政策；当前数值只延续迁移前行为，不代表已完成收益校准。"
+    intended_effect: "把总分分层转换为区间仓位建议，并让后续 confidence gate、position gate 和报告解释能引用同一组边界。"
+    validation: "tests/test_position_model.py、tests/test_config.py 和 tests/test_daily_scoring.py 覆盖加载、排序、0 分 floor、区间映射和日报输出；GOV-005 audit 校验本 rationale map。"
+    review_condition: "market feedback / backtest / owner review 提供新证据前不得调整；连续 8 份相关报告后复核 pilot 合理性。"
+  daily_conclusion:
+    target_path: daily_conclusion
+    status: pilot
+    owner: system
+    rationale: "将日报中文结论、吸引力、支撑/压力和核心模块降级边界集中为 policy，避免报告逻辑继续散落硬编码。"
+    intended_effect: "让同一组分数和置信度边界驱动 daily conclusion wording、manual review 提示和低分模块解释。"
+    validation: "tests/test_daily_scoring.py 覆盖 daily conclusion 分支；tests/test_config.py 覆盖配置加载和顺序约束；GOV-005 audit 校验本 rationale map。"
+    review_condition: "当 daily conclusion 与 owner review 或 forward outcome 持续偏离时，另开校准任务调整。"
+  confidence_policy:
+    target_path: confidence_policy
+    status: pilot
+    owner: system
+    rationale: "将 high/medium confidence、数据质量扣分和 confidence-based position cap 迁入 policy，保留当前保守降级行为。"
+    intended_effect: "在数据质量、feature warning、manual review 缺口和低置信模块出现时降低置信度或收紧建议仓位上限。"
+    validation: "tests/test_daily_scoring.py 覆盖 confidence penalty、cap band 和日报 gate 输出；tests/test_config.py 覆盖配置加载；GOV-005 audit 校验本 rationale map。"
+    review_condition: "需要用 forward outcome、data quality report 和人工复核记录确认扣分强度后才能调整。"
+  source_type_confidence:
+    target_path: source_type_confidence
+    status: pilot
+    owner: system
+    rationale: "按 data source class 限制 component confidence，防止 manual、partial、LLM 或 placeholder 输入被解释为完整 hard data。"
+    intended_effect: "让 partial_hard_data、manual_input、llm_formal_assessment、insufficient_data、placeholder 和 unknown source type 进入统一置信度上限。"
+    validation: "tests/test_config.py 覆盖配置加载；tests/test_daily_scoring.py 覆盖 source-type confidence 对 scoring / report 的影响；GOV-005 audit 校验本 rationale map。"
+    review_condition: "新增 source_type 或第二合格数据源准入时必须同步复核本 map。"
 
 weights:
   trend: 25

@@ -203,6 +203,8 @@ def heuristic_governance_audit_command(
         f"numeric_literals={payload['summary']['numeric_literal_finding_count']}；"
         f"unregistered={payload['summary']['unregistered_numeric_literal_count']}；"
         f"policy_metadata_failures={payload['summary']['failed_policy_metadata_check_count']}；"
+        f"policy_rationale_map_failures="
+        f"{payload['summary']['failed_policy_rationale_map_check_count']}；"
         f"warnings={payload['summary']['warning_count']}；"
         f"production_effect={payload['production_effect']}；"
         "只读治理审计"

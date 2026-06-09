@@ -130,6 +130,128 @@ def test_heuristic_governance_fails_missing_policy_metadata(tmp_path: Path) -> N
     assert check["missing_fields"] == ["rationale", "validation"]
 
 
+def test_heuristic_governance_fails_missing_policy_rationale_map(
+    tmp_path: Path,
+) -> None:
+    _write_source(tmp_path, "def identity(value):\n    return value\n")
+    _write_sample_policy(
+        tmp_path,
+        "\n".join(
+            [
+                "position_bands:",
+                "  min_score: 42",
+                "threshold_rationale_map: {}",
+            ]
+        ),
+    )
+    config_path = _write_governance_config(
+        tmp_path,
+        required_policy_rationale_maps=_sample_required_rationale_map(),
+    )
+
+    payload = build_heuristic_governance_payload(
+        as_of=date(2026, 6, 9),
+        config_path=config_path,
+        project_root=tmp_path,
+    )
+
+    assert payload["status"] == "FAIL"
+    assert payload["summary"]["failed_policy_rationale_map_check_count"] == 1
+    assert payload["summary"]["missing_policy_rationale_count"] == 1
+    assert payload["summary"]["missing_policy_validation_count"] == 1
+    check = payload["policy_rationale_map_checks"][0]
+    assert check["key"] == "position_bands"
+    assert check["missing_fields"] == [
+        "status",
+        "owner",
+        "rationale",
+        "intended_effect",
+        "validation",
+        "review_condition",
+    ]
+
+
+def test_heuristic_governance_fails_missing_policy_rationale_validation(
+    tmp_path: Path,
+) -> None:
+    _write_source(tmp_path, "def identity(value):\n    return value\n")
+    _write_sample_policy(
+        tmp_path,
+        "\n".join(
+            [
+                "position_bands:",
+                "  min_score: 42",
+                "threshold_rationale_map:",
+                "  position_bands:",
+                "    target_path: position_bands",
+                "    status: pilot",
+                "    owner: system",
+                '    rationale: "测试 rationale。"',
+                '    intended_effect: "测试影响。"',
+                '    review_condition: "测试复核条件。"',
+            ]
+        ),
+    )
+    config_path = _write_governance_config(
+        tmp_path,
+        required_policy_rationale_maps=_sample_required_rationale_map(),
+    )
+
+    payload = build_heuristic_governance_payload(
+        as_of=date(2026, 6, 9),
+        config_path=config_path,
+        project_root=tmp_path,
+    )
+
+    assert payload["status"] == "FAIL"
+    assert payload["summary"]["missing_policy_rationale_count"] == 0
+    assert payload["summary"]["missing_policy_validation_count"] == 1
+    check = payload["policy_rationale_map_checks"][0]
+    assert check["missing_fields"] == ["validation"]
+    assert check["missing_target_path"] is False
+    assert check["target_has_numeric_leaf"] is True
+
+
+def test_heuristic_governance_fails_stale_policy_rationale_target(
+    tmp_path: Path,
+) -> None:
+    _write_source(tmp_path, "def identity(value):\n    return value\n")
+    _write_sample_policy(
+        tmp_path,
+        "\n".join(
+            [
+                "position_bands:",
+                "  min_score: 42",
+                "threshold_rationale_map:",
+                "  position_bands:",
+                "    target_path: removed_position_bands",
+                "    status: pilot",
+                "    owner: system",
+                '    rationale: "测试 rationale。"',
+                '    intended_effect: "测试影响。"',
+                '    validation: "tests/test_heuristic_governance.py"',
+                '    review_condition: "测试复核条件。"',
+            ]
+        ),
+    )
+    config_path = _write_governance_config(
+        tmp_path,
+        required_policy_rationale_maps=_sample_required_rationale_map(),
+    )
+
+    payload = build_heuristic_governance_payload(
+        as_of=date(2026, 6, 9),
+        config_path=config_path,
+        project_root=tmp_path,
+    )
+
+    assert payload["status"] == "FAIL"
+    assert payload["summary"]["stale_policy_rationale_map_count"] == 1
+    check = payload["policy_rationale_map_checks"][0]
+    assert check["target_path"] == "removed_position_bands"
+    assert check["missing_target_path"] is True
+
+
 def test_default_heuristic_governance_audit_passes() -> None:
     payload = build_heuristic_governance_payload(as_of=date(2026, 6, 7))
 
@@ -138,6 +260,9 @@ def test_default_heuristic_governance_audit_passes() -> None:
     assert payload["policy_version"] == "heuristic_governance_v1"
     assert payload["summary"]["unregistered_numeric_literal_count"] == 0
     assert payload["summary"]["failed_policy_metadata_check_count"] == 0
+    assert payload["summary"]["failed_policy_rationale_map_check_count"] == 0
+    assert payload["summary"]["policy_rationale_map_check_count"] == 12
+    assert payload["summary"]["policy_rationale_map_coverage_pct"] == 100.0
 
 
 def _write_source(tmp_path: Path, text: str) -> Path:
@@ -152,6 +277,7 @@ def _write_governance_config(
     *,
     baseline: str = "",
     required_policy_metadata: str = "",
+    required_policy_rationale_maps: str = "",
 ) -> Path:
     config_path = tmp_path / "config" / "heuristic_governance.yaml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -174,9 +300,49 @@ def _write_governance_config(
                 baseline.rstrip() if baseline else "  []",
                 "required_policy_metadata:",
                 required_policy_metadata.rstrip() if required_policy_metadata else "  []",
+                "required_policy_rationale_maps:",
+                (
+                    required_policy_rationale_maps.rstrip()
+                    if required_policy_rationale_maps
+                    else "  []"
+                ),
             ]
         )
         + "\n",
         encoding="utf-8",
     )
     return config_path
+
+
+def _write_sample_policy(tmp_path: Path, body: str) -> Path:
+    policy_path = tmp_path / "config" / "sample_policy.yaml"
+    policy_path.parent.mkdir(parents=True, exist_ok=True)
+    policy_path.write_text(
+        "\n".join(
+            [
+                "policy_metadata:",
+                "  version: sample_policy_v1",
+                body.rstrip(),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return policy_path
+
+
+def _sample_required_rationale_map() -> str:
+    return (
+        "  - path: config/sample_policy.yaml\n"
+        "    policy_version_path: policy_metadata.version\n"
+        "    map_section: threshold_rationale_map\n"
+        "    required_fields:\n"
+        "      - status\n"
+        "      - owner\n"
+        "      - rationale\n"
+        "      - intended_effect\n"
+        "      - validation\n"
+        "      - review_condition\n"
+        "    required_keys:\n"
+        "      - position_bands\n"
+    )

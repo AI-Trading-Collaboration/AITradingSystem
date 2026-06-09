@@ -1,6 +1,6 @@
 # 启发式阈值逐项 rationale map 深化
 
-状态：READY
+状态：DONE
 
 最后更新：2026-06-09
 
@@ -57,3 +57,14 @@ leaf，后续可以进一步建立逐阈值 rationale / validation 对照表。
 - 2026-06-09：从 `GOV-004` 后续增强拆分为独立 READY 任务，原因：逐阈值
   rationale map 会增加审计深度，但不阻断当前 heuristic audit 工具和已配置阈值
   迁移范围归档。
+- 2026-06-09：从 READY 进入 IN_PROGRESS，原因：开始实现只读
+  threshold/section-level rationale map 校验；本轮不得改变任何评分、仓位、回测、
+  promotion、日报或 approved overlay 阈值。
+- 2026-06-09：从 IN_PROGRESS 改为 DONE，原因：`config/scoring_rules.yaml`、
+  `config/backtest_validation_policy.yaml` 和 `config/feedback_sample_policy.yaml`
+  已新增 `threshold_rationale_map`，`aits docs heuristic-audit` 已校验 missing
+  rationale、missing validation、stale target path 和 map coverage；真实审计
+  `heuristic-audit --fail-on-warning` 为 PASS，map coverage=100.0%，
+  `production_effect=none`，未改变任何 policy 数值。验证通过 focused pytest
+  53 passed、文档新鲜度、documentation contract、Ruff、repo-wide Black check、
+  `compileall` 和 `git diff --check`。

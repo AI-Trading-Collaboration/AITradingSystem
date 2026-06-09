@@ -3,7 +3,7 @@ policy_metadata:
   status: pilot
   owner: system
   rationale: "把投资解释路径中的 numeric literal 审计从人工 rg 固化为只读治理门禁；初版登记现有低风险或已治理例外，新增未登记数字比较或函数默认参数必须解释或迁移到 policy config。"
-  validation: "由 tests/test_heuristic_governance.py 覆盖未登记数字比较、函数默认参数、baseline 登记、policy metadata 缺失和默认仓库审计；CLI 由 tests/test_cli_direct.py 覆盖 direct dispatcher。"
+  validation: "由 tests/test_heuristic_governance.py 覆盖未登记数字比较、函数默认参数、baseline 登记、policy metadata 缺失、policy rationale map 缺失/缺 validation/stale key 和默认仓库审计；CLI 由 tests/test_cli_direct.py 覆盖 direct dispatcher。"
   review_after_reports: 8
 
 audit_scope:
@@ -124,3 +124,50 @@ required_policy_metadata:
       - rationale
       - validation
       - review_after_reports
+
+required_policy_rationale_maps:
+  - path: config/scoring_rules.yaml
+    policy_version_path: policy_metadata.version
+    map_section: threshold_rationale_map
+    required_fields:
+      - status
+      - owner
+      - rationale
+      - intended_effect
+      - validation
+      - review_condition
+    required_keys:
+      - position_bands
+      - daily_conclusion
+      - confidence_policy
+      - source_type_confidence
+  - path: config/backtest_validation_policy.yaml
+    policy_version_path: policy_metadata.version
+    map_section: threshold_rationale_map
+    required_fields:
+      - status
+      - owner
+      - rationale
+      - intended_effect
+      - validation
+      - review_condition
+    required_keys:
+      - data_credibility
+      - execution_costs
+      - pit_coverage
+      - gate_attribution
+      - robustness
+      - promotion
+  - path: config/feedback_sample_policy.yaml
+    policy_version_path: version
+    map_section: threshold_rationale_map
+    required_fields:
+      - status
+      - owner
+      - rationale
+      - intended_effect
+      - validation
+      - review_condition
+    required_keys:
+      - decision_outcomes
+      - prediction_outcomes

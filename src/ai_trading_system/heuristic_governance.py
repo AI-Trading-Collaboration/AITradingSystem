@@ -89,15 +89,26 @@ def build_heuristic_governance_payload(
     stale_baseline = [entry for entry in baseline_entries if str(entry["key"]) not in found_keys]
     policy_checks = _policy_metadata_checks(config, project_root)
     failed_policy_checks = [check for check in policy_checks if check["status"] == "FAIL"]
+    rationale_map_checks = _policy_rationale_map_checks(config, project_root)
+    failed_rationale_map_checks = [
+        check for check in rationale_map_checks if check["status"] == "FAIL"
+    ]
 
-    error_count = len(unregistered_numeric) + len(failed_policy_checks) + len(scan_errors)
+    error_count = (
+        len(unregistered_numeric)
+        + len(failed_policy_checks)
+        + len(failed_rationale_map_checks)
+        + len(scan_errors)
+    )
     warning_count = len(stale_baseline)
     status = "FAIL" if error_count else ("PASS_WITH_WARNINGS" if warning_count else "PASS")
+    passed_rationale_map_checks = len(rationale_map_checks) - len(failed_rationale_map_checks)
 
     return {
         "schema_version": 1,
         "report_type": REPORT_TYPE,
         "task_id": TASK_ID,
+        "related_task_ids": ["GOV-004", "GOV-005"],
         "as_of": as_of.isoformat(),
         "status": status,
         "production_effect": PRODUCTION_EFFECT,
@@ -116,6 +127,24 @@ def build_heuristic_governance_payload(
             "stale_baseline_entry_count": len(stale_baseline),
             "policy_metadata_check_count": len(policy_checks),
             "failed_policy_metadata_check_count": len(failed_policy_checks),
+            "policy_rationale_map_check_count": len(rationale_map_checks),
+            "passed_policy_rationale_map_check_count": passed_rationale_map_checks,
+            "failed_policy_rationale_map_check_count": len(failed_rationale_map_checks),
+            "policy_rationale_map_coverage_pct": _coverage_pct(
+                passed_rationale_map_checks,
+                len(rationale_map_checks),
+            ),
+            "missing_policy_rationale_count": _missing_field_count(
+                rationale_map_checks,
+                "rationale",
+            ),
+            "missing_policy_validation_count": _missing_field_count(
+                rationale_map_checks,
+                "validation",
+            ),
+            "stale_policy_rationale_map_count": sum(
+                1 for check in rationale_map_checks if check["missing_target_path"]
+            ),
             "scan_error_count": len(scan_errors),
             "error_count": error_count,
             "warning_count": warning_count,
@@ -124,6 +153,7 @@ def build_heuristic_governance_payload(
         "unregistered_numeric_literal_findings": unregistered_numeric,
         "stale_baseline_entries": stale_baseline,
         "policy_metadata_checks": policy_checks,
+        "policy_rationale_map_checks": rationale_map_checks,
         "scan_errors": scan_errors,
     }
 
@@ -151,6 +181,7 @@ def render_heuristic_governance_markdown(payload: dict[str, Any]) -> str:
         f"- 状态：{payload['status']}",
         f"- production_effect={payload['production_effect']}",
         f"- task_id={payload['task_id']}",
+        f"- related_task_ids={', '.join(payload.get('related_task_ids', []))}",
         f"- policy_version={payload['policy_version']}",
         f"- config_path=`{payload['config_path']}`",
         "",
@@ -166,6 +197,13 @@ def render_heuristic_governance_markdown(payload: dict[str, Any]) -> str:
         f"|过期 baseline 条目|{summary['stale_baseline_entry_count']}|",
         f"|policy metadata 检查|{summary['policy_metadata_check_count']}|",
         f"|policy metadata 失败|{summary['failed_policy_metadata_check_count']}|",
+        f"|policy rationale map 检查|{summary['policy_rationale_map_check_count']}|",
+        f"|policy rationale map 通过|{summary['passed_policy_rationale_map_check_count']}|",
+        f"|policy rationale map 失败|{summary['failed_policy_rationale_map_check_count']}|",
+        f"|policy rationale map 覆盖率|{summary['policy_rationale_map_coverage_pct']:.1f}%|",
+        f"|缺 rationale map|{summary['missing_policy_rationale_count']}|",
+        f"|缺 validation map|{summary['missing_policy_validation_count']}|",
+        f"|stale rationale map target|{summary['stale_policy_rationale_map_count']}|",
         f"|扫描错误|{summary['scan_error_count']}|",
         f"|错误|{summary['error_count']}|",
         f"|警告|{summary['warning_count']}|",
@@ -198,6 +236,25 @@ def render_heuristic_governance_markdown(payload: dict[str, Any]) -> str:
         lines.append(
             f"|`{check['path']}`|`{check['section'] or '<top-level>'}`|"
             f"{check['status']}|{missing}|"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Policy Rationale Map 检查",
+            "",
+            "|配置|policy version|map|key|target|状态|缺失字段|target 存在|numeric leaf|",
+            "|---|---|---|---|---|---|---|---|---|",
+        ]
+    )
+    for check in payload["policy_rationale_map_checks"]:
+        missing = ", ".join(check["missing_fields"]) if check["missing_fields"] else "-"
+        target_exists = "yes" if not check["missing_target_path"] else "no"
+        numeric_leaf = "yes" if check["target_has_numeric_leaf"] else "no"
+        lines.append(
+            f"|`{check['path']}`|`{check['policy_version']}`|`{check['map_section']}`|"
+            f"`{check['key']}`|`{check['target_path']}`|{check['status']}|{missing}|"
+            f"{target_exists}|{numeric_leaf}|"
         )
 
     stale = payload["stale_baseline_entries"]
@@ -463,6 +520,135 @@ def _policy_metadata_checks(config: dict[str, Any], project_root: Path) -> list[
     return checks
 
 
+def _policy_rationale_map_checks(
+    config: dict[str, Any],
+    project_root: Path,
+) -> list[dict[str, Any]]:
+    raw_checks = config.get("required_policy_rationale_maps", [])
+    if not isinstance(raw_checks, list):
+        raise ValueError("heuristic governance required_policy_rationale_maps must be a list")
+    checks: list[dict[str, Any]] = []
+    for raw_check in raw_checks:
+        check = _mapping(raw_check, "required_policy_rationale_maps entry")
+        relative_config_path = _required_string(check, "path")
+        map_section = _required_string(check, "map_section")
+        policy_version_path = str(check.get("policy_version_path") or "policy_metadata.version")
+        required_fields = check.get("required_fields")
+        if not isinstance(required_fields, list) or not required_fields:
+            raise ValueError(
+                "required_policy_rationale_maps.required_fields must be a non-empty list"
+            )
+        required_keys = check.get("required_keys")
+        if not isinstance(required_keys, list) or not required_keys:
+            raise ValueError(
+                "required_policy_rationale_maps.required_keys must be a non-empty list"
+            )
+        required_field_names = [str(field) for field in required_fields]
+        path = project_root / relative_config_path
+        if not path.exists():
+            for key in required_keys:
+                checks.append(
+                    _policy_rationale_map_check_payload(
+                        path=relative_config_path,
+                        policy_version="",
+                        map_section=map_section,
+                        key=str(key),
+                        target_path=str(key),
+                        required_fields=required_field_names,
+                        missing_fields=required_field_names,
+                        missing_target_path=True,
+                        target_has_numeric_leaf=False,
+                    )
+                )
+            continue
+
+        policy_payload = _load_mapping(path)
+        policy_version_exists, policy_version = _value_at_path(policy_payload, policy_version_path)
+        map_payload = _section_mapping(policy_payload, map_section)
+        for key in required_keys:
+            key_name = str(key)
+            entry = map_payload.get(key_name)
+            entry_mapping = entry if isinstance(entry, dict) else {}
+            target_path = str(entry_mapping.get("target_path") or key_name)
+            target_exists, target_value = _value_at_path(policy_payload, target_path)
+            missing_fields = [
+                field
+                for field in required_field_names
+                if not _has_reviewable_value(entry_mapping.get(field))
+            ]
+            checks.append(
+                _policy_rationale_map_check_payload(
+                    path=relative_config_path,
+                    policy_version=str(policy_version) if policy_version_exists else "",
+                    map_section=map_section,
+                    key=key_name,
+                    target_path=target_path,
+                    required_fields=required_field_names,
+                    missing_fields=missing_fields,
+                    missing_target_path=not target_exists,
+                    target_has_numeric_leaf=(
+                        _contains_numeric_leaf(target_value) if target_exists else False
+                    ),
+                )
+            )
+
+        for key, raw_entry in sorted(map_payload.items()):
+            key_name = str(key)
+            if key_name in {str(item) for item in required_keys}:
+                continue
+            if not isinstance(raw_entry, dict):
+                continue
+            target_path = str(raw_entry.get("target_path") or key_name)
+            target_exists, target_value = _value_at_path(policy_payload, target_path)
+            if target_exists:
+                continue
+            checks.append(
+                _policy_rationale_map_check_payload(
+                    path=relative_config_path,
+                    policy_version=str(policy_version) if policy_version_exists else "",
+                    map_section=map_section,
+                    key=key_name,
+                    target_path=target_path,
+                    required_fields=required_field_names,
+                    missing_fields=[],
+                    missing_target_path=True,
+                    target_has_numeric_leaf=(
+                        _contains_numeric_leaf(target_value) if target_exists else False
+                    ),
+                )
+            )
+    return checks
+
+
+def _policy_rationale_map_check_payload(
+    *,
+    path: str,
+    policy_version: str,
+    map_section: str,
+    key: str,
+    target_path: str,
+    required_fields: list[str],
+    missing_fields: list[str],
+    missing_target_path: bool,
+    target_has_numeric_leaf: bool,
+) -> dict[str, Any]:
+    status = (
+        "FAIL" if missing_fields or missing_target_path or not target_has_numeric_leaf else "PASS"
+    )
+    return {
+        "path": path,
+        "policy_version": policy_version,
+        "map_section": map_section,
+        "key": key,
+        "target_path": target_path,
+        "required_fields": required_fields,
+        "missing_fields": missing_fields,
+        "missing_target_path": missing_target_path,
+        "target_has_numeric_leaf": target_has_numeric_leaf,
+        "status": status,
+    }
+
+
 def _section_mapping(payload: dict[str, Any], section: str) -> dict[str, Any]:
     if not section:
         return payload
@@ -472,6 +658,48 @@ def _section_mapping(payload: dict[str, Any], section: str) -> dict[str, Any]:
             return {}
         current = current.get(part)
     return current if isinstance(current, dict) else {}
+
+
+def _value_at_path(payload: dict[str, Any], value_path: str) -> tuple[bool, Any]:
+    current: Any = payload
+    if not value_path:
+        return True, current
+    for part in value_path.split("."):
+        if isinstance(current, dict):
+            if part not in current:
+                return False, None
+            current = current[part]
+            continue
+        if isinstance(current, list) and part.isdigit():
+            index = int(part)
+            if index >= len(current):
+                return False, None
+            current = current[index]
+            continue
+        return False, None
+    return True, current
+
+
+def _contains_numeric_leaf(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    if isinstance(value, dict):
+        return any(_contains_numeric_leaf(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_numeric_leaf(item) for item in value)
+    return False
+
+
+def _coverage_pct(passed_count: int, total_count: int) -> float:
+    if total_count <= 0:
+        return 100.0
+    return round((passed_count / total_count) * 100.0, 1)
+
+
+def _missing_field_count(checks: list[dict[str, Any]], field_name: str) -> int:
+    return sum(1 for check in checks if field_name in check["missing_fields"])
 
 
 def _has_reviewable_value(value: Any) -> bool:

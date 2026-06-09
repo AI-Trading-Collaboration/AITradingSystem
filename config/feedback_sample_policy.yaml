@@ -4,13 +4,30 @@ owner: system
 market_regime_id: ai_after_chatgpt
 effective_from: 2026-05-16
 rationale: "把 feedback / shadow / promotion 样本下限拆成 reporting、pilot、diagnostic、promotion 四层；当前 pilot 允许用已积累样本启动诊断和候选复核，但 promotion floor 仍保持较高门槛，避免低样本直接影响 production 权重、规则或仓位 gate。"
-validation: "由 tests/test_market_feedback_optimization.py、tests/test_decision_outcomes.py、tests/test_prediction_ledger.py、tests/test_feedback_loop_review.py 和 GOV-004 heuristic audit 覆盖；真实 2026-05-14 validation maturity 已验证低样本仅进入 READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW。"
+validation: "由 tests/test_market_feedback_optimization.py、tests/test_decision_outcomes.py、tests/test_prediction_ledger.py、tests/test_feedback_loop_review.py 和 GOV-004/GOV-005 heuristic audit 覆盖；真实 2026-05-14 validation maturity 已验证低样本仅进入 READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW。"
 review_after_reports: 8
 notes:
   - "当前处于市场反馈优化 pilot 阶段，样本较少时允许启动复盘、因果链和候选规则整理。"
   - "pilot floor 只允许生成诊断和候选复核，不允许晋级 production 权重、规则或仓位 gate。"
   - "2026-05-16 按 owner 要求将 diagnostic floor 下调到当前已积累 outcome 样本刚好可启动后续验证；promotion floor 不下调。"
   - "如果后续周度报告显示节奏过快或噪声过高，提高 pilot floor 或延长 review_after_reports。"
+threshold_rationale_map:
+  decision_outcomes:
+    target_path: decision_outcomes
+    status: pilot
+    owner: system
+    rationale: "decision outcome floor 将 reporting、pilot、diagnostic 和 promotion 拆开，允许低样本先进入只读复盘，但阻止低样本 production 晋级。"
+    intended_effect: "用分层样本下限控制 decision calibration、feedback review 和 promotion readiness 的解释强度。"
+    validation: "tests/test_decision_outcomes.py、tests/test_feedback_loop_review.py 和 tests/test_market_feedback_optimization.py 覆盖 floor 读取和报告状态；GOV-005 audit 校验本 rationale map。"
+    review_condition: "每 8 份相关报告或 owner 认为 pilot 噪声过高时复核。"
+  prediction_outcomes:
+    target_path: prediction_outcomes
+    status: pilot
+    owner: system
+    rationale: "prediction outcome floor 将 shadow / prediction ledger 的早期观察与 promotion 样本要求分离，避免前向样本不足时过度解释。"
+    intended_effect: "允许 prediction ledger 先输出 coverage/freshness 观察，同时让 promotion floor 继续保持严格。"
+    validation: "tests/test_prediction_ledger.py、tests/test_market_feedback_optimization.py 和 tests/test_feedback_loop_review.py 覆盖 floor 读取和成熟度状态；GOV-005 audit 校验本 rationale map。"
+    review_condition: "forward prediction outcome 样本达到评估窗口或 shadow maturity 报告出现持续偏差时复核。"
 decision_outcomes:
   reporting_floor: 1
   pilot_floor: 5

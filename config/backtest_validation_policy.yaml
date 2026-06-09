@@ -6,6 +6,56 @@ policy_metadata:
   validation: "由 tests/test_config.py 与 tests/test_backtest.py 覆盖；promotion sample floor 仍读取 config/feedback_sample_policy.yaml，避免重复定义样本门槛。"
   review_after_reports: 8
 
+threshold_rationale_map:
+  data_credibility:
+    target_path: data_credibility
+    status: pilot
+    owner: system
+    rationale: "component coverage 下限用于阻断数据覆盖不足的回测或 candidate 证据，避免低覆盖样本被解读为完整策略表现。"
+    intended_effect: "把 coverage 不足的候选降级或阻断在 owner review / promotion 前。"
+    validation: "tests/test_backtest.py、tests/test_config.py 和 robustness/candidate focused tests 覆盖 coverage gate；GOV-005 audit 校验本 rationale map。"
+    review_condition: "当 PIT/data credibility 覆盖报告显示稳定改善或新增数据源后复核。"
+  execution_costs:
+    target_path: execution_costs
+    status: pilot
+    owner: system
+    rationale: "默认执行成本用于回测和 robustness cost stress 的保守交易成本假设；当前数值保持迁移前行为。"
+    intended_effect: "让 cost drag、turnover attribution 和 backtest comparison 使用可追溯默认成本，而不是源码常量。"
+    validation: "tests/test_backtest.py 和 tests/test_config.py 覆盖默认成本加载、summary 和 cost stress 输出；GOV-005 audit 校验本 rationale map。"
+    review_condition: "真实交易成本样本或 broker fee/slippage policy 明确后另开执行成本校准任务。"
+  pit_coverage:
+    target_path: pit_coverage
+    status: pilot
+    owner: system
+    rationale: "PIT readiness 的 forward days 与 staleness 边界用于披露估值/预期样本成熟度，不允许用采集日视图伪装历史可见性。"
+    intended_effect: "在 PIT 样本不足或过期时保持降级，并让 backtest / report 暴露 readiness 限制。"
+    validation: "tests/test_backtest.py、PIT coverage focused tests 和 docs freshness 覆盖 readiness report；GOV-005 audit 校验本 rationale map。"
+    review_condition: "forward-only PIT 样本自然积累到可评估窗口后复核。"
+  gate_attribution:
+    target_path: gate_attribution
+    status: pilot
+    owner: system
+    rationale: "left-tail 阈值用于 gate/event attribution 中标记显著负向尾部贡献，保留迁移前解释边界。"
+    intended_effect: "让回测 attribution 把极端负贡献作为风险解释项，而不直接改变评分或仓位。"
+    validation: "tests/test_gate_attribution.py 和 tests/test_backtest.py 覆盖 attribution summary；GOV-005 audit 校验本 rationale map。"
+    review_condition: "当 attribution report 与真实 drawdown review 形成足够样本后复核。"
+  robustness:
+    target_path: robustness
+    status: pilot
+    owner: system
+    rationale: "robustness section 集中定义 shifted start、cost stress、weight perturbation、OOS、random baseline、bootstrap 和独立窗口等候选证据边界。"
+    intended_effect: "让 candidate 先通过稳健性、随机基线、数据覆盖和统计证据检查，再进入人工复核；不得自动 production 晋级。"
+    validation: "tests/test_backtest.py、tests/test_market_feedback_optimization.py 和 parameter candidate tests 覆盖 robustness policy；GOV-005 audit 校验本 rationale map。"
+    review_condition: "真实 robustness / forward shadow 样本积累后，按 owner-approved policy change 复核。"
+  promotion:
+    target_path: promotion
+    status: pilot
+    owner: system
+    rationale: "promotion section 记录晋级前必须满足的数据可信度、robustness category、lag sensitivity 和 rule governance 条件。"
+    intended_effect: "阻断缺证据、缺规则治理或 lag sensitivity 不足的候选进入 production 解释。"
+    validation: "tests/test_backtest.py、promotion gate focused tests 和 docs/report contract 覆盖 promotion gate 输出；GOV-005 audit 校验本 rationale map。"
+    review_condition: "任何 production promotion 条件调整都必须另建 owner approval / calibration 任务。"
+
 data_credibility:
   component_coverage_min: 0.90
 
