@@ -1,6 +1,6 @@
 # TRADING-069 Portfolio Decision Journal and Human Review Notes
 
-状态：VALIDATING
+状态：BASELINE_DONE
 
 最后更新：2026-06-09
 
@@ -163,3 +163,18 @@ present.
   schema/safety gate 可运行，不能替代真实 weekly review action item 到
   journal entry 的 owner review 样本；任务保持 `VALIDATING`，next owner 调整为
   项目 owner + 系统验证，直到捕获并复核真实 weekly decision entry。
+- 2026-06-09：最终归档前复验空 journal 的完整只读链路。`decision-journal
+  list --json` 输出 `entries=[]`，`decision-journal validate` 为 `PASS`；
+  `decision-journal report --as-of 2026-06-08`、`analytics --as-of
+  2026-06-08` 和 `propose-state-updates --as-of 2026-06-08` 均可运行，
+  analytics 显示 `entry_count=0`、`follow_up_task_count=0`，proposal 显示
+  `proposal_count=0`、`state_mutation_performed=false`。刷新
+  `reports index --as-of 2026-06-08` 和 `reports reader-brief --as-of
+  2026-06-08` 后，Reader Brief `Portfolio Decision Journal` 显示
+  `availability=AVAILABLE`、`status=NO_ACTIVE_DECISIONS`、`entry_count=0`，
+  并保留 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
+  `broker_action=none`、`manual_review_required=true`。目标测试
+  `tests\test_etf_decision_journal.py` 为 10 passed。TRADING-069 从
+  `VALIDATING` 归档为 `BASELINE_DONE`：schema、CLI、report、analytics、
+  proposal、Reader Brief 和 validation gate 已完成；真实 weekly decision
+  entry 仍需 owner 人工复核后写入，不能由系统自动生成或伪造。
