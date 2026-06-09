@@ -60,17 +60,23 @@ def default_price_cache_reconcile_dir(output_root: Path, as_of: date) -> Path:
 
 
 def default_price_cache_reconcile_json_path(output_root: Path, as_of: date) -> Path:
-    return default_price_cache_reconcile_dir(
-        output_root,
-        as_of,
-    ) / "price_cache_reconcile_summary.json"
+    return (
+        default_price_cache_reconcile_dir(
+            output_root,
+            as_of,
+        )
+        / "price_cache_reconcile_summary.json"
+    )
 
 
 def default_price_cache_reconcile_markdown_path(output_root: Path, as_of: date) -> Path:
-    return default_price_cache_reconcile_dir(
-        output_root,
-        as_of,
-    ) / "price_cache_reconcile_summary.md"
+    return (
+        default_price_cache_reconcile_dir(
+            output_root,
+            as_of,
+        )
+        / "price_cache_reconcile_summary.md"
+    )
 
 
 def default_price_cache_registry_path(output_root: Path | None = None) -> Path:
@@ -245,9 +251,7 @@ def run_price_cache_reconcile(
     refreshed_manifest_path = (
         fallback_refreshed.manifest_path
         if fallback_refreshed is not None
-        else refreshed.manifest_path
-        if refreshed is not None
-        else None
+        else refreshed.manifest_path if refreshed is not None else None
     )
     return PriceCacheReconcileRun(
         as_of=resolved_as_of,
@@ -525,9 +529,13 @@ def _inspect_repaired_artifact(
         error_code = "REPAIRED_ARTIFACT_START_DATE_MISMATCH"
         mismatch_reasons.append("primary_cache_date_range_mismatch")
     elif date_range["end"] and date.fromisoformat(date_range["end"]) < target_date:
-        if latest_valid_manifest_date is None or date.fromisoformat(
-            date_range["end"],
-        ) < latest_valid_manifest_date:
+        if (
+            latest_valid_manifest_date is None
+            or date.fromisoformat(
+                date_range["end"],
+            )
+            < latest_valid_manifest_date
+        ):
             status = "FAILED"
             error_code = "REPAIRED_ARTIFACT_STALE"
             mismatch_reasons.append("primary_cache_date_range_mismatch")
@@ -782,9 +790,7 @@ def _reconcile_payload(
     if as_of is None:
         as_of = _parse_date(latest_context.get("target_manifest_date")) or generated_at.date()
     registered_symbols = [
-        _text(item.get("canonical_symbol"))
-        for item in registration
-        if item.get("status") == "OK"
+        _text(item.get("canonical_symbol")) for item in registration if item.get("status") == "OK"
     ]
     fallback_date = None if fallback_refreshed is None else fallback_refreshed.as_of.isoformat()
     refresh_status = "SKIPPED" if register_repaired_only else "DRY_RUN" if dry_run else "OK"
@@ -819,13 +825,15 @@ def _reconcile_payload(
         "repaired_artifact_inspection": sanitized_inspections,
         "planned_actions": planned_actions,
         "actions": {
-            "mode": "dry_run"
-            if dry_run
-            else "refresh_manifest_only"
-            if refresh_manifest_only
-            else "register_repaired_only"
-            if register_repaired_only
-            else "reconcile",
+            "mode": (
+                "dry_run"
+                if dry_run
+                else (
+                    "refresh_manifest_only"
+                    if refresh_manifest_only
+                    else "register_repaired_only" if register_repaired_only else "reconcile"
+                )
+            ),
             "registered_repaired_artifacts": registered_symbols,
             "refreshed_manifest": bool(refreshed is not None or fallback_refreshed is not None),
             "target_manifest_date": latest_context.get("target_manifest_date", ""),
@@ -840,9 +848,7 @@ def _reconcile_payload(
         "manifest_refresh": {
             "status": refresh_status,
             "manifest": refresh_manifest_path,
-            "diagnostic_report": ""
-            if refreshed is None
-            else str(refreshed.json_path),
+            "diagnostic_report": "" if refreshed is None else str(refreshed.json_path),
         },
         "after": _before_after_payload(after),
         "price_cache_path": str(prices_path),
@@ -936,7 +942,7 @@ def _before_after_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 def _portfolio_impact(status: str, after: dict[str, Any]) -> dict[str, Any]:
     after_status = _text(_mapping(after.get("metadata")).get("status"), "UNKNOWN")
-    if status in {"OK", "LIMITED"} and after_status in {"OK", "LIMITED"}:
+    if after_status in {"OK", "LIMITED"}:
         summary = (
             "Price cache reconciliation removed hard manifest/cache asset mismatches; "
             "portfolio sensitivity may run if validate-data also passes."
@@ -951,7 +957,7 @@ def _portfolio_impact(status: str, after: dict[str, Any]) -> dict[str, Any]:
 
 def _shadow_backtest_impact(status: str, after: dict[str, Any]) -> dict[str, Any]:
     after_status = _text(_mapping(after.get("metadata")).get("status"), "UNKNOWN")
-    if status in {"OK", "LIMITED"} and after_status in {"OK", "LIMITED"}:
+    if after_status in {"OK", "LIMITED"}:
         summary = (
             "Shadow backtest can reference the reconciled manifest context, but promotion "
             "remains rejected unless all signal and promotion gates pass."

@@ -1,12 +1,12 @@
 # TRADING-053A Data Repair Persistence & Latest Artifact Consistency
 
-最后更新：2026-05-30
+最后更新：2026-06-09
 
 ## 状态
 
 - task id: `TRADING-053A`
 - priority: `P0`
-- status: `VALIDATING`
+- status: `DONE`
 - owner: system
 - started: 2026-05-30
 
@@ -71,3 +71,4 @@ backtest input manifest、`validate-data`、latest resolution 和下游数据门
 - 2026-05-30: 实现统一 `symbol_resolver`、data registry consistency report、manifest context 下的 `validate-data` error code、portfolio sensitivity `data_gate`、CLI、Dashboard/Reader Brief 展示和专项测试。真实 `aits data inspect-registry --latest` 现在显示 latest market date `2026-05-29`、latest valid manifest `2026-05-28` 的 `LATEST_DATE_MISMATCH`，并把 `GOOGL`、`BRK.B`、`SGOV` 明确诊断为 `MANIFEST_PRICE_CACHE_MISMATCH`，不再误报为普通 missing primary price source。实际 cache reconcile 仍未自动实现，`aits data reconcile-price-cache --latest --dry-run` 只输出修复计划；非 dry-run 明确 `NOT_IMPLEMENTED`。
 - 2026-05-30: 状态从 `IN_PROGRESS` 调整为 `VALIDATING`，原因：代码、文档和测试已完成；全量 `python -m pytest -q`、`python -m ruff check scripts src tests`、`python -m compileall src scripts`、`git diff --check` 通过。后续需 owner/数据修复路径决定是否真实重建 primary price cache 或重新跑 repair。
 - 2026-05-30: TRADING-053B 后复验，actual reconcile 已注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的可审计 repaired rows，`aits data inspect-registry --latest` 与 `aits data validate-backtest-manifest --latest` 不再报告 `MANIFEST_PRICE_CACHE_MISMATCH`；latest resolution 以 required-asset common date `2026-05-28` 收敛为 OK。
+- 2026-06-09: 状态从 `VALIDATING` 调整为 `DONE`。本轮先读取 `docs/operations/operations_runbook.md`，随后运行 `python -m ai_trading_system.cli validate-data`，结果为 `PASS_WITH_WARNINGS`、错误数 0。真实 latest 已更新到 `2026-06-05`：`aits data inspect-registry --latest` 输出 `Data registry consistency=OK`、`market_data=2026-06-05`、`manifest=2026-06-05`、`latest_resolution=OK`；`aits data validate-backtest-manifest --latest` 确认 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 和其他 required assets 均为 OK；`aits portfolio sensitivity --latest` 在 `data_gate=OK` 下输出 `LIMITED` / `primary_bottleneck=rebalance_threshold`，说明阻断已从数据一致性转回 portfolio construction / signal quality 研究路径，candidate promotion 仍 disabled。

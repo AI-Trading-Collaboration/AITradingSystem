@@ -1,12 +1,12 @@
 # TRADING-053B Price Cache Reconcile & Backtest Manifest Refresh
 
-最后更新：2026-05-30
+最后更新：2026-06-09
 
 ## 状态
 
 - task id: `TRADING-053B`
 - priority: `P0`
-- status: `VALIDATING`
+- status: `DONE`
 - owner: system
 - started: 2026-05-30
 
@@ -74,3 +74,4 @@
 
 - 2026-05-30: 新增需求文档并进入 `IN_PROGRESS`。本任务承接 TRADING-053A 的真实 blocker，目标是修复 cache/manifest/latest lifecycle，不改变投资策略或 production 参数。
 - 2026-05-30: 实现可执行 reconcile / manifest refresh 并进入 `VALIDATING`。真实运行从 audited FMP raw cache 注册 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 各 1008 行到主价格缓存，写出 `artifacts/data_registry/price_cache_registry.json` 和 `artifacts/data_quality/2026-05-28/price_cache_reconcile_summary.json/md`。由于可审计 repaired rows 只覆盖到 2026-05-28，系统没有补造 2026-05-29 行，而是把 latest resolution 收敛到 required-asset common date `2026-05-28`；`aits portfolio sensitivity --latest` 已通过 data gate 并返回 `LIMITED`。
+- 2026-06-09: 状态从 `VALIDATING` 调整为 `DONE`。本轮真实 latest `aits data reconcile-price-cache --latest --dry-run` 输出 `after=latest_resolution=OK`、`market_data=2026-06-05`、`manifest=2026-06-05`；实际 `aits data reconcile-price-cache --latest` 为幂等 `NOT_REQUIRED`，写出 `artifacts/data_quality/2026-06-05/price_cache_reconcile_summary.json/md`，before/after required asset status 全部 OK，未生成伪价格、未降低 data quality gate、未修改 production 参数。验证期间发现 `NOT_REQUIRED` 且 after status OK 时 impact summary 仍误写为 blocked，本轮已修正为按 after registry status 判断，并用 `tests/trading_engine/test_price_cache_reconcile.py` 覆盖第二次 reconcile 的文案；真实 summary 现显示 portfolio sensitivity may run if validate-data also passes，shadow backtest 可引用 reconciled manifest context 但 promotion 仍 rejected。

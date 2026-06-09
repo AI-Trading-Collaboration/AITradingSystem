@@ -86,6 +86,8 @@ def test_reconcile_is_idempotent(
     assert first.payload["metadata"]["status"] in {"OK", "LIMITED"}
     assert second.payload["metadata"]["status"] in {"OK", "LIMITED", "NOT_REQUIRED"}
     assert len(pd.read_csv(tmp_path / "data" / "prices_daily.csv")) == row_count
+    assert "remains blocked" not in second.payload["impact_on_portfolio_sensitivity"]["summary"]
+    assert "remains blocked" not in second.payload["impact_on_shadow_backtest"]["summary"]
 
 
 def test_reconcile_fails_closed_when_repaired_artifact_missing(
@@ -103,8 +105,7 @@ def test_reconcile_fails_closed_when_repaired_artifact_missing(
 
     assert run.payload["metadata"]["status"] == "FAILED"
     inspection = {
-        item["canonical_symbol"]: item
-        for item in run.payload["repaired_artifact_inspection"]
+        item["canonical_symbol"]: item for item in run.payload["repaired_artifact_inspection"]
     }
     assert inspection["GOOGL"]["error_code"] == "REPAIRED_ARTIFACT_MISSING"
     assert run.payload["safety"]["fake_price_rows_generated"] is False
