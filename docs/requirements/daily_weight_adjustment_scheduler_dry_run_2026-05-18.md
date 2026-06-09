@@ -1,6 +1,6 @@
 # TRADING-018A：Daily Weight Adjustment Scheduler Dry Run
 
-最后更新：2026-05-18
+最后更新：2026-06-09
 
 关联任务：`TRADING-018A`
 
@@ -121,3 +121,15 @@ dry-run report 必须记录：
   显式 safety checks、Windows Task Scheduler runbook、GitHub Actions schedule 暂不启用说明、
   系统流图 / 产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、
   `tests/test_daily_task_dashboard.py`、全量 pytest、ruff 和 black check。
+- 2026-06-09：从 VALIDATING 改为 BASELINE_DONE。原因：本轮已按 operations runbook
+  复核 scheduler validation 边界，`aits validate-data` 为 `PASS_WITH_WARNINGS` /
+  错误数 0；默认缺输入 smoke 输出 `LIMITED`、`pipeline_status=LIMITED`、
+  candidate_count 0、`promotion_gate_status=INSUFFICIENT_DATA`、
+  `production_effect=none`、`manual_review_only=true`，并列出 6 个缺失的 015/016/017
+  上游 JSON/Markdown artifacts；字段级复核确认不写 production profile、不写 approved
+  profile、不调用 IBKR / PaperBroker / replay / controlled fill / lifecycle / comparison，
+  不自动 git commit/push，`dashboard_write_only_summary=true` 且 forbidden terms absent；
+  目标 + dashboard pytest 28 passed，`tests/trading_engine` 939 passed，scoped safety scan
+  未命中敏感输出或 forbidden production promotion 语义，当前代码基线 GitHub Actions
+  run `27180822758` success。实际 3～7 个美股交易日的本地 scheduler/manual-run 稳定性观察
+  尚无真实多日样本，本轮已拆分为 `TRADING-018A1` 继续跟踪，避免把运行期观察伪装成已完成。
