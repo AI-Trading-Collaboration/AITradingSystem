@@ -1,0 +1,40 @@
+schema_version: 1
+
+policy_metadata:
+  version: pressure_regime_tagging_v1
+  status: baseline
+  owner: project_owner
+  rationale: >
+    使用价格行为 proxy 为 forward outcomes 标记 pressure regime，帮助
+    defensive_limited_adjustment_drawdown 累积可审计样本。
+  validation: focused tests plus pressure-regime-tag validation artifact
+  review_condition: >
+    当引入更可信的 macro/volatility/source 数据或 owner 调整 pressure regime 定义时复核。
+
+symbols:
+  tech_proxy: QQQ
+  semiconductor_proxy: SMH
+  fallback_semiconductor_proxy: SOXX
+
+thresholds:
+  tech_drawdown_pct: -0.05
+  semiconductor_pullback_pct: -0.07
+  risk_off_volatility_percentile: 0.75
+  strong_recovery_return_pct: 0.05
+  sideways_trend_abs_max: 0.01
+
+windows:
+  rolling_days:
+    - 5
+    - 10
+    - 20
+
+validation:
+  required_pressure_events: 5
+
+safety:
+  broker_action_allowed: false
+  broker_action_taken: false
+  production_effect: none
+  auto_apply_policy: false
+  owner_approval_required: true

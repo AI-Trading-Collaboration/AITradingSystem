@@ -2115,6 +2115,84 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_sim_review.get("rule_review_cycle_recommendation"),
                     ),
                     (
+                        "weekly_cycle_id",
+                        etf_dynamic_v3_sim_review.get("confirmation_weekly_cycle_id"),
+                    ),
+                    (
+                        "weekly_due_updated_windows",
+                        (
+                            f"{etf_dynamic_v3_sim_review.get('confirmation_weekly_due_windows')}"
+                            " / "
+                            f"{etf_dynamic_v3_sim_review.get('confirmation_weekly_updated_windows')}"
+                        ),
+                    ),
+                    (
+                        "weekly_rule_review_recommendation",
+                        etf_dynamic_v3_sim_review.get(
+                            "confirmation_weekly_rule_review_recommendation"
+                        ),
+                    ),
+                    (
+                        "pressure_regime_tag_id",
+                        etf_dynamic_v3_sim_review.get("pressure_regime_tag_id"),
+                    ),
+                    (
+                        "pressure_counts",
+                        (
+                            "tech_drawdown="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_tech_drawdown_count')}; "
+                            "risk_off="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_risk_off_count')}; "
+                            "semiconductor_pullback="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_semiconductor_pullback_count')}"
+                        ),
+                    ),
+                    (
+                        "defensive_validation_relevant_outcomes",
+                        etf_dynamic_v3_sim_review.get(
+                            "pressure_defensive_validation_relevant_outcomes"
+                        ),
+                    ),
+                    (
+                        "confirmation_dashboard_id",
+                        etf_dynamic_v3_sim_review.get("confirmation_dashboard_id"),
+                    ),
+                    (
+                        "dashboard_ready_for_evaluation",
+                        etf_dynamic_v3_sim_review.get("dashboard_ready_for_evaluation"),
+                    ),
+                    (
+                        "limited_adjustment_progress",
+                        etf_dynamic_v3_sim_review.get(
+                            "dashboard_limited_adjustment_progress"
+                        ),
+                    ),
+                    (
+                        "defensive_pressure_progress",
+                        etf_dynamic_v3_sim_review.get(
+                            "dashboard_defensive_pressure_progress"
+                        ),
+                    ),
+                    (
+                        "consensus_target_status",
+                        etf_dynamic_v3_sim_review.get("dashboard_consensus_target_status"),
+                    ),
+                    (
+                        "rule_review_queue_id",
+                        etf_dynamic_v3_sim_review.get("rule_review_queue_id"),
+                    ),
+                    (
+                        "rule_review_queue_counts",
+                        (
+                            "pending="
+                            f"{etf_dynamic_v3_sim_review.get('rule_review_queue_pending_count')}; "
+                            "ready="
+                            f"{etf_dynamic_v3_sim_review.get('rule_review_queue_ready_count')}; "
+                            "not_ready="
+                            f"{etf_dynamic_v3_sim_review.get('rule_review_queue_not_ready_count')}"
+                        ),
+                    ),
+                    (
                         "ready_for_evaluation_count",
                         etf_dynamic_v3_sim_review.get(
                             "confirmation_ready_for_evaluation_count"
@@ -2205,6 +2283,22 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "rule_review_cycle_path",
                         etf_dynamic_v3_sim_review.get("rule_review_cycle_path"),
+                    ),
+                    (
+                        "confirmation_weekly_path",
+                        etf_dynamic_v3_sim_review.get("confirmation_weekly_path"),
+                    ),
+                    (
+                        "pressure_regime_tag_path",
+                        etf_dynamic_v3_sim_review.get("pressure_regime_tag_path"),
+                    ),
+                    (
+                        "confirmation_dashboard_path",
+                        etf_dynamic_v3_sim_review.get("confirmation_dashboard_path"),
+                    ),
+                    (
+                        "rule_review_queue_path",
+                        etf_dynamic_v3_sim_review.get("rule_review_queue_path"),
                     ),
                     (
                         "rule_owner_decision_path",
@@ -5986,6 +6080,22 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         _report_index_artifact_path(report_index, "etf_dynamic_v3_rule_review_cycle"),
         "rule_review_cycle_manifest.json",
     )
+    confirmation_weekly_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_confirmation_cycle_weekly"),
+        "weekly_cycle_manifest.json",
+    )
+    pressure_regime_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_pressure_regime_tag"),
+        "pressure_regime_manifest.json",
+    )
+    confirmation_dashboard_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_confirmation_dashboard"),
+        "confirmation_dashboard_manifest.json",
+    )
+    rule_review_queue_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_rule_review_queue"),
+        "rule_review_queue_manifest.json",
+    )
     rule_owner_decision_path = _dynamic_v3_rule_owner_decision_journal_path(
         _report_index_artifact_path(
             report_index,
@@ -6056,6 +6166,35 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         if rule_review_cycle_path is not None
         else None
     )
+    confirmation_weekly = _read_optional_json(confirmation_weekly_path)
+    confirmation_weekly_summary = _read_optional_json(
+        confirmation_weekly_path.parent / "weekly_cycle_summary.json"
+        if confirmation_weekly_path is not None
+        else None
+    )
+    pressure_regime = _read_optional_json(pressure_regime_path)
+    pressure_regime_summary = _read_optional_json(
+        pressure_regime_path.parent / "pressure_regime_summary.json"
+        if pressure_regime_path is not None
+        else None
+    )
+    confirmation_dashboard = _read_optional_json(confirmation_dashboard_path)
+    confirmation_dashboard_summary = _read_optional_json(
+        confirmation_dashboard_path.parent / "confirmation_dashboard_summary.json"
+        if confirmation_dashboard_path is not None
+        else None
+    )
+    confirmation_dashboard_targets = _read_optional_json(
+        confirmation_dashboard_path.parent / "target_status_table.json"
+        if confirmation_dashboard_path is not None
+        else None
+    )
+    rule_review_queue = _read_optional_json(rule_review_queue_path)
+    rule_review_queue_summary = _read_optional_json(
+        rule_review_queue_path.parent / "queue_summary.json"
+        if rule_review_queue_path is not None
+        else None
+    )
     owner_decisions = _read_optional_jsonl(rule_owner_decision_path)
     latest_owner_decision = owner_decisions[-1] if owner_decisions else {}
     source_payloads = tuple(
@@ -6081,6 +6220,15 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             evaluation_summary,
             rule_review_cycle,
             rule_review_matrix,
+            confirmation_weekly,
+            confirmation_weekly_summary,
+            pressure_regime,
+            pressure_regime_summary,
+            confirmation_dashboard,
+            confirmation_dashboard_summary,
+            confirmation_dashboard_targets,
+            rule_review_queue,
+            rule_review_queue_summary,
             latest_owner_decision,
         )
     )
@@ -6119,6 +6267,14 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         f"{row.get('target')}={row.get('condition')}"
         for row in _records(_mapping(failure_conditions).get("failure_conditions"))
     )
+    dashboard_targets = {
+        _text(row.get("target_id")): row
+        for row in _records(_mapping(confirmation_dashboard_targets).get("targets"))
+    }
+    limited_target = _mapping(dashboard_targets.get("limited_adjustment_vs_no_trade"))
+    defensive_target = _mapping(dashboard_targets.get("defensive_limited_adjustment_drawdown"))
+    consensus_target = _mapping(dashboard_targets.get("consensus_target_risk"))
+    pressure_samples = _mapping(_mapping(pressure_regime_summary).get("pressure_samples"))
     auto_apply = any(
         payload.get("auto_apply") is True or payload.get("auto_policy_apply") is True
         for payload in source_payloads
@@ -6179,6 +6335,8 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             f"{_text(_mapping(confirmation_plan).get('confirmation_plan_id'), 'MISSING')}; "
             "rule_review_cycle="
             f"{_text(_mapping(rule_review_cycle).get('cycle_id'), 'MISSING')}; "
+            "weekly_cycle="
+            f"{_text(_mapping(confirmation_weekly).get('weekly_cycle_id'), 'MISSING')}; "
             f"defensive_status={defensive_status}; auto_apply={auto_apply}; "
             "production_effect=none."
         ),
@@ -6231,6 +6389,58 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             _mapping(rule_review_cycle).get("cycle_recommendation"),
             "MISSING",
         ),
+        "confirmation_weekly_cycle_id": _text(
+            _mapping(confirmation_weekly).get("weekly_cycle_id"),
+            "MISSING",
+        ),
+        "confirmation_weekly_due_windows": _int(
+            _mapping(confirmation_weekly_summary).get("due_windows")
+        ),
+        "confirmation_weekly_updated_windows": _int(
+            _mapping(confirmation_weekly_summary).get("updated_windows")
+        ),
+        "confirmation_weekly_rule_review_recommendation": _text(
+            _mapping(confirmation_weekly_summary).get("rule_review_recommendation"),
+            "MISSING",
+        ),
+        "pressure_regime_tag_id": _text(
+            _mapping(pressure_regime).get("tag_id"),
+            "MISSING",
+        ),
+        "pressure_tech_drawdown_count": _int(pressure_samples.get("tech_drawdown")),
+        "pressure_risk_off_count": _int(pressure_samples.get("risk_off")),
+        "pressure_semiconductor_pullback_count": _int(
+            pressure_samples.get("semiconductor_pullback")
+        ),
+        "pressure_defensive_validation_relevant_outcomes": _int(
+            _mapping(pressure_regime_summary).get("defensive_validation_relevant_outcomes")
+        ),
+        "confirmation_dashboard_id": _text(
+            _mapping(confirmation_dashboard).get("dashboard_id"),
+            "MISSING",
+        ),
+        "dashboard_ready_for_evaluation": _int(
+            _mapping(confirmation_dashboard_summary).get("ready_for_evaluation")
+        ),
+        "dashboard_limited_adjustment_progress": limited_target.get("progress_pct", "MISSING"),
+        "dashboard_defensive_pressure_progress": defensive_target.get("progress_pct", "MISSING"),
+        "dashboard_consensus_target_status": _text(
+            consensus_target.get("status"),
+            "MISSING",
+        ),
+        "rule_review_queue_id": _text(
+            _mapping(rule_review_queue).get("queue_id"),
+            "MISSING",
+        ),
+        "rule_review_queue_pending_count": _int(
+            _mapping(rule_review_queue_summary).get("pending_count")
+        ),
+        "rule_review_queue_ready_count": _int(
+            _mapping(rule_review_queue_summary).get("ready_for_owner_review_count")
+        ),
+        "rule_review_queue_not_ready_count": _int(
+            _mapping(rule_review_queue_summary).get("not_ready_count")
+        ),
         "confirmation_ready_for_evaluation_count": _int(
             _mapping(progress_summary).get("ready_for_evaluation_count")
         ),
@@ -6275,9 +6485,17 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "confirmation_progress_path": _text(confirmation_progress_path),
         "confirmation_evaluation_path": _text(confirmation_evaluation_path),
         "rule_review_cycle_path": _text(rule_review_cycle_path),
+        "confirmation_weekly_path": _text(confirmation_weekly_path),
+        "pressure_regime_tag_path": _text(pressure_regime_path),
+        "confirmation_dashboard_path": _text(confirmation_dashboard_path),
+        "rule_review_queue_path": _text(rule_review_queue_path),
         "rule_owner_decision_path": _text(rule_owner_decision_path),
         "detail_report": _text(
-            rule_review_cycle_path
+            confirmation_dashboard_path
+            or confirmation_weekly_path
+            or rule_review_queue_path
+            or pressure_regime_path
+            or rule_review_cycle_path
             or confirmation_evaluation_path
             or confirmation_progress_path
             or confirmation_plan_path
@@ -6317,6 +6535,24 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "confirmation_evaluation_id": "MISSING",
         "rule_review_cycle_id": "MISSING",
         "rule_review_cycle_recommendation": "MISSING",
+        "confirmation_weekly_cycle_id": "MISSING",
+        "confirmation_weekly_due_windows": 0,
+        "confirmation_weekly_updated_windows": 0,
+        "confirmation_weekly_rule_review_recommendation": "MISSING",
+        "pressure_regime_tag_id": "MISSING",
+        "pressure_tech_drawdown_count": 0,
+        "pressure_risk_off_count": 0,
+        "pressure_semiconductor_pullback_count": 0,
+        "pressure_defensive_validation_relevant_outcomes": 0,
+        "confirmation_dashboard_id": "MISSING",
+        "dashboard_ready_for_evaluation": 0,
+        "dashboard_limited_adjustment_progress": "MISSING",
+        "dashboard_defensive_pressure_progress": "MISSING",
+        "dashboard_consensus_target_status": "MISSING",
+        "rule_review_queue_id": "MISSING",
+        "rule_review_queue_pending_count": 0,
+        "rule_review_queue_ready_count": 0,
+        "rule_review_queue_not_ready_count": 0,
         "confirmation_ready_for_evaluation_count": 0,
         "confirmation_insufficient_events_count": 0,
         "confirmation_success_count": 0,
@@ -6344,6 +6580,10 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "confirmation_progress_path": "",
         "confirmation_evaluation_path": "",
         "rule_review_cycle_path": "",
+        "confirmation_weekly_path": "",
+        "pressure_regime_tag_path": "",
+        "confirmation_dashboard_path": "",
+        "rule_review_queue_path": "",
         "rule_owner_decision_path": "",
         "detail_report": "",
         "limitation": (

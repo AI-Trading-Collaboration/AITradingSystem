@@ -951,6 +951,21 @@ READY。Rule review cycle 默认 `policy_change_allowed=false`；owner decision 
 `auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`，不触发 broker、
 不进入 production、不修改 `position_advisory_v1.yaml`、policy、official target weights、
 portfolio 或 baseline state。
+TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS 把上述闭环扩展为 weekly/manual
+evidence operations。配置入口为
+`config/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_schedule_v1.yaml` 和
+`config/etf_portfolio/dynamic_v3_rescue/pressure_regime_tagging_v1.yaml`；CLI 包括
+`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、
+`pressure-regime-tag validate-config/run/report`、`confirmation-dashboard build/report` 和
+`rule-review-queue build/report`，对应验证入口为
+`validate-confirmation-cycle-weekly`、`validate-pressure-regime-tag`、
+`validate-confirmation-dashboard` 和 `validate-rule-review-queue`。Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/confirmation_cycle_plan|confirmation_cycle_weekly|pressure_regime_tag|confirmation_dashboard|rule_review_queue/`，
+并由 report registry / Reader Brief 只读展示。Weekly runner 默认 dry-run，不执行 outcome
+update；只有显式 `--execute-ready-updates` 才会调用 safe outcome update，且仍需先通过
+cached data quality gate。Pressure regime thresholds 全部来自配置；dashboard 和 queue 只供
+人工复核，不授权 defensive label、policy mutation、official target weights mutation、
+portfolio mutation、broker action 或 production action。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

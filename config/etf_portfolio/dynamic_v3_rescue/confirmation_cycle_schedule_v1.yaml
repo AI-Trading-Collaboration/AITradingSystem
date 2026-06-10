@@ -1,0 +1,54 @@
+schema_version: 1
+
+policy_metadata:
+  version: confirmation_cycle_schedule_v1
+  status: baseline
+  owner: project_owner
+  rationale: >
+    周度汇总 forward outcome、confirmation progress、rule review 和 owner queue，
+    只用于人工复核与 evidence accumulation。
+  validation: focused tests plus weekly-cycle validation artifact
+  review_condition: >
+    当 outcome update cadence、owner review policy 或 production boundary 改变时复核。
+
+schedule:
+  cadence: weekly
+  preferred_weekday: SAT
+  timezone: Asia/Tokyo
+
+inputs:
+  confirmation_registry: latest
+  outcome_due: latest_or_scan
+  shadow_shortlist: latest
+  position_advisory_config: config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml
+
+windows:
+  outcome_windows_trading_days:
+    - 1
+    - 5
+    - 10
+    - 20
+
+safety:
+  broker_action_allowed: false
+  broker_action_taken: false
+  production_effect: none
+  auto_apply_policy: false
+  owner_approval_required: true
+
+steps:
+  - outcome_due_scan
+  - outcome_update_review
+  - outcome_update_if_ready
+  - rolling_evidence_refresh
+  - confirmation_progress_update
+  - confirmation_evaluate
+  - rule_review_cycle
+  - owner_decision_queue_update
+  - weekly_dashboard
+  - reader_brief_update
+
+execution:
+  dry_run_default: true
+  require_explicit_update: true
+  continue_on_no_due_windows: true
