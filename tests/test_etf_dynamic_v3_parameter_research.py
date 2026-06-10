@@ -1026,12 +1026,12 @@ def test_dynamic_v3_data_and_injection_audit_contracts(tmp_path: Path) -> None:
         config_path=config_path,
         as_of=pd.Timestamp(as_of).date(),
         end=pd.Timestamp(as_of).date(),
-        max_candidates=2,
+        max_candidates=1,
         prices_path=prices_path,
         rates_path=rates_path,
         output_dir=tmp_path / "injection_audit",
     )
-    assert injection["report"]["candidate_count"] == 2
+    assert injection["report"]["candidate_count"] == 1
     assert (
         validate_injection_audit_artifact(
             audit_id=injection["audit_id"],
@@ -1437,7 +1437,7 @@ def _write_real_smoke_cache(tmp_path: Path) -> tuple[Path, Path, str]:
     universe = load_universe()
     tickers = list(dict.fromkeys([*configured_price_tickers(universe), "CASH"]))
     series_ids = configured_rate_series(universe)
-    dates = pd.bdate_range("2022-01-03", periods=520)
+    dates = pd.bdate_range("2022-01-03", periods=360)
     price_rows: list[dict[str, object]] = []
     for ticker_index, ticker in enumerate(tickers):
         base = 100.0 + ticker_index * 3.0

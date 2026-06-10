@@ -19,7 +19,6 @@ from ai_trading_system.etf_portfolio.dynamic_robustness import (
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     DYNAMIC_V3_FAILURE_ATTRIBUTION_REPORT_TYPE,
     build_dynamic_v3_failure_attribution_report,
-    build_dynamic_v3_failure_attribution_validation_report,
     load_dynamic_v3_failure_attribution_policy_config,
     write_dynamic_v3_failure_attribution_report,
 )
@@ -92,20 +91,14 @@ def test_dynamic_v3_failure_attribution_report_and_reader_brief(tmp_path: Path) 
 def test_dynamic_v3_failure_attribution_validation_report_and_cli_pass(
     tmp_path: Path,
 ) -> None:
-    validation = build_dynamic_v3_failure_attribution_validation_report()
-
-    assert validation["status"] == "PASS"
-    assert validation["failed_check_count"] == 0
-    assert validation["no_auto_approval"] is True
-    assert validation["no_auto_enrollment"] is True
-
+    output_dir = tmp_path / "validation"
     result = CliRunner().invoke(
         etf_app,
         [
             "dynamic-v3-rescue",
             "validate-attribution",
             "--output-dir",
-            str(tmp_path / "validation"),
+            str(output_dir),
         ],
         env={"COLUMNS": "180"},
         terminal_width=180,
@@ -113,6 +106,12 @@ def test_dynamic_v3_failure_attribution_validation_report_and_cli_pass(
     assert result.exit_code == 0, result.output
     assert "status=PASS" in result.output
     assert "automatic_enrollment_allowed=false" in result.output
+    validation = _single_validation_payload(output_dir)
+
+    assert validation["status"] == "PASS"
+    assert validation["failed_check_count"] == 0
+    assert validation["no_auto_approval"] is True
+    assert validation["no_auto_enrollment"] is True
 
 
 def _sample_failure_attribution_report() -> dict[str, object]:
@@ -168,3 +167,9 @@ def _report_record(report_id: str, path: Path) -> dict[str, object]:
         "exists": True,
         "age_days": 0,
     }
+
+
+def _single_validation_payload(output_dir: Path) -> dict[str, object]:
+    paths = list(output_dir.glob("dynamic-v3-failure-attribution-validation_*.json"))
+    assert len(paths) == 1
+    return json.loads(paths[0].read_text(encoding="utf-8"))

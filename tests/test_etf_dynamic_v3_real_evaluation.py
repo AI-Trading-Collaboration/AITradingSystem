@@ -23,7 +23,6 @@ from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DYNAMIC_V3_REAL_EVALUATION_REPORT_TYPE,
     DynamicV3RealEvaluationError,
     build_dynamic_v3_real_evaluation_report,
-    build_dynamic_v3_real_evaluation_validation_report,
     load_dynamic_v3_real_evaluation_policy_config,
     materialize_dynamic_v3_real_candidate_policy,
     precompute_dynamic_v3_fixed_robustness_reports,
@@ -173,20 +172,14 @@ def test_dynamic_v3_real_evaluation_reuses_fixed_robustness_cache(monkeypatch) -
 
 
 def test_dynamic_v3_real_validation_report_and_cli_pass(tmp_path: Path) -> None:
-    validation = build_dynamic_v3_real_evaluation_validation_report()
-
-    assert validation["status"] == "PASS"
-    assert validation["failed_check_count"] == 0
-    assert validation["no_auto_approval"] is True
-    assert validation["no_auto_enrollment"] is True
-
+    output_dir = tmp_path / "validation"
     result = CliRunner().invoke(
         etf_app,
         [
             "dynamic-v3-rescue",
             "validate-real",
             "--output-dir",
-            str(tmp_path / "validation"),
+            str(output_dir),
         ],
         env={"COLUMNS": "180"},
         terminal_width=180,
@@ -194,6 +187,12 @@ def test_dynamic_v3_real_validation_report_and_cli_pass(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "status=PASS" in result.output
     assert "automatic_enrollment_allowed=false" in result.output
+    validation = _single_validation_payload(output_dir)
+
+    assert validation["status"] == "PASS"
+    assert validation["failed_check_count"] == 0
+    assert validation["no_auto_approval"] is True
+    assert validation["no_auto_enrollment"] is True
 
 
 def _sample_real_evaluation_report() -> dict[str, object]:
@@ -226,3 +225,9 @@ def _report_record(report_id: str, path: Path) -> dict[str, object]:
         "exists": True,
         "age_days": 0,
     }
+
+
+def _single_validation_payload(output_dir: Path) -> dict[str, object]:
+    paths = list(output_dir.glob("dynamic-v3-real-evaluation-validation_*.json"))
+    assert len(paths) == 1
+    return json.loads(paths[0].read_text(encoding="utf-8"))

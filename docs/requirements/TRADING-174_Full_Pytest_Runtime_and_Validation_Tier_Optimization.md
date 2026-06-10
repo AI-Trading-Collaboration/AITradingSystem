@@ -75,6 +75,30 @@
   `tests/trading_engine/test_portfolio_*` / tracking window / candidate tracking
   integration tests（约 19-24 秒）。后续若仍要缩短 full runtime，应优先调查这些
   fixture/artifact 生成路径是否可缓存或拆分。
+- 2026-06-10：owner 要求继续压缩 full runtime。第二阶段从 top slow tests 入手，优先
+  处理 Dynamic v3 simulation/research 和 trading_engine integration/report 中的重复真实评估、
+  重复 synthetic price generation、重复 CLI validation/report 生成路径。约束不变：不跳过关键
+  投资解释测试，不把 slow tests 默认隐藏，不降低 full gate。
+- 2026-06-10：第二阶段完成首轮 runtime reduction：
+  - `test_dynamic_v3_real_validation_report_and_cli_pass` 和
+    `test_dynamic_v3_failure_attribution_validation_report_and_cli_pass` 改为由 CLI 完整生成
+    validation artifact，再读取 JSON 断言 status/safety，去掉同一测试内 direct builder + CLI 的
+    重复 heavy sample build；两个用例合计从约 80 秒级降到约 42 秒。
+  - `test_etf_dynamic_v3_parameter_research.py` 的 real smoke cache 从 520 个 trading days
+    收窄到 360 个 trading days，并把 injection audit contract 测试从 2 个真实候选收窄为
+    1 个真实候选；该文件 17 tests 通过，总耗时约 52 秒，两个原 60 秒级测试合计约 48 秒。
+  - portfolio candidate / review / tracking shared fixture 从 80 days / 20 min history 收窄到
+    40 days / 12 min history；相关 40 tests 通过，总耗时约 2 分 28 秒，原 23 秒级
+    shadow-backtest reference 用例降到约 11-12 秒。
+  - `python scripts/run_validation_tier.py dynamic-v3` 结果为 47 passed，elapsed 227.26 秒
+    （约 3 分 46 秒）。
+  - `python scripts/run_validation_tier.py full` 结果为 2313 passed、640 warnings，
+    pytest runtime 864.67 秒（14 分 24 秒），script elapsed 866.78 秒；相对第一阶段
+    full baseline 17 分 56 秒，减少约 3 分 32 秒。
+- 2026-06-10：剩余 top slow tests 已从 60-74 秒级下降到约 30 秒级；后续继续压缩应优先
+  调查 `test_etf_dynamic_rescue.py`、Dynamic v3 failure/real report builders，以及
+  trading_engine portfolio sensitivity / shadow-backtest reference 测试是否能复用已生成的
+  diagnostics/summary artifacts，或拆分为 contract-only 与 full integration 两层。
 
 ## 7. 当前使用规则
 

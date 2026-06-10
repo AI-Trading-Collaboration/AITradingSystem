@@ -160,7 +160,7 @@ def test_reader_brief_uses_latest_candidate_date_not_newer_mtime(
 
 
 def _candidate_fixture(tmp_path: Path) -> dict[str, object]:
-    fixture = _write_shadow_backtest_fixture(tmp_path, days=80, min_history_days=20)
+    fixture = _write_shadow_backtest_fixture(tmp_path, days=40, min_history_days=12)
     run_signal_snapshot_build(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],
