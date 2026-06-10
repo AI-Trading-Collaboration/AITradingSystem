@@ -74,6 +74,24 @@ python -m pip install -e ".[dev,data,dashboard,brokers]"
 python -m pytest
 ```
 
+日常开发不要盲等 full pytest。先按改动范围运行分层验证，输出中会显示实际 pytest
+命令和慢测试耗时：
+
+```powershell
+python scripts/run_validation_tier.py --list
+python scripts/run_validation_tier.py fast
+python scripts/run_validation_tier.py reader-brief
+python scripts/run_validation_tier.py dynamic-v3
+python scripts/run_validation_tier.py trading-engine
+python scripts/run_validation_tier.py full
+```
+
+`fast` 用于 CLI wiring、report registry 和 documentation contract 快速反馈；
+`dynamic-v3`、`reader-brief`、`trading-engine` 用于对应领域改动。涉及投资解释、
+data quality、scoring、backtest、report registry、Reader Brief、broker safety 或跨模块
+契约的改动，最终仍应跑对应领域 gate，并在交付前尽量跑 `full`；如果 full 仍因环境
+上限超时，不能记为 PASS，需要记录已通过的 scoped suites、超时时间和 top slow tests。
+
 项目主线运行环境固定对齐 Python 3.11：CI 使用 3.11，`pyproject.toml` 的
 Ruff/Black/Mypy 目标也是 `py311`。Windows 本机如果裸 `python` 指向 3.12+
 或 3.14，应优先使用 `.\.venv\Scripts\python.exe` 或先激活 `.venv` 再运行

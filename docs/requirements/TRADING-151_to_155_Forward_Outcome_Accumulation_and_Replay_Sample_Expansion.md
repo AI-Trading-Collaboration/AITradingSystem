@@ -1,5 +1,7 @@
 # TRADING-151 to TRADING-155: Forward Outcome Accumulation and Replay Sample Expansion
 
+最后更新：2026-06-10
+
 ## 背景
 
 TRADING-146_to_150 已经能解释 historical replay 的 `PARTIAL`、`PENDING`

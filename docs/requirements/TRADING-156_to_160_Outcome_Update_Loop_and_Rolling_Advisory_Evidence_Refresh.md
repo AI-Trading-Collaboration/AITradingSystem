@@ -1,5 +1,7 @@
 # TRADING-156 to TRADING-160: Outcome Update Loop and Rolling Advisory Evidence Refresh
 
+最后更新：2026-06-10
+
 ## 背景
 
 TRADING-151_to_155 已经能扫描 forward outcome due windows，并在真实链路中识别

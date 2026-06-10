@@ -1,5 +1,7 @@
 # TRADING-161 to TRADING-168: Backtest Simulation Advisory Evaluation
 
+最后更新：2026-06-10
+
 ## 背景
 
 TRADING-156_to_160 已把 forward advisory outcome update / rolling evidence
