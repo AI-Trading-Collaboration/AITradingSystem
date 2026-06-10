@@ -1,0 +1,119 @@
+# TRADING-174 to TRADING-178 Forward Confirmation Execution and Rule Review Cycle
+
+最后更新：2026-06-10
+
+## 1. 背景
+
+TRADING-169 to TRADING-173 已生成 simulation advisory review 和 forward confirmation plan。
+最新真实链路包括：
+
+- interpretation_id：`a629c036f1ea3129`
+- risk_return_id：`c61b1b9ca357cba1`
+- defensive_validation_id：`b79486b62042b702`
+- proposal_review_id：`f5dc442131f3740c`
+- confirmation_plan_id：`808e55a74ca6951f`
+
+当前 plan 已定义 `limited_adjustment_vs_no_trade`、
+`defensive_limited_adjustment_drawdown` 和 `consensus_target_risk` 三个 target，但仍是静态
+artifact。系统还缺少 target registry、progress tracking、success/failure evaluation、
+rule review cycle 和 owner decision journal。
+
+## 2. 编号说明
+
+附件原始标题使用 `TRADING-174` 到 `TRADING-178`。当前任务登记表中 `TRADING-174` 已被
+`Full Pytest Runtime and Validation Tier Optimization` 使用并处于 VALIDATING。为避免 task id
+复用，本轮登记和文档使用唯一汇总 ID：
+
+`TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE`
+
+本文仍保留附件原始编号范围，便于追溯 owner 提供的开发计划。
+
+## 3. 阶段目标
+
+把 `forward_confirmation_plan` 从静态计划升级为持续跟踪闭环：
+
+1. 注册 active/watch-only confirmation targets。
+2. 每次 forward outcome、outcome dashboard 或 weekly review 更新后聚合 target progress。
+3. 在样本达到要求时评估 success criteria / failure conditions；样本不足时保持 NOT_READY。
+4. 输出 rule review cycle report，作为每周人工复核材料。
+5. 记录 owner 对 rule proposal 的结构化 decision，但不自动改配置。
+
+## 4. 阶段拆解
+
+|原始编号|名称|状态|验收重点|
+|---|---|---|---|
+|TRADING-174|Forward Confirmation Target Registry|VALIDATING|从 `confirmation_plan_id` 注册 targets；`target_id` 唯一；`auto_apply=false`；`owner_approval_required=true`。|
+|TRADING-175|Confirmation Progress Tracker|VALIDATING|聚合 limited-vs-notrade、consensus-risk 和 available outcome evidence；样本不足不得 READY。|
+|TRADING-176|Success / Failure Condition Evaluator|VALIDATING|只在 progress 达到要求后判断 SUCCESS/FAILURE；单指标 pass 不得判定 SUCCESS。|
+|TRADING-177|Rule Review Cycle Report|VALIDATING|汇总 registry/progress/evaluation；默认 `policy_change_allowed=false`；输出 Reader Brief section。|
+|TRADING-178|Owner Decision Integration|VALIDATING|创建和记录 owner decision journal；`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`。|
+
+## 5. 安全边界
+
+- 不修改 `config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml`。
+- 不修改 policy、official target weights、baseline/production state、paper/real portfolio。
+- 不生成 production candidate。
+- 不触发 broker API 或自动下单。
+- 不自动执行 owner approval。
+- SUCCESS 只表示可以进入人工 rule review，不表示自动修改规则。
+- `approve_manual_policy_review` 只表示允许人工配置 review，不表示自动应用配置。
+
+## 6. Artifact 计划
+
+新增 runtime artifact roots：
+
+```text
+reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/<registry_id>/
+reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/<progress_id>/
+reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/<evaluation_id>/
+reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/<cycle_id>/
+reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/
+```
+
+Registry 也会写入 reviewable YAML：
+
+```text
+registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml
+```
+
+## 7. CLI 计划
+
+```bash
+aits etf dynamic-v3-rescue confirmation-targets register --confirmation-plan-id 808e55a74ca6951f
+aits etf dynamic-v3-rescue confirmation-targets list
+aits etf dynamic-v3-rescue confirmation-targets report --latest
+aits etf dynamic-v3-rescue validate-confirmation-targets --registry-id <registry_id>
+
+aits etf dynamic-v3-rescue confirmation-progress update --registry-id <registry_id>
+aits etf dynamic-v3-rescue confirmation-progress report --latest
+aits etf dynamic-v3-rescue validate-confirmation-progress --progress-id <progress_id>
+
+aits etf dynamic-v3-rescue confirmation-evaluate run --progress-id <progress_id>
+aits etf dynamic-v3-rescue confirmation-evaluate report --latest
+aits etf dynamic-v3-rescue validate-confirmation-evaluate --evaluation-id <evaluation_id>
+
+aits etf dynamic-v3-rescue rule-review-cycle run --registry-id <registry_id> --progress-id <progress_id> --evaluation-id <evaluation_id>
+aits etf dynamic-v3-rescue rule-review-cycle report --latest
+aits etf dynamic-v3-rescue validate-rule-review-cycle --cycle-id <cycle_id>
+
+aits etf dynamic-v3-rescue rule-owner-decision create --cycle-id <cycle_id>
+aits etf dynamic-v3-rescue rule-owner-decision list
+aits etf dynamic-v3-rescue rule-owner-decision record --decision-id <decision_id> --decision continue_tracking
+aits etf dynamic-v3-rescue rule-owner-decision report --latest
+aits etf dynamic-v3-rescue validate-rule-owner-decision --decision-id <decision_id>
+```
+
+## 8. 验收标准
+
+- 五段 CLI run/report/list/validate 可运行。
+- Focused tests 覆盖 registry、progress、evaluation、rule review、owner decision。
+- Reports 用中文说明 market regime、actual date range/source artifact、data quality/status 限制和安全边界。
+- `policy_change_allowed=false` 为 rule review 默认值。
+- `auto_apply=false`、`broker_action_allowed=false`、`production_effect=none` 在所有相关 artifact 中可见。
+- `position_advisory_v1.yaml` 不被修改。
+- README、operations runbook、system flow、report registry、artifact catalog、Reader Brief 相关文档同步。
+
+## 9. 进展记录
+
+- 2026-06-10：新增需求文档和 task register 入口，状态为 IN_PROGRESS；记录附件原始编号与现有 `TRADING-174` 冲突，采用唯一汇总 ID 继续实现。
+- 2026-06-10：baseline 实现完成并转入 VALIDATING；真实链路从 confirmation plan `808e55a74ca6951f` 生成 registry `ad9f5724b143a76d`、progress `8e5c03f0284aab0b`、evaluation `bce0745ee33cea84`、rule review cycle `c80e7855c31eeee5` 和 owner decision `b4de77feff8cd189`。当前 progress 为 `ready_for_evaluation_count=0`、`insufficient_events_count=2`，evaluation 为 `success_count=0`、`failure_count=0`、`not_ready_count=3`，cycle recommendation 为 `continue_tracking`，owner decision 记录为 `continue_tracking`；缺少足够 forward samples 和 pressure-regime tagged outcomes 时保持 NOT_READY/INSUFFICIENT_EVENTS，不允许自动规则变更。验证通过五个新增 validate CLI、五个 report CLI、dynamic-v3 root validation、dynamic-v3 family artifact validation、report index、documentation contract、Reader Brief latest、Reader Brief quality、focused pytest 6 passed、ruff、compileall、git diff check 和全量 pytest 2320 passed / 640 warnings / 14:31。

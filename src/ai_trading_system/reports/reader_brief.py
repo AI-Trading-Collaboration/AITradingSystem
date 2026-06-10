@@ -7,6 +7,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -2092,6 +2094,61 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "failure_conditions",
                         etf_dynamic_v3_sim_review.get("failure_conditions"),
                     ),
+                    (
+                        "confirmation_registry_id",
+                        etf_dynamic_v3_sim_review.get("confirmation_registry_id"),
+                    ),
+                    (
+                        "confirmation_progress_id",
+                        etf_dynamic_v3_sim_review.get("confirmation_progress_id"),
+                    ),
+                    (
+                        "confirmation_evaluation_id",
+                        etf_dynamic_v3_sim_review.get("confirmation_evaluation_id"),
+                    ),
+                    (
+                        "rule_review_cycle_id",
+                        etf_dynamic_v3_sim_review.get("rule_review_cycle_id"),
+                    ),
+                    (
+                        "rule_review_cycle_recommendation",
+                        etf_dynamic_v3_sim_review.get("rule_review_cycle_recommendation"),
+                    ),
+                    (
+                        "ready_for_evaluation_count",
+                        etf_dynamic_v3_sim_review.get(
+                            "confirmation_ready_for_evaluation_count"
+                        ),
+                    ),
+                    (
+                        "insufficient_events_count",
+                        etf_dynamic_v3_sim_review.get(
+                            "confirmation_insufficient_events_count"
+                        ),
+                    ),
+                    (
+                        "evaluation_counts",
+                        (
+                            "success="
+                            f"{etf_dynamic_v3_sim_review.get('confirmation_success_count')}; "
+                            "failure="
+                            f"{etf_dynamic_v3_sim_review.get('confirmation_failure_count')}; "
+                            "not_ready="
+                            f"{etf_dynamic_v3_sim_review.get('confirmation_not_ready_count')}"
+                        ),
+                    ),
+                    (
+                        "rule_review_policy_change_allowed",
+                        etf_dynamic_v3_sim_review.get("rule_review_policy_change_allowed"),
+                    ),
+                    (
+                        "rule_owner_decision_id",
+                        etf_dynamic_v3_sim_review.get("rule_owner_decision_id"),
+                    ),
+                    (
+                        "rule_owner_decision",
+                        etf_dynamic_v3_sim_review.get("rule_owner_decision"),
+                    ),
                     ("auto_apply", etf_dynamic_v3_sim_review.get("auto_apply")),
                     (
                         "owner_approval_required",
@@ -2132,6 +2189,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "forward_confirmation_plan_path",
                         etf_dynamic_v3_sim_review.get("forward_confirmation_plan_path"),
+                    ),
+                    (
+                        "confirmation_registry_path",
+                        etf_dynamic_v3_sim_review.get("confirmation_registry_path"),
+                    ),
+                    (
+                        "confirmation_progress_path",
+                        etf_dynamic_v3_sim_review.get("confirmation_progress_path"),
+                    ),
+                    (
+                        "confirmation_evaluation_path",
+                        etf_dynamic_v3_sim_review.get("confirmation_evaluation_path"),
+                    ),
+                    (
+                        "rule_review_cycle_path",
+                        etf_dynamic_v3_sim_review.get("rule_review_cycle_path"),
+                    ),
+                    (
+                        "rule_owner_decision_path",
+                        etf_dynamic_v3_sim_review.get("rule_owner_decision_path"),
                     ),
                 ]
             ),
@@ -5894,6 +5971,27 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         _report_index_artifact_path(report_index, "etf_dynamic_v3_forward_confirmation_plan"),
         "confirmation_plan_manifest.json",
     )
+    confirmation_registry_path = _dynamic_v3_confirmation_registry_manifest_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_confirmation_registry"),
+    )
+    confirmation_progress_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_confirmation_progress"),
+        "confirmation_progress_manifest.json",
+    )
+    confirmation_evaluation_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_confirmation_evaluation"),
+        "confirmation_evaluation_manifest.json",
+    )
+    rule_review_cycle_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_rule_review_cycle"),
+        "rule_review_cycle_manifest.json",
+    )
+    rule_owner_decision_path = _dynamic_v3_rule_owner_decision_journal_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_rule_owner_decision",
+        )
+    )
     interpretation = _read_optional_json(interpretation_path)
     interpretation_matrix = _read_optional_json(
         interpretation_path.parent / "variant_interpretation_matrix.json"
@@ -5939,6 +6037,27 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         if confirmation_plan_path is not None
         else None
     )
+    confirmation_registry = _read_optional_json(confirmation_registry_path)
+    confirmation_progress = _read_optional_json(confirmation_progress_path)
+    progress_summary = _read_optional_json(
+        confirmation_progress_path.parent / "target_progress_summary.json"
+        if confirmation_progress_path is not None
+        else None
+    )
+    confirmation_evaluation = _read_optional_json(confirmation_evaluation_path)
+    evaluation_summary = _read_optional_json(
+        confirmation_evaluation_path.parent / "confirmation_evaluation_summary.json"
+        if confirmation_evaluation_path is not None
+        else None
+    )
+    rule_review_cycle = _read_optional_json(rule_review_cycle_path)
+    rule_review_matrix = _read_optional_json(
+        rule_review_cycle_path.parent / "rule_review_decision_matrix.json"
+        if rule_review_cycle_path is not None
+        else None
+    )
+    owner_decisions = _read_optional_jsonl(rule_owner_decision_path)
+    latest_owner_decision = owner_decisions[-1] if owner_decisions else {}
     source_payloads = tuple(
         _mapping(payload)
         for payload in (
@@ -5955,6 +6074,14 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             confirmation_targets,
             trigger_conditions,
             failure_conditions,
+            confirmation_registry,
+            confirmation_progress,
+            progress_summary,
+            confirmation_evaluation,
+            evaluation_summary,
+            rule_review_cycle,
+            rule_review_matrix,
+            latest_owner_decision,
         )
     )
     if not any(source_payloads):
@@ -6050,6 +6177,8 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             f"{_text(_mapping(proposal_review).get('proposal_review_id'), 'MISSING')}; "
             "confirmation_plan="
             f"{_text(_mapping(confirmation_plan).get('confirmation_plan_id'), 'MISSING')}; "
+            "rule_review_cycle="
+            f"{_text(_mapping(rule_review_cycle).get('cycle_id'), 'MISSING')}; "
             f"defensive_status={defensive_status}; auto_apply={auto_apply}; "
             "production_effect=none."
         ),
@@ -6082,6 +6211,46 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "confirmation_targets": target_ids or "MISSING",
         "calibration_ready_conditions": ready_conditions or "MISSING",
         "failure_conditions": failure_condition_list or "MISSING",
+        "confirmation_registry_id": _text(
+            _mapping(confirmation_registry).get("registry_id"),
+            "MISSING",
+        ),
+        "confirmation_progress_id": _text(
+            _mapping(confirmation_progress).get("progress_id"),
+            "MISSING",
+        ),
+        "confirmation_evaluation_id": _text(
+            _mapping(confirmation_evaluation).get("evaluation_id"),
+            "MISSING",
+        ),
+        "rule_review_cycle_id": _text(
+            _mapping(rule_review_cycle).get("cycle_id"),
+            "MISSING",
+        ),
+        "rule_review_cycle_recommendation": _text(
+            _mapping(rule_review_cycle).get("cycle_recommendation"),
+            "MISSING",
+        ),
+        "confirmation_ready_for_evaluation_count": _int(
+            _mapping(progress_summary).get("ready_for_evaluation_count")
+        ),
+        "confirmation_insufficient_events_count": _int(
+            _mapping(progress_summary).get("insufficient_events_count")
+        ),
+        "confirmation_success_count": _int(_mapping(evaluation_summary).get("success_count")),
+        "confirmation_failure_count": _int(_mapping(evaluation_summary).get("failure_count")),
+        "confirmation_not_ready_count": _int(_mapping(evaluation_summary).get("not_ready_count")),
+        "rule_review_policy_change_allowed": (
+            _mapping(rule_review_matrix).get("policy_change_allowed") is True
+        ),
+        "rule_owner_decision_id": _text(
+            _mapping(latest_owner_decision).get("decision_id"),
+            "MISSING",
+        ),
+        "rule_owner_decision": _text(
+            _mapping(latest_owner_decision).get("owner_decision"),
+            "MISSING",
+        ),
         "auto_apply": auto_apply,
         "owner_approval_required": owner_approval_required,
         "position_advisory_config_mutated": position_advisory_config_mutated,
@@ -6102,8 +6271,18 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "sim_defensive_validation_path": _text(defensive_validation_path),
         "advisory_proposal_review_path": _text(proposal_review_path),
         "forward_confirmation_plan_path": _text(confirmation_plan_path),
+        "confirmation_registry_path": _text(confirmation_registry_path),
+        "confirmation_progress_path": _text(confirmation_progress_path),
+        "confirmation_evaluation_path": _text(confirmation_evaluation_path),
+        "rule_review_cycle_path": _text(rule_review_cycle_path),
+        "rule_owner_decision_path": _text(rule_owner_decision_path),
         "detail_report": _text(
-            confirmation_plan_path or proposal_review_path or interpretation_path
+            rule_review_cycle_path
+            or confirmation_evaluation_path
+            or confirmation_progress_path
+            or confirmation_plan_path
+            or proposal_review_path
+            or interpretation_path
         ),
     }
 
@@ -6133,6 +6312,19 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "confirmation_targets": "MISSING",
         "calibration_ready_conditions": "MISSING",
         "failure_conditions": "MISSING",
+        "confirmation_registry_id": "MISSING",
+        "confirmation_progress_id": "MISSING",
+        "confirmation_evaluation_id": "MISSING",
+        "rule_review_cycle_id": "MISSING",
+        "rule_review_cycle_recommendation": "MISSING",
+        "confirmation_ready_for_evaluation_count": 0,
+        "confirmation_insufficient_events_count": 0,
+        "confirmation_success_count": 0,
+        "confirmation_failure_count": 0,
+        "confirmation_not_ready_count": 0,
+        "rule_review_policy_change_allowed": False,
+        "rule_owner_decision_id": "MISSING",
+        "rule_owner_decision": "MISSING",
         "auto_apply": False,
         "owner_approval_required": True,
         "position_advisory_config_mutated": False,
@@ -6148,6 +6340,11 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "sim_defensive_validation_path": "",
         "advisory_proposal_review_path": "",
         "forward_confirmation_plan_path": "",
+        "confirmation_registry_path": "",
+        "confirmation_progress_path": "",
+        "confirmation_evaluation_path": "",
+        "rule_review_cycle_path": "",
+        "rule_owner_decision_path": "",
         "detail_report": "",
         "limitation": (
             "Reader Brief does not run simulation interpretation or proposal review CLIs; "
@@ -8320,6 +8517,51 @@ def _dynamic_v3_sibling_artifact_path(path: Path | None, artifact_name: str) -> 
     if sibling.exists():
         return sibling
     return path
+
+
+def _dynamic_v3_confirmation_registry_manifest_path(path: Path | None) -> Path | None:
+    sibling = _dynamic_v3_sibling_artifact_path(path, "confirmation_registry_manifest.json")
+    if sibling is None:
+        return None
+    if sibling.name == "confirmation_registry_manifest.json":
+        return sibling
+    if path is None or path.suffix.lower() not in {".yaml", ".yml"}:
+        return None
+    registry_id = _text(_read_optional_yaml_mapping(path).get("registry_id"))
+    if not registry_id:
+        return None
+    for root in _dynamic_v3_confirmation_registry_search_roots(path):
+        for relative in (
+            Path("reports")
+            / "etf_portfolio"
+            / "dynamic_v3_rescue"
+            / "forward_confirmation_registry",
+            Path("forward_confirmation_registry"),
+        ):
+            candidate = root / relative / registry_id / "confirmation_registry_manifest.json"
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def _dynamic_v3_confirmation_registry_search_roots(path: Path) -> tuple[Path, ...]:
+    roots = [PROJECT_ROOT]
+    if path.parent.name == "registry":
+        roots.append(path.parent.parent)
+    if path.parent.name == "etf_portfolio" and path.parent.parent.name == "registry":
+        roots.append(path.parent.parent.parent)
+    return tuple(dict.fromkeys(roots))
+
+
+def _dynamic_v3_rule_owner_decision_journal_path(path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    if path.name == "rule_owner_decision_journal.jsonl":
+        return path
+    sibling = path.parent / "rule_owner_decision_journal.jsonl"
+    if sibling.exists():
+        return sibling
+    return path if path.suffix.lower() == ".jsonl" else None
 
 
 def _research_decision_recommendation_path(path: Path | None) -> Path | None:
@@ -12679,6 +12921,29 @@ def _read_optional_json(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
         return {}
     raw = json.loads(path.read_text(encoding="utf-8"))
+    return raw if isinstance(raw, dict) else {}
+
+
+def _read_optional_jsonl(path: Path | None) -> list[dict[str, Any]]:
+    if path is None or not path.exists():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        raw = json.loads(line)
+        if isinstance(raw, dict):
+            rows.append(raw)
+    return rows
+
+
+def _read_optional_yaml_mapping(path: Path | None) -> dict[str, Any]:
+    if path is None or not path.exists():
+        return {}
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return {}
     return raw if isinstance(raw, dict) else {}
 
 

@@ -933,6 +933,24 @@ drawdown 和 turnover 代价拆开；defensive validation 明确
 `BACKTEST_SIMULATION_NOT_PIT`、`production_effect=none`、no broker、no production、no
 official target weight mutation、no `position_advisory_v1.yaml` mutation 和 no policy auto
 apply。
+TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE 把上述 static
+`forward_confirmation_plan` 升级为持续执行闭环。CLI 包括
+`confirmation-targets register/list/report`、`confirmation-progress update/report`、
+`confirmation-evaluate run/report`、`rule-review-cycle run/report` 和
+`rule-owner-decision create/list/record/report`；验证入口为
+`validate-confirmation-targets`、`validate-confirmation-progress`、
+`validate-confirmation-evaluate`、`validate-rule-review-cycle` 和
+`validate-rule-owner-decision`。Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry|confirmation_progress|confirmation_evaluation|rule_review_cycle|rule_owner_decision/`，
+并同步生成 reviewable
+`registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml`。Progress
+tracker 会读取 latest `limited-vs-notrade` 和 `consensus-risk` evidence；缺少样本、窗口或
+pressure-regime 标签时必须保持 `INSUFFICIENT_EVENTS` / `NOT_READY`，不得伪造
+READY。Rule review cycle 默认 `policy_change_allowed=false`；owner decision journal
+只记录人工决策，`approve_manual_policy_review` 也不自动修改配置。该闭环继续固定
+`auto_apply=false`、`broker_action_allowed=false`、`production_effect=none`，不触发 broker、
+不进入 production、不修改 `position_advisory_v1.yaml`、policy、official target weights、
+portfolio 或 baseline state。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

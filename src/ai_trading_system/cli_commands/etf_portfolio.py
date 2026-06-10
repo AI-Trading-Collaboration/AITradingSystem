@@ -297,6 +297,32 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     validate_sim_interpretation_artifact,
     validate_sim_risk_return_artifact,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_confirmation_cycle import (
+    DEFAULT_CONFIRMATION_EVALUATION_DIR,
+    DEFAULT_CONFIRMATION_PROGRESS_DIR,
+    DEFAULT_CONFIRMATION_REGISTRY_DIR,
+    DEFAULT_CONFIRMATION_REGISTRY_YAML_PATH,
+    DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
+    DEFAULT_RULE_REVIEW_CYCLE_DIR,
+    confirmation_evaluation_report_payload,
+    confirmation_progress_report_payload,
+    confirmation_targets_report_payload,
+    create_rule_owner_decision,
+    list_confirmation_targets,
+    list_rule_owner_decisions,
+    record_rule_owner_decision,
+    register_confirmation_targets,
+    rule_owner_decision_report_payload,
+    rule_review_cycle_report_payload,
+    run_confirmation_evaluation,
+    run_rule_review_cycle,
+    update_confirmation_progress,
+    validate_confirmation_evaluation_artifact,
+    validate_confirmation_progress_artifact,
+    validate_confirmation_targets_artifact,
+    validate_rule_owner_decision_artifact,
+    validate_rule_review_cycle_artifact,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     DEFAULT_DYNAMIC_V3_FAILURE_ATTRIBUTION_POLICY_CONFIG_PATH,
     DEFAULT_DYNAMIC_V3_FAILURE_ATTRIBUTION_REPORT_DIR,
@@ -1298,6 +1324,26 @@ dynamic_v3_forward_confirmation_plan_app = typer.Typer(
     help="Dynamic v3 forward confirmation plan update。",
     no_args_is_help=True,
 )
+dynamic_v3_confirmation_targets_app = typer.Typer(
+    help="Dynamic v3 forward confirmation target registry。",
+    no_args_is_help=True,
+)
+dynamic_v3_confirmation_progress_app = typer.Typer(
+    help="Dynamic v3 confirmation target progress tracking。",
+    no_args_is_help=True,
+)
+dynamic_v3_confirmation_evaluate_app = typer.Typer(
+    help="Dynamic v3 confirmation success/failure evaluation。",
+    no_args_is_help=True,
+)
+dynamic_v3_rule_review_cycle_app = typer.Typer(
+    help="Dynamic v3 rule review cycle report。",
+    no_args_is_help=True,
+)
+dynamic_v3_rule_owner_decision_app = typer.Typer(
+    help="Dynamic v3 rule owner decision journal。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1440,6 +1486,20 @@ dynamic_v3_rescue_app.add_typer(
     dynamic_v3_forward_confirmation_plan_app,
     name="forward-confirmation-plan",
 )
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_confirmation_targets_app,
+    name="confirmation-targets",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_confirmation_progress_app,
+    name="confirmation-progress",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_confirmation_evaluate_app,
+    name="confirmation-evaluate",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_rule_review_cycle_app, name="rule-review-cycle")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_rule_owner_decision_app, name="rule-owner-decision")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
@@ -11108,6 +11168,571 @@ def dynamic_v3_validate_forward_confirmation_plan_command(
     )
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_confirmation_targets_app.command("register")
+def dynamic_v3_confirmation_targets_register_command(
+    confirmation_plan_id: Annotated[
+        str,
+        typer.Option(
+            "--confirmation-plan-id",
+            "--confirmation_plan_id",
+            help="forward confirmation plan id。",
+        ),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation registry artifact root。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+    confirmation_plan_dir: Annotated[
+        Path,
+        typer.Option("--confirmation-plan-dir", help="forward confirmation plan root。"),
+    ] = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+    registry_yaml_path: Annotated[
+        Path,
+        typer.Option("--registry-yaml-path", help="reviewable registry YAML path。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_YAML_PATH,
+) -> None:
+    """注册 TRADING-174 forward confirmation targets。"""
+    result = register_confirmation_targets(
+        confirmation_plan_id=confirmation_plan_id,
+        confirmation_plan_dir=confirmation_plan_dir,
+        output_dir=output_dir,
+        registry_yaml_path=registry_yaml_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"registry_id={result['registry_id']}")
+    typer.echo(f"registry_dir={result['registry_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"target_count={manifest['targets_total']}")
+    typer.echo(f"active_target_count={manifest['active_target_count']}")
+    typer.echo(f"watch_only_target_count={manifest['watch_only_target_count']}")
+    typer.echo("auto_apply=false")
+    typer.echo("owner_approval_required=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_confirmation_targets_app.command("list")
+def dynamic_v3_confirmation_targets_list_command(
+    registry_id: Annotated[
+        str | None,
+        typer.Option("--registry-id", "--registry_id", help="registry id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest registry。"),
+    ] = True,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation registry artifact root。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+) -> None:
+    """列出 TRADING-174 confirmation targets。"""
+    payload = list_confirmation_targets(
+        registry_id=registry_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"registry_id={payload['registry_id']}")
+    typer.echo(f"target_count={payload['targets_total']}")
+    typer.echo(f"active_target_count={payload['active_target_count']}")
+    typer.echo(f"watch_only_target_count={payload['watch_only_target_count']}")
+    for target in payload["targets"]:
+        typer.echo(
+            "target="
+            + json.dumps(
+                {
+                    "target_id": target.get("target_id"),
+                    "status": target.get("status"),
+                    "current_status": target.get("current_status"),
+                    "auto_apply": target.get("auto_apply"),
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_confirmation_targets_app.command("report")
+def dynamic_v3_confirmation_targets_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest registry。"),
+    ] = False,
+    registry_id: Annotated[
+        str | None,
+        typer.Option("--registry-id", "--registry_id", help="registry id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation registry artifact root。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+) -> None:
+    """展示 TRADING-174 confirmation target registry 摘要。"""
+    payload = confirmation_targets_report_payload(
+        registry_id=registry_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"registry_id={payload['registry_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"target_count={payload['targets_total']}")
+    typer.echo(f"active_target_count={payload['active_target_count']}")
+    typer.echo(f"watch_only_target_count={payload['watch_only_target_count']}")
+    typer.echo(f"report_path={payload['confirmation_targets_report_path']}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-confirmation-targets")
+def dynamic_v3_validate_confirmation_targets_command(
+    registry_id: Annotated[
+        str,
+        typer.Option("--registry-id", "--registry_id", help="registry id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation registry artifact root。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+) -> None:
+    """校验 TRADING-174 confirmation target registry artifact。"""
+    payload = validate_confirmation_targets_artifact(registry_id=registry_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_confirmation_progress_app.command("update")
+def dynamic_v3_confirmation_progress_update_command(
+    registry_id: Annotated[
+        str,
+        typer.Option("--registry-id", "--registry_id", help="registry id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation progress artifact root。"),
+    ] = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+    registry_dir: Annotated[
+        Path,
+        typer.Option("--registry-dir", help="confirmation registry artifact root。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+    limited_vs_notrade_dir: Annotated[
+        Path,
+        typer.Option("--limited-vs-notrade-dir", help="limited-vs-notrade artifact root。"),
+    ] = DEFAULT_LIMITED_VS_NOTRADE_DIR,
+    consensus_risk_dir: Annotated[
+        Path,
+        typer.Option("--consensus-risk-dir", help="consensus-risk artifact root。"),
+    ] = DEFAULT_CONSENSUS_RISK_DIR,
+) -> None:
+    """更新 TRADING-175 confirmation target progress。"""
+    result = update_confirmation_progress(
+        registry_id=registry_id,
+        registry_dir=registry_dir,
+        output_dir=output_dir,
+        limited_vs_notrade_dir=limited_vs_notrade_dir,
+        consensus_risk_dir=consensus_risk_dir,
+    )
+    summary = result["target_progress_summary"]
+    typer.echo(f"progress_id={result['progress_id']}")
+    typer.echo(f"progress_dir={result['progress_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"ready_for_evaluation_count={summary['ready_for_evaluation_count']}")
+    typer.echo(f"insufficient_events_count={summary['insufficient_events_count']}")
+    typer.echo(f"summary_recommendation={summary['summary_recommendation']}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_confirmation_progress_app.command("report")
+def dynamic_v3_confirmation_progress_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest progress。"),
+    ] = False,
+    progress_id: Annotated[
+        str | None,
+        typer.Option("--progress-id", "--progress_id", help="progress id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation progress artifact root。"),
+    ] = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+) -> None:
+    """展示 TRADING-175 confirmation progress 摘要。"""
+    payload = confirmation_progress_report_payload(
+        progress_id=progress_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["target_progress_summary"]
+    typer.echo(f"progress_id={payload['progress_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"ready_for_evaluation_count={summary['ready_for_evaluation_count']}")
+    typer.echo(f"insufficient_events_count={summary['insufficient_events_count']}")
+    typer.echo(f"report_path={payload['confirmation_progress_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-confirmation-progress")
+def dynamic_v3_validate_confirmation_progress_command(
+    progress_id: Annotated[
+        str,
+        typer.Option("--progress-id", "--progress_id", help="progress id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation progress artifact root。"),
+    ] = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+) -> None:
+    """校验 TRADING-175 confirmation progress artifact。"""
+    payload = validate_confirmation_progress_artifact(
+        progress_id=progress_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_confirmation_evaluate_app.command("run")
+def dynamic_v3_confirmation_evaluate_run_command(
+    progress_id: Annotated[
+        str,
+        typer.Option("--progress-id", "--progress_id", help="progress id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation evaluation artifact root。"),
+    ] = DEFAULT_CONFIRMATION_EVALUATION_DIR,
+    progress_dir: Annotated[
+        Path,
+        typer.Option("--progress-dir", help="confirmation progress artifact root。"),
+    ] = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+) -> None:
+    """运行 TRADING-176 success/failure condition evaluation。"""
+    result = run_confirmation_evaluation(
+        progress_id=progress_id,
+        progress_dir=progress_dir,
+        output_dir=output_dir,
+    )
+    summary = result["confirmation_evaluation_summary"]
+    typer.echo(f"evaluation_id={result['evaluation_id']}")
+    typer.echo(f"evaluation_dir={result['evaluation_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"success_count={summary['success_count']}")
+    typer.echo(f"failure_count={summary['failure_count']}")
+    typer.echo(f"not_ready_count={summary['not_ready_count']}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_confirmation_evaluate_app.command("report")
+def dynamic_v3_confirmation_evaluate_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest evaluation。"),
+    ] = False,
+    evaluation_id: Annotated[
+        str | None,
+        typer.Option("--evaluation-id", "--evaluation_id", help="evaluation id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation evaluation artifact root。"),
+    ] = DEFAULT_CONFIRMATION_EVALUATION_DIR,
+) -> None:
+    """展示 TRADING-176 confirmation evaluation 摘要。"""
+    payload = confirmation_evaluation_report_payload(
+        evaluation_id=evaluation_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["confirmation_evaluation_summary"]
+    typer.echo(f"evaluation_id={payload['evaluation_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"success_count={summary['success_count']}")
+    typer.echo(f"failure_count={summary['failure_count']}")
+    typer.echo(f"not_ready_count={summary['not_ready_count']}")
+    typer.echo(f"report_path={payload['confirmation_evaluation_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-confirmation-evaluate")
+def dynamic_v3_validate_confirmation_evaluate_command(
+    evaluation_id: Annotated[
+        str,
+        typer.Option("--evaluation-id", "--evaluation_id", help="evaluation id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="confirmation evaluation artifact root。"),
+    ] = DEFAULT_CONFIRMATION_EVALUATION_DIR,
+) -> None:
+    """校验 TRADING-176 confirmation evaluation artifact。"""
+    payload = validate_confirmation_evaluation_artifact(
+        evaluation_id=evaluation_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_rule_review_cycle_app.command("run")
+def dynamic_v3_rule_review_cycle_run_command(
+    registry_id: Annotated[
+        str,
+        typer.Option("--registry-id", "--registry_id", help="registry id。"),
+    ],
+    progress_id: Annotated[
+        str,
+        typer.Option("--progress-id", "--progress_id", help="progress id。"),
+    ],
+    evaluation_id: Annotated[
+        str,
+        typer.Option("--evaluation-id", "--evaluation_id", help="evaluation id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="rule review cycle artifact root。"),
+    ] = DEFAULT_RULE_REVIEW_CYCLE_DIR,
+    registry_dir: Annotated[
+        Path,
+        typer.Option("--registry-dir", help="confirmation registry artifact root。"),
+    ] = DEFAULT_CONFIRMATION_REGISTRY_DIR,
+    progress_dir: Annotated[
+        Path,
+        typer.Option("--progress-dir", help="confirmation progress artifact root。"),
+    ] = DEFAULT_CONFIRMATION_PROGRESS_DIR,
+    evaluation_dir: Annotated[
+        Path,
+        typer.Option("--evaluation-dir", help="confirmation evaluation artifact root。"),
+    ] = DEFAULT_CONFIRMATION_EVALUATION_DIR,
+) -> None:
+    """生成 TRADING-177 rule review cycle report。"""
+    result = run_rule_review_cycle(
+        registry_id=registry_id,
+        progress_id=progress_id,
+        evaluation_id=evaluation_id,
+        registry_dir=registry_dir,
+        progress_dir=progress_dir,
+        evaluation_dir=evaluation_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"cycle_id={result['cycle_id']}")
+    typer.echo(f"cycle_dir={result['cycle_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"cycle_recommendation={manifest['cycle_recommendation']}")
+    typer.echo(f"targets_requiring_owner_action={manifest['targets_requiring_owner_action']}")
+    typer.echo("policy_change_allowed=false")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rule_review_cycle_app.command("report")
+def dynamic_v3_rule_review_cycle_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest rule review cycle。"),
+    ] = False,
+    cycle_id: Annotated[
+        str | None,
+        typer.Option("--cycle-id", "--cycle_id", help="cycle id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="rule review cycle artifact root。"),
+    ] = DEFAULT_RULE_REVIEW_CYCLE_DIR,
+) -> None:
+    """展示 TRADING-177 rule review cycle 摘要。"""
+    payload = rule_review_cycle_report_payload(
+        cycle_id=cycle_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"cycle_id={payload['cycle_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"cycle_recommendation={payload['cycle_recommendation']}")
+    typer.echo(f"targets_requiring_owner_action={payload['targets_requiring_owner_action']}")
+    typer.echo(f"report_path={payload['rule_review_cycle_report_path']}")
+    typer.echo("policy_change_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-rule-review-cycle")
+def dynamic_v3_validate_rule_review_cycle_command(
+    cycle_id: Annotated[
+        str,
+        typer.Option("--cycle-id", "--cycle_id", help="cycle id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="rule review cycle artifact root。"),
+    ] = DEFAULT_RULE_REVIEW_CYCLE_DIR,
+) -> None:
+    """校验 TRADING-177 rule review cycle artifact。"""
+    payload = validate_rule_review_cycle_artifact(cycle_id=cycle_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("policy_change_allowed=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_rule_owner_decision_app.command("create")
+def dynamic_v3_rule_owner_decision_create_command(
+    cycle_id: Annotated[
+        str,
+        typer.Option("--cycle-id", "--cycle_id", help="cycle id。"),
+    ],
+    cycle_dir: Annotated[
+        Path,
+        typer.Option("--cycle-dir", help="rule review cycle artifact root。"),
+    ] = DEFAULT_RULE_REVIEW_CYCLE_DIR,
+    journal_path: Annotated[
+        Path,
+        typer.Option("--journal-path", help="owner decision journal JSONL path。"),
+    ] = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
+) -> None:
+    """创建 TRADING-178 pending owner decision record。"""
+    result = create_rule_owner_decision(
+        cycle_id=cycle_id,
+        cycle_dir=cycle_dir,
+        journal_path=journal_path,
+    )
+    record = result["record"]
+    typer.echo(f"decision_id={result['decision_id']}")
+    typer.echo(f"journal_path={result['journal_path']}")
+    typer.echo(f"owner_decision={record['owner_decision']}")
+    typer.echo("auto_apply=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rule_owner_decision_app.command("list")
+def dynamic_v3_rule_owner_decision_list_command(
+    journal_path: Annotated[
+        Path,
+        typer.Option("--journal-path", help="owner decision journal JSONL path。"),
+    ] = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
+) -> None:
+    """列出 TRADING-178 owner decision journal。"""
+    payload = list_rule_owner_decisions(journal_path=journal_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"decision_count={payload['decision_count']}")
+    typer.echo(f"pending_count={payload['pending_count']}")
+    for record in payload["records"]:
+        typer.echo(
+            "decision="
+            + json.dumps(
+                {
+                    "decision_id": record.get("decision_id"),
+                    "cycle_id": record.get("cycle_id"),
+                    "owner_decision": record.get("owner_decision"),
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rule_owner_decision_app.command("record")
+def dynamic_v3_rule_owner_decision_record_command(
+    decision_id: Annotated[
+        str,
+        typer.Option("--decision-id", "--decision_id", help="decision id。"),
+    ],
+    decision: Annotated[
+        str,
+        typer.Option("--decision", help="owner decision value。"),
+    ],
+    notes: Annotated[str, typer.Option("--notes", help="owner decision note。")] = "",
+    journal_path: Annotated[
+        Path,
+        typer.Option("--journal-path", help="owner decision journal JSONL path。"),
+    ] = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
+) -> None:
+    """记录 TRADING-178 owner decision。"""
+    result = record_rule_owner_decision(
+        decision_id=decision_id,
+        decision=cast(Any, decision),
+        notes=notes,
+        journal_path=journal_path,
+    )
+    record = result["record"]
+    typer.echo(f"decision_id={result['decision_id']}")
+    typer.echo(f"owner_decision={record['owner_decision']}")
+    typer.echo("auto_apply=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rule_owner_decision_app.command("report")
+def dynamic_v3_rule_owner_decision_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest owner decision。"),
+    ] = False,
+    decision_id: Annotated[
+        str | None,
+        typer.Option("--decision-id", "--decision_id", help="decision id。"),
+    ] = None,
+    journal_path: Annotated[
+        Path,
+        typer.Option("--journal-path", help="owner decision journal JSONL path。"),
+    ] = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
+) -> None:
+    """展示 TRADING-178 owner decision 摘要。"""
+    payload = rule_owner_decision_report_payload(
+        decision_id=decision_id,
+        latest=latest,
+        journal_path=journal_path,
+    )
+    record = payload["record"]
+    typer.echo(f"decision_id={payload['decision_id']}")
+    typer.echo(f"owner_decision={payload['owner_decision']}")
+    typer.echo(f"target_count={len(record.get('target_ids') or [])}")
+    typer.echo(f"report_path={payload['rule_owner_decision_report_path']}")
+    typer.echo("auto_apply=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-rule-owner-decision")
+def dynamic_v3_validate_rule_owner_decision_command(
+    decision_id: Annotated[
+        str,
+        typer.Option("--decision-id", "--decision_id", help="decision id。"),
+    ],
+    journal_path: Annotated[
+        Path,
+        typer.Option("--journal-path", help="owner decision journal JSONL path。"),
+    ] = DEFAULT_RULE_OWNER_DECISION_JOURNAL_PATH,
+) -> None:
+    """校验 TRADING-178 owner decision journal record。"""
+    payload = validate_rule_owner_decision_artifact(
+        decision_id=decision_id,
+        journal_path=journal_path,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("auto_apply=false")
+    typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)

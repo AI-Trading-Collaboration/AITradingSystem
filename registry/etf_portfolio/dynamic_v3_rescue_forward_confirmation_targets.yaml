@@ -1,0 +1,72 @@
+schema_version: 1
+source_confirmation_plan_id: 808e55a74ca6951f
+created_at: '2026-06-10T14:59:12.360785+00:00'
+status: active
+targets:
+- target_id: limited_adjustment_vs_no_trade
+  status: active
+  priority: HIGH
+  source: backtest_sim_forward_confirmation_plan
+  windows:
+  - 1
+  - 5
+  - 10
+  - 20
+  success_criteria:
+    avg_relative_return_min: 0.0
+    drawdown_delta_max: 0.0
+    win_rate_vs_no_trade_min: 0.55
+  failure_conditions:
+    underperforms_no_trade:
+      action: tighten_or_disable_limited_adjustment_proposal
+  current_status: in_progress
+  owner_approval_required: true
+  auto_apply: false
+  broker_action_allowed: false
+  production_effect: none
+  required_forward_events: 10
+- target_id: defensive_limited_adjustment_drawdown
+  status: active
+  priority: HIGH
+  source: backtest_sim_forward_confirmation_plan
+  windows:
+  - 5
+  - 10
+  - 20
+  success_criteria:
+    drawdown_delta_vs_no_trade_max: 0.0
+    win_rate_vs_no_trade_min: 0.5
+  failure_conditions:
+    fails_to_reduce_drawdown_in_pressure_regime:
+      action: rename_or_remove_defensive_label
+  current_status: in_progress
+  owner_approval_required: true
+  auto_apply: false
+  broker_action_allowed: false
+  production_effect: none
+  required_pressure_regime_events: 10
+- target_id: consensus_target_risk
+  status: watch_only
+  priority: MEDIUM
+  source: backtest_sim_forward_confirmation_plan
+  windows:
+  - 5
+  - 10
+  - 20
+  success_criteria:
+    drawdown_delta_vs_limited_adjustment_max: 0.0
+    turnover_delta_max: 0.0
+  failure_conditions:
+    excess_drawdown_persists:
+      action: keep_consensus_target_as_reference_only
+  current_status: watch_only
+  owner_approval_required: true
+  auto_apply: false
+  broker_action_allowed: false
+  production_effect: none
+  required_forward_events: 10
+production_effect: none
+broker_action_allowed: false
+auto_apply: false
+owner_approval_required: true
+registry_id: ad9f5724b143a76d

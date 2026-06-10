@@ -2954,6 +2954,113 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_confirmation_registry
+    title: ETF Dynamic v3 Confirmation Registry
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue confirmation-targets report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/confirmation_registry_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/registered_targets.yaml
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_registry/*/confirmation_targets_report.md
+      - registry/etf_portfolio/dynamic_v3_rescue_forward_confirmation_targets.yaml
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-174_to_178 converts the static forward confirmation plan into
+      auditable target tracking state while preserving auto_apply=false and
+      production_effect=none.
+    owner_action: review_registered_confirmation_targets_before_progress_tracking
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_confirmation_progress
+    title: ETF Dynamic v3 Confirmation Progress
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue confirmation-progress report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/confirmation_progress_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/target_progress.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/target_progress_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_progress/*/confirmation_progress_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-174_to_178 tracks forward sample availability, missing windows, and
+      pressure-regime blockers before any success or failure conclusion is allowed.
+    owner_action: review_confirmation_progress_blockers_before_evaluation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_confirmation_evaluation
+    title: ETF Dynamic v3 Confirmation Evaluation
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue confirmation-evaluate report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/target_evaluations.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/confirmation_evaluation/*/confirmation_evaluation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-174_to_178 evaluates target status only after progress readiness and
+      keeps insufficient samples as NOT_READY rather than treating weak evidence as
+      policy approval.
+    owner_action: review_confirmation_success_failure_matrix_before_rule_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_rule_review_cycle
+    title: ETF Dynamic v3 Rule Review Cycle
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue rule-review-cycle report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_cycle_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/rule_review_cycle_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_review_cycle/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-174_to_178 summarizes confirmation evidence for manual governance
+      review while keeping policy_change_allowed=false until the owner explicitly
+      decides otherwise outside this automated cycle.
+    owner_action: review_rule_review_cycle_before_any_manual_policy_change_request
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_rule_owner_decision
+    title: ETF Dynamic v3 Rule Owner Decision
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: project_owner
+    command: aits etf dynamic-v3-rescue rule-owner-decision report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/rule_owner_decision_journal.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/rule_owner_decision/rule_owner_decision_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-174_to_178 records manual owner decisions for the rule review cycle
+      without mutating position advisory config, targets, portfolios, policy, or
+      broker state.
+    owner_action: record_owner_decision_after_rule_review_cycle_manual_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
