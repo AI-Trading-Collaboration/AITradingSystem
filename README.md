@@ -877,6 +877,24 @@ Reader Brief section；`evidence-trend` 在历史不足时固定 `INSUFFICIENT_H
 `Dynamic Rescue Forward Outcome Decision` 区块。该阶段继续固定 no broker、no production、
 no owner auto approval、no official target weight mutation、no real portfolio mutation、
 no baseline mutation 和 no policy auto apply。
+TRADING-161 到 TRADING-168 新增 `backtest-sim` historical simulation advisory evaluation。
+配置入口为
+`config/etf_portfolio/dynamic_v3_rescue/backtest_simulation_advisory_v1.yaml`，
+CLI 包括 `backtest-sim config-validate`、`event-generate/report`、
+`variants-generate/report`、`outcome-run/report`、`paper-run/report`、
+`regime-review/report`、`sensitivity-run/report`、`calibration-pack/report` 和
+`forward-bridge/report`，验证入口为 `validate-backtest-sim-events`、
+`validate-backtest-sim-variants`、`validate-backtest-sim-outcome`、
+`validate-backtest-sim-paper`、`validate-backtest-sim-regime`、
+`validate-backtest-sim-sensitivity`、`validate-backtest-sim-calibration` 和
+`validate-backtest-sim-forward-bridge`。Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_events|backtest_sim_variants|backtest_sim_outcome|backtest_sim_paper|backtest_sim_regime|backtest_sim_sensitivity|backtest_sim_calibration|backtest_sim_forward_bridge/`。
+所有输出固定 `outcome_mode=BACKTEST_SIMULATION`、
+`pit_safety_status=SIMULATION_NOT_PIT`、`not_for_production=true`、
+`broker_action_allowed=false`、`broker_action_taken=false`、`auto_policy_apply=false` 和
+`production_effect=none`。该链路评估 current shadow shortlist/manual advisory 规则，
+不是 PIT replay，不是 production evidence；calibration pack 只生成 owner review
+proposal，forward bridge 只生成 confirmation targets 和 Reader Brief section。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

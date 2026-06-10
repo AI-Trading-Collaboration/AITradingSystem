@@ -241,6 +241,42 @@ from ai_trading_system.etf_portfolio.dynamic_v2_review import (
     write_dynamic_v2_review_package,
     write_dynamic_v2_review_validation_report,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
+    DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+    DEFAULT_BACKTEST_SIM_CONFIG_PATH,
+    DEFAULT_BACKTEST_SIM_EVENT_DIR,
+    DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+    DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    DEFAULT_BACKTEST_SIM_PAPER_DIR,
+    DEFAULT_BACKTEST_SIM_REGIME_DIR,
+    DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
+    DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+    backtest_sim_calibration_report_payload,
+    backtest_sim_event_report_payload,
+    backtest_sim_forward_bridge_report_payload,
+    backtest_sim_outcome_report_payload,
+    backtest_sim_paper_report_payload,
+    backtest_sim_regime_report_payload,
+    backtest_sim_sensitivity_report_payload,
+    backtest_sim_variant_report_payload,
+    generate_backtest_sim_events,
+    generate_backtest_sim_variants,
+    run_backtest_sim_calibration_pack,
+    run_backtest_sim_forward_bridge,
+    run_backtest_sim_outcome,
+    run_backtest_sim_paper,
+    run_backtest_sim_regime_review,
+    run_backtest_sim_sensitivity,
+    validate_backtest_sim_calibration_artifact,
+    validate_backtest_sim_events_artifact,
+    validate_backtest_sim_forward_bridge_artifact,
+    validate_backtest_sim_outcome_artifact,
+    validate_backtest_sim_paper_artifact,
+    validate_backtest_sim_regime_artifact,
+    validate_backtest_sim_sensitivity_artifact,
+    validate_backtest_sim_variants_artifact,
+    validate_backtest_simulation_config,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     DEFAULT_DYNAMIC_V3_FAILURE_ATTRIBUTION_POLICY_CONFIG_PATH,
     DEFAULT_DYNAMIC_V3_FAILURE_ATTRIBUTION_REPORT_DIR,
@@ -1218,6 +1254,10 @@ dynamic_v3_forward_outcome_decision_app = typer.Typer(
     help="Dynamic v3 rescue weekly forward outcome decision workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_backtest_sim_app = typer.Typer(
+    help="Dynamic v3 rescue backtest simulation advisory workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1345,6 +1385,7 @@ dynamic_v3_rescue_app.add_typer(
     dynamic_v3_forward_outcome_decision_app,
     name="forward-outcome-decision",
 )
+dynamic_v3_rescue_app.add_typer(dynamic_v3_backtest_sim_app, name="backtest-sim")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
@@ -9794,6 +9835,739 @@ def dynamic_v3_validate_forward_outcome_decision_command(
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_effect=none")
     typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("config-validate")
+def dynamic_v3_backtest_sim_config_validate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="backtest simulation config。"),
+    ] = DEFAULT_BACKTEST_SIM_CONFIG_PATH,
+) -> None:
+    """校验 TRADING-161 backtest simulation config。"""
+    payload = validate_backtest_simulation_config(config_path=config_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("outcome_mode=BACKTEST_SIMULATION")
+    typer.echo("pit_safety_status=SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("event-generate")
+def dynamic_v3_backtest_sim_event_generate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="backtest simulation config。"),
+    ] = DEFAULT_BACKTEST_SIM_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """生成 TRADING-161 simulated advisory events。"""
+    result = generate_backtest_sim_events(config_path=config_path, output_dir=output_dir)
+    manifest = result["manifest"]
+    typer.echo(f"event_set_id={result['event_set_id']}")
+    typer.echo(f"event_dir={result['event_set_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"event_count={manifest['event_count']}")
+    typer.echo(f"ready_count={manifest['ready_count']}")
+    typer.echo(f"insufficient_data_count={manifest['insufficient_data_count']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo("outcome_mode=BACKTEST_SIMULATION")
+    typer.echo("pit_safety_status=SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("event-report")
+def dynamic_v3_backtest_sim_event_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim events。"),
+    ] = False,
+    event_set_id: Annotated[
+        str | None,
+        typer.Option("--event-set-id", help="event set id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """展示 TRADING-161 event generation 摘要。"""
+    payload = backtest_sim_event_report_payload(
+        event_set_id=event_set_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"event_set_id={payload['event_set_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"event_count={payload['event_count']}")
+    typer.echo(f"ready_count={payload['ready_count']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"report_path={payload['event_generation_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-events")
+def dynamic_v3_validate_backtest_sim_events_command(
+    event_set_id: Annotated[str, typer.Option("--event-set-id", help="event set id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """校验 TRADING-161 backtest simulation event artifact。"""
+    payload = validate_backtest_sim_events_artifact(
+        event_set_id=event_set_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("outcome_mode=BACKTEST_SIMULATION")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("variants-generate")
+def dynamic_v3_backtest_sim_variants_generate_command(
+    event_set_id: Annotated[str, typer.Option("--event-set-id", help="event set id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation variant artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+    event_dir: Annotated[
+        Path,
+        typer.Option("--event-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """生成 TRADING-162 simulated advisory variants。"""
+    result = generate_backtest_sim_variants(
+        event_set_id=event_set_id,
+        output_dir=output_dir,
+        event_dir=event_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"variant_set_id={result['variant_set_id']}")
+    typer.echo(f"variant_dir={result['variant_set_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"variant_row_count={len(result['variant_rows'])}")
+    typer.echo(f"ready_count={manifest['ready_count']}")
+    typer.echo(f"skipped_count={manifest['skipped_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("variants-report")
+def dynamic_v3_backtest_sim_variants_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim variants。"),
+    ] = False,
+    variant_set_id: Annotated[
+        str | None,
+        typer.Option("--variant-set-id", help="variant set id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation variant artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+) -> None:
+    """展示 TRADING-162 variant 摘要。"""
+    payload = backtest_sim_variant_report_payload(
+        variant_set_id=variant_set_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"variant_set_id={payload['variant_set_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant_row_count={len(payload['simulated_variant_weights'])}")
+    typer.echo(f"ready_count={payload['ready_count']}")
+    typer.echo(f"report_path={payload['variant_generation_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-variants")
+def dynamic_v3_validate_backtest_sim_variants_command(
+    variant_set_id: Annotated[
+        str,
+        typer.Option("--variant-set-id", help="variant set id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation variant artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+) -> None:
+    """校验 TRADING-162 backtest simulation variants artifact。"""
+    payload = validate_backtest_sim_variants_artifact(
+        variant_set_id=variant_set_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("outcome-run")
+def dynamic_v3_backtest_sim_outcome_run_command(
+    variant_set_id: Annotated[
+        str,
+        typer.Option("--variant-set-id", help="variant set id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    variant_dir: Annotated[
+        Path,
+        typer.Option("--variant-dir", help="backtest simulation variant artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+    event_dir: Annotated[
+        Path,
+        typer.Option("--event-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """运行 TRADING-163 simulated outcome windows。"""
+    result = run_backtest_sim_outcome(
+        variant_set_id=variant_set_id,
+        output_dir=output_dir,
+        variant_dir=variant_dir,
+        event_dir=event_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"sim_outcome_id={result['sim_outcome_id']}")
+    typer.echo(f"outcome_dir={result['sim_outcome_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"available_count={manifest['available_count']}")
+    typer.echo(f"pending_count={manifest['pending_count']}")
+    typer.echo(f"best_variant={manifest['best_variant']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("outcome-report")
+def dynamic_v3_backtest_sim_outcome_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim outcome。"),
+    ] = False,
+    sim_outcome_id: Annotated[
+        str | None,
+        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+) -> None:
+    """展示 TRADING-163 outcome 摘要。"""
+    payload = backtest_sim_outcome_report_payload(
+        sim_outcome_id=sim_outcome_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"sim_outcome_id={payload['sim_outcome_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"available_count={payload['available_count']}")
+    typer.echo(f"pending_count={payload['pending_count']}")
+    typer.echo(f"best_variant={payload['best_variant']}")
+    typer.echo(f"report_path={payload['backtest_sim_outcome_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-outcome")
+def dynamic_v3_validate_backtest_sim_outcome_command(
+    sim_outcome_id: Annotated[
+        str,
+        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+) -> None:
+    """校验 TRADING-163 backtest simulation outcome artifact。"""
+    payload = validate_backtest_sim_outcome_artifact(
+        sim_outcome_id=sim_outcome_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("paper-run")
+def dynamic_v3_backtest_sim_paper_run_command(
+    variant_set_id: Annotated[
+        str,
+        typer.Option("--variant-set-id", help="variant set id。"),
+    ],
+    variant: Annotated[
+        str,
+        typer.Option("--variant", help="paper simulation variant。"),
+    ] = "limited_adjustment",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation paper artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_PAPER_DIR,
+    variant_dir: Annotated[
+        Path,
+        typer.Option("--variant-dir", help="backtest simulation variant artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+    event_dir: Annotated[
+        Path,
+        typer.Option("--event-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """运行 TRADING-164 historical paper portfolio v2。"""
+    result = run_backtest_sim_paper(
+        variant_set_id=variant_set_id,
+        variant=variant,
+        output_dir=output_dir,
+        variant_dir=variant_dir,
+        event_dir=event_dir,
+    )
+    manifest = result["manifest"]
+    summary = result["performance_summary"]
+    typer.echo(f"sim_paper_id={result['sim_paper_id']}")
+    typer.echo(f"paper_dir={result['sim_paper_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"variant={summary['variant']}")
+    typer.echo(f"total_return={summary['total_return']}")
+    typer.echo(f"max_drawdown={summary['max_drawdown']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("paper-report")
+def dynamic_v3_backtest_sim_paper_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim paper。"),
+    ] = False,
+    sim_paper_id: Annotated[
+        str | None,
+        typer.Option("--sim-paper-id", help="simulation paper id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation paper artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_PAPER_DIR,
+) -> None:
+    """展示 TRADING-164 paper portfolio v2 摘要。"""
+    payload = backtest_sim_paper_report_payload(
+        sim_paper_id=sim_paper_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["sim_paper_performance_summary"]
+    typer.echo(f"sim_paper_id={payload['sim_paper_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant={summary['variant']}")
+    typer.echo(f"total_return={summary['total_return']}")
+    typer.echo(f"max_drawdown={summary['max_drawdown']}")
+    typer.echo(f"report_path={payload['backtest_sim_paper_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-paper")
+def dynamic_v3_validate_backtest_sim_paper_command(
+    sim_paper_id: Annotated[str, typer.Option("--sim-paper-id", help="simulation paper id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation paper artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_PAPER_DIR,
+) -> None:
+    """校验 TRADING-164 backtest simulation paper artifact。"""
+    payload = validate_backtest_sim_paper_artifact(
+        sim_paper_id=sim_paper_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("regime-review")
+def dynamic_v3_backtest_sim_regime_review_command(
+    sim_outcome_id: Annotated[
+        str,
+        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation regime artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+) -> None:
+    """运行 TRADING-165 regime-specific simulation review。"""
+    result = run_backtest_sim_regime_review(
+        sim_outcome_id=sim_outcome_id,
+        output_dir=output_dir,
+        outcome_dir=outcome_dir,
+    )
+    manifest = result["manifest"]
+    inventory = result["regime_window_inventory"]
+    regime_count = len(_mapping_obj(inventory.get("regime_counts")))
+    typer.echo(f"regime_review_id={result['regime_review_id']}")
+    typer.echo(f"regime_dir={result['regime_review_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"regime_count={regime_count}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("regime-report")
+def dynamic_v3_backtest_sim_regime_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim regime。"),
+    ] = False,
+    regime_review_id: Annotated[
+        str | None,
+        typer.Option("--regime-review-id", help="regime review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation regime artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
+) -> None:
+    """展示 TRADING-165 regime review 摘要。"""
+    payload = backtest_sim_regime_report_payload(
+        regime_review_id=regime_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    inventory = payload["regime_window_inventory"]
+    regime_count = len(_mapping_obj(inventory.get("regime_counts")))
+    typer.echo(f"regime_review_id={payload['regime_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"regime_count={regime_count}")
+    typer.echo(f"report_path={payload['backtest_sim_regime_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-regime")
+def dynamic_v3_validate_backtest_sim_regime_command(
+    regime_review_id: Annotated[
+        str,
+        typer.Option("--regime-review-id", help="regime review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation regime artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
+) -> None:
+    """校验 TRADING-165 backtest simulation regime artifact。"""
+    payload = validate_backtest_sim_regime_artifact(
+        regime_review_id=regime_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("sensitivity-run")
+def dynamic_v3_backtest_sim_sensitivity_run_command(
+    sim_outcome_id: Annotated[
+        str,
+        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation sensitivity artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    variant_dir: Annotated[
+        Path,
+        typer.Option("--variant-dir", help="backtest simulation variant artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+    event_dir: Annotated[
+        Path,
+        typer.Option("--event-dir", help="backtest simulation event artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_EVENT_DIR,
+) -> None:
+    """运行 TRADING-166 sensitivity and overfit diagnostics。"""
+    result = run_backtest_sim_sensitivity(
+        sim_outcome_id=sim_outcome_id,
+        output_dir=output_dir,
+        outcome_dir=outcome_dir,
+        variant_dir=variant_dir,
+        event_dir=event_dir,
+    )
+    manifest = result["manifest"]
+    warnings = result["overfit_warning_summary"]
+    typer.echo(f"sensitivity_id={result['sensitivity_id']}")
+    typer.echo(f"sensitivity_dir={result['sensitivity_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"simulation_overfit_status={warnings['simulation_overfit_status']}")
+    typer.echo(f"strong_calibration_allowed={warnings['strong_calibration_allowed']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("sensitivity-report")
+def dynamic_v3_backtest_sim_sensitivity_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim sensitivity。"),
+    ] = False,
+    sensitivity_id: Annotated[
+        str | None,
+        typer.Option("--sensitivity-id", help="sensitivity id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation sensitivity artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
+) -> None:
+    """展示 TRADING-166 sensitivity 摘要。"""
+    payload = backtest_sim_sensitivity_report_payload(
+        sensitivity_id=sensitivity_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    warnings = payload["overfit_warning_summary"]
+    typer.echo(f"sensitivity_id={payload['sensitivity_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"simulation_overfit_status={warnings['simulation_overfit_status']}")
+    typer.echo(f"strong_calibration_allowed={warnings['strong_calibration_allowed']}")
+    typer.echo(f"report_path={payload['backtest_sim_sensitivity_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-sensitivity")
+def dynamic_v3_validate_backtest_sim_sensitivity_command(
+    sensitivity_id: Annotated[str, typer.Option("--sensitivity-id", help="sensitivity id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation sensitivity artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
+) -> None:
+    """校验 TRADING-166 backtest simulation sensitivity artifact。"""
+    payload = validate_backtest_sim_sensitivity_artifact(
+        sensitivity_id=sensitivity_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("calibration-pack")
+def dynamic_v3_backtest_sim_calibration_pack_command(
+    sim_outcome_id: Annotated[
+        str,
+        typer.Option("--sim-outcome-id", help="simulation outcome id。"),
+    ],
+    sim_paper_id: Annotated[str, typer.Option("--sim-paper-id", help="simulation paper id。")],
+    regime_review_id: Annotated[
+        str,
+        typer.Option("--regime-review-id", help="regime review id。"),
+    ],
+    sensitivity_id: Annotated[str, typer.Option("--sensitivity-id", help="sensitivity id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation calibration artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    paper_dir: Annotated[
+        Path,
+        typer.Option("--paper-dir", help="backtest simulation paper artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_PAPER_DIR,
+    regime_dir: Annotated[
+        Path,
+        typer.Option("--regime-dir", help="backtest simulation regime artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_REGIME_DIR,
+    sensitivity_dir: Annotated[
+        Path,
+        typer.Option("--sensitivity-dir", help="backtest simulation sensitivity artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
+) -> None:
+    """生成 TRADING-167 simulation calibration pack。"""
+    result = run_backtest_sim_calibration_pack(
+        sim_outcome_id=sim_outcome_id,
+        sim_paper_id=sim_paper_id,
+        regime_review_id=regime_review_id,
+        sensitivity_id=sensitivity_id,
+        output_dir=output_dir,
+        outcome_dir=outcome_dir,
+        paper_dir=paper_dir,
+        regime_dir=regime_dir,
+        sensitivity_dir=sensitivity_dir,
+    )
+    manifest = result["manifest"]
+    evidence = result["simulation_evidence_summary"]
+    typer.echo(f"calibration_pack_id={result['calibration_pack_id']}")
+    typer.echo(f"calibration_dir={result['calibration_pack_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"calibration_readiness={evidence['calibration_readiness']}")
+    typer.echo(f"auto_apply={manifest['auto_apply']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("calibration-report")
+def dynamic_v3_backtest_sim_calibration_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim calibration。"),
+    ] = False,
+    calibration_pack_id: Annotated[
+        str | None,
+        typer.Option("--calibration-pack-id", help="calibration pack id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation calibration artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+) -> None:
+    """展示 TRADING-167 calibration pack 摘要。"""
+    payload = backtest_sim_calibration_report_payload(
+        calibration_pack_id=calibration_pack_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    evidence = payload["simulation_evidence_summary"]
+    typer.echo(f"calibration_pack_id={payload['calibration_pack_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"calibration_readiness={evidence['calibration_readiness']}")
+    typer.echo(f"auto_apply={payload['auto_apply']}")
+    typer.echo(f"report_path={payload['backtest_sim_calibration_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-calibration")
+def dynamic_v3_validate_backtest_sim_calibration_command(
+    calibration_pack_id: Annotated[
+        str,
+        typer.Option("--calibration-pack-id", help="calibration pack id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation calibration artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+) -> None:
+    """校验 TRADING-167 backtest simulation calibration artifact。"""
+    payload = validate_backtest_sim_calibration_artifact(
+        calibration_pack_id=calibration_pack_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_backtest_sim_app.command("forward-bridge")
+def dynamic_v3_backtest_sim_forward_bridge_command(
+    calibration_pack_id: Annotated[
+        str,
+        typer.Option("--calibration-pack-id", help="calibration pack id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation bridge artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+    calibration_dir: Annotated[
+        Path,
+        typer.Option("--calibration-dir", help="backtest simulation calibration root。"),
+    ] = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+) -> None:
+    """生成 TRADING-168 simulation-to-forward bridge。"""
+    result = run_backtest_sim_forward_bridge(
+        calibration_pack_id=calibration_pack_id,
+        output_dir=output_dir,
+        calibration_dir=calibration_dir,
+    )
+    manifest = result["manifest"]
+    targets = result["forward_confirmation_targets"]
+    typer.echo(f"bridge_id={result['bridge_id']}")
+    typer.echo(f"bridge_dir={result['bridge_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"next_action={manifest['next_action']}")
+    typer.echo(f"target_count={len(targets['targets'])}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_backtest_sim_app.command("forward-bridge-report")
+def dynamic_v3_backtest_sim_forward_bridge_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest backtest sim bridge。"),
+    ] = False,
+    bridge_id: Annotated[str | None, typer.Option("--bridge-id", help="bridge id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation bridge artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+) -> None:
+    """展示 TRADING-168 forward bridge 摘要。"""
+    payload = backtest_sim_forward_bridge_report_payload(
+        bridge_id=bridge_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    targets = payload["forward_confirmation_targets"]
+    typer.echo(f"bridge_id={payload['bridge_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"next_action={payload['next_action']}")
+    typer.echo(f"target_count={len(targets['targets'])}")
+    typer.echo(f"report_path={payload['sim_forward_bridge_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-backtest-sim-forward-bridge")
+def dynamic_v3_validate_backtest_sim_forward_bridge_command(
+    bridge_id: Annotated[str, typer.Option("--bridge-id", help="bridge id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="backtest simulation bridge artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+) -> None:
+    """校验 TRADING-168 backtest simulation forward bridge artifact。"""
+    payload = validate_backtest_sim_forward_bridge_artifact(
+        bridge_id=bridge_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 

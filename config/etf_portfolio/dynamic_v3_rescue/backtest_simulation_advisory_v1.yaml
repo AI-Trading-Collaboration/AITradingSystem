@@ -1,0 +1,117 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_backtest_simulation_advisory_v1
+  owner: project_owner
+  version: 2026-06-10
+  status: pilot_baseline
+  rationale: >
+    Evaluate current Dynamic v3 rescue advisory rules over the AI-after-ChatGPT
+    historical window as BACKTEST_SIMULATION evidence while keeping the result
+    separate from PIT historical replay and forward outcomes.
+  intended_effect: >
+    Produce non-production simulated advisory events, variants, outcomes, paper
+    portfolio curves, regime reviews, sensitivity diagnostics, calibration
+    proposals, and forward confirmation targets for manual research review.
+  validation_evidence: >
+    Focused tests cover config validation, event/variant/outcome/paper/regime/
+    sensitivity/calibration/bridge artifacts and safety flags.
+  review_condition: >
+    Review after enough FORWARD_OUTCOME windows mature or before any change to
+    position_advisory_v1.yaml is proposed for owner approval.
+
+simulation:
+  name: dynamic_v3_rescue_advisory_backtest_simulation_v1
+  market_regime: ai_after_chatgpt
+  regime_anchor_event: ChatGPT public launch
+  regime_anchor_date: "2022-11-30"
+  outcome_mode: BACKTEST_SIMULATION
+  pit_safety_status: SIMULATION_NOT_PIT
+  not_for_production: true
+
+date_range:
+  start: "2022-12-01"
+  end: "2026-06-08"
+  event_frequency: weekly
+  event_day: MON
+  min_history_days_before_event: 60
+
+source:
+  shadow_shortlist_id: "4378b3ed3fc1be41"
+  position_advisory_config: config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml
+  price_source: existing_price_cache
+  price_cache_path: data/raw/prices_daily.csv
+  rates_cache_path: data/raw/rates_daily.csv
+  use_adjusted_close: true
+
+portfolio:
+  baseline_snapshot:
+    QQQ: 0.50
+    SMH: 0.20
+    TLT: 0.10
+    CASH: 0.20
+  rebalance_mode: simulated
+  cash_symbol: CASH
+  defensive_symbols: [CASH, TLT, SGOV]
+  semiconductor_symbols: [SMH, SOXX]
+
+variants:
+  enabled:
+    - no_trade
+    - consensus_target
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+
+outcome_windows:
+  trading_days: [1, 5, 10, 20]
+
+limits:
+  max_single_event_total_adjustment: 0.10
+  max_single_symbol_adjustment: 0.05
+  min_trade_threshold: 0.01
+
+consensus_policy:
+  high_consensus_max_symbol_dispersion: 0.08
+  low_disagreement_max_average_dispersion: 0.04
+
+regime_policy:
+  ai_trend_qqq_60d_return_min: 0.08
+  ai_trend_smh_minus_qqq_60d_min: -0.02
+  tech_drawdown_qqq_20d_return_max: -0.05
+  tech_drawdown_qqq_60d_return_max: -0.08
+  semiconductor_pullback_smh_20d_return_max: -0.05
+  semiconductor_pullback_smh_minus_qqq_20d_max: -0.02
+  risk_off_qqq_20d_return_max: -0.03
+  risk_off_spy_20d_return_max: -0.03
+  strong_recovery_qqq_20d_return_min: 0.05
+  strong_recovery_smh_20d_return_min: 0.05
+  sideways_choppy_qqq_60d_abs_return_max: 0.04
+
+sensitivity_policy:
+  event_frequency_profiles: [weekly, biweekly, monthly]
+  adjustment_limit_grid: [0.05, 0.10, 0.15]
+  shortlist_top_n_grid: [1, 2, 5]
+  consensus_dispersion_thresholds:
+    low: 0.04
+    default: 0.08
+    high: 0.12
+  min_available_windows_for_low_risk: 20
+  max_regime_return_concentration_low_risk: 0.70
+  max_parameter_result_spread_low_risk: 0.02
+  high_risk_regime_return_concentration: 0.85
+  high_risk_parameter_result_spread: 0.05
+
+forward_confirmation:
+  required_forward_events: 10
+  win_rate_vs_no_trade_min: 0.55
+  min_relative_return: 0.0
+  avg_drawdown_delta_max: 0.0
+  windows: [1, 5, 10, 20]
+
+safety:
+  broker_action_allowed: false
+  broker_action_taken: false
+  auto_policy_apply: false
+  production_effect: none
+  require_report_label: BACKTEST_SIMULATION_NOT_PIT

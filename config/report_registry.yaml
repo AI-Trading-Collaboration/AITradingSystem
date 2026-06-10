@@ -2666,6 +2666,185 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_events
+    title: ETF Dynamic v3 Backtest Simulation Events
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim event-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_events/*/backtest_sim_event_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_events/*/simulated_advisory_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_events/*/simulation_input_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_events/*/event_generation_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_events/*/validate_data_quality_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-161 simulation events should be refreshed after shadow shortlist,
+      advisory rules, date range, or cached-data provenance changes.
+    owner_action: review_simulation_event_status_before_variant_or_outcome_interpretation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_variants
+    title: ETF Dynamic v3 Backtest Simulation Variants
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim variants-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_set_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/simulated_variant_weights.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_action_ledger.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_variants/*/variant_generation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-162 variants record no_trade, consensus, limited, defensive, and
+      equal-weight shadow candidate simulation paths without broker action.
+    owner_action: review_variant_weights_before_simulated_outcome_or_calibration
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_outcome
+    title: ETF Dynamic v3 Backtest Simulation Outcome
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim outcome-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/sim_outcome_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/simulated_outcome_windows.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/simulated_variant_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/backtest_sim_outcome_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_outcome/*/validate_data_quality_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-163 simulated outcome windows disclose AVAILABLE/PENDING/
+      INSUFFICIENT_DATA counts and data quality status before simulation
+      conclusions are interpreted.
+    owner_action: review_simulated_outcome_status_and_data_quality_before_calibration
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_paper
+    title: ETF Dynamic v3 Backtest Simulation Paper Portfolio
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim paper-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_paper_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_paper_state_history.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_trade_ledger.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/sim_paper_performance_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_paper/*/backtest_sim_paper_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-164 reconstructs historical paper-only state and trade ledger for
+      the selected simulation variant without real portfolio mutation.
+    owner_action: review_sim_paper_performance_before_any_forward_confirmation_plan
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_regime
+    title: ETF Dynamic v3 Backtest Simulation Regime Review
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim regime-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/sim_regime_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/regime_window_inventory.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/variant_regime_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/regime_review_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_regime/*/backtest_sim_regime_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-165 regime review checks whether simulated performance is
+      concentrated in narrow AI-cycle market states before calibration review.
+    owner_action: review_regime_concentration_before_interpreting_simulation_strength
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_sensitivity
+    title: ETF Dynamic v3 Backtest Simulation Sensitivity
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim sensitivity-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/sim_sensitivity_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/threshold_sensitivity.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/shortlist_sensitivity.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/adjustment_limit_sensitivity.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/event_frequency_sensitivity.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/overfit_warning_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_sensitivity/*/backtest_sim_sensitivity_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-166 sensitivity and overfit diagnostics must be reviewed before
+      any simulation calibration proposal is treated as credible.
+    owner_action: review_overfit_and_parameter_sensitivity_before_calibration
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_calibration
+    title: ETF Dynamic v3 Backtest Simulation Calibration Pack
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim calibration-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/sim_calibration_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/simulation_evidence_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/proposed_advisory_rule_changes.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/simulation_limitations.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/backtest_sim_calibration_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_calibration/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-167 calibration pack is owner-review-only and must remain visible
+      with auto_apply=false and production_effect=none.
+    owner_action: review_simulation_calibration_pack_before_any_manual_policy_edit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_backtest_sim_forward_bridge
+    title: ETF Dynamic v3 Backtest Simulation Forward Bridge
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue backtest-sim forward-bridge-report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/sim_forward_bridge_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/forward_confirmation_targets.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/weekly_review_questions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/sim_forward_bridge_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/backtest_sim_forward_bridge/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-168 bridge turns simulation findings into forward confirmation
+      targets and weekly review questions without production effects.
+    owner_action: review_forward_confirmation_targets_before_next_weekly_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
