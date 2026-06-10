@@ -9,6 +9,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+DEFAULT_WORKERS = "8"
+DEFAULT_DIST = "loadfile"
+SERIAL_WORKER_VALUES = {"", "0", "1", "serial", "none"}
+
 
 @dataclass(frozen=True)
 class TierSpec:
@@ -78,12 +82,21 @@ def _discover_matching_tests(repo_root: Path, match_terms: Sequence[str]) -> lis
     return discovered
 
 
+def _pytest_parallel_args(workers: str, dist: str) -> list[str]:
+    normalized_workers = workers.strip().lower()
+    if normalized_workers in SERIAL_WORKER_VALUES:
+        return []
+    return ["-n", workers.strip(), "--dist", dist.strip()]
+
+
 def build_command(
     tier: str,
     *,
     python_executable: str,
     repo_root: Path,
     extra_pytest_args: Sequence[str] = (),
+    workers: str = DEFAULT_WORKERS,
+    dist: str = DEFAULT_DIST,
 ) -> list[str]:
     spec = TIER_SPECS[tier]
     paths = list(spec.paths)
@@ -95,6 +108,7 @@ def build_command(
         python_executable,
         "-m",
         "pytest",
+        *_pytest_parallel_args(workers, dist),
         *paths,
         *spec.pytest_args,
         *extra_pytest_args,
@@ -122,7 +136,10 @@ def _write_report(path: Path, payload: dict[str, object]) -> None:
 
 
 def _list_tiers() -> str:
-    lines = ["Available validation tiers:"]
+    lines = [
+        f"Default pytest parallelism: -n {DEFAULT_WORKERS} --dist {DEFAULT_DIST}",
+        "Available validation tiers:",
+    ]
     for name in sorted(TIER_SPECS):
         lines.append(f"- {name}: {TIER_SPECS[name].description}")
     return "\n".join(lines)
@@ -155,6 +172,19 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=[],
         help="Extra pytest argument appended to the selected tier command. Use --pytest-arg=VALUE.",
     )
+    parser.add_argument(
+        "--workers",
+        default=DEFAULT_WORKERS,
+        help=(
+            "pytest-xdist worker count. Defaults to 8; pass 1, 0, serial, or none "
+            "for serial reproduction."
+        ),
+    )
+    parser.add_argument(
+        "--dist",
+        default=DEFAULT_DIST,
+        help="pytest-xdist distribution strategy used when workers > 1. Defaults to loadfile.",
+    )
     return parser.parse_args(argv)
 
 
@@ -173,15 +203,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         python_executable=args.python,
         repo_root=repo_root,
         extra_pytest_args=args.pytest_arg,
+        workers=args.workers,
+        dist=args.dist,
     )
     print(f"Validation tier: {args.tier}", flush=True)
     print(f"Coverage: {TIER_SPECS[args.tier].description}", flush=True)
+    print(f"Workers: {args.workers}", flush=True)
+    print(f"Distribution: {args.dist}", flush=True)
     print(f"Command: {_format_command(command)}", flush=True)
 
     if args.print_only:
         payload: dict[str, object] = {
             "tier": args.tier,
             "status": "PRINT_ONLY",
+            "workers": args.workers,
+            "dist": args.dist,
             "command": command,
         }
         if args.json_output:
@@ -190,7 +226,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     result = _run_command(command, cwd=repo_root)
     status = "PASS" if result["exit_code"] == 0 else "FAIL"
-    payload = {"tier": args.tier, "status": status, **result}
+    payload = {
+        "tier": args.tier,
+        "status": status,
+        "workers": args.workers,
+        "dist": args.dist,
+        **result,
+    }
     print(f"Status: {status}")
     print(f"Elapsed seconds: {result['elapsed_seconds']}")
     if args.json_output:

@@ -34,6 +34,8 @@
 2. 某些 integration / CLI / Reader Brief / Dynamic v3 / trading_engine tests 可能重复构建较重 fixtures。
 3. 本地 15 分钟工具超时低于 full suite 的稳定上界，导致验证结果不稳定。
 4. 建立 fast/domain/full tiers 比盲目延长 timeout 更能提升开发效率。
+5. 多核并行可降低 wall-clock 时间，但必须先验证共享 artifact、latest pointer、临时目录和
+   stdout/report 输出没有并发竞争。
 
 ## 5. 验收标准
 
@@ -44,6 +46,8 @@
 - full pytest 仍保留为完整 gate；若仍超时，记录明确慢点和下一步，不写成 PASS。
 - 更新 task register 和本文状态。
 - 通过 ruff、compileall、git diff check 和新增/修改工具测试。
+- 默认验证入口使用 8 worker 并行 pytest，并在命令/JSON summary 中披露 workers 和
+  distribution 策略；同时保留 `--workers 1` 串行复现入口。
 
 ## 6. 进展记录
 
@@ -99,10 +103,29 @@
   调查 `test_etf_dynamic_rescue.py`、Dynamic v3 failure/real report builders，以及
   trading_engine portfolio sensitivity / shadow-backtest reference 测试是否能复用已生成的
   diagnostics/summary artifacts，或拆分为 contract-only 与 full integration 两层。
+- 2026-06-10：owner 要求默认开八核并充分利用多核性能。第三阶段目标是把
+  `scripts/run_validation_tier.py` 默认调整为 `pytest-xdist` 8 worker 并行执行，使用
+  `--dist=loadfile` 降低同文件内共享 fixture / artifact 顺序风险，并保留
+  `--workers 1` 用于串行复现。若并行暴露 latest pointer、shared artifact、cache 或临时目录
+  竞争，必须修复隔离或记录明确策略，不能静默回退为串行并写成 PASS。
+- 2026-06-10：第三阶段完成默认并行入口：新增 `pytest-xdist` dev dependency，
+  `scripts/run_validation_tier.py` 默认输出/执行 `-n 8 --dist loadfile`，`--print-only`
+  和 JSON summary 均披露 `workers` / `dist`，并保留 `--workers 1` 串行复现。CI
+  test step 改为通过 `python scripts/run_validation_tier.py full` 执行完整 gate。
+  并行实测结果：
+  - runner tests：`python -m pytest tests/test_validation_tier_script.py -q` 为
+    3 passed。
+  - `python scripts/run_validation_tier.py fast` 为 37 passed，script elapsed 14.72 秒。
+  - `python scripts/run_validation_tier.py dynamic-v3` 为 47 passed，pytest runtime
+    55.38 秒，script elapsed 61.22 秒；相对串行 227.26 秒明显缩短。
+  - `python scripts/run_validation_tier.py full` 为 2314 passed、642 warnings，
+    pytest runtime 137.22 秒（约 2 分 17 秒），script elapsed 138.04 秒；未观察到
+    worker crash、latest pointer 竞争或 shared artifact 并发失败。
 
 ## 7. 当前使用规则
 
-本阶段不降低 full pytest gate，只改变日常反馈入口：
+本阶段不降低 full pytest gate，只改变日常反馈入口。默认命令使用 8 worker 并行
+pytest（`-n 8 --dist loadfile`），需要复现串行问题时显式加 `--workers 1`：
 
 - 普通 CLI wiring、report registry、documentation contract 改动：先跑
   `python scripts/run_validation_tier.py fast`。
@@ -113,7 +136,8 @@
 - paper trading engine、scheduler、portfolio tooling 改动：跑
   `python scripts/run_validation_tier.py trading-engine`。
 - 跨模块、P0 投资解释、data quality、scoring、backtest、broker safety 或交付前最终验证：
-  跑 `python scripts/run_validation_tier.py full`，本地命令 timeout 应按 25-30 分钟级设置。
+  跑 `python scripts/run_validation_tier.py full`；默认 8 worker 下本机 full gate 已进入
+  3 分钟内，若显式使用 `--workers 1` 串行复现，timeout 仍应按 25-30 分钟级设置。
 
 如果没有运行 full gate，交付说明必须明确已运行的 scoped tiers 和限制；如果 full gate
 被环境超时中断，不能写成 PASS，必须记录 timeout 时长、已完成进度和可见 slow-test 线索。

@@ -74,8 +74,9 @@ python -m pip install -e ".[dev,data,dashboard,brokers]"
 python -m pytest
 ```
 
-日常开发不要盲等 full pytest。先按改动范围运行分层验证，输出中会显示实际 pytest
-命令和慢测试耗时：
+日常开发不要盲等 full pytest。先按改动范围运行分层验证，默认使用 8 worker
+并行 pytest（`-n 8 --dist loadfile`），输出中会显示实际 pytest 命令、workers、
+distribution 和慢测试耗时：
 
 ```powershell
 python scripts/run_validation_tier.py --list
@@ -85,6 +86,8 @@ python scripts/run_validation_tier.py dynamic-v3
 python scripts/run_validation_tier.py trading-engine
 python scripts/run_validation_tier.py full
 ```
+
+需要复现串行行为时显式加 `--workers 1`；不要把并行失败静默改写成串行 PASS。
 
 `fast` 用于 CLI wiring、report registry 和 documentation contract 快速反馈；
 `dynamic-v3`、`reader-brief`、`trading-engine` 用于对应领域改动。涉及投资解释、

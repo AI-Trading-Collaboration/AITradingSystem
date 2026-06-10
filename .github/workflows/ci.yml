@@ -21,7 +21,7 @@ jobs:
         run: python -m ai_trading_system.cli docs validate-freshness
       - name: Test
         id: pytest
-        run: python -m pytest --durations=50 --durations-min=1 --junitxml=pytest-results.xml
+        run: python scripts/run_validation_tier.py full --pytest-arg=--junitxml=pytest-results.xml
       - name: Test failure annotations
         if: ${{ failure() && steps.pytest.conclusion == 'failure' }}
         run: |
