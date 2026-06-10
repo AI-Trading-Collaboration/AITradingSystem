@@ -74,6 +74,17 @@ DEFAULT_BACKTEST_SIM_CALIBRATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "backt
 DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "backtest_sim_forward_bridge"
 )
+DEFAULT_SIM_INTERPRETATION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_interpretation"
+DEFAULT_SIM_RISK_RETURN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_risk_return"
+DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sim_defensive_validation"
+)
+DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "advisory_proposal_review"
+)
+DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "forward_confirmation_plan"
+)
 
 OUTCOME_MODE_BACKTEST_SIMULATION = "BACKTEST_SIMULATION"
 PIT_SAFETY_SIMULATION = "SIMULATION_NOT_PIT"
@@ -96,6 +107,35 @@ REGIME_BUCKETS = {
     "risk_off",
     "strong_recovery",
     "unknown",
+}
+ACTIVE_SIM_VARIANTS = (
+    "limited_adjustment",
+    "consensus_target",
+    "defensive_limited_adjustment",
+)
+RISK_RETURN_STATUSES = {
+    "RETURN_IMPROVES_RISK_IMPROVES",
+    "RETURN_IMPROVES_RISK_WORSENS",
+    "RETURN_WORSE_RISK_IMPROVES",
+    "RETURN_WORSE_RISK_WORSE",
+    "INSUFFICIENT_DATA",
+}
+DEFENSIVE_PRESSURE_REGIMES = {"tech_drawdown", "risk_off", "semiconductor_pullback"}
+DEFENSIVE_VALIDATION_STATUSES = {
+    "PROVEN_DEFENSIVE",
+    "PARTIALLY_DEFENSIVE",
+    "NOT_PROVEN_DEFENSIVE",
+    "FAILS_DEFENSIVE_EXPECTATION",
+    "INSUFFICIENT_DATA",
+    "INSUFFICIENT_SAMPLE",
+}
+PROPOSAL_REVIEW_DECISIONS = {
+    "ACCEPT",
+    "ACCEPT_FOR_OBSERVATION",
+    "REJECT",
+    "DEFER",
+    "REQUIRES_MORE_DATA",
+    "OWNER_REVIEW_REQUIRED",
 }
 
 
@@ -1469,6 +1509,844 @@ def validate_backtest_sim_forward_bridge_artifact(
     )
 
 
+def run_sim_interpretation(
+    *,
+    outcome_id: str,
+    calibration_id: str,
+    bridge_id: str,
+    outcome_dir: Path = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    calibration_dir: Path = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+    bridge_dir: Path = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+    output_dir: Path = DEFAULT_SIM_INTERPRETATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    outcome_manifest = _read_json(outcome_dir / outcome_id / "sim_outcome_manifest.json")
+    outcome_summary = _read_json(outcome_dir / outcome_id / "simulated_variant_summary.json")
+    calibration_evidence = _read_json(
+        calibration_dir / calibration_id / "simulation_evidence_summary.json"
+    )
+    bridge_manifest = _read_json(bridge_dir / bridge_id / "sim_forward_bridge_manifest.json")
+    bridge_targets = _read_json(bridge_dir / bridge_id / "forward_confirmation_targets.json")
+    matrix = _variant_interpretation_matrix(outcome_summary)
+    findings = _sim_key_findings(
+        outcome_summary=outcome_summary,
+        calibration_evidence=calibration_evidence,
+        bridge_targets=bridge_targets,
+    )
+    interpretation_id = _stable_id(
+        "sim-interpretation",
+        outcome_id,
+        calibration_id,
+        bridge_id,
+        generated.isoformat(),
+    )
+    interpretation_dir = _unique_dir(output_dir / interpretation_id)
+    interpretation_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_interpretation_manifest",
+        "interpretation_id": interpretation_dir.name,
+        "outcome_id": outcome_id,
+        "calibration_id": calibration_id,
+        "bridge_id": bridge_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_best_variant": outcome_manifest.get("best_variant"),
+        "source_calibration_readiness": calibration_evidence.get("calibration_readiness"),
+        "source_bridge_next_action": bridge_manifest.get("next_action"),
+        "sim_interpretation_manifest_path": str(
+            interpretation_dir / "sim_interpretation_manifest.json"
+        ),
+        "variant_interpretation_matrix_path": str(
+            interpretation_dir / "variant_interpretation_matrix.json"
+        ),
+        "key_findings_path": str(interpretation_dir / "key_findings.json"),
+        "sim_interpretation_report_path": str(
+            interpretation_dir / "sim_interpretation_report.md"
+        ),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(interpretation_dir / "sim_interpretation_manifest.json", manifest)
+    _write_json(interpretation_dir / "variant_interpretation_matrix.json", matrix)
+    _write_json(interpretation_dir / "key_findings.json", findings)
+    _write_text(
+        interpretation_dir / "sim_interpretation_report.md",
+        render_sim_interpretation_report(manifest, matrix, findings),
+    )
+    _update_latest_pointer(
+        "latest_sim_interpretation",
+        interpretation_dir.name,
+        interpretation_dir / "sim_interpretation_manifest.json",
+    )
+    return {
+        "interpretation_id": interpretation_dir.name,
+        "interpretation_dir": interpretation_dir,
+        "manifest": manifest,
+        "variant_interpretation_matrix": matrix,
+        "key_findings": findings,
+    }
+
+
+def sim_interpretation_report_payload(
+    *,
+    interpretation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIM_INTERPRETATION_DIR,
+) -> dict[str, Any]:
+    interpretation_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=interpretation_id if not latest else None,
+        pointer_name="latest_sim_interpretation",
+    )
+    return {
+        **_read_json(interpretation_dir / "sim_interpretation_manifest.json"),
+        "variant_interpretation_matrix": _read_json(
+            interpretation_dir / "variant_interpretation_matrix.json"
+        ),
+        "key_findings": _read_json(interpretation_dir / "key_findings.json"),
+        "interpretation_dir": str(interpretation_dir),
+    }
+
+
+def validate_sim_interpretation_artifact(
+    *, interpretation_id: str, output_dir: Path = DEFAULT_SIM_INTERPRETATION_DIR
+) -> dict[str, Any]:
+    interpretation_dir = output_dir / interpretation_id
+    manifest = _read_optional_json(interpretation_dir / "sim_interpretation_manifest.json") or {}
+    matrix = _read_optional_json(interpretation_dir / "variant_interpretation_matrix.json") or {}
+    findings = _read_optional_json(interpretation_dir / "key_findings.json") or {}
+    variants = _records(matrix.get("variants"))
+    checks = [
+        _check(
+            "manifest_exists",
+            (interpretation_dir / "sim_interpretation_manifest.json").exists(),
+            "",
+        ),
+        _check(
+            "matrix_exists",
+            (interpretation_dir / "variant_interpretation_matrix.json").exists(),
+            "",
+        ),
+        _check("findings_exists", (interpretation_dir / "key_findings.json").exists(), ""),
+        _check(
+            "report_exists",
+            (interpretation_dir / "sim_interpretation_report.md").exists(),
+            "",
+        ),
+        _check(
+            "interpretation_id_matches",
+            manifest.get("interpretation_id") == interpretation_id,
+            "",
+        ),
+        _check(
+            "all_variants_interpreted",
+            {row.get("variant") for row in variants} >= set(BACKTEST_SIM_VARIANTS),
+            "variants",
+        ),
+        _check(
+            "variant_fields_present",
+            all(
+                row.get("role")
+                and row.get("risk_profile")
+                and row.get("recommended_usage")
+                for row in variants
+            ),
+            "role/risk/recommended usage",
+        ),
+        _check(
+            "simulation_not_pit_marked",
+            manifest.get("report_label") == REPORT_LABEL_BACKTEST_SIMULATION
+            and any(
+                REPORT_LABEL_BACKTEST_SIMULATION in _texts(row.get("limitations"))
+                or "BACKTEST_SIMULATION_NOT_PIT" in _text(row.get("summary"))
+                for row in _records(findings.get("findings"))
+            ),
+            REPORT_LABEL_BACKTEST_SIMULATION,
+        ),
+        _check(
+            "no_auto_policy",
+            manifest.get("auto_policy_apply") is False
+            and manifest.get("production_effect") == "none",
+            "no policy apply",
+        ),
+        _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_sim_interpretation_validation",
+        artifact_id_key="interpretation_id",
+        artifact_id=interpretation_id,
+        checks=checks,
+    )
+
+
+def run_sim_risk_return(
+    *,
+    outcome_id: str,
+    outcome_dir: Path = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    output_dir: Path = DEFAULT_SIM_RISK_RETURN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    outcome_manifest = _read_json(outcome_dir / outcome_id / "sim_outcome_manifest.json")
+    outcome_summary = _read_json(outcome_dir / outcome_id / "simulated_variant_summary.json")
+    table = _risk_return_tradeoff_table(outcome_summary)
+    summary = _risk_adjusted_summary(table)
+    risk_return_id = _stable_id("sim-risk-return", outcome_id, generated.isoformat())
+    risk_return_dir = _unique_dir(output_dir / risk_return_id)
+    risk_return_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_risk_return_manifest",
+        "risk_return_id": risk_return_dir.name,
+        "outcome_id": outcome_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if table else "INSUFFICIENT_DATA",
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_best_variant": outcome_manifest.get("best_variant"),
+        "risk_return_manifest_path": str(risk_return_dir / "risk_return_manifest.json"),
+        "active_variant_tradeoff_table_path": str(
+            risk_return_dir / "active_variant_tradeoff_table.csv"
+        ),
+        "risk_adjusted_summary_path": str(risk_return_dir / "risk_adjusted_summary.json"),
+        "risk_return_report_path": str(risk_return_dir / "risk_return_report.md"),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(risk_return_dir / "risk_return_manifest.json", manifest)
+    pd.DataFrame(table).to_csv(risk_return_dir / "active_variant_tradeoff_table.csv", index=False)
+    _write_json(risk_return_dir / "risk_adjusted_summary.json", summary)
+    _write_text(
+        risk_return_dir / "risk_return_report.md",
+        render_risk_return_report(manifest, table, summary),
+    )
+    _update_latest_pointer(
+        "latest_sim_risk_return",
+        risk_return_dir.name,
+        risk_return_dir / "risk_return_manifest.json",
+    )
+    return {
+        "risk_return_id": risk_return_dir.name,
+        "risk_return_dir": risk_return_dir,
+        "manifest": manifest,
+        "active_variant_tradeoff_table": table,
+        "risk_adjusted_summary": summary,
+    }
+
+
+def sim_risk_return_report_payload(
+    *,
+    risk_return_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIM_RISK_RETURN_DIR,
+) -> dict[str, Any]:
+    risk_return_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=risk_return_id if not latest else None,
+        pointer_name="latest_sim_risk_return",
+    )
+    return {
+        **_read_json(risk_return_dir / "risk_return_manifest.json"),
+        "risk_adjusted_summary": _read_json(risk_return_dir / "risk_adjusted_summary.json"),
+        "risk_return_dir": str(risk_return_dir),
+    }
+
+
+def validate_sim_risk_return_artifact(
+    *, risk_return_id: str, output_dir: Path = DEFAULT_SIM_RISK_RETURN_DIR
+) -> dict[str, Any]:
+    risk_return_dir = output_dir / risk_return_id
+    manifest = _read_optional_json(risk_return_dir / "risk_return_manifest.json") or {}
+    summary = _read_optional_json(risk_return_dir / "risk_adjusted_summary.json") or {}
+    rows = _records(summary.get("summary"))
+    checks = [
+        _check("manifest_exists", (risk_return_dir / "risk_return_manifest.json").exists(), ""),
+        _check(
+            "tradeoff_csv_exists",
+            (risk_return_dir / "active_variant_tradeoff_table.csv").exists(),
+            "",
+        ),
+        _check("summary_exists", (risk_return_dir / "risk_adjusted_summary.json").exists(), ""),
+        _check("report_exists", (risk_return_dir / "risk_return_report.md").exists(), ""),
+        _check("risk_return_id_matches", manifest.get("risk_return_id") == risk_return_id, ""),
+        _check(
+            "active_variants_present",
+            {row.get("variant") for row in rows} >= set(ACTIVE_SIM_VARIANTS),
+            "active variants",
+        ),
+        _check(
+            "status_values_valid",
+            all(row.get("risk_return_status") in RISK_RETURN_STATUSES for row in rows),
+            "risk-return statuses",
+        ),
+        _check(
+            "return_and_risk_separated",
+            all(
+                "return_improvement_20d_pp" in row
+                and "drawdown_worsening_20d_pp" in row
+                for row in rows
+            ),
+            "separate return/risk fields",
+        ),
+        _check(
+            "no_auto_policy",
+            manifest.get("auto_policy_apply") is False
+            and manifest.get("production_effect") == "none",
+            "no policy apply",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_sim_risk_return_validation",
+        artifact_id_key="risk_return_id",
+        artifact_id=risk_return_id,
+        checks=checks,
+    )
+
+
+def run_sim_defensive_validation(
+    *,
+    outcome_id: str,
+    outcome_dir: Path = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    output_dir: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    outcome_manifest = _read_json(outcome_dir / outcome_id / "sim_outcome_manifest.json")
+    outcome_rows = _read_jsonl(outcome_dir / outcome_id / "simulated_outcome_windows.jsonl")
+    matrix_rows = _defensive_regime_matrix(outcome_rows)
+    failure_cases = [
+        _defensive_failure_case(row)
+        for row in matrix_rows
+        if _mapping(row.get("defensive_limited_adjustment")).get("status")
+        == "FAILS_DEFENSIVE_EXPECTATION"
+    ]
+    summary = _defensive_validation_summary(matrix_rows)
+    defensive_validation_id = _stable_id(
+        "sim-defensive-validation",
+        outcome_id,
+        generated.isoformat(),
+    )
+    defensive_dir = _unique_dir(output_dir / defensive_validation_id)
+    defensive_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_defensive_validation_manifest",
+        "defensive_validation_id": defensive_dir.name,
+        "outcome_id": outcome_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_best_variant": outcome_manifest.get("best_variant"),
+        "defensive_validation_manifest_path": str(
+            defensive_dir / "defensive_validation_manifest.json"
+        ),
+        "defensive_regime_matrix_path": str(defensive_dir / "defensive_regime_matrix.jsonl"),
+        "defensive_failure_cases_path": str(defensive_dir / "defensive_failure_cases.jsonl"),
+        "defensive_validation_summary_path": str(
+            defensive_dir / "defensive_validation_summary.json"
+        ),
+        "defensive_validation_report_path": str(
+            defensive_dir / "defensive_validation_report.md"
+        ),
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(defensive_dir / "defensive_validation_manifest.json", manifest)
+    _write_jsonl(defensive_dir / "defensive_regime_matrix.jsonl", matrix_rows)
+    _write_jsonl(defensive_dir / "defensive_failure_cases.jsonl", failure_cases)
+    _write_json(defensive_dir / "defensive_validation_summary.json", summary)
+    _write_text(
+        defensive_dir / "defensive_validation_report.md",
+        render_defensive_validation_report(manifest, summary, matrix_rows),
+    )
+    _update_latest_pointer(
+        "latest_sim_defensive_validation",
+        defensive_dir.name,
+        defensive_dir / "defensive_validation_manifest.json",
+    )
+    return {
+        "defensive_validation_id": defensive_dir.name,
+        "defensive_validation_dir": defensive_dir,
+        "manifest": manifest,
+        "defensive_regime_matrix": matrix_rows,
+        "defensive_failure_cases": failure_cases,
+        "defensive_validation_summary": summary,
+    }
+
+
+def sim_defensive_validation_report_payload(
+    *,
+    defensive_validation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+) -> dict[str, Any]:
+    defensive_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=defensive_validation_id if not latest else None,
+        pointer_name="latest_sim_defensive_validation",
+    )
+    return {
+        **_read_json(defensive_dir / "defensive_validation_manifest.json"),
+        "defensive_regime_matrix": _read_jsonl(defensive_dir / "defensive_regime_matrix.jsonl"),
+        "defensive_validation_summary": _read_json(
+            defensive_dir / "defensive_validation_summary.json"
+        ),
+        "defensive_validation_dir": str(defensive_dir),
+    }
+
+
+def validate_sim_defensive_validation_artifact(
+    *,
+    defensive_validation_id: str,
+    output_dir: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+) -> dict[str, Any]:
+    defensive_dir = output_dir / defensive_validation_id
+    manifest = _read_optional_json(defensive_dir / "defensive_validation_manifest.json") or {}
+    rows = _read_jsonl(defensive_dir / "defensive_regime_matrix.jsonl")
+    summary = _read_optional_json(defensive_dir / "defensive_validation_summary.json") or {}
+    checks = [
+        _check(
+            "manifest_exists",
+            (defensive_dir / "defensive_validation_manifest.json").exists(),
+            "",
+        ),
+        _check("matrix_exists", (defensive_dir / "defensive_regime_matrix.jsonl").exists(), ""),
+        _check(
+            "failure_cases_exists",
+            (defensive_dir / "defensive_failure_cases.jsonl").exists(),
+            "",
+        ),
+        _check(
+            "summary_exists",
+            (defensive_dir / "defensive_validation_summary.json").exists(),
+            "",
+        ),
+        _check(
+            "report_exists",
+            (defensive_dir / "defensive_validation_report.md").exists(),
+            "",
+        ),
+        _check(
+            "defensive_validation_id_matches",
+            manifest.get("defensive_validation_id") == defensive_validation_id,
+            "",
+        ),
+        _check(
+            "pressure_regimes_present",
+            {row.get("regime") for row in rows} >= DEFENSIVE_PRESSURE_REGIMES,
+            "pressure regimes",
+        ),
+        _check(
+            "defensive_not_auto_proven",
+            summary.get("defensive_limited_adjustment_status")
+            in {"NOT_PROVEN_DEFENSIVE", "PARTIALLY_DEFENSIVE", "PROVEN_DEFENSIVE"},
+            _text(summary.get("defensive_limited_adjustment_status")),
+        ),
+        _check(
+            "regime_status_valid",
+            all(
+                _mapping(row.get("defensive_limited_adjustment")).get("status")
+                in DEFENSIVE_VALIDATION_STATUSES
+                for row in rows
+            ),
+            "defensive statuses",
+        ),
+        _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_sim_defensive_validation_validation",
+        artifact_id_key="defensive_validation_id",
+        artifact_id=defensive_validation_id,
+        checks=checks,
+    )
+
+
+def run_advisory_proposal_review(
+    *,
+    interpretation_id: str,
+    risk_return_id: str,
+    defensive_validation_id: str,
+    calibration_id: str,
+    interpretation_dir: Path = DEFAULT_SIM_INTERPRETATION_DIR,
+    risk_return_dir: Path = DEFAULT_SIM_RISK_RETURN_DIR,
+    defensive_validation_dir: Path = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+    calibration_dir: Path = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+    output_dir: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    interpretation_manifest = _read_json(
+        interpretation_dir / interpretation_id / "sim_interpretation_manifest.json"
+    )
+    key_findings = _read_json(interpretation_dir / interpretation_id / "key_findings.json")
+    risk_summary = _read_json(risk_return_dir / risk_return_id / "risk_adjusted_summary.json")
+    defensive_summary = _read_json(
+        defensive_validation_dir
+        / defensive_validation_id
+        / "defensive_validation_summary.json"
+    )
+    calibration_manifest = _read_json(
+        calibration_dir / calibration_id / "sim_calibration_manifest.json"
+    )
+    proposals = _read_json(calibration_dir / calibration_id / "proposed_advisory_rule_changes.json")
+    decision_matrix = _proposal_decision_matrix(
+        proposals=proposals,
+        risk_summary=risk_summary,
+        defensive_summary=defensive_summary,
+        key_findings=key_findings,
+    )
+    proposal_review_id = _stable_id(
+        "advisory-proposal-review",
+        interpretation_id,
+        risk_return_id,
+        defensive_validation_id,
+        calibration_id,
+        generated.isoformat(),
+    )
+    review_dir = _unique_dir(output_dir / proposal_review_id)
+    review_dir.mkdir(parents=True, exist_ok=False)
+    reader_brief = render_proposal_review_reader_brief(decision_matrix, defensive_summary)
+    checklist = render_owner_approval_checklist(decision_matrix, defensive_summary)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_advisory_proposal_review_manifest",
+        "proposal_review_id": review_dir.name,
+        "interpretation_id": interpretation_id,
+        "risk_return_id": risk_return_id,
+        "defensive_validation_id": defensive_validation_id,
+        "calibration_id": calibration_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_best_variant": interpretation_manifest.get("source_best_variant"),
+        "source_calibration_pack_id": calibration_manifest.get("calibration_pack_id"),
+        "proposal_review_manifest_path": str(review_dir / "proposal_review_manifest.json"),
+        "proposal_decision_matrix_path": str(review_dir / "proposal_decision_matrix.json"),
+        "owner_approval_checklist_path": str(review_dir / "owner_approval_checklist.md"),
+        "advisory_proposal_review_report_path": str(
+            review_dir / "advisory_proposal_review_report.md"
+        ),
+        "reader_brief_section_path": str(review_dir / "reader_brief_section.md"),
+        "auto_apply": False,
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(review_dir / "proposal_review_manifest.json", manifest)
+    _write_json(review_dir / "proposal_decision_matrix.json", decision_matrix)
+    _write_text(review_dir / "owner_approval_checklist.md", checklist)
+    _write_text(
+        review_dir / "advisory_proposal_review_report.md",
+        render_advisory_proposal_review_report(manifest, decision_matrix, defensive_summary),
+    )
+    _write_text(review_dir / "reader_brief_section.md", reader_brief)
+    _update_latest_pointer(
+        "latest_advisory_proposal_review",
+        review_dir.name,
+        review_dir / "proposal_review_manifest.json",
+    )
+    return {
+        "proposal_review_id": review_dir.name,
+        "proposal_review_dir": review_dir,
+        "manifest": manifest,
+        "proposal_decision_matrix": decision_matrix,
+        "owner_approval_checklist": checklist,
+        "reader_brief_section": reader_brief,
+    }
+
+
+def advisory_proposal_review_report_payload(
+    *,
+    proposal_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+) -> dict[str, Any]:
+    review_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=proposal_review_id if not latest else None,
+        pointer_name="latest_advisory_proposal_review",
+    )
+    return {
+        **_read_json(review_dir / "proposal_review_manifest.json"),
+        "proposal_decision_matrix": _read_json(review_dir / "proposal_decision_matrix.json"),
+        "reader_brief_section": _read_text(review_dir / "reader_brief_section.md"),
+        "proposal_review_dir": str(review_dir),
+    }
+
+
+def validate_advisory_proposal_review_artifact(
+    *,
+    proposal_review_id: str,
+    output_dir: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+) -> dict[str, Any]:
+    review_dir = output_dir / proposal_review_id
+    manifest = _read_optional_json(review_dir / "proposal_review_manifest.json") or {}
+    matrix = _read_optional_json(review_dir / "proposal_decision_matrix.json") or {}
+    proposals = _records(matrix.get("proposals"))
+    checks = [
+        _check("manifest_exists", (review_dir / "proposal_review_manifest.json").exists(), ""),
+        _check("matrix_exists", (review_dir / "proposal_decision_matrix.json").exists(), ""),
+        _check(
+            "checklist_exists",
+            (review_dir / "owner_approval_checklist.md").exists(),
+            "",
+        ),
+        _check(
+            "report_exists",
+            (review_dir / "advisory_proposal_review_report.md").exists(),
+            "",
+        ),
+        _check("reader_brief_exists", (review_dir / "reader_brief_section.md").exists(), ""),
+        _check(
+            "proposal_review_id_matches",
+            manifest.get("proposal_review_id") == proposal_review_id,
+            "",
+        ),
+        _check(
+            "decision_values_valid",
+            all(row.get("decision") in PROPOSAL_REVIEW_DECISIONS for row in proposals),
+            "decisions",
+        ),
+        _check(
+            "auto_apply_false",
+            manifest.get("auto_apply") is False
+            and all(row.get("auto_apply") is False for row in proposals),
+            "auto apply false",
+        ),
+        _check(
+            "owner_approval_required",
+            manifest.get("owner_approval_required") is True
+            and any(row.get("owner_approval_required") is True for row in proposals),
+            "owner approval required",
+        ),
+        _check(
+            "position_policy_not_modified",
+            matrix.get("position_advisory_config_mutated") is False,
+            "no position_advisory_v1 mutation",
+        ),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_advisory_proposal_review_validation",
+        artifact_id_key="proposal_review_id",
+        artifact_id=proposal_review_id,
+        checks=checks,
+    )
+
+
+def run_forward_confirmation_plan(
+    *,
+    proposal_review_id: str,
+    bridge_id: str,
+    proposal_review_dir: Path = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+    bridge_dir: Path = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+    output_dir: Path = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    review_manifest = _read_json(
+        proposal_review_dir / proposal_review_id / "proposal_review_manifest.json"
+    )
+    decision_matrix = _read_json(
+        proposal_review_dir / proposal_review_id / "proposal_decision_matrix.json"
+    )
+    bridge_manifest = _read_json(bridge_dir / bridge_id / "sim_forward_bridge_manifest.json")
+    bridge_targets = _read_json(bridge_dir / bridge_id / "forward_confirmation_targets.json")
+    targets = _confirmation_targets(decision_matrix, bridge_targets)
+    trigger_conditions = _confirmation_trigger_conditions(targets)
+    failure_conditions = _confirmation_failure_conditions()
+    confirmation_plan_id = _stable_id(
+        "forward-confirmation-plan",
+        proposal_review_id,
+        bridge_id,
+        generated.isoformat(),
+    )
+    plan_dir = _unique_dir(output_dir / confirmation_plan_id)
+    plan_dir.mkdir(parents=True, exist_ok=False)
+    reader_brief = render_forward_confirmation_plan_reader_brief(targets, trigger_conditions)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_forward_confirmation_plan_manifest",
+        "confirmation_plan_id": plan_dir.name,
+        "proposal_review_id": proposal_review_id,
+        "bridge_id": bridge_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": "ai_after_chatgpt",
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "pit_safety_status": PIT_SAFETY_SIMULATION,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "not_for_production": True,
+        "source_bridge_next_action": bridge_manifest.get("next_action"),
+        "source_review_status": review_manifest.get("status"),
+        "confirmation_plan_manifest_path": str(plan_dir / "confirmation_plan_manifest.json"),
+        "confirmation_targets_path": str(plan_dir / "confirmation_targets.json"),
+        "trigger_conditions_path": str(plan_dir / "trigger_conditions.json"),
+        "failure_conditions_path": str(plan_dir / "failure_conditions.json"),
+        "forward_confirmation_plan_report_path": str(
+            plan_dir / "forward_confirmation_plan_report.md"
+        ),
+        "reader_brief_section_path": str(plan_dir / "reader_brief_section.md"),
+        "auto_apply": False,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "auto_policy_apply": False,
+        "production_effect": "none",
+        "production_candidate_generated": False,
+        "manual_review_required": True,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(plan_dir / "confirmation_plan_manifest.json", manifest)
+    _write_json(plan_dir / "confirmation_targets.json", targets)
+    _write_json(plan_dir / "trigger_conditions.json", trigger_conditions)
+    _write_json(plan_dir / "failure_conditions.json", failure_conditions)
+    _write_text(
+        plan_dir / "forward_confirmation_plan_report.md",
+        render_forward_confirmation_plan_report(
+            manifest,
+            targets,
+            trigger_conditions,
+            failure_conditions,
+        ),
+    )
+    _write_text(plan_dir / "reader_brief_section.md", reader_brief)
+    _update_latest_pointer(
+        "latest_forward_confirmation_plan",
+        plan_dir.name,
+        plan_dir / "confirmation_plan_manifest.json",
+    )
+    return {
+        "confirmation_plan_id": plan_dir.name,
+        "confirmation_plan_dir": plan_dir,
+        "manifest": manifest,
+        "confirmation_targets": targets,
+        "trigger_conditions": trigger_conditions,
+        "failure_conditions": failure_conditions,
+        "reader_brief_section": reader_brief,
+    }
+
+
+def forward_confirmation_plan_report_payload(
+    *,
+    confirmation_plan_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+) -> dict[str, Any]:
+    plan_dir = _artifact_dir_from_latest(
+        output_dir=output_dir,
+        artifact_id=confirmation_plan_id if not latest else None,
+        pointer_name="latest_forward_confirmation_plan",
+    )
+    return {
+        **_read_json(plan_dir / "confirmation_plan_manifest.json"),
+        "confirmation_targets": _read_json(plan_dir / "confirmation_targets.json"),
+        "trigger_conditions": _read_json(plan_dir / "trigger_conditions.json"),
+        "failure_conditions": _read_json(plan_dir / "failure_conditions.json"),
+        "reader_brief_section": _read_text(plan_dir / "reader_brief_section.md"),
+        "confirmation_plan_dir": str(plan_dir),
+    }
+
+
+def validate_forward_confirmation_plan_artifact(
+    *,
+    confirmation_plan_id: str,
+    output_dir: Path = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+) -> dict[str, Any]:
+    plan_dir = output_dir / confirmation_plan_id
+    manifest = _read_optional_json(plan_dir / "confirmation_plan_manifest.json") or {}
+    targets = _read_optional_json(plan_dir / "confirmation_targets.json") or {}
+    trigger_conditions = _read_optional_json(plan_dir / "trigger_conditions.json") or {}
+    failure_conditions = _read_optional_json(plan_dir / "failure_conditions.json") or {}
+    target_rows = _records(targets.get("targets"))
+    checks = [
+        _check("manifest_exists", (plan_dir / "confirmation_plan_manifest.json").exists(), ""),
+        _check("targets_exists", (plan_dir / "confirmation_targets.json").exists(), ""),
+        _check("triggers_exists", (plan_dir / "trigger_conditions.json").exists(), ""),
+        _check("failures_exists", (plan_dir / "failure_conditions.json").exists(), ""),
+        _check(
+            "report_exists",
+            (plan_dir / "forward_confirmation_plan_report.md").exists(),
+            "",
+        ),
+        _check("reader_brief_exists", (plan_dir / "reader_brief_section.md").exists(), ""),
+        _check(
+            "confirmation_plan_id_matches",
+            manifest.get("confirmation_plan_id") == confirmation_plan_id,
+            "",
+        ),
+        _check(
+            "required_targets_present",
+            {row.get("target_id") for row in target_rows}
+            >= {
+                "limited_adjustment_vs_no_trade",
+                "defensive_limited_adjustment_drawdown",
+                "consensus_target_risk",
+            },
+            "targets",
+        ),
+        _check(
+            "trigger_conditions_readable",
+            bool(_records(trigger_conditions.get("calibration_ready_conditions")))
+            and bool(_records(trigger_conditions.get("calibration_not_ready_conditions"))),
+            "trigger conditions",
+        ),
+        _check(
+            "failure_conditions_readable",
+            bool(_records(failure_conditions.get("failure_conditions"))),
+            "failure conditions",
+        ),
+        _check("no_auto_policy", manifest.get("auto_policy_apply") is False, ""),
+    ]
+    return _validation_payload(
+        report_type="etf_dynamic_v3_forward_confirmation_plan_validation",
+        artifact_id_key="confirmation_plan_id",
+        artifact_id=confirmation_plan_id,
+        checks=checks,
+    )
+
+
 def render_event_generation_report(
     manifest: Mapping[str, Any], events: Sequence[Mapping[str, Any]]
 ) -> str:
@@ -1651,6 +2529,1131 @@ def render_forward_bridge_reader_brief(targets: Mapping[str, Any]) -> str:
             "- broker_action_allowed=false；production_effect=none。",
         ]
     )
+
+
+def render_sim_interpretation_report(
+    manifest: Mapping[str, Any],
+    matrix: Mapping[str, Any],
+    findings: Mapping[str, Any],
+) -> str:
+    variants = _records(matrix.get("variants"))
+    finding_rows = _records(findings.get("findings"))
+    return "\n".join(
+        [
+            "# Dynamic v3 Simulation Interpretation",
+            "",
+            f"- interpretation_id: {manifest.get('interpretation_id')}",
+            f"- outcome_id: {manifest.get('outcome_id')}",
+            f"- calibration_id: {manifest.get('calibration_id')}",
+            f"- bridge_id: {manifest.get('bridge_id')}",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- evidence_label: {REPORT_LABEL_BACKTEST_SIMULATION}",
+            (
+                "- 结论边界：本报告解释 BACKTEST_SIMULATION，"
+                "不是 PIT / forward / production evidence。"
+            ),
+            "",
+            "## Variant Roles",
+            "",
+            *[
+                (
+                    f"- {row.get('variant')}: role={row.get('role')}; "
+                    f"return={_mapping(row.get('return_profile')).get('five_to_twenty_days')}; "
+                    f"risk={_mapping(row.get('risk_profile')).get('drawdown')}; "
+                    f"usage={row.get('recommended_usage')}"
+                )
+                for row in variants
+            ],
+            "",
+            "## Key Findings",
+            "",
+            *[
+                (
+                    f"- {row.get('finding_id')}: {row.get('summary')} "
+                    f"confidence={row.get('confidence')}; limitations="
+                    f"{', '.join(_texts(row.get('limitations')))}"
+                )
+                for row in finding_rows
+            ],
+            "",
+            "## Review Answers",
+            "",
+            f"- overall best variant: {manifest.get('source_best_variant')}",
+            (
+                "- lowest-risk variant: no_trade, because it has zero turnover "
+                "and avoids simulated active exposure."
+            ),
+            "- limited_adjustment: medium-horizon active tilt, not a defensive rule.",
+            "- consensus_target: upper-bound reference, not default execution.",
+            "- defensive_limited_adjustment: defensive behavior is not proven by overall ranking.",
+            (
+                "- all conclusions remain BACKTEST_SIMULATION_NOT_PIT "
+                "and require forward confirmation."
+            ),
+        ]
+    )
+
+
+def render_risk_return_report(
+    manifest: Mapping[str, Any],
+    table: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> str:
+    rows = _records(summary.get("summary"))
+    return "\n".join(
+        [
+            "# Dynamic v3 Simulation Risk-Return Review",
+            "",
+            f"- risk_return_id: {manifest.get('risk_return_id')}",
+            f"- outcome_id: {manifest.get('outcome_id')}",
+            f"- evidence_label: {REPORT_LABEL_BACKTEST_SIMULATION}",
+            "- 解释边界：收益改善和风险改善分开判断；收益改善不会自动触发规则修改。",
+            "",
+            "## Active Variant Tradeoff",
+            "",
+            *[
+                (
+                    f"- {row.get('variant')}: status={row.get('risk_return_status')}; "
+                    f"20d_return_improvement_pp={row.get('return_improvement_20d_pp')}; "
+                    f"drawdown_worsening_pp={row.get('drawdown_worsening_20d_pp')}; "
+                    f"return_per_drawdown_worsening="
+                    f"{row.get('return_per_drawdown_worsening')}"
+                )
+                for row in rows
+            ],
+            "",
+            "## Review Answers",
+            "",
+            "- active variants 的收益提升尚不能单独补偿 drawdown 加深；需要 forward confirmation。",
+            "- limited_adjustment 的补偿关系见 return_per_drawdown_worsening。",
+            "- consensus_target 更像更高风险暴露的 upper-bound reference。",
+            (
+                "- defensive_limited_adjustment 是否改善 risk-adjusted profile "
+                "由本表和 regime validation 共同判断。"
+            ),
+            "- 若没有 RETURN_IMPROVES_RISK_IMPROVES，不能把 active variant 改成默认执行。",
+            f"- table_rows: {len(table)}",
+        ]
+    )
+
+
+def render_defensive_validation_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    matrix_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            "# Dynamic v3 Defensive Variant Validation",
+            "",
+            f"- defensive_validation_id: {manifest.get('defensive_validation_id')}",
+            f"- outcome_id: {manifest.get('outcome_id')}",
+            f"- evidence_label: {REPORT_LABEL_BACKTEST_SIMULATION}",
+            f"- defensive_limited_adjustment_status: "
+            f"{summary.get('defensive_limited_adjustment_status')}",
+            f"- recommendation: {summary.get('recommendation')}",
+            "",
+            "## Regime Results",
+            "",
+            *[
+                (
+                    f"- {row.get('regime')}: best_variant={row.get('best_variant')}; "
+                    f"sample_count={row.get('sample_count')}; "
+                    f"defensive_status="
+                    f"{_mapping(row.get('defensive_limited_adjustment')).get('status')}; "
+                    f"avg_relative_to_no_trade="
+                    f"{_mapping(row.get('defensive_limited_adjustment')).get('avg_relative_to_no_trade')}"
+                )
+                for row in matrix_rows
+            ],
+            "",
+            "## Review Answers",
+            "",
+            "- defensive_limited_adjustment 不能因 overall best 自动判定为 defensive。",
+            "- tech_drawdown 下若 no_trade 更好，说明主动暴露没有降低压力窗口损失。",
+            "- risk_off 样本不足时只能保持观察，不得给强结论。",
+            "- semiconductor_pullback 样本不足或表现不稳时不支持默认防守规则。",
+            "- 若继续失败，应考虑改名或重新分类为 active variant。",
+        ]
+    )
+
+
+def render_owner_approval_checklist(
+    decision_matrix: Mapping[str, Any],
+    defensive_summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "# Owner Approval Checklist",
+            "",
+            "- [ ] 是否接受 limited_adjustment 继续作为默认观察规则？",
+            "- [ ] 是否同意不自动使用 consensus_target？",
+            "- [ ] 是否同意 defensive_limited_adjustment 暂不认定为 defensive？",
+            "- [ ] 是否要求 forward confirmation 后再改规则？",
+            "- [ ] 是否继续保持 no broker / no production？",
+            "- [ ] 是否需要重命名 defensive_limited_adjustment？",
+            "",
+            f"auto_apply: {decision_matrix.get('auto_apply')}",
+            f"owner_approval_required: {decision_matrix.get('owner_approval_required')}",
+            "defensive_limited_adjustment_status: "
+            f"{defensive_summary.get('defensive_limited_adjustment_status')}",
+        ]
+    )
+
+
+def render_proposal_review_reader_brief(
+    decision_matrix: Mapping[str, Any],
+    defensive_summary: Mapping[str, Any],
+) -> str:
+    decisions = ", ".join(
+        f"{row.get('proposal_id')}={row.get('decision')}"
+        for row in _records(decision_matrix.get("proposals"))
+    )
+    return "\n".join(
+        [
+            "## Dynamic Rescue Advisory Proposal Review",
+            "",
+            f"- proposal_decisions: {decisions}",
+            f"- defensive_status: {defensive_summary.get('defensive_limited_adjustment_status')}",
+            "- auto_apply=false；owner_approval_required=true。",
+            "- no broker / no production / no position_advisory_v1.yaml mutation。",
+        ]
+    )
+
+
+def render_advisory_proposal_review_report(
+    manifest: Mapping[str, Any],
+    decision_matrix: Mapping[str, Any],
+    defensive_summary: Mapping[str, Any],
+) -> str:
+    proposals = _records(decision_matrix.get("proposals"))
+    return "\n".join(
+        [
+            "# Dynamic v3 Advisory Proposal Review",
+            "",
+            f"- proposal_review_id: {manifest.get('proposal_review_id')}",
+            f"- calibration_id: {manifest.get('calibration_id')}",
+            f"- evidence_label: {REPORT_LABEL_BACKTEST_SIMULATION}",
+            f"- auto_apply: {decision_matrix.get('auto_apply')}",
+            f"- owner_approval_required: {decision_matrix.get('owner_approval_required')}",
+            "",
+            "## Proposal Decisions",
+            "",
+            *[
+                (
+                    f"- {row.get('proposal_id')}: decision={row.get('decision')}; "
+                    f"reason={row.get('reason')}"
+                )
+                for row in proposals
+            ],
+            "",
+            "## Review Answers",
+            "",
+            "- 当前 proposals 只接受为 observation / forward confirmation，不自动修改配置。",
+            (
+                "- 不自动修改配置的原因：simulation 不是 PIT-safe，"
+                "active variants 仍有 drawdown worsening。"
+            ),
+            (
+                "- 下一轮 calibration 需要 forward win rate、relative return "
+                "和 drawdown 条件同时达标。"
+            ),
+            (
+                "- owner 需要确认 observation、consensus target、defensive naming "
+                "和 no production 边界。"
+            ),
+            "- Reader Brief 展示 proposal decisions、defensive status 和 safety boundary。",
+            f"- defensive_limited_adjustment_status: "
+            f"{defensive_summary.get('defensive_limited_adjustment_status')}",
+        ]
+    )
+
+
+def render_forward_confirmation_plan_reader_brief(
+    targets: Mapping[str, Any],
+    trigger_conditions: Mapping[str, Any],
+) -> str:
+    target_ids = ", ".join(row.get("target_id", "") for row in _records(targets.get("targets")))
+    ready = ", ".join(
+        row.get("condition", "")
+        for row in _records(trigger_conditions.get("calibration_ready_conditions"))
+    )
+    return "\n".join(
+        [
+            "## Dynamic Rescue Forward Confirmation Plan",
+            "",
+            f"- targets: {target_ids}",
+            f"- calibration_readiness: {ready}",
+            (
+                "- limited_adjustment confirmation、defensive drawdown confirmation "
+                "和 consensus risk watch 均需 forward evidence。"
+            ),
+            "- auto_apply=false；production_effect=none；broker_action_allowed=false。",
+        ]
+    )
+
+
+def render_forward_confirmation_plan_report(
+    manifest: Mapping[str, Any],
+    targets: Mapping[str, Any],
+    trigger_conditions: Mapping[str, Any],
+    failure_conditions: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "# Dynamic v3 Forward Confirmation Plan",
+            "",
+            f"- confirmation_plan_id: {manifest.get('confirmation_plan_id')}",
+            f"- proposal_review_id: {manifest.get('proposal_review_id')}",
+            f"- bridge_id: {manifest.get('bridge_id')}",
+            f"- evidence_label: {REPORT_LABEL_BACKTEST_SIMULATION}",
+            "",
+            "## Confirmation Targets",
+            "",
+            *[
+                (
+                    f"- {row.get('target_id')}: priority={row.get('priority')}; "
+                    f"windows={row.get('windows')}; status={row.get('current_status')}; "
+                    f"reason={row.get('reason')}"
+                )
+                for row in _records(targets.get("targets"))
+            ],
+            "",
+            "## Trigger Conditions",
+            "",
+            *[
+                f"- ready: {row.get('condition')} requires={row.get('requires')}"
+                for row in _records(trigger_conditions.get("calibration_ready_conditions"))
+            ],
+            *[
+                f"- not_ready: {row.get('condition')} action={row.get('action')}"
+                for row in _records(trigger_conditions.get("calibration_not_ready_conditions"))
+            ],
+            "",
+            "## Failure Conditions",
+            "",
+            *[
+                (
+                    f"- {row.get('target')}: condition={row.get('condition')}; "
+                    f"action={row.get('action')}"
+                )
+                for row in _records(failure_conditions.get("failure_conditions"))
+            ],
+            "",
+            "## Review Answers",
+            "",
+            (
+                "- forward tracking 需要验证 limited_adjustment、"
+                "defensive drawdown 和 consensus risk。"
+            ),
+            "- 每个信号的 sample floor 写在 confirmation_targets.json。",
+            "- 成功标准和失败标准分别写入 trigger_conditions.json 与 failure_conditions.json。",
+            "- 只有 ready conditions 满足后才允许重新讨论 rule calibration。",
+            "- drawdown worsening 持续时必须继续保持当前规则。",
+        ]
+    )
+
+
+def _variant_interpretation_matrix(outcome_summary: Mapping[str, Any]) -> dict[str, Any]:
+    no_trade = _variant_summary_row(outcome_summary, "no_trade")
+    variants = []
+    for variant in BACKTEST_SIM_VARIANTS:
+        row = _variant_summary_row(outcome_summary, variant)
+        variants.append(
+            {
+                "variant": variant,
+                "role": _variant_role(variant),
+                "return_profile": _variant_return_profile(row, no_trade),
+                "risk_profile": _variant_risk_profile(row, no_trade),
+                "interpretation": _variant_interpretation_text(variant, row, no_trade),
+                "recommended_usage": _variant_recommended_usage(variant),
+                "not_recommended_usage": _variant_not_recommended_usage(variant),
+                "evidence_label": REPORT_LABEL_BACKTEST_SIMULATION,
+                "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+            }
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_variant_interpretation_matrix",
+        "variants": variants,
+        "report_label": REPORT_LABEL_BACKTEST_SIMULATION,
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "broker_action_taken": False,
+    }
+
+
+def _variant_role(variant: str) -> str:
+    return {
+        "no_trade": "passive_reference",
+        "limited_adjustment": "risk_aware_active_tilt",
+        "consensus_target": "upper_bound_reference",
+        "defensive_limited_adjustment": "unproven_defensive_active_tilt",
+        "equal_weight_shadow_candidates": "diversification_shadow_reference",
+    }.get(variant, "simulation_reference")
+
+
+def _variant_return_profile(
+    row: Mapping[str, Any],
+    no_trade: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "one_day": _return_compare(row, no_trade, "avg_1d_return"),
+        "five_to_twenty_days": _medium_horizon_compare(row, no_trade),
+        "avg_1d_return": row.get("avg_1d_return", 0.0),
+        "avg_5d_return": row.get("avg_5d_return", 0.0),
+        "avg_10d_return": row.get("avg_10d_return", 0.0),
+        "avg_20d_return": row.get("avg_20d_return", 0.0),
+    }
+
+
+def _variant_risk_profile(
+    row: Mapping[str, Any],
+    no_trade: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "drawdown": _drawdown_compare(row, no_trade),
+        "turnover": _turnover_compare(row, no_trade),
+        "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d", 0.0),
+        "avg_turnover": row.get("avg_turnover", 0.0),
+    }
+
+
+def _variant_interpretation_text(
+    variant: str,
+    row: Mapping[str, Any],
+    no_trade: Mapping[str, Any],
+) -> str:
+    if variant == "no_trade":
+        return "no_trade is the lowest-intervention reference for comparing active variants."
+    if variant == "limited_adjustment":
+        return (
+            "limited_adjustment appears to add medium-horizon active exposure rather than "
+            "reduce risk."
+        )
+    if variant == "consensus_target":
+        return "consensus_target is an upper-bound reference for full simulated consensus exposure."
+    if variant == "defensive_limited_adjustment":
+        return (
+            "defensive_limited_adjustment requires regime-specific proof before it can be "
+            "called defensive."
+        )
+    delta = _float(row.get("avg_20d_return")) - _float(no_trade.get("avg_20d_return"))
+    return f"simulation reference variant; 20d delta vs no_trade={round(delta, 6)}."
+
+
+def _variant_recommended_usage(variant: str) -> str:
+    return {
+        "no_trade": "risk_reference",
+        "limited_adjustment": "continue_observation",
+        "consensus_target": "upper_bound_reference_only",
+        "defensive_limited_adjustment": "regime_specific_validation_only",
+        "equal_weight_shadow_candidates": "shadow_reference_only",
+    }.get(variant, "review_only")
+
+
+def _variant_not_recommended_usage(variant: str) -> str:
+    return {
+        "no_trade": "do_not_treat_as_active_alpha",
+        "limited_adjustment": "do_not_treat_as_defensive_rule",
+        "consensus_target": "do_not_use_as_default_execution",
+        "defensive_limited_adjustment": "do_not_label_as_proven_defensive",
+        "equal_weight_shadow_candidates": "do_not_promote_without_candidate_review",
+    }.get(variant, "do_not_use_for_production")
+
+
+def _return_compare(row: Mapping[str, Any], baseline: Mapping[str, Any], key: str) -> str:
+    delta = _float(row.get(key)) - _float(baseline.get(key))
+    if abs(delta) <= 0.000001:
+        return "similar_to_no_trade"
+    return "stronger_than_no_trade" if delta > 0 else "weaker_than_no_trade"
+
+
+def _medium_horizon_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
+    comparisons = [
+        _float(row.get(key)) - _float(baseline.get(key))
+        for key in ("avg_5d_return", "avg_10d_return", "avg_20d_return")
+    ]
+    positive = sum(1 for value in comparisons if value > 0.000001)
+    negative = sum(1 for value in comparisons if value < -0.000001)
+    if positive == len(comparisons):
+        return "stronger_than_no_trade"
+    if negative == len(comparisons):
+        return "weaker_than_no_trade"
+    if positive:
+        return "mixed_but_positive_medium_horizon"
+    return "similar_to_no_trade"
+
+
+def _drawdown_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
+    delta = _float(row.get("avg_max_drawdown_20d")) - _float(
+        baseline.get("avg_max_drawdown_20d")
+    )
+    if abs(delta) <= 0.000001:
+        return "similar_to_no_trade"
+    return "better_than_no_trade" if delta > 0 else "worse_than_no_trade"
+
+
+def _turnover_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
+    delta = _float(row.get("avg_turnover")) - _float(baseline.get("avg_turnover"))
+    if abs(delta) <= 0.000001:
+        return "similar_to_no_trade"
+    return "higher_than_no_trade" if delta > 0 else "lower_than_no_trade"
+
+
+def _sim_key_findings(
+    *,
+    outcome_summary: Mapping[str, Any],
+    calibration_evidence: Mapping[str, Any],
+    bridge_targets: Mapping[str, Any],
+) -> dict[str, Any]:
+    no_trade = _variant_summary_row(outcome_summary, "no_trade")
+    active_rows = [
+        _variant_summary_row(outcome_summary, variant) for variant in ACTIVE_SIM_VARIANTS
+    ]
+    medium_positive = [
+        row
+        for row in active_rows
+        if _float(row.get("avg_20d_return")) > _float(no_trade.get("avg_20d_return"))
+    ]
+    drawdown_worse = [
+        row
+        for row in active_rows
+        if _float(row.get("avg_max_drawdown_20d"))
+        < _float(no_trade.get("avg_max_drawdown_20d"))
+    ]
+    findings = [
+        {
+            "finding_id": "active_variants_improve_medium_horizon_return",
+            "summary": (
+                "Active variants improve 5/10/20d average return versus no_trade "
+                "when the 20d delta is positive."
+            ),
+            "evidence": [
+                {
+                    "variant": row.get("variant"),
+                    "avg_20d_return": row.get("avg_20d_return"),
+                    "no_trade_avg_20d_return": no_trade.get("avg_20d_return"),
+                }
+                for row in medium_positive
+            ],
+            "confidence": "MEDIUM" if medium_positive else "LOW",
+            "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "drawdown may worsen"],
+        },
+        {
+            "finding_id": "active_variants_worsen_drawdown",
+            "summary": "Active variants can increase average 20d max drawdown versus no_trade.",
+            "evidence": [
+                {
+                    "variant": row.get("variant"),
+                    "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d"),
+                    "no_trade_avg_max_drawdown_20d": no_trade.get("avg_max_drawdown_20d"),
+                }
+                for row in drawdown_worse
+            ],
+            "confidence": "HIGH" if drawdown_worse else "MEDIUM",
+            "limitations": [REPORT_LABEL_BACKTEST_SIMULATION],
+        },
+        {
+            "finding_id": "consensus_target_is_upper_bound_reference",
+            "summary": (
+                "consensus_target should be read as an upper-bound reference "
+                "rather than default execution."
+            ),
+            "evidence": [_variant_summary_row(outcome_summary, "consensus_target")],
+            "confidence": "MEDIUM",
+            "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "turnover and drawdown risk"],
+        },
+        {
+            "finding_id": "defensive_variant_requires_regime_validation",
+            "summary": (
+                "defensive_limited_adjustment is not proven defensive "
+                "by overall ranking alone."
+            ),
+            "evidence": [
+                {
+                    "best_variant": outcome_summary.get("best_variant"),
+                    "defensive_drawdown_20d": calibration_evidence.get(
+                        "defensive_limited_avg_drawdown_20d"
+                    ),
+                }
+            ],
+            "confidence": "MEDIUM",
+            "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "pressure regime sample required"],
+        },
+        {
+            "finding_id": "requires_forward_confirmation",
+            "summary": (
+                "BACKTEST_SIMULATION_NOT_PIT requires forward confirmation "
+                "before rule calibration."
+            ),
+            "evidence": _records(bridge_targets.get("targets")),
+            "confidence": "HIGH",
+            "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "not PIT evidence"],
+        },
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_interpretation_key_findings",
+        "findings": findings,
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "broker_action_taken": False,
+    }
+
+
+def _risk_return_tradeoff_table(outcome_summary: Mapping[str, Any]) -> list[dict[str, Any]]:
+    no_trade = _variant_summary_row(outcome_summary, "no_trade")
+    if not no_trade:
+        return []
+    rows = []
+    for variant in ACTIVE_SIM_VARIANTS:
+        row = _variant_summary_row(outcome_summary, variant)
+        if not row:
+            rows.append(_empty_risk_return_row(variant))
+            continue
+        return_delta_pp = _pp(
+            _float(row.get("avg_20d_return")) - _float(no_trade.get("avg_20d_return"))
+        )
+        drawdown_delta_pp = _pp(
+            _float(row.get("avg_max_drawdown_20d"))
+            - _float(no_trade.get("avg_max_drawdown_20d"))
+        )
+        drawdown_worsening_pp = round(
+            max(
+                0.0,
+                abs(_float(row.get("avg_max_drawdown_20d")))
+                - abs(_float(no_trade.get("avg_max_drawdown_20d"))),
+            )
+            * 100,
+            4,
+        )
+        turnover_delta_pp = _pp(
+            _float(row.get("avg_turnover")) - _float(no_trade.get("avg_turnover"))
+        )
+        status = _risk_return_status(return_delta_pp, drawdown_delta_pp, row)
+        rows.append(
+            {
+                "variant": variant,
+                "avg_1d_return": row.get("avg_1d_return", 0.0),
+                "avg_5d_return": row.get("avg_5d_return", 0.0),
+                "avg_10d_return": row.get("avg_10d_return", 0.0),
+                "avg_20d_return": row.get("avg_20d_return", 0.0),
+                "delta_20d_return_vs_no_trade": return_delta_pp,
+                "avg_max_drawdown_20d": row.get("avg_max_drawdown_20d", 0.0),
+                "drawdown_delta_vs_no_trade": drawdown_delta_pp,
+                "avg_turnover": row.get("avg_turnover", 0.0),
+                "turnover_delta_vs_no_trade": turnover_delta_pp,
+                "return_per_drawdown_worsening": _ratio(
+                    return_delta_pp,
+                    drawdown_worsening_pp,
+                ),
+                "return_per_turnover": _ratio(return_delta_pp, turnover_delta_pp),
+                "risk_return_status": status,
+                "drawdown_worsening_20d_pp": drawdown_worsening_pp,
+            }
+        )
+    return rows
+
+
+def _empty_risk_return_row(variant: str) -> dict[str, Any]:
+    return {
+        "variant": variant,
+        "avg_1d_return": 0.0,
+        "avg_5d_return": 0.0,
+        "avg_10d_return": 0.0,
+        "avg_20d_return": 0.0,
+        "delta_20d_return_vs_no_trade": 0.0,
+        "avg_max_drawdown_20d": 0.0,
+        "drawdown_delta_vs_no_trade": 0.0,
+        "avg_turnover": 0.0,
+        "turnover_delta_vs_no_trade": 0.0,
+        "return_per_drawdown_worsening": 0.0,
+        "return_per_turnover": 0.0,
+        "risk_return_status": "INSUFFICIENT_DATA",
+        "drawdown_worsening_20d_pp": 0.0,
+    }
+
+
+def _risk_adjusted_summary(table: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    rows = []
+    for row in table:
+        status = _text(row.get("risk_return_status"), "INSUFFICIENT_DATA")
+        rows.append(
+            {
+                "variant": row.get("variant"),
+                "return_improvement_20d_pp": row.get("delta_20d_return_vs_no_trade", 0.0),
+                "drawdown_worsening_20d_pp": row.get("drawdown_worsening_20d_pp", 0.0),
+                "turnover_increase_pp": max(0.0, _float(row.get("turnover_delta_vs_no_trade"))),
+                "return_per_drawdown_worsening": row.get(
+                    "return_per_drawdown_worsening",
+                    0.0,
+                ),
+                "return_per_turnover": row.get("return_per_turnover", 0.0),
+                "risk_return_status": status,
+                "recommendation": (
+                    "observe_not_execute"
+                    if status == "RETURN_IMPROVES_RISK_WORSENS"
+                    else "continue_review"
+                ),
+            }
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sim_risk_adjusted_summary",
+        "summary": rows,
+        "has_return_improves_risk_improves": any(
+            row.get("risk_return_status") == "RETURN_IMPROVES_RISK_IMPROVES" for row in rows
+        ),
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "broker_action_taken": False,
+    }
+
+
+def _risk_return_status(
+    return_delta_pp: float,
+    drawdown_delta_pp: float,
+    row: Mapping[str, Any],
+) -> str:
+    if _int(row.get("available_count")) <= 0:
+        return "INSUFFICIENT_DATA"
+    return_improves = return_delta_pp > 0
+    risk_improves = drawdown_delta_pp >= 0
+    if return_improves and risk_improves:
+        return "RETURN_IMPROVES_RISK_IMPROVES"
+    if return_improves and not risk_improves:
+        return "RETURN_IMPROVES_RISK_WORSENS"
+    if not return_improves and risk_improves:
+        return "RETURN_WORSE_RISK_IMPROVES"
+    return "RETURN_WORSE_RISK_WORSE"
+
+
+def _defensive_regime_matrix(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    available = [
+        row
+        for row in rows
+        if row.get("outcome_status") == "AVAILABLE"
+        and _int(row.get("window_days")) in {5, 10, 20}
+    ]
+    by_variant_regime: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in available:
+        key = (_text(row.get("regime_label"), "unknown"), _text(row.get("variant")))
+        by_variant_regime[key].append(row)
+    ordered_regimes = [
+        "tech_drawdown",
+        "risk_off",
+        "semiconductor_pullback",
+        "sideways_choppy",
+        "strong_recovery",
+        "ai_trend",
+        "unknown",
+    ]
+    matrix = []
+    for regime in ordered_regimes:
+        defensive_rows = by_variant_regime.get((regime, "defensive_limited_adjustment"), [])
+        no_trade_rows = by_variant_regime.get((regime, "no_trade"), [])
+        rel = [_float(row.get("relative_to_no_trade")) for row in defensive_rows]
+        drawdown_deltas = _aligned_drawdown_deltas(defensive_rows, no_trade_rows)
+        sample_count = len({_text(row.get("sim_event_id")) for row in defensive_rows})
+        avg_relative = round(_avg(rel), 6)
+        avg_drawdown_delta = round(_avg(drawdown_deltas), 6)
+        status = _defensive_regime_status(
+            regime=regime,
+            sample_count=sample_count,
+            avg_relative=avg_relative,
+            avg_drawdown_delta=avg_drawdown_delta,
+        )
+        best_variant = _best_regime_variant(by_variant_regime, regime)
+        matrix.append(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "regime": regime,
+                "sample_count": sample_count,
+                "best_variant": best_variant,
+                "defensive_limited_adjustment": {
+                    "avg_return": round(
+                        _avg([_float(row.get("return")) for row in defensive_rows]),
+                        6,
+                    ),
+                    "avg_relative_to_no_trade": avg_relative,
+                    "win_rate_vs_no_trade": (
+                        round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else 0.0
+                    ),
+                    "avg_drawdown_delta_vs_no_trade": avg_drawdown_delta,
+                    "status": status,
+                },
+                "conclusion": _defensive_regime_conclusion(regime, best_variant, status),
+                "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+                "broker_action_taken": False,
+            }
+        )
+    return matrix
+
+
+def _aligned_drawdown_deltas(
+    defensive_rows: Sequence[Mapping[str, Any]],
+    no_trade_rows: Sequence[Mapping[str, Any]],
+) -> list[float]:
+    no_trade_by_key = {
+        (_text(row.get("sim_event_id")), _int(row.get("window_days"))): row
+        for row in no_trade_rows
+    }
+    deltas = []
+    for row in defensive_rows:
+        key = (_text(row.get("sim_event_id")), _int(row.get("window_days")))
+        reference = no_trade_by_key.get(key)
+        if reference is None:
+            continue
+        deltas.append(
+            _float(row.get("max_drawdown")) - _float(reference.get("max_drawdown"))
+        )
+    return deltas
+
+
+def _defensive_regime_status(
+    *,
+    regime: str,
+    sample_count: int,
+    avg_relative: float,
+    avg_drawdown_delta: float,
+) -> str:
+    if sample_count <= 0:
+        return "INSUFFICIENT_DATA"
+    if regime in DEFENSIVE_PRESSURE_REGIMES and sample_count < 5:
+        return "INSUFFICIENT_SAMPLE"
+    return_ok = avg_relative >= 0
+    drawdown_ok = avg_drawdown_delta >= 0
+    if return_ok and drawdown_ok:
+        return "PROVEN_DEFENSIVE"
+    if not return_ok and not drawdown_ok:
+        return "FAILS_DEFENSIVE_EXPECTATION"
+    return "PARTIALLY_DEFENSIVE"
+
+
+def _best_regime_variant(
+    by_variant_regime: Mapping[tuple[str, str], Sequence[Mapping[str, Any]]],
+    regime: str,
+) -> str:
+    candidates = []
+    for variant in BACKTEST_SIM_VARIANTS:
+        rows = by_variant_regime.get((regime, variant), [])
+        if rows:
+            candidates.append(
+                (
+                    variant,
+                    _avg([_float(row.get("return")) for row in rows]),
+                )
+            )
+    if not candidates:
+        return "INSUFFICIENT_DATA"
+    return max(candidates, key=lambda item: item[1])[0]
+
+
+def _defensive_regime_conclusion(regime: str, best_variant: str, status: str) -> str:
+    if status == "INSUFFICIENT_DATA":
+        return f"{regime} has no available defensive validation sample."
+    if status == "INSUFFICIENT_SAMPLE":
+        return f"{regime} sample is too small for defensive confirmation."
+    if best_variant == "no_trade":
+        return f"no_trade outperformed defensive_limited_adjustment in {regime}."
+    if status == "PROVEN_DEFENSIVE":
+        return f"defensive_limited_adjustment met return and drawdown checks in {regime}."
+    if status == "PARTIALLY_DEFENSIVE":
+        return f"defensive_limited_adjustment was mixed in {regime}."
+    return f"defensive_limited_adjustment failed defensive expectations in {regime}."
+
+
+def _defensive_failure_case(row: Mapping[str, Any]) -> dict[str, Any]:
+    defensive = _mapping(row.get("defensive_limited_adjustment"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "regime": row.get("regime"),
+        "sample_count": row.get("sample_count"),
+        "best_variant": row.get("best_variant"),
+        "avg_relative_to_no_trade": defensive.get("avg_relative_to_no_trade"),
+        "avg_drawdown_delta_vs_no_trade": defensive.get("avg_drawdown_delta_vs_no_trade"),
+        "reason": "defensive_limited_adjustment did not beat no_trade in pressure validation",
+        "broker_action_taken": False,
+    }
+
+
+def _defensive_validation_summary(matrix_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    regime_results = {
+        _text(row.get("regime")): _mapping(row.get("defensive_limited_adjustment")).get("status")
+        for row in matrix_rows
+    }
+    pressure_statuses = [
+        _text(regime_results.get(regime), "INSUFFICIENT_DATA")
+        for regime in sorted(DEFENSIVE_PRESSURE_REGIMES)
+    ]
+    if pressure_statuses and all(status == "PROVEN_DEFENSIVE" for status in pressure_statuses):
+        overall = "PROVEN_DEFENSIVE"
+        recommendation = "continue_defensive_label_under_forward_confirmation"
+    elif any(status == "PARTIALLY_DEFENSIVE" for status in pressure_statuses):
+        overall = "PARTIALLY_DEFENSIVE"
+        recommendation = "continue_observation_without_default_defensive_claim"
+    else:
+        overall = "NOT_PROVEN_DEFENSIVE"
+        recommendation = "rename_or_reclassify_as_active_variant"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_defensive_validation_summary",
+        "defensive_limited_adjustment_status": overall,
+        "regime_results": regime_results,
+        "recommendation": recommendation,
+        "requires_forward_confirmation": True,
+        "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
+        "broker_action_taken": False,
+    }
+
+
+def _proposal_decision_matrix(
+    *,
+    proposals: Mapping[str, Any],
+    risk_summary: Mapping[str, Any],
+    defensive_summary: Mapping[str, Any],
+    key_findings: Mapping[str, Any],
+) -> dict[str, Any]:
+    proposal_rows = []
+    source_proposals = _records(proposals.get("proposals"))
+    if not source_proposals:
+        source_proposals = [
+            {
+                "proposal_id": "require_forward_confirmation",
+                "proposal_type": "require_forward_confirmation",
+            }
+        ]
+    for proposal in source_proposals:
+        proposal_id = _text(proposal.get("proposal_id") or proposal.get("proposal_type"))
+        proposal_rows.append(
+            {
+                "proposal_id": proposal_id,
+                "decision": _proposal_decision(proposal_id),
+                "auto_apply": False,
+                "owner_approval_required": True,
+                "reason": _proposal_review_reason(
+                    proposal_id,
+                    risk_summary=risk_summary,
+                    defensive_summary=defensive_summary,
+                ),
+                "conditions": _proposal_review_conditions(proposal_id),
+                "source_confidence": proposal.get("confidence", "MEDIUM"),
+                "source_evidence_mode": proposal.get(
+                    "evidence_mode",
+                    OUTCOME_MODE_BACKTEST_SIMULATION,
+                ),
+            }
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_proposal_decision_matrix",
+        "proposals": proposal_rows,
+        "key_findings": [
+            row.get("finding_id") for row in _records(key_findings.get("findings"))
+        ],
+        "auto_apply": False,
+        "owner_approval_required": True,
+        "position_advisory_config_mutated": False,
+        "production_candidate_generated": False,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _proposal_decision(proposal_id: str) -> str:
+    if proposal_id == "keep_limited_adjustment_default":
+        return "ACCEPT_FOR_OBSERVATION"
+    if proposal_id == "require_forward_confirmation":
+        return "ACCEPT"
+    return "OWNER_REVIEW_REQUIRED"
+
+
+def _proposal_review_reason(
+    proposal_id: str,
+    *,
+    risk_summary: Mapping[str, Any],
+    defensive_summary: Mapping[str, Any],
+) -> str:
+    if proposal_id == "keep_limited_adjustment_default":
+        return (
+            "limited_adjustment improves medium-horizon simulated return in some windows but "
+            "risk-return review still requires observation before execution."
+        )
+    if proposal_id == "require_forward_confirmation":
+        return "simulation is not PIT-safe and active variants can worsen drawdown."
+    if proposal_id == "rename_defensive_limited_adjustment":
+        return (
+            "defensive_limited_adjustment_status="
+            f"{defensive_summary.get('defensive_limited_adjustment_status')}."
+        )
+    statuses = [
+        row.get("risk_return_status") for row in _records(risk_summary.get("summary"))
+    ]
+    return f"owner review required; risk_return_statuses={statuses}."
+
+
+def _proposal_review_conditions(proposal_id: str) -> list[str]:
+    if proposal_id in {"keep_limited_adjustment_default", "require_forward_confirmation"}:
+        return [
+            "forward win_rate_vs_no_trade >= 0.55",
+            "forward avg_relative_return >= 0",
+            "forward drawdown_delta <= 0",
+        ]
+    return ["owner review required before any policy mutation"]
+
+
+def _confirmation_targets(
+    decision_matrix: Mapping[str, Any],
+    bridge_targets: Mapping[str, Any],
+) -> dict[str, Any]:
+    bridge_by_id = {
+        _text(row.get("target") or row.get("target_id")): row
+        for row in _records(bridge_targets.get("targets"))
+    }
+    limited = bridge_by_id.get("limited_adjustment_vs_no_trade", {})
+    defensive = bridge_by_id.get("defensive_limited_adjustment_drawdown", {})
+    limited_criteria = _mapping(limited.get("success_criteria"))
+    defensive_criteria = _mapping(defensive.get("success_criteria"))
+    required_events = _int(limited.get("required_forward_events"), 10)
+    win_rate_min = _float(limited_criteria.get("win_rate_vs_no_trade_min"), 0.55)
+    avg_relative_min = _float(limited_criteria.get("avg_relative_return_min"), 0.0)
+    drawdown_max = _float(
+        limited_criteria.get("drawdown_delta_max")
+        or limited_criteria.get("avg_drawdown_delta_max"),
+        0.0,
+    )
+    targets = [
+        {
+            "target_id": "limited_adjustment_vs_no_trade",
+            "priority": "HIGH",
+            "windows": [1, 5, 10, 20],
+            "required_forward_events": required_events,
+            "success_criteria": {
+                "win_rate_vs_no_trade_min": win_rate_min,
+                "avg_relative_return_min": avg_relative_min,
+                "drawdown_delta_max": drawdown_max,
+            },
+            "current_status": "IN_PROGRESS",
+            "reason": (
+                "Backtest simulation suggests medium-horizon return benefit "
+                "but worse drawdown."
+            ),
+        },
+        {
+            "target_id": "defensive_limited_adjustment_drawdown",
+            "priority": "HIGH",
+            "windows": [5, 10, 20],
+            "required_pressure_regime_events": max(
+                5,
+                _int(defensive.get("required_forward_events"), 5),
+            ),
+            "success_criteria": {
+                "drawdown_delta_vs_no_trade_max": _float(
+                    defensive_criteria.get("drawdown_delta_vs_no_trade_max")
+                    or defensive_criteria.get("avg_drawdown_delta_max"),
+                    0.0,
+                ),
+                "win_rate_vs_no_trade_min": 0.50,
+            },
+            "current_status": "IN_PROGRESS",
+            "reason": "Defensive behavior not proven in simulation.",
+        },
+        {
+            "target_id": "consensus_target_risk",
+            "priority": "MEDIUM",
+            "windows": [5, 10, 20],
+            "required_forward_events": required_events,
+            "success_criteria": {
+                "drawdown_delta_vs_limited_adjustment_max": 0.0,
+                "turnover_delta_max": 0.0,
+            },
+            "current_status": "WATCH_ONLY",
+            "reason": "Consensus target acts as upper-bound reference, not default action.",
+        },
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_targets",
+        "targets": targets,
+        "source_proposals": [
+            row.get("proposal_id") for row in _records(decision_matrix.get("proposals"))
+        ],
+        "broker_action_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _confirmation_trigger_conditions(targets: Mapping[str, Any]) -> dict[str, Any]:
+    limited = next(
+        (
+            row
+            for row in _records(targets.get("targets"))
+            if row.get("target_id") == "limited_adjustment_vs_no_trade"
+        ),
+        {},
+    )
+    criteria = _mapping(limited.get("success_criteria"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_trigger_conditions",
+        "calibration_ready_conditions": [
+            {
+                "condition": "limited_adjustment_forward_success",
+                "requires": [
+                    f"forward_events >= {limited.get('required_forward_events', 10)}",
+                    f"win_rate_vs_no_trade >= {criteria.get('win_rate_vs_no_trade_min', 0.55)}",
+                    f"avg_relative_return >= {criteria.get('avg_relative_return_min', 0.0)}",
+                    f"drawdown_delta <= {criteria.get('drawdown_delta_max', 0.0)}",
+                ],
+            }
+        ],
+        "calibration_not_ready_conditions": [
+            {
+                "condition": "drawdown_worsening_persists",
+                "requires": ["drawdown_delta > 0"],
+                "action": "do_not_loosen_rules",
+            },
+            {
+                "condition": "defensive_status_not_proven",
+                "requires": ["pressure_regime_drawdown_delta > 0"],
+                "action": "do_not_label_defensive_variant_as_defensive",
+            },
+        ],
+        "broker_action_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _confirmation_failure_conditions() -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_confirmation_failure_conditions",
+        "failure_conditions": [
+            {
+                "target": "limited_adjustment_vs_no_trade",
+                "condition": "underperforms_no_trade",
+                "action": "tighten_or_disable_limited_adjustment_proposal",
+            },
+            {
+                "target": "defensive_limited_adjustment_drawdown",
+                "condition": "fails_to_reduce_drawdown_in_pressure_regime",
+                "action": "rename_or_remove_defensive_label",
+            },
+            {
+                "target": "consensus_target_risk",
+                "condition": "excess_drawdown_persists",
+                "action": "keep_consensus_target_as_reference_only",
+            },
+        ],
+        "broker_action_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _pp(value: float) -> float:
+    return round(value * 100, 4)
+
+
+def _ratio(numerator: float, denominator: float) -> float:
+    return round(numerator / denominator, 4) if denominator > 0 else 0.0
 
 
 def _records_as_ints(value: Any) -> list[int]:

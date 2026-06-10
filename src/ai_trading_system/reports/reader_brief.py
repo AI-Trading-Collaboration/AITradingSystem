@@ -198,6 +198,7 @@ def build_reader_brief_payload(
     etf_dynamic_v3_real_evaluation = _etf_dynamic_v3_real_evaluation_summary(report_index)
     etf_dynamic_v3_failure_attribution = _etf_dynamic_v3_failure_attribution_summary(report_index)
     etf_dynamic_v3_parameter_research = _etf_dynamic_v3_parameter_research_summary(report_index)
+    etf_dynamic_v3_sim_review = _etf_dynamic_v3_sim_review_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -341,6 +342,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_real_evaluation": etf_dynamic_v3_real_evaluation,
         "etf_dynamic_v3_failure_attribution": etf_dynamic_v3_failure_attribution,
         "etf_dynamic_v3_parameter_research": etf_dynamic_v3_parameter_research,
+        "etf_dynamic_v3_sim_review": etf_dynamic_v3_sim_review,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -616,6 +618,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_v3_real_evaluation = _mapping(payload.get("etf_dynamic_v3_real_evaluation"))
     etf_dynamic_v3_failure_attribution = _mapping(payload.get("etf_dynamic_v3_failure_attribution"))
     etf_dynamic_v3_parameter_research = _mapping(payload.get("etf_dynamic_v3_parameter_research"))
+    etf_dynamic_v3_sim_review = _mapping(payload.get("etf_dynamic_v3_sim_review"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -2038,6 +2041,97 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "forward_outcome_decision_path",
                         etf_dynamic_v3_parameter_research.get("forward_outcome_decision"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Simulation Advisory Review",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_v3_sim_review.get("availability")),
+                    ("status", etf_dynamic_v3_sim_review.get("status")),
+                    ("summary", etf_dynamic_v3_sim_review.get("summary_sentence")),
+                    ("interpretation_id", etf_dynamic_v3_sim_review.get("interpretation_id")),
+                    ("risk_return_id", etf_dynamic_v3_sim_review.get("risk_return_id")),
+                    (
+                        "defensive_validation_id",
+                        etf_dynamic_v3_sim_review.get("defensive_validation_id"),
+                    ),
+                    (
+                        "proposal_review_id",
+                        etf_dynamic_v3_sim_review.get("proposal_review_id"),
+                    ),
+                    (
+                        "confirmation_plan_id",
+                        etf_dynamic_v3_sim_review.get("confirmation_plan_id"),
+                    ),
+                    ("variant_roles", etf_dynamic_v3_sim_review.get("variant_roles")),
+                    ("key_findings", etf_dynamic_v3_sim_review.get("key_findings")),
+                    (
+                        "risk_return_statuses",
+                        etf_dynamic_v3_sim_review.get("risk_return_statuses"),
+                    ),
+                    (
+                        "defensive_status",
+                        etf_dynamic_v3_sim_review.get("defensive_status"),
+                    ),
+                    (
+                        "proposal_decisions",
+                        etf_dynamic_v3_sim_review.get("proposal_decisions"),
+                    ),
+                    (
+                        "confirmation_targets",
+                        etf_dynamic_v3_sim_review.get("confirmation_targets"),
+                    ),
+                    (
+                        "calibration_ready_conditions",
+                        etf_dynamic_v3_sim_review.get("calibration_ready_conditions"),
+                    ),
+                    (
+                        "failure_conditions",
+                        etf_dynamic_v3_sim_review.get("failure_conditions"),
+                    ),
+                    ("auto_apply", etf_dynamic_v3_sim_review.get("auto_apply")),
+                    (
+                        "owner_approval_required",
+                        etf_dynamic_v3_sim_review.get("owner_approval_required"),
+                    ),
+                    (
+                        "position_advisory_config_mutated",
+                        etf_dynamic_v3_sim_review.get("position_advisory_config_mutated"),
+                    ),
+                    ("report_label", etf_dynamic_v3_sim_review.get("report_label")),
+                    ("outcome_mode", etf_dynamic_v3_sim_review.get("outcome_mode")),
+                    (
+                        "pit_safety_status",
+                        etf_dynamic_v3_sim_review.get("pit_safety_status"),
+                    ),
+                    ("safety_status", etf_dynamic_v3_sim_review.get("safety_status")),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_sim_review.get("production_effect"),
+                    ),
+                    ("broker_action", etf_dynamic_v3_sim_review.get("broker_action")),
+                    (
+                        "sim_interpretation_path",
+                        etf_dynamic_v3_sim_review.get("sim_interpretation_path"),
+                    ),
+                    (
+                        "sim_risk_return_path",
+                        etf_dynamic_v3_sim_review.get("sim_risk_return_path"),
+                    ),
+                    (
+                        "sim_defensive_validation_path",
+                        etf_dynamic_v3_sim_review.get("sim_defensive_validation_path"),
+                    ),
+                    (
+                        "advisory_proposal_review_path",
+                        etf_dynamic_v3_sim_review.get("advisory_proposal_review_path"),
+                    ),
+                    (
+                        "forward_confirmation_plan_path",
+                        etf_dynamic_v3_sim_review.get("forward_confirmation_plan_path"),
                     ),
                 ]
             ),
@@ -5774,6 +5868,305 @@ def _etf_dynamic_v3_failure_attribution_safety_status(
         "commands_executed=false"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_v3_sim_review_summary()
+    interpretation_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_sim_interpretation"),
+        "sim_interpretation_manifest.json",
+    )
+    risk_return_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_sim_risk_return"),
+        "risk_return_manifest.json",
+    )
+    defensive_validation_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_sim_defensive_validation"),
+        "defensive_validation_manifest.json",
+    )
+    proposal_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_advisory_proposal_review"),
+        "proposal_review_manifest.json",
+    )
+    confirmation_plan_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_forward_confirmation_plan"),
+        "confirmation_plan_manifest.json",
+    )
+    interpretation = _read_optional_json(interpretation_path)
+    interpretation_matrix = _read_optional_json(
+        interpretation_path.parent / "variant_interpretation_matrix.json"
+        if interpretation_path is not None
+        else None
+    )
+    key_findings = _read_optional_json(
+        interpretation_path.parent / "key_findings.json"
+        if interpretation_path is not None
+        else None
+    )
+    risk_return = _read_optional_json(risk_return_path)
+    risk_summary = _read_optional_json(
+        risk_return_path.parent / "risk_adjusted_summary.json"
+        if risk_return_path is not None
+        else None
+    )
+    defensive_validation = _read_optional_json(defensive_validation_path)
+    defensive_summary = _read_optional_json(
+        defensive_validation_path.parent / "defensive_validation_summary.json"
+        if defensive_validation_path is not None
+        else None
+    )
+    proposal_review = _read_optional_json(proposal_review_path)
+    decision_matrix = _read_optional_json(
+        proposal_review_path.parent / "proposal_decision_matrix.json"
+        if proposal_review_path is not None
+        else None
+    )
+    confirmation_plan = _read_optional_json(confirmation_plan_path)
+    confirmation_targets = _read_optional_json(
+        confirmation_plan_path.parent / "confirmation_targets.json"
+        if confirmation_plan_path is not None
+        else None
+    )
+    trigger_conditions = _read_optional_json(
+        confirmation_plan_path.parent / "trigger_conditions.json"
+        if confirmation_plan_path is not None
+        else None
+    )
+    failure_conditions = _read_optional_json(
+        confirmation_plan_path.parent / "failure_conditions.json"
+        if confirmation_plan_path is not None
+        else None
+    )
+    source_payloads = tuple(
+        _mapping(payload)
+        for payload in (
+            interpretation,
+            interpretation_matrix,
+            key_findings,
+            risk_return,
+            risk_summary,
+            defensive_validation,
+            defensive_summary,
+            proposal_review,
+            decision_matrix,
+            confirmation_plan,
+            confirmation_targets,
+            trigger_conditions,
+            failure_conditions,
+        )
+    )
+    if not any(source_payloads):
+        return _missing_etf_dynamic_v3_sim_review_summary()
+    required_manifests = (
+        interpretation,
+        risk_return,
+        defensive_validation,
+        proposal_review,
+        confirmation_plan,
+    )
+    availability = "AVAILABLE" if all(required_manifests) else "PARTIAL"
+    variant_roles = ", ".join(
+        f"{row.get('variant')}={row.get('role')}"
+        for row in _records(_mapping(interpretation_matrix).get("variants"))
+    )
+    finding_ids = ", ".join(
+        _text(row.get("finding_id")) for row in _records(_mapping(key_findings).get("findings"))
+    )
+    risk_rows = _records(_mapping(risk_summary).get("summary"))
+    risk_statuses = ", ".join(
+        f"{row.get('variant')}={row.get('risk_return_status')}" for row in risk_rows
+    )
+    proposal_rows = _records(_mapping(decision_matrix).get("proposals"))
+    proposal_decisions = ", ".join(
+        f"{row.get('proposal_id')}={row.get('decision')}" for row in proposal_rows
+    )
+    target_rows = _records(_mapping(confirmation_targets).get("targets"))
+    target_ids = ", ".join(_text(row.get("target_id")) for row in target_rows)
+    ready_conditions = ", ".join(
+        _text(row.get("condition"))
+        for row in _records(_mapping(trigger_conditions).get("calibration_ready_conditions"))
+    )
+    failure_condition_list = ", ".join(
+        f"{row.get('target')}={row.get('condition')}"
+        for row in _records(_mapping(failure_conditions).get("failure_conditions"))
+    )
+    auto_apply = any(
+        payload.get("auto_apply") is True or payload.get("auto_policy_apply") is True
+        for payload in source_payloads
+    ) or any(row.get("auto_apply") is True for row in proposal_rows)
+    owner_approval_required = (
+        True
+        if not proposal_rows
+        else any(row.get("owner_approval_required") is True for row in proposal_rows)
+    )
+    position_advisory_config_mutated = (
+        _mapping(decision_matrix).get("position_advisory_config_mutated") is True
+    )
+    safety_ok = all(_etf_dynamic_v3_sim_review_payload_safe(payload) for payload in source_payloads)
+    safety_ok = safety_ok and not auto_apply and not position_advisory_config_mutated
+    status = _text(
+        _mapping(confirmation_plan).get("status")
+        or _mapping(proposal_review).get("status")
+        or _mapping(defensive_validation).get("status")
+        or _mapping(risk_return).get("status")
+        or _mapping(interpretation).get("status"),
+        "MISSING",
+    )
+    defensive_status = _text(
+        _mapping(defensive_summary).get("defensive_limited_adjustment_status"),
+        "MISSING",
+    )
+    report_label = _text(
+        _mapping(confirmation_plan).get("report_label")
+        or _mapping(proposal_review).get("report_label")
+        or _mapping(interpretation).get("report_label"),
+        "MISSING",
+    )
+    outcome_mode = _text(
+        _mapping(confirmation_plan).get("outcome_mode")
+        or _mapping(proposal_review).get("outcome_mode")
+        or _mapping(interpretation).get("outcome_mode"),
+        "MISSING",
+    )
+    pit_safety_status = _text(
+        _mapping(confirmation_plan).get("pit_safety_status")
+        or _mapping(proposal_review).get("pit_safety_status")
+        or _mapping(interpretation).get("pit_safety_status"),
+        "MISSING",
+    )
+    return {
+        "availability": availability,
+        "status": status,
+        "summary_sentence": (
+            "Dynamic Rescue Simulation Advisory Review: "
+            "interpretation="
+            f"{_text(_mapping(interpretation).get('interpretation_id'), 'MISSING')}; "
+            f"risk_return={_text(_mapping(risk_return).get('risk_return_id'), 'MISSING')}; "
+            "defensive_validation="
+            f"{_text(_mapping(defensive_validation).get('defensive_validation_id'), 'MISSING')}; "
+            "proposal_review="
+            f"{_text(_mapping(proposal_review).get('proposal_review_id'), 'MISSING')}; "
+            "confirmation_plan="
+            f"{_text(_mapping(confirmation_plan).get('confirmation_plan_id'), 'MISSING')}; "
+            f"defensive_status={defensive_status}; auto_apply={auto_apply}; "
+            "production_effect=none."
+        ),
+        "interpretation_id": _text(_mapping(interpretation).get("interpretation_id"), "MISSING"),
+        "risk_return_id": _text(_mapping(risk_return).get("risk_return_id"), "MISSING"),
+        "defensive_validation_id": _text(
+            _mapping(defensive_validation).get("defensive_validation_id"),
+            "MISSING",
+        ),
+        "proposal_review_id": _text(
+            _mapping(proposal_review).get("proposal_review_id"),
+            "MISSING",
+        ),
+        "confirmation_plan_id": _text(
+            _mapping(confirmation_plan).get("confirmation_plan_id"),
+            "MISSING",
+        ),
+        "outcome_id": _text(_mapping(interpretation).get("outcome_id"), "MISSING"),
+        "calibration_id": _text(_mapping(interpretation).get("calibration_id"), "MISSING"),
+        "bridge_id": _text(_mapping(confirmation_plan).get("bridge_id"), "MISSING"),
+        "variant_roles": variant_roles or "MISSING",
+        "key_findings": finding_ids or "MISSING",
+        "risk_return_statuses": risk_statuses or "MISSING",
+        "defensive_status": defensive_status,
+        "defensive_recommendation": _text(
+            _mapping(defensive_summary).get("recommendation"),
+            "MISSING",
+        ),
+        "proposal_decisions": proposal_decisions or "MISSING",
+        "confirmation_targets": target_ids or "MISSING",
+        "calibration_ready_conditions": ready_conditions or "MISSING",
+        "failure_conditions": failure_condition_list or "MISSING",
+        "auto_apply": auto_apply,
+        "owner_approval_required": owner_approval_required,
+        "position_advisory_config_mutated": position_advisory_config_mutated,
+        "report_label": report_label,
+        "outcome_mode": outcome_mode,
+        "pit_safety_status": pit_safety_status,
+        "safety_status": (
+            "BACKTEST_SIMULATION_NOT_PIT; production_effect=none; broker_action=none; "
+            "auto_policy_apply=false; position_advisory_config_mutated=false"
+            if safety_ok
+            else "SAFETY_REVIEW_REQUIRED"
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "sim_interpretation_path": _text(interpretation_path),
+        "sim_risk_return_path": _text(risk_return_path),
+        "sim_defensive_validation_path": _text(defensive_validation_path),
+        "advisory_proposal_review_path": _text(proposal_review_path),
+        "forward_confirmation_plan_path": _text(confirmation_plan_path),
+        "detail_report": _text(
+            confirmation_plan_path or proposal_review_path or interpretation_path
+        ),
+    }
+
+
+def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": (
+            "Dynamic Rescue Simulation Advisory Review: no latest interpretation, "
+            "risk-return, defensive validation, proposal review, or confirmation plan found."
+        ),
+        "interpretation_id": "MISSING",
+        "risk_return_id": "MISSING",
+        "defensive_validation_id": "MISSING",
+        "proposal_review_id": "MISSING",
+        "confirmation_plan_id": "MISSING",
+        "outcome_id": "MISSING",
+        "calibration_id": "MISSING",
+        "bridge_id": "MISSING",
+        "variant_roles": "MISSING",
+        "key_findings": "MISSING",
+        "risk_return_statuses": "MISSING",
+        "defensive_status": "MISSING",
+        "defensive_recommendation": "MISSING",
+        "proposal_decisions": "MISSING",
+        "confirmation_targets": "MISSING",
+        "calibration_ready_conditions": "MISSING",
+        "failure_conditions": "MISSING",
+        "auto_apply": False,
+        "owner_approval_required": True,
+        "position_advisory_config_mutated": False,
+        "report_label": "MISSING",
+        "outcome_mode": "MISSING",
+        "pit_safety_status": "MISSING",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "sim_interpretation_path": "",
+        "sim_risk_return_path": "",
+        "sim_defensive_validation_path": "",
+        "advisory_proposal_review_path": "",
+        "forward_confirmation_plan_path": "",
+        "detail_report": "",
+        "limitation": (
+            "Reader Brief does not run simulation interpretation or proposal review CLIs; "
+            "it only reads latest report registry artifacts."
+        ),
+    }
+
+
+def _etf_dynamic_v3_sim_review_payload_safe(payload: Mapping[str, Any]) -> bool:
+    if not payload:
+        return True
+    return (
+        _etf_dynamic_v3_extra_payload_safe(payload)
+        and payload.get("broker_action_allowed") is not True
+        and payload.get("broker_action_taken") is not True
+        and payload.get("auto_policy_apply") is not True
+        and payload.get("auto_apply") is not True
+        and payload.get("position_advisory_config_mutated") is not True
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
     )
 
 

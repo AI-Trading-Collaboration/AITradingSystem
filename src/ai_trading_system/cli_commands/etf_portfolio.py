@@ -242,6 +242,7 @@ from ai_trading_system.etf_portfolio.dynamic_v2_review import (
     write_dynamic_v2_review_validation_report,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
+    DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
     DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
     DEFAULT_BACKTEST_SIM_CONFIG_PATH,
     DEFAULT_BACKTEST_SIM_EVENT_DIR,
@@ -251,6 +252,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     DEFAULT_BACKTEST_SIM_REGIME_DIR,
     DEFAULT_BACKTEST_SIM_SENSITIVITY_DIR,
     DEFAULT_BACKTEST_SIM_VARIANT_DIR,
+    DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+    DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+    DEFAULT_SIM_INTERPRETATION_DIR,
+    DEFAULT_SIM_RISK_RETURN_DIR,
+    advisory_proposal_review_report_payload,
     backtest_sim_calibration_report_payload,
     backtest_sim_event_report_payload,
     backtest_sim_forward_bridge_report_payload,
@@ -259,14 +265,24 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     backtest_sim_regime_report_payload,
     backtest_sim_sensitivity_report_payload,
     backtest_sim_variant_report_payload,
+    forward_confirmation_plan_report_payload,
     generate_backtest_sim_events,
     generate_backtest_sim_variants,
+    run_advisory_proposal_review,
     run_backtest_sim_calibration_pack,
     run_backtest_sim_forward_bridge,
     run_backtest_sim_outcome,
     run_backtest_sim_paper,
     run_backtest_sim_regime_review,
     run_backtest_sim_sensitivity,
+    run_forward_confirmation_plan,
+    run_sim_defensive_validation,
+    run_sim_interpretation,
+    run_sim_risk_return,
+    sim_defensive_validation_report_payload,
+    sim_interpretation_report_payload,
+    sim_risk_return_report_payload,
+    validate_advisory_proposal_review_artifact,
     validate_backtest_sim_calibration_artifact,
     validate_backtest_sim_events_artifact,
     validate_backtest_sim_forward_bridge_artifact,
@@ -276,6 +292,10 @@ from ai_trading_system.etf_portfolio.dynamic_v3_backtest_simulation import (
     validate_backtest_sim_sensitivity_artifact,
     validate_backtest_sim_variants_artifact,
     validate_backtest_simulation_config,
+    validate_forward_confirmation_plan_artifact,
+    validate_sim_defensive_validation_artifact,
+    validate_sim_interpretation_artifact,
+    validate_sim_risk_return_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     DEFAULT_DYNAMIC_V3_FAILURE_ATTRIBUTION_POLICY_CONFIG_PATH,
@@ -1258,6 +1278,26 @@ dynamic_v3_backtest_sim_app = typer.Typer(
     help="Dynamic v3 rescue backtest simulation advisory workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_sim_interpretation_app = typer.Typer(
+    help="Dynamic v3 simulation result interpretation pack。",
+    no_args_is_help=True,
+)
+dynamic_v3_sim_risk_return_app = typer.Typer(
+    help="Dynamic v3 simulation risk-return tradeoff review。",
+    no_args_is_help=True,
+)
+dynamic_v3_sim_defensive_validation_app = typer.Typer(
+    help="Dynamic v3 simulation defensive validation review。",
+    no_args_is_help=True,
+)
+dynamic_v3_advisory_proposal_review_app = typer.Typer(
+    help="Dynamic v3 advisory proposal review pack。",
+    no_args_is_help=True,
+)
+dynamic_v3_forward_confirmation_plan_app = typer.Typer(
+    help="Dynamic v3 forward confirmation plan update。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_review_app = typer.Typer(
     help="Dynamic v3 rescue position review workflow。",
     no_args_is_help=True,
@@ -1386,6 +1426,20 @@ dynamic_v3_rescue_app.add_typer(
     name="forward-outcome-decision",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_backtest_sim_app, name="backtest-sim")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_sim_interpretation_app, name="sim-interpretation")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_sim_risk_return_app, name="sim-risk-return")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_sim_defensive_validation_app,
+    name="sim-defensive-validation",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_advisory_proposal_review_app,
+    name="advisory-proposal-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_forward_confirmation_plan_app,
+    name="forward-confirmation-plan",
+)
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_review_app, name="position-review")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
@@ -10567,6 +10621,493 @@ def dynamic_v3_validate_backtest_sim_forward_bridge_command(
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("broker_action_taken=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sim_interpretation_app.command("run")
+def dynamic_v3_sim_interpretation_run_command(
+    outcome_id: Annotated[str, typer.Option("--outcome-id", help="simulation outcome id。")],
+    calibration_id: Annotated[
+        str,
+        typer.Option("--calibration-id", help="simulation calibration pack id。"),
+    ],
+    bridge_id: Annotated[str, typer.Option("--bridge-id", help="simulation bridge id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation interpretation artifact root。"),
+    ] = DEFAULT_SIM_INTERPRETATION_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    calibration_dir: Annotated[
+        Path,
+        typer.Option("--calibration-dir", help="backtest simulation calibration root。"),
+    ] = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+    bridge_dir: Annotated[
+        Path,
+        typer.Option("--bridge-dir", help="backtest simulation bridge root。"),
+    ] = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+) -> None:
+    """生成 TRADING-169 simulation interpretation pack。"""
+    result = run_sim_interpretation(
+        outcome_id=outcome_id,
+        calibration_id=calibration_id,
+        bridge_id=bridge_id,
+        output_dir=output_dir,
+        outcome_dir=outcome_dir,
+        calibration_dir=calibration_dir,
+        bridge_dir=bridge_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"interpretation_id={result['interpretation_id']}")
+    typer.echo(f"interpretation_dir={result['interpretation_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"source_best_variant={manifest['source_best_variant']}")
+    typer.echo("report_label=BACKTEST_SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_sim_interpretation_app.command("report")
+def dynamic_v3_sim_interpretation_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest simulation interpretation。"),
+    ] = False,
+    interpretation_id: Annotated[
+        str | None,
+        typer.Option("--interpretation-id", help="interpretation id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation interpretation artifact root。"),
+    ] = DEFAULT_SIM_INTERPRETATION_DIR,
+) -> None:
+    """展示 TRADING-169 interpretation 摘要。"""
+    payload = sim_interpretation_report_payload(
+        interpretation_id=interpretation_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    matrix = payload["variant_interpretation_matrix"]
+    typer.echo(f"interpretation_id={payload['interpretation_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant_count={len(matrix['variants'])}")
+    typer.echo(f"report_path={payload['sim_interpretation_report_path']}")
+    typer.echo("report_label=BACKTEST_SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-sim-interpretation")
+def dynamic_v3_validate_sim_interpretation_command(
+    interpretation_id: Annotated[
+        str,
+        typer.Option("--interpretation-id", help="interpretation id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation interpretation artifact root。"),
+    ] = DEFAULT_SIM_INTERPRETATION_DIR,
+) -> None:
+    """校验 TRADING-169 simulation interpretation artifact。"""
+    payload = validate_sim_interpretation_artifact(
+        interpretation_id=interpretation_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("report_label=BACKTEST_SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sim_risk_return_app.command("run")
+def dynamic_v3_sim_risk_return_run_command(
+    outcome_id: Annotated[str, typer.Option("--outcome-id", help="simulation outcome id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation risk-return artifact root。"),
+    ] = DEFAULT_SIM_RISK_RETURN_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+) -> None:
+    """生成 TRADING-170 simulation risk-return review。"""
+    result = run_sim_risk_return(
+        outcome_id=outcome_id,
+        output_dir=output_dir,
+        outcome_dir=outcome_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"risk_return_id={result['risk_return_id']}")
+    typer.echo(f"risk_return_dir={result['risk_return_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"row_count={len(result['active_variant_tradeoff_table'])}")
+    typer.echo("report_label=BACKTEST_SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_sim_risk_return_app.command("report")
+def dynamic_v3_sim_risk_return_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest simulation risk-return。"),
+    ] = False,
+    risk_return_id: Annotated[
+        str | None,
+        typer.Option("--risk-return-id", "--risk_return_id", help="risk-return id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation risk-return artifact root。"),
+    ] = DEFAULT_SIM_RISK_RETURN_DIR,
+) -> None:
+    """展示 TRADING-170 risk-return 摘要。"""
+    payload = sim_risk_return_report_payload(
+        risk_return_id=risk_return_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["risk_adjusted_summary"]
+    typer.echo(f"risk_return_id={payload['risk_return_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"summary_count={len(summary['summary'])}")
+    typer.echo(f"report_path={payload['risk_return_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-sim-risk-return")
+def dynamic_v3_validate_sim_risk_return_command(
+    risk_return_id: Annotated[
+        str,
+        typer.Option("--risk-return-id", "--risk_return_id", help="risk-return id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation risk-return artifact root。"),
+    ] = DEFAULT_SIM_RISK_RETURN_DIR,
+) -> None:
+    """校验 TRADING-170 simulation risk-return artifact。"""
+    payload = validate_sim_risk_return_artifact(
+        risk_return_id=risk_return_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sim_defensive_validation_app.command("run")
+def dynamic_v3_sim_defensive_validation_run_command(
+    outcome_id: Annotated[str, typer.Option("--outcome-id", help="simulation outcome id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation defensive validation artifact root。"),
+    ] = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+    outcome_dir: Annotated[
+        Path,
+        typer.Option("--outcome-dir", help="backtest simulation outcome artifact root。"),
+    ] = DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+) -> None:
+    """生成 TRADING-171 defensive validation。"""
+    result = run_sim_defensive_validation(
+        outcome_id=outcome_id,
+        output_dir=output_dir,
+        outcome_dir=outcome_dir,
+    )
+    summary = result["defensive_validation_summary"]
+    typer.echo(f"defensive_validation_id={result['defensive_validation_id']}")
+    typer.echo(f"defensive_validation_dir={result['defensive_validation_dir']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(
+        "defensive_limited_adjustment_status="
+        f"{summary['defensive_limited_adjustment_status']}"
+    )
+    typer.echo("report_label=BACKTEST_SIMULATION_NOT_PIT")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_sim_defensive_validation_app.command("report")
+def dynamic_v3_sim_defensive_validation_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest defensive validation。"),
+    ] = False,
+    defensive_validation_id: Annotated[
+        str | None,
+        typer.Option(
+            "--defensive-validation-id",
+            "--defensive_validation_id",
+            help="defensive validation id。",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation defensive validation artifact root。"),
+    ] = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+) -> None:
+    """展示 TRADING-171 defensive validation 摘要。"""
+    payload = sim_defensive_validation_report_payload(
+        defensive_validation_id=defensive_validation_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["defensive_validation_summary"]
+    typer.echo(f"defensive_validation_id={payload['defensive_validation_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(
+        "defensive_limited_adjustment_status="
+        f"{summary['defensive_limited_adjustment_status']}"
+    )
+    typer.echo(f"report_path={payload['defensive_validation_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-sim-defensive-validation")
+def dynamic_v3_validate_sim_defensive_validation_command(
+    defensive_validation_id: Annotated[
+        str,
+        typer.Option(
+            "--defensive-validation-id",
+            "--defensive_validation_id",
+            help="defensive validation id。",
+        ),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="simulation defensive validation artifact root。"),
+    ] = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+) -> None:
+    """校验 TRADING-171 defensive validation artifact。"""
+    payload = validate_sim_defensive_validation_artifact(
+        defensive_validation_id=defensive_validation_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_advisory_proposal_review_app.command("run")
+def dynamic_v3_advisory_proposal_review_run_command(
+    interpretation_id: Annotated[
+        str,
+        typer.Option("--interpretation-id", help="interpretation id。"),
+    ],
+    risk_return_id: Annotated[
+        str,
+        typer.Option("--risk-return-id", "--risk_return_id", help="risk-return id。"),
+    ],
+    defensive_validation_id: Annotated[
+        str,
+        typer.Option(
+            "--defensive-validation-id",
+            "--defensive_validation_id",
+            help="defensive validation id。",
+        ),
+    ],
+    calibration_id: Annotated[
+        str,
+        typer.Option("--calibration-id", help="simulation calibration pack id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory proposal review artifact root。"),
+    ] = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+    interpretation_dir: Annotated[
+        Path,
+        typer.Option("--interpretation-dir", help="simulation interpretation root。"),
+    ] = DEFAULT_SIM_INTERPRETATION_DIR,
+    risk_return_dir: Annotated[
+        Path,
+        typer.Option("--risk-return-dir", help="simulation risk-return root。"),
+    ] = DEFAULT_SIM_RISK_RETURN_DIR,
+    defensive_validation_dir: Annotated[
+        Path,
+        typer.Option("--defensive-validation-dir", help="defensive validation root。"),
+    ] = DEFAULT_SIM_DEFENSIVE_VALIDATION_DIR,
+    calibration_dir: Annotated[
+        Path,
+        typer.Option("--calibration-dir", help="backtest simulation calibration root。"),
+    ] = DEFAULT_BACKTEST_SIM_CALIBRATION_DIR,
+) -> None:
+    """生成 TRADING-172 advisory proposal review。"""
+    result = run_advisory_proposal_review(
+        interpretation_id=interpretation_id,
+        risk_return_id=risk_return_id,
+        defensive_validation_id=defensive_validation_id,
+        calibration_id=calibration_id,
+        output_dir=output_dir,
+        interpretation_dir=interpretation_dir,
+        risk_return_dir=risk_return_dir,
+        defensive_validation_dir=defensive_validation_dir,
+        calibration_dir=calibration_dir,
+    )
+    manifest = result["manifest"]
+    matrix = result["proposal_decision_matrix"]
+    typer.echo(f"proposal_review_id={result['proposal_review_id']}")
+    typer.echo(f"proposal_review_dir={result['proposal_review_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"proposal_count={len(matrix['proposals'])}")
+    typer.echo(f"auto_apply={manifest['auto_apply']}")
+    typer.echo(f"owner_approval_required={manifest['owner_approval_required']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_advisory_proposal_review_app.command("report")
+def dynamic_v3_advisory_proposal_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest advisory proposal review。"),
+    ] = False,
+    proposal_review_id: Annotated[
+        str | None,
+        typer.Option("--proposal-review-id", "--proposal_review_id", help="proposal review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory proposal review artifact root。"),
+    ] = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-172 proposal review 摘要。"""
+    payload = advisory_proposal_review_report_payload(
+        proposal_review_id=proposal_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    matrix = payload["proposal_decision_matrix"]
+    typer.echo(f"proposal_review_id={payload['proposal_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"proposal_count={len(matrix['proposals'])}")
+    typer.echo(f"auto_apply={payload['auto_apply']}")
+    typer.echo(f"report_path={payload['advisory_proposal_review_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-advisory-proposal-review")
+def dynamic_v3_validate_advisory_proposal_review_command(
+    proposal_review_id: Annotated[
+        str,
+        typer.Option("--proposal-review-id", "--proposal_review_id", help="proposal review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="advisory proposal review artifact root。"),
+    ] = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-172 advisory proposal review artifact。"""
+    payload = validate_advisory_proposal_review_artifact(
+        proposal_review_id=proposal_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_forward_confirmation_plan_app.command("run")
+def dynamic_v3_forward_confirmation_plan_run_command(
+    proposal_review_id: Annotated[
+        str,
+        typer.Option("--proposal-review-id", "--proposal_review_id", help="proposal review id。"),
+    ],
+    bridge_id: Annotated[str, typer.Option("--bridge-id", help="simulation bridge id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="forward confirmation plan artifact root。"),
+    ] = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+    proposal_review_dir: Annotated[
+        Path,
+        typer.Option("--proposal-review-dir", help="advisory proposal review root。"),
+    ] = DEFAULT_ADVISORY_PROPOSAL_REVIEW_DIR,
+    bridge_dir: Annotated[
+        Path,
+        typer.Option("--bridge-dir", help="backtest simulation bridge root。"),
+    ] = DEFAULT_BACKTEST_SIM_FORWARD_BRIDGE_DIR,
+) -> None:
+    """生成 TRADING-173 forward confirmation plan。"""
+    result = run_forward_confirmation_plan(
+        proposal_review_id=proposal_review_id,
+        bridge_id=bridge_id,
+        output_dir=output_dir,
+        proposal_review_dir=proposal_review_dir,
+        bridge_dir=bridge_dir,
+    )
+    manifest = result["manifest"]
+    targets = result["confirmation_targets"]
+    typer.echo(f"confirmation_plan_id={result['confirmation_plan_id']}")
+    typer.echo(f"confirmation_plan_dir={result['confirmation_plan_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"target_count={len(targets['targets'])}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_forward_confirmation_plan_app.command("report")
+def dynamic_v3_forward_confirmation_plan_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest forward confirmation plan。"),
+    ] = False,
+    confirmation_plan_id: Annotated[
+        str | None,
+        typer.Option(
+            "--confirmation-plan-id",
+            "--confirmation_plan_id",
+            help="confirmation plan id。",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="forward confirmation plan artifact root。"),
+    ] = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+) -> None:
+    """展示 TRADING-173 forward confirmation plan 摘要。"""
+    payload = forward_confirmation_plan_report_payload(
+        confirmation_plan_id=confirmation_plan_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    targets = payload["confirmation_targets"]
+    typer.echo(f"confirmation_plan_id={payload['confirmation_plan_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"target_count={len(targets['targets'])}")
+    typer.echo(f"report_path={payload['forward_confirmation_plan_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-forward-confirmation-plan")
+def dynamic_v3_validate_forward_confirmation_plan_command(
+    confirmation_plan_id: Annotated[
+        str,
+        typer.Option(
+            "--confirmation-plan-id",
+            "--confirmation_plan_id",
+            help="confirmation plan id。",
+        ),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="forward confirmation plan artifact root。"),
+    ] = DEFAULT_FORWARD_CONFIRMATION_PLAN_DIR,
+) -> None:
+    """校验 TRADING-173 forward confirmation plan artifact。"""
+    payload = validate_forward_confirmation_plan_artifact(
+        confirmation_plan_id=confirmation_plan_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)

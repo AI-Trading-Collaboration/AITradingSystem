@@ -2845,6 +2845,115 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_sim_interpretation
+    title: ETF Dynamic v3 Simulation Interpretation
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue sim-interpretation report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/sim_interpretation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/variant_interpretation_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/key_findings.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation/*/sim_interpretation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-169 translates backtest simulation raw metrics into variant
+      role/risk/usage interpretation while preserving BACKTEST_SIMULATION_NOT_PIT.
+    owner_action: review_variant_interpretation_before_any_rule_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_sim_risk_return
+    title: ETF Dynamic v3 Simulation Risk-Return Review
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue sim-risk-return report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/risk_return_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/active_variant_tradeoff_table.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/risk_adjusted_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_risk_return/*/risk_return_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-170 separates medium-horizon simulated return improvement from
+      drawdown/turnover cost before any advisory rule discussion.
+    owner_action: review_risk_return_tradeoff_before_interpreting_active_variants
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_sim_defensive_validation
+    title: ETF Dynamic v3 Simulation Defensive Validation
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue sim-defensive-validation report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_validation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_regime_matrix.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_failure_cases.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_validation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sim_defensive_validation/*/defensive_validation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-171 checks whether defensive_limited_adjustment is actually
+      defensive in pressure regimes instead of relying on overall best ranking.
+    owner_action: review_pressure_regime_defensive_validation_before_using_defensive_label
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_advisory_proposal_review
+    title: ETF Dynamic v3 Advisory Proposal Review
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue advisory-proposal-review report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/proposal_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/proposal_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/owner_approval_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/advisory_proposal_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/advisory_proposal_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-172 converts simulation calibration proposals into manual review
+      decisions with auto_apply=false and owner_approval_required=true.
+    owner_action: review_advisory_proposal_matrix_before_any_manual_policy_edit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_forward_confirmation_plan
+    title: ETF Dynamic v3 Forward Confirmation Plan
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue forward-confirmation-plan report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/confirmation_plan_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/confirmation_targets.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/trigger_conditions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/failure_conditions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/forward_confirmation_plan_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_confirmation_plan/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-173 turns manual proposal review into forward success and failure
+      conditions without production, policy, or broker effects.
+    owner_action: review_forward_confirmation_plan_before_weekly_advisory_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

@@ -43,6 +43,11 @@ def prepare_backtest_sim_environment(tmp_path: Path, monkeypatch: Any) -> dict[s
         "sensitivity_dir": tmp_path / "backtest_sim_sensitivity",
         "calibration_dir": tmp_path / "backtest_sim_calibration",
         "bridge_dir": tmp_path / "backtest_sim_forward_bridge",
+        "interpretation_dir": tmp_path / "sim_interpretation",
+        "risk_return_dir": tmp_path / "sim_risk_return",
+        "defensive_validation_dir": tmp_path / "sim_defensive_validation",
+        "proposal_review_dir": tmp_path / "advisory_proposal_review",
+        "confirmation_plan_dir": tmp_path / "forward_confirmation_plan",
     }
 
 
@@ -163,6 +168,101 @@ def run_forward_bridge_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, An
         generated_at=datetime(2026, 7, 31, 9, tzinfo=UTC),
     )
     return {**fixture, "bridge": bridge}
+
+
+def run_sim_interpretation_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
+    fixture = run_forward_bridge_fixture(tmp_path, monkeypatch)
+    interpretation = sim.run_sim_interpretation(
+        outcome_id=fixture["outcome"]["sim_outcome_id"],
+        calibration_id=fixture["calibration"]["calibration_pack_id"],
+        bridge_id=fixture["bridge"]["bridge_id"],
+        outcome_dir=fixture["outcome_dir"],
+        calibration_dir=fixture["calibration_dir"],
+        bridge_dir=fixture["bridge_dir"],
+        output_dir=fixture["interpretation_dir"],
+        generated_at=datetime(2026, 7, 31, 10, tzinfo=UTC),
+    )
+    return {**fixture, "interpretation": interpretation}
+
+
+def run_sim_risk_return_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
+    fixture = run_forward_bridge_fixture(tmp_path, monkeypatch)
+    risk_return = sim.run_sim_risk_return(
+        outcome_id=fixture["outcome"]["sim_outcome_id"],
+        outcome_dir=fixture["outcome_dir"],
+        output_dir=fixture["risk_return_dir"],
+        generated_at=datetime(2026, 7, 31, 11, tzinfo=UTC),
+    )
+    return {**fixture, "risk_return": risk_return}
+
+
+def run_sim_defensive_validation_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
+    fixture = run_forward_bridge_fixture(tmp_path, monkeypatch)
+    defensive_validation = sim.run_sim_defensive_validation(
+        outcome_id=fixture["outcome"]["sim_outcome_id"],
+        outcome_dir=fixture["outcome_dir"],
+        output_dir=fixture["defensive_validation_dir"],
+        generated_at=datetime(2026, 7, 31, 12, tzinfo=UTC),
+    )
+    return {**fixture, "defensive_validation": defensive_validation}
+
+
+def run_advisory_proposal_review_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
+    fixture = run_forward_bridge_fixture(tmp_path, monkeypatch)
+    interpretation = sim.run_sim_interpretation(
+        outcome_id=fixture["outcome"]["sim_outcome_id"],
+        calibration_id=fixture["calibration"]["calibration_pack_id"],
+        bridge_id=fixture["bridge"]["bridge_id"],
+        outcome_dir=fixture["outcome_dir"],
+        calibration_dir=fixture["calibration_dir"],
+        bridge_dir=fixture["bridge_dir"],
+        output_dir=fixture["interpretation_dir"],
+        generated_at=datetime(2026, 7, 31, 10, tzinfo=UTC),
+    )
+    risk_return = sim.run_sim_risk_return(
+        outcome_id=fixture["outcome"]["sim_outcome_id"],
+        outcome_dir=fixture["outcome_dir"],
+        output_dir=fixture["risk_return_dir"],
+        generated_at=datetime(2026, 7, 31, 11, tzinfo=UTC),
+    )
+    defensive_validation = sim.run_sim_defensive_validation(
+        outcome_id=fixture["outcome"]["sim_outcome_id"],
+        outcome_dir=fixture["outcome_dir"],
+        output_dir=fixture["defensive_validation_dir"],
+        generated_at=datetime(2026, 7, 31, 12, tzinfo=UTC),
+    )
+    proposal_review = sim.run_advisory_proposal_review(
+        interpretation_id=interpretation["interpretation_id"],
+        risk_return_id=risk_return["risk_return_id"],
+        defensive_validation_id=defensive_validation["defensive_validation_id"],
+        calibration_id=fixture["calibration"]["calibration_pack_id"],
+        interpretation_dir=fixture["interpretation_dir"],
+        risk_return_dir=fixture["risk_return_dir"],
+        defensive_validation_dir=fixture["defensive_validation_dir"],
+        calibration_dir=fixture["calibration_dir"],
+        output_dir=fixture["proposal_review_dir"],
+        generated_at=datetime(2026, 7, 31, 13, tzinfo=UTC),
+    )
+    return {
+        **fixture,
+        "interpretation": interpretation,
+        "risk_return": risk_return,
+        "defensive_validation": defensive_validation,
+        "proposal_review": proposal_review,
+    }
+
+
+def run_forward_confirmation_plan_fixture(tmp_path: Path, monkeypatch: Any) -> dict[str, Any]:
+    fixture = run_advisory_proposal_review_fixture(tmp_path, monkeypatch)
+    confirmation_plan = sim.run_forward_confirmation_plan(
+        proposal_review_id=fixture["proposal_review"]["proposal_review_id"],
+        bridge_id=fixture["bridge"]["bridge_id"],
+        proposal_review_dir=fixture["proposal_review_dir"],
+        bridge_dir=fixture["bridge_dir"],
+        output_dir=fixture["confirmation_plan_dir"],
+        generated_at=datetime(2026, 7, 31, 14, tzinfo=UTC),
+    )
+    return {**fixture, "confirmation_plan": confirmation_plan}
 
 
 def _write_config(

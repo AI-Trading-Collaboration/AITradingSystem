@@ -895,6 +895,23 @@ CLI 包括 `backtest-sim config-validate`、`event-generate/report`、
 `production_effect=none`。该链路评估 current shadow shortlist/manual advisory 规则，
 不是 PIT replay，不是 production evidence；calibration pack 只生成 owner review
 proposal，forward bridge 只生成 confirmation targets 和 Reader Brief section。
+TRADING-169 到 TRADING-173 在上述 simulation 结果之上新增 interpretation / advisory
+review 层。CLI 包括 `sim-interpretation run/report`、`sim-risk-return run/report`、
+`sim-defensive-validation run/report`、`advisory-proposal-review run/report` 和
+`forward-confirmation-plan run/report`，验证入口为 `validate-sim-interpretation`、
+`validate-sim-risk-return`、`validate-sim-defensive-validation`、
+`validate-advisory-proposal-review` 和 `validate-forward-confirmation-plan`。Artifacts
+写入
+`reports/etf_portfolio/dynamic_v3_rescue/sim_interpretation|sim_risk_return|sim_defensive_validation|advisory_proposal_review|forward_confirmation_plan/`。
+Interpretation pack 解释每个 variant 的 role、return/risk profile 和 recommended
+usage；risk-return review 把 limited / defensive / consensus 相对 `no_trade` 的收益、
+drawdown 和 turnover 代价拆开；defensive validation 明确
+`defensive_limited_adjustment` 不能因 overall best 自动视为防守有效；proposal review
+固定 `auto_apply=false`、`owner_approval_required=true`；forward confirmation plan
+只生成后续 tracking 的 success / failure 条件。该阶段继续固定
+`BACKTEST_SIMULATION_NOT_PIT`、`production_effect=none`、no broker、no production、no
+official target weight mutation、no `position_advisory_v1.yaml` mutation 和 no policy auto
+apply。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
