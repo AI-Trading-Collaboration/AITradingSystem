@@ -3173,6 +3173,117 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_pressure_tag_diagnosis
+    title: ETF Dynamic v3 Pressure Tag Diagnosis
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue pressure-tag-diagnosis report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/pressure_tag_diagnosis_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/threshold_hit_distribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/near_miss_windows.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/outcome_mapping_diagnostics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis/*/pressure_tag_diagnosis_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-184 diagnoses why pressure-regime-tag produced zero defensive
+      validation relevant outcomes and separates threshold, near-miss, mapping
+      and missing simulation/replay scan causes without changing policy.
+    owner_action: review_pressure_mapping_diagnosis_before_threshold_or_label_changes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_pressure_outcome_backfill
+    title: ETF Dynamic v3 Pressure Outcome Backfill
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue pressure-outcome-backfill report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_outcome_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_source_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_outcome_backfill/*/pressure_backfill_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-185 backfills pressure outcomes from forward, historical replay
+      and backtest simulation while preserving source mode and evidence quality.
+    owner_action: review_source_mode_mix_before_interpreting_defensive_evidence
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_pressure_compare
+    title: ETF Dynamic v3 Defensive Pressure Compare
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue defensive-pressure-compare report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pressure_compare_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/pressure_variant_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pairwise_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pressure_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_pressure_compare/*/defensive_pressure_compare_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-186 compares defensive_limited_adjustment, limited_adjustment,
+      consensus_target and no_trade in pressure windows while distinguishing
+      simulation evidence from forward evidence.
+    owner_action: review_defensive_pressure_status_before_any_rule_approval_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_rule_review
+    title: ETF Dynamic v3 Defensive Rule Review
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: project_owner
+    command: aits etf dynamic-v3-rescue defensive-rule-review report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_owner_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/defensive_rule_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_rule_review/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-187 generates the owner-facing defensive rule status review and
+      keeps rule_approval_allowed=false and auto_apply=false by default.
+    owner_action: review_defensive_name_and_observe_only_status
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weekly_ops_decision_update
+    title: ETF Dynamic v3 Weekly Ops Decision Update
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weekly-ops-decision-update report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_decision_update_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/updated_weekly_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_next_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/weekly_ops_decision_update_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_ops_decision_update/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-188 connects pressure backfill and defensive rule review back to
+      weekly operations decisions while keeping policy_change_allowed=false.
+    owner_action: review_continue_tracking_decision_and_next_pressure_sample_actions
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

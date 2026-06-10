@@ -2154,6 +2154,91 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "pressure_diagnosis",
+                        (
+                            f"id={etf_dynamic_v3_sim_review.get('pressure_diagnosis_id')}; "
+                            f"reason={etf_dynamic_v3_sim_review.get('pressure_diagnosis_reason')}; "
+                            "near_miss="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_near_miss_window_count')}"
+                        ),
+                    ),
+                    (
+                        "pressure_backfill",
+                        (
+                            f"id={etf_dynamic_v3_sim_review.get('pressure_backfill_id')}; "
+                            "total="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_backfill_total')}; "
+                            "forward="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_backfill_forward_count')}; "
+                            "replay="
+                            f"{etf_dynamic_v3_sim_review.get('pressure_backfill_replay_count')}; "
+                            "simulation="
+                            + "{}; ".format(
+                                etf_dynamic_v3_sim_review.get(
+                                    "pressure_backfill_simulation_count"
+                                )
+                            )
+                            + (
+                                "relevant="
+                                f"{etf_dynamic_v3_sim_review.get('pressure_backfill_relevant_count')}"
+                            )
+                        ),
+                    ),
+                    (
+                        "defensive_pressure_compare",
+                        (
+                            "id={}; ".format(
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_pressure_comparison_id"
+                                )
+                            )
+                            + "status={}; ".format(
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_pressure_status"
+                                )
+                            )
+                            + (
+                                "rule_approval="
+                                f"{etf_dynamic_v3_sim_review.get('defensive_pressure_can_support_rule_approval')}"
+                            )
+                        ),
+                    ),
+                    (
+                        "defensive_rule_review",
+                        (
+                            f"id={etf_dynamic_v3_sim_review.get('defensive_rule_review_id')}; "
+                            "recommended={}; ".format(
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_rule_recommended_status"
+                                )
+                            )
+                            + (
+                                "approval="
+                                f"{etf_dynamic_v3_sim_review.get('defensive_rule_approval_allowed')}"
+                            )
+                        ),
+                    ),
+                    (
+                        "weekly_ops_decision_update",
+                        (
+                            f"id={etf_dynamic_v3_sim_review.get('weekly_ops_decision_update_id')}; "
+                            "recommendation={}; ".format(
+                                etf_dynamic_v3_sim_review.get("weekly_ops_recommendation")
+                            )
+                            + (
+                                "policy_change_allowed={}; ".format(
+                                    etf_dynamic_v3_sim_review.get(
+                                        "weekly_ops_policy_change_allowed"
+                                    )
+                                )
+                                + (
+                                    "broker_action_allowed="
+                                    f"{etf_dynamic_v3_sim_review.get('weekly_ops_broker_action_allowed')}"
+                                )
+                            )
+                        ),
+                    ),
+                    (
                         "confirmation_dashboard_id",
                         etf_dynamic_v3_sim_review.get("confirmation_dashboard_id"),
                     ),
@@ -2299,6 +2384,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "rule_review_queue_path",
                         etf_dynamic_v3_sim_review.get("rule_review_queue_path"),
+                    ),
+                    (
+                        "pressure_tag_diagnosis_path",
+                        etf_dynamic_v3_sim_review.get("pressure_tag_diagnosis_path"),
+                    ),
+                    (
+                        "pressure_outcome_backfill_path",
+                        etf_dynamic_v3_sim_review.get("pressure_outcome_backfill_path"),
+                    ),
+                    (
+                        "defensive_pressure_compare_path",
+                        etf_dynamic_v3_sim_review.get("defensive_pressure_compare_path"),
+                    ),
+                    (
+                        "defensive_rule_review_path",
+                        etf_dynamic_v3_sim_review.get("defensive_rule_review_path"),
+                    ),
+                    (
+                        "weekly_ops_decision_update_path",
+                        etf_dynamic_v3_sim_review.get("weekly_ops_decision_update_path"),
                     ),
                     (
                         "rule_owner_decision_path",
@@ -6096,6 +6201,26 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         _report_index_artifact_path(report_index, "etf_dynamic_v3_rule_review_queue"),
         "rule_review_queue_manifest.json",
     )
+    pressure_tag_diagnosis_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_pressure_tag_diagnosis"),
+        "pressure_tag_diagnosis_manifest.json",
+    )
+    pressure_outcome_backfill_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_pressure_outcome_backfill"),
+        "pressure_backfill_manifest.json",
+    )
+    defensive_pressure_compare_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_defensive_pressure_compare"),
+        "defensive_pressure_compare_manifest.json",
+    )
+    defensive_rule_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_defensive_rule_review"),
+        "defensive_rule_review_manifest.json",
+    )
+    weekly_ops_decision_update_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_weekly_ops_decision_update"),
+        "weekly_ops_decision_update_manifest.json",
+    )
     rule_owner_decision_path = _dynamic_v3_rule_owner_decision_journal_path(
         _report_index_artifact_path(
             report_index,
@@ -6195,6 +6320,46 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         if rule_review_queue_path is not None
         else None
     )
+    pressure_tag_diagnosis = _read_optional_json(pressure_tag_diagnosis_path)
+    pressure_tag_diagnosis_distribution = _read_optional_json(
+        pressure_tag_diagnosis_path.parent / "threshold_hit_distribution.json"
+        if pressure_tag_diagnosis_path is not None
+        else None
+    )
+    pressure_tag_diagnosis_mapping = _read_optional_json(
+        pressure_tag_diagnosis_path.parent / "outcome_mapping_diagnostics.json"
+        if pressure_tag_diagnosis_path is not None
+        else None
+    )
+    pressure_outcome_backfill = _read_optional_json(pressure_outcome_backfill_path)
+    pressure_outcome_backfill_summary = _read_optional_json(
+        pressure_outcome_backfill_path.parent / "pressure_source_summary.json"
+        if pressure_outcome_backfill_path is not None
+        else None
+    )
+    defensive_pressure_compare = _read_optional_json(defensive_pressure_compare_path)
+    defensive_pressure_summary = _read_optional_json(
+        defensive_pressure_compare_path.parent / "defensive_pressure_summary.json"
+        if defensive_pressure_compare_path is not None
+        else None
+    )
+    defensive_rule_review = _read_optional_json(defensive_rule_review_path)
+    defensive_rule_matrix = _read_optional_json(
+        defensive_rule_review_path.parent / "defensive_rule_decision_matrix.json"
+        if defensive_rule_review_path is not None
+        else None
+    )
+    weekly_ops_decision_update = _read_optional_json(weekly_ops_decision_update_path)
+    weekly_ops_decision_matrix = _read_optional_json(
+        weekly_ops_decision_update_path.parent / "updated_weekly_decision_matrix.json"
+        if weekly_ops_decision_update_path is not None
+        else None
+    )
+    weekly_ops_next_actions = _read_optional_json(
+        weekly_ops_decision_update_path.parent / "weekly_ops_next_actions.json"
+        if weekly_ops_decision_update_path is not None
+        else None
+    )
     owner_decisions = _read_optional_jsonl(rule_owner_decision_path)
     latest_owner_decision = owner_decisions[-1] if owner_decisions else {}
     source_payloads = tuple(
@@ -6229,6 +6394,18 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             confirmation_dashboard_targets,
             rule_review_queue,
             rule_review_queue_summary,
+            pressure_tag_diagnosis,
+            pressure_tag_diagnosis_distribution,
+            pressure_tag_diagnosis_mapping,
+            pressure_outcome_backfill,
+            pressure_outcome_backfill_summary,
+            defensive_pressure_compare,
+            defensive_pressure_summary,
+            defensive_rule_review,
+            defensive_rule_matrix,
+            weekly_ops_decision_update,
+            weekly_ops_decision_matrix,
+            weekly_ops_next_actions,
             latest_owner_decision,
         )
     )
@@ -6275,6 +6452,19 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
     defensive_target = _mapping(dashboard_targets.get("defensive_limited_adjustment_drawdown"))
     consensus_target = _mapping(dashboard_targets.get("consensus_target_risk"))
     pressure_samples = _mapping(_mapping(pressure_regime_summary).get("pressure_samples"))
+    pressure_diagnosis_summary = _mapping(
+        _mapping(pressure_tag_diagnosis).get("diagnosis_summary")
+    )
+    pressure_near_counts = _mapping(
+        _mapping(pressure_tag_diagnosis_distribution).get("near_miss_counts")
+    )
+    pressure_backfill_by_source = _mapping(
+        _mapping(pressure_outcome_backfill_summary).get("by_source_mode")
+    )
+    weekly_next_action_names = ", ".join(
+        _text(row.get("action"))
+        for row in _records(_mapping(weekly_ops_next_actions).get("next_actions"))
+    )
     auto_apply = any(
         payload.get("auto_apply") is True or payload.get("auto_policy_apply") is True
         for payload in source_payloads
@@ -6415,6 +6605,78 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "pressure_defensive_validation_relevant_outcomes": _int(
             _mapping(pressure_regime_summary).get("defensive_validation_relevant_outcomes")
         ),
+        "pressure_diagnosis_id": _text(
+            _mapping(pressure_tag_diagnosis).get("diagnosis_id"),
+            "MISSING",
+        ),
+        "pressure_diagnosis_reason": _text(
+            pressure_diagnosis_summary.get("primary_reason"),
+            "MISSING",
+        ),
+        "pressure_near_miss_window_count": sum(
+            _int(value) for value in pressure_near_counts.values()
+        ),
+        "pressure_mapping_failure_count": len(
+            _records(_mapping(pressure_tag_diagnosis_mapping).get("mapping_failures"))
+        ),
+        "pressure_backfill_id": _text(
+            _mapping(pressure_outcome_backfill).get("pressure_backfill_id"),
+            "MISSING",
+        ),
+        "pressure_backfill_total": _int(
+            _mapping(pressure_outcome_backfill_summary).get("total_pressure_outcomes")
+        ),
+        "pressure_backfill_forward_count": _int(
+            pressure_backfill_by_source.get("FORWARD_OUTCOME")
+        ),
+        "pressure_backfill_replay_count": _int(
+            pressure_backfill_by_source.get("HISTORICAL_REPLAY")
+        ),
+        "pressure_backfill_simulation_count": _int(
+            pressure_backfill_by_source.get("BACKTEST_SIMULATION")
+        ),
+        "pressure_backfill_relevant_count": _int(
+            _mapping(pressure_outcome_backfill_summary).get(
+                "defensive_validation_relevant_count"
+            )
+        ),
+        "defensive_pressure_comparison_id": _text(
+            _mapping(defensive_pressure_compare).get("comparison_id"),
+            "MISSING",
+        ),
+        "defensive_pressure_status": _text(
+            _mapping(defensive_pressure_summary).get("defensive_status"),
+            "MISSING",
+        ),
+        "defensive_pressure_can_support_rule_approval": (
+            _mapping(defensive_pressure_summary).get("can_support_rule_approval") is True
+        ),
+        "defensive_rule_review_id": _text(
+            _mapping(defensive_rule_review).get("review_id"),
+            "MISSING",
+        ),
+        "defensive_rule_recommended_status": _text(
+            _mapping(defensive_rule_matrix).get("recommended_status"),
+            "MISSING",
+        ),
+        "defensive_rule_approval_allowed": (
+            _mapping(defensive_rule_matrix).get("rule_approval_allowed") is True
+        ),
+        "weekly_ops_decision_update_id": _text(
+            _mapping(weekly_ops_decision_update).get("decision_update_id"),
+            "MISSING",
+        ),
+        "weekly_ops_recommendation": _text(
+            _mapping(weekly_ops_decision_matrix).get("weekly_recommendation"),
+            "MISSING",
+        ),
+        "weekly_ops_policy_change_allowed": (
+            _mapping(weekly_ops_decision_matrix).get("policy_change_allowed") is True
+        ),
+        "weekly_ops_broker_action_allowed": (
+            _mapping(weekly_ops_decision_matrix).get("broker_action_allowed") is True
+        ),
+        "weekly_ops_next_actions": weekly_next_action_names or "MISSING",
         "confirmation_dashboard_id": _text(
             _mapping(confirmation_dashboard).get("dashboard_id"),
             "MISSING",
@@ -6489,6 +6751,11 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "pressure_regime_tag_path": _text(pressure_regime_path),
         "confirmation_dashboard_path": _text(confirmation_dashboard_path),
         "rule_review_queue_path": _text(rule_review_queue_path),
+        "pressure_tag_diagnosis_path": _text(pressure_tag_diagnosis_path),
+        "pressure_outcome_backfill_path": _text(pressure_outcome_backfill_path),
+        "defensive_pressure_compare_path": _text(defensive_pressure_compare_path),
+        "defensive_rule_review_path": _text(defensive_rule_review_path),
+        "weekly_ops_decision_update_path": _text(weekly_ops_decision_update_path),
         "rule_owner_decision_path": _text(rule_owner_decision_path),
         "detail_report": _text(
             confirmation_dashboard_path
@@ -6544,6 +6811,27 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "pressure_risk_off_count": 0,
         "pressure_semiconductor_pullback_count": 0,
         "pressure_defensive_validation_relevant_outcomes": 0,
+        "pressure_diagnosis_id": "MISSING",
+        "pressure_diagnosis_reason": "MISSING",
+        "pressure_near_miss_window_count": 0,
+        "pressure_mapping_failure_count": 0,
+        "pressure_backfill_id": "MISSING",
+        "pressure_backfill_total": 0,
+        "pressure_backfill_forward_count": 0,
+        "pressure_backfill_replay_count": 0,
+        "pressure_backfill_simulation_count": 0,
+        "pressure_backfill_relevant_count": 0,
+        "defensive_pressure_comparison_id": "MISSING",
+        "defensive_pressure_status": "MISSING",
+        "defensive_pressure_can_support_rule_approval": False,
+        "defensive_rule_review_id": "MISSING",
+        "defensive_rule_recommended_status": "MISSING",
+        "defensive_rule_approval_allowed": False,
+        "weekly_ops_decision_update_id": "MISSING",
+        "weekly_ops_recommendation": "MISSING",
+        "weekly_ops_policy_change_allowed": False,
+        "weekly_ops_broker_action_allowed": False,
+        "weekly_ops_next_actions": "MISSING",
         "confirmation_dashboard_id": "MISSING",
         "dashboard_ready_for_evaluation": 0,
         "dashboard_limited_adjustment_progress": "MISSING",
@@ -6584,6 +6872,11 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "pressure_regime_tag_path": "",
         "confirmation_dashboard_path": "",
         "rule_review_queue_path": "",
+        "pressure_tag_diagnosis_path": "",
+        "pressure_outcome_backfill_path": "",
+        "defensive_pressure_compare_path": "",
+        "defensive_rule_review_path": "",
+        "weekly_ops_decision_update_path": "",
         "rule_owner_decision_path": "",
         "detail_report": "",
         "limitation": (

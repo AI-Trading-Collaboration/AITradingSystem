@@ -966,6 +966,21 @@ update；只有显式 `--execute-ready-updates` 才会调用 safe outcome update
 cached data quality gate。Pressure regime thresholds 全部来自配置；dashboard 和 queue 只供
 人工复核，不授权 defensive label、policy mutation、official target weights mutation、
 portfolio mutation、broker action 或 production action。
+TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION 在 weekly evidence operations
+之后新增 pressure-regime sample expansion 和 defensive rule validation 链路。CLI 包括
+`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、
+`defensive-pressure-compare run/report`、`defensive-rule-review run/report` 和
+`weekly-ops-decision-update run/report`，对应验证入口为
+`validate-pressure-tag-diagnosis`、`validate-pressure-outcome-backfill`、
+`validate-defensive-pressure-compare`、`validate-defensive-rule-review` 和
+`validate-weekly-ops-decision-update`。Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/pressure_tag_diagnosis|pressure_outcome_backfill|defensive_pressure_compare|defensive_rule_review|weekly_ops_decision_update/`，
+并由 report registry / Reader Brief 只读展示。Backfill 明确区分 `FORWARD_OUTCOME`、
+`HISTORICAL_REPLAY` 和 `BACKTEST_SIMULATION`；simulation 样本统一标记
+`SIMULATION_NOT_PIT`、`can_support_production=false`。该链路只解释 pressure tag
+mapping gap、扩充 research-only pressure outcome inventory，并生成 owner checklist /
+weekly next actions；不批准 defensive label、不修改 `position_advisory_v1.yaml`、
+policy、official target weights、portfolio 或 baseline state、不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
