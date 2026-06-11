@@ -201,12 +201,11 @@ def build_reader_brief_payload(
     etf_dynamic_v3_failure_attribution = _etf_dynamic_v3_failure_attribution_summary(report_index)
     etf_dynamic_v3_parameter_research = _etf_dynamic_v3_parameter_research_summary(report_index)
     etf_dynamic_v3_sim_review = _etf_dynamic_v3_sim_review_summary(report_index)
-    etf_dynamic_v3_manual_execution_review = (
-        _etf_dynamic_v3_manual_execution_review_summary(report_index)
-    )
-    etf_dynamic_v3_real_snapshot_review = _etf_dynamic_v3_real_snapshot_review_summary(
+    etf_dynamic_v3_manual_execution_review = _etf_dynamic_v3_manual_execution_review_summary(
         report_index
     )
+    etf_dynamic_v3_real_snapshot_review = _etf_dynamic_v3_real_snapshot_review_summary(report_index)
+    etf_dynamic_v3_system_target = _etf_dynamic_v3_system_target_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -353,6 +352,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_sim_review": etf_dynamic_v3_sim_review,
         "etf_dynamic_v3_manual_execution_review": etf_dynamic_v3_manual_execution_review,
         "etf_dynamic_v3_real_snapshot_review": etf_dynamic_v3_real_snapshot_review,
+        "etf_dynamic_v3_system_target": etf_dynamic_v3_system_target,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -635,6 +635,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_v3_real_snapshot_review = _mapping(
         payload.get("etf_dynamic_v3_real_snapshot_review")
     )
+    etf_dynamic_v3_system_target = _mapping(payload.get("etf_dynamic_v3_system_target"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -1465,9 +1466,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "research_decision_update_go_no_go",
-                        etf_dynamic_v3_parameter_research.get(
-                            "research_decision_update_go_no_go"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("research_decision_update_go_no_go"),
                     ),
                     (
                         "research_decision_update_recommended_action",
@@ -1495,15 +1494,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "research_decision_update_warnings",
-                        etf_dynamic_v3_parameter_research.get(
-                            "research_decision_update_warnings"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("research_decision_update_warnings"),
                     ),
                     (
                         "research_decision_update_next_task",
-                        etf_dynamic_v3_parameter_research.get(
-                            "research_decision_update_next_task"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("research_decision_update_next_task"),
                     ),
                     (
                         "shortlist_status",
@@ -1531,15 +1526,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_shortlist_candidate_count",
-                        etf_dynamic_v3_parameter_research.get(
-                            "shadow_shortlist_candidate_count"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("shadow_shortlist_candidate_count"),
                     ),
                     (
                         "shadow_shortlist_monitoring_ready",
-                        etf_dynamic_v3_parameter_research.get(
-                            "shadow_shortlist_monitoring_ready"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("shadow_shortlist_monitoring_ready"),
                     ),
                     (
                         "position_advisory_status",
@@ -1547,9 +1538,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "position_advisory_consensus_status",
-                        etf_dynamic_v3_parameter_research.get(
-                            "position_advisory_consensus_status"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("position_advisory_consensus_status"),
                     ),
                     (
                         "position_advisory_recommended_action",
@@ -1571,15 +1560,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_observation_readiness",
-                        etf_dynamic_v3_parameter_research.get(
-                            "shadow_observation_readiness"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("shadow_observation_readiness"),
                     ),
                     (
                         "position_advisory_readiness",
-                        etf_dynamic_v3_parameter_research.get(
-                            "position_advisory_readiness"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("position_advisory_readiness"),
                     ),
                     (
                         "production_readiness",
@@ -1593,15 +1578,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_monitor_run_active_count",
-                        etf_dynamic_v3_parameter_research.get(
-                            "shadow_monitor_run_active_count"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("shadow_monitor_run_active_count"),
                     ),
                     (
                         "shadow_monitor_run_recommendation",
-                        etf_dynamic_v3_parameter_research.get(
-                            "shadow_monitor_run_recommendation"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("shadow_monitor_run_recommendation"),
                     ),
                     (
                         "portfolio_snapshot_status",
@@ -1647,9 +1628,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "owner_review_broker_action_taken",
-                        etf_dynamic_v3_parameter_research.get(
-                            "owner_review_broker_action_taken"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("owner_review_broker_action_taken"),
                     ),
                     (
                         "sweep_leaderboard",
@@ -1756,15 +1735,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "pit_warning_count",
-                        etf_dynamic_v3_parameter_research.get(
-                            "replay_inventory_pit_warning_count"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("replay_inventory_pit_warning_count"),
                     ),
                     (
                         "pit_unsafe_count",
-                        etf_dynamic_v3_parameter_research.get(
-                            "replay_inventory_pit_unsafe_count"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("replay_inventory_pit_unsafe_count"),
                     ),
                     (
                         "historical_replay",
@@ -1804,9 +1779,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "available_count",
-                        etf_dynamic_v3_parameter_research.get(
-                            "backfilled_outcome_available_count"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("backfilled_outcome_available_count"),
                     ),
                     (
                         "pending_count",
@@ -1824,9 +1797,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "limited_adjustment_vs_no_trade_5d",
-                        etf_dynamic_v3_parameter_research.get(
-                            "limited_adjustment_vs_no_trade_5d"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("limited_adjustment_vs_no_trade_5d"),
                     ),
                     (
                         "historical_paper_sim",
@@ -1842,15 +1813,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "historical_paper_sim_total_return",
-                        etf_dynamic_v3_parameter_research.get(
-                            "historical_paper_sim_total_return"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim_total_return"),
                     ),
                     (
                         "historical_paper_sim_max_drawdown",
-                        etf_dynamic_v3_parameter_research.get(
-                            "historical_paper_sim_max_drawdown"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("historical_paper_sim_max_drawdown"),
                     ),
                     (
                         "historical_paper_sim_turnover",
@@ -1868,9 +1835,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "replay_performance_review_status",
-                        etf_dynamic_v3_parameter_research.get(
-                            "replay_performance_review_status"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("replay_performance_review_status"),
                     ),
                     (
                         "review_best_variant",
@@ -1909,9 +1874,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "outcome_update_ready_count",
-                        etf_dynamic_v3_parameter_research.get(
-                            "outcome_update_review_ready_count"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("outcome_update_review_ready_count"),
                     ),
                     (
                         "outcome_update_review_future_data_used",
@@ -1967,9 +1930,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_trend_confidence_change",
-                        etf_dynamic_v3_parameter_research.get(
-                            "evidence_trend_confidence_change"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("evidence_trend_confidence_change"),
                     ),
                     (
                         "evidence_trend_next_action",
@@ -1977,15 +1938,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "forward_outcome_decision_action",
-                        etf_dynamic_v3_parameter_research.get(
-                            "forward_outcome_decision_action"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("forward_outcome_decision_action"),
                     ),
                     (
                         "forward_rule_calibration_readiness",
-                        etf_dynamic_v3_parameter_research.get(
-                            "forward_rule_calibration_readiness"
-                        ),
+                        etf_dynamic_v3_parameter_research.get("forward_rule_calibration_readiness"),
                     ),
                     (
                         "forward_next_due_scan_date",
@@ -2092,9 +2049,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "candidate_agreement_status",
-                        etf_dynamic_v3_manual_execution_review.get(
-                            "candidate_agreement_status"
-                        ),
+                        etf_dynamic_v3_manual_execution_review.get("candidate_agreement_status"),
                     ),
                     (
                         "guardrail_status",
@@ -2106,15 +2061,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "owner_approval_required",
-                        etf_dynamic_v3_manual_execution_review.get(
-                            "owner_approval_required"
-                        ),
+                        etf_dynamic_v3_manual_execution_review.get("owner_approval_required"),
                     ),
                     (
                         "broker_action_allowed",
-                        etf_dynamic_v3_manual_execution_review.get(
-                            "broker_action_allowed"
-                        ),
+                        etf_dynamic_v3_manual_execution_review.get("broker_action_allowed"),
                     ),
                     (
                         "broker_action_taken",
@@ -2122,9 +2073,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "order_ticket_generated",
-                        etf_dynamic_v3_manual_execution_review.get(
-                            "order_ticket_generated"
-                        ),
+                        etf_dynamic_v3_manual_execution_review.get("order_ticket_generated"),
                     ),
                     (
                         "production_effect",
@@ -2136,9 +2085,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "manual_execution_review_path",
-                        etf_dynamic_v3_manual_execution_review.get(
-                            "manual_execution_review_path"
-                        ),
+                        etf_dynamic_v3_manual_execution_review.get("manual_execution_review_path"),
                     ),
                     (
                         "guardrail_path",
@@ -2205,9 +2152,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "weekly_real_snapshot_review_path",
-                        etf_dynamic_v3_real_snapshot_review.get(
-                            "weekly_real_snapshot_review_path"
-                        ),
+                        etf_dynamic_v3_real_snapshot_review.get("weekly_real_snapshot_review_path"),
                     ),
                     (
                         "dry_run_path",
@@ -2220,6 +2165,68 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "paper_action_path",
                         etf_dynamic_v3_real_snapshot_review.get("paper_action_path"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue System Target Portfolio",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_v3_system_target.get("availability")),
+                    ("status", etf_dynamic_v3_system_target.get("status")),
+                    ("summary", etf_dynamic_v3_system_target.get("summary_sentence")),
+                    ("target_id", etf_dynamic_v3_system_target.get("target_id")),
+                    ("paper_shadow_id", etf_dynamic_v3_system_target.get("paper_shadow_id")),
+                    ("rebalance_id", etf_dynamic_v3_system_target.get("rebalance_id")),
+                    ("performance_id", etf_dynamic_v3_system_target.get("performance_id")),
+                    ("review_id", etf_dynamic_v3_system_target.get("review_id")),
+                    (
+                        "recommended_research_method",
+                        etf_dynamic_v3_system_target.get("recommended_research_method"),
+                    ),
+                    ("decision_status", etf_dynamic_v3_system_target.get("decision_status")),
+                    (
+                        "data_quality_status",
+                        etf_dynamic_v3_system_target.get("data_quality_status"),
+                    ),
+                    ("tracked_methods", etf_dynamic_v3_system_target.get("tracked_methods")),
+                    (
+                        "best_return_method",
+                        etf_dynamic_v3_system_target.get("best_return_method"),
+                    ),
+                    (
+                        "best_risk_adjusted_method",
+                        etf_dynamic_v3_system_target.get("best_risk_adjusted_method"),
+                    ),
+                    (
+                        "broker_action_allowed",
+                        etf_dynamic_v3_system_target.get("broker_action_allowed"),
+                    ),
+                    (
+                        "broker_action_taken",
+                        etf_dynamic_v3_system_target.get("broker_action_taken"),
+                    ),
+                    (
+                        "not_official_target_weights",
+                        etf_dynamic_v3_system_target.get("not_official_target_weights"),
+                    ),
+                    ("production_effect", etf_dynamic_v3_system_target.get("production_effect")),
+                    ("safety_status", etf_dynamic_v3_system_target.get("safety_status")),
+                    ("next_action", etf_dynamic_v3_system_target.get("next_action")),
+                    (
+                        "system_target_review_path",
+                        etf_dynamic_v3_system_target.get("system_target_review_path"),
+                    ),
+                    ("model_target_path", etf_dynamic_v3_system_target.get("model_target_path")),
+                    ("paper_shadow_path", etf_dynamic_v3_system_target.get("paper_shadow_path")),
+                    (
+                        "model_rebalance_path",
+                        etf_dynamic_v3_system_target.get("model_rebalance_path"),
+                    ),
+                    (
+                        "paper_shadow_performance_path",
+                        etf_dynamic_v3_system_target.get("paper_shadow_performance_path"),
                     ),
                 ]
             ),
@@ -2351,9 +2358,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                             f"{etf_dynamic_v3_sim_review.get('pressure_backfill_replay_count')}; "
                             "simulation="
                             + "{}; ".format(
-                                etf_dynamic_v3_sim_review.get(
-                                    "pressure_backfill_simulation_count"
-                                )
+                                etf_dynamic_v3_sim_review.get("pressure_backfill_simulation_count")
                             )
                             + (
                                 "relevant="
@@ -2365,14 +2370,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "defensive_pressure_compare",
                         (
                             "id={}; ".format(
-                                etf_dynamic_v3_sim_review.get(
-                                    "defensive_pressure_comparison_id"
-                                )
+                                etf_dynamic_v3_sim_review.get("defensive_pressure_comparison_id")
                             )
                             + "status={}; ".format(
-                                etf_dynamic_v3_sim_review.get(
-                                    "defensive_pressure_status"
-                                )
+                                etf_dynamic_v3_sim_review.get("defensive_pressure_status")
                             )
                             + (
                                 "rule_approval="
@@ -2385,9 +2386,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         (
                             f"id={etf_dynamic_v3_sim_review.get('defensive_rule_review_id')}; "
                             "recommended={}; ".format(
-                                etf_dynamic_v3_sim_review.get(
-                                    "defensive_rule_recommended_status"
-                                )
+                                etf_dynamic_v3_sim_review.get("defensive_rule_recommended_status")
                             )
                             + (
                                 "approval="
@@ -2419,9 +2418,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "defensive_hypothesis_deep_dive",
                         (
                             "id={}; supporting={}; contradicting={}; rule_approval={}".format(
-                                etf_dynamic_v3_sim_review.get(
-                                    "defensive_hypothesis_deep_dive_id"
-                                ),
+                                etf_dynamic_v3_sim_review.get("defensive_hypothesis_deep_dive_id"),
                                 etf_dynamic_v3_sim_review.get(
                                     "defensive_hypothesis_supporting_count"
                                 ),
@@ -2484,9 +2481,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "forward_pressure_capture",
                         (
                             "id={}; event_triggers={}".format(
-                                etf_dynamic_v3_sim_review.get(
-                                    "forward_pressure_capture_plan_id"
-                                ),
+                                etf_dynamic_v3_sim_review.get("forward_pressure_capture_plan_id"),
                                 etf_dynamic_v3_sim_review.get(
                                     "forward_pressure_event_trigger_count"
                                 ),
@@ -2514,9 +2509,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                                 etf_dynamic_v3_sim_review.get("pressure_sample_ledger_id"),
                                 etf_dynamic_v3_sim_review.get("pressure_forward_samples"),
                                 etf_dynamic_v3_sim_review.get("pressure_simulation_samples"),
-                                etf_dynamic_v3_sim_review.get(
-                                    "pressure_progress_to_requirement"
-                                ),
+                                etf_dynamic_v3_sim_review.get("pressure_progress_to_requirement"),
                             )
                         ),
                     ),
@@ -2525,12 +2518,8 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         (
                             "id={}; rule_status={}; recommendation={}; new_simulation={}".format(
                                 etf_dynamic_v3_sim_review.get("weekly_defensive_id"),
-                                etf_dynamic_v3_sim_review.get(
-                                    "weekly_defensive_rule_status"
-                                ),
-                                etf_dynamic_v3_sim_review.get(
-                                    "weekly_defensive_recommendation"
-                                ),
+                                etf_dynamic_v3_sim_review.get("weekly_defensive_rule_status"),
+                                etf_dynamic_v3_sim_review.get("weekly_defensive_recommendation"),
                                 etf_dynamic_v3_sim_review.get(
                                     "weekly_defensive_new_simulation_samples"
                                 ),
@@ -2547,15 +2536,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "limited_adjustment_progress",
-                        etf_dynamic_v3_sim_review.get(
-                            "dashboard_limited_adjustment_progress"
-                        ),
+                        etf_dynamic_v3_sim_review.get("dashboard_limited_adjustment_progress"),
                     ),
                     (
                         "defensive_pressure_progress",
-                        etf_dynamic_v3_sim_review.get(
-                            "dashboard_defensive_pressure_progress"
-                        ),
+                        etf_dynamic_v3_sim_review.get("dashboard_defensive_pressure_progress"),
                     ),
                     (
                         "consensus_target_status",
@@ -2578,15 +2563,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "ready_for_evaluation_count",
-                        etf_dynamic_v3_sim_review.get(
-                            "confirmation_ready_for_evaluation_count"
-                        ),
+                        etf_dynamic_v3_sim_review.get("confirmation_ready_for_evaluation_count"),
                     ),
                     (
                         "insufficient_events_count",
-                        etf_dynamic_v3_sim_review.get(
-                            "confirmation_insufficient_events_count"
-                        ),
+                        etf_dynamic_v3_sim_review.get("confirmation_insufficient_events_count"),
                     ),
                     (
                         "evaluation_counts",
@@ -6920,9 +6901,7 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
     defensive_target = _mapping(dashboard_targets.get("defensive_limited_adjustment_drawdown"))
     consensus_target = _mapping(dashboard_targets.get("consensus_target_risk"))
     pressure_samples = _mapping(_mapping(pressure_regime_summary).get("pressure_samples"))
-    pressure_diagnosis_summary = _mapping(
-        _mapping(pressure_tag_diagnosis).get("diagnosis_summary")
-    )
+    pressure_diagnosis_summary = _mapping(_mapping(pressure_tag_diagnosis).get("diagnosis_summary"))
     pressure_near_counts = _mapping(
         _mapping(pressure_tag_diagnosis_distribution).get("near_miss_counts")
     )
@@ -7122,9 +7101,7 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "pressure_backfill_total": _int(
             _mapping(pressure_outcome_backfill_summary).get("total_pressure_outcomes")
         ),
-        "pressure_backfill_forward_count": _int(
-            pressure_backfill_by_source.get("FORWARD_OUTCOME")
-        ),
+        "pressure_backfill_forward_count": _int(pressure_backfill_by_source.get("FORWARD_OUTCOME")),
         "pressure_backfill_replay_count": _int(
             pressure_backfill_by_source.get("HISTORICAL_REPLAY")
         ),
@@ -7132,9 +7109,7 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             pressure_backfill_by_source.get("BACKTEST_SIMULATION")
         ),
         "pressure_backfill_relevant_count": _int(
-            _mapping(pressure_outcome_backfill_summary).get(
-                "defensive_validation_relevant_count"
-            )
+            _mapping(pressure_outcome_backfill_summary).get("defensive_validation_relevant_count")
         ),
         "defensive_pressure_comparison_id": _text(
             _mapping(defensive_pressure_compare).get("comparison_id"),
@@ -7256,9 +7231,7 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             _mapping(pressure_sample_ledger).get("ledger_id"),
             "MISSING",
         ),
-        "pressure_forward_samples": _int(
-            _mapping(pressure_sample_summary).get("forward_samples")
-        ),
+        "pressure_forward_samples": _int(_mapping(pressure_sample_summary).get("forward_samples")),
         "pressure_simulation_samples": _int(
             _mapping(pressure_sample_summary).get("simulation_samples")
         ),
@@ -7733,8 +7706,7 @@ def _missing_etf_dynamic_v3_manual_execution_review_summary() -> dict[str, Any]:
         "availability": "MISSING",
         "status": "MISSING",
         "summary_sentence": (
-            "Dynamic Rescue Manual Execution Review: no latest manual execution "
-            "review pack found."
+            "Dynamic Rescue Manual Execution Review: no latest manual execution review pack found."
         ),
         "manual_review_id": "MISSING",
         "snapshot_id": "MISSING",
@@ -7790,8 +7762,7 @@ def _etf_dynamic_v3_manual_execution_review_safety_status(
         or payload.get("automatic_candidate_promotion") is True
         or payload.get("auto_enrollment_without_owner_approval") is True
         or payload.get("owner_approval_executed") is True
-        or _text(payload.get("production_effect"), PRODUCTION_EFFECT)
-        != PRODUCTION_EFFECT
+        or _text(payload.get("production_effect"), PRODUCTION_EFFECT) != PRODUCTION_EFFECT
         for payload in material
     )
     review_payloads = [
@@ -7977,8 +7948,7 @@ def _etf_dynamic_v3_real_snapshot_safety_status(
         or payload.get("automatic_candidate_promotion") is True
         or payload.get("auto_enrollment_without_owner_approval") is True
         or payload.get("owner_approval_executed") is True
-        or _text(payload.get("production_effect"), PRODUCTION_EFFECT)
-        != PRODUCTION_EFFECT
+        or _text(payload.get("production_effect"), PRODUCTION_EFFECT) != PRODUCTION_EFFECT
         for payload in material
     )
     if not unsafe:
@@ -7988,6 +7958,242 @@ def _etf_dynamic_v3_real_snapshot_safety_status(
             "order_ticket_generated=false"
         )
     return "SAFETY_REVIEW_REQUIRED"
+
+
+def _etf_dynamic_v3_system_target_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_v3_system_target_summary()
+
+    target_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_model_target"),
+        "model_target_manifest.json",
+    )
+    paper_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_paper_shadow"),
+        "paper_shadow_manifest.json",
+    )
+    rebalance_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_model_rebalance"),
+        "model_rebalance_manifest.json",
+    )
+    performance_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_paper_shadow_performance"),
+        "paper_shadow_performance_manifest.json",
+    )
+    review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_system_target_review"),
+        "system_target_review_manifest.json",
+    )
+    review_manifest = _read_optional_json(review_path)
+    if not review_manifest:
+        return _missing_etf_dynamic_v3_system_target_summary()
+
+    target_manifest = _read_optional_json(target_path)
+    paper_manifest = _read_optional_json(paper_path)
+    rebalance_manifest = _read_optional_json(rebalance_path)
+    performance_manifest = _read_optional_json(performance_path)
+    decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(review_path, "system_target_decision.json")
+    )
+    paper_state = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(paper_path, "paper_shadow_state.json")
+    )
+    rebalance_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            rebalance_path,
+            "rebalance_turnover_summary.json",
+        )
+    )
+    performance_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            performance_path,
+            "method_performance_summary.json",
+        )
+    )
+    method_rows = _records(performance_summary.get("methods"))
+    limited_row = _first_method_row(method_rows, "limited_adjustment")
+    consensus_row = _first_method_row(method_rows, "consensus_target")
+    tracked_methods = _texts(paper_state.get("tracked_methods")) or [
+        _text(row.get("target_method"))
+        for row in _records(paper_state.get("method_states"))
+        if row.get("target_method")
+    ]
+    target_id = _text(
+        review_manifest.get("target_id"), _text(target_manifest.get("target_id"), "MISSING")
+    )
+    paper_shadow_id = _text(
+        review_manifest.get("paper_shadow_id"),
+        _text(paper_manifest.get("paper_shadow_id"), "MISSING"),
+    )
+    performance_id = _text(
+        review_manifest.get("performance_id"),
+        _text(performance_manifest.get("performance_id"), "MISSING"),
+    )
+    review_id = _text(review_manifest.get("review_id"), "MISSING")
+    recommended = _text(
+        decision.get("recommended_research_method"),
+        _text(review_manifest.get("recommended_research_method"), "MISSING"),
+    )
+    decision_status = _text(
+        decision.get("decision_status"),
+        _text(review_manifest.get("decision_status"), "MISSING"),
+    )
+    production_effect = _text(review_manifest.get("production_effect"), PRODUCTION_EFFECT)
+    safety_status = _etf_dynamic_v3_system_target_safety_status(
+        target_manifest,
+        paper_manifest,
+        paper_state,
+        rebalance_manifest,
+        rebalance_summary,
+        performance_manifest,
+        performance_summary,
+        review_manifest,
+        decision,
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(review_manifest.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            "Dynamic Rescue System Target Portfolio: "
+            f"target={target_id}; paper_shadow={paper_shadow_id}; "
+            f"performance={performance_id}; recommended={recommended}; "
+            f"decision={decision_status}; "
+            f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
+            "broker_action_allowed="
+            f"{str(review_manifest.get('broker_action_allowed') is True).lower()}; "
+            f"production_effect={production_effect}."
+        ),
+        "target_id": target_id,
+        "paper_shadow_id": paper_shadow_id,
+        "rebalance_id": _text(rebalance_summary.get("rebalance_id"), "MISSING"),
+        "performance_id": performance_id,
+        "review_id": review_id,
+        "generated_methods": ",".join(_texts(target_manifest.get("generated_methods"))),
+        "tracked_methods": ",".join(tracked_methods),
+        "recommended_research_method": recommended,
+        "decision_status": decision_status,
+        "data_quality_status": _text(performance_summary.get("data_quality_status"), "MISSING"),
+        "best_return_method": _text(performance_summary.get("best_return_method"), "MISSING"),
+        "best_drawdown_method": _text(performance_summary.get("best_drawdown_method"), "MISSING"),
+        "best_risk_adjusted_method": _text(
+            performance_summary.get("best_risk_adjusted_method"),
+            "MISSING",
+        ),
+        "limited_adjustment_vs_static": limited_row.get(
+            "relative_to_static_baseline",
+            "MISSING",
+        ),
+        "consensus_target_vs_no_trade": consensus_row.get(
+            "relative_to_no_trade",
+            "MISSING",
+        ),
+        "total_turnover": rebalance_summary.get("total_turnover", "MISSING"),
+        "skipped_methods": ",".join(_texts(rebalance_summary.get("skipped_methods"))),
+        "broker_action_allowed": review_manifest.get("broker_action_allowed") is True,
+        "broker_action_taken": review_manifest.get("broker_action_taken") is True,
+        "not_official_target_weights": review_manifest.get("not_official_target_weights") is True,
+        "research_target_only": review_manifest.get("research_target_only") is True,
+        "paper_shadow_only": review_manifest.get("paper_shadow_only") is True,
+        "production_effect": production_effect,
+        "safety_status": safety_status,
+        "next_action": _text(decision.get("next_action"), "continue_paper_shadow_observation"),
+        "system_target_review_path": "" if review_path is None else str(review_path),
+        "model_target_path": "" if target_path is None else str(target_path),
+        "paper_shadow_path": "" if paper_path is None else str(paper_path),
+        "model_rebalance_path": "" if rebalance_path is None else str(rebalance_path),
+        "paper_shadow_performance_path": (
+            "" if performance_path is None else str(performance_path)
+        ),
+        "broker_action": _text(review_manifest.get("broker_action"), "none"),
+        "limitation": (
+            "Reader Brief only reads latest system target artifacts; it does not "
+            "generate target weights, run paper shadow performance, mutate official "
+            "target weights, or trigger broker action."
+        ),
+    }
+
+
+def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": (
+            "Dynamic Rescue System Target Portfolio: no latest system target review pack found."
+        ),
+        "target_id": "MISSING",
+        "paper_shadow_id": "MISSING",
+        "rebalance_id": "MISSING",
+        "performance_id": "MISSING",
+        "review_id": "MISSING",
+        "generated_methods": "",
+        "tracked_methods": "",
+        "recommended_research_method": "MISSING",
+        "decision_status": "MISSING",
+        "data_quality_status": "MISSING",
+        "best_return_method": "MISSING",
+        "best_drawdown_method": "MISSING",
+        "best_risk_adjusted_method": "MISSING",
+        "limited_adjustment_vs_static": "MISSING",
+        "consensus_target_vs_no_trade": "MISSING",
+        "total_turnover": "MISSING",
+        "skipped_methods": "",
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "not_official_target_weights": True,
+        "research_target_only": True,
+        "paper_shadow_only": True,
+        "production_effect": PRODUCTION_EFFECT,
+        "safety_status": "MISSING",
+        "next_action": "generate_system_target_review_pack",
+        "system_target_review_path": "",
+        "model_target_path": "",
+        "paper_shadow_path": "",
+        "model_rebalance_path": "",
+        "paper_shadow_performance_path": "",
+        "broker_action": "none",
+        "limitation": (
+            "Reader Brief only reads latest system target artifacts; it cannot "
+            "backfill missing review evidence."
+        ),
+    }
+
+
+def _etf_dynamic_v3_system_target_safety_status(
+    *payloads: Mapping[str, Any],
+) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    unsafe = any(
+        payload.get("broker_action_allowed") is True
+        or payload.get("broker_action_taken") is True
+        or payload.get("order_ticket_generated") is True
+        or payload.get("production_state_mutated") is True
+        or payload.get("baseline_config_mutated") is True
+        or payload.get("official_target_weights_mutated") is True
+        or payload.get("production_candidate_generated") is True
+        or payload.get("automatic_candidate_promotion") is True
+        or payload.get("auto_apply") is True
+        or _text(payload.get("production_effect"), PRODUCTION_EFFECT) != PRODUCTION_EFFECT
+        for payload in material
+    )
+    if not unsafe:
+        return (
+            "research_target_only=true; paper_shadow_only=true; "
+            "not_official_target_weights=true; production_effect=none; "
+            "broker_action_allowed=false; broker_action_taken=false; "
+            "order_ticket_generated=false"
+        )
+    return "SAFETY_REVIEW_REQUIRED"
+
+
+def _first_method_row(rows: list[dict[str, Any]], method: str) -> dict[str, Any]:
+    for row in rows:
+        if _text(row.get("target_method")) == method:
+            return row
+    return {}
 
 
 def _etf_dynamic_v3_parameter_research_summary(
@@ -8768,9 +8974,7 @@ def _etf_dynamic_v3_parameter_research_summary(
             "usable_candidates_after",
             0,
         ),
-        "research_decision_update_warnings": ", ".join(
-            _texts(go_no_go_matrix.get("warnings"))
-        )
+        "research_decision_update_warnings": ", ".join(_texts(go_no_go_matrix.get("warnings")))
         or "MISSING",
         "research_decision_update_next_task": _text(
             research_decision_update_next_action.get("suggested_codex_task"),
@@ -8868,8 +9072,7 @@ def _etf_dynamic_v3_parameter_research_summary(
             "MISSING",
         ),
         "position_advisory_daily_mode": _text(
-            position_advisory_daily.get("mode")
-            or position_advisory_daily_actions.get("mode"),
+            position_advisory_daily.get("mode") or position_advisory_daily_actions.get("mode"),
             "MISSING",
         ),
         "position_advisory_daily_consensus_status": _text(
@@ -8978,8 +9181,7 @@ def _etf_dynamic_v3_parameter_research_summary(
             0,
         ),
         "backfilled_outcome_best_variant": _text(
-            variant_performance.get("best_variant")
-            or backfilled_outcome.get("best_variant"),
+            variant_performance.get("best_variant") or backfilled_outcome.get("best_variant"),
             "MISSING",
         ),
         "limited_adjustment_vs_no_trade_5d": variant_performance.get(
@@ -9822,9 +10024,7 @@ def _etf_dynamic_v3_parameter_research_replay_only_summary(
             ),
             "evidence_trend": "" if evidence_trend_path is None else str(evidence_trend_path),
             "forward_outcome_decision": (
-                ""
-                if forward_outcome_decision_path is None
-                else str(forward_outcome_decision_path)
+                "" if forward_outcome_decision_path is None else str(forward_outcome_decision_path)
             ),
             "safety_status": safety_status,
             "production_candidate_generated": _any_payload_flag_true(
@@ -10611,8 +10811,7 @@ def _missing_etf_forward_simulation_summary() -> dict[str, Any]:
         "decision_input_usage": "none; Reader Brief does not run forward update",
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
-            "ETF Forward Simulation: no active shadow candidates. "
-            "Run experiment enrollment first."
+            "ETF Forward Simulation: no active shadow candidates. Run experiment enrollment first."
         ),
         "limitation": (
             "ETF forward dashboard artifact is missing; Reader Brief does not run "
@@ -10634,8 +10833,7 @@ def _etf_forward_safety_status(*payloads: Mapping[str, Any]) -> str:
         for payload in material
     )
     return (
-        "observe_only=true; production_effect=none; broker_action=none; "
-        "manual_review_required=true"
+        "observe_only=true; production_effect=none; broker_action=none; manual_review_required=true"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )
@@ -10804,8 +11002,7 @@ def _missing_etf_ai_attribution_summary() -> dict[str, Any]:
         "manual_review_required": True,
         "summary_sentence": "AI Attribution Review: no latest attribution report found.",
         "limitation": (
-            "AI attribution report artifact is missing; Reader Brief does not run "
-            "AI attribution."
+            "AI attribution report artifact is missing; Reader Brief does not run AI attribution."
         ),
     }
 
@@ -11077,8 +11274,7 @@ def _satellite_replacement_delta_text(plan: Mapping[str, Any]) -> str:
             pieces.append(f"{etf} -{_format_percent(parsed)}")
     for allocation in allocations:
         pieces.append(
-            f"{_text(allocation.get('ticker'))} +"
-            f"{_format_percent(allocation.get('allocation'))}"
+            f"{_text(allocation.get('ticker'))} +{_format_percent(allocation.get('allocation'))}"
         )
     return ", ".join(pieces) if pieces else "none"
 
@@ -12258,8 +12454,7 @@ def _portfolio_tracking_review_summary(as_of: date) -> dict[str, Any]:
             "tracking_days": 0,
             "excess_return": "",
             "summary_sentence": (
-                "Portfolio tracking review is unreadable; production parameters remain "
-                "unchanged."
+                "Portfolio tracking review is unreadable; production parameters remain unchanged."
             ),
         }
     metadata = _mapping(payload.get("metadata"))
@@ -12798,8 +12993,7 @@ def _market_data_refresh_review_summary(as_of: date) -> dict[str, Any]:
             "status": "MISSING",
             "target_date": "",
             "summary_sentence": (
-                "Market data refresh summary is unreadable; recovery status requires "
-                "manual review."
+                "Market data refresh summary is unreadable; recovery status requires manual review."
             ),
         }
     metadata = _mapping(payload.get("metadata"))
@@ -13884,7 +14078,9 @@ def _score_change_narrative(
     driver_text = (
         f"主要正向来自 {', '.join(positive[:2])}"
         if positive and delta >= 0
-        else f"主要拖累来自 {', '.join(negative[:2])}" if negative else "主要驱动未充分披露"
+        else f"主要拖累来自 {', '.join(negative[:2])}"
+        if negative
+        else "主要驱动未充分披露"
     )
     binding = _text(decision.get("binding_gate_label"), "UNKNOWN")
     if position_delta is None:
@@ -13928,7 +14124,7 @@ def _documentation_contract_summary(payload: Mapping[str, Any]) -> dict[str, Any
             "warning_count": 0,
             "production_effect": PRODUCTION_EFFECT,
             "limitation": (
-                "documentation_contract artifact missing; " "Reader Brief 不补造文档治理结论。"
+                "documentation_contract artifact missing; Reader Brief 不补造文档治理结论。"
             ),
         }
     summary = _mapping(payload.get("summary"))
@@ -14746,8 +14942,7 @@ def _status_badge(value: object) -> str:
         label = text
         class_name = _css_token(normalized)
     return (
-        f'<span class="status-badge status-{html.escape(class_name)}">'
-        f"{html.escape(label)}</span>"
+        f'<span class="status-badge status-{html.escape(class_name)}">{html.escape(label)}</span>'
     )
 
 
@@ -14869,7 +15064,7 @@ def _top_summary_cards(
             "label": "Production Effect",
             "value": f"production_effect={production_effect}",
             "detail": (
-                "研究晋升：" f"{_text(status_panel.get('research_promotion_status'), 'UNKNOWN')}"
+                f"研究晋升：{_text(status_panel.get('research_promotion_status'), 'UNKNOWN')}"
             ),
             "badge": production_effect,
             "extra_badge": _text(

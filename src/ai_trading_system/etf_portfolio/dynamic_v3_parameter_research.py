@@ -18693,6 +18693,31 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "id_keys": ("review_id",),
         },
         {
+            "pointer_name": "latest_model_target",
+            "pattern": "model_target/*/model_target_manifest.json",
+            "id_keys": ("target_id",),
+        },
+        {
+            "pointer_name": "latest_paper_shadow",
+            "pattern": "paper_shadow/*/paper_shadow_manifest.json",
+            "id_keys": ("paper_shadow_id",),
+        },
+        {
+            "pointer_name": "latest_model_rebalance",
+            "pattern": "model_rebalance/*/model_rebalance_manifest.json",
+            "id_keys": ("rebalance_id",),
+        },
+        {
+            "pointer_name": "latest_paper_shadow_performance",
+            "pattern": "paper_shadow_performance/*/paper_shadow_performance_manifest.json",
+            "id_keys": ("performance_id",),
+        },
+        {
+            "pointer_name": "latest_system_target_review",
+            "pattern": "system_target_review/*/system_target_review_manifest.json",
+            "id_keys": ("review_id", "system_target_review_id"),
+        },
+        {
             "pointer_name": "latest_paper_portfolio",
             "pattern": "paper_portfolio/*/paper_portfolio_manifest.json",
             "id_keys": ("paper_portfolio_id",),

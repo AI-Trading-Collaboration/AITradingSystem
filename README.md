@@ -1042,6 +1042,25 @@ projection。所有输出固定 `broker_action_allowed=false`、`broker_action_t
 `order_ticket_generated=false`、`real_portfolio_mutated=false`、
 `production_effect=none`，不得导入 broker、生成订单、修改真实仓位、official target
 weights、baseline 或 production state。
+TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW 在 dynamic v3 rescue
+shadow shortlist / candidate consensus / position advisory policy 之上新增完全独立的
+research model target portfolio 和 paper shadow account 链路，不读取 owner real
+portfolio。CLI 包括 `model-target config-validate/generate/report`、`paper-shadow
+init/state/report`、`model-rebalance simulate/report`、`paper-shadow-performance
+run/report --as-of YYYY-MM-DD` 和 `system-target-review pack/report`，对应验证入口为
+`validate-model-target`、`validate-paper-shadow`、`validate-model-rebalance`、
+`validate-paper-shadow-performance` 和 `validate-system-target-review`。配置入口为
+`model_target_portfolio_v1.yaml` 和 `paper_shadow_account_v1.yaml`；runtime artifacts
+写入
+`reports/etf_portfolio/dynamic_v3_rescue/model_target|paper_shadow|model_rebalance|paper_shadow_performance|system_target_review/`，
+并登记 report registry / Reader Brief `Dynamic Rescue System Target Portfolio`
+区块。`paper-shadow-performance run` 在读取缓存价格前执行 `aits validate-data`
+等价门禁，artifact 显式写出 `performance_start_date`、`evaluation_as_of` 和
+`data_quality_status`。所有输出固定 `research_target_only=true`、
+`paper_shadow_only=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`broker_action_taken=false`、
+`order_ticket_generated=false`、`production_effect=none`，不得生成 broker action、
+order ticket、official target weights、production candidate 或真实 portfolio mutation。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -24,6 +24,7 @@ from ai_trading_system.data.quality import (
     write_data_quality_report as write_cache_data_quality_report,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as defensive_evidence
+from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio.ai_attribution import (
     DEFAULT_AI_ATTRIBUTION_DATASET_DIR,
     DEFAULT_AI_ATTRIBUTION_REVIEW_DIR,
@@ -1340,6 +1341,26 @@ dynamic_v3_paper_portfolio_app = typer.Typer(
     help="Dynamic v3 rescue paper portfolio workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_model_target_app = typer.Typer(
+    help="Dynamic v3 rescue research model target workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_paper_shadow_app = typer.Typer(
+    help="Dynamic v3 rescue paper shadow account workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_model_rebalance_app = typer.Typer(
+    help="Dynamic v3 rescue model target paper rebalance workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_paper_shadow_performance_app = typer.Typer(
+    help="Dynamic v3 rescue paper shadow performance workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_system_target_review_app = typer.Typer(
+    help="Dynamic v3 rescue system target portfolio review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_advisory_outcome_app = typer.Typer(
     help="Dynamic v3 rescue advisory outcome workflow。",
     no_args_is_help=True,
@@ -1663,6 +1684,17 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_position_advisory_app, name="position
 dynamic_v3_rescue_app.add_typer(dynamic_v3_consensus_drift_app, name="consensus-drift")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_owner_review_app, name="owner-review")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_paper_portfolio_app, name="paper-portfolio")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_model_target_app, name="model-target")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_paper_shadow_app, name="paper-shadow")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_model_rebalance_app, name="model-rebalance")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_performance_app,
+    name="paper-shadow-performance",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_system_target_review_app,
+    name="system-target-review",
+)
 dynamic_v3_rescue_app.add_typer(dynamic_v3_advisory_outcome_app, name="advisory-outcome")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_owner_attribution_app, name="owner-attribution")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_aging_app, name="shadow-aging")
@@ -2015,8 +2047,7 @@ def baseline_review_eligibility_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="eligibility JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
-    / "eligibility",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "eligibility",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -2083,8 +2114,7 @@ def baseline_review_matrix_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence matrix JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
-    / "matrix",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "matrix",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -2731,10 +2761,7 @@ def trend_calibration_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3351,10 +3378,7 @@ def dynamic_robustness_report_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3579,10 +3603,7 @@ def dynamic_rescue_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4117,10 +4138,7 @@ def dynamic_v3_rescue_real_evaluate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4336,10 +4354,7 @@ def dynamic_v3_rescue_failure_attribution_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认使用 real evaluation end date。"),
@@ -4639,10 +4654,7 @@ def dynamic_v3_data_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data audit artifact root。"),
@@ -4719,10 +4731,7 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data provenance artifact root。"),
@@ -4755,10 +4764,7 @@ def dynamic_v3_data_provenance_repair_price_manifest_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
     try:
@@ -4785,10 +4791,7 @@ def dynamic_v3_data_provenance_validate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """校验 TRADING-113 price cache provenance。"""
     payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
@@ -4983,10 +4986,7 @@ def dynamic_v3_sweep_run_profile_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -5037,10 +5037,7 @@ def dynamic_v3_injection_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="injection audit artifact root。"),
@@ -5146,10 +5143,7 @@ def dynamic_v3_sweep_run_command(
             "--rates-path",
             help="real evaluator FRED rates cache for validate-data gate。",
         ),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option(
@@ -8918,6 +8912,446 @@ def dynamic_v3_validate_paper_portfolio_command(
         raise typer.Exit(code=1)
 
 
+@dynamic_v3_model_target_app.command("config-validate")
+def dynamic_v3_model_target_config_validate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="model target config。"),
+    ] = system_target.DEFAULT_MODEL_TARGET_CONFIG_PATH,
+) -> None:
+    """校验 TRADING-209 research model target config。"""
+    payload = system_target.validate_model_target_config(config_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("research_target_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_model_target_app.command("generate")
+def dynamic_v3_model_target_generate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="model target config。"),
+    ] = system_target.DEFAULT_MODEL_TARGET_CONFIG_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="target as-of date。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="model target artifact root。"),
+    ] = system_target.DEFAULT_MODEL_TARGET_DIR,
+) -> None:
+    """生成 TRADING-209 research model target weights。"""
+    result = system_target.generate_model_target(
+        config_path=config_path,
+        as_of=_parse_date(as_of) if as_of else None,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"target_id={result['target_id']}")
+    typer.echo(f"target_dir={result['target_dir']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"generated_methods={','.join(manifest['generated_methods'])}")
+    typer.echo(f"recommended_research_method={manifest['recommended_research_method']}")
+    typer.echo("research_target_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_model_target_app.command("report")
+def dynamic_v3_model_target_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest model target。"),
+    ] = False,
+    target_id: Annotated[str | None, typer.Option("--target-id", help="target id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="model target artifact root。"),
+    ] = system_target.DEFAULT_MODEL_TARGET_DIR,
+) -> None:
+    """展示 TRADING-209 model target 摘要。"""
+    payload = system_target.model_target_report_payload(
+        target_id=target_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"target_id={payload['target_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"generated_methods={','.join(payload['generated_methods'])}")
+    typer.echo(f"recommended_research_method={payload['recommended_research_method']}")
+    typer.echo(f"report_path={payload['model_target_report_path']}")
+    typer.echo("official_target_weights_written=false")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-model-target")
+def dynamic_v3_validate_model_target_command(
+    target_id: Annotated[str, typer.Option("--target-id", help="target id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="model target artifact root。"),
+    ] = system_target.DEFAULT_MODEL_TARGET_DIR,
+) -> None:
+    """校验 TRADING-209 model target artifact。"""
+    payload = system_target.validate_model_target_artifact(
+        target_id=target_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("research_target_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_paper_shadow_app.command("init")
+def dynamic_v3_paper_shadow_init_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="paper shadow account config。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_DIR,
+) -> None:
+    """初始化 TRADING-210 paper shadow account。"""
+    result = system_target.init_paper_shadow_account(config_path=config_path, output_dir=output_dir)
+    state = result["state"]
+    typer.echo(f"paper_shadow_id={result['paper_shadow_id']}")
+    typer.echo(f"paper_shadow_dir={result['paper_shadow_dir']}")
+    typer.echo(f"state_status={state['state_status']}")
+    typer.echo(f"tracked_methods={','.join(state['tracked_methods'])}")
+    typer.echo("paper_shadow_only=true")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_paper_shadow_app.command("state")
+def dynamic_v3_paper_shadow_state_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest paper shadow。"),
+    ] = False,
+    paper_shadow_id: Annotated[
+        str | None,
+        typer.Option("--paper-shadow-id", help="paper shadow id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_DIR,
+) -> None:
+    """展示 TRADING-210 paper shadow state。"""
+    payload = system_target.paper_shadow_state_payload(
+        paper_shadow_id=paper_shadow_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"paper_shadow_id={payload['paper_shadow_id']}")
+    typer.echo(f"state_status={payload['state_status']}")
+    typer.echo(f"as_of={payload['as_of']}")
+    typer.echo(f"tracked_methods={','.join(payload['tracked_methods'])}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_paper_shadow_app.command("report")
+def dynamic_v3_paper_shadow_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest paper shadow。"),
+    ] = False,
+    paper_shadow_id: Annotated[
+        str | None,
+        typer.Option("--paper-shadow-id", help="paper shadow id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_DIR,
+) -> None:
+    """展示 TRADING-210 paper shadow report。"""
+    payload = system_target.paper_shadow_report_payload(
+        paper_shadow_id=paper_shadow_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"paper_shadow_id={payload['paper_shadow_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"tracked_methods={','.join(payload['tracked_methods'])}")
+    typer.echo(f"report_path={payload['paper_shadow_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow")
+def dynamic_v3_validate_paper_shadow_command(
+    paper_shadow_id: Annotated[
+        str,
+        typer.Option("--paper-shadow-id", help="paper shadow id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_DIR,
+) -> None:
+    """校验 TRADING-210 paper shadow artifact。"""
+    payload = system_target.validate_paper_shadow_artifact(
+        paper_shadow_id=paper_shadow_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("paper_shadow_only=true")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_model_rebalance_app.command("simulate")
+def dynamic_v3_model_rebalance_simulate_command(
+    paper_shadow_id: Annotated[
+        str,
+        typer.Option("--paper-shadow-id", help="paper shadow id。"),
+    ],
+    target_id: Annotated[str, typer.Option("--target-id", help="model target id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="model rebalance artifact root。"),
+    ] = system_target.DEFAULT_MODEL_REBALANCE_DIR,
+) -> None:
+    """执行 TRADING-211 model target paper rebalance。"""
+    result = system_target.simulate_model_rebalance(
+        paper_shadow_id=paper_shadow_id,
+        target_id=target_id,
+        output_dir=output_dir,
+    )
+    summary = result["rebalance_turnover_summary"]
+    typer.echo(f"rebalance_id={result['rebalance_id']}")
+    typer.echo(f"rebalance_dir={result['rebalance_dir']}")
+    typer.echo(f"total_turnover={summary['total_turnover']}")
+    typer.echo(f"skipped_methods={','.join(summary['skipped_methods'])}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_model_rebalance_app.command("report")
+def dynamic_v3_model_rebalance_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest model rebalance。"),
+    ] = False,
+    rebalance_id: Annotated[
+        str | None,
+        typer.Option("--rebalance-id", help="rebalance id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="model rebalance artifact root。"),
+    ] = system_target.DEFAULT_MODEL_REBALANCE_DIR,
+) -> None:
+    """展示 TRADING-211 model rebalance report。"""
+    payload = system_target.model_rebalance_report_payload(
+        rebalance_id=rebalance_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("rebalance_turnover_summary"))
+    typer.echo(f"rebalance_id={payload['rebalance_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"total_turnover={summary.get('total_turnover')}")
+    typer.echo(f"skipped_methods={','.join(summary.get('skipped_methods') or [])}")
+    typer.echo(f"report_path={payload['model_rebalance_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-model-rebalance")
+def dynamic_v3_validate_model_rebalance_command(
+    rebalance_id: Annotated[str, typer.Option("--rebalance-id", help="rebalance id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="model rebalance artifact root。"),
+    ] = system_target.DEFAULT_MODEL_REBALANCE_DIR,
+) -> None:
+    """校验 TRADING-211 model rebalance artifact。"""
+    payload = system_target.validate_model_rebalance_artifact(
+        rebalance_id=rebalance_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("paper_shadow_only=true")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_paper_shadow_performance_app.command("run")
+def dynamic_v3_paper_shadow_performance_run_command(
+    paper_shadow_id: Annotated[
+        str,
+        typer.Option("--paper-shadow-id", help="paper shadow id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow performance artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="performance evaluation date，YYYY-MM-DD；默认使用运行日期。"),
+    ] = None,
+) -> None:
+    """运行 TRADING-212 paper shadow performance comparison。"""
+    result = system_target.run_paper_shadow_performance(
+        paper_shadow_id=paper_shadow_id,
+        output_dir=output_dir,
+        as_of=_parse_date(as_of) if as_of else None,
+    )
+    summary = result["method_performance_summary"]
+    typer.echo(f"performance_id={result['performance_id']}")
+    typer.echo(f"performance_dir={result['performance_dir']}")
+    typer.echo(f"performance_start_date={summary['performance_start_date']}")
+    typer.echo(f"evaluation_as_of={summary['evaluation_as_of']}")
+    typer.echo(f"best_return_method={summary['best_return_method']}")
+    typer.echo(f"best_drawdown_method={summary['best_drawdown_method']}")
+    typer.echo(f"best_risk_adjusted_method={summary['best_risk_adjusted_method']}")
+    typer.echo("data_quality_status=" + str(summary["data_quality_status"]))
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_paper_shadow_performance_app.command("report")
+def dynamic_v3_paper_shadow_performance_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest paper shadow performance。"),
+    ] = False,
+    performance_id: Annotated[
+        str | None,
+        typer.Option("--performance-id", help="performance id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow performance artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
+) -> None:
+    """展示 TRADING-212 paper shadow performance report。"""
+    payload = system_target.paper_shadow_performance_report_payload(
+        performance_id=performance_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("method_performance_summary"))
+    typer.echo(f"performance_id={payload['performance_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"best_return_method={summary.get('best_return_method')}")
+    typer.echo(f"best_drawdown_method={summary.get('best_drawdown_method')}")
+    typer.echo(f"best_risk_adjusted_method={summary.get('best_risk_adjusted_method')}")
+    typer.echo(f"report_path={payload['paper_shadow_performance_report_path']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-performance")
+def dynamic_v3_validate_paper_shadow_performance_command(
+    performance_id: Annotated[str, typer.Option("--performance-id", help="performance id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper shadow performance artifact root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR,
+) -> None:
+    """校验 TRADING-212 paper shadow performance artifact。"""
+    payload = system_target.validate_paper_shadow_performance_artifact(
+        performance_id=performance_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("paper_shadow_only=true")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_system_target_review_app.command("pack")
+def dynamic_v3_system_target_review_pack_command(
+    target_id: Annotated[str, typer.Option("--target-id", help="model target id。")],
+    paper_shadow_id: Annotated[
+        str,
+        typer.Option("--paper-shadow-id", help="paper shadow id。"),
+    ],
+    performance_id: Annotated[str, typer.Option("--performance-id", help="performance id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="system target review artifact root。"),
+    ] = system_target.DEFAULT_SYSTEM_TARGET_REVIEW_DIR,
+) -> None:
+    """生成 TRADING-213 system target portfolio review pack。"""
+    result = system_target.build_system_target_review_pack(
+        target_id=target_id,
+        paper_shadow_id=paper_shadow_id,
+        performance_id=performance_id,
+        output_dir=output_dir,
+    )
+    decision = result["system_target_decision"]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"review_dir={result['review_dir']}")
+    typer.echo(f"recommended_research_method={decision['recommended_research_method']}")
+    typer.echo(f"decision_status={decision['decision_status']}")
+    typer.echo("research_target_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_system_target_review_app.command("report")
+def dynamic_v3_system_target_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest system target review。"),
+    ] = False,
+    review_id: Annotated[str | None, typer.Option("--review-id", help="review id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="system target review artifact root。"),
+    ] = system_target.DEFAULT_SYSTEM_TARGET_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-213 system target review report。"""
+    payload = system_target.system_target_review_report_payload(
+        review_id=review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("system_target_decision"))
+    typer.echo(f"review_id={payload['review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"recommended_research_method={decision.get('recommended_research_method')}")
+    typer.echo(f"decision_status={decision.get('decision_status')}")
+    typer.echo(f"report_path={payload['system_target_review_report_path']}")
+    typer.echo("research_target_only=true")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-system-target-review")
+def dynamic_v3_validate_system_target_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="system target review artifact root。"),
+    ] = system_target.DEFAULT_SYSTEM_TARGET_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-213 system target review artifact。"""
+    payload = system_target.validate_system_target_review_artifact(
+        review_id=review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("research_target_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_advisory_outcome_app.command("track")
 def dynamic_v3_advisory_outcome_track_command(
     daily_advisory_id: Annotated[
@@ -12090,8 +12524,7 @@ def dynamic_v3_sim_defensive_validation_run_command(
     typer.echo(f"defensive_validation_dir={result['defensive_validation_dir']}")
     typer.echo(f"status={result['manifest']['status']}")
     typer.echo(
-        "defensive_limited_adjustment_status="
-        f"{summary['defensive_limited_adjustment_status']}"
+        f"defensive_limited_adjustment_status={summary['defensive_limited_adjustment_status']}"
     )
     typer.echo("report_label=BACKTEST_SIMULATION_NOT_PIT")
     typer.echo("production_effect=none")
@@ -12126,8 +12559,7 @@ def dynamic_v3_sim_defensive_validation_report_command(
     typer.echo(f"defensive_validation_id={payload['defensive_validation_id']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(
-        "defensive_limited_adjustment_status="
-        f"{summary['defensive_limited_adjustment_status']}"
+        f"defensive_limited_adjustment_status={summary['defensive_limited_adjustment_status']}"
     )
     typer.echo(f"report_path={payload['defensive_validation_report_path']}")
     typer.echo("production_effect=none")
@@ -15037,10 +15469,7 @@ def dynamic_shadow_update_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     registry_path: Annotated[
         Path,
         typer.Option("--registry-path", help="dynamic shadow candidate registry path。"),
@@ -16717,8 +17146,7 @@ def governance_summary_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出目录。"),
-    ] = DEFAULT_ETF_REPORT_DIR
-    / "governance",
+    ] = DEFAULT_ETF_REPORT_DIR / "governance",
 ) -> None:
     """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
     config = load_etf_config_bundle()
@@ -17115,9 +17543,7 @@ def experiments_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT
-    / "config"
-    / "report_registry.yaml",
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
 ) -> None:
     """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
     generated = datetime.now(UTC)
@@ -17324,9 +17750,7 @@ def forward_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT
-    / "config"
-    / "report_registry.yaml",
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
     output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
         DEFAULT_ETF_FORWARD_REPORT_DIR / "validation"
     ),
@@ -19506,11 +19930,7 @@ def p2_derive_edgar_events_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "sec_edgar"
-    / "filing_timeline.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Canonical edgar_text_events 输出路径，默认读取 p2.yaml。"),
@@ -19555,27 +19975,15 @@ def p2_fetch_edgar_text_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "sec_edgar"
-    / "filing_timeline.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
     document_dir: Annotated[
         Path,
         typer.Option(help="SEC filing 文本缓存目录。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents",
     output_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index 输出路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
     manifest_path: Annotated[Path, typer.Option(help="P2 source manifest 输出路径。")] = (
         DEFAULT_ETF_P2_MANIFEST_PATH
     ),
@@ -19629,11 +20037,7 @@ def p2_edgar_topics_command(
     input_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index CSV。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
     date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
     output_dir: Annotated[Path, typer.Option(help="EDGAR topic audit 输出目录。")] = (
         DEFAULT_ETF_REPORT_DIR / "p2"

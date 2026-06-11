@@ -2273,6 +2273,112 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_model_target
+    title: ETF Dynamic v3 Rescue Research Model Target Portfolio
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue model-target report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/model_target_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/model_target_weights.json
+      - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/method_target_weights.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/target_constraint_checks.json
+      - reports/etf_portfolio/dynamic_v3_rescue/model_target/*/model_target_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-209 builds research-only system target weights from latest dynamic
+      v3 rescue advisory evidence, with no official target weight mutation and
+      no broker action.
+    owner_action: review_model_target_methods_before_paper_shadow_rebalance
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow
+    title: ETF Dynamic v3 Rescue Paper Shadow Account
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_state.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_method_states.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow/*/paper_shadow_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-210 tracks model target methods in an isolated paper shadow account
+      without reading broker state or changing real/manual snapshot state.
+    owner_action: review_paper_shadow_state_before_model_rebalance
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_model_rebalance
+    title: ETF Dynamic v3 Rescue Model Rebalance Simulation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue model-rebalance report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/model_rebalance_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/rebalance_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/method_weight_history.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/rebalance_turnover_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/model_rebalance/*/model_rebalance_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-211 applies research model target weights only to paper shadow
+      method state and writes an auditable turnover/event ledger.
+    owner_action: review_rebalance_events_before_performance_comparison
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_performance
+    title: ETF Dynamic v3 Rescue Paper Shadow Performance
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-performance report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/paper_shadow_performance_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/method_performance_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/method_pairwise_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/regime_performance_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/paper_shadow_performance_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_performance/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-212 compares paper shadow methods only after the cached data
+      quality gate passes and exposes data_quality_status in the artifact.
+    owner_action: review_performance_and_data_quality_before_method_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_system_target_review
+    title: ETF Dynamic v3 Rescue System Target Review Pack
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue system-target-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/system_target_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/system_target_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/owner_research_review_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_review/*/system_target_review_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-213 bundles target, paper shadow, rebalance/performance evidence
+      for owner review while preserving research-only and no-broker boundaries.
+    owner_action: owner_review_system_target_pack_before_any_policy_or_weight_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

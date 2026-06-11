@@ -1,0 +1,61 @@
+schema_version: 1
+
+paper_shadow_account:
+  name: dynamic_v3_rescue_paper_shadow_account_v1
+  mode: paper_shadow_only
+  base_currency: USD
+  initial_equity: 100000.0
+  start_date: "2022-12-01"
+  initial_method: static_baseline
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_paper_shadow_account_v1
+  owner: project_owner
+  version: 2026-06-12
+  status: pilot_baseline
+  rationale: >
+    Track research model target methods in an isolated paper shadow account
+    that is separate from owner real portfolio snapshots and broker state.
+  intended_effect: >
+    Compare method-level returns, drawdown, volatility, and turnover over the
+    ai_after_chatgpt regime before any owner review escalation.
+  validation_evidence: >
+    TRADING-209_to_213 focused tests and paper shadow validation.
+  review_condition: >
+    Revisit after enough forward paper observations exist to evaluate method
+    stability and pressure-regime behavior.
+
+tracking:
+  target_methods:
+    - static_baseline
+    - no_trade_baseline
+    - consensus_target
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+
+baseline:
+  static_weights:
+    QQQ: 0.50
+    SMH: 0.20
+    TLT: 0.10
+    CASH: 0.20
+
+pricing:
+  price_source: existing_price_cache
+  use_adjusted_close: true
+
+costs:
+  transaction_cost_bps: 0
+  slippage_bps: 0
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  production_effect: none
+  order_ticket_generated: false
+  auto_apply: false
