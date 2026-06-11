@@ -2239,6 +2239,128 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "defensive_hypothesis_deep_dive",
+                        (
+                            "id={}; supporting={}; contradicting={}; rule_approval={}".format(
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_hypothesis_deep_dive_id"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_hypothesis_supporting_count"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_hypothesis_contradicting_count"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_hypothesis_can_support_rule_approval"
+                                ),
+                            )
+                        ),
+                    ),
+                    (
+                        "defensive_label_review",
+                        (
+                            "id={}; status={}; recommended={}; auto_rename={}".format(
+                                etf_dynamic_v3_sim_review.get("defensive_label_review_id"),
+                                etf_dynamic_v3_sim_review.get("defensive_label_status"),
+                                etf_dynamic_v3_sim_review.get("defensive_recommended_label"),
+                                etf_dynamic_v3_sim_review.get("defensive_label_auto_rename"),
+                            )
+                        ),
+                    ),
+                    (
+                        "defensive_failure_study",
+                        (
+                            "id={}; cases={}; top_pattern={}".format(
+                                etf_dynamic_v3_sim_review.get("defensive_failure_study_id"),
+                                etf_dynamic_v3_sim_review.get("defensive_failure_case_count"),
+                                etf_dynamic_v3_sim_review.get("defensive_failure_top_pattern"),
+                            )
+                        ),
+                    ),
+                    (
+                        "defensive_research_note",
+                        (
+                            "id={}; status={}; forward_support={}".format(
+                                etf_dynamic_v3_sim_review.get("defensive_research_note_id"),
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_hypothesis_current_status"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_hypothesis_forward_support"
+                                ),
+                            )
+                        ),
+                    ),
+                    (
+                        "defensive_owner_pack",
+                        (
+                            "id={}; continue_tracking_recommended={}".format(
+                                etf_dynamic_v3_sim_review.get("defensive_owner_pack_id"),
+                                etf_dynamic_v3_sim_review.get(
+                                    "defensive_owner_continue_tracking_recommended"
+                                ),
+                            )
+                        ),
+                    ),
+                    (
+                        "forward_pressure_capture",
+                        (
+                            "id={}; event_triggers={}".format(
+                                etf_dynamic_v3_sim_review.get(
+                                    "forward_pressure_capture_plan_id"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "forward_pressure_event_trigger_count"
+                                ),
+                            )
+                        ),
+                    ),
+                    (
+                        "pressure_trigger_capture",
+                        (
+                            "trigger_id={}; trigger_status={}; capture_required={}; "
+                            "capture_id={}; capture_status={}; manual_force={}".format(
+                                etf_dynamic_v3_sim_review.get("pressure_trigger_id"),
+                                etf_dynamic_v3_sim_review.get("pressure_trigger_status"),
+                                etf_dynamic_v3_sim_review.get("pressure_capture_required"),
+                                etf_dynamic_v3_sim_review.get("pressure_capture_id"),
+                                etf_dynamic_v3_sim_review.get("pressure_capture_status"),
+                                etf_dynamic_v3_sim_review.get("pressure_capture_manual_force"),
+                            )
+                        ),
+                    ),
+                    (
+                        "pressure_sample_ledger",
+                        (
+                            "id={}; forward={}; simulation={}; progress={}".format(
+                                etf_dynamic_v3_sim_review.get("pressure_sample_ledger_id"),
+                                etf_dynamic_v3_sim_review.get("pressure_forward_samples"),
+                                etf_dynamic_v3_sim_review.get("pressure_simulation_samples"),
+                                etf_dynamic_v3_sim_review.get(
+                                    "pressure_progress_to_requirement"
+                                ),
+                            )
+                        ),
+                    ),
+                    (
+                        "weekly_defensive_evidence",
+                        (
+                            "id={}; rule_status={}; recommendation={}; new_simulation={}".format(
+                                etf_dynamic_v3_sim_review.get("weekly_defensive_id"),
+                                etf_dynamic_v3_sim_review.get(
+                                    "weekly_defensive_rule_status"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "weekly_defensive_recommendation"
+                                ),
+                                etf_dynamic_v3_sim_review.get(
+                                    "weekly_defensive_new_simulation_samples"
+                                ),
+                            )
+                        ),
+                    ),
+                    (
                         "confirmation_dashboard_id",
                         etf_dynamic_v3_sim_review.get("confirmation_dashboard_id"),
                     ),
@@ -2404,6 +2526,46 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "weekly_ops_decision_update_path",
                         etf_dynamic_v3_sim_review.get("weekly_ops_decision_update_path"),
+                    ),
+                    (
+                        "defensive_hypothesis_deep_dive_path",
+                        etf_dynamic_v3_sim_review.get("defensive_hypothesis_deep_dive_path"),
+                    ),
+                    (
+                        "defensive_label_review_path",
+                        etf_dynamic_v3_sim_review.get("defensive_label_review_path"),
+                    ),
+                    (
+                        "defensive_failure_study_path",
+                        etf_dynamic_v3_sim_review.get("defensive_failure_study_path"),
+                    ),
+                    (
+                        "defensive_research_note_path",
+                        etf_dynamic_v3_sim_review.get("defensive_research_note_path"),
+                    ),
+                    (
+                        "defensive_owner_pack_path",
+                        etf_dynamic_v3_sim_review.get("defensive_owner_pack_path"),
+                    ),
+                    (
+                        "forward_pressure_capture_path",
+                        etf_dynamic_v3_sim_review.get("forward_pressure_capture_path"),
+                    ),
+                    (
+                        "pressure_trigger_path",
+                        etf_dynamic_v3_sim_review.get("pressure_trigger_path"),
+                    ),
+                    (
+                        "pressure_capture_path",
+                        etf_dynamic_v3_sim_review.get("pressure_capture_path"),
+                    ),
+                    (
+                        "pressure_sample_ledger_path",
+                        etf_dynamic_v3_sim_review.get("pressure_sample_ledger_path"),
+                    ),
+                    (
+                        "weekly_defensive_evidence_path",
+                        etf_dynamic_v3_sim_review.get("weekly_defensive_evidence_path"),
                     ),
                     (
                         "rule_owner_decision_path",
@@ -6221,6 +6383,49 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         _report_index_artifact_path(report_index, "etf_dynamic_v3_weekly_ops_decision_update"),
         "weekly_ops_decision_update_manifest.json",
     )
+    defensive_hypothesis_deep_dive_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_defensive_hypothesis_deep_dive",
+        ),
+        "deep_dive_manifest.json",
+    )
+    defensive_label_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_defensive_label_review"),
+        "label_review_manifest.json",
+    )
+    defensive_failure_study_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_defensive_failure_study"),
+        "failure_study_manifest.json",
+    )
+    defensive_research_note_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_defensive_research_note"),
+        "defensive_research_note_manifest.json",
+    )
+    defensive_owner_pack_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_defensive_owner_pack"),
+        "defensive_owner_pack_manifest.json",
+    )
+    forward_pressure_capture_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_forward_pressure_capture"),
+        "capture_plan_manifest.json",
+    )
+    pressure_trigger_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_pressure_trigger"),
+        "pressure_trigger_manifest.json",
+    )
+    pressure_capture_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_pressure_capture"),
+        "pressure_capture_manifest.json",
+    )
+    pressure_sample_ledger_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_pressure_sample_ledger"),
+        "pressure_sample_ledger_manifest.json",
+    )
+    weekly_defensive_evidence_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_weekly_defensive_evidence"),
+        "weekly_defensive_manifest.json",
+    )
     rule_owner_decision_path = _dynamic_v3_rule_owner_decision_journal_path(
         _report_index_artifact_path(
             report_index,
@@ -6360,6 +6565,71 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         if weekly_ops_decision_update_path is not None
         else None
     )
+    defensive_hypothesis_deep_dive = _read_optional_json(defensive_hypothesis_deep_dive_path)
+    defensive_hypothesis_regime_matrix = _read_optional_json(
+        defensive_hypothesis_deep_dive_path.parent / "regime_effect_matrix.json"
+        if defensive_hypothesis_deep_dive_path is not None
+        else None
+    )
+    defensive_label_review = _read_optional_json(defensive_label_review_path)
+    defensive_label_matrix = _read_optional_json(
+        defensive_label_review_path.parent / "label_decision_matrix.json"
+        if defensive_label_review_path is not None
+        else None
+    )
+    defensive_failure_study = _read_optional_json(defensive_failure_study_path)
+    defensive_failure_summary = _read_optional_json(
+        defensive_failure_study_path.parent / "failure_pattern_summary.json"
+        if defensive_failure_study_path is not None
+        else None
+    )
+    defensive_research_note = _read_optional_json(defensive_research_note_path)
+    defensive_hypothesis_summary = _read_optional_json(
+        defensive_research_note_path.parent / "defensive_hypothesis_summary.json"
+        if defensive_research_note_path is not None
+        else None
+    )
+    defensive_owner_pack = _read_optional_json(defensive_owner_pack_path)
+    defensive_owner_options = _read_optional_json(
+        defensive_owner_pack_path.parent / "owner_decision_options.json"
+        if defensive_owner_pack_path is not None
+        else None
+    )
+    forward_pressure_capture = _read_optional_json(forward_pressure_capture_path)
+    forward_pressure_event_plan = _read_optional_json(
+        forward_pressure_capture_path.parent / "event_driven_trigger_plan.json"
+        if forward_pressure_capture_path is not None
+        else None
+    )
+    pressure_trigger = _read_optional_json(pressure_trigger_path)
+    pressure_trigger_metrics = _read_optional_json(
+        pressure_trigger_path.parent / "trigger_metrics.json"
+        if pressure_trigger_path is not None
+        else None
+    )
+    pressure_trigger_actions = _read_optional_json(
+        pressure_trigger_path.parent / "triggered_actions.json"
+        if pressure_trigger_path is not None
+        else None
+    )
+    pressure_capture = _read_optional_json(pressure_capture_path)
+    pressure_capture_steps = _read_optional_json(
+        pressure_capture_path.parent / "pressure_capture_steps.json"
+        if pressure_capture_path is not None
+        else None
+    )
+    pressure_sample_ledger = _read_optional_json(pressure_sample_ledger_path)
+    pressure_sample_summary = _read_optional_json(
+        pressure_sample_ledger_path.parent / "pressure_sample_summary.json"
+        if pressure_sample_ledger_path is not None
+        else None
+    )
+    weekly_defensive_evidence = _read_optional_json(weekly_defensive_evidence_path)
+    weekly_defensive_summary = _read_optional_json(
+        weekly_defensive_evidence_path.parent / "weekly_defensive_summary.json"
+        if weekly_defensive_evidence_path is not None
+        else None
+    )
     owner_decisions = _read_optional_jsonl(rule_owner_decision_path)
     latest_owner_decision = owner_decisions[-1] if owner_decisions else {}
     source_payloads = tuple(
@@ -6406,6 +6676,27 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             weekly_ops_decision_update,
             weekly_ops_decision_matrix,
             weekly_ops_next_actions,
+            defensive_hypothesis_deep_dive,
+            defensive_hypothesis_regime_matrix,
+            defensive_label_review,
+            defensive_label_matrix,
+            defensive_failure_study,
+            defensive_failure_summary,
+            defensive_research_note,
+            defensive_hypothesis_summary,
+            defensive_owner_pack,
+            defensive_owner_options,
+            forward_pressure_capture,
+            forward_pressure_event_plan,
+            pressure_trigger,
+            pressure_trigger_metrics,
+            pressure_trigger_actions,
+            pressure_capture,
+            pressure_capture_steps,
+            pressure_sample_ledger,
+            pressure_sample_summary,
+            weekly_defensive_evidence,
+            weekly_defensive_summary,
             latest_owner_decision,
         )
     )
@@ -6465,6 +6756,23 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         _text(row.get("action"))
         for row in _records(_mapping(weekly_ops_next_actions).get("next_actions"))
     )
+    failure_patterns = _records(_mapping(defensive_failure_summary).get("patterns"))
+    top_failure_pattern = next(
+        (_text(row.get("pattern")) for row in failure_patterns if _int(row.get("count")) > 0),
+        "MISSING",
+    )
+    owner_recommended_decisions = {
+        _text(row.get("decision"))
+        for row in _records(_mapping(defensive_owner_options).get("options"))
+        if row.get("recommended") is True
+    }
+    pressure_trigger_status = _text(
+        _mapping(pressure_trigger_metrics).get("trigger_status"),
+        "MISSING",
+    )
+    pressure_capture_required = (
+        _mapping(pressure_trigger_actions).get("event_driven_capture_required") is True
+    )
     auto_apply = any(
         payload.get("auto_apply") is True or payload.get("auto_policy_apply") is True
         for payload in source_payloads
@@ -6484,7 +6792,13 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         or _mapping(proposal_review).get("status")
         or _mapping(defensive_validation).get("status")
         or _mapping(risk_return).get("status")
-        or _mapping(interpretation).get("status"),
+        or _mapping(interpretation).get("status")
+        or _mapping(weekly_defensive_evidence).get("status")
+        or _mapping(pressure_sample_ledger).get("status")
+        or _mapping(pressure_capture).get("status")
+        or _mapping(pressure_trigger).get("status")
+        or _mapping(defensive_research_note).get("status")
+        or _mapping(defensive_hypothesis_deep_dive).get("status"),
         "MISSING",
     )
     defensive_status = _text(
@@ -6527,6 +6841,11 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             f"{_text(_mapping(rule_review_cycle).get('cycle_id'), 'MISSING')}; "
             "weekly_cycle="
             f"{_text(_mapping(confirmation_weekly).get('weekly_cycle_id'), 'MISSING')}; "
+            "defensive_hypothesis="
+            f"{_text(_mapping(defensive_hypothesis_summary).get('current_status'), 'MISSING')}; "
+            f"pressure_trigger={pressure_trigger_status}; "
+            "weekly_defensive="
+            f"{_text(_mapping(weekly_defensive_summary).get('defensive_rule_status'), 'MISSING')}; "
             f"defensive_status={defensive_status}; auto_apply={auto_apply}; "
             "production_effect=none."
         ),
@@ -6677,6 +6996,114 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
             _mapping(weekly_ops_decision_matrix).get("broker_action_allowed") is True
         ),
         "weekly_ops_next_actions": weekly_next_action_names or "MISSING",
+        "defensive_hypothesis_deep_dive_id": _text(
+            _mapping(defensive_hypothesis_deep_dive).get("deep_dive_id"),
+            "MISSING",
+        ),
+        "defensive_hypothesis_supporting_count": _int(
+            _mapping(defensive_hypothesis_deep_dive).get("supporting_case_count")
+        ),
+        "defensive_hypothesis_contradicting_count": _int(
+            _mapping(defensive_hypothesis_deep_dive).get("contradicting_case_count")
+        ),
+        "defensive_hypothesis_can_support_rule_approval": (
+            _mapping(defensive_hypothesis_deep_dive).get("can_support_rule_approval") is True
+        ),
+        "defensive_label_review_id": _text(
+            _mapping(defensive_label_review).get("label_review_id"),
+            "MISSING",
+        ),
+        "defensive_label_status": _text(
+            _mapping(defensive_label_matrix).get("label_status"),
+            "MISSING",
+        ),
+        "defensive_recommended_label": _text(
+            _mapping(defensive_label_matrix).get("recommended_label"),
+            "MISSING",
+        ),
+        "defensive_label_auto_rename": (
+            _mapping(defensive_label_matrix).get("auto_rename") is True
+        ),
+        "defensive_failure_study_id": _text(
+            _mapping(defensive_failure_study).get("failure_study_id"),
+            "MISSING",
+        ),
+        "defensive_failure_case_count": _int(
+            _mapping(defensive_failure_study).get("failure_case_count")
+        ),
+        "defensive_failure_top_pattern": top_failure_pattern,
+        "defensive_research_note_id": _text(
+            _mapping(defensive_research_note).get("note_id"),
+            "MISSING",
+        ),
+        "defensive_hypothesis_current_status": _text(
+            _mapping(defensive_hypothesis_summary).get("current_status"),
+            "MISSING",
+        ),
+        "defensive_hypothesis_forward_support": _text(
+            _mapping(defensive_hypothesis_summary).get("forward_support"),
+            "MISSING",
+        ),
+        "defensive_owner_pack_id": _text(
+            _mapping(defensive_owner_pack).get("pack_id"),
+            "MISSING",
+        ),
+        "defensive_owner_continue_tracking_recommended": (
+            "continue_tracking" in owner_recommended_decisions
+        ),
+        "forward_pressure_capture_plan_id": _text(
+            _mapping(forward_pressure_capture).get("capture_plan_id"),
+            "MISSING",
+        ),
+        "forward_pressure_event_trigger_count": len(
+            _mapping(forward_pressure_event_plan).get("triggers", {})
+        ),
+        "pressure_trigger_id": _text(
+            _mapping(pressure_trigger).get("trigger_id"),
+            "MISSING",
+        ),
+        "pressure_trigger_status": pressure_trigger_status,
+        "pressure_capture_required": pressure_capture_required,
+        "pressure_capture_id": _text(
+            _mapping(pressure_capture).get("capture_id"),
+            "MISSING",
+        ),
+        "pressure_capture_status": _text(
+            _mapping(pressure_capture).get("status"),
+            "MISSING",
+        ),
+        "pressure_capture_manual_force": (
+            _mapping(pressure_capture_steps).get("manual_force") is True
+        ),
+        "pressure_sample_ledger_id": _text(
+            _mapping(pressure_sample_ledger).get("ledger_id"),
+            "MISSING",
+        ),
+        "pressure_forward_samples": _int(
+            _mapping(pressure_sample_summary).get("forward_samples")
+        ),
+        "pressure_simulation_samples": _int(
+            _mapping(pressure_sample_summary).get("simulation_samples")
+        ),
+        "pressure_progress_to_requirement": _mapping(pressure_sample_summary).get(
+            "progress_to_requirement",
+            "MISSING",
+        ),
+        "weekly_defensive_id": _text(
+            _mapping(weekly_defensive_evidence).get("weekly_defensive_id"),
+            "MISSING",
+        ),
+        "weekly_defensive_rule_status": _text(
+            _mapping(weekly_defensive_summary).get("defensive_rule_status"),
+            "MISSING",
+        ),
+        "weekly_defensive_recommendation": _text(
+            _mapping(weekly_defensive_summary).get("weekly_recommendation"),
+            "MISSING",
+        ),
+        "weekly_defensive_new_simulation_samples": _int(
+            _mapping(weekly_defensive_summary).get("new_simulation_pressure_samples")
+        ),
         "confirmation_dashboard_id": _text(
             _mapping(confirmation_dashboard).get("dashboard_id"),
             "MISSING",
@@ -6756,9 +7183,26 @@ def _etf_dynamic_v3_sim_review_summary(report_index: Mapping[str, Any]) -> dict[
         "defensive_pressure_compare_path": _text(defensive_pressure_compare_path),
         "defensive_rule_review_path": _text(defensive_rule_review_path),
         "weekly_ops_decision_update_path": _text(weekly_ops_decision_update_path),
+        "defensive_hypothesis_deep_dive_path": _text(defensive_hypothesis_deep_dive_path),
+        "defensive_label_review_path": _text(defensive_label_review_path),
+        "defensive_failure_study_path": _text(defensive_failure_study_path),
+        "defensive_research_note_path": _text(defensive_research_note_path),
+        "defensive_owner_pack_path": _text(defensive_owner_pack_path),
+        "forward_pressure_capture_path": _text(forward_pressure_capture_path),
+        "pressure_trigger_path": _text(pressure_trigger_path),
+        "pressure_capture_path": _text(pressure_capture_path),
+        "pressure_sample_ledger_path": _text(pressure_sample_ledger_path),
+        "weekly_defensive_evidence_path": _text(weekly_defensive_evidence_path),
         "rule_owner_decision_path": _text(rule_owner_decision_path),
         "detail_report": _text(
-            confirmation_dashboard_path
+            weekly_defensive_evidence_path
+            or pressure_sample_ledger_path
+            or pressure_capture_path
+            or pressure_trigger_path
+            or defensive_research_note_path
+            or defensive_hypothesis_deep_dive_path
+            or forward_pressure_capture_path
+            or confirmation_dashboard_path
             or confirmation_weekly_path
             or rule_review_queue_path
             or pressure_regime_path
@@ -6832,6 +7276,38 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "weekly_ops_policy_change_allowed": False,
         "weekly_ops_broker_action_allowed": False,
         "weekly_ops_next_actions": "MISSING",
+        "defensive_hypothesis_deep_dive_id": "MISSING",
+        "defensive_hypothesis_supporting_count": 0,
+        "defensive_hypothesis_contradicting_count": 0,
+        "defensive_hypothesis_can_support_rule_approval": False,
+        "defensive_label_review_id": "MISSING",
+        "defensive_label_status": "MISSING",
+        "defensive_recommended_label": "MISSING",
+        "defensive_label_auto_rename": False,
+        "defensive_failure_study_id": "MISSING",
+        "defensive_failure_case_count": 0,
+        "defensive_failure_top_pattern": "MISSING",
+        "defensive_research_note_id": "MISSING",
+        "defensive_hypothesis_current_status": "MISSING",
+        "defensive_hypothesis_forward_support": "MISSING",
+        "defensive_owner_pack_id": "MISSING",
+        "defensive_owner_continue_tracking_recommended": False,
+        "forward_pressure_capture_plan_id": "MISSING",
+        "forward_pressure_event_trigger_count": 0,
+        "pressure_trigger_id": "MISSING",
+        "pressure_trigger_status": "MISSING",
+        "pressure_capture_required": False,
+        "pressure_capture_id": "MISSING",
+        "pressure_capture_status": "MISSING",
+        "pressure_capture_manual_force": False,
+        "pressure_sample_ledger_id": "MISSING",
+        "pressure_forward_samples": 0,
+        "pressure_simulation_samples": 0,
+        "pressure_progress_to_requirement": "MISSING",
+        "weekly_defensive_id": "MISSING",
+        "weekly_defensive_rule_status": "MISSING",
+        "weekly_defensive_recommendation": "MISSING",
+        "weekly_defensive_new_simulation_samples": 0,
         "confirmation_dashboard_id": "MISSING",
         "dashboard_ready_for_evaluation": 0,
         "dashboard_limited_adjustment_progress": "MISSING",
@@ -6877,6 +7353,16 @@ def _missing_etf_dynamic_v3_sim_review_summary() -> dict[str, Any]:
         "defensive_pressure_compare_path": "",
         "defensive_rule_review_path": "",
         "weekly_ops_decision_update_path": "",
+        "defensive_hypothesis_deep_dive_path": "",
+        "defensive_label_review_path": "",
+        "defensive_failure_study_path": "",
+        "defensive_research_note_path": "",
+        "defensive_owner_pack_path": "",
+        "forward_pressure_capture_path": "",
+        "pressure_trigger_path": "",
+        "pressure_capture_path": "",
+        "pressure_sample_ledger_path": "",
+        "weekly_defensive_evidence_path": "",
         "rule_owner_decision_path": "",
         "detail_report": "",
         "limitation": (

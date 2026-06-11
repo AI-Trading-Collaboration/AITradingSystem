@@ -23,6 +23,7 @@ from ai_trading_system.data.quality import (
 from ai_trading_system.data.quality import (
     write_data_quality_report as write_cache_data_quality_report,
 )
+from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as defensive_evidence
 from ai_trading_system.etf_portfolio.ai_attribution import (
     DEFAULT_AI_ATTRIBUTION_DATASET_DIR,
     DEFAULT_AI_ATTRIBUTION_REVIEW_DIR,
@@ -1418,6 +1419,46 @@ dynamic_v3_weekly_ops_decision_update_app = typer.Typer(
     help="Dynamic v3 weekly operations decision update。",
     no_args_is_help=True,
 )
+dynamic_v3_defensive_hypothesis_deep_dive_app = typer.Typer(
+    help="Dynamic v3 defensive hypothesis deep-dive workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_defensive_label_review_app = typer.Typer(
+    help="Dynamic v3 defensive label review workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_defensive_failure_study_app = typer.Typer(
+    help="Dynamic v3 defensive failure study workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_defensive_research_note_app = typer.Typer(
+    help="Dynamic v3 defensive research note workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_defensive_owner_pack_app = typer.Typer(
+    help="Dynamic v3 defensive owner decision pack workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_forward_pressure_capture_app = typer.Typer(
+    help="Dynamic v3 forward pressure evidence capture planning。",
+    no_args_is_help=True,
+)
+dynamic_v3_pressure_trigger_app = typer.Typer(
+    help="Dynamic v3 daily pressure trigger scanner。",
+    no_args_is_help=True,
+)
+dynamic_v3_pressure_capture_app = typer.Typer(
+    help="Dynamic v3 event-driven pressure capture workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_pressure_sample_ledger_app = typer.Typer(
+    help="Dynamic v3 forward/PIT pressure sample ledger。",
+    no_args_is_help=True,
+)
+dynamic_v3_weekly_defensive_evidence_app = typer.Typer(
+    help="Dynamic v3 weekly defensive evidence update。",
+    no_args_is_help=True,
+)
 dynamic_v3_confirmation_dashboard_app = typer.Typer(
     help="Dynamic v3 confirmation evidence dashboard。",
     no_args_is_help=True,
@@ -1603,6 +1644,40 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_weekly_ops_decision_update_app,
     name="weekly-ops-decision-update",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_defensive_hypothesis_deep_dive_app,
+    name="defensive-hypothesis-deep-dive",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_defensive_label_review_app,
+    name="defensive-label-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_defensive_failure_study_app,
+    name="defensive-failure-study",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_defensive_research_note_app,
+    name="defensive-research-note",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_defensive_owner_pack_app,
+    name="defensive-owner-pack",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_forward_pressure_capture_app,
+    name="forward-pressure-capture",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_pressure_trigger_app, name="pressure-trigger")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_pressure_capture_app, name="pressure-capture")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_pressure_sample_ledger_app,
+    name="pressure-sample-ledger",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weekly_defensive_evidence_app,
+    name="weekly-defensive-evidence",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_confirmation_dashboard_app,
@@ -9158,6 +9233,15 @@ def _parse_dynamic_v3_outcome_date(value: str, option_name: str) -> date:
         raise typer.BadParameter(f"{option_name} must use YYYY-MM-DD") from exc
 
 
+def _echo_validation_payload(payload: Mapping[str, Any]) -> None:
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_outcome_due_app.command("scan")
 def dynamic_v3_outcome_due_scan_command(
     as_of: Annotated[str, typer.Option("--as-of", help="扫描到期窗口的 as-of 日期。")],
@@ -12550,6 +12634,778 @@ def dynamic_v3_validate_weekly_ops_decision_update_command(
     typer.echo("production_effect=none")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
+
+
+@dynamic_v3_defensive_hypothesis_deep_dive_app.command("run")
+def dynamic_v3_defensive_hypothesis_deep_dive_run_command(
+    pressure_backfill_id: Annotated[
+        str,
+        typer.Option("--pressure-backfill-id", "--backfill-id", help="pressure backfill id。"),
+    ],
+    comparison_id: Annotated[
+        str,
+        typer.Option("--comparison-id", "--comparison_id", help="defensive comparison id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive hypothesis deep-dive artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR,
+) -> None:
+    """运行 TRADING-189 defensive hypothesis deep dive。"""
+    result = defensive_evidence.run_defensive_hypothesis_deep_dive(
+        pressure_backfill_id=pressure_backfill_id,
+        comparison_id=comparison_id,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"deep_dive_id={result['deep_dive_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"supporting_cases={manifest['supporting_case_count']}")
+    typer.echo(f"contradicting_cases={manifest['contradicting_case_count']}")
+    typer.echo("can_support_rule_approval=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_defensive_hypothesis_deep_dive_app.command("report")
+def dynamic_v3_defensive_hypothesis_deep_dive_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest defensive deep dive。"),
+    ] = False,
+    deep_dive_id: Annotated[
+        str | None,
+        typer.Option("--deep-dive-id", "--deep_dive_id", help="deep dive id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive hypothesis deep-dive artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR,
+) -> None:
+    """展示 TRADING-189 defensive hypothesis deep dive 摘要。"""
+    payload = defensive_evidence.defensive_hypothesis_deep_dive_report_payload(
+        deep_dive_id=deep_dive_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"deep_dive_id={payload['deep_dive_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"supporting_cases={payload['supporting_case_count']}")
+    typer.echo(f"contradicting_cases={payload['contradicting_case_count']}")
+    typer.echo(f"report_path={payload['defensive_hypothesis_deep_dive_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-defensive-hypothesis-deep-dive")
+def dynamic_v3_validate_defensive_hypothesis_deep_dive_command(
+    deep_dive_id: Annotated[
+        str,
+        typer.Option("--deep-dive-id", "--deep_dive_id", help="deep dive id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive hypothesis deep-dive artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_HYPOTHESIS_DEEP_DIVE_DIR,
+) -> None:
+    """校验 TRADING-189 defensive hypothesis deep dive artifact。"""
+    payload = defensive_evidence.validate_defensive_hypothesis_deep_dive_artifact(
+        deep_dive_id=deep_dive_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_defensive_label_review_app.command("run")
+def dynamic_v3_defensive_label_review_run_command(
+    deep_dive_id: Annotated[
+        str,
+        typer.Option("--deep-dive-id", "--deep_dive_id", help="deep dive id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive label review artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR,
+) -> None:
+    """运行 TRADING-190 defensive label review。"""
+    result = defensive_evidence.run_defensive_label_review(
+        deep_dive_id=deep_dive_id,
+        output_dir=output_dir,
+    )
+    matrix = result["label_decision_matrix"]
+    typer.echo(f"label_review_id={result['label_review_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"label_status={matrix['label_status']}")
+    typer.echo(f"recommended_label={matrix['recommended_label']}")
+    typer.echo("auto_rename=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_defensive_label_review_app.command("report")
+def dynamic_v3_defensive_label_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest defensive label review。"),
+    ] = False,
+    label_review_id: Annotated[
+        str | None,
+        typer.Option("--label-review-id", "--label_review_id", help="label review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive label review artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-190 defensive label review 摘要。"""
+    payload = defensive_evidence.defensive_label_review_report_payload(
+        label_review_id=label_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    matrix = payload["label_decision_matrix"]
+    typer.echo(f"label_review_id={payload['label_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"label_status={matrix['label_status']}")
+    typer.echo(f"recommended_label={matrix['recommended_label']}")
+    typer.echo(f"report_path={payload['defensive_label_review_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-defensive-label-review")
+def dynamic_v3_validate_defensive_label_review_command(
+    label_review_id: Annotated[
+        str,
+        typer.Option("--label-review-id", "--label_review_id", help="label review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive label review artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_LABEL_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-190 defensive label review artifact。"""
+    payload = defensive_evidence.validate_defensive_label_review_artifact(
+        label_review_id=label_review_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_defensive_failure_study_app.command("run")
+def dynamic_v3_defensive_failure_study_run_command(
+    deep_dive_id: Annotated[
+        str,
+        typer.Option("--deep-dive-id", "--deep_dive_id", help="deep dive id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive failure study artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR,
+) -> None:
+    """运行 TRADING-191 defensive failure study。"""
+    result = defensive_evidence.run_defensive_failure_study(
+        deep_dive_id=deep_dive_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"failure_study_id={result['failure_study_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"failure_case_count={result['manifest']['failure_case_count']}")
+    typer.echo("auto_apply=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_defensive_failure_study_app.command("report")
+def dynamic_v3_defensive_failure_study_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest defensive failure study。"),
+    ] = False,
+    failure_study_id: Annotated[
+        str | None,
+        typer.Option("--failure-study-id", "--failure_study_id", help="failure study id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive failure study artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR,
+) -> None:
+    """展示 TRADING-191 defensive failure study 摘要。"""
+    payload = defensive_evidence.defensive_failure_study_report_payload(
+        failure_study_id=failure_study_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"failure_study_id={payload['failure_study_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failure_case_count={payload['failure_case_count']}")
+    typer.echo(f"report_path={payload['defensive_failure_study_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-defensive-failure-study")
+def dynamic_v3_validate_defensive_failure_study_command(
+    failure_study_id: Annotated[
+        str,
+        typer.Option("--failure-study-id", "--failure_study_id", help="failure study id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive failure study artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_FAILURE_STUDY_DIR,
+) -> None:
+    """校验 TRADING-191 defensive failure study artifact。"""
+    payload = defensive_evidence.validate_defensive_failure_study_artifact(
+        failure_study_id=failure_study_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_defensive_research_note_app.command("run")
+def dynamic_v3_defensive_research_note_run_command(
+    deep_dive_id: Annotated[
+        str,
+        typer.Option("--deep-dive-id", "--deep_dive_id", help="deep dive id。"),
+    ],
+    label_review_id: Annotated[
+        str,
+        typer.Option("--label-review-id", "--label_review_id", help="label review id。"),
+    ],
+    failure_study_id: Annotated[
+        str,
+        typer.Option("--failure-study-id", "--failure_study_id", help="failure study id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive research note artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR,
+) -> None:
+    """运行 TRADING-192 defensive research note。"""
+    result = defensive_evidence.run_defensive_research_note(
+        deep_dive_id=deep_dive_id,
+        label_review_id=label_review_id,
+        failure_study_id=failure_study_id,
+        output_dir=output_dir,
+    )
+    summary = result["defensive_hypothesis_summary"]
+    typer.echo(f"note_id={result['note_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"current_status={summary['current_status']}")
+    typer.echo(f"recommended_action={summary['recommended_action']}")
+    typer.echo("can_support_rule_approval=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_defensive_research_note_app.command("report")
+def dynamic_v3_defensive_research_note_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest defensive research note。"),
+    ] = False,
+    note_id: Annotated[
+        str | None,
+        typer.Option("--note-id", "--note_id", help="research note id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive research note artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR,
+) -> None:
+    """展示 TRADING-192 defensive research note 摘要。"""
+    payload = defensive_evidence.defensive_research_note_report_payload(
+        note_id=note_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["defensive_hypothesis_summary"]
+    typer.echo(f"note_id={payload['note_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"current_status={summary['current_status']}")
+    typer.echo(f"recommended_action={summary['recommended_action']}")
+    typer.echo(f"report_path={payload['defensive_research_note_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-defensive-research-note")
+def dynamic_v3_validate_defensive_research_note_command(
+    note_id: Annotated[str, typer.Option("--note-id", "--note_id", help="note id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive research note artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_RESEARCH_NOTE_DIR,
+) -> None:
+    """校验 TRADING-192 defensive research note artifact。"""
+    payload = defensive_evidence.validate_defensive_research_note_artifact(
+        note_id=note_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_defensive_owner_pack_app.command("run")
+def dynamic_v3_defensive_owner_pack_run_command(
+    note_id: Annotated[str, typer.Option("--note-id", "--note_id", help="note id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive owner pack artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_OWNER_PACK_DIR,
+) -> None:
+    """运行 TRADING-193 defensive owner decision pack。"""
+    result = defensive_evidence.run_defensive_owner_pack(note_id=note_id, output_dir=output_dir)
+    options = result["owner_decision_options"]
+    typer.echo(f"pack_id={result['pack_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"auto_apply={options['auto_apply']}")
+    typer.echo(f"policy_change_allowed={options['policy_change_allowed']}")
+    typer.echo(f"broker_action_allowed={options['broker_action_allowed']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_defensive_owner_pack_app.command("report")
+def dynamic_v3_defensive_owner_pack_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest defensive owner pack。"),
+    ] = False,
+    pack_id: Annotated[
+        str | None,
+        typer.Option("--pack-id", "--pack_id", help="owner pack id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive owner pack artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_OWNER_PACK_DIR,
+) -> None:
+    """展示 TRADING-193 defensive owner pack 摘要。"""
+    payload = defensive_evidence.defensive_owner_pack_report_payload(
+        pack_id=pack_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    options = payload["owner_decision_options"]
+    typer.echo(f"pack_id={payload['pack_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"auto_apply={options['auto_apply']}")
+    typer.echo(f"policy_change_allowed={options['policy_change_allowed']}")
+    typer.echo(f"report_path={payload['defensive_owner_pack_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-defensive-owner-pack")
+def dynamic_v3_validate_defensive_owner_pack_command(
+    pack_id: Annotated[str, typer.Option("--pack-id", "--pack_id", help="owner pack id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="defensive owner pack artifact root。"),
+    ] = defensive_evidence.DEFAULT_DEFENSIVE_OWNER_PACK_DIR,
+) -> None:
+    """校验 TRADING-193 defensive owner pack artifact。"""
+    payload = defensive_evidence.validate_defensive_owner_pack_artifact(
+        pack_id=pack_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_forward_pressure_capture_app.command("plan")
+def dynamic_v3_forward_pressure_capture_plan_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="forward pressure capture config。"),
+    ] = defensive_evidence.DEFAULT_FORWARD_PRESSURE_CAPTURE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="forward pressure capture artifact root。"),
+    ] = defensive_evidence.DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR,
+) -> None:
+    """运行 TRADING-194 forward pressure capture plan。"""
+    result = defensive_evidence.build_forward_pressure_capture_plan(
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+    typer.echo(f"capture_plan_id={result['capture_plan_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"daily_commands={len(result['daily_command_pack']['commands'])}")
+    typer.echo(f"weekly_commands={len(result['weekly_command_pack']['commands'])}")
+    typer.echo(f"event_commands={len(result['event_driven_trigger_plan']['commands'])}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_forward_pressure_capture_app.command("report")
+def dynamic_v3_forward_pressure_capture_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest forward pressure plan。"),
+    ] = False,
+    capture_plan_id: Annotated[
+        str | None,
+        typer.Option("--capture-plan-id", "--capture_plan_id", help="capture plan id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="forward pressure capture artifact root。"),
+    ] = defensive_evidence.DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR,
+) -> None:
+    """展示 TRADING-194 forward pressure capture plan 摘要。"""
+    payload = defensive_evidence.forward_pressure_capture_report_payload(
+        capture_plan_id=capture_plan_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"capture_plan_id={payload['capture_plan_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"report_path={payload['forward_pressure_capture_report_path']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-forward-pressure-capture")
+def dynamic_v3_validate_forward_pressure_capture_command(
+    capture_plan_id: Annotated[
+        str,
+        typer.Option("--capture-plan-id", "--capture_plan_id", help="capture plan id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="forward pressure capture artifact root。"),
+    ] = defensive_evidence.DEFAULT_FORWARD_PRESSURE_CAPTURE_DIR,
+) -> None:
+    """校验 TRADING-194 forward pressure capture artifact。"""
+    payload = defensive_evidence.validate_forward_pressure_capture_artifact(
+        capture_plan_id=capture_plan_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_pressure_trigger_app.command("scan")
+def dynamic_v3_pressure_trigger_scan_command(
+    as_of: Annotated[str, typer.Option("--as-of", "--date", help="as-of date YYYY-MM-DD。")],
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="forward pressure capture config。"),
+    ] = defensive_evidence.DEFAULT_FORWARD_PRESSURE_CAPTURE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure trigger artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_TRIGGER_DIR,
+    enforce_data_quality_gate: Annotated[
+        bool,
+        typer.Option(
+            "--enforce-data-quality-gate/--skip-data-quality-gate",
+            help="是否运行 cached data quality gate。",
+        ),
+    ] = True,
+) -> None:
+    """运行 TRADING-195 daily pressure trigger scanner。"""
+    result = defensive_evidence.run_pressure_trigger_scan(
+        as_of=_parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        config_path=config_path,
+        output_dir=output_dir,
+        enforce_data_quality_gate=enforce_data_quality_gate,
+    )
+    metrics = result["trigger_metrics"]
+    actions = result["triggered_actions"]
+    typer.echo(f"trigger_id={result['trigger_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"trigger_status={metrics['trigger_status']}")
+    typer.echo(f"event_driven_capture_required={actions['event_driven_capture_required']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_pressure_trigger_app.command("report")
+def dynamic_v3_pressure_trigger_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest pressure trigger。"),
+    ] = False,
+    trigger_id: Annotated[
+        str | None,
+        typer.Option("--trigger-id", "--trigger_id", help="pressure trigger id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure trigger artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_TRIGGER_DIR,
+) -> None:
+    """展示 TRADING-195 pressure trigger 摘要。"""
+    payload = defensive_evidence.pressure_trigger_report_payload(
+        trigger_id=trigger_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    metrics = payload["trigger_metrics"]
+    actions = payload["triggered_actions"]
+    typer.echo(f"trigger_id={payload['trigger_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"trigger_status={metrics['trigger_status']}")
+    typer.echo(f"event_driven_capture_required={actions['event_driven_capture_required']}")
+    typer.echo(f"report_path={payload['pressure_trigger_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-pressure-trigger")
+def dynamic_v3_validate_pressure_trigger_command(
+    trigger_id: Annotated[
+        str,
+        typer.Option("--trigger-id", "--trigger_id", help="pressure trigger id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure trigger artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_TRIGGER_DIR,
+) -> None:
+    """校验 TRADING-195 pressure trigger artifact。"""
+    payload = defensive_evidence.validate_pressure_trigger_artifact(
+        trigger_id=trigger_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_pressure_capture_app.command("run")
+def dynamic_v3_pressure_capture_run_command(
+    trigger_id: Annotated[
+        str,
+        typer.Option("--trigger-id", "--trigger_id", help="pressure trigger id。"),
+    ],
+    force: Annotated[
+        bool,
+        typer.Option("--force/--no-force", help="NO_TRIGGER 时是否手动 force workflow。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure capture artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_CAPTURE_DIR,
+    enforce_data_quality_gate: Annotated[
+        bool,
+        typer.Option(
+            "--enforce-data-quality-gate/--skip-data-quality-gate",
+            help="是否运行 cached data quality gate。",
+        ),
+    ] = True,
+) -> None:
+    """运行 TRADING-196 event-driven pressure capture workflow。"""
+    result = defensive_evidence.run_pressure_capture_workflow(
+        trigger_id=trigger_id,
+        force=force,
+        output_dir=output_dir,
+        enforce_data_quality_gate=enforce_data_quality_gate,
+    )
+    steps = result["pressure_capture_steps"]
+    typer.echo(f"capture_id={result['capture_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"trigger_status={steps['trigger_status']}")
+    typer.echo(f"manual_force={steps['manual_force']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_pressure_capture_app.command("report")
+def dynamic_v3_pressure_capture_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest pressure capture。"),
+    ] = False,
+    capture_id: Annotated[
+        str | None,
+        typer.Option("--capture-id", "--capture_id", help="pressure capture id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure capture artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_CAPTURE_DIR,
+) -> None:
+    """展示 TRADING-196 pressure capture 摘要。"""
+    payload = defensive_evidence.pressure_capture_report_payload(
+        capture_id=capture_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    steps = payload["pressure_capture_steps"]
+    typer.echo(f"capture_id={payload['capture_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"trigger_status={steps['trigger_status']}")
+    typer.echo(f"manual_force={steps['manual_force']}")
+    typer.echo(f"report_path={payload['pressure_capture_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-pressure-capture")
+def dynamic_v3_validate_pressure_capture_command(
+    capture_id: Annotated[
+        str,
+        typer.Option("--capture-id", "--capture_id", help="pressure capture id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure capture artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_CAPTURE_DIR,
+) -> None:
+    """校验 TRADING-196 pressure capture artifact。"""
+    payload = defensive_evidence.validate_pressure_capture_artifact(
+        capture_id=capture_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_pressure_sample_ledger_app.command("update")
+def dynamic_v3_pressure_sample_ledger_update_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="forward pressure capture config。"),
+    ] = defensive_evidence.DEFAULT_FORWARD_PRESSURE_CAPTURE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure sample ledger artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR,
+) -> None:
+    """运行 TRADING-197 forward/PIT pressure sample ledger update。"""
+    result = defensive_evidence.update_pressure_sample_ledger(
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+    summary = result["pressure_sample_summary"]
+    typer.echo(f"ledger_id={result['ledger_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"forward_samples={summary['forward_samples']}")
+    typer.echo(f"pit_replay_samples={summary['pit_replay_samples']}")
+    typer.echo(f"simulation_samples={summary['simulation_samples']}")
+    typer.echo(f"progress_to_requirement={summary['progress_to_requirement']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_pressure_sample_ledger_app.command("report")
+def dynamic_v3_pressure_sample_ledger_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest pressure sample ledger。"),
+    ] = False,
+    ledger_id: Annotated[
+        str | None,
+        typer.Option("--ledger-id", "--ledger_id", help="pressure sample ledger id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure sample ledger artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR,
+) -> None:
+    """展示 TRADING-197 pressure sample ledger 摘要。"""
+    payload = defensive_evidence.pressure_sample_ledger_report_payload(
+        ledger_id=ledger_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["pressure_sample_summary"]
+    typer.echo(f"ledger_id={payload['ledger_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"forward_samples={summary['forward_samples']}")
+    typer.echo(f"pit_replay_samples={summary['pit_replay_samples']}")
+    typer.echo(f"simulation_samples={summary['simulation_samples']}")
+    typer.echo(f"report_path={payload['pressure_sample_ledger_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-pressure-sample-ledger")
+def dynamic_v3_validate_pressure_sample_ledger_command(
+    ledger_id: Annotated[
+        str,
+        typer.Option("--ledger-id", "--ledger_id", help="pressure sample ledger id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="pressure sample ledger artifact root。"),
+    ] = defensive_evidence.DEFAULT_PRESSURE_SAMPLE_LEDGER_DIR,
+) -> None:
+    """校验 TRADING-197 pressure sample ledger artifact。"""
+    payload = defensive_evidence.validate_pressure_sample_ledger_artifact(
+        ledger_id=ledger_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
+
+
+@dynamic_v3_weekly_defensive_evidence_app.command("run")
+def dynamic_v3_weekly_defensive_evidence_run_command(
+    week_ending: Annotated[
+        str,
+        typer.Option("--week-ending", help="week ending date YYYY-MM-DD。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly defensive evidence artifact root。"),
+    ] = defensive_evidence.DEFAULT_WEEKLY_DEFENSIVE_EVIDENCE_DIR,
+) -> None:
+    """运行 TRADING-198 weekly defensive evidence update。"""
+    result = defensive_evidence.run_weekly_defensive_evidence_update(
+        week_ending=_parse_dynamic_v3_outcome_date(week_ending, "--week-ending"),
+        output_dir=output_dir,
+    )
+    summary = result["weekly_defensive_summary"]
+    typer.echo(f"weekly_defensive_id={result['weekly_defensive_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"new_forward_pressure_samples={summary['new_forward_pressure_samples']}")
+    typer.echo(f"defensive_rule_status={summary['defensive_rule_status']}")
+    typer.echo(f"weekly_recommendation={summary['weekly_recommendation']}")
+    typer.echo("policy_change_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_weekly_defensive_evidence_app.command("report")
+def dynamic_v3_weekly_defensive_evidence_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest weekly defensive evidence。"),
+    ] = False,
+    weekly_defensive_id: Annotated[
+        str | None,
+        typer.Option(
+            "--weekly-defensive-id",
+            "--weekly_defensive_id",
+            help="weekly defensive id。",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly defensive evidence artifact root。"),
+    ] = defensive_evidence.DEFAULT_WEEKLY_DEFENSIVE_EVIDENCE_DIR,
+) -> None:
+    """展示 TRADING-198 weekly defensive evidence 摘要。"""
+    payload = defensive_evidence.weekly_defensive_evidence_report_payload(
+        weekly_defensive_id=weekly_defensive_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = payload["weekly_defensive_summary"]
+    typer.echo(f"weekly_defensive_id={payload['weekly_defensive_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"new_forward_pressure_samples={summary['new_forward_pressure_samples']}")
+    typer.echo(f"defensive_rule_status={summary['defensive_rule_status']}")
+    typer.echo(f"report_path={payload['weekly_defensive_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-weekly-defensive-evidence")
+def dynamic_v3_validate_weekly_defensive_evidence_command(
+    weekly_defensive_id: Annotated[
+        str,
+        typer.Option(
+            "--weekly-defensive-id",
+            "--weekly_defensive_id",
+            help="weekly defensive id。",
+        ),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly defensive evidence artifact root。"),
+    ] = defensive_evidence.DEFAULT_WEEKLY_DEFENSIVE_EVIDENCE_DIR,
+) -> None:
+    """校验 TRADING-198 weekly defensive evidence artifact。"""
+    payload = defensive_evidence.validate_weekly_defensive_evidence_artifact(
+        weekly_defensive_id=weekly_defensive_id,
+        output_dir=output_dir,
+    )
+    _echo_validation_payload(payload)
 
 
 @dynamic_v3_confirmation_dashboard_app.command("build")

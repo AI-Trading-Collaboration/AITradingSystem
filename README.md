@@ -981,6 +981,28 @@ TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION 在 weekly evidence oper
 mapping gap、扩充 research-only pressure outcome inventory，并生成 owner checklist /
 weekly next actions；不批准 defensive label、不修改 `position_advisory_v1.yaml`、
 policy、official target weights、portfolio 或 baseline state、不触发 broker。
+TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE 在上述 pressure validation
+后新增 defensive hypothesis review 和 forward evidence automation。CLI 包括
+`defensive-hypothesis-deep-dive run/report`、`defensive-label-review run/report`、
+`defensive-failure-study run/report`、`defensive-research-note run/report`、
+`defensive-owner-pack run/report`、`forward-pressure-capture plan/report`、
+`pressure-trigger scan/report`、`pressure-capture run/report`、
+`pressure-sample-ledger update/report` 和 `weekly-defensive-evidence run/report`，对应
+验证入口为 `validate-defensive-hypothesis-deep-dive`、
+`validate-defensive-label-review`、`validate-defensive-failure-study`、
+`validate-defensive-research-note`、`validate-defensive-owner-pack`、
+`validate-forward-pressure-capture`、`validate-pressure-trigger`、
+`validate-pressure-capture`、`validate-pressure-sample-ledger` 和
+`validate-weekly-defensive-evidence`。配置入口为
+`config/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture_v1.yaml`。Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive|defensive_label_review|defensive_failure_study|defensive_research_note|defensive_owner_pack|forward_pressure_capture|pressure_trigger|pressure_capture|pressure_sample_ledger|weekly_defensive_evidence/`，
+并由 report registry / Reader Brief 只读展示。该链路把 simulation 中的 supporting /
+contradicting cases、label 风险、failure pattern、owner decision options、daily/weekly/event
+capture plan、trigger scan、capture run/skip、pressure sample ledger 和 weekly evidence
+汇总成 forward tracking baseline；所有输出固定 `RESEARCH_ONLY`、`auto_apply=false`、
+`policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`，不修改
+`position_advisory_v1.yaml`、policy、official target weights、portfolio 或 baseline/production
+state，也不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

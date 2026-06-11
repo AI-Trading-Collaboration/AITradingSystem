@@ -3284,6 +3284,221 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_hypothesis_deep_dive
+    title: ETF Dynamic v3 Defensive Hypothesis Deep Dive
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue defensive-hypothesis-deep-dive report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/deep_dive_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/supporting_cases.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/contradicting_cases.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/regime_effect_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/exposure_change_attribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_hypothesis_deep_dive/*/defensive_hypothesis_deep_dive_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-189 separates supporting and contradicting defensive pressure cases
+      while keeping all evidence research-only.
+    owner_action: review_supporting_and_contradicting_cases_before_label_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_label_review
+    title: ETF Dynamic v3 Defensive Label Review
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: project_owner
+    command: aits etf dynamic-v3-rescue defensive-label-review report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/label_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/label_decision_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/candidate_labels.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/defensive_label_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_label_review/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-190 reviews whether the defensive label is potentially misleading
+      without auto-renaming config or applying policy.
+    owner_action: decide_whether_to_keep_warning_or_rename_label_later
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_failure_study
+    title: ETF Dynamic v3 Defensive Failure Study
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue defensive-failure-study report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_study_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_cases_ranked.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_pattern_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/failure_mitigation_ideas.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_failure_study/*/defensive_failure_study_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-191 ranks contradicting defensive cases and records mitigation
+      ideas as research-only proposals.
+    owner_action: review_failure_patterns_before_any_guard_design_work
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_research_note
+    title: ETF Dynamic v3 Defensive Research Note
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue defensive-research-note report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_research_note_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_hypothesis_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/defensive_research_note.md
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_research_note/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-192 summarizes the defensive hypothesis as RESEARCH_ONLY with no
+      forward support until enough pressure samples mature.
+    owner_action: use_research_note_as_current_owner_facing_interpretation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_defensive_owner_pack
+    title: ETF Dynamic v3 Defensive Owner Pack
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: project_owner
+    command: aits etf dynamic-v3-rescue defensive-owner-pack report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/defensive_owner_pack_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/owner_decision_options.json
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/owner_decision_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/defensive_owner_pack/*/defensive_owner_pack_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-193 turns the research note into owner review options without
+      allowing automatic policy or broker action.
+    owner_action: review_continue_tracking_and_label_warning_options
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_forward_pressure_capture
+    title: ETF Dynamic v3 Forward Pressure Capture Plan
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue forward-pressure-capture report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/capture_plan_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/daily_command_pack.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/weekly_command_pack.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/event_driven_trigger_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/forward_pressure_capture/*/forward_pressure_capture_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-194 records daily, weekly and event-driven pressure capture
+      command packs from governed YAML thresholds.
+    owner_action: review_capture_plan_before_documented_scheduler_or_manual_use
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_pressure_trigger
+    title: ETF Dynamic v3 Pressure Trigger Scan
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue pressure-trigger report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/pressure_trigger_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/trigger_metrics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/triggered_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_trigger/*/pressure_trigger_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-195 provides a lightweight data-quality-gated scan for QQQ/SMH
+      pressure trigger conditions.
+    owner_action: review_trigger_status_before_running_heavy_capture_steps
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_pressure_capture
+    title: ETF Dynamic v3 Pressure Capture Workflow
+    group: research
+    cadence: event_driven
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue pressure-capture report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_steps.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_artifacts.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_capture/*/pressure_capture_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-196 records whether pressure capture skipped, ran from a trigger,
+      or ran under explicit manual force.
+    owner_action: review_capture_steps_and_artifact_ids_after_pressure_trigger
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_pressure_sample_ledger
+    title: ETF Dynamic v3 Pressure Sample Ledger
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue pressure-sample-ledger report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_sample_ledger_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_samples.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_sample_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/pressure_sample_ledger/*/pressure_sample_ledger_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-197 tracks forward, replay and simulation pressure samples while
+      keeping simulation ineligible for rule approval.
+    owner_action: review_forward_sample_progress_before_defensive_rule_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weekly_defensive_evidence
+    title: ETF Dynamic v3 Weekly Defensive Evidence
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weekly-defensive-evidence report --latest
+    artifact_selection_policy: latest_available
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/weekly_defensive_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_defensive_evidence/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-198 summarizes weekly defensive sample progress and keeps the
+      defensive rule status RESEARCH_ONLY.
+    owner_action: review_weekly_defensive_progress_and_continue_tracking_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
