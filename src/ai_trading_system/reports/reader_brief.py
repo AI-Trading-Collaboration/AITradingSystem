@@ -204,6 +204,9 @@ def build_reader_brief_payload(
     etf_dynamic_v3_manual_execution_review = (
         _etf_dynamic_v3_manual_execution_review_summary(report_index)
     )
+    etf_dynamic_v3_real_snapshot_review = _etf_dynamic_v3_real_snapshot_review_summary(
+        report_index
+    )
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -349,6 +352,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_parameter_research": etf_dynamic_v3_parameter_research,
         "etf_dynamic_v3_sim_review": etf_dynamic_v3_sim_review,
         "etf_dynamic_v3_manual_execution_review": etf_dynamic_v3_manual_execution_review,
+        "etf_dynamic_v3_real_snapshot_review": etf_dynamic_v3_real_snapshot_review,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -627,6 +631,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_v3_sim_review = _mapping(payload.get("etf_dynamic_v3_sim_review"))
     etf_dynamic_v3_manual_execution_review = _mapping(
         payload.get("etf_dynamic_v3_manual_execution_review")
+    )
+    etf_dynamic_v3_real_snapshot_review = _mapping(
+        payload.get("etf_dynamic_v3_real_snapshot_review")
     )
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
@@ -2148,6 +2155,71 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "snapshot_path",
                         etf_dynamic_v3_manual_execution_review.get("snapshot_path"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Real Snapshot Advisory Review",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_v3_real_snapshot_review.get("availability")),
+                    ("status", etf_dynamic_v3_real_snapshot_review.get("status")),
+                    ("summary", etf_dynamic_v3_real_snapshot_review.get("summary_sentence")),
+                    (
+                        "weekly_real_review_id",
+                        etf_dynamic_v3_real_snapshot_review.get("weekly_real_review_id"),
+                    ),
+                    (
+                        "snapshot_status",
+                        etf_dynamic_v3_real_snapshot_review.get("snapshot_status"),
+                    ),
+                    (
+                        "recommended_action",
+                        etf_dynamic_v3_real_snapshot_review.get("recommended_action"),
+                    ),
+                    (
+                        "owner_decision",
+                        etf_dynamic_v3_real_snapshot_review.get("owner_decision"),
+                    ),
+                    (
+                        "paper_action_taken",
+                        etf_dynamic_v3_real_snapshot_review.get("paper_action_taken"),
+                    ),
+                    (
+                        "broker_action_taken",
+                        etf_dynamic_v3_real_snapshot_review.get("broker_action_taken"),
+                    ),
+                    (
+                        "order_ticket_generated",
+                        etf_dynamic_v3_real_snapshot_review.get("order_ticket_generated"),
+                    ),
+                    ("next_action", etf_dynamic_v3_real_snapshot_review.get("next_action")),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_real_snapshot_review.get("production_effect"),
+                    ),
+                    (
+                        "safety_status",
+                        etf_dynamic_v3_real_snapshot_review.get("safety_status"),
+                    ),
+                    (
+                        "weekly_real_snapshot_review_path",
+                        etf_dynamic_v3_real_snapshot_review.get(
+                            "weekly_real_snapshot_review_path"
+                        ),
+                    ),
+                    (
+                        "dry_run_path",
+                        etf_dynamic_v3_real_snapshot_review.get("dry_run_path"),
+                    ),
+                    (
+                        "owner_review_path",
+                        etf_dynamic_v3_real_snapshot_review.get("owner_review_path"),
+                    ),
+                    (
+                        "paper_action_path",
+                        etf_dynamic_v3_real_snapshot_review.get("paper_action_path"),
                     ),
                 ]
             ),
@@ -7735,6 +7807,185 @@ def _etf_dynamic_v3_manual_execution_review_safety_status(
             "observe_only=true; candidate_only=true; production_effect=none; "
             "broker_action_allowed=false; broker_action_taken=false; "
             "order_ticket_generated=false; owner_approval_required=true"
+        )
+    return "SAFETY_REVIEW_REQUIRED"
+
+
+def _etf_dynamic_v3_real_snapshot_review_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_v3_real_snapshot_review_summary()
+    weekly_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_weekly_real_snapshot_review",
+        ),
+        "weekly_real_snapshot_review_manifest.json",
+    )
+    weekly_manifest = _read_optional_json(weekly_path)
+    if not weekly_manifest:
+        return _missing_etf_dynamic_v3_real_snapshot_review_summary()
+    weekly_summary_path = _dynamic_v3_sibling_artifact_path(
+        weekly_path,
+        "weekly_real_snapshot_summary.json",
+    )
+    owner_decision_summary_path = _dynamic_v3_sibling_artifact_path(
+        weekly_path,
+        "weekly_owner_decision_summary.json",
+    )
+    dry_run_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_real_snapshot_dry_run"),
+        "real_snapshot_dry_run_manifest.json",
+    )
+    owner_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_real_execution_owner_review",
+        ),
+        "real_execution_owner_review_manifest.json",
+    )
+    paper_action_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_real_snapshot_paper_action",
+        ),
+        "real_snapshot_paper_action_manifest.json",
+    )
+    weekly_summary = _read_optional_json(weekly_summary_path)
+    owner_decision_summary = _read_optional_json(owner_decision_summary_path)
+    dry_run_manifest = _read_optional_json(dry_run_path)
+    owner_review_manifest = _read_optional_json(owner_review_path)
+    paper_action_manifest = _read_optional_json(paper_action_path)
+    source_summary = weekly_summary or weekly_manifest
+    weekly_real_review_id = _text(
+        source_summary.get("weekly_real_review_id"),
+        "MISSING",
+    )
+    snapshot_status = _text(source_summary.get("snapshot_status"), "MISSING")
+    recommended_action = _text(source_summary.get("recommended_action"), "MISSING")
+    owner_decision = _text(source_summary.get("owner_decision"), "pending")
+    paper_action_taken = source_summary.get("paper_action_taken") is True
+    broker_action_taken = source_summary.get("broker_action_taken") is True
+    order_ticket_generated = source_summary.get("order_ticket_generated") is True
+    next_action = _text(source_summary.get("next_action"), "MISSING")
+    production_effect = _text(source_summary.get("production_effect"), PRODUCTION_EFFECT)
+    safety_status = _etf_dynamic_v3_real_snapshot_safety_status(
+        weekly_manifest,
+        weekly_summary or {},
+        owner_decision_summary or {},
+        dry_run_manifest or {},
+        owner_review_manifest or {},
+        paper_action_manifest or {},
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(weekly_manifest.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            "Dynamic Rescue Real Snapshot Advisory Review: "
+            f"weekly={weekly_real_review_id}; snapshot={snapshot_status}; "
+            f"recommended_action={recommended_action}; owner_decision={owner_decision}; "
+            f"paper_action_taken={str(paper_action_taken).lower()}; "
+            f"broker_action_taken={str(broker_action_taken).lower()}; "
+            f"order_ticket_generated={str(order_ticket_generated).lower()}; "
+            f"next_action={next_action}."
+        ),
+        "weekly_real_review_id": weekly_real_review_id,
+        "week_ending": _text(source_summary.get("week_ending"), "MISSING"),
+        "latest_snapshot_id": _text(source_summary.get("latest_snapshot_id"), "MISSING"),
+        "latest_dry_run_id": _text(source_summary.get("latest_dry_run_id"), "MISSING"),
+        "latest_owner_review_id": _text(
+            source_summary.get("latest_owner_review_id"),
+            "MISSING",
+        ),
+        "latest_paper_action_id": _text(
+            source_summary.get("latest_paper_action_id"),
+            "MISSING",
+        ),
+        "snapshot_status": snapshot_status,
+        "recommended_action": recommended_action,
+        "owner_decision": owner_decision,
+        "paper_action_taken": paper_action_taken,
+        "broker_action_taken": broker_action_taken,
+        "order_ticket_generated": order_ticket_generated,
+        "next_action": next_action,
+        "production_effect": production_effect,
+        "safety_status": safety_status,
+        "pending_reviews": (owner_decision_summary or {}).get("pending_reviews", 0),
+        "monitor_count": (owner_decision_summary or {}).get("monitor_count", 0),
+        "no_trade_count": (owner_decision_summary or {}).get("no_trade_count", 0),
+        "paper_adjustment_review_only_count": (owner_decision_summary or {}).get(
+            "paper_adjustment_review_only_count",
+            0,
+        ),
+        "weekly_real_snapshot_review_path": "" if weekly_path is None else str(weekly_path),
+        "dry_run_path": "" if dry_run_path is None else str(dry_run_path),
+        "owner_review_path": "" if owner_review_path is None else str(owner_review_path),
+        "paper_action_path": "" if paper_action_path is None else str(paper_action_path),
+        "broker_action": _text(weekly_manifest.get("broker_action"), "none"),
+    }
+
+
+def _missing_etf_dynamic_v3_real_snapshot_review_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": (
+            "Dynamic Rescue Real Snapshot Advisory Review: no latest weekly real "
+            "snapshot review found."
+        ),
+        "weekly_real_review_id": "MISSING",
+        "week_ending": "MISSING",
+        "latest_snapshot_id": "MISSING",
+        "latest_dry_run_id": "MISSING",
+        "latest_owner_review_id": "MISSING",
+        "latest_paper_action_id": "MISSING",
+        "snapshot_status": "MISSING",
+        "recommended_action": "MISSING",
+        "owner_decision": "pending",
+        "paper_action_taken": False,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        "next_action": "update_snapshot",
+        "production_effect": PRODUCTION_EFFECT,
+        "safety_status": "MISSING",
+        "pending_reviews": 0,
+        "monitor_count": 0,
+        "no_trade_count": 0,
+        "paper_adjustment_review_only_count": 0,
+        "weekly_real_snapshot_review_path": "",
+        "dry_run_path": "",
+        "owner_review_path": "",
+        "paper_action_path": "",
+        "broker_action": "none",
+    }
+
+
+def _etf_dynamic_v3_real_snapshot_safety_status(
+    *payloads: Mapping[str, Any],
+) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    unsafe = any(
+        payload.get("broker_action_allowed") is True
+        or payload.get("broker_action_taken") is True
+        or payload.get("order_ticket_generated") is True
+        or payload.get("production_state_mutated") is True
+        or payload.get("baseline_config_mutated") is True
+        or payload.get("official_target_weights_mutated") is True
+        or payload.get("automatic_candidate_promotion") is True
+        or payload.get("auto_enrollment_without_owner_approval") is True
+        or payload.get("owner_approval_executed") is True
+        or _text(payload.get("production_effect"), PRODUCTION_EFFECT)
+        != PRODUCTION_EFFECT
+        for payload in material
+    )
+    if not unsafe:
+        return (
+            "observe_only=true; candidate_only=true; production_effect=none; "
+            "broker_action_allowed=false; broker_action_taken=false; "
+            "order_ticket_generated=false"
         )
     return "SAFETY_REVIEW_REQUIRED"
 

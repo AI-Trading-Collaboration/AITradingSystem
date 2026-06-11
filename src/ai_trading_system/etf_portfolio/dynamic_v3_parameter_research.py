@@ -18657,6 +18657,37 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "id_keys": ("manual_review_id",),
         },
         {
+            "pointer_name": "latest_real_snapshot_intake",
+            "pattern": "real_snapshot_intake/*/real_snapshot_intake_manifest.json",
+            "id_keys": ("snapshot_intake_id",),
+        },
+        {
+            "pointer_name": "latest_real_snapshot_dry_run",
+            "pattern": "real_snapshot_dry_run/*/real_snapshot_dry_run_manifest.json",
+            "id_keys": ("dry_run_id",),
+        },
+        {
+            "pointer_name": "latest_real_execution_owner_review",
+            "pattern": (
+                "real_execution_owner_review/*/real_execution_owner_review_manifest.json"
+            ),
+            "id_keys": ("review_id",),
+        },
+        {
+            "pointer_name": "latest_real_snapshot_paper_action",
+            "pattern": (
+                "real_snapshot_paper_action/*/real_snapshot_paper_action_manifest.json"
+            ),
+            "id_keys": ("paper_action_id",),
+        },
+        {
+            "pointer_name": "latest_weekly_real_snapshot_review",
+            "pattern": (
+                "weekly_real_snapshot_review/*/weekly_real_snapshot_review_manifest.json"
+            ),
+            "id_keys": ("weekly_real_review_id",),
+        },
+        {
             "pointer_name": "latest_position_review",
             "pattern": "position_review/*/position_review_manifest.json",
             "id_keys": ("review_id",),

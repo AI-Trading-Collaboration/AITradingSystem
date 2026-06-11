@@ -1021,6 +1021,27 @@ section。Artifacts 写入
 baseline / production state。所有输出固定 `broker_action_allowed=false`、
 `broker_action_taken=false`、`order_ticket_generated=false`、`owner_approval_required=true`
 和 `production_effect=none`。
+TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN_AND_OWNER_DECISION_LOOP 在上述
+manual execution review 之上新增真实人工 snapshot intake、dry-run、owner decision、
+paper-only action 和 weekly rollup 链路。CLI 包括
+`real-snapshot template/lint/intake/report`、`real-snapshot-dry-run run/report`、
+`real-execution-owner-review create/record/report`、`real-snapshot-paper-action apply/report`
+和 `weekly-real-snapshot-review run/report`，对应验证入口为
+`validate-real-snapshot`、`validate-real-snapshot-dry-run`、
+`validate-real-execution-owner-review`、`validate-real-snapshot-paper-action` 和
+`validate-weekly-real-snapshot-review`。模板入口为
+`config/etf_portfolio/dynamic_v3_rescue/current_portfolio_snapshot.real.template.yaml`。
+Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_intake|real_snapshot_dry_run|real_execution_owner_review|real_snapshot_paper_action|weekly_real_snapshot_review/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Real Snapshot Advisory Review`
+区块。该链路只接受 owner 提供、脱敏后的 manual snapshot；redaction lint 会阻断
+account/order/tax-lot/personally identifying/statement path 类字段；dry-run 只生成
+advisory evidence，owner decision 只记录 `monitor`、`paper_adjustment`、`no_trade`、
+`needs_more_data`、`reject` 或 `manual_follow_up`，paper action 只更新 paper-only
+projection。所有输出固定 `broker_action_allowed=false`、`broker_action_taken=false`、
+`order_ticket_generated=false`、`real_portfolio_mutated=false`、
+`production_effect=none`，不得导入 broker、生成订单、修改真实仓位、official target
+weights、baseline 或 production state。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

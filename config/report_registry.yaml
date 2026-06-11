@@ -2171,6 +2171,108 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_real_snapshot_intake
+    title: ETF Dynamic v3 Rescue Real Manual Snapshot Intake
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue real-snapshot intake --snapshot config/etf_portfolio/dynamic_v3_rescue/current_portfolio_snapshot.yaml
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_intake/*/real_snapshot_intake_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_intake/*/redaction_check.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_intake/*/normalized_real_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_intake/*/real_snapshot_intake_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-204 records redaction status, normalized manual snapshot input,
+      and no-broker safety before any real manual snapshot advisory dry run.
+    owner_action: owner_review_redaction_safe_real_snapshot_before_dry_run
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_real_snapshot_dry_run
+    title: ETF Dynamic v3 Rescue Real Snapshot Advisory Dry Run
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue real-snapshot-dry-run run --snapshot-intake-id <snapshot_intake_id> --shadow-shortlist-id <shadow_shortlist_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_dry_run/*/real_snapshot_dry_run_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_dry_run/*/dry_run_artifact_links.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_dry_run/*/real_snapshot_dry_run_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_dry_run/*/real_snapshot_dry_run_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_dry_run/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-205 chains real manual snapshot intake through existing exposure,
+      drift, guardrail, and manual execution review artifacts without generating
+      broker orders or production mutations.
+    owner_action: owner_review_real_snapshot_dry_run_before_decision_recording
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_real_execution_owner_review
+    title: ETF Dynamic v3 Rescue Real Execution Owner Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue real-execution-owner-review create --dry-run-id <dry_run_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/real_execution_owner_review/*/real_execution_owner_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_execution_owner_review/*/owner_execution_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_execution_owner_review/*/real_execution_owner_review_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-206 records owner decisions for real snapshot dry-run advisory
+      evidence while keeping true account state unchanged.
+    owner_action: record_owner_decision_before_paper_or_weekly_tracking
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_real_snapshot_paper_action
+    title: ETF Dynamic v3 Rescue Real Snapshot Paper Action Tracking
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue real-snapshot-paper-action apply --owner-review-id <review_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_paper_action/*/real_snapshot_paper_action_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_paper_action/*/paper_action_from_real_snapshot.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_paper_action/*/paper_state_after_action.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_snapshot_paper_action/*/real_snapshot_paper_action_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-207 converts owner decisions into paper-only or no-action tracking
+      from the real manual snapshot dry run without mutating the real snapshot.
+    owner_action: review_paper_action_before_weekly_real_snapshot_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weekly_real_snapshot_review
+    title: ETF Dynamic v3 Rescue Weekly Real Snapshot Advisory Review
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weekly-real-snapshot-review run --week-ending YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_real_snapshot_review/*/weekly_real_snapshot_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_real_snapshot_review/*/weekly_real_snapshot_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_real_snapshot_review/*/weekly_owner_decision_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_real_snapshot_review/*/weekly_real_snapshot_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/weekly_real_snapshot_review/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-208 summarizes the latest real manual snapshot dry run, owner
+      decision, paper/manual action, and next action for weekly owner review.
+    owner_action: review_weekly_real_snapshot_advisory_before_next_snapshot_update
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

@@ -715,6 +715,32 @@ from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     write_dynamic_v3_real_evaluation_report,
     write_dynamic_v3_real_evaluation_validation_report,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_real_snapshot import (
+    DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+    DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
+    DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
+    DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+    DEFAULT_REAL_SNAPSHOT_TEMPLATE_PATH,
+    DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
+    apply_real_snapshot_paper_action,
+    create_real_execution_owner_review,
+    intake_real_snapshot,
+    lint_real_snapshot_file,
+    real_execution_owner_review_report_payload,
+    real_snapshot_dry_run_report_payload,
+    real_snapshot_paper_action_report_payload,
+    real_snapshot_report_payload,
+    record_real_execution_owner_decision,
+    run_real_snapshot_dry_run,
+    run_weekly_real_snapshot_review,
+    validate_real_execution_owner_review,
+    validate_real_snapshot,
+    validate_real_snapshot_dry_run,
+    validate_real_snapshot_paper_action,
+    validate_weekly_real_snapshot_review,
+    weekly_real_snapshot_review_report_payload,
+    write_real_snapshot_template,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
     DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH,
     DEFAULT_DYNAMIC_V3_RESCUE_REPORT_DIR,
@@ -1278,6 +1304,26 @@ dynamic_v3_manual_execution_review_app = typer.Typer(
     help="Dynamic v3 rescue manual execution review pack workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_real_snapshot_app = typer.Typer(
+    help="Dynamic v3 rescue real manual snapshot intake workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_real_snapshot_dry_run_app = typer.Typer(
+    help="Dynamic v3 rescue real snapshot advisory dry-run workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_real_execution_owner_review_app = typer.Typer(
+    help="Dynamic v3 rescue real execution owner decision workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_real_snapshot_paper_action_app = typer.Typer(
+    help="Dynamic v3 rescue real snapshot paper action workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weekly_real_snapshot_review_app = typer.Typer(
+    help="Dynamic v3 rescue weekly real snapshot advisory review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_position_advisory_app = typer.Typer(
     help="Dynamic v3 rescue position advisory workflow。",
     no_args_is_help=True,
@@ -1595,6 +1641,23 @@ dynamic_v3_rescue_app.add_typer(dynamic_v3_execution_guardrails_app, name="execu
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_manual_execution_review_app,
     name="manual-execution-review",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_real_snapshot_app, name="real-snapshot")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_real_snapshot_dry_run_app,
+    name="real-snapshot-dry-run",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_real_execution_owner_review_app,
+    name="real-execution-owner-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_real_snapshot_paper_action_app,
+    name="real-snapshot-paper-action",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weekly_real_snapshot_review_app,
+    name="weekly-real-snapshot-review",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_position_advisory_app, name="position-advisory")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_consensus_drift_app, name="consensus-drift")
@@ -7892,6 +7955,431 @@ def dynamic_v3_validate_manual_execution_review_command(
     typer.echo("order_ticket_generated=false")
     typer.echo("broker_action_allowed=false")
     typer.echo("owner_approval_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_real_snapshot_app.command("template")
+def dynamic_v3_real_snapshot_template_command(
+    output_path: Annotated[
+        Path,
+        typer.Option("--output", "--output-path", help="redaction-safe real snapshot template。"),
+    ] = DEFAULT_REAL_SNAPSHOT_TEMPLATE_PATH,
+) -> None:
+    """生成 TRADING-204 redaction-safe real manual snapshot template。"""
+    payload = write_real_snapshot_template(output_path)
+    typer.echo(f"template_path={payload['template_path']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo("broker_imported=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+
+
+@dynamic_v3_real_snapshot_app.command("lint")
+def dynamic_v3_real_snapshot_lint_command(
+    snapshot: Annotated[Path, typer.Option("--snapshot", help="real manual snapshot YAML。")],
+) -> None:
+    """检查 TRADING-204 real manual snapshot 是否 redaction-safe。"""
+    payload = lint_real_snapshot_file(snapshot)
+    typer.echo(f"redaction_status={payload['redaction_status']}")
+    typer.echo(f"blocking_issues={len(payload['blocking_issues'])}")
+    typer.echo(f"warnings={len(payload['warnings'])}")
+    typer.echo("broker_imported=false")
+    typer.echo("broker_action_taken=false")
+    if payload["redaction_status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_real_snapshot_app.command("intake")
+def dynamic_v3_real_snapshot_intake_command(
+    snapshot: Annotated[Path, typer.Option("--snapshot", help="real manual snapshot YAML。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot intake artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
+) -> None:
+    """接入 TRADING-204 owner-maintained real manual snapshot。"""
+    result = intake_real_snapshot(snapshot_path=snapshot, output_dir=output_dir)
+    manifest = result["manifest"]
+    typer.echo(f"snapshot_intake_id={result['snapshot_intake_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"redaction_status={manifest['redaction_status']}")
+    typer.echo(f"snapshot_status={manifest['snapshot_status']}")
+    typer.echo(f"manual_portfolio_snapshot_id={manifest['manual_portfolio_snapshot_id']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("broker_action_taken=false")
+    if manifest["status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_real_snapshot_app.command("report")
+def dynamic_v3_real_snapshot_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest real snapshot intake。"),
+    ] = False,
+    snapshot_intake_id: Annotated[
+        str | None,
+        typer.Option("--snapshot-intake-id", help="real snapshot intake id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot intake artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
+) -> None:
+    """展示 TRADING-204 real snapshot intake 摘要。"""
+    payload = real_snapshot_report_payload(
+        snapshot_intake_id=snapshot_intake_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"snapshot_intake_id={payload['snapshot_intake_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"redaction_status={payload['redaction_status']}")
+    typer.echo(f"snapshot_status={payload['snapshot_status']}")
+    typer.echo(f"report_path={payload['real_snapshot_intake_report_path']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_rescue_app.command("validate-real-snapshot")
+def dynamic_v3_validate_real_snapshot_command(
+    snapshot_intake_id: Annotated[
+        str,
+        typer.Option("--snapshot-intake-id", help="real snapshot intake id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot intake artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_INTAKE_DIR,
+) -> None:
+    """校验 TRADING-204 real snapshot intake artifact。"""
+    payload = validate_real_snapshot(snapshot_intake_id=snapshot_intake_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("broker_action_taken=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_real_snapshot_dry_run_app.command("run")
+def dynamic_v3_real_snapshot_dry_run_command(
+    snapshot_intake_id: Annotated[
+        str,
+        typer.Option("--snapshot-intake-id", help="real snapshot intake id。"),
+    ],
+    shadow_shortlist_id: Annotated[
+        str,
+        typer.Option("--shadow-shortlist-id", help="shadow shortlist id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot dry-run artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
+) -> None:
+    """运行 TRADING-205 real snapshot advisory dry run。"""
+    result = run_real_snapshot_dry_run(
+        snapshot_intake_id=snapshot_intake_id,
+        shadow_shortlist_id=shadow_shortlist_id,
+        output_dir=output_dir,
+    )
+    summary = result["real_snapshot_dry_run_summary"]
+    typer.echo(f"dry_run_id={result['dry_run_id']}")
+    typer.echo(f"snapshot_status={summary['snapshot_status']}")
+    typer.echo(f"exposure_status={summary['exposure_status']}")
+    typer.echo(f"drift_status={summary['drift_status']}")
+    typer.echo(f"guardrail_status={summary['guardrail_status']}")
+    typer.echo(f"recommended_action={summary['manual_review_recommended_action']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+
+
+@dynamic_v3_real_snapshot_dry_run_app.command("report")
+def dynamic_v3_real_snapshot_dry_run_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest real snapshot dry run。"),
+    ] = False,
+    dry_run_id: Annotated[str | None, typer.Option("--dry-run-id", help="dry run id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot dry-run artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
+) -> None:
+    """展示 TRADING-205 real snapshot dry-run 摘要。"""
+    payload = real_snapshot_dry_run_report_payload(
+        dry_run_id=dry_run_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("real_snapshot_dry_run_summary"))
+    typer.echo(f"dry_run_id={payload['dry_run_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"exposure_status={summary.get('exposure_status')}")
+    typer.echo(f"drift_status={summary.get('drift_status')}")
+    typer.echo(f"guardrail_status={summary.get('guardrail_status')}")
+    typer.echo(f"recommended_action={summary.get('manual_review_recommended_action')}")
+    typer.echo(f"report_path={payload['real_snapshot_dry_run_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-real-snapshot-dry-run")
+def dynamic_v3_validate_real_snapshot_dry_run_command(
+    dry_run_id: Annotated[str, typer.Option("--dry-run-id", help="dry run id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot dry-run artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_DRY_RUN_DIR,
+) -> None:
+    """校验 TRADING-205 real snapshot dry-run artifact。"""
+    payload = validate_real_snapshot_dry_run(dry_run_id=dry_run_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_real_execution_owner_review_app.command("create")
+def dynamic_v3_real_execution_owner_review_create_command(
+    dry_run_id: Annotated[str, typer.Option("--dry-run-id", help="dry run id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real execution owner review artifact root。"),
+    ] = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+) -> None:
+    """从 TRADING-205 dry run 创建 TRADING-206 owner review。"""
+    result = create_real_execution_owner_review(dry_run_id=dry_run_id, output_dir=output_dir)
+    manifest = result["manifest"]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"recommended_action={manifest['recommended_action']}")
+    typer.echo(f"owner_decision={manifest['owner_decision']}")
+    typer.echo("broker_action_taken=false")
+
+
+@dynamic_v3_real_execution_owner_review_app.command("record")
+def dynamic_v3_real_execution_owner_review_record_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="owner review id。")],
+    decision: Annotated[str, typer.Option("--decision", help="owner decision。")],
+    owner_notes: Annotated[
+        str,
+        typer.Option("--owner-notes", help="owner notes; do not include sensitive account data。"),
+    ] = "",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real execution owner review artifact root。"),
+    ] = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+) -> None:
+    """记录 TRADING-206 owner decision。"""
+    result = record_real_execution_owner_decision(
+        review_id=review_id,
+        decision=decision,
+        owner_notes=owner_notes,
+        output_dir=output_dir,
+    )
+    payload = result["decision"]
+    typer.echo(f"review_id={review_id}")
+    typer.echo(f"owner_decision={payload['owner_decision']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("order_ticket_generated=false")
+
+
+@dynamic_v3_real_execution_owner_review_app.command("report")
+def dynamic_v3_real_execution_owner_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest owner execution review。"),
+    ] = False,
+    review_id: Annotated[str | None, typer.Option("--review-id", help="owner review id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real execution owner review artifact root。"),
+    ] = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-206 owner review 摘要。"""
+    payload = real_execution_owner_review_report_payload(
+        review_id=review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("owner_execution_decision"))
+    typer.echo(f"review_id={payload['review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"owner_decision={decision.get('owner_decision')}")
+    typer.echo(f"recommended_action={decision.get('recommended_action')}")
+    typer.echo(f"report_path={payload['real_execution_owner_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-real-execution-owner-review")
+def dynamic_v3_validate_real_execution_owner_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="owner review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real execution owner review artifact root。"),
+    ] = DEFAULT_REAL_EXECUTION_OWNER_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-206 owner review artifact。"""
+    payload = validate_real_execution_owner_review(review_id=review_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("order_ticket_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_real_snapshot_paper_action_app.command("apply")
+def dynamic_v3_real_snapshot_paper_action_apply_command(
+    owner_review_id: Annotated[
+        str,
+        typer.Option("--owner-review-id", "--review-id", help="owner review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot paper action artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+) -> None:
+    """从 TRADING-206 owner review 生成 TRADING-207 paper/manual action tracking。"""
+    result = apply_real_snapshot_paper_action(
+        owner_review_id=owner_review_id,
+        output_dir=output_dir,
+    )
+    action = result["paper_action_from_real_snapshot"]
+    typer.echo(f"paper_action_id={result['paper_action_id']}")
+    typer.echo(f"action_type={action['action_type']}")
+    typer.echo(f"owner_decision={action['owner_decision']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("order_ticket_generated=false")
+
+
+@dynamic_v3_real_snapshot_paper_action_app.command("report")
+def dynamic_v3_real_snapshot_paper_action_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest real snapshot paper action。"),
+    ] = False,
+    paper_action_id: Annotated[
+        str | None,
+        typer.Option("--paper-action-id", help="paper action id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot paper action artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+) -> None:
+    """展示 TRADING-207 paper/manual action 摘要。"""
+    payload = real_snapshot_paper_action_report_payload(
+        paper_action_id=paper_action_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    action = _mapping_obj(payload.get("paper_action_from_real_snapshot"))
+    typer.echo(f"paper_action_id={payload['paper_action_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"action_type={action.get('action_type')}")
+    typer.echo(f"broker_action_taken={action.get('broker_action_taken')}")
+    typer.echo(f"report_path={payload['real_snapshot_paper_action_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-real-snapshot-paper-action")
+def dynamic_v3_validate_real_snapshot_paper_action_command(
+    paper_action_id: Annotated[
+        str,
+        typer.Option("--paper-action-id", help="paper action id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="real snapshot paper action artifact root。"),
+    ] = DEFAULT_REAL_SNAPSHOT_PAPER_ACTION_DIR,
+) -> None:
+    """校验 TRADING-207 real snapshot paper action artifact。"""
+    payload = validate_real_snapshot_paper_action(
+        paper_action_id=paper_action_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("order_ticket_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weekly_real_snapshot_review_app.command("run")
+def dynamic_v3_weekly_real_snapshot_review_run_command(
+    week_ending: Annotated[
+        str,
+        typer.Option("--week-ending", help="week ending date YYYY-MM-DD。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly real snapshot review artifact root。"),
+    ] = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
+) -> None:
+    """生成 TRADING-208 weekly real snapshot advisory review。"""
+    result = run_weekly_real_snapshot_review(
+        week_ending=_parse_date(week_ending),
+        output_dir=output_dir,
+    )
+    summary = result["weekly_real_snapshot_summary"]
+    typer.echo(f"weekly_real_review_id={result['weekly_real_review_id']}")
+    typer.echo(f"snapshot_status={summary['snapshot_status']}")
+    typer.echo(f"owner_decision={summary['owner_decision']}")
+    typer.echo(f"next_action={summary['next_action']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("order_ticket_generated=false")
+
+
+@dynamic_v3_weekly_real_snapshot_review_app.command("report")
+def dynamic_v3_weekly_real_snapshot_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest weekly real snapshot review。"),
+    ] = False,
+    weekly_real_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-real-review-id", help="weekly real snapshot review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly real snapshot review artifact root。"),
+    ] = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
+) -> None:
+    """展示 TRADING-208 weekly real snapshot advisory review 摘要。"""
+    payload = weekly_real_snapshot_review_report_payload(
+        weekly_real_review_id=weekly_real_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("weekly_real_snapshot_summary"))
+    typer.echo(f"weekly_real_review_id={payload['weekly_real_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"owner_decision={summary.get('owner_decision')}")
+    typer.echo(f"next_action={summary.get('next_action')}")
+    typer.echo(f"report_path={payload['weekly_real_snapshot_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weekly-real-snapshot-review")
+def dynamic_v3_validate_weekly_real_snapshot_review_command(
+    weekly_real_review_id: Annotated[
+        str,
+        typer.Option("--weekly-real-review-id", help="weekly real snapshot review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weekly real snapshot review artifact root。"),
+    ] = DEFAULT_WEEKLY_REAL_SNAPSHOT_REVIEW_DIR,
+) -> None:
+    """校验 TRADING-208 weekly real snapshot advisory review artifact。"""
+    payload = validate_weekly_real_snapshot_review(
+        weekly_real_review_id=weekly_real_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("broker_action_taken=false")
+    typer.echo("order_ticket_generated=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 
