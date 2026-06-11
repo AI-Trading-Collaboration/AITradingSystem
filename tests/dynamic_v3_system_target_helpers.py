@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +9,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_t
 
 TARGET_AS_OF = date(2026, 1, 5)
 EVALUATION_AS_OF = date(2026, 1, 8)
+BACKFILL_START = date(2022, 12, 1)
+BACKFILL_END = date(2024, 2, 29)
 
 
 def write_model_target_config(tmp_path: Path) -> Path:
@@ -287,6 +289,196 @@ def run_review_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "review": review}
 
 
+def write_paper_shadow_backfill_config(
+    tmp_path: Path,
+    *,
+    prices_path: Path,
+) -> dict[str, Any]:
+    source_dirs = write_target_source_artifacts(tmp_path)
+    model_config = write_model_target_config(tmp_path)
+    paper_config = write_paper_shadow_config(tmp_path)
+    config_path = tmp_path / "paper_shadow_backfill_v1.yaml"
+    config_path.write_text(
+        f"""
+schema_version: 1
+backfill:
+  mode: BACKTEST_SIMULATION
+  research_target_only: true
+  paper_shadow_only: true
+  not_pit_safe: true
+  not_official_target_weights: true
+date_range:
+  start: "{BACKFILL_START.isoformat()}"
+  end: "{BACKFILL_END.isoformat()}"
+  rebalance_frequency: weekly
+  rebalance_day: MON
+  min_history_days_before_first_rebalance: 20
+source:
+  model_target_config: {model_config.as_posix()}
+  paper_shadow_config: {paper_config.as_posix()}
+  position_advisory_daily_dir: {source_dirs["position_advisory_daily_dir"].as_posix()}
+  shadow_monitor_dir: {source_dirs["shadow_monitor_dir"].as_posix()}
+  shadow_shortlist_dir: {source_dirs["shadow_shortlist_dir"].as_posix()}
+  consensus_drift_dir: {source_dirs["consensus_drift_dir"].as_posix()}
+  price_cache_path: {prices_path.as_posix()}
+target_methods:
+  enabled:
+    - static_baseline
+    - no_trade_baseline
+    - consensus_target
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+costs:
+  transaction_cost_bps: 0
+  slippage_bps: 0
+evaluation:
+  min_observations_per_window: 10
+regime_policy:
+  min_sample_count: 2
+  risk_off_return_threshold: -0.015
+  tech_drawdown_return_threshold: -0.010
+  semiconductor_pullback_return_threshold: -0.012
+  ai_trend_return_threshold: 0.008
+  strong_recovery_return_threshold: 0.012
+stability_policy:
+  large_jump_threshold: 0.10
+  high_jump_threshold: 0.20
+  stable_max_daily_weight_change: 0.08
+  unstable_max_daily_weight_change: 0.18
+  moderate_annualized_turnover: 1.5
+  high_annualized_turnover: 4.0
+selection_policy:
+  preferred_method_order:
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - consensus_target
+  reference_only_methods:
+    - consensus_target
+  preferred_method_score_tolerance: 0.10
+  continue_observation_score: 0.55
+  review_required_score: 0.35
+  score_weights:
+    return: 0.25
+    drawdown: 0.25
+    risk_adjusted: 0.20
+    regime: 0.15
+    stability: 0.15
+    turnover_penalty: 0.10
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return {
+        "config_path": config_path,
+        "model_config_path": model_config,
+        "paper_config_path": paper_config,
+        **source_dirs,
+    }
+
+
+def run_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
+    prices_path, rates_path = write_long_market_cache(tmp_path / "market_cache")
+    config = write_paper_shadow_backfill_config(tmp_path, prices_path=prices_path)
+    backfill = system_target.run_paper_shadow_backfill(
+        config_path=config["config_path"],
+        output_dir=tmp_path / "paper_shadow_backfill",
+        price_cache_path=prices_path,
+        rates_cache_path=rates_path,
+        generated_at=datetime(2024, 3, 1, tzinfo=UTC),
+    )
+    return {
+        **config,
+        "prices_path": prices_path,
+        "rates_path": rates_path,
+        "backfill": backfill,
+    }
+
+
+def run_rolling_eval_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_backfill_fixture(tmp_path)
+    rolling = system_target.run_paper_shadow_rolling_eval(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "paper_shadow_rolling_eval",
+        generated_at=datetime(2024, 3, 1, 1, tzinfo=UTC),
+    )
+    return {**fixture, "rolling": rolling}
+
+
+def run_regime_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_backfill_fixture(tmp_path)
+    regime = system_target.run_paper_shadow_regime_review(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "paper_shadow_regime_review",
+        generated_at=datetime(2024, 3, 1, 2, tzinfo=UTC),
+    )
+    return {**fixture, "regime": regime}
+
+
+def run_stability_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_backfill_fixture(tmp_path)
+    stability = system_target.run_paper_shadow_stability(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "paper_shadow_stability",
+        generated_at=datetime(2024, 3, 1, 3, tzinfo=UTC),
+    )
+    return {**fixture, "stability": stability}
+
+
+def run_selection_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_backfill_fixture(tmp_path)
+    rolling = system_target.run_paper_shadow_rolling_eval(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "paper_shadow_rolling_eval",
+        generated_at=datetime(2024, 3, 1, 1, tzinfo=UTC),
+    )
+    regime = system_target.run_paper_shadow_regime_review(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "paper_shadow_regime_review",
+        generated_at=datetime(2024, 3, 1, 2, tzinfo=UTC),
+    )
+    stability = system_target.run_paper_shadow_stability(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "paper_shadow_stability",
+        generated_at=datetime(2024, 3, 1, 3, tzinfo=UTC),
+    )
+    selection = system_target.run_system_target_selection_review(
+        backfill_id=fixture["backfill"]["backfill_id"],
+        rolling_eval_id=rolling["rolling_eval_id"],
+        regime_review_id=regime["regime_review_id"],
+        stability_id=stability["stability_id"],
+        backfill_dir=tmp_path / "paper_shadow_backfill",
+        rolling_eval_dir=tmp_path / "paper_shadow_rolling_eval",
+        regime_review_dir=tmp_path / "paper_shadow_regime_review",
+        stability_dir=tmp_path / "paper_shadow_stability",
+        output_dir=tmp_path / "system_target_selection_review",
+        generated_at=datetime(2024, 3, 1, 4, tzinfo=UTC),
+    )
+    return {
+        **fixture,
+        "rolling": rolling,
+        "regime": regime,
+        "stability": stability,
+        "selection": selection,
+    }
+
+
 def write_market_cache(root: Path) -> tuple[Path, Path]:
     root.mkdir(parents=True, exist_ok=True)
     prices_path = root / "prices_daily.csv"
@@ -315,6 +507,36 @@ def write_market_cache(root: Path) -> tuple[Path, Path]:
         + "\n",
         encoding="utf-8",
     )
+    return prices_path, rates_path
+
+
+def write_long_market_cache(root: Path) -> tuple[Path, Path]:
+    root.mkdir(parents=True, exist_ok=True)
+    prices_path = root / "prices_daily.csv"
+    rates_path = root / "rates_daily.csv"
+    symbols = ("QQQ", "SMH", "SOXX", "TLT")
+    levels = {symbol: 100.0 + index * 5.0 for index, symbol in enumerate(symbols)}
+    price_lines = ["date,ticker,open,high,low,close,adj_close,volume"]
+    rate_lines = ["date,series,value"]
+    current = BACKFILL_START
+    day_index = 0
+    while current <= BACKFILL_END:
+        if current.weekday() >= 5:
+            current += timedelta(days=1)
+            continue
+        rates = _scenario_returns(day_index)
+        for symbol in symbols:
+            levels[symbol] *= 1.0 + rates[symbol]
+            close = levels[symbol]
+            price_lines.append(
+                f"{current.isoformat()},{symbol},{close:.4f},{close * 1.01:.4f},"
+                f"{close * 0.99:.4f},{close:.4f},{close:.4f},1000000"
+            )
+        rate_lines.append(f"{current.isoformat()},FEDFUNDS,4.0")
+        current += timedelta(days=1)
+        day_index += 1
+    prices_path.write_text("\n".join(price_lines) + "\n", encoding="utf-8")
+    rates_path.write_text("\n".join(rate_lines) + "\n", encoding="utf-8")
     return prices_path, rates_path
 
 
@@ -361,3 +583,22 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
         "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
         encoding="utf-8",
     )
+
+
+def _scenario_returns(day_index: int) -> dict[str, float]:
+    if day_index % 61 == 0:
+        return {"QQQ": -0.030, "SMH": -0.040, "SOXX": -0.042, "TLT": -0.005}
+    if day_index % 47 == 0:
+        return {"QQQ": -0.018, "SMH": -0.030, "SOXX": -0.032, "TLT": 0.002}
+    if day_index % 53 == 0:
+        return {"QQQ": -0.022, "SMH": -0.010, "SOXX": -0.012, "TLT": -0.002}
+    if day_index % 43 == 0:
+        return {"QQQ": 0.026, "SMH": 0.034, "SOXX": 0.036, "TLT": 0.004}
+    if day_index % 17 == 0:
+        return {"QQQ": 0.012, "SMH": 0.016, "SOXX": 0.018, "TLT": 0.000}
+    return {
+        "QQQ": 0.0012,
+        "SMH": 0.0015,
+        "SOXX": 0.0017,
+        "TLT": 0.0003,
+    }

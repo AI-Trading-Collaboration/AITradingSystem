@@ -2187,6 +2187,18 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     ("decision_status", etf_dynamic_v3_system_target.get("decision_status")),
                     (
+                        "selection_review_id",
+                        etf_dynamic_v3_system_target.get("selection_review_id"),
+                    ),
+                    (
+                        "secondary_research_methods",
+                        etf_dynamic_v3_system_target.get("secondary_research_methods"),
+                    ),
+                    (
+                        "reference_only_methods",
+                        etf_dynamic_v3_system_target.get("reference_only_methods"),
+                    ),
+                    (
                         "data_quality_status",
                         etf_dynamic_v3_system_target.get("data_quality_status"),
                     ),
@@ -7986,6 +7998,13 @@ def _etf_dynamic_v3_system_target_summary(
         _report_index_artifact_path(report_index, "etf_dynamic_v3_system_target_review"),
         "system_target_review_manifest.json",
     )
+    selection_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_system_target_selection_review",
+        ),
+        "system_target_selection_manifest.json",
+    )
     review_manifest = _read_optional_json(review_path)
     if not review_manifest:
         return _missing_etf_dynamic_v3_system_target_summary()
@@ -7996,6 +8015,13 @@ def _etf_dynamic_v3_system_target_summary(
     performance_manifest = _read_optional_json(performance_path)
     decision = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(review_path, "system_target_decision.json")
+    )
+    selection_manifest = _read_optional_json(selection_path)
+    selection_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(selection_path, "selection_decision.json")
+    )
+    selection_scorecard = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(selection_path, "target_method_scorecard.json")
     )
     paper_state = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(paper_path, "paper_shadow_state.json")
@@ -8033,12 +8059,18 @@ def _etf_dynamic_v3_system_target_summary(
     )
     review_id = _text(review_manifest.get("review_id"), "MISSING")
     recommended = _text(
-        decision.get("recommended_research_method"),
-        _text(review_manifest.get("recommended_research_method"), "MISSING"),
+        selection_decision.get("recommended_research_method"),
+        _text(
+            decision.get("recommended_research_method"),
+            _text(review_manifest.get("recommended_research_method"), "MISSING"),
+        ),
     )
     decision_status = _text(
-        decision.get("decision_status"),
-        _text(review_manifest.get("decision_status"), "MISSING"),
+        selection_decision.get("decision_status"),
+        _text(
+            decision.get("decision_status"),
+            _text(review_manifest.get("decision_status"), "MISSING"),
+        ),
     )
     production_effect = _text(review_manifest.get("production_effect"), PRODUCTION_EFFECT)
     safety_status = _etf_dynamic_v3_system_target_safety_status(
@@ -8051,6 +8083,9 @@ def _etf_dynamic_v3_system_target_summary(
         performance_summary,
         review_manifest,
         decision,
+        selection_manifest,
+        selection_decision,
+        selection_scorecard,
     )
     return {
         "availability": "AVAILABLE",
@@ -8074,6 +8109,17 @@ def _etf_dynamic_v3_system_target_summary(
         "tracked_methods": ",".join(tracked_methods),
         "recommended_research_method": recommended,
         "decision_status": decision_status,
+        "selection_review_id": _text(
+            selection_manifest.get("selection_review_id"),
+            "MISSING",
+        ),
+        "secondary_research_methods": ",".join(
+            _texts(selection_decision.get("secondary_research_methods"))
+        ),
+        "reference_only_methods": ",".join(
+            _texts(selection_decision.get("reference_only_methods"))
+        ),
+        "selection_review_path": "" if selection_path is None else str(selection_path),
         "data_quality_status": _text(performance_summary.get("data_quality_status"), "MISSING"),
         "best_return_method": _text(performance_summary.get("best_return_method"), "MISSING"),
         "best_drawdown_method": _text(performance_summary.get("best_drawdown_method"), "MISSING"),
@@ -8098,7 +8144,10 @@ def _etf_dynamic_v3_system_target_summary(
         "paper_shadow_only": review_manifest.get("paper_shadow_only") is True,
         "production_effect": production_effect,
         "safety_status": safety_status,
-        "next_action": _text(decision.get("next_action"), "continue_paper_shadow_observation"),
+        "next_action": _text(
+            selection_decision.get("next_action"),
+            _text(decision.get("next_action"), "continue_paper_shadow_observation"),
+        ),
         "system_target_review_path": "" if review_path is None else str(review_path),
         "model_target_path": "" if target_path is None else str(target_path),
         "paper_shadow_path": "" if paper_path is None else str(paper_path),
@@ -8131,6 +8180,10 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "tracked_methods": "",
         "recommended_research_method": "MISSING",
         "decision_status": "MISSING",
+        "selection_review_id": "MISSING",
+        "secondary_research_methods": "",
+        "reference_only_methods": "",
+        "selection_review_path": "",
         "data_quality_status": "MISSING",
         "best_return_method": "MISSING",
         "best_drawdown_method": "MISSING",

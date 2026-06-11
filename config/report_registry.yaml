@@ -2379,6 +2379,115 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_backfill
+    title: ETF Dynamic v3 Rescue Paper Shadow Historical Backfill
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_backfill/*/paper_shadow_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_backfill/*/backfill_rebalance_calendar.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_backfill/*/backfill_method_states.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_backfill/*/backfill_trade_ledger.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_backfill/*/backfill_data_quality.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_backfill/*/paper_shadow_backfill_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-214 expands paper shadow method comparison from short chain
+      validation to a research-only ai_after_chatgpt historical simulation and
+      discloses not_pit_safe=true.
+    owner_action: review_backfill_coverage_data_quality_and_no_broker_boundary
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_rolling_eval
+    title: ETF Dynamic v3 Rescue Paper Shadow Rolling Evaluation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-rolling-eval report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_rolling_eval/*/rolling_eval_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_rolling_eval/*/rolling_window_inventory.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_rolling_eval/*/rolling_method_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_rolling_eval/*/rolling_rank_stability.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_rolling_eval/*/paper_shadow_rolling_eval_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-215 compares target methods across full, yearly, and rolling
+      windows so method selection does not rely only on full-period averages.
+    owner_action: review_rolling_rank_stability_before_method_selection
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_regime_review
+    title: ETF Dynamic v3 Rescue Paper Shadow Regime Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-regime-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_regime_review/*/paper_shadow_regime_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_regime_review/*/regime_window_inventory.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_regime_review/*/method_regime_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_regime_review/*/regime_method_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_regime_review/*/paper_shadow_regime_review_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-216 reviews method behavior by rule-based research regime buckets
+      and marks insufficient samples explicitly.
+    owner_action: review_regime_method_summary_without_auto_rule_approval
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_stability
+    title: ETF Dynamic v3 Rescue Paper Shadow Stability Diagnostics
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-stability report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_stability/*/paper_shadow_stability_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_stability/*/method_stability_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_stability/*/weight_path_jump_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_stability/*/turnover_diagnostics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_stability/*/paper_shadow_stability_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-217 exposes target method weight jumps and turnover so selection
+      review considers stability, not only return.
+    owner_action: review_stability_and_turnover_before_method_selection
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_system_target_selection_review
+    title: ETF Dynamic v3 Rescue System Target Selection Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue system-target-selection-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_selection_review/*/system_target_selection_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_selection_review/*/target_method_scorecard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_selection_review/*/selection_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_selection_review/*/owner_research_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_selection_review/*/system_target_selection_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/system_target_selection_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-218 bundles backfill, rolling, regime, and stability evidence into
+      a research-only method selection review with no official target weight or
+      broker permission.
+    owner_action: owner_review_selection_before_any_policy_or_weight_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

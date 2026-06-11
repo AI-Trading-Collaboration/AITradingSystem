@@ -1,0 +1,122 @@
+schema_version: 1
+
+backfill:
+  name: dynamic_v3_rescue_paper_shadow_backfill_v1
+  mode: BACKTEST_SIMULATION
+  not_pit_safe: true
+  research_target_only: true
+  paper_shadow_only: true
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_paper_shadow_backfill_v1
+  owner: project_owner
+  version: 2026-06-12
+  status: pilot_baseline
+  rationale: >
+    Reconstruct research-only paper shadow target-method paths over the
+    ai_after_chatgpt market regime so the project can compare method behavior
+    beyond the initial two-day chain validation.
+  intended_effect: >
+    Provide non-production historical research diagnostics for target method
+    return, drawdown, regime behavior, stability, and turnover.
+  validation_evidence: >
+    TRADING-214_to_218 focused tests, artifact validators, data quality gate,
+    ruff, compileall, and git diff check.
+  review_condition: >
+    Revisit after owner review of the first full historical backfill and after
+    enough forward paper shadow observations exist to compare simulated and
+    forward evidence.
+
+date_range:
+  start: "2022-12-01"
+  end: latest_available
+  rebalance_frequency: weekly
+  rebalance_day: MON
+  min_history_days_before_first_rebalance: 60
+
+source:
+  model_target_config: config/etf_portfolio/dynamic_v3_rescue/model_target_portfolio_v1.yaml
+  paper_shadow_config: config/etf_portfolio/dynamic_v3_rescue/paper_shadow_account_v1.yaml
+  position_advisory_daily_dir: reports/etf_portfolio/dynamic_v3_rescue/position_advisory_daily
+  shadow_monitor_dir: reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor_runs
+  shadow_shortlist_dir: reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist
+  consensus_drift_dir: reports/etf_portfolio/dynamic_v3_rescue/consensus_drift
+  price_source: existing_price_cache
+  price_cache_path: data/raw/prices_daily.csv
+  use_adjusted_close: true
+
+target_methods:
+  enabled:
+    - static_baseline
+    - no_trade_baseline
+    - consensus_target
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - selected_top_candidate
+
+costs:
+  transaction_cost_bps: 0
+  slippage_bps: 0
+
+evaluation:
+  min_observations_per_window: 20
+  rationale: >
+    Thin windows remain visible but are marked INSUFFICIENT_DATA before they
+    influence method selection.
+
+regime_policy:
+  min_sample_count: 5
+  risk_off_return_threshold: -0.015
+  tech_drawdown_return_threshold: -0.010
+  semiconductor_pullback_return_threshold: -0.012
+  ai_trend_return_threshold: 0.008
+  strong_recovery_return_threshold: 0.012
+  rationale: >
+    Initial rule-based buckets for research diagnostics only. These thresholds
+    do not approve defensive rules and must be revisited after owner review.
+
+stability_policy:
+  large_jump_threshold: 0.10
+  high_jump_threshold: 0.20
+  stable_max_daily_weight_change: 0.08
+  unstable_max_daily_weight_change: 0.18
+  moderate_annualized_turnover: 1.5
+  high_annualized_turnover: 4.0
+  rationale: >
+    Pilot diagnostics for large weight path changes and high turnover. These
+    labels affect research review only, not trading permission.
+
+selection_policy:
+  preferred_method_order:
+    - limited_adjustment
+    - defensive_limited_adjustment
+    - equal_weight_shadow_candidates
+    - consensus_target
+  reference_only_methods:
+    - consensus_target
+  preferred_method_score_tolerance: 0.10
+  continue_observation_score: 0.55
+  review_required_score: 0.35
+  score_weights:
+    return: 0.25
+    drawdown: 0.25
+    risk_adjusted: 0.20
+    regime: 0.15
+    stability: 0.15
+    turnover_penalty: 0.10
+  rationale: >
+    Balanced pilot scorecard that favors durable return, lower drawdown,
+    risk-adjusted behavior, regime coverage, and stability. A preferred method
+    can remain recommended only when it is close to the highest score and is not
+    blocked by insufficient data.
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

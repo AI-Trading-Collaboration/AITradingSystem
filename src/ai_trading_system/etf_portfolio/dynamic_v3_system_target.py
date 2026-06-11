@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import math
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -45,16 +45,39 @@ DEFAULT_MODEL_TARGET_CONFIG_PATH = (
 DEFAULT_PAPER_SHADOW_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "paper_shadow_account_v1.yaml"
 )
+DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "paper_shadow_backfill_v1.yaml"
+)
 DEFAULT_PRICE_CACHE_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 DEFAULT_MODEL_TARGET_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "model_target"
 DEFAULT_PAPER_SHADOW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow"
 DEFAULT_MODEL_REBALANCE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "model_rebalance"
 DEFAULT_PAPER_SHADOW_PERFORMANCE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_performance"
 DEFAULT_SYSTEM_TARGET_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "system_target_review"
+DEFAULT_PAPER_SHADOW_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_backfill"
+DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_rolling_eval"
+)
+DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_regime_review"
+)
+DEFAULT_PAPER_SHADOW_STABILITY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_stability"
+DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "system_target_selection_review"
+)
+
+AI_AFTER_CHATGPT_START = date(2022, 12, 1)
 
 # Reporting bucket boundary, not an approval or allocation rule. The 2% daily
 # loss level is intentionally named so future calibration work can audit it.
 PRESSURE_RETURN_THRESHOLD = -0.02
+
+# Reporting sufficiency floor used only to label thin diagnostic windows.
+DEFAULT_MIN_EVAL_OBSERVATIONS = 20
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -1119,6 +1142,1090 @@ def validate_system_target_review_artifact(
     return _validation_payload("etf_dynamic_v3_system_target_review_validation", review_id, checks)
 
 
+def load_paper_shadow_backfill_config(
+    path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    _assert_paper_shadow_backfill_config_safe(payload)
+    return payload
+
+
+def validate_paper_shadow_backfill_config(
+    path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    payload: dict[str, Any] = {}
+    try:
+        payload = load_paper_shadow_backfill_config(path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("config_loads", False, str(exc)))
+    else:
+        backfill = _mapping(payload.get("backfill"))
+        date_range = _mapping(payload.get("date_range"))
+        source = _mapping(payload.get("source"))
+        checks.extend(
+            [
+                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
+                _check(
+                    "mode_backtest_simulation", backfill.get("mode") == "BACKTEST_SIMULATION", ""
+                ),
+                _check("not_pit_safe_visible", backfill.get("not_pit_safe") is True, ""),
+                _check("research_target_only", backfill.get("research_target_only") is True, ""),
+                _check("paper_shadow_only", backfill.get("paper_shadow_only") is True, ""),
+                _check(
+                    "date_start_ai_regime",
+                    _coerce_date(date_range.get("start"), date(1970, 1, 1))
+                    >= AI_AFTER_CHATGPT_START,
+                    _text(date_range.get("start")),
+                ),
+                _check("target_methods_present", bool(_enabled_methods(payload)), ""),
+                _check(
+                    "required_source_configs_present",
+                    bool(source.get("model_target_config") and source.get("paper_shadow_config")),
+                    "",
+                ),
+                _check("safety_locked", _safety_config_locked(_mapping(payload.get("safety"))), ""),
+            ]
+        )
+    return _validation_payload(
+        "etf_dynamic_v3_paper_shadow_backfill_config_validation",
+        "paper_shadow_backfill_config",
+        checks,
+        extra={
+            "config_path": str(path),
+            "mode": _text(backfill.get("mode")),
+            "not_pit_safe": backfill.get("not_pit_safe") is True,
+        },
+    )
+
+
+def run_paper_shadow_backfill(
+    *,
+    config_path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    config = load_paper_shadow_backfill_config(config_path)
+    generated = generated_at or datetime.now(UTC)
+    source = _mapping(config.get("source"))
+    date_range = _mapping(config.get("date_range"))
+    start = _coerce_date(date_range.get("start"), AI_AFTER_CHATGPT_START)
+    enabled = _enabled_methods(config) or list(TARGET_METHODS)
+    prices_path = price_cache_path or _resolve_project_path(
+        source.get("price_cache_path"), DEFAULT_PRICE_CACHE_PATH
+    )
+    target_weights = _backfill_target_method_weights(config)
+    target_weights = {
+        method: target_weights[method] for method in enabled if method in target_weights
+    }
+    if not target_weights:
+        raise DynamicV3SystemTargetError("backfill has no enabled target method weights")
+    symbols = sorted(
+        {symbol for weights in target_weights.values() for symbol in weights if symbol != "CASH"}
+    )
+    pivot = _load_price_pivot(prices_path, symbols, start)
+    configured_end = _text(date_range.get("end"), "latest_available")
+    end = (
+        _coerce_date(configured_end, _latest_price_date(pivot))
+        if configured_end
+        else _latest_price_date(pivot)
+    )
+    if configured_end == "latest_available":
+        end = _latest_price_date(pivot)
+    pivot = pivot.loc[pivot.index.date <= end]
+    if pivot.empty:
+        raise DynamicV3SystemTargetError("backfill price window is empty")
+    actual_start = pivot.index[0].date()
+    actual_end = pivot.index[-1].date()
+    quality = _run_data_quality_gate(
+        price_cache_path=prices_path,
+        rates_cache_path=rates_cache_path,
+        expected_symbols=symbols,
+        as_of=actual_end,
+    )
+    if not quality.passed:
+        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
+    returns = pivot.pct_change().fillna(0.0)
+    trading_dates = [idx.date() for idx in returns.index]
+    rebalance_dates = _backfill_rebalance_dates(
+        trading_dates,
+        frequency=_text(date_range.get("rebalance_frequency"), "weekly"),
+        rebalance_day=_text(date_range.get("rebalance_day"), "MON"),
+        min_history_days=int(_float(date_range.get("min_history_days_before_first_rebalance"), 0)),
+    )
+    initial_weights = _backfill_initial_weights(config)
+    states: list[dict[str, Any]] = []
+    ledger: list[dict[str, Any]] = []
+    method_state = {
+        method: {
+            "weights": dict(initial_weights),
+            "portfolio_value": 1.0,
+            "peak_value": 1.0,
+        }
+        for method in target_weights
+    }
+    for timestamp, return_row in returns.iterrows():
+        current_date = timestamp.date()
+        is_calendar_rebalance = current_date in rebalance_dates
+        for method, target in target_weights.items():
+            state = method_state[method]
+            before_return_weights = _normalize_weights(_mapping(state["weights"]))
+            daily_return = _portfolio_return(before_return_weights, return_row)
+            portfolio_value = _float(state["portfolio_value"]) * (1.0 + daily_return)
+            drifted = _drift_weights(before_return_weights, return_row, daily_return)
+            turnover = 0.0
+            rebalance_event = False
+            before_trade = dict(drifted)
+            after_weights = dict(drifted)
+            if is_calendar_rebalance and method != "no_trade_baseline":
+                after_weights = _normalize_weights(target)
+                turnover = _turnover(before_trade, after_weights)
+                rebalance_event = True
+                ledger.append(
+                    {
+                        "date": current_date.isoformat(),
+                        "target_method": method,
+                        "before_weights": before_trade,
+                        "target_weights": after_weights,
+                        "after_weights": after_weights,
+                        "deltas": _weight_deltas(before_trade, after_weights),
+                        "turnover": turnover,
+                        "trade_type": "paper_rebalance",
+                        "broker_action_taken": False,
+                        "order_ticket_generated": False,
+                        **SYSTEM_TARGET_SAFETY,
+                    }
+                )
+            elif is_calendar_rebalance and method == "no_trade_baseline":
+                ledger.append(
+                    {
+                        "date": current_date.isoformat(),
+                        "target_method": method,
+                        "before_weights": before_trade,
+                        "target_weights": before_trade,
+                        "after_weights": before_trade,
+                        "deltas": {},
+                        "turnover": 0.0,
+                        "trade_type": "paper_no_trade",
+                        "broker_action_taken": False,
+                        "order_ticket_generated": False,
+                        **SYSTEM_TARGET_SAFETY,
+                    }
+                )
+            peak = max(_float(state["peak_value"]), portfolio_value)
+            drawdown = portfolio_value / peak - 1.0 if peak > 0 else 0.0
+            state["weights"] = after_weights
+            state["portfolio_value"] = portfolio_value
+            state["peak_value"] = peak
+            states.append(
+                {
+                    "date": current_date.isoformat(),
+                    "target_method": method,
+                    "weights": after_weights,
+                    "portfolio_value": round(portfolio_value, 10),
+                    "daily_return": round(daily_return, 10),
+                    "drawdown": round(drawdown, 10),
+                    "turnover": round(turnover, 10),
+                    "rebalance_event": rebalance_event,
+                    "research_target_only": True,
+                    "not_official_target_weights": True,
+                    "broker_action_taken": False,
+                    **SYSTEM_TARGET_SAFETY,
+                }
+            )
+    backfill_id = _stable_id(
+        "paper-shadow-backfill",
+        config_path,
+        actual_start.isoformat(),
+        actual_end.isoformat(),
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    calendar = {
+        "schema_version": SCHEMA_VERSION,
+        "backfill_id": root.name,
+        "rebalance_frequency": _text(date_range.get("rebalance_frequency"), "weekly"),
+        "rebalance_day": _text(date_range.get("rebalance_day"), "MON"),
+        "rebalance_dates": [item.isoformat() for item in sorted(rebalance_dates)],
+        "rebalance_count": len(rebalance_dates),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    data_quality = _backfill_data_quality_payload(
+        backfill_id=root.name,
+        start=actual_start,
+        end=actual_end,
+        pivot=pivot,
+        symbols=symbols,
+        quality=quality,
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_paper_shadow_backfill_manifest",
+        "backfill_id": root.name,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if quality.passed else "FAIL",
+        "market_regime": "ai_after_chatgpt",
+        "requested_start_date": start.isoformat(),
+        "requested_end_date": configured_end,
+        "date_start": actual_start.isoformat(),
+        "date_end": actual_end.isoformat(),
+        "rebalance_count": len(rebalance_dates),
+        "tracked_methods": list(target_weights),
+        "data_quality_status": quality.status,
+        "mode": "BACKTEST_SIMULATION",
+        "not_pit_safe": True,
+        "config_path": str(config_path),
+        "paper_shadow_backfill_manifest_path": str(root / "paper_shadow_backfill_manifest.json"),
+        "backfill_rebalance_calendar_path": str(root / "backfill_rebalance_calendar.json"),
+        "backfill_method_states_path": str(root / "backfill_method_states.jsonl"),
+        "backfill_trade_ledger_path": str(root / "backfill_trade_ledger.jsonl"),
+        "backfill_data_quality_path": str(root / "backfill_data_quality.json"),
+        "paper_shadow_backfill_report_path": str(root / "paper_shadow_backfill_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "paper_shadow_backfill_manifest.json", manifest)
+    _write_json(root / "backfill_rebalance_calendar.json", calendar)
+    _write_jsonl(root / "backfill_method_states.jsonl", states)
+    _write_jsonl(root / "backfill_trade_ledger.jsonl", ledger)
+    _write_json(root / "backfill_data_quality.json", data_quality)
+    _write_text(
+        root / "paper_shadow_backfill_report.md",
+        render_paper_shadow_backfill_report(manifest, calendar, data_quality),
+    )
+    _write_latest_pointer(
+        "latest_paper_shadow_backfill", root.name, root / "paper_shadow_backfill_manifest.json"
+    )
+    return {
+        "backfill_id": root.name,
+        "backfill_dir": root,
+        "manifest": manifest,
+        "backfill_rebalance_calendar": calendar,
+        "backfill_method_states": states,
+        "backfill_trade_ledger": ledger,
+        "backfill_data_quality": data_quality,
+    }
+
+
+def paper_shadow_backfill_report_payload(
+    *,
+    backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=backfill_id,
+        latest_pointer="latest_paper_shadow_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="paper_shadow_backfill_manifest.json",
+    )
+    return {
+        **_read_json(root / "paper_shadow_backfill_manifest.json"),
+        "backfill_rebalance_calendar": _read_json(root / "backfill_rebalance_calendar.json"),
+        "backfill_method_states": _read_jsonl(root / "backfill_method_states.jsonl"),
+        "backfill_trade_ledger": _read_jsonl(root / "backfill_trade_ledger.jsonl"),
+        "backfill_data_quality": _read_json(root / "backfill_data_quality.json"),
+        "backfill_dir": str(root),
+    }
+
+
+def validate_paper_shadow_backfill_artifact(
+    *,
+    backfill_id: str,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / backfill_id
+    manifest = _read_optional_json(root / "paper_shadow_backfill_manifest.json") or {}
+    calendar = _read_optional_json(root / "backfill_rebalance_calendar.json") or {}
+    data_quality = _read_optional_json(root / "backfill_data_quality.json") or {}
+    states = _read_jsonl(root / "backfill_method_states.jsonl")
+    ledger = _read_jsonl(root / "backfill_trade_ledger.jsonl")
+    tracked = set(_texts(manifest.get("tracked_methods")))
+    state_methods = {str(row.get("target_method")) for row in states}
+    checks = _required_file_checks(
+        root,
+        (
+            "paper_shadow_backfill_manifest.json",
+            "backfill_rebalance_calendar.json",
+            "backfill_method_states.jsonl",
+            "backfill_trade_ledger.jsonl",
+            "backfill_data_quality.json",
+            "paper_shadow_backfill_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("backfill_id_matches", manifest.get("backfill_id") == backfill_id, ""),
+            _check(
+                "market_regime_visible", manifest.get("market_regime") == "ai_after_chatgpt", ""
+            ),
+            _check("not_pit_safe_visible", manifest.get("not_pit_safe") is True, ""),
+            _check("state_history_present", bool(states), ""),
+            _check(
+                "all_methods_have_states", tracked.issubset(state_methods), ",".join(state_methods)
+            ),
+            _check("rebalance_calendar_present", bool(calendar.get("rebalance_dates")), ""),
+            _check(
+                "trade_ledger_broker_false",
+                all(row.get("broker_action_taken") is not True for row in ledger),
+                "",
+            ),
+            _check(
+                "data_quality_visible",
+                data_quality.get("data_quality") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(data_quality.get("data_quality")),
+            ),
+            _check(
+                "broker_forbidden", _payload_safe(manifest, calendar, data_quality, *states), ""
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_paper_shadow_backfill_validation", backfill_id, checks
+    )
+
+
+def run_paper_shadow_rolling_eval(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id, output_dir=backfill_dir
+    )
+    states = _records(backfill.get("backfill_method_states"))
+    config = _load_backfill_config_from_manifest(backfill)
+    min_observations = _config_int(
+        config, ("evaluation", "min_observations_per_window"), DEFAULT_MIN_EVAL_OBSERVATIONS
+    )
+    windows = _rolling_window_inventory(states, min_observations=min_observations)
+    metrics: list[dict[str, Any]] = []
+    for window in windows:
+        metrics.extend(_rolling_metrics_for_window(states, window, min_observations))
+    _rank_rolling_metrics(metrics)
+    stability = _rolling_rank_stability(metrics)
+    rolling_eval_id = _stable_id("paper-shadow-rolling-eval", backfill_id, generated.isoformat())
+    root = _unique_dir(output_dir / rolling_eval_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_paper_shadow_rolling_eval_manifest",
+        "rolling_eval_id": root.name,
+        "backfill_id": backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if metrics else "FAIL",
+        "window_count": len(windows),
+        "metric_row_count": len(metrics),
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "rolling_eval_manifest_path": str(root / "rolling_eval_manifest.json"),
+        "rolling_window_inventory_path": str(root / "rolling_window_inventory.json"),
+        "rolling_method_metrics_path": str(root / "rolling_method_metrics.jsonl"),
+        "rolling_rank_stability_path": str(root / "rolling_rank_stability.json"),
+        "paper_shadow_rolling_eval_report_path": str(root / "paper_shadow_rolling_eval_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    inventory = {
+        "schema_version": SCHEMA_VERSION,
+        "rolling_eval_id": root.name,
+        "windows": windows,
+        "window_count": len(windows),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "rolling_eval_manifest.json", manifest)
+    _write_json(root / "rolling_window_inventory.json", inventory)
+    _write_jsonl(root / "rolling_method_metrics.jsonl", metrics)
+    _write_json(root / "rolling_rank_stability.json", stability)
+    _write_text(
+        root / "paper_shadow_rolling_eval_report.md",
+        render_paper_shadow_rolling_eval_report(manifest, stability, metrics),
+    )
+    _write_latest_pointer(
+        "latest_paper_shadow_rolling_eval", root.name, root / "rolling_eval_manifest.json"
+    )
+    return {
+        "rolling_eval_id": root.name,
+        "rolling_eval_dir": root,
+        "manifest": manifest,
+        "rolling_window_inventory": inventory,
+        "rolling_method_metrics": metrics,
+        "rolling_rank_stability": stability,
+    }
+
+
+def paper_shadow_rolling_eval_report_payload(
+    *,
+    rolling_eval_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=rolling_eval_id,
+        latest_pointer="latest_paper_shadow_rolling_eval",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="rolling_eval_manifest.json",
+    )
+    return {
+        **_read_json(root / "rolling_eval_manifest.json"),
+        "rolling_window_inventory": _read_json(root / "rolling_window_inventory.json"),
+        "rolling_method_metrics": _read_jsonl(root / "rolling_method_metrics.jsonl"),
+        "rolling_rank_stability": _read_json(root / "rolling_rank_stability.json"),
+        "rolling_eval_dir": str(root),
+    }
+
+
+def validate_paper_shadow_rolling_eval_artifact(
+    *,
+    rolling_eval_id: str,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / rolling_eval_id
+    manifest = _read_optional_json(root / "rolling_eval_manifest.json") or {}
+    inventory = _read_optional_json(root / "rolling_window_inventory.json") or {}
+    stability = _read_optional_json(root / "rolling_rank_stability.json") or {}
+    metrics = _read_jsonl(root / "rolling_method_metrics.jsonl")
+    window_types = {str(row.get("window_type")) for row in _records(inventory.get("windows"))}
+    checks = _required_file_checks(
+        root,
+        (
+            "rolling_eval_manifest.json",
+            "rolling_window_inventory.json",
+            "rolling_method_metrics.jsonl",
+            "rolling_rank_stability.json",
+            "paper_shadow_rolling_eval_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "rolling_eval_id_matches", manifest.get("rolling_eval_id") == rolling_eval_id, ""
+            ),
+            _check("metrics_present", bool(metrics), ""),
+            _check(
+                "required_window_types_present",
+                {"full", "yearly", "rolling_3m", "rolling_6m", "rolling_12m"}.issubset(
+                    window_types
+                ),
+                ",".join(sorted(window_types)),
+            ),
+            _check("rank_stability_present", bool(_records(stability.get("methods"))), ""),
+            _check("broker_forbidden", _payload_safe(manifest, inventory, stability, *metrics), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_paper_shadow_rolling_eval_validation", rolling_eval_id, checks
+    )
+
+
+def run_paper_shadow_regime_review(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id, output_dir=backfill_dir
+    )
+    states = _records(backfill.get("backfill_method_states"))
+    config = _load_backfill_config_from_manifest(backfill)
+    min_sample = _config_int(config, ("regime_policy", "min_sample_count"), 5)
+    labels = _regime_labels_from_states(states, config)
+    metrics = _regime_method_metrics(states, labels, min_sample)
+    summary = _regime_method_summary(metrics)
+    regime_review_id = _stable_id("paper-shadow-regime-review", backfill_id, generated.isoformat())
+    root = _unique_dir(output_dir / regime_review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    inventory = {
+        "schema_version": SCHEMA_VERSION,
+        "regime_review_id": root.name,
+        "regimes": [
+            {"regime": regime, "sample_count": sum(1 for item in labels.values() if item == regime)}
+            for regime in _configured_regimes()
+        ],
+        **SYSTEM_TARGET_SAFETY,
+    }
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_paper_shadow_regime_review_manifest",
+        "regime_review_id": root.name,
+        "backfill_id": backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if metrics else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "paper_shadow_regime_manifest_path": str(root / "paper_shadow_regime_manifest.json"),
+        "regime_window_inventory_path": str(root / "regime_window_inventory.json"),
+        "method_regime_metrics_path": str(root / "method_regime_metrics.jsonl"),
+        "regime_method_summary_path": str(root / "regime_method_summary.json"),
+        "paper_shadow_regime_review_report_path": str(
+            root / "paper_shadow_regime_review_report.md"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "paper_shadow_regime_manifest.json", manifest)
+    _write_json(root / "regime_window_inventory.json", inventory)
+    _write_jsonl(root / "method_regime_metrics.jsonl", metrics)
+    _write_json(root / "regime_method_summary.json", summary)
+    _write_text(
+        root / "paper_shadow_regime_review_report.md",
+        render_paper_shadow_regime_review_report(manifest, summary),
+    )
+    _write_latest_pointer(
+        "latest_paper_shadow_regime_review",
+        root.name,
+        root / "paper_shadow_regime_manifest.json",
+    )
+    return {
+        "regime_review_id": root.name,
+        "regime_review_dir": root,
+        "manifest": manifest,
+        "regime_window_inventory": inventory,
+        "method_regime_metrics": metrics,
+        "regime_method_summary": summary,
+    }
+
+
+def paper_shadow_regime_review_report_payload(
+    *,
+    regime_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=regime_review_id,
+        latest_pointer="latest_paper_shadow_regime_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="paper_shadow_regime_manifest.json",
+    )
+    return {
+        **_read_json(root / "paper_shadow_regime_manifest.json"),
+        "regime_window_inventory": _read_json(root / "regime_window_inventory.json"),
+        "method_regime_metrics": _read_jsonl(root / "method_regime_metrics.jsonl"),
+        "regime_method_summary": _read_json(root / "regime_method_summary.json"),
+        "regime_review_dir": str(root),
+    }
+
+
+def validate_paper_shadow_regime_review_artifact(
+    *,
+    regime_review_id: str,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / regime_review_id
+    manifest = _read_optional_json(root / "paper_shadow_regime_manifest.json") or {}
+    summary = _read_optional_json(root / "regime_method_summary.json") or {}
+    metrics = _read_jsonl(root / "method_regime_metrics.jsonl")
+    regimes = {str(row.get("regime")) for row in metrics}
+    checks = _required_file_checks(
+        root,
+        (
+            "paper_shadow_regime_manifest.json",
+            "regime_window_inventory.json",
+            "method_regime_metrics.jsonl",
+            "regime_method_summary.json",
+            "paper_shadow_regime_review_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "regime_review_id_matches",
+                manifest.get("regime_review_id") == regime_review_id,
+                "",
+            ),
+            _check("metrics_present", bool(metrics), ""),
+            _check("configured_regimes_present", set(_configured_regimes()).issubset(regimes), ""),
+            _check("summary_present", bool(_records(summary.get("regimes"))), ""),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *metrics), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_paper_shadow_regime_review_validation", regime_review_id, checks
+    )
+
+
+def run_paper_shadow_stability(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id, output_dir=backfill_dir
+    )
+    states = _records(backfill.get("backfill_method_states"))
+    config = _load_backfill_config_from_manifest(backfill)
+    metrics, jumps, turnover = _stability_diagnostics(states, config)
+    stability_id = _stable_id("paper-shadow-stability", backfill_id, generated.isoformat())
+    root = _unique_dir(output_dir / stability_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_paper_shadow_stability_manifest",
+        "stability_id": root.name,
+        "backfill_id": backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if metrics else "FAIL",
+        "paper_shadow_stability_manifest_path": str(root / "paper_shadow_stability_manifest.json"),
+        "method_stability_metrics_path": str(root / "method_stability_metrics.jsonl"),
+        "weight_path_jump_events_path": str(root / "weight_path_jump_events.jsonl"),
+        "turnover_diagnostics_path": str(root / "turnover_diagnostics.json"),
+        "paper_shadow_stability_report_path": str(root / "paper_shadow_stability_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "paper_shadow_stability_manifest.json", manifest)
+    _write_jsonl(root / "method_stability_metrics.jsonl", metrics)
+    _write_jsonl(root / "weight_path_jump_events.jsonl", jumps)
+    _write_json(root / "turnover_diagnostics.json", turnover)
+    _write_text(
+        root / "paper_shadow_stability_report.md",
+        render_paper_shadow_stability_report(manifest, metrics, turnover),
+    )
+    _write_latest_pointer(
+        "latest_paper_shadow_stability", root.name, root / "paper_shadow_stability_manifest.json"
+    )
+    return {
+        "stability_id": root.name,
+        "stability_dir": root,
+        "manifest": manifest,
+        "method_stability_metrics": metrics,
+        "weight_path_jump_events": jumps,
+        "turnover_diagnostics": turnover,
+    }
+
+
+def paper_shadow_stability_report_payload(
+    *,
+    stability_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=stability_id,
+        latest_pointer="latest_paper_shadow_stability",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="paper_shadow_stability_manifest.json",
+    )
+    return {
+        **_read_json(root / "paper_shadow_stability_manifest.json"),
+        "method_stability_metrics": _read_jsonl(root / "method_stability_metrics.jsonl"),
+        "weight_path_jump_events": _read_jsonl(root / "weight_path_jump_events.jsonl"),
+        "turnover_diagnostics": _read_json(root / "turnover_diagnostics.json"),
+        "stability_dir": str(root),
+    }
+
+
+def validate_paper_shadow_stability_artifact(
+    *,
+    stability_id: str,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
+) -> dict[str, Any]:
+    root = output_dir / stability_id
+    manifest = _read_optional_json(root / "paper_shadow_stability_manifest.json") or {}
+    turnover = _read_optional_json(root / "turnover_diagnostics.json") or {}
+    metrics = _read_jsonl(root / "method_stability_metrics.jsonl")
+    jumps = _read_jsonl(root / "weight_path_jump_events.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "paper_shadow_stability_manifest.json",
+            "method_stability_metrics.jsonl",
+            "weight_path_jump_events.jsonl",
+            "turnover_diagnostics.json",
+            "paper_shadow_stability_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("stability_id_matches", manifest.get("stability_id") == stability_id, ""),
+            _check("metrics_present", bool(metrics), ""),
+            _check("turnover_diagnostics_present", bool(_records(turnover.get("methods"))), ""),
+            _check(
+                "jump_events_broker_false",
+                all(row.get("broker_action_taken") is not True for row in jumps),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, turnover, *metrics, *jumps), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_paper_shadow_stability_validation", stability_id, checks
+    )
+
+
+def run_system_target_selection_review(
+    *,
+    backfill_id: str,
+    rolling_eval_id: str,
+    regime_review_id: str,
+    stability_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    rolling_eval_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
+    regime_review_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
+    stability_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
+    output_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id, output_dir=backfill_dir
+    )
+    rolling = paper_shadow_rolling_eval_report_payload(
+        rolling_eval_id=rolling_eval_id, output_dir=rolling_eval_dir
+    )
+    regime = paper_shadow_regime_review_report_payload(
+        regime_review_id=regime_review_id, output_dir=regime_review_dir
+    )
+    stability = paper_shadow_stability_report_payload(
+        stability_id=stability_id, output_dir=stability_dir
+    )
+    config = _load_backfill_config_from_manifest(backfill)
+    scorecard = _selection_scorecard(rolling, regime, stability, config)
+    decision = _selection_decision(scorecard, config)
+    selection_review_id = _stable_id(
+        "system-target-selection-review",
+        backfill_id,
+        rolling_eval_id,
+        regime_review_id,
+        stability_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / selection_review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["selection_review_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_system_target_selection_manifest",
+        "selection_review_id": root.name,
+        "backfill_id": backfill_id,
+        "rolling_eval_id": rolling_eval_id,
+        "regime_review_id": regime_review_id,
+        "stability_id": stability_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "system_target_selection_manifest_path": str(
+            root / "system_target_selection_manifest.json"
+        ),
+        "target_method_scorecard_path": str(root / "target_method_scorecard.json"),
+        "selection_decision_path": str(root / "selection_decision.json"),
+        "owner_research_checklist_path": str(root / "owner_research_checklist.md"),
+        "system_target_selection_review_report_path": str(
+            root / "system_target_selection_review_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "system_target_selection_manifest.json", manifest)
+    _write_json(root / "target_method_scorecard.json", scorecard)
+    _write_json(root / "selection_decision.json", decision)
+    _write_text(root / "owner_research_checklist.md", render_selection_owner_checklist(decision))
+    _write_text(
+        root / "system_target_selection_review_report.md",
+        render_system_target_selection_review_report(manifest, scorecard, decision),
+    )
+    _write_text(root / "reader_brief_section.md", render_selection_reader_brief(decision))
+    _write_latest_pointer(
+        "latest_system_target_selection_review",
+        root.name,
+        root / "system_target_selection_manifest.json",
+    )
+    return {
+        "selection_review_id": root.name,
+        "selection_review_dir": root,
+        "manifest": manifest,
+        "target_method_scorecard": scorecard,
+        "selection_decision": decision,
+    }
+
+
+def system_target_selection_review_report_payload(
+    *,
+    selection_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=selection_review_id,
+        latest_pointer="latest_system_target_selection_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="system_target_selection_manifest.json",
+    )
+    return {
+        **_read_json(root / "system_target_selection_manifest.json"),
+        "target_method_scorecard": _read_json(root / "target_method_scorecard.json"),
+        "selection_decision": _read_json(root / "selection_decision.json"),
+        "selection_review_dir": str(root),
+    }
+
+
+def validate_system_target_selection_review_artifact(
+    *,
+    selection_review_id: str,
+    output_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / selection_review_id
+    manifest = _read_optional_json(root / "system_target_selection_manifest.json") or {}
+    scorecard = _read_optional_json(root / "target_method_scorecard.json") or {}
+    decision = _read_optional_json(root / "selection_decision.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "system_target_selection_manifest.json",
+            "target_method_scorecard.json",
+            "selection_decision.json",
+            "owner_research_checklist.md",
+            "system_target_selection_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "selection_review_id_matches",
+                manifest.get("selection_review_id") == selection_review_id
+                and decision.get("selection_review_id") == selection_review_id,
+                "",
+            ),
+            _check("scorecard_present", bool(_records(scorecard.get("methods"))), ""),
+            _check(
+                "recommended_method_present",
+                bool(decision.get("recommended_research_method")),
+                "",
+            ),
+            _check(
+                "decision_status_valid",
+                decision.get("decision_status")
+                in {"CONTINUE_OBSERVATION", "REVIEW_REQUIRED", "INSUFFICIENT_DATA"},
+                "",
+            ),
+            _check(
+                "not_official_target_weights",
+                decision.get("not_official_target_weights") is True,
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, scorecard, decision), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_system_target_selection_review_validation",
+        selection_review_id,
+        checks,
+    )
+
+
+def render_paper_shadow_backfill_report(
+    manifest: Mapping[str, Any],
+    calendar: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Paper Shadow Historical Backfill {manifest.get('backfill_id')}",
+            "",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- requested_date_range: {manifest.get('requested_start_date')} to "
+            f"{manifest.get('requested_end_date')}",
+            f"- actual_date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- rebalance_events: {calendar.get('rebalance_count')}",
+            f"- tracked_methods: {', '.join(_texts(manifest.get('tracked_methods')))}",
+            f"- data_quality: {data_quality.get('data_quality')}",
+            f"- missing_symbols: {', '.join(_texts(data_quality.get('missing_symbols')))}",
+            "- mode: BACKTEST_SIMULATION",
+            "- not_pit_safe: true",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- broker_action_taken: false",
+            "- production_effect: none",
+            "",
+            "该报告是 paper shadow research backfill，不是 PIT-safe production backtest，"
+            "不能批准 official target weights 或 broker action。",
+            "",
+        ]
+    )
+
+
+def render_paper_shadow_rolling_eval_report(
+    manifest: Mapping[str, Any],
+    stability: Mapping[str, Any],
+    metrics: Sequence[Mapping[str, Any]],
+) -> str:
+    rows = _records(stability.get("methods"))
+    best_average = _best_rank_stability_method(rows)
+    stable = [row for row in rows if row.get("rank_stability_status") == "STABLE"]
+    limited = _find_method(rows, "limited_adjustment")
+    defensive = _find_method(rows, "defensive_limited_adjustment")
+    consensus = _find_method(rows, "consensus_target")
+    return "\n".join(
+        [
+            f"# Paper Shadow Rolling Evaluation {manifest.get('rolling_eval_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- window_count: {manifest.get('window_count')}",
+            f"- metric_row_count: {len(metrics)}",
+            f"- best_average_rank_method: {best_average}",
+            f"- stable_methods: {', '.join(_texts([row.get('target_method') for row in stable]))}",
+            f"- limited_adjustment_stability: {limited.get('rank_stability_status', 'MISSING')}",
+            f"- defensive_limited_adjustment_stability: "
+            f"{defensive.get('rank_stability_status', 'MISSING')}",
+            f"- consensus_target_stability: {consensus.get('rank_stability_status', 'MISSING')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_paper_shadow_regime_review_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    regimes = _records(summary.get("regimes"))
+    by_name = {row.get("regime"): row for row in regimes}
+    semiconductor_best = _mapping(by_name.get("semiconductor_pullback")).get(
+        "best_return_method",
+        "MISSING",
+    )
+    return "\n".join(
+        [
+            f"# Paper Shadow Regime Review {manifest.get('regime_review_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- ai_trend_best_return_method: "
+            f"{_mapping(by_name.get('ai_trend')).get('best_return_method', 'MISSING')}",
+            f"- tech_drawdown_best_return_method: "
+            f"{_mapping(by_name.get('tech_drawdown')).get('best_return_method', 'MISSING')}",
+            f"- semiconductor_pullback_best_return_method: {semiconductor_best}",
+            f"- defensive_limited_adjustment_status: "
+            f"{summary.get('defensive_limited_adjustment_status')}",
+            "- no_auto_defensive_rule_approval: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_paper_shadow_stability_report(
+    manifest: Mapping[str, Any],
+    metrics: Sequence[Mapping[str, Any]],
+    turnover: Mapping[str, Any],
+) -> str:
+    methods = list(metrics)
+    most_stable = _best_status_method(methods, "stability_status")
+    highest_turnover = _max_field_method(_records(turnover.get("methods")), "annualized_turnover")
+    jump_count = sum(int(_float(row.get("large_jump_count"))) for row in methods)
+    consensus = _find_method(methods, "consensus_target")
+    selected = _find_method(methods, "selected_top_candidate")
+    return "\n".join(
+        [
+            f"# Paper Shadow Stability Diagnostics {manifest.get('stability_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- most_stable_method: {most_stable}",
+            f"- highest_turnover_method: {highest_turnover}",
+            f"- large_jump_count: {jump_count}",
+            f"- consensus_target_stability: {consensus.get('stability_status', 'MISSING')}",
+            f"- selected_top_candidate_stability: {selected.get('stability_status', 'MISSING')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_selection_owner_checklist(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Owner Research Checklist {decision.get('selection_review_id')}",
+            "",
+            "- 是否继续将 limited_adjustment 作为主 research target？",
+            "- 是否保留 defensive_limited_adjustment 作为 secondary research method？",
+            "- 是否将 consensus_target 保持为 reference-only？",
+            "- 是否需要减少 target methods 数量？",
+            "- 是否继续运行 paper shadow account？",
+            "- 是否仍然禁止 broker / production？",
+            "",
+            f"- recommended_research_method: {decision.get('recommended_research_method')}",
+            f"- decision_status: {decision.get('decision_status')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_system_target_selection_review_report(
+    manifest: Mapping[str, Any],
+    scorecard: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    methods = _records(scorecard.get("methods"))
+    best_return = _max_field_method(methods, "return_score")
+    best_drawdown = _max_field_method(methods, "drawdown_score")
+    best_stability = _max_field_method(methods, "stability_score")
+    best_regime = _max_field_method(methods, "regime_score")
+    secondary_methods = ", ".join(_texts(decision.get("secondary_research_methods")))
+    reference_only_methods = ", ".join(_texts(decision.get("reference_only_methods")))
+    return "\n".join(
+        [
+            f"# System Target Method Selection Review {manifest.get('selection_review_id')}",
+            "",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- data_quality_status: {manifest.get('data_quality_status')}",
+            f"- recommended_research_method: {decision.get('recommended_research_method')}",
+            f"- secondary_methods: {secondary_methods}",
+            f"- reference_only_methods: {reference_only_methods}",
+            f"- decision_status: {decision.get('decision_status')}",
+            f"- best_return_score_method: {best_return}",
+            f"- best_drawdown_score_method: {best_drawdown}",
+            f"- best_stability_score_method: {best_stability}",
+            f"- best_regime_score_method: {best_regime}",
+            "- official_target_weights_allowed: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            _text(decision.get("reason")),
+            "",
+        ]
+    )
+
+
+def render_selection_reader_brief(decision: Mapping[str, Any]) -> str:
+    secondary_methods = ", ".join(_texts(decision.get("secondary_research_methods")))
+    reference_only_methods = ", ".join(_texts(decision.get("reference_only_methods")))
+    return "\n".join(
+        [
+            "## Dynamic Rescue System Target Selection Review",
+            "",
+            f"- recommended_research_method: {decision.get('recommended_research_method')}",
+            f"- secondary_methods: {secondary_methods}",
+            f"- reference_only_methods: {reference_only_methods}",
+            f"- decision_status: {decision.get('decision_status')}",
+            "- research_target_only: true",
+            f"- next_action: {decision.get('next_action')}",
+            "",
+        ]
+    )
+
+
 def render_model_target_report(
     manifest: Mapping[str, Any],
     rows: Sequence[Mapping[str, Any]],
@@ -1715,6 +2822,1025 @@ def _regime_breakdown(
     return {"schema_version": SCHEMA_VERSION, "regimes": regimes, **SYSTEM_TARGET_SAFETY}
 
 
+def _backfill_target_method_weights(config: Mapping[str, Any]) -> dict[str, dict[str, float]]:
+    source = _mapping(config.get("source"))
+    model_config_path = _resolve_project_path(
+        source.get("model_target_config"), DEFAULT_MODEL_TARGET_CONFIG_PATH
+    )
+    model_config = load_model_target_config(model_config_path)
+    baseline = _config_baseline_weights(model_config)
+    source_payload = _latest_target_source(
+        position_advisory_daily_dir=_resolve_project_path(
+            source.get("position_advisory_daily_dir"), DEFAULT_POSITION_ADVISORY_DAILY_DIR
+        ),
+        shadow_monitor_dir=_resolve_project_path(
+            source.get("shadow_monitor_dir"), DEFAULT_SHADOW_MONITOR_RUN_DIR
+        ),
+        shadow_shortlist_dir=_resolve_project_path(
+            source.get("shadow_shortlist_dir"), DEFAULT_SHADOW_SHORTLIST_DIR
+        ),
+        consensus_drift_dir=_resolve_project_path(
+            source.get("consensus_drift_dir"), DEFAULT_CONSENSUS_DRIFT_DIR
+        ),
+    )
+    candidates = source_payload["candidate_targets"]
+    consensus = _normalize_weights(
+        source_payload.get("consensus_weights")
+        or _average_candidate_weights(candidates)
+        or baseline
+    )
+    top_candidate = _normalize_weights(_first_candidate_weights(candidates) or consensus)
+    equal_weight = _normalize_weights(_average_candidate_weights(candidates) or consensus)
+    advisory_limits = _load_advisory_limits(
+        _mapping(model_config.get("source")).get("position_advisory_config")
+    )
+    if not advisory_limits:
+        advisory_limits = _load_advisory_limits(DEFAULT_POSITION_ADVISORY_CONFIG_PATH)
+    limited = _limited_adjustment(
+        baseline=baseline,
+        target=consensus,
+        max_total_adjustment=_float(advisory_limits.get("max_single_day_total_adjustment")),
+        max_symbol_adjustment=_float(advisory_limits.get("max_single_symbol_adjustment")),
+    )
+    defensive = _defensive_adjustment(
+        limited,
+        _mapping(_mapping(model_config.get("method_policy")).get("defensive_limited_adjustment")),
+    )
+    return {
+        "static_baseline": baseline,
+        "no_trade_baseline": baseline,
+        "consensus_target": consensus,
+        "limited_adjustment": limited,
+        "defensive_limited_adjustment": defensive,
+        "equal_weight_shadow_candidates": equal_weight,
+        "selected_top_candidate": top_candidate,
+    }
+
+
+def _backfill_initial_weights(config: Mapping[str, Any]) -> dict[str, float]:
+    source = _mapping(config.get("source"))
+    paper_config_path = _resolve_project_path(
+        source.get("paper_shadow_config"), DEFAULT_PAPER_SHADOW_CONFIG_PATH
+    )
+    paper_config = load_paper_shadow_config(paper_config_path)
+    baseline = _mapping(paper_config.get("baseline")).get("static_weights")
+    if isinstance(baseline, Mapping):
+        return _normalize_weights(baseline)
+    return _config_baseline_weights(
+        load_model_target_config(
+            _resolve_project_path(
+                source.get("model_target_config"), DEFAULT_MODEL_TARGET_CONFIG_PATH
+            )
+        )
+    )
+
+
+def _load_price_pivot(path: Path, symbols: Sequence[str], start: date) -> pd.DataFrame:
+    frame = pd.read_csv(path)
+    if not {"date", "ticker", "adj_close"}.issubset(frame.columns):
+        raise DynamicV3SystemTargetError("price cache must contain date,ticker,adj_close")
+    frame = frame.loc[frame["ticker"].astype(str).isin(symbols)].copy()
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
+    frame = frame.loc[frame["date"].notna() & frame["adj_close"].notna()]
+    frame = frame.loc[frame["date"].dt.date >= start]
+    pivot = frame.pivot_table(
+        index="date", columns="ticker", values="adj_close", aggfunc="last"
+    ).sort_index()
+    return pivot.dropna(how="all")
+
+
+def _latest_price_date(pivot: pd.DataFrame) -> date:
+    if pivot.empty:
+        raise DynamicV3SystemTargetError("price cache has no rows for requested symbols")
+    return pivot.index[-1].date()
+
+
+def _backfill_rebalance_dates(
+    trading_dates: Sequence[date],
+    *,
+    frequency: str,
+    rebalance_day: str,
+    min_history_days: int,
+) -> set[date]:
+    if frequency.lower() != "weekly":
+        raise DynamicV3SystemTargetError("paper shadow backfill only supports weekly rebalance")
+    if not trading_dates:
+        return set()
+    weekday_map = {"MON": 0, "TUE": 1, "WED": 2, "THU": 3, "FRI": 4}
+    target_weekday = weekday_map.get(rebalance_day.upper(), 0)
+    first_allowed = min(trading_dates) + timedelta(days=min_history_days)
+    selected: set[date] = set()
+    by_week: dict[tuple[int, int], list[date]] = {}
+    for item in trading_dates:
+        if item < first_allowed:
+            continue
+        iso = item.isocalendar()
+        by_week.setdefault((iso.year, iso.week), []).append(item)
+    for dates in by_week.values():
+        on_or_after = [item for item in dates if item.weekday() >= target_weekday]
+        selected.add(min(on_or_after or dates))
+    return selected
+
+
+def _portfolio_return(weights: Mapping[str, float], return_row: Mapping[str, Any]) -> float:
+    value = 0.0
+    for symbol, weight in weights.items():
+        if symbol == "CASH":
+            continue
+        value += _float(weight) * _float(return_row.get(symbol))
+    return value
+
+
+def _drift_weights(
+    weights: Mapping[str, float],
+    return_row: Mapping[str, Any],
+    portfolio_return: float,
+) -> dict[str, float]:
+    denominator = 1.0 + portfolio_return
+    if denominator <= 0:
+        return _normalize_weights(weights)
+    drifted = {}
+    for symbol, weight in weights.items():
+        asset_return = 0.0 if symbol == "CASH" else _float(return_row.get(symbol))
+        drifted[symbol] = _float(weight) * (1.0 + asset_return) / denominator
+    return _normalize_weights(drifted)
+
+
+def _backfill_data_quality_payload(
+    *,
+    backfill_id: str,
+    start: date,
+    end: date,
+    pivot: pd.DataFrame,
+    symbols: Sequence[str],
+    quality: DataQualityReport,
+) -> dict[str, Any]:
+    missing_symbols = [symbol for symbol in symbols if symbol not in pivot.columns]
+    missing_dates = [
+        idx.date().isoformat()
+        for idx, row in pivot.iterrows()
+        if any(pd.isna(row.get(symbol)) for symbol in symbols if symbol in pivot.columns)
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "backfill_id": backfill_id,
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "price_source_status": quality.status,
+        "missing_price_dates": missing_dates,
+        "missing_symbols": missing_symbols,
+        "data_quality": quality.status,
+        "data_quality_checked_at": quality.checked_at.isoformat(),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _rolling_window_inventory(
+    states: Sequence[Mapping[str, Any]],
+    *,
+    min_observations: int,
+) -> list[dict[str, Any]]:
+    dates = sorted({_coerce_date(row.get("date"), date(1970, 1, 1)) for row in states})
+    dates = [item for item in dates if item >= AI_AFTER_CHATGPT_START]
+    if not dates:
+        return []
+    windows: list[dict[str, Any]] = [
+        {
+            "window_id": f"full_{dates[0].isoformat()}_{dates[-1].isoformat()}",
+            "window_type": "full",
+            "start_date": dates[0].isoformat(),
+            "end_date": dates[-1].isoformat(),
+            "observation_count": len(dates),
+            "status": "PASS" if len(dates) >= min_observations else "INSUFFICIENT_DATA",
+        }
+    ]
+    for year in sorted({item.year for item in dates}):
+        year_dates = [item for item in dates if item.year == year]
+        windows.append(
+            {
+                "window_id": f"yearly_{year}",
+                "window_type": "yearly",
+                "start_date": year_dates[0].isoformat(),
+                "end_date": year_dates[-1].isoformat(),
+                "observation_count": len(year_dates),
+                "status": "PASS" if len(year_dates) >= min_observations else "INSUFFICIENT_DATA",
+            }
+        )
+    date_index = pd.to_datetime([item.isoformat() for item in dates])
+    month_starts = sorted({date(item.year, item.month, 1) for item in dates})
+    for months in (3, 6, 12):
+        for month_start in month_starts:
+            window_end_ts = (
+                pd.Timestamp(month_start) + pd.DateOffset(months=months) - pd.Timedelta(days=1)
+            )
+            selected = [
+                item for item in date_index if pd.Timestamp(month_start) <= item <= window_end_ts
+            ]
+            if not selected:
+                continue
+            window_dates = [item.date() for item in selected]
+            if window_dates[-1] > dates[-1]:
+                continue
+            windows.append(
+                {
+                    "window_id": (
+                        f"rolling_{months}m_{window_dates[0].strftime('%Y_%m')}_"
+                        f"{window_dates[-1].strftime('%Y_%m')}"
+                    ),
+                    "window_type": f"rolling_{months}m",
+                    "start_date": window_dates[0].isoformat(),
+                    "end_date": window_dates[-1].isoformat(),
+                    "observation_count": len(window_dates),
+                    "status": (
+                        "PASS" if len(window_dates) >= min_observations else "INSUFFICIENT_DATA"
+                    ),
+                }
+            )
+    return windows
+
+
+def _rolling_metrics_for_window(
+    states: Sequence[Mapping[str, Any]],
+    window: Mapping[str, Any],
+    min_observations: int,
+) -> list[dict[str, Any]]:
+    start = _coerce_date(window.get("start_date"), date(1970, 1, 1))
+    end = _coerce_date(window.get("end_date"), date(1970, 1, 1))
+    rows = [
+        row for row in states if start <= _coerce_date(row.get("date"), date(1970, 1, 1)) <= end
+    ]
+    results = []
+    for method in sorted({str(row.get("target_method")) for row in rows}):
+        method_rows = [row for row in rows if row.get("target_method") == method]
+        metrics = _state_path_metrics(method_rows, min_observations=min_observations)
+        results.append(
+            {
+                "window_id": window.get("window_id"),
+                "window_type": window.get("window_type"),
+                "start_date": window.get("start_date"),
+                "end_date": window.get("end_date"),
+                "target_method": method,
+                **metrics,
+                "relative_to_static_baseline": 0.0,
+                "relative_to_no_trade_baseline": 0.0,
+                "rank_by_return": 0,
+                "rank_by_drawdown": 0,
+                "rank_by_risk_adjusted": 0,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    static_return = _metric_for(results, "static_baseline", "total_return")
+    no_trade_return = _metric_for(results, "no_trade_baseline", "total_return")
+    for row in results:
+        row["relative_to_static_baseline"] = round(
+            _float(row.get("total_return")) - static_return, 10
+        )
+        row["relative_to_no_trade_baseline"] = round(
+            _float(row.get("total_return")) - no_trade_return, 10
+        )
+    return results
+
+
+def _state_path_metrics(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    min_observations: int,
+) -> dict[str, Any]:
+    ordered = sorted(rows, key=lambda row: _text(row.get("date")))
+    if len(ordered) < min_observations:
+        status = "INSUFFICIENT_DATA"
+    else:
+        status = "PASS"
+    if len(ordered) < 2:
+        return {
+            "total_return": 0.0,
+            "annualized_return": 0.0,
+            "max_drawdown": 0.0,
+            "realized_volatility": 0.0,
+            "turnover": round(sum(_float(row.get("turnover")) for row in ordered), 10),
+            "risk_adjusted_return_to_volatility": 0.0,
+            "status": status,
+        }
+    start_value = _float(ordered[0].get("portfolio_value"), 1.0)
+    end_value = _float(ordered[-1].get("portfolio_value"), start_value)
+    total_return = end_value / start_value - 1.0 if start_value > 0 else 0.0
+    daily_returns = [_float(row.get("daily_return")) for row in ordered]
+    volatility = _stddev(daily_returns) * math.sqrt(252.0) if len(daily_returns) > 1 else 0.0
+    annualized = _annualized_return(total_return, len(daily_returns))
+    values = [_float(row.get("portfolio_value")) for row in ordered]
+    peak = values[0] if values else 1.0
+    drawdowns = []
+    for value in values:
+        peak = max(peak, value)
+        drawdowns.append(value / peak - 1.0 if peak > 0 else 0.0)
+    risk_adjusted = annualized / volatility if volatility > 0 else annualized
+    return {
+        "total_return": round(total_return, 10),
+        "annualized_return": round(annualized, 10),
+        "max_drawdown": round(min(drawdowns or [0.0]), 10),
+        "realized_volatility": round(volatility, 10),
+        "turnover": round(sum(_float(row.get("turnover")) for row in ordered), 10),
+        "risk_adjusted_return_to_volatility": round(risk_adjusted, 10),
+        "status": status,
+    }
+
+
+def _rank_rolling_metrics(metrics: list[dict[str, Any]]) -> None:
+    for window_id in sorted({str(row.get("window_id")) for row in metrics}):
+        rows = [
+            row
+            for row in metrics
+            if row.get("window_id") == window_id and row.get("status") != "INSUFFICIENT_DATA"
+        ]
+        _assign_rank(rows, "total_return", "rank_by_return", high=True)
+        _assign_rank(rows, "max_drawdown", "rank_by_drawdown", high=True)
+        _assign_rank(
+            rows,
+            "risk_adjusted_return_to_volatility",
+            "rank_by_risk_adjusted",
+            high=True,
+        )
+
+
+def _assign_rank(
+    rows: Sequence[dict[str, Any]], field: str, rank_field: str, *, high: bool
+) -> None:
+    ordered = sorted(rows, key=lambda row: _float(row.get(field)), reverse=high)
+    for rank, row in enumerate(ordered, start=1):
+        row[rank_field] = rank
+
+
+def _rolling_rank_stability(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    methods = sorted({str(row.get("target_method")) for row in metrics if row.get("target_method")})
+    method_count = max(1, len(methods))
+    rows = []
+    for method in methods:
+        selected = [
+            row
+            for row in metrics
+            if row.get("target_method") == method and _float(row.get("rank_by_return")) > 0
+        ]
+        if not selected:
+            rows.append(
+                {
+                    "target_method": method,
+                    "avg_rank_return": 0.0,
+                    "avg_rank_drawdown": 0.0,
+                    "avg_rank_risk_adjusted": 0.0,
+                    "top_3_frequency": 0.0,
+                    "bottom_3_frequency": 0.0,
+                    "rank_stability_status": "INSUFFICIENT_DATA",
+                }
+            )
+            continue
+        avg_return = sum(_float(row.get("rank_by_return")) for row in selected) / len(selected)
+        avg_drawdown = sum(_float(row.get("rank_by_drawdown")) for row in selected) / len(selected)
+        avg_risk = sum(_float(row.get("rank_by_risk_adjusted")) for row in selected) / len(selected)
+        top_3 = sum(1 for row in selected if _float(row.get("rank_by_return")) <= 3) / len(selected)
+        bottom_3 = sum(
+            1 for row in selected if _float(row.get("rank_by_return")) > method_count - 3
+        ) / len(selected)
+        if top_3 >= 0.6 and bottom_3 <= 0.2:
+            status = "STABLE"
+        elif bottom_3 >= 0.5:
+            status = "UNSTABLE"
+        else:
+            status = "MIXED"
+        rows.append(
+            {
+                "target_method": method,
+                "avg_rank_return": round(avg_return, 6),
+                "avg_rank_drawdown": round(avg_drawdown, 6),
+                "avg_rank_risk_adjusted": round(avg_risk, 6),
+                "top_3_frequency": round(top_3, 6),
+                "bottom_3_frequency": round(bottom_3, 6),
+                "rank_stability_status": status,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"schema_version": SCHEMA_VERSION, "methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _configured_regimes() -> tuple[str, ...]:
+    return (
+        "ai_trend",
+        "tech_drawdown",
+        "semiconductor_pullback",
+        "risk_off",
+        "sideways_choppy",
+        "strong_recovery",
+    )
+
+
+def _regime_labels_from_states(
+    states: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> dict[str, str]:
+    static_rows = [row for row in states if row.get("target_method") == "static_baseline"]
+    by_date = {str(row.get("date")): _float(row.get("daily_return")) for row in static_rows}
+    policy = _mapping(config.get("regime_policy"))
+    risk_off = _float(policy.get("risk_off_return_threshold"), -0.015)
+    drawdown = _float(policy.get("tech_drawdown_return_threshold"), -0.01)
+    semi = _float(policy.get("semiconductor_pullback_return_threshold"), -0.012)
+    trend = _float(policy.get("ai_trend_return_threshold"), 0.008)
+    recovery = _float(policy.get("strong_recovery_return_threshold"), 0.012)
+    labels = {}
+    for date_text, value in by_date.items():
+        if value <= risk_off:
+            label = "risk_off"
+        elif value <= semi:
+            label = "semiconductor_pullback"
+        elif value <= drawdown:
+            label = "tech_drawdown"
+        elif value >= recovery:
+            label = "strong_recovery"
+        elif value >= trend:
+            label = "ai_trend"
+        else:
+            label = "sideways_choppy"
+        labels[date_text] = label
+    return labels
+
+
+def _regime_method_metrics(
+    states: Sequence[Mapping[str, Any]],
+    labels: Mapping[str, str],
+    min_sample: int,
+) -> list[dict[str, Any]]:
+    rows = []
+    methods = sorted({str(row.get("target_method")) for row in states if row.get("target_method")})
+    no_trade_by_regime: dict[str, dict[str, Any]] = {}
+    for regime in _configured_regimes():
+        date_set = {date_text for date_text, label in labels.items() if label == regime}
+        for method in methods:
+            selected = [
+                row
+                for row in states
+                if row.get("target_method") == method and row.get("date") in date_set
+            ]
+            metrics = _sample_return_metrics(selected, min_sample=min_sample)
+            item = {
+                "regime": regime,
+                "target_method": method,
+                "sample_count": len(selected),
+                "total_return": metrics["total_return"],
+                "avg_return": metrics["avg_return"],
+                "max_drawdown": metrics["max_drawdown"],
+                "realized_volatility": metrics["realized_volatility"],
+                "turnover": metrics["turnover"],
+                "relative_to_static_baseline": 0.0,
+                "relative_to_no_trade_baseline": 0.0,
+                "win_rate_vs_no_trade": 0.0,
+                "risk_adjusted_return_to_volatility": metrics["risk_adjusted_return_to_volatility"],
+                "status": metrics["status"],
+                **SYSTEM_TARGET_SAFETY,
+            }
+            rows.append(item)
+            if method == "no_trade_baseline":
+                no_trade_by_regime[regime] = item
+    static_by_regime = {
+        row["regime"]: row for row in rows if row.get("target_method") == "static_baseline"
+    }
+    for row in rows:
+        regime = str(row.get("regime"))
+        static = static_by_regime.get(regime, {})
+        no_trade = no_trade_by_regime.get(regime, {})
+        row["relative_to_static_baseline"] = round(
+            _float(row.get("total_return")) - _float(static.get("total_return")),
+            10,
+        )
+        row["relative_to_no_trade_baseline"] = round(
+            _float(row.get("total_return")) - _float(no_trade.get("total_return")),
+            10,
+        )
+        row["win_rate_vs_no_trade"] = _win_rate_vs_method(states, labels, row, "no_trade_baseline")
+    return rows
+
+
+def _sample_return_metrics(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    min_sample: int,
+) -> dict[str, Any]:
+    daily = [_float(row.get("daily_return")) for row in rows]
+    if not daily:
+        return {
+            "total_return": 0.0,
+            "avg_return": 0.0,
+            "max_drawdown": 0.0,
+            "realized_volatility": 0.0,
+            "turnover": 0.0,
+            "risk_adjusted_return_to_volatility": 0.0,
+            "status": "INSUFFICIENT_DATA",
+        }
+    equity = 1.0
+    peak = 1.0
+    drawdowns = []
+    for value in daily:
+        equity *= 1.0 + value
+        peak = max(peak, equity)
+        drawdowns.append(equity / peak - 1.0)
+    total = equity - 1.0
+    vol = _stddev(daily) * math.sqrt(252.0) if len(daily) > 1 else 0.0
+    annualized = _annualized_return(total, len(daily))
+    risk_adjusted = annualized / vol if vol > 0 else annualized
+    return {
+        "total_return": round(total, 10),
+        "avg_return": round(sum(daily) / len(daily), 10),
+        "max_drawdown": round(min(drawdowns or [0.0]), 10),
+        "realized_volatility": round(vol, 10),
+        "turnover": round(sum(_float(row.get("turnover")) for row in rows), 10),
+        "risk_adjusted_return_to_volatility": round(risk_adjusted, 10),
+        "status": "PASS" if len(daily) >= min_sample else "INSUFFICIENT_DATA",
+    }
+
+
+def _win_rate_vs_method(
+    states: Sequence[Mapping[str, Any]],
+    labels: Mapping[str, str],
+    row: Mapping[str, Any],
+    benchmark_method: str,
+) -> float:
+    regime = str(row.get("regime"))
+    method = str(row.get("target_method"))
+    date_set = {date_text for date_text, label in labels.items() if label == regime}
+    method_returns = {
+        str(item.get("date")): _float(item.get("daily_return"))
+        for item in states
+        if item.get("target_method") == method and item.get("date") in date_set
+    }
+    benchmark_returns = {
+        str(item.get("date")): _float(item.get("daily_return"))
+        for item in states
+        if item.get("target_method") == benchmark_method and item.get("date") in date_set
+    }
+    shared = sorted(set(method_returns) & set(benchmark_returns))
+    if not shared:
+        return 0.0
+    wins = sum(
+        1 for date_text in shared if method_returns[date_text] > benchmark_returns[date_text]
+    )
+    return round(wins / len(shared), 6)
+
+
+def _regime_method_summary(metrics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    regimes = []
+    defensive_statuses = []
+    for regime in _configured_regimes():
+        rows = [row for row in metrics if row.get("regime") == regime]
+        valid = [row for row in rows if row.get("status") != "INSUFFICIENT_DATA"]
+        sample_count = max((int(_float(row.get("sample_count"))) for row in rows), default=0)
+        if valid:
+            best_return = _best_metric_method(valid, "total_return", high=True)
+            best_drawdown = _best_metric_method(valid, "max_drawdown", high=True)
+            best_risk = _best_metric_method(
+                valid,
+                "risk_adjusted_return_to_volatility",
+                high=True,
+            )
+        else:
+            best_return = best_drawdown = best_risk = "INSUFFICIENT_DATA"
+        defensive_status = _defensive_regime_status(rows)
+        defensive_statuses.append(defensive_status)
+        regimes.append(
+            {
+                "regime": regime,
+                "best_return_method": best_return,
+                "best_drawdown_method": best_drawdown,
+                "best_risk_adjusted_method": best_risk,
+                "defensive_limited_adjustment_status": defensive_status,
+                "sample_count": sample_count,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    if all(status == "INSUFFICIENT_DATA" for status in defensive_statuses):
+        overall_defensive = "INSUFFICIENT_DATA"
+    elif "FAIL" in defensive_statuses:
+        overall_defensive = "MIXED"
+    elif "MIXED" in defensive_statuses:
+        overall_defensive = "MIXED"
+    else:
+        overall_defensive = "PASS"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "regimes": regimes,
+        "defensive_limited_adjustment_status": overall_defensive,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _defensive_regime_status(rows: Sequence[Mapping[str, Any]]) -> str:
+    defensive = _find_method(rows, "defensive_limited_adjustment")
+    no_trade = _find_method(rows, "no_trade_baseline")
+    if not defensive or defensive.get("status") == "INSUFFICIENT_DATA":
+        return "INSUFFICIENT_DATA"
+    better_return = _float(defensive.get("total_return")) >= _float(no_trade.get("total_return"))
+    better_drawdown = _float(defensive.get("max_drawdown")) >= _float(no_trade.get("max_drawdown"))
+    if better_return and better_drawdown:
+        return "PASS"
+    if better_return or better_drawdown:
+        return "MIXED"
+    return "FAIL"
+
+
+def _stability_diagnostics(
+    states: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    policy = _mapping(config.get("stability_policy"))
+    large_jump = _float(policy.get("large_jump_threshold"), 0.10)
+    high_jump = _float(policy.get("high_jump_threshold"), 0.20)
+    stable_max = _float(policy.get("stable_max_daily_weight_change"), 0.08)
+    unstable_max = _float(policy.get("unstable_max_daily_weight_change"), 0.18)
+    turnover_high = _float(policy.get("high_annualized_turnover"), 4.0)
+    turnover_moderate = _float(policy.get("moderate_annualized_turnover"), 1.5)
+    metrics: list[dict[str, Any]] = []
+    jumps: list[dict[str, Any]] = []
+    turnover_rows: list[dict[str, Any]] = []
+    for method in sorted(
+        {str(row.get("target_method")) for row in states if row.get("target_method")}
+    ):
+        rows = sorted(
+            [row for row in states if row.get("target_method") == method],
+            key=lambda row: _text(row.get("date")),
+        )
+        changes = []
+        cash_weights = []
+        risk_weights = []
+        rebalance_turnovers = []
+        previous: Mapping[str, Any] | None = None
+        for row in rows:
+            weights = _normalize_weights(_mapping(row.get("weights")))
+            cash_weights.append(_float(weights.get("CASH")))
+            risk_weights.append(sum(value for symbol, value in weights.items() if symbol != "CASH"))
+            if row.get("rebalance_event") is True:
+                rebalance_turnovers.append(_float(row.get("turnover")))
+            if previous is not None:
+                previous_weights = _normalize_weights(_mapping(previous.get("weights")))
+                deltas = _weight_deltas(previous_weights, weights)
+                total_abs = sum(abs(value) for value in deltas.values())
+                changes.append(total_abs)
+                if total_abs >= large_jump:
+                    symbol, delta = max(deltas.items(), key=lambda item: abs(item[1]))
+                    jumps.append(
+                        {
+                            "date": row.get("date"),
+                            "target_method": method,
+                            "total_abs_weight_change": round(total_abs, 10),
+                            "largest_symbol_delta": {"symbol": symbol, "delta": round(delta, 10)},
+                            "jump_reason": (
+                                "target_method_rebalance"
+                                if row.get("rebalance_event") is True
+                                else "weight_drift"
+                            ),
+                            "severity": (
+                                "HIGH"
+                                if total_abs >= high_jump
+                                else "MEDIUM"
+                                if total_abs >= large_jump
+                                else "LOW"
+                            ),
+                            "broker_action_taken": False,
+                            **SYSTEM_TARGET_SAFETY,
+                        }
+                    )
+            previous = row
+        avg_change = sum(changes) / len(changes) if changes else 0.0
+        max_change = max(changes or [0.0])
+        if not rows:
+            status = "INSUFFICIENT_DATA"
+        elif (
+            max_change <= stable_max and len([item for item in changes if item >= large_jump]) == 0
+        ):
+            status = "STABLE"
+        elif max_change >= unstable_max:
+            status = "UNSTABLE"
+        else:
+            status = "MODERATE"
+        total_turnover = sum(rebalance_turnovers)
+        years = max(1.0 / 252.0, len(rows) / 252.0)
+        annualized_turnover = total_turnover / years
+        if not rows:
+            turnover_status = "INSUFFICIENT_DATA"
+        elif annualized_turnover >= turnover_high:
+            turnover_status = "HIGH"
+        elif annualized_turnover >= turnover_moderate:
+            turnover_status = "MODERATE"
+        else:
+            turnover_status = "LOW"
+        method_metric = {
+            "target_method": method,
+            "avg_daily_weight_change": round(avg_change, 10),
+            "max_daily_weight_change": round(max_change, 10),
+            "avg_rebalance_turnover": round(
+                sum(rebalance_turnovers) / len(rebalance_turnovers) if rebalance_turnovers else 0.0,
+                10,
+            ),
+            "max_rebalance_turnover": round(max(rebalance_turnovers or [0.0]), 10),
+            "rebalance_count": len(rebalance_turnovers),
+            "large_jump_count": len([item for item in changes if item >= large_jump]),
+            "cash_weight_volatility": round(_stddev(cash_weights), 10),
+            "risk_asset_weight_volatility": round(_stddev(risk_weights), 10),
+            "stability_status": status,
+            **SYSTEM_TARGET_SAFETY,
+        }
+        metrics.append(method_metric)
+        turnover_rows.append(
+            {
+                "target_method": method,
+                "total_turnover": round(total_turnover, 10),
+                "annualized_turnover": round(annualized_turnover, 10),
+                "turnover_status": turnover_status,
+                "warning": ["high_turnover"] if turnover_status == "HIGH" else [],
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return (
+        metrics,
+        jumps,
+        {"schema_version": SCHEMA_VERSION, "methods": turnover_rows, **SYSTEM_TARGET_SAFETY},
+    )
+
+
+def _selection_scorecard(
+    rolling: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    stability: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    rank_rows = _records(_mapping(rolling.get("rolling_rank_stability")).get("methods"))
+    regime_summary = _records(_mapping(regime.get("regime_method_summary")).get("regimes"))
+    stability_rows = _records(stability.get("method_stability_metrics"))
+    turnover_rows = _records(_mapping(stability.get("turnover_diagnostics")).get("methods"))
+    methods = sorted(
+        {
+            str(row.get("target_method"))
+            for row in [*rank_rows, *stability_rows, *turnover_rows]
+            if row.get("target_method")
+        }
+    )
+    method_count = max(1, len(methods))
+    policy = _mapping(config.get("selection_policy"))
+    weights = _mapping(policy.get("score_weights"))
+    return_weight = _float(weights.get("return"), 0.25)
+    drawdown_weight = _float(weights.get("drawdown"), 0.25)
+    risk_weight = _float(weights.get("risk_adjusted"), 0.20)
+    regime_weight = _float(weights.get("regime"), 0.15)
+    stability_weight = _float(weights.get("stability"), 0.15)
+    turnover_high = _float(
+        _mapping(config.get("stability_policy")).get("high_annualized_turnover"),
+        4.0,
+    )
+    rows = []
+    for method in methods:
+        rank = _find_method(rank_rows, method)
+        stability_row = _find_method(stability_rows, method)
+        turnover = _find_method(turnover_rows, method)
+        return_score = _rank_score(_float(rank.get("avg_rank_return")), method_count)
+        drawdown_score = _rank_score(_float(rank.get("avg_rank_drawdown")), method_count)
+        risk_score = _rank_score(_float(rank.get("avg_rank_risk_adjusted")), method_count)
+        regime_score = _regime_score(regime_summary, method)
+        stability_score = _stability_status_score(_text(stability_row.get("stability_status")))
+        turnover_penalty = min(1.0, _float(turnover.get("annualized_turnover")) / turnover_high)
+        overall = (
+            return_score * return_weight
+            + drawdown_score * drawdown_weight
+            + risk_score * risk_weight
+            + regime_score * regime_weight
+            + stability_score * stability_weight
+            - turnover_penalty * _float(weights.get("turnover_penalty"), 0.10)
+        )
+        if rank.get("rank_stability_status") == "INSUFFICIENT_DATA":
+            status = "INSUFFICIENT_DATA"
+        elif overall >= _float(policy.get("continue_observation_score"), 0.55):
+            status = "CONTINUE_OBSERVATION"
+        elif overall >= _float(policy.get("review_required_score"), 0.35):
+            status = "REVIEW_REQUIRED"
+        else:
+            status = "NOT_RECOMMENDED"
+        rows.append(
+            {
+                "target_method": method,
+                "return_score": round(return_score, 6),
+                "drawdown_score": round(drawdown_score, 6),
+                "risk_adjusted_score": round(risk_score, 6),
+                "regime_score": round(regime_score, 6),
+                "stability_score": round(stability_score, 6),
+                "turnover_penalty": round(turnover_penalty, 6),
+                "overall_score": round(max(0.0, overall), 6),
+                "status": status,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"schema_version": SCHEMA_VERSION, "methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _selection_decision(
+    scorecard: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = _records(scorecard.get("methods"))
+    policy = _mapping(config.get("selection_policy"))
+    preferred_order = _texts(policy.get("preferred_method_order")) or [
+        "limited_adjustment",
+        "defensive_limited_adjustment",
+        "equal_weight_shadow_candidates",
+        "consensus_target",
+    ]
+    eligible = [row for row in rows if row.get("status") != "INSUFFICIENT_DATA"]
+    if not eligible:
+        recommended = "INSUFFICIENT_DATA"
+        decision_status = "INSUFFICIENT_DATA"
+    else:
+        best_score = max(_float(row.get("overall_score")) for row in eligible)
+        tolerance = _float(policy.get("preferred_method_score_tolerance"), 0.10)
+        preferred_candidates = [
+            row
+            for method in preferred_order
+            for row in eligible
+            if row.get("target_method") == method
+            and _float(row.get("overall_score")) >= best_score - tolerance
+            and row.get("status") != "NOT_RECOMMENDED"
+        ]
+        recommended_row = (
+            preferred_candidates[0]
+            if preferred_candidates
+            else max(
+                eligible,
+                key=lambda row: _float(row.get("overall_score")),
+            )
+        )
+        recommended = _text(recommended_row.get("target_method"))
+        decision_status = (
+            "CONTINUE_OBSERVATION"
+            if recommended_row.get("status") == "CONTINUE_OBSERVATION"
+            else "REVIEW_REQUIRED"
+        )
+    secondary = [
+        _text(row.get("target_method"))
+        for row in sorted(
+            eligible, key=lambda item: _float(item.get("overall_score")), reverse=True
+        )
+        if row.get("target_method") != recommended and row.get("status") != "NOT_RECOMMENDED"
+    ][:2]
+    reference_only = _texts(policy.get("reference_only_methods")) or ["consensus_target"]
+    reference_only = [method for method in reference_only if method != recommended]
+    not_recommended = [
+        _text(row.get("target_method")) for row in rows if row.get("status") == "NOT_RECOMMENDED"
+    ]
+    reason = (
+        f"{recommended} is selected for continued research observation based on rolling rank, "
+        "regime behavior, stability, and turnover diagnostics. The decision remains "
+        "research-only and does not allow official target weights or broker action."
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "selection_review_id": "",
+        "recommended_research_method": recommended,
+        "secondary_research_methods": secondary,
+        "reference_only_methods": reference_only,
+        "not_recommended_methods": not_recommended,
+        "decision_status": decision_status,
+        "reason": reason,
+        "next_action": "continue_paper_shadow_observation",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _rank_score(avg_rank: float, method_count: int) -> float:
+    if avg_rank <= 0 or method_count <= 1:
+        return 0.0
+    return max(0.0, min(1.0, 1.0 - (avg_rank - 1.0) / (method_count - 1.0)))
+
+
+def _regime_score(regime_summary: Sequence[Mapping[str, Any]], method: str) -> float:
+    if not regime_summary:
+        return 0.0
+    points = 0.0
+    total = 0.0
+    for row in regime_summary:
+        if row.get("sample_count", 0) == 0:
+            continue
+        total += 3.0
+        points += 1.0 if row.get("best_return_method") == method else 0.0
+        points += 1.0 if row.get("best_drawdown_method") == method else 0.0
+        points += 1.0 if row.get("best_risk_adjusted_method") == method else 0.0
+    return points / total if total > 0 else 0.0
+
+
+def _stability_status_score(status: str) -> float:
+    return {
+        "STABLE": 1.0,
+        "MODERATE": 0.65,
+        "MIXED": 0.5,
+        "UNSTABLE": 0.15,
+        "INSUFFICIENT_DATA": 0.0,
+    }.get(status, 0.0)
+
+
+def _annualized_return(total_return: float, periods: int) -> float:
+    if periods <= 0:
+        return 0.0
+    if total_return <= -1.0:
+        return -1.0
+    return float((1.0 + total_return) ** (252.0 / periods) - 1.0)
+
+
+def _stddev(values: Sequence[float]) -> float:
+    if not values:
+        return 0.0
+    mean = sum(values) / len(values)
+    return math.sqrt(sum((value - mean) ** 2 for value in values) / len(values))
+
+
+def _best_metric_method(
+    rows: Sequence[Mapping[str, Any]],
+    field: str,
+    *,
+    high: bool,
+) -> str:
+    if not rows:
+        return "INSUFFICIENT_DATA"
+    selected = (
+        max(rows, key=lambda row: _float(row.get(field)))
+        if high
+        else min(
+            rows,
+            key=lambda row: _float(row.get(field)),
+        )
+    )
+    return _text(selected.get("target_method"), "INSUFFICIENT_DATA")
+
+
+def _best_rank_stability_method(rows: Sequence[Mapping[str, Any]]) -> str:
+    valid = [row for row in rows if row.get("rank_stability_status") != "INSUFFICIENT_DATA"]
+    if not valid:
+        return "INSUFFICIENT_DATA"
+    return _text(
+        min(
+            valid,
+            key=lambda row: (
+                (
+                    _float(row.get("avg_rank_return"))
+                    + _float(row.get("avg_rank_drawdown"))
+                    + _float(row.get("avg_rank_risk_adjusted"))
+                )
+                / 3.0
+            ),
+        ).get("target_method")
+    )
+
+
+def _best_status_method(rows: Sequence[Mapping[str, Any]], field: str) -> str:
+    order = {"STABLE": 0, "LOW": 0, "MODERATE": 1, "MIXED": 2, "HIGH": 2, "UNSTABLE": 3}
+    valid = [row for row in rows if row.get(field) not in {None, "INSUFFICIENT_DATA"}]
+    if not valid:
+        return "INSUFFICIENT_DATA"
+    return _text(
+        min(valid, key=lambda row: order.get(_text(row.get(field)), 9)).get("target_method")
+    )
+
+
+def _max_field_method(rows: Sequence[Mapping[str, Any]], field: str) -> str:
+    if not rows:
+        return "INSUFFICIENT_DATA"
+    return _text(max(rows, key=lambda row: _float(row.get(field))).get("target_method"))
+
+
+def _config_int(config: Mapping[str, Any], path: Sequence[str], default: int) -> int:
+    return int(_config_float(config, path, float(default)))
+
+
+def _config_float(config: Mapping[str, Any], path: Sequence[str], default: float) -> float:
+    node: Any = config
+    for key in path:
+        node = _mapping(node).get(key)
+    return _float(node, default)
+
+
+def _load_backfill_config_from_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
+    path_text = _text(manifest.get("config_path"))
+    if not path_text:
+        return {}
+    path = Path(path_text)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    if not path.exists():
+        return {}
+    try:
+        return load_paper_shadow_backfill_config(path)
+    except DynamicV3SystemTargetError:
+        return {}
+
+
+def _resolve_project_path(value: object, default: Path) -> Path:
+    if value in {None, ""}:
+        return default
+    path = Path(str(value))
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
 def _recommended_research_method(
     rows: Sequence[Mapping[str, Any]],
     summary: Mapping[str, Any],
@@ -1831,6 +3957,29 @@ def _assert_paper_shadow_config_safe(payload: Mapping[str, Any]) -> None:
         raise DynamicV3SystemTargetError("paper shadow start_date cannot predate 2022-12-01")
     if not _safety_config_locked(_mapping(payload.get("safety"))):
         raise DynamicV3SystemTargetError("paper shadow safety fields are unsafe")
+
+
+def _assert_paper_shadow_backfill_config_safe(payload: Mapping[str, Any]) -> None:
+    backfill = _mapping(payload.get("backfill"))
+    date_range = _mapping(payload.get("date_range"))
+    source = _mapping(payload.get("source"))
+    if backfill.get("mode") != "BACKTEST_SIMULATION":
+        raise DynamicV3SystemTargetError("paper shadow backfill must use BACKTEST_SIMULATION")
+    if backfill.get("not_pit_safe") is not True:
+        raise DynamicV3SystemTargetError("paper shadow backfill must disclose not_pit_safe=true")
+    if backfill.get("research_target_only") is not True:
+        raise DynamicV3SystemTargetError("paper shadow backfill must be research_target_only")
+    if backfill.get("paper_shadow_only") is not True:
+        raise DynamicV3SystemTargetError("paper shadow backfill must be paper_shadow_only")
+    if _coerce_date(date_range.get("start"), date(1970, 1, 1)) < AI_AFTER_CHATGPT_START:
+        raise DynamicV3SystemTargetError("paper shadow backfill start cannot predate 2022-12-01")
+    if not source.get("model_target_config") or not source.get("paper_shadow_config"):
+        raise DynamicV3SystemTargetError("paper shadow backfill source configs are required")
+    unknown = set(_enabled_methods(payload)) - set(TARGET_METHODS)
+    if unknown:
+        raise DynamicV3SystemTargetError(f"unknown target methods: {sorted(unknown)}")
+    if not _safety_config_locked(_mapping(payload.get("safety"))):
+        raise DynamicV3SystemTargetError("paper shadow backfill safety fields are unsafe")
 
 
 def _safety_config_locked(safety: Mapping[str, Any]) -> bool:
