@@ -1,0 +1,56 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_manual_portfolio_snapshot_schema_v1
+  owner: project_owner
+  version: 2026-06-11
+  status: pilot_baseline
+  rationale: >
+    Define the owner-maintained manual portfolio snapshot contract before any
+    position drift or execution guardrail review consumes current holdings.
+  intended_effect: >
+    Make manual snapshot validity, value/weight consistency, owner review
+    status, and broker-action safety fields explicit and auditable.
+  validation_evidence: >
+    Focused tests cover valid snapshots, invalid weight sums, duplicate symbols,
+    negative weights, and broker safety fields.
+  review_condition: >
+    Review before adding broker import, multi-currency settlement handling, or
+    any order ticket workflow.
+
+required_sections:
+  - snapshot
+  - cash
+  - positions
+  - metadata
+
+required_snapshot_fields:
+  - as_of
+  - source
+  - broker_imported
+  - owner_reviewed
+  - base_currency
+  - total_equity
+  - cash_symbol
+
+required_position_fields:
+  - symbol
+  - asset_type
+  - value
+  - weight
+  - currency
+
+allowed_sources:
+  - manual_owner_input
+
+allowed_currencies:
+  - USD
+
+tolerances:
+  weight_sum_tolerance: 0.005
+  value_sum_tolerance_pct: 0.005
+
+safety:
+  broker_action_allowed: false
+  broker_action_taken: false
+  production_effect: none

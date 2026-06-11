@@ -201,6 +201,9 @@ def build_reader_brief_payload(
     etf_dynamic_v3_failure_attribution = _etf_dynamic_v3_failure_attribution_summary(report_index)
     etf_dynamic_v3_parameter_research = _etf_dynamic_v3_parameter_research_summary(report_index)
     etf_dynamic_v3_sim_review = _etf_dynamic_v3_sim_review_summary(report_index)
+    etf_dynamic_v3_manual_execution_review = (
+        _etf_dynamic_v3_manual_execution_review_summary(report_index)
+    )
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -345,6 +348,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_failure_attribution": etf_dynamic_v3_failure_attribution,
         "etf_dynamic_v3_parameter_research": etf_dynamic_v3_parameter_research,
         "etf_dynamic_v3_sim_review": etf_dynamic_v3_sim_review,
+        "etf_dynamic_v3_manual_execution_review": etf_dynamic_v3_manual_execution_review,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -621,6 +625,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_v3_failure_attribution = _mapping(payload.get("etf_dynamic_v3_failure_attribution"))
     etf_dynamic_v3_parameter_research = _mapping(payload.get("etf_dynamic_v3_parameter_research"))
     etf_dynamic_v3_sim_review = _mapping(payload.get("etf_dynamic_v3_sim_review"))
+    etf_dynamic_v3_manual_execution_review = _mapping(
+        payload.get("etf_dynamic_v3_manual_execution_review")
+    )
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -2043,6 +2050,104 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "forward_outcome_decision_path",
                         etf_dynamic_v3_parameter_research.get("forward_outcome_decision"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Manual Execution Review",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        etf_dynamic_v3_manual_execution_review.get("availability"),
+                    ),
+                    ("status", etf_dynamic_v3_manual_execution_review.get("status")),
+                    (
+                        "summary",
+                        etf_dynamic_v3_manual_execution_review.get("summary_sentence"),
+                    ),
+                    (
+                        "manual_review_id",
+                        etf_dynamic_v3_manual_execution_review.get("manual_review_id"),
+                    ),
+                    (
+                        "snapshot_status",
+                        etf_dynamic_v3_manual_execution_review.get("snapshot_status"),
+                    ),
+                    (
+                        "exposure_status",
+                        etf_dynamic_v3_manual_execution_review.get("exposure_status"),
+                    ),
+                    (
+                        "drift_status",
+                        etf_dynamic_v3_manual_execution_review.get("drift_status"),
+                    ),
+                    (
+                        "candidate_agreement_status",
+                        etf_dynamic_v3_manual_execution_review.get(
+                            "candidate_agreement_status"
+                        ),
+                    ),
+                    (
+                        "guardrail_status",
+                        etf_dynamic_v3_manual_execution_review.get("guardrail_status"),
+                    ),
+                    (
+                        "recommended_action",
+                        etf_dynamic_v3_manual_execution_review.get("recommended_action"),
+                    ),
+                    (
+                        "owner_approval_required",
+                        etf_dynamic_v3_manual_execution_review.get(
+                            "owner_approval_required"
+                        ),
+                    ),
+                    (
+                        "broker_action_allowed",
+                        etf_dynamic_v3_manual_execution_review.get(
+                            "broker_action_allowed"
+                        ),
+                    ),
+                    (
+                        "broker_action_taken",
+                        etf_dynamic_v3_manual_execution_review.get("broker_action_taken"),
+                    ),
+                    (
+                        "order_ticket_generated",
+                        etf_dynamic_v3_manual_execution_review.get(
+                            "order_ticket_generated"
+                        ),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_manual_execution_review.get("production_effect"),
+                    ),
+                    (
+                        "safety_status",
+                        etf_dynamic_v3_manual_execution_review.get("safety_status"),
+                    ),
+                    (
+                        "manual_execution_review_path",
+                        etf_dynamic_v3_manual_execution_review.get(
+                            "manual_execution_review_path"
+                        ),
+                    ),
+                    (
+                        "guardrail_path",
+                        etf_dynamic_v3_manual_execution_review.get("guardrail_path"),
+                    ),
+                    (
+                        "drift_path",
+                        etf_dynamic_v3_manual_execution_review.get("drift_path"),
+                    ),
+                    (
+                        "exposure_path",
+                        etf_dynamic_v3_manual_execution_review.get("exposure_path"),
+                    ),
+                    (
+                        "snapshot_path",
+                        etf_dynamic_v3_manual_execution_review.get("snapshot_path"),
                     ),
                 ]
             ),
@@ -7384,6 +7489,254 @@ def _etf_dynamic_v3_sim_review_payload_safe(payload: Mapping[str, Any]) -> bool:
         and payload.get("position_advisory_config_mutated") is not True
         and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
     )
+
+
+def _etf_dynamic_v3_manual_execution_review_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_v3_manual_execution_review_summary()
+
+    snapshot_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_manual_portfolio_snapshot",
+        ),
+        "manual_portfolio_manifest.json",
+    )
+    exposure_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_portfolio_exposure",
+        ),
+        "portfolio_exposure_manifest.json",
+    )
+    drift_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_position_drift",
+        ),
+        "position_drift_manifest.json",
+    )
+    guardrail_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_execution_guardrails",
+        ),
+        "guardrail_manifest.json",
+    )
+    review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_manual_execution_review",
+        ),
+        "manual_execution_review_manifest.json",
+    )
+
+    review_manifest = _read_optional_json(review_path)
+    if not review_manifest:
+        return _missing_etf_dynamic_v3_manual_execution_review_summary()
+
+    snapshot_manifest = _read_optional_json(snapshot_path)
+    exposure_manifest = _read_optional_json(exposure_path)
+    drift_manifest = _read_optional_json(drift_path)
+    guardrail_manifest = _read_optional_json(guardrail_path)
+    exposure_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(exposure_path, "exposure_summary.json")
+    )
+    drift_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(drift_path, "consensus_drift_summary.json")
+    )
+    guardrail_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(guardrail_path, "guardrail_summary.json")
+    )
+    decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(review_path, "manual_execution_decision.json")
+    )
+
+    recommended_action = _text(
+        decision.get("recommended_action"),
+        _text(review_manifest.get("recommended_action"), "MISSING"),
+    )
+    manual_review_id = _text(review_manifest.get("manual_review_id"), "MISSING")
+    snapshot_status = _text(snapshot_manifest.get("status"), "MISSING")
+    exposure_status = _text(exposure_manifest.get("status"), "MISSING")
+    drift_status = _text(
+        drift_summary.get("drift_status"),
+        _text(drift_manifest.get("status"), "MISSING"),
+    )
+    candidate_agreement = _text(
+        drift_summary.get("candidate_agreement_status"),
+        "MISSING",
+    )
+    guardrail_status = _text(guardrail_manifest.get("status"), "MISSING")
+    owner_approval_required = (
+        decision.get("owner_approval_required")
+        if "owner_approval_required" in decision
+        else review_manifest.get("owner_approval_required")
+    )
+    broker_action_allowed = (
+        decision.get("broker_action_allowed")
+        if "broker_action_allowed" in decision
+        else review_manifest.get("broker_action_allowed")
+    )
+    broker_action_taken = (
+        decision.get("broker_action_taken")
+        if "broker_action_taken" in decision
+        else review_manifest.get("broker_action_taken")
+    )
+    order_ticket_generated = (
+        decision.get("order_ticket_generated")
+        if "order_ticket_generated" in decision
+        else review_manifest.get("order_ticket_generated")
+    )
+    production_effect = _text(
+        decision.get("production_effect"),
+        _text(review_manifest.get("production_effect"), PRODUCTION_EFFECT),
+    )
+    safety_status = _etf_dynamic_v3_manual_execution_review_safety_status(
+        snapshot_manifest,
+        exposure_manifest,
+        exposure_summary,
+        drift_manifest,
+        drift_summary,
+        guardrail_manifest,
+        guardrail_summary,
+        review_manifest,
+        decision,
+    )
+
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(review_manifest.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            "Dynamic Rescue Manual Execution Review: "
+            f"review={manual_review_id}; snapshot={snapshot_status}; "
+            f"exposure={exposure_status}; drift={drift_status}; "
+            f"agreement={candidate_agreement}; guardrail={guardrail_status}; "
+            f"action={recommended_action}; "
+            f"broker_action_allowed={str(broker_action_allowed).lower()}; "
+            f"order_ticket_generated={str(order_ticket_generated).lower()}; "
+            f"production_effect={production_effect}."
+        ),
+        "manual_review_id": manual_review_id,
+        "snapshot_id": _text(review_manifest.get("snapshot_id"), "MISSING"),
+        "exposure_id": _text(review_manifest.get("exposure_id"), "MISSING"),
+        "drift_id": _text(review_manifest.get("drift_id"), "MISSING"),
+        "guardrail_id": _text(review_manifest.get("guardrail_id"), "MISSING"),
+        "snapshot_status": snapshot_status,
+        "exposure_status": exposure_status,
+        "drift_status": drift_status,
+        "candidate_agreement_status": candidate_agreement,
+        "total_abs_drift_to_consensus": drift_summary.get(
+            "total_abs_drift_to_consensus",
+            "MISSING",
+        ),
+        "guardrail_status": guardrail_status,
+        "recommended_action": recommended_action,
+        "capped_count": guardrail_summary.get("capped_count", 0),
+        "blocked_count": guardrail_summary.get("blocked_count", 0),
+        "owner_approval_required": owner_approval_required is True,
+        "broker_action_allowed": broker_action_allowed is True,
+        "broker_action_taken": broker_action_taken is True,
+        "order_ticket_generated": order_ticket_generated is True,
+        "production_effect": production_effect,
+        "safety_status": safety_status,
+        "max_single_symbol": _text(exposure_summary.get("max_single_symbol"), "MISSING"),
+        "tech_weight": exposure_summary.get("tech_weight", "MISSING"),
+        "semiconductor_weight": exposure_summary.get("semiconductor_weight", "MISSING"),
+        "defensive_weight": exposure_summary.get("defensive_weight", "MISSING"),
+        "manual_execution_review_path": "" if review_path is None else str(review_path),
+        "guardrail_path": "" if guardrail_path is None else str(guardrail_path),
+        "drift_path": "" if drift_path is None else str(drift_path),
+        "exposure_path": "" if exposure_path is None else str(exposure_path),
+        "snapshot_path": "" if snapshot_path is None else str(snapshot_path),
+        "manual_review_required": review_manifest.get("manual_review_required") is True,
+        "broker_action": _text(review_manifest.get("broker_action"), "none"),
+    }
+
+
+def _missing_etf_dynamic_v3_manual_execution_review_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": (
+            "Dynamic Rescue Manual Execution Review: no latest manual execution "
+            "review pack found."
+        ),
+        "manual_review_id": "MISSING",
+        "snapshot_id": "MISSING",
+        "exposure_id": "MISSING",
+        "drift_id": "MISSING",
+        "guardrail_id": "MISSING",
+        "snapshot_status": "MISSING",
+        "exposure_status": "MISSING",
+        "drift_status": "MISSING",
+        "candidate_agreement_status": "MISSING",
+        "total_abs_drift_to_consensus": "MISSING",
+        "guardrail_status": "MISSING",
+        "recommended_action": "MISSING",
+        "capped_count": 0,
+        "blocked_count": 0,
+        "owner_approval_required": True,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        "production_effect": PRODUCTION_EFFECT,
+        "safety_status": "MISSING",
+        "max_single_symbol": "MISSING",
+        "tech_weight": "MISSING",
+        "semiconductor_weight": "MISSING",
+        "defensive_weight": "MISSING",
+        "manual_execution_review_path": "",
+        "guardrail_path": "",
+        "drift_path": "",
+        "exposure_path": "",
+        "snapshot_path": "",
+        "manual_review_required": True,
+        "broker_action": "none",
+        "limitation": (
+            "Reader Brief only reads latest manual snapshot, exposure, drift, "
+            "guardrail, and review artifacts; it does not run execution CLIs."
+        ),
+    }
+
+
+def _etf_dynamic_v3_manual_execution_review_safety_status(
+    *payloads: Mapping[str, Any],
+) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    unsafe = any(
+        payload.get("broker_action_allowed") is True
+        or payload.get("broker_action_taken") is True
+        or payload.get("order_ticket_generated") is True
+        or payload.get("production_state_mutated") is True
+        or payload.get("baseline_config_mutated") is True
+        or payload.get("official_target_weights_mutated") is True
+        or payload.get("automatic_candidate_promotion") is True
+        or payload.get("auto_enrollment_without_owner_approval") is True
+        or payload.get("owner_approval_executed") is True
+        or _text(payload.get("production_effect"), PRODUCTION_EFFECT)
+        != PRODUCTION_EFFECT
+        for payload in material
+    )
+    review_payloads = [
+        payload
+        for payload in material
+        if "owner_approval_required" in payload or "order_ticket_generated" in payload
+    ]
+    owner_review_required = all(
+        payload.get("owner_approval_required") is True for payload in review_payloads
+    )
+    if not unsafe and owner_review_required:
+        return (
+            "observe_only=true; candidate_only=true; production_effect=none; "
+            "broker_action_allowed=false; broker_action_taken=false; "
+            "order_ticket_generated=false; owner_approval_required=true"
+        )
+    return "SAFETY_REVIEW_REQUIRED"
 
 
 def _etf_dynamic_v3_parameter_research_summary(

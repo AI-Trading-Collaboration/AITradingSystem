@@ -1,27 +1,56 @@
 schema_version: 1
-as_of: "2026-06-07"
-base_currency: "USD"
-account_type: "manual_snapshot"
-source: "manual"
-total_equity: 100000.0
+
+snapshot:
+  as_of: "2026-06-11"
+  source: manual_owner_input
+  broker_imported: false
+  owner_reviewed: false
+  base_currency: USD
+  total_equity: 100000.00
+  cash_symbol: CASH
+
+accounts:
+  - account_id: manual_primary
+    account_type: manual_snapshot
+    currency: USD
+    total_equity: 100000.00
+
 cash:
-  symbol: "CASH"
+  symbol: CASH
+  value: 20000.00
   weight: 0.20
-  value: 20000.0
+  currency: USD
+
 positions:
   - symbol: QQQ
+    asset_type: ETF
+    quantity: null
+    market_price: null
+    value: 50000.00
     weight: 0.50
-    value: 50000.0
     currency: USD
+    account_id: manual_primary
+
   - symbol: SMH
+    asset_type: ETF
+    quantity: null
+    market_price: null
+    value: 20000.00
     weight: 0.20
-    value: 20000.0
     currency: USD
+    account_id: manual_primary
+
   - symbol: TLT
+    asset_type: ETF
+    quantity: null
+    market_price: null
+    value: 10000.00
     weight: 0.10
-    value: 10000.0
     currency: USD
+    account_id: manual_primary
+
 metadata:
-  owner_reviewed: false
-  broker_imported: false
-  notes: "Manual placeholder snapshot for advisory validation; not broker-imported"
+  owner_notes: "Owner-maintained manual placeholder; not broker-imported."
+  last_manual_update: "2026-06-11"
+  broker_action_allowed: false
+  broker_action_taken: false

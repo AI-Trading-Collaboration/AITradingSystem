@@ -1,0 +1,45 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_execution_guardrails_v1
+  owner: project_owner
+  version: 2026-06-11
+  status: pilot_baseline
+  rationale: >
+    Bound any manual-review adjustment suggestion from position drift before an
+    owner considers paper-only execution review.
+  intended_effect: >
+    Cap oversized deltas, block unsafe risk increases, and keep all outputs
+    advisory-only with no order ticket or broker action.
+  validation_evidence: >
+    Focused tests cover capped deltas, high-disagreement risk-increase blocks,
+    and fixed no-broker/no-ticket safety fields.
+  review_condition: >
+    Review after owner has real manual snapshot observations and before adding
+    broker import, order tickets, fees, taxes, or actual execution routing.
+
+mode:
+  advisory_only: true
+  broker_action_allowed: false
+  order_ticket_generation_allowed: false
+  require_owner_approval: true
+
+limits:
+  max_single_day_total_adjustment: 0.10
+  max_single_week_total_adjustment: 0.20
+  max_single_symbol_adjustment: 0.05
+  min_trade_threshold: 0.01
+  max_risk_asset_increase: 0.05
+  max_semiconductor_increase: 0.03
+  min_cash_after_adjustment: 0.05
+
+risk_controls:
+  block_risk_increase_during_high_disagreement: true
+  block_risk_increase_when_data_quality_not_pass: true
+  block_adjustment_when_pressure_regime_uncertain: true
+  require_manual_review_for_risk_increase: true
+
+stepwise_execution:
+  enabled: true
+  max_steps: 3
+  min_days_between_steps: 3

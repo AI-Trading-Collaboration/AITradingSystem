@@ -27,6 +27,12 @@ advisory_limits:
   max_risk_asset_increase_without_confirmation: 0.05
   max_risk_asset_decrease_without_confirmation: 0.10
 
+drift_analysis:
+  low_total_abs_drift: 0.03
+  high_total_abs_drift: 0.10
+  manual_review_total_abs_drift: 0.05
+  high_symbol_dispersion_blocks_adjustment: true
+
 execution_mode:
   advisory_only: true
   broker_action_allowed: false

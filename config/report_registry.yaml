@@ -2065,6 +2065,112 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_manual_portfolio_snapshot
+    title: ETF Dynamic v3 Rescue Strict Manual Portfolio Snapshot
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue manual-portfolio validate --snapshot config/etf_portfolio/dynamic_v3_rescue/current_portfolio_snapshot.yaml
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_portfolio_snapshot/*/manual_portfolio_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_portfolio_snapshot/*/normalized_portfolio.json
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_portfolio_snapshot/*/portfolio_weight_check.json
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_portfolio_snapshot/*/portfolio_snapshot_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-199 validates owner-provided manual portfolio snapshots with
+      explicit source, currency, weight, value, duplicate-key, and no-broker
+      safety checks before any exposure, drift, or guardrail interpretation.
+    owner_action: owner_review_strict_manual_snapshot_before_execution_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_portfolio_exposure
+    title: ETF Dynamic v3 Rescue Portfolio Exposure Validation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue portfolio-exposure validate --snapshot-id <snapshot_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_exposure/*/portfolio_exposure_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_exposure/*/exposure_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_exposure/*/exposure_by_symbol.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/portfolio_exposure/*/portfolio_exposure_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-200 summarizes risk asset, cash, tech, semiconductor, defensive,
+      single-symbol, and currency exposure from the validated manual snapshot.
+    owner_action: review_exposure_warnings_before_position_drift_or_guardrails
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_position_drift
+    title: ETF Dynamic v3 Rescue Position Drift Analysis
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue position-drift run --snapshot-id <snapshot_id> --shadow-shortlist-id <shadow_shortlist_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/position_drift/*/position_drift_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_drift/*/consensus_drift_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/position_drift/*/candidate_drift_analysis.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/position_drift/*/drift_action_candidates.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/position_drift/*/position_drift_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-201 compares validated current weights with latest shadow-shortlist
+      candidate target weights and exposes candidate agreement before any
+      adjustment review.
+    owner_action: review_drift_status_and_candidate_agreement_before_guardrails
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_execution_guardrails
+    title: ETF Dynamic v3 Rescue Execution Guardrails
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue execution-guardrails check --drift-id <drift_id> --exposure-id <exposure_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/execution_guardrails/*/guardrail_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/execution_guardrails/*/guardrail_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/execution_guardrails/*/proposed_adjustment_checks.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/execution_guardrails/*/stepwise_adjustment_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/execution_guardrails/*/execution_guardrails_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-202 caps and blocks proposed drift adjustments under reviewed
+      execution guardrails while keeping broker/order generation disabled.
+    owner_action: review_guardrail_blocks_and_caps_before_manual_review_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_manual_execution_review
+    title: ETF Dynamic v3 Rescue Manual Execution Review Pack
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue manual-execution-review pack --snapshot-id <snapshot_id> --exposure-id <exposure_id> --drift-id <drift_id> --guardrail-id <guardrail_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_execution_review/*/manual_execution_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_execution_review/*/manual_execution_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_execution_review/*/owner_execution_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_execution_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/manual_execution_review/*/manual_execution_review_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-203 bundles manual snapshot, exposure, drift, and execution
+      guardrail evidence into an owner-review-only pack with no broker action,
+      no order ticket, and no production mutation.
+    owner_action: owner_review_pack_before_any_manual_paper_adjustment_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

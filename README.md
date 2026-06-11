@@ -1003,6 +1003,24 @@ capture plan、trigger scan、capture run/skip、pressure sample ledger 和 week
 `policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`，不修改
 `position_advisory_v1.yaml`、policy、official target weights、portfolio 或 baseline/production
 state，也不触发 broker。
+TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS 在 dynamic v3 rescue shadow shortlist
+和 position advisory 之上新增严格 manual snapshot / exposure / drift / execution
+guardrail / review pack 链路。CLI 包括 `manual-portfolio validate/normalize/report`、
+`portfolio-exposure validate/report`、`position-drift run/report`、
+`execution-guardrails check/report` 和 `manual-execution-review pack/report`，对应
+验证入口为 `validate-manual-portfolio`、`validate-portfolio-exposure`、
+`validate-position-drift`、`validate-execution-guardrails` 和
+`validate-manual-execution-review`。配置入口为
+`manual_portfolio_snapshot_schema_v1.yaml`、`portfolio_exposure_policy_v1.yaml`、
+`execution_guardrails_v1.yaml` 和 `position_advisory_v1.yaml` 的 `drift_analysis`
+section。Artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/manual_portfolio_snapshot|portfolio_exposure|position_drift|execution_guardrails|manual_execution_review/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Manual Execution Review`
+区块。该链路只消费 owner-maintained manual snapshot 和 shadow shortlist target weights；
+它不导入 broker、不生成 order ticket、不写 official target weights、不修改 portfolio /
+baseline / production state。所有输出固定 `broker_action_allowed=false`、
+`broker_action_taken=false`、`order_ticket_generated=false`、`owner_approval_required=true`
+和 `production_effect=none`。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

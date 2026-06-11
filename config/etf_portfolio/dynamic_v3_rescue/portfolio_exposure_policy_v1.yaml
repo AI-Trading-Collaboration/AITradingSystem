@@ -1,0 +1,44 @@
+schema_version: 1
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_portfolio_exposure_policy_v1
+  owner: project_owner
+  version: 2026-06-11
+  status: pilot_baseline
+  rationale: >
+    Provide transparent concentration, semiconductor, cash, risk-asset, and
+    currency checks for manual portfolio snapshots before position drift review.
+  intended_effect: >
+    Fail closed on concentration and currency risks that would make downstream
+    adjustment advice misleading.
+  validation_evidence: >
+    Focused tests cover exposure warnings, limit failures, and currency
+    validation.
+  review_condition: >
+    Recalibrate after owner reviews real manual snapshots or adds additional
+    asset classes and currencies.
+
+exposure_groups:
+  tech:
+    symbols: [QQQ, XLK, VGT]
+  semiconductor:
+    symbols: [SMH, SOXX, NVDA, AMD, TSM]
+  defensive:
+    symbols: [TLT, IEF, GLD, CASH]
+  cash:
+    symbols: [CASH]
+
+limits:
+  max_single_symbol_weight: 0.60
+  max_semiconductor_weight: 0.35
+  max_risk_asset_weight: 0.90
+  min_cash_weight: 0.05
+  max_non_base_currency_weight: 0.20
+
+warnings:
+  semiconductor_watch_weight: 0.25
+  cash_low_warning: 0.10
+
+safety:
+  broker_action_allowed: false
+  production_effect: none
