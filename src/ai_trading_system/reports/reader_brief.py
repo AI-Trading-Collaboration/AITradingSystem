@@ -2219,6 +2219,73 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "refined_confidence",
                         etf_dynamic_v3_system_target.get("refined_confidence"),
                     ),
+                    ("risk_capped_id", etf_dynamic_v3_system_target.get("risk_capped_id")),
+                    (
+                        "risk_capped_backfill_id",
+                        etf_dynamic_v3_system_target.get("risk_capped_backfill_id"),
+                    ),
+                    (
+                        "risk_capped_comparison_id",
+                        etf_dynamic_v3_system_target.get("risk_capped_comparison_id"),
+                    ),
+                    (
+                        "risk_capped_review_id",
+                        etf_dynamic_v3_system_target.get("risk_capped_review_id"),
+                    ),
+                    (
+                        "risk_capped_decision",
+                        etf_dynamic_v3_system_target.get("risk_capped_decision"),
+                    ),
+                    (
+                        "risk_capped_confidence",
+                        etf_dynamic_v3_system_target.get("risk_capped_confidence"),
+                    ),
+                    (
+                        "risk_capped_improvements_vs_limited",
+                        etf_dynamic_v3_system_target.get("risk_capped_improvements_vs_limited"),
+                    ),
+                    (
+                        "risk_capped_return_delta_vs_limited",
+                        etf_dynamic_v3_system_target.get("risk_capped_return_delta_vs_limited"),
+                    ),
+                    (
+                        "risk_capped_drawdown_delta_vs_limited",
+                        etf_dynamic_v3_system_target.get("risk_capped_drawdown_delta_vs_limited"),
+                    ),
+                    (
+                        "risk_capped_semiconductor_exposure_delta",
+                        etf_dynamic_v3_system_target.get(
+                            "risk_capped_semiconductor_exposure_delta"
+                        ),
+                    ),
+                    (
+                        "risk_capped_rolling_consistency_delta",
+                        etf_dynamic_v3_system_target.get(
+                            "risk_capped_rolling_consistency_delta"
+                        ),
+                    ),
+                    (
+                        "risk_capped_generated_cap_event_count",
+                        etf_dynamic_v3_system_target.get(
+                            "risk_capped_generated_cap_event_count"
+                        ),
+                    ),
+                    (
+                        "risk_capped_backfill_cap_event_count",
+                        etf_dynamic_v3_system_target.get(
+                            "risk_capped_backfill_cap_event_count"
+                        ),
+                    ),
+                    (
+                        "risk_capped_reallocated_to_cash",
+                        etf_dynamic_v3_system_target.get("risk_capped_reallocated_to_cash"),
+                    ),
+                    (
+                        "risk_capped_requires_forward_confirmation",
+                        etf_dynamic_v3_system_target.get(
+                            "risk_capped_requires_forward_confirmation"
+                        ),
+                    ),
                     (
                         "secondary_research_methods",
                         etf_dynamic_v3_system_target.get("secondary_research_methods"),
@@ -2273,6 +2340,19 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "refined_proposal_path",
                         etf_dynamic_v3_system_target.get("refined_proposal_path"),
+                    ),
+                    ("risk_capped_path", etf_dynamic_v3_system_target.get("risk_capped_path")),
+                    (
+                        "risk_capped_backfill_path",
+                        etf_dynamic_v3_system_target.get("risk_capped_backfill_path"),
+                    ),
+                    (
+                        "risk_capped_comparison_path",
+                        etf_dynamic_v3_system_target.get("risk_capped_comparison_path"),
+                    ),
+                    (
+                        "risk_capped_review_path",
+                        etf_dynamic_v3_system_target.get("risk_capped_review_path"),
                     ),
                 ]
             ),
@@ -8053,8 +8133,37 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "refined_method_proposal_manifest.json",
     )
+    risk_capped_limited_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_risk_capped_limited",
+        ),
+        "risk_capped_limited_manifest.json",
+    )
+    risk_capped_backfill_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_risk_capped_backfill",
+        ),
+        "risk_capped_backfill_manifest.json",
+    )
+    risk_capped_comparison_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_risk_capped_comparison",
+        ),
+        "risk_capped_comparison_manifest.json",
+    )
+    risk_capped_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_risk_capped_review",
+        ),
+        "risk_capped_review_manifest.json",
+    )
     review_manifest = _read_optional_json(review_path)
-    if not review_manifest:
+    risk_capped_review_manifest = _read_optional_json(risk_capped_review_path)
+    if not review_manifest and not risk_capped_review_manifest:
         return _missing_etf_dynamic_v3_system_target_summary()
 
     target_manifest = _read_optional_json(target_path)
@@ -8081,6 +8190,42 @@ def _etf_dynamic_v3_system_target_summary(
     )
     refined_methods = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(refined_path, "proposed_next_methods.json")
+    )
+    risk_capped_limited_manifest = _read_optional_json(risk_capped_limited_path)
+    risk_capped_cap_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(risk_capped_limited_path, "cap_reason_summary.json")
+    )
+    risk_capped_backfill_manifest = _read_optional_json(risk_capped_backfill_path)
+    risk_capped_backfill_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            risk_capped_backfill_path,
+            "risk_capped_backfill_summary.json",
+        )
+    )
+    risk_capped_comparison_manifest = _read_optional_json(risk_capped_comparison_path)
+    risk_capped_metrics = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            risk_capped_comparison_path,
+            "risk_capped_vs_limited_metrics.json",
+        )
+    )
+    risk_capped_rolling = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            risk_capped_comparison_path,
+            "risk_capped_rolling_comparison.json",
+        )
+    )
+    risk_capped_stability = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            risk_capped_comparison_path,
+            "risk_capped_stability_comparison.json",
+        )
+    )
+    risk_capped_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            risk_capped_review_path,
+            "risk_capped_decision.json",
+        )
     )
     paper_state = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(paper_path, "paper_shadow_state.json")
@@ -8150,12 +8295,28 @@ def _etf_dynamic_v3_system_target_summary(
         refined_manifest,
         refined_decision,
         refined_methods,
+        risk_capped_limited_manifest,
+        risk_capped_cap_summary,
+        risk_capped_backfill_manifest,
+        risk_capped_backfill_summary,
+        risk_capped_comparison_manifest,
+        risk_capped_metrics,
+        risk_capped_rolling,
+        risk_capped_stability,
+        risk_capped_review_manifest,
+        risk_capped_decision,
     )
     hardening_decision_label = _text(hardening_decision.get("hardening_decision"), "MISSING")
     refined_next_step = _text(refined_decision.get("recommended_next_step"), "MISSING")
     refined_method_names = ",".join(
         _texts([row.get("method") for row in _records(refined_methods.get("methods"))])
     )
+    risk_capped_values = _mapping(risk_capped_metrics.get("metrics"))
+    risk_capped_improvements = _mapping(risk_capped_decision.get("improvements_vs_limited"))
+    risk_capped_improvement_summary = ",".join(
+        f"{key}={value}" for key, value in sorted(risk_capped_improvements.items())
+    )
+    risk_capped_decision_label = _text(risk_capped_decision.get("decision"), "MISSING")
     return {
         "availability": "AVAILABLE",
         "status": _text(review_manifest.get("status"), "UNKNOWN"),
@@ -8166,6 +8327,7 @@ def _etf_dynamic_v3_system_target_summary(
             f"decision={decision_status}; "
             f"hardening={hardening_decision_label}; "
             f"refined_next_step={refined_next_step}; "
+            f"risk_capped={risk_capped_decision_label}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
             "broker_action_allowed="
             f"{str(review_manifest.get('broker_action_allowed') is True).lower()}; "
@@ -8206,6 +8368,73 @@ def _etf_dynamic_v3_system_target_summary(
         "refined_confidence": _text(refined_decision.get("confidence"), "MISSING"),
         "refined_proposed_next_methods": refined_method_names,
         "refined_proposal_path": "" if refined_path is None else str(refined_path),
+        "risk_capped_id": _text(risk_capped_limited_manifest.get("risk_capped_id"), "MISSING"),
+        "risk_capped_backfill_id": _text(
+            risk_capped_backfill_manifest.get("risk_capped_backfill_id"),
+            "MISSING",
+        ),
+        "risk_capped_comparison_id": _text(
+            risk_capped_comparison_manifest.get("comparison_id"),
+            "MISSING",
+        ),
+        "risk_capped_review_id": _text(
+            risk_capped_review_manifest.get("review_id"),
+            "MISSING",
+        ),
+        "risk_capped_decision": risk_capped_decision_label,
+        "risk_capped_confidence": _text(
+            risk_capped_decision.get("decision_confidence"),
+            "MISSING",
+        ),
+        "risk_capped_improvements_vs_limited": risk_capped_improvement_summary,
+        "risk_capped_requires_forward_confirmation": risk_capped_decision.get(
+            "requires_forward_confirmation"
+        )
+        is True,
+        "risk_capped_return_delta_vs_limited": risk_capped_values.get(
+            "total_return_delta",
+            "MISSING",
+        ),
+        "risk_capped_drawdown_delta_vs_limited": risk_capped_values.get(
+            "max_drawdown_delta",
+            "MISSING",
+        ),
+        "risk_capped_semiconductor_exposure_delta": risk_capped_values.get(
+            "avg_semiconductor_weight_delta",
+            "MISSING",
+        ),
+        "risk_capped_rolling_consistency_delta": _text(
+            risk_capped_rolling.get("stability_delta"),
+            "MISSING",
+        ),
+        "risk_capped_stability_conclusion": _text(
+            risk_capped_stability.get("stability_conclusion"),
+            "MISSING",
+        ),
+        "risk_capped_generated_cap_event_count": risk_capped_cap_summary.get(
+            "total_cap_events",
+            "MISSING",
+        ),
+        "risk_capped_backfill_cap_event_count": risk_capped_backfill_summary.get(
+            "cap_event_count",
+            "MISSING",
+        ),
+        "risk_capped_reallocated_to_cash": risk_capped_cap_summary.get(
+            "total_reallocated_to_cash",
+            "MISSING",
+        ),
+        "risk_capped_path": (
+            "" if risk_capped_limited_path is None else str(risk_capped_limited_path)
+        ),
+        "risk_capped_backfill_path": (
+            "" if risk_capped_backfill_path is None else str(risk_capped_backfill_path)
+        ),
+        "risk_capped_comparison_path": (
+            "" if risk_capped_comparison_path is None else str(risk_capped_comparison_path)
+        ),
+        "risk_capped_review_path": (
+            "" if risk_capped_review_path is None else str(risk_capped_review_path)
+        ),
         "data_quality_status": _text(performance_summary.get("data_quality_status"), "MISSING"),
         "best_return_method": _text(performance_summary.get("best_return_method"), "MISSING"),
         "best_drawdown_method": _text(performance_summary.get("best_drawdown_method"), "MISSING"),
@@ -8280,6 +8509,26 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "refined_confidence": "MISSING",
         "refined_proposed_next_methods": "",
         "refined_proposal_path": "",
+        "risk_capped_id": "MISSING",
+        "risk_capped_backfill_id": "MISSING",
+        "risk_capped_comparison_id": "MISSING",
+        "risk_capped_review_id": "MISSING",
+        "risk_capped_decision": "MISSING",
+        "risk_capped_confidence": "MISSING",
+        "risk_capped_improvements_vs_limited": "",
+        "risk_capped_requires_forward_confirmation": False,
+        "risk_capped_return_delta_vs_limited": "MISSING",
+        "risk_capped_drawdown_delta_vs_limited": "MISSING",
+        "risk_capped_semiconductor_exposure_delta": "MISSING",
+        "risk_capped_rolling_consistency_delta": "MISSING",
+        "risk_capped_stability_conclusion": "MISSING",
+        "risk_capped_generated_cap_event_count": "MISSING",
+        "risk_capped_backfill_cap_event_count": "MISSING",
+        "risk_capped_reallocated_to_cash": "MISSING",
+        "risk_capped_path": "",
+        "risk_capped_backfill_path": "",
+        "risk_capped_comparison_path": "",
+        "risk_capped_review_path": "",
         "data_quality_status": "MISSING",
         "best_return_method": "MISSING",
         "best_drawdown_method": "MISSING",

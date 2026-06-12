@@ -1,0 +1,79 @@
+schema_version: 1
+
+method:
+  name: risk_capped_limited_adjustment
+  base_method: limited_adjustment
+  mode: research_target_only
+  not_official_target_weights: true
+  paper_shadow_only: true
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_risk_capped_limited_adjustment_v1
+  owner: project_owner
+  version: 2026-06-12
+  status: pilot_baseline
+  rationale: >
+    TRADING-224～228 found that limited_adjustment improved return but worsened
+    long-window risk, rolling stability, and semiconductor exposure. This
+    policy caps risk exposure while preserving a research-only limited
+    adjustment variant for historical paper shadow review.
+  intended_effect: >
+    Reduce semiconductor and total risk asset exposure, preserve a minimum cash
+    buffer, and constrain per-rebalance risk increases without producing
+    official target weights or broker instructions.
+  validation_evidence: >
+    TRADING-229～233 focused tests, risk-capped config validation, generation,
+    backfill, comparison, review validation, ruff, compileall, and git diff
+    check.
+  review_condition: >
+    Revisit after owner review of the risk-capped review pack and after forward
+    confirmation evidence is available.
+
+caps:
+  max_total_risk_asset_weight: 0.90
+  max_semiconductor_weight: 0.25
+  max_single_symbol_weight: 0.60
+  min_cash_weight: 0.10
+
+delta_caps:
+  max_total_risk_asset_increase_per_rebalance: 0.05
+  max_semiconductor_increase_per_rebalance: 0.02
+  max_single_symbol_increase_per_rebalance: 0.03
+  max_total_adjustment_per_rebalance: 0.10
+
+contextual_caps:
+  sideways_choppy:
+    max_total_risk_asset_weight: 0.85
+    max_semiconductor_weight: 0.22
+    max_total_risk_asset_increase_per_rebalance: 0.02
+    min_cash_weight: 0.12
+  tech_drawdown:
+    max_total_risk_asset_weight: 0.80
+    max_semiconductor_weight: 0.20
+    allow_risk_asset_increase: false
+    min_cash_weight: 0.15
+  semiconductor_pullback:
+    max_semiconductor_weight: 0.18
+    allow_semiconductor_increase: false
+
+reallocation:
+  excess_weight_destination:
+    - CASH
+    - TLT
+  fallback_destination: CASH
+  preserve_total_weight: true
+
+diagnostics:
+  emit_cap_events: true
+  emit_reallocation_events: true
+  emit_cap_reason_summary: true
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

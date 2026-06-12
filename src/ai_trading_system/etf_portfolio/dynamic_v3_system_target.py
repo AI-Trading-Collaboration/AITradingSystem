@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 from ai_trading_system.config import PROJECT_ROOT, load_data_quality
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
@@ -31,6 +32,7 @@ TARGET_METHODS = (
     "no_trade_baseline",
     "consensus_target",
     "limited_adjustment",
+    "risk_capped_limited_adjustment",
     "defensive_limited_adjustment",
     "equal_weight_shadow_candidates",
     "selected_top_candidate",
@@ -51,6 +53,13 @@ DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH = (
     / "etf_portfolio"
     / "dynamic_v3_rescue"
     / "paper_shadow_backfill_v1.yaml"
+)
+DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "risk_capped_limited_adjustment_v1.yaml"
 )
 DEFAULT_PRICE_CACHE_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 DEFAULT_MODEL_TARGET_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "model_target"
@@ -89,6 +98,11 @@ DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR = (
 DEFAULT_REFINED_METHOD_PROPOSAL_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "refined_method_proposal"
 )
+DEFAULT_RISK_CAPPED_CONFIG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_limited_config"
+DEFAULT_RISK_CAPPED_LIMITED_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_limited"
+DEFAULT_RISK_CAPPED_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_backfill"
+DEFAULT_RISK_CAPPED_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_comparison"
+DEFAULT_RISK_CAPPED_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_review"
 
 AI_AFTER_CHATGPT_START = date(2022, 12, 1)
 
@@ -132,6 +146,14 @@ RISK_EVENT_LOW_CASH_WEIGHT = 0.10
 
 # Reporting-only alternative review bucket for method comparison labels.
 ALTERNATIVE_RETURN_HIGH_EXPECTATION_THRESHOLD = 0.10
+
+# Reporting-only preservation floor for risk-capped method review. It labels
+# whether drawdown/exposure improvement sacrificed too much return; it does not
+# approve production weights or size a position.
+RISK_CAPPED_ACCEPTABLE_RETURN_DELTA_FLOOR = -0.05
+
+# Reporting-only threshold for treating tiny exposure changes as unchanged.
+RISK_CAPPED_EXPOSURE_CHANGE_TOLERANCE = 0.001
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -212,6 +234,187 @@ def validate_model_target_config(path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH) 
     )
 
 
+def load_risk_capped_limited_config(
+    path: Path = DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    _assert_risk_capped_limited_config_safe(payload)
+    return payload
+
+
+def validate_risk_capped_limited_config(
+    path: Path = DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH,
+    *,
+    model_config_path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    payload: dict[str, Any] = {}
+    model_config: dict[str, Any] = {}
+    try:
+        payload = load_risk_capped_limited_config(path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("config_loads", False, str(exc)))
+    try:
+        model_config = load_model_target_config(model_config_path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("model_config_loads", False, str(exc)))
+    if payload:
+        method = _mapping(payload.get("method"))
+        caps = _mapping(payload.get("caps"))
+        delta_caps = _mapping(payload.get("delta_caps"))
+        safety = _mapping(payload.get("safety"))
+        model_constraints = _constraints(model_config)
+        universe = _risk_capped_symbol_universe(model_config, payload)
+        reallocation = _mapping(payload.get("reallocation"))
+        destinations = _texts(reallocation.get("excess_weight_destination"))
+        max_semi = _float(caps.get("max_semiconductor_weight"))
+        model_max_semi = _float(model_constraints.get("max_semiconductor_weight"), 1.0)
+        checks.extend(
+            [
+                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
+                _check(
+                    "method_name",
+                    method.get("name") == "risk_capped_limited_adjustment",
+                    _text(method.get("name")),
+                ),
+                _check(
+                    "base_method_limited_adjustment",
+                    method.get("base_method") == "limited_adjustment",
+                    _text(method.get("base_method")),
+                ),
+                _check(
+                    "research_target_only",
+                    method.get("mode") == "research_target_only"
+                    and method.get("not_official_target_weights") is True
+                    and method.get("paper_shadow_only") is True,
+                    "",
+                ),
+                _check(
+                    "max_semiconductor_not_wider_than_model_target",
+                    max_semi <= model_max_semi,
+                    f"risk_capped={max_semi};model_target={model_max_semi}",
+                ),
+                _check(
+                    "min_cash_non_negative",
+                    _float(caps.get("min_cash_weight")) >= 0.0,
+                    _text(caps.get("min_cash_weight")),
+                ),
+                _check(
+                    "caps_within_bounds",
+                    _risk_capped_caps_within_bounds(caps, delta_caps),
+                    "",
+                ),
+                _check(
+                    "allocation_possible",
+                    _risk_capped_allocation_possible(caps, universe),
+                    ",".join(sorted(universe)),
+                ),
+                _check(
+                    "contextual_caps_not_relaxed",
+                    _risk_capped_contextual_caps_not_relaxed(payload),
+                    "",
+                ),
+                _check(
+                    "reallocation_destinations_in_universe",
+                    bool(destinations) and all(item.upper() in universe for item in destinations),
+                    ",".join(destinations),
+                ),
+                _check(
+                    "fallback_destination_in_universe",
+                    _text(reallocation.get("fallback_destination"), "CASH").upper() in universe,
+                    _text(reallocation.get("fallback_destination")),
+                ),
+                _check("safety_locked", _safety_config_locked(safety), ""),
+            ]
+        )
+    return _validation_payload(
+        "etf_dynamic_v3_risk_capped_limited_config_validation",
+        "risk_capped_limited_config",
+        checks,
+        extra={"config_path": str(path), "model_config_path": str(model_config_path)},
+    )
+
+
+def build_risk_capped_limited_config_report(
+    *,
+    config_path: Path = DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH,
+    model_config_path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH,
+    output_dir: Path = DEFAULT_RISK_CAPPED_CONFIG_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_risk_capped_limited_config(config_path)
+    validation = validate_risk_capped_limited_config(
+        config_path, model_config_path=model_config_path
+    )
+    config_validation_id = _stable_id(
+        "risk-capped-config",
+        config_path,
+        model_config_path,
+        validation["status"],
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / config_validation_id)
+    root.mkdir(parents=True, exist_ok=False)
+    normalized = _normalized_risk_capped_config(config)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_risk_capped_limited_config_manifest",
+        "config_validation_id": root.name,
+        "generated_at": generated.isoformat(),
+        "status": validation["status"],
+        "config_path": str(config_path),
+        "model_config_path": str(model_config_path),
+        "base_method": _mapping(config.get("method")).get("base_method"),
+        "target_method": _mapping(config.get("method")).get("name"),
+        "risk_capped_config_manifest_path": str(root / "risk_capped_config_manifest.json"),
+        "normalized_risk_capped_config_path": str(root / "normalized_risk_capped_config.yaml"),
+        "risk_capped_config_report_path": str(root / "risk_capped_config_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "risk_capped_config_manifest.json", manifest)
+    _write_text(
+        root / "normalized_risk_capped_config.yaml",
+        yaml.safe_dump(normalized, sort_keys=False, allow_unicode=True),
+    )
+    _write_text(
+        root / "risk_capped_config_report.md",
+        render_risk_capped_limited_config_report(manifest, normalized, validation),
+    )
+    _write_latest_pointer(
+        "latest_risk_capped_limited_config",
+        root.name,
+        root / "risk_capped_config_manifest.json",
+    )
+    return {
+        "config_validation_id": root.name,
+        "config_dir": root,
+        "manifest": manifest,
+        "normalized_config": normalized,
+        "validation": validation,
+    }
+
+
+def risk_capped_limited_config_report_payload(
+    *,
+    config_validation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RISK_CAPPED_CONFIG_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=config_validation_id,
+        latest_pointer="latest_risk_capped_limited_config",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="risk_capped_config_manifest.json",
+    )
+    return {
+        **_read_json(root / "risk_capped_config_manifest.json"),
+        "config_dir": str(root),
+        "normalized_config": _load_yaml_mapping(root / "normalized_risk_capped_config.yaml"),
+    }
+
+
 def generate_model_target(
     *,
     config_path: Path = DEFAULT_MODEL_TARGET_CONFIG_PATH,
@@ -259,11 +462,20 @@ def generate_model_target(
         limited,
         _mapping(_mapping(config.get("method_policy")).get("defensive_limited_adjustment")),
     )
+    risk_capped = _risk_capped_limited_weights_for_model_target(
+        base_weights=limited,
+        previous_weights=baseline,
+        risk_config=_load_risk_capped_config_if_available(config),
+        model_config=config,
+        as_of=target_date,
+        regime_context="normal",
+    )
     method_weights = {
         "static_baseline": baseline,
         "no_trade_baseline": baseline,
         "consensus_target": consensus,
         "limited_adjustment": limited,
+        "risk_capped_limited_adjustment": risk_capped,
         "defensive_limited_adjustment": defensive,
         "equal_weight_shadow_candidates": equal_weight,
         "selected_top_candidate": top_candidate,
@@ -1312,6 +1524,10 @@ def run_paper_shadow_backfill(
     initial_weights = _backfill_initial_weights(config)
     states: list[dict[str, Any]] = []
     ledger: list[dict[str, Any]] = []
+    risk_config = _load_risk_capped_config_if_available(config)
+    model_config = load_model_target_config(
+        _resolve_project_path(source.get("model_target_config"), DEFAULT_MODEL_TARGET_CONFIG_PATH)
+    )
     method_state = {
         method: {
             "weights": dict(initial_weights),
@@ -1333,8 +1549,25 @@ def run_paper_shadow_backfill(
             rebalance_event = False
             before_trade = dict(drifted)
             after_weights = dict(drifted)
+            cap_events: list[dict[str, Any]] = []
+            reallocation_events: list[dict[str, Any]] = []
+            cap_reason_summary: dict[str, Any] = {}
             if is_calendar_rebalance and method != "no_trade_baseline":
-                after_weights = _normalize_weights(target)
+                if method == "risk_capped_limited_adjustment":
+                    cap_result = _apply_risk_capped_limited_adjustment(
+                        as_of=current_date,
+                        base_weights=target_weights["limited_adjustment"],
+                        previous_weights=before_trade,
+                        risk_config=risk_config,
+                        model_config=model_config,
+                        regime_context=_risk_capped_regime_context_for_return(return_row, config),
+                    )
+                    after_weights = cap_result["capped_weights"]
+                    cap_events = _records(cap_result.get("cap_events"))
+                    reallocation_events = _records(cap_result.get("reallocation_events"))
+                    cap_reason_summary = _mapping(cap_result.get("cap_reason_summary"))
+                else:
+                    after_weights = _normalize_weights(target)
                 turnover = _turnover(before_trade, after_weights)
                 rebalance_event = True
                 ledger.append(
@@ -1347,6 +1580,9 @@ def run_paper_shadow_backfill(
                         "deltas": _weight_deltas(before_trade, after_weights),
                         "turnover": turnover,
                         "trade_type": "paper_rebalance",
+                        "cap_events": cap_events,
+                        "reallocation_events": reallocation_events,
+                        "cap_reason_summary": cap_reason_summary,
                         "broker_action_taken": False,
                         "order_ticket_generated": False,
                         **SYSTEM_TARGET_SAFETY,
@@ -1383,6 +1619,7 @@ def run_paper_shadow_backfill(
                     "drawdown": round(drawdown, 10),
                     "turnover": round(turnover, 10),
                     "rebalance_event": rebalance_event,
+                    "cap_event_count": len(cap_events) if rebalance_event else 0,
                     "research_target_only": True,
                     "not_official_target_weights": True,
                     "broker_action_taken": False,
@@ -3693,6 +3930,878 @@ def validate_refined_method_proposal_artifact(
     )
 
 
+def generate_risk_capped_limited_target(
+    *,
+    target_id: str,
+    config_path: Path = DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    output_dir: Path = DEFAULT_RISK_CAPPED_LIMITED_DIR,
+    regime_context: str = "normal",
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_risk_capped_limited_config(config_path)
+    model_target = model_target_report_payload(target_id=target_id, output_dir=model_target_dir)
+    model_config = load_model_target_config(
+        _resolve_project_path(model_target.get("config_path"), DEFAULT_MODEL_TARGET_CONFIG_PATH)
+    )
+    method_weights = _mapping(
+        _mapping(model_target.get("model_target_weights")).get("method_weights")
+    )
+    base_weights = _normalize_weights(_mapping(method_weights.get("limited_adjustment")))
+    previous_weights = _normalize_weights(
+        _mapping(method_weights.get("static_baseline")) or base_weights
+    )
+    as_of = _coerce_date(model_target.get("as_of"), generated.date())
+    cap_result = _apply_risk_capped_limited_adjustment(
+        as_of=as_of,
+        base_weights=base_weights,
+        previous_weights=previous_weights,
+        risk_config=config,
+        model_config=model_config,
+        regime_context=regime_context,
+    )
+    target_row = {
+        "as_of": as_of.isoformat(),
+        "base_method": "limited_adjustment",
+        "target_method": "risk_capped_limited_adjustment",
+        "base_weights": base_weights,
+        "capped_weights": cap_result["capped_weights"],
+        "active_caps": cap_result["active_caps"],
+        "regime_context": cap_result["regime_context"],
+        "research_target_only": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    risk_capped_id = _stable_id(
+        "risk-capped-limited",
+        target_id,
+        config_path,
+        target_row["capped_weights"],
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / risk_capped_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_risk_capped_limited_manifest",
+        "risk_capped_id": root.name,
+        "target_id": target_id,
+        "generated_at": generated.isoformat(),
+        "as_of": as_of.isoformat(),
+        "status": cap_result["cap_reason_summary"]["cap_status"],
+        "base_method": "limited_adjustment",
+        "target_method": "risk_capped_limited_adjustment",
+        "config_path": str(config_path),
+        "risk_capped_limited_manifest_path": str(root / "risk_capped_limited_manifest.json"),
+        "risk_capped_target_weights_path": str(root / "risk_capped_target_weights.jsonl"),
+        "cap_events_path": str(root / "cap_events.jsonl"),
+        "reallocation_events_path": str(root / "reallocation_events.jsonl"),
+        "cap_reason_summary_path": str(root / "cap_reason_summary.json"),
+        "risk_capped_limited_report_path": str(root / "risk_capped_limited_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "risk_capped_limited_manifest.json", manifest)
+    _write_jsonl(root / "risk_capped_target_weights.jsonl", [target_row])
+    _write_jsonl(root / "cap_events.jsonl", _records(cap_result.get("cap_events")))
+    _write_jsonl(
+        root / "reallocation_events.jsonl",
+        _records(cap_result.get("reallocation_events")),
+    )
+    _write_json(root / "cap_reason_summary.json", cap_result["cap_reason_summary"])
+    _write_text(
+        root / "risk_capped_limited_report.md",
+        render_risk_capped_limited_report(manifest, target_row, cap_result["cap_reason_summary"]),
+    )
+    _write_latest_pointer(
+        "latest_risk_capped_limited", root.name, root / "risk_capped_limited_manifest.json"
+    )
+    return {
+        "risk_capped_id": root.name,
+        "risk_capped_dir": root,
+        "manifest": manifest,
+        "risk_capped_target_weights": [target_row],
+        "cap_events": _records(cap_result.get("cap_events")),
+        "reallocation_events": _records(cap_result.get("reallocation_events")),
+        "cap_reason_summary": cap_result["cap_reason_summary"],
+    }
+
+
+def risk_capped_limited_report_payload(
+    *,
+    risk_capped_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RISK_CAPPED_LIMITED_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=risk_capped_id,
+        latest_pointer="latest_risk_capped_limited",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="risk_capped_limited_manifest.json",
+    )
+    return {
+        **_read_json(root / "risk_capped_limited_manifest.json"),
+        "risk_capped_target_weights": _read_jsonl(root / "risk_capped_target_weights.jsonl"),
+        "cap_events": _read_jsonl(root / "cap_events.jsonl"),
+        "reallocation_events": _read_jsonl(root / "reallocation_events.jsonl"),
+        "cap_reason_summary": _read_json(root / "cap_reason_summary.json"),
+        "risk_capped_dir": str(root),
+    }
+
+
+def validate_risk_capped_limited_artifact(
+    *,
+    risk_capped_id: str,
+    output_dir: Path = DEFAULT_RISK_CAPPED_LIMITED_DIR,
+) -> dict[str, Any]:
+    root = output_dir / risk_capped_id
+    manifest = _read_optional_json(root / "risk_capped_limited_manifest.json") or {}
+    rows = _read_jsonl(root / "risk_capped_target_weights.jsonl")
+    summary = _read_optional_json(root / "cap_reason_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "risk_capped_limited_manifest.json",
+            "risk_capped_target_weights.jsonl",
+            "cap_events.jsonl",
+            "reallocation_events.jsonl",
+            "cap_reason_summary.json",
+            "risk_capped_limited_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("risk_capped_id_matches", manifest.get("risk_capped_id") == risk_capped_id, ""),
+            _check(
+                "target_method_present",
+                all(row.get("target_method") == "risk_capped_limited_adjustment" for row in rows),
+                "",
+            ),
+            _check(
+                "weights_sum_to_one",
+                all(_weights_sum_to_one(row.get("capped_weights")) for row in rows),
+                "",
+            ),
+            _check(
+                "cap_status_valid",
+                summary.get("cap_status") in {"PASS", "PASS_WITH_WARNINGS", "NO_CAPS_TRIGGERED"},
+                _text(summary.get("cap_status")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *rows), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_risk_capped_limited_validation",
+        risk_capped_id,
+        checks,
+    )
+
+
+def run_risk_capped_backfill(
+    *,
+    config_path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
+    output_dir: Path = DEFAULT_RISK_CAPPED_BACKFILL_DIR,
+    paper_shadow_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_backfill = run_paper_shadow_backfill(
+        config_path=config_path,
+        output_dir=paper_shadow_backfill_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+        generated_at=generated,
+    )
+    states = [
+        row
+        for row in source_backfill["backfill_method_states"]
+        if row.get("target_method") == "risk_capped_limited_adjustment"
+    ]
+    ledger = [
+        row
+        for row in source_backfill["backfill_trade_ledger"]
+        if row.get("target_method") == "risk_capped_limited_adjustment"
+    ]
+    cap_events = [
+        event
+        for row in ledger
+        for event in _records(row.get("cap_events"))
+    ]
+    reallocation_events = [
+        event
+        for row in ledger
+        for event in _records(row.get("reallocation_events"))
+    ]
+    summary = _risk_capped_backfill_summary(
+        source_backfill["manifest"],
+        states,
+        ledger,
+        cap_events,
+        reallocation_events,
+    )
+    backfill_id = _stable_id(
+        "risk-capped-backfill",
+        source_backfill["backfill_id"],
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_risk_capped_backfill_manifest",
+        "risk_capped_backfill_id": root.name,
+        "source_paper_shadow_backfill_id": source_backfill["backfill_id"],
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if states else "FAIL",
+        "method": "risk_capped_limited_adjustment",
+        "market_regime": source_backfill["manifest"].get("market_regime", "ai_after_chatgpt"),
+        "date_start": summary["date_start"],
+        "date_end": summary["date_end"],
+        "risk_capped_backfill_manifest_path": str(root / "risk_capped_backfill_manifest.json"),
+        "risk_capped_method_states_path": str(root / "risk_capped_method_states.jsonl"),
+        "risk_capped_trade_ledger_path": str(root / "risk_capped_trade_ledger.jsonl"),
+        "risk_capped_backfill_summary_path": str(root / "risk_capped_backfill_summary.json"),
+        "risk_capped_backfill_report_path": str(root / "risk_capped_backfill_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "risk_capped_backfill_manifest.json", manifest)
+    _write_jsonl(root / "risk_capped_method_states.jsonl", states)
+    _write_jsonl(root / "risk_capped_trade_ledger.jsonl", ledger)
+    _write_json(root / "risk_capped_backfill_summary.json", summary)
+    _write_text(
+        root / "risk_capped_backfill_report.md",
+        render_risk_capped_backfill_report(manifest, summary),
+    )
+    _write_latest_pointer(
+        "latest_risk_capped_backfill", root.name, root / "risk_capped_backfill_manifest.json"
+    )
+    return {
+        "risk_capped_backfill_id": root.name,
+        "risk_capped_backfill_dir": root,
+        "source_paper_shadow_backfill": source_backfill,
+        "manifest": manifest,
+        "risk_capped_method_states": states,
+        "risk_capped_trade_ledger": ledger,
+        "risk_capped_backfill_summary": summary,
+        "cap_events": cap_events,
+        "reallocation_events": reallocation_events,
+    }
+
+
+def risk_capped_backfill_report_payload(
+    *,
+    backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RISK_CAPPED_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=backfill_id,
+        latest_pointer="latest_risk_capped_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="risk_capped_backfill_manifest.json",
+    )
+    return {
+        **_read_json(root / "risk_capped_backfill_manifest.json"),
+        "risk_capped_method_states": _read_jsonl(root / "risk_capped_method_states.jsonl"),
+        "risk_capped_trade_ledger": _read_jsonl(root / "risk_capped_trade_ledger.jsonl"),
+        "risk_capped_backfill_summary": _read_json(root / "risk_capped_backfill_summary.json"),
+        "risk_capped_backfill_dir": str(root),
+    }
+
+
+def validate_risk_capped_backfill_artifact(
+    *,
+    backfill_id: str,
+    output_dir: Path = DEFAULT_RISK_CAPPED_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / backfill_id
+    manifest = _read_optional_json(root / "risk_capped_backfill_manifest.json") or {}
+    states = _read_jsonl(root / "risk_capped_method_states.jsonl")
+    ledger = _read_jsonl(root / "risk_capped_trade_ledger.jsonl")
+    summary = _read_optional_json(root / "risk_capped_backfill_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "risk_capped_backfill_manifest.json",
+            "risk_capped_method_states.jsonl",
+            "risk_capped_trade_ledger.jsonl",
+            "risk_capped_backfill_summary.json",
+            "risk_capped_backfill_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "backfill_id_matches",
+                manifest.get("risk_capped_backfill_id") == backfill_id,
+                "",
+            ),
+            _check("states_present", bool(states), ""),
+            _check(
+                "method_only",
+                all(row.get("target_method") == "risk_capped_limited_adjustment" for row in states),
+                "",
+            ),
+            _check("trade_ledger_present", bool(ledger), ""),
+            _check(
+                "data_quality_visible",
+                summary.get("data_quality") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(summary.get("data_quality")),
+            ),
+            _check(
+                "broker_action_taken_false",
+                summary.get("broker_action_taken") is False
+                and all(row.get("broker_action_taken") is False for row in ledger),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *states, *ledger), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_risk_capped_backfill_validation",
+        backfill_id,
+        checks,
+    )
+
+
+def run_risk_capped_comparison(
+    *,
+    risk_capped_backfill_id: str,
+    baseline_backfill_id: str,
+    risk_capped_backfill_dir: Path = DEFAULT_RISK_CAPPED_BACKFILL_DIR,
+    baseline_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_RISK_CAPPED_COMPARISON_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    risk_backfill = risk_capped_backfill_report_payload(
+        backfill_id=risk_capped_backfill_id,
+        output_dir=risk_capped_backfill_dir,
+    )
+    baseline = paper_shadow_backfill_report_payload(
+        backfill_id=baseline_backfill_id,
+        output_dir=baseline_backfill_dir,
+    )
+    risk_states = _records(risk_backfill.get("risk_capped_method_states"))
+    baseline_states = _records(baseline.get("backfill_method_states"))
+    combined_states = [*baseline_states, *risk_states]
+    metrics = _risk_capped_vs_limited_metrics(risk_states, baseline_states)
+    regime = _risk_capped_regime_comparison(combined_states, baseline)
+    rolling = _risk_capped_rolling_comparison(combined_states, baseline)
+    stability = _risk_capped_stability_comparison(risk_states, baseline_states)
+    comparison_id = _stable_id(
+        "risk-capped-comparison",
+        risk_capped_backfill_id,
+        baseline_backfill_id,
+        metrics,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / comparison_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_risk_capped_comparison_manifest",
+        "comparison_id": root.name,
+        "risk_capped_backfill_id": risk_capped_backfill_id,
+        "baseline_backfill_id": baseline_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "date_start": baseline.get("date_start"),
+        "date_end": baseline.get("date_end"),
+        "risk_capped_comparison_manifest_path": str(root / "risk_capped_comparison_manifest.json"),
+        "risk_capped_vs_limited_metrics_path": str(root / "risk_capped_vs_limited_metrics.json"),
+        "risk_capped_regime_comparison_path": str(root / "risk_capped_regime_comparison.json"),
+        "risk_capped_rolling_comparison_path": str(root / "risk_capped_rolling_comparison.json"),
+        "risk_capped_stability_comparison_path": str(
+            root / "risk_capped_stability_comparison.json"
+        ),
+        "risk_capped_comparison_report_path": str(root / "risk_capped_comparison_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "risk_capped_comparison_manifest.json", manifest)
+    _write_json(root / "risk_capped_vs_limited_metrics.json", metrics)
+    _write_json(root / "risk_capped_regime_comparison.json", regime)
+    _write_json(root / "risk_capped_rolling_comparison.json", rolling)
+    _write_json(root / "risk_capped_stability_comparison.json", stability)
+    _write_text(
+        root / "risk_capped_comparison_report.md",
+        render_risk_capped_comparison_report(manifest, metrics, regime, rolling, stability),
+    )
+    _write_latest_pointer(
+        "latest_risk_capped_comparison", root.name, root / "risk_capped_comparison_manifest.json"
+    )
+    return {
+        "comparison_id": root.name,
+        "comparison_dir": root,
+        "manifest": manifest,
+        "risk_capped_vs_limited_metrics": metrics,
+        "risk_capped_regime_comparison": regime,
+        "risk_capped_rolling_comparison": rolling,
+        "risk_capped_stability_comparison": stability,
+    }
+
+
+def risk_capped_comparison_report_payload(
+    *,
+    comparison_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RISK_CAPPED_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=comparison_id,
+        latest_pointer="latest_risk_capped_comparison",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="risk_capped_comparison_manifest.json",
+    )
+    return {
+        **_read_json(root / "risk_capped_comparison_manifest.json"),
+        "risk_capped_vs_limited_metrics": _read_json(root / "risk_capped_vs_limited_metrics.json"),
+        "risk_capped_regime_comparison": _read_json(root / "risk_capped_regime_comparison.json"),
+        "risk_capped_rolling_comparison": _read_json(root / "risk_capped_rolling_comparison.json"),
+        "risk_capped_stability_comparison": _read_json(
+            root / "risk_capped_stability_comparison.json"
+        ),
+        "comparison_dir": str(root),
+    }
+
+
+def validate_risk_capped_comparison_artifact(
+    *,
+    comparison_id: str,
+    output_dir: Path = DEFAULT_RISK_CAPPED_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = output_dir / comparison_id
+    manifest = _read_optional_json(root / "risk_capped_comparison_manifest.json") or {}
+    metrics = _read_optional_json(root / "risk_capped_vs_limited_metrics.json") or {}
+    regime = _read_optional_json(root / "risk_capped_regime_comparison.json") or {}
+    rolling = _read_optional_json(root / "risk_capped_rolling_comparison.json") or {}
+    stability = _read_optional_json(root / "risk_capped_stability_comparison.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "risk_capped_comparison_manifest.json",
+            "risk_capped_vs_limited_metrics.json",
+            "risk_capped_regime_comparison.json",
+            "risk_capped_rolling_comparison.json",
+            "risk_capped_stability_comparison.json",
+            "risk_capped_comparison_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("comparison_id_matches", manifest.get("comparison_id") == comparison_id, ""),
+            _check(
+                "comparison_methods_valid",
+                _mapping(metrics.get("comparison")).get("method_a")
+                == "risk_capped_limited_adjustment"
+                and _mapping(metrics.get("comparison")).get("method_b") == "limited_adjustment",
+                "",
+            ),
+            _check("regime_comparison_present", bool(_records(regime.get("regimes"))), ""),
+            _check(
+                "rolling_comparison_present",
+                rolling.get("rolling_windows_total") is not None,
+                "",
+            ),
+            _check(
+                "stability_conclusion_valid",
+                stability.get("stability_conclusion")
+                in {"IMPROVED", "WORSE", "MIXED", "INSUFFICIENT_DATA"},
+                _text(stability.get("stability_conclusion")),
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, metrics, regime, rolling, stability),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_risk_capped_comparison_validation",
+        comparison_id,
+        checks,
+    )
+
+
+def build_risk_capped_review_pack(
+    *,
+    comparison_id: str,
+    risk_capped_backfill_id: str,
+    comparison_dir: Path = DEFAULT_RISK_CAPPED_COMPARISON_DIR,
+    risk_capped_backfill_dir: Path = DEFAULT_RISK_CAPPED_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_RISK_CAPPED_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    comparison = risk_capped_comparison_report_payload(
+        comparison_id=comparison_id,
+        output_dir=comparison_dir,
+    )
+    backfill = risk_capped_backfill_report_payload(
+        backfill_id=risk_capped_backfill_id,
+        output_dir=risk_capped_backfill_dir,
+    )
+    decision = _risk_capped_review_decision(comparison, backfill)
+    review_id = _stable_id(
+        "risk-capped-review",
+        comparison_id,
+        risk_capped_backfill_id,
+        decision,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["review_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_risk_capped_review_manifest",
+        "review_id": root.name,
+        "comparison_id": comparison_id,
+        "risk_capped_backfill_id": risk_capped_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "risk_capped_review_manifest_path": str(root / "risk_capped_review_manifest.json"),
+        "risk_capped_decision_path": str(root / "risk_capped_decision.json"),
+        "owner_risk_capped_checklist_path": str(root / "owner_risk_capped_checklist.md"),
+        "risk_capped_review_report_path": str(root / "risk_capped_review_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "risk_capped_review_manifest.json", manifest)
+    _write_json(root / "risk_capped_decision.json", decision)
+    _write_text(
+        root / "owner_risk_capped_checklist.md",
+        render_risk_capped_owner_checklist(decision),
+    )
+    _write_text(
+        root / "risk_capped_review_report.md",
+        render_risk_capped_review_report(manifest, decision, comparison, backfill),
+    )
+    _write_text(
+        root / "reader_brief_section.md",
+        render_risk_capped_review_reader_brief(decision),
+    )
+    _write_latest_pointer(
+        "latest_risk_capped_review", root.name, root / "risk_capped_review_manifest.json"
+    )
+    return {
+        "review_id": root.name,
+        "review_dir": root,
+        "manifest": manifest,
+        "risk_capped_decision": decision,
+        "reader_brief_section": render_risk_capped_review_reader_brief(decision),
+    }
+
+
+def risk_capped_review_report_payload(
+    *,
+    review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RISK_CAPPED_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=review_id,
+        latest_pointer="latest_risk_capped_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="risk_capped_review_manifest.json",
+    )
+    return {
+        **_read_json(root / "risk_capped_review_manifest.json"),
+        "risk_capped_decision": _read_json(root / "risk_capped_decision.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "review_dir": str(root),
+    }
+
+
+def validate_risk_capped_review_artifact(
+    *,
+    review_id: str,
+    output_dir: Path = DEFAULT_RISK_CAPPED_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / review_id
+    manifest = _read_optional_json(root / "risk_capped_review_manifest.json") or {}
+    decision = _read_optional_json(root / "risk_capped_decision.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "risk_capped_review_manifest.json",
+            "risk_capped_decision.json",
+            "owner_risk_capped_checklist.md",
+            "risk_capped_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "review_id_matches",
+                manifest.get("review_id") == review_id and decision.get("review_id") == review_id,
+                "",
+            ),
+            _check(
+                "decision_valid",
+                decision.get("decision")
+                in {
+                    "PROMOTE_TO_RECOMMENDED_RESEARCH",
+                    "CONTINUE_OBSERVATION",
+                    "REVIEW_REQUIRED",
+                    "REJECT",
+                },
+                _text(decision.get("decision")),
+            ),
+            _check("research_target_only_true", decision.get("research_target_only") is True, ""),
+            _check(
+                "not_official_target_weights_true",
+                decision.get("not_official_target_weights") is True,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                decision.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", decision.get("production_effect") == "none", ""),
+            _check(
+                "requires_forward_confirmation_true",
+                decision.get("requires_forward_confirmation") is True,
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, decision), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_risk_capped_review_validation",
+        review_id,
+        checks,
+    )
+
+
+def render_risk_capped_limited_config_report(
+    manifest: Mapping[str, Any],
+    config: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> str:
+    caps = _mapping(config.get("caps"))
+    contextual = _mapping(config.get("contextual_caps"))
+    reallocation = _mapping(config.get("reallocation"))
+    return "\n".join(
+        [
+            f"# Risk-Capped Limited Config {manifest.get('config_validation_id')}",
+            "",
+            f"- base_method: {_mapping(config.get('method')).get('base_method')}",
+            "- target_method: risk_capped_limited_adjustment",
+            f"- validation_status: {validation.get('status')}",
+            f"- max_total_risk_asset_weight: {caps.get('max_total_risk_asset_weight')}",
+            f"- max_semiconductor_weight: {caps.get('max_semiconductor_weight')}",
+            f"- max_single_symbol_weight: {caps.get('max_single_symbol_weight')}",
+            f"- min_cash_weight: {caps.get('min_cash_weight')}",
+            f"- contextual_caps: {', '.join(sorted(contextual))}",
+            f"- excess_weight_destination: "
+            f"{', '.join(_texts(reallocation.get('excess_weight_destination')))}",
+            f"- fallback_destination: {reallocation.get('fallback_destination')}",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- paper_shadow_only: true",
+            "- broker_action_allowed: false",
+            "- official_target_weights_written: false",
+            "- production_effect: none",
+            "",
+            "该配置只定义 research-only risk cap policy。它不会触发 broker，也不会写入 "
+            "official target weights。",
+            "",
+        ]
+    )
+
+
+def render_risk_capped_limited_report(
+    manifest: Mapping[str, Any],
+    target_row: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Risk-Capped Limited Target {manifest.get('risk_capped_id')}",
+            "",
+            f"- as_of: {manifest.get('as_of')}",
+            f"- base_method: {manifest.get('base_method')}",
+            f"- target_method: {manifest.get('target_method')}",
+            f"- regime_context: {target_row.get('regime_context')}",
+            f"- cap_status: {summary.get('cap_status')}",
+            f"- cap_event_count: {summary.get('total_cap_events')}",
+            f"- active_caps: {', '.join(_texts(target_row.get('active_caps')))}",
+            f"- total_reallocated_to_cash: {summary.get('total_reallocated_to_cash')}",
+            f"- total_reallocated_to_defensive: {summary.get('total_reallocated_to_defensive')}",
+            "- weights_sum_preserved: true",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "报告回答：触发 cap 的日期在 `cap_events.jsonl` 中；主要 cap 类型在 "
+            "`cap_reason_summary.json` 中；半导体暴露和 cash buffer 变化可由 "
+            "`base_weights` 与 `capped_weights` 对比；本链路不会触发 broker。",
+            "",
+        ]
+    )
+
+
+def render_risk_capped_backfill_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Risk-Capped Paper Shadow Backfill {manifest.get('risk_capped_backfill_id')}",
+            "",
+            f"- method: {summary.get('method')}",
+            f"- date_range: {summary.get('date_start')} to {summary.get('date_end')}",
+            f"- rebalance_count: {summary.get('rebalance_count')}",
+            f"- cap_event_count: {summary.get('cap_event_count')}",
+            f"- total_turnover: {summary.get('total_turnover')}",
+            f"- avg_semiconductor_weight: {summary.get('avg_semiconductor_weight')}",
+            f"- max_semiconductor_weight: {summary.get('max_semiconductor_weight')}",
+            f"- avg_cash_weight: {summary.get('avg_cash_weight')}",
+            f"- min_cash_weight: {summary.get('min_cash_weight')}",
+            f"- data_quality: {summary.get('data_quality')}",
+            "- broker_action_taken: false",
+            "- not_official_target_weights: true",
+            "- production_effect: none",
+            "",
+            "该 backfill 覆盖 ai_after_chatgpt regime，用于评估 risk-capped method 的历史 "
+            "research behavior，不是 production backtest 或交易指令。",
+            "",
+        ]
+    )
+
+
+def render_risk_capped_comparison_report(
+    manifest: Mapping[str, Any],
+    metrics: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    rolling: Mapping[str, Any],
+    stability: Mapping[str, Any],
+) -> str:
+    values = _mapping(metrics.get("metrics"))
+    sideways = next(
+        (
+            row
+            for row in _records(regime.get("regimes"))
+            if row.get("regime") == "sideways_choppy"
+        ),
+        {},
+    )
+    return "\n".join(
+        [
+            f"# Risk-Capped Comparison {manifest.get('comparison_id')}",
+            "",
+            f"- methods: {metrics.get('comparison')}",
+            f"- return_delta_vs_limited: {values.get('total_return_delta')}",
+            f"- annualized_return_delta_vs_limited: {values.get('annualized_return_delta')}",
+            f"- max_drawdown_delta_vs_limited: {values.get('max_drawdown_delta')}",
+            f"- realized_volatility_delta_vs_limited: {values.get('realized_volatility_delta')}",
+            f"- turnover_delta_vs_limited: {values.get('turnover_delta')}",
+            f"- avg_semiconductor_weight_delta: {values.get('avg_semiconductor_weight_delta')}",
+            f"- max_semiconductor_weight_delta: {values.get('max_semiconductor_weight_delta')}",
+            f"- avg_cash_weight_delta: {values.get('avg_cash_weight_delta')}",
+            f"- sideways_choppy_conclusion: {sideways.get('conclusion', 'MISSING')}",
+            f"- rolling_stability_delta: {rolling.get('stability_delta')}",
+            f"- stability_conclusion: {stability.get('stability_conclusion')}",
+            f"- conclusion: {metrics.get('conclusion')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "结论只用于 research method review。即使 risk-capped 优于 limited_adjustment，"
+            "仍不代表 official target weights 或 broker action 获批。",
+            "",
+        ]
+    )
+
+
+def render_risk_capped_owner_checklist(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Owner Risk-Capped Checklist {decision.get('review_id', '')}",
+            "",
+            "- [ ] 是否接受 risk_capped_limited_adjustment 作为新的 primary research method？",
+            "- [ ] 是否接受 limited_adjustment 降为 secondary research method？",
+            "- [ ] 是否接受 consensus_target 继续作为 reference-only？",
+            "- [ ] 是否接受 defensive_limited_adjustment 继续 research-only？",
+            "- [ ] 是否要求 forward confirmation 后再进行下一步？",
+            "- [ ] 是否确认不写 official target weights？",
+            "- [ ] 是否确认 no broker / no production？",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            "- requires_forward_confirmation: true",
+            "",
+        ]
+    )
+
+
+def render_risk_capped_review_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    comparison: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+) -> str:
+    improvements = _mapping(decision.get("improvements_vs_limited"))
+    summary = _mapping(backfill.get("risk_capped_backfill_summary"))
+    metrics = _mapping(_mapping(comparison.get("risk_capped_vs_limited_metrics")).get("metrics"))
+    return "\n".join(
+        [
+            f"# Risk-Capped Research Method Review {manifest.get('review_id')}",
+            "",
+            f"- candidate_method: {decision.get('candidate_method')}",
+            f"- base_method: {decision.get('base_method')}",
+            f"- decision: {decision.get('decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- max_drawdown: {improvements.get('max_drawdown')}",
+            f"- rolling_consistency: {improvements.get('rolling_consistency')}",
+            f"- semiconductor_exposure: {improvements.get('semiconductor_exposure')}",
+            f"- return_preservation: {improvements.get('return_preservation')}",
+            f"- return_delta_vs_limited: {metrics.get('total_return_delta')}",
+            f"- drawdown_delta_vs_limited: {metrics.get('max_drawdown_delta')}",
+            f"- avg_semiconductor_weight: {summary.get('avg_semiconductor_weight')}",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "- requires_forward_confirmation: true",
+            "",
+            "该 review pack 判断 risk_capped_limited_adjustment 是否解决 "
+            "limited_adjustment 的 semiconductor exposure、drawdown 和 rolling consistency "
+            "问题。结论仍需 owner review 和 forward confirmation，不能自动成为 production "
+            "target weights。",
+            "",
+        ]
+    )
+
+
+def render_risk_capped_review_reader_brief(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Risk-Capped Research Method Review",
+            "",
+            f"- candidate_method: {decision.get('candidate_method')}",
+            f"- decision: {decision.get('decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- improvements_vs_limited: {decision.get('improvements_vs_limited')}",
+            "- research_target_only: true",
+            "- requires_forward_confirmation: true",
+            f"- next_action: {decision.get('next_action')}",
+            "",
+        ]
+    )
+
+
 def render_paper_shadow_backfill_report(
     manifest: Mapping[str, Any],
     calendar: Mapping[str, Any],
@@ -5143,11 +6252,20 @@ def _backfill_target_method_weights(config: Mapping[str, Any]) -> dict[str, dict
         limited,
         _mapping(_mapping(model_config.get("method_policy")).get("defensive_limited_adjustment")),
     )
+    risk_capped = _risk_capped_limited_weights_for_model_target(
+        base_weights=limited,
+        previous_weights=baseline,
+        risk_config=_load_risk_capped_config_if_available(config),
+        model_config=model_config,
+        as_of=AI_AFTER_CHATGPT_START,
+        regime_context="normal",
+    )
     return {
         "static_baseline": baseline,
         "no_trade_baseline": baseline,
         "consensus_target": consensus,
         "limited_adjustment": limited,
+        "risk_capped_limited_adjustment": risk_capped,
         "defensive_limited_adjustment": defensive,
         "equal_weight_shadow_candidates": equal_weight,
         "selected_top_candidate": top_candidate,
@@ -8260,6 +9378,846 @@ def _assert_paper_shadow_backfill_config_safe(payload: Mapping[str, Any]) -> Non
         raise DynamicV3SystemTargetError(f"unknown target methods: {sorted(unknown)}")
     if not _safety_config_locked(_mapping(payload.get("safety"))):
         raise DynamicV3SystemTargetError("paper shadow backfill safety fields are unsafe")
+
+
+def _assert_risk_capped_limited_config_safe(payload: Mapping[str, Any]) -> None:
+    method = _mapping(payload.get("method"))
+    if method.get("name") != "risk_capped_limited_adjustment":
+        raise DynamicV3SystemTargetError("risk-capped config method.name is invalid")
+    if method.get("base_method") != "limited_adjustment":
+        raise DynamicV3SystemTargetError(
+            "risk-capped config base_method must be limited_adjustment"
+        )
+    if method.get("mode") != "research_target_only":
+        raise DynamicV3SystemTargetError("risk-capped config must use research_target_only mode")
+    if method.get("not_official_target_weights") is not True:
+        raise DynamicV3SystemTargetError("risk-capped config must be not_official_target_weights")
+    if method.get("paper_shadow_only") is not True:
+        raise DynamicV3SystemTargetError("risk-capped config must be paper_shadow_only")
+    if not _mapping(payload.get("caps")):
+        raise DynamicV3SystemTargetError("risk-capped config caps are required")
+    if not _safety_config_locked(_mapping(payload.get("safety"))):
+        raise DynamicV3SystemTargetError("risk-capped config safety fields are unsafe")
+
+
+def _load_risk_capped_config_if_available(config: Mapping[str, Any]) -> dict[str, Any]:
+    source = _mapping(config.get("source"))
+    path = _resolve_project_path(
+        source.get("risk_capped_limited_config"),
+        DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH,
+    )
+    return load_risk_capped_limited_config(path)
+
+
+def _normalized_risk_capped_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    normalized = dict(config)
+    reallocation = dict(_mapping(config.get("reallocation")))
+    if "excess_weight_destination" in reallocation:
+        reallocation["excess_weight_destination"] = [
+            item.upper() for item in _texts(reallocation.get("excess_weight_destination"))
+        ]
+    if reallocation.get("fallback_destination"):
+        reallocation["fallback_destination"] = _text(
+            reallocation.get("fallback_destination")
+        ).upper()
+    normalized["reallocation"] = reallocation
+    normalized["safety"] = {**SYSTEM_TARGET_SAFETY, **_mapping(config.get("safety"))}
+    return normalized
+
+
+def _risk_capped_caps_within_bounds(
+    caps: Mapping[str, Any],
+    delta_caps: Mapping[str, Any],
+) -> bool:
+    cap_fields = (
+        "max_total_risk_asset_weight",
+        "max_semiconductor_weight",
+        "max_single_symbol_weight",
+        "min_cash_weight",
+    )
+    delta_fields = (
+        "max_total_risk_asset_increase_per_rebalance",
+        "max_semiconductor_increase_per_rebalance",
+        "max_single_symbol_increase_per_rebalance",
+        "max_total_adjustment_per_rebalance",
+    )
+    return all(0.0 <= _float(caps.get(field), -1.0) <= 1.0 for field in cap_fields) and all(
+        0.0 <= _float(delta_caps.get(field), -1.0) <= 1.0 for field in delta_fields
+    )
+
+
+def _risk_capped_allocation_possible(
+    caps: Mapping[str, Any],
+    universe: set[str],
+) -> bool:
+    return (
+        "CASH" in universe
+        and 0.0 <= _float(caps.get("min_cash_weight"), -1.0) <= 1.0
+        and 0.0 <= _float(caps.get("max_total_risk_asset_weight"), -1.0) <= 1.0
+        and 0.0 <= _float(caps.get("max_single_symbol_weight"), -1.0) <= 1.0
+    )
+
+
+def _risk_capped_contextual_caps_not_relaxed(config: Mapping[str, Any]) -> bool:
+    caps = _mapping(config.get("caps"))
+    delta_caps = _mapping(config.get("delta_caps"))
+    contextual = _mapping(config.get("contextual_caps"))
+    max_fields = (
+        "max_total_risk_asset_weight",
+        "max_semiconductor_weight",
+        "max_single_symbol_weight",
+    )
+    min_fields = ("min_cash_weight",)
+    delta_fields = (
+        "max_total_risk_asset_increase_per_rebalance",
+        "max_semiconductor_increase_per_rebalance",
+        "max_single_symbol_increase_per_rebalance",
+        "max_total_adjustment_per_rebalance",
+    )
+    for raw_context in contextual.values():
+        context = _mapping(raw_context)
+        if context.get("explicit_allow_relaxation") is True:
+            continue
+        for field in max_fields:
+            if field in context and _float(context.get(field)) > _float(caps.get(field), 1.0):
+                return False
+        for field in min_fields:
+            if field in context and _float(context.get(field)) < _float(caps.get(field)):
+                return False
+        for field in delta_fields:
+            if field in context and _float(context.get(field)) > _float(delta_caps.get(field), 1.0):
+                return False
+    return True
+
+
+def _risk_capped_symbol_universe(
+    model_config: Mapping[str, Any],
+    risk_config: Mapping[str, Any] | None = None,
+) -> set[str]:
+    constraints = _constraints(model_config)
+    symbols = {
+        symbol.upper()
+        for weights in (
+            _mapping(_mapping(model_config.get("baseline")).get("static_weights")),
+            {item: 0 for item in _texts(constraints.get("semiconductor_symbols"))},
+            {item: 0 for item in _texts(constraints.get("defensive_symbols"))},
+        )
+        for symbol in weights
+    }
+    risk = _mapping(risk_config)
+    reallocation = _mapping(risk.get("reallocation"))
+    symbols.update(item.upper() for item in _texts(reallocation.get("excess_weight_destination")))
+    if reallocation.get("fallback_destination"):
+        symbols.add(_text(reallocation.get("fallback_destination")).upper())
+    symbols.update({"QQQ", "SMH", "SOXX", "TLT", "CASH"})
+    return symbols
+
+
+def _risk_capped_limited_weights_for_model_target(
+    *,
+    base_weights: Mapping[str, Any],
+    previous_weights: Mapping[str, Any],
+    risk_config: Mapping[str, Any],
+    model_config: Mapping[str, Any],
+    as_of: date,
+    regime_context: str,
+) -> dict[str, float]:
+    return _apply_risk_capped_limited_adjustment(
+        as_of=as_of,
+        base_weights=base_weights,
+        previous_weights=previous_weights,
+        risk_config=risk_config,
+        model_config=model_config,
+        regime_context=regime_context,
+    )["capped_weights"]
+
+
+def _apply_risk_capped_limited_adjustment(
+    *,
+    as_of: date,
+    base_weights: Mapping[str, Any],
+    previous_weights: Mapping[str, Any],
+    risk_config: Mapping[str, Any],
+    model_config: Mapping[str, Any],
+    regime_context: str,
+) -> dict[str, Any]:
+    base = _normalize_weights(base_weights)
+    previous = _normalize_weights(previous_weights)
+    symbols = sorted(
+        set(base) | set(previous) | _risk_capped_symbol_universe(model_config, risk_config)
+    )
+    capped = {symbol: _float(base.get(symbol)) for symbol in symbols}
+    caps = _effective_risk_capped_caps(risk_config, regime_context)
+    semiconductors = _risk_capped_semiconductor_symbols(model_config)
+    defensive = _risk_capped_defensive_symbols(model_config)
+    risk_symbols = [symbol for symbol in symbols if symbol not in defensive and symbol != "CASH"]
+    cap_events: list[dict[str, Any]] = []
+    reallocation_events: list[dict[str, Any]] = []
+
+    def allocate_excess(source: str, amount: float, reason: str) -> None:
+        if amount <= 0:
+            return
+        reallocation = _mapping(risk_config.get("reallocation"))
+        destinations = _texts(reallocation.get("excess_weight_destination")) or ["CASH", "TLT"]
+        destination = destinations[0].upper() if destinations else "CASH"
+        if destination not in capped:
+            destination = _text(reallocation.get("fallback_destination"), "CASH").upper()
+        before = _float(capped.get(destination))
+        capped[destination] = round(before + amount, 10)
+        reallocation_events.append(
+            {
+                "as_of": as_of.isoformat(),
+                "excess_source": source,
+                "excess_weight": round(amount, 10),
+                "destination": destination,
+                "destination_before": round(before, 10),
+                "destination_after": round(capped[destination], 10),
+                "reason": reason,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+
+    def reduce_symbol(
+        symbol: str,
+        target: float,
+        cap_type: str,
+        cap_value: float,
+        reason: str,
+    ) -> None:
+        before = _float(capped.get(symbol))
+        after = min(before, max(0.0, target))
+        excess = round(before - after, 10)
+        if excess <= 0:
+            return
+        capped[symbol] = round(after, 10)
+        cap_events.append(
+            {
+                "as_of": as_of.isoformat(),
+                "symbol": symbol,
+                "cap_type": cap_type,
+                "before_weight": round(before, 10),
+                "after_weight": round(after, 10),
+                "cap_value": round(cap_value, 10),
+                "excess_weight": excess,
+                "reason": reason,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+        allocate_excess(symbol, excess, "preserve_total_weight_after_cap")
+
+    def reduce_group(
+        symbol_list: Sequence[str],
+        cap_value: float,
+        cap_type: str,
+        reason: str,
+    ) -> None:
+        selected = [symbol for symbol in symbol_list if _float(capped.get(symbol)) > 0]
+        total = sum(_float(capped.get(symbol)) for symbol in selected)
+        if total <= cap_value or not selected:
+            return
+        target_total = max(0.0, cap_value)
+        reduction = total - target_total
+        for symbol in selected:
+            share = _float(capped.get(symbol)) / total if total > 0 else 0.0
+            reduce_symbol(
+                symbol,
+                _float(capped.get(symbol)) - reduction * share,
+                cap_type,
+                cap_value,
+                reason,
+            )
+
+    for symbol in symbols:
+        reduce_symbol(
+            symbol,
+            _float(caps.get("max_single_symbol_weight"), 1.0),
+            "max_single_symbol_weight",
+            _float(caps.get("max_single_symbol_weight"), 1.0),
+            "single_symbol_risk_cap",
+        )
+    reduce_group(
+        semiconductors,
+        _float(caps.get("max_semiconductor_weight"), 1.0),
+        "max_semiconductor_weight",
+        "higher_semiconductor_exposure_risk_cap",
+    )
+    reduce_group(
+        risk_symbols,
+        _float(caps.get("max_total_risk_asset_weight"), 1.0),
+        "max_total_risk_asset_weight",
+        "total_risk_asset_exposure_cap",
+    )
+    previous_risk = _group_weight(previous, risk_symbols)
+    risk_cap = previous_risk + _float(caps.get("max_total_risk_asset_increase_per_rebalance"), 1.0)
+    if caps.get("allow_risk_asset_increase") is False:
+        risk_cap = previous_risk
+    reduce_group(
+        risk_symbols,
+        min(_float(caps.get("max_total_risk_asset_weight"), 1.0), risk_cap),
+        "max_total_risk_asset_increase_per_rebalance",
+        "risk_asset_increase_delta_cap",
+    )
+    previous_semi = _group_weight(previous, semiconductors)
+    semi_cap = previous_semi + _float(caps.get("max_semiconductor_increase_per_rebalance"), 1.0)
+    if caps.get("allow_semiconductor_increase") is False:
+        semi_cap = previous_semi
+    reduce_group(
+        semiconductors,
+        min(_float(caps.get("max_semiconductor_weight"), 1.0), semi_cap),
+        "max_semiconductor_increase_per_rebalance",
+        "semiconductor_increase_delta_cap",
+    )
+    single_delta = _float(caps.get("max_single_symbol_increase_per_rebalance"), 1.0)
+    for symbol in symbols:
+        reduce_symbol(
+            symbol,
+            _float(previous.get(symbol)) + single_delta,
+            "max_single_symbol_increase_per_rebalance",
+            single_delta,
+            "single_symbol_increase_delta_cap",
+        )
+    turnover = _turnover(previous, capped)
+    max_adjustment = _float(caps.get("max_total_adjustment_per_rebalance"), 1.0)
+    if turnover > max_adjustment > 0:
+        ratio = max_adjustment / turnover
+        for symbol in symbols:
+            previous_weight = _float(previous.get(symbol))
+            capped_delta = _float(capped.get(symbol)) - previous_weight
+            capped[symbol] = round(
+                previous_weight + capped_delta * ratio,
+                10,
+            )
+        cap_events.append(
+            {
+                "as_of": as_of.isoformat(),
+                "symbol": "PORTFOLIO",
+                "cap_type": "max_total_adjustment_per_rebalance",
+                "before_weight": round(turnover, 10),
+                "after_weight": round(max_adjustment, 10),
+                "cap_value": round(max_adjustment, 10),
+                "excess_weight": round(turnover - max_adjustment, 10),
+                "reason": "total_adjustment_delta_cap",
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    cash_before = _float(capped.get("CASH"))
+    min_cash = _float(caps.get("min_cash_weight"), 0.0)
+    if cash_before < min_cash:
+        reduce_group(
+            risk_symbols,
+            max(0.0, _group_weight(capped, risk_symbols) - (min_cash - cash_before)),
+            "min_cash_weight",
+            "minimum_cash_buffer_cap",
+        )
+    capped = _normalize_weights(capped)
+    summary = _risk_capped_cap_reason_summary(
+        cap_events,
+        reallocation_events,
+        regime_context=regime_context,
+    )
+    return {
+        "base_weights": base,
+        "previous_weights": previous,
+        "capped_weights": capped,
+        "active_caps": sorted({str(row.get("cap_type")) for row in cap_events}),
+        "regime_context": regime_context,
+        "cap_events": cap_events,
+        "reallocation_events": reallocation_events,
+        "cap_reason_summary": summary,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _effective_risk_capped_caps(
+    risk_config: Mapping[str, Any],
+    regime_context: str,
+) -> dict[str, Any]:
+    caps = {
+        **_mapping(risk_config.get("caps")),
+        **_mapping(risk_config.get("delta_caps")),
+    }
+    context = _mapping(_mapping(risk_config.get("contextual_caps")).get(regime_context))
+    explicit_relax = context.get("explicit_allow_relaxation") is True
+    for field, value in context.items():
+        if field.startswith("max_") and field in caps and not explicit_relax:
+            caps[field] = min(_float(caps.get(field), 1.0), _float(value))
+        elif field.startswith("min_") and field in caps and not explicit_relax:
+            caps[field] = max(_float(caps.get(field)), _float(value))
+        else:
+            caps[field] = value
+    return caps
+
+
+def _risk_capped_cap_reason_summary(
+    cap_events: Sequence[Mapping[str, Any]],
+    reallocation_events: Sequence[Mapping[str, Any]],
+    *,
+    regime_context: str,
+) -> dict[str, Any]:
+    by_cap_type = {
+        "max_semiconductor_weight": 0,
+        "max_total_risk_asset_weight": 0,
+        "min_cash_weight": 0,
+        "contextual_sideways_choppy": 0,
+    }
+    for event in cap_events:
+        cap_type = _text(event.get("cap_type"))
+        by_cap_type[cap_type] = by_cap_type.get(cap_type, 0) + 1
+    if regime_context == "sideways_choppy" and cap_events:
+        by_cap_type["contextual_sideways_choppy"] = len(cap_events)
+    total_cash = sum(
+        _float(row.get("excess_weight"))
+        for row in reallocation_events
+        if row.get("destination") == "CASH"
+    )
+    total_defensive = sum(
+        _float(row.get("excess_weight"))
+        for row in reallocation_events
+        if row.get("destination") in {"TLT", "BND"}
+    )
+    return {
+        "total_cap_events": len(cap_events),
+        "by_cap_type": by_cap_type,
+        "total_reallocated_to_cash": round(total_cash, 10),
+        "total_reallocated_to_defensive": round(total_defensive, 10),
+        "cap_status": "PASS" if cap_events else "NO_CAPS_TRIGGERED",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _risk_capped_regime_context_for_return(
+    return_row: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> str:
+    policy = _mapping(config.get("regime_policy"))
+    risk_off = _float(policy.get("risk_off_return_threshold"), -0.015)
+    drawdown = _float(policy.get("tech_drawdown_return_threshold"), -0.010)
+    semi = _float(policy.get("semiconductor_pullback_return_threshold"), -0.012)
+    trend = _float(policy.get("ai_trend_return_threshold"), 0.008)
+    recovery = _float(policy.get("strong_recovery_return_threshold"), 0.012)
+    qqq = _float(return_row.get("QQQ"))
+    semi_return = min(_float(return_row.get("SMH")), _float(return_row.get("SOXX")))
+    avg_risk = (qqq + semi_return) / 2.0
+    if avg_risk <= risk_off:
+        return "risk_off"
+    if semi_return <= semi:
+        return "semiconductor_pullback"
+    if qqq <= drawdown:
+        return "tech_drawdown"
+    if avg_risk >= recovery:
+        return "strong_recovery"
+    if avg_risk >= trend:
+        return "ai_trend"
+    return "sideways_choppy"
+
+
+def _risk_capped_semiconductor_symbols(model_config: Mapping[str, Any]) -> list[str]:
+    symbols = _texts(_constraints(model_config).get("semiconductor_symbols")) or ["SMH", "SOXX"]
+    return [symbol.upper() for symbol in symbols]
+
+
+def _risk_capped_defensive_symbols(model_config: Mapping[str, Any]) -> set[str]:
+    symbols = _texts(_constraints(model_config).get("defensive_symbols")) or ["CASH", "TLT"]
+    return {symbol.upper() for symbol in symbols} | {"CASH"}
+
+
+def _group_weight(weights: Mapping[str, Any], symbols: Sequence[str]) -> float:
+    return sum(_float(weights.get(symbol)) for symbol in symbols)
+
+
+def _risk_capped_backfill_summary(
+    source_manifest: Mapping[str, Any],
+    states: Sequence[Mapping[str, Any]],
+    ledger: Sequence[Mapping[str, Any]],
+    cap_events: Sequence[Mapping[str, Any]],
+    reallocation_events: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    semi_weights = [
+        _semiconductor_weight(_mapping(row.get("weights")), ("SMH", "SOXX")) for row in states
+    ]
+    cash_weights = [_float(_mapping(row.get("weights")).get("CASH")) for row in states]
+    return {
+        "method": "risk_capped_limited_adjustment",
+        "date_start": source_manifest.get("date_start"),
+        "date_end": source_manifest.get("date_end"),
+        "rebalance_count": len(ledger),
+        "cap_event_count": len(cap_events),
+        "total_turnover": round(sum(_float(row.get("turnover")) for row in ledger), 10),
+        "avg_semiconductor_weight": round(_mean_float(semi_weights), 10),
+        "max_semiconductor_weight": round(max(semi_weights or [0.0]), 10),
+        "avg_cash_weight": round(_mean_float(cash_weights), 10),
+        "min_cash_weight": round(min(cash_weights or [0.0]), 10),
+        "total_reallocated_to_cash": round(
+            sum(
+                _float(row.get("excess_weight"))
+                for row in reallocation_events
+                if row.get("destination") == "CASH"
+            ),
+            10,
+        ),
+        "data_quality": source_manifest.get("data_quality_status"),
+        "broker_action_taken": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _risk_capped_vs_limited_metrics(
+    risk_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    risk_metrics = _state_path_metrics(risk_states, min_observations=2)
+    limited_metrics = _method_path_metrics(baseline_states, "limited_adjustment")
+    risk_exposure = _exposure_summary(risk_states)
+    limited_exposure = _exposure_summary(
+        [row for row in baseline_states if row.get("target_method") == "limited_adjustment"]
+    )
+    values = {
+        "total_return_delta": round(
+            _float(risk_metrics.get("total_return")) - _float(limited_metrics.get("total_return")),
+            10,
+        ),
+        "annualized_return_delta": round(
+            _float(risk_metrics.get("annualized_return"))
+            - _float(limited_metrics.get("annualized_return")),
+            10,
+        ),
+        "max_drawdown_delta": round(
+            _float(risk_metrics.get("max_drawdown")) - _float(limited_metrics.get("max_drawdown")),
+            10,
+        ),
+        "realized_volatility_delta": round(
+            _float(risk_metrics.get("realized_volatility"))
+            - _float(limited_metrics.get("realized_volatility")),
+            10,
+        ),
+        "turnover_delta": round(
+            _float(risk_metrics.get("turnover")) - _float(limited_metrics.get("turnover")),
+            10,
+        ),
+        "avg_semiconductor_weight_delta": round(
+            _float(risk_exposure.get("avg_semiconductor_weight"))
+            - _float(limited_exposure.get("avg_semiconductor_weight")),
+            10,
+        ),
+        "max_semiconductor_weight_delta": round(
+            _float(risk_exposure.get("max_semiconductor_weight"))
+            - _float(limited_exposure.get("max_semiconductor_weight")),
+            10,
+        ),
+        "avg_cash_weight_delta": round(
+            _float(risk_exposure.get("avg_cash_weight"))
+            - _float(limited_exposure.get("avg_cash_weight")),
+            10,
+        ),
+    }
+    return {
+        "comparison": {
+            "method_a": "risk_capped_limited_adjustment",
+            "method_b": "limited_adjustment",
+        },
+        "metrics": values,
+        "conclusion": _risk_capped_comparison_conclusion(values),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _risk_capped_comparison_conclusion(metrics: Mapping[str, Any]) -> str:
+    drawdown_improved = _float(metrics.get("max_drawdown_delta")) > 0.0
+    semi_reduced = _float(metrics.get("avg_semiconductor_weight_delta")) < (
+        -RISK_CAPPED_EXPOSURE_CHANGE_TOLERANCE
+    )
+    return_preserved = _float(metrics.get("total_return_delta")) >= (
+        RISK_CAPPED_ACCEPTABLE_RETURN_DELTA_FLOOR
+    )
+    if drawdown_improved and semi_reduced and return_preserved:
+        return "risk_capped_better"
+    if not drawdown_improved and not semi_reduced:
+        return "limited_better"
+    return "mixed"
+
+
+def _risk_capped_regime_comparison(
+    states: Sequence[Mapping[str, Any]],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _load_backfill_config_from_manifest(baseline)
+    labels = _regime_labels_from_states(states, config)
+    rows = []
+    for regime in ("sideways_choppy", "tech_drawdown"):
+        date_set = {day for day, label in labels.items() if label == regime}
+        risk_rows = [
+            row
+            for row in states
+            if row.get("target_method") == "risk_capped_limited_adjustment"
+            and row.get("date") in date_set
+        ]
+        limited_rows = [
+            row
+            for row in states
+            if row.get("target_method") == "limited_adjustment" and row.get("date") in date_set
+        ]
+        risk_metrics = _sample_return_metrics(risk_rows, min_sample=1)
+        limited_metrics = _sample_return_metrics(limited_rows, min_sample=1)
+        return_delta = round(
+            _float(risk_metrics.get("total_return")) - _float(limited_metrics.get("total_return")),
+            10,
+        )
+        drawdown_delta = round(
+            _float(risk_metrics.get("max_drawdown")) - _float(limited_metrics.get("max_drawdown")),
+            10,
+        )
+        rows.append(
+            {
+                "regime": regime,
+                "sample_count": len(risk_rows),
+                "return_delta_vs_limited": return_delta,
+                "drawdown_delta_vs_limited": drawdown_delta,
+                "win_rate_vs_limited": _win_rate_between_rows(risk_rows, limited_rows),
+                "conclusion": _risk_capped_regime_conclusion(
+                    return_delta,
+                    drawdown_delta,
+                    risk_rows,
+                ),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"regimes": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _risk_capped_regime_conclusion(
+    return_delta: float,
+    drawdown_delta: float,
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    if not rows:
+        return "insufficient_data"
+    if drawdown_delta > 0.0 and return_delta >= RISK_CAPPED_ACCEPTABLE_RETURN_DELTA_FLOOR:
+        return "risk_capped_better"
+    if drawdown_delta < 0.0 and return_delta < 0.0:
+        return "limited_better"
+    return "mixed"
+
+
+def _risk_capped_rolling_comparison(
+    states: Sequence[Mapping[str, Any]],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _load_backfill_config_from_manifest(baseline)
+    min_obs = int(_float(_mapping(config.get("evaluation")).get("min_observations_per_window"), 20))
+    windows = _rolling_window_inventory(states, min_observations=min_obs)
+    metrics = [
+        row
+        for window in windows
+        for row in _rolling_metrics_for_window(states, window, min_obs)
+    ]
+    _rank_rolling_metrics(metrics)
+    stability = _rolling_rank_stability(metrics)
+    risk = _find_method(_records(stability.get("methods")), "risk_capped_limited_adjustment")
+    limited = _find_method(_records(stability.get("methods")), "limited_adjustment")
+    stability_delta = _risk_capped_stability_delta(
+        _float(risk.get("top_3_frequency")),
+        _float(limited.get("top_3_frequency")),
+        _float(risk.get("bottom_3_frequency")),
+        _float(limited.get("bottom_3_frequency")),
+    )
+    return {
+        "rolling_windows_total": len(windows),
+        "risk_capped_top_3_frequency": _float(risk.get("top_3_frequency")),
+        "limited_top_3_frequency": _float(limited.get("top_3_frequency")),
+        "risk_capped_bottom_3_frequency": _float(risk.get("bottom_3_frequency")),
+        "limited_bottom_3_frequency": _float(limited.get("bottom_3_frequency")),
+        "stability_delta": stability_delta,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _risk_capped_stability_delta(
+    risk_top: float,
+    limited_top: float,
+    risk_bottom: float,
+    limited_bottom: float,
+) -> str:
+    if risk_top == 0 and limited_top == 0 and risk_bottom == 0 and limited_bottom == 0:
+        return "INSUFFICIENT_DATA"
+    if risk_top >= limited_top and risk_bottom <= limited_bottom:
+        return "IMPROVED"
+    if risk_top < limited_top and risk_bottom > limited_bottom:
+        return "WORSE"
+    return "MIXED"
+
+
+def _risk_capped_stability_comparison(
+    risk_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    limited_states = [
+        row for row in baseline_states if row.get("target_method") == "limited_adjustment"
+    ]
+    risk_turnovers = [
+        _float(row.get("turnover")) for row in risk_states if row.get("rebalance_event") is True
+    ]
+    limited_turnovers = [
+        _float(row.get("turnover")) for row in limited_states if row.get("rebalance_event") is True
+    ]
+    risk_semi = [
+        _semiconductor_weight(_mapping(row.get("weights")), ("SMH", "SOXX")) for row in risk_states
+    ]
+    limited_semi = [
+        _semiconductor_weight(_mapping(row.get("weights")), ("SMH", "SOXX"))
+        for row in limited_states
+    ]
+    risk_cash = [_float(_mapping(row.get("weights")).get("CASH")) for row in risk_states]
+    limited_cash = [_float(_mapping(row.get("weights")).get("CASH")) for row in limited_states]
+    large_jump_count_delta = _large_jump_count(risk_states) - _large_jump_count(limited_states)
+    payload = {
+        "avg_rebalance_turnover_delta": round(
+            _mean_float(risk_turnovers) - _mean_float(limited_turnovers),
+            10,
+        ),
+        "max_rebalance_turnover_delta": round(
+            max(risk_turnovers or [0.0]) - max(limited_turnovers or [0.0]),
+            10,
+        ),
+        "large_jump_count_delta": large_jump_count_delta,
+        "semiconductor_exposure_volatility_delta": round(
+            _stddev(risk_semi) - _stddev(limited_semi),
+            10,
+        ),
+        "cash_weight_volatility_delta": round(_stddev(risk_cash) - _stddev(limited_cash), 10),
+    }
+    payload["stability_conclusion"] = _risk_capped_stability_conclusion(payload)
+    return {**payload, **SYSTEM_TARGET_SAFETY}
+
+
+def _risk_capped_stability_conclusion(payload: Mapping[str, Any]) -> str:
+    if payload.get("large_jump_count_delta") is None:
+        return "INSUFFICIENT_DATA"
+    if (
+        _float(payload.get("large_jump_count_delta")) <= 0
+        and _float(payload.get("semiconductor_exposure_volatility_delta")) <= 0
+    ):
+        return "IMPROVED"
+    if (
+        _float(payload.get("large_jump_count_delta")) > 0
+        and _float(payload.get("semiconductor_exposure_volatility_delta")) > 0
+    ):
+        return "WORSE"
+    return "MIXED"
+
+
+def _risk_capped_review_decision(
+    comparison: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+) -> dict[str, Any]:
+    metrics = _mapping(_mapping(comparison.get("risk_capped_vs_limited_metrics")).get("metrics"))
+    rolling = _mapping(comparison.get("risk_capped_rolling_comparison"))
+    summary = _mapping(backfill.get("risk_capped_backfill_summary"))
+    improvements = {
+        "max_drawdown": (
+            "IMPROVED" if _float(metrics.get("max_drawdown_delta")) > 0.0 else "WORSE"
+        ),
+        "rolling_consistency": rolling.get("stability_delta", "INSUFFICIENT_DATA"),
+        "semiconductor_exposure": _semiconductor_exposure_decision(
+            _float(metrics.get("avg_semiconductor_weight_delta"))
+        ),
+        "return_preservation": _return_preservation_decision(
+            _float(metrics.get("total_return_delta"))
+        ),
+    }
+    reasons = _risk_capped_decision_reasons(improvements, summary)
+    if (
+        improvements["max_drawdown"] == "IMPROVED"
+        and improvements["semiconductor_exposure"] == "REDUCED"
+        and improvements["return_preservation"] in {"GOOD", "ACCEPTABLE"}
+        and improvements["rolling_consistency"] in {"IMPROVED", "MIXED"}
+    ):
+        decision = "PROMOTE_TO_RECOMMENDED_RESEARCH"
+    elif improvements["return_preservation"] == "POOR":
+        decision = "REJECT"
+    else:
+        decision = "CONTINUE_OBSERVATION"
+    confidence = "LOW" if summary.get("data_quality") == "PASS_WITH_WARNINGS" else "MEDIUM"
+    return {
+        "candidate_method": "risk_capped_limited_adjustment",
+        "base_method": "limited_adjustment",
+        "decision": decision,
+        "decision_confidence": confidence,
+        "reason": reasons,
+        "improvements_vs_limited": improvements,
+        "research_target_only": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        "requires_forward_confirmation": True,
+        "next_action": "owner_review_then_forward_confirmation",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _semiconductor_exposure_decision(delta: float) -> str:
+    if delta < -RISK_CAPPED_EXPOSURE_CHANGE_TOLERANCE:
+        return "REDUCED"
+    if delta > RISK_CAPPED_EXPOSURE_CHANGE_TOLERANCE:
+        return "INCREASED"
+    return "UNCHANGED"
+
+
+def _return_preservation_decision(delta: float) -> str:
+    if delta >= 0.0:
+        return "GOOD"
+    if delta >= RISK_CAPPED_ACCEPTABLE_RETURN_DELTA_FLOOR:
+        return "ACCEPTABLE"
+    return "POOR"
+
+
+def _risk_capped_decision_reasons(
+    improvements: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> list[str]:
+    reasons = [
+        f"max_drawdown={improvements.get('max_drawdown')}",
+        f"rolling_consistency={improvements.get('rolling_consistency')}",
+        f"semiconductor_exposure={improvements.get('semiconductor_exposure')}",
+        f"return_preservation={improvements.get('return_preservation')}",
+        f"data_quality={summary.get('data_quality')}",
+        "research_only_no_broker_no_production",
+    ]
+    return reasons
+
+
+def _win_rate_between_rows(
+    risk_rows: Sequence[Mapping[str, Any]],
+    limited_rows: Sequence[Mapping[str, Any]],
+) -> float:
+    limited_by_date = {
+        str(row.get("date")): _float(row.get("daily_return")) for row in limited_rows
+    }
+    paired = [
+        _float(row.get("daily_return")) > limited_by_date[str(row.get("date"))]
+        for row in risk_rows
+        if str(row.get("date")) in limited_by_date
+    ]
+    return round(sum(1 for item in paired if item) / len(paired), 10) if paired else 0.0
+
+
+def _large_jump_count(rows: Sequence[Mapping[str, Any]]) -> int:
+    ordered = sorted(rows, key=lambda row: _text(row.get("date")))
+    previous: Mapping[str, Any] | None = None
+    count = 0
+    for row in ordered:
+        if previous is not None:
+            deltas = _weight_deltas(
+                _mapping(previous.get("weights")),
+                _mapping(row.get("weights")),
+            )
+            if sum(abs(value) for value in deltas.values()) >= INSTABILITY_WEIGHT_JUMP_THRESHOLD:
+                count += 1
+        previous = row
+    return count
+
+
+def _semiconductor_weight(weights: Mapping[str, Any], symbols: Sequence[str]) -> float:
+    return sum(_float(weights.get(symbol)) for symbol in symbols)
 
 
 def _safety_config_locked(safety: Mapping[str, Any]) -> bool:

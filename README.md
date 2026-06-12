@@ -1114,6 +1114,27 @@ method proposal；`risk_capped_limited_adjustment` 与 `regime_gated_limited_adj
 在本阶段只是 conceptual candidate，不实现、不写 target config、不写 official target
 weights、不修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production
 state 或 policy、不生成 order ticket、不触发 broker。
+
+TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD 实现
+`risk_capped_limited_adjustment` research-only method。配置入口为
+`config/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_adjustment_v1.yaml`；
+CLI 入口为 `risk-capped-limited config-validate/report-config/generate/report`、
+`validate-risk-capped-limited-config`、`validate-risk-capped-limited`、
+`risk-capped-backfill run/report`、`validate-risk-capped-backfill`、
+`risk-capped-comparison run/report`、`validate-risk-capped-comparison`、
+`risk-capped-review pack/report` 和 `validate-risk-capped-review`。Runtime artifacts
+写入
+`reports/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_config|risk_capped_limited|risk_capped_backfill|risk_capped_comparison|risk_capped_review/`，
+并登记 report registry / Reader Brief `Dynamic Rescue System Target Portfolio`
+risk-capped fields。该链路从 `limited_adjustment` 生成 cap events / reallocation
+events，backfill 前执行 cached data quality gate，比较 return、drawdown、
+semiconductor exposure 和 rolling stability，并输出 owner review decision；所有输出
+固定 `research_target_only=true`、`paper_shadow_only=true`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、
+`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`production_effect=none`，不得写 official target weights、`position_advisory_v1.yaml`、
+paper/real portfolio、baseline/production state、policy、order ticket 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

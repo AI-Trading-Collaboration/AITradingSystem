@@ -46,6 +46,7 @@ target_methods:
     - no_trade_baseline
     - consensus_target
     - limited_adjustment
+    - risk_capped_limited_adjustment
     - defensive_limited_adjustment
     - equal_weight_shadow_candidates
     - selected_top_candidate
@@ -114,6 +115,7 @@ tracking:
     - no_trade_baseline
     - consensus_target
     - limited_adjustment
+    - risk_capped_limited_adjustment
     - defensive_limited_adjustment
     - equal_weight_shadow_candidates
     - selected_top_candidate
@@ -320,6 +322,7 @@ source:
   shadow_monitor_dir: {source_dirs["shadow_monitor_dir"].as_posix()}
   shadow_shortlist_dir: {source_dirs["shadow_shortlist_dir"].as_posix()}
   consensus_drift_dir: {source_dirs["consensus_drift_dir"].as_posix()}
+  risk_capped_limited_config: {system_target.DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH.as_posix()}
   price_cache_path: {prices_path.as_posix()}
 target_methods:
   enabled:
@@ -327,6 +330,7 @@ target_methods:
     - no_trade_baseline
     - consensus_target
     - limited_adjustment
+    - risk_capped_limited_adjustment
     - defensive_limited_adjustment
     - equal_weight_shadow_candidates
     - selected_top_candidate
