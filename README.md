@@ -1098,6 +1098,22 @@ checklist；它不写 `model_target_portfolio_v1.yaml`、不写 `position_adviso
 不写 official target weights、不修改 paper/real portfolio、baseline/production state 或
 policy、不生成 order ticket、不触发 broker。即使 hardening decision 未来通过，也只表示
 `hardened_primary_research_method` 观察口径，不是 production approval。
+TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
+在 hardening pack 之后继续拆解 `limited_adjustment` 的未通过原因。CLI 链路为
+`limited-instability run/report`、`limited-risk-attribution run/report`、
+`data-warning-repair-plan run/report`、`alternative-method-review run/report` 和
+`refined-method-proposal run/report`；对应验证入口为
+`validate-limited-instability`、`validate-limited-risk-attribution`、
+`validate-data-warning-repair-plan`、`validate-alternative-method-review` 和
+`validate-refined-method-proposal`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/limited_instability|limited_risk_attribution|data_warning_repair_plan|alternative_method_review|refined_method_proposal/`，
+并登记 report registry / Reader Brief `Dynamic Rescue System Target Portfolio`
+refined proposal fields。该链路只诊断 rolling instability、return-improves-risk-worsens
+归因、data warning blocking / repair plan、替代 research method 候选和 refined next
+method proposal；`risk_capped_limited_adjustment` 与 `regime_gated_limited_adjustment`
+在本阶段只是 conceptual candidate，不实现、不写 target config、不写 official target
+weights、不修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production
+state 或 policy、不生成 order ticket、不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

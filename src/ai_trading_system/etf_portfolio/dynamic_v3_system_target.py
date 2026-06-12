@@ -76,6 +76,19 @@ DEFAULT_DATA_WARNING_IMPACT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_warni
 DEFAULT_RESEARCH_METHOD_HARDENING_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_method_hardening"
 )
+DEFAULT_LIMITED_INSTABILITY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_instability"
+DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_risk_attribution"
+)
+DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_warning_repair_plan"
+)
+DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "alternative_method_review"
+)
+DEFAULT_REFINED_METHOD_PROPOSAL_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "refined_method_proposal"
+)
 
 AI_AFTER_CHATGPT_START = date(2022, 12, 1)
 
@@ -99,6 +112,26 @@ LONG_WINDOW_MEDIUM_CONFIDENCE_OBSERVATIONS = 252
 # Exposure interpretation tolerance for reporting whether limited_adjustment
 # materially changes risk-asset weight relative to static baseline.
 EXPOSURE_SIMILARITY_TOLERANCE = 0.02
+
+# Reporting-only window diagnosis buckets. These thresholds do not approve,
+# reject, or size any portfolio; they only classify review rows.
+INSTABILITY_RETURN_UNDERPERFORMANCE_TOLERANCE = -0.0001
+INSTABILITY_DRAWDOWN_WORSE_TOLERANCE = -0.002
+INSTABILITY_HIGH_SEVERITY_RETURN_DELTA = -0.005
+INSTABILITY_HIGH_SEVERITY_DRAWDOWN_DELTA = -0.01
+INSTABILITY_TURNOVER_HIGH_THRESHOLD = 0.08
+INSTABILITY_WEIGHT_JUMP_THRESHOLD = 0.04
+
+# Reporting-only trailing-event buckets for risk attribution.
+RISK_WORSENING_EVENT_WINDOW_DAYS = 20
+RISK_WORSENING_DRAWDOWN_DELTA_THRESHOLD = -0.002
+RISK_WORSENING_VOL_DELTA_THRESHOLD = 0.005
+RISK_WORSENING_TURNOVER_DELTA_THRESHOLD = 0.02
+RISK_EVENT_HIGH_SEMICONDUCTOR_WEIGHT = 0.25
+RISK_EVENT_LOW_CASH_WEIGHT = 0.10
+
+# Reporting-only alternative review bucket for method comparison labels.
+ALTERNATIVE_RETURN_HIGH_EXPECTATION_THRESHOLD = 0.10
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -2821,6 +2854,845 @@ def validate_research_method_hardening_artifact(
     )
 
 
+def run_limited_instability_diagnosis(
+    *,
+    backfill_id: str,
+    consistency_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    consistency_dir: Path = DEFAULT_LIMITED_CONSISTENCY_DIR,
+    rolling_eval_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
+    output_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    consistency = limited_consistency_report_payload(
+        consistency_id=consistency_id,
+        output_dir=consistency_dir,
+    )
+    rolling = paper_shadow_rolling_eval_report_payload(
+        rolling_eval_id=_text(consistency.get("rolling_eval_id")),
+        output_dir=rolling_eval_dir,
+    )
+    states = _records(backfill.get("backfill_method_states"))
+    config = _load_backfill_config_from_manifest(backfill)
+    inventory = _unstable_window_inventory(
+        rolling=_records(rolling.get("rolling_method_metrics")),
+        states=states,
+        config=config,
+    )
+    reason_summary = _instability_reason_summary(consistency, inventory)
+    failure_pattern = _rolling_failure_pattern(inventory)
+    instability_id = _stable_id(
+        "limited-instability",
+        backfill_id,
+        consistency_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / instability_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_limited_instability_manifest",
+        "instability_id": root.name,
+        "backfill_id": backfill_id,
+        "consistency_id": consistency_id,
+        "rolling_eval_id": rolling.get("rolling_eval_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "limited_instability_manifest_path": str(root / "limited_instability_manifest.json"),
+        "unstable_window_inventory_path": str(root / "unstable_window_inventory.jsonl"),
+        "instability_reason_summary_path": str(root / "instability_reason_summary.json"),
+        "rolling_failure_pattern_path": str(root / "rolling_failure_pattern.json"),
+        "limited_instability_report_path": str(root / "limited_instability_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "limited_instability_manifest.json", manifest)
+    _write_jsonl(root / "unstable_window_inventory.jsonl", inventory)
+    _write_json(root / "instability_reason_summary.json", reason_summary)
+    _write_json(root / "rolling_failure_pattern.json", failure_pattern)
+    _write_text(
+        root / "limited_instability_report.md",
+        render_limited_instability_report(manifest, inventory, reason_summary, failure_pattern),
+    )
+    _write_latest_pointer(
+        "latest_limited_instability",
+        root.name,
+        root / "limited_instability_manifest.json",
+    )
+    return {
+        "instability_id": root.name,
+        "instability_dir": root,
+        "manifest": manifest,
+        "unstable_window_inventory": inventory,
+        "instability_reason_summary": reason_summary,
+        "rolling_failure_pattern": failure_pattern,
+    }
+
+
+def limited_instability_report_payload(
+    *,
+    instability_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=instability_id,
+        latest_pointer="latest_limited_instability",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="limited_instability_manifest.json",
+    )
+    return {
+        **_read_json(root / "limited_instability_manifest.json"),
+        "unstable_window_inventory": _read_jsonl(root / "unstable_window_inventory.jsonl"),
+        "instability_reason_summary": _read_json(root / "instability_reason_summary.json"),
+        "rolling_failure_pattern": _read_json(root / "rolling_failure_pattern.json"),
+        "instability_dir": str(root),
+    }
+
+
+def validate_limited_instability_artifact(
+    *,
+    instability_id: str,
+    output_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
+) -> dict[str, Any]:
+    root = output_dir / instability_id
+    manifest = _read_optional_json(root / "limited_instability_manifest.json") or {}
+    inventory = _read_jsonl(root / "unstable_window_inventory.jsonl")
+    summary = _read_optional_json(root / "instability_reason_summary.json") or {}
+    pattern = _read_optional_json(root / "rolling_failure_pattern.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "limited_instability_manifest.json",
+            "unstable_window_inventory.jsonl",
+            "instability_reason_summary.json",
+            "rolling_failure_pattern.json",
+            "limited_instability_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "instability_id_matches",
+                manifest.get("instability_id") == instability_id,
+                "",
+            ),
+            _check(
+                "target_method_limited",
+                summary.get("target_method") == "limited_adjustment",
+                _text(summary.get("target_method")),
+            ),
+            _check(
+                "rolling_status_visible",
+                summary.get("rolling_consistency_status")
+                in {"STABLE", "MIXED", "UNSTABLE", "INSUFFICIENT_DATA"},
+                _text(summary.get("rolling_consistency_status")),
+            ),
+            _check(
+                "unstable_window_count_matches",
+                int(_float(summary.get("unstable_window_count"))) == len(inventory),
+                str(len(inventory)),
+            ),
+            _check("failure_patterns_present", bool(_records(pattern.get("patterns"))), ""),
+            _check(
+                "recommendation_valid",
+                summary.get("recommendation")
+                in {
+                    "continue_diagnosis",
+                    "consider_regime_gate",
+                    "consider_risk_cap",
+                    "insufficient_data",
+                },
+                _text(summary.get("recommendation")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, pattern, *inventory), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_limited_instability_validation",
+        instability_id,
+        checks,
+    )
+
+
+def run_limited_risk_attribution(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    states = _records(backfill.get("backfill_method_states"))
+    symbols = _backfill_non_cash_symbols(backfill)
+    price_cache_path, rates_cache_path = _backfill_cache_paths(backfill)
+    quality = _run_data_quality_gate(
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+        expected_symbols=symbols,
+        as_of=generated.date(),
+    )
+    if not quality.passed:
+        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
+    returns = _backfill_symbol_returns(backfill)
+    return_contribution = _return_contribution_by_symbol(states, returns)
+    drawdown_contribution = _drawdown_contribution_by_symbol(states, returns)
+    exposure = _risk_exposure_shift_attribution(states)
+    events = _risk_worsening_events(states)
+    attribution_id = _stable_id(
+        "limited-risk-attribution",
+        backfill_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / attribution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_limited_risk_attribution_manifest",
+        "risk_attribution_id": root.name,
+        "attribution_id": root.name,
+        "backfill_id": backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": quality.status,
+        "source_backfill_data_quality_status": backfill.get("data_quality_status"),
+        "data_quality_checked_at": quality.checked_at.isoformat(),
+        "data_quality_report_visible": True,
+        "limited_risk_attribution_manifest_path": str(
+            root / "limited_risk_attribution_manifest.json"
+        ),
+        "return_contribution_by_symbol_path": str(root / "return_contribution_by_symbol.json"),
+        "drawdown_contribution_by_symbol_path": str(
+            root / "drawdown_contribution_by_symbol.json"
+        ),
+        "exposure_shift_attribution_path": str(root / "exposure_shift_attribution.json"),
+        "risk_worsening_events_path": str(root / "risk_worsening_events.jsonl"),
+        "limited_risk_attribution_report_path": str(
+            root / "limited_risk_attribution_report.md"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "limited_risk_attribution_manifest.json", manifest)
+    _write_json(root / "return_contribution_by_symbol.json", return_contribution)
+    _write_json(root / "drawdown_contribution_by_symbol.json", drawdown_contribution)
+    _write_json(root / "exposure_shift_attribution.json", exposure)
+    _write_jsonl(root / "risk_worsening_events.jsonl", events)
+    _write_text(
+        root / "limited_risk_attribution_report.md",
+        render_limited_risk_attribution_report(
+            manifest,
+            return_contribution,
+            drawdown_contribution,
+            exposure,
+            events,
+        ),
+    )
+    _write_latest_pointer(
+        "latest_limited_risk_attribution",
+        root.name,
+        root / "limited_risk_attribution_manifest.json",
+    )
+    return {
+        "risk_attribution_id": root.name,
+        "attribution_id": root.name,
+        "risk_attribution_dir": root,
+        "attribution_dir": root,
+        "manifest": manifest,
+        "return_contribution_by_symbol": return_contribution,
+        "drawdown_contribution_by_symbol": drawdown_contribution,
+        "exposure_shift_attribution": exposure,
+        "risk_worsening_events": events,
+    }
+
+
+def limited_risk_attribution_report_payload(
+    *,
+    attribution_id: str | None = None,
+    risk_attribution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    resolved_id = risk_attribution_id or attribution_id
+    root = _artifact_dir(
+        artifact_id=resolved_id,
+        latest_pointer="latest_limited_risk_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="limited_risk_attribution_manifest.json",
+    )
+    return {
+        **_read_json(root / "limited_risk_attribution_manifest.json"),
+        "return_contribution_by_symbol": _read_json(root / "return_contribution_by_symbol.json"),
+        "drawdown_contribution_by_symbol": _read_json(
+            root / "drawdown_contribution_by_symbol.json"
+        ),
+        "exposure_shift_attribution": _read_json(root / "exposure_shift_attribution.json"),
+        "risk_worsening_events": _read_jsonl(root / "risk_worsening_events.jsonl"),
+        "risk_attribution_dir": str(root),
+        "attribution_dir": str(root),
+    }
+
+
+def validate_limited_risk_attribution_artifact(
+    *,
+    attribution_id: str | None = None,
+    risk_attribution_id: str | None = None,
+    output_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    resolved_id = risk_attribution_id or attribution_id
+    if not resolved_id:
+        raise DynamicV3SystemTargetError("risk attribution id is required")
+    root = output_dir / resolved_id
+    manifest = _read_optional_json(root / "limited_risk_attribution_manifest.json") or {}
+    returns = _read_optional_json(root / "return_contribution_by_symbol.json") or {}
+    drawdown = _read_optional_json(root / "drawdown_contribution_by_symbol.json") or {}
+    exposure = _read_optional_json(root / "exposure_shift_attribution.json") or {}
+    events = _read_jsonl(root / "risk_worsening_events.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "limited_risk_attribution_manifest.json",
+            "return_contribution_by_symbol.json",
+            "drawdown_contribution_by_symbol.json",
+            "exposure_shift_attribution.json",
+            "risk_worsening_events.jsonl",
+            "limited_risk_attribution_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "risk_attribution_id_matches",
+                manifest.get("risk_attribution_id") == resolved_id
+                or manifest.get("attribution_id") == resolved_id,
+                "",
+            ),
+            _check(
+                "target_method_limited",
+                returns.get("target_method") == "limited_adjustment"
+                and drawdown.get("target_method") == "limited_adjustment"
+                and exposure.get("target_method") == "limited_adjustment",
+                "",
+            ),
+            _check("return_symbols_present", bool(_records(returns.get("symbols"))), ""),
+            _check("drawdown_symbols_present", bool(_records(drawdown.get("symbols"))), ""),
+            _check(
+                "risk_source_valid",
+                exposure.get("risk_worsening_source")
+                in {
+                    "higher_risk_asset_exposure",
+                    "higher_semiconductor_exposure",
+                    "lower_cash",
+                    "timing_error",
+                    "mixed",
+                    "unknown",
+                },
+                _text(exposure.get("risk_worsening_source")),
+            ),
+            _check("events_jsonl_readable", isinstance(events, list), ""),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, returns, drawdown, exposure, *events),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_limited_risk_attribution_validation",
+        resolved_id,
+        checks,
+    )
+
+
+def run_data_warning_repair_plan(
+    *,
+    impact_id: str,
+    data_warning_impact_dir: Path = DEFAULT_DATA_WARNING_IMPACT_DIR,
+    output_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    impact = data_warning_impact_report_payload(
+        impact_id=impact_id,
+        output_dir=data_warning_impact_dir,
+    )
+    actions = _warning_repair_actions(impact)
+    matrix = _warning_blocking_matrix(impact, actions)
+    repair_plan_id = _stable_id(
+        "data-warning-repair-plan",
+        impact_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / repair_plan_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_warning_repair_plan_manifest",
+        "repair_plan_id": root.name,
+        "impact_id": impact_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": impact.get("market_regime", "ai_after_chatgpt"),
+        "date_start": impact.get("date_start"),
+        "date_end": impact.get("date_end"),
+        "data_quality_status": impact.get("data_quality_status"),
+        "data_warning_repair_plan_manifest_path": str(
+            root / "data_warning_repair_plan_manifest.json"
+        ),
+        "warning_repair_actions_path": str(root / "warning_repair_actions.jsonl"),
+        "warning_blocking_matrix_path": str(root / "warning_blocking_matrix.json"),
+        "data_warning_repair_plan_report_path": str(
+            root / "data_warning_repair_plan_report.md"
+        ),
+        "auto_repair_executed": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "data_warning_repair_plan_manifest.json", manifest)
+    _write_jsonl(root / "warning_repair_actions.jsonl", actions)
+    _write_json(root / "warning_blocking_matrix.json", matrix)
+    _write_text(
+        root / "data_warning_repair_plan_report.md",
+        render_data_warning_repair_plan_report(manifest, actions, matrix),
+    )
+    _write_latest_pointer(
+        "latest_data_warning_repair_plan",
+        root.name,
+        root / "data_warning_repair_plan_manifest.json",
+    )
+    return {
+        "repair_plan_id": root.name,
+        "repair_plan_dir": root,
+        "manifest": manifest,
+        "warning_repair_actions": actions,
+        "warning_blocking_matrix": matrix,
+    }
+
+
+def data_warning_repair_plan_report_payload(
+    *,
+    repair_plan_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=repair_plan_id,
+        latest_pointer="latest_data_warning_repair_plan",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="data_warning_repair_plan_manifest.json",
+    )
+    return {
+        **_read_json(root / "data_warning_repair_plan_manifest.json"),
+        "warning_repair_actions": _read_jsonl(root / "warning_repair_actions.jsonl"),
+        "warning_blocking_matrix": _read_json(root / "warning_blocking_matrix.json"),
+        "repair_plan_dir": str(root),
+    }
+
+
+def validate_data_warning_repair_plan_artifact(
+    *,
+    repair_plan_id: str,
+    output_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / repair_plan_id
+    manifest = _read_optional_json(root / "data_warning_repair_plan_manifest.json") or {}
+    actions = _read_jsonl(root / "warning_repair_actions.jsonl")
+    matrix = _read_optional_json(root / "warning_blocking_matrix.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "data_warning_repair_plan_manifest.json",
+            "warning_repair_actions.jsonl",
+            "warning_blocking_matrix.json",
+            "data_warning_repair_plan_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "repair_plan_id_matches",
+                manifest.get("repair_plan_id") == repair_plan_id,
+                "",
+            ),
+            _check("warning_actions_present", bool(actions), ""),
+            _check(
+                "no_auto_repair",
+                manifest.get("auto_repair_executed") is False
+                and all(row.get("auto_repair_allowed") is False for row in actions),
+                "",
+            ),
+            _check(
+                "overall_status_valid",
+                matrix.get("overall_data_warning_status")
+                in {"PASS", "PASS_WITH_WARNINGS", "REVIEW_REQUIRED", "BLOCKING"},
+                _text(matrix.get("overall_data_warning_status")),
+            ),
+            _check(
+                "hardening_after_repair_valid",
+                matrix.get("hardening_allowed_after_repair") in {"UNKNOWN", "YES", "NO"},
+                _text(matrix.get("hardening_allowed_after_repair")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, matrix, *actions), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_data_warning_repair_plan_validation",
+        repair_plan_id,
+        checks,
+    )
+
+
+def run_alternative_method_review(
+    *,
+    backfill_id: str,
+    risk_attribution_id: str,
+    instability_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    risk_attribution_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
+    instability_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
+    output_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    risk = limited_risk_attribution_report_payload(
+        risk_attribution_id=risk_attribution_id,
+        output_dir=risk_attribution_dir,
+    )
+    instability = limited_instability_report_payload(
+        instability_id=instability_id,
+        output_dir=instability_dir,
+    )
+    candidates = _alternative_method_candidates(risk, instability)
+    scorecard = _alternative_method_scorecard(backfill, risk, instability, candidates)
+    alt_review_id = _stable_id(
+        "alternative-method-review",
+        backfill_id,
+        risk_attribution_id,
+        instability_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / alt_review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_alternative_method_review_manifest",
+        "alt_review_id": root.name,
+        "backfill_id": backfill_id,
+        "risk_attribution_id": risk_attribution_id,
+        "instability_id": instability_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "alternative_method_review_manifest_path": str(
+            root / "alternative_method_review_manifest.json"
+        ),
+        "alternative_method_candidates_path": str(root / "alternative_method_candidates.json"),
+        "alternative_method_scorecard_path": str(root / "alternative_method_scorecard.json"),
+        "alternative_method_review_report_path": str(root / "alternative_method_review_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "alternative_method_review_manifest.json", manifest)
+    _write_json(root / "alternative_method_candidates.json", candidates)
+    _write_json(root / "alternative_method_scorecard.json", scorecard)
+    _write_text(
+        root / "alternative_method_review_report.md",
+        render_alternative_method_review_report(manifest, candidates, scorecard),
+    )
+    _write_latest_pointer(
+        "latest_alternative_method_review",
+        root.name,
+        root / "alternative_method_review_manifest.json",
+    )
+    return {
+        "alt_review_id": root.name,
+        "alt_review_dir": root,
+        "manifest": manifest,
+        "alternative_method_candidates": candidates,
+        "alternative_method_scorecard": scorecard,
+    }
+
+
+def alternative_method_review_report_payload(
+    *,
+    alt_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=alt_review_id,
+        latest_pointer="latest_alternative_method_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="alternative_method_review_manifest.json",
+    )
+    return {
+        **_read_json(root / "alternative_method_review_manifest.json"),
+        "alternative_method_candidates": _read_json(root / "alternative_method_candidates.json"),
+        "alternative_method_scorecard": _read_json(root / "alternative_method_scorecard.json"),
+        "alt_review_dir": str(root),
+    }
+
+
+def validate_alternative_method_review_artifact(
+    *,
+    alt_review_id: str,
+    output_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / alt_review_id
+    manifest = _read_optional_json(root / "alternative_method_review_manifest.json") or {}
+    candidates = _read_optional_json(root / "alternative_method_candidates.json") or {}
+    scorecard = _read_optional_json(root / "alternative_method_scorecard.json") or {}
+    methods = {row.get("method") for row in _records(candidates.get("candidates"))}
+    checks = _required_file_checks(
+        root,
+        (
+            "alternative_method_review_manifest.json",
+            "alternative_method_candidates.json",
+            "alternative_method_scorecard.json",
+            "alternative_method_review_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("alt_review_id_matches", manifest.get("alt_review_id") == alt_review_id, ""),
+            _check(
+                "risk_capped_candidate_present",
+                "risk_capped_limited_adjustment" in methods,
+                ",".join(sorted(str(item) for item in methods)),
+            ),
+            _check(
+                "regime_gated_candidate_present",
+                "regime_gated_limited_adjustment" in methods,
+                ",".join(sorted(str(item) for item in methods)),
+            ),
+            _check(
+                "no_new_method_auto_apply",
+                all(
+                    row.get("auto_apply") is False
+                    for row in _records(candidates.get("candidates"))
+                ),
+                "",
+            ),
+            _check("scorecard_present", bool(_records(scorecard.get("methods"))), ""),
+            _check("broker_forbidden", _payload_safe(manifest, candidates, scorecard), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_alternative_method_review_validation",
+        alt_review_id,
+        checks,
+    )
+
+
+def run_refined_method_proposal(
+    *,
+    instability_id: str,
+    risk_attribution_id: str,
+    repair_plan_id: str,
+    alt_review_id: str,
+    instability_dir: Path = DEFAULT_LIMITED_INSTABILITY_DIR,
+    risk_attribution_dir: Path = DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR,
+    repair_plan_dir: Path = DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR,
+    alt_review_dir: Path = DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR,
+    output_dir: Path = DEFAULT_REFINED_METHOD_PROPOSAL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    instability = limited_instability_report_payload(
+        instability_id=instability_id,
+        output_dir=instability_dir,
+    )
+    risk = limited_risk_attribution_report_payload(
+        risk_attribution_id=risk_attribution_id,
+        output_dir=risk_attribution_dir,
+    )
+    repair = data_warning_repair_plan_report_payload(
+        repair_plan_id=repair_plan_id,
+        output_dir=repair_plan_dir,
+    )
+    alt_review = alternative_method_review_report_payload(
+        alt_review_id=alt_review_id,
+        output_dir=alt_review_dir,
+    )
+    decision = _refined_method_decision(instability, risk, repair, alt_review)
+    next_methods = _proposed_next_methods(decision, alt_review)
+    proposal_id = _stable_id(
+        "refined-method-proposal",
+        instability_id,
+        risk_attribution_id,
+        repair_plan_id,
+        alt_review_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / proposal_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["proposal_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_refined_method_proposal_manifest",
+        "proposal_id": root.name,
+        "instability_id": instability_id,
+        "risk_attribution_id": risk_attribution_id,
+        "repair_plan_id": repair_plan_id,
+        "alt_review_id": alt_review_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "recommended_next_step": decision.get("recommended_next_step"),
+        "confidence": decision.get("confidence"),
+        "refined_method_proposal_manifest_path": str(
+            root / "refined_method_proposal_manifest.json"
+        ),
+        "refined_method_decision_path": str(root / "refined_method_decision.json"),
+        "proposed_next_methods_path": str(root / "proposed_next_methods.json"),
+        "owner_refined_method_checklist_path": str(root / "owner_refined_method_checklist.md"),
+        "refined_method_proposal_report_path": str(root / "refined_method_proposal_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "refined_method_proposal_manifest.json", manifest)
+    _write_json(root / "refined_method_decision.json", decision)
+    _write_json(root / "proposed_next_methods.json", next_methods)
+    _write_text(
+        root / "owner_refined_method_checklist.md",
+        render_refined_owner_checklist(decision),
+    )
+    _write_text(
+        root / "refined_method_proposal_report.md",
+        render_refined_method_proposal_report(
+            manifest,
+            decision,
+            next_methods,
+            instability,
+            risk,
+            repair,
+            alt_review,
+        ),
+    )
+    _write_text(
+        root / "reader_brief_section.md",
+        render_refined_method_reader_brief(decision, next_methods),
+    )
+    _write_latest_pointer(
+        "latest_refined_method_proposal",
+        root.name,
+        root / "refined_method_proposal_manifest.json",
+    )
+    return {
+        "proposal_id": root.name,
+        "proposal_dir": root,
+        "manifest": manifest,
+        "refined_method_decision": decision,
+        "proposed_next_methods": next_methods,
+    }
+
+
+def refined_method_proposal_report_payload(
+    *,
+    proposal_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_REFINED_METHOD_PROPOSAL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=proposal_id,
+        latest_pointer="latest_refined_method_proposal",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="refined_method_proposal_manifest.json",
+    )
+    return {
+        **_read_json(root / "refined_method_proposal_manifest.json"),
+        "refined_method_decision": _read_json(root / "refined_method_decision.json"),
+        "proposed_next_methods": _read_json(root / "proposed_next_methods.json"),
+        "proposal_dir": str(root),
+    }
+
+
+def validate_refined_method_proposal_artifact(
+    *,
+    proposal_id: str,
+    output_dir: Path = DEFAULT_REFINED_METHOD_PROPOSAL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / proposal_id
+    manifest = _read_optional_json(root / "refined_method_proposal_manifest.json") or {}
+    decision = _read_optional_json(root / "refined_method_decision.json") or {}
+    next_methods = _read_optional_json(root / "proposed_next_methods.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "refined_method_proposal_manifest.json",
+            "refined_method_decision.json",
+            "proposed_next_methods.json",
+            "owner_refined_method_checklist.md",
+            "refined_method_proposal_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "proposal_id_matches",
+                manifest.get("proposal_id") == proposal_id
+                and decision.get("proposal_id") == proposal_id,
+                "",
+            ),
+            _check(
+                "recommended_next_step_valid",
+                decision.get("recommended_next_step")
+                in {
+                    "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD",
+                    "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD",
+                    "CONTINUE_OBSERVATION",
+                    "REPAIR_DATA_WARNINGS_FIRST",
+                    "DEFER",
+                },
+                _text(decision.get("recommended_next_step")),
+            ),
+            _check("next_methods_present", bool(_records(next_methods.get("methods"))), ""),
+            _check("auto_apply_false", decision.get("auto_apply") is False, ""),
+            _check(
+                "research_target_only_true",
+                decision.get("research_target_only") is True,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                decision.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", decision.get("production_effect") == "none", ""),
+            _check("broker_forbidden", _payload_safe(manifest, decision, next_methods), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_refined_method_proposal_validation",
+        proposal_id,
+        checks,
+    )
+
+
 def render_paper_shadow_backfill_report(
     manifest: Mapping[str, Any],
     calendar: Mapping[str, Any],
@@ -3310,6 +4182,319 @@ def render_hardening_reader_brief(decision: Mapping[str, Any]) -> str:
             f"- requires_forward_confirmation: "
             f"{str(decision.get('requires_forward_confirmation') is True).lower()}",
             f"- next_action: {next_action}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_limited_instability_report(
+    manifest: Mapping[str, Any],
+    inventory: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+    pattern: Mapping[str, Any],
+) -> str:
+    top_windows = sorted(
+        inventory,
+        key=lambda row: (
+            {"HIGH": 0, "MEDIUM": 1, "LOW": 2}.get(_text(row.get("severity")), 9),
+            _float(row.get("relative_to_static_baseline")),
+        ),
+    )[:10]
+    patterns = _records(pattern.get("patterns"))
+    return "\n".join(
+        [
+            f"# Limited Adjustment Instability Diagnosis {manifest.get('instability_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- consistency_id: {manifest.get('consistency_id')}",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- rolling_consistency_status: {summary.get('rolling_consistency_status')}",
+            f"- unstable_window_count: {summary.get('unstable_window_count')}",
+            f"- dominant_failure_regime: {summary.get('dominant_failure_regime')}",
+            f"- recommendation: {summary.get('recommendation')}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Top Failure Patterns",
+            "",
+            *[
+                "- "
+                f"{row.get('pattern')}: windows={row.get('supporting_windows')}, "
+                f"possible_fix={row.get('possible_fix')}"
+                for row in patterns
+            ],
+            "",
+            "## Unstable Windows",
+            "",
+            *[
+                "- "
+                f"{row.get('window_id')}: failure_type={row.get('failure_type')}, "
+                f"severity={row.get('severity')}, "
+                f"return_vs_static={row.get('relative_to_static_baseline')}, "
+                f"drawdown_delta_vs_static={row.get('drawdown_delta_vs_static')}, "
+                f"turnover={row.get('turnover')}, "
+                f"regime_tags={','.join(_texts(row.get('regime_tags')))}"
+                for row in top_windows
+            ],
+            "",
+            "limited_adjustment rolling instability is research evidence only. "
+            "It may motivate a risk cap or regime gate proposal, but it does not "
+            "approve official target weights, broker action, or production mutation.",
+            "",
+        ]
+    )
+
+
+def render_limited_risk_attribution_report(
+    manifest: Mapping[str, Any],
+    return_contribution: Mapping[str, Any],
+    drawdown_contribution: Mapping[str, Any],
+    exposure: Mapping[str, Any],
+    events: Sequence[Mapping[str, Any]],
+) -> str:
+    positive = ", ".join(_texts(return_contribution.get("top_positive_contributors")))
+    drawdown_top = ", ".join(_texts(drawdown_contribution.get("top_drawdown_contributors")))
+    event_types = sorted({_text(row.get("risk_worsening_type")) for row in events})
+    return "\n".join(
+        [
+            f"# Limited Risk Attribution {manifest.get('risk_attribution_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- top_return_contributors: {positive}",
+            f"- top_drawdown_contributors: {drawdown_top}",
+            f"- avg_risk_asset_delta_vs_static: "
+            f"{exposure.get('avg_risk_asset_delta_vs_static')}",
+            f"- avg_semiconductor_delta_vs_static: "
+            f"{exposure.get('avg_semiconductor_delta_vs_static')}",
+            f"- avg_cash_delta_vs_static: {exposure.get('avg_cash_delta_vs_static')}",
+            f"- risk_worsening_source: {exposure.get('risk_worsening_source')}",
+            f"- risk_worsening_event_count: {len(events)}",
+            f"- risk_worsening_event_types: {', '.join(event_types)}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Return Contribution By Symbol",
+            "",
+            *[
+                "- "
+                f"{row.get('symbol')}: avg_weight={row.get('avg_weight')}, "
+                f"return_contribution={row.get('return_contribution')}, "
+                "relative_contribution_vs_static="
+                f"{row.get('relative_contribution_vs_static')}"
+                for row in _records(return_contribution.get("symbols"))
+            ],
+            "",
+            "## Drawdown Contribution By Symbol",
+            "",
+            *[
+                "- "
+                f"{row.get('symbol')}: drawdown_contribution="
+                f"{row.get('drawdown_contribution')}, "
+                f"weight_during_drawdown={row.get('weight_during_drawdown')}, "
+                f"relative_to_static={row.get('relative_to_static')}"
+                for row in _records(drawdown_contribution.get("symbols"))
+            ],
+            "",
+            "该归因解释 RETURN_IMPROVES_RISK_WORSENS 的来源；它不实现 risk cap，"
+            "也不改变任何 production weight 或 broker 状态。",
+            "",
+        ]
+    )
+
+
+def render_data_warning_repair_plan_report(
+    manifest: Mapping[str, Any],
+    actions: Sequence[Mapping[str, Any]],
+    matrix: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Data Warning Repair Plan {manifest.get('repair_plan_id')}",
+            "",
+            f"- impact_id: {manifest.get('impact_id')}",
+            f"- overall_data_warning_status: {matrix.get('overall_data_warning_status')}",
+            f"- hardening_allowed_after_repair: {matrix.get('hardening_allowed_after_repair')}",
+            "- auto_repair_executed: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Warning Blocking Matrix",
+            "",
+            *[
+                "- "
+                f"{row.get('warning_id')}: blocks_hardening={row.get('blocks_hardening')}, "
+                f"blocks_research={row.get('blocks_research')}, "
+                f"blocks_production={row.get('blocks_production')}, "
+                f"reason={row.get('reason')}"
+                for row in _records(matrix.get("warnings"))
+            ],
+            "",
+            "## Repair Actions",
+            "",
+            *[
+                "- "
+                f"{row.get('warning_id')}: type={row.get('warning_type')}, "
+                f"severity={row.get('severity')}, "
+                f"recommended_repair_action={row.get('recommended_repair_action')}, "
+                f"expected_effect={row.get('expected_effect')}, "
+                f"auto_repair_allowed={row.get('auto_repair_allowed')}"
+                for row in actions
+            ],
+            "",
+            "该 repair plan 只提出人工可审阅修复路径，不自动 refresh cache、"
+            "repair manifest、rerun backfill 或修改 production state。",
+            "",
+        ]
+    )
+
+
+def render_alternative_method_review_report(
+    manifest: Mapping[str, Any],
+    candidates: Mapping[str, Any],
+    scorecard: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Alternative Method Review {manifest.get('alt_review_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- risk_attribution_id: {manifest.get('risk_attribution_id')}",
+            f"- instability_id: {manifest.get('instability_id')}",
+            f"- recommended_alternative: {scorecard.get('recommended_alternative')}",
+            f"- proposed_method_count: {len(_records(candidates.get('candidates')))}",
+            "- auto_apply: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Candidate Scorecard",
+            "",
+            *[
+                "- "
+                f"{row.get('method')}: status={row.get('current_status')}, "
+                f"return={row.get('return_expectation')}, "
+                f"risk={row.get('risk_expectation')}, "
+                f"stability={row.get('stability_expectation')}, "
+                f"recommendation={row.get('recommendation')}"
+                for row in _records(scorecard.get("methods"))
+            ],
+            "",
+            "## Proposed Candidates",
+            "",
+            *[
+                "- "
+                f"{row.get('method')}: status={row.get('status')}, "
+                f"expected_benefit={row.get('expected_benefit')}, "
+                f"expected_cost={row.get('expected_cost')}, "
+                f"requires_new_implementation={row.get('requires_new_implementation')}"
+                for row in _records(candidates.get("candidates"))
+            ],
+            "",
+            "本报告只提出候选 research methods，不实现新 method，不改变 target weights。",
+            "",
+        ]
+    )
+
+
+def render_refined_owner_checklist(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Owner Refined Method Checklist {decision.get('proposal_id')}",
+            "",
+            "- 是否接受 limited_adjustment 暂不 harden？",
+            "- 是否优先实现 risk_capped_limited_adjustment？",
+            "- 是否优先实现 regime_gated_limited_adjustment？",
+            "- 是否需要先修复 data warnings？",
+            "- 是否继续保留 limited_adjustment 作为 secondary research method？",
+            "- 是否确认所有新 method 仍为 research-only？",
+            "- 是否确认 no broker / no production？",
+            "",
+            f"- recommended_next_step: {decision.get('recommended_next_step')}",
+            f"- confidence: {decision.get('confidence')}",
+            "- auto_apply: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_refined_method_proposal_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    next_methods: Mapping[str, Any],
+    instability: Mapping[str, Any],
+    risk: Mapping[str, Any],
+    repair: Mapping[str, Any],
+    alt_review: Mapping[str, Any],
+) -> str:
+    instability_summary = _mapping(instability.get("instability_reason_summary"))
+    exposure = _mapping(risk.get("exposure_shift_attribution"))
+    matrix = _mapping(repair.get("warning_blocking_matrix"))
+    scorecard = _mapping(alt_review.get("alternative_method_scorecard"))
+    return "\n".join(
+        [
+            f"# Refined Research Method Proposal {manifest.get('proposal_id')}",
+            "",
+            f"- current_method: {decision.get('current_method')}",
+            f"- current_hardening_status: {decision.get('current_hardening_status')}",
+            f"- recommended_next_step: {decision.get('recommended_next_step')}",
+            f"- reason: {decision.get('reason')}",
+            f"- confidence: {decision.get('confidence')}",
+            f"- limited_instability_recommendation: {instability_summary.get('recommendation')}",
+            f"- dominant_failure_regime: {instability_summary.get('dominant_failure_regime')}",
+            f"- risk_worsening_source: {exposure.get('risk_worsening_source')}",
+            f"- hardening_allowed_after_repair: "
+            f"{matrix.get('hardening_allowed_after_repair')}",
+            f"- recommended_alternative: {scorecard.get('recommended_alternative')}",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Proposed Next Methods",
+            "",
+            *[
+                "- "
+                f"{row.get('method')}: priority={row.get('priority')}, "
+                f"scope={row.get('implementation_scope')}, "
+                f"expected_improvement={row.get('expected_improvement')}, "
+                f"required_validation={','.join(_texts(row.get('required_validation')))}"
+                for row in _records(next_methods.get("methods"))
+            ],
+            "",
+            "limited_adjustment 当前不应 harden 为 primary research method。"
+            "下一阶段如实现 refined method，也必须保持 research-only、"
+            "no official target、no broker、no production。",
+            "",
+        ]
+    )
+
+
+def render_refined_method_reader_brief(
+    decision: Mapping[str, Any],
+    next_methods: Mapping[str, Any],
+) -> str:
+    methods = ", ".join(
+        _texts([row.get("method") for row in _records(next_methods.get("methods"))])
+    )
+    return "\n".join(
+        [
+            "## Dynamic Rescue Refined Research Method Proposal",
+            "",
+            f"- current_method: {decision.get('current_method')}",
+            f"- recommended_next_step: {decision.get('recommended_next_step')}",
+            f"- proposed_next_methods: {methods}",
+            f"- confidence: {decision.get('confidence')}",
+            f"- research_target_only: {str(decision.get('research_target_only') is True).lower()}",
+            f"- next_action: {decision.get('next_action')}",
             "- not_official_target_weights: true",
             "- broker_action_allowed: false",
             "- production_effect: none",
@@ -5775,6 +6960,1028 @@ def _research_method_hardening_decision(
         ),
         **SYSTEM_TARGET_SAFETY,
     }
+
+
+def _unstable_window_inventory(
+    *,
+    rolling: Sequence[Mapping[str, Any]],
+    states: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    by_window: dict[str, list[Mapping[str, Any]]] = {}
+    for row in rolling:
+        if row.get("status") == "INSUFFICIENT_DATA":
+            continue
+        by_window.setdefault(_text(row.get("window_id")), []).append(row)
+    labels = _regime_labels_from_states(states, config)
+    rows: list[dict[str, Any]] = []
+    for window_id, window_rows in sorted(by_window.items()):
+        limited = _find_method(window_rows, "limited_adjustment")
+        if not limited:
+            continue
+        static = _find_method(window_rows, "static_baseline")
+        no_trade = _find_method(window_rows, "no_trade_baseline")
+        method_count = len({row.get("target_method") for row in window_rows})
+        drawdown_delta = round(
+            _float(limited.get("max_drawdown")) - _float(static.get("max_drawdown")),
+            10,
+        )
+        risk_adjusted_delta = round(
+            _float(limited.get("risk_adjusted_return_to_volatility"))
+            - _float(static.get("risk_adjusted_return_to_volatility")),
+            10,
+        )
+        weight_jump = _window_max_weight_jump(
+            states,
+            start=_coerce_date(limited.get("start_date"), AI_AFTER_CHATGPT_START),
+            end=_coerce_date(limited.get("end_date"), AI_AFTER_CHATGPT_START),
+            method="limited_adjustment",
+        )
+        reasons = _window_failure_reasons(
+            limited=limited,
+            drawdown_delta=drawdown_delta,
+            risk_adjusted_delta=risk_adjusted_delta,
+            method_count=method_count,
+            weight_jump=weight_jump,
+        )
+        if not reasons:
+            continue
+        regime_tags = _window_regime_tags(
+            labels,
+            start=_coerce_date(limited.get("start_date"), AI_AFTER_CHATGPT_START),
+            end=_coerce_date(limited.get("end_date"), AI_AFTER_CHATGPT_START),
+        )
+        rows.append(
+            {
+                "window_id": window_id,
+                "window_type": limited.get("window_type"),
+                "start_date": limited.get("start_date"),
+                "end_date": limited.get("end_date"),
+                "limited_adjustment_rank_return": int(_float(limited.get("rank_by_return"))),
+                "limited_adjustment_rank_risk_adjusted": int(
+                    _float(limited.get("rank_by_risk_adjusted"))
+                ),
+                "relative_to_static_baseline": round(
+                    _float(limited.get("relative_to_static_baseline")),
+                    10,
+                ),
+                "relative_to_no_trade_baseline": round(
+                    _float(limited.get("relative_to_no_trade_baseline")),
+                    10,
+                ),
+                "drawdown_delta_vs_static": drawdown_delta,
+                "risk_adjusted_delta_vs_static": risk_adjusted_delta,
+                "turnover": round(_float(limited.get("turnover")), 10),
+                "max_weight_jump": weight_jump,
+                "regime_tags": regime_tags,
+                "failure_reasons": reasons,
+                "failure_type": _window_failure_type(reasons),
+                "severity": _window_failure_severity(
+                    reasons=reasons,
+                    return_delta=_float(limited.get("relative_to_static_baseline")),
+                    drawdown_delta=drawdown_delta,
+                ),
+                "static_total_return": static.get("total_return"),
+                "no_trade_total_return": no_trade.get("total_return"),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return rows
+
+
+def _window_failure_reasons(
+    *,
+    limited: Mapping[str, Any],
+    drawdown_delta: float,
+    risk_adjusted_delta: float,
+    method_count: int,
+    weight_jump: float,
+) -> list[str]:
+    reasons: list[str] = []
+    if (
+        _float(limited.get("relative_to_static_baseline"))
+        < INSTABILITY_RETURN_UNDERPERFORMANCE_TOLERANCE
+        or _float(limited.get("relative_to_no_trade_baseline"))
+        < INSTABILITY_RETURN_UNDERPERFORMANCE_TOLERANCE
+    ):
+        reasons.append("return_underperformance")
+    if drawdown_delta < INSTABILITY_DRAWDOWN_WORSE_TOLERANCE:
+        reasons.append("drawdown_worse")
+    if (
+        risk_adjusted_delta < 0.0
+        or _float(limited.get("rank_by_risk_adjusted")) > max(1, method_count - 2)
+    ):
+        reasons.append("risk_adjusted_worse")
+    if _float(limited.get("turnover")) >= INSTABILITY_TURNOVER_HIGH_THRESHOLD:
+        reasons.append("turnover_high")
+    if weight_jump >= INSTABILITY_WEIGHT_JUMP_THRESHOLD:
+        reasons.append("weight_jump_linked")
+    return sorted(set(reasons))
+
+
+def _window_failure_type(reasons: Sequence[str]) -> str:
+    priority = (
+        "return_underperformance",
+        "drawdown_worse",
+        "risk_adjusted_worse",
+        "turnover_high",
+    )
+    material = [reason for reason in reasons if reason in priority]
+    if len(material) == 1:
+        return material[0]
+    if len(material) > 1:
+        return "mixed"
+    return "mixed" if reasons else "mixed"
+
+
+def _window_failure_severity(
+    *,
+    reasons: Sequence[str],
+    return_delta: float,
+    drawdown_delta: float,
+) -> str:
+    material_count = len([reason for reason in reasons if reason != "weight_jump_linked"])
+    if (
+        material_count >= 2
+        or return_delta <= INSTABILITY_HIGH_SEVERITY_RETURN_DELTA
+        or drawdown_delta <= INSTABILITY_HIGH_SEVERITY_DRAWDOWN_DELTA
+    ):
+        return "HIGH"
+    if material_count == 1:
+        return "MEDIUM"
+    return "LOW"
+
+
+def _window_regime_tags(
+    labels: Mapping[str, str],
+    *,
+    start: date,
+    end: date,
+) -> list[str]:
+    counts: dict[str, int] = {}
+    for day_text, label in labels.items():
+        day = _coerce_date(day_text, date(1970, 1, 1))
+        if start <= day <= end:
+            counts[label] = counts.get(label, 0) + 1
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return [name for name, _count in ordered[:3]] or ["unknown"]
+
+
+def _window_max_weight_jump(
+    states: Sequence[Mapping[str, Any]],
+    *,
+    start: date,
+    end: date,
+    method: str,
+) -> float:
+    selected = sorted(
+        [
+            row
+            for row in states
+            if row.get("target_method") == method
+            and start <= _coerce_date(row.get("date"), date(1970, 1, 1)) <= end
+        ],
+        key=lambda row: _text(row.get("date")),
+    )
+    max_jump = 0.0
+    previous: dict[str, Any] | None = None
+    for row in selected:
+        weights = _mapping(row.get("weights"))
+        if previous is not None:
+            max_jump = max(
+                max_jump,
+                max(
+                    (
+                        abs(_float(weights.get(symbol)) - _float(previous.get(symbol)))
+                        for symbol in set(weights) | set(previous)
+                    ),
+                    default=0.0,
+                ),
+            )
+        previous = weights
+    return round(max_jump, 10)
+
+
+def _instability_reason_summary(
+    consistency: Mapping[str, Any],
+    inventory: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    reason_counts: dict[str, int] = {}
+    regime_counts: dict[str, int] = {}
+    for row in inventory:
+        for reason in _texts(row.get("failure_reasons")):
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+        for regime in _texts(row.get("regime_tags")):
+            regime_counts[regime] = regime_counts.get(regime, 0) + 1
+    total = len(inventory)
+    top_reasons = [
+        {
+            "reason": reason,
+            "count": count,
+            "share": round(count / total, 6) if total else 0.0,
+        }
+        for reason, count in sorted(reason_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    dominant_regime = _dominant_failure_regime(regime_counts)
+    if total == 0:
+        recommendation = "insufficient_data"
+    elif dominant_regime in {"tech_drawdown", "semiconductor_pullback", "risk_off"}:
+        recommendation = "consider_regime_gate"
+    elif any(row["reason"] == "drawdown_worse" for row in top_reasons):
+        recommendation = "consider_risk_cap"
+    else:
+        recommendation = "continue_diagnosis"
+    rolling = _mapping(consistency.get("rolling_consistency_summary"))
+    return {
+        "target_method": "limited_adjustment",
+        "rolling_consistency_status": _text(
+            rolling.get("rolling_consistency_status"),
+            "INSUFFICIENT_DATA",
+        ),
+        "unstable_window_count": total,
+        "top_reasons": top_reasons,
+        "dominant_failure_regime": dominant_regime,
+        "recommendation": recommendation,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _dominant_failure_regime(regime_counts: Mapping[str, int]) -> str:
+    if not regime_counts:
+        return "unknown"
+    normalized = {
+        "semiconductor_pressure": "semiconductor_pullback",
+        "normal": "sideways_choppy",
+    }
+    ranked = sorted(regime_counts.items(), key=lambda item: (-item[1], item[0]))
+    return normalized.get(ranked[0][0], ranked[0][0])
+
+
+def _rolling_failure_pattern(inventory: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    pressure = [
+        row
+        for row in inventory
+        if {"tech_drawdown", "semiconductor_pullback", "risk_off"}
+        & set(_texts(row.get("regime_tags")))
+    ]
+    return_good_drawdown_worse = [
+        row
+        for row in inventory
+        if _float(row.get("relative_to_static_baseline")) > 0
+        and _float(row.get("drawdown_delta_vs_static")) < INSTABILITY_DRAWDOWN_WORSE_TOLERANCE
+    ]
+    turnover = [
+        row for row in inventory if "turnover_high" in set(_texts(row.get("failure_reasons")))
+    ]
+    jumps = [
+        row for row in inventory if "weight_jump_linked" in set(_texts(row.get("failure_reasons")))
+    ]
+    patterns = [
+        {
+            "pattern": "underperforms_in_pressure_regime",
+            "supporting_windows": len(pressure),
+            "description": (
+                "limited_adjustment tends to underperform when tech, semiconductor, "
+                "or risk-off pressure is active."
+            ),
+            "possible_fix": "regime_gate_risk_increase",
+        },
+        {
+            "pattern": "return_good_but_drawdown_worse",
+            "supporting_windows": len(return_good_drawdown_worse),
+            "description": "limited_adjustment can improve return while worsening drawdown.",
+            "possible_fix": "risk_cap_or_drawdown_guard",
+        },
+        {
+            "pattern": "turnover_or_weight_jump_linked",
+            "supporting_windows": len(turnover) + len(jumps),
+            "description": "Some weak windows coincide with higher turnover or weight jumps.",
+            "possible_fix": "lower_turnover_or_smoother_adjustment",
+        },
+    ]
+    return {"patterns": patterns, **SYSTEM_TARGET_SAFETY}
+
+
+def _backfill_symbol_returns(backfill: Mapping[str, Any]) -> pd.DataFrame:
+    symbols = _backfill_non_cash_symbols(backfill)
+    if not symbols:
+        return pd.DataFrame()
+    price_cache_path, _ = _backfill_cache_paths(backfill)
+    if not price_cache_path.exists():
+        return pd.DataFrame()
+    start = _coerce_date(backfill.get("date_start"), AI_AFTER_CHATGPT_START)
+    end = _coerce_date(backfill.get("date_end"), date.max)
+    try:
+        pivot = _load_price_pivot(price_cache_path, symbols, start)
+    except DynamicV3SystemTargetError:
+        return pd.DataFrame()
+    pivot = pivot.loc[pivot.index.date <= end]
+    returns = pivot.pct_change().fillna(0.0)
+    returns.index = [idx.date().isoformat() for idx in returns.index]
+    return returns
+
+
+def _backfill_non_cash_symbols(backfill: Mapping[str, Any]) -> list[str]:
+    states = _records(backfill.get("backfill_method_states"))
+    return sorted(
+        {
+            symbol
+            for row in states
+            for symbol in _mapping(row.get("weights"))
+            if symbol != "CASH"
+        }
+    )
+
+
+def _backfill_cache_paths(backfill: Mapping[str, Any]) -> tuple[Path, Path]:
+    config = _load_backfill_config_from_manifest(backfill)
+    source = _mapping(config.get("source"))
+    price_cache_path = _resolve_project_path(
+        source.get("price_cache_path"),
+        DEFAULT_PRICE_CACHE_PATH,
+    )
+    if source.get("rates_cache_path"):
+        rates_cache_path = _resolve_project_path(
+            source.get("rates_cache_path"),
+            DEFAULT_RATES_CACHE_PATH,
+        )
+    else:
+        sibling_rates = price_cache_path.with_name(DEFAULT_RATES_CACHE_PATH.name)
+        rates_cache_path = sibling_rates if sibling_rates.exists() else DEFAULT_RATES_CACHE_PATH
+    return price_cache_path, rates_cache_path
+
+
+def _return_contribution_by_symbol(
+    states: Sequence[Mapping[str, Any]],
+    returns: pd.DataFrame,
+) -> dict[str, Any]:
+    limited_rows = _method_state_rows(states, "limited_adjustment")
+    static_rows = _method_state_rows(states, "static_baseline")
+    limited = _symbol_contribution(limited_rows, returns)
+    static = _symbol_contribution(static_rows, returns)
+    symbols = sorted(set(limited) | set(static) | set(returns.columns if not returns.empty else []))
+    rows = [
+        {
+            "symbol": symbol,
+            "avg_weight": round(_avg_symbol_weight(limited_rows, symbol), 10),
+            "return_contribution": round(_float(limited.get(symbol)), 10),
+            "relative_contribution_vs_static": round(
+                _float(limited.get(symbol)) - _float(static.get(symbol)),
+                10,
+            ),
+        }
+        for symbol in symbols
+    ]
+    positives = [
+        row["symbol"]
+        for row in sorted(
+            rows,
+            key=lambda row: _float(row.get("relative_contribution_vs_static")),
+            reverse=True,
+        )
+        if _float(row.get("relative_contribution_vs_static")) > 0
+    ][:3]
+    negatives = [
+        row["symbol"]
+        for row in sorted(rows, key=lambda row: _float(row.get("relative_contribution_vs_static")))
+        if _float(row.get("relative_contribution_vs_static")) < 0
+    ][:3]
+    return {
+        "target_method": "limited_adjustment",
+        "symbols": rows,
+        "top_positive_contributors": positives,
+        "top_negative_contributors": negatives,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _drawdown_contribution_by_symbol(
+    states: Sequence[Mapping[str, Any]],
+    returns: pd.DataFrame,
+) -> dict[str, Any]:
+    limited_rows = _method_state_rows(states, "limited_adjustment")
+    static_rows = _method_state_rows(states, "static_baseline")
+    start, end = _max_drawdown_window(limited_rows)
+    limited_window = _rows_between(limited_rows, start, end)
+    static_window = _rows_between(static_rows, start, end)
+    limited = _symbol_contribution(limited_window, returns)
+    static = _symbol_contribution(static_window, returns)
+    symbols = sorted(set(limited) | set(static) | set(returns.columns if not returns.empty else []))
+    rows = [
+        {
+            "symbol": symbol,
+            "drawdown_contribution": round(_float(limited.get(symbol)), 10),
+            "weight_during_drawdown": round(_avg_symbol_weight(limited_window, symbol), 10),
+            "relative_to_static": round(
+                _float(limited.get(symbol)) - _float(static.get(symbol)),
+                10,
+            ),
+        }
+        for symbol in symbols
+    ]
+    top = [
+        row["symbol"]
+        for row in sorted(rows, key=lambda row: _float(row.get("drawdown_contribution")))
+        if _float(row.get("drawdown_contribution")) < 0
+    ][:3]
+    return {
+        "target_method": "limited_adjustment",
+        "max_drawdown_window": {
+            "start_date": start.isoformat() if start != date.max else "",
+            "end_date": end.isoformat() if end != date.min else "",
+        },
+        "symbols": rows,
+        "top_drawdown_contributors": top,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _risk_exposure_shift_attribution(states: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    limited = _exposure_summary(_method_state_rows(states, "limited_adjustment"))
+    static = _exposure_summary(_method_state_rows(states, "static_baseline"))
+    risk_delta = round(
+        _float(limited.get("avg_risk_asset_weight")) - _float(static.get("avg_risk_asset_weight")),
+        10,
+    )
+    semi_delta = round(
+        _float(limited.get("avg_semiconductor_weight"))
+        - _float(static.get("avg_semiconductor_weight")),
+        10,
+    )
+    cash_delta = round(
+        _float(limited.get("avg_cash_weight")) - _float(static.get("avg_cash_weight")),
+        10,
+    )
+    sources = []
+    if semi_delta > EXPOSURE_SIMILARITY_TOLERANCE:
+        sources.append("higher_semiconductor_exposure")
+    if risk_delta > EXPOSURE_SIMILARITY_TOLERANCE:
+        sources.append("higher_risk_asset_exposure")
+    if cash_delta < -EXPOSURE_SIMILARITY_TOLERANCE:
+        sources.append("lower_cash")
+    if len(sources) > 1:
+        source = "mixed"
+    elif sources:
+        source = sources[0]
+    else:
+        source = "unknown"
+    return {
+        "target_method": "limited_adjustment",
+        "avg_risk_asset_weight": limited.get("avg_risk_asset_weight"),
+        "avg_risk_asset_delta_vs_static": risk_delta,
+        "avg_semiconductor_weight": limited.get("avg_semiconductor_weight"),
+        "avg_semiconductor_delta_vs_static": semi_delta,
+        "avg_cash_weight": limited.get("avg_cash_weight"),
+        "avg_cash_delta_vs_static": cash_delta,
+        "risk_worsening_source": source,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _risk_worsening_events(states: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    limited = _method_state_rows(states, "limited_adjustment")
+    static = _method_state_rows(states, "static_baseline")
+    static_by_date = {row.get("date"): row for row in static}
+    rows: list[dict[str, Any]] = []
+    for index in range(RISK_WORSENING_EVENT_WINDOW_DAYS - 1, len(limited)):
+        window = limited[index - RISK_WORSENING_EVENT_WINDOW_DAYS + 1 : index + 1]
+        static_window = [
+            static_by_date.get(row.get("date"), {})
+            for row in window
+            if row.get("date") in static_by_date
+        ]
+        if len(static_window) < RISK_WORSENING_EVENT_WINDOW_DAYS:
+            continue
+        limited_returns = [_float(row.get("daily_return")) for row in window]
+        static_returns = [_float(row.get("daily_return")) for row in static_window]
+        drawdown_delta = round(
+            _drawdown_from_returns(limited_returns) - _drawdown_from_returns(static_returns),
+            10,
+        )
+        vol_delta = round(
+            _stddev(limited_returns) * math.sqrt(252.0)
+            - _stddev(static_returns) * math.sqrt(252.0),
+            10,
+        )
+        turnover_delta = round(
+            sum(_float(row.get("turnover")) for row in window)
+            - sum(_float(row.get("turnover")) for row in static_window),
+            10,
+        )
+        reasons = []
+        if drawdown_delta < RISK_WORSENING_DRAWDOWN_DELTA_THRESHOLD:
+            reasons.append("drawdown_deeper")
+        if vol_delta > RISK_WORSENING_VOL_DELTA_THRESHOLD:
+            reasons.append("volatility_higher")
+        if turnover_delta > RISK_WORSENING_TURNOVER_DELTA_THRESHOLD:
+            reasons.append("turnover_higher")
+        if not reasons:
+            continue
+        exposure = _exposure_summary(window)
+        event_type = reasons[0] if len(reasons) == 1 else "mixed"
+        event_date = _text(window[-1].get("date"))
+        rows.append(
+            {
+                "event_id": _stable_id("risk-worsening-event", event_date, event_type),
+                "date": event_date,
+                "window": f"{RISK_WORSENING_EVENT_WINDOW_DAYS}d",
+                "risk_worsening_type": event_type,
+                "risk_asset_weight": exposure.get("avg_risk_asset_weight"),
+                "semiconductor_weight": exposure.get("avg_semiconductor_weight"),
+                "cash_weight": exposure.get("avg_cash_weight"),
+                "relative_drawdown_vs_static": drawdown_delta,
+                "volatility_delta_vs_static": vol_delta,
+                "turnover_delta_vs_static": turnover_delta,
+                "likely_cause": _risk_event_likely_cause(exposure),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return rows
+
+
+def _method_state_rows(states: Sequence[Mapping[str, Any]], method: str) -> list[dict[str, Any]]:
+    return sorted(
+        [dict(row) for row in states if row.get("target_method") == method],
+        key=lambda row: _text(row.get("date")),
+    )
+
+
+def _rows_between(
+    rows: Sequence[Mapping[str, Any]],
+    start: date,
+    end: date,
+) -> list[dict[str, Any]]:
+    return [
+        dict(row)
+        for row in rows
+        if start <= _coerce_date(row.get("date"), date(1970, 1, 1)) <= end
+    ]
+
+
+def _max_drawdown_window(rows: Sequence[Mapping[str, Any]]) -> tuple[date, date]:
+    if not rows:
+        return date.max, date.min
+    peak_value = _float(rows[0].get("portfolio_value"), 1.0)
+    peak_date = _coerce_date(rows[0].get("date"), date.max)
+    worst_drawdown = 0.0
+    worst_start = peak_date
+    worst_end = peak_date
+    for row in rows:
+        value = _float(row.get("portfolio_value"), 1.0)
+        current_date = _coerce_date(row.get("date"), peak_date)
+        if value > peak_value:
+            peak_value = value
+            peak_date = current_date
+        drawdown = value / peak_value - 1.0 if peak_value > 0 else 0.0
+        if drawdown < worst_drawdown:
+            worst_drawdown = drawdown
+            worst_start = peak_date
+            worst_end = current_date
+    return worst_start, worst_end
+
+
+def _symbol_contribution(
+    rows: Sequence[Mapping[str, Any]],
+    returns: pd.DataFrame,
+) -> dict[str, float]:
+    if returns.empty:
+        return {}
+    contribution = {str(symbol): 0.0 for symbol in returns.columns}
+    for row in rows:
+        day = _text(row.get("date"))
+        if day not in returns.index:
+            continue
+        weights = _mapping(row.get("weights"))
+        for symbol in returns.columns:
+            contribution[str(symbol)] += _float(weights.get(str(symbol))) * _float(
+                returns.loc[day, symbol]
+            )
+    return {symbol: round(value, 10) for symbol, value in contribution.items()}
+
+
+def _avg_symbol_weight(rows: Sequence[Mapping[str, Any]], symbol: str) -> float:
+    return _mean_float([_float(_mapping(row.get("weights")).get(symbol)) for row in rows])
+
+
+def _drawdown_from_returns(values: Sequence[float]) -> float:
+    equity = 1.0
+    peak = 1.0
+    worst = 0.0
+    for value in values:
+        equity *= 1.0 + value
+        peak = max(peak, equity)
+        worst = min(worst, equity / peak - 1.0 if peak > 0 else 0.0)
+    return worst
+
+
+def _risk_event_likely_cause(exposure: Mapping[str, Any]) -> str:
+    if _float(exposure.get("avg_semiconductor_weight")) >= RISK_EVENT_HIGH_SEMICONDUCTOR_WEIGHT:
+        return "risk_exposure_too_high"
+    if _float(exposure.get("avg_cash_weight")) <= RISK_EVENT_LOW_CASH_WEIGHT:
+        return "late_risk_reduction"
+    return "unknown"
+
+
+def _warning_repair_actions(impact: Mapping[str, Any]) -> list[dict[str, Any]]:
+    inventory = _mapping(impact.get("data_warning_inventory"))
+    warnings = _records(inventory.get("warnings"))
+    if not warnings:
+        warnings = [
+            {
+                "warning_id": "no_recorded_warning",
+                "severity": "INFO",
+                "affected_symbols": [],
+                "affected_dates": [],
+                "potential_metric_impact": "LOW",
+            }
+        ]
+    actions = []
+    for warning in warnings:
+        warning_id = _text(warning.get("warning_id"), "unknown_warning")
+        warning_type = _warning_type(warning_id)
+        severity = _warning_repair_severity(warning)
+        repair_action = _recommended_repair_action(warning_type, warning_id)
+        actions.append(
+            {
+                "warning_id": warning_id,
+                "warning_type": warning_type,
+                "severity": severity,
+                "affected_artifacts": [
+                    _text(impact.get("impact_id")),
+                    _text(impact.get("backfill_id")),
+                    _text(impact.get("selection_review_id")),
+                ],
+                "recommended_repair_action": repair_action,
+                "expected_effect": _expected_repair_effect(repair_action, severity),
+                "auto_repair_allowed": False,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return actions
+
+
+def _warning_type(warning_id: str) -> str:
+    lowered = warning_id.lower()
+    if "manifest" in lowered and "missing" in lowered:
+        return "price_manifest_missing"
+    if "stale" in lowered:
+        return "stale_report"
+    if "checksum" in lowered:
+        return "missing_checksum"
+    if "missing_price" in lowered or "missing_symbols" in lowered:
+        return "price_cache_gap"
+    return "unknown"
+
+
+def _warning_repair_severity(warning: Mapping[str, Any]) -> str:
+    impact = _text(warning.get("potential_metric_impact"), "UNKNOWN")
+    raw = _text(warning.get("severity"), "WARNING")
+    if raw in {"BLOCKING", "REVIEW_REQUIRED"}:
+        return raw
+    if impact in {"UNKNOWN", "HIGH"}:
+        return "REVIEW_REQUIRED"
+    if impact == "MEDIUM":
+        return "WARNING"
+    return "INFO" if raw == "INFO" else "WARNING"
+
+
+def _recommended_repair_action(warning_type: str, warning_id: str) -> str:
+    if warning_type in {"price_manifest_missing", "missing_checksum"}:
+        return "repair_manifest"
+    if warning_type == "stale_report":
+        return "rerun_report_index"
+    if warning_type == "price_cache_gap":
+        return "refresh_price_cache"
+    if warning_id == "no_recorded_warning":
+        return "no_action"
+    return "manual_review"
+
+
+def _expected_repair_effect(repair_action: str, severity: str) -> str:
+    if repair_action == "no_action":
+        return "no_change"
+    if repair_action == "manual_review":
+        return "unknown"
+    if severity == "REVIEW_REQUIRED":
+        return "downgrade_warning"
+    return "remove_warning"
+
+
+def _warning_blocking_matrix(
+    impact: Mapping[str, Any],
+    actions: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    sensitivity = _mapping(impact.get("recommendation_sensitivity_to_warnings"))
+    rows = []
+    for action in actions:
+        severity = _text(action.get("severity"))
+        warning_id = _text(action.get("warning_id"))
+        blocks_hardening = severity in {"REVIEW_REQUIRED", "BLOCKING"}
+        rows.append(
+            {
+                "warning_id": warning_id,
+                "blocks_hardening": blocks_hardening,
+                "blocks_research": severity == "BLOCKING",
+                "blocks_production": severity in {"WARNING", "REVIEW_REQUIRED", "BLOCKING"},
+                "reason": _warning_blocking_reason(action, sensitivity),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    if any(row.get("blocks_hardening") for row in rows):
+        overall = "REVIEW_REQUIRED"
+    elif any(row.get("blocks_production") for row in rows):
+        overall = "PASS_WITH_WARNINGS"
+    else:
+        overall = "PASS"
+    effects = {_text(row.get("expected_effect")) for row in actions}
+    hardening_after = (
+        "NO"
+        if any(row.get("blocks_research") for row in rows)
+        else "UNKNOWN"
+        if "unknown" in effects or any(row.get("blocks_hardening") for row in rows)
+        else "YES"
+    )
+    return {
+        "warnings": rows,
+        "overall_data_warning_status": overall,
+        "hardening_allowed_after_repair": hardening_after,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _warning_blocking_reason(
+    action: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+) -> str:
+    if action.get("severity") == "REVIEW_REQUIRED":
+        return "Data warning impact is not quantified enough to harden the research method."
+    if action.get("severity") == "BLOCKING":
+        return "Data warning blocks research interpretation until repaired."
+    if sensitivity.get("data_quality_decision") == "REVIEW_REQUIRED":
+        return "Warning contributes to REVIEW_REQUIRED data quality decision."
+    return "Warning should be reviewed before production use but does not block research."
+
+
+def _alternative_method_candidates(
+    risk: Mapping[str, Any],
+    instability: Mapping[str, Any],
+) -> dict[str, Any]:
+    _ = risk, instability
+    return {
+        "candidates": [
+            {
+                "method": "risk_capped_limited_adjustment",
+                "status": "PROPOSED",
+                "description": (
+                    "limited_adjustment with risk asset increase capped during elevated "
+                    "drawdown or high dispersion."
+                ),
+                "expected_benefit": "reduce drawdown worsening",
+                "expected_cost": "may reduce return improvement",
+                "requires_new_implementation": True,
+                "auto_apply": False,
+            },
+            {
+                "method": "regime_gated_limited_adjustment",
+                "status": "PROPOSED",
+                "description": (
+                    "allow limited adjustment only outside tech_drawdown, "
+                    "semiconductor_pullback, or risk_off regimes."
+                ),
+                "expected_benefit": "improve pressure regime behavior",
+                "expected_cost": "may miss rebound after drawdown",
+                "requires_new_implementation": True,
+                "auto_apply": False,
+            },
+            {
+                "method": "lower_turnover_limited_adjustment",
+                "status": "PROPOSED",
+                "description": "smaller adjustment step or slower rebalance cadence.",
+                "expected_benefit": "reduce turnover and weight jumps",
+                "expected_cost": "slower response to improved target evidence",
+                "requires_new_implementation": True,
+                "auto_apply": False,
+            },
+            {
+                "method": "cash_buffered_limited_adjustment",
+                "status": "PROPOSED",
+                "description": "keep a higher cash floor while limited_adjustment is under review.",
+                "expected_benefit": "reduce drawdown sensitivity",
+                "expected_cost": "may reduce upside capture",
+                "requires_new_implementation": True,
+                "auto_apply": False,
+            },
+        ],
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _alternative_method_scorecard(
+    backfill: Mapping[str, Any],
+    risk: Mapping[str, Any],
+    instability: Mapping[str, Any],
+    candidates: Mapping[str, Any],
+) -> dict[str, Any]:
+    states = _records(backfill.get("backfill_method_states"))
+    methods = []
+    for method in (
+        "limited_adjustment",
+        "defensive_limited_adjustment",
+        "static_baseline",
+        "consensus_target",
+    ):
+        metrics = _method_path_metrics(states, method)
+        methods.append(
+            {
+                "method": method,
+                "current_status": (
+                    "REVIEW_REQUIRED" if method == "limited_adjustment" else "EXISTING"
+                ),
+                "return_expectation": _return_expectation(metrics),
+                "risk_expectation": _risk_expectation(metrics, states),
+                "stability_expectation": (
+                    _text(
+                        _mapping(instability.get("instability_reason_summary")).get(
+                            "rolling_consistency_status"
+                        ),
+                        "UNKNOWN",
+                    )
+                    if method == "limited_adjustment"
+                    else "UNKNOWN"
+                ),
+                "implementation_status": "EXISTING",
+                "recommendation": (
+                    "KEEP_AS_SECONDARY_OR_REFINE"
+                    if method == "limited_adjustment"
+                    else "KEEP_AS_REFERENCE"
+                ),
+            }
+        )
+    for row in _records(candidates.get("candidates")):
+        method = _text(row.get("method"))
+        methods.append(
+            {
+                "method": method,
+                "current_status": "PROPOSED",
+                "return_expectation": "MEDIUM",
+                "risk_expectation": (
+                    "BETTER"
+                    if method
+                    in {"risk_capped_limited_adjustment", "cash_buffered_limited_adjustment"}
+                    else "UNKNOWN"
+                ),
+                "stability_expectation": "UNKNOWN",
+                "implementation_status": "NOT_IMPLEMENTED",
+                "recommendation": (
+                    "IMPLEMENT_AS_RESEARCH_CANDIDATE"
+                    if method
+                    in {"risk_capped_limited_adjustment", "regime_gated_limited_adjustment"}
+                    else "CONSIDER_AFTER_PRIMARY_REFINEMENT"
+                ),
+            }
+        )
+    recommended = _recommended_alternative_method(risk, instability)
+    return {
+        "methods": methods,
+        "recommended_alternative": recommended,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _return_expectation(metrics: Mapping[str, Any]) -> str:
+    total = _float(metrics.get("total_return"))
+    if total > ALTERNATIVE_RETURN_HIGH_EXPECTATION_THRESHOLD:
+        return "HIGHER"
+    if total > 0.0:
+        return "MEDIUM"
+    return "LOWER"
+
+
+def _risk_expectation(metrics: Mapping[str, Any], states: Sequence[Mapping[str, Any]]) -> str:
+    static = _method_path_metrics(states, "static_baseline")
+    if _float(metrics.get("max_drawdown")) >= _float(static.get("max_drawdown")):
+        return "BETTER"
+    return "WORSE"
+
+
+def _recommended_alternative_method(
+    risk: Mapping[str, Any],
+    instability: Mapping[str, Any],
+) -> str:
+    exposure = _mapping(risk.get("exposure_shift_attribution"))
+    summary = _mapping(instability.get("instability_reason_summary"))
+    source = _text(exposure.get("risk_worsening_source"))
+    recommendation = _text(summary.get("recommendation"))
+    if source in {
+        "higher_risk_asset_exposure",
+        "higher_semiconductor_exposure",
+        "lower_cash",
+        "mixed",
+    }:
+        return "risk_capped_limited_adjustment"
+    if recommendation == "consider_regime_gate":
+        return "regime_gated_limited_adjustment"
+    return "risk_capped_limited_adjustment"
+
+
+def _refined_method_decision(
+    instability: Mapping[str, Any],
+    risk: Mapping[str, Any],
+    repair: Mapping[str, Any],
+    alt_review: Mapping[str, Any],
+) -> dict[str, Any]:
+    instability_summary = _mapping(instability.get("instability_reason_summary"))
+    exposure = _mapping(risk.get("exposure_shift_attribution"))
+    matrix = _mapping(repair.get("warning_blocking_matrix"))
+    scorecard = _mapping(alt_review.get("alternative_method_scorecard"))
+    recommended_alt = _text(scorecard.get("recommended_alternative"))
+    warning_after = _text(matrix.get("hardening_allowed_after_repair"), "UNKNOWN")
+    if warning_after == "NO":
+        next_step = "REPAIR_DATA_WARNINGS_FIRST"
+    elif recommended_alt == "risk_capped_limited_adjustment":
+        next_step = "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD"
+    elif recommended_alt == "regime_gated_limited_adjustment":
+        next_step = "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD"
+    elif _text(instability_summary.get("recommendation")) == "insufficient_data":
+        next_step = "CONTINUE_OBSERVATION"
+    else:
+        next_step = "DEFER"
+    confidence = (
+        "LOW"
+        if warning_after == "UNKNOWN"
+        else "MEDIUM"
+        if next_step
+        in {
+            "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD",
+            "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD",
+        }
+        else "LOW"
+    )
+    reason = (
+        "limited_adjustment did not harden because rolling consistency is "
+        f"{instability_summary.get('rolling_consistency_status')}, "
+        f"risk worsening source is {exposure.get('risk_worsening_source')}, "
+        f"and data warning repair outcome is {warning_after}."
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "proposal_id": "",
+        "current_method": "limited_adjustment",
+        "current_hardening_status": "REVIEW_REQUIRED",
+        "recommended_next_step": next_step,
+        "reason": reason,
+        "confidence": confidence,
+        "auto_apply": False,
+        "research_target_only": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        "data_warnings_need_repair_before_hardening": warning_after != "YES",
+        "limited_adjustment_secondary_research_method": True,
+        "next_action": (
+            "implement_research_only_refined_method_candidate"
+            if next_step.startswith("IMPLEMENT_")
+            else "owner_review_required"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _proposed_next_methods(
+    decision: Mapping[str, Any],
+    alt_review: Mapping[str, Any],
+) -> dict[str, Any]:
+    _ = alt_review
+    preferred = _text(decision.get("recommended_next_step"))
+    risk_priority = "HIGH" if preferred == "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD" else "MEDIUM"
+    regime_priority = "HIGH" if preferred == "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD" else "MEDIUM"
+    methods = [
+        {
+            "method": "risk_capped_limited_adjustment",
+            "priority": risk_priority,
+            "implementation_scope": "research_only",
+            "expected_improvement": (
+                "reduce drawdown worsening while preserving part of return improvement"
+            ),
+            "required_validation": [
+                "historical backfill",
+                "rolling consistency",
+                "pressure regime review",
+                "forward confirmation",
+            ],
+        },
+        {
+            "method": "regime_gated_limited_adjustment",
+            "priority": regime_priority,
+            "implementation_scope": "research_only",
+            "expected_improvement": "avoid active risk increase in pressure regimes",
+            "required_validation": [
+                "regime-specific simulation",
+                "forward pressure samples",
+            ],
+        },
+    ]
+    return {"methods": methods, **SYSTEM_TARGET_SAFETY}
 
 
 def _mean_float(values: Sequence[float]) -> float:

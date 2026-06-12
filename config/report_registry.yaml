@@ -2593,6 +2593,111 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_limited_instability
+    title: ETF Dynamic v3 Rescue Limited Instability Diagnosis
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue limited-instability report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/limited_instability_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/unstable_window_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/instability_reason_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/rolling_failure_pattern.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_instability/*/limited_instability_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-224 explains why limited_adjustment rolling consistency is unstable
+      before any refined research method is proposed.
+    owner_action: review_instability_reasons_before_refined_method_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_limited_risk_attribution
+    title: ETF Dynamic v3 Rescue Limited Risk Attribution
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue limited-risk-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/limited_risk_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/return_contribution_by_symbol.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/drawdown_contribution_by_symbol.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/exposure_shift_attribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/risk_worsening_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/limited_risk_attribution/*/limited_risk_attribution_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-225 attributes RETURN_IMPROVES_RISK_WORSENS to symbol
+      contributions, exposure shifts, and risk worsening events.
+    owner_action: review_risk_worsening_source_before_refined_method_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_data_warning_repair_plan
+    title: ETF Dynamic v3 Rescue Data Warning Repair Plan
+    group: data_quality
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue data-warning-repair-plan report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/data_warning_repair_plan_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/warning_repair_actions.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/warning_blocking_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/data_warning_repair_plan/*/data_warning_repair_plan_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-226 records data warning blocking status and repair actions
+      without automatically mutating cache, manifests, or reports.
+    owner_action: review_warning_repair_plan_before_hardening_or_production_interpretation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_alternative_method_review
+    title: ETF Dynamic v3 Rescue Alternative Method Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue alternative-method-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_candidates.json
+      - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_scorecard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/alternative_method_review/*/alternative_method_review_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-227 compares existing and proposed research-only alternatives
+      before implementing any new target method.
+    owner_action: review_alternative_method_scorecard_before_candidate_implementation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_refined_method_proposal
+    title: ETF Dynamic v3 Rescue Refined Research Method Proposal
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue refined-method-proposal report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/refined_method_proposal_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/refined_method_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/proposed_next_methods.json
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/owner_refined_method_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/refined_method_proposal_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/refined_method_proposal/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-228 summarizes limited_adjustment weakness diagnosis and proposes
+      the next research-only method refinement with no official weights or broker action.
+    owner_action: owner_review_refined_method_proposal_before_new_method_implementation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance
