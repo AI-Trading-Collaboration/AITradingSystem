@@ -1,0 +1,98 @@
+schema_version: 1
+
+transform_types:
+  cap_group_weight:
+    description: Cap aggregate group exposure and reallocate excess to CASH.
+    required_fields:
+      - group
+      - max_weight
+    allowed_modes:
+      - reduce_excess_to_cash
+  cap_symbol_weight:
+    description: Cap a single symbol and reallocate excess to CASH.
+    required_fields:
+      - symbol
+      - max_weight
+    allowed_modes:
+      - reduce_excess_to_cash
+  min_cash_weight:
+    description: Enforce a minimum CASH weight by scaling non-cash exposure.
+    required_fields:
+      - min_cash_weight
+    allowed_modes:
+      - scale_non_cash
+  regime_gate:
+    description: Apply a target transform only when the current regime label matches.
+    required_fields:
+      - regime
+      - action
+    allowed_modes:
+      - hold_previous_weights
+      - reduce_active_tilt
+      - block_risk_asset_increase
+      - block_symbol_increase
+      - only_allow_risk_reduction
+  regime_cooldown:
+    description: Hold prior weights for a cooldown period after a target regime trigger.
+    required_fields:
+      - regime
+      - cooldown_days
+    allowed_modes:
+      - hold_previous_weights
+  weight_smoothing:
+    description: Average recent target weights before applying the rebalance.
+    required_fields:
+      - window_days
+    allowed_modes:
+      - trailing_mean
+  signal_persistence:
+    description: Require the target direction to persist for several observations.
+    required_fields:
+      - persistence_days
+    allowed_modes:
+      - hold_until_confirmed
+  rebalance_threshold:
+    description: Skip small target changes below a total absolute delta threshold.
+    required_fields:
+      - min_total_abs_delta
+    allowed_modes:
+      - hold_previous_weights
+  turnover_cap:
+    description: Blend toward the target only up to a maximum single rebalance turnover.
+    required_fields:
+      - max_turnover
+    allowed_modes:
+      - proportional_blend
+  candidate_subset:
+    description: Select a lightweight candidate source set before aggregation.
+    required_fields:
+      - selection_rule
+    allowed_modes:
+      - top_5_by_score
+      - cluster_representatives
+      - all_available_methods
+  consensus_aggregation:
+    description: Aggregate available candidate method weights into a single target.
+    required_fields:
+      - method
+    allowed_modes:
+      - weighted_mean
+      - median
+      - trimmed_mean
+  hold_previous_weights:
+    description: Reuse the current drifted weights instead of accepting the new target.
+    required_fields:
+      - reason
+    allowed_modes:
+      - hold_previous_weights
+
+safety:
+  experiment_only: true
+  research_screening_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

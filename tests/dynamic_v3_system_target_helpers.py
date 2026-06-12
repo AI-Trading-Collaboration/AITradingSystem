@@ -5,6 +5,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 
 TARGET_AS_OF = date(2026, 1, 5)
@@ -409,6 +411,171 @@ def run_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+def write_weight_experiment_matrix_config(
+    tmp_path: Path,
+    *,
+    source_backfill_id: str,
+) -> Path:
+    payload = yaml.safe_load(
+        system_target.DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH.read_text(encoding="utf-8")
+    )
+    payload["experiment_group"]["source_backfill_id"] = source_backfill_id
+    config_path = tmp_path / "weight_experiment_matrix_v1.yaml"
+    config_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return config_path
+
+
+def run_experiment_matrix_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_backfill_fixture(tmp_path)
+    matrix_config = write_weight_experiment_matrix_config(
+        tmp_path,
+        source_backfill_id=fixture["backfill"]["backfill_id"],
+    )
+    matrix = system_target.build_experiment_matrix(
+        config_path=matrix_config,
+        output_dir=tmp_path / "experiment_matrix",
+        generated_at=datetime(2024, 3, 2, tzinfo=UTC),
+    )
+    return {**fixture, "matrix_config_path": matrix_config, "matrix": matrix}
+
+
+def run_batch_experiment_fixture(
+    tmp_path: Path,
+    *,
+    force_promote: bool = False,
+) -> dict[str, Any]:
+    fixture = run_experiment_matrix_fixture(tmp_path)
+    batch = system_target.run_batch_experiment(
+        matrix_id=fixture["matrix"]["matrix_id"],
+        matrix_dir=tmp_path / "experiment_matrix",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "batch_experiment",
+        price_cache_path=fixture["prices_path"],
+        rates_cache_path=fixture["rates_path"],
+        generated_at=datetime(2024, 3, 3, tzinfo=UTC),
+    )
+    if force_promote:
+        force_promotable_batch_metrics(batch["batch_dir"])
+    return {**fixture, "batch": batch}
+
+
+def run_experiment_triage_fixture(
+    tmp_path: Path,
+    *,
+    force_promote: bool = True,
+) -> dict[str, Any]:
+    fixture = run_batch_experiment_fixture(tmp_path, force_promote=force_promote)
+    triage = system_target.run_experiment_triage(
+        batch_id=fixture["batch"]["batch_id"],
+        batch_dir=tmp_path / "batch_experiment",
+        matrix_dir=tmp_path / "experiment_matrix",
+        output_dir=tmp_path / "experiment_triage",
+        generated_at=datetime(2024, 3, 4, tzinfo=UTC),
+    )
+    return {**fixture, "triage": triage}
+
+
+def run_top_variant_interpretation_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_experiment_triage_fixture(tmp_path)
+    interpretation = system_target.run_top_variant_interpretation(
+        triage_id=fixture["triage"]["triage_id"],
+        triage_dir=tmp_path / "experiment_triage",
+        matrix_dir=tmp_path / "experiment_matrix",
+        output_dir=tmp_path / "top_variant_interpretation",
+        generated_at=datetime(2024, 3, 5, tzinfo=UTC),
+    )
+    return {**fixture, "interpretation": interpretation}
+
+
+def run_method_promotion_plan_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_top_variant_interpretation_fixture(tmp_path)
+    promotion_plan = system_target.run_method_promotion_plan(
+        triage_id=fixture["triage"]["triage_id"],
+        interpretation_id=fixture["interpretation"]["interpretation_id"],
+        triage_dir=tmp_path / "experiment_triage",
+        interpretation_dir=tmp_path / "top_variant_interpretation",
+        output_dir=tmp_path / "method_promotion_plan",
+        generated_at=datetime(2024, 3, 6, tzinfo=UTC),
+    )
+    return {**fixture, "promotion_plan": promotion_plan}
+
+
+def force_promotable_batch_metrics(
+    batch_dir: Path,
+    *,
+    promote_variant: str = "sideways_choppy_hold_previous",
+    reject_variant: str = "cash_buffer_15",
+) -> None:
+    performance_path = batch_dir / "variant_performance_metrics.jsonl"
+    stability_path = batch_dir / "variant_stability_metrics.jsonl"
+    regime_path = batch_dir / "variant_regime_metrics.jsonl"
+    performance = _read_jsonl(performance_path)
+    stability = _read_jsonl(stability_path)
+    regime = _read_jsonl(regime_path)
+
+    for row in performance:
+        if row["variant_id"] == promote_variant:
+            row.update(
+                {
+                    "relative_to_limited_adjustment": 0.05,
+                    "drawdown_delta_vs_limited": 0.02,
+                    "turnover_delta_vs_limited": -0.2,
+                    "performance_status": "PASS",
+                }
+            )
+        if row["variant_id"] == reject_variant:
+            row.update(
+                {
+                    "relative_to_limited_adjustment": 0.03,
+                    "drawdown_delta_vs_limited": -0.02,
+                    "turnover_delta_vs_limited": 0.0,
+                    "performance_status": "FAIL",
+                }
+            )
+    for row in stability:
+        if row["variant_id"] == promote_variant:
+            row.update(
+                {
+                    "rolling_consistency_delta": "IMPROVED",
+                    "stability_status": "STABLE",
+                    "large_jump_count": 0,
+                    "avg_rebalance_turnover": 0.0,
+                }
+            )
+        if row["variant_id"] == reject_variant:
+            row.update(
+                {
+                    "rolling_consistency_delta": "MIXED",
+                    "stability_status": "MODERATE",
+                }
+            )
+    for row in regime:
+        if row["variant_id"] == promote_variant:
+            row.update(
+                {
+                    "relative_to_limited_adjustment": 0.01,
+                    "drawdown_delta_vs_limited": 0.01,
+                    "turnover_delta_vs_limited": -0.05,
+                    "regime_status": "IMPROVED",
+                }
+            )
+        if row["variant_id"] == reject_variant:
+            row.update(
+                {
+                    "relative_to_limited_adjustment": 0.01,
+                    "drawdown_delta_vs_limited": 0.0,
+                    "turnover_delta_vs_limited": 0.0,
+                    "regime_status": "MIXED",
+                }
+            )
+    _write_jsonl(performance_path, performance)
+    _write_jsonl(stability_path, stability)
+    _write_jsonl(regime_path, regime)
+
+
 def run_rolling_eval_fixture(tmp_path: Path) -> dict[str, Any]:
     fixture = run_backfill_fixture(tmp_path)
     rolling = system_target.run_paper_shadow_rolling_eval(
@@ -580,6 +747,16 @@ def report_index_for_review_fixture(fixture: dict[str, Any]) -> dict[str, Any]:
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:

@@ -2803,6 +2803,154 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_hypothesis_backlog
+    title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue hypothesis-backlog report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypothesis_backlog_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/failure_mode_taxonomy.json
+      - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypotheses.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypothesis_priority_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/hypothesis_backlog/*/hypothesis_backlog_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-239 records failure modes, hypothesis families, target failure
+      coverage, and experiment-matrix candidates before lightweight screening.
+    owner_action: review_hypothesis_backlog_before_experiment_matrix_screening
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_variant_transform_spec
+    title: ETF Dynamic v3 Rescue Lightweight Variant Transform Spec
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue variant-transform report-spec
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/variant_transform_spec_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/normalized_transform_spec.yaml
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/transform_type_catalog.json
+      - reports/etf_portfolio/dynamic_v3_rescue/variant_transform_spec/*/variant_transform_spec_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-240 documents the allowed lightweight transform catalog and safety
+      boundary before variants are generated from the experiment matrix.
+    owner_action: review_transform_spec_before_interpreting_variant_screening
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_experiment_matrix
+    title: ETF Dynamic v3 Rescue Weight Experiment Matrix
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue experiment-matrix report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/experiment_matrix_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/variant_specs.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/transform_specs.json
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_matrix/*/experiment_matrix_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-241 records experiment-only variants, transform coverage, failure
+      mode coverage, and source backfill before batch screening.
+    owner_action: review_experiment_matrix_before_batch_experiment
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_batch_experiment
+    title: ETF Dynamic v3 Rescue Batch Lightweight Experiment
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue batch-experiment report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/batch_experiment_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/variant_weight_paths.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/variant_performance_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/variant_regime_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/variant_stability_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/batch_experiment/*/batch_experiment_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-242 runs lightweight variant backfills through the cached data
+      quality gate and exposes performance, regime, and stability metrics.
+    owner_action: review_batch_experiment_before_triage_conclusion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_experiment_triage
+    title: ETF Dynamic v3 Rescue Experiment Triage
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue experiment-triage report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/triage_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/variant_scorecard.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/promotion_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/rejected_variants.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/triage_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/experiment_triage/*/triage_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-243 converts screening metrics into promote, keep-testing,
+      reject, or defer decisions while preserving research-only safety posture.
+    owner_action: review_experiment_triage_before_any_formal_method_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_top_variant_interpretation
+    title: ETF Dynamic v3 Rescue Top Variant Interpretation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue top-variant-interpretation report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/top_variant_interpretation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/top_variant_explanations.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/variant_failure_mode_coverage.json
+      - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/top_variant_interpretation_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/top_variant_interpretation/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-244 explains why top variants helped, what they cost, which
+      regimes/failure modes remain weak, and whether promotion is justified.
+    owner_action: review_top_variant_interpretation_before_method_promotion_plan
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_method_promotion_plan
+    title: ETF Dynamic v3 Rescue Method Promotion Plan
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue method-promotion-plan report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/method_promotion_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/promoted_method_specs.json
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/formal_implementation_plan.md
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/owner_review_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/method_promotion_plan_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/method_promotion_plan/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-245 turns top variant evidence into a research-only formal method
+      implementation plan without creating production weights or broker actions.
+    owner_action: owner_review_method_promotion_plan_before_next_implementation_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

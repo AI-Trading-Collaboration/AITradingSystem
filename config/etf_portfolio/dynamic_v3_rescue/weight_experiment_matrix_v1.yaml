@@ -1,0 +1,162 @@
+schema_version: 1
+
+source:
+  hypothesis_config: config/etf_portfolio/dynamic_v3_rescue/weight_optimization_hypothesis_v1.yaml
+  transform_spec_config: config/etf_portfolio/dynamic_v3_rescue/weight_variant_transform_v1.yaml
+
+experiment_group:
+  id: limited_adjustment_refinement_matrix_v1
+  base_method: limited_adjustment
+  source_backfill_id: paper-shadow-backfill_2138461d25e686e0
+  market_regime: ai_after_chatgpt
+  requested_start_date: "2022-12-01"
+  rationale: Lightweight screening before any formal research method implementation.
+
+triage_policy:
+  policy_version: weight_experiment_triage_v1
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Initial screening weights balance return preservation, drawdown behavior,
+    rolling consistency, regime breadth, turnover, and simplicity.
+  intended_effect: >
+    Promote at most the strongest lightweight variants into owner-reviewed
+    formal research-method implementation tasks.
+  validation_evidence: >
+    Planned validation is focused unit tests plus a real batch experiment using
+    the paper-shadow backfill source declared in this matrix.
+  review_condition: >
+    Revisit after the first formal implementation candidate completes backfill,
+    rolling evaluation, regime review, stability diagnostics, and forward
+    confirmation.
+  score_weights:
+    return: 0.25
+    drawdown: 0.25
+    rolling_consistency: 0.20
+    regime: 0.15
+    turnover: 0.10
+    simplicity: 0.05
+  promote_score: 0.70
+  keep_testing_score: 0.55
+  hard_reject_rules:
+    - max_drawdown_materially_worse
+    - rolling_consistency_worse
+    - pressure_regime_performance_worse
+    - turnover_explodes
+    - data_quality_FAIL
+    - only_wins_in_one_narrow_window
+
+variants:
+  - variant_id: sideways_choppy_hold_previous
+    hypothesis_id: sideways_choppy_hold_previous
+    family: regime_gating
+    transforms:
+      - type: regime_gate
+        regime: sideways_choppy
+        action: hold_previous_weights
+  - variant_id: sideways_choppy_reduce_tilt_50
+    hypothesis_id: sideways_choppy_reduce_tilt_50
+    family: regime_gating
+    transforms:
+      - type: regime_gate
+        regime: sideways_choppy
+        action: reduce_active_tilt
+        multiplier: 0.5
+  - variant_id: sideways_choppy_cooldown_5d
+    hypothesis_id: sideways_choppy_cooldown_5d
+    family: cooldown
+    transforms:
+      - type: regime_cooldown
+        regime: sideways_choppy
+        cooldown_days: 5
+  - variant_id: sideways_choppy_signal_persistence_3d
+    hypothesis_id: sideways_choppy_signal_persistence_3d
+    family: signal_stability
+    transforms:
+      - type: signal_persistence
+        persistence_days: 3
+  - variant_id: tech_drawdown_block_risk_increase
+    hypothesis_id: tech_drawdown_block_risk_increase
+    family: regime_gating
+    transforms:
+      - type: regime_gate
+        regime: tech_drawdown
+        action: block_risk_asset_increase
+  - variant_id: semiconductor_pullback_block_smh_increase
+    hypothesis_id: semiconductor_pullback_block_smh_increase
+    family: risk_exposure_control
+    transforms:
+      - type: regime_gate
+        regime: semiconductor_pullback
+        action: block_symbol_increase
+        symbol: SMH
+  - variant_id: risk_off_only_allow_risk_reduction
+    hypothesis_id: risk_off_only_allow_risk_reduction
+    family: regime_gating
+    transforms:
+      - type: regime_gate
+        regime: risk_off
+        action: only_allow_risk_reduction
+  - variant_id: smooth_weights_3d
+    hypothesis_id: smooth_weights_3d
+    family: weight_smoothing
+    transforms:
+      - type: weight_smoothing
+        window_days: 3
+  - variant_id: smooth_weights_5d
+    hypothesis_id: smooth_weights_5d
+    family: weight_smoothing
+    transforms:
+      - type: weight_smoothing
+        window_days: 5
+  - variant_id: rebalance_only_if_delta_gt_3pct
+    hypothesis_id: rebalance_only_if_delta_gt_3pct
+    family: rebalance_threshold
+    transforms:
+      - type: rebalance_threshold
+        min_total_abs_delta: 0.03
+  - variant_id: top_5_candidate_consensus
+    hypothesis_id: top_5_candidate_consensus
+    family: candidate_ensemble
+    transforms:
+      - type: candidate_subset
+        selection_rule: top_5_by_score
+      - type: consensus_aggregation
+        method: weighted_mean
+  - variant_id: cluster_representative_consensus
+    hypothesis_id: cluster_representative_consensus
+    family: candidate_ensemble
+    transforms:
+      - type: candidate_subset
+        selection_rule: cluster_representatives
+      - type: consensus_aggregation
+        method: weighted_mean
+  - variant_id: median_target_weights
+    hypothesis_id: median_target_weights
+    family: candidate_ensemble
+    transforms:
+      - type: consensus_aggregation
+        method: median
+  - variant_id: trimmed_mean_target_weights
+    hypothesis_id: trimmed_mean_target_weights
+    family: candidate_ensemble
+    transforms:
+      - type: consensus_aggregation
+        method: trimmed_mean
+  - variant_id: cash_buffer_15
+    hypothesis_id: cash_buffer_15
+    family: cash_buffer
+    transforms:
+      - type: min_cash_weight
+        min_cash_weight: 0.15
+
+safety:
+  experiment_only: true
+  research_screening_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

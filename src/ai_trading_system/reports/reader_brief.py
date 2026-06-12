@@ -2287,6 +2287,70 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "experiment_triage_id",
+                        etf_dynamic_v3_system_target.get("experiment_triage_id"),
+                    ),
+                    (
+                        "experiment_batch_id",
+                        etf_dynamic_v3_system_target.get("experiment_batch_id"),
+                    ),
+                    (
+                        "experiment_matrix_id",
+                        etf_dynamic_v3_system_target.get("experiment_matrix_id"),
+                    ),
+                    (
+                        "experiment_top_variant",
+                        etf_dynamic_v3_system_target.get("experiment_top_variant"),
+                    ),
+                    (
+                        "experiment_promote_count",
+                        etf_dynamic_v3_system_target.get("experiment_promote_count"),
+                    ),
+                    (
+                        "experiment_keep_testing_count",
+                        etf_dynamic_v3_system_target.get("experiment_keep_testing_count"),
+                    ),
+                    (
+                        "experiment_reject_count",
+                        etf_dynamic_v3_system_target.get("experiment_reject_count"),
+                    ),
+                    (
+                        "experiment_top_promoted_variants",
+                        etf_dynamic_v3_system_target.get("experiment_top_promoted_variants"),
+                    ),
+                    (
+                        "top_variant_interpretation_id",
+                        etf_dynamic_v3_system_target.get("top_variant_interpretation_id"),
+                    ),
+                    (
+                        "best_experiment_variant",
+                        etf_dynamic_v3_system_target.get("best_experiment_variant"),
+                    ),
+                    (
+                        "top_variant_solved_failure_modes",
+                        etf_dynamic_v3_system_target.get("top_variant_solved_failure_modes"),
+                    ),
+                    (
+                        "top_variant_expected_costs",
+                        etf_dynamic_v3_system_target.get("top_variant_expected_costs"),
+                    ),
+                    (
+                        "method_promotion_plan_id",
+                        etf_dynamic_v3_system_target.get("method_promotion_plan_id"),
+                    ),
+                    (
+                        "proposed_method_names",
+                        etf_dynamic_v3_system_target.get("proposed_method_names"),
+                    ),
+                    (
+                        "promotion_implementation_scope",
+                        etf_dynamic_v3_system_target.get("promotion_implementation_scope"),
+                    ),
+                    (
+                        "promotion_next_action",
+                        etf_dynamic_v3_system_target.get("promotion_next_action"),
+                    ),
+                    (
                         "secondary_research_methods",
                         etf_dynamic_v3_system_target.get("secondary_research_methods"),
                     ),
@@ -2353,6 +2417,18 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "risk_capped_review_path",
                         etf_dynamic_v3_system_target.get("risk_capped_review_path"),
+                    ),
+                    (
+                        "experiment_triage_path",
+                        etf_dynamic_v3_system_target.get("experiment_triage_path"),
+                    ),
+                    (
+                        "top_variant_interpretation_path",
+                        etf_dynamic_v3_system_target.get("top_variant_interpretation_path"),
+                    ),
+                    (
+                        "method_promotion_plan_path",
+                        etf_dynamic_v3_system_target.get("method_promotion_plan_path"),
                     ),
                 ]
             ),
@@ -8161,9 +8237,39 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "risk_capped_review_manifest.json",
     )
+    experiment_triage_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_experiment_triage",
+        ),
+        "triage_manifest.json",
+    )
+    top_variant_interpretation_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_top_variant_interpretation",
+        ),
+        "top_variant_interpretation_manifest.json",
+    )
+    method_promotion_plan_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_method_promotion_plan",
+        ),
+        "method_promotion_manifest.json",
+    )
     review_manifest = _read_optional_json(review_path)
     risk_capped_review_manifest = _read_optional_json(risk_capped_review_path)
-    if not review_manifest and not risk_capped_review_manifest:
+    experiment_triage_manifest = _read_optional_json(experiment_triage_path)
+    top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
+    method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
+    if (
+        not review_manifest
+        and not risk_capped_review_manifest
+        and not experiment_triage_manifest
+        and not top_variant_interpretation_manifest
+        and not method_promotion_plan_manifest
+    ):
         return _missing_etf_dynamic_v3_system_target_summary()
 
     target_manifest = _read_optional_json(target_path)
@@ -8225,6 +8331,30 @@ def _etf_dynamic_v3_system_target_summary(
         _dynamic_v3_sibling_artifact_path(
             risk_capped_review_path,
             "risk_capped_decision.json",
+        )
+    )
+    experiment_triage_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(experiment_triage_path, "triage_summary.json")
+    )
+    experiment_scorecard = _read_optional_jsonl(
+        _dynamic_v3_sibling_artifact_path(experiment_triage_path, "variant_scorecard.jsonl")
+    )
+    promotion_candidates = _read_optional_jsonl(
+        _dynamic_v3_sibling_artifact_path(
+            experiment_triage_path,
+            "promotion_candidates.jsonl",
+        )
+    )
+    top_variant_explanations = _read_optional_jsonl(
+        _dynamic_v3_sibling_artifact_path(
+            top_variant_interpretation_path,
+            "top_variant_explanations.jsonl",
+        )
+    )
+    promoted_method_specs = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            method_promotion_plan_path,
+            "promoted_method_specs.json",
         )
     )
     paper_state = _read_optional_json(
@@ -8305,6 +8435,14 @@ def _etf_dynamic_v3_system_target_summary(
         risk_capped_stability,
         risk_capped_review_manifest,
         risk_capped_decision,
+        experiment_triage_manifest,
+        experiment_triage_summary,
+        *experiment_scorecard,
+        *promotion_candidates,
+        top_variant_interpretation_manifest,
+        *top_variant_explanations,
+        method_promotion_plan_manifest,
+        promoted_method_specs,
     )
     hardening_decision_label = _text(hardening_decision.get("hardening_decision"), "MISSING")
     refined_next_step = _text(refined_decision.get("recommended_next_step"), "MISSING")
@@ -8317,9 +8455,25 @@ def _etf_dynamic_v3_system_target_summary(
         f"{key}={value}" for key, value in sorted(risk_capped_improvements.items())
     )
     risk_capped_decision_label = _text(risk_capped_decision.get("decision"), "MISSING")
+    experiment_top_variant = _text(experiment_triage_summary.get("top_variant"), "MISSING")
+    top_promoted_variants = ",".join(
+        _texts([row.get("variant_id") for row in promotion_candidates])
+    )
+    best_explanation = _mapping(top_variant_explanations[0] if top_variant_explanations else {})
+    promoted_methods = _records(promoted_method_specs.get("methods"))
+    proposed_method_names = ",".join(
+        _texts([row.get("proposed_method_name") for row in promoted_methods])
+    )
+    primary_status = _text(
+        review_manifest.get("status"),
+        _text(
+            method_promotion_plan_manifest.get("status"),
+            _text(experiment_triage_manifest.get("status"), "UNKNOWN"),
+        ),
+    )
     return {
         "availability": "AVAILABLE",
-        "status": _text(review_manifest.get("status"), "UNKNOWN"),
+        "status": primary_status,
         "summary_sentence": (
             "Dynamic Rescue System Target Portfolio: "
             f"target={target_id}; paper_shadow={paper_shadow_id}; "
@@ -8328,6 +8482,8 @@ def _etf_dynamic_v3_system_target_summary(
             f"hardening={hardening_decision_label}; "
             f"refined_next_step={refined_next_step}; "
             f"risk_capped={risk_capped_decision_label}; "
+            f"experiment_top={experiment_top_variant}; "
+            f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
             "broker_action_allowed="
             f"{str(review_manifest.get('broker_action_allowed') is True).lower()}; "
@@ -8435,6 +8591,59 @@ def _etf_dynamic_v3_system_target_summary(
         "risk_capped_review_path": (
             "" if risk_capped_review_path is None else str(risk_capped_review_path)
         ),
+        "experiment_triage_id": _text(
+            experiment_triage_manifest.get("triage_id"),
+            "MISSING",
+        ),
+        "experiment_batch_id": _text(
+            experiment_triage_manifest.get("batch_id"),
+            "MISSING",
+        ),
+        "experiment_matrix_id": _text(
+            experiment_triage_manifest.get("matrix_id"),
+            "MISSING",
+        ),
+        "experiment_top_variant": experiment_top_variant,
+        "experiment_promote_count": experiment_triage_summary.get("promote_count", "MISSING"),
+        "experiment_keep_testing_count": experiment_triage_summary.get(
+            "keep_testing_count",
+            "MISSING",
+        ),
+        "experiment_reject_count": experiment_triage_summary.get("reject_count", "MISSING"),
+        "experiment_top_promoted_variants": top_promoted_variants,
+        "top_variant_interpretation_id": _text(
+            top_variant_interpretation_manifest.get("interpretation_id"),
+            "MISSING",
+        ),
+        "best_experiment_variant": _text(
+            top_variant_interpretation_manifest.get("recommended_variant"),
+            experiment_top_variant,
+        ),
+        "top_variant_solved_failure_modes": ",".join(
+            _texts(best_explanation.get("why_it_helped"))
+        ),
+        "top_variant_expected_costs": ",".join(_texts(best_explanation.get("what_it_costs"))),
+        "method_promotion_plan_id": _text(
+            method_promotion_plan_manifest.get("promotion_plan_id"),
+            "MISSING",
+        ),
+        "proposed_method_names": proposed_method_names,
+        "promotion_implementation_scope": _text(
+            method_promotion_plan_manifest.get("implementation_scope"),
+            "MISSING",
+        ),
+        "promotion_next_action": _text(promoted_method_specs.get("next_action"), "MISSING"),
+        "experiment_triage_path": (
+            "" if experiment_triage_path is None else str(experiment_triage_path)
+        ),
+        "top_variant_interpretation_path": (
+            ""
+            if top_variant_interpretation_path is None
+            else str(top_variant_interpretation_path)
+        ),
+        "method_promotion_plan_path": (
+            "" if method_promotion_plan_path is None else str(method_promotion_plan_path)
+        ),
         "data_quality_status": _text(performance_summary.get("data_quality_status"), "MISSING"),
         "best_return_method": _text(performance_summary.get("best_return_method"), "MISSING"),
         "best_drawdown_method": _text(performance_summary.get("best_drawdown_method"), "MISSING"),
@@ -8529,6 +8738,25 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "risk_capped_backfill_path": "",
         "risk_capped_comparison_path": "",
         "risk_capped_review_path": "",
+        "experiment_triage_id": "MISSING",
+        "experiment_batch_id": "MISSING",
+        "experiment_matrix_id": "MISSING",
+        "experiment_top_variant": "MISSING",
+        "experiment_promote_count": "MISSING",
+        "experiment_keep_testing_count": "MISSING",
+        "experiment_reject_count": "MISSING",
+        "experiment_top_promoted_variants": "",
+        "top_variant_interpretation_id": "MISSING",
+        "best_experiment_variant": "MISSING",
+        "top_variant_solved_failure_modes": "",
+        "top_variant_expected_costs": "",
+        "method_promotion_plan_id": "MISSING",
+        "proposed_method_names": "",
+        "promotion_implementation_scope": "MISSING",
+        "promotion_next_action": "MISSING",
+        "experiment_triage_path": "",
+        "top_variant_interpretation_path": "",
+        "method_promotion_plan_path": "",
         "data_quality_status": "MISSING",
         "best_return_method": "MISSING",
         "best_drawdown_method": "MISSING",

@@ -854,6 +854,8 @@ def _redact_broker_value(value: Any, *, raw_broker_order_ids: Sequence[str]) -> 
                 "perm_id",
             }:
                 redacted[str(key)] = _redacted_broker_order_id(item)
+            elif normalized_key == "output_paths":
+                redacted[str(key)] = item
             else:
                 redacted[str(key)] = _redact_broker_value(
                     item,

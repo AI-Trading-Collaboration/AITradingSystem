@@ -1,0 +1,307 @@
+schema_version: 1
+
+hypothesis_families:
+  - risk_exposure_control
+  - regime_gating
+  - signal_stability
+  - cooldown
+  - weight_smoothing
+  - rebalance_threshold
+  - candidate_ensemble
+  - cash_buffer
+  - turnover_control
+
+failure_modes:
+  - id: exposure_too_high
+    description: limited_adjustment keeps too much risk-asset exposure when risk should be reduced.
+    severity: REVIEW_REQUIRED
+  - id: higher_semiconductor_exposure
+    description: candidate weights raise semiconductor exposure versus the limited baseline.
+    severity: REVIEW_REQUIRED
+  - id: sideways_choppy_instability
+    description: target weights churn in sideways/choppy regimes without durable benefit.
+    severity: REVIEW_REQUIRED
+  - id: signal_churn
+    description: day-to-day signal changes flip weight direction too frequently.
+    severity: REVIEW_REQUIRED
+  - id: missed_rebound_after_cap
+    description: mechanical caps can miss strong recovery or rebound windows.
+    severity: REVIEW_REQUIRED
+  - id: cap_too_mechanical
+    description: exposure caps reduce risk mechanically without regime-aware tradeoff handling.
+    severity: REVIEW_REQUIRED
+  - id: drawdown_not_improved
+    description: prior variants did not materially improve max drawdown.
+    severity: REVIEW_REQUIRED
+  - id: return_preservation_poor
+    description: risk reduction preserved too little of limited_adjustment return.
+    severity: REVIEW_REQUIRED
+  - id: rolling_consistency_unstable
+    description: rolling windows do not show stable improvement versus limited_adjustment.
+    severity: REVIEW_REQUIRED
+  - id: turnover_high
+    description: target path turnover is high enough to question implementation viability.
+    severity: REVIEW_REQUIRED
+  - id: weight_jump_high
+    description: target weights move in large jumps that complicate owner interpretation.
+    severity: REVIEW_REQUIRED
+  - id: regime_mismatch
+    description: the same transform helps one regime but harms pressure or rebound regimes.
+    severity: REVIEW_REQUIRED
+  - id: data_warning_review_required
+    description: data quality warnings must remain visible before interpreting experiments.
+    severity: REVIEW_REQUIRED
+
+hypotheses:
+  - hypothesis_id: sideways_choppy_hold_previous
+    family: regime_gating
+    base_method: limited_adjustment
+    description: Hold previous weights in sideways_choppy regimes to reduce churn.
+    target_failure_modes:
+      - sideways_choppy_instability
+      - signal_churn
+      - turnover_high
+      - rolling_consistency_unstable
+    expected_benefit:
+      - lower_turnover
+      - improve_rolling_consistency
+    expected_cost:
+      - may_miss_rebound
+      - may_delay_useful_signal
+    complexity: LOW
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: sideways_choppy_reduce_tilt_50
+    family: regime_gating
+    base_method: limited_adjustment
+    description: Reduce active tilt by 50% during sideways_choppy regimes.
+    target_failure_modes:
+      - sideways_choppy_instability
+      - signal_churn
+      - return_preservation_poor
+    expected_benefit:
+      - reduce_churn_without_full_freeze
+      - preserve_some_upside
+    expected_cost:
+      - partial_risk_reduction_only
+    complexity: LOW
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: sideways_choppy_cooldown_5d
+    family: cooldown
+    base_method: limited_adjustment
+    description: Apply a five day cooldown after sideways_choppy triggers.
+    target_failure_modes:
+      - sideways_choppy_instability
+      - signal_churn
+      - turnover_high
+    expected_benefit:
+      - lower_turnover
+      - improve_rolling_consistency
+    expected_cost:
+      - may_miss_rebound
+    complexity: LOW
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: sideways_choppy_signal_persistence_3d
+    family: signal_stability
+    base_method: limited_adjustment
+    description: Require repeated directional confirmation before accepting a new target.
+    target_failure_modes:
+      - signal_churn
+      - weight_jump_high
+      - rolling_consistency_unstable
+    expected_benefit:
+      - reduce_weight_flips
+      - lower_large_jumps
+    expected_cost:
+      - slower_response_to_new_information
+    complexity: MEDIUM
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: tech_drawdown_block_risk_increase
+    family: regime_gating
+    base_method: limited_adjustment
+    description: Block aggregate risk-asset increases during tech_drawdown regimes.
+    target_failure_modes:
+      - drawdown_not_improved
+      - exposure_too_high
+      - regime_mismatch
+    expected_benefit:
+      - reduce_drawdown
+      - improve_pressure_regime_behavior
+    expected_cost:
+      - may_reduce_return
+    complexity: LOW
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: semiconductor_pullback_block_smh_increase
+    family: risk_exposure_control
+    base_method: limited_adjustment
+    description: Block SMH increases during semiconductor_pullback regimes.
+    target_failure_modes:
+      - higher_semiconductor_exposure
+      - drawdown_not_improved
+      - regime_mismatch
+    expected_benefit:
+      - reduce_semiconductor_drawdown_exposure
+    expected_cost:
+      - may_underweight_rebound
+    complexity: LOW
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: risk_off_only_allow_risk_reduction
+    family: regime_gating
+    base_method: limited_adjustment
+    description: In risk_off regimes only allow target changes that reduce risk exposure.
+    target_failure_modes:
+      - exposure_too_high
+      - drawdown_not_improved
+      - regime_mismatch
+    expected_benefit:
+      - prevent_risk_increase_in_pressure
+    expected_cost:
+      - may_sacrifice_recovery_return
+    complexity: LOW
+    priority: HIGH
+    status: ready_for_matrix
+  - hypothesis_id: smooth_weights_3d
+    family: weight_smoothing
+    base_method: limited_adjustment
+    description: Smooth target weights over a three day window.
+    target_failure_modes:
+      - weight_jump_high
+      - rolling_consistency_unstable
+      - signal_churn
+    expected_benefit:
+      - reduce_weight_jumps
+      - improve_rolling_consistency
+    expected_cost:
+      - may_lag_fast_regime_change
+    complexity: LOW
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: smooth_weights_5d
+    family: weight_smoothing
+    base_method: limited_adjustment
+    description: Smooth target weights over a five day window.
+    target_failure_modes:
+      - weight_jump_high
+      - rolling_consistency_unstable
+      - turnover_high
+    expected_benefit:
+      - reduce_weight_jumps
+      - lower_turnover
+    expected_cost:
+      - may_miss_rebound
+    complexity: LOW
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: rebalance_only_if_delta_gt_3pct
+    family: rebalance_threshold
+    base_method: limited_adjustment
+    description: Ignore small total absolute target deltas below three percent.
+    target_failure_modes:
+      - turnover_high
+      - signal_churn
+      - weight_jump_high
+    expected_benefit:
+      - lower_noise_trades
+      - reduce_operational_churn
+    expected_cost:
+      - may_ignore_small_valid_signal
+    complexity: LOW
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: top_5_candidate_consensus
+    family: candidate_ensemble
+    base_method: limited_adjustment
+    description: Aggregate a top-candidate subset into a consensus target.
+    target_failure_modes:
+      - return_preservation_poor
+      - rolling_consistency_unstable
+      - regime_mismatch
+    expected_benefit:
+      - diversify_candidate_noise
+      - preserve_upside
+    expected_cost:
+      - may_dilute_clear_signal
+    complexity: MEDIUM
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: cluster_representative_consensus
+    family: candidate_ensemble
+    base_method: limited_adjustment
+    description: Aggregate cluster representative methods instead of a single target.
+    target_failure_modes:
+      - rolling_consistency_unstable
+      - regime_mismatch
+      - return_preservation_poor
+    expected_benefit:
+      - reduce_single_model_noise
+      - improve_regime_balance
+    expected_cost:
+      - more_complex_owner_review
+    complexity: MEDIUM
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: median_target_weights
+    family: candidate_ensemble
+    base_method: limited_adjustment
+    description: Use median target weights across available research methods.
+    target_failure_modes:
+      - signal_churn
+      - weight_jump_high
+      - rolling_consistency_unstable
+    expected_benefit:
+      - robust_to_outlier_method
+      - lower_weight_jumps
+    expected_cost:
+      - may_mute_best_signal
+    complexity: MEDIUM
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: trimmed_mean_target_weights
+    family: candidate_ensemble
+    base_method: limited_adjustment
+    description: Use trimmed mean target weights across available research methods.
+    target_failure_modes:
+      - signal_churn
+      - weight_jump_high
+      - return_preservation_poor
+    expected_benefit:
+      - reduce_outlier_method_impact
+      - keep_some_upside
+    expected_cost:
+      - needs_enough_candidate_sources
+    complexity: MEDIUM
+    priority: MEDIUM
+    status: ready_for_matrix
+  - hypothesis_id: cash_buffer_15
+    family: cash_buffer
+    base_method: limited_adjustment
+    description: Require a 15% cash buffer in experiment target weights.
+    target_failure_modes:
+      - exposure_too_high
+      - drawdown_not_improved
+      - cap_too_mechanical
+      - missed_rebound_after_cap
+    expected_benefit:
+      - reduce_drawdown
+      - create_risk_budget
+    expected_cost:
+      - may_sacrifice_return
+    complexity: LOW
+    priority: MEDIUM
+    status: ready_for_matrix
+
+safety:
+  experiment_only: true
+  research_screening_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

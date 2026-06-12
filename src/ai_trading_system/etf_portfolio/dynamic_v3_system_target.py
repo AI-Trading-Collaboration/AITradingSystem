@@ -61,6 +61,27 @@ DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH = (
     / "dynamic_v3_rescue"
     / "risk_capped_limited_adjustment_v1.yaml"
 )
+DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "weight_optimization_hypothesis_v1.yaml"
+)
+DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "weight_variant_transform_v1.yaml"
+)
+DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "weight_experiment_matrix_v1.yaml"
+)
 DEFAULT_PRICE_CACHE_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 DEFAULT_MODEL_TARGET_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "model_target"
 DEFAULT_PAPER_SHADOW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow"
@@ -103,6 +124,17 @@ DEFAULT_RISK_CAPPED_LIMITED_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_cappe
 DEFAULT_RISK_CAPPED_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_backfill"
 DEFAULT_RISK_CAPPED_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_comparison"
 DEFAULT_RISK_CAPPED_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_review"
+DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
+DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
+)
+DEFAULT_EXPERIMENT_MATRIX_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "experiment_matrix"
+DEFAULT_BATCH_EXPERIMENT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "batch_experiment"
+DEFAULT_EXPERIMENT_TRIAGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "experiment_triage"
+DEFAULT_TOP_VARIANT_INTERPRETATION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "top_variant_interpretation"
+)
+DEFAULT_METHOD_PROMOTION_PLAN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "method_promotion_plan"
 
 AI_AFTER_CHATGPT_START = date(2022, 12, 1)
 
@@ -171,6 +203,63 @@ SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "automatic_candidate_promotion": False,
     "auto_apply": False,
 }
+
+EXPERIMENT_FACTORY_SAFETY: dict[str, Any] = {
+    **SYSTEM_TARGET_SAFETY,
+    "experiment_only": True,
+    "research_screening_only": True,
+    "not_formal_research_method": True,
+}
+
+DEFAULT_FAILURE_MODES: tuple[str, ...] = (
+    "exposure_too_high",
+    "higher_semiconductor_exposure",
+    "sideways_choppy_instability",
+    "signal_churn",
+    "missed_rebound_after_cap",
+    "cap_too_mechanical",
+    "drawdown_not_improved",
+    "return_preservation_poor",
+    "rolling_consistency_unstable",
+    "turnover_high",
+    "weight_jump_high",
+    "regime_mismatch",
+    "data_warning_review_required",
+)
+
+DEFAULT_HYPOTHESIS_FAMILIES: tuple[str, ...] = (
+    "risk_exposure_control",
+    "regime_gating",
+    "signal_stability",
+    "cooldown",
+    "weight_smoothing",
+    "rebalance_threshold",
+    "candidate_ensemble",
+    "cash_buffer",
+    "turnover_control",
+)
+
+DEFAULT_TRANSFORM_TYPES: tuple[str, ...] = (
+    "cap_group_weight",
+    "cap_symbol_weight",
+    "min_cash_weight",
+    "regime_gate",
+    "regime_cooldown",
+    "weight_smoothing",
+    "signal_persistence",
+    "rebalance_threshold",
+    "turnover_cap",
+    "candidate_subset",
+    "consensus_aggregation",
+    "hold_previous_weights",
+)
+
+DEFAULT_TRIAGE_DECISIONS: tuple[str, ...] = (
+    "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE",
+    "KEEP_FOR_MORE_TESTING",
+    "REJECT",
+    "DEFER",
+)
 
 
 class DynamicV3SystemTargetError(ValueError):
@@ -413,6 +502,1300 @@ def risk_capped_limited_config_report_payload(
         "config_dir": str(root),
         "normalized_config": _load_yaml_mapping(root / "normalized_risk_capped_config.yaml"),
     }
+
+
+def load_weight_optimization_hypothesis_config(
+    path: Path = DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    _assert_experiment_factory_config_safe(payload)
+    return payload
+
+
+def validate_weight_optimization_hypothesis_config(
+    path: Path = DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    payload: dict[str, Any] = {}
+    try:
+        payload = load_weight_optimization_hypothesis_config(path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("config_loads", False, str(exc)))
+    else:
+        failure_modes = _records(payload.get("failure_modes"))
+        hypotheses = _records(payload.get("hypotheses"))
+        mode_ids = {str(row.get("id")) for row in failure_modes if row.get("id")}
+        families = set(_texts(payload.get("hypothesis_families")))
+        hypothesis_ids = [str(row.get("hypothesis_id")) for row in hypotheses]
+        target_modes = {
+            mode for row in hypotheses for mode in _texts(row.get("target_failure_modes"))
+        }
+        checks.extend(
+            [
+                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
+                _check(
+                    "required_failure_modes_present",
+                    set(DEFAULT_FAILURE_MODES).issubset(mode_ids),
+                    ",".join(sorted(mode_ids)),
+                ),
+                _check(
+                    "required_hypothesis_families_present",
+                    set(DEFAULT_HYPOTHESIS_FAMILIES).issubset(families),
+                    ",".join(sorted(families)),
+                ),
+                _check("hypotheses_present", bool(hypotheses), ""),
+                _check(
+                    "hypothesis_ids_unique",
+                    len(hypothesis_ids) == len(set(hypothesis_ids)),
+                    ",".join(hypothesis_ids),
+                ),
+                _check(
+                    "hypotheses_have_target_failure_modes",
+                    all(_texts(row.get("target_failure_modes")) for row in hypotheses),
+                    "",
+                ),
+                _check(
+                    "hypothesis_failure_modes_known",
+                    target_modes.issubset(mode_ids),
+                    ",".join(sorted(target_modes - mode_ids)),
+                ),
+                _check(
+                    "hypothesis_families_known",
+                    {str(row.get("family")) for row in hypotheses}.issubset(families),
+                    "",
+                ),
+                _check(
+                    "safety_locked",
+                    _experiment_safety_config_locked(_mapping(payload.get("safety"))),
+                    "",
+                ),
+            ]
+        )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_optimization_hypothesis_config_validation",
+        "weight_optimization_hypothesis_config",
+        checks,
+        extra={"config_path": str(path)},
+    )
+
+
+def build_hypothesis_backlog(
+    *,
+    config_path: Path = DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
+    output_dir: Path = DEFAULT_HYPOTHESIS_BACKLOG_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_weight_optimization_hypothesis_config(config_path)
+    validation = validate_weight_optimization_hypothesis_config(config_path)
+    failure_modes = _normalized_failure_modes(config)
+    hypotheses = _normalized_hypotheses(config)
+    priority = _hypothesis_priority_summary(failure_modes, hypotheses)
+    backlog_id = _stable_id(
+        "hypothesis-backlog",
+        config_path,
+        validation["status"],
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / backlog_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_hypothesis_backlog_manifest",
+        "backlog_id": root.name,
+        "generated_at": generated.isoformat(),
+        "status": validation["status"],
+        "config_path": str(config_path),
+        "failure_modes_count": len(failure_modes["failure_modes"]),
+        "hypotheses_count": len(hypotheses),
+        "high_priority_hypotheses": priority["high_priority_hypotheses"],
+        "hypothesis_backlog_manifest_path": str(root / "hypothesis_backlog_manifest.json"),
+        "failure_mode_taxonomy_path": str(root / "failure_mode_taxonomy.json"),
+        "hypotheses_path": str(root / "hypotheses.jsonl"),
+        "hypothesis_priority_summary_path": str(root / "hypothesis_priority_summary.json"),
+        "hypothesis_backlog_report_path": str(root / "hypothesis_backlog_report.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "hypothesis_backlog_manifest.json", manifest)
+    _write_json(root / "failure_mode_taxonomy.json", failure_modes)
+    _write_jsonl(root / "hypotheses.jsonl", hypotheses)
+    _write_json(root / "hypothesis_priority_summary.json", priority)
+    _write_text(
+        root / "hypothesis_backlog_report.md",
+        render_hypothesis_backlog_report(manifest, failure_modes, hypotheses, priority),
+    )
+    _write_latest_pointer(
+        "latest_hypothesis_backlog",
+        root.name,
+        root / "hypothesis_backlog_manifest.json",
+    )
+    return {
+        "backlog_id": root.name,
+        "backlog_dir": root,
+        "manifest": manifest,
+        "failure_mode_taxonomy": failure_modes,
+        "hypotheses": hypotheses,
+        "hypothesis_priority_summary": priority,
+        "validation": validation,
+    }
+
+
+def hypothesis_backlog_report_payload(
+    *,
+    backlog_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_HYPOTHESIS_BACKLOG_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=backlog_id,
+        latest_pointer="latest_hypothesis_backlog",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="hypothesis_backlog_manifest.json",
+    )
+    return {
+        **_read_json(root / "hypothesis_backlog_manifest.json"),
+        "failure_mode_taxonomy": _read_json(root / "failure_mode_taxonomy.json"),
+        "hypotheses": _read_jsonl(root / "hypotheses.jsonl"),
+        "hypothesis_priority_summary": _read_json(root / "hypothesis_priority_summary.json"),
+        "backlog_dir": str(root),
+    }
+
+
+def validate_hypothesis_backlog_artifact(
+    *,
+    backlog_id: str,
+    output_dir: Path = DEFAULT_HYPOTHESIS_BACKLOG_DIR,
+) -> dict[str, Any]:
+    root = output_dir / backlog_id
+    manifest = _read_optional_json(root / "hypothesis_backlog_manifest.json") or {}
+    taxonomy = _read_optional_json(root / "failure_mode_taxonomy.json") or {}
+    hypotheses = _read_jsonl(root / "hypotheses.jsonl")
+    priority = _read_optional_json(root / "hypothesis_priority_summary.json") or {}
+    mode_ids = {
+        str(row.get("id")) for row in _records(taxonomy.get("failure_modes")) if row.get("id")
+    }
+    checks = _required_file_checks(
+        root,
+        (
+            "hypothesis_backlog_manifest.json",
+            "failure_mode_taxonomy.json",
+            "hypotheses.jsonl",
+            "hypothesis_priority_summary.json",
+            "hypothesis_backlog_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("backlog_id_matches", manifest.get("backlog_id") == backlog_id, ""),
+            _check("failure_mode_taxonomy_present", bool(mode_ids), ""),
+            _check("hypotheses_present", bool(hypotheses), ""),
+            _check(
+                "hypotheses_have_target_failure_modes",
+                all(_texts(row.get("target_failure_modes")) for row in hypotheses),
+                "",
+            ),
+            _check(
+                "hypothesis_failure_modes_known",
+                all(
+                    set(_texts(row.get("target_failure_modes"))).issubset(mode_ids)
+                    for row in hypotheses
+                ),
+                "",
+            ),
+            _check(
+                "priority_summary_present",
+                priority.get("hypotheses_total") == len(hypotheses),
+                "",
+            ),
+            _check(
+                "promotion_eligible_false",
+                all(row.get("promotion_eligible") is False for row in hypotheses),
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, taxonomy, priority, *hypotheses),
+                "",
+            ),
+            _check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, taxonomy, priority, *hypotheses),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_hypothesis_backlog_validation",
+        backlog_id,
+        checks,
+    )
+
+
+def load_weight_variant_transform_spec(
+    path: Path = DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    _assert_experiment_factory_config_safe(payload)
+    return payload
+
+
+def validate_weight_variant_transform_spec_config(
+    path: Path = DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    payload: dict[str, Any] = {}
+    try:
+        payload = load_weight_variant_transform_spec(path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("config_loads", False, str(exc)))
+    else:
+        transform_types = _mapping(payload.get("transform_types"))
+        checks.extend(
+            [
+                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
+                _check(
+                    "required_transform_types_present",
+                    set(DEFAULT_TRANSFORM_TYPES).issubset(set(transform_types)),
+                    ",".join(sorted(transform_types)),
+                ),
+                _check(
+                    "required_fields_declared",
+                    all(
+                        isinstance(_mapping(spec).get("required_fields"), Sequence)
+                        and not isinstance(_mapping(spec).get("required_fields"), str | bytes)
+                        for spec in transform_types.values()
+                    ),
+                    "",
+                ),
+                _check(
+                    "safety_locked",
+                    _experiment_safety_config_locked(_mapping(payload.get("safety"))),
+                    "",
+                ),
+            ]
+        )
+    return _validation_payload(
+        "etf_dynamic_v3_variant_transform_spec_config_validation",
+        "weight_variant_transform_spec_config",
+        checks,
+        extra={"config_path": str(path)},
+    )
+
+
+def build_variant_transform_spec_report(
+    *,
+    config_path: Path = DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
+    output_dir: Path = DEFAULT_VARIANT_TRANSFORM_SPEC_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    spec = load_weight_variant_transform_spec(config_path)
+    validation = validate_weight_variant_transform_spec_config(config_path)
+    normalized = _normalized_variant_transform_spec(spec)
+    catalog = _transform_type_catalog(normalized)
+    spec_id = _stable_id("variant-transform-spec", config_path, generated.isoformat())
+    root = _unique_dir(output_dir / spec_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_variant_transform_spec_manifest",
+        "spec_id": root.name,
+        "generated_at": generated.isoformat(),
+        "status": validation["status"],
+        "config_path": str(config_path),
+        "transform_type_count": len(catalog["transform_types"]),
+        "variant_transform_spec_manifest_path": str(
+            root / "variant_transform_spec_manifest.json"
+        ),
+        "normalized_transform_spec_path": str(root / "normalized_transform_spec.yaml"),
+        "transform_type_catalog_path": str(root / "transform_type_catalog.json"),
+        "variant_transform_spec_report_path": str(root / "variant_transform_spec_report.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "variant_transform_spec_manifest.json", manifest)
+    _write_text(
+        root / "normalized_transform_spec.yaml",
+        yaml.safe_dump(normalized, sort_keys=False, allow_unicode=True),
+    )
+    _write_json(root / "transform_type_catalog.json", catalog)
+    _write_text(
+        root / "variant_transform_spec_report.md",
+        render_variant_transform_spec_report(manifest, catalog),
+    )
+    _write_latest_pointer(
+        "latest_variant_transform_spec",
+        root.name,
+        root / "variant_transform_spec_manifest.json",
+    )
+    return {
+        "spec_id": root.name,
+        "spec_dir": root,
+        "manifest": manifest,
+        "normalized_transform_spec": normalized,
+        "transform_type_catalog": catalog,
+        "validation": validation,
+    }
+
+
+def variant_transform_spec_report_payload(
+    *,
+    spec_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_VARIANT_TRANSFORM_SPEC_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=spec_id,
+        latest_pointer="latest_variant_transform_spec",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="variant_transform_spec_manifest.json",
+    )
+    return {
+        **_read_json(root / "variant_transform_spec_manifest.json"),
+        "normalized_transform_spec": _load_yaml_mapping(root / "normalized_transform_spec.yaml"),
+        "transform_type_catalog": _read_json(root / "transform_type_catalog.json"),
+        "spec_dir": str(root),
+    }
+
+
+def validate_variant_transform_spec_artifact(
+    *,
+    spec_id: str,
+    output_dir: Path = DEFAULT_VARIANT_TRANSFORM_SPEC_DIR,
+) -> dict[str, Any]:
+    root = output_dir / spec_id
+    manifest = _read_optional_json(root / "variant_transform_spec_manifest.json") or {}
+    normalized = (
+        _load_yaml_mapping(root / "normalized_transform_spec.yaml")
+        if (root / "normalized_transform_spec.yaml").exists()
+        else {}
+    )
+    catalog = _read_optional_json(root / "transform_type_catalog.json") or {}
+    types = {str(row.get("type")) for row in _records(catalog.get("transform_types"))}
+    checks = _required_file_checks(
+        root,
+        (
+            "variant_transform_spec_manifest.json",
+            "normalized_transform_spec.yaml",
+            "transform_type_catalog.json",
+            "variant_transform_spec_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("spec_id_matches", manifest.get("spec_id") == spec_id, ""),
+            _check(
+                "required_transform_types_present",
+                set(DEFAULT_TRANSFORM_TYPES).issubset(types),
+                ",".join(sorted(types)),
+            ),
+            _check("normalized_spec_present", bool(normalized.get("transform_types")), ""),
+            _check("broker_forbidden", _payload_safe(manifest, catalog), ""),
+            _check("experiment_safety_locked", _payload_experiment_safe(manifest, catalog), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_variant_transform_spec_validation",
+        spec_id,
+        checks,
+    )
+
+
+def load_weight_experiment_matrix_config(
+    path: Path = DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    _assert_experiment_factory_config_safe(payload)
+    return payload
+
+
+def validate_weight_experiment_matrix_config(
+    path: Path = DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    payload: dict[str, Any] = {}
+    try:
+        payload = load_weight_experiment_matrix_config(path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("config_loads", False, str(exc)))
+    else:
+        variants = _records(payload.get("variants"))
+        group = _mapping(payload.get("experiment_group"))
+        variant_ids = [str(row.get("variant_id")) for row in variants]
+        transform_types = {
+            _text(transform.get("type"))
+            for row in variants
+            for transform in _records(row.get("transforms"))
+        }
+        checks.extend(
+            [
+                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
+                _check("experiment_group_id_present", bool(group.get("id")), ""),
+                _check(
+                    "base_method_limited_adjustment",
+                    group.get("base_method") == "limited_adjustment",
+                    _text(group.get("base_method")),
+                ),
+                _check("source_backfill_id_present", bool(group.get("source_backfill_id")), ""),
+                _check("variants_present", bool(variants), ""),
+                _check(
+                    "variant_ids_unique",
+                    len(variant_ids) == len(set(variant_ids)),
+                    ",".join(variant_ids),
+                ),
+                _check(
+                    "variants_have_transforms",
+                    all(_records(row.get("transforms")) for row in variants),
+                    "",
+                ),
+                _check(
+                    "required_transform_families_covered",
+                    {
+                        "regime_gate",
+                        "weight_smoothing",
+                        "rebalance_threshold",
+                        "consensus_aggregation",
+                    }.issubset(transform_types),
+                    ",".join(sorted(transform_types)),
+                ),
+                _check(
+                    "safety_locked",
+                    _experiment_safety_config_locked(_mapping(payload.get("safety"))),
+                    "",
+                ),
+            ]
+        )
+    return _validation_payload(
+        "etf_dynamic_v3_experiment_matrix_config_validation",
+        "weight_experiment_matrix_config",
+        checks,
+        extra={"config_path": str(path)},
+    )
+
+
+def build_experiment_matrix(
+    *,
+    config_path: Path = DEFAULT_WEIGHT_EXPERIMENT_MATRIX_CONFIG_PATH,
+    output_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_weight_experiment_matrix_config(config_path)
+    validation = validate_weight_experiment_matrix_config(config_path)
+    hypothesis_config = load_weight_optimization_hypothesis_config(
+        _resolve_project_path(
+            _mapping(config.get("source")).get("hypothesis_config"),
+            DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH,
+        )
+    )
+    transform_spec = load_weight_variant_transform_spec(
+        _resolve_project_path(
+            _mapping(config.get("source")).get("transform_spec_config"),
+            DEFAULT_WEIGHT_VARIANT_TRANSFORM_CONFIG_PATH,
+        )
+    )
+    hypothesis_lookup = {
+        str(row.get("hypothesis_id")): row
+        for row in _normalized_hypotheses(hypothesis_config)
+        if row.get("hypothesis_id")
+    }
+    variant_specs = _normalized_variant_specs(config, hypothesis_lookup, transform_spec)
+    transform_specs = _matrix_transform_specs(transform_spec, variant_specs)
+    summary = _experiment_matrix_summary(variant_specs)
+    matrix_id = _stable_id("experiment-matrix", config_path, generated.isoformat())
+    root = _unique_dir(output_dir / matrix_id)
+    root.mkdir(parents=True, exist_ok=False)
+    group = _mapping(config.get("experiment_group"))
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_experiment_matrix_manifest",
+        "matrix_id": root.name,
+        "experiment_group_id": group.get("id"),
+        "base_method": group.get("base_method"),
+        "source_backfill_id": group.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": validation["status"],
+        "config_path": str(config_path),
+        "variant_count": len(variant_specs),
+        "families_covered": summary["families_covered"],
+        "failure_modes_covered": summary["failure_modes_covered"],
+        "experiment_matrix_manifest_path": str(root / "experiment_matrix_manifest.json"),
+        "variant_specs_path": str(root / "variant_specs.jsonl"),
+        "transform_specs_path": str(root / "transform_specs.json"),
+        "experiment_matrix_report_path": str(root / "experiment_matrix_report.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "experiment_matrix_manifest.json", manifest)
+    _write_jsonl(root / "variant_specs.jsonl", variant_specs)
+    _write_json(root / "transform_specs.json", transform_specs)
+    _write_text(
+        root / "experiment_matrix_report.md",
+        render_experiment_matrix_report(manifest, variant_specs, transform_specs, summary),
+    )
+    _write_latest_pointer(
+        "latest_experiment_matrix", root.name, root / "experiment_matrix_manifest.json"
+    )
+    return {
+        "matrix_id": root.name,
+        "matrix_dir": root,
+        "manifest": manifest,
+        "variant_specs": variant_specs,
+        "transform_specs": transform_specs,
+        "summary": summary,
+        "validation": validation,
+    }
+
+
+def experiment_matrix_report_payload(
+    *,
+    matrix_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=matrix_id,
+        latest_pointer="latest_experiment_matrix",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="experiment_matrix_manifest.json",
+    )
+    return {
+        **_read_json(root / "experiment_matrix_manifest.json"),
+        "variant_specs": _read_jsonl(root / "variant_specs.jsonl"),
+        "transform_specs": _read_json(root / "transform_specs.json"),
+        "matrix_dir": str(root),
+    }
+
+
+def validate_experiment_matrix_artifact(
+    *,
+    matrix_id: str,
+    output_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
+) -> dict[str, Any]:
+    root = output_dir / matrix_id
+    manifest = _read_optional_json(root / "experiment_matrix_manifest.json") or {}
+    variants = _read_jsonl(root / "variant_specs.jsonl")
+    transforms = _read_optional_json(root / "transform_specs.json") or {}
+    transform_types = {
+        _text(transform.get("type"))
+        for row in variants
+        for transform in _records(row.get("transforms"))
+    }
+    checks = _required_file_checks(
+        root,
+        (
+            "experiment_matrix_manifest.json",
+            "variant_specs.jsonl",
+            "transform_specs.json",
+            "experiment_matrix_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("matrix_id_matches", manifest.get("matrix_id") == matrix_id, ""),
+            _check("variants_present", bool(variants), ""),
+            _check(
+                "variants_have_target_failure_modes",
+                all(_texts(row.get("target_failure_modes")) for row in variants),
+                "",
+            ),
+            _check(
+                "required_families_covered",
+                {
+                    "regime_gate",
+                    "weight_smoothing",
+                    "rebalance_threshold",
+                    "consensus_aggregation",
+                }.issubset(transform_types),
+                ",".join(sorted(transform_types)),
+            ),
+            _check(
+                "variants_experiment_only",
+                all(row.get("experiment_only") is True for row in variants),
+                "",
+            ),
+            _check(
+                "not_formal_research_method",
+                all(row.get("not_formal_research_method") is True for row in variants),
+                "",
+            ),
+            _check("transform_specs_present", bool(transforms.get("transform_types")), ""),
+            _check("broker_forbidden", _payload_safe(manifest, transforms, *variants), ""),
+            _check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, transforms, *variants),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_experiment_matrix_validation", matrix_id, checks)
+
+
+def run_batch_experiment(
+    *,
+    matrix_id: str,
+    matrix_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
+    baseline_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    matrix = experiment_matrix_report_payload(matrix_id=matrix_id, output_dir=matrix_dir)
+    source_backfill_id = _text(matrix.get("source_backfill_id"))
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=source_backfill_id,
+        output_dir=baseline_backfill_dir,
+    )
+    baseline_states = _records(backfill.get("backfill_method_states"))
+    config = _load_backfill_config_from_manifest(backfill)
+    start = _coerce_date(backfill.get("date_start"), AI_AFTER_CHATGPT_START)
+    end = _coerce_date(backfill.get("date_end"), start)
+    symbols = _symbols_from_state_paths(baseline_states)
+    source = _mapping(config.get("source"))
+    prices_path = price_cache_path or _resolve_project_path(
+        source.get("price_cache_path"), DEFAULT_PRICE_CACHE_PATH
+    )
+    pivot = _load_price_pivot(prices_path, symbols, start)
+    pivot = pivot.loc[pivot.index.date <= end]
+    quality_as_of = max(end, generated.date())
+    quality = _run_data_quality_gate(
+        price_cache_path=prices_path,
+        rates_cache_path=rates_cache_path,
+        expected_symbols=symbols,
+        as_of=quality_as_of,
+    )
+    if not quality.passed:
+        raise DynamicV3SystemTargetError(f"data quality gate failed: {quality.status}")
+    returns = pivot.pct_change().fillna(0.0)
+    labels = {
+        idx.date().isoformat(): _risk_capped_regime_context_for_return(row, config)
+        for idx, row in returns.iterrows()
+    }
+    variant_specs = _records(matrix.get("variant_specs"))
+    variant_states: list[dict[str, Any]] = []
+    for variant in variant_specs:
+        variant_states.extend(
+            _run_variant_weight_path(
+                variant=variant,
+                baseline_states=baseline_states,
+                returns=returns,
+                labels=labels,
+                config=config,
+            )
+        )
+    performance = _variant_performance_metrics(variant_states, baseline_states)
+    regime = _variant_regime_metrics(variant_states, baseline_states, labels, config)
+    stability = _variant_stability_metrics(variant_states, baseline_states, config)
+    batch_id = _stable_id("batch-experiment", matrix_id, generated.isoformat())
+    root = _unique_dir(output_dir / batch_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_batch_experiment_manifest",
+        "batch_id": root.name,
+        "matrix_id": matrix_id,
+        "source_backfill_id": source_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if performance else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "requested_start_date": backfill.get("requested_start_date"),
+        "requested_end_date": backfill.get("requested_end_date"),
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "data_quality_status": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "data_quality_checked_at": quality.checked_at.isoformat(),
+        "variants_total": len(variant_specs),
+        "variants_completed": len({row.get("variant_id") for row in performance}),
+        "variant_weight_paths_path": str(root / "variant_weight_paths.jsonl"),
+        "variant_performance_metrics_path": str(root / "variant_performance_metrics.jsonl"),
+        "variant_regime_metrics_path": str(root / "variant_regime_metrics.jsonl"),
+        "variant_stability_metrics_path": str(root / "variant_stability_metrics.jsonl"),
+        "batch_experiment_report_path": str(root / "batch_experiment_report.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "batch_experiment_manifest.json", manifest)
+    _write_jsonl(root / "variant_weight_paths.jsonl", variant_states)
+    _write_jsonl(root / "variant_performance_metrics.jsonl", performance)
+    _write_jsonl(root / "variant_regime_metrics.jsonl", regime)
+    _write_jsonl(root / "variant_stability_metrics.jsonl", stability)
+    _write_text(
+        root / "batch_experiment_report.md",
+        render_batch_experiment_report(manifest, performance, regime, stability),
+    )
+    _write_latest_pointer(
+        "latest_batch_experiment", root.name, root / "batch_experiment_manifest.json"
+    )
+    return {
+        "batch_id": root.name,
+        "batch_dir": root,
+        "manifest": manifest,
+        "variant_weight_paths": variant_states,
+        "variant_performance_metrics": performance,
+        "variant_regime_metrics": regime,
+        "variant_stability_metrics": stability,
+    }
+
+
+def batch_experiment_report_payload(
+    *,
+    batch_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=batch_id,
+        latest_pointer="latest_batch_experiment",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="batch_experiment_manifest.json",
+    )
+    return {
+        **_read_json(root / "batch_experiment_manifest.json"),
+        "variant_weight_paths": _read_jsonl(root / "variant_weight_paths.jsonl"),
+        "variant_performance_metrics": _read_jsonl(root / "variant_performance_metrics.jsonl"),
+        "variant_regime_metrics": _read_jsonl(root / "variant_regime_metrics.jsonl"),
+        "variant_stability_metrics": _read_jsonl(root / "variant_stability_metrics.jsonl"),
+        "batch_dir": str(root),
+    }
+
+
+def validate_batch_experiment_artifact(
+    *,
+    batch_id: str,
+    output_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
+) -> dict[str, Any]:
+    root = output_dir / batch_id
+    manifest = _read_optional_json(root / "batch_experiment_manifest.json") or {}
+    weights = _read_jsonl(root / "variant_weight_paths.jsonl")
+    performance = _read_jsonl(root / "variant_performance_metrics.jsonl")
+    regime = _read_jsonl(root / "variant_regime_metrics.jsonl")
+    stability = _read_jsonl(root / "variant_stability_metrics.jsonl")
+    variants = {str(row.get("variant_id")) for row in performance}
+    checks = _required_file_checks(
+        root,
+        (
+            "batch_experiment_manifest.json",
+            "variant_weight_paths.jsonl",
+            "variant_performance_metrics.jsonl",
+            "variant_regime_metrics.jsonl",
+            "variant_stability_metrics.jsonl",
+            "batch_experiment_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("batch_id_matches", manifest.get("batch_id") == batch_id, ""),
+            _check("variant_weight_paths_present", bool(weights), ""),
+            _check("performance_metrics_present", bool(performance), ""),
+            _check(
+                "each_variant_has_regime_metrics",
+                variants.issubset({str(row.get("variant_id")) for row in regime}),
+                "",
+            ),
+            _check(
+                "each_variant_has_stability_metrics",
+                variants.issubset({str(row.get("variant_id")) for row in stability}),
+                "",
+            ),
+            _check(
+                "data_quality_visible",
+                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(manifest.get("data_quality_status")),
+            ),
+            _check("data_quality_as_of_visible", bool(manifest.get("data_quality_as_of")), ""),
+            _check("broker_forbidden", _payload_safe(manifest, *weights, *performance), ""),
+            _check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, *weights, *performance, *regime, *stability),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_batch_experiment_validation", batch_id, checks)
+
+
+def run_experiment_triage(
+    *,
+    batch_id: str,
+    batch_dir: Path = DEFAULT_BATCH_EXPERIMENT_DIR,
+    matrix_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
+    output_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    batch = batch_experiment_report_payload(batch_id=batch_id, output_dir=batch_dir)
+    matrix = experiment_matrix_report_payload(
+        matrix_id=_text(batch.get("matrix_id")),
+        output_dir=matrix_dir,
+    )
+    variant_specs = _records(matrix.get("variant_specs"))
+    policy = _mapping(
+        _mapping(load_weight_experiment_matrix_config(Path(matrix["config_path"]))).get(
+            "triage_policy"
+        )
+    )
+    scorecard = _triage_variant_scorecard(batch, variant_specs, policy)
+    candidates = _promotion_candidates(scorecard, variant_specs)
+    rejected = [
+        row
+        for row in scorecard
+        if row.get("triage_decision") == "REJECT"
+    ]
+    summary = _triage_summary(scorecard, candidates)
+    triage_id = _stable_id("experiment-triage", batch_id, generated.isoformat())
+    root = _unique_dir(output_dir / triage_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_experiment_triage_manifest",
+        "triage_id": root.name,
+        "batch_id": batch_id,
+        "matrix_id": batch.get("matrix_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if scorecard else "FAIL",
+        "triage_policy_version": policy.get("policy_version", "weight_experiment_triage_v1"),
+        "market_regime": batch.get("market_regime", "ai_after_chatgpt"),
+        "date_start": batch.get("date_start"),
+        "date_end": batch.get("date_end"),
+        "data_quality_status": batch.get("data_quality_status"),
+        "triage_manifest_path": str(root / "triage_manifest.json"),
+        "variant_scorecard_path": str(root / "variant_scorecard.jsonl"),
+        "promotion_candidates_path": str(root / "promotion_candidates.jsonl"),
+        "rejected_variants_path": str(root / "rejected_variants.jsonl"),
+        "triage_summary_path": str(root / "triage_summary.json"),
+        "triage_report_path": str(root / "triage_report.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "triage_manifest.json", manifest)
+    _write_jsonl(root / "variant_scorecard.jsonl", scorecard)
+    _write_jsonl(root / "promotion_candidates.jsonl", candidates)
+    _write_jsonl(root / "rejected_variants.jsonl", rejected)
+    _write_json(root / "triage_summary.json", summary)
+    _write_text(
+        root / "triage_report.md",
+        render_experiment_triage_report(manifest, summary, scorecard),
+    )
+    _write_latest_pointer(
+        "latest_experiment_triage",
+        root.name,
+        root / "triage_manifest.json",
+    )
+    return {
+        "triage_id": root.name,
+        "triage_dir": root,
+        "manifest": manifest,
+        "variant_scorecard": scorecard,
+        "promotion_candidates": candidates,
+        "rejected_variants": rejected,
+        "triage_summary": summary,
+    }
+
+
+def experiment_triage_report_payload(
+    *,
+    triage_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=triage_id,
+        latest_pointer="latest_experiment_triage",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="triage_manifest.json",
+    )
+    return {
+        **_read_json(root / "triage_manifest.json"),
+        "variant_scorecard": _read_jsonl(root / "variant_scorecard.jsonl"),
+        "promotion_candidates": _read_jsonl(root / "promotion_candidates.jsonl"),
+        "rejected_variants": _read_jsonl(root / "rejected_variants.jsonl"),
+        "triage_summary": _read_json(root / "triage_summary.json"),
+        "triage_dir": str(root),
+    }
+
+
+def validate_experiment_triage_artifact(
+    *,
+    triage_id: str,
+    output_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
+) -> dict[str, Any]:
+    root = output_dir / triage_id
+    manifest = _read_optional_json(root / "triage_manifest.json") or {}
+    scorecard = _read_jsonl(root / "variant_scorecard.jsonl")
+    candidates = _read_jsonl(root / "promotion_candidates.jsonl")
+    rejected = _read_jsonl(root / "rejected_variants.jsonl")
+    summary = _read_optional_json(root / "triage_summary.json") or {}
+    decisions = {str(row.get("triage_decision")) for row in scorecard}
+    checks = _required_file_checks(
+        root,
+        (
+            "triage_manifest.json",
+            "variant_scorecard.jsonl",
+            "promotion_candidates.jsonl",
+            "rejected_variants.jsonl",
+            "triage_summary.json",
+            "triage_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("triage_id_matches", manifest.get("triage_id") == triage_id, ""),
+            _check("scorecard_present", bool(scorecard), ""),
+            _check("decisions_valid", decisions.issubset(set(DEFAULT_TRIAGE_DECISIONS)), ""),
+            _check(
+                "hard_reject_effective",
+                all(
+                    row.get("triage_decision") != "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+                    for row in scorecard
+                    if _texts(row.get("hard_reject_flags"))
+                ),
+                "",
+            ),
+            _check(
+                "summary_counts_match",
+                int(_float(summary.get("variants_total"))) == len(scorecard),
+                "",
+            ),
+            _check(
+                "promotion_candidates_subset_scorecard",
+                {
+                    _text(row.get("variant_id"))
+                    for row in candidates
+                    if row.get("variant_id")
+                }.issubset(
+                    {
+                        _text(row.get("variant_id"))
+                        for row in scorecard
+                        if row.get("triage_decision")
+                        == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+                    }
+                )
+                and len(candidates) <= 2,
+                "",
+            ),
+            _check("rejected_variants_present_or_empty", rejected is not None, ""),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *scorecard), ""),
+            _check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *scorecard, *candidates),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_experiment_triage_validation", triage_id, checks)
+
+
+def run_top_variant_interpretation(
+    *,
+    triage_id: str,
+    triage_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
+    matrix_dir: Path = DEFAULT_EXPERIMENT_MATRIX_DIR,
+    output_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    triage = experiment_triage_report_payload(triage_id=triage_id, output_dir=triage_dir)
+    matrix = experiment_matrix_report_payload(
+        matrix_id=_text(triage.get("matrix_id")),
+        output_dir=matrix_dir,
+    )
+    variant_specs = _records(matrix.get("variant_specs"))
+    explanations = _top_variant_explanations(triage, variant_specs)
+    coverage = _variant_failure_mode_coverage(variant_specs, explanations)
+    interpretation_id = _stable_id("top-variant-interpretation", triage_id, generated.isoformat())
+    root = _unique_dir(output_dir / interpretation_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_top_variant_interpretation_manifest",
+        "interpretation_id": root.name,
+        "triage_id": triage_id,
+        "matrix_id": triage.get("matrix_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if explanations else "FAIL",
+        "top_variant_count": len(explanations),
+        "recommended_variant": _recommended_interpretation_variant(explanations),
+        "top_variant_interpretation_manifest_path": str(
+            root / "top_variant_interpretation_manifest.json"
+        ),
+        "top_variant_explanations_path": str(root / "top_variant_explanations.jsonl"),
+        "variant_failure_mode_coverage_path": str(root / "variant_failure_mode_coverage.json"),
+        "top_variant_interpretation_report_path": str(
+            root / "top_variant_interpretation_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_top_variant_interpretation_reader_brief(manifest, explanations)
+    _write_json(root / "top_variant_interpretation_manifest.json", manifest)
+    _write_jsonl(root / "top_variant_explanations.jsonl", explanations)
+    _write_json(root / "variant_failure_mode_coverage.json", coverage)
+    _write_text(
+        root / "top_variant_interpretation_report.md",
+        render_top_variant_interpretation_report(manifest, explanations, coverage),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_top_variant_interpretation",
+        root.name,
+        root / "top_variant_interpretation_manifest.json",
+    )
+    return {
+        "interpretation_id": root.name,
+        "interpretation_dir": root,
+        "manifest": manifest,
+        "top_variant_explanations": explanations,
+        "variant_failure_mode_coverage": coverage,
+        "reader_brief_section": reader,
+    }
+
+
+def top_variant_interpretation_report_payload(
+    *,
+    interpretation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=interpretation_id,
+        latest_pointer="latest_top_variant_interpretation",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="top_variant_interpretation_manifest.json",
+    )
+    return {
+        **_read_json(root / "top_variant_interpretation_manifest.json"),
+        "top_variant_explanations": _read_jsonl(root / "top_variant_explanations.jsonl"),
+        "variant_failure_mode_coverage": _read_json(root / "variant_failure_mode_coverage.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "interpretation_dir": str(root),
+    }
+
+
+def validate_top_variant_interpretation_artifact(
+    *,
+    interpretation_id: str,
+    output_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / interpretation_id
+    manifest = _read_optional_json(root / "top_variant_interpretation_manifest.json") or {}
+    explanations = _read_jsonl(root / "top_variant_explanations.jsonl")
+    coverage = _read_optional_json(root / "variant_failure_mode_coverage.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "top_variant_interpretation_manifest.json",
+            "top_variant_explanations.jsonl",
+            "variant_failure_mode_coverage.json",
+            "top_variant_interpretation_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "interpretation_id_matches",
+                manifest.get("interpretation_id") == interpretation_id,
+                "",
+            ),
+            _check("explanations_present", bool(explanations), ""),
+            _check(
+                "promoted_variants_explained",
+                all(
+                    row.get("recommended_promotion") is True
+                    for row in explanations
+                    if row.get("triage_decision")
+                    == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+                ),
+                "",
+            ),
+            _check(
+                "failure_mode_coverage_present",
+                bool(_records(coverage.get("failure_modes"))),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, coverage, *explanations), ""),
+            _check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, coverage, *explanations),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_top_variant_interpretation_validation",
+        interpretation_id,
+        checks,
+    )
+
+
+def run_method_promotion_plan(
+    *,
+    triage_id: str,
+    interpretation_id: str,
+    triage_dir: Path = DEFAULT_EXPERIMENT_TRIAGE_DIR,
+    interpretation_dir: Path = DEFAULT_TOP_VARIANT_INTERPRETATION_DIR,
+    output_dir: Path = DEFAULT_METHOD_PROMOTION_PLAN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    triage = experiment_triage_report_payload(triage_id=triage_id, output_dir=triage_dir)
+    interpretation = top_variant_interpretation_report_payload(
+        interpretation_id=interpretation_id,
+        output_dir=interpretation_dir,
+    )
+    method_specs = _promoted_method_specs(triage, interpretation)
+    promotion_plan_id = _stable_id(
+        "method-promotion-plan", triage_id, interpretation_id, generated.isoformat()
+    )
+    root = _unique_dir(output_dir / promotion_plan_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_method_promotion_plan_manifest",
+        "promotion_plan_id": root.name,
+        "triage_id": triage_id,
+        "interpretation_id": interpretation_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if method_specs["methods"] else "DEFER",
+        "proposed_method_names": [
+            row.get("proposed_method_name") for row in _records(method_specs.get("methods"))
+        ],
+        "implementation_scope": "research_only",
+        "method_promotion_manifest_path": str(root / "method_promotion_manifest.json"),
+        "promoted_method_specs_path": str(root / "promoted_method_specs.json"),
+        "formal_implementation_plan_path": str(root / "formal_implementation_plan.md"),
+        "owner_review_checklist_path": str(root / "owner_review_checklist.md"),
+        "method_promotion_plan_report_path": str(root / "method_promotion_plan_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+    plan = render_formal_implementation_plan(manifest, method_specs)
+    checklist = render_method_promotion_owner_checklist(method_specs)
+    report = render_method_promotion_plan_report(manifest, method_specs)
+    reader = render_method_promotion_reader_brief(manifest, method_specs)
+    _write_json(root / "method_promotion_manifest.json", manifest)
+    _write_json(root / "promoted_method_specs.json", method_specs)
+    _write_text(root / "formal_implementation_plan.md", plan)
+    _write_text(root / "owner_review_checklist.md", checklist)
+    _write_text(root / "method_promotion_plan_report.md", report)
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_method_promotion_plan",
+        root.name,
+        root / "method_promotion_manifest.json",
+    )
+    return {
+        "promotion_plan_id": root.name,
+        "promotion_plan_dir": root,
+        "manifest": manifest,
+        "promoted_method_specs": method_specs,
+        "formal_implementation_plan": plan,
+        "owner_review_checklist": checklist,
+        "reader_brief_section": reader,
+    }
+
+
+def method_promotion_plan_report_payload(
+    *,
+    promotion_plan_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_METHOD_PROMOTION_PLAN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=promotion_plan_id,
+        latest_pointer="latest_method_promotion_plan",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="method_promotion_manifest.json",
+    )
+    return {
+        **_read_json(root / "method_promotion_manifest.json"),
+        "promoted_method_specs": _read_json(root / "promoted_method_specs.json"),
+        "formal_implementation_plan": (
+            root / "formal_implementation_plan.md"
+        ).read_text(encoding="utf-8"),
+        "owner_review_checklist": (root / "owner_review_checklist.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "promotion_plan_dir": str(root),
+    }
+
+
+def validate_method_promotion_plan_artifact(
+    *,
+    promotion_plan_id: str,
+    output_dir: Path = DEFAULT_METHOD_PROMOTION_PLAN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / promotion_plan_id
+    manifest = _read_optional_json(root / "method_promotion_manifest.json") or {}
+    specs = _read_optional_json(root / "promoted_method_specs.json") or {}
+    methods = _records(specs.get("methods"))
+    method_names = [_text(row.get("proposed_method_name")) for row in methods]
+    checks = _required_file_checks(
+        root,
+        (
+            "method_promotion_manifest.json",
+            "promoted_method_specs.json",
+            "formal_implementation_plan.md",
+            "owner_review_checklist.md",
+            "method_promotion_plan_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "promotion_plan_id_matches",
+                manifest.get("promotion_plan_id") == promotion_plan_id,
+                "",
+            ),
+            _check("method_specs_present", bool(methods), ""),
+            _check(
+                "proposed_method_names_unique",
+                len(method_names) == len(set(method_names)),
+                ",".join(method_names),
+            ),
+            _check(
+                "implementation_scope_research_only",
+                all(row.get("implementation_scope") == "research_only" for row in methods),
+                "",
+            ),
+            _check(
+                "no_auto_apply",
+                all(row.get("auto_apply") is False for row in methods),
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                all(row.get("broker_action_allowed") is False for row in methods),
+                "",
+            ),
+            _check(
+                "production_effect_none",
+                all(row.get("production_effect") == PRODUCTION_EFFECT for row in methods),
+                "",
+            ),
+            _check("broker_forbidden_manifest", _payload_safe(manifest, specs, *methods), ""),
+            _check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, specs, *methods),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_method_promotion_plan_validation",
+        promotion_plan_id,
+        checks,
+    )
 
 
 def generate_model_target(
@@ -10218,6 +11601,1697 @@ def _large_jump_count(rows: Sequence[Mapping[str, Any]]) -> int:
 
 def _semiconductor_weight(weights: Mapping[str, Any], symbols: Sequence[str]) -> float:
     return sum(_float(weights.get(symbol)) for symbol in symbols)
+
+
+def _assert_experiment_factory_config_safe(payload: Mapping[str, Any]) -> None:
+    if not _experiment_safety_config_locked(_mapping(payload.get("safety"))):
+        raise DynamicV3SystemTargetError("experiment factory config safety boundary is not locked")
+
+
+def _experiment_safety_config_locked(safety: Mapping[str, Any]) -> bool:
+    return (
+        safety.get("experiment_only") is True
+        and safety.get("research_screening_only") is True
+        and safety.get("broker_action_allowed") is False
+        and safety.get("broker_action_taken", False) is False
+        and safety.get("order_ticket_generated", False) is False
+        and safety.get("production_effect") == PRODUCTION_EFFECT
+        and safety.get("auto_apply", False) is False
+    )
+
+
+def _payload_experiment_safe(*payloads: Mapping[str, Any]) -> bool:
+    return all(
+        payload.get("experiment_only", True) is True
+        and payload.get("research_screening_only", True) is True
+        and payload.get("not_formal_research_method", True) is True
+        and payload.get("not_official_target_weights", True) is True
+        and payload.get("broker_action_allowed") is not True
+        and payload.get("broker_action_taken") is not True
+        and payload.get("order_ticket_generated") is not True
+        and payload.get("auto_apply") is not True
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        for payload in payloads
+        if payload
+    )
+
+
+def _normalized_failure_modes(config: Mapping[str, Any]) -> dict[str, Any]:
+    rows = []
+    raw = {str(row.get("id")): row for row in _records(config.get("failure_modes"))}
+    for mode in DEFAULT_FAILURE_MODES:
+        source = _mapping(raw.get(mode))
+        rows.append(
+            {
+                "id": mode,
+                "description": _text(
+                    source.get("description"),
+                    f"{mode} requires explicit hypothesis coverage.",
+                ),
+                "severity": _text(source.get("severity"), "REVIEW_REQUIRED"),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    for mode, source in sorted(raw.items()):
+        if mode in DEFAULT_FAILURE_MODES:
+            continue
+        rows.append(
+            {
+                "id": mode,
+                "description": _text(source.get("description")),
+                "severity": _text(source.get("severity"), "REVIEW_REQUIRED"),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": SCHEMA_VERSION, "failure_modes": rows, **EXPERIMENT_FACTORY_SAFETY}
+
+
+def _normalized_hypotheses(config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for row in _records(config.get("hypotheses")):
+        rows.append(
+            {
+                "hypothesis_id": _text(row.get("hypothesis_id")),
+                "family": _text(row.get("family")),
+                "base_method": _text(row.get("base_method"), "limited_adjustment"),
+                "description": _text(row.get("description")),
+                "target_failure_modes": _texts(row.get("target_failure_modes")),
+                "expected_benefit": _texts(row.get("expected_benefit")),
+                "expected_cost": _texts(row.get("expected_cost")),
+                "complexity": _text(row.get("complexity"), "MEDIUM"),
+                "priority": _text(row.get("priority"), "MEDIUM"),
+                "status": _text(row.get("status"), "proposed"),
+                "promotion_eligible": False,
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _hypothesis_priority_summary(
+    taxonomy: Mapping[str, Any],
+    hypotheses: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    modes = [str(row.get("id")) for row in _records(taxonomy.get("failure_modes"))]
+    covered = {
+        mode for row in hypotheses for mode in _texts(row.get("target_failure_modes"))
+    }
+    high = [
+        _text(row.get("hypothesis_id"))
+        for row in hypotheses
+        if _text(row.get("priority")).upper() == "HIGH"
+    ]
+    family_counts: dict[str, int] = {}
+    for row in hypotheses:
+        family = _text(row.get("family"), "UNKNOWN")
+        family_counts[family] = family_counts.get(family, 0) + 1
+    recommended = [
+        _text(row.get("hypothesis_id"))
+        for row in hypotheses
+        if _text(row.get("priority")).upper() == "HIGH"
+        and _text(row.get("status"), "proposed") in {"proposed", "ready_for_matrix"}
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "failure_modes_total": len(modes),
+        "hypotheses_total": len(hypotheses),
+        "high_priority_hypotheses": high,
+        "hypothesis_family_counts": family_counts,
+        "uncovered_failure_modes": [mode for mode in modes if mode not in covered],
+        "recommended_for_experiment_matrix": recommended[:10],
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _normalized_variant_transform_spec(config: Mapping[str, Any]) -> dict[str, Any]:
+    transform_types = {}
+    for transform_type in DEFAULT_TRANSFORM_TYPES:
+        spec = _mapping(_mapping(config.get("transform_types")).get(transform_type))
+        transform_types[transform_type] = {
+            "description": _text(
+                spec.get("description"),
+                f"{transform_type} lightweight experiment transform.",
+            ),
+            "required_fields": _texts(spec.get("required_fields")),
+            "allowed_modes": _texts(spec.get("allowed_modes")),
+        }
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "transform_types": transform_types,
+        "safety": dict(_mapping(config.get("safety"))),
+    }
+
+
+def _transform_type_catalog(spec: Mapping[str, Any]) -> dict[str, Any]:
+    rows = []
+    for transform_type, payload in sorted(_mapping(spec.get("transform_types")).items()):
+        data = _mapping(payload)
+        rows.append(
+            {
+                "type": transform_type,
+                "description": _text(data.get("description")),
+                "required_fields": _texts(data.get("required_fields")),
+                "allowed_modes": _texts(data.get("allowed_modes")),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": SCHEMA_VERSION, "transform_types": rows, **EXPERIMENT_FACTORY_SAFETY}
+
+
+def _normalized_variant_specs(
+    config: Mapping[str, Any],
+    hypothesis_lookup: Mapping[str, Mapping[str, Any]],
+    transform_spec: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    group = _mapping(config.get("experiment_group"))
+    catalog = _mapping(transform_spec.get("transform_types"))
+    rows = []
+    for row in _records(config.get("variants")):
+        hypothesis_id = _text(row.get("hypothesis_id"))
+        hypothesis = _mapping(hypothesis_lookup.get(hypothesis_id))
+        target_modes = _texts(row.get("target_failure_modes")) or _texts(
+            hypothesis.get("target_failure_modes")
+        )
+        transforms = []
+        for transform in _records(row.get("transforms")):
+            transform_type = _text(transform.get("type"))
+            required = _texts(_mapping(catalog.get(transform_type)).get("required_fields"))
+            missing = [field for field in required if field not in transform]
+            payload = {**dict(transform), "missing_required_fields": missing}
+            transforms.append(payload)
+        rows.append(
+            {
+                "variant_id": _text(row.get("variant_id")),
+                "base_method": _text(row.get("base_method"), _text(group.get("base_method"))),
+                "hypothesis_id": hypothesis_id,
+                "family": _text(row.get("family"), _text(hypothesis.get("family"), "UNKNOWN")),
+                "transforms": transforms,
+                "target_failure_modes": target_modes,
+                "expected_benefit": _texts(row.get("expected_benefit"))
+                or _texts(hypothesis.get("expected_benefit")),
+                "expected_cost": _texts(row.get("expected_cost"))
+                or _texts(hypothesis.get("expected_cost")),
+                "experiment_only": True,
+                "research_screening_only": True,
+                "not_formal_research_method": True,
+                "not_official_target_weights": True,
+                "broker_action_allowed": False,
+                "production_effect": PRODUCTION_EFFECT,
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _matrix_transform_specs(
+    transform_spec: Mapping[str, Any],
+    variant_specs: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    used = {
+        _text(transform.get("type"))
+        for row in variant_specs
+        for transform in _records(row.get("transforms"))
+    }
+    catalog = _transform_type_catalog(_normalized_variant_transform_spec(transform_spec))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "transform_types": [
+            row for row in _records(catalog.get("transform_types")) if row.get("type") in used
+        ],
+        "used_transform_types": sorted(used),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _experiment_matrix_summary(variant_specs: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    families = sorted({_text(row.get("family")) for row in variant_specs if row.get("family")})
+    failure_modes = sorted(
+        {
+            mode
+            for row in variant_specs
+            for mode in _texts(row.get("target_failure_modes"))
+        }
+    )
+    type_map: dict[str, list[str]] = {}
+    for row in variant_specs:
+        for transform in _records(row.get("transforms")):
+            transform_type = _text(transform.get("type"))
+            type_map.setdefault(transform_type, []).append(_text(row.get("variant_id")))
+    return {
+        "variant_count": len(variant_specs),
+        "families_covered": families,
+        "failure_modes_covered": failure_modes,
+        "variants_by_transform_type": type_map,
+        "formal_method_variant_count": sum(
+            1 for row in variant_specs if row.get("not_formal_research_method") is not True
+        ),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _symbols_from_state_paths(states: Sequence[Mapping[str, Any]]) -> list[str]:
+    symbols = sorted(
+        {
+            symbol
+            for row in states
+            for symbol in _mapping(row.get("weights"))
+            if symbol != "CASH"
+        }
+    )
+    if not symbols:
+        raise DynamicV3SystemTargetError("state paths do not contain priced symbols")
+    return symbols
+
+
+def _run_variant_weight_path(
+    *,
+    variant: Mapping[str, Any],
+    baseline_states: Sequence[Mapping[str, Any]],
+    returns: pd.DataFrame,
+    labels: Mapping[str, str],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    variant_id = _text(variant.get("variant_id"))
+    base_by_date = {
+        str(row.get("date")): row
+        for row in baseline_states
+        if row.get("target_method") == "limited_adjustment"
+    }
+    rows_by_date_method: dict[str, dict[str, Mapping[str, Any]]] = {}
+    for row in baseline_states:
+        rows_by_date_method.setdefault(str(row.get("date")), {})[
+            str(row.get("target_method"))
+        ] = row
+    initial = _mapping(next(iter(base_by_date.values()), {}).get("weights"))
+    current_weights = _normalize_weights(initial or _backfill_initial_weights(config))
+    portfolio_value = 1.0
+    peak_value = 1.0
+    transform_state: dict[str, Any] = {
+        "target_history": [],
+        "last_target": current_weights,
+        "cooldown_until": {},
+        "persistence_count": 0,
+    }
+    result = []
+    for timestamp, return_row in returns.iterrows():
+        current_date = timestamp.date()
+        date_text = current_date.isoformat()
+        base_row = _mapping(base_by_date.get(date_text))
+        before_return = _normalize_weights(current_weights)
+        daily_return = _portfolio_return(before_return, return_row)
+        portfolio_value *= 1.0 + daily_return
+        drifted = _drift_weights(before_return, return_row, daily_return)
+        after_weights = dict(drifted)
+        turnover = 0.0
+        rebalance_event = False
+        if base_row.get("rebalance_event") is True:
+            target = _variant_source_target(
+                variant=variant,
+                date_text=date_text,
+                rows_by_date_method=rows_by_date_method,
+                fallback=_mapping(base_row.get("weights")),
+            )
+            after_weights = _apply_experiment_transforms(
+                as_of=current_date,
+                target=target,
+                previous=drifted,
+                variant=variant,
+                regime=_text(labels.get(date_text), "sideways_choppy"),
+                transform_state=transform_state,
+            )
+            turnover = _turnover(drifted, after_weights)
+            rebalance_event = turnover > 0.0
+        peak_value = max(peak_value, portfolio_value)
+        drawdown = portfolio_value / peak_value - 1.0 if peak_value > 0 else 0.0
+        current_weights = after_weights
+        result.append(
+            {
+                "date": date_text,
+                "variant_id": variant_id,
+                "base_method": variant.get("base_method"),
+                "target_method": variant_id,
+                "regime": _text(labels.get(date_text), "sideways_choppy"),
+                "weights": after_weights,
+                "portfolio_value": round(portfolio_value, 10),
+                "daily_return": round(daily_return, 10),
+                "drawdown": round(drawdown, 10),
+                "turnover": round(turnover, 10),
+                "rebalance_event": rebalance_event,
+                "target_failure_modes": _texts(variant.get("target_failure_modes")),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return result
+
+
+def _variant_source_target(
+    *,
+    variant: Mapping[str, Any],
+    date_text: str,
+    rows_by_date_method: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    fallback: Mapping[str, Any],
+) -> dict[str, float]:
+    transforms = _records(variant.get("transforms"))
+    has_candidate_aggregation = any(
+        _text(transform.get("type")) in {"candidate_subset", "consensus_aggregation"}
+        for transform in transforms
+    )
+    if has_candidate_aggregation:
+        method_rows = rows_by_date_method.get(date_text, {})
+        method_weights = [
+            _mapping(row.get("weights"))
+            for method, row in method_rows.items()
+            if method
+            in {
+                "limited_adjustment",
+                "defensive_limited_adjustment",
+                "consensus_target",
+                "equal_weight_shadow_candidates",
+                "selected_top_candidate",
+            }
+        ]
+        method = _text(
+            next(
+                (
+                    transform.get("method")
+                    for transform in transforms
+                    if _text(transform.get("type")) == "consensus_aggregation"
+                ),
+                "weighted_mean",
+            )
+        )
+        return _aggregate_weights(method_weights, method=method)
+    return _normalize_weights(fallback)
+
+
+def _aggregate_weights(
+    weights_list: Sequence[Mapping[str, Any]],
+    *,
+    method: str,
+) -> dict[str, float]:
+    clean = [_normalize_weights(weights) for weights in weights_list if weights]
+    if not clean:
+        raise DynamicV3SystemTargetError("candidate aggregation has no weight sources")
+    symbols = sorted({symbol for weights in clean for symbol in weights})
+    if method == "median":
+        result = {
+            symbol: sorted(_float(weights.get(symbol)) for weights in clean)[len(clean) // 2]
+            for symbol in symbols
+        }
+    elif method == "trimmed_mean" and len(clean) >= 3:
+        result = {}
+        for symbol in symbols:
+            values = sorted(_float(weights.get(symbol)) for weights in clean)
+            trimmed = values[1:-1] or values
+            result[symbol] = sum(trimmed) / len(trimmed)
+    else:
+        result = {
+            symbol: sum(_float(weights.get(symbol)) for weights in clean) / len(clean)
+            for symbol in symbols
+        }
+    return _normalize_weights(result)
+
+
+def _apply_experiment_transforms(
+    *,
+    as_of: date,
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    variant: Mapping[str, Any],
+    regime: str,
+    transform_state: dict[str, Any],
+) -> dict[str, float]:
+    current = _normalize_weights(target)
+    previous_weights = _normalize_weights(previous)
+    for transform in _records(variant.get("transforms")):
+        transform_type = _text(transform.get("type"))
+        if transform_type == "hold_previous_weights":
+            current = dict(previous_weights)
+        elif transform_type == "regime_gate" and regime == _text(transform.get("regime")):
+            current = _apply_regime_gate(current, previous_weights, transform)
+        elif transform_type == "regime_cooldown" and regime == _text(transform.get("regime")):
+            current = _apply_regime_cooldown(
+                as_of,
+                current,
+                previous_weights,
+                transform,
+                transform_state,
+            )
+        elif transform_type == "weight_smoothing":
+            current = _apply_weight_smoothing(current, transform, transform_state)
+        elif transform_type == "signal_persistence":
+            current = _apply_signal_persistence(
+                current,
+                previous_weights,
+                transform,
+                transform_state,
+            )
+        elif transform_type == "rebalance_threshold":
+            threshold = _float(transform.get("min_total_abs_delta"))
+            total_delta = sum(
+                abs(value) for value in _weight_deltas(previous_weights, current).values()
+            )
+            if total_delta < threshold:
+                current = dict(previous_weights)
+        elif transform_type == "turnover_cap":
+            current = _apply_turnover_cap(
+                current,
+                previous_weights,
+                _float(transform.get("max_turnover")),
+            )
+        elif transform_type == "cap_group_weight":
+            current = _cap_group_weight(
+                current,
+                group=_text(transform.get("group")),
+                max_weight=_float(transform.get("max_weight")),
+            )
+        elif transform_type == "cap_symbol_weight":
+            current = _cap_symbol_weight(
+                current,
+                symbol=_text(transform.get("symbol")),
+                max_weight=_float(transform.get("max_weight")),
+            )
+        elif transform_type == "min_cash_weight":
+            current = _apply_min_cash(current, _float(transform.get("min_cash_weight")))
+    transform_state["last_target"] = current
+    return _normalize_weights(current)
+
+
+def _apply_regime_gate(
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    transform: Mapping[str, Any],
+) -> dict[str, float]:
+    action = _text(transform.get("action"))
+    if action == "hold_previous_weights":
+        return _normalize_weights(previous)
+    if action == "reduce_active_tilt":
+        multiplier = _float(transform.get("multiplier"), 0.5)
+        return _blend_weights(previous, target, multiplier)
+    if action in {"block_risk_asset_increase", "only_allow_risk_reduction"}:
+        return _block_risk_increase(target, previous)
+    if action == "block_symbol_increase":
+        symbol = _text(transform.get("symbol"), "SMH")
+        return _block_symbol_increase(target, previous, symbol)
+    return _normalize_weights(target)
+
+
+def _apply_regime_cooldown(
+    as_of: date,
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    transform: Mapping[str, Any],
+    transform_state: dict[str, Any],
+) -> dict[str, float]:
+    key = _text(transform.get("regime"))
+    cooldown_days = int(_float(transform.get("cooldown_days"), 0))
+    cooldown_until = _mapping(transform_state.get("cooldown_until"))
+    until = _coerce_date(cooldown_until.get(key), date(1970, 1, 1))
+    if as_of <= until:
+        return _normalize_weights(previous)
+    cooldown_until[key] = (as_of + timedelta(days=cooldown_days)).isoformat()
+    transform_state["cooldown_until"] = cooldown_until
+    return _normalize_weights(previous)
+
+
+def _apply_weight_smoothing(
+    target: Mapping[str, Any],
+    transform: Mapping[str, Any],
+    transform_state: dict[str, Any],
+) -> dict[str, float]:
+    window = max(1, int(_float(transform.get("window_days"), 1)))
+    history = _records(transform_state.get("target_history"))
+    history.append({"weights": _normalize_weights(target)})
+    history = history[-window:]
+    transform_state["target_history"] = history
+    return _aggregate_weights(
+        [_mapping(row.get("weights")) for row in history],
+        method="weighted_mean",
+    )
+
+
+def _apply_signal_persistence(
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    transform: Mapping[str, Any],
+    transform_state: dict[str, Any],
+) -> dict[str, float]:
+    days = max(1, int(_float(transform.get("persistence_days"), 1)))
+    last_target = _normalize_weights(_mapping(transform_state.get("last_target")) or previous)
+    deltas = _weight_deltas(previous, target)
+    last_deltas = _weight_deltas(previous, last_target)
+    same_direction = all(
+        deltas.get(symbol, 0.0) == 0.0
+        or last_deltas.get(symbol, 0.0) == 0.0
+        or deltas.get(symbol, 0.0) * last_deltas.get(symbol, 0.0) >= 0.0
+        for symbol in set(deltas) | set(last_deltas)
+    )
+    count = int(_float(transform_state.get("persistence_count"), 0))
+    count = count + 1 if same_direction else 1
+    transform_state["persistence_count"] = count
+    return _normalize_weights(target if count >= days else previous)
+
+
+def _apply_turnover_cap(
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    max_turnover: float,
+) -> dict[str, float]:
+    turnover = _turnover(previous, target)
+    if max_turnover <= 0 or turnover <= max_turnover:
+        return _normalize_weights(target)
+    return _blend_weights(previous, target, max_turnover / turnover)
+
+
+def _cap_group_weight(
+    weights: Mapping[str, Any],
+    *,
+    group: str,
+    max_weight: float,
+) -> dict[str, float]:
+    if group in {"semiconductor", "semiconductors"}:
+        symbols = ("SMH", "SOXX")
+    elif group in {"risk_assets", "risk"}:
+        symbols = tuple(symbol for symbol in weights if symbol not in {"CASH", "TLT", "BND"})
+    else:
+        symbols = tuple(_texts(group.split(",")))
+    current = _group_weight(weights, symbols)
+    if max_weight <= 0 or current <= max_weight:
+        return _normalize_weights(weights)
+    result = dict(_normalize_weights(weights))
+    excess = current - max_weight
+    scale = max_weight / current if current > 0 else 1.0
+    for symbol in symbols:
+        result[symbol] = _float(result.get(symbol)) * scale
+    result["CASH"] = _float(result.get("CASH")) + excess
+    return _normalize_weights(result)
+
+
+def _cap_symbol_weight(
+    weights: Mapping[str, Any],
+    *,
+    symbol: str,
+    max_weight: float,
+) -> dict[str, float]:
+    result = dict(_normalize_weights(weights))
+    symbol = symbol.upper()
+    if symbol not in result or max_weight <= 0 or result[symbol] <= max_weight:
+        return result
+    excess = result[symbol] - max_weight
+    result[symbol] = max_weight
+    result["CASH"] = _float(result.get("CASH")) + excess
+    return _normalize_weights(result)
+
+
+def _apply_min_cash(weights: Mapping[str, Any], min_cash: float) -> dict[str, float]:
+    result = dict(_normalize_weights(weights))
+    cash = _float(result.get("CASH"))
+    if min_cash <= 0 or cash >= min_cash:
+        return result
+    non_cash = {symbol: value for symbol, value in result.items() if symbol != "CASH"}
+    scale = max(0.0, 1.0 - min_cash) / sum(non_cash.values()) if non_cash else 0.0
+    for symbol in non_cash:
+        result[symbol] = non_cash[symbol] * scale
+    result["CASH"] = min_cash
+    return _normalize_weights(result)
+
+
+def _block_risk_increase(
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+) -> dict[str, float]:
+    risk_symbols = [
+        symbol
+        for symbol in set(target) | set(previous)
+        if symbol not in {"CASH", "TLT", "BND"}
+    ]
+    target_risk = _group_weight(target, risk_symbols)
+    previous_risk = _group_weight(previous, risk_symbols)
+    if target_risk <= previous_risk:
+        return _normalize_weights(target)
+    return _cap_group_weight(target, group="risk_assets", max_weight=previous_risk)
+
+
+def _block_symbol_increase(
+    target: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    symbol: str,
+) -> dict[str, float]:
+    symbol = symbol.upper()
+    if _float(target.get(symbol)) <= _float(previous.get(symbol)):
+        return _normalize_weights(target)
+    return _cap_symbol_weight(target, symbol=symbol, max_weight=_float(previous.get(symbol)))
+
+
+def _blend_weights(
+    previous: Mapping[str, Any],
+    target: Mapping[str, Any],
+    multiplier: float,
+) -> dict[str, float]:
+    multiplier = max(0.0, min(1.0, multiplier))
+    symbols = sorted(set(previous) | set(target))
+    return _normalize_weights(
+        {
+            symbol: _float(previous.get(symbol)) + (
+                _float(target.get(symbol)) - _float(previous.get(symbol))
+            )
+            * multiplier
+            for symbol in symbols
+        }
+    )
+
+
+def _variant_performance_metrics(
+    variant_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    limited = _method_path_metrics(baseline_states, "limited_adjustment")
+    static = _method_path_metrics(baseline_states, "static_baseline")
+    no_trade = _method_path_metrics(baseline_states, "no_trade_baseline")
+    rows = []
+    for variant_id in sorted({str(row.get("variant_id")) for row in variant_states}):
+        states = [row for row in variant_states if row.get("variant_id") == variant_id]
+        metrics = _state_path_metrics(states, min_observations=2)
+        status = _performance_status(metrics, limited)
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "base_method": "limited_adjustment",
+                "total_return": metrics["total_return"],
+                "annualized_return": metrics["annualized_return"],
+                "max_drawdown": metrics["max_drawdown"],
+                "realized_volatility": metrics["realized_volatility"],
+                "turnover": metrics["turnover"],
+                "relative_to_limited_adjustment": round(
+                    _float(metrics.get("total_return")) - _float(limited.get("total_return")),
+                    10,
+                ),
+                "relative_to_static_baseline": round(
+                    _float(metrics.get("total_return")) - _float(static.get("total_return")),
+                    10,
+                ),
+                "relative_to_no_trade_baseline": round(
+                    _float(metrics.get("total_return")) - _float(no_trade.get("total_return")),
+                    10,
+                ),
+                "drawdown_delta_vs_limited": round(
+                    _float(metrics.get("max_drawdown")) - _float(limited.get("max_drawdown")),
+                    10,
+                ),
+                "turnover_delta_vs_limited": round(
+                    _float(metrics.get("turnover")) - _float(limited.get("turnover")),
+                    10,
+                ),
+                "performance_status": status,
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _performance_status(metrics: Mapping[str, Any], limited: Mapping[str, Any]) -> str:
+    if metrics.get("status") == "INSUFFICIENT_DATA":
+        return "INSUFFICIENT_DATA"
+    if _float(metrics.get("total_return")) >= _float(limited.get("total_return")) and _float(
+        metrics.get("max_drawdown")
+    ) >= _float(limited.get("max_drawdown")):
+        return "PASS"
+    if _float(metrics.get("max_drawdown")) >= _float(limited.get("max_drawdown")):
+        return "PASS_WITH_WARNINGS"
+    return "FAIL"
+
+
+def _variant_regime_metrics(
+    variant_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+    labels: Mapping[str, str],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    min_sample = _config_int(config, ("regime_policy", "min_sample_count"), 5)
+    rows = []
+    for variant_id in sorted({str(row.get("variant_id")) for row in variant_states}):
+        for regime in _configured_regimes():
+            date_set = {date_text for date_text, label in labels.items() if label == regime}
+            selected = [
+                row
+                for row in variant_states
+                if row.get("variant_id") == variant_id and row.get("date") in date_set
+            ]
+            limited = [
+                row
+                for row in baseline_states
+                if row.get("target_method") == "limited_adjustment" and row.get("date") in date_set
+            ]
+            static = [
+                row
+                for row in baseline_states
+                if row.get("target_method") == "static_baseline" and row.get("date") in date_set
+            ]
+            metrics = _sample_return_metrics(selected, min_sample=min_sample)
+            limited_metrics = _sample_return_metrics(limited, min_sample=min_sample)
+            static_metrics = _sample_return_metrics(static, min_sample=min_sample)
+            return_delta = round(
+                _float(metrics.get("total_return")) - _float(limited_metrics.get("total_return")),
+                10,
+            )
+            drawdown_delta = round(
+                _float(metrics.get("max_drawdown")) - _float(limited_metrics.get("max_drawdown")),
+                10,
+            )
+            turnover_delta = round(
+                _float(metrics.get("turnover")) - _float(limited_metrics.get("turnover")),
+                10,
+            )
+            rows.append(
+                {
+                    "variant_id": variant_id,
+                    "regime": regime,
+                    "sample_count": len(selected),
+                    "relative_to_limited_adjustment": return_delta,
+                    "relative_to_static_baseline": round(
+                        _float(metrics.get("total_return"))
+                        - _float(static_metrics.get("total_return")),
+                        10,
+                    ),
+                    "drawdown_delta_vs_limited": drawdown_delta,
+                    "turnover_delta_vs_limited": turnover_delta,
+                    "regime_status": _regime_status(metrics, return_delta, drawdown_delta),
+                    **EXPERIMENT_FACTORY_SAFETY,
+                }
+            )
+    return rows
+
+
+def _regime_status(metrics: Mapping[str, Any], return_delta: float, drawdown_delta: float) -> str:
+    if metrics.get("status") == "INSUFFICIENT_DATA":
+        return "INSUFFICIENT_DATA"
+    if return_delta >= 0.0 and drawdown_delta >= 0.0:
+        return "IMPROVED"
+    if return_delta < 0.0 and drawdown_delta < 0.0:
+        return "WORSE"
+    return "MIXED"
+
+
+def _variant_stability_metrics(
+    variant_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+    config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    variant_metrics, _, _ = _stability_diagnostics(variant_states, config)
+    limited_states = [
+        row for row in baseline_states if row.get("target_method") == "limited_adjustment"
+    ]
+    limited_metrics, _, _ = _stability_diagnostics(limited_states, config)
+    limited_row = _find_method(limited_metrics, "limited_adjustment")
+    rows = []
+    for row in variant_metrics:
+        variant_id = _text(row.get("target_method"))
+        states = [item for item in variant_states if item.get("variant_id") == variant_id]
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "avg_rebalance_turnover": row.get("avg_rebalance_turnover", 0.0),
+                "max_rebalance_turnover": row.get("max_rebalance_turnover", 0.0),
+                "large_jump_count": row.get("large_jump_count", 0),
+                "weight_flip_count": _weight_flip_count(states),
+                "rolling_consistency_delta": _variant_rolling_consistency_delta(
+                    states,
+                    limited_states,
+                ),
+                "stability_status": _variant_stability_status(row, limited_row),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _variant_stability_status(
+    row: Mapping[str, Any],
+    limited_row: Mapping[str, Any],
+) -> str:
+    status = _text(row.get("stability_status"), "INSUFFICIENT_DATA")
+    if status == "INSUFFICIENT_DATA":
+        return "INSUFFICIENT_DATA"
+    large_jump_count = _float(row.get("large_jump_count"))
+    limited_jump_count = _float(limited_row.get("large_jump_count"))
+    avg_turnover = _float(row.get("avg_rebalance_turnover"))
+    limited_turnover = _float(limited_row.get("avg_rebalance_turnover"))
+    if large_jump_count <= limited_jump_count and avg_turnover <= limited_turnover:
+        return "STABLE"
+    if status == "UNSTABLE":
+        return "UNSTABLE"
+    return "MODERATE"
+
+
+def _weight_flip_count(states: Sequence[Mapping[str, Any]]) -> int:
+    ordered = sorted(states, key=lambda row: _text(row.get("date")))
+    last_delta: dict[str, float] = {}
+    previous: Mapping[str, Any] | None = None
+    flips = 0
+    for row in ordered:
+        if previous is None:
+            previous = row
+            continue
+        deltas = _weight_deltas(_mapping(previous.get("weights")), _mapping(row.get("weights")))
+        for symbol, delta in deltas.items():
+            if last_delta.get(symbol, 0.0) * delta < 0:
+                flips += 1
+            if delta != 0:
+                last_delta[symbol] = delta
+        previous = row
+    return flips
+
+
+def _variant_rolling_consistency_delta(
+    variant_states: Sequence[Mapping[str, Any]],
+    limited_states: Sequence[Mapping[str, Any]],
+) -> str:
+    windows = _rolling_window_inventory(
+        [*variant_states, *limited_states],
+        min_observations=DEFAULT_MIN_EVAL_OBSERVATIONS,
+    )
+    if not windows:
+        return "INSUFFICIENT_DATA"
+    improved = 0
+    worse = 0
+    for window in windows:
+        variant_metrics = _state_path_metrics(
+            [
+                row
+                for row in variant_states
+                if _coerce_date(window.get("start_date"), date(1970, 1, 1))
+                <= _coerce_date(row.get("date"), date(1970, 1, 1))
+                <= _coerce_date(window.get("end_date"), date(1970, 1, 1))
+            ],
+            min_observations=DEFAULT_MIN_EVAL_OBSERVATIONS,
+        )
+        limited_metrics = _state_path_metrics(
+            [
+                row
+                for row in limited_states
+                if _coerce_date(window.get("start_date"), date(1970, 1, 1))
+                <= _coerce_date(row.get("date"), date(1970, 1, 1))
+                <= _coerce_date(window.get("end_date"), date(1970, 1, 1))
+            ],
+            min_observations=DEFAULT_MIN_EVAL_OBSERVATIONS,
+        )
+        if variant_metrics.get("status") == "INSUFFICIENT_DATA":
+            continue
+        if _float(variant_metrics.get("max_drawdown")) >= _float(
+            limited_metrics.get("max_drawdown")
+        ):
+            improved += 1
+        else:
+            worse += 1
+    if improved == 0 and worse == 0:
+        return "INSUFFICIENT_DATA"
+    if improved > worse:
+        return "IMPROVED"
+    if worse > improved:
+        return "WORSE"
+    return "MIXED"
+
+
+def _triage_variant_scorecard(
+    batch: Mapping[str, Any],
+    variant_specs: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    performance = {
+        str(row.get("variant_id")): row
+        for row in _records(batch.get("variant_performance_metrics"))
+    }
+    stability = {
+        str(row.get("variant_id")): row
+        for row in _records(batch.get("variant_stability_metrics"))
+    }
+    regimes = _records(batch.get("variant_regime_metrics"))
+    weights = _mapping(policy.get("score_weights"))
+    rows = []
+    for spec in variant_specs:
+        variant_id = _text(spec.get("variant_id"))
+        perf = _mapping(performance.get(variant_id))
+        stable = _mapping(stability.get(variant_id))
+        regime_rows = [row for row in regimes if row.get("variant_id") == variant_id]
+        components = {
+            "return_score": _bounded_score(
+                _float(perf.get("relative_to_limited_adjustment")),
+                -0.05,
+                0.05,
+            ),
+            "drawdown_score": _bounded_score(
+                _float(perf.get("drawdown_delta_vs_limited")),
+                -0.02,
+                0.02,
+            ),
+            "rolling_consistency_score": _label_score(
+                _text(stable.get("rolling_consistency_delta")),
+                {"IMPROVED": 1.0, "MIXED": 0.55, "INSUFFICIENT_DATA": 0.0, "WORSE": 0.0},
+            ),
+            "regime_score": _triage_regime_score(regime_rows),
+            "turnover_score": _bounded_score(
+                -_float(perf.get("turnover_delta_vs_limited")),
+                -0.2,
+                0.2,
+            ),
+            "simplicity_score": _simplicity_score(spec),
+        }
+        overall = sum(
+            components[key] * _float(weights.get(key.removesuffix("_score")), default)
+            for key, default in (
+                ("return_score", 0.25),
+                ("drawdown_score", 0.25),
+                ("rolling_consistency_score", 0.20),
+                ("regime_score", 0.15),
+                ("turnover_score", 0.10),
+                ("simplicity_score", 0.05),
+            )
+        )
+        flags = _hard_reject_flags(perf, stable, regime_rows, batch)
+        decision = _triage_decision(overall, flags, perf, stable, policy)
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "overall_score": round(overall, 6),
+                "score_components": {key: round(value, 6) for key, value in components.items()},
+                "hard_reject_flags": flags,
+                "triage_decision": decision,
+                "reason": _triage_reason(decision, flags, perf, stable),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return sorted(rows, key=lambda row: _float(row.get("overall_score")), reverse=True)
+
+
+def _bounded_score(value: float, lower: float, upper: float) -> float:
+    if upper <= lower:
+        return 0.0
+    return max(0.0, min(1.0, (value - lower) / (upper - lower)))
+
+
+def _label_score(label: str, mapping: Mapping[str, float]) -> float:
+    return _float(mapping.get(label), 0.0)
+
+
+def _triage_regime_score(regime_rows: Sequence[Mapping[str, Any]]) -> float:
+    valid = [row for row in regime_rows if row.get("regime_status") != "INSUFFICIENT_DATA"]
+    if not valid:
+        return 0.0
+    points = sum(
+        {
+            "IMPROVED": 1.0,
+            "MIXED": 0.55,
+            "WORSE": 0.0,
+        }.get(_text(row.get("regime_status")), 0.0)
+        for row in valid
+    )
+    return points / len(valid)
+
+
+def _simplicity_score(spec: Mapping[str, Any]) -> float:
+    count = len(_records(spec.get("transforms")))
+    if count <= 1:
+        return 1.0
+    if count == 2:
+        return 0.75
+    return 0.45
+
+
+def _hard_reject_flags(
+    perf: Mapping[str, Any],
+    stable: Mapping[str, Any],
+    regime_rows: Sequence[Mapping[str, Any]],
+    batch: Mapping[str, Any],
+) -> list[str]:
+    flags = []
+    if batch.get("data_quality_status") == "FAIL":
+        flags.append("data_quality_FAIL")
+    if _float(perf.get("drawdown_delta_vs_limited")) < -0.002:
+        flags.append("max_drawdown_materially_worse")
+    if stable.get("rolling_consistency_delta") == "WORSE":
+        flags.append("rolling_consistency_worse")
+    if any(
+        row.get("regime") in {"risk_off", "tech_drawdown", "semiconductor_pullback"}
+        and row.get("regime_status") == "WORSE"
+        for row in regime_rows
+    ):
+        flags.append("pressure_regime_performance_worse")
+    if _float(perf.get("turnover_delta_vs_limited")) > 0.25:
+        flags.append("turnover_explodes")
+    return flags
+
+
+def _triage_decision(
+    score: float,
+    flags: Sequence[str],
+    perf: Mapping[str, Any],
+    stable: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> str:
+    if flags:
+        return "REJECT"
+    promote = _float(policy.get("promote_score"), 0.70)
+    keep = _float(policy.get("keep_testing_score"), 0.55)
+    if score >= promote and perf.get("performance_status") != "FAIL":
+        return "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+    if score >= keep or stable.get("rolling_consistency_delta") == "IMPROVED":
+        return "KEEP_FOR_MORE_TESTING"
+    if perf.get("performance_status") == "INSUFFICIENT_DATA":
+        return "DEFER"
+    return "REJECT"
+
+
+def _triage_reason(
+    decision: str,
+    flags: Sequence[str],
+    perf: Mapping[str, Any],
+    stable: Mapping[str, Any],
+) -> list[str]:
+    if flags:
+        return [*flags, "hard_reject_rule_applied"]
+    return [
+        f"decision={decision}",
+        f"performance_status={perf.get('performance_status')}",
+        f"drawdown_delta_vs_limited={perf.get('drawdown_delta_vs_limited')}",
+        f"rolling_consistency_delta={stable.get('rolling_consistency_delta')}",
+        "research_only_no_broker_no_production",
+    ]
+
+
+def _promotion_candidates(
+    scorecard: Sequence[Mapping[str, Any]],
+    variant_specs: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    specs = {str(row.get("variant_id")): row for row in variant_specs}
+    rows = []
+    for row in scorecard:
+        if row.get("triage_decision") != "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE":
+            continue
+        variant_id = _text(row.get("variant_id"))
+        spec = _mapping(specs.get(variant_id))
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "proposed_method_name": _proposed_method_name(variant_id),
+                "source_hypothesis_id": spec.get("hypothesis_id"),
+                "promotion_reason": (
+                    "Improves screening score without hard reject flags; formal "
+                    "implementation still requires research-only validation."
+                ),
+                "implementation_complexity": _text(spec.get("complexity"), "MEDIUM"),
+                "requires_formal_method": True,
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows[:2]
+
+
+def _proposed_method_name(variant_id: str) -> str:
+    cleaned = variant_id.replace("-", "_").strip("_")
+    if not cleaned:
+        return "unnamed_limited_adjustment_research_method"
+    return f"{cleaned}_limited_adjustment_research_method"
+
+
+def _triage_summary(
+    scorecard: Sequence[Mapping[str, Any]],
+    candidates: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    counts = {decision: 0 for decision in DEFAULT_TRIAGE_DECISIONS}
+    for row in scorecard:
+        decision = _text(row.get("triage_decision"))
+        counts[decision] = counts.get(decision, 0) + 1
+    top = _text(scorecard[0].get("variant_id")) if scorecard else "INSUFFICIENT_DATA"
+    if candidates:
+        action = "promote_top_variant"
+    elif counts["KEEP_FOR_MORE_TESTING"]:
+        action = "run_more_experiments"
+    elif counts["REJECT"] == len(scorecard):
+        action = "continue_diagnosis"
+    else:
+        action = "defer"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "variants_total": len(scorecard),
+        "promote_count": counts["PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"],
+        "keep_testing_count": counts["KEEP_FOR_MORE_TESTING"],
+        "reject_count": counts["REJECT"],
+        "defer_count": counts["DEFER"],
+        "top_variant": top,
+        "recommended_next_action": action,
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _top_variant_explanations(
+    triage: Mapping[str, Any],
+    variant_specs: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    specs = {str(row.get("variant_id")): row for row in variant_specs}
+    selected = [
+        row
+        for row in _records(triage.get("variant_scorecard"))
+        if row.get("triage_decision")
+        in {"PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE", "KEEP_FOR_MORE_TESTING"}
+    ][:5]
+    if not selected:
+        selected = _records(triage.get("variant_scorecard"))[:3]
+    rows = []
+    for row in selected:
+        variant_id = _text(row.get("variant_id"))
+        spec = _mapping(specs.get(variant_id))
+        transforms = _records(spec.get("transforms"))
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "triage_decision": row.get("triage_decision"),
+                "what_it_changes": [_describe_transform(transform) for transform in transforms],
+                "why_it_helped": _interpretation_benefits(row, spec),
+                "what_it_costs": _texts(spec.get("expected_cost")) or ["may reduce upside capture"],
+                "best_regimes": _best_regimes_for_variant(spec),
+                "weak_regimes": _weak_regimes_for_variant(spec),
+                "implementation_risk": _implementation_risk(spec),
+                "recommended_promotion": (
+                    row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+                ),
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _describe_transform(transform: Mapping[str, Any]) -> str:
+    transform_type = _text(transform.get("type"))
+    if transform_type == "regime_gate":
+        return f"{transform.get('regime')} regime uses {transform.get('action')}"
+    if transform_type == "weight_smoothing":
+        return f"smooths target weights over {transform.get('window_days')} days"
+    if transform_type == "rebalance_threshold":
+        return f"rebalances only above delta {transform.get('min_total_abs_delta')}"
+    if transform_type == "min_cash_weight":
+        return f"enforces min cash {transform.get('min_cash_weight')}"
+    return transform_type
+
+
+def _interpretation_benefits(row: Mapping[str, Any], spec: Mapping[str, Any]) -> list[str]:
+    components = _mapping(row.get("score_components"))
+    benefits = list(_texts(spec.get("expected_benefit")))
+    if _float(components.get("rolling_consistency_score")) >= 0.55:
+        benefits.append("improves rolling consistency")
+    if _float(components.get("turnover_score")) >= 0.55:
+        benefits.append("lowers turnover pressure")
+    if _float(components.get("drawdown_score")) >= 0.55:
+        benefits.append("improves drawdown behavior")
+    return benefits or ["screening score improved without hard reject flags"]
+
+
+def _best_regimes_for_variant(spec: Mapping[str, Any]) -> list[str]:
+    regimes = [
+        _text(transform.get("regime"))
+        for transform in _records(spec.get("transforms"))
+        if transform.get("regime")
+    ]
+    return regimes or ["ai_after_chatgpt"]
+
+
+def _weak_regimes_for_variant(spec: Mapping[str, Any]) -> list[str]:
+    costs = " ".join(_texts(spec.get("expected_cost"))).lower()
+    if "rebound" in costs or "recovery" in costs:
+        return ["strong_recovery"]
+    return ["requires_forward_confirmation"]
+
+
+def _implementation_risk(spec: Mapping[str, Any]) -> str:
+    count = len(_records(spec.get("transforms")))
+    if count <= 1:
+        return "LOW"
+    if count == 2:
+        return "MEDIUM"
+    return "HIGH"
+
+
+def _variant_failure_mode_coverage(
+    variant_specs: Sequence[Mapping[str, Any]],
+    explanations: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    explained = {str(row.get("variant_id")) for row in explanations}
+    rows = []
+    for mode in DEFAULT_FAILURE_MODES:
+        covered = [
+            _text(row.get("variant_id"))
+            for row in variant_specs
+            if mode in _texts(row.get("target_failure_modes"))
+        ]
+        promoted = [variant for variant in covered if variant in explained]
+        if promoted:
+            status = "GOOD"
+        elif covered:
+            status = "PARTIAL"
+        else:
+            status = "MISSING"
+        rows.append(
+            {
+                "failure_mode": mode,
+                "covered_by_variants": covered,
+                "coverage_status": status,
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": SCHEMA_VERSION, "failure_modes": rows, **EXPERIMENT_FACTORY_SAFETY}
+
+
+def _recommended_interpretation_variant(explanations: Sequence[Mapping[str, Any]]) -> str:
+    for row in explanations:
+        if row.get("recommended_promotion") is True:
+            return _text(row.get("variant_id"))
+    return _text(explanations[0].get("variant_id")) if explanations else "INSUFFICIENT_DATA"
+
+
+def _promoted_method_specs(
+    triage: Mapping[str, Any],
+    interpretation: Mapping[str, Any],
+) -> dict[str, Any]:
+    explanations = {
+        str(row.get("variant_id")): row
+        for row in _records(interpretation.get("top_variant_explanations"))
+    }
+    methods = []
+    for row in _records(triage.get("promotion_candidates")):
+        variant_id = _text(row.get("variant_id"))
+        explanation = _mapping(explanations.get(variant_id))
+        methods.append(
+            {
+                "proposed_method_name": row.get("proposed_method_name"),
+                "source_variant_id": variant_id,
+                "base_method": "limited_adjustment",
+                "implementation_scope": "research_only",
+                "expected_benefit": _texts(explanation.get("why_it_helped")),
+                "expected_cost": _texts(explanation.get("what_it_costs")),
+                "required_validation_after_implementation": [
+                    "paper shadow backfill",
+                    "rolling eval",
+                    "regime review",
+                    "stability diagnostics",
+                    "forward confirmation",
+                ],
+                "auto_apply": False,
+                "broker_action_allowed": False,
+                "production_effect": PRODUCTION_EFFECT,
+                **EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "methods": methods,
+        "next_action": (
+            "owner_review_then_formal_research_method_task"
+            if methods
+            else "run_more_experiments_before_promotion"
+        ),
+        **EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def render_hypothesis_backlog_report(
+    manifest: Mapping[str, Any],
+    taxonomy: Mapping[str, Any],
+    hypotheses: Sequence[Mapping[str, Any]],
+    priority: Mapping[str, Any],
+) -> str:
+    high_priority = ", ".join(_texts(priority.get("high_priority_hypotheses"))) or "none"
+    uncovered = ", ".join(_texts(priority.get("uncovered_failure_modes"))) or "none"
+    matrix_candidates = (
+        ", ".join(_texts(priority.get("recommended_for_experiment_matrix"))) or "none"
+    )
+    failure_mode_lines = [
+        f"- {row.get('id')}: {row.get('description')}"
+        for row in _records(taxonomy.get("failure_modes"))
+    ]
+    return "\n".join(
+        [
+            f"# Weight Optimization Hypothesis Backlog {manifest.get('backlog_id')}",
+            "",
+            "## 摘要",
+            f"- failure modes: {priority.get('failure_modes_total')}",
+            f"- hypotheses: {priority.get('hypotheses_total')}",
+            f"- HIGH priority: {high_priority}",
+            f"- uncovered failure modes: {uncovered}",
+            f"- matrix candidates: {matrix_candidates}",
+            "",
+            "## Failure Modes",
+            *failure_mode_lines,
+            "",
+            "## Safety",
+            "- experiment_only=true",
+            "- research_screening_only=true",
+            "- broker_action_allowed=false",
+            "- production_effect=none",
+            "",
+            f"artifact: {manifest.get('hypothesis_backlog_manifest_path')}",
+        ]
+    ) + "\n"
+
+
+def render_variant_transform_spec_report(
+    manifest: Mapping[str, Any],
+    catalog: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Variant Transform Spec {manifest.get('spec_id')}",
+            "",
+            "## Transform Catalog",
+            *[
+                f"- {row.get('type')}: required={','.join(_texts(row.get('required_fields')))}"
+                for row in _records(catalog.get("transform_types"))
+            ],
+            "",
+            "## Safety",
+            "- experiment_only=true",
+            "- research_screening_only=true",
+            "- not_formal_research_method=true",
+            "- broker_action_allowed=false",
+            "- production_effect=none",
+        ]
+    ) + "\n"
+
+
+def render_experiment_matrix_report(
+    manifest: Mapping[str, Any],
+    variants: Sequence[Mapping[str, Any]],
+    transform_specs: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    _ = transform_specs
+    by_transform_type = _mapping(summary.get("variants_by_transform_type"))
+    regime_gate = ", ".join(_texts(by_transform_type.get("regime_gate")))
+    smoothing = ", ".join(_texts(by_transform_type.get("weight_smoothing")))
+    cooldown = ", ".join(_texts(by_transform_type.get("regime_cooldown")))
+    ensemble = ", ".join(_texts(by_transform_type.get("consensus_aggregation")))
+    return "\n".join(
+        [
+            f"# Experiment Matrix {manifest.get('matrix_id')}",
+            "",
+            "## 摘要",
+            f"- variants: {len(variants)}",
+            f"- families: {', '.join(_texts(summary.get('families_covered')))}",
+            f"- failure modes: {', '.join(_texts(summary.get('failure_modes_covered')))}",
+            f"- regime-gating variants: {regime_gate}",
+            f"- smoothing variants: {smoothing}",
+            f"- cooldown variants: {cooldown}",
+            f"- ensemble variants: {ensemble}",
+            f"- formal method variants: {summary.get('formal_method_variant_count')}",
+            "",
+            "## Safety",
+            "- all variants are experiment_only=true",
+            "- not_formal_research_method=true",
+            "- broker_action_allowed=false",
+            "- production_effect=none",
+        ]
+    ) + "\n"
+
+
+def render_batch_experiment_report(
+    manifest: Mapping[str, Any],
+    performance: Sequence[Mapping[str, Any]],
+    regime: Sequence[Mapping[str, Any]],
+    stability: Sequence[Mapping[str, Any]],
+) -> str:
+    drawdown = _best_variant(performance, "drawdown_delta_vs_limited")
+    rolling = _best_label_variant(stability, "rolling_consistency_delta", "IMPROVED")
+    turnover = _best_variant(performance, "turnover_delta_vs_limited", high=False)
+    sacrificed = [
+        _text(row.get("variant_id"))
+        for row in performance
+        if _float(row.get("relative_to_limited_adjustment")) < -0.05
+    ]
+    sideways = [
+        _text(row.get("variant_id"))
+        for row in regime
+        if row.get("regime") == "sideways_choppy" and row.get("regime_status") == "IMPROVED"
+    ]
+    insufficient = ", ".join(_insufficient_variants(performance)) or "none"
+    return "\n".join(
+        [
+            f"# Batch Experiment {manifest.get('batch_id')}",
+            "",
+            "## 摘要",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- data_quality_status: {manifest.get('data_quality_status')}",
+            f"- variants completed: {manifest.get('variants_completed')}",
+            f"- data insufficient variants: {insufficient}",
+            f"- best drawdown variant: {drawdown}",
+            f"- best rolling consistency variant: {rolling}",
+            f"- best turnover variant: {turnover}",
+            f"- sideways_choppy improved: {', '.join(sideways) or 'none'}",
+            f"- material return sacrifice: {', '.join(sacrificed) or 'none'}",
+            "",
+            "## Safety",
+            "- experiment_only=true",
+            "- research_screening_only=true",
+            "- broker_action_allowed=false",
+            "- production_effect=none",
+        ]
+    ) + "\n"
+
+
+def render_experiment_triage_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    scorecard: Sequence[Mapping[str, Any]],
+) -> str:
+    promoted = [
+        _text(row.get("variant_id"))
+        for row in scorecard
+        if row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+    ]
+    rejected = [
+        _text(row.get("variant_id"))
+        for row in scorecard
+        if row.get("triage_decision") == "REJECT"
+    ]
+    keep = [
+        _text(row.get("variant_id"))
+        for row in scorecard
+        if row.get("triage_decision") == "KEEP_FOR_MORE_TESTING"
+    ]
+    return "\n".join(
+        [
+            f"# Experiment Triage {manifest.get('triage_id')}",
+            "",
+            "## 摘要",
+            f"- promote: {summary.get('promote_count')} ({', '.join(promoted) or 'none'})",
+            f"- keep_testing: {summary.get('keep_testing_count')} ({', '.join(keep) or 'none'})",
+            f"- reject: {summary.get('reject_count')} ({', '.join(rejected) or 'none'})",
+            f"- top_variant: {summary.get('top_variant')}",
+            f"- next_action: {summary.get('recommended_next_action')}",
+            "",
+            "## 解释",
+            "Scorecard 只用于 research screening。PROMOTE 表示可以另开 formal research "
+            "method implementation，不表示生产批准。",
+            "",
+            "## Safety",
+            "- research_screening_only=true",
+            "- not_official_target_weights=true",
+            "- broker_action_allowed=false",
+            "- production_effect=none",
+        ]
+    ) + "\n"
+
+
+def render_top_variant_interpretation_report(
+    manifest: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+    coverage: Mapping[str, Any],
+) -> str:
+    missing = [
+        _text(row.get("failure_mode"))
+        for row in _records(coverage.get("failure_modes"))
+        if row.get("coverage_status") == "MISSING"
+    ]
+    lines = [
+        f"# Top Variant Interpretation {manifest.get('interpretation_id')}",
+        "",
+        "## Top Variants",
+    ]
+    for row in explanations:
+        lines.extend(
+            [
+                f"- {row.get('variant_id')}: {row.get('triage_decision')}",
+                f"  changes: {', '.join(_texts(row.get('what_it_changes')))}",
+                f"  helped: {', '.join(_texts(row.get('why_it_helped')))}",
+                f"  costs: {', '.join(_texts(row.get('what_it_costs')))}",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            f"remaining missing failure modes: {', '.join(missing) or 'none'}",
+            f"recommended variant: {manifest.get('recommended_variant')}",
+            "",
+            "Safety: research-only / no broker / no production.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_top_variant_interpretation_reader_brief(
+    manifest: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+) -> str:
+    best = _mapping(explanations[0] if explanations else {})
+    return "\n".join(
+        [
+            "## Dynamic Rescue Weight Experiment Top Variant Interpretation",
+            "",
+            f"- best_variant: {manifest.get('recommended_variant')}",
+            f"- triage_decision: {best.get('triage_decision', 'MISSING')}",
+            f"- solved_failure_modes: {', '.join(_texts(best.get('why_it_helped')))}",
+            f"- expected_costs: {', '.join(_texts(best.get('what_it_costs')))}",
+            "- production_effect: none",
+            "- broker_action_allowed: false",
+        ]
+    ) + "\n"
+
+
+def render_formal_implementation_plan(
+    manifest: Mapping[str, Any],
+    method_specs: Mapping[str, Any],
+) -> str:
+    methods = _records(method_specs.get("methods"))
+    recommended = ", ".join(_text(row.get("proposed_method_name")) for row in methods) or "none"
+    selection_reason = (
+        "选择原因：来自 batch experiment triage 和 top variant interpretation；"
+        "仍需 owner review。"
+    )
+    required_validation = (
+        "实现后必须运行：paper shadow backfill、rolling eval、regime review、"
+        "stability diagnostics、forward confirmation。"
+    )
+    scope_note = (
+        "Scope: research_only。不能 production/broker，因为本阶段 evidence 是 "
+        "lightweight screening，尚未完成正式 method implementation、forward "
+        "confirmation 或 owner approval。"
+    )
+    return "\n".join(
+        [
+            "# Formal Research Method Promotion Plan",
+            "",
+            f"推荐正式实现 method：{recommended}",
+            "",
+            selection_reason,
+            "",
+            "需要新增 config / CLI / artifacts：",
+            "- formal research method source config",
+            "- method config validation/report",
+            "- research target generation",
+            "- paper shadow backfill",
+            "- comparison/review pack",
+            "",
+            required_validation,
+            "",
+            scope_note,
+            "",
+            f"source promotion_plan_id: {manifest.get('promotion_plan_id')}",
+        ]
+    ) + "\n"
+
+
+def render_method_promotion_owner_checklist(method_specs: Mapping[str, Any]) -> str:
+    methods = ", ".join(
+        _text(row.get("proposed_method_name")) for row in _records(method_specs.get("methods"))
+    )
+    return "\n".join(
+        [
+            "# Owner Review Checklist",
+            "",
+            f"- [ ] 是否接受从 batch experiment 中 promotion top variant？({methods or 'none'})",
+            "- [ ] 是否接受实现为 research-only method？",
+            "- [ ] 是否接受不写 official target weights？",
+            "- [ ] 是否接受实现后仍需 forward confirmation？",
+            "- [ ] 是否确认不触发 broker / production？",
+        ]
+    ) + "\n"
+
+
+def render_method_promotion_plan_report(
+    manifest: Mapping[str, Any],
+    method_specs: Mapping[str, Any],
+) -> str:
+    methods = _records(method_specs.get("methods"))
+    lines = [
+        f"# Method Promotion Plan {manifest.get('promotion_plan_id')}",
+        "",
+        f"- implementation_scope: {manifest.get('implementation_scope')}",
+        f"- next_action: {method_specs.get('next_action')}",
+    ]
+    for row in methods:
+        lines.extend(
+            [
+                f"- proposed_method_name: {row.get('proposed_method_name')}",
+                f"  source_variant_id: {row.get('source_variant_id')}",
+                f"  expected_benefit: {', '.join(_texts(row.get('expected_benefit')))}",
+                f"  expected_cost: {', '.join(_texts(row.get('expected_cost')))}",
+            ]
+        )
+    lines.extend(["", "Safety: no official target / no broker / no production."])
+    return "\n".join(lines) + "\n"
+
+
+def render_method_promotion_reader_brief(
+    manifest: Mapping[str, Any],
+    method_specs: Mapping[str, Any],
+) -> str:
+    methods = _records(method_specs.get("methods"))
+    first = _mapping(methods[0] if methods else {})
+    return "\n".join(
+        [
+            "## Dynamic Rescue Weight Experiment Promotion Plan",
+            "",
+            f"- promoted_variant: {first.get('source_variant_id', 'none')}",
+            f"- proposed_method_name: {first.get('proposed_method_name', 'none')}",
+            f"- expected_benefit: {', '.join(_texts(first.get('expected_benefit')))}",
+            f"- expected_cost: {', '.join(_texts(first.get('expected_cost')))}",
+            f"- implementation_scope: {manifest.get('implementation_scope')}",
+            f"- next_action: {method_specs.get('next_action')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+        ]
+    ) + "\n"
+
+
+def _best_variant(
+    rows: Sequence[Mapping[str, Any]],
+    field: str,
+    *,
+    high: bool = True,
+) -> str:
+    if not rows:
+        return "INSUFFICIENT_DATA"
+    selected = max(rows, key=lambda row: _float(row.get(field))) if high else min(
+        rows, key=lambda row: _float(row.get(field))
+    )
+    return _text(selected.get("variant_id"))
+
+
+def _best_label_variant(
+    rows: Sequence[Mapping[str, Any]],
+    field: str,
+    preferred: str,
+) -> str:
+    for row in rows:
+        if row.get(field) == preferred:
+            return _text(row.get("variant_id"))
+    return _text(rows[0].get("variant_id")) if rows else "INSUFFICIENT_DATA"
+
+
+def _insufficient_variants(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    return [
+        _text(row.get("variant_id"))
+        for row in rows
+        if row.get("performance_status") == "INSUFFICIENT_DATA"
+    ]
 
 
 def _safety_config_locked(safety: Mapping[str, Any]) -> bool:

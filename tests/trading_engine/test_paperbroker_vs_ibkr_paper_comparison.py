@@ -196,6 +196,18 @@ def test_account_id_and_broker_order_id_are_redacted_in_outputs(tmp_path: Path) 
     assert "broker_order_id：`101`" not in markdown_text
 
 
+def test_output_paths_are_not_broker_order_id_redacted(tmp_path: Path) -> None:
+    work_dir = tmp_path / "pytest-3101"
+    work_dir.mkdir()
+
+    payload, _client = _run_with_mock(work_dir)
+
+    assert "[REDACTED_BROKER_ORDER_ID" not in payload["output_paths"]["json"]
+    assert "[REDACTED_BROKER_ORDER_ID" not in payload["output_paths"]["markdown"]
+    assert Path(payload["output_paths"]["json"]).exists()
+    assert Path(payload["output_paths"]["markdown"]).exists()
+
+
 def test_intent_fixture_input_is_supported(tmp_path: Path) -> None:
     fixture_path = tmp_path / "order_intent.json"
     fixture_path.write_text(
