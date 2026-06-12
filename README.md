@@ -1082,6 +1082,22 @@ artifacts 写入
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `production_effect=none`，不得修改 target config、official target weights、paper/real
 portfolio、baseline/production state、policy 或触发 broker。
+TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
+在上述 selection review 之后新增原因归因和 research method hardening pack。CLI 链路为
+`selection-attribution run/report`、`limited-long-risk run/report`、
+`limited-consistency run/report`、`data-warning-impact run/report` 和
+`research-method-hardening run/report`；对应验证入口为
+`validate-selection-attribution`、`validate-limited-long-risk`、
+`validate-limited-consistency`、`validate-data-warning-impact` 和
+`validate-research-method-hardening`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/selection_attribution|limited_long_risk|limited_consistency|data_warning_impact|research_method_hardening/`，
+并登记 report registry / Reader Brief `Dynamic Rescue System Target Portfolio`
+hardening fields。该链路只解释 `limited_adjustment` 为什么被推荐、为什么仍为
+`REVIEW_REQUIRED`、长窗口风险/一致性/数据 warning 是否改变结论，以及 owner 下一步
+checklist；它不写 `model_target_portfolio_v1.yaml`、不写 `position_advisory_v1.yaml`、
+不写 official target weights、不修改 paper/real portfolio、baseline/production state 或
+policy、不生成 order ticket、不触发 broker。即使 hardening decision 未来通过，也只表示
+`hardened_primary_research_method` 观察口径，不是 production approval。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

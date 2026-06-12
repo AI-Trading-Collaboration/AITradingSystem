@@ -2190,6 +2190,19 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "selection_review_id",
                         etf_dynamic_v3_system_target.get("selection_review_id"),
                     ),
+                    ("hardening_id", etf_dynamic_v3_system_target.get("hardening_id")),
+                    (
+                        "hardening_decision",
+                        etf_dynamic_v3_system_target.get("hardening_decision"),
+                    ),
+                    (
+                        "hardening_confidence",
+                        etf_dynamic_v3_system_target.get("hardening_decision_confidence"),
+                    ),
+                    (
+                        "hardening_blockers",
+                        etf_dynamic_v3_system_target.get("hardening_blocking_issues"),
+                    ),
                     (
                         "secondary_research_methods",
                         etf_dynamic_v3_system_target.get("secondary_research_methods"),
@@ -2240,6 +2253,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "paper_shadow_performance_path",
                         etf_dynamic_v3_system_target.get("paper_shadow_performance_path"),
                     ),
+                    ("hardening_path", etf_dynamic_v3_system_target.get("hardening_path")),
                 ]
             ),
         ),
@@ -8005,6 +8019,13 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "system_target_selection_manifest.json",
     )
+    hardening_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_research_method_hardening",
+        ),
+        "research_method_hardening_manifest.json",
+    )
     review_manifest = _read_optional_json(review_path)
     if not review_manifest:
         return _missing_etf_dynamic_v3_system_target_summary()
@@ -8022,6 +8043,10 @@ def _etf_dynamic_v3_system_target_summary(
     )
     selection_scorecard = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(selection_path, "target_method_scorecard.json")
+    )
+    hardening_manifest = _read_optional_json(hardening_path)
+    hardening_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(hardening_path, "hardening_decision.json")
     )
     paper_state = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(paper_path, "paper_shadow_state.json")
@@ -8086,7 +8111,10 @@ def _etf_dynamic_v3_system_target_summary(
         selection_manifest,
         selection_decision,
         selection_scorecard,
+        hardening_manifest,
+        hardening_decision,
     )
+    hardening_decision_label = _text(hardening_decision.get("hardening_decision"), "MISSING")
     return {
         "availability": "AVAILABLE",
         "status": _text(review_manifest.get("status"), "UNKNOWN"),
@@ -8095,6 +8123,7 @@ def _etf_dynamic_v3_system_target_summary(
             f"target={target_id}; paper_shadow={paper_shadow_id}; "
             f"performance={performance_id}; recommended={recommended}; "
             f"decision={decision_status}; "
+            f"hardening={hardening_decision_label}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
             "broker_action_allowed="
             f"{str(review_manifest.get('broker_action_allowed') is True).lower()}; "
@@ -8120,6 +8149,16 @@ def _etf_dynamic_v3_system_target_summary(
             _texts(selection_decision.get("reference_only_methods"))
         ),
         "selection_review_path": "" if selection_path is None else str(selection_path),
+        "hardening_id": _text(hardening_manifest.get("hardening_id"), "MISSING"),
+        "hardening_decision": hardening_decision_label,
+        "hardening_decision_confidence": _text(
+            hardening_decision.get("decision_confidence"),
+            "MISSING",
+        ),
+        "hardening_blocking_issues": ",".join(
+            _texts(hardening_decision.get("blocking_issues"))
+        ),
+        "hardening_path": "" if hardening_path is None else str(hardening_path),
         "data_quality_status": _text(performance_summary.get("data_quality_status"), "MISSING"),
         "best_return_method": _text(performance_summary.get("best_return_method"), "MISSING"),
         "best_drawdown_method": _text(performance_summary.get("best_drawdown_method"), "MISSING"),
@@ -8184,6 +8223,11 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "secondary_research_methods": "",
         "reference_only_methods": "",
         "selection_review_path": "",
+        "hardening_id": "MISSING",
+        "hardening_decision": "MISSING",
+        "hardening_decision_confidence": "MISSING",
+        "hardening_blocking_issues": "",
+        "hardening_path": "",
         "data_quality_status": "MISSING",
         "best_return_method": "MISSING",
         "best_drawdown_method": "MISSING",

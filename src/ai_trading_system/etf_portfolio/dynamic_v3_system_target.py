@@ -69,6 +69,13 @@ DEFAULT_PAPER_SHADOW_STABILITY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_s
 DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "system_target_selection_review"
 )
+DEFAULT_SELECTION_ATTRIBUTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "selection_attribution"
+DEFAULT_LIMITED_LONG_RISK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_long_risk"
+DEFAULT_LIMITED_CONSISTENCY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_consistency"
+DEFAULT_DATA_WARNING_IMPACT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_warning_impact"
+DEFAULT_RESEARCH_METHOD_HARDENING_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_method_hardening"
+)
 
 AI_AFTER_CHATGPT_START = date(2022, 12, 1)
 
@@ -78,6 +85,20 @@ PRESSURE_RETURN_THRESHOLD = -0.02
 
 # Reporting sufficiency floor used only to label thin diagnostic windows.
 DEFAULT_MIN_EVAL_OBSERVATIONS = 20
+
+# Reporting-only data quality penalties used in attribution explanations. These
+# do not recompute or replace the original system target selection score.
+DATA_QUALITY_WARNING_ATTRIBUTION_PENALTY = 0.05
+DATA_QUALITY_FAIL_ATTRIBUTION_PENALTY = 0.25
+
+# Reporting confidence floors for long-window review labels. They only affect
+# confidence text, not recommendation or hardening decisions.
+LONG_WINDOW_HIGH_CONFIDENCE_OBSERVATIONS = 504
+LONG_WINDOW_MEDIUM_CONFIDENCE_OBSERVATIONS = 252
+
+# Exposure interpretation tolerance for reporting whether limited_adjustment
+# materially changes risk-asset weight relative to static baseline.
+EXPOSURE_SIMILARITY_TOLERANCE = 0.02
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -2029,6 +2050,777 @@ def validate_system_target_selection_review_artifact(
     )
 
 
+def run_selection_attribution(
+    *,
+    selection_review_id: str,
+    selection_review_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
+    output_dir: Path = DEFAULT_SELECTION_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    selection = system_target_selection_review_report_payload(
+        selection_review_id=selection_review_id,
+        output_dir=selection_review_dir,
+    )
+    scorecard = _mapping(selection.get("target_method_scorecard"))
+    decision = _mapping(selection.get("selection_decision"))
+    rows = _selection_attribution_rows(scorecard, decision, selection)
+    recommendation = _recommendation_reason_breakdown(rows, decision)
+    review_required = _review_required_reason_breakdown(selection, rows, decision)
+    attribution_id = _stable_id(
+        "selection-attribution",
+        selection_review_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / attribution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_selection_attribution_manifest",
+        "attribution_id": root.name,
+        "selection_review_id": selection_review_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if rows else "FAIL",
+        "market_regime": selection.get("market_regime", "ai_after_chatgpt"),
+        "date_start": selection.get("date_start"),
+        "date_end": selection.get("date_end"),
+        "data_quality_status": selection.get("data_quality_status"),
+        "selection_attribution_manifest_path": str(
+            root / "selection_attribution_manifest.json"
+        ),
+        "method_score_attribution_path": str(root / "method_score_attribution.jsonl"),
+        "recommendation_reason_breakdown_path": str(
+            root / "recommendation_reason_breakdown.json"
+        ),
+        "review_required_reason_breakdown_path": str(
+            root / "review_required_reason_breakdown.json"
+        ),
+        "selection_attribution_report_path": str(root / "selection_attribution_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "selection_attribution_manifest.json", manifest)
+    _write_jsonl(root / "method_score_attribution.jsonl", rows)
+    _write_json(root / "recommendation_reason_breakdown.json", recommendation)
+    _write_json(root / "review_required_reason_breakdown.json", review_required)
+    _write_text(
+        root / "selection_attribution_report.md",
+        render_selection_attribution_report(manifest, rows, recommendation, review_required),
+    )
+    _write_latest_pointer(
+        "latest_selection_attribution", root.name, root / "selection_attribution_manifest.json"
+    )
+    return {
+        "attribution_id": root.name,
+        "attribution_dir": root,
+        "manifest": manifest,
+        "method_score_attribution": rows,
+        "recommendation_reason_breakdown": recommendation,
+        "review_required_reason_breakdown": review_required,
+    }
+
+
+def selection_attribution_report_payload(
+    *,
+    attribution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SELECTION_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=attribution_id,
+        latest_pointer="latest_selection_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="selection_attribution_manifest.json",
+    )
+    return {
+        **_read_json(root / "selection_attribution_manifest.json"),
+        "method_score_attribution": _read_jsonl(root / "method_score_attribution.jsonl"),
+        "recommendation_reason_breakdown": _read_json(
+            root / "recommendation_reason_breakdown.json"
+        ),
+        "review_required_reason_breakdown": _read_json(
+            root / "review_required_reason_breakdown.json"
+        ),
+        "attribution_dir": str(root),
+    }
+
+
+def validate_selection_attribution_artifact(
+    *,
+    attribution_id: str,
+    output_dir: Path = DEFAULT_SELECTION_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / attribution_id
+    manifest = _read_optional_json(root / "selection_attribution_manifest.json") or {}
+    rows = _read_jsonl(root / "method_score_attribution.jsonl")
+    recommendation = _read_optional_json(root / "recommendation_reason_breakdown.json") or {}
+    review_required = _read_optional_json(root / "review_required_reason_breakdown.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "selection_attribution_manifest.json",
+            "method_score_attribution.jsonl",
+            "recommendation_reason_breakdown.json",
+            "review_required_reason_breakdown.json",
+            "selection_attribution_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("attribution_id_matches", manifest.get("attribution_id") == attribution_id, ""),
+            _check("method_rows_present", bool(rows), ""),
+            _check(
+                "recommended_method_visible",
+                bool(recommendation.get("recommended_research_method")),
+                "",
+            ),
+            _check(
+                "review_required_reasons_visible",
+                bool(_records(review_required.get("review_required_reasons"))),
+                "",
+            ),
+            _check(
+                "can_trigger_production_false",
+                review_required.get("can_trigger_production") is False,
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, recommendation, review_required, *rows),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_selection_attribution_validation", attribution_id, checks
+    )
+
+
+def run_limited_long_risk_review(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_LIMITED_LONG_RISK_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    states = _records(backfill.get("backfill_method_states"))
+    long_window = _limited_long_window_risk_return(backfill, states)
+    baseline_breakdown = _limited_vs_baseline_breakdown(states)
+    exposure = _limited_exposure_path_analysis(states)
+    risk_review_id = _stable_id("limited-long-risk", backfill_id, generated.isoformat())
+    root = _unique_dir(output_dir / risk_review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_limited_long_risk_manifest",
+        "risk_review_id": root.name,
+        "backfill_id": backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if long_window.get("metrics") else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "limited_long_risk_manifest_path": str(root / "limited_long_risk_manifest.json"),
+        "long_window_risk_return_path": str(root / "long_window_risk_return.json"),
+        "limited_vs_baseline_breakdown_path": str(root / "limited_vs_baseline_breakdown.json"),
+        "exposure_path_analysis_path": str(root / "exposure_path_analysis.json"),
+        "limited_long_risk_report_path": str(root / "limited_long_risk_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "limited_long_risk_manifest.json", manifest)
+    _write_json(root / "long_window_risk_return.json", long_window)
+    _write_json(root / "limited_vs_baseline_breakdown.json", baseline_breakdown)
+    _write_json(root / "exposure_path_analysis.json", exposure)
+    _write_text(
+        root / "limited_long_risk_report.md",
+        render_limited_long_risk_report(manifest, long_window, baseline_breakdown, exposure),
+    )
+    _write_latest_pointer(
+        "latest_limited_long_risk", root.name, root / "limited_long_risk_manifest.json"
+    )
+    return {
+        "risk_review_id": root.name,
+        "risk_review_dir": root,
+        "manifest": manifest,
+        "long_window_risk_return": long_window,
+        "limited_vs_baseline_breakdown": baseline_breakdown,
+        "exposure_path_analysis": exposure,
+    }
+
+
+def limited_long_risk_report_payload(
+    *,
+    risk_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_LIMITED_LONG_RISK_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=risk_review_id,
+        latest_pointer="latest_limited_long_risk",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="limited_long_risk_manifest.json",
+    )
+    return {
+        **_read_json(root / "limited_long_risk_manifest.json"),
+        "long_window_risk_return": _read_json(root / "long_window_risk_return.json"),
+        "limited_vs_baseline_breakdown": _read_json(root / "limited_vs_baseline_breakdown.json"),
+        "exposure_path_analysis": _read_json(root / "exposure_path_analysis.json"),
+        "risk_review_dir": str(root),
+    }
+
+
+def validate_limited_long_risk_artifact(
+    *,
+    risk_review_id: str,
+    output_dir: Path = DEFAULT_LIMITED_LONG_RISK_DIR,
+) -> dict[str, Any]:
+    root = output_dir / risk_review_id
+    manifest = _read_optional_json(root / "limited_long_risk_manifest.json") or {}
+    long_window = _read_optional_json(root / "long_window_risk_return.json") or {}
+    baseline = _read_optional_json(root / "limited_vs_baseline_breakdown.json") or {}
+    exposure = _read_optional_json(root / "exposure_path_analysis.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "limited_long_risk_manifest.json",
+            "long_window_risk_return.json",
+            "limited_vs_baseline_breakdown.json",
+            "exposure_path_analysis.json",
+            "limited_long_risk_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("risk_review_id_matches", manifest.get("risk_review_id") == risk_review_id, ""),
+            _check(
+                "target_method_limited",
+                long_window.get("target_method") == "limited_adjustment",
+                "",
+            ),
+            _check(
+                "risk_return_status_valid",
+                long_window.get("risk_return_status")
+                in {
+                    "RETURN_IMPROVES_RISK_IMPROVES",
+                    "RETURN_IMPROVES_RISK_WORSENS",
+                    "RETURN_WORSE_RISK_IMPROVES",
+                    "RETURN_WORSE_RISK_WORSE",
+                    "INSUFFICIENT_DATA",
+                },
+                _text(long_window.get("risk_return_status")),
+            ),
+            _check("baseline_comparisons_present", bool(_records(baseline.get("comparisons"))), ""),
+            _check(
+                "exposure_summary_present",
+                exposure.get("target_method") == "limited_adjustment",
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, long_window, baseline, exposure),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_limited_long_risk_validation", risk_review_id, checks
+    )
+
+
+def run_limited_consistency_check(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    rolling_eval_dir: Path = DEFAULT_PAPER_SHADOW_ROLLING_EVAL_DIR,
+    regime_review_dir: Path = DEFAULT_PAPER_SHADOW_REGIME_REVIEW_DIR,
+    stability_dir: Path = DEFAULT_PAPER_SHADOW_STABILITY_DIR,
+    output_dir: Path = DEFAULT_LIMITED_CONSISTENCY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    rolling = _latest_or_run_rolling_for_backfill(
+        backfill_id,
+        backfill_dir=backfill_dir,
+        rolling_eval_dir=rolling_eval_dir,
+    )
+    regime = _latest_or_run_regime_for_backfill(
+        backfill_id,
+        backfill_dir=backfill_dir,
+        regime_review_dir=regime_review_dir,
+    )
+    stability = _latest_or_run_stability_for_backfill(
+        backfill_id,
+        backfill_dir=backfill_dir,
+        stability_dir=stability_dir,
+    )
+    rolling_summary = _limited_rolling_consistency_summary(rolling)
+    regime_summary = _limited_regime_consistency_summary(regime)
+    stability_summary = _limited_stability_consistency_summary(stability)
+    consistency_id = _stable_id("limited-consistency", backfill_id, generated.isoformat())
+    root = _unique_dir(output_dir / consistency_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_limited_consistency_manifest",
+        "consistency_id": root.name,
+        "backfill_id": backfill_id,
+        "rolling_eval_id": rolling.get("rolling_eval_id"),
+        "regime_review_id": regime.get("regime_review_id"),
+        "stability_id": stability.get("stability_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "limited_consistency_manifest_path": str(root / "limited_consistency_manifest.json"),
+        "rolling_consistency_summary_path": str(root / "rolling_consistency_summary.json"),
+        "regime_consistency_summary_path": str(root / "regime_consistency_summary.json"),
+        "stability_consistency_summary_path": str(root / "stability_consistency_summary.json"),
+        "limited_consistency_report_path": str(root / "limited_consistency_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "limited_consistency_manifest.json", manifest)
+    _write_json(root / "rolling_consistency_summary.json", rolling_summary)
+    _write_json(root / "regime_consistency_summary.json", regime_summary)
+    _write_json(root / "stability_consistency_summary.json", stability_summary)
+    _write_text(
+        root / "limited_consistency_report.md",
+        render_limited_consistency_report(
+            manifest,
+            rolling_summary,
+            regime_summary,
+            stability_summary,
+        ),
+    )
+    _write_latest_pointer(
+        "latest_limited_consistency", root.name, root / "limited_consistency_manifest.json"
+    )
+    return {
+        "consistency_id": root.name,
+        "consistency_dir": root,
+        "manifest": manifest,
+        "rolling_consistency_summary": rolling_summary,
+        "regime_consistency_summary": regime_summary,
+        "stability_consistency_summary": stability_summary,
+    }
+
+
+def limited_consistency_report_payload(
+    *,
+    consistency_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_LIMITED_CONSISTENCY_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=consistency_id,
+        latest_pointer="latest_limited_consistency",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="limited_consistency_manifest.json",
+    )
+    return {
+        **_read_json(root / "limited_consistency_manifest.json"),
+        "rolling_consistency_summary": _read_json(root / "rolling_consistency_summary.json"),
+        "regime_consistency_summary": _read_json(root / "regime_consistency_summary.json"),
+        "stability_consistency_summary": _read_json(root / "stability_consistency_summary.json"),
+        "consistency_dir": str(root),
+    }
+
+
+def validate_limited_consistency_artifact(
+    *,
+    consistency_id: str,
+    output_dir: Path = DEFAULT_LIMITED_CONSISTENCY_DIR,
+) -> dict[str, Any]:
+    root = output_dir / consistency_id
+    manifest = _read_optional_json(root / "limited_consistency_manifest.json") or {}
+    rolling = _read_optional_json(root / "rolling_consistency_summary.json") or {}
+    regime = _read_optional_json(root / "regime_consistency_summary.json") or {}
+    stability = _read_optional_json(root / "stability_consistency_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "limited_consistency_manifest.json",
+            "rolling_consistency_summary.json",
+            "regime_consistency_summary.json",
+            "stability_consistency_summary.json",
+            "limited_consistency_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("consistency_id_matches", manifest.get("consistency_id") == consistency_id, ""),
+            _check(
+                "rolling_status_valid",
+                rolling.get("rolling_consistency_status")
+                in {"STABLE", "MIXED", "UNSTABLE", "INSUFFICIENT_DATA"},
+                _text(rolling.get("rolling_consistency_status")),
+            ),
+            _check(
+                "regime_status_valid",
+                regime.get("regime_consistency_status")
+                in {
+                    "BROADLY_CONSISTENT",
+                    "REGIME_DEPENDENT",
+                    "WEAK_IN_PRESSURE",
+                    "INSUFFICIENT_DATA",
+                },
+                _text(regime.get("regime_consistency_status")),
+            ),
+            _check(
+                "stability_status_valid",
+                stability.get("stability_status")
+                in {"STABLE", "MODERATE", "UNSTABLE", "INSUFFICIENT_DATA"},
+                _text(stability.get("stability_status")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, rolling, regime, stability), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_limited_consistency_validation", consistency_id, checks
+    )
+
+
+def run_data_warning_impact_review(
+    *,
+    backfill_id: str,
+    selection_review_id: str,
+    backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    selection_review_dir: Path = DEFAULT_SYSTEM_TARGET_SELECTION_REVIEW_DIR,
+    output_dir: Path = DEFAULT_DATA_WARNING_IMPACT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = paper_shadow_backfill_report_payload(
+        backfill_id=backfill_id,
+        output_dir=backfill_dir,
+    )
+    selection = system_target_selection_review_report_payload(
+        selection_review_id=selection_review_id,
+        output_dir=selection_review_dir,
+    )
+    inventory = _data_warning_inventory(backfill)
+    affected_metrics = _affected_metrics_from_warnings(inventory)
+    sensitivity = _recommendation_sensitivity_to_warnings(selection, inventory, affected_metrics)
+    impact_id = _stable_id(
+        "data-warning-impact",
+        backfill_id,
+        selection_review_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / impact_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_warning_impact_manifest",
+        "impact_id": root.name,
+        "backfill_id": backfill_id,
+        "selection_review_id": selection_review_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "data_warning_impact_manifest_path": str(root / "data_warning_impact_manifest.json"),
+        "data_warning_inventory_path": str(root / "data_warning_inventory.json"),
+        "affected_metrics_path": str(root / "affected_metrics.json"),
+        "recommendation_sensitivity_to_warnings_path": str(
+            root / "recommendation_sensitivity_to_warnings.json"
+        ),
+        "data_warning_impact_report_path": str(root / "data_warning_impact_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "data_warning_impact_manifest.json", manifest)
+    _write_json(root / "data_warning_inventory.json", inventory)
+    _write_json(root / "affected_metrics.json", affected_metrics)
+    _write_json(root / "recommendation_sensitivity_to_warnings.json", sensitivity)
+    _write_text(
+        root / "data_warning_impact_report.md",
+        render_data_warning_impact_report(manifest, inventory, affected_metrics, sensitivity),
+    )
+    _write_latest_pointer(
+        "latest_data_warning_impact", root.name, root / "data_warning_impact_manifest.json"
+    )
+    return {
+        "impact_id": root.name,
+        "impact_dir": root,
+        "manifest": manifest,
+        "data_warning_inventory": inventory,
+        "affected_metrics": affected_metrics,
+        "recommendation_sensitivity_to_warnings": sensitivity,
+    }
+
+
+def data_warning_impact_report_payload(
+    *,
+    impact_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_DATA_WARNING_IMPACT_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=impact_id,
+        latest_pointer="latest_data_warning_impact",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="data_warning_impact_manifest.json",
+    )
+    return {
+        **_read_json(root / "data_warning_impact_manifest.json"),
+        "data_warning_inventory": _read_json(root / "data_warning_inventory.json"),
+        "affected_metrics": _read_json(root / "affected_metrics.json"),
+        "recommendation_sensitivity_to_warnings": _read_json(
+            root / "recommendation_sensitivity_to_warnings.json"
+        ),
+        "impact_dir": str(root),
+    }
+
+
+def validate_data_warning_impact_artifact(
+    *,
+    impact_id: str,
+    output_dir: Path = DEFAULT_DATA_WARNING_IMPACT_DIR,
+) -> dict[str, Any]:
+    root = output_dir / impact_id
+    manifest = _read_optional_json(root / "data_warning_impact_manifest.json") or {}
+    inventory = _read_optional_json(root / "data_warning_inventory.json") or {}
+    affected = _read_optional_json(root / "affected_metrics.json") or {}
+    sensitivity = _read_optional_json(root / "recommendation_sensitivity_to_warnings.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "data_warning_impact_manifest.json",
+            "data_warning_inventory.json",
+            "affected_metrics.json",
+            "recommendation_sensitivity_to_warnings.json",
+            "data_warning_impact_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("impact_id_matches", manifest.get("impact_id") == impact_id, ""),
+            _check(
+                "data_quality_visible",
+                inventory.get("data_quality") in {"PASS", "PASS_WITH_WARNINGS", "FAIL"},
+                _text(inventory.get("data_quality")),
+            ),
+            _check("affected_metrics_present", bool(_records(affected.get("metrics"))), ""),
+            _check(
+                "recommendation_stability_valid",
+                sensitivity.get("recommendation_stability")
+                in {"STABLE", "REVIEW_REQUIRED", "UNSTABLE", "UNKNOWN"},
+                _text(sensitivity.get("recommendation_stability")),
+            ),
+            _check(
+                "data_quality_decision_valid",
+                sensitivity.get("data_quality_decision")
+                in {"ACCEPT_FOR_RESEARCH", "REVIEW_REQUIRED", "BLOCKED"},
+                _text(sensitivity.get("data_quality_decision")),
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, inventory, affected, sensitivity),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_data_warning_impact_validation", impact_id, checks
+    )
+
+
+def run_research_method_hardening_pack(
+    *,
+    selection_attribution_id: str,
+    risk_review_id: str,
+    consistency_id: str,
+    data_warning_impact_id: str,
+    selection_attribution_dir: Path = DEFAULT_SELECTION_ATTRIBUTION_DIR,
+    risk_review_dir: Path = DEFAULT_LIMITED_LONG_RISK_DIR,
+    consistency_dir: Path = DEFAULT_LIMITED_CONSISTENCY_DIR,
+    data_warning_impact_dir: Path = DEFAULT_DATA_WARNING_IMPACT_DIR,
+    output_dir: Path = DEFAULT_RESEARCH_METHOD_HARDENING_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    attribution = selection_attribution_report_payload(
+        attribution_id=selection_attribution_id,
+        output_dir=selection_attribution_dir,
+    )
+    risk = limited_long_risk_report_payload(
+        risk_review_id=risk_review_id,
+        output_dir=risk_review_dir,
+    )
+    consistency = limited_consistency_report_payload(
+        consistency_id=consistency_id,
+        output_dir=consistency_dir,
+    )
+    data_warning = data_warning_impact_report_payload(
+        impact_id=data_warning_impact_id,
+        output_dir=data_warning_impact_dir,
+    )
+    decision = _research_method_hardening_decision(attribution, risk, consistency, data_warning)
+    hardening_id = _stable_id(
+        "research-method-hardening",
+        selection_attribution_id,
+        risk_review_id,
+        consistency_id,
+        data_warning_impact_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / hardening_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["hardening_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_method_hardening_manifest",
+        "hardening_id": root.name,
+        "selection_attribution_id": selection_attribution_id,
+        "risk_review_id": risk_review_id,
+        "consistency_id": consistency_id,
+        "data_warning_impact_id": data_warning_impact_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "candidate_method": decision.get("candidate_method"),
+        "hardening_decision": decision.get("hardening_decision"),
+        "decision_confidence": decision.get("decision_confidence"),
+        "research_method_hardening_manifest_path": str(
+            root / "research_method_hardening_manifest.json"
+        ),
+        "hardening_decision_path": str(root / "hardening_decision.json"),
+        "owner_research_method_checklist_path": str(
+            root / "owner_research_method_checklist.md"
+        ),
+        "research_method_hardening_report_path": str(
+            root / "research_method_hardening_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "research_method_hardening_manifest.json", manifest)
+    _write_json(root / "hardening_decision.json", decision)
+    _write_text(
+        root / "owner_research_method_checklist.md",
+        render_hardening_owner_checklist(decision),
+    )
+    _write_text(
+        root / "research_method_hardening_report.md",
+        render_research_method_hardening_report(
+            manifest,
+            decision,
+            attribution,
+            risk,
+            consistency,
+            data_warning,
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", render_hardening_reader_brief(decision))
+    _write_latest_pointer(
+        "latest_research_method_hardening",
+        root.name,
+        root / "research_method_hardening_manifest.json",
+    )
+    return {
+        "hardening_id": root.name,
+        "hardening_dir": root,
+        "manifest": manifest,
+        "hardening_decision": decision,
+    }
+
+
+def research_method_hardening_report_payload(
+    *,
+    hardening_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_RESEARCH_METHOD_HARDENING_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=hardening_id,
+        latest_pointer="latest_research_method_hardening",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="research_method_hardening_manifest.json",
+    )
+    return {
+        **_read_json(root / "research_method_hardening_manifest.json"),
+        "hardening_decision_payload": _read_json(root / "hardening_decision.json"),
+        "hardening_dir": str(root),
+    }
+
+
+def validate_research_method_hardening_artifact(
+    *,
+    hardening_id: str,
+    output_dir: Path = DEFAULT_RESEARCH_METHOD_HARDENING_DIR,
+) -> dict[str, Any]:
+    root = output_dir / hardening_id
+    manifest = _read_optional_json(root / "research_method_hardening_manifest.json") or {}
+    decision = _read_optional_json(root / "hardening_decision.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "research_method_hardening_manifest.json",
+            "hardening_decision.json",
+            "owner_research_method_checklist.md",
+            "research_method_hardening_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "hardening_id_matches",
+                manifest.get("hardening_id") == hardening_id
+                and decision.get("hardening_id") == hardening_id,
+                "",
+            ),
+            _check(
+                "candidate_method_limited",
+                decision.get("candidate_method") == "limited_adjustment",
+                _text(decision.get("candidate_method")),
+            ),
+            _check(
+                "hardening_decision_valid",
+                decision.get("hardening_decision")
+                in {
+                    "HARDEN_AS_PRIMARY_RESEARCH",
+                    "CONTINUE_OBSERVATION",
+                    "REVIEW_REQUIRED",
+                    "REJECT",
+                },
+                _text(decision.get("hardening_decision")),
+            ),
+            _check(
+                "not_official_target_weights",
+                decision.get("not_official_target_weights") is True,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                decision.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", decision.get("production_effect") == "none", ""),
+            _check("broker_forbidden", _payload_safe(manifest, decision), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_research_method_hardening_validation", hardening_id, checks
+    )
+
+
 def render_paper_shadow_backfill_report(
     manifest: Mapping[str, Any],
     calendar: Mapping[str, Any],
@@ -2221,6 +3013,306 @@ def render_selection_reader_brief(decision: Mapping[str, Any]) -> str:
             f"- decision_status: {decision.get('decision_status')}",
             "- research_target_only: true",
             f"- next_action: {decision.get('next_action')}",
+            "",
+        ]
+    )
+
+
+def render_selection_attribution_report(
+    manifest: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+    recommendation: Mapping[str, Any],
+    review_required: Mapping[str, Any],
+) -> str:
+    recommended = _text(recommendation.get("recommended_research_method"))
+    recommended_row = _find_method(rows, recommended)
+    top_reasons = [
+        _text(item.get("reason"))
+        for item in _records(recommendation.get("primary_reasons"))
+        if item.get("reason")
+    ]
+    blockers = [
+        _text(item.get("reason"))
+        for item in _records(review_required.get("review_required_reasons"))
+        if item.get("blocking") is True
+    ]
+    return "\n".join(
+        [
+            f"# Selection Attribution {manifest.get('attribution_id')}",
+            "",
+            f"- selection_review_id: {manifest.get('selection_review_id')}",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- data_quality_status: {manifest.get('data_quality_status')}",
+            f"- recommended_research_method: {recommended}",
+            f"- recommended_overall_score: {recommended_row.get('overall_score', 'MISSING')}",
+            f"- top_reasons: {', '.join(top_reasons)}",
+            f"- decision_status: {review_required.get('decision_status')}",
+            f"- blocking_reasons: {', '.join(blockers) if blockers else 'none'}",
+            f"- can_harden_research_method: {review_required.get('can_harden_research_method')}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "该 attribution 只解释既有 selection review，不重新选择 target method，"
+            "也不允许 official target weights 或 broker action。",
+            "",
+            "## Method Components",
+            "",
+            *[
+                "- "
+                f"{row.get('rank')}. {row.get('target_method')}: "
+                f"overall={row.get('overall_score')}, "
+                f"return={_mapping(row.get('score_components')).get('return_score')}, "
+                f"drawdown={_mapping(row.get('score_components')).get('drawdown_score')}, "
+                "risk_adjusted="
+                f"{_mapping(row.get('score_components')).get('risk_adjusted_score')}, "
+                f"regime={_mapping(row.get('score_components')).get('regime_score')}, "
+                f"stability={_mapping(row.get('score_components')).get('stability_score')}, "
+                "turnover_penalty="
+                f"{_mapping(row.get('score_components')).get('turnover_penalty')}, "
+                f"data_quality_penalty="
+                f"{_mapping(row.get('score_components')).get('data_quality_penalty')}"
+                for row in rows
+            ],
+            "",
+        ]
+    )
+
+
+def render_limited_long_risk_report(
+    manifest: Mapping[str, Any],
+    long_window: Mapping[str, Any],
+    baseline_breakdown: Mapping[str, Any],
+    exposure: Mapping[str, Any],
+) -> str:
+    metrics = _mapping(long_window.get("metrics"))
+    comparisons = _records(baseline_breakdown.get("comparisons"))
+    return "\n".join(
+        [
+            f"# Limited Adjustment Long-window Risk Review {manifest.get('risk_review_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- market_regime: {manifest.get('market_regime')}",
+            f"- date_range: {long_window.get('date_start')} to {long_window.get('date_end')}",
+            f"- total_return: {metrics.get('total_return')}",
+            f"- annualized_return: {metrics.get('annualized_return')}",
+            f"- max_drawdown: {metrics.get('max_drawdown')}",
+            f"- realized_volatility: {metrics.get('realized_volatility')}",
+            f"- turnover: {metrics.get('turnover')}",
+            f"- risk_return_status: {long_window.get('risk_return_status')}",
+            f"- confidence: {long_window.get('confidence')}",
+            f"- risk_exposure_interpretation: "
+            f"{exposure.get('risk_exposure_interpretation')}",
+            f"- avg_risk_asset_weight: {exposure.get('avg_risk_asset_weight')}",
+            f"- avg_semiconductor_weight: {exposure.get('avg_semiconductor_weight')}",
+            f"- avg_cash_weight: {exposure.get('avg_cash_weight')}",
+            "- official_target_weights_allowed: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Baseline Comparisons",
+            "",
+            *[
+                "- "
+                f"{row.get('baseline')}: return_delta={row.get('return_delta')}, "
+                f"drawdown_delta={row.get('drawdown_delta')}, "
+                f"volatility_delta={row.get('volatility_delta')}, "
+                f"turnover_delta={row.get('turnover_delta')}, "
+                f"conclusion={row.get('conclusion')}"
+                for row in comparisons
+            ],
+            "",
+            "收益改善如存在，仍需同时阅读回撤、波动、换手和 exposure path；"
+            "该报告不能升级 official target weights。",
+            "",
+        ]
+    )
+
+
+def render_limited_consistency_report(
+    manifest: Mapping[str, Any],
+    rolling: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    stability: Mapping[str, Any],
+) -> str:
+    pressure_failures = [
+        _text(row.get("regime"))
+        for row in _records(regime.get("regimes"))
+        if row.get("status") == "FAIL"
+        and row.get("regime") in {"tech_drawdown", "semiconductor_pullback", "risk_off"}
+    ]
+    pressure_summary = ", ".join(pressure_failures) if pressure_failures else "none"
+    return "\n".join(
+        [
+            f"# Limited Adjustment Consistency Check {manifest.get('consistency_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- rolling_eval_id: {manifest.get('rolling_eval_id')}",
+            f"- regime_review_id: {manifest.get('regime_review_id')}",
+            f"- stability_id: {manifest.get('stability_id')}",
+            f"- rolling_consistency_status: {rolling.get('rolling_consistency_status')}",
+            f"- top_3_frequency_by_return: {rolling.get('top_3_frequency_by_return')}",
+            f"- top_3_frequency_by_risk_adjusted: "
+            f"{rolling.get('top_3_frequency_by_risk_adjusted')}",
+            f"- bottom_3_frequency: {rolling.get('bottom_3_frequency')}",
+            f"- regime_consistency_status: {regime.get('regime_consistency_status')}",
+            f"- pressure_regime_failures: {pressure_summary}",
+            f"- stability_status: {stability.get('stability_status')}",
+            f"- turnover_status: {stability.get('turnover_status')}",
+            f"- large_jump_count: {stability.get('large_jump_count')}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "Consistency evidence 只用于 research hardening，不产生 policy auto-apply、"
+            "official target weights 或 broker action。",
+            "",
+        ]
+    )
+
+
+def render_data_warning_impact_report(
+    manifest: Mapping[str, Any],
+    inventory: Mapping[str, Any],
+    affected_metrics: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+) -> str:
+    warnings = _records(inventory.get("warnings"))
+    metrics = _records(affected_metrics.get("metrics"))
+    return "\n".join(
+        [
+            f"# Data Warning Impact Review {manifest.get('impact_id')}",
+            "",
+            f"- backfill_id: {manifest.get('backfill_id')}",
+            f"- selection_review_id: {manifest.get('selection_review_id')}",
+            f"- data_quality: {inventory.get('data_quality')}",
+            f"- warning_ids: {', '.join(_texts([row.get('warning_id') for row in warnings]))}",
+            f"- recommendation_stability: {sensitivity.get('recommendation_stability')}",
+            f"- data_quality_decision: {sensitivity.get('data_quality_decision')}",
+            f"- would_change_if_warnings_excluded: "
+            f"{sensitivity.get('would_change_if_warnings_excluded')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Affected Metrics",
+            "",
+            *[
+                "- "
+                f"{row.get('metric')}: affected={row.get('affected')}, "
+                f"impact_level={row.get('impact_level')}, reason={row.get('reason')}"
+                for row in metrics
+            ],
+            "",
+            "如果 warning 明细缺失，本报告保持 UNKNOWN / REVIEW_REQUIRED，"
+            "不把 warning 静默解释为无影响。",
+            "",
+        ]
+    )
+
+
+def render_hardening_owner_checklist(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Owner Research Method Checklist {decision.get('hardening_id')}",
+            "",
+            "- 是否接受 limited_adjustment 作为 primary research method？",
+            "- 是否接受它仍需 forward confirmation？",
+            "- 是否接受它不是 official target weights？",
+            "- 是否接受它不触发 broker / production？",
+            "- 是否继续将 consensus_target 作为 reference-only？",
+            "- 是否继续将 defensive_limited_adjustment 作为 secondary / research-only？",
+            "- 是否需要重新跑 backfill 或修复 data warnings？",
+            "",
+            f"- candidate_method: {decision.get('candidate_method')}",
+            f"- hardening_decision: {decision.get('hardening_decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- blocking_issues: {', '.join(_texts(decision.get('blocking_issues')))}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_research_method_hardening_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    attribution: Mapping[str, Any],
+    risk: Mapping[str, Any],
+    consistency: Mapping[str, Any],
+    data_warning: Mapping[str, Any],
+) -> str:
+    risk_return = _mapping(risk.get("long_window_risk_return"))
+    risk_metrics = _mapping(risk_return.get("metrics"))
+    rolling = _mapping(consistency.get("rolling_consistency_summary"))
+    regime = _mapping(consistency.get("regime_consistency_summary"))
+    stability = _mapping(consistency.get("stability_consistency_summary"))
+    warning_sensitivity = _mapping(data_warning.get("recommendation_sensitivity_to_warnings"))
+    return "\n".join(
+        [
+            f"# Research Method Hardening {manifest.get('hardening_id')}",
+            "",
+            f"- candidate_method: {decision.get('candidate_method')}",
+            f"- current_status: {decision.get('current_status')}",
+            f"- hardening_decision: {decision.get('hardening_decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- reasons: {', '.join(_texts(decision.get('reasons')))}",
+            f"- blocking_issues: {', '.join(_texts(decision.get('blocking_issues')))}",
+            f"- warnings: {', '.join(_texts(decision.get('warnings')))}",
+            f"- total_return: {risk_metrics.get('total_return')}",
+            f"- max_drawdown: {risk_metrics.get('max_drawdown')}",
+            f"- turnover: {risk_metrics.get('turnover')}",
+            f"- risk_return_status: {risk_return.get('risk_return_status')}",
+            f"- rolling_consistency_status: {rolling.get('rolling_consistency_status')}",
+            f"- regime_consistency_status: {regime.get('regime_consistency_status')}",
+            f"- stability_status: {stability.get('stability_status')}",
+            f"- data_quality_decision: {warning_sensitivity.get('data_quality_decision')}",
+            f"- requires_forward_confirmation: {decision.get('requires_forward_confirmation')}",
+            "- official_target_weights_allowed: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "Hardening pack 只定义 research method 观察口径；不修改 "
+            "`position_advisory_v1.yaml`、`model_target_portfolio_v1.yaml`、"
+            "official target weights、portfolio、broker 或 production state。",
+            "",
+            f"- selection_attribution_id: {manifest.get('selection_attribution_id')}",
+            f"- risk_review_id: {manifest.get('risk_review_id')}",
+            f"- consistency_id: {manifest.get('consistency_id')}",
+            f"- data_warning_impact_id: {manifest.get('data_warning_impact_id')}",
+            "",
+            "## Attribution Summary",
+            "",
+            f"- recommended_research_method: "
+            f"{_mapping(attribution.get('recommendation_reason_breakdown')).get('recommended_research_method')}",
+            f"- decision_status: "
+            f"{_mapping(attribution.get('review_required_reason_breakdown')).get('decision_status')}",
+            "",
+        ]
+    )
+
+
+def render_hardening_reader_brief(decision: Mapping[str, Any]) -> str:
+    next_action = (
+        "owner_review_required"
+        if decision.get("hardening_decision") == "REVIEW_REQUIRED"
+        else "continue_paper_shadow_observation"
+    )
+    return "\n".join(
+        [
+            "## Dynamic Rescue Research Method Hardening",
+            "",
+            f"- candidate_method: {decision.get('candidate_method')}",
+            f"- hardening_decision: {decision.get('hardening_decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- research_target_only: {str(decision.get('research_target_only') is True).lower()}",
+            f"- requires_forward_confirmation: "
+            f"{str(decision.get('requires_forward_confirmation') is True).lower()}",
+            f"- next_action: {next_action}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
             "",
         ]
     )
@@ -3706,6 +4798,987 @@ def _selection_decision(
         "next_action": "continue_paper_shadow_observation",
         **SYSTEM_TARGET_SAFETY,
     }
+
+
+def _selection_attribution_rows(
+    scorecard: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    selection: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    source_rows = _records(scorecard.get("methods"))
+    ordered = sorted(source_rows, key=lambda row: _float(row.get("overall_score")), reverse=True)
+    recommended = _text(decision.get("recommended_research_method"))
+    secondary = set(_texts(decision.get("secondary_research_methods")))
+    reference_only = set(_texts(decision.get("reference_only_methods")))
+    not_recommended = set(_texts(decision.get("not_recommended_methods")))
+    component_fields = (
+        "return_score",
+        "drawdown_score",
+        "risk_adjusted_score",
+        "regime_score",
+        "stability_score",
+    )
+    best_by_component = {
+        field: _max_field_method(source_rows, field) for field in component_fields
+    }
+    data_quality_penalty = _data_quality_attribution_penalty(
+        _text(selection.get("data_quality_status"))
+    )
+    rows: list[dict[str, Any]] = []
+    for rank, row in enumerate(ordered, start=1):
+        method = _text(row.get("target_method"))
+        score_components = {
+            "return_score": round(_float(row.get("return_score")), 6),
+            "drawdown_score": round(_float(row.get("drawdown_score")), 6),
+            "risk_adjusted_score": round(_float(row.get("risk_adjusted_score")), 6),
+            "regime_score": round(_float(row.get("regime_score")), 6),
+            "stability_score": round(_float(row.get("stability_score")), 6),
+            "turnover_penalty": round(_float(row.get("turnover_penalty")), 6),
+            "data_quality_penalty": round(data_quality_penalty, 6),
+        }
+        if method == recommended:
+            selection_status = "recommended_research_method"
+        elif method in secondary:
+            selection_status = "secondary_research_method"
+        elif method in reference_only:
+            selection_status = "reference_only"
+        elif method in not_recommended or row.get("status") == "NOT_RECOMMENDED":
+            selection_status = "not_recommended"
+        else:
+            selection_status = "observed_method"
+        selection_reasons = _selection_component_reasons(
+            method=method,
+            row=row,
+            recommended=recommended,
+            best_by_component=best_by_component,
+            decision=decision,
+            rank=rank,
+        )
+        rows.append(
+            {
+                "target_method": method,
+                "overall_score": round(_float(row.get("overall_score")), 6),
+                "score_components": score_components,
+                "rank": rank,
+                "selection_status": selection_status,
+                "selection_reasons": selection_reasons,
+                "weaknesses": _selection_component_weaknesses(row),
+                "review_required_reasons": _selection_row_review_reasons(
+                    method=method,
+                    row=row,
+                    decision=decision,
+                    data_quality_status=_text(selection.get("data_quality_status")),
+                ),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return rows
+
+
+def _selection_component_reasons(
+    *,
+    method: str,
+    row: Mapping[str, Any],
+    recommended: str,
+    best_by_component: Mapping[str, str],
+    decision: Mapping[str, Any],
+    rank: int,
+) -> list[str]:
+    reasons: list[str] = []
+    if method == recommended:
+        reasons.append("selected_by_research_method_policy")
+        if rank > 1:
+            reasons.append("preferred_method_within_selection_tolerance")
+    for field, best_method in best_by_component.items():
+        if best_method == method:
+            reasons.append(f"best_{field}")
+    if _float(row.get("turnover_penalty")) <= 0.0:
+        reasons.append("no_turnover_penalty")
+    if row.get("status") == "CONTINUE_OBSERVATION":
+        reasons.append("score_status_continue_observation")
+    elif row.get("status") == "REVIEW_REQUIRED":
+        reasons.append("score_status_review_required")
+    if method in set(_texts(decision.get("reference_only_methods"))):
+        reasons.append("reference_only_policy")
+    return reasons
+
+
+def _selection_component_weaknesses(row: Mapping[str, Any]) -> list[str]:
+    weaknesses: list[str] = []
+    for field in (
+        "return_score",
+        "drawdown_score",
+        "risk_adjusted_score",
+        "regime_score",
+        "stability_score",
+    ):
+        if _float(row.get(field)) < 0.5:
+            weaknesses.append(f"{field}_below_midpoint")
+    if _float(row.get("turnover_penalty")) >= 0.5:
+        weaknesses.append("turnover_penalty_high")
+    if row.get("status") == "NOT_RECOMMENDED":
+        weaknesses.append("selection_score_not_recommended")
+    return weaknesses
+
+
+def _selection_row_review_reasons(
+    *,
+    method: str,
+    row: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    data_quality_status: str,
+) -> list[str]:
+    reasons: list[str] = []
+    if data_quality_status == "PASS_WITH_WARNINGS":
+        reasons.append("data_quality_pass_with_warnings")
+    if data_quality_status == "FAIL":
+        reasons.append("data_quality_failed")
+    if row.get("status") == "REVIEW_REQUIRED":
+        reasons.append("method_score_review_required")
+    if method == decision.get("recommended_research_method") and (
+        decision.get("decision_status") == "REVIEW_REQUIRED"
+    ):
+        reasons.append("forward_confirmation_missing")
+    return reasons
+
+
+def _data_quality_attribution_penalty(status: str) -> float:
+    if status == "PASS_WITH_WARNINGS":
+        return DATA_QUALITY_WARNING_ATTRIBUTION_PENALTY
+    if status == "FAIL":
+        return DATA_QUALITY_FAIL_ATTRIBUTION_PENALTY
+    return 0.0
+
+
+def _recommendation_reason_breakdown(
+    rows: Sequence[Mapping[str, Any]],
+    decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    recommended = _text(decision.get("recommended_research_method"))
+    recommended_row = _find_method(rows, recommended)
+    top_method = _text(rows[0].get("target_method")) if rows else "INSUFFICIENT_DATA"
+    primary_reason = (
+        "top_overall_score"
+        if recommended == top_method
+        else "preferred_research_method_within_selection_tolerance"
+    )
+    evidence = [
+        f"recommended={recommended}",
+        f"recommended_rank={recommended_row.get('rank', 'MISSING')}",
+        f"recommended_overall_score={recommended_row.get('overall_score', 'MISSING')}",
+        f"top_overall_score_method={top_method}",
+    ]
+    primary = [
+        {
+            "reason": primary_reason,
+            "evidence": evidence,
+            "confidence": "MEDIUM" if recommended_row else "LOW",
+        }
+    ]
+    if recommended_row:
+        components = _mapping(recommended_row.get("score_components"))
+        primary.append(
+            {
+                "reason": "balanced_return_risk_stability_review_candidate",
+                "evidence": [
+                    f"return_score={components.get('return_score')}",
+                    f"drawdown_score={components.get('drawdown_score')}",
+                    f"risk_adjusted_score={components.get('risk_adjusted_score')}",
+                    f"stability_score={components.get('stability_score')}",
+                    f"turnover_penalty={components.get('turnover_penalty')}",
+                ],
+                "confidence": "MEDIUM",
+            }
+        )
+    return {
+        "recommended_research_method": recommended,
+        "primary_reasons": primary,
+        "secondary_reasons": [
+            {
+                "reason": "research_only_safety_boundary_preserved",
+                "evidence": [
+                    "not_official_target_weights=true",
+                    "broker_action_allowed=false",
+                    "production_effect=none",
+                ],
+                "confidence": "HIGH",
+            }
+        ],
+        "why_not_consensus_target": _why_not_method(rows, recommended, "consensus_target"),
+        "why_not_defensive_limited_adjustment": _why_not_method(
+            rows, recommended, "defensive_limited_adjustment"
+        ),
+        "why_not_static_baseline": _why_not_method(rows, recommended, "static_baseline"),
+        "why_not_selected_top_candidate": _why_not_method(
+            rows, recommended, "selected_top_candidate"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _why_not_method(
+    rows: Sequence[Mapping[str, Any]],
+    recommended: str,
+    method: str,
+) -> list[str]:
+    row = _find_method(rows, method)
+    recommended_row = _find_method(rows, recommended)
+    if not row:
+        return [f"{method}_not_available"]
+    reasons: list[str] = []
+    if row.get("selection_status") == "reference_only":
+        reasons.append(f"{method}_configured_reference_only")
+    if row.get("selection_status") == "not_recommended":
+        reasons.append(f"{method}_selection_status_not_recommended")
+    if _float(row.get("overall_score")) > _float(recommended_row.get("overall_score")):
+        reasons.append("higher_overall_score_but_not_preferred_research_method")
+    weaknesses = _texts(row.get("weaknesses"))
+    if weaknesses:
+        reasons.extend(weaknesses[:3])
+    if not reasons:
+        reasons.append(f"{method}_not_selected_by_research_policy")
+    return reasons
+
+
+def _review_required_reason_breakdown(
+    selection: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+    decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    decision_status = _text(decision.get("decision_status"), "REVIEW_REQUIRED")
+    data_quality = _text(selection.get("data_quality_status"))
+    recommended = _text(decision.get("recommended_research_method"))
+    recommended_row = _find_method(rows, recommended)
+    reasons: list[dict[str, Any]] = []
+    if data_quality == "PASS_WITH_WARNINGS":
+        reasons.append(
+            {
+                "reason": "data_quality_pass_with_warnings",
+                "severity": "WARNING",
+                "blocking": False,
+            }
+        )
+    elif data_quality == "FAIL":
+        reasons.append(
+            {
+                "reason": "data_quality_failed",
+                "severity": "BLOCKER",
+                "blocking": True,
+            }
+        )
+    if decision_status == "REVIEW_REQUIRED":
+        reasons.append(
+            {
+                "reason": "forward_confirmation_missing",
+                "severity": "REVIEW_REQUIRED",
+                "blocking": True,
+            }
+        )
+    if recommended_row.get("review_required_reasons"):
+        reasons.append(
+            {
+                "reason": "recommended_method_requires_owner_review",
+                "severity": "REVIEW_REQUIRED",
+                "blocking": True,
+            }
+        )
+    if recommended_row and _float(recommended_row.get("rank")) > 1:
+        reasons.append(
+            {
+                "reason": "recommended_method_not_top_overall_score",
+                "severity": "WARNING",
+                "blocking": False,
+            }
+        )
+    if not reasons:
+        reasons.append(
+            {
+                "reason": "no_blocking_review_required_reason_detected",
+                "severity": "INFO",
+                "blocking": False,
+            }
+        )
+    can_harden = not any(row.get("blocking") is True for row in reasons)
+    return {
+        "decision_status": decision_status,
+        "review_required_reasons": reasons,
+        "can_harden_research_method": can_harden,
+        "can_trigger_official_target_weights": False,
+        "can_trigger_production": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _limited_long_window_risk_return(
+    backfill: Mapping[str, Any],
+    states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    limited = _method_path_metrics(states, "limited_adjustment")
+    static = _method_path_metrics(states, "static_baseline")
+    no_trade = _method_path_metrics(states, "no_trade_baseline")
+    metrics = {
+        "total_return": limited["total_return"],
+        "annualized_return": limited["annualized_return"],
+        "max_drawdown": limited["max_drawdown"],
+        "realized_volatility": limited["realized_volatility"],
+        "turnover": limited["turnover"],
+        "relative_to_static_baseline": round(
+            _float(limited.get("total_return")) - _float(static.get("total_return")),
+            10,
+        ),
+        "relative_to_no_trade_baseline": round(
+            _float(limited.get("total_return")) - _float(no_trade.get("total_return")),
+            10,
+        ),
+    }
+    return {
+        "target_method": "limited_adjustment",
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "metrics": metrics,
+        "risk_return_status": _risk_return_status(limited, static),
+        "confidence": _long_window_confidence(
+            observation_count=int(_float(limited.get("observation_count"))),
+            data_quality_status=_text(backfill.get("data_quality_status")),
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _method_path_metrics(
+    states: Sequence[Mapping[str, Any]],
+    method: str,
+) -> dict[str, Any]:
+    rows = [row for row in states if row.get("target_method") == method]
+    metrics = _state_path_metrics(rows, min_observations=2)
+    metrics["observation_count"] = len(rows)
+    return metrics
+
+
+def _risk_return_status(
+    limited: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+) -> str:
+    if not limited.get("observation_count") or not baseline.get("observation_count"):
+        return "INSUFFICIENT_DATA"
+    return_improves = _float(limited.get("total_return")) > _float(baseline.get("total_return"))
+    risk_improves = _float(limited.get("max_drawdown")) >= _float(baseline.get("max_drawdown"))
+    if return_improves and risk_improves:
+        return "RETURN_IMPROVES_RISK_IMPROVES"
+    if return_improves and not risk_improves:
+        return "RETURN_IMPROVES_RISK_WORSENS"
+    if not return_improves and risk_improves:
+        return "RETURN_WORSE_RISK_IMPROVES"
+    return "RETURN_WORSE_RISK_WORSE"
+
+
+def _long_window_confidence(*, observation_count: int, data_quality_status: str) -> str:
+    if (
+        observation_count >= LONG_WINDOW_HIGH_CONFIDENCE_OBSERVATIONS
+        and data_quality_status == "PASS"
+    ):
+        return "HIGH"
+    if observation_count >= LONG_WINDOW_MEDIUM_CONFIDENCE_OBSERVATIONS and data_quality_status in {
+        "PASS",
+        "PASS_WITH_WARNINGS",
+    }:
+        return "MEDIUM"
+    return "LOW"
+
+
+def _limited_vs_baseline_breakdown(
+    states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    limited = _method_path_metrics(states, "limited_adjustment")
+    comparisons = []
+    for baseline_method in ("static_baseline", "no_trade_baseline"):
+        baseline = _method_path_metrics(states, baseline_method)
+        comparisons.append(_baseline_comparison(limited, baseline, baseline_method))
+    return {"comparisons": comparisons, **SYSTEM_TARGET_SAFETY}
+
+
+def _baseline_comparison(
+    limited: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    baseline_method: str,
+) -> dict[str, Any]:
+    return_delta = round(
+        _float(limited.get("total_return")) - _float(baseline.get("total_return")),
+        10,
+    )
+    drawdown_delta = round(
+        _float(limited.get("max_drawdown")) - _float(baseline.get("max_drawdown")),
+        10,
+    )
+    volatility_delta = round(
+        _float(limited.get("realized_volatility")) - _float(baseline.get("realized_volatility")),
+        10,
+    )
+    turnover_delta = round(_float(limited.get("turnover")) - _float(baseline.get("turnover")), 10)
+    return {
+        "baseline": baseline_method,
+        "return_delta": return_delta,
+        "drawdown_delta": drawdown_delta,
+        "volatility_delta": volatility_delta,
+        "turnover_delta": turnover_delta,
+        "conclusion": _comparison_conclusion(
+            limited=limited,
+            baseline=baseline,
+            return_delta=return_delta,
+            drawdown_delta=drawdown_delta,
+            volatility_delta=volatility_delta,
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _comparison_conclusion(
+    *,
+    limited: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    return_delta: float,
+    drawdown_delta: float,
+    volatility_delta: float,
+) -> str:
+    if not limited.get("observation_count") or not baseline.get("observation_count"):
+        return "insufficient_data"
+    risk_better = drawdown_delta >= 0.0 and volatility_delta <= 0.0
+    risk_worse = drawdown_delta < 0.0 and volatility_delta > 0.0
+    if return_delta > 0.0 and risk_better:
+        return "limited_better"
+    if return_delta <= 0.0 and risk_worse:
+        return "baseline_better"
+    return "mixed"
+
+
+def _limited_exposure_path_analysis(
+    states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    limited_rows = [row for row in states if row.get("target_method") == "limited_adjustment"]
+    static_rows = [row for row in states if row.get("target_method") == "static_baseline"]
+    limited_exposure = _exposure_summary(limited_rows)
+    static_exposure = _exposure_summary(static_rows)
+    avg_risk = _float(limited_exposure.get("avg_risk_asset_weight"))
+    static_avg_risk = _float(static_exposure.get("avg_risk_asset_weight"))
+    if not limited_rows:
+        interpretation = "mixed"
+    elif avg_risk > static_avg_risk + EXPOSURE_SIMILARITY_TOLERANCE:
+        interpretation = "higher_risk_exposure"
+    elif avg_risk < static_avg_risk - EXPOSURE_SIMILARITY_TOLERANCE:
+        interpretation = "lower_risk_exposure"
+    else:
+        interpretation = "similar_risk_exposure"
+    warnings: list[str] = []
+    if interpretation == "higher_risk_exposure":
+        warnings.append("limited_adjustment_higher_risk_asset_exposure")
+    return {
+        "target_method": "limited_adjustment",
+        **limited_exposure,
+        "risk_exposure_interpretation": interpretation,
+        "warnings": warnings,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _exposure_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    risk_weights: list[float] = []
+    semiconductor_weights: list[float] = []
+    cash_weights: list[float] = []
+    for row in rows:
+        weights = _normalize_weights(_mapping(row.get("weights")))
+        risk_weights.append(sum(value for symbol, value in weights.items() if symbol != "CASH"))
+        semiconductor_weights.append(
+            sum(_float(weights.get(symbol)) for symbol in ("SMH", "SOXX"))
+        )
+        cash_weights.append(_float(weights.get("CASH")))
+    return {
+        "avg_risk_asset_weight": round(_mean_float(risk_weights), 10),
+        "max_risk_asset_weight": round(max(risk_weights or [0.0]), 10),
+        "avg_semiconductor_weight": round(_mean_float(semiconductor_weights), 10),
+        "max_semiconductor_weight": round(max(semiconductor_weights or [0.0]), 10),
+        "avg_cash_weight": round(_mean_float(cash_weights), 10),
+        "min_cash_weight": round(min(cash_weights or [0.0]), 10),
+    }
+
+
+def _latest_or_run_rolling_for_backfill(
+    backfill_id: str,
+    *,
+    backfill_dir: Path,
+    rolling_eval_dir: Path,
+) -> dict[str, Any]:
+    existing = _matching_child_artifact_dir(
+        rolling_eval_dir,
+        "rolling_eval_manifest.json",
+        backfill_id,
+    )
+    if existing is not None:
+        return paper_shadow_rolling_eval_report_payload(
+            rolling_eval_id=existing.name,
+            output_dir=rolling_eval_dir,
+        )
+    run = run_paper_shadow_rolling_eval(
+        backfill_id=backfill_id,
+        backfill_dir=backfill_dir,
+        output_dir=rolling_eval_dir,
+    )
+    return paper_shadow_rolling_eval_report_payload(
+        rolling_eval_id=run["rolling_eval_id"],
+        output_dir=rolling_eval_dir,
+    )
+
+
+def _latest_or_run_regime_for_backfill(
+    backfill_id: str,
+    *,
+    backfill_dir: Path,
+    regime_review_dir: Path,
+) -> dict[str, Any]:
+    existing = _matching_child_artifact_dir(
+        regime_review_dir,
+        "paper_shadow_regime_manifest.json",
+        backfill_id,
+    )
+    if existing is not None:
+        return paper_shadow_regime_review_report_payload(
+            regime_review_id=existing.name,
+            output_dir=regime_review_dir,
+        )
+    run = run_paper_shadow_regime_review(
+        backfill_id=backfill_id,
+        backfill_dir=backfill_dir,
+        output_dir=regime_review_dir,
+    )
+    return paper_shadow_regime_review_report_payload(
+        regime_review_id=run["regime_review_id"],
+        output_dir=regime_review_dir,
+    )
+
+
+def _latest_or_run_stability_for_backfill(
+    backfill_id: str,
+    *,
+    backfill_dir: Path,
+    stability_dir: Path,
+) -> dict[str, Any]:
+    existing = _matching_child_artifact_dir(
+        stability_dir,
+        "paper_shadow_stability_manifest.json",
+        backfill_id,
+    )
+    if existing is not None:
+        return paper_shadow_stability_report_payload(
+            stability_id=existing.name,
+            output_dir=stability_dir,
+        )
+    run = run_paper_shadow_stability(
+        backfill_id=backfill_id,
+        backfill_dir=backfill_dir,
+        output_dir=stability_dir,
+    )
+    return paper_shadow_stability_report_payload(
+        stability_id=run["stability_id"],
+        output_dir=stability_dir,
+    )
+
+
+def _matching_child_artifact_dir(root: Path, manifest_name: str, backfill_id: str) -> Path | None:
+    if not root.exists():
+        return None
+    candidates = sorted(
+        [path for path in root.glob(f"*/{manifest_name}") if path.is_file()],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in candidates:
+        payload = _read_optional_json(path) or {}
+        if payload.get("backfill_id") == backfill_id:
+            return path.parent
+    return None
+
+
+def _limited_rolling_consistency_summary(rolling: Mapping[str, Any]) -> dict[str, Any]:
+    rank_rows = _records(_mapping(rolling.get("rolling_rank_stability")).get("methods"))
+    metrics = _records(rolling.get("rolling_method_metrics"))
+    limited_rank = _find_method(rank_rows, "limited_adjustment")
+    limited_metrics = [
+        row
+        for row in metrics
+        if row.get("target_method") == "limited_adjustment"
+        and _float(row.get("rank_by_return")) > 0
+    ]
+    total = len({str(row.get("window_id")) for row in limited_metrics})
+    top_risk = (
+        sum(1 for row in limited_metrics if _float(row.get("rank_by_risk_adjusted")) <= 3) / total
+        if total
+        else 0.0
+    )
+    top_return = _float(limited_rank.get("top_3_frequency"))
+    bottom = _float(limited_rank.get("bottom_3_frequency"))
+    if not total:
+        status = "INSUFFICIENT_DATA"
+    elif top_return >= 0.6 and top_risk >= 0.6 and bottom <= 0.2:
+        status = "STABLE"
+    elif bottom >= 0.5:
+        status = "UNSTABLE"
+    else:
+        status = "MIXED"
+    return {
+        "target_method": "limited_adjustment",
+        "rolling_windows_total": total,
+        "top_3_frequency_by_return": round(top_return, 6),
+        "top_3_frequency_by_risk_adjusted": round(top_risk, 6),
+        "bottom_3_frequency": round(bottom, 6),
+        "avg_rank_return": round(_float(limited_rank.get("avg_rank_return")), 6),
+        "avg_rank_risk_adjusted": round(_float(limited_rank.get("avg_rank_risk_adjusted")), 6),
+        "rolling_consistency_status": status,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _limited_regime_consistency_summary(regime: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _records(regime.get("method_regime_metrics"))
+    rows: list[dict[str, Any]] = []
+    for regime_name in _configured_regimes():
+        regime_rows = [
+            row
+            for row in metrics
+            if row.get("regime") == regime_name and row.get("status") != "INSUFFICIENT_DATA"
+        ]
+        limited = _find_method(
+            [row for row in metrics if row.get("regime") == regime_name],
+            "limited_adjustment",
+        )
+        rank = 0
+        if regime_rows:
+            ordered = sorted(
+                regime_rows,
+                key=lambda row: _float(row.get("total_return")),
+                reverse=True,
+            )
+            for index, item in enumerate(ordered, start=1):
+                if item.get("target_method") == "limited_adjustment":
+                    rank = index
+                    break
+        status = _limited_regime_status(limited)
+        rows.append(
+            {
+                "regime": regime_name,
+                "relative_to_static_baseline": round(
+                    _float(limited.get("relative_to_static_baseline")),
+                    10,
+                ),
+                "relative_to_no_trade_baseline": round(
+                    _float(limited.get("relative_to_no_trade_baseline")),
+                    10,
+                ),
+                "rank": rank,
+                "status": status,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    statuses = {str(row.get("status")) for row in rows}
+    pressure_fail = any(
+        row.get("status") == "FAIL"
+        and row.get("regime") in {"tech_drawdown", "semiconductor_pullback", "risk_off"}
+        for row in rows
+    )
+    if statuses == {"INSUFFICIENT_DATA"}:
+        overall = "INSUFFICIENT_DATA"
+    elif pressure_fail:
+        overall = "WEAK_IN_PRESSURE"
+    elif "FAIL" in statuses:
+        overall = "REGIME_DEPENDENT"
+    else:
+        overall = "BROADLY_CONSISTENT"
+    return {
+        "target_method": "limited_adjustment",
+        "regimes": rows,
+        "regime_consistency_status": overall,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _limited_regime_status(limited: Mapping[str, Any]) -> str:
+    if not limited or limited.get("status") == "INSUFFICIENT_DATA":
+        return "INSUFFICIENT_DATA"
+    rel_static = _float(limited.get("relative_to_static_baseline"))
+    rel_no_trade = _float(limited.get("relative_to_no_trade_baseline"))
+    if rel_static >= 0.0 and rel_no_trade >= 0.0:
+        return "PASS"
+    if rel_static >= 0.0 or rel_no_trade >= 0.0:
+        return "PASS_WITH_WARNINGS"
+    return "FAIL"
+
+
+def _limited_stability_consistency_summary(stability: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _find_method(
+        _records(stability.get("method_stability_metrics")),
+        "limited_adjustment",
+    )
+    turnover = _find_method(
+        _records(_mapping(stability.get("turnover_diagnostics")).get("methods")),
+        "limited_adjustment",
+    )
+    return {
+        "target_method": "limited_adjustment",
+        "avg_rebalance_turnover": round(_float(metrics.get("avg_rebalance_turnover")), 10),
+        "max_rebalance_turnover": round(_float(metrics.get("max_rebalance_turnover")), 10),
+        "large_jump_count": int(_float(metrics.get("large_jump_count"))),
+        "stability_status": _text(metrics.get("stability_status"), "INSUFFICIENT_DATA"),
+        "turnover_status": _text(turnover.get("turnover_status"), "INSUFFICIENT_DATA"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _data_warning_inventory(backfill: Mapping[str, Any]) -> dict[str, Any]:
+    data_quality = _text(backfill.get("data_quality_status"), _text(backfill.get("data_quality")))
+    quality_payload = _mapping(backfill.get("backfill_data_quality"))
+    warnings: list[dict[str, Any]] = []
+    for item in [
+        *_records(quality_payload.get("warnings")),
+        *_records(quality_payload.get("issues")),
+    ]:
+        severity = _text(item.get("severity"), "WARNING")
+        if severity not in {"WARNING", "INFO"}:
+            continue
+        warnings.append(
+            {
+                "warning_id": _text(
+                    item.get("warning_id"),
+                    _text(item.get("code"), "data_quality_warning"),
+                ),
+                "severity": severity,
+                "affected_symbols": _texts(item.get("affected_symbols")),
+                "affected_dates": _texts(item.get("affected_dates")),
+                "potential_metric_impact": _text(item.get("potential_metric_impact"), "UNKNOWN"),
+            }
+        )
+    missing_symbols = _texts(quality_payload.get("missing_symbols"))
+    missing_dates = _texts(quality_payload.get("missing_price_dates"))
+    if missing_symbols:
+        warnings.append(
+            {
+                "warning_id": "missing_symbols_present",
+                "severity": "WARNING",
+                "affected_symbols": missing_symbols,
+                "affected_dates": [],
+                "potential_metric_impact": "HIGH",
+            }
+        )
+    if missing_dates:
+        warnings.append(
+            {
+                "warning_id": "missing_price_dates_present",
+                "severity": "WARNING",
+                "affected_symbols": [],
+                "affected_dates": missing_dates,
+                "potential_metric_impact": "MEDIUM",
+            }
+        )
+    if data_quality == "PASS_WITH_WARNINGS" and not warnings:
+        warnings.append(
+            {
+                "warning_id": "pass_with_warnings_detail_unavailable",
+                "severity": "WARNING",
+                "affected_symbols": [],
+                "affected_dates": [],
+                "potential_metric_impact": "UNKNOWN",
+            }
+        )
+    return {
+        "backfill_id": backfill.get("backfill_id"),
+        "data_quality": data_quality,
+        "warnings": warnings,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _affected_metrics_from_warnings(inventory: Mapping[str, Any]) -> dict[str, Any]:
+    warnings = _records(inventory.get("warnings"))
+    impact_levels = {_text(row.get("potential_metric_impact"), "UNKNOWN") for row in warnings}
+    if not warnings:
+        level = "LOW"
+        affected: bool | None = False
+        reason = "data_quality_pass_without_recorded_warning"
+    elif "UNKNOWN" in impact_levels:
+        level = "UNKNOWN"
+        affected = None
+        reason = "warning_detail_missing_or_unquantified"
+    elif "HIGH" in impact_levels:
+        level = "HIGH"
+        affected = True
+        reason = "high_potential_data_warning_impact"
+    elif "MEDIUM" in impact_levels:
+        level = "MEDIUM"
+        affected = True
+        reason = "medium_potential_data_warning_impact"
+    else:
+        level = "LOW"
+        affected = False
+        reason = "warnings_not_expected_to_move_core_metrics"
+    return {
+        "metrics": [
+            {
+                "metric": metric,
+                "affected": affected,
+                "impact_level": level,
+                "reason": reason,
+            }
+            for metric in ("total_return", "max_drawdown", "realized_volatility", "turnover")
+        ],
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _recommendation_sensitivity_to_warnings(
+    selection: Mapping[str, Any],
+    inventory: Mapping[str, Any],
+    affected_metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    data_quality = _text(inventory.get("data_quality"))
+    metrics = _records(affected_metrics.get("metrics"))
+    impact_levels = {_text(row.get("impact_level")) for row in metrics}
+    warning_ids = _texts([row.get("warning_id") for row in _records(inventory.get("warnings"))])
+    if data_quality == "FAIL":
+        stability = "UNSTABLE"
+        would_change: bool | None = True
+        decision = "BLOCKED"
+        blocking = ["data_quality_failed"]
+    elif "UNKNOWN" in impact_levels:
+        stability = "REVIEW_REQUIRED"
+        would_change = None
+        decision = "REVIEW_REQUIRED"
+        blocking = ["warning_metric_impact_unknown"]
+    elif data_quality == "PASS_WITH_WARNINGS" and {"HIGH", "MEDIUM"} & impact_levels:
+        stability = "REVIEW_REQUIRED"
+        would_change = None
+        decision = "REVIEW_REQUIRED"
+        blocking = ["warning_metric_impact_potentially_material"]
+    else:
+        stability = "STABLE"
+        would_change = False
+        decision = "ACCEPT_FOR_RESEARCH"
+        blocking = []
+    return {
+        "recommended_research_method": _text(
+            _mapping(selection.get("selection_decision")).get("recommended_research_method"),
+            "limited_adjustment",
+        ),
+        "recommendation_stability": stability,
+        "would_change_if_warnings_excluded": would_change,
+        "warning_blocking_reasons": blocking,
+        "warning_ids": warning_ids,
+        "data_quality_decision": decision,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _research_method_hardening_decision(
+    attribution: Mapping[str, Any],
+    risk: Mapping[str, Any],
+    consistency: Mapping[str, Any],
+    data_warning: Mapping[str, Any],
+) -> dict[str, Any]:
+    recommendation = _mapping(attribution.get("recommendation_reason_breakdown"))
+    review = _mapping(attribution.get("review_required_reason_breakdown"))
+    risk_return = _mapping(risk.get("long_window_risk_return"))
+    rolling = _mapping(consistency.get("rolling_consistency_summary"))
+    regime = _mapping(consistency.get("regime_consistency_summary"))
+    stability = _mapping(consistency.get("stability_consistency_summary"))
+    warning_sensitivity = _mapping(data_warning.get("recommendation_sensitivity_to_warnings"))
+    recommended = _text(recommendation.get("recommended_research_method"), "MISSING")
+    candidate = "limited_adjustment"
+    limited_row = _find_method(
+        _records(attribution.get("method_score_attribution")),
+        candidate,
+    )
+    blocking_issues = [
+        _text(row.get("reason"))
+        for row in _records(review.get("review_required_reasons"))
+        if row.get("blocking") is True
+    ]
+    warnings: list[str] = []
+    if warning_sensitivity.get("data_quality_decision") != "ACCEPT_FOR_RESEARCH":
+        blocking_issues.append(
+            "data_quality_warning_impact_"
+            + _text(warning_sensitivity.get("data_quality_decision"), "review_required").lower()
+        )
+    risk_status = _text(risk_return.get("risk_return_status"))
+    if risk_status == "RETURN_WORSE_RISK_WORSE":
+        blocking_issues.append("long_window_return_worse_and_risk_worse")
+    elif risk_status == "RETURN_IMPROVES_RISK_WORSENS":
+        warnings.append("long_window_return_improves_but_risk_worsens")
+    rolling_status = _text(rolling.get("rolling_consistency_status"))
+    regime_status = _text(regime.get("regime_consistency_status"))
+    stability_status = _text(stability.get("stability_status"))
+    if rolling_status == "UNSTABLE":
+        blocking_issues.append("rolling_consistency_unstable")
+    if regime_status == "WEAK_IN_PRESSURE":
+        blocking_issues.append("weak_in_pressure_regimes")
+    if stability_status == "UNSTABLE":
+        blocking_issues.append("weight_path_unstable")
+    if regime_status == "REGIME_DEPENDENT":
+        warnings.append("regime_dependent_performance")
+    if rolling_status == "MIXED":
+        warnings.append("rolling_consistency_mixed")
+    if recommended != candidate:
+        blocking_issues.append("limited_adjustment_not_recommended_by_selection_review")
+    blocking_issues = sorted(set(item for item in blocking_issues if item))
+    warnings = sorted(set(item for item in warnings if item))
+    if (
+        "long_window_return_worse_and_risk_worse" in blocking_issues
+        and "weight_path_unstable" in blocking_issues
+    ):
+        hardening_decision = "REJECT"
+    elif blocking_issues:
+        hardening_decision = "REVIEW_REQUIRED"
+    elif warnings:
+        hardening_decision = "CONTINUE_OBSERVATION"
+    else:
+        hardening_decision = "HARDEN_AS_PRIMARY_RESEARCH"
+    confidence = (
+        "LOW"
+        if blocking_issues
+        else "MEDIUM"
+        if warnings or warning_sensitivity.get("data_quality_decision") != "ACCEPT_FOR_RESEARCH"
+        else "HIGH"
+    )
+    reasons = [
+        f"candidate_method={candidate}",
+        f"selection_recommended_method={recommended}",
+        f"risk_return_status={risk_status}",
+        f"rolling_consistency_status={rolling_status}",
+        f"regime_consistency_status={regime_status}",
+        f"stability_status={stability_status}",
+        f"data_quality_decision={warning_sensitivity.get('data_quality_decision')}",
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "hardening_id": "",
+        "candidate_method": candidate,
+        "current_status": _text(limited_row.get("selection_status"), "observed_method"),
+        "hardening_decision": hardening_decision,
+        "decision_confidence": confidence,
+        "reasons": reasons,
+        "blocking_issues": blocking_issues,
+        "warnings": warnings,
+        "research_target_only": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        "requires_forward_confirmation": True,
+        "next_action": (
+            "owner_review_required"
+            if hardening_decision == "REVIEW_REQUIRED"
+            else "continue_paper_shadow_observation"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _mean_float(values: Sequence[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
 
 
 def _rank_score(avg_rank: float, method_count: int) -> float:
