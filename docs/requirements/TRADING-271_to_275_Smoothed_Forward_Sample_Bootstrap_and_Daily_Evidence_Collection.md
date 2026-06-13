@@ -94,3 +94,8 @@ weights、production target weights、自动切换 paper-shadow primary candidat
   rates 最新为 `2026-06-11`，被 `aits validate-data` 正确阻断为 `FAIL`
  （`prices_stale` / `rates_stale`）；解除条件是在 2026-06-20 或之后刷新缓存并重跑
   validate-data 后复验，不允许用未来数据或绕过质量门禁。
+- 2026-06-14: 完成续验审计；全量 `python -m pytest tests -q` 首次跑完后发现
+  documentation contract warning（3 个新 sample bootstrap artifact catalog 行缺少显式
+  `schema_version` / `status` 术语），已补齐 `smoothed_outcome_update`、
+  `smoothed_forward_classification` 和 `smoothed_forward_weekly_run` 的 catalog
+  schema/status 描述，并复验 documentation contract / default contract test。
