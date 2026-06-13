@@ -555,6 +555,112 @@ def run_smoothed_review_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+def run_smoothed_readiness_chain_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_smoothed_review_chain_fixture(tmp_path)
+    attribution = system_target.run_smoothed_review_attribution(
+        review_id=fixture["review"]["review_id"],
+        comparison_id=fixture["comparison"]["comparison_id"],
+        backfill_id=fixture["smoothed"]["smoothed_backfill_id"],
+        review_dir=tmp_path / "smoothed_review",
+        comparison_dir=tmp_path / "smoothed_comparison",
+        backfill_dir=tmp_path / "smoothed_backfill",
+        output_dir=tmp_path / "smoothed_review_attribution",
+    )
+    benefit_lag = system_target.run_smoothing_benefit_lag_drilldown(
+        smoothed_backfill_id=fixture["smoothed"]["smoothed_backfill_id"],
+        comparison_id=fixture["comparison"]["comparison_id"],
+        backfill_dir=tmp_path / "smoothed_backfill",
+        comparison_dir=tmp_path / "smoothed_comparison",
+        output_dir=tmp_path / "smoothing_benefit_lag",
+    )
+    regime = system_target.run_smoothed_regime_validation(
+        smoothed_backfill_id=fixture["smoothed"]["smoothed_backfill_id"],
+        smoothed_backfill_dir=tmp_path / "smoothed_backfill",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "smoothed_regime_validation",
+    )
+    confirmation = system_target.register_smoothed_confirmation_targets(
+        review_id=fixture["review"]["review_id"],
+        regime_validation_id=regime["regime_validation_id"],
+        review_dir=tmp_path / "smoothed_review",
+        regime_validation_dir=tmp_path / "smoothed_regime_validation",
+        output_dir=tmp_path / "smoothed_forward_confirmation",
+    )
+    watch = system_target.run_smoothed_watch_pack(
+        review_attribution_id=attribution["attribution_id"],
+        benefit_lag_id=benefit_lag["drilldown_id"],
+        regime_validation_id=regime["regime_validation_id"],
+        confirmation_id=confirmation["confirmation_id"],
+        attribution_dir=tmp_path / "smoothed_review_attribution",
+        benefit_lag_dir=tmp_path / "smoothing_benefit_lag",
+        regime_validation_dir=tmp_path / "smoothed_regime_validation",
+        confirmation_dir=tmp_path / "smoothed_forward_confirmation",
+        output_dir=tmp_path / "smoothed_watch_pack",
+    )
+    gap = system_target.run_smoothed_evidence_gap_diagnosis(
+        benefit_lag_id=benefit_lag["drilldown_id"],
+        regime_validation_id=regime["regime_validation_id"],
+        watch_pack_id=watch["watch_pack_id"],
+        benefit_lag_dir=tmp_path / "smoothing_benefit_lag",
+        regime_validation_dir=tmp_path / "smoothed_regime_validation",
+        watch_pack_dir=tmp_path / "smoothed_watch_pack",
+        output_dir=tmp_path / "smoothed_evidence_gap",
+    )
+    churn = system_target.run_smoothed_churn_backfill(
+        smoothed_backfill_id=fixture["smoothed"]["smoothed_backfill_id"],
+        baseline_backfill_id=fixture["smoothed"]["source_paper_shadow_backfill"][
+            "backfill_id"
+        ],
+        risk_capped_backfill_id=fixture["risk_capped"]["risk_capped_backfill_id"],
+        smoothed_backfill_dir=tmp_path / "smoothed_backfill",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        risk_capped_backfill_dir=tmp_path / "risk_capped_backfill",
+        output_dir=tmp_path / "smoothed_churn_backfill",
+    )
+    sideways = system_target.run_sideways_mixed_attribution(
+        regime_validation_id=regime["regime_validation_id"],
+        churn_id=churn["churn_id"],
+        regime_validation_dir=tmp_path / "smoothed_regime_validation",
+        churn_dir=tmp_path / "smoothed_churn_backfill",
+        smoothed_backfill_dir=tmp_path / "smoothed_backfill",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "sideways_mixed_attribution",
+    )
+    scorecard = system_target.run_smoothed_readiness_scorecard(
+        attribution_id=attribution["attribution_id"],
+        benefit_lag_id=benefit_lag["drilldown_id"],
+        churn_id=churn["churn_id"],
+        sideways_attribution_id=sideways["sideways_attribution_id"],
+        confirmation_id=confirmation["confirmation_id"],
+        attribution_dir=tmp_path / "smoothed_review_attribution",
+        benefit_lag_dir=tmp_path / "smoothing_benefit_lag",
+        churn_dir=tmp_path / "smoothed_churn_backfill",
+        sideways_attribution_dir=tmp_path / "sideways_mixed_attribution",
+        confirmation_dir=tmp_path / "smoothed_forward_confirmation",
+        output_dir=tmp_path / "smoothed_readiness_scorecard",
+    )
+    owner_update = system_target.run_smoothed_owner_review_update(
+        scorecard_id=scorecard["scorecard_id"],
+        watch_pack_id=watch["watch_pack_id"],
+        scorecard_dir=tmp_path / "smoothed_readiness_scorecard",
+        watch_pack_dir=tmp_path / "smoothed_watch_pack",
+        output_dir=tmp_path / "smoothed_owner_review_update",
+    )
+    return {
+        **fixture,
+        "attribution": attribution,
+        "benefit_lag": benefit_lag,
+        "regime": regime,
+        "confirmation": confirmation,
+        "watch": watch,
+        "gap": gap,
+        "churn": churn,
+        "sideways": sideways,
+        "scorecard": scorecard,
+        "owner_update": owner_update,
+    }
+
+
 def force_promotable_batch_metrics(
     batch_dir: Path,
     *,

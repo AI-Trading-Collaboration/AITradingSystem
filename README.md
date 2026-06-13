@@ -1201,6 +1201,26 @@ pack。所有输出继续固定 `research_target_only=true`、`paper_shadow_only
 `production_effect=none`；达标后也不自动 promotion，不写 official target weights、不触发
 broker/order/production。
 
+TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
+在 smoothed watch pack 之后新增 evidence completeness 和 promotion readiness review。
+CLI 入口为 `smoothed-evidence-gap run/report`、`validate-smoothed-evidence-gap`、
+`smoothed-churn-backfill run/report`、`validate-smoothed-churn-backfill`、
+`sideways-mixed-attribution run/report`、`validate-sideways-mixed-attribution`、
+`smoothed-readiness-scorecard run/report`、`validate-smoothed-readiness-scorecard`、
+`smoothed-owner-review-update run/report` 和
+`validate-smoothed-owner-review-update`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap|smoothed_churn_backfill|sideways_mixed_attribution|smoothed_readiness_scorecard|smoothed_owner_review_update/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Owner Review`。该链路说明
+benefit / lag 缺失证据、direct signal churn / weight jump / direction flip metrics、
+sideways mixed 原因、3d vs 5d readiness score 和 owner decision options。Readiness weights、
+jump thresholds 和 review thresholds 是 research pilot baseline；`PROMOTE_FOR_REVIEW` 只代表
+可进入 owner review 讨论，不代表 automatic promotion。所有输出继续固定
+`research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
+`auto_apply=false`、`production_effect=none`；不得新增/启用 target method、修改
+`position_advisory_v1.yaml`、official target weights、paper/real portfolio、baseline/production
+state、policy、order ticket 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

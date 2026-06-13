@@ -2380,6 +2380,28 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_system_target.get("smoothed_watch_recommended_action"),
                     ),
                     (
+                        "smoothed_owner_update_id",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_update_id"),
+                    ),
+                    (
+                        "smoothed_owner_readiness_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_readiness_decision"
+                        ),
+                    ),
+                    (
+                        "smoothed_owner_recommended_action",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_recommended_action"
+                        ),
+                    ),
+                    (
+                        "smoothed_owner_forward_confirmation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_forward_confirmation_status"
+                        ),
+                    ),
+                    (
                         "experiment_triage_id",
                         etf_dynamic_v3_system_target.get("experiment_triage_id"),
                     ),
@@ -2529,6 +2551,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_system_target.get("smoothed_watch_pack_path"),
                     ),
                     (
+                        "smoothed_owner_update_path",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_update_path"),
+                    ),
+                    (
                         "experiment_triage_path",
                         etf_dynamic_v3_system_target.get("experiment_triage_path"),
                     ),
@@ -2598,6 +2624,47 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "watch_pack_path",
                         etf_dynamic_v3_system_target.get("smoothed_watch_pack_path"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Smoothed Owner Review",
+            _definition_table(
+                [
+                    (
+                        "owner_update_id",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_update_id"),
+                    ),
+                    (
+                        "readiness_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_readiness_decision"
+                        ),
+                    ),
+                    (
+                        "recommended_owner_action",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_recommended_action"
+                        ),
+                    ),
+                    (
+                        "forward_confirmation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_forward_confirmation_status"
+                        ),
+                    ),
+                    (
+                        "broker_action_allowed",
+                        etf_dynamic_v3_system_target.get("broker_action_allowed"),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_system_target.get("production_effect"),
+                    ),
+                    (
+                        "owner_update_path",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_update_path"),
                     ),
                 ]
             ),
@@ -8441,6 +8508,13 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_watch_manifest.json",
     )
+    smoothed_owner_update_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_owner_review_update",
+        ),
+        "smoothed_owner_update_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -8466,6 +8540,7 @@ def _etf_dynamic_v3_system_target_summary(
     risk_capped_review_manifest = _read_optional_json(risk_capped_review_path)
     smoothed_review_manifest = _read_optional_json(smoothed_review_path)
     smoothed_watch_manifest = _read_optional_json(smoothed_watch_path)
+    smoothed_owner_update_manifest = _read_optional_json(smoothed_owner_update_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
@@ -8474,6 +8549,7 @@ def _etf_dynamic_v3_system_target_summary(
         and not risk_capped_review_manifest
         and not smoothed_review_manifest
         and not smoothed_watch_manifest
+        and not smoothed_owner_update_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -8592,6 +8668,12 @@ def _etf_dynamic_v3_system_target_summary(
             "smoothed_watch_summary.json",
         )
     )
+    smoothed_owner_options = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_owner_update_path,
+            "smoothed_owner_decision_options.json",
+        )
+    )
     experiment_triage_summary = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(experiment_triage_path, "triage_summary.json")
     )
@@ -8707,6 +8789,8 @@ def _etf_dynamic_v3_system_target_summary(
         smoothed_decision,
         smoothed_watch_manifest,
         smoothed_watch_summary,
+        smoothed_owner_update_manifest,
+        smoothed_owner_options,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -8795,6 +8879,8 @@ def _etf_dynamic_v3_system_target_summary(
             f"risk_capped={risk_capped_decision_label}; "
             f"smoothed={smoothed_decision_label}; "
             f"smoothed_watch={_text(smoothed_watch_summary.get('recommended_action'), 'MISSING')}; "
+            "smoothed_owner="
+            f"{_text(smoothed_owner_options.get('recommended_owner_action'), 'MISSING')}; "
             f"experiment_top={experiment_top_variant}; "
             f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
@@ -8996,6 +9082,22 @@ def _etf_dynamic_v3_system_target_summary(
             smoothed_watch_summary.get("recovery_lag_status"),
             "MISSING",
         ),
+        "smoothed_owner_update_id": _text(
+            smoothed_owner_update_manifest.get("owner_update_id"),
+            "MISSING",
+        ),
+        "smoothed_owner_readiness_decision": _text(
+            smoothed_owner_options.get("readiness_decision"),
+            "MISSING",
+        ),
+        "smoothed_owner_recommended_action": _text(
+            smoothed_owner_options.get("recommended_owner_action"),
+            "MISSING",
+        ),
+        "smoothed_owner_forward_confirmation_status": _text(
+            smoothed_owner_options.get("forward_confirmation_status"),
+            "MISSING",
+        ),
         "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
         "smoothed_backfill_path": (
             "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
@@ -9005,6 +9107,9 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_review_path": "" if smoothed_review_path is None else str(smoothed_review_path),
         "smoothed_watch_pack_path": "" if smoothed_watch_path is None else str(smoothed_watch_path),
+        "smoothed_owner_update_path": (
+            "" if smoothed_owner_update_path is None else str(smoothed_owner_update_path)
+        ),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
             "MISSING",
@@ -9178,11 +9283,16 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_watch_benefit_lag_tradeoff": "MISSING",
         "smoothed_watch_sideways_validation_status": "MISSING",
         "smoothed_watch_recovery_lag_status": "MISSING",
+        "smoothed_owner_update_id": "MISSING",
+        "smoothed_owner_readiness_decision": "MISSING",
+        "smoothed_owner_recommended_action": "MISSING",
+        "smoothed_owner_forward_confirmation_status": "MISSING",
         "smoothed_path": "",
         "smoothed_backfill_path": "",
         "smoothed_comparison_path": "",
         "smoothed_review_path": "",
         "smoothed_watch_pack_path": "",
+        "smoothed_owner_update_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",

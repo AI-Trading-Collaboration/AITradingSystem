@@ -3010,6 +3010,111 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_evidence_gap
+    title: ETF Dynamic v3 Rescue Smoothed Evidence Gap Diagnosis
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-evidence-gap report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap/*/smoothed_evidence_gap_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap/*/missing_evidence_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap/*/evidence_gap_reason_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap/*/required_metric_backfill_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_evidence_gap/*/smoothed_evidence_gap_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-256 explains which smoothed method evidence gaps can be resolved
+      by direct metric backfill and which still require forward observation.
+    owner_action: review_smoothed_evidence_gaps_before_readiness_scorecard
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_churn_backfill
+    title: ETF Dynamic v3 Rescue Smoothed Churn Backfill
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-churn-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_churn_backfill/*/smoothed_churn_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_churn_backfill/*/churn_metrics_by_method.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_churn_backfill/*/weight_jump_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_churn_backfill/*/direction_flip_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_churn_backfill/*/churn_reduction_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_churn_backfill/*/smoothed_churn_backfill_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-257 adds direct weight jump, direction flip, turnover, and signal
+      churn metrics for smoothed methods against limited and risk-capped inputs.
+    owner_action: review_churn_backfill_before_sideways_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_sideways_mixed_attribution
+    title: ETF Dynamic v3 Rescue Sideways Mixed Attribution
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue sideways-mixed-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/sideways_mixed_attribution/*/sideways_mixed_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sideways_mixed_attribution/*/sideways_window_outcomes.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/sideways_mixed_attribution/*/sideways_mixed_reason_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sideways_mixed_attribution/*/sideways_3d_vs_5d_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sideways_mixed_attribution/*/sideways_mixed_attribution_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-258 attributes mixed sideways evidence between churn reduction,
+      lag cost, drawdown protection, and 3d versus 5d smoothing behavior.
+    owner_action: review_sideways_mixed_reasons_before_readiness_scorecard
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_readiness_scorecard
+    title: ETF Dynamic v3 Rescue Smoothed Readiness Scorecard
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-readiness-scorecard report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_readiness_scorecard/*/smoothed_readiness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_readiness_scorecard/*/smoothed_method_scorecard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_readiness_scorecard/*/promotion_readiness_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_readiness_scorecard/*/smoothed_readiness_scorecard_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-259 combines attribution, benefit/lag, churn, sideways, and forward
+      confirmation evidence into a research-only promotion readiness scorecard.
+    owner_action: review_scorecard_before_owner_decision_update
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_owner_review_update
+    title: ETF Dynamic v3 Rescue Smoothed Owner Review Update
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-owner-review-update report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_review_update/*/smoothed_owner_update_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_review_update/*/smoothed_owner_decision_options.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_review_update/*/smoothed_owner_review_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_review_update/*/smoothed_owner_review_update_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_review_update/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-260 packages scorecard and watch-pack evidence into owner review
+      options while preserving no-production-effect safety fields.
+    owner_action: owner_review_smoothed_readiness_options_before_any_promotion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research
