@@ -2803,6 +2803,112 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_limited_config
+    title: ETF Dynamic v3 Rescue Smoothed Limited Config
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-limited report-config --config config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/smoothed_limited_config_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/normalized_smoothed_limited_config.yaml
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config/*/smoothed_limited_config_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-246 records the reviewed smoothing policy, lag diagnostics, and
+      research-only safety posture before generating smoothed limited targets.
+    owner_action: review_smoothed_limited_config_before_interpreting_research_method
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_limited
+    title: ETF Dynamic v3 Rescue Smoothed Limited Target
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-limited report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothed_limited_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothed_target_weights.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothing_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/lag_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/weight_jump_reduction_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited/*/smoothed_limited_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-247 converts limited_adjustment into smooth_weights_3d and
+      smooth_weights_5d research-only targets and records smoothing / lag events.
+    owner_action: review_smoothed_target_before_backfill_or_forward_confirmation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_backfill
+    title: ETF Dynamic v3 Rescue Smoothed Limited Backfill
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_method_states.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_trade_ledger.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_backfill_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_backfill/*/smoothed_backfill_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-248 backfills smoothed limited methods through the required
+      cached data quality gate and exposes turnover, smoothing, and lag events.
+    owner_action: review_smoothed_backfill_before_comparison_conclusion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_comparison
+    title: ETF Dynamic v3 Rescue Smoothed vs Limited Comparison
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-comparison report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_comparison_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_vs_limited_metrics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_regime_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_rolling_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_stability_comparison.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothing_lag_cost_analysis.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_comparison/*/smoothed_comparison_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-249 compares smoothed methods against limited, risk-capped, and
+      baseline method evidence on return, drawdown, turnover, stability, and lag cost.
+    owner_action: review_smoothed_comparison_before_review_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_review
+    title: ETF Dynamic v3 Rescue Smoothed Research Method Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/smoothed_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/smoothed_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/owner_smoothed_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/smoothed_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-250 packages the owner research review decision and keeps smoothed
+      methods research-only until forward confirmation and owner approval exist.
+    owner_action: owner_review_smoothed_method_before_any_forward_confirmation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research

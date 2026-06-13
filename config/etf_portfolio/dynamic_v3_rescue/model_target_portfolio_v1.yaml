@@ -31,6 +31,7 @@ source:
   position_advisory_config: config/etf_portfolio/dynamic_v3_rescue/position_advisory_v1.yaml
   pressure_regime_config: config/etf_portfolio/dynamic_v3_rescue/pressure_regime_tagging_v1.yaml
   risk_capped_limited_config: config/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_adjustment_v1.yaml
+  smoothed_limited_config: config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
 
 target_methods:
   enabled:
@@ -38,6 +39,8 @@ target_methods:
     - no_trade_baseline
     - consensus_target
     - limited_adjustment
+    - smooth_weights_3d_limited_adjustment
+    - smooth_weights_5d_limited_adjustment
     - risk_capped_limited_adjustment
     - defensive_limited_adjustment
     - equal_weight_shadow_candidates

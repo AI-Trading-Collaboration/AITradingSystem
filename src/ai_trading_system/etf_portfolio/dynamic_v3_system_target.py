@@ -32,11 +32,20 @@ TARGET_METHODS = (
     "no_trade_baseline",
     "consensus_target",
     "limited_adjustment",
+    "smooth_weights_3d_limited_adjustment",
+    "smooth_weights_5d_limited_adjustment",
     "risk_capped_limited_adjustment",
     "defensive_limited_adjustment",
     "equal_weight_shadow_candidates",
     "selected_top_candidate",
 )
+SMOOTHED_VARIANT_TO_METHOD = {
+    "smooth_weights_3d": "smooth_weights_3d_limited_adjustment",
+    "smooth_weights_5d": "smooth_weights_5d_limited_adjustment",
+}
+SMOOTHED_METHOD_TO_VARIANT = {
+    method: variant for variant, method in SMOOTHED_VARIANT_TO_METHOD.items()
+}
 DEFAULT_MODEL_TARGET_CONFIG_PATH = (
     PROJECT_ROOT
     / "config"
@@ -60,6 +69,13 @@ DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH = (
     / "etf_portfolio"
     / "dynamic_v3_rescue"
     / "risk_capped_limited_adjustment_v1.yaml"
+)
+DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "smoothed_limited_adjustment_v1.yaml"
 )
 DEFAULT_WEIGHT_OPTIMIZATION_HYPOTHESIS_CONFIG_PATH = (
     PROJECT_ROOT
@@ -124,6 +140,11 @@ DEFAULT_RISK_CAPPED_LIMITED_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_cappe
 DEFAULT_RISK_CAPPED_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_backfill"
 DEFAULT_RISK_CAPPED_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_comparison"
 DEFAULT_RISK_CAPPED_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_review"
+DEFAULT_SMOOTHED_CONFIG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_limited_config"
+DEFAULT_SMOOTHED_LIMITED_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_limited"
+DEFAULT_SMOOTHED_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_backfill"
+DEFAULT_SMOOTHED_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_comparison"
+DEFAULT_SMOOTHED_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_review"
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
 DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
@@ -186,6 +207,15 @@ RISK_CAPPED_ACCEPTABLE_RETURN_DELTA_FLOOR = -0.05
 
 # Reporting-only threshold for treating tiny exposure changes as unchanged.
 RISK_CAPPED_EXPOSURE_CHANGE_TOLERANCE = 0.001
+
+# Reporting-only preservation floor for smoothed method review. It labels
+# whether smoothing sacrificed too much return; it does not approve production
+# weights or size a position.
+SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR = -0.03
+
+# Reporting-only threshold for lag cost labels in smoothed comparison artifacts.
+SMOOTHED_LAG_COST_HIGH_THRESHOLD = -0.02
+SMOOTHED_LAG_COST_MEDIUM_THRESHOLD = -0.005
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -501,6 +531,208 @@ def risk_capped_limited_config_report_payload(
         **_read_json(root / "risk_capped_config_manifest.json"),
         "config_dir": str(root),
         "normalized_config": _load_yaml_mapping(root / "normalized_risk_capped_config.yaml"),
+    }
+
+
+def load_smoothed_limited_config(
+    path: Path = DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = _load_yaml_mapping(path)
+    _assert_smoothed_limited_config_safe(payload)
+    return payload
+
+
+def validate_smoothed_limited_config(
+    path: Path = DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    payload: dict[str, Any] = {}
+    try:
+        payload = load_smoothed_limited_config(path)
+    except Exception as exc:  # noqa: BLE001
+        checks.append(_check("config_loads", False, str(exc)))
+    if payload:
+        method = _mapping(payload.get("method"))
+        variants = _mapping(payload.get("variants"))
+        constraints = _mapping(payload.get("constraints"))
+        safety = _mapping(payload.get("safety"))
+        enabled = _enabled_smoothed_variants(payload)
+        checks.extend(
+            [
+                _check("schema_version", payload.get("schema_version") == SCHEMA_VERSION, ""),
+                _check(
+                    "method_name",
+                    method.get("name") == "smoothed_limited_adjustment",
+                    _text(method.get("name")),
+                ),
+                _check(
+                    "base_method_limited_adjustment",
+                    method.get("base_method") == "limited_adjustment",
+                    _text(method.get("base_method")),
+                ),
+                _check(
+                    "research_target_only",
+                    method.get("mode") == "research_target_only"
+                    and method.get("not_official_target_weights") is True
+                    and method.get("paper_shadow_only") is True,
+                    "",
+                ),
+                _check("at_least_one_variant_enabled", bool(enabled), ",".join(enabled)),
+                _check(
+                    "known_variants_only",
+                    set(enabled).issubset(set(SMOOTHED_VARIANT_TO_METHOD)),
+                    ",".join(enabled),
+                ),
+                _check(
+                    "variant_smoothing_windows_positive",
+                    all(
+                        int(_float(_mapping(variants.get(variant)).get("smoothing_window_days")))
+                        > 0
+                        for variant in enabled
+                    ),
+                    "",
+                ),
+                _check(
+                    "variant_alpha_within_bounds",
+                    all(
+                        0.0 <= _float(_mapping(variants.get(variant)).get("alpha"), -1.0) <= 1.0
+                        for variant in enabled
+                    ),
+                    "",
+                ),
+                _check(
+                    "max_daily_total_weight_change_within_bounds",
+                    all(
+                        0.0
+                        <= _float(
+                            _mapping(variants.get(variant)).get("max_daily_total_weight_change"),
+                            -1.0,
+                        )
+                        <= 1.0
+                        for variant in enabled
+                    ),
+                    "",
+                ),
+                _check(
+                    "single_symbol_change_not_above_total_change",
+                    all(
+                        _float(
+                            _mapping(variants.get(variant)).get(
+                                "max_single_symbol_daily_change"
+                            ),
+                            2.0,
+                        )
+                        <= _float(
+                            _mapping(variants.get(variant)).get("max_daily_total_weight_change"),
+                            -1.0,
+                        )
+                        for variant in enabled
+                    ),
+                    "",
+                ),
+                _check(
+                    "min_cash_non_negative",
+                    _float(constraints.get("min_cash_weight"), -1.0) >= 0.0,
+                    _text(constraints.get("min_cash_weight")),
+                ),
+                _check(
+                    "preserve_total_weight_true",
+                    constraints.get("preserve_total_weight") is True,
+                    "",
+                ),
+                _check(
+                    "constraints_within_bounds",
+                    _smoothed_constraints_within_bounds(constraints),
+                    "",
+                ),
+                _check("safety_locked", _safety_config_locked(safety), ""),
+            ]
+        )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_limited_config_validation",
+        "smoothed_limited_config",
+        checks,
+        extra={"config_path": str(path)},
+    )
+
+
+def build_smoothed_limited_config_report(
+    *,
+    config_path: Path = DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH,
+    output_dir: Path = DEFAULT_SMOOTHED_CONFIG_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_smoothed_limited_config(config_path)
+    validation = validate_smoothed_limited_config(config_path)
+    config_validation_id = _stable_id(
+        "smoothed-limited-config",
+        config_path,
+        validation["status"],
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / config_validation_id)
+    root.mkdir(parents=True, exist_ok=False)
+    normalized = _normalized_smoothed_config(config)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_limited_config_manifest",
+        "config_validation_id": root.name,
+        "generated_at": generated.isoformat(),
+        "status": validation["status"],
+        "config_path": str(config_path),
+        "base_method": _mapping(config.get("method")).get("base_method"),
+        "target_method": _mapping(config.get("method")).get("name"),
+        "enabled_variants": _enabled_smoothed_variants(config),
+        "smoothed_limited_config_manifest_path": str(
+            root / "smoothed_limited_config_manifest.json"
+        ),
+        "normalized_smoothed_limited_config_path": str(
+            root / "normalized_smoothed_limited_config.yaml"
+        ),
+        "smoothed_limited_config_report_path": str(root / "smoothed_limited_config_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_limited_config_manifest.json", manifest)
+    _write_text(
+        root / "normalized_smoothed_limited_config.yaml",
+        yaml.safe_dump(normalized, sort_keys=False, allow_unicode=True),
+    )
+    _write_text(
+        root / "smoothed_limited_config_report.md",
+        render_smoothed_limited_config_report(manifest, normalized, validation),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_limited_config",
+        root.name,
+        root / "smoothed_limited_config_manifest.json",
+    )
+    return {
+        "config_validation_id": root.name,
+        "config_dir": root,
+        "manifest": manifest,
+        "normalized_config": normalized,
+        "validation": validation,
+    }
+
+
+def smoothed_limited_config_report_payload(
+    *,
+    config_validation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_CONFIG_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=config_validation_id,
+        latest_pointer="latest_smoothed_limited_config",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_limited_config_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_limited_config_manifest.json"),
+        "config_dir": str(root),
+        "normalized_config": _load_yaml_mapping(root / "normalized_smoothed_limited_config.yaml"),
     }
 
 
@@ -1853,11 +2085,32 @@ def generate_model_target(
         as_of=target_date,
         regime_context="normal",
     )
+    smoothed_config = _load_smoothed_config_if_available(config)
+    smooth_3d = _smoothed_limited_weights_for_model_target(
+        base_weights=limited,
+        previous_weights=baseline,
+        smoothed_config=smoothed_config,
+        model_config=config,
+        as_of=target_date,
+        variant_id="smooth_weights_3d",
+        regime_context="normal",
+    )
+    smooth_5d = _smoothed_limited_weights_for_model_target(
+        base_weights=limited,
+        previous_weights=baseline,
+        smoothed_config=smoothed_config,
+        model_config=config,
+        as_of=target_date,
+        variant_id="smooth_weights_5d",
+        regime_context="normal",
+    )
     method_weights = {
         "static_baseline": baseline,
         "no_trade_baseline": baseline,
         "consensus_target": consensus,
         "limited_adjustment": limited,
+        "smooth_weights_3d_limited_adjustment": smooth_3d,
+        "smooth_weights_5d_limited_adjustment": smooth_5d,
         "risk_capped_limited_adjustment": risk_capped,
         "defensive_limited_adjustment": defensive,
         "equal_weight_shadow_candidates": equal_weight,
@@ -2908,6 +3161,7 @@ def run_paper_shadow_backfill(
     states: list[dict[str, Any]] = []
     ledger: list[dict[str, Any]] = []
     risk_config = _load_risk_capped_config_if_available(config)
+    smoothed_config = _load_smoothed_config_if_available(config)
     model_config = load_model_target_config(
         _resolve_project_path(source.get("model_target_config"), DEFAULT_MODEL_TARGET_CONFIG_PATH)
     )
@@ -2935,6 +3189,8 @@ def run_paper_shadow_backfill(
             cap_events: list[dict[str, Any]] = []
             reallocation_events: list[dict[str, Any]] = []
             cap_reason_summary: dict[str, Any] = {}
+            smoothing_events: list[dict[str, Any]] = []
+            lag_events: list[dict[str, Any]] = []
             if is_calendar_rebalance and method != "no_trade_baseline":
                 if method == "risk_capped_limited_adjustment":
                     cap_result = _apply_risk_capped_limited_adjustment(
@@ -2949,6 +3205,19 @@ def run_paper_shadow_backfill(
                     cap_events = _records(cap_result.get("cap_events"))
                     reallocation_events = _records(cap_result.get("reallocation_events"))
                     cap_reason_summary = _mapping(cap_result.get("cap_reason_summary"))
+                elif method in SMOOTHED_METHOD_TO_VARIANT:
+                    smoothing_result = _apply_smoothed_limited_adjustment(
+                        as_of=current_date,
+                        base_weights=target_weights["limited_adjustment"],
+                        previous_smoothed_weights=before_trade,
+                        smoothed_config=smoothed_config,
+                        model_config=model_config,
+                        variant_id=SMOOTHED_METHOD_TO_VARIANT[method],
+                        regime_context=_risk_capped_regime_context_for_return(return_row, config),
+                    )
+                    after_weights = smoothing_result["smoothed_weights"]
+                    smoothing_events = _records(smoothing_result.get("smoothing_events"))
+                    lag_events = _records(smoothing_result.get("lag_events"))
                 else:
                     after_weights = _normalize_weights(target)
                 turnover = _turnover(before_trade, after_weights)
@@ -2966,6 +3235,8 @@ def run_paper_shadow_backfill(
                         "cap_events": cap_events,
                         "reallocation_events": reallocation_events,
                         "cap_reason_summary": cap_reason_summary,
+                        "smoothing_events": smoothing_events,
+                        "lag_events": lag_events,
                         "broker_action_taken": False,
                         "order_ticket_generated": False,
                         **SYSTEM_TARGET_SAFETY,
@@ -3003,6 +3274,8 @@ def run_paper_shadow_backfill(
                     "turnover": round(turnover, 10),
                     "rebalance_event": rebalance_event,
                     "cap_event_count": len(cap_events) if rebalance_event else 0,
+                    "smoothing_event_count": len(smoothing_events) if rebalance_event else 0,
+                    "lag_event_count": len(lag_events) if rebalance_event else 0,
                     "research_target_only": True,
                     "not_official_target_weights": True,
                     "broker_action_taken": False,
@@ -5967,6 +6240,702 @@ def validate_risk_capped_review_artifact(
     )
 
 
+def generate_smoothed_limited_target(
+    *,
+    target_id: str,
+    config_path: Path = DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_LIMITED_DIR,
+    regime_context: str = "normal",
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_smoothed_limited_config(config_path)
+    model_target = model_target_report_payload(target_id=target_id, output_dir=model_target_dir)
+    model_config = load_model_target_config(
+        _resolve_project_path(model_target.get("config_path"), DEFAULT_MODEL_TARGET_CONFIG_PATH)
+    )
+    method_weights = _mapping(
+        _mapping(model_target.get("model_target_weights")).get("method_weights")
+    )
+    base_weights = _normalize_weights(_mapping(method_weights.get("limited_adjustment")))
+    previous_default = _normalize_weights(
+        _mapping(method_weights.get("static_baseline")) or base_weights
+    )
+    as_of = _coerce_date(model_target.get("as_of"), generated.date())
+    target_rows: list[dict[str, Any]] = []
+    smoothing_events: list[dict[str, Any]] = []
+    lag_events: list[dict[str, Any]] = []
+    for variant in _enabled_smoothed_variants(config):
+        target_method = SMOOTHED_VARIANT_TO_METHOD[variant]
+        previous = _normalize_weights(
+            _mapping(method_weights.get(target_method)) or previous_default
+        )
+        result = _apply_smoothed_limited_adjustment(
+            as_of=as_of,
+            base_weights=base_weights,
+            previous_smoothed_weights=previous,
+            smoothed_config=config,
+            model_config=model_config,
+            variant_id=variant,
+            regime_context=regime_context,
+        )
+        target_rows.append(
+            {
+                "as_of": as_of.isoformat(),
+                "base_method": "limited_adjustment",
+                "target_method": target_method,
+                "base_weights": base_weights,
+                "previous_smoothed_weights": previous,
+                "smoothed_weights": result["smoothed_weights"],
+                "smoothing_window_days": result["effective_policy"]["smoothing_window_days"],
+                "alpha": result["effective_policy"]["alpha"],
+                "regime_context": result["regime_context"],
+                "research_target_only": True,
+                "not_official_target_weights": True,
+                "broker_action_allowed": False,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+        smoothing_events.extend(_records(result.get("smoothing_events")))
+        lag_events.extend(_records(result.get("lag_events")))
+    summary = _smoothed_weight_jump_reduction_summary(target_rows)
+    smoothed_id = _stable_id(
+        "smoothed-limited",
+        target_id,
+        config_path,
+        target_rows,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / smoothed_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_limited_manifest",
+        "smoothed_id": root.name,
+        "target_id": target_id,
+        "generated_at": generated.isoformat(),
+        "as_of": as_of.isoformat(),
+        "status": "PASS" if target_rows else "FAIL",
+        "base_method": "limited_adjustment",
+        "target_methods": [row["target_method"] for row in target_rows],
+        "config_path": str(config_path),
+        "smoothed_limited_manifest_path": str(root / "smoothed_limited_manifest.json"),
+        "smoothed_target_weights_path": str(root / "smoothed_target_weights.jsonl"),
+        "smoothing_events_path": str(root / "smoothing_events.jsonl"),
+        "lag_events_path": str(root / "lag_events.jsonl"),
+        "weight_jump_reduction_summary_path": str(root / "weight_jump_reduction_summary.json"),
+        "smoothed_limited_report_path": str(root / "smoothed_limited_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_limited_manifest.json", manifest)
+    _write_jsonl(root / "smoothed_target_weights.jsonl", target_rows)
+    _write_jsonl(root / "smoothing_events.jsonl", smoothing_events)
+    _write_jsonl(root / "lag_events.jsonl", lag_events)
+    _write_json(root / "weight_jump_reduction_summary.json", summary)
+    _write_text(
+        root / "smoothed_limited_report.md",
+        render_smoothed_limited_report(manifest, target_rows, summary, lag_events),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_limited", root.name, root / "smoothed_limited_manifest.json"
+    )
+    return {
+        "smoothed_id": root.name,
+        "smoothed_dir": root,
+        "manifest": manifest,
+        "smoothed_target_weights": target_rows,
+        "smoothing_events": smoothing_events,
+        "lag_events": lag_events,
+        "weight_jump_reduction_summary": summary,
+    }
+
+
+def smoothed_limited_report_payload(
+    *,
+    smoothed_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_LIMITED_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=smoothed_id,
+        latest_pointer="latest_smoothed_limited",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_limited_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_limited_manifest.json"),
+        "smoothed_target_weights": _read_jsonl(root / "smoothed_target_weights.jsonl"),
+        "smoothing_events": _read_jsonl(root / "smoothing_events.jsonl"),
+        "lag_events": _read_jsonl(root / "lag_events.jsonl"),
+        "weight_jump_reduction_summary": _read_json(root / "weight_jump_reduction_summary.json"),
+        "smoothed_dir": str(root),
+    }
+
+
+def validate_smoothed_limited_artifact(
+    *,
+    smoothed_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_LIMITED_DIR,
+) -> dict[str, Any]:
+    root = output_dir / smoothed_id
+    manifest = _read_optional_json(root / "smoothed_limited_manifest.json") or {}
+    rows = _read_jsonl(root / "smoothed_target_weights.jsonl")
+    summary = _read_optional_json(root / "weight_jump_reduction_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_limited_manifest.json",
+            "smoothed_target_weights.jsonl",
+            "smoothing_events.jsonl",
+            "lag_events.jsonl",
+            "weight_jump_reduction_summary.json",
+            "smoothed_limited_report.md",
+        ),
+    )
+    target_methods = {row.get("target_method") for row in rows}
+    checks.extend(
+        [
+            _check("smoothed_id_matches", manifest.get("smoothed_id") == smoothed_id, ""),
+            _check("target_rows_present", bool(rows), ""),
+            _check(
+                "smoothed_methods_present",
+                {
+                    "smooth_weights_3d_limited_adjustment",
+                    "smooth_weights_5d_limited_adjustment",
+                }.issubset(target_methods),
+                ",".join(sorted(str(item) for item in target_methods)),
+            ),
+            _check(
+                "weights_sum_to_one",
+                all(_weights_sum_to_one(row.get("smoothed_weights")) for row in rows),
+                "",
+            ),
+            _check(
+                "weight_jump_summary_present",
+                bool(_records(summary.get("target_methods"))),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *rows), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_limited_validation",
+        smoothed_id,
+        checks,
+    )
+
+
+def run_smoothed_backfill(
+    *,
+    config_path: Path = DEFAULT_PAPER_SHADOW_BACKFILL_CONFIG_PATH,
+    output_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+    paper_shadow_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_backfill = run_paper_shadow_backfill(
+        config_path=config_path,
+        output_dir=paper_shadow_backfill_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+        generated_at=generated,
+    )
+    smoothed_methods = set(SMOOTHED_METHOD_TO_VARIANT)
+    states = [
+        row
+        for row in source_backfill["backfill_method_states"]
+        if row.get("target_method") in smoothed_methods
+    ]
+    ledger = [
+        row
+        for row in source_backfill["backfill_trade_ledger"]
+        if row.get("target_method") in smoothed_methods
+    ]
+    smoothing_events = [
+        event for row in ledger for event in _records(row.get("smoothing_events"))
+    ]
+    lag_events = [event for row in ledger for event in _records(row.get("lag_events"))]
+    summary = _smoothed_backfill_summary(
+        source_backfill["manifest"],
+        states,
+        ledger,
+        smoothing_events,
+        lag_events,
+    )
+    backfill_id = _stable_id(
+        "smoothed-backfill",
+        source_backfill["backfill_id"],
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_backfill_manifest",
+        "smoothed_backfill_id": root.name,
+        "source_paper_shadow_backfill_id": source_backfill["backfill_id"],
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if states else "FAIL",
+        "methods": sorted(smoothed_methods),
+        "market_regime": source_backfill["manifest"].get("market_regime", "ai_after_chatgpt"),
+        "date_start": source_backfill["manifest"].get("date_start"),
+        "date_end": source_backfill["manifest"].get("date_end"),
+        "smoothed_backfill_manifest_path": str(root / "smoothed_backfill_manifest.json"),
+        "smoothed_method_states_path": str(root / "smoothed_method_states.jsonl"),
+        "smoothed_trade_ledger_path": str(root / "smoothed_trade_ledger.jsonl"),
+        "smoothed_backfill_summary_path": str(root / "smoothed_backfill_summary.json"),
+        "smoothed_backfill_report_path": str(root / "smoothed_backfill_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_backfill_manifest.json", manifest)
+    _write_jsonl(root / "smoothed_method_states.jsonl", states)
+    _write_jsonl(root / "smoothed_trade_ledger.jsonl", ledger)
+    _write_json(root / "smoothed_backfill_summary.json", summary)
+    _write_text(
+        root / "smoothed_backfill_report.md",
+        render_smoothed_backfill_report(manifest, summary),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_backfill", root.name, root / "smoothed_backfill_manifest.json"
+    )
+    return {
+        "smoothed_backfill_id": root.name,
+        "smoothed_backfill_dir": root,
+        "source_paper_shadow_backfill": source_backfill,
+        "manifest": manifest,
+        "smoothed_method_states": states,
+        "smoothed_trade_ledger": ledger,
+        "smoothed_backfill_summary": summary,
+        "smoothing_events": smoothing_events,
+        "lag_events": lag_events,
+    }
+
+
+def smoothed_backfill_report_payload(
+    *,
+    backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=backfill_id,
+        latest_pointer="latest_smoothed_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_backfill_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_backfill_manifest.json"),
+        "smoothed_method_states": _read_jsonl(root / "smoothed_method_states.jsonl"),
+        "smoothed_trade_ledger": _read_jsonl(root / "smoothed_trade_ledger.jsonl"),
+        "smoothed_backfill_summary": _read_json(root / "smoothed_backfill_summary.json"),
+        "smoothed_backfill_dir": str(root),
+    }
+
+
+def validate_smoothed_backfill_artifact(
+    *,
+    backfill_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / backfill_id
+    manifest = _read_optional_json(root / "smoothed_backfill_manifest.json") or {}
+    states = _read_jsonl(root / "smoothed_method_states.jsonl")
+    ledger = _read_jsonl(root / "smoothed_trade_ledger.jsonl")
+    summary = _read_optional_json(root / "smoothed_backfill_summary.json") or {}
+    methods = {row.get("target_method") for row in states}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_backfill_manifest.json",
+            "smoothed_method_states.jsonl",
+            "smoothed_trade_ledger.jsonl",
+            "smoothed_backfill_summary.json",
+            "smoothed_backfill_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "backfill_id_matches",
+                manifest.get("smoothed_backfill_id") == backfill_id,
+                "",
+            ),
+            _check("states_present", bool(states), ""),
+            _check(
+                "smoothed_methods_present",
+                set(SMOOTHED_METHOD_TO_VARIANT).issubset(methods),
+                ",".join(sorted(str(item) for item in methods)),
+            ),
+            _check("trade_ledger_present", bool(ledger), ""),
+            _check(
+                "data_quality_visible",
+                summary.get("data_quality") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(summary.get("data_quality")),
+            ),
+            _check(
+                "broker_action_taken_false",
+                summary.get("broker_action_taken") is False
+                and all(row.get("broker_action_taken") is False for row in ledger),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *states, *ledger), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_backfill_validation",
+        backfill_id,
+        checks,
+    )
+
+
+def run_smoothed_comparison(
+    *,
+    smoothed_backfill_id: str,
+    baseline_backfill_id: str,
+    risk_capped_backfill_id: str,
+    smoothed_backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+    baseline_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    risk_capped_backfill_dir: Path = DEFAULT_RISK_CAPPED_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    smoothed = smoothed_backfill_report_payload(
+        backfill_id=smoothed_backfill_id,
+        output_dir=smoothed_backfill_dir,
+    )
+    baseline = paper_shadow_backfill_report_payload(
+        backfill_id=baseline_backfill_id,
+        output_dir=baseline_backfill_dir,
+    )
+    risk_capped = risk_capped_backfill_report_payload(
+        backfill_id=risk_capped_backfill_id,
+        output_dir=risk_capped_backfill_dir,
+    )
+    smoothed_states = _records(smoothed.get("smoothed_method_states"))
+    baseline_states = _records(baseline.get("backfill_method_states"))
+    risk_states = _records(risk_capped.get("risk_capped_method_states"))
+    combined_states = [*baseline_states, *risk_states, *smoothed_states]
+    smoothed_ledger = _records(smoothed.get("smoothed_trade_ledger"))
+    metrics = _smoothed_vs_limited_metrics(smoothed_states, baseline_states, risk_states)
+    regime = _smoothed_regime_comparison(combined_states, baseline)
+    rolling = _smoothed_rolling_comparison(combined_states, baseline)
+    stability = _smoothed_stability_comparison(smoothed_states, baseline_states)
+    lag_cost = _smoothed_lag_cost_analysis(combined_states, smoothed_ledger, baseline)
+    comparison_id = _stable_id(
+        "smoothed-comparison",
+        smoothed_backfill_id,
+        baseline_backfill_id,
+        risk_capped_backfill_id,
+        metrics,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / comparison_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_comparison_manifest",
+        "comparison_id": root.name,
+        "smoothed_backfill_id": smoothed_backfill_id,
+        "baseline_backfill_id": baseline_backfill_id,
+        "risk_capped_backfill_id": risk_capped_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "date_start": baseline.get("date_start"),
+        "date_end": baseline.get("date_end"),
+        "smoothed_comparison_manifest_path": str(root / "smoothed_comparison_manifest.json"),
+        "smoothed_vs_limited_metrics_path": str(root / "smoothed_vs_limited_metrics.json"),
+        "smoothed_regime_comparison_path": str(root / "smoothed_regime_comparison.json"),
+        "smoothed_rolling_comparison_path": str(root / "smoothed_rolling_comparison.json"),
+        "smoothed_stability_comparison_path": str(root / "smoothed_stability_comparison.json"),
+        "smoothing_lag_cost_analysis_path": str(root / "smoothing_lag_cost_analysis.json"),
+        "smoothed_comparison_report_path": str(root / "smoothed_comparison_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_comparison_manifest.json", manifest)
+    _write_json(root / "smoothed_vs_limited_metrics.json", metrics)
+    _write_json(root / "smoothed_regime_comparison.json", regime)
+    _write_json(root / "smoothed_rolling_comparison.json", rolling)
+    _write_json(root / "smoothed_stability_comparison.json", stability)
+    _write_json(root / "smoothing_lag_cost_analysis.json", lag_cost)
+    _write_text(
+        root / "smoothed_comparison_report.md",
+        render_smoothed_comparison_report(manifest, metrics, regime, rolling, stability, lag_cost),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_comparison", root.name, root / "smoothed_comparison_manifest.json"
+    )
+    return {
+        "comparison_id": root.name,
+        "comparison_dir": root,
+        "manifest": manifest,
+        "smoothed_vs_limited_metrics": metrics,
+        "smoothed_regime_comparison": regime,
+        "smoothed_rolling_comparison": rolling,
+        "smoothed_stability_comparison": stability,
+        "smoothing_lag_cost_analysis": lag_cost,
+    }
+
+
+def smoothed_comparison_report_payload(
+    *,
+    comparison_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=comparison_id,
+        latest_pointer="latest_smoothed_comparison",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_comparison_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_comparison_manifest.json"),
+        "smoothed_vs_limited_metrics": _read_json(root / "smoothed_vs_limited_metrics.json"),
+        "smoothed_regime_comparison": _read_json(root / "smoothed_regime_comparison.json"),
+        "smoothed_rolling_comparison": _read_json(root / "smoothed_rolling_comparison.json"),
+        "smoothed_stability_comparison": _read_json(root / "smoothed_stability_comparison.json"),
+        "smoothing_lag_cost_analysis": _read_json(root / "smoothing_lag_cost_analysis.json"),
+        "comparison_dir": str(root),
+    }
+
+
+def validate_smoothed_comparison_artifact(
+    *,
+    comparison_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = output_dir / comparison_id
+    manifest = _read_optional_json(root / "smoothed_comparison_manifest.json") or {}
+    metrics = _read_optional_json(root / "smoothed_vs_limited_metrics.json") or {}
+    regime = _read_optional_json(root / "smoothed_regime_comparison.json") or {}
+    rolling = _read_optional_json(root / "smoothed_rolling_comparison.json") or {}
+    stability = _read_optional_json(root / "smoothed_stability_comparison.json") or {}
+    lag_cost = _read_optional_json(root / "smoothing_lag_cost_analysis.json") or {}
+    comparison_pairs = _records(metrics.get("comparisons"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_comparison_manifest.json",
+            "smoothed_vs_limited_metrics.json",
+            "smoothed_regime_comparison.json",
+            "smoothed_rolling_comparison.json",
+            "smoothed_stability_comparison.json",
+            "smoothing_lag_cost_analysis.json",
+            "smoothed_comparison_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("comparison_id_matches", manifest.get("comparison_id") == comparison_id, ""),
+            _check(
+                "smooth_3d_vs_limited_present",
+                any(
+                    row.get("method_a") == "smooth_weights_3d_limited_adjustment"
+                    and row.get("method_b") == "limited_adjustment"
+                    for row in comparison_pairs
+                ),
+                "",
+            ),
+            _check(
+                "smooth_5d_vs_limited_present",
+                any(
+                    row.get("method_a") == "smooth_weights_5d_limited_adjustment"
+                    and row.get("method_b") == "limited_adjustment"
+                    for row in comparison_pairs
+                ),
+                "",
+            ),
+            _check("regime_comparison_present", bool(_records(regime.get("regimes"))), ""),
+            _check(
+                "rolling_comparison_present",
+                bool(_records(rolling.get("methods"))),
+                "",
+            ),
+            _check(
+                "stability_comparison_present",
+                bool(_records(stability.get("methods"))),
+                "",
+            ),
+            _check(
+                "lag_cost_present",
+                bool(_records(lag_cost.get("methods"))),
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, metrics, regime, rolling, stability, lag_cost),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_comparison_validation",
+        comparison_id,
+        checks,
+    )
+
+
+def build_smoothed_review_pack(
+    *,
+    comparison_id: str,
+    smoothed_backfill_id: str,
+    comparison_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
+    smoothed_backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    comparison = smoothed_comparison_report_payload(
+        comparison_id=comparison_id,
+        output_dir=comparison_dir,
+    )
+    backfill = smoothed_backfill_report_payload(
+        backfill_id=smoothed_backfill_id,
+        output_dir=smoothed_backfill_dir,
+    )
+    decision = _smoothed_review_decision(comparison, backfill)
+    review_id = _stable_id(
+        "smoothed-review",
+        comparison_id,
+        smoothed_backfill_id,
+        decision,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["review_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_review_manifest",
+        "review_id": root.name,
+        "comparison_id": comparison_id,
+        "smoothed_backfill_id": smoothed_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_review_manifest_path": str(root / "smoothed_review_manifest.json"),
+        "smoothed_decision_path": str(root / "smoothed_decision.json"),
+        "owner_smoothed_checklist_path": str(root / "owner_smoothed_checklist.md"),
+        "smoothed_review_report_path": str(root / "smoothed_review_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_review_manifest.json", manifest)
+    _write_json(root / "smoothed_decision.json", decision)
+    _write_text(root / "owner_smoothed_checklist.md", render_smoothed_owner_checklist(decision))
+    _write_text(
+        root / "smoothed_review_report.md",
+        render_smoothed_review_report(manifest, decision, comparison, backfill),
+    )
+    _write_text(root / "reader_brief_section.md", render_smoothed_review_reader_brief(decision))
+    _write_latest_pointer(
+        "latest_smoothed_review", root.name, root / "smoothed_review_manifest.json"
+    )
+    return {
+        "review_id": root.name,
+        "review_dir": root,
+        "manifest": manifest,
+        "smoothed_decision": decision,
+        "reader_brief_section": render_smoothed_review_reader_brief(decision),
+    }
+
+
+def smoothed_review_report_payload(
+    *,
+    review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=review_id,
+        latest_pointer="latest_smoothed_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_review_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_review_manifest.json"),
+        "smoothed_decision": _read_json(root / "smoothed_decision.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "review_dir": str(root),
+    }
+
+
+def validate_smoothed_review_artifact(
+    *,
+    review_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / review_id
+    manifest = _read_optional_json(root / "smoothed_review_manifest.json") or {}
+    decision = _read_optional_json(root / "smoothed_decision.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_review_manifest.json",
+            "smoothed_decision.json",
+            "owner_smoothed_checklist.md",
+            "smoothed_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "review_id_matches",
+                manifest.get("review_id") == review_id and decision.get("review_id") == review_id,
+                "",
+            ),
+            _check(
+                "decision_valid",
+                decision.get("decision")
+                in {
+                    "PROMOTE_TO_RECOMMENDED_RESEARCH",
+                    "CONTINUE_OBSERVATION",
+                    "REVIEW_REQUIRED",
+                    "REJECT",
+                },
+                _text(decision.get("decision")),
+            ),
+            _check(
+                "recommended_method_valid",
+                decision.get("recommended_method") == "smooth_weights_3d_limited_adjustment",
+                _text(decision.get("recommended_method")),
+            ),
+            _check("research_target_only_true", decision.get("research_target_only") is True, ""),
+            _check(
+                "not_official_target_weights_true",
+                decision.get("not_official_target_weights") is True,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                decision.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", decision.get("production_effect") == "none", ""),
+            _check(
+                "requires_forward_confirmation_true",
+                decision.get("requires_forward_confirmation") is True,
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, decision), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_review_validation",
+        review_id,
+        checks,
+    )
+
+
 def render_risk_capped_limited_config_report(
     manifest: Mapping[str, Any],
     config: Mapping[str, Any],
@@ -6177,6 +7146,237 @@ def render_risk_capped_review_reader_brief(decision: Mapping[str, Any]) -> str:
             f"- decision: {decision.get('decision')}",
             f"- decision_confidence: {decision.get('decision_confidence')}",
             f"- improvements_vs_limited: {decision.get('improvements_vs_limited')}",
+            "- research_target_only: true",
+            "- requires_forward_confirmation: true",
+            f"- next_action: {decision.get('next_action')}",
+            "",
+        ]
+    )
+
+
+def render_smoothed_limited_config_report(
+    manifest: Mapping[str, Any],
+    config: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> str:
+    variants = _mapping(config.get("variants"))
+    context = _mapping(config.get("regime_context"))
+    return "\n".join(
+        [
+            f"# Smoothed Limited Config {manifest.get('config_validation_id')}",
+            "",
+            f"- base_method: {_mapping(config.get('method')).get('base_method')}",
+            "- target_methods: smooth_weights_3d_limited_adjustment, "
+            "smooth_weights_5d_limited_adjustment",
+            f"- validation_status: {validation.get('status')}",
+            f"- enabled_variants: {', '.join(_enabled_smoothed_variants(config))}",
+            f"- smooth_weights_3d: {_mapping(variants.get('smooth_weights_3d'))}",
+            f"- smooth_weights_5d: {_mapping(variants.get('smooth_weights_5d'))}",
+            f"- sideways_choppy: {_mapping(context.get('sideways_choppy'))}",
+            f"- strong_recovery: {_mapping(context.get('strong_recovery'))}",
+            "- official_target_weights_written: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "该配置只定义 limited_adjustment weight path 的 research-only smoothing policy。"
+            "3d 是 primary candidate，5d 是 lag-risk sensitivity method；二者都不会触发 "
+            "broker 或 official target weights。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_limited_report(
+    manifest: Mapping[str, Any],
+    target_rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+    lag_events: Sequence[Mapping[str, Any]],
+) -> str:
+    row_by_method = {row.get("target_method"): row for row in target_rows}
+    summary_rows = _records(summary.get("target_methods"))
+    return "\n".join(
+        [
+            f"# Smoothed Limited Target {manifest.get('smoothed_id')}",
+            "",
+            f"- as_of: {manifest.get('as_of')}",
+            "- base_method: limited_adjustment",
+            f"- target_methods: {', '.join(_texts(manifest.get('target_methods')))}",
+            f"- smooth_weights_3d_weights: "
+            f"{_mapping(row_by_method.get('smooth_weights_3d_limited_adjustment')).get('smoothed_weights')}",
+            f"- smooth_weights_5d_weights: "
+            f"{_mapping(row_by_method.get('smooth_weights_5d_limited_adjustment')).get('smoothed_weights')}",
+            f"- smoothing_event_count: "
+            f"{sum(int(_float(row.get('smoothing_event_count'))) for row in summary_rows)}",
+            f"- lag_event_count: {len(lag_events)}",
+            f"- jump_reduction_summary: {summary_rows}",
+            "- weights_sum_preserved: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "报告回答：3d / 5d 的 smoothed weights 在 `smoothed_target_weights.jsonl`；"
+            "权重跳变减少在 `weight_jump_reduction_summary.json`；lag diagnostics 在 "
+            "`lag_events.jsonl`；本链路不会触发 broker。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_backfill_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    methods = _records(summary.get("methods"))
+    return "\n".join(
+        [
+            f"# Smoothed Paper Shadow Backfill {manifest.get('smoothed_backfill_id')}",
+            "",
+            f"- date_range: {summary.get('date_start')} to {summary.get('date_end')}",
+            f"- data_quality: {summary.get('data_quality')}",
+            f"- smoothing_event_count: {summary.get('smoothing_event_count')}",
+            f"- lag_event_count: {summary.get('lag_event_count')}",
+            f"- methods: {methods}",
+            "- broker_action_taken: false",
+            "- not_official_target_weights: true",
+            "- production_effect: none",
+            "",
+            "该 backfill 覆盖 ai_after_chatgpt regime，用于评估 smoothed limited method "
+            "的 historical research behavior，不是 production backtest 或交易指令。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_comparison_report(
+    manifest: Mapping[str, Any],
+    metrics: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    rolling: Mapping[str, Any],
+    stability: Mapping[str, Any],
+    lag_cost: Mapping[str, Any],
+) -> str:
+    primary = _find_comparison(
+        _records(metrics.get("comparisons")),
+        "smooth_weights_3d_limited_adjustment",
+        "limited_adjustment",
+    )
+    stability_primary = _find_method(
+        _records(stability.get("methods")), "smooth_weights_3d_limited_adjustment"
+    )
+    lag_primary = _find_method(
+        _records(lag_cost.get("methods")), "smooth_weights_3d_limited_adjustment"
+    )
+    rolling_primary = _find_method(
+        _records(rolling.get("methods")), "smooth_weights_3d_limited_adjustment"
+    )
+    sideways = next(
+        (
+            row
+            for row in _records(regime.get("regimes"))
+            if row.get("regime") == "sideways_choppy"
+        ),
+        {},
+    )
+    return "\n".join(
+        [
+            f"# Smoothed Comparison {manifest.get('comparison_id')}",
+            "",
+            f"- smooth_3d_return_delta_vs_limited: {primary.get('total_return_delta')}",
+            f"- smooth_3d_drawdown_delta_vs_limited: {primary.get('max_drawdown_delta')}",
+            f"- smooth_3d_turnover_delta_vs_limited: {primary.get('turnover_delta')}",
+            f"- smooth_3d_rolling_consistency_delta: "
+            f"{rolling_primary.get('rolling_consistency_delta')}",
+            f"- smooth_3d_stability_conclusion: {stability_primary.get('stability_conclusion')}",
+            f"- smooth_3d_lag_cost_status: {lag_primary.get('lag_cost_status')}",
+            f"- sideways_choppy_conclusion: {sideways.get('smooth_3d_conclusion')}",
+            f"- conclusion: {primary.get('conclusion')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "结论只用于 research method review。即使 smoothed method 优于 "
+            "limited_adjustment，仍不代表 official target weights 或 broker action 获批。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_owner_checklist(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Owner Smoothed Checklist {decision.get('review_id', '')}",
+            "",
+            "- [ ] 是否接受 smooth_weights_3d_limited_adjustment 作为 recommended method？",
+            "- [ ] 是否接受 smooth_weights_5d 作为 secondary / sensitivity method？",
+            "- [ ] 是否接受 limited_adjustment 降为 baseline / reference method？",
+            "- [ ] 是否确认 smoothed method 仍需 forward confirmation？",
+            "- [ ] 是否确认不写 official target weights？",
+            "- [ ] 是否确认 no broker / no production？",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            "- requires_forward_confirmation: true",
+            "",
+        ]
+    )
+
+
+def render_smoothed_review_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    comparison: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+) -> str:
+    improvements = _mapping(decision.get("improvements_vs_limited"))
+    summary = _mapping(backfill.get("smoothed_backfill_summary"))
+    primary = _find_comparison(
+        _records(_mapping(comparison.get("smoothed_vs_limited_metrics")).get("comparisons")),
+        "smooth_weights_3d_limited_adjustment",
+        "limited_adjustment",
+    )
+    return "\n".join(
+        [
+            f"# Smoothed Research Method Review {manifest.get('review_id')}",
+            "",
+            f"- recommended_method: {decision.get('recommended_method')}",
+            f"- secondary_method: {decision.get('secondary_method')}",
+            f"- base_method: {decision.get('base_method')}",
+            f"- decision: {decision.get('decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- rolling_consistency: {improvements.get('rolling_consistency')}",
+            f"- turnover: {improvements.get('turnover')}",
+            f"- weight_jumps: {improvements.get('weight_jumps')}",
+            f"- return_preservation: {improvements.get('return_preservation')}",
+            f"- drawdown: {improvements.get('drawdown')}",
+            f"- lag_risk: {decision.get('lag_risk')}",
+            f"- return_delta_vs_limited: {primary.get('total_return_delta')}",
+            f"- drawdown_delta_vs_limited: {primary.get('max_drawdown_delta')}",
+            f"- smoothing_event_count: {summary.get('smoothing_event_count')}",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "- requires_forward_confirmation: true",
+            "",
+            "该 review pack 判断 smooth_weights_3d_limited_adjustment 是否解决 "
+            "limited_adjustment 的 rolling instability、signal churn 和 weight jump 问题。"
+            "结论仍需 owner review 和 forward confirmation，不能自动成为 production target "
+            "weights。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_review_reader_brief(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Research Method Review",
+            "",
+            f"- recommended_method: {decision.get('recommended_method')}",
+            f"- secondary_method: {decision.get('secondary_method')}",
+            f"- decision: {decision.get('decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- improvements_vs_limited: {decision.get('improvements_vs_limited')}",
+            f"- lag_risk: {decision.get('lag_risk')}",
             "- research_target_only: true",
             "- requires_forward_confirmation: true",
             f"- next_action: {decision.get('next_action')}",
@@ -7643,11 +8843,32 @@ def _backfill_target_method_weights(config: Mapping[str, Any]) -> dict[str, dict
         as_of=AI_AFTER_CHATGPT_START,
         regime_context="normal",
     )
+    smoothed_config = _load_smoothed_config_if_available(config)
+    smooth_3d = _smoothed_limited_weights_for_model_target(
+        base_weights=limited,
+        previous_weights=baseline,
+        smoothed_config=smoothed_config,
+        model_config=model_config,
+        as_of=AI_AFTER_CHATGPT_START,
+        variant_id="smooth_weights_3d",
+        regime_context="normal",
+    )
+    smooth_5d = _smoothed_limited_weights_for_model_target(
+        base_weights=limited,
+        previous_weights=baseline,
+        smoothed_config=smoothed_config,
+        model_config=model_config,
+        as_of=AI_AFTER_CHATGPT_START,
+        variant_id="smooth_weights_5d",
+        regime_context="normal",
+    )
     return {
         "static_baseline": baseline,
         "no_trade_baseline": baseline,
         "consensus_target": consensus,
         "limited_adjustment": limited,
+        "smooth_weights_3d_limited_adjustment": smooth_3d,
+        "smooth_weights_5d_limited_adjustment": smooth_5d,
         "risk_capped_limited_adjustment": risk_capped,
         "defensive_limited_adjustment": defensive,
         "equal_weight_shadow_candidates": equal_weight,
@@ -10783,6 +12004,28 @@ def _assert_risk_capped_limited_config_safe(payload: Mapping[str, Any]) -> None:
         raise DynamicV3SystemTargetError("risk-capped config safety fields are unsafe")
 
 
+def _assert_smoothed_limited_config_safe(payload: Mapping[str, Any]) -> None:
+    method = _mapping(payload.get("method"))
+    if method.get("name") != "smoothed_limited_adjustment":
+        raise DynamicV3SystemTargetError("smoothed config method.name is invalid")
+    if method.get("base_method") != "limited_adjustment":
+        raise DynamicV3SystemTargetError(
+            "smoothed config base_method must be limited_adjustment"
+        )
+    if method.get("mode") != "research_target_only":
+        raise DynamicV3SystemTargetError("smoothed config must use research_target_only mode")
+    if method.get("not_official_target_weights") is not True:
+        raise DynamicV3SystemTargetError("smoothed config must be not_official_target_weights")
+    if method.get("paper_shadow_only") is not True:
+        raise DynamicV3SystemTargetError("smoothed config must be paper_shadow_only")
+    if not _mapping(payload.get("variants")):
+        raise DynamicV3SystemTargetError("smoothed config variants are required")
+    if _mapping(payload.get("constraints")).get("preserve_total_weight") is not True:
+        raise DynamicV3SystemTargetError("smoothed config must preserve total weight")
+    if not _safety_config_locked(_mapping(payload.get("safety"))):
+        raise DynamicV3SystemTargetError("smoothed config safety fields are unsafe")
+
+
 def _load_risk_capped_config_if_available(config: Mapping[str, Any]) -> dict[str, Any]:
     source = _mapping(config.get("source"))
     path = _resolve_project_path(
@@ -10790,6 +12033,15 @@ def _load_risk_capped_config_if_available(config: Mapping[str, Any]) -> dict[str
         DEFAULT_RISK_CAPPED_LIMITED_CONFIG_PATH,
     )
     return load_risk_capped_limited_config(path)
+
+
+def _load_smoothed_config_if_available(config: Mapping[str, Any]) -> dict[str, Any]:
+    source = _mapping(config.get("source"))
+    path = _resolve_project_path(
+        source.get("smoothed_limited_config"),
+        DEFAULT_SMOOTHED_LIMITED_CONFIG_PATH,
+    )
+    return load_smoothed_limited_config(path)
 
 
 def _normalized_risk_capped_config(config: Mapping[str, Any]) -> dict[str, Any]:
@@ -10806,6 +12058,35 @@ def _normalized_risk_capped_config(config: Mapping[str, Any]) -> dict[str, Any]:
     normalized["reallocation"] = reallocation
     normalized["safety"] = {**SYSTEM_TARGET_SAFETY, **_mapping(config.get("safety"))}
     return normalized
+
+
+def _normalized_smoothed_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    normalized = dict(config)
+    normalized["safety"] = {**SYSTEM_TARGET_SAFETY, **_mapping(config.get("safety"))}
+    return normalized
+
+
+def _enabled_smoothed_variants(config: Mapping[str, Any]) -> list[str]:
+    variants = _mapping(config.get("variants"))
+    return [
+        variant
+        for variant in SMOOTHED_VARIANT_TO_METHOD
+        if _mapping(variants.get(variant)).get("enabled") is True
+    ]
+
+
+def _enabled_smoothed_methods(config: Mapping[str, Any]) -> list[str]:
+    return [SMOOTHED_VARIANT_TO_METHOD[variant] for variant in _enabled_smoothed_variants(config)]
+
+
+def _smoothed_constraints_within_bounds(constraints: Mapping[str, Any]) -> bool:
+    bounded_fields = (
+        "min_cash_weight",
+        "max_single_symbol_weight",
+        "max_semiconductor_weight",
+        "max_total_risk_asset_weight",
+    )
+    return all(0.0 <= _float(constraints.get(field), -1.0) <= 1.0 for field in bounded_fields)
 
 
 def _risk_capped_caps_within_bounds(
@@ -11566,6 +12847,843 @@ def _risk_capped_decision_reasons(
         "research_only_no_broker_no_production",
     ]
     return reasons
+
+
+def _smoothed_limited_weights_for_model_target(
+    *,
+    base_weights: Mapping[str, Any],
+    previous_weights: Mapping[str, Any],
+    smoothed_config: Mapping[str, Any],
+    model_config: Mapping[str, Any],
+    as_of: date,
+    variant_id: str,
+    regime_context: str,
+) -> dict[str, float]:
+    return _apply_smoothed_limited_adjustment(
+        as_of=as_of,
+        base_weights=base_weights,
+        previous_smoothed_weights=previous_weights,
+        smoothed_config=smoothed_config,
+        model_config=model_config,
+        variant_id=variant_id,
+        regime_context=regime_context,
+    )["smoothed_weights"]
+
+
+def _apply_smoothed_limited_adjustment(
+    *,
+    as_of: date,
+    base_weights: Mapping[str, Any],
+    previous_smoothed_weights: Mapping[str, Any],
+    smoothed_config: Mapping[str, Any],
+    model_config: Mapping[str, Any],
+    variant_id: str,
+    regime_context: str,
+) -> dict[str, Any]:
+    base = _normalize_weights(base_weights)
+    previous = _normalize_weights(previous_smoothed_weights or base)
+    symbols = sorted(
+        set(base)
+        | set(previous)
+        | set(_config_baseline_weights(model_config))
+        | set(_texts(_constraints(model_config).get("semiconductor_symbols")))
+        | set(_texts(_constraints(model_config).get("defensive_symbols")))
+        | {"CASH"}
+    )
+    policy = _effective_smoothed_policy(smoothed_config, variant_id, regime_context)
+    alpha = _float(policy.get("alpha"))
+    raw = {
+        symbol: _float(previous.get(symbol))
+        + alpha * (_float(base.get(symbol)) - _float(previous.get(symbol)))
+        for symbol in symbols
+    }
+    deltas = {
+        symbol: _float(raw.get(symbol)) - _float(previous.get(symbol)) for symbol in symbols
+    }
+    max_single = _float(policy.get("max_single_symbol_daily_change"), 1.0)
+    deltas = {
+        symbol: max(-max_single, min(max_single, delta)) for symbol, delta in deltas.items()
+    }
+    total_abs = sum(abs(delta) for delta in deltas.values())
+    max_total = _float(policy.get("max_daily_total_weight_change"), 1.0)
+    if total_abs > max_total > 0:
+        ratio = max_total / total_abs
+        deltas = {symbol: delta * ratio for symbol, delta in deltas.items()}
+    smoothed = {
+        symbol: max(0.0, _float(previous.get(symbol)) + _float(deltas.get(symbol)))
+        for symbol in symbols
+    }
+    smoothed = _normalize_weights(smoothed)
+    smoothed, constraint_events = _enforce_smoothed_constraints(
+        smoothed,
+        smoothed_config=smoothed_config,
+        model_config=model_config,
+        as_of=as_of,
+        target_method=SMOOTHED_VARIANT_TO_METHOD[variant_id],
+    )
+    smoothing_events = _smoothed_smoothing_events(
+        as_of=as_of,
+        target_method=SMOOTHED_VARIANT_TO_METHOD[variant_id],
+        symbols=symbols,
+        base=base,
+        previous=previous,
+        smoothed=smoothed,
+    )
+    lag_events = _smoothed_lag_events(
+        as_of=as_of,
+        target_method=SMOOTHED_VARIANT_TO_METHOD[variant_id],
+        symbols=symbols,
+        base=base,
+        previous=previous,
+        smoothed=smoothed,
+        regime_context=regime_context,
+        variant_id=variant_id,
+    )
+    return {
+        "base_weights": base,
+        "previous_smoothed_weights": previous,
+        "smoothed_weights": smoothed,
+        "effective_policy": policy,
+        "regime_context": regime_context,
+        "smoothing_events": [*smoothing_events, *constraint_events],
+        "lag_events": lag_events,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _effective_smoothed_policy(
+    smoothed_config: Mapping[str, Any],
+    variant_id: str,
+    regime_context: str,
+) -> dict[str, Any]:
+    variant = dict(_mapping(_mapping(smoothed_config.get("variants")).get(variant_id)))
+    policy = {
+        "smoothing_window_days": int(_float(variant.get("smoothing_window_days"), 1)),
+        "smoothing_type": _text(variant.get("smoothing_type"), "exponential"),
+        "alpha": _float(variant.get("alpha"), 1.0),
+        "min_signal_persistence_days": int(
+            _float(variant.get("min_signal_persistence_days"), 1)
+        ),
+        "max_daily_total_weight_change": _float(
+            variant.get("max_daily_total_weight_change"), 1.0
+        ),
+        "max_single_symbol_daily_change": _float(
+            variant.get("max_single_symbol_daily_change"), 1.0
+        ),
+    }
+    context = _mapping(_mapping(smoothed_config.get("regime_context")).get(regime_context))
+    if regime_context == "sideways_choppy" and context.get("increase_smoothing_strength") is True:
+        policy["alpha"] = _float(policy.get("alpha")) * _float(context.get("alpha_multiplier"), 1.0)
+        if context.get("max_daily_total_weight_change") is not None:
+            policy["max_daily_total_weight_change"] = min(
+                _float(policy.get("max_daily_total_weight_change"), 1.0),
+                _float(context.get("max_daily_total_weight_change")),
+            )
+        policy["min_signal_persistence_days"] = int(
+            _float(policy.get("min_signal_persistence_days"))
+            + _float(context.get("min_signal_persistence_days_add"), 0.0)
+        )
+    elif regime_context == "strong_recovery" and context.get("reduce_smoothing_strength") is True:
+        policy["alpha"] = _float(policy.get("alpha")) * _float(context.get("alpha_multiplier"), 1.0)
+        policy["allow_faster_risk_restore"] = context.get("allow_faster_risk_restore") is True
+    policy["alpha"] = round(max(0.0, min(1.0, _float(policy.get("alpha")))), 10)
+    policy["max_daily_total_weight_change"] = round(
+        max(0.0, min(1.0, _float(policy.get("max_daily_total_weight_change")))),
+        10,
+    )
+    policy["max_single_symbol_daily_change"] = round(
+        max(
+            0.0,
+            min(
+                _float(policy.get("max_daily_total_weight_change")),
+                _float(policy.get("max_single_symbol_daily_change")),
+            ),
+        ),
+        10,
+    )
+    return policy
+
+
+def _enforce_smoothed_constraints(
+    weights: Mapping[str, Any],
+    *,
+    smoothed_config: Mapping[str, Any],
+    model_config: Mapping[str, Any],
+    as_of: date,
+    target_method: str,
+) -> tuple[dict[str, float], list[dict[str, Any]]]:
+    adjusted = {symbol: _float(value) for symbol, value in _normalize_weights(weights).items()}
+    constraints = {**_constraints(model_config), **_mapping(smoothed_config.get("constraints"))}
+    semiconductors = _risk_capped_semiconductor_symbols(model_config)
+    defensive = _risk_capped_defensive_symbols(model_config)
+    symbols = sorted(set(adjusted) | set(semiconductors) | defensive | {"CASH"})
+    for symbol in symbols:
+        adjusted.setdefault(symbol, 0.0)
+    risk_symbols = [symbol for symbol in symbols if symbol not in defensive and symbol != "CASH"]
+    events: list[dict[str, Any]] = []
+
+    def allocate_to_cash(amount: float, reason: str, source: str) -> None:
+        if amount <= 0:
+            return
+        before = _float(adjusted.get("CASH"))
+        adjusted["CASH"] = round(before + amount, 10)
+        events.append(
+            {
+                "as_of": as_of.isoformat(),
+                "target_method": target_method,
+                "symbol": source,
+                "base_delta": 0.0,
+                "smoothed_delta": round(-amount, 10),
+                "delta_reduction": round(amount, 10),
+                "event_type": "constraint_reallocation",
+                "reason": reason,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+
+    def reduce_symbol(symbol: str, cap: float, reason: str) -> None:
+        before = _float(adjusted.get(symbol))
+        if before <= cap:
+            return
+        excess = round(before - cap, 10)
+        adjusted[symbol] = round(cap, 10)
+        allocate_to_cash(excess, reason, symbol)
+
+    def reduce_group(symbol_list: Sequence[str], cap: float, reason: str) -> None:
+        selected = [symbol for symbol in symbol_list if _float(adjusted.get(symbol)) > 0]
+        total = sum(_float(adjusted.get(symbol)) for symbol in selected)
+        if total <= cap or not selected:
+            return
+        reduction = total - cap
+        for symbol in selected:
+            share = _float(adjusted.get(symbol)) / total if total > 0 else 0.0
+            adjusted[symbol] = round(_float(adjusted.get(symbol)) - reduction * share, 10)
+        allocate_to_cash(reduction, reason, "GROUP")
+
+    max_single = _float(constraints.get("max_single_symbol_weight"), 1.0)
+    for symbol in symbols:
+        if symbol != "CASH":
+            reduce_symbol(symbol, max_single, "max_single_symbol_weight")
+    reduce_group(
+        semiconductors,
+        _float(constraints.get("max_semiconductor_weight"), 1.0),
+        "max_semiconductor_weight",
+    )
+    reduce_group(
+        risk_symbols,
+        _float(constraints.get("max_total_risk_asset_weight"), 1.0),
+        "max_total_risk_asset_weight",
+    )
+    min_cash = _float(constraints.get("min_cash_weight"), 0.0)
+    if _float(adjusted.get("CASH")) < min_cash:
+        need = min_cash - _float(adjusted.get("CASH"))
+        reduce_group(
+            risk_symbols,
+            max(0.0, _group_weight(adjusted, risk_symbols) - need),
+            "min_cash_weight",
+        )
+    return _normalize_weights(adjusted), events
+
+
+def _smoothed_smoothing_events(
+    *,
+    as_of: date,
+    target_method: str,
+    symbols: Sequence[str],
+    base: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    smoothed: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    events = []
+    for symbol in symbols:
+        base_delta = _float(base.get(symbol)) - _float(previous.get(symbol))
+        smoothed_delta = _float(smoothed.get(symbol)) - _float(previous.get(symbol))
+        delta_reduction = abs(base_delta) - abs(smoothed_delta)
+        if abs(delta_reduction) <= 0.0000001:
+            continue
+        events.append(
+            {
+                "as_of": as_of.isoformat(),
+                "target_method": target_method,
+                "symbol": symbol,
+                "base_delta": round(base_delta, 10),
+                "smoothed_delta": round(smoothed_delta, 10),
+                "delta_reduction": round(delta_reduction, 10),
+                "event_type": "weight_smoothing",
+                "reason": "exponential_smoothing",
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return events
+
+
+def _smoothed_lag_events(
+    *,
+    as_of: date,
+    target_method: str,
+    symbols: Sequence[str],
+    base: Mapping[str, Any],
+    previous: Mapping[str, Any],
+    smoothed: Mapping[str, Any],
+    regime_context: str,
+    variant_id: str,
+) -> list[dict[str, Any]]:
+    if regime_context != "strong_recovery":
+        return []
+    events = []
+    for symbol in symbols:
+        base_delta = _float(base.get(symbol)) - _float(previous.get(symbol))
+        smoothed_delta = _float(smoothed.get(symbol)) - _float(previous.get(symbol))
+        if base_delta <= 0 or smoothed_delta >= base_delta:
+            continue
+        reduction_ratio = 1.0 - (smoothed_delta / base_delta if base_delta else 1.0)
+        lag_risk = "HIGH" if variant_id == "smooth_weights_5d" else "MEDIUM"
+        if reduction_ratio < 0.25:
+            lag_risk = "LOW"
+        events.append(
+            {
+                "as_of": as_of.isoformat(),
+                "target_method": target_method,
+                "symbol": symbol,
+                "base_signal_direction": "increase",
+                "smoothed_direction": (
+                    "hold_or_slow_increase" if smoothed_delta >= 0 else "opposite_direction"
+                ),
+                "regime_context": regime_context,
+                "lag_risk": lag_risk,
+                "reason": "smoothing_may_lag_fast_regime_change",
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return events
+
+
+def _smoothed_weight_jump_reduction_summary(
+    target_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rows = []
+    for row in target_rows:
+        previous = _mapping(row.get("previous_smoothed_weights"))
+        base = _mapping(row.get("base_weights"))
+        smoothed = _mapping(row.get("smoothed_weights"))
+        base_change = sum(abs(value) for value in _weight_deltas(previous, base).values())
+        smoothed_change = sum(abs(value) for value in _weight_deltas(previous, smoothed).values())
+        base_large = 1 if base_change >= INSTABILITY_WEIGHT_JUMP_THRESHOLD else 0
+        smoothed_large = 1 if smoothed_change >= INSTABILITY_WEIGHT_JUMP_THRESHOLD else 0
+        status = "INSUFFICIENT_DATA"
+        if base_large or smoothed_large:
+            status = "IMPROVED" if smoothed_large < base_large else "WORSE"
+            if smoothed_large == base_large:
+                status = "MIXED"
+        elif smoothed_change <= base_change:
+            status = "IMPROVED"
+        rows.append(
+            {
+                "target_method": row.get("target_method"),
+                "base_large_jump_count": base_large,
+                "smoothed_large_jump_count": smoothed_large,
+                "jump_reduction": base_large - smoothed_large,
+                "avg_total_abs_weight_change_base": round(base_change, 10),
+                "avg_total_abs_weight_change_smoothed": round(smoothed_change, 10),
+                "smoothing_event_count": sum(
+                    1
+                    for symbol in set(base) | set(previous) | set(smoothed)
+                    if abs(_float(base.get(symbol)) - _float(smoothed.get(symbol))) > 0.0000001
+                ),
+                "status": status,
+            }
+        )
+    return {"target_methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_backfill_summary(
+    source_manifest: Mapping[str, Any],
+    states: Sequence[Mapping[str, Any]],
+    ledger: Sequence[Mapping[str, Any]],
+    smoothing_events: Sequence[Mapping[str, Any]],
+    lag_events: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    method_rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        method_states = [row for row in states if row.get("target_method") == method]
+        method_ledger = [row for row in ledger if row.get("target_method") == method]
+        turnovers = [_float(row.get("turnover")) for row in method_ledger]
+        method_rows.append(
+            {
+                "method": method,
+                "date_start": source_manifest.get("date_start"),
+                "date_end": source_manifest.get("date_end"),
+                "rebalance_count": len(method_ledger),
+                "smoothing_event_count": sum(
+                    1 for row in smoothing_events if row.get("target_method") == method
+                ),
+                "lag_event_count": sum(
+                    1 for row in lag_events if row.get("target_method") == method
+                ),
+                "avg_turnover": round(_mean_float(turnovers), 10),
+                "max_turnover": round(max(turnovers or [0.0]), 10),
+                "large_jump_count": _large_jump_count(method_states),
+                "data_quality": source_manifest.get("data_quality_status"),
+                "broker_action_taken": False,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {
+        "methods": method_rows,
+        "date_start": source_manifest.get("date_start"),
+        "date_end": source_manifest.get("date_end"),
+        "smoothing_event_count": len(smoothing_events),
+        "lag_event_count": len(lag_events),
+        "data_quality": source_manifest.get("data_quality_status"),
+        "broker_action_taken": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_vs_limited_metrics(
+    smoothed_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+    risk_states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    comparisons = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        method_states = [row for row in smoothed_states if row.get("target_method") == method]
+        for baseline_method, baseline_rows in (
+            (
+                "limited_adjustment",
+                [
+                    row
+                    for row in baseline_states
+                    if row.get("target_method") == "limited_adjustment"
+                ],
+            ),
+            ("risk_capped_limited_adjustment", risk_states),
+            (
+                "static_baseline",
+                [row for row in baseline_states if row.get("target_method") == "static_baseline"],
+            ),
+            (
+                "no_trade_baseline",
+                [row for row in baseline_states if row.get("target_method") == "no_trade_baseline"],
+            ),
+            (
+                "consensus_target",
+                [row for row in baseline_states if row.get("target_method") == "consensus_target"],
+            ),
+            (
+                "defensive_limited_adjustment",
+                [
+                    row
+                    for row in baseline_states
+                    if row.get("target_method") == "defensive_limited_adjustment"
+                ],
+            ),
+        ):
+            method_metrics = _state_path_metrics(method_states, min_observations=2)
+            baseline_metrics = _state_path_metrics(baseline_rows, min_observations=2)
+            values = {
+                "method_a": method,
+                "method_b": baseline_method,
+                "total_return_delta": round(
+                    _float(method_metrics.get("total_return"))
+                    - _float(baseline_metrics.get("total_return")),
+                    10,
+                ),
+                "annualized_return_delta": round(
+                    _float(method_metrics.get("annualized_return"))
+                    - _float(baseline_metrics.get("annualized_return")),
+                    10,
+                ),
+                "max_drawdown_delta": round(
+                    _float(method_metrics.get("max_drawdown"))
+                    - _float(baseline_metrics.get("max_drawdown")),
+                    10,
+                ),
+                "realized_volatility_delta": round(
+                    _float(method_metrics.get("realized_volatility"))
+                    - _float(baseline_metrics.get("realized_volatility")),
+                    10,
+                ),
+                "turnover_delta": round(
+                    _float(method_metrics.get("turnover"))
+                    - _float(baseline_metrics.get("turnover")),
+                    10,
+                ),
+                "large_jump_count_delta": _large_jump_count(method_states)
+                - _large_jump_count(baseline_rows),
+                "rolling_consistency_delta": "INSUFFICIENT_DATA",
+            }
+            values["conclusion"] = _smoothed_comparison_conclusion(values)
+            comparisons.append(values)
+    return {"comparisons": comparisons, **SYSTEM_TARGET_SAFETY}
+
+
+def _find_comparison(
+    rows: Sequence[Mapping[str, Any]],
+    method_a: str,
+    method_b: str,
+) -> dict[str, Any]:
+    for row in rows:
+        if row.get("method_a") == method_a and row.get("method_b") == method_b:
+            return dict(row)
+    return {}
+
+
+def _smoothed_comparison_conclusion(metrics: Mapping[str, Any]) -> str:
+    return_delta = _float(metrics.get("total_return_delta"))
+    drawdown_delta = _float(metrics.get("max_drawdown_delta"))
+    turnover_delta = _float(metrics.get("turnover_delta"))
+    jump_delta = _float(metrics.get("large_jump_count_delta"))
+    if (
+        return_delta >= SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR
+        and drawdown_delta >= 0.0
+        and turnover_delta <= 0.0
+        and jump_delta <= 0.0
+    ):
+        return "smoothed_better"
+    if return_delta < SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR and drawdown_delta < 0.0:
+        return "limited_better"
+    return "mixed"
+
+
+def _smoothed_regime_comparison(
+    states: Sequence[Mapping[str, Any]],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _load_backfill_config_from_manifest(baseline)
+    labels = _regime_labels_from_states(states, config)
+    rows = []
+    for regime in ("sideways_choppy", "strong_recovery"):
+        date_set = {day for day, label in labels.items() if label == regime}
+        row = {"regime": regime, "sample_count": len(date_set)}
+        for method, prefix in (
+            ("smooth_weights_3d_limited_adjustment", "smooth_3d"),
+            ("smooth_weights_5d_limited_adjustment", "smooth_5d"),
+        ):
+            method_rows = [
+                item
+                for item in states
+                if item.get("target_method") == method and item.get("date") in date_set
+            ]
+            limited_rows = [
+                item
+                for item in states
+                if item.get("target_method") == "limited_adjustment"
+                and item.get("date") in date_set
+            ]
+            method_metrics = _sample_return_metrics(method_rows, min_sample=1)
+            limited_metrics = _sample_return_metrics(limited_rows, min_sample=1)
+            row[f"{prefix}_return_delta_vs_limited"] = round(
+                _float(method_metrics.get("total_return"))
+                - _float(limited_metrics.get("total_return")),
+                10,
+            )
+            row[f"{prefix}_drawdown_delta_vs_limited"] = round(
+                _float(method_metrics.get("max_drawdown"))
+                - _float(limited_metrics.get("max_drawdown")),
+                10,
+            )
+            row[f"{prefix}_turnover_delta_vs_limited"] = round(
+                sum(_float(item.get("turnover")) for item in method_rows)
+                - sum(_float(item.get("turnover")) for item in limited_rows),
+                10,
+            )
+        if regime == "sideways_choppy":
+            row["smooth_3d_conclusion"] = _smoothed_regime_conclusion(
+                _float(row.get("smooth_3d_return_delta_vs_limited")),
+                _float(row.get("smooth_3d_drawdown_delta_vs_limited")),
+                _float(row.get("smooth_3d_turnover_delta_vs_limited")),
+                int(row["sample_count"]),
+            )
+        else:
+            row["smooth_3d_lag_cost"] = row.get("smooth_3d_return_delta_vs_limited", 0.0)
+            row["smooth_5d_lag_cost"] = row.get("smooth_5d_return_delta_vs_limited", 0.0)
+            row["lag_status"] = _smoothed_lag_cost_status(
+                min(_float(row["smooth_3d_lag_cost"]), _float(row["smooth_5d_lag_cost"]))
+            )
+        rows.append({**row, **SYSTEM_TARGET_SAFETY})
+    return {"regimes": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_regime_conclusion(
+    return_delta: float,
+    drawdown_delta: float,
+    turnover_delta: float,
+    sample_count: int,
+) -> str:
+    if sample_count <= 0:
+        return "insufficient_data"
+    if (
+        return_delta >= SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR
+        and drawdown_delta >= 0
+        and turnover_delta <= 0
+    ):
+        return "improved"
+    if return_delta < SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR and drawdown_delta < 0:
+        return "worse"
+    return "mixed"
+
+
+def _smoothed_rolling_comparison(
+    states: Sequence[Mapping[str, Any]],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _load_backfill_config_from_manifest(baseline)
+    min_obs = int(_float(_mapping(config.get("evaluation")).get("min_observations_per_window"), 20))
+    windows = _rolling_window_inventory(states, min_observations=min_obs)
+    metrics = [
+        row
+        for window in windows
+        for row in _rolling_metrics_for_window(states, window, min_obs)
+    ]
+    _rank_rolling_metrics(metrics)
+    stability = _rolling_rank_stability(metrics)
+    limited = _find_method(_records(stability.get("methods")), "limited_adjustment")
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        item = _find_method(_records(stability.get("methods")), method)
+        rows.append(
+            {
+                "method": method,
+                "target_method": method,
+                "rolling_windows_total": len(windows),
+                "top_3_frequency_delta_vs_limited": round(
+                    _float(item.get("top_3_frequency")) - _float(limited.get("top_3_frequency")),
+                    10,
+                ),
+                "bottom_3_frequency_delta_vs_limited": round(
+                    _float(item.get("bottom_3_frequency"))
+                    - _float(limited.get("bottom_3_frequency")),
+                    10,
+                ),
+                "rolling_consistency_delta": _risk_capped_stability_delta(
+                    _float(item.get("top_3_frequency")),
+                    _float(limited.get("top_3_frequency")),
+                    _float(item.get("bottom_3_frequency")),
+                    _float(limited.get("bottom_3_frequency")),
+                ),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_stability_comparison(
+    smoothed_states: Sequence[Mapping[str, Any]],
+    baseline_states: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    limited_states = [
+        row for row in baseline_states if row.get("target_method") == "limited_adjustment"
+    ]
+    limited_turnovers = [
+        _float(row.get("turnover")) for row in limited_states if row.get("rebalance_event") is True
+    ]
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        method_states = [row for row in smoothed_states if row.get("target_method") == method]
+        method_turnovers = [
+            _float(row.get("turnover"))
+            for row in method_states
+            if row.get("rebalance_event") is True
+        ]
+        payload = {
+            "method": method,
+            "target_method": method,
+            "avg_rebalance_turnover_delta_vs_limited": round(
+                _mean_float(method_turnovers) - _mean_float(limited_turnovers),
+                10,
+            ),
+            "max_rebalance_turnover_delta_vs_limited": round(
+                max(method_turnovers or [0.0]) - max(limited_turnovers or [0.0]),
+                10,
+            ),
+            "large_jump_count_delta_vs_limited": _large_jump_count(method_states)
+            - _large_jump_count(limited_states),
+            "weight_flip_count_delta_vs_limited": _weight_flip_count(method_states)
+            - _weight_flip_count(limited_states),
+        }
+        payload["stability_conclusion"] = _smoothed_stability_conclusion(payload)
+        rows.append({**payload, **SYSTEM_TARGET_SAFETY})
+    return {"methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_stability_conclusion(payload: Mapping[str, Any]) -> str:
+    if (
+        _float(payload.get("large_jump_count_delta_vs_limited")) <= 0
+        and _float(payload.get("avg_rebalance_turnover_delta_vs_limited")) <= 0
+        and _float(payload.get("weight_flip_count_delta_vs_limited")) <= 0
+    ):
+        return "IMPROVED"
+    if (
+        _float(payload.get("large_jump_count_delta_vs_limited")) > 0
+        and _float(payload.get("avg_rebalance_turnover_delta_vs_limited")) > 0
+    ):
+        return "WORSE"
+    return "MIXED"
+
+
+def _smoothed_lag_cost_analysis(
+    states: Sequence[Mapping[str, Any]],
+    ledger: Sequence[Mapping[str, Any]],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _load_backfill_config_from_manifest(baseline)
+    labels = _regime_labels_from_states(states, config)
+    strong_dates = {day for day, label in labels.items() if label == "strong_recovery"}
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        method_rows = [
+            row
+            for row in states
+            if row.get("target_method") == method and row.get("date") in strong_dates
+        ]
+        limited_rows = [
+            row
+            for row in states
+            if row.get("target_method") == "limited_adjustment" and row.get("date") in strong_dates
+        ]
+        method_metrics = _sample_return_metrics(method_rows, min_sample=1)
+        limited_metrics = _sample_return_metrics(limited_rows, min_sample=1)
+        strong_cost = round(
+            _float(method_metrics.get("total_return"))
+            - _float(limited_metrics.get("total_return")),
+            10,
+        )
+        lag_events = [
+            event
+            for row in ledger
+            if row.get("target_method") == method
+            for event in _records(row.get("lag_events"))
+        ]
+        missed_upside = sum(
+            1 for event in lag_events if event.get("lag_risk") in {"MEDIUM", "HIGH"}
+        )
+        rows.append(
+            {
+                "method": method,
+                "target_method": method,
+                "strong_recovery_lag_cost": strong_cost,
+                "fast_regime_change_lag_cost": strong_cost,
+                "missed_upside_count": missed_upside,
+                "lag_cost_status": _smoothed_lag_cost_status(strong_cost),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_lag_cost_status(value: float) -> str:
+    if value <= SMOOTHED_LAG_COST_HIGH_THRESHOLD:
+        return "HIGH"
+    if value <= SMOOTHED_LAG_COST_MEDIUM_THRESHOLD:
+        return "MEDIUM"
+    return "LOW"
+
+
+def _weight_flip_count(rows: Sequence[Mapping[str, Any]]) -> int:
+    ordered = sorted(rows, key=lambda row: _text(row.get("date")))
+    previous_deltas: dict[str, float] = {}
+    count = 0
+    previous_weights: Mapping[str, Any] | None = None
+    for row in ordered:
+        weights = _mapping(row.get("weights"))
+        if previous_weights is not None:
+            deltas = _weight_deltas(previous_weights, weights)
+            for symbol, delta in deltas.items():
+                if delta == 0:
+                    continue
+                previous_delta = previous_deltas.get(symbol)
+                if previous_delta is not None and previous_delta * delta < 0:
+                    count += 1
+                previous_deltas[symbol] = delta
+        previous_weights = weights
+    return count
+
+
+def _smoothed_review_decision(
+    comparison: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+) -> dict[str, Any]:
+    comparisons = _records(
+        _mapping(comparison.get("smoothed_vs_limited_metrics")).get("comparisons")
+    )
+    primary = _find_comparison(
+        comparisons, "smooth_weights_3d_limited_adjustment", "limited_adjustment"
+    )
+    rolling = _find_method(
+        _records(_mapping(comparison.get("smoothed_rolling_comparison")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    lag = _find_method(
+        _records(_mapping(comparison.get("smoothing_lag_cost_analysis")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    summary = _mapping(backfill.get("smoothed_backfill_summary"))
+    improvements = {
+        "rolling_consistency": rolling.get("rolling_consistency_delta", "INSUFFICIENT_DATA"),
+        "turnover": _delta_improvement_status(
+            _float(primary.get("turnover_delta")), lower_is_better=True
+        ),
+        "weight_jumps": _delta_improvement_status(
+            _float(primary.get("large_jump_count_delta")), lower_is_better=True
+        ),
+        "return_preservation": _smoothed_return_preservation_decision(
+            _float(primary.get("total_return_delta"))
+        ),
+        "drawdown": _delta_improvement_status(
+            _float(primary.get("max_drawdown_delta")), lower_is_better=False
+        ),
+    }
+    lag_risk = lag.get("lag_cost_status", "INSUFFICIENT_DATA")
+    if (
+        improvements["rolling_consistency"] == "IMPROVED"
+        and improvements["turnover"] == "IMPROVED"
+        and improvements["weight_jumps"] == "IMPROVED"
+        and improvements["return_preservation"] in {"GOOD", "ACCEPTABLE"}
+        and lag_risk in {"LOW", "MEDIUM"}
+    ):
+        decision = "PROMOTE_TO_RECOMMENDED_RESEARCH"
+    elif improvements["return_preservation"] == "POOR" or lag_risk == "HIGH":
+        decision = "REJECT"
+    else:
+        decision = "CONTINUE_OBSERVATION"
+    confidence = "LOW" if summary.get("data_quality") == "PASS_WITH_WARNINGS" else "MEDIUM"
+    return {
+        "candidate_methods": [
+            "smooth_weights_3d_limited_adjustment",
+            "smooth_weights_5d_limited_adjustment",
+        ],
+        "base_method": "limited_adjustment",
+        "recommended_method": "smooth_weights_3d_limited_adjustment",
+        "secondary_method": "smooth_weights_5d_limited_adjustment",
+        "decision": decision,
+        "decision_confidence": confidence,
+        "improvements_vs_limited": improvements,
+        "lag_risk": lag_risk,
+        "research_target_only": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        "requires_forward_confirmation": True,
+        "next_action": "owner_review_then_forward_confirmation",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_return_preservation_decision(delta: float) -> str:
+    if delta >= 0.0:
+        return "GOOD"
+    if delta >= SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR:
+        return "ACCEPTABLE"
+    return "POOR"
+
+
+def _delta_improvement_status(value: float, *, lower_is_better: bool) -> str:
+    if value == 0:
+        return "MIXED"
+    if lower_is_better:
+        return "IMPROVED" if value < 0 else "WORSE"
+    return "IMPROVED" if value > 0 else "WORSE"
 
 
 def _win_rate_between_rows(

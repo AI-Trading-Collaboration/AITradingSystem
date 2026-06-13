@@ -42,6 +42,7 @@ source:
   shadow_shortlist_dir: reports/etf_portfolio/dynamic_v3_rescue/shadow_shortlist
   consensus_drift_dir: reports/etf_portfolio/dynamic_v3_rescue/consensus_drift
   risk_capped_limited_config: config/etf_portfolio/dynamic_v3_rescue/risk_capped_limited_adjustment_v1.yaml
+  smoothed_limited_config: config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml
   price_source: existing_price_cache
   price_cache_path: data/raw/prices_daily.csv
   use_adjusted_close: true
@@ -52,6 +53,8 @@ target_methods:
     - no_trade_baseline
     - consensus_target
     - limited_adjustment
+    - smooth_weights_3d_limited_adjustment
+    - smooth_weights_5d_limited_adjustment
     - risk_capped_limited_adjustment
     - defensive_limited_adjustment
     - equal_weight_shadow_candidates

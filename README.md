@@ -1161,6 +1161,27 @@ broker。所有输出固定 `experiment_only=true`、`research_screening_only=tr
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `auto_apply=false`、`production_effect=none`。
 
+TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD 实现
+`smooth_weights_3d_limited_adjustment` 和 `smooth_weights_5d_limited_adjustment`
+research-only method。配置入口为
+`config/etf_portfolio/dynamic_v3_rescue/smoothed_limited_adjustment_v1.yaml`；CLI 入口为
+`smoothed-limited config-validate/report-config/generate/report`、
+`validate-smoothed-limited-config`、`validate-smoothed-limited`、
+`smoothed-backfill run/report`、`validate-smoothed-backfill`、
+`smoothed-comparison run/report`、`validate-smoothed-comparison`、
+`smoothed-review pack/report` 和 `validate-smoothed-review`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/smoothed_limited_config|smoothed_limited|smoothed_backfill|smoothed_comparison|smoothed_review/`，
+并登记 report registry / Reader Brief `Dynamic Rescue System Target Portfolio`
+smoothed fields。该链路从 `limited_adjustment` 生成 3d / 5d 平滑 target weights、
+smoothing events、lag events 和 weight jump reduction summary，backfill 前执行 cached
+data quality gate，比较 smoothed vs `limited_adjustment` / risk-capped / baseline 的
+return、drawdown、turnover、rolling/regime/stability 和 lag cost，并输出 owner review
+decision；所有输出固定 `research_target_only=true`、`paper_shadow_only=true`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、
+`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`production_effect=none`，不得写 official target weights、`position_advisory_v1.yaml`、
+paper/real portfolio、baseline/production state、policy、order ticket 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

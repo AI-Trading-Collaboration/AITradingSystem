@@ -1,0 +1,83 @@
+schema_version: 1
+
+method:
+  name: smoothed_limited_adjustment
+  base_method: limited_adjustment
+  mode: research_target_only
+  not_official_target_weights: true
+  paper_shadow_only: true
+
+policy_metadata:
+  policy_id: dynamic_v3_rescue_smoothed_limited_adjustment_v1
+  owner: project_owner
+  version: 2026-06-13
+  status: pilot_baseline
+  rationale: >
+    TRADING-239 to 245 found smooth_weights_3d as the strongest promotion
+    candidate from the experiment factory, with smooth_weights_5d as a
+    sensitivity candidate. This policy formalizes those variants as
+    research-only transforms of the limited_adjustment target weight path.
+  intended_effect: >
+    Reduce signal churn, target weight jumps, and turnover while preserving the
+    limited_adjustment return advantage and exposing lag risk during strong
+    recovery regimes.
+  validation_evidence: >
+    TRADING-246 to 250 focused tests, smoothed config validation, generation,
+    backfill, comparison, review validation, ruff, compileall, and git diff
+    check.
+  review_condition: >
+    Revisit after owner review of the smoothed review pack and after forward
+    confirmation evidence is available.
+
+variants:
+  smooth_weights_3d:
+    enabled: true
+    smoothing_window_days: 3
+    smoothing_type: exponential
+    alpha: 0.50
+    min_signal_persistence_days: 2
+    max_daily_total_weight_change: 0.08
+    max_single_symbol_daily_change: 0.04
+
+  smooth_weights_5d:
+    enabled: true
+    smoothing_window_days: 5
+    smoothing_type: exponential
+    alpha: 0.35
+    min_signal_persistence_days: 3
+    max_daily_total_weight_change: 0.06
+    max_single_symbol_daily_change: 0.03
+
+constraints:
+  preserve_total_weight: true
+  min_cash_weight: 0.05
+  max_single_symbol_weight: 0.65
+  max_semiconductor_weight: 0.35
+  max_total_risk_asset_weight: 0.95
+
+regime_context:
+  sideways_choppy:
+    increase_smoothing_strength: true
+    alpha_multiplier: 0.75
+    max_daily_total_weight_change: 0.05
+    min_signal_persistence_days_add: 1
+
+  strong_recovery:
+    reduce_smoothing_strength: true
+    alpha_multiplier: 1.25
+    allow_faster_risk_restore: true
+
+diagnostics:
+  emit_smoothing_events: true
+  emit_lag_events: true
+  emit_weight_jump_reduction_summary: true
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

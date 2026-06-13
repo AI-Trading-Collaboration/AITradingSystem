@@ -2286,6 +2286,63 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                             "risk_capped_requires_forward_confirmation"
                         ),
                     ),
+                    ("smoothed_id", etf_dynamic_v3_system_target.get("smoothed_id")),
+                    (
+                        "smoothed_backfill_id",
+                        etf_dynamic_v3_system_target.get("smoothed_backfill_id"),
+                    ),
+                    (
+                        "smoothed_comparison_id",
+                        etf_dynamic_v3_system_target.get("smoothed_comparison_id"),
+                    ),
+                    (
+                        "smoothed_review_id",
+                        etf_dynamic_v3_system_target.get("smoothed_review_id"),
+                    ),
+                    (
+                        "smoothed_decision",
+                        etf_dynamic_v3_system_target.get("smoothed_decision"),
+                    ),
+                    (
+                        "smoothed_recommended_method",
+                        etf_dynamic_v3_system_target.get("smoothed_recommended_method"),
+                    ),
+                    (
+                        "smoothed_confidence",
+                        etf_dynamic_v3_system_target.get("smoothed_confidence"),
+                    ),
+                    (
+                        "smoothed_improvements_vs_limited",
+                        etf_dynamic_v3_system_target.get("smoothed_improvements_vs_limited"),
+                    ),
+                    (
+                        "smoothed_return_delta_vs_limited",
+                        etf_dynamic_v3_system_target.get("smoothed_return_delta_vs_limited"),
+                    ),
+                    (
+                        "smoothed_drawdown_delta_vs_limited",
+                        etf_dynamic_v3_system_target.get("smoothed_drawdown_delta_vs_limited"),
+                    ),
+                    (
+                        "smoothed_turnover_delta_vs_limited",
+                        etf_dynamic_v3_system_target.get("smoothed_turnover_delta_vs_limited"),
+                    ),
+                    (
+                        "smoothed_rolling_consistency_delta",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_rolling_consistency_delta"
+                        ),
+                    ),
+                    (
+                        "smoothed_lag_risk",
+                        etf_dynamic_v3_system_target.get("smoothed_lag_risk"),
+                    ),
+                    (
+                        "smoothed_requires_forward_confirmation",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_requires_forward_confirmation"
+                        ),
+                    ),
                     (
                         "experiment_triage_id",
                         etf_dynamic_v3_system_target.get("experiment_triage_id"),
@@ -2417,6 +2474,19 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "risk_capped_review_path",
                         etf_dynamic_v3_system_target.get("risk_capped_review_path"),
+                    ),
+                    ("smoothed_path", etf_dynamic_v3_system_target.get("smoothed_path")),
+                    (
+                        "smoothed_backfill_path",
+                        etf_dynamic_v3_system_target.get("smoothed_backfill_path"),
+                    ),
+                    (
+                        "smoothed_comparison_path",
+                        etf_dynamic_v3_system_target.get("smoothed_comparison_path"),
+                    ),
+                    (
+                        "smoothed_review_path",
+                        etf_dynamic_v3_system_target.get("smoothed_review_path"),
                     ),
                     (
                         "experiment_triage_path",
@@ -8237,6 +8307,34 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "risk_capped_review_manifest.json",
     )
+    smoothed_limited_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_limited",
+        ),
+        "smoothed_limited_manifest.json",
+    )
+    smoothed_backfill_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_backfill",
+        ),
+        "smoothed_backfill_manifest.json",
+    )
+    smoothed_comparison_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_comparison",
+        ),
+        "smoothed_comparison_manifest.json",
+    )
+    smoothed_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_review",
+        ),
+        "smoothed_review_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -8260,12 +8358,14 @@ def _etf_dynamic_v3_system_target_summary(
     )
     review_manifest = _read_optional_json(review_path)
     risk_capped_review_manifest = _read_optional_json(risk_capped_review_path)
+    smoothed_review_manifest = _read_optional_json(smoothed_review_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
     if (
         not review_manifest
         and not risk_capped_review_manifest
+        and not smoothed_review_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -8331,6 +8431,51 @@ def _etf_dynamic_v3_system_target_summary(
         _dynamic_v3_sibling_artifact_path(
             risk_capped_review_path,
             "risk_capped_decision.json",
+        )
+    )
+    smoothed_limited_manifest = _read_optional_json(smoothed_limited_path)
+    smoothed_jump_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_limited_path,
+            "weight_jump_reduction_summary.json",
+        )
+    )
+    smoothed_backfill_manifest = _read_optional_json(smoothed_backfill_path)
+    smoothed_backfill_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_backfill_path,
+            "smoothed_backfill_summary.json",
+        )
+    )
+    smoothed_comparison_manifest = _read_optional_json(smoothed_comparison_path)
+    smoothed_metrics = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_comparison_path,
+            "smoothed_vs_limited_metrics.json",
+        )
+    )
+    smoothed_rolling = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_comparison_path,
+            "smoothed_rolling_comparison.json",
+        )
+    )
+    smoothed_stability = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_comparison_path,
+            "smoothed_stability_comparison.json",
+        )
+    )
+    smoothed_lag_cost = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_comparison_path,
+            "smoothing_lag_cost_analysis.json",
+        )
+    )
+    smoothed_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_review_path,
+            "smoothed_decision.json",
         )
     )
     experiment_triage_summary = _read_optional_json(
@@ -8435,6 +8580,17 @@ def _etf_dynamic_v3_system_target_summary(
         risk_capped_stability,
         risk_capped_review_manifest,
         risk_capped_decision,
+        smoothed_limited_manifest,
+        smoothed_jump_summary,
+        smoothed_backfill_manifest,
+        smoothed_backfill_summary,
+        smoothed_comparison_manifest,
+        smoothed_metrics,
+        smoothed_rolling,
+        smoothed_stability,
+        smoothed_lag_cost,
+        smoothed_review_manifest,
+        smoothed_decision,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -8455,6 +8611,45 @@ def _etf_dynamic_v3_system_target_summary(
         f"{key}={value}" for key, value in sorted(risk_capped_improvements.items())
     )
     risk_capped_decision_label = _text(risk_capped_decision.get("decision"), "MISSING")
+    smoothed_comparisons = _records(smoothed_metrics.get("comparisons"))
+    smoothed_primary = next(
+        (
+            row
+            for row in smoothed_comparisons
+            if row.get("method_a") == "smooth_weights_3d_limited_adjustment"
+            and row.get("method_b") == "limited_adjustment"
+        ),
+        {},
+    )
+    smoothed_improvements = _mapping(smoothed_decision.get("improvements_vs_limited"))
+    smoothed_improvement_summary = ",".join(
+        f"{key}={value}" for key, value in sorted(smoothed_improvements.items())
+    )
+    smoothed_decision_label = _text(smoothed_decision.get("decision"), "MISSING")
+    smoothed_rolling_primary = next(
+        (
+            row
+            for row in _records(smoothed_rolling.get("methods"))
+            if row.get("target_method") == "smooth_weights_3d_limited_adjustment"
+        ),
+        {},
+    )
+    smoothed_stability_primary = next(
+        (
+            row
+            for row in _records(smoothed_stability.get("methods"))
+            if row.get("target_method") == "smooth_weights_3d_limited_adjustment"
+        ),
+        {},
+    )
+    smoothed_lag_primary = next(
+        (
+            row
+            for row in _records(smoothed_lag_cost.get("methods"))
+            if row.get("target_method") == "smooth_weights_3d_limited_adjustment"
+        ),
+        {},
+    )
     experiment_top_variant = _text(experiment_triage_summary.get("top_variant"), "MISSING")
     top_promoted_variants = ",".join(
         _texts([row.get("variant_id") for row in promotion_candidates])
@@ -8482,6 +8677,7 @@ def _etf_dynamic_v3_system_target_summary(
             f"hardening={hardening_decision_label}; "
             f"refined_next_step={refined_next_step}; "
             f"risk_capped={risk_capped_decision_label}; "
+            f"smoothed={smoothed_decision_label}; "
             f"experiment_top={experiment_top_variant}; "
             f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
@@ -8591,6 +8787,78 @@ def _etf_dynamic_v3_system_target_summary(
         "risk_capped_review_path": (
             "" if risk_capped_review_path is None else str(risk_capped_review_path)
         ),
+        "smoothed_id": _text(smoothed_limited_manifest.get("smoothed_id"), "MISSING"),
+        "smoothed_backfill_id": _text(
+            smoothed_backfill_manifest.get("smoothed_backfill_id"),
+            "MISSING",
+        ),
+        "smoothed_comparison_id": _text(
+            smoothed_comparison_manifest.get("comparison_id"),
+            "MISSING",
+        ),
+        "smoothed_review_id": _text(
+            smoothed_review_manifest.get("review_id"),
+            "MISSING",
+        ),
+        "smoothed_decision": smoothed_decision_label,
+        "smoothed_recommended_method": _text(
+            smoothed_decision.get("recommended_method"),
+            "MISSING",
+        ),
+        "smoothed_secondary_method": _text(
+            smoothed_decision.get("secondary_method"),
+            "MISSING",
+        ),
+        "smoothed_confidence": _text(
+            smoothed_decision.get("decision_confidence"),
+            "MISSING",
+        ),
+        "smoothed_improvements_vs_limited": smoothed_improvement_summary,
+        "smoothed_lag_risk": _text(smoothed_decision.get("lag_risk"), "MISSING"),
+        "smoothed_requires_forward_confirmation": smoothed_decision.get(
+            "requires_forward_confirmation"
+        )
+        is True,
+        "smoothed_return_delta_vs_limited": smoothed_primary.get(
+            "total_return_delta",
+            "MISSING",
+        ),
+        "smoothed_drawdown_delta_vs_limited": smoothed_primary.get(
+            "max_drawdown_delta",
+            "MISSING",
+        ),
+        "smoothed_turnover_delta_vs_limited": smoothed_primary.get(
+            "turnover_delta",
+            "MISSING",
+        ),
+        "smoothed_rolling_consistency_delta": _text(
+            smoothed_rolling_primary.get("rolling_consistency_delta"),
+            "MISSING",
+        ),
+        "smoothed_stability_conclusion": _text(
+            smoothed_stability_primary.get("stability_conclusion"),
+            "MISSING",
+        ),
+        "smoothed_lag_cost_status": _text(
+            smoothed_lag_primary.get("lag_cost_status"),
+            "MISSING",
+        ),
+        "smoothed_smoothing_event_count": smoothed_backfill_summary.get(
+            "smoothing_event_count",
+            "MISSING",
+        ),
+        "smoothed_lag_event_count": smoothed_backfill_summary.get(
+            "lag_event_count",
+            "MISSING",
+        ),
+        "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
+        "smoothed_backfill_path": (
+            "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
+        ),
+        "smoothed_comparison_path": (
+            "" if smoothed_comparison_path is None else str(smoothed_comparison_path)
+        ),
+        "smoothed_review_path": "" if smoothed_review_path is None else str(smoothed_review_path),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
             "MISSING",
@@ -8738,6 +9006,29 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "risk_capped_backfill_path": "",
         "risk_capped_comparison_path": "",
         "risk_capped_review_path": "",
+        "smoothed_id": "MISSING",
+        "smoothed_backfill_id": "MISSING",
+        "smoothed_comparison_id": "MISSING",
+        "smoothed_review_id": "MISSING",
+        "smoothed_decision": "MISSING",
+        "smoothed_recommended_method": "MISSING",
+        "smoothed_secondary_method": "MISSING",
+        "smoothed_confidence": "MISSING",
+        "smoothed_improvements_vs_limited": "",
+        "smoothed_lag_risk": "MISSING",
+        "smoothed_requires_forward_confirmation": False,
+        "smoothed_return_delta_vs_limited": "MISSING",
+        "smoothed_drawdown_delta_vs_limited": "MISSING",
+        "smoothed_turnover_delta_vs_limited": "MISSING",
+        "smoothed_rolling_consistency_delta": "MISSING",
+        "smoothed_stability_conclusion": "MISSING",
+        "smoothed_lag_cost_status": "MISSING",
+        "smoothed_smoothing_event_count": "MISSING",
+        "smoothed_lag_event_count": "MISSING",
+        "smoothed_path": "",
+        "smoothed_backfill_path": "",
+        "smoothed_comparison_path": "",
+        "smoothed_review_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",
