@@ -1286,6 +1286,31 @@ sample collection、progress、dashboard、monitor、readiness recheck 和 owner
 weights、修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production state、
 policy、order ticket 或 broker。
 
+TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
+在 smoothed forward sample bootstrap 后新增 freshness preflight、latest-available
+daily emission、blocked explain、refresh plan 和 retry orchestration。CLI 入口为
+`smoothed-data-preflight run/report`、`validate-smoothed-data-preflight`、
+`smoothed-latest-emission run/report`、`validate-smoothed-latest-emission`、
+`smoothed-blocked-explain run/report`、`validate-smoothed-blocked-explain`、
+`smoothed-refresh-plan run/report`、`validate-smoothed-refresh-plan`、
+`smoothed-bootstrap-retry run/report` 和 `validate-smoothed-bootstrap-retry`。
+Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_preflight|smoothed_latest_emission|smoothed_blocked_explain|smoothed_refresh_plan|smoothed_bootstrap_retry/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Freshness Bootstrap`。
+Preflight 调用 `aits validate-data` 等价门禁并披露 `freshness_status`、
+`validate_data_status` 和 `latest_valid_as_of`；requested date 数据 stale、missing 或
+future-as-of 时，due scan、outcome update、classification 和 weekly run 保持 blocked。
+Latest-available emission 只允许在 `latest_valid_as_of` 生成 daily observation event，
+固定 `due_scan_allowed=false`、`outcome_update_allowed=false`、`future_data_used=false`。
+Refresh plan 只列出 source requirements 和 rerun commands，不刷新外部数据源。Retry 先跑
+preflight；只有 fresh 状态才执行完整 weekly runner，blocked 状态直接记录
+`retry_status=BLOCKED`。所有输出继续固定 `research_target_only=true`、
+`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、
+`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`can_execute_switch=false`、`production_effect=none`；不得绕过 validate-data、使用未来数据、
+补造 outcome、自动 switch、写 official target weights、修改 `position_advisory_v1.yaml`、
+paper/real portfolio、baseline/production state、policy、order ticket 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -11,7 +11,13 @@ from typing import Any
 import pandas as pd
 import yaml
 
-from ai_trading_system.config import PROJECT_ROOT, load_data_quality
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    configured_price_tickers,
+    configured_rate_series,
+    load_data_quality,
+    load_universe,
+)
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import DEFAULT_RATES_CACHE_PATH
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
@@ -209,6 +215,21 @@ DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR = (
 )
 DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_weekly_run"
+)
+DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_data_preflight"
+)
+DEFAULT_SMOOTHED_LATEST_EMISSION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_latest_emission"
+)
+DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_blocked_explain"
+)
+DEFAULT_SMOOTHED_REFRESH_PLAN_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_refresh_plan"
+)
+DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_bootstrap_retry"
 )
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
 DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
@@ -11213,6 +11234,1051 @@ def validate_smoothed_forward_weekly_run_artifact(
     )
 
 
+def run_smoothed_data_preflight(
+    *,
+    requested_as_of: date | None = None,
+    requested_week_ending: date | None = None,
+    output_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    requested_date = _smoothed_requested_date(
+        requested_as_of=requested_as_of,
+        requested_week_ending=requested_week_ending,
+    )
+    quality_report = _smoothed_preflight_data_quality_report(
+        prices_path=price_cache_path,
+        rates_path=rates_path,
+        as_of=requested_date,
+    )
+    snapshot = _smoothed_data_freshness_snapshot(
+        requested_as_of=requested_as_of,
+        requested_week_ending=requested_week_ending,
+        quality_report=quality_report,
+        prices_path=price_cache_path,
+        rates_path=rates_path,
+        model_target_dir=model_target_dir,
+    )
+    command_matrix = _smoothed_runnable_command_matrix(snapshot)
+    blocked_matrix = _smoothed_blocked_reason_matrix(snapshot)
+    preflight_id = _stable_id(
+        "smoothed-data-preflight",
+        requested_as_of.isoformat() if requested_as_of else "",
+        requested_week_ending.isoformat() if requested_week_ending else "",
+        snapshot,
+        command_matrix,
+        blocked_matrix,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / preflight_id)
+    root.mkdir(parents=True, exist_ok=False)
+    snapshot["preflight_id"] = root.name
+    command_matrix["preflight_id"] = root.name
+    blocked_matrix["preflight_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_data_preflight_manifest",
+        "preflight_id": root.name,
+        "requested_as_of": requested_as_of.isoformat() if requested_as_of else None,
+        "requested_week_ending": (
+            requested_week_ending.isoformat() if requested_week_ending else None
+        ),
+        "latest_valid_as_of": snapshot.get("latest_valid_as_of"),
+        "freshness_status": snapshot.get("freshness_status"),
+        "validate_data_status": snapshot.get("validate_data_status"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_data_preflight_manifest_path": str(
+            root / "smoothed_data_preflight_manifest.json"
+        ),
+        "data_freshness_snapshot_path": str(root / "data_freshness_snapshot.json"),
+        "runnable_command_matrix_path": str(root / "runnable_command_matrix.json"),
+        "blocked_reason_matrix_path": str(root / "blocked_reason_matrix.json"),
+        "smoothed_data_preflight_report_path": str(
+            root / "smoothed_data_preflight_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_data_preflight_reader_brief(snapshot, command_matrix)
+    _write_json(root / "smoothed_data_preflight_manifest.json", manifest)
+    _write_json(root / "data_freshness_snapshot.json", snapshot)
+    _write_json(root / "runnable_command_matrix.json", command_matrix)
+    _write_json(root / "blocked_reason_matrix.json", blocked_matrix)
+    _write_text(
+        root / "smoothed_data_preflight_report.md",
+        render_smoothed_data_preflight_report(
+            manifest,
+            snapshot,
+            command_matrix,
+            blocked_matrix,
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_data_preflight",
+        root.name,
+        root / "smoothed_data_preflight_manifest.json",
+    )
+    return {
+        "preflight_id": root.name,
+        "preflight_dir": root,
+        "manifest": manifest,
+        "data_freshness_snapshot": snapshot,
+        "runnable_command_matrix": command_matrix,
+        "blocked_reason_matrix": blocked_matrix,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_data_preflight_report_payload(
+    *,
+    preflight_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=preflight_id,
+        latest_pointer="latest_smoothed_data_preflight",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_data_preflight_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_data_preflight_manifest.json"),
+        "data_freshness_snapshot": _read_json(root / "data_freshness_snapshot.json"),
+        "runnable_command_matrix": _read_json(root / "runnable_command_matrix.json"),
+        "blocked_reason_matrix": _read_json(root / "blocked_reason_matrix.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "preflight_dir": str(root),
+    }
+
+
+def validate_smoothed_data_preflight_artifact(
+    *,
+    preflight_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+) -> dict[str, Any]:
+    root = output_dir / preflight_id
+    manifest = _read_optional_json(root / "smoothed_data_preflight_manifest.json") or {}
+    snapshot = _read_optional_json(root / "data_freshness_snapshot.json") or {}
+    command_matrix = _read_optional_json(root / "runnable_command_matrix.json") or {}
+    blocked_matrix = _read_optional_json(root / "blocked_reason_matrix.json") or {}
+    commands = _records(command_matrix.get("commands"))
+    freshness_status = _text(snapshot.get("freshness_status"))
+    blocked_commands = [row for row in commands if row.get("status") == "BLOCKED"]
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_data_preflight_manifest.json",
+            "data_freshness_snapshot.json",
+            "runnable_command_matrix.json",
+            "blocked_reason_matrix.json",
+            "smoothed_data_preflight_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "preflight_id_matches",
+                manifest.get("preflight_id") == preflight_id
+                and snapshot.get("preflight_id") == preflight_id,
+                "",
+            ),
+            _check(
+                "freshness_status_allowed",
+                freshness_status
+                in {
+                    "READY",
+                    "READY_WITH_WARNINGS",
+                    "BLOCKED_STALE_DATA",
+                    "BLOCKED_FUTURE_AS_OF",
+                    "BLOCKED_MISSING_PRICE",
+                    "BLOCKED_DATA_QUALITY_FAIL",
+                    "LATEST_AVAILABLE_ONLY",
+                },
+                freshness_status,
+            ),
+            _check(
+                "latest_valid_visible_when_available",
+                "latest_valid_as_of" in snapshot,
+                _text(snapshot.get("latest_valid_as_of")),
+            ),
+            _check("command_matrix_non_empty", bool(commands), str(len(commands))),
+            _check(
+                "blocked_status_has_blocked_command",
+                not freshness_status.startswith("BLOCKED") or bool(blocked_commands),
+                freshness_status,
+            ),
+            _check(
+                "blocked_reasons_listed",
+                isinstance(blocked_matrix.get("blocked_reasons"), list),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, snapshot, command_matrix), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_data_preflight_validation",
+        preflight_id,
+        checks,
+    )
+
+
+def run_smoothed_latest_emission(
+    *,
+    preflight_id: str,
+    preflight_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_LATEST_EMISSION_DIR,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    preflight = smoothed_data_preflight_report_payload(
+        preflight_id=preflight_id,
+        output_dir=preflight_dir,
+    )
+    snapshot = _mapping(preflight.get("data_freshness_snapshot"))
+    requested_date = _coerce_date(
+        snapshot.get("requested_as_of") or snapshot.get("requested_week_ending"),
+        date.min,
+    )
+    resolved_as_of = _coerce_date(snapshot.get("latest_valid_as_of"), date.min)
+    if resolved_as_of == date.min:
+        raise DynamicV3SystemTargetError("preflight has no latest_valid_as_of for fallback")
+    if resolved_as_of > requested_date and requested_date != date.min:
+        resolved_as_of = requested_date
+    emission = run_smoothed_daily_emission(
+        as_of=resolved_as_of,
+        model_target_dir=model_target_dir,
+        output_dir=emission_dir,
+        price_cache_path=price_cache_path,
+        generated_at=generated,
+    )
+    manifest = emission["manifest"]
+    event = emission["smoothed_forward_events"][0]
+    latest_emission_id = _stable_id(
+        "smoothed-latest-emission",
+        preflight_id,
+        requested_date.isoformat(),
+        resolved_as_of.isoformat(),
+        manifest.get("emission_id"),
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / latest_emission_id)
+    root.mkdir(parents=True, exist_ok=False)
+    resolution = {
+        "schema_version": SCHEMA_VERSION,
+        "latest_emission_id": root.name,
+        "source_preflight_id": preflight_id,
+        "requested_as_of": requested_date.isoformat(),
+        "resolved_as_of": resolved_as_of.isoformat(),
+        "resolution_reason": (
+            "latest_valid_as_of_fallback"
+            if resolved_as_of != requested_date
+            else "requested_as_of_supported"
+        ),
+        "fallback_scope": "daily_emission_only",
+        "due_scan_allowed": False,
+        "outcome_update_allowed": False,
+        "future_data_used": False,
+        "data_quality": event.get("data_quality"),
+        "source_preflight_freshness_status": snapshot.get("freshness_status"),
+        "source_preflight_validate_data_status": snapshot.get("validate_data_status"),
+        "emission_status": event.get("event_status"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    links = {
+        "schema_version": SCHEMA_VERSION,
+        "latest_emission_id": root.name,
+        "resolved_as_of": resolved_as_of.isoformat(),
+        "daily_emission_id": manifest.get("emission_id"),
+        "daily_emission_dir": emission["emission_dir"].as_posix(),
+        "emitted_event_count": manifest.get("emitted_event_count"),
+        "event_status": event.get("event_status"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    latest_manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_latest_emission_manifest",
+        "latest_emission_id": root.name,
+        "source_preflight_id": preflight_id,
+        "requested_as_of": requested_date.isoformat(),
+        "resolved_as_of": resolved_as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_latest_emission_manifest_path": str(
+            root / "smoothed_latest_emission_manifest.json"
+        ),
+        "latest_emission_resolution_path": str(root / "latest_emission_resolution.json"),
+        "latest_emission_artifact_links_path": str(
+            root / "latest_emission_artifact_links.json"
+        ),
+        "smoothed_latest_emission_report_path": str(
+            root / "smoothed_latest_emission_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_latest_emission_reader_brief(resolution, links)
+    _write_json(root / "smoothed_latest_emission_manifest.json", latest_manifest)
+    _write_json(root / "latest_emission_resolution.json", resolution)
+    _write_json(root / "latest_emission_artifact_links.json", links)
+    _write_text(
+        root / "smoothed_latest_emission_report.md",
+        render_smoothed_latest_emission_report(latest_manifest, resolution, links),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_latest_emission",
+        root.name,
+        root / "smoothed_latest_emission_manifest.json",
+    )
+    return {
+        "latest_emission_id": root.name,
+        "latest_emission_dir": root,
+        "manifest": latest_manifest,
+        "latest_emission_resolution": resolution,
+        "latest_emission_artifact_links": links,
+        "daily_emission": emission,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_latest_emission_report_payload(
+    *,
+    latest_emission_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_LATEST_EMISSION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=latest_emission_id,
+        latest_pointer="latest_smoothed_latest_emission",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_latest_emission_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_latest_emission_manifest.json"),
+        "latest_emission_resolution": _read_json(root / "latest_emission_resolution.json"),
+        "latest_emission_artifact_links": _read_json(
+            root / "latest_emission_artifact_links.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "latest_emission_dir": str(root),
+    }
+
+
+def validate_smoothed_latest_emission_artifact(
+    *,
+    latest_emission_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_LATEST_EMISSION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / latest_emission_id
+    manifest = _read_optional_json(root / "smoothed_latest_emission_manifest.json") or {}
+    resolution = _read_optional_json(root / "latest_emission_resolution.json") or {}
+    links = _read_optional_json(root / "latest_emission_artifact_links.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_latest_emission_manifest.json",
+            "latest_emission_resolution.json",
+            "latest_emission_artifact_links.json",
+            "smoothed_latest_emission_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "latest_emission_id_matches",
+                manifest.get("latest_emission_id") == latest_emission_id
+                and resolution.get("latest_emission_id") == latest_emission_id,
+                "",
+            ),
+            _check(
+                "fallback_scope_daily_only",
+                resolution.get("fallback_scope") == "daily_emission_only",
+                _text(resolution.get("fallback_scope")),
+            ),
+            _check(
+                "outcome_update_forbidden",
+                resolution.get("outcome_update_allowed") is False,
+                "",
+            ),
+            _check("due_scan_forbidden", resolution.get("due_scan_allowed") is False, ""),
+            _check(
+                "future_data_used_false",
+                resolution.get("future_data_used") is False,
+                "",
+            ),
+            _check(
+                "daily_emission_linked",
+                bool(_text(links.get("daily_emission_id"))),
+                _text(links.get("daily_emission_id")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, resolution, links), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_latest_emission_validation",
+        latest_emission_id,
+        checks,
+    )
+
+
+def run_smoothed_blocked_explain(
+    *,
+    preflight_id: str,
+    preflight_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    preflight = smoothed_data_preflight_report_payload(
+        preflight_id=preflight_id,
+        output_dir=preflight_dir,
+    )
+    snapshot = _mapping(preflight.get("data_freshness_snapshot"))
+    command_matrix = _mapping(preflight.get("runnable_command_matrix"))
+    explanations = _smoothed_blocked_command_explanations(snapshot, command_matrix)
+    explain_id = _stable_id(
+        "smoothed-blocked-explain",
+        preflight_id,
+        explanations,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / explain_id)
+    root.mkdir(parents=True, exist_ok=False)
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "explain_id": root.name,
+        "source_preflight_id": preflight_id,
+        "blocked_commands": explanations,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    owner_summary = render_smoothed_blocked_owner_summary(snapshot, explanations)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_blocked_explain_manifest",
+        "explain_id": root.name,
+        "source_preflight_id": preflight_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "blocked_command_count": len(explanations),
+        "smoothed_blocked_explain_manifest_path": str(
+            root / "smoothed_blocked_explain_manifest.json"
+        ),
+        "blocked_command_explanations_path": str(
+            root / "blocked_command_explanations.json"
+        ),
+        "blocked_owner_summary_path": str(root / "blocked_owner_summary.md"),
+        "smoothed_blocked_explain_report_path": str(
+            root / "smoothed_blocked_explain_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_blocked_explain_reader_brief(snapshot, explanations)
+    _write_json(root / "smoothed_blocked_explain_manifest.json", manifest)
+    _write_json(root / "blocked_command_explanations.json", payload)
+    _write_text(root / "blocked_owner_summary.md", owner_summary)
+    _write_text(
+        root / "smoothed_blocked_explain_report.md",
+        render_smoothed_blocked_explain_report(manifest, snapshot, explanations),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_blocked_explain",
+        root.name,
+        root / "smoothed_blocked_explain_manifest.json",
+    )
+    return {
+        "explain_id": root.name,
+        "explain_dir": root,
+        "manifest": manifest,
+        "blocked_command_explanations": payload,
+        "blocked_owner_summary": owner_summary,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_blocked_explain_report_payload(
+    *,
+    explain_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=explain_id,
+        latest_pointer="latest_smoothed_blocked_explain",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_blocked_explain_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_blocked_explain_manifest.json"),
+        "blocked_command_explanations": _read_json(
+            root / "blocked_command_explanations.json"
+        ),
+        "blocked_owner_summary": (root / "blocked_owner_summary.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "explain_dir": str(root),
+    }
+
+
+def validate_smoothed_blocked_explain_artifact(
+    *,
+    explain_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / explain_id
+    manifest = _read_optional_json(root / "smoothed_blocked_explain_manifest.json") or {}
+    payload = _read_optional_json(root / "blocked_command_explanations.json") or {}
+    commands = _records(payload.get("blocked_commands"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_blocked_explain_manifest.json",
+            "blocked_command_explanations.json",
+            "blocked_owner_summary.md",
+            "smoothed_blocked_explain_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "explain_id_matches",
+                manifest.get("explain_id") == explain_id
+                and payload.get("explain_id") == explain_id,
+                "",
+            ),
+            _check("blocked_commands_present", bool(commands), str(len(commands))),
+            _check(
+                "human_explanation_present",
+                all(_text(row.get("human_explanation")) for row in commands),
+                "",
+            ),
+            _check(
+                "safe_next_action_present",
+                all(_text(row.get("safe_next_action")) for row in commands),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, payload), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_blocked_explain_validation",
+        explain_id,
+        checks,
+    )
+
+
+def run_smoothed_refresh_plan(
+    *,
+    preflight_id: str,
+    explain_id: str,
+    preflight_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    explain_dir: Path = DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_REFRESH_PLAN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    preflight = smoothed_data_preflight_report_payload(
+        preflight_id=preflight_id,
+        output_dir=preflight_dir,
+    )
+    explain = smoothed_blocked_explain_report_payload(
+        explain_id=explain_id,
+        output_dir=explain_dir,
+    )
+    snapshot = _mapping(preflight.get("data_freshness_snapshot"))
+    requirements = _smoothed_source_refresh_requirements(snapshot)
+    rerun = _smoothed_rerun_command_plan(snapshot)
+    refresh_plan_id = _stable_id(
+        "smoothed-refresh-plan",
+        preflight_id,
+        explain_id,
+        requirements,
+        rerun,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / refresh_plan_id)
+    root.mkdir(parents=True, exist_ok=False)
+    requirements["refresh_plan_id"] = root.name
+    rerun["refresh_plan_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_refresh_plan_manifest",
+        "refresh_plan_id": root.name,
+        "source_preflight_id": preflight_id,
+        "source_explain_id": explain_id,
+        "requested_as_of": snapshot.get("requested_as_of")
+        or snapshot.get("requested_week_ending"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_refresh_plan_manifest_path": str(
+            root / "smoothed_refresh_plan_manifest.json"
+        ),
+        "source_refresh_requirements_path": str(root / "source_refresh_requirements.json"),
+        "rerun_command_plan_path": str(root / "rerun_command_plan.json"),
+        "smoothed_refresh_plan_report_path": str(root / "smoothed_refresh_plan_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_refresh_plan_reader_brief(requirements, rerun)
+    _write_json(root / "smoothed_refresh_plan_manifest.json", manifest)
+    _write_json(root / "source_refresh_requirements.json", requirements)
+    _write_json(root / "rerun_command_plan.json", rerun)
+    _write_text(
+        root / "smoothed_refresh_plan_report.md",
+        render_smoothed_refresh_plan_report(
+            manifest,
+            requirements,
+            rerun,
+            explain,
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_refresh_plan",
+        root.name,
+        root / "smoothed_refresh_plan_manifest.json",
+    )
+    return {
+        "refresh_plan_id": root.name,
+        "refresh_plan_dir": root,
+        "manifest": manifest,
+        "source_refresh_requirements": requirements,
+        "rerun_command_plan": rerun,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_refresh_plan_report_payload(
+    *,
+    refresh_plan_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_REFRESH_PLAN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=refresh_plan_id,
+        latest_pointer="latest_smoothed_refresh_plan",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_refresh_plan_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_refresh_plan_manifest.json"),
+        "source_refresh_requirements": _read_json(root / "source_refresh_requirements.json"),
+        "rerun_command_plan": _read_json(root / "rerun_command_plan.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "refresh_plan_dir": str(root),
+    }
+
+
+def validate_smoothed_refresh_plan_artifact(
+    *,
+    refresh_plan_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_REFRESH_PLAN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / refresh_plan_id
+    manifest = _read_optional_json(root / "smoothed_refresh_plan_manifest.json") or {}
+    requirements = _read_optional_json(root / "source_refresh_requirements.json") or {}
+    rerun = _read_optional_json(root / "rerun_command_plan.json") or {}
+    source_rows = _records(requirements.get("source_requirements"))
+    rerun_rows = _records(rerun.get("rerun_after_refresh"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_refresh_plan_manifest.json",
+            "source_refresh_requirements.json",
+            "rerun_command_plan.json",
+            "smoothed_refresh_plan_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "refresh_plan_id_matches",
+                manifest.get("refresh_plan_id") == refresh_plan_id
+                and requirements.get("refresh_plan_id") == refresh_plan_id,
+                "",
+            ),
+            _check("source_requirements_present", bool(source_rows), str(len(source_rows))),
+            _check("rerun_commands_present", bool(rerun_rows), str(len(rerun_rows))),
+            _check(
+                "does_not_refresh_sources",
+                rerun.get("external_refresh_executed") is False,
+                "",
+            ),
+            _check(
+                "rerun_allowed_boolean",
+                isinstance(rerun.get("rerun_allowed_now"), bool),
+                _text(rerun.get("rerun_allowed_now")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, requirements, rerun), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_refresh_plan_validation",
+        refresh_plan_id,
+        checks,
+    )
+
+
+def run_smoothed_bootstrap_retry(
+    *,
+    requested_as_of: date | None = None,
+    requested_week_ending: date | None = None,
+    output_dir: Path = DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR,
+    preflight_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    latest_emission_dir: Path = DEFAULT_SMOOTHED_LATEST_EMISSION_DIR,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    due_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+    update_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+    classification_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
+    binding_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
+    progress_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    dashboard_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+    monitor_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+    switch_plan_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
+    recheck_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+    owner_promotion_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
+    renewal_dir: Path = DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR,
+    weekly_run_dir: Path = DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR,
+    binding_id: str | None = None,
+    switch_plan_id: str | None = None,
+    owner_promotion_id: str | None = None,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    requested_date = _smoothed_requested_date(
+        requested_as_of=requested_as_of,
+        requested_week_ending=requested_week_ending,
+    )
+    preflight = run_smoothed_data_preflight(
+        requested_as_of=requested_as_of,
+        requested_week_ending=requested_week_ending,
+        output_dir=preflight_dir,
+        price_cache_path=price_cache_path,
+        rates_path=rates_path,
+        model_target_dir=model_target_dir,
+        generated_at=generated,
+    )
+    snapshot = _mapping(preflight.get("data_freshness_snapshot"))
+    preflight_status = _text(snapshot.get("freshness_status"))
+    can_run_full = preflight_status in {"READY", "READY_WITH_WARNINGS"}
+    can_run_latest_only = preflight_status == "LATEST_AVAILABLE_ONLY"
+    steps: list[dict[str, Any]] = [
+        {
+            "step": "preflight",
+            "status": "PASS" if can_run_full or can_run_latest_only else "BLOCKED",
+            "artifact_id": preflight["preflight_id"],
+        }
+    ]
+    artifacts: dict[str, Any] = {
+        "preflight": {"artifact_id": preflight["preflight_id"]},
+    }
+    latest_emission: dict[str, Any] | None = None
+    weekly: dict[str, Any] | None = None
+
+    if can_run_full:
+        weekly = run_smoothed_forward_weekly_run(
+            week_ending=requested_date,
+            binding_id=binding_id,
+            switch_plan_id=switch_plan_id,
+            owner_promotion_id=owner_promotion_id,
+            model_target_dir=model_target_dir,
+            emission_dir=emission_dir,
+            due_dir=due_dir,
+            update_dir=update_dir,
+            classification_dir=classification_dir,
+            binding_dir=binding_dir,
+            progress_dir=progress_dir,
+            dashboard_dir=dashboard_dir,
+            monitor_dir=monitor_dir,
+            switch_plan_dir=switch_plan_dir,
+            recheck_dir=recheck_dir,
+            owner_promotion_dir=owner_promotion_dir,
+            renewal_dir=renewal_dir,
+            output_dir=weekly_run_dir,
+            price_cache_path=price_cache_path,
+            generated_at=generated,
+        )
+        for row in _records(_mapping(weekly.get("weekly_run_steps")).get("steps")):
+            steps.append(dict(row))
+        artifacts["weekly_runner"] = {"artifact_id": weekly["weekly_run_id"]}
+        artifacts.update(_mapping(_mapping(weekly.get("weekly_run_artifacts")).get("artifacts")))
+    elif can_run_latest_only:
+        latest_emission = run_smoothed_latest_emission(
+            preflight_id=preflight["preflight_id"],
+            preflight_dir=preflight_dir,
+            output_dir=latest_emission_dir,
+            model_target_dir=model_target_dir,
+            emission_dir=emission_dir,
+            price_cache_path=price_cache_path,
+            generated_at=generated,
+        )
+        steps.append(
+            {
+                "step": "latest_emission",
+                "status": "PASS",
+                "artifact_id": latest_emission["latest_emission_id"],
+            }
+        )
+        artifacts["latest_emission"] = {
+            "artifact_id": latest_emission["latest_emission_id"]
+        }
+        _append_retry_skipped_steps(
+            steps,
+            (
+                "outcome_due_scan",
+                "outcome_update",
+                "forward_classification",
+                "progress_update",
+                "weekly_dashboard",
+                "event_monitor",
+                "switch_readiness",
+                "owner_renewal",
+            ),
+            "latest_available_emission_only",
+        )
+    else:
+        _append_retry_skipped_steps(
+            steps,
+            (
+                "daily_emission",
+                "outcome_due_scan",
+                "outcome_update",
+                "forward_classification",
+                "progress_update",
+                "weekly_dashboard",
+                "event_monitor",
+                "switch_readiness",
+                "owner_renewal",
+            ),
+            "preflight_blocked",
+        )
+
+    retry_id = _stable_id(
+        "smoothed-bootstrap-retry",
+        requested_as_of.isoformat() if requested_as_of else "",
+        requested_week_ending.isoformat() if requested_week_ending else "",
+        preflight["preflight_id"],
+        steps,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / retry_id)
+    root.mkdir(parents=True, exist_ok=False)
+    preflight_result = {
+        "schema_version": SCHEMA_VERSION,
+        "retry_id": root.name,
+        "requested_as_of": requested_date.isoformat(),
+        "preflight_status": preflight_status,
+        "latest_valid_as_of": snapshot.get("latest_valid_as_of"),
+        "can_run_full_retry": can_run_full,
+        "can_run_latest_available_emission_only": can_run_latest_only,
+        "blocking_errors": _texts(snapshot.get("blocking_errors")),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    step_payload = {"schema_version": SCHEMA_VERSION, "steps": steps, **SYSTEM_TARGET_SAFETY}
+    artifact_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "retry_id": root.name,
+        "artifacts": artifacts,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    summary = _smoothed_retry_summary(
+        retry_id=root.name,
+        requested_date=requested_date,
+        preflight_status=preflight_status,
+        weekly=weekly,
+        latest_emission=latest_emission,
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_bootstrap_retry_manifest",
+        "retry_id": root.name,
+        "requested_as_of": requested_date.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "retry_status": summary.get("retry_status"),
+        "smoothed_bootstrap_retry_manifest_path": str(
+            root / "smoothed_bootstrap_retry_manifest.json"
+        ),
+        "retry_preflight_result_path": str(root / "retry_preflight_result.json"),
+        "retry_steps_path": str(root / "retry_steps.json"),
+        "retry_artifacts_path": str(root / "retry_artifacts.json"),
+        "retry_summary_path": str(root / "retry_summary.json"),
+        "smoothed_bootstrap_retry_report_path": str(
+            root / "smoothed_bootstrap_retry_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_bootstrap_retry_reader_brief(summary)
+    _write_json(root / "smoothed_bootstrap_retry_manifest.json", manifest)
+    _write_json(root / "retry_preflight_result.json", preflight_result)
+    _write_json(root / "retry_steps.json", step_payload)
+    _write_json(root / "retry_artifacts.json", artifact_payload)
+    _write_json(root / "retry_summary.json", summary)
+    _write_text(
+        root / "smoothed_bootstrap_retry_report.md",
+        render_smoothed_bootstrap_retry_report(
+            manifest,
+            preflight_result,
+            step_payload,
+            summary,
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_bootstrap_retry",
+        root.name,
+        root / "smoothed_bootstrap_retry_manifest.json",
+    )
+    return {
+        "retry_id": root.name,
+        "retry_dir": root,
+        "manifest": manifest,
+        "retry_preflight_result": preflight_result,
+        "retry_steps": step_payload,
+        "retry_artifacts": artifact_payload,
+        "retry_summary": summary,
+        "preflight": preflight,
+        "latest_emission": latest_emission,
+        "weekly_run": weekly,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_bootstrap_retry_report_payload(
+    *,
+    retry_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=retry_id,
+        latest_pointer="latest_smoothed_bootstrap_retry",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_bootstrap_retry_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_bootstrap_retry_manifest.json"),
+        "retry_preflight_result": _read_json(root / "retry_preflight_result.json"),
+        "retry_steps": _read_json(root / "retry_steps.json"),
+        "retry_artifacts": _read_json(root / "retry_artifacts.json"),
+        "retry_summary": _read_json(root / "retry_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "retry_dir": str(root),
+    }
+
+
+def validate_smoothed_bootstrap_retry_artifact(
+    *,
+    retry_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR,
+) -> dict[str, Any]:
+    root = output_dir / retry_id
+    manifest = _read_optional_json(root / "smoothed_bootstrap_retry_manifest.json") or {}
+    preflight = _read_optional_json(root / "retry_preflight_result.json") or {}
+    steps_payload = _read_optional_json(root / "retry_steps.json") or {}
+    artifacts = _read_optional_json(root / "retry_artifacts.json") or {}
+    summary = _read_optional_json(root / "retry_summary.json") or {}
+    steps = _records(steps_payload.get("steps"))
+    preflight_status = _text(preflight.get("preflight_status"))
+    blocked = preflight_status.startswith("BLOCKED")
+    outcome_update_pass = any(
+        row.get("step") == "outcome_update" and row.get("status") == "PASS"
+        for row in steps
+    )
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_bootstrap_retry_manifest.json",
+            "retry_preflight_result.json",
+            "retry_steps.json",
+            "retry_artifacts.json",
+            "retry_summary.json",
+            "smoothed_bootstrap_retry_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "retry_id_matches",
+                manifest.get("retry_id") == retry_id
+                and preflight.get("retry_id") == retry_id
+                and summary.get("retry_id") == retry_id,
+                "",
+            ),
+            _check(
+                "preflight_first",
+                bool(steps) and steps[0].get("step") == "preflight",
+                ",".join(_text(row.get("step")) for row in steps[:2]),
+            ),
+            _check(
+                "blocked_does_not_update_outcome",
+                not blocked or not outcome_update_pass,
+                preflight_status,
+            ),
+            _check(
+                "retry_status_allowed",
+                summary.get("retry_status") in {"COMPLETED", "BLOCKED", "PARTIAL", "FAIL"},
+                _text(summary.get("retry_status")),
+            ),
+            _check(
+                "can_execute_switch_false",
+                summary.get("can_execute_switch") is False,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                summary.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check(
+                "production_effect_none",
+                summary.get("production_effect") == "none",
+                _text(summary.get("production_effect")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, preflight, artifacts, summary), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_bootstrap_retry_validation",
+        retry_id,
+        checks,
+    )
+
+
 def render_risk_capped_limited_config_report(
     manifest: Mapping[str, Any],
     config: Mapping[str, Any],
@@ -13085,6 +14151,351 @@ def render_smoothed_forward_weekly_run_reader_brief(summary: Mapping[str, Any]) 
             f"{summary.get('required_recovery_events')}",
             f"- can_execute_switch: {summary.get('can_execute_switch')}",
             f"- weekly_recommendation: {summary.get('weekly_recommendation')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_data_preflight_report(
+    manifest: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+    command_matrix: Mapping[str, Any],
+    blocked_matrix: Mapping[str, Any],
+) -> str:
+    latest = _mapping(snapshot.get("latest_available"))
+    return "\n".join(
+        [
+            f"# Smoothed Data Preflight {manifest.get('preflight_id')}",
+            "",
+            f"- requested_as_of: {snapshot.get('requested_as_of')}",
+            f"- requested_week_ending: {snapshot.get('requested_week_ending')}",
+            f"- latest_valid_as_of: {snapshot.get('latest_valid_as_of')}",
+            f"- freshness_status: {snapshot.get('freshness_status')}",
+            f"- validate_data_status: {snapshot.get('validate_data_status')}",
+            f"- blocking_errors: {', '.join(_texts(snapshot.get('blocking_errors')))}",
+            f"- latest prices_daily: {latest.get('prices_daily')}",
+            f"- latest prices_marketstack_daily: {latest.get('prices_marketstack_daily')}",
+            f"- latest rates_daily: {latest.get('rates_daily')}",
+            "- future_data_used: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Runnable Command Matrix",
+            "",
+            *[
+                "- "
+                f"{row.get('command')}: status={row.get('status')} "
+                f"reason={row.get('reason')} resolved_as_of={row.get('resolved_as_of')}"
+                for row in _records(command_matrix.get("commands"))
+            ],
+            "",
+            "## Blocked Reasons",
+            "",
+            *[
+                "- "
+                f"{row.get('reason')}: severity={row.get('severity')} "
+                f"latest={row.get('latest_available')} blocks="
+                f"{','.join(_texts(row.get('blocks')))}"
+                for row in _records(blocked_matrix.get("blocked_reasons"))
+            ],
+            "",
+            "Preflight 只解释当前 cached data 能否支持 requested date；它不刷新数据、"
+            "不绕过 validate-data，也不更新 forward outcome。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_data_preflight_reader_brief(
+    snapshot: Mapping[str, Any],
+    command_matrix: Mapping[str, Any],
+) -> str:
+    runnable_latest = [
+        row
+        for row in _records(command_matrix.get("commands"))
+        if row.get("status") == "RUNNABLE_WITH_LATEST_AVAILABLE"
+    ]
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Data Preflight",
+            "",
+            f"- preflight_id: {snapshot.get('preflight_id')}",
+            f"- requested_as_of: {snapshot.get('requested_as_of')}",
+            f"- requested_week_ending: {snapshot.get('requested_week_ending')}",
+            f"- latest_valid_as_of: {snapshot.get('latest_valid_as_of')}",
+            f"- freshness_status: {snapshot.get('freshness_status')}",
+            f"- blocking_errors: {', '.join(_texts(snapshot.get('blocking_errors')))}",
+            f"- latest_available_fallback_commands: {len(runnable_latest)}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_latest_emission_report(
+    manifest: Mapping[str, Any],
+    resolution: Mapping[str, Any],
+    links: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Latest Emission {manifest.get('latest_emission_id')}",
+            "",
+            f"- source_preflight_id: {resolution.get('source_preflight_id')}",
+            f"- requested_as_of: {resolution.get('requested_as_of')}",
+            f"- resolved_as_of: {resolution.get('resolved_as_of')}",
+            f"- resolution_reason: {resolution.get('resolution_reason')}",
+            f"- fallback_scope: {resolution.get('fallback_scope')}",
+            f"- daily_emission_id: {links.get('daily_emission_id')}",
+            f"- emitted_event_count: {links.get('emitted_event_count')}",
+            f"- event_status: {links.get('event_status')}",
+            f"- due_scan_allowed: {resolution.get('due_scan_allowed')}",
+            f"- outcome_update_allowed: {resolution.get('outcome_update_allowed')}",
+            f"- future_data_used: {resolution.get('future_data_used')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "Latest-available fallback 只生成 daily observation event。它不会扫描 due "
+            "windows，不会更新 outcome，也不会把未成熟 forward sample 标记为 AVAILABLE。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_latest_emission_reader_brief(
+    resolution: Mapping[str, Any],
+    links: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Latest Emission",
+            "",
+            f"- latest_emission_id: {resolution.get('latest_emission_id')}",
+            f"- requested_as_of: {resolution.get('requested_as_of')}",
+            f"- resolved_as_of: {resolution.get('resolved_as_of')}",
+            f"- emitted_event_count: {links.get('emitted_event_count')}",
+            f"- outcome_update_allowed: {resolution.get('outcome_update_allowed')}",
+            f"- future_data_used: {resolution.get('future_data_used')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_blocked_owner_summary(
+    snapshot: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+) -> str:
+    latest = _mapping(snapshot.get("latest_available"))
+    requested = snapshot.get("requested_as_of") or snapshot.get("requested_week_ending")
+    return "\n".join(
+        [
+            "# Smoothed Forward Run Blocked Summary",
+            "",
+            "Requested date:",
+            str(requested),
+            "",
+            "Latest available data:",
+            f"- prices_daily: {latest.get('prices_daily')}",
+            f"- rates_daily: {latest.get('rates_daily')}",
+            "",
+            "Blocked commands:",
+            *[f"- {row.get('command')}" for row in explanations],
+            "",
+            "Reason:",
+            "Data freshness gate failed. This is expected fail-close behavior.",
+            "",
+            "Allowed actions:",
+            "- run latest-available daily emission",
+            "- refresh price / rate caches",
+            "- retry after sources are fresh",
+            "",
+            "Forbidden actions:",
+            "- do not bypass validate-data",
+            "- do not update outcomes with stale data",
+            "- do not use future data",
+            "- do not generate order tickets",
+            "",
+        ]
+    )
+
+
+def render_smoothed_blocked_explain_report(
+    manifest: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Blocked Explain {manifest.get('explain_id')}",
+            "",
+            f"- source_preflight_id: {manifest.get('source_preflight_id')}",
+            f"- freshness_status: {snapshot.get('freshness_status')}",
+            f"- validate_data_status: {snapshot.get('validate_data_status')}",
+            f"- blocking_errors: {', '.join(_texts(snapshot.get('blocking_errors')))}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Blocked Commands",
+            "",
+            *[
+                "- "
+                f"{row.get('command')}: {row.get('human_explanation')} "
+                f"safe_next_action={row.get('safe_next_action')}"
+                for row in explanations
+            ],
+            "",
+            "Blocked explanation 是人类可读诊断包，不是数据刷新执行器，也不是 "
+            "production action approval。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_blocked_explain_reader_brief(
+    snapshot: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Blocked Explain",
+            "",
+            f"- freshness_status: {snapshot.get('freshness_status')}",
+            f"- blocking_errors: {', '.join(_texts(snapshot.get('blocking_errors')))}",
+            f"- blocked_command_count: {len(explanations)}",
+            "- safe_next_action: refresh_sources_then_retry",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_refresh_plan_report(
+    manifest: Mapping[str, Any],
+    requirements: Mapping[str, Any],
+    rerun: Mapping[str, Any],
+    explain: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Refresh Plan {manifest.get('refresh_plan_id')}",
+            "",
+            f"- source_preflight_id: {manifest.get('source_preflight_id')}",
+            f"- source_explain_id: {manifest.get('source_explain_id')}",
+            f"- requested_as_of: {requirements.get('requested_as_of')}",
+            f"- all_required_sources_fresh: {requirements.get('all_required_sources_fresh')}",
+            f"- rerun_allowed_now: {rerun.get('rerun_allowed_now')}",
+            f"- external_refresh_executed: {rerun.get('external_refresh_executed')}",
+            f"- blocked_command_count: {explain.get('blocked_command_count')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Source Requirements",
+            "",
+            *[
+                "- "
+                f"{row.get('source')}: current_latest={row.get('current_latest_date')} "
+                f"required_through={row.get('required_through')} "
+                f"status={row.get('status')} action={row.get('required_action')}"
+                for row in _records(requirements.get("source_requirements"))
+            ],
+            "",
+            "## Rerun Commands",
+            "",
+            *[
+                "- "
+                f"{row.get('step')}. {row.get('command')} - {row.get('purpose')}"
+                for row in _records(rerun.get("rerun_after_refresh"))
+            ],
+            "",
+            "Refresh plan 只给出刷新和重跑计划，不直接调用外部数据源。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_refresh_plan_reader_brief(
+    requirements: Mapping[str, Any],
+    rerun: Mapping[str, Any],
+) -> str:
+    stale = [
+        row
+        for row in _records(requirements.get("source_requirements"))
+        if row.get("status") != "FRESH"
+    ]
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Refresh Plan",
+            "",
+            f"- refresh_plan_id: {requirements.get('refresh_plan_id')}",
+            f"- stale_source_count: {len(stale)}",
+            f"- required_through: {requirements.get('requested_as_of')}",
+            f"- rerun_allowed_now: {rerun.get('rerun_allowed_now')}",
+            f"- external_refresh_executed: {rerun.get('external_refresh_executed')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_bootstrap_retry_report(
+    manifest: Mapping[str, Any],
+    preflight: Mapping[str, Any],
+    steps: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Bootstrap Retry {manifest.get('retry_id')}",
+            "",
+            f"- requested_as_of: {summary.get('requested_as_of')}",
+            f"- retry_status: {summary.get('retry_status')}",
+            f"- preflight_status: {preflight.get('preflight_status')}",
+            f"- blocking_errors: {', '.join(_texts(preflight.get('blocking_errors')))}",
+            f"- emitted_events: {summary.get('emitted_events')}",
+            f"- due_windows: {summary.get('due_windows')}",
+            f"- updated_windows: {summary.get('updated_windows')}",
+            f"- classified_events: {summary.get('classified_events')}",
+            f"- can_execute_switch: {summary.get('can_execute_switch')}",
+            f"- weekly_recommendation: {summary.get('weekly_recommendation')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Retry Steps",
+            "",
+            *[
+                "- "
+                f"{row.get('step')}: status={row.get('status')} "
+                f"artifact_id={row.get('artifact_id')} reason={row.get('reason')}"
+                for row in _records(steps.get("steps"))
+            ],
+            "",
+            "Retry runner 必须先执行 preflight。若 preflight blocked，则不运行 "
+            "outcome update；若数据 ready，才串联完整 smoothed forward evidence chain。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_bootstrap_retry_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Bootstrap Retry",
+            "",
+            f"- retry_id: {summary.get('retry_id')}",
+            f"- retry_status: {summary.get('retry_status')}",
+            f"- requested_as_of: {summary.get('requested_as_of')}",
+            f"- emitted_events: {summary.get('emitted_events')}",
+            f"- updated_windows: {summary.get('updated_windows')}",
+            "- forward_progress: "
+            f"{summary.get('available_forward_events_after_retry')}",
+            f"- can_execute_switch: {summary.get('can_execute_switch')}",
             "- broker_action_allowed: false",
             "- production_effect: none",
             "",
@@ -17630,7 +19041,16 @@ def _optional_latest_model_target_payload(output_dir: Path) -> dict[str, Any]:
     try:
         return model_target_report_payload(latest=True, output_dir=output_dir)
     except DynamicV3SystemTargetError:
-        return {}
+        latest_root = _latest_child_dir_with(output_dir, "model_target_manifest.json")
+        if latest_root is None:
+            return {}
+        try:
+            return model_target_report_payload(
+                target_id=latest_root.name,
+                output_dir=output_dir,
+            )
+        except DynamicV3SystemTargetError:
+            return {}
 
 
 def _load_advisory_limits(path_or_value: object) -> dict[str, Any]:
@@ -22694,6 +24114,641 @@ def _smoothed_weekly_run_summary(
         "production_effect": "none",
         **SYSTEM_TARGET_SAFETY,
     }
+
+
+def _smoothed_requested_date(
+    *,
+    requested_as_of: date | None,
+    requested_week_ending: date | None,
+) -> date:
+    if requested_as_of is None and requested_week_ending is None:
+        raise DynamicV3SystemTargetError("requested_as_of or requested_week_ending is required")
+    if requested_as_of is not None and requested_week_ending is not None:
+        raise DynamicV3SystemTargetError(
+            "requested_as_of and requested_week_ending cannot both be set"
+        )
+    return requested_as_of or requested_week_ending or date.min
+
+
+def _smoothed_preflight_data_quality_report(
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    as_of: date,
+) -> DataQualityReport:
+    expected_price_tickers = _smoothed_expected_price_tickers(prices_path)
+    expected_rate_series = _smoothed_expected_rate_series(rates_path)
+    return validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=expected_price_tickers,
+        expected_rate_series=expected_rate_series,
+        quality_config=load_data_quality(),
+        as_of=as_of,
+        manifest_path=_smoothed_download_manifest_path(prices_path),
+        secondary_prices_path=_smoothed_marketstack_prices_path(prices_path),
+        require_secondary_prices=_smoothed_requires_marketstack_prices(prices_path),
+    )
+
+
+def _smoothed_expected_price_tickers(prices_path: Path) -> list[str]:
+    if _smoothed_is_default_price_cache(prices_path):
+        try:
+            return configured_price_tickers(load_universe())
+        except (OSError, ValueError, TypeError):
+            pass
+    inferred = _infer_csv_values(prices_path, "ticker")
+    if inferred:
+        return inferred
+    try:
+        return configured_price_tickers(load_universe())
+    except (OSError, ValueError, TypeError):
+        return []
+
+
+def _smoothed_expected_rate_series(rates_path: Path) -> list[str]:
+    if _smoothed_is_default_rates_cache(rates_path):
+        try:
+            return configured_rate_series(load_universe())
+        except (OSError, ValueError, TypeError):
+            pass
+    inferred = _infer_csv_values(rates_path, "series")
+    if inferred:
+        return inferred
+    try:
+        return configured_rate_series(load_universe())
+    except (OSError, ValueError, TypeError):
+        return []
+
+
+def _smoothed_data_freshness_snapshot(
+    *,
+    requested_as_of: date | None,
+    requested_week_ending: date | None,
+    quality_report: DataQualityReport,
+    prices_path: Path,
+    rates_path: Path,
+    model_target_dir: Path,
+) -> dict[str, Any]:
+    requested_date = _smoothed_requested_date(
+        requested_as_of=requested_as_of,
+        requested_week_ending=requested_week_ending,
+    )
+    price_latest = quality_report.price_summary.max_date
+    secondary_latest = (
+        quality_report.secondary_price_summary.max_date
+        if quality_report.secondary_price_summary is not None
+        else None
+    )
+    rates_latest = quality_report.rate_summary.max_date
+    require_secondary = _smoothed_requires_marketstack_prices(prices_path)
+    latest_valid = _smoothed_latest_valid_as_of(
+        price_latest=price_latest,
+        secondary_latest=secondary_latest,
+        rates_latest=rates_latest,
+        require_secondary=require_secondary,
+    )
+    errors = _smoothed_issue_codes(quality_report, severity="ERROR")
+    warnings = _smoothed_issue_codes(quality_report, severity="WARNING")
+    freshness_status = _smoothed_freshness_status(
+        requested_date=requested_date,
+        latest_valid_as_of=latest_valid,
+        validate_data_status=quality_report.status,
+        blocking_errors=errors,
+    )
+    model_target_as_of = _smoothed_latest_model_target_as_of(model_target_dir)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "preflight_id": "",
+        "requested_as_of": requested_as_of.isoformat() if requested_as_of else None,
+        "requested_week_ending": (
+            requested_week_ending.isoformat() if requested_week_ending else None
+        ),
+        "requested_date": requested_date.isoformat(),
+        "latest_available": {
+            "prices_daily": _date_or_none(price_latest),
+            "prices_marketstack_daily": _date_or_none(secondary_latest),
+            "rates_daily": _date_or_none(rates_latest),
+            "model_target_available_as_of": _date_or_none(model_target_as_of),
+            "regime_tags_available_as_of": _date_or_none(price_latest),
+        },
+        "latest_valid_as_of": _date_or_none(latest_valid),
+        "freshness_status": freshness_status,
+        "validate_data_status": quality_report.status,
+        "blocking_errors": errors,
+        "warnings": warnings,
+        "quality_issues": _smoothed_quality_issues_payload(quality_report),
+        "source_paths": {
+            "prices_daily": str(prices_path),
+            "prices_marketstack_daily": str(_smoothed_marketstack_prices_path(prices_path)),
+            "rates_daily": str(rates_path),
+        },
+        "future_data_used": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_latest_valid_as_of(
+    *,
+    price_latest: date | None,
+    secondary_latest: date | None,
+    rates_latest: date | None,
+    require_secondary: bool,
+) -> date | None:
+    required = [price_latest, rates_latest]
+    if require_secondary:
+        required.append(secondary_latest)
+    if any(item is None for item in required):
+        return None
+    return min(item for item in required if item is not None)
+
+
+def _smoothed_freshness_status(
+    *,
+    requested_date: date,
+    latest_valid_as_of: date | None,
+    validate_data_status: str,
+    blocking_errors: Sequence[str],
+) -> str:
+    if blocking_errors:
+        if any(code in {"prices_stale", "rates_stale"} for code in blocking_errors):
+            return "BLOCKED_STALE_DATA"
+        if any(code in {"prices_future_dates", "rates_future_dates"} for code in blocking_errors):
+            return "BLOCKED_FUTURE_AS_OF"
+        if any("price" in code and "missing" in code for code in blocking_errors):
+            return "BLOCKED_MISSING_PRICE"
+        return "BLOCKED_DATA_QUALITY_FAIL"
+    if latest_valid_as_of is not None and requested_date > latest_valid_as_of:
+        return "LATEST_AVAILABLE_ONLY"
+    if validate_data_status == "PASS_WITH_WARNINGS":
+        return "READY_WITH_WARNINGS"
+    return "READY"
+
+
+def _smoothed_runnable_command_matrix(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    requested_date = _text(snapshot.get("requested_date"))
+    latest_valid = _text(snapshot.get("latest_valid_as_of"))
+    freshness_status = _text(snapshot.get("freshness_status"))
+    ready = freshness_status in {"READY", "READY_WITH_WARNINGS"}
+    latest_available_only = freshness_status == "LATEST_AVAILABLE_ONLY"
+    latest_fallback_allowed = bool(latest_valid) and (
+        latest_available_only or freshness_status == "BLOCKED_STALE_DATA"
+    )
+    blocked_reason = _smoothed_command_block_reason(snapshot)
+    commands = [
+        {
+            "command": "smoothed-daily-emission",
+            "requested_as_of": requested_date,
+            "status": "RUNNABLE" if ready else "BLOCKED",
+            "reason": "requested_as_of_supported" if ready else blocked_reason,
+        },
+        {
+            "command": "smoothed-daily-emission",
+            "requested_as_of": "latest_valid_as_of",
+            "resolved_as_of": latest_valid or None,
+            "status": (
+                "RUNNABLE_WITH_LATEST_AVAILABLE"
+                if latest_fallback_allowed
+                else ("RUNNABLE" if ready else "BLOCKED")
+            ),
+            "reason": (
+                "safe_observation_emission_only"
+                if latest_fallback_allowed
+                else ("requested_as_of_supported" if ready else "no_latest_valid_as_of")
+            ),
+        },
+        {
+            "command": "smoothed-outcome-due",
+            "requested_as_of": requested_date,
+            "status": "RUNNABLE" if ready else "BLOCKED",
+            "reason": "requested_as_of_supported" if ready else blocked_reason,
+        },
+        {
+            "command": "smoothed-outcome-update",
+            "requested_as_of": requested_date,
+            "status": "RUNNABLE" if ready else "BLOCKED",
+            "reason": "requested_as_of_supported" if ready else blocked_reason,
+        },
+        {
+            "command": "smoothed-forward-weekly-run",
+            "requested_week_ending": requested_date,
+            "status": "RUNNABLE" if ready else "BLOCKED",
+            "reason": "requested_week_ending_supported" if ready else blocked_reason,
+        },
+    ]
+    return {"schema_version": SCHEMA_VERSION, "preflight_id": "", "commands": commands}
+
+
+def _smoothed_blocked_reason_matrix(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    reasons = _texts(snapshot.get("blocking_errors"))
+    if not reasons and snapshot.get("freshness_status") == "LATEST_AVAILABLE_ONLY":
+        reasons = ["requested_as_of_after_latest_valid_as_of"]
+    rows = [_smoothed_blocked_reason_row(reason, snapshot) for reason in reasons]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "preflight_id": "",
+        "blocked_reasons": rows,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_blocked_reason_row(reason: str, snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    latest = _mapping(snapshot.get("latest_available"))
+    requested = _text(snapshot.get("requested_date"))
+    latest_available = None
+    blocks = ["validate_data", "weekly_runner"]
+    fallback_scope = ["diagnostic_report"]
+    can_fallback = False
+    if reason.startswith("prices_") or reason == "requested_as_of_after_latest_valid_as_of":
+        latest_available = latest.get("prices_daily")
+        blocks = ["outcome_due_scan", "outcome_update", "weekly_runner"]
+        fallback_scope = ["daily_emission_only"]
+        can_fallback = bool(snapshot.get("latest_valid_as_of"))
+    if reason.startswith("rates_"):
+        latest_available = latest.get("rates_daily")
+        blocks = ["validate_data", "weekly_runner"]
+        fallback_scope = ["diagnostic_report", "daily_emission_if_target_generation_safe"]
+        can_fallback = bool(snapshot.get("latest_valid_as_of"))
+    return {
+        "reason": reason,
+        "severity": "BLOCKING",
+        "latest_available": latest_available,
+        "requested_date": requested,
+        "blocks": blocks,
+        "can_fallback_to_latest_available": can_fallback,
+        "fallback_scope": fallback_scope,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_command_block_reason(snapshot: Mapping[str, Any]) -> str:
+    errors = _texts(snapshot.get("blocking_errors"))
+    if "prices_stale" in errors and "rates_stale" in errors:
+        return "prices_stale_and_rates_stale"
+    if errors:
+        return "_and_".join(errors)
+    if snapshot.get("freshness_status") == "LATEST_AVAILABLE_ONLY":
+        return "requested_as_of_after_latest_valid_as_of"
+    if snapshot.get("freshness_status") == "BLOCKED_DATA_QUALITY_FAIL":
+        return "validate_data_status_fail"
+    return "validate_data_status_fail"
+
+
+def _smoothed_blocked_command_explanations(
+    snapshot: Mapping[str, Any],
+    command_matrix: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    latest = _mapping(snapshot.get("latest_available"))
+    requested = _text(snapshot.get("requested_date"))
+    errors = _texts(snapshot.get("blocking_errors"))
+    rows: list[dict[str, Any]] = []
+    for command in _records(command_matrix.get("commands")):
+        if command.get("status") != "BLOCKED":
+            continue
+        name = _text(command.get("command"))
+        rows.append(
+            {
+                "command": _smoothed_human_command(name, requested),
+                "status": "BLOCKED",
+                "validate_data_status": snapshot.get("validate_data_status"),
+                "blocking_errors": errors,
+                "human_explanation": _smoothed_human_blocked_explanation(
+                    name,
+                    requested,
+                    latest,
+                ),
+                "safe_next_action": _smoothed_safe_next_action(name),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return rows
+
+
+def _smoothed_human_command(command: str, requested: str) -> str:
+    if command == "smoothed-outcome-due":
+        return f"smoothed-outcome-due scan --as-of {requested}"
+    if command == "smoothed-forward-weekly-run":
+        return f"smoothed-forward-weekly-run run --week-ending {requested}"
+    if command == "smoothed-outcome-update":
+        return "smoothed-outcome-update run --due-id <due_id>"
+    return f"{command} run --as-of {requested}"
+
+
+def _smoothed_human_blocked_explanation(
+    command: str,
+    requested: str,
+    latest: Mapping[str, Any],
+) -> str:
+    if command == "smoothed-forward-weekly-run":
+        return (
+            "Weekly runner cannot update or classify forward outcomes until all required "
+            f"data sources cover the week ending date {requested}. "
+            f"Current prices latest={latest.get('prices_daily')}, "
+            f"rates latest={latest.get('rates_daily')}."
+        )
+    if command == "smoothed-daily-emission":
+        return (
+            f"Requested daily emission uses requested as_of {requested}, but local caches "
+            f"are only fresh through latest_valid_as_of. Use latest-available emission "
+            "only if observation-only fallback is acceptable."
+        )
+    return (
+        f"Requested due/update command requires price and rate data through {requested}, "
+        f"but local caches are only fresh through prices={latest.get('prices_daily')} "
+        f"and rates={latest.get('rates_daily')}."
+    )
+
+
+def _smoothed_safe_next_action(command: str) -> str:
+    if command == "smoothed-daily-emission":
+        return "run_latest_available_emission"
+    if command == "smoothed-forward-weekly-run":
+        return "run_latest_available_emission_or_wait_for_refresh"
+    return "refresh_sources_then_retry"
+
+
+def _smoothed_source_refresh_requirements(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    latest = _mapping(snapshot.get("latest_available"))
+    requested = _text(snapshot.get("requested_date"))
+    rows = [
+        _smoothed_source_requirement_row(
+            source="prices_daily.csv",
+            current_latest=latest.get("prices_daily"),
+            required_through=requested,
+            action="refresh_price_cache",
+            required=True,
+        ),
+        _smoothed_source_requirement_row(
+            source="prices_marketstack_daily.csv",
+            current_latest=latest.get("prices_marketstack_daily"),
+            required_through=requested,
+            action="refresh_marketstack_price_cache",
+            required=latest.get("prices_marketstack_daily") is not None,
+        ),
+        _smoothed_source_requirement_row(
+            source="rates_daily.csv",
+            current_latest=latest.get("rates_daily"),
+            required_through=requested,
+            action="refresh_rates_cache",
+            required=True,
+        ),
+    ]
+    all_fresh = all(row["status"] == "FRESH" for row in rows if row.get("required") is True)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "refresh_plan_id": "",
+        "requested_as_of": requested,
+        "source_requirements": rows,
+        "all_required_sources_fresh": all_fresh,
+        "external_refresh_executed": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_source_requirement_row(
+    *,
+    source: str,
+    current_latest: object,
+    required_through: str,
+    action: str,
+    required: bool,
+) -> dict[str, Any]:
+    latest_date = _coerce_date(current_latest, date.min)
+    required_date = _coerce_date(required_through, date.max)
+    if latest_date == date.min:
+        status = "MISSING" if required else "OPTIONAL_MISSING"
+    elif latest_date >= required_date:
+        status = "FRESH"
+    else:
+        status = "STALE"
+    return {
+        "source": source,
+        "current_latest_date": None if latest_date == date.min else latest_date.isoformat(),
+        "required_through": required_through,
+        "status": status,
+        "required": required,
+        "required_action": action if status != "FRESH" else "none",
+    }
+
+
+def _smoothed_rerun_command_plan(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    requested = _text(snapshot.get("requested_date"))
+    use_week = snapshot.get("requested_week_ending") is not None
+    preflight_command = (
+        "aits etf dynamic-v3-rescue smoothed-data-preflight run "
+        f"--requested-week-ending {requested}"
+        if use_week
+        else "aits etf dynamic-v3-rescue smoothed-data-preflight run "
+        f"--requested-as-of {requested}"
+    )
+    ready = snapshot.get("freshness_status") in {"READY", "READY_WITH_WARNINGS"}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "refresh_plan_id": "",
+        "rerun_after_refresh": [
+            {
+                "step": 1,
+                "command": preflight_command,
+                "purpose": "confirm freshness",
+            },
+            {
+                "step": 2,
+                "command": (
+                    "aits etf dynamic-v3-rescue smoothed-outcome-due scan "
+                    f"--as-of {requested}"
+                ),
+                "purpose": "find due windows",
+            },
+            {
+                "step": 3,
+                "command": (
+                    "aits etf dynamic-v3-rescue smoothed-outcome-update run "
+                    "--due-id <due_id>"
+                ),
+                "purpose": "update matured outcomes",
+            },
+            {
+                "step": 4,
+                "command": (
+                    "aits etf dynamic-v3-rescue smoothed-forward-classify run "
+                    "--update-id <update_id>"
+                ),
+                "purpose": "classify sideways / recovery events",
+            },
+            {
+                "step": 5,
+                "command": (
+                    "aits etf dynamic-v3-rescue smoothed-forward-weekly-run run "
+                    f"--week-ending {requested}"
+                ),
+                "purpose": "run weekly chain",
+            },
+        ],
+        "rerun_allowed_now": ready,
+        "blocking_reason": None if ready else "sources_not_fresh",
+        "external_refresh_executed": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _append_retry_skipped_steps(
+    steps: list[dict[str, Any]],
+    names: Sequence[str],
+    reason: str,
+) -> None:
+    for name in names:
+        steps.append({"step": name, "status": "SKIPPED", "artifact_id": None, "reason": reason})
+
+
+def _smoothed_retry_summary(
+    *,
+    retry_id: str,
+    requested_date: date,
+    preflight_status: str,
+    weekly: Mapping[str, Any] | None,
+    latest_emission: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    if weekly is not None:
+        weekly_summary = _mapping(weekly.get("weekly_run_summary"))
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "retry_id": retry_id,
+            "requested_as_of": requested_date.isoformat(),
+            "retry_status": "COMPLETED",
+            "emitted_events": int(_float(weekly_summary.get("emitted_events"))),
+            "due_windows": int(_float(weekly_summary.get("due_windows"))),
+            "updated_windows": int(_float(weekly_summary.get("updated_windows"))),
+            "classified_events": int(_float(weekly_summary.get("classified_events"))),
+            "available_forward_events_after_retry": int(
+                _float(weekly_summary.get("available_forward_events"))
+            ),
+            "available_sideways_events_after_retry": int(
+                _float(weekly_summary.get("available_sideways_events"))
+            ),
+            "available_recovery_events_after_retry": int(
+                _float(weekly_summary.get("available_recovery_events"))
+            ),
+            "can_execute_switch": False,
+            "weekly_recommendation": "continue_observation",
+            "broker_action_allowed": False,
+            "production_effect": "none",
+            **SYSTEM_TARGET_SAFETY,
+        }
+    if latest_emission is not None:
+        links = _mapping(latest_emission.get("latest_emission_artifact_links"))
+        return _smoothed_empty_retry_summary(
+            retry_id=retry_id,
+            requested_date=requested_date,
+            retry_status="PARTIAL",
+            emitted_events=int(_float(links.get("emitted_event_count"))),
+        )
+    status = "BLOCKED" if preflight_status.startswith("BLOCKED") else "FAIL"
+    return _smoothed_empty_retry_summary(
+        retry_id=retry_id,
+        requested_date=requested_date,
+        retry_status=status,
+        emitted_events=0,
+    )
+
+
+def _smoothed_empty_retry_summary(
+    *,
+    retry_id: str,
+    requested_date: date,
+    retry_status: str,
+    emitted_events: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "retry_id": retry_id,
+        "requested_as_of": requested_date.isoformat(),
+        "retry_status": retry_status,
+        "emitted_events": emitted_events,
+        "due_windows": 0,
+        "updated_windows": 0,
+        "classified_events": 0,
+        "available_forward_events_after_retry": 0,
+        "available_sideways_events_after_retry": 0,
+        "available_recovery_events_after_retry": 0,
+        "can_execute_switch": False,
+        "weekly_recommendation": "continue_observation",
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_issue_codes(report: DataQualityReport, *, severity: str) -> list[str]:
+    codes: list[str] = []
+    for issue in report.issues:
+        issue_severity = getattr(issue.severity, "value", str(issue.severity))
+        if issue_severity != severity:
+            continue
+        if issue.code not in codes:
+            codes.append(issue.code)
+    return codes
+
+
+def _smoothed_quality_issues_payload(report: DataQualityReport) -> list[dict[str, Any]]:
+    return [
+        {
+            "severity": getattr(issue.severity, "value", str(issue.severity)),
+            "code": issue.code,
+            "message": issue.message,
+            "rows": issue.rows,
+            "sample": issue.sample,
+            "source": issue.source,
+        }
+        for issue in report.issues
+    ]
+
+
+def _smoothed_latest_model_target_as_of(model_target_dir: Path) -> date | None:
+    try:
+        payload = _optional_latest_model_target_payload(model_target_dir)
+    except DynamicV3SystemTargetError:
+        return None
+    return _coerce_date(payload.get("as_of"), date.min) if payload else None
+
+
+def _smoothed_download_manifest_path(prices_path: Path) -> Path:
+    return prices_path.parent / "download_manifest.csv"
+
+
+def _smoothed_marketstack_prices_path(prices_path: Path) -> Path:
+    return prices_path.parent / "prices_marketstack_daily.csv"
+
+
+def _smoothed_requires_marketstack_prices(prices_path: Path) -> bool:
+    return _smoothed_is_default_price_cache(prices_path)
+
+
+def _smoothed_is_default_price_cache(path: Path) -> bool:
+    try:
+        return path.resolve() == DEFAULT_PRICE_CACHE_PATH.resolve()
+    except OSError:
+        return path == DEFAULT_PRICE_CACHE_PATH
+
+
+def _smoothed_is_default_rates_cache(path: Path) -> bool:
+    try:
+        return path.resolve() == DEFAULT_RATES_CACHE_PATH.resolve()
+    except OSError:
+        return path == DEFAULT_RATES_CACHE_PATH
+
+
+def _infer_csv_values(path: Path, column: str) -> list[str]:
+    if not path.exists():
+        return []
+    try:
+        frame = pd.read_csv(path, usecols=[column])
+    except (OSError, ValueError, pd.errors.ParserError):
+        return []
+    return sorted({_text(value) for value in frame[column].dropna() if _text(value)})
+
+
+def _date_or_none(value: date | None) -> str | None:
+    return value.isoformat() if value else None
 
 
 def _primary_smoothed_comparison(comparison: Mapping[str, Any], method: str) -> dict[str, Any]:

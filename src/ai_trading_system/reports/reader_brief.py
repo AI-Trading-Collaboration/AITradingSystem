@@ -3109,6 +3109,133 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
+            "Dynamic Rescue Smoothed Freshness Bootstrap",
+            _definition_table(
+                [
+                    (
+                        "data_preflight_id",
+                        etf_dynamic_v3_system_target.get("smoothed_data_preflight_id"),
+                    ),
+                    (
+                        "freshness_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_preflight_freshness_status"
+                        ),
+                    ),
+                    (
+                        "latest_valid_as_of",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_preflight_latest_valid_as_of"
+                        ),
+                    ),
+                    (
+                        "validate_data_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_preflight_validate_data_status"
+                        ),
+                    ),
+                    (
+                        "blocking_errors",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_preflight_blocking_errors"
+                        ),
+                    ),
+                    (
+                        "latest_available_fallback_commands",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_preflight_latest_available_fallback_commands"
+                        ),
+                    ),
+                    (
+                        "latest_emission_id",
+                        etf_dynamic_v3_system_target.get("smoothed_latest_emission_id"),
+                    ),
+                    (
+                        "latest_emission_resolved_as_of",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_latest_emission_resolved_as_of"
+                        ),
+                    ),
+                    (
+                        "latest_emission_event_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_latest_emission_event_status"
+                        ),
+                    ),
+                    (
+                        "outcome_update_allowed",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_latest_emission_outcome_update_allowed"
+                        ),
+                    ),
+                    (
+                        "blocked_explain_id",
+                        etf_dynamic_v3_system_target.get("smoothed_blocked_explain_id"),
+                    ),
+                    (
+                        "blocked_commands",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_blocked_explain_commands"
+                        ),
+                    ),
+                    (
+                        "refresh_plan_id",
+                        etf_dynamic_v3_system_target.get("smoothed_refresh_plan_id"),
+                    ),
+                    (
+                        "required_sources",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_refresh_plan_required_sources"
+                        ),
+                    ),
+                    (
+                        "rerun_allowed_now",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_refresh_plan_rerun_allowed_now"
+                        ),
+                    ),
+                    (
+                        "bootstrap_retry_id",
+                        etf_dynamic_v3_system_target.get("smoothed_bootstrap_retry_id"),
+                    ),
+                    (
+                        "bootstrap_retry_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_bootstrap_retry_status"
+                        ),
+                    ),
+                    (
+                        "retry_preflight_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_bootstrap_retry_preflight_status"
+                        ),
+                    ),
+                    (
+                        "retry_updated_windows",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_bootstrap_retry_updated_windows"
+                        ),
+                    ),
+                    (
+                        "retry_can_execute_switch",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_bootstrap_retry_can_execute_switch"
+                        ),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_system_target.get("production_effect"),
+                    ),
+                    (
+                        "bootstrap_retry_path",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_bootstrap_retry_path"
+                        ),
+                    ),
+                ]
+            ),
+        ),
+        _section(
             "Dynamic Rescue Simulation Advisory Review",
             _definition_table(
                 [
@@ -9059,6 +9186,41 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_forward_weekly_run_manifest.json",
     )
+    smoothed_data_preflight_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_data_preflight",
+        ),
+        "smoothed_data_preflight_manifest.json",
+    )
+    smoothed_latest_emission_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_latest_emission",
+        ),
+        "smoothed_latest_emission_manifest.json",
+    )
+    smoothed_blocked_explain_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_blocked_explain",
+        ),
+        "smoothed_blocked_explain_manifest.json",
+    )
+    smoothed_refresh_plan_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_refresh_plan",
+        ),
+        "smoothed_refresh_plan_manifest.json",
+    )
+    smoothed_bootstrap_retry_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_bootstrap_retry",
+        ),
+        "smoothed_bootstrap_retry_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -9104,6 +9266,11 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_forward_weekly_run_manifest = _read_optional_json(
         smoothed_forward_weekly_run_path
     )
+    smoothed_data_preflight_manifest = _read_optional_json(smoothed_data_preflight_path)
+    smoothed_latest_emission_manifest = _read_optional_json(smoothed_latest_emission_path)
+    smoothed_blocked_explain_manifest = _read_optional_json(smoothed_blocked_explain_path)
+    smoothed_refresh_plan_manifest = _read_optional_json(smoothed_refresh_plan_path)
+    smoothed_bootstrap_retry_manifest = _read_optional_json(smoothed_bootstrap_retry_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
@@ -9128,6 +9295,11 @@ def _etf_dynamic_v3_system_target_summary(
         and not smoothed_outcome_update_manifest
         and not smoothed_forward_classification_manifest
         and not smoothed_forward_weekly_run_manifest
+        and not smoothed_data_preflight_manifest
+        and not smoothed_latest_emission_manifest
+        and not smoothed_blocked_explain_manifest
+        and not smoothed_refresh_plan_manifest
+        and not smoothed_bootstrap_retry_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -9390,6 +9562,66 @@ def _etf_dynamic_v3_system_target_summary(
             "weekly_run_summary.json",
         )
     )
+    smoothed_data_freshness_snapshot = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_data_preflight_path,
+            "data_freshness_snapshot.json",
+        )
+    )
+    smoothed_runnable_command_matrix = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_data_preflight_path,
+            "runnable_command_matrix.json",
+        )
+    )
+    smoothed_latest_emission_resolution = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_latest_emission_path,
+            "latest_emission_resolution.json",
+        )
+    )
+    smoothed_latest_emission_links = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_latest_emission_path,
+            "latest_emission_artifact_links.json",
+        )
+    )
+    smoothed_blocked_command_explanations = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_blocked_explain_path,
+            "blocked_command_explanations.json",
+        )
+    )
+    smoothed_source_refresh_requirements = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_refresh_plan_path,
+            "source_refresh_requirements.json",
+        )
+    )
+    smoothed_rerun_command_plan = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_refresh_plan_path,
+            "rerun_command_plan.json",
+        )
+    )
+    smoothed_retry_preflight_result = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_bootstrap_retry_path,
+            "retry_preflight_result.json",
+        )
+    )
+    smoothed_retry_steps = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_bootstrap_retry_path,
+            "retry_steps.json",
+        )
+    )
+    smoothed_retry_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_bootstrap_retry_path,
+            "retry_summary.json",
+        )
+    )
     experiment_triage_summary = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(experiment_triage_path, "triage_summary.json")
     )
@@ -9545,6 +9777,21 @@ def _etf_dynamic_v3_system_target_summary(
         smoothed_forward_classification_summary,
         smoothed_forward_weekly_run_manifest,
         smoothed_forward_weekly_run_summary,
+        smoothed_data_preflight_manifest,
+        smoothed_data_freshness_snapshot,
+        smoothed_runnable_command_matrix,
+        smoothed_latest_emission_manifest,
+        smoothed_latest_emission_resolution,
+        smoothed_latest_emission_links,
+        smoothed_blocked_explain_manifest,
+        smoothed_blocked_command_explanations,
+        smoothed_refresh_plan_manifest,
+        smoothed_source_refresh_requirements,
+        smoothed_rerun_command_plan,
+        smoothed_bootstrap_retry_manifest,
+        smoothed_retry_preflight_result,
+        smoothed_retry_steps,
+        smoothed_retry_summary,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -9644,6 +9891,45 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_bootstrap_recommendation = _text(
         smoothed_forward_weekly_run_summary.get("weekly_recommendation"),
         "MISSING",
+    )
+    smoothed_preflight_blocking_errors = ",".join(
+        _texts(smoothed_data_freshness_snapshot.get("blocking_errors"))
+    )
+    smoothed_preflight_runnable_latest_count = len(
+        [
+            row
+            for row in _records(smoothed_runnable_command_matrix.get("commands"))
+            if row.get("status") == "RUNNABLE_WITH_LATEST_AVAILABLE"
+        ]
+    )
+    smoothed_blocked_commands = _records(
+        smoothed_blocked_command_explanations.get("blocked_commands")
+    )
+    smoothed_blocked_command_names = ",".join(
+        _texts([row.get("command") for row in smoothed_blocked_commands])
+    )
+    smoothed_source_requirements = _records(
+        smoothed_source_refresh_requirements.get("source_requirements")
+    )
+    smoothed_refresh_required_sources = ",".join(
+        _texts(
+            [
+                row.get("source")
+                for row in smoothed_source_requirements
+                if row.get("required") is True and row.get("status") != "FRESH"
+            ]
+        )
+    )
+    smoothed_refresh_stale_source_count = len(
+        [row for row in smoothed_source_requirements if row.get("status") != "FRESH"]
+    )
+    smoothed_retry_step_statuses = ",".join(
+        _texts(
+            [
+                f"{row.get('step')}={row.get('status')}"
+                for row in _records(smoothed_retry_steps.get("steps"))
+            ]
+        )
     )
     primary_status = _text(
         review_manifest.get("status"),
@@ -10207,6 +10493,103 @@ def _etf_dynamic_v3_system_target_summary(
             smoothed_forward_weekly_run_summary.get("weekly_recommendation"),
             "MISSING",
         ),
+        "smoothed_data_preflight_id": _text(
+            smoothed_data_preflight_manifest.get("preflight_id"),
+            "MISSING",
+        ),
+        "smoothed_data_preflight_requested_as_of": _text(
+            smoothed_data_preflight_manifest.get("requested_as_of"),
+            _text(smoothed_data_freshness_snapshot.get("requested_as_of"), "MISSING"),
+        ),
+        "smoothed_data_preflight_freshness_status": _text(
+            smoothed_data_preflight_manifest.get("freshness_status"),
+            _text(smoothed_data_freshness_snapshot.get("freshness_status"), "MISSING"),
+        ),
+        "smoothed_data_preflight_latest_valid_as_of": _text(
+            smoothed_data_preflight_manifest.get("latest_valid_as_of"),
+            _text(smoothed_data_freshness_snapshot.get("latest_valid_as_of"), "MISSING"),
+        ),
+        "smoothed_data_preflight_validate_data_status": _text(
+            smoothed_data_preflight_manifest.get("validate_data_status"),
+            _text(smoothed_data_freshness_snapshot.get("validate_data_status"), "MISSING"),
+        ),
+        "smoothed_data_preflight_blocking_errors": smoothed_preflight_blocking_errors,
+        "smoothed_data_preflight_latest_available_fallback_commands": (
+            smoothed_preflight_runnable_latest_count
+        ),
+        "smoothed_latest_emission_id": _text(
+            smoothed_latest_emission_manifest.get("latest_emission_id"),
+            "MISSING",
+        ),
+        "smoothed_latest_emission_resolved_as_of": _text(
+            smoothed_latest_emission_manifest.get("resolved_as_of"),
+            _text(smoothed_latest_emission_resolution.get("resolved_as_of"), "MISSING"),
+        ),
+        "smoothed_latest_emission_event_status": _text(
+            smoothed_latest_emission_links.get("event_status"),
+            "MISSING",
+        ),
+        "smoothed_latest_emission_emitted_event_count": smoothed_latest_emission_links.get(
+            "emitted_event_count",
+            "MISSING",
+        ),
+        "smoothed_latest_emission_outcome_update_allowed": (
+            smoothed_latest_emission_resolution.get("outcome_update_allowed")
+        ),
+        "smoothed_latest_emission_due_scan_allowed": (
+            smoothed_latest_emission_resolution.get("due_scan_allowed")
+        ),
+        "smoothed_latest_emission_future_data_used": (
+            smoothed_latest_emission_resolution.get("future_data_used")
+        ),
+        "smoothed_blocked_explain_id": _text(
+            smoothed_blocked_explain_manifest.get("explain_id"),
+            "MISSING",
+        ),
+        "smoothed_blocked_explain_command_count": smoothed_blocked_explain_manifest.get(
+            "blocked_command_count",
+            "MISSING",
+        ),
+        "smoothed_blocked_explain_commands": smoothed_blocked_command_names,
+        "smoothed_refresh_plan_id": _text(
+            smoothed_refresh_plan_manifest.get("refresh_plan_id"),
+            "MISSING",
+        ),
+        "smoothed_refresh_plan_required_sources": smoothed_refresh_required_sources,
+        "smoothed_refresh_plan_stale_source_count": smoothed_refresh_stale_source_count,
+        "smoothed_refresh_plan_all_required_sources_fresh": (
+            smoothed_source_refresh_requirements.get("all_required_sources_fresh")
+        ),
+        "smoothed_refresh_plan_rerun_allowed_now": smoothed_rerun_command_plan.get(
+            "rerun_allowed_now"
+        ),
+        "smoothed_refresh_plan_external_refresh_executed": (
+            smoothed_rerun_command_plan.get("external_refresh_executed")
+        ),
+        "smoothed_bootstrap_retry_id": _text(
+            smoothed_bootstrap_retry_manifest.get("retry_id"),
+            "MISSING",
+        ),
+        "smoothed_bootstrap_retry_status": _text(
+            smoothed_bootstrap_retry_manifest.get("retry_status"),
+            _text(smoothed_retry_summary.get("retry_status"), "MISSING"),
+        ),
+        "smoothed_bootstrap_retry_preflight_status": _text(
+            smoothed_retry_preflight_result.get("preflight_status"),
+            "MISSING",
+        ),
+        "smoothed_bootstrap_retry_updated_windows": smoothed_retry_summary.get(
+            "updated_windows",
+            "MISSING",
+        ),
+        "smoothed_bootstrap_retry_emitted_events": smoothed_retry_summary.get(
+            "emitted_events",
+            "MISSING",
+        ),
+        "smoothed_bootstrap_retry_can_execute_switch": (
+            smoothed_retry_summary.get("can_execute_switch") is True
+        ),
+        "smoothed_bootstrap_retry_step_statuses": smoothed_retry_step_statuses,
         "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
         "smoothed_backfill_path": (
             "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
@@ -10271,6 +10654,23 @@ def _etf_dynamic_v3_system_target_summary(
             ""
             if smoothed_forward_weekly_run_path is None
             else str(smoothed_forward_weekly_run_path)
+        ),
+        "smoothed_data_preflight_path": (
+            "" if smoothed_data_preflight_path is None else str(smoothed_data_preflight_path)
+        ),
+        "smoothed_latest_emission_path": (
+            ""
+            if smoothed_latest_emission_path is None
+            else str(smoothed_latest_emission_path)
+        ),
+        "smoothed_blocked_explain_path": (
+            "" if smoothed_blocked_explain_path is None else str(smoothed_blocked_explain_path)
+        ),
+        "smoothed_refresh_plan_path": (
+            "" if smoothed_refresh_plan_path is None else str(smoothed_refresh_plan_path)
+        ),
+        "smoothed_bootstrap_retry_path": (
+            "" if smoothed_bootstrap_retry_path is None else str(smoothed_bootstrap_retry_path)
         ),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
@@ -10523,6 +10923,36 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_forward_weekly_run_recovery_progress": "MISSING/MISSING",
         "smoothed_forward_weekly_run_can_execute_switch": False,
         "smoothed_forward_weekly_run_recommendation": "MISSING",
+        "smoothed_data_preflight_id": "MISSING",
+        "smoothed_data_preflight_requested_as_of": "MISSING",
+        "smoothed_data_preflight_freshness_status": "MISSING",
+        "smoothed_data_preflight_latest_valid_as_of": "MISSING",
+        "smoothed_data_preflight_validate_data_status": "MISSING",
+        "smoothed_data_preflight_blocking_errors": "",
+        "smoothed_data_preflight_latest_available_fallback_commands": "MISSING",
+        "smoothed_latest_emission_id": "MISSING",
+        "smoothed_latest_emission_resolved_as_of": "MISSING",
+        "smoothed_latest_emission_event_status": "MISSING",
+        "smoothed_latest_emission_emitted_event_count": "MISSING",
+        "smoothed_latest_emission_outcome_update_allowed": "MISSING",
+        "smoothed_latest_emission_due_scan_allowed": "MISSING",
+        "smoothed_latest_emission_future_data_used": "MISSING",
+        "smoothed_blocked_explain_id": "MISSING",
+        "smoothed_blocked_explain_command_count": "MISSING",
+        "smoothed_blocked_explain_commands": "",
+        "smoothed_refresh_plan_id": "MISSING",
+        "smoothed_refresh_plan_required_sources": "",
+        "smoothed_refresh_plan_stale_source_count": "MISSING",
+        "smoothed_refresh_plan_all_required_sources_fresh": "MISSING",
+        "smoothed_refresh_plan_rerun_allowed_now": "MISSING",
+        "smoothed_refresh_plan_external_refresh_executed": "MISSING",
+        "smoothed_bootstrap_retry_id": "MISSING",
+        "smoothed_bootstrap_retry_status": "MISSING",
+        "smoothed_bootstrap_retry_preflight_status": "MISSING",
+        "smoothed_bootstrap_retry_updated_windows": "MISSING",
+        "smoothed_bootstrap_retry_emitted_events": "MISSING",
+        "smoothed_bootstrap_retry_can_execute_switch": False,
+        "smoothed_bootstrap_retry_step_statuses": "",
         "smoothed_path": "",
         "smoothed_backfill_path": "",
         "smoothed_comparison_path": "",
@@ -10544,6 +10974,11 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_outcome_update_path": "",
         "smoothed_forward_classification_path": "",
         "smoothed_forward_weekly_run_path": "",
+        "smoothed_data_preflight_path": "",
+        "smoothed_latest_emission_path": "",
+        "smoothed_blocked_explain_path": "",
+        "smoothed_refresh_plan_path": "",
+        "smoothed_bootstrap_retry_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",
