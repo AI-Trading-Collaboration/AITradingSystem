@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 from manual_portfolio_guardrail_helpers import manual_snapshot_payload, write_manual_snapshot
 
+from ai_trading_system.etf_portfolio import dynamic_v3_real_snapshot as real_snapshot
 from ai_trading_system.etf_portfolio.dynamic_v3_real_snapshot import (
     intake_real_snapshot,
     lint_real_snapshot_file,
@@ -54,3 +55,20 @@ def test_real_snapshot_intake_validates_manual_snapshot(tmp_path: Path) -> None:
     assert manifest["manual_portfolio_snapshot_id"]
     assert validation["status"] == "PASS"
     assert manifest["broker_action_allowed"] is False
+
+
+def test_tmp_real_snapshot_intake_does_not_update_latest_pointer(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    pointer_dir = tmp_path / "latest"
+    monkeypatch.setattr(real_snapshot, "DEFAULT_LATEST_POINTER_DIR", pointer_dir)
+    snapshot_path = write_manual_snapshot(tmp_path)
+
+    intake_real_snapshot(
+        snapshot_path=snapshot_path,
+        output_dir=tmp_path / "real_snapshot_intake",
+        manual_snapshot_output_dir=tmp_path / "manual_portfolio_snapshot",
+    )
+
+    assert not (pointer_dir / "latest_real_snapshot_intake.json").exists()

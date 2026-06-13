@@ -1531,6 +1531,8 @@ def _unique_dir(path: Path) -> Path:
 
 
 def _write_latest_pointer(pointer_name: str, artifact_id: str, path: Path) -> None:
+    if not _is_default_dynamic_v3_research_artifact(path):
+        return
     DEFAULT_LATEST_POINTER_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "schema_version": SCHEMA_VERSION,
@@ -1541,6 +1543,15 @@ def _write_latest_pointer(pointer_name: str, artifact_id: str, path: Path) -> No
         "updated_at": datetime.now(UTC).isoformat(),
     }
     _write_json(DEFAULT_LATEST_POINTER_DIR / f"{pointer_name}.json", payload)
+
+
+def _is_default_dynamic_v3_research_artifact(path: Path) -> bool:
+    try:
+        resolved_path = path.resolve(strict=False)
+        resolved_root = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT.resolve(strict=False)
+        return resolved_path == resolved_root or resolved_path.is_relative_to(resolved_root)
+    except (OSError, RuntimeError, ValueError):
+        return False
 
 
 def _latest_pointer_artifact_id(pointer_name: str) -> str:
