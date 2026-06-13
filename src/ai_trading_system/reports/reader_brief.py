@@ -2402,6 +2402,32 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "smoothed_promotion_review_id",
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_review_id"),
+                    ),
+                    (
+                        "primary_research_candidate_gate_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "primary_research_candidate_gate_decision"
+                        ),
+                    ),
+                    (
+                        "smoothed_forward_binding_id",
+                        etf_dynamic_v3_system_target.get("smoothed_forward_binding_id"),
+                    ),
+                    (
+                        "paper_shadow_primary_switch_auto_switch",
+                        etf_dynamic_v3_system_target.get(
+                            "paper_shadow_primary_switch_auto_switch"
+                        ),
+                    ),
+                    (
+                        "smoothed_owner_promotion_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_promotion_decision"
+                        ),
+                    ),
+                    (
                         "experiment_triage_id",
                         etf_dynamic_v3_system_target.get("experiment_triage_id"),
                     ),
@@ -2555,6 +2581,30 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_system_target.get("smoothed_owner_update_path"),
                     ),
                     (
+                        "smoothed_promotion_review_path",
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_review_path"),
+                    ),
+                    (
+                        "primary_research_candidate_gate_path",
+                        etf_dynamic_v3_system_target.get(
+                            "primary_research_candidate_gate_path"
+                        ),
+                    ),
+                    (
+                        "smoothed_forward_binding_path",
+                        etf_dynamic_v3_system_target.get("smoothed_forward_binding_path"),
+                    ),
+                    (
+                        "paper_shadow_primary_switch_path",
+                        etf_dynamic_v3_system_target.get(
+                            "paper_shadow_primary_switch_path"
+                        ),
+                    ),
+                    (
+                        "smoothed_owner_promotion_path",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_promotion_path"),
+                    ),
+                    (
                         "experiment_triage_path",
                         etf_dynamic_v3_system_target.get("experiment_triage_path"),
                     ),
@@ -2665,6 +2715,119 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "owner_update_path",
                         etf_dynamic_v3_system_target.get("smoothed_owner_update_path"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Smoothed Promotion Decision",
+            _definition_table(
+                [
+                    (
+                        "promotion_review_id",
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_review_id"),
+                    ),
+                    (
+                        "readiness_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_promotion_readiness_decision"
+                        ),
+                    ),
+                    (
+                        "decision_confidence",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_promotion_decision_confidence"
+                        ),
+                    ),
+                    (
+                        "can_enter_owner_review",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_promotion_can_enter_owner_review"
+                        ),
+                    ),
+                    (
+                        "supporting_evidence",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_promotion_supporting_evidence"
+                        ),
+                    ),
+                    (
+                        "blocking_issues",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_promotion_blocking_issues"
+                        ),
+                    ),
+                    (
+                        "gate_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "primary_research_candidate_gate_decision"
+                        ),
+                    ),
+                    (
+                        "owner_approval_required",
+                        etf_dynamic_v3_system_target.get(
+                            "primary_research_candidate_owner_approval_required"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_update_allowed",
+                        etf_dynamic_v3_system_target.get(
+                            "primary_research_candidate_update_allowed"
+                        ),
+                    ),
+                    (
+                        "bound_targets",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_binding_bound_targets"
+                        ),
+                    ),
+                    (
+                        "watch_only_targets",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_binding_watch_only_targets"
+                        ),
+                    ),
+                    (
+                        "proposed_primary_research_candidate",
+                        etf_dynamic_v3_system_target.get(
+                            "paper_shadow_primary_switch_proposed_candidate"
+                        ),
+                    ),
+                    (
+                        "auto_switch",
+                        etf_dynamic_v3_system_target.get(
+                            "paper_shadow_primary_switch_auto_switch"
+                        ),
+                    ),
+                    (
+                        "rollback_method",
+                        etf_dynamic_v3_system_target.get(
+                            "paper_shadow_primary_switch_rollback_method"
+                        ),
+                    ),
+                    (
+                        "owner_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_promotion_decision"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_primary_candidate_change_allowed",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_promotion_change_allowed"
+                        ),
+                    ),
+                    (
+                        "broker_action_allowed",
+                        etf_dynamic_v3_system_target.get("broker_action_allowed"),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_system_target.get("production_effect"),
+                    ),
+                    (
+                        "owner_promotion_path",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_promotion_path"),
                     ),
                 ]
             ),
@@ -8515,6 +8678,41 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_owner_update_manifest.json",
     )
+    smoothed_promotion_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_promotion_review",
+        ),
+        "smoothed_promotion_review_manifest.json",
+    )
+    primary_research_gate_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_primary_research_candidate_gate",
+        ),
+        "primary_research_candidate_gate_manifest.json",
+    )
+    smoothed_forward_binding_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_forward_binding",
+        ),
+        "smoothed_forward_binding_manifest.json",
+    )
+    paper_shadow_primary_switch_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_shadow_primary_switch",
+        ),
+        "paper_shadow_primary_switch_manifest.json",
+    )
+    smoothed_owner_promotion_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_owner_promotion",
+        ),
+        "smoothed_owner_promotion_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -8541,6 +8739,11 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_review_manifest = _read_optional_json(smoothed_review_path)
     smoothed_watch_manifest = _read_optional_json(smoothed_watch_path)
     smoothed_owner_update_manifest = _read_optional_json(smoothed_owner_update_path)
+    smoothed_promotion_review_manifest = _read_optional_json(smoothed_promotion_review_path)
+    primary_research_gate_manifest = _read_optional_json(primary_research_gate_path)
+    smoothed_forward_binding_manifest = _read_optional_json(smoothed_forward_binding_path)
+    paper_shadow_primary_switch_manifest = _read_optional_json(paper_shadow_primary_switch_path)
+    smoothed_owner_promotion_manifest = _read_optional_json(smoothed_owner_promotion_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
@@ -8550,6 +8753,11 @@ def _etf_dynamic_v3_system_target_summary(
         and not smoothed_review_manifest
         and not smoothed_watch_manifest
         and not smoothed_owner_update_manifest
+        and not smoothed_promotion_review_manifest
+        and not primary_research_gate_manifest
+        and not smoothed_forward_binding_manifest
+        and not paper_shadow_primary_switch_manifest
+        and not smoothed_owner_promotion_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -8674,6 +8882,60 @@ def _etf_dynamic_v3_system_target_summary(
             "smoothed_owner_decision_options.json",
         )
     )
+    smoothed_promotion_evidence = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_promotion_review_path,
+            "promotion_evidence_summary.json",
+        )
+    )
+    smoothed_promotion_blocking = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_promotion_review_path,
+            "promotion_blocking_issues.json",
+        )
+    )
+    primary_research_gate_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            primary_research_gate_path,
+            "gate_decision.json",
+        )
+    )
+    primary_research_gate_criteria = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            primary_research_gate_path,
+            "gate_criteria_results.json",
+        )
+    )
+    smoothed_bound_targets = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_forward_binding_path,
+            "bound_confirmation_targets.json",
+        )
+    )
+    smoothed_forward_requirements = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_forward_binding_path,
+            "forward_progress_requirements.json",
+        )
+    )
+    paper_shadow_switch_plan = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            paper_shadow_primary_switch_path,
+            "primary_switch_plan.json",
+        )
+    )
+    paper_shadow_switch_safety = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            paper_shadow_primary_switch_path,
+            "primary_switch_safety_checks.json",
+        )
+    )
+    smoothed_owner_promotion_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_owner_promotion_path,
+            "owner_promotion_decision.json",
+        )
+    )
     experiment_triage_summary = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(experiment_triage_path, "triage_summary.json")
     )
@@ -8791,6 +9053,20 @@ def _etf_dynamic_v3_system_target_summary(
         smoothed_watch_summary,
         smoothed_owner_update_manifest,
         smoothed_owner_options,
+        smoothed_promotion_review_manifest,
+        smoothed_promotion_evidence,
+        smoothed_promotion_blocking,
+        primary_research_gate_manifest,
+        primary_research_gate_decision,
+        primary_research_gate_criteria,
+        smoothed_forward_binding_manifest,
+        smoothed_bound_targets,
+        smoothed_forward_requirements,
+        paper_shadow_primary_switch_manifest,
+        paper_shadow_switch_plan,
+        paper_shadow_switch_safety,
+        smoothed_owner_promotion_manifest,
+        smoothed_owner_promotion_decision,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -8881,6 +9157,12 @@ def _etf_dynamic_v3_system_target_summary(
             f"smoothed_watch={_text(smoothed_watch_summary.get('recommended_action'), 'MISSING')}; "
             "smoothed_owner="
             f"{_text(smoothed_owner_options.get('recommended_owner_action'), 'MISSING')}; "
+            "smoothed_promotion="
+            f"{_text(smoothed_promotion_evidence.get('readiness_decision'), 'MISSING')}; "
+            "primary_gate="
+            f"{_text(primary_research_gate_decision.get('gate_decision'), 'MISSING')}; "
+            "owner_promotion="
+            f"{_text(smoothed_owner_promotion_decision.get('owner_decision'), 'MISSING')}; "
             f"experiment_top={experiment_top_variant}; "
             f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
@@ -9098,6 +9380,114 @@ def _etf_dynamic_v3_system_target_summary(
             smoothed_owner_options.get("forward_confirmation_status"),
             "MISSING",
         ),
+        "smoothed_promotion_review_id": _text(
+            smoothed_promotion_review_manifest.get("promotion_review_id"),
+            "MISSING",
+        ),
+        "smoothed_promotion_readiness_decision": _text(
+            smoothed_promotion_evidence.get("readiness_decision"),
+            "MISSING",
+        ),
+        "smoothed_promotion_decision_confidence": _text(
+            smoothed_promotion_evidence.get("decision_confidence"),
+            "MISSING",
+        ),
+        "smoothed_promotion_can_enter_owner_review": (
+            smoothed_promotion_blocking.get("can_enter_owner_review") is True
+        ),
+        "smoothed_promotion_supporting_evidence": ",".join(
+            _texts(
+                [
+                    row.get("evidence_id")
+                    for row in _records(smoothed_promotion_evidence.get("supporting_evidence"))
+                ]
+            )
+        ),
+        "smoothed_promotion_blocking_issues": ",".join(
+            _texts(
+                [
+                    row.get("issue")
+                    for row in _records(smoothed_promotion_blocking.get("blocking_issues"))
+                ]
+            )
+        ),
+        "primary_research_candidate_gate_id": _text(
+            primary_research_gate_manifest.get("gate_id"),
+            "MISSING",
+        ),
+        "primary_research_candidate_gate_decision": _text(
+            primary_research_gate_decision.get("gate_decision"),
+            "MISSING",
+        ),
+        "primary_research_candidate_gate_confidence": _text(
+            primary_research_gate_decision.get("decision_confidence"),
+            "MISSING",
+        ),
+        "primary_research_candidate_owner_approval_required": (
+            primary_research_gate_decision.get("owner_approval_required") is True
+        ),
+        "primary_research_candidate_update_allowed": _text(
+            primary_research_gate_decision.get("can_update_paper_shadow_primary_candidate"),
+            "MISSING",
+        ),
+        "smoothed_forward_binding_id": _text(
+            smoothed_forward_binding_manifest.get("binding_id"),
+            "MISSING",
+        ),
+        "smoothed_forward_binding_bound_targets": ",".join(
+            _texts(
+                [row.get("target_id") for row in _records(smoothed_bound_targets.get("targets"))]
+            )
+        ),
+        "smoothed_forward_binding_watch_only_targets": ",".join(
+            _texts(
+                [
+                    row.get("target_id")
+                    for row in _records(smoothed_bound_targets.get("targets"))
+                    if row.get("status") == "WATCH_ONLY"
+                ]
+            )
+        ),
+        "smoothed_forward_binding_rule_review_ready_when": ",".join(
+            _texts(smoothed_forward_requirements.get("rule_review_ready_when"))
+        ),
+        "paper_shadow_primary_switch_plan_id": _text(
+            paper_shadow_primary_switch_manifest.get("switch_plan_id"),
+            "MISSING",
+        ),
+        "paper_shadow_primary_switch_proposed_candidate": _text(
+            paper_shadow_switch_plan.get("proposed_primary_research_candidate"),
+            "MISSING",
+        ),
+        "paper_shadow_primary_switch_auto_switch": (
+            paper_shadow_switch_plan.get("auto_switch") is True
+        ),
+        "paper_shadow_primary_switch_rollback_method": _text(
+            paper_shadow_switch_plan.get("rollback_method"),
+            "MISSING",
+        ),
+        "paper_shadow_primary_switch_safety_status": _text(
+            paper_shadow_switch_safety.get("status"),
+            "MISSING",
+        ),
+        "smoothed_owner_promotion_decision_id": _text(
+            smoothed_owner_promotion_manifest.get("decision_id"),
+            "MISSING",
+        ),
+        "smoothed_owner_promotion_decision": _text(
+            smoothed_owner_promotion_decision.get("owner_decision"),
+            "MISSING",
+        ),
+        "smoothed_owner_promotion_recommended_action": _text(
+            smoothed_owner_promotion_decision.get("recommended_owner_action"),
+            "MISSING",
+        ),
+        "smoothed_owner_promotion_change_allowed": (
+            smoothed_owner_promotion_decision.get(
+                "paper_shadow_primary_candidate_change_allowed"
+            )
+            is True
+        ),
         "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
         "smoothed_backfill_path": (
             "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
@@ -9109,6 +9499,25 @@ def _etf_dynamic_v3_system_target_summary(
         "smoothed_watch_pack_path": "" if smoothed_watch_path is None else str(smoothed_watch_path),
         "smoothed_owner_update_path": (
             "" if smoothed_owner_update_path is None else str(smoothed_owner_update_path)
+        ),
+        "smoothed_promotion_review_path": (
+            ""
+            if smoothed_promotion_review_path is None
+            else str(smoothed_promotion_review_path)
+        ),
+        "primary_research_candidate_gate_path": (
+            "" if primary_research_gate_path is None else str(primary_research_gate_path)
+        ),
+        "smoothed_forward_binding_path": (
+            "" if smoothed_forward_binding_path is None else str(smoothed_forward_binding_path)
+        ),
+        "paper_shadow_primary_switch_path": (
+            ""
+            if paper_shadow_primary_switch_path is None
+            else str(paper_shadow_primary_switch_path)
+        ),
+        "smoothed_owner_promotion_path": (
+            "" if smoothed_owner_promotion_path is None else str(smoothed_owner_promotion_path)
         ),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
@@ -9287,12 +9696,41 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_owner_readiness_decision": "MISSING",
         "smoothed_owner_recommended_action": "MISSING",
         "smoothed_owner_forward_confirmation_status": "MISSING",
+        "smoothed_promotion_review_id": "MISSING",
+        "smoothed_promotion_readiness_decision": "MISSING",
+        "smoothed_promotion_decision_confidence": "MISSING",
+        "smoothed_promotion_can_enter_owner_review": False,
+        "smoothed_promotion_supporting_evidence": "",
+        "smoothed_promotion_blocking_issues": "",
+        "primary_research_candidate_gate_id": "MISSING",
+        "primary_research_candidate_gate_decision": "MISSING",
+        "primary_research_candidate_gate_confidence": "MISSING",
+        "primary_research_candidate_owner_approval_required": False,
+        "primary_research_candidate_update_allowed": "MISSING",
+        "smoothed_forward_binding_id": "MISSING",
+        "smoothed_forward_binding_bound_targets": "",
+        "smoothed_forward_binding_watch_only_targets": "",
+        "smoothed_forward_binding_rule_review_ready_when": "",
+        "paper_shadow_primary_switch_plan_id": "MISSING",
+        "paper_shadow_primary_switch_proposed_candidate": "MISSING",
+        "paper_shadow_primary_switch_auto_switch": False,
+        "paper_shadow_primary_switch_rollback_method": "MISSING",
+        "paper_shadow_primary_switch_safety_status": "MISSING",
+        "smoothed_owner_promotion_decision_id": "MISSING",
+        "smoothed_owner_promotion_decision": "MISSING",
+        "smoothed_owner_promotion_recommended_action": "MISSING",
+        "smoothed_owner_promotion_change_allowed": False,
         "smoothed_path": "",
         "smoothed_backfill_path": "",
         "smoothed_comparison_path": "",
         "smoothed_review_path": "",
         "smoothed_watch_pack_path": "",
         "smoothed_owner_update_path": "",
+        "smoothed_promotion_review_path": "",
+        "primary_research_candidate_gate_path": "",
+        "smoothed_forward_binding_path": "",
+        "paper_shadow_primary_switch_path": "",
+        "smoothed_owner_promotion_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",

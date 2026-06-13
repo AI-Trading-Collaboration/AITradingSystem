@@ -3115,6 +3115,110 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_promotion_review
+    title: ETF Dynamic v3 Rescue Smoothed Promotion Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-promotion-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_promotion_review/*/smoothed_promotion_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_promotion_review/*/promotion_evidence_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_promotion_review/*/promotion_blocking_issues.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_promotion_review/*/smoothed_promotion_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_promotion_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-261 packages smoothed readiness and owner update evidence into a
+      promotion review pack while separating review eligibility from promotion.
+    owner_action: owner_review_smoothed_promotion_pack_before_primary_candidate_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_primary_research_candidate_gate
+    title: ETF Dynamic v3 Rescue Primary Research Candidate Gate
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue primary-research-candidate-gate report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/primary_research_candidate_gate/*/primary_research_candidate_gate_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/primary_research_candidate_gate/*/gate_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/primary_research_candidate_gate/*/gate_criteria_results.json
+      - reports/etf_portfolio/dynamic_v3_rescue/primary_research_candidate_gate/*/primary_research_candidate_gate_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-262 decides whether smooth_weights_3d is eligible for owner
+      approval as a paper-shadow research-only primary candidate.
+    owner_action: owner_review_primary_candidate_gate_before_any_switch_plan
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_forward_binding
+    title: ETF Dynamic v3 Rescue Smoothed Forward Binding
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-forward-binding report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_binding/*/smoothed_forward_binding_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_binding/*/bound_confirmation_targets.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_binding/*/forward_progress_requirements.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_binding/*/smoothed_forward_binding_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_binding/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-263 binds smoothed confirmation targets into the weekly evidence,
+      dashboard, and rule-review observation semantics.
+    owner_action: review_smoothed_forward_binding_during_weekly_confirmation_cycle
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_primary_switch
+    title: ETF Dynamic v3 Rescue Paper Shadow Primary Switch Plan
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-primary-switch report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_primary_switch/*/paper_shadow_primary_switch_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_primary_switch/*/primary_switch_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_primary_switch/*/primary_switch_safety_checks.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_primary_switch/*/paper_shadow_primary_switch_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_primary_switch/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-264 plans a paper-shadow primary research candidate switch without
+      executing it or touching official target weights.
+    owner_action: owner_review_switch_plan_before_recording_promotion_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_owner_promotion
+    title: ETF Dynamic v3 Rescue Smoothed Owner Promotion Decision
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-owner-promotion report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_promotion/*/smoothed_owner_promotion_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_promotion/*/owner_promotion_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_promotion/*/owner_promotion_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_promotion/*/smoothed_owner_promotion_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_promotion/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-265 records owner decisions for smoothed promotion and primary
+      candidate planning without auto-switching, production, or broker effect.
+    owner_action: owner_record_smoothed_promotion_decision_before_any_followup_switch_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research

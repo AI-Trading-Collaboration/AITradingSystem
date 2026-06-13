@@ -1221,6 +1221,27 @@ jump thresholds 和 review thresholds 是 research pilot baseline；`PROMOTE_FOR
 `position_advisory_v1.yaml`、official target weights、paper/real portfolio、baseline/production
 state、policy、order ticket 或 broker。
 
+TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
+在 smoothed owner review update 之后新增 promotion review / paper-shadow primary
+research candidate gate。CLI 入口为 `smoothed-promotion-review pack/report`、
+`validate-smoothed-promotion-review`、`primary-research-candidate-gate run/report`、
+`validate-primary-research-candidate-gate`、`smoothed-forward-binding run/report`、
+`validate-smoothed-forward-binding`、`paper-shadow-primary-switch plan/report`、
+`validate-paper-shadow-primary-switch`、`smoothed-owner-promotion create/record/report`
+和 `validate-smoothed-owner-promotion`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/smoothed_promotion_review|primary_research_candidate_gate|smoothed_forward_binding|paper_shadow_primary_switch|smoothed_owner_promotion/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Promotion Decision`。
+该链路把 `PROMOTE_FOR_REVIEW` 与正式 promotion 分开：3d method 可进入 owner review
+并可被 gate 标记为 `ELIGIBLE_FOR_OWNER_APPROVAL`，但 paper-shadow primary candidate
+变更仍为 `OWNER_DECISION_REQUIRED`，switch plan 只生成计划，owner promotion journal
+只记录决策。Forward binding 把 3d vs limited、sideways improvement 和 recovery lag watch
+targets 接入 weekly evidence / dashboard / rule-review queue 的观察语义。所有输出继续固定
+`research_target_only=true`、`paper_shadow_only=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
+`auto_apply=false`、`production_effect=none`；不得自动切换 primary candidate、写 official
+target weights、修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production
+state、policy、order ticket 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -661,6 +661,60 @@ def run_smoothed_readiness_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_smoothed_readiness_chain_fixture(tmp_path)
+    promotion_review = system_target.build_smoothed_promotion_review_pack(
+        readiness_scorecard_id=fixture["scorecard"]["scorecard_id"],
+        owner_update_id=fixture["owner_update"]["owner_update_id"],
+        watch_pack_id=fixture["watch"]["watch_pack_id"],
+        scorecard_dir=tmp_path / "smoothed_readiness_scorecard",
+        owner_update_dir=tmp_path / "smoothed_owner_review_update",
+        watch_pack_dir=tmp_path / "smoothed_watch_pack",
+        output_dir=tmp_path / "smoothed_promotion_review",
+        generated_at=datetime(2024, 3, 7, tzinfo=UTC),
+    )
+    gate = system_target.run_primary_research_candidate_gate(
+        promotion_review_id=promotion_review["promotion_review_id"],
+        promotion_review_dir=tmp_path / "smoothed_promotion_review",
+        output_dir=tmp_path / "primary_research_candidate_gate",
+        generated_at=datetime(2024, 3, 8, tzinfo=UTC),
+    )
+    binding = system_target.run_smoothed_forward_binding(
+        confirmation_id=fixture["confirmation"]["confirmation_id"],
+        gate_id=gate["gate_id"],
+        confirmation_dir=tmp_path / "smoothed_forward_confirmation",
+        gate_dir=tmp_path / "primary_research_candidate_gate",
+        output_dir=tmp_path / "smoothed_forward_binding",
+        generated_at=datetime(2024, 3, 9, tzinfo=UTC),
+    )
+    switch_plan = system_target.build_paper_shadow_primary_switch_plan(
+        gate_id=gate["gate_id"],
+        binding_id=binding["binding_id"],
+        gate_dir=tmp_path / "primary_research_candidate_gate",
+        binding_dir=tmp_path / "smoothed_forward_binding",
+        output_dir=tmp_path / "paper_shadow_primary_switch",
+        generated_at=datetime(2024, 3, 10, tzinfo=UTC),
+    )
+    owner_promotion = system_target.create_smoothed_owner_promotion_decision(
+        promotion_review_id=promotion_review["promotion_review_id"],
+        gate_id=gate["gate_id"],
+        switch_plan_id=switch_plan["switch_plan_id"],
+        promotion_review_dir=tmp_path / "smoothed_promotion_review",
+        gate_dir=tmp_path / "primary_research_candidate_gate",
+        switch_plan_dir=tmp_path / "paper_shadow_primary_switch",
+        output_dir=tmp_path / "smoothed_owner_promotion",
+        generated_at=datetime(2024, 3, 11, tzinfo=UTC),
+    )
+    return {
+        **fixture,
+        "promotion_review": promotion_review,
+        "gate": gate,
+        "binding": binding,
+        "switch_plan": switch_plan,
+        "owner_promotion": owner_promotion,
+    }
+
+
 def force_promotable_batch_metrics(
     batch_dir: Path,
     *,
