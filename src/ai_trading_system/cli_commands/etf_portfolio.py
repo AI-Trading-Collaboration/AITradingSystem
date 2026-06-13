@@ -25,6 +25,9 @@ from ai_trading_system.data.quality import (
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as defensive_evidence
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_weight_batch_search as weight_batch_search,
+)
 from ai_trading_system.etf_portfolio.ai_attribution import (
     DEFAULT_AI_ATTRIBUTION_DATASET_DIR,
     DEFAULT_AI_ATTRIBUTION_REVIEW_DIR,
@@ -1593,6 +1596,58 @@ dynamic_v3_smoothed_data_readiness_app = typer.Typer(
     help="Dynamic v3 rescue smoothed owner data readiness pack。",
     no_args_is_help=True,
 )
+dynamic_v3_weight_search_space_app = typer.Typer(
+    help="Dynamic v3 rescue weight search-space workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_experiment_batch2_app = typer.Typer(
+    help="Dynamic v3 rescue weight optimization Batch-2 matrix workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_batch_backfill_app = typer.Typer(
+    help="Dynamic v3 rescue weight Batch-2 historical backfill workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_scorecard_app = typer.Typer(
+    help="Dynamic v3 rescue weight Batch-2 multi-objective scorecard。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_robustness_review_app = typer.Typer(
+    help="Dynamic v3 rescue weight Batch-2 robustness review。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_adaptive_branch_app = typer.Typer(
+    help="Dynamic v3 rescue weight Batch-2 adaptive branch controller。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_expanded_search_app = typer.Typer(
+    help="Dynamic v3 rescue weight expanded search workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_candidate_cluster_app = typer.Typer(
+    help="Dynamic v3 rescue weight candidate clustering workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_top_candidate_interpretation_app = typer.Typer(
+    help="Dynamic v3 rescue weight top candidate interpretation workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_method_promotion_gate_app = typer.Typer(
+    help="Dynamic v3 rescue weight method promotion gate workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_formal_method_auto_plan_app = typer.Typer(
+    help="Dynamic v3 rescue formal method auto-plan workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_search_dashboard_app = typer.Typer(
+    help="Dynamic v3 rescue weight search dashboard workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_owner_research_decision_pack_app = typer.Typer(
+    help="Dynamic v3 rescue owner research decision pack workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2148,6 +2203,52 @@ dynamic_v3_rescue_app.add_typer(
     dynamic_v3_smoothed_data_readiness_app,
     name="smoothed-data-readiness",
 )
+dynamic_v3_rescue_app.add_typer(dynamic_v3_weight_search_space_app, name="weight-search-space")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_experiment_batch2_app,
+    name="weight-experiment-batch2",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_batch_backfill_app,
+    name="weight-batch-backfill",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_weight_scorecard_app, name="weight-scorecard")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_robustness_review_app,
+    name="weight-robustness-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_adaptive_branch_app,
+    name="weight-adaptive-branch",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_expanded_search_app,
+    name="weight-expanded-search",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_candidate_cluster_app,
+    name="weight-candidate-cluster",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_top_candidate_interpretation_app,
+    name="weight-top-candidate-interpretation",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_method_promotion_gate_app,
+    name="weight-method-promotion-gate",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_formal_method_auto_plan_app,
+    name="formal-method-auto-plan",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_weight_search_dashboard_app,
+    name="weight-search-dashboard",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_owner_research_decision_pack_app,
+    name="owner-research-decision-pack",
+)
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_experiment_matrix_app, name="experiment-matrix")
@@ -2513,7 +2614,8 @@ def baseline_review_eligibility_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="eligibility JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "eligibility",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
+    / "eligibility",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -2580,7 +2682,8 @@ def baseline_review_matrix_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence matrix JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "matrix",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
+    / "matrix",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -3227,7 +3330,10 @@ def trend_calibration_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3844,7 +3950,10 @@ def dynamic_robustness_report_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4069,7 +4178,10 @@ def dynamic_rescue_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4604,7 +4716,10 @@ def dynamic_v3_rescue_real_evaluate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4820,7 +4935,10 @@ def dynamic_v3_rescue_failure_attribution_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认使用 real evaluation end date。"),
@@ -5120,7 +5238,10 @@ def dynamic_v3_data_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data audit artifact root。"),
@@ -5197,7 +5318,10 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data provenance artifact root。"),
@@ -5230,7 +5354,10 @@ def dynamic_v3_data_provenance_repair_price_manifest_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
     try:
@@ -5257,7 +5384,10 @@ def dynamic_v3_data_provenance_validate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """校验 TRADING-113 price cache provenance。"""
     payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
@@ -5452,7 +5582,10 @@ def dynamic_v3_sweep_run_profile_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -5503,7 +5636,10 @@ def dynamic_v3_injection_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="injection audit artifact root。"),
@@ -5609,7 +5745,10 @@ def dynamic_v3_sweep_run_command(
             "--rates-path",
             help="real evaluator FRED rates cache for validate-data gate。",
         ),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option(
@@ -10237,9 +10376,7 @@ def dynamic_v3_selection_attribution_run_command(
     review = result["review_required_reason_breakdown"]
     typer.echo(f"attribution_id={result['attribution_id']}")
     typer.echo(f"attribution_dir={result['attribution_dir']}")
-    typer.echo(
-        f"recommended_research_method={recommendation['recommended_research_method']}"
-    )
+    typer.echo(f"recommended_research_method={recommendation['recommended_research_method']}")
     typer.echo(f"decision_status={review['decision_status']}")
     typer.echo("not_official_target_weights=true")
     typer.echo("broker_action_allowed=false")
@@ -10270,9 +10407,7 @@ def dynamic_v3_selection_attribution_report_command(
     review = _mapping_obj(payload.get("review_required_reason_breakdown"))
     typer.echo(f"attribution_id={payload['attribution_id']}")
     typer.echo(f"status={payload['status']}")
-    typer.echo(
-        f"recommended_research_method={recommendation.get('recommended_research_method')}"
-    )
+    typer.echo(f"recommended_research_method={recommendation.get('recommended_research_method')}")
     typer.echo(f"decision_status={review.get('decision_status')}")
     typer.echo(f"report_path={payload['selection_attribution_report_path']}")
     typer.echo("broker_action_allowed=false")
@@ -12290,7 +12425,9 @@ def dynamic_v3_smoothed_evidence_gap_run_command(
     reason = result["evidence_gap_reason_summary"]
     typer.echo(f"gap_id={result['gap_id']}")
     typer.echo(f"gap_dir={result['gap_dir']}")
-    typer.echo(f"tradeoff_can_be_resolved_by_backfill={reason['tradeoff_can_be_resolved_by_backfill']}")
+    typer.echo(
+        f"tradeoff_can_be_resolved_by_backfill={reason['tradeoff_can_be_resolved_by_backfill']}"
+    )
     typer.echo(f"requires_forward_data={reason['requires_forward_data']}")
     typer.echo("broker_action_allowed=false")
 
@@ -12316,7 +12453,9 @@ def dynamic_v3_smoothed_evidence_gap_report_command(
     reason = _mapping_obj(payload.get("evidence_gap_reason_summary"))
     typer.echo(f"gap_id={payload['gap_id']}")
     typer.echo(f"status={payload['status']}")
-    typer.echo(f"tradeoff_can_be_resolved_by_backfill={reason.get('tradeoff_can_be_resolved_by_backfill')}")
+    typer.echo(
+        f"tradeoff_can_be_resolved_by_backfill={reason.get('tradeoff_can_be_resolved_by_backfill')}"
+    )
     typer.echo(f"requires_forward_data={reason.get('requires_forward_data')}")
     typer.echo(f"report_path={payload['smoothed_evidence_gap_report_path']}")
     typer.echo("broker_action_allowed=false")
@@ -12928,9 +13067,7 @@ def dynamic_v3_paper_shadow_primary_switch_plan_command(
     safety = result["primary_switch_safety_checks"]
     typer.echo(f"switch_plan_id={result['switch_plan_id']}")
     typer.echo(f"switch_plan_dir={result['switch_plan_dir']}")
-    typer.echo(
-        f"proposed_primary_research_candidate={plan['proposed_primary_research_candidate']}"
-    )
+    typer.echo(f"proposed_primary_research_candidate={plan['proposed_primary_research_candidate']}")
     typer.echo(f"auto_switch={plan['auto_switch']}")
     typer.echo(f"safety_status={safety['status']}")
     typer.echo("broker_action_allowed=false")
@@ -13526,7 +13663,10 @@ def dynamic_v3_smoothed_daily_emission_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -13627,7 +13767,10 @@ def dynamic_v3_smoothed_outcome_due_scan_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -13719,7 +13862,10 @@ def dynamic_v3_smoothed_outcome_update_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -13913,7 +14059,10 @@ def dynamic_v3_smoothed_forward_weekly_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -14039,7 +14188,10 @@ def dynamic_v3_smoothed_data_preflight_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """运行 TRADING-276 smoothed data freshness preflight。"""
     result = system_target.run_smoothed_data_preflight(
@@ -14406,7 +14558,10 @@ def dynamic_v3_smoothed_bootstrap_retry_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
 ) -> None:
     """运行 TRADING-280 smoothed bootstrap retry runner。"""
     result = system_target.run_smoothed_bootstrap_retry(
@@ -15046,6 +15201,969 @@ def dynamic_v3_validate_smoothed_data_readiness_command(
         raise typer.Exit(code=1)
 
 
+@dynamic_v3_weight_search_space_app.command("validate")
+def dynamic_v3_weight_search_space_validate_command(
+    config: Annotated[
+        Path,
+        typer.Option("--config", help="weight search space config。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight search space artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+) -> None:
+    """校验并登记 TRADING-286 weight search space。"""
+    result = weight_batch_search.run_weight_search_space_validation(
+        config_path=config,
+        output_dir=output_dir,
+    )
+    typer.echo(f"search_space_id={result['search_space_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"families={','.join(result['manifest']['families'])}")
+    typer.echo("broker_action_allowed=false")
+    if result["manifest"]["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_search_space_app.command("report")
+def dynamic_v3_weight_search_space_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest search space。"),
+    ] = False,
+    search_space_id: Annotated[
+        str | None,
+        typer.Option("--search-space-id", help="search space id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight search space artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+) -> None:
+    payload = weight_batch_search.weight_search_space_report_payload(
+        search_space_id=search_space_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"search_space_id={payload['search_space_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"families={','.join(payload['families'])}")
+    typer.echo(f"report_path={payload['weight_search_space_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-search-space")
+def dynamic_v3_validate_weight_search_space_command(
+    search_space_id: Annotated[
+        str,
+        typer.Option("--search-space-id", help="search space id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight search space artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_search_space_artifact(
+        search_space_id=search_space_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_experiment_batch2_app.command("build")
+def dynamic_v3_weight_experiment_batch2_build_command(
+    search_space_id: Annotated[
+        str,
+        typer.Option("--search-space-id", help="search space id。"),
+    ],
+    source_backfill_id: Annotated[
+        str | None,
+        typer.Option("--source-backfill-id", help="paper shadow backfill id override。"),
+    ] = None,
+    search_space_dir: Annotated[
+        Path,
+        typer.Option("--search-space-dir", help="weight search space artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Batch-2 matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+) -> None:
+    result = weight_batch_search.build_weight_experiment_batch2(
+        search_space_id=search_space_id,
+        source_backfill_id=source_backfill_id,
+        search_space_dir=search_space_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"batch2_matrix_id={result['batch2_matrix_id']}")
+    typer.echo(f"variant_count={result['manifest']['variant_count']}")
+    typer.echo(f"families={','.join(result['manifest']['families_covered'])}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_weight_experiment_batch2_app.command("report")
+def dynamic_v3_weight_experiment_batch2_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest Batch-2 matrix。"),
+    ] = False,
+    matrix_id: Annotated[str | None, typer.Option("--matrix-id", help="matrix id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Batch-2 matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+) -> None:
+    payload = weight_batch_search.weight_experiment_batch2_report_payload(
+        matrix_id=matrix_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"batch2_matrix_id={payload['batch2_matrix_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant_count={payload['variant_count']}")
+    typer.echo(f"report_path={payload['batch2_matrix_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-experiment-batch2")
+def dynamic_v3_validate_weight_experiment_batch2_command(
+    matrix_id: Annotated[str, typer.Option("--matrix-id", help="matrix id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Batch-2 matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_experiment_batch2_artifact(
+        matrix_id=matrix_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_batch_backfill_app.command("run")
+def dynamic_v3_weight_batch_backfill_run_command(
+    matrix_id: Annotated[str, typer.Option("--matrix-id", help="Batch-2 matrix id。")],
+    matrix_dir: Annotated[
+        Path,
+        typer.Option("--matrix-dir", help="Batch-2 matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+    baseline_backfill_dir: Annotated[
+        Path,
+        typer.Option("--baseline-backfill-dir", help="paper shadow backfill root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    price_cache_path: Annotated[
+        Path | None,
+        typer.Option("--price-cache-path", help="price cache override。"),
+    ] = None,
+    rates_cache_path: Annotated[
+        Path,
+        typer.Option("--rates-cache-path", help="rates cache path。"),
+    ] = system_target.DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    result = weight_batch_search.run_weight_batch_backfill(
+        matrix_id=matrix_id,
+        matrix_dir=matrix_dir,
+        baseline_backfill_dir=baseline_backfill_dir,
+        output_dir=output_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"batch_backfill_id={result['batch_backfill_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"date_range={manifest['date_start']}..{manifest['date_end']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo(f"variants_completed={manifest['variants_completed']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_weight_batch_backfill_app.command("resume")
+def dynamic_v3_weight_batch_backfill_resume_command(
+    backfill_id: Annotated[
+        str,
+        typer.Option("--backfill-id", help="batch backfill id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+) -> None:
+    result = weight_batch_search.resume_weight_batch_backfill(
+        backfill_id=backfill_id,
+        output_dir=output_dir,
+    )
+    progress = _mapping_obj(result["progress"])
+    typer.echo(f"batch_backfill_id={result['batch_backfill_id']}")
+    typer.echo(f"resume_status={result['resume_status']}")
+    typer.echo(f"variants_completed={progress.get('variants_completed')}")
+
+
+@dynamic_v3_weight_batch_backfill_app.command("report")
+def dynamic_v3_weight_batch_backfill_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest batch backfill。"),
+    ] = False,
+    backfill_id: Annotated[
+        str | None,
+        typer.Option("--backfill-id", help="batch backfill id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.weight_batch_backfill_report_payload(
+        backfill_id=backfill_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"batch_backfill_id={payload['batch_backfill_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"variants_completed={payload['variants_completed']}")
+    typer.echo(f"report_path={payload['batch_backfill_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-batch-backfill")
+def dynamic_v3_validate_weight_batch_backfill_command(
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="batch backfill id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_batch_backfill_artifact(
+        backfill_id=backfill_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_scorecard_app.command("run")
+def dynamic_v3_weight_scorecard_run_command(
+    backfill_id: Annotated[str, typer.Option("--backfill-id", help="batch backfill id。")],
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    matrix_dir: Annotated[
+        Path,
+        typer.Option("--matrix-dir", help="Batch-2 matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+) -> None:
+    result = weight_batch_search.run_weight_scorecard(
+        backfill_id=backfill_id,
+        backfill_dir=backfill_dir,
+        matrix_dir=matrix_dir,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"scorecard_id={result['scorecard_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"top_return_candidate={manifest['top_return_candidate']}")
+    typer.echo(f"top_drawdown_candidate={manifest['top_drawdown_candidate']}")
+    typer.echo(f"pareto_count={len(result['pareto_frontier']['candidates'])}")
+
+
+@dynamic_v3_weight_scorecard_app.command("report")
+def dynamic_v3_weight_scorecard_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest scorecard。"),
+    ] = False,
+    scorecard_id: Annotated[
+        str | None,
+        typer.Option("--scorecard-id", help="scorecard id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+) -> None:
+    payload = weight_batch_search.weight_scorecard_report_payload(
+        scorecard_id=scorecard_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"scorecard_id={payload['scorecard_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"top_return_candidate={payload['top_return_candidate']}")
+    typer.echo(f"report_path={payload['weight_scorecard_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-scorecard")
+def dynamic_v3_validate_weight_scorecard_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="scorecard id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_scorecard_artifact(
+        scorecard_id=scorecard_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_robustness_review_app.command("run")
+def dynamic_v3_weight_robustness_review_run_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="scorecard id。")],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    backfill_dir: Annotated[
+        Path,
+        typer.Option("--backfill-dir", help="batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="robustness review artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+) -> None:
+    result = weight_batch_search.run_weight_robustness_review(
+        scorecard_id=scorecard_id,
+        scorecard_dir=scorecard_dir,
+        backfill_dir=backfill_dir,
+        output_dir=output_dir,
+    )
+    summary = result["robustness_summary"]
+    typer.echo(f"robustness_id={result['robustness_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"robust_candidates={','.join(summary['robust_candidates'])}")
+
+
+@dynamic_v3_weight_robustness_review_app.command("report")
+def dynamic_v3_weight_robustness_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest robustness review。"),
+    ] = False,
+    robustness_id: Annotated[
+        str | None,
+        typer.Option("--robustness-id", help="robustness id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="robustness review artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.weight_robustness_review_report_payload(
+        robustness_id=robustness_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("robustness_summary"))
+    typer.echo(f"robustness_id={payload['robustness_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"robust_candidates={','.join(summary.get('robust_candidates', []))}")
+    typer.echo(f"report_path={payload['weight_robustness_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-robustness-review")
+def dynamic_v3_validate_weight_robustness_review_command(
+    robustness_id: Annotated[
+        str,
+        typer.Option("--robustness-id", help="robustness id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="robustness review artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_robustness_review_artifact(
+        robustness_id=robustness_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_adaptive_branch_app.command("run")
+def dynamic_v3_weight_adaptive_branch_run_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="scorecard id。")],
+    robustness_id: Annotated[
+        str,
+        typer.Option("--robustness-id", help="robustness id。"),
+    ],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    robustness_dir: Annotated[
+        Path,
+        typer.Option("--robustness-dir", help="robustness review artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="adaptive branch artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+) -> None:
+    result = weight_batch_search.run_weight_adaptive_branch(
+        scorecard_id=scorecard_id,
+        robustness_id=robustness_id,
+        scorecard_dir=scorecard_dir,
+        robustness_dir=robustness_dir,
+        output_dir=output_dir,
+    )
+    decision = result["branch_decision"]
+    typer.echo(f"branch_id={result['branch_id']}")
+    typer.echo(f"branch_decision={decision['branch_decision']}")
+    typer.echo(f"next_command={decision['next_command']}")
+
+
+@dynamic_v3_weight_adaptive_branch_app.command("report")
+def dynamic_v3_weight_adaptive_branch_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest adaptive branch。"),
+    ] = False,
+    branch_id: Annotated[str | None, typer.Option("--branch-id", help="branch id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="adaptive branch artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+) -> None:
+    payload = weight_batch_search.weight_adaptive_branch_report_payload(
+        branch_id=branch_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("branch_decision_payload"))
+    typer.echo(f"branch_id={payload['branch_id']}")
+    typer.echo(f"branch_decision={decision.get('branch_decision')}")
+    typer.echo(f"report_path={payload['weight_adaptive_branch_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-adaptive-branch")
+def dynamic_v3_validate_weight_adaptive_branch_command(
+    branch_id: Annotated[str, typer.Option("--branch-id", help="branch id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="adaptive branch artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_adaptive_branch_artifact(
+        branch_id=branch_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_expanded_search_app.command("build")
+def dynamic_v3_weight_expanded_search_build_command(
+    branch_id: Annotated[str, typer.Option("--branch-id", help="branch id。")],
+    branch_dir: Annotated[
+        Path,
+        typer.Option("--branch-dir", help="adaptive branch artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+    search_space_dir: Annotated[
+        Path,
+        typer.Option("--search-space-dir", help="weight search space artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="expanded matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR,
+) -> None:
+    result = weight_batch_search.build_weight_expanded_search(
+        branch_id=branch_id,
+        branch_dir=branch_dir,
+        search_space_dir=search_space_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"expanded_matrix_id={result['batch2_matrix_id']}")
+    typer.echo(f"variant_count={result['manifest']['variant_count']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_weight_expanded_search_app.command("run")
+def dynamic_v3_weight_expanded_search_run_command(
+    expanded_matrix_id: Annotated[
+        str,
+        typer.Option("--expanded-matrix-id", help="expanded matrix id。"),
+    ],
+    expanded_matrix_dir: Annotated[
+        Path,
+        typer.Option("--expanded-matrix-dir", help="expanded matrix artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR,
+    baseline_backfill_dir: Annotated[
+        Path,
+        typer.Option("--baseline-backfill-dir", help="paper shadow backfill root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight batch backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    price_cache_path: Annotated[
+        Path | None,
+        typer.Option("--price-cache-path", help="price cache override。"),
+    ] = None,
+) -> None:
+    result = weight_batch_search.run_weight_expanded_search(
+        expanded_matrix_id=expanded_matrix_id,
+        expanded_matrix_dir=expanded_matrix_dir,
+        baseline_backfill_dir=baseline_backfill_dir,
+        output_dir=output_dir,
+        price_cache_path=price_cache_path,
+    )
+    typer.echo(f"batch_backfill_id={result['batch_backfill_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+
+
+@dynamic_v3_weight_candidate_cluster_app.command("run")
+def dynamic_v3_weight_candidate_cluster_run_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="scorecard id。")],
+    robustness_id: Annotated[
+        str,
+        typer.Option("--robustness-id", help="robustness id。"),
+    ],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    robustness_dir: Annotated[
+        Path,
+        typer.Option("--robustness-dir", help="robustness review artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate cluster artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+) -> None:
+    result = weight_batch_search.run_weight_candidate_cluster(
+        scorecard_id=scorecard_id,
+        robustness_id=robustness_id,
+        scorecard_dir=scorecard_dir,
+        robustness_dir=robustness_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"cluster_id={result['cluster_id']}")
+    typer.echo(f"cluster_count={result['manifest']['cluster_count']}")
+
+
+@dynamic_v3_weight_candidate_cluster_app.command("report")
+def dynamic_v3_weight_candidate_cluster_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest candidate cluster。"),
+    ] = False,
+    cluster_id: Annotated[str | None, typer.Option("--cluster-id", help="cluster id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate cluster artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+) -> None:
+    payload = weight_batch_search.weight_candidate_cluster_report_payload(
+        cluster_id=cluster_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"cluster_id={payload['cluster_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"report_path={payload['candidate_cluster_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-candidate-cluster")
+def dynamic_v3_validate_weight_candidate_cluster_command(
+    cluster_id: Annotated[str, typer.Option("--cluster-id", help="cluster id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate cluster artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_candidate_cluster_artifact(
+        cluster_id=cluster_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_top_candidate_interpretation_app.command("run")
+def dynamic_v3_weight_top_candidate_interpretation_run_command(
+    cluster_id: Annotated[str, typer.Option("--cluster-id", help="cluster id。")],
+    cluster_dir: Annotated[
+        Path,
+        typer.Option("--cluster-dir", help="candidate cluster artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="top candidate interpretation root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+) -> None:
+    result = weight_batch_search.run_weight_top_candidate_interpretation(
+        cluster_id=cluster_id,
+        cluster_dir=cluster_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"interpretation_id={result['interpretation_id']}")
+    typer.echo(f"recommended_variant={result['manifest']['recommended_variant']}")
+
+
+@dynamic_v3_weight_top_candidate_interpretation_app.command("report")
+def dynamic_v3_weight_top_candidate_interpretation_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest interpretation。"),
+    ] = False,
+    interpretation_id: Annotated[
+        str | None,
+        typer.Option("--interpretation-id", help="interpretation id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="top candidate interpretation root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+) -> None:
+    payload = weight_batch_search.weight_top_candidate_interpretation_report_payload(
+        interpretation_id=interpretation_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"interpretation_id={payload['interpretation_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"recommended_variant={payload['recommended_variant']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-top-candidate-interpretation")
+def dynamic_v3_validate_weight_top_candidate_interpretation_command(
+    interpretation_id: Annotated[
+        str,
+        typer.Option("--interpretation-id", help="interpretation id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="top candidate interpretation root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_top_candidate_interpretation_artifact(
+        interpretation_id=interpretation_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_method_promotion_gate_app.command("run")
+def dynamic_v3_weight_method_promotion_gate_run_command(
+    interpretation_id: Annotated[
+        str,
+        typer.Option("--interpretation-id", help="interpretation id。"),
+    ],
+    interpretation_dir: Annotated[
+        Path,
+        typer.Option("--interpretation-dir", help="top candidate interpretation root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion gate artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+) -> None:
+    result = weight_batch_search.run_weight_method_promotion_gate(
+        interpretation_id=interpretation_id,
+        interpretation_dir=interpretation_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"promotion_gate_id={result['promotion_gate_id']}")
+    typer.echo(f"promoted_candidate_count={result['manifest']['promoted_candidate_count']}")
+
+
+@dynamic_v3_weight_method_promotion_gate_app.command("report")
+def dynamic_v3_weight_method_promotion_gate_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest promotion gate。"),
+    ] = False,
+    promotion_gate_id: Annotated[
+        str | None,
+        typer.Option("--promotion-gate-id", help="promotion gate id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion gate artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+) -> None:
+    payload = weight_batch_search.weight_method_promotion_gate_report_payload(
+        promotion_gate_id=promotion_gate_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"promotion_gate_id={payload['promotion_gate_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"promoted_candidate_count={payload['promoted_candidate_count']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-method-promotion-gate")
+def dynamic_v3_validate_weight_method_promotion_gate_command(
+    promotion_gate_id: Annotated[
+        str,
+        typer.Option("--promotion-gate-id", help="promotion gate id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion gate artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_method_promotion_gate_artifact(
+        promotion_gate_id=promotion_gate_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_formal_method_auto_plan_app.command("run")
+def dynamic_v3_formal_method_auto_plan_run_command(
+    promotion_gate_id: Annotated[
+        str,
+        typer.Option("--promotion-gate-id", help="promotion gate id。"),
+    ],
+    promotion_gate_dir: Annotated[
+        Path,
+        typer.Option("--promotion-gate-dir", help="promotion gate artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="formal method auto-plan root。"),
+    ] = weight_batch_search.DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
+) -> None:
+    result = weight_batch_search.run_formal_method_auto_plan(
+        promotion_gate_id=promotion_gate_id,
+        promotion_gate_dir=promotion_gate_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"plan_id={result['plan_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"implemented={result['manifest']['implemented']}")
+
+
+@dynamic_v3_formal_method_auto_plan_app.command("report")
+def dynamic_v3_formal_method_auto_plan_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest formal method plan。"),
+    ] = False,
+    plan_id: Annotated[str | None, typer.Option("--plan-id", help="plan id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="formal method auto-plan root。"),
+    ] = weight_batch_search.DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
+) -> None:
+    payload = weight_batch_search.formal_method_auto_plan_report_payload(
+        plan_id=plan_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"plan_id={payload['plan_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"implemented={payload['implemented']}")
+
+
+@dynamic_v3_rescue_app.command("validate-formal-method-auto-plan")
+def dynamic_v3_validate_formal_method_auto_plan_command(
+    plan_id: Annotated[str, typer.Option("--plan-id", help="plan id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="formal method auto-plan root。"),
+    ] = weight_batch_search.DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
+) -> None:
+    payload = weight_batch_search.validate_formal_method_auto_plan_artifact(
+        plan_id=plan_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_search_dashboard_app.command("build")
+def dynamic_v3_weight_search_dashboard_build_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="scorecard id。")],
+    branch_id: Annotated[str, typer.Option("--branch-id", help="branch id。")],
+    promotion_gate_id: Annotated[
+        str | None,
+        typer.Option("--promotion-gate-id", help="promotion gate id。"),
+    ] = None,
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    branch_dir: Annotated[
+        Path,
+        typer.Option("--branch-dir", help="adaptive branch artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+    promotion_gate_dir: Annotated[
+        Path,
+        typer.Option("--promotion-gate-dir", help="promotion gate artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight search dashboard root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+) -> None:
+    result = weight_batch_search.build_weight_search_dashboard(
+        scorecard_id=scorecard_id,
+        branch_id=branch_id,
+        promotion_gate_id=promotion_gate_id,
+        scorecard_dir=scorecard_dir,
+        branch_dir=branch_dir,
+        promotion_gate_dir=promotion_gate_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"dashboard_id={result['dashboard_id']}")
+    typer.echo(f"variants_total={result['search_summary']['variants_total']}")
+    typer.echo(f"branch_decision={result['next_actions']['branch_decision']}")
+
+
+@dynamic_v3_weight_search_dashboard_app.command("report")
+def dynamic_v3_weight_search_dashboard_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest dashboard。"),
+    ] = False,
+    dashboard_id: Annotated[
+        str | None,
+        typer.Option("--dashboard-id", help="dashboard id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight search dashboard root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+) -> None:
+    payload = weight_batch_search.weight_search_dashboard_report_payload(
+        dashboard_id=dashboard_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"dashboard_id={payload['dashboard_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"top_candidate={payload['top_candidates']['top_overall_candidate']}")
+
+
+@dynamic_v3_rescue_app.command("validate-weight-search-dashboard")
+def dynamic_v3_validate_weight_search_dashboard_command(
+    dashboard_id: Annotated[
+        str,
+        typer.Option("--dashboard-id", help="dashboard id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight search dashboard root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+) -> None:
+    payload = weight_batch_search.validate_weight_search_dashboard_artifact(
+        dashboard_id=dashboard_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_owner_research_decision_pack_app.command("build")
+def dynamic_v3_owner_research_decision_pack_build_command(
+    dashboard_id: Annotated[
+        str,
+        typer.Option("--dashboard-id", help="dashboard id。"),
+    ],
+    dashboard_dir: Annotated[
+        Path,
+        typer.Option("--dashboard-dir", help="weight search dashboard root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner decision pack root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
+) -> None:
+    result = weight_batch_search.build_owner_research_decision_pack(
+        dashboard_id=dashboard_id,
+        dashboard_dir=dashboard_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"owner_pack_id={result['owner_pack_id']}")
+    typer.echo(f"recommended_decision={result['manifest']['recommended_owner_decision']}")
+
+
+@dynamic_v3_owner_research_decision_pack_app.command("report")
+def dynamic_v3_owner_research_decision_pack_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest owner pack。"),
+    ] = False,
+    owner_pack_id: Annotated[
+        str | None,
+        typer.Option("--owner-pack-id", help="owner decision pack id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner decision pack root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
+) -> None:
+    payload = weight_batch_search.owner_research_decision_pack_report_payload(
+        owner_pack_id=owner_pack_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"owner_pack_id={payload['owner_pack_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"recommended_decision={payload['recommended_owner_decision']}")
+
+
+@dynamic_v3_rescue_app.command("validate-owner-research-decision-pack")
+def dynamic_v3_validate_owner_research_decision_pack_command(
+    owner_pack_id: Annotated[
+        str,
+        typer.Option("--owner-pack-id", help="owner decision pack id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner decision pack root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
+) -> None:
+    payload = weight_batch_search.validate_owner_research_decision_pack_artifact(
+        owner_pack_id=owner_pack_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_hypothesis_backlog_app.command("build")
 def dynamic_v3_hypothesis_backlog_build_command(
     config_path: Annotated[
@@ -15070,8 +16188,7 @@ def dynamic_v3_hypothesis_backlog_build_command(
     typer.echo(f"failure_modes_count={manifest['failure_modes_count']}")
     typer.echo(f"hypotheses_count={manifest['hypotheses_count']}")
     typer.echo(
-        "high_priority_hypotheses="
-        + ",".join(_texts(priority.get("high_priority_hypotheses")))
+        "high_priority_hypotheses=" + ",".join(_texts(priority.get("high_priority_hypotheses")))
     )
     typer.echo("experiment_only=true")
     typer.echo("broker_action_allowed=false")
@@ -15345,16 +16462,16 @@ def dynamic_v3_batch_experiment_report_command(
     )
     performance = _records_obj(payload.get("variant_performance_metrics"))
     stability = _records_obj(payload.get("variant_stability_metrics"))
-    best_drawdown = max(
-        performance,
-        key=lambda row: float(row.get("drawdown_delta_vs_limited", 0.0)),
-    ) if performance else {}
+    best_drawdown = (
+        max(
+            performance,
+            key=lambda row: float(row.get("drawdown_delta_vs_limited", 0.0)),
+        )
+        if performance
+        else {}
+    )
     best_rolling = next(
-        (
-            row
-            for row in stability
-            if row.get("rolling_consistency_delta") == "IMPROVED"
-        ),
+        (row for row in stability if row.get("rolling_consistency_delta") == "IMPROVED"),
         stability[0] if stability else {},
     )
     typer.echo(f"batch_id={payload['batch_id']}")
@@ -15448,8 +16565,7 @@ def dynamic_v3_experiment_triage_report_command(
     )
     summary = _mapping_obj(payload.get("triage_summary"))
     promoted = [
-        str(row.get("variant_id"))
-        for row in _records_obj(payload.get("promotion_candidates"))
+        str(row.get("variant_id")) for row in _records_obj(payload.get("promotion_candidates"))
     ]
     typer.echo(f"triage_id={payload['triage_id']}")
     typer.echo(f"status={payload['status']}")
@@ -15605,10 +16721,7 @@ def dynamic_v3_method_promotion_plan_run_command(
     typer.echo(f"promotion_plan_id={result['promotion_plan_id']}")
     typer.echo(f"promotion_plan_dir={result['promotion_plan_dir']}")
     typer.echo(f"status={manifest['status']}")
-    typer.echo(
-        "proposed_method_names="
-        + ",".join(_texts(manifest.get("proposed_method_names")))
-    )
+    typer.echo("proposed_method_names=" + ",".join(_texts(manifest.get("proposed_method_names"))))
     typer.echo(f"implementation_scope={manifest['implementation_scope']}")
     typer.echo("broker_action_allowed=false")
     typer.echo("production_effect=none")
@@ -15640,8 +16753,7 @@ def dynamic_v3_method_promotion_plan_report_command(
     typer.echo(f"promotion_plan_id={payload['promotion_plan_id']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(
-        "proposed_method_names="
-        + ",".join(str(row.get("proposed_method_name")) for row in methods)
+        "proposed_method_names=" + ",".join(str(row.get("proposed_method_name")) for row in methods)
     )
     typer.echo(f"implementation_scope={payload['implementation_scope']}")
     typer.echo(f"next_action={specs.get('next_action')}")
@@ -21791,7 +22903,10 @@ def dynamic_shadow_update_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     registry_path: Annotated[
         Path,
         typer.Option("--registry-path", help="dynamic shadow candidate registry path。"),
@@ -23468,7 +24583,8 @@ def governance_summary_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出目录。"),
-    ] = DEFAULT_ETF_REPORT_DIR / "governance",
+    ] = DEFAULT_ETF_REPORT_DIR
+    / "governance",
 ) -> None:
     """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
     config = load_etf_config_bundle()
@@ -23865,7 +24981,9 @@ def experiments_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+    ] = PROJECT_ROOT
+    / "config"
+    / "report_registry.yaml",
 ) -> None:
     """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
     generated = datetime.now(UTC)
@@ -24072,7 +25190,9 @@ def forward_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+    ] = PROJECT_ROOT
+    / "config"
+    / "report_registry.yaml",
     output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
         DEFAULT_ETF_FORWARD_REPORT_DIR / "validation"
     ),
@@ -26252,7 +27372,11 @@ def p2_derive_edgar_events_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "sec_edgar"
+    / "filing_timeline.csv",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Canonical edgar_text_events 输出路径，默认读取 p2.yaml。"),
@@ -26297,15 +27421,27 @@ def p2_fetch_edgar_text_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "sec_edgar"
+    / "filing_timeline.csv",
     document_dir: Annotated[
         Path,
         typer.Option(help="SEC filing 文本缓存目录。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents",
     output_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index 输出路径。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents.csv",
     manifest_path: Annotated[Path, typer.Option(help="P2 source manifest 输出路径。")] = (
         DEFAULT_ETF_P2_MANIFEST_PATH
     ),
@@ -26359,7 +27495,11 @@ def p2_edgar_topics_command(
     input_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index CSV。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents.csv",
     date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
     output_dir: Annotated[Path, typer.Option(help="EDGAR topic audit 输出目录。")] = (
         DEFAULT_ETF_REPORT_DIR / "p2"
@@ -27661,9 +28801,7 @@ def _mapping_obj(value: object) -> dict[str, object]:
 
 def _records_obj(value: object) -> list[dict[str, object]]:
     return (
-        [dict(item) for item in value if isinstance(item, dict)]
-        if isinstance(value, list)
-        else []
+        [dict(item) for item in value if isinstance(item, dict)] if isinstance(value, list) else []
     )
 
 

@@ -1,0 +1,132 @@
+schema_version: 1
+
+search:
+  name: dynamic_v3_weight_optimization_batch2
+  source_backfill_id: paper-shadow-backfill_2138461d25e686e0
+  base_methods:
+    - limited_adjustment
+    - smooth_weights_3d_limited_adjustment
+  mode: research_screening_only
+  market_regime: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: "2022-11-30"
+  default_backtest_start: "2022-12-01"
+  rationale: >
+    Batch-2 expands from single-candidate validation to broad
+    research-only screening across smoothing, cooldown, regime gates,
+    ensemble, rebalance, cash buffer, exposure and turnover controls.
+
+families:
+  smoothing:
+    enabled: true
+    windows: [2, 3, 5, 7]
+    alpha: [0.25, 0.35, 0.50, 0.65]
+    max_daily_total_weight_change: [0.04, 0.06, 0.08, 0.10]
+
+  cooldown:
+    enabled: true
+    regimes: [sideways_choppy]
+    cooldown_days: [3, 5, 10]
+    min_signal_persistence: [2, 3, 5]
+    hold_previous_weights: [true, false]
+    reduce_active_tilt: [0.25, 0.50, 0.75]
+
+  regime_gating:
+    enabled: true
+    gates:
+      - sideways_reduce_tilt_50
+      - sideways_hold_previous
+      - tech_drawdown_block_risk_increase
+      - semiconductor_pullback_block_smh_increase
+      - risk_off_only_allow_risk_reduction
+      - strong_recovery_fast_restore
+
+  rebalance_threshold:
+    enabled: true
+    min_total_delta: [0.02, 0.03, 0.05]
+    rebalance_frequency: [weekly, biweekly, monthly]
+    stepwise_rebalance: [2, 3]
+
+  candidate_ensemble:
+    enabled: true
+    methods:
+      - median_target_weights
+      - trimmed_mean_target_weights
+      - top_3_candidate_consensus
+      - top_5_candidate_consensus
+      - cluster_representative_consensus
+      - risk_adjusted_weighted_consensus
+      - low_turnover_candidate_consensus
+      - exclude_high_semiconductor_candidates
+
+  cash_buffer:
+    enabled: true
+    min_cash: [0.10, 0.15, 0.20]
+
+  risk_exposure_control:
+    enabled: true
+    risk_asset_cap: [0.85, 0.90, 0.95]
+    semiconductor_cap: [0.20, 0.25, 0.30]
+
+  turnover_control:
+    enabled: true
+    max_rebalance_turnover: [0.04, 0.06, 0.08]
+
+  hybrid_smoothing_regime:
+    enabled: true
+    templates:
+      - smooth_3d_plus_sideways_cooldown_5d
+      - smooth_3d_plus_tech_drawdown_block
+      - sideways_hold_plus_strong_recovery_restore
+
+  hybrid_ensemble_smoothing:
+    enabled: true
+    templates:
+      - smooth_3d_plus_median_target_weights
+      - top5_consensus_plus_smooth_3d
+      - median_plus_rebalance_delta_3pct
+
+max_variants:
+  initial_batch: 80
+  expanded_batch: 200
+
+scorecard_policy:
+  policy_version: weight_batch_search_scorecard_pilot_v1
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Pilot weights balance return preservation, drawdown, volatility,
+    risk-adjusted return, turnover, rolling consistency, regime stability,
+    lag, churn, weight jumps, simplicity and data quality. They are research
+    screening weights only and must be recalibrated after enough forward
+    samples accumulate.
+  intended_effect: >
+    Rank candidate transforms for owner-reviewed formal method planning
+    without changing official target weights or production state.
+  validation_evidence: >
+    Focused unit tests, artifact validators, data-quality-gated historical
+    backfill, scorecard and robustness artifacts.
+  review_condition: >
+    Revisit after the first completed batch2 + expanded round, or when forward
+    confirmation sample targets are met.
+  promote_score: 0.72
+  keep_testing_score: 0.56
+  hard_reject_rules:
+    - max_drawdown_materially_worse_than_limited_adjustment
+    - rolling_consistency_worse_than_limited_adjustment
+    - turnover_materially_higher_than_limited_adjustment
+    - strong_recovery_lag_cost_HIGH
+    - sideways_choppy_performance_WORSE
+    - data_quality_FAIL
+    - only_wins_in_one_narrow_window_or_pressure_regimes_worse
+
+safety:
+  research_screening_only: true
+  experiment_only: true
+  not_formal_research_method: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  auto_apply: false

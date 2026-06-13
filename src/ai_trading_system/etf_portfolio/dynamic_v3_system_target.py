@@ -136,18 +136,12 @@ DEFAULT_RESEARCH_METHOD_HARDENING_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "research_method_hardening"
 )
 DEFAULT_LIMITED_INSTABILITY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_instability"
-DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_risk_attribution"
-)
-DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_warning_repair_plan"
-)
+DEFAULT_LIMITED_RISK_ATTRIBUTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "limited_risk_attribution"
+DEFAULT_DATA_WARNING_REPAIR_PLAN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_warning_repair_plan"
 DEFAULT_ALTERNATIVE_METHOD_REVIEW_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "alternative_method_review"
 )
-DEFAULT_REFINED_METHOD_PROPOSAL_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "refined_method_proposal"
-)
+DEFAULT_REFINED_METHOD_PROPOSAL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "refined_method_proposal"
 DEFAULT_RISK_CAPPED_CONFIG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_limited_config"
 DEFAULT_RISK_CAPPED_LIMITED_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_limited"
 DEFAULT_RISK_CAPPED_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "risk_capped_backfill"
@@ -161,9 +155,7 @@ DEFAULT_SMOOTHED_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_revie
 DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_review_attribution"
 )
-DEFAULT_SMOOTHING_BENEFIT_LAG_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothing_benefit_lag"
-)
+DEFAULT_SMOOTHING_BENEFIT_LAG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothing_benefit_lag"
 DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_regime_validation"
 )
@@ -188,15 +180,11 @@ DEFAULT_SMOOTHED_PROMOTION_REVIEW_DIR = (
 DEFAULT_PRIMARY_RESEARCH_CANDIDATE_GATE_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "primary_research_candidate_gate"
 )
-DEFAULT_SMOOTHED_FORWARD_BINDING_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_binding"
-)
+DEFAULT_SMOOTHED_FORWARD_BINDING_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_binding"
 DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_primary_switch"
 )
-DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_promotion"
-)
+DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_promotion"
 DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_progress"
 )
@@ -207,37 +195,21 @@ DEFAULT_SMOOTHED_EVENT_MONITOR_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothe
 DEFAULT_SMOOTHED_SWITCH_READINESS_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_switch_readiness"
 )
-DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_renewal"
-)
-DEFAULT_SMOOTHED_DAILY_EMISSION_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_daily_emission"
-)
+DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_renewal"
+DEFAULT_SMOOTHED_DAILY_EMISSION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_daily_emission"
 DEFAULT_SMOOTHED_OUTCOME_DUE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_outcome_due"
-DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_outcome_update"
-)
+DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_outcome_update"
 DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_classification"
 )
 DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_weekly_run"
 )
-DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_data_preflight"
-)
-DEFAULT_SMOOTHED_LATEST_EMISSION_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_latest_emission"
-)
-DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_blocked_explain"
-)
-DEFAULT_SMOOTHED_REFRESH_PLAN_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_refresh_plan"
-)
-DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_bootstrap_retry"
-)
+DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_data_preflight"
+DEFAULT_SMOOTHED_LATEST_EMISSION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_latest_emission"
+DEFAULT_SMOOTHED_BLOCKED_EXPLAIN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_blocked_explain"
+DEFAULT_SMOOTHED_REFRESH_PLAN_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_refresh_plan"
+DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_bootstrap_retry"
 DEFAULT_SMOOTHED_SOURCE_REFRESH_CONFIG_PATH = (
     PROJECT_ROOT
     / "config"
@@ -245,25 +217,15 @@ DEFAULT_SMOOTHED_SOURCE_REFRESH_CONFIG_PATH = (
     / "dynamic_v3_rescue"
     / "smoothed_source_refresh_v1.yaml"
 )
-DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_source_refresh"
-)
+DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_source_refresh"
 DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_post_refresh_validation"
 )
-DEFAULT_SMOOTHED_RETRY_RESUME_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_retry_resume"
-)
-DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_sample_growth"
-)
-DEFAULT_SMOOTHED_DATA_READINESS_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_data_readiness"
-)
+DEFAULT_SMOOTHED_RETRY_RESUME_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_retry_resume"
+DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_sample_growth"
+DEFAULT_SMOOTHED_DATA_READINESS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_data_readiness"
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
-DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
-)
+DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
 DEFAULT_EXPERIMENT_MATRIX_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "experiment_matrix"
 DEFAULT_BATCH_EXPERIMENT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "batch_experiment"
 DEFAULT_EXPERIMENT_TRIAGE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "experiment_triage"
@@ -769,9 +731,7 @@ def validate_smoothed_limited_config(
                     "single_symbol_change_not_above_total_change",
                     all(
                         _float(
-                            _mapping(variants.get(variant)).get(
-                                "max_single_symbol_daily_change"
-                            ),
+                            _mapping(variants.get(variant)).get("max_single_symbol_daily_change"),
                             2.0,
                         )
                         <= _float(
@@ -1189,9 +1149,7 @@ def build_variant_transform_spec_report(
         "status": validation["status"],
         "config_path": str(config_path),
         "transform_type_count": len(catalog["transform_types"]),
-        "variant_transform_spec_manifest_path": str(
-            root / "variant_transform_spec_manifest.json"
-        ),
+        "variant_transform_spec_manifest_path": str(root / "variant_transform_spec_manifest.json"),
         "normalized_transform_spec_path": str(root / "normalized_transform_spec.yaml"),
         "transform_type_catalog_path": str(root / "transform_type_catalog.json"),
         "variant_transform_spec_report_path": str(root / "variant_transform_spec_report.md"),
@@ -1724,11 +1682,7 @@ def run_experiment_triage(
     )
     scorecard = _triage_variant_scorecard(batch, variant_specs, policy)
     candidates = _promotion_candidates(scorecard, variant_specs)
-    rejected = [
-        row
-        for row in scorecard
-        if row.get("triage_decision") == "REJECT"
-    ]
+    rejected = [row for row in scorecard if row.get("triage_decision") == "REJECT"]
     summary = _triage_summary(scorecard, candidates)
     triage_id = _stable_id("experiment-triage", batch_id, generated.isoformat())
     root = _unique_dir(output_dir / triage_id)
@@ -1847,15 +1801,12 @@ def validate_experiment_triage_artifact(
             _check(
                 "promotion_candidates_subset_scorecard",
                 {
-                    _text(row.get("variant_id"))
-                    for row in candidates
-                    if row.get("variant_id")
+                    _text(row.get("variant_id")) for row in candidates if row.get("variant_id")
                 }.issubset(
                     {
                         _text(row.get("variant_id"))
                         for row in scorecard
-                        if row.get("triage_decision")
-                        == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+                        if row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
                     }
                 )
                 and len(candidates) <= 2,
@@ -1992,8 +1943,7 @@ def validate_top_variant_interpretation_artifact(
                 all(
                     row.get("recommended_promotion") is True
                     for row in explanations
-                    if row.get("triage_decision")
-                    == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
+                    if row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
                 ),
                 "",
             ),
@@ -2100,15 +2050,11 @@ def method_promotion_plan_report_payload(
     return {
         **_read_json(root / "method_promotion_manifest.json"),
         "promoted_method_specs": _read_json(root / "promoted_method_specs.json"),
-        "formal_implementation_plan": (
-            root / "formal_implementation_plan.md"
-        ).read_text(encoding="utf-8"),
-        "owner_review_checklist": (root / "owner_review_checklist.md").read_text(
+        "formal_implementation_plan": (root / "formal_implementation_plan.md").read_text(
             encoding="utf-8"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "owner_review_checklist": (root / "owner_review_checklist.md").read_text(encoding="utf-8"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "promotion_plan_dir": str(root),
     }
 
@@ -2671,9 +2617,11 @@ def simulate_model_rebalance(
                 "weights": after,
                 "cash_weight": _float(after.get("CASH")),
                 "turnover_to_date": round(_float(row.get("turnover_to_date")) + turnover, 10),
-                "last_rebalance_date": manifest_target.get("as_of")
-                if status == "APPLIED_TO_PAPER"
-                else row.get("last_rebalance_date"),
+                "last_rebalance_date": (
+                    manifest_target.get("as_of")
+                    if status == "APPLIED_TO_PAPER"
+                    else row.get("last_rebalance_date")
+                ),
                 "broker_action_taken": False,
                 "production_effect": PRODUCTION_EFFECT,
                 **SYSTEM_TARGET_SAFETY,
@@ -2743,9 +2691,9 @@ def simulate_model_rebalance(
         "paper_shadow_id": paper_shadow_id,
         "target_id": target_id,
         "generated_at": generated.isoformat(),
-        "status": "PASS"
-        if not turnover_summary["insufficient_data_methods"]
-        else "PASS_WITH_WARNINGS",
+        "status": (
+            "PASS" if not turnover_summary["insufficient_data_methods"] else "PASS_WITH_WARNINGS"
+        ),
         "model_rebalance_manifest_path": str(rebalance_dir / "model_rebalance_manifest.json"),
         "rebalance_events_path": str(rebalance_dir / "rebalance_events.jsonl"),
         "method_weight_history_path": str(rebalance_dir / "method_weight_history.jsonl"),
@@ -4163,13 +4111,9 @@ def run_selection_attribution(
         "date_start": selection.get("date_start"),
         "date_end": selection.get("date_end"),
         "data_quality_status": selection.get("data_quality_status"),
-        "selection_attribution_manifest_path": str(
-            root / "selection_attribution_manifest.json"
-        ),
+        "selection_attribution_manifest_path": str(root / "selection_attribution_manifest.json"),
         "method_score_attribution_path": str(root / "method_score_attribution.jsonl"),
-        "recommendation_reason_breakdown_path": str(
-            root / "recommendation_reason_breakdown.json"
-        ),
+        "recommendation_reason_breakdown_path": str(root / "recommendation_reason_breakdown.json"),
         "review_required_reason_breakdown_path": str(
             root / "review_required_reason_breakdown.json"
         ),
@@ -4714,9 +4658,7 @@ def validate_data_warning_impact_artifact(
             ),
         ]
     )
-    return _validation_payload(
-        "etf_dynamic_v3_data_warning_impact_validation", impact_id, checks
-    )
+    return _validation_payload("etf_dynamic_v3_data_warning_impact_validation", impact_id, checks)
 
 
 def run_research_method_hardening_pack(
@@ -4778,12 +4720,8 @@ def run_research_method_hardening_pack(
             root / "research_method_hardening_manifest.json"
         ),
         "hardening_decision_path": str(root / "hardening_decision.json"),
-        "owner_research_method_checklist_path": str(
-            root / "owner_research_method_checklist.md"
-        ),
-        "research_method_hardening_report_path": str(
-            root / "research_method_hardening_report.md"
-        ),
+        "owner_research_method_checklist_path": str(root / "owner_research_method_checklist.md"),
+        "research_method_hardening_report_path": str(root / "research_method_hardening_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -5123,14 +5061,10 @@ def run_limited_risk_attribution(
             root / "limited_risk_attribution_manifest.json"
         ),
         "return_contribution_by_symbol_path": str(root / "return_contribution_by_symbol.json"),
-        "drawdown_contribution_by_symbol_path": str(
-            root / "drawdown_contribution_by_symbol.json"
-        ),
+        "drawdown_contribution_by_symbol_path": str(root / "drawdown_contribution_by_symbol.json"),
         "exposure_shift_attribution_path": str(root / "exposure_shift_attribution.json"),
         "risk_worsening_events_path": str(root / "risk_worsening_events.jsonl"),
-        "limited_risk_attribution_report_path": str(
-            root / "limited_risk_attribution_report.md"
-        ),
+        "limited_risk_attribution_report_path": str(root / "limited_risk_attribution_report.md"),
         **SYSTEM_TARGET_SAFETY,
     }
     _write_json(root / "limited_risk_attribution_manifest.json", manifest)
@@ -5302,9 +5236,7 @@ def run_data_warning_repair_plan(
         ),
         "warning_repair_actions_path": str(root / "warning_repair_actions.jsonl"),
         "warning_blocking_matrix_path": str(root / "warning_blocking_matrix.json"),
-        "data_warning_repair_plan_report_path": str(
-            root / "data_warning_repair_plan_report.md"
-        ),
+        "data_warning_repair_plan_report_path": str(root / "data_warning_repair_plan_report.md"),
         "auto_repair_executed": False,
         **SYSTEM_TARGET_SAFETY,
     }
@@ -5536,8 +5468,7 @@ def validate_alternative_method_review_artifact(
             _check(
                 "no_new_method_auto_apply",
                 all(
-                    row.get("auto_apply") is False
-                    for row in _records(candidates.get("candidates"))
+                    row.get("auto_apply") is False for row in _records(candidates.get("candidates"))
                 ),
                 "",
             ),
@@ -5934,15 +5865,9 @@ def run_risk_capped_backfill(
         for row in source_backfill["backfill_trade_ledger"]
         if row.get("target_method") == "risk_capped_limited_adjustment"
     ]
-    cap_events = [
-        event
-        for row in ledger
-        for event in _records(row.get("cap_events"))
-    ]
+    cap_events = [event for row in ledger for event in _records(row.get("cap_events"))]
     reallocation_events = [
-        event
-        for row in ledger
-        for event in _records(row.get("reallocation_events"))
+        event for row in ledger for event in _records(row.get("reallocation_events"))
     ]
     summary = _risk_capped_backfill_summary(
         source_backfill["manifest"],
@@ -6607,9 +6532,7 @@ def run_smoothed_backfill(
         for row in source_backfill["backfill_trade_ledger"]
         if row.get("target_method") in smoothed_methods
     ]
-    smoothing_events = [
-        event for row in ledger for event in _records(row.get("smoothing_events"))
-    ]
+    smoothing_events = [event for row in ledger for event in _records(row.get("smoothing_events"))]
     lag_events = [event for row in ledger for event in _records(row.get("lag_events"))]
     summary = _smoothed_backfill_summary(
         source_backfill["manifest"],
@@ -7184,9 +7107,7 @@ def smoothed_review_attribution_report_payload(
         "smoothed_decision_reason_breakdown": _read_json(
             root / "smoothed_decision_reason_breakdown.json"
         ),
-        "smoothed_metric_support_matrix": _read_json(
-            root / "smoothed_metric_support_matrix.json"
-        ),
+        "smoothed_metric_support_matrix": _read_json(root / "smoothed_metric_support_matrix.json"),
         "attribution_dir": str(root),
     }
 
@@ -7299,9 +7220,7 @@ def run_smoothing_benefit_lag_drilldown(
         "data_quality_status": _mapping(backfill.get("smoothed_backfill_summary")).get(
             "data_quality"
         ),
-        "smoothing_benefit_lag_manifest_path": str(
-            root / "smoothing_benefit_lag_manifest.json"
-        ),
+        "smoothing_benefit_lag_manifest_path": str(root / "smoothing_benefit_lag_manifest.json"),
         "smoothing_benefit_summary_path": str(root / "smoothing_benefit_summary.json"),
         "lag_cost_summary_path": str(root / "lag_cost_summary.json"),
         "benefit_lag_tradeoff_matrix_path": str(root / "benefit_lag_tradeoff_matrix.json"),
@@ -7442,9 +7361,7 @@ def run_smoothed_regime_validation(
             root / "smoothed_regime_validation_manifest.json"
         ),
         "sideways_validation_summary_path": str(root / "sideways_validation_summary.json"),
-        "recovery_lag_validation_summary_path": str(
-            root / "recovery_lag_validation_summary.json"
-        ),
+        "recovery_lag_validation_summary_path": str(root / "recovery_lag_validation_summary.json"),
         "smoothed_regime_validation_report_path": str(
             root / "smoothed_regime_validation_report.md"
         ),
@@ -8689,9 +8606,7 @@ def build_smoothed_promotion_review_pack(
         ),
         "promotion_evidence_summary_path": str(root / "promotion_evidence_summary.json"),
         "promotion_blocking_issues_path": str(root / "promotion_blocking_issues.json"),
-        "smoothed_promotion_review_report_path": str(
-            root / "smoothed_promotion_review_report.md"
-        ),
+        "smoothed_promotion_review_report_path": str(root / "smoothed_promotion_review_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -8736,9 +8651,7 @@ def smoothed_promotion_review_report_payload(
         **_read_json(root / "smoothed_promotion_review_manifest.json"),
         "promotion_evidence_summary": _read_json(root / "promotion_evidence_summary.json"),
         "promotion_blocking_issues": _read_json(root / "promotion_blocking_issues.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "promotion_review_dir": str(root),
     }
 
@@ -9003,9 +8916,7 @@ def run_smoothed_forward_binding(
         ),
         "bound_confirmation_targets_path": str(root / "bound_confirmation_targets.json"),
         "forward_progress_requirements_path": str(root / "forward_progress_requirements.json"),
-        "smoothed_forward_binding_report_path": str(
-            root / "smoothed_forward_binding_report.md"
-        ),
+        "smoothed_forward_binding_report_path": str(root / "smoothed_forward_binding_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -9050,9 +8961,7 @@ def smoothed_forward_binding_report_payload(
         **_read_json(root / "smoothed_forward_binding_manifest.json"),
         "bound_confirmation_targets": _read_json(root / "bound_confirmation_targets.json"),
         "forward_progress_requirements": _read_json(root / "forward_progress_requirements.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "binding_dir": str(root),
     }
 
@@ -9200,9 +9109,7 @@ def paper_shadow_primary_switch_report_payload(
         **_read_json(root / "paper_shadow_primary_switch_manifest.json"),
         "primary_switch_plan": _read_json(root / "primary_switch_plan.json"),
         "primary_switch_safety_checks": _read_json(root / "primary_switch_safety_checks.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "switch_plan_dir": str(root),
     }
 
@@ -9318,9 +9225,7 @@ def create_smoothed_owner_promotion_decision(
         ),
         "owner_promotion_decision_path": str(root / "owner_promotion_decision.json"),
         "owner_promotion_checklist_path": str(root / "owner_promotion_checklist.md"),
-        "smoothed_owner_promotion_report_path": str(
-            root / "smoothed_owner_promotion_report.md"
-        ),
+        "smoothed_owner_promotion_report_path": str(root / "smoothed_owner_promotion_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -9338,9 +9243,7 @@ def create_smoothed_owner_promotion_decision(
         "owner_promotion_checklist": (root / "owner_promotion_checklist.md").read_text(
             encoding="utf-8"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
     }
 
 
@@ -9373,9 +9276,7 @@ def record_smoothed_owner_promotion_decision(
         "owner_promotion_checklist": (root / "owner_promotion_checklist.md").read_text(
             encoding="utf-8"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
     }
 
 
@@ -9398,9 +9299,7 @@ def smoothed_owner_promotion_report_payload(
         "owner_promotion_checklist": (root / "owner_promotion_checklist.md").read_text(
             encoding="utf-8"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "decision_dir": str(root),
     }
 
@@ -9532,9 +9431,7 @@ def update_smoothed_forward_progress(
         "smoothed_forward_progress_summary_path": str(
             root / "smoothed_forward_progress_summary.json"
         ),
-        "smoothed_forward_progress_report_path": str(
-            root / "smoothed_forward_progress_report.md"
-        ),
+        "smoothed_forward_progress_report_path": str(root / "smoothed_forward_progress_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -9581,9 +9478,7 @@ def smoothed_forward_progress_report_payload(
         "smoothed_forward_progress_summary": _read_json(
             root / "smoothed_forward_progress_summary.json"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "progress_dir": str(root),
     }
 
@@ -9680,9 +9575,7 @@ def build_smoothed_weekly_dashboard(
         ),
         "smoothed_dashboard_summary_path": str(root / "smoothed_dashboard_summary.json"),
         "smoothed_target_status_table_path": str(root / "smoothed_target_status_table.json"),
-        "smoothed_weekly_dashboard_report_path": str(
-            root / "smoothed_weekly_dashboard_report.md"
-        ),
+        "smoothed_weekly_dashboard_report_path": str(root / "smoothed_weekly_dashboard_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -9727,9 +9620,7 @@ def smoothed_weekly_dashboard_report_payload(
         **_read_json(root / "smoothed_weekly_dashboard_manifest.json"),
         "smoothed_dashboard_summary": _read_json(root / "smoothed_dashboard_summary.json"),
         "smoothed_target_status_table": _read_json(root / "smoothed_target_status_table.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "dashboard_dir": str(root),
     }
 
@@ -9805,12 +9696,8 @@ def update_smoothed_event_monitor(
         else classification_dir
     )
     classified = _collect_classified_smoothed_events(effective_classification_dir)
-    sideways_events = [
-        row for row in classified if row.get("sideways_relevant") is True
-    ]
-    recovery_events = [
-        row for row in classified if row.get("recovery_lag_relevant") is True
-    ]
+    sideways_events = [row for row in classified if row.get("sideways_relevant") is True]
+    recovery_events = [row for row in classified if row.get("recovery_lag_relevant") is True]
     summary = _smoothed_event_accumulation_summary(
         progress_summary,
         sideways_events,
@@ -9832,9 +9719,7 @@ def update_smoothed_event_monitor(
         "progress_id": progress_id,
         "generated_at": generated.isoformat(),
         "status": "PASS",
-        "smoothed_event_monitor_manifest_path": str(
-            root / "smoothed_event_monitor_manifest.json"
-        ),
+        "smoothed_event_monitor_manifest_path": str(root / "smoothed_event_monitor_manifest.json"),
         "sideways_event_inventory_path": str(root / "sideways_event_inventory.jsonl"),
         "recovery_event_inventory_path": str(root / "recovery_event_inventory.jsonl"),
         "event_accumulation_summary_path": str(root / "event_accumulation_summary.json"),
@@ -9997,9 +9882,7 @@ def recheck_smoothed_switch_readiness(
         ),
         "switch_readiness_decision_path": str(root / "switch_readiness_decision.json"),
         "switch_readiness_criteria_path": str(root / "switch_readiness_criteria.json"),
-        "smoothed_switch_readiness_report_path": str(
-            root / "smoothed_switch_readiness_report.md"
-        ),
+        "smoothed_switch_readiness_report_path": str(root / "smoothed_switch_readiness_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -10044,9 +9927,7 @@ def smoothed_switch_readiness_report_payload(
         **_read_json(root / "smoothed_switch_readiness_manifest.json"),
         "switch_readiness_decision": _read_json(root / "switch_readiness_decision.json"),
         "switch_readiness_criteria": _read_json(root / "switch_readiness_criteria.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "recheck_dir": str(root),
     }
 
@@ -10140,9 +10021,7 @@ def build_smoothed_owner_renewal_pack(
         "owner_promotion_id": owner_promotion_id,
         "generated_at": generated.isoformat(),
         "status": "PASS",
-        "smoothed_owner_renewal_manifest_path": str(
-            root / "smoothed_owner_renewal_manifest.json"
-        ),
+        "smoothed_owner_renewal_manifest_path": str(root / "smoothed_owner_renewal_manifest.json"),
         "owner_renewal_options_path": str(root / "owner_renewal_options.json"),
         "owner_renewal_checklist_path": str(root / "owner_renewal_checklist.md"),
         "smoothed_owner_renewal_report_path": str(root / "smoothed_owner_renewal_report.md"),
@@ -10193,9 +10072,7 @@ def smoothed_owner_renewal_report_payload(
         "owner_renewal_checklist": (root / "owner_renewal_checklist.md").read_text(
             encoding="utf-8"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "renewal_dir": str(root),
     }
 
@@ -10352,12 +10229,8 @@ def run_smoothed_daily_emission(
         ),
         "smoothed_forward_events_path": str(root / "smoothed_forward_events.jsonl"),
         "smoothed_event_weights_path": str(root / "smoothed_event_weights.json"),
-        "smoothed_emission_data_quality_path": str(
-            root / "smoothed_emission_data_quality.json"
-        ),
-        "smoothed_daily_emission_report_path": str(
-            root / "smoothed_daily_emission_report.md"
-        ),
+        "smoothed_emission_data_quality_path": str(root / "smoothed_emission_data_quality.json"),
+        "smoothed_daily_emission_report_path": str(root / "smoothed_daily_emission_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -10409,12 +10282,8 @@ def smoothed_daily_emission_report_payload(
         **_read_json(root / "smoothed_daily_emission_manifest.json"),
         "smoothed_forward_events": _read_jsonl(root / "smoothed_forward_events.jsonl"),
         "smoothed_event_weights": _read_json(root / "smoothed_event_weights.json"),
-        "smoothed_emission_data_quality": _read_json(
-            root / "smoothed_emission_data_quality.json"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "smoothed_emission_data_quality": _read_json(root / "smoothed_emission_data_quality.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "emission_dir": str(root),
     }
 
@@ -10448,8 +10317,7 @@ def validate_smoothed_daily_emission_artifact(
             _check(
                 "event_status_allowed",
                 all(
-                    row.get("event_status")
-                    in {"ACTIVE", "SKIPPED", "INSUFFICIENT_DATA"}
+                    row.get("event_status") in {"ACTIVE", "SKIPPED", "INSUFFICIENT_DATA"}
                     for row in events
                 ),
                 "",
@@ -10540,9 +10408,7 @@ def scan_smoothed_outcome_due(
         "scanner_as_of": as_of.isoformat(),
         "generated_at": generated.isoformat(),
         "status": "PASS",
-        "smoothed_outcome_due_manifest_path": str(
-            root / "smoothed_outcome_due_manifest.json"
-        ),
+        "smoothed_outcome_due_manifest_path": str(root / "smoothed_outcome_due_manifest.json"),
         "due_windows_path": str(root / "due_windows.jsonl"),
         "due_summary_path": str(root / "due_summary.json"),
         "smoothed_outcome_due_report_path": str(root / "smoothed_outcome_due_report.md"),
@@ -10609,9 +10475,11 @@ def validate_smoothed_outcome_due_artifact(
         ),
     )
     due_logic_valid = all(
-        row.get("can_update") is False
-        if row.get("due_status") != "DUE"
-        else row.get("price_available") is True
+        (
+            row.get("can_update") is False
+            if row.get("due_status") != "DUE"
+            else row.get("price_available") is True
+        )
         for row in rows
     )
     no_future_update = all(
@@ -10700,12 +10568,8 @@ def run_smoothed_outcome_update(
         ),
         "updated_smoothed_outcomes_path": str(root / "updated_smoothed_outcomes.jsonl"),
         "skipped_smoothed_outcomes_path": str(root / "skipped_smoothed_outcomes.jsonl"),
-        "smoothed_outcome_delta_summary_path": str(
-            root / "smoothed_outcome_delta_summary.json"
-        ),
-        "smoothed_outcome_update_report_path": str(
-            root / "smoothed_outcome_update_report.md"
-        ),
+        "smoothed_outcome_delta_summary_path": str(root / "smoothed_outcome_delta_summary.json"),
+        "smoothed_outcome_update_report_path": str(root / "smoothed_outcome_update_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -10752,12 +10616,8 @@ def smoothed_outcome_update_report_payload(
         **_read_json(root / "smoothed_outcome_update_manifest.json"),
         "updated_smoothed_outcomes": _read_jsonl(root / "updated_smoothed_outcomes.jsonl"),
         "skipped_smoothed_outcomes": _read_jsonl(root / "skipped_smoothed_outcomes.jsonl"),
-        "smoothed_outcome_delta_summary": _read_json(
-            root / "smoothed_outcome_delta_summary.json"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "smoothed_outcome_delta_summary": _read_json(root / "smoothed_outcome_delta_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "update_dir": str(root),
     }
 
@@ -10787,8 +10647,7 @@ def validate_smoothed_outcome_update_artifact(
         [
             _check(
                 "update_id_matches",
-                manifest.get("update_id") == update_id
-                and summary.get("update_id") == update_id,
+                manifest.get("update_id") == update_id and summary.get("update_id") == update_id,
                 "",
             ),
             _check(
@@ -10835,9 +10694,7 @@ def run_smoothed_forward_classification(
     outcomes = _records(update.get("updated_smoothed_outcomes"))
     events = _smoothed_events_by_id(emission_dir)
     weights = _smoothed_event_weights_by_id(emission_dir)
-    classified = [
-        _smoothed_classified_forward_event(row, events, weights) for row in outcomes
-    ]
+    classified = [_smoothed_classified_forward_event(row, events, weights) for row in outcomes]
     summary = _smoothed_classification_summary(classified)
     classification_id = _stable_id(
         "smoothed-forward-classification",
@@ -11175,9 +11032,7 @@ def smoothed_forward_weekly_run_report_payload(
         "weekly_run_steps": _read_json(root / "weekly_run_steps.json"),
         "weekly_run_artifacts": _read_json(root / "weekly_run_artifacts.json"),
         "weekly_run_summary": _read_json(root / "weekly_run_summary.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "weekly_run_dir": str(root),
     }
 
@@ -11326,9 +11181,7 @@ def run_smoothed_data_preflight(
         "data_freshness_snapshot_path": str(root / "data_freshness_snapshot.json"),
         "runnable_command_matrix_path": str(root / "runnable_command_matrix.json"),
         "blocked_reason_matrix_path": str(root / "blocked_reason_matrix.json"),
-        "smoothed_data_preflight_report_path": str(
-            root / "smoothed_data_preflight_report.md"
-        ),
+        "smoothed_data_preflight_report_path": str(root / "smoothed_data_preflight_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -11381,9 +11234,7 @@ def smoothed_data_preflight_report_payload(
         "data_freshness_snapshot": _read_json(root / "data_freshness_snapshot.json"),
         "runnable_command_matrix": _read_json(root / "runnable_command_matrix.json"),
         "blocked_reason_matrix": _read_json(root / "blocked_reason_matrix.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "preflight_dir": str(root),
     }
 
@@ -11548,12 +11399,8 @@ def run_smoothed_latest_emission(
             root / "smoothed_latest_emission_manifest.json"
         ),
         "latest_emission_resolution_path": str(root / "latest_emission_resolution.json"),
-        "latest_emission_artifact_links_path": str(
-            root / "latest_emission_artifact_links.json"
-        ),
-        "smoothed_latest_emission_report_path": str(
-            root / "smoothed_latest_emission_report.md"
-        ),
+        "latest_emission_artifact_links_path": str(root / "latest_emission_artifact_links.json"),
+        "smoothed_latest_emission_report_path": str(root / "smoothed_latest_emission_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -11598,12 +11445,8 @@ def smoothed_latest_emission_report_payload(
     return {
         **_read_json(root / "smoothed_latest_emission_manifest.json"),
         "latest_emission_resolution": _read_json(root / "latest_emission_resolution.json"),
-        "latest_emission_artifact_links": _read_json(
-            root / "latest_emission_artifact_links.json"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "latest_emission_artifact_links": _read_json(root / "latest_emission_artifact_links.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "latest_emission_dir": str(root),
     }
 
@@ -11708,13 +11551,9 @@ def run_smoothed_blocked_explain(
         "smoothed_blocked_explain_manifest_path": str(
             root / "smoothed_blocked_explain_manifest.json"
         ),
-        "blocked_command_explanations_path": str(
-            root / "blocked_command_explanations.json"
-        ),
+        "blocked_command_explanations_path": str(root / "blocked_command_explanations.json"),
         "blocked_owner_summary_path": str(root / "blocked_owner_summary.md"),
-        "smoothed_blocked_explain_report_path": str(
-            root / "smoothed_blocked_explain_report.md"
-        ),
+        "smoothed_blocked_explain_report_path": str(root / "smoothed_blocked_explain_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -11757,15 +11596,9 @@ def smoothed_blocked_explain_report_payload(
     )
     return {
         **_read_json(root / "smoothed_blocked_explain_manifest.json"),
-        "blocked_command_explanations": _read_json(
-            root / "blocked_command_explanations.json"
-        ),
-        "blocked_owner_summary": (root / "blocked_owner_summary.md").read_text(
-            encoding="utf-8"
-        ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "blocked_command_explanations": _read_json(root / "blocked_command_explanations.json"),
+        "blocked_owner_summary": (root / "blocked_owner_summary.md").read_text(encoding="utf-8"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "explain_dir": str(root),
     }
 
@@ -11857,13 +11690,10 @@ def run_smoothed_refresh_plan(
         "refresh_plan_id": root.name,
         "source_preflight_id": preflight_id,
         "source_explain_id": explain_id,
-        "requested_as_of": snapshot.get("requested_as_of")
-        or snapshot.get("requested_week_ending"),
+        "requested_as_of": snapshot.get("requested_as_of") or snapshot.get("requested_week_ending"),
         "generated_at": generated.isoformat(),
         "status": "PASS",
-        "smoothed_refresh_plan_manifest_path": str(
-            root / "smoothed_refresh_plan_manifest.json"
-        ),
+        "smoothed_refresh_plan_manifest_path": str(root / "smoothed_refresh_plan_manifest.json"),
         "source_refresh_requirements_path": str(root / "source_refresh_requirements.json"),
         "rerun_command_plan_path": str(root / "rerun_command_plan.json"),
         "smoothed_refresh_plan_report_path": str(root / "smoothed_refresh_plan_report.md"),
@@ -11916,9 +11746,7 @@ def smoothed_refresh_plan_report_payload(
         **_read_json(root / "smoothed_refresh_plan_manifest.json"),
         "source_refresh_requirements": _read_json(root / "source_refresh_requirements.json"),
         "rerun_command_plan": _read_json(root / "rerun_command_plan.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "refresh_plan_dir": str(root),
     }
 
@@ -12077,9 +11905,7 @@ def run_smoothed_bootstrap_retry(
                 "artifact_id": latest_emission["latest_emission_id"],
             }
         )
-        artifacts["latest_emission"] = {
-            "artifact_id": latest_emission["latest_emission_id"]
-        }
+        artifacts["latest_emission"] = {"artifact_id": latest_emission["latest_emission_id"]}
         _append_retry_skipped_steps(
             steps,
             (
@@ -12161,9 +11987,7 @@ def run_smoothed_bootstrap_retry(
         "retry_steps_path": str(root / "retry_steps.json"),
         "retry_artifacts_path": str(root / "retry_artifacts.json"),
         "retry_summary_path": str(root / "retry_summary.json"),
-        "smoothed_bootstrap_retry_report_path": str(
-            root / "smoothed_bootstrap_retry_report.md"
-        ),
+        "smoothed_bootstrap_retry_report_path": str(root / "smoothed_bootstrap_retry_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -12222,9 +12046,7 @@ def smoothed_bootstrap_retry_report_payload(
         "retry_steps": _read_json(root / "retry_steps.json"),
         "retry_artifacts": _read_json(root / "retry_artifacts.json"),
         "retry_summary": _read_json(root / "retry_summary.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "retry_dir": str(root),
     }
 
@@ -12244,8 +12066,7 @@ def validate_smoothed_bootstrap_retry_artifact(
     preflight_status = _text(preflight.get("preflight_status"))
     blocked = preflight_status.startswith("BLOCKED")
     outcome_update_pass = any(
-        row.get("step") == "outcome_update" and row.get("status") == "PASS"
-        for row in steps
+        row.get("step") == "outcome_update" and row.get("status") == "PASS" for row in steps
     )
     checks = _required_file_checks(
         root,
@@ -12445,9 +12266,7 @@ def run_smoothed_source_refresh(
         "refresh_execution_request_path": str(root / "refresh_execution_request.json"),
         "source_refresh_results_path": str(root / "source_refresh_results.json"),
         "source_refresh_audit_path": str(root / "source_refresh_audit.json"),
-        "smoothed_source_refresh_report_path": str(
-            root / "smoothed_source_refresh_report.md"
-        ),
+        "smoothed_source_refresh_report_path": str(root / "smoothed_source_refresh_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -12495,9 +12314,7 @@ def smoothed_source_refresh_report_payload(
         "refresh_execution_request": _read_json(root / "refresh_execution_request.json"),
         "source_refresh_results": _read_json(root / "source_refresh_results.json"),
         "source_refresh_audit": _read_json(root / "source_refresh_audit.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "refresh_execution_dir": str(root),
     }
 
@@ -12550,8 +12367,7 @@ def validate_smoothed_source_refresh_artifact(
             _check(
                 "source_status_allowed",
                 all(
-                    row.get("status")
-                    in {"REFRESHED", "SKIPPED", "FAILED", "DRY_RUN_ONLY"}
+                    row.get("status") in {"REFRESHED", "SKIPPED", "FAILED", "DRY_RUN_ONLY"}
                     for row in source_rows
                 ),
                 "",
@@ -12646,8 +12462,7 @@ def run_smoothed_post_refresh_validation(
         "freshness_status": snapshot.get("freshness_status"),
         "latest_valid_as_of": snapshot.get("latest_valid_as_of"),
         "blocking_errors": _texts(snapshot.get("blocking_errors")),
-        "can_run_full_retry": snapshot.get("freshness_status")
-        in {"READY", "READY_WITH_WARNINGS"},
+        "can_run_full_retry": snapshot.get("freshness_status") in {"READY", "READY_WITH_WARNINGS"},
         "can_run_latest_available_emission_only": (
             snapshot.get("freshness_status") == "LATEST_AVAILABLE_ONLY"
         ),
@@ -12670,9 +12485,7 @@ def run_smoothed_post_refresh_validation(
         "validate_data_status": data_validation.get("validate_data_status"),
         "freshness_status": preflight_result.get("freshness_status"),
         "retry_decision": decision.get("retry_decision"),
-        "smoothed_post_refresh_manifest_path": str(
-            root / "smoothed_post_refresh_manifest.json"
-        ),
+        "smoothed_post_refresh_manifest_path": str(root / "smoothed_post_refresh_manifest.json"),
         "post_refresh_data_validation_path": str(root / "post_refresh_data_validation.json"),
         "post_refresh_preflight_result_path": str(root / "post_refresh_preflight_result.json"),
         "post_refresh_decision_path": str(root / "post_refresh_decision.json"),
@@ -12725,9 +12538,7 @@ def smoothed_post_refresh_validation_report_payload(
         "post_refresh_data_validation": _read_json(root / "post_refresh_data_validation.json"),
         "post_refresh_preflight_result": _read_json(root / "post_refresh_preflight_result.json"),
         "post_refresh_decision": _read_json(root / "post_refresh_decision.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "post_refresh_dir": str(root),
     }
 
@@ -12929,9 +12740,7 @@ def run_smoothed_retry_resume(
         "generated_at": generated.isoformat(),
         "status": "PASS",
         "resume_status": summary.get("resume_status"),
-        "smoothed_retry_resume_manifest_path": str(
-            root / "smoothed_retry_resume_manifest.json"
-        ),
+        "smoothed_retry_resume_manifest_path": str(root / "smoothed_retry_resume_manifest.json"),
         "resume_precondition_check_path": str(root / "resume_precondition_check.json"),
         "resume_steps_path": str(root / "resume_steps.json"),
         "resume_artifacts_path": str(root / "resume_artifacts.json"),
@@ -12988,9 +12797,7 @@ def smoothed_retry_resume_report_payload(
         "resume_steps": _read_json(root / "resume_steps.json"),
         "resume_artifacts": _read_json(root / "resume_artifacts.json"),
         "resume_summary": _read_json(root / "resume_summary.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "resume_dir": str(root),
     }
 
@@ -13040,8 +12847,7 @@ def validate_smoothed_retry_resume_artifact(
             _check("required_steps_present", required.issubset(present), ",".join(sorted(present))),
             _check(
                 "blocked_when_not_retry_ready",
-                precondition.get("can_resume") is True
-                or summary.get("resume_status") == "BLOCKED",
+                precondition.get("can_resume") is True or summary.get("resume_status") == "BLOCKED",
                 _text(summary.get("resume_status")),
             ),
             _check(
@@ -13104,14 +12910,10 @@ def build_smoothed_sample_growth(
         "generated_at": generated.isoformat(),
         "status": "PASS",
         "growth_status": growth_summary.get("growth_status"),
-        "smoothed_sample_growth_manifest_path": str(
-            root / "smoothed_sample_growth_manifest.json"
-        ),
+        "smoothed_sample_growth_manifest_path": str(root / "smoothed_sample_growth_manifest.json"),
         "sample_growth_summary_path": str(root / "sample_growth_summary.json"),
         "sample_growth_by_target_path": str(root / "sample_growth_by_target.json"),
-        "sample_growth_dashboard_report_path": str(
-            root / "sample_growth_dashboard_report.md"
-        ),
+        "sample_growth_dashboard_report_path": str(root / "sample_growth_dashboard_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -13156,9 +12958,7 @@ def smoothed_sample_growth_report_payload(
         **_read_json(root / "smoothed_sample_growth_manifest.json"),
         "sample_growth_summary": _read_json(root / "sample_growth_summary.json"),
         "sample_growth_by_target": _read_json(root / "sample_growth_by_target.json"),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "growth_dir": str(root),
     }
 
@@ -13187,8 +12987,7 @@ def validate_smoothed_sample_growth_artifact(
         [
             _check(
                 "growth_id_matches",
-                manifest.get("growth_id") == growth_id
-                and summary.get("growth_id") == growth_id,
+                manifest.get("growth_id") == growth_id and summary.get("growth_id") == growth_id,
                 "",
             ),
             _check(
@@ -13272,9 +13071,7 @@ def pack_smoothed_data_readiness(
         ),
         "owner_data_readiness_summary_path": str(root / "owner_data_readiness_summary.json"),
         "owner_data_readiness_checklist_path": str(root / "owner_data_readiness_checklist.md"),
-        "smoothed_data_readiness_report_path": str(
-            root / "smoothed_data_readiness_report.md"
-        ),
+        "smoothed_data_readiness_report_path": str(root / "smoothed_data_readiness_report.md"),
         "reader_brief_section_path": str(root / "reader_brief_section.md"),
         **SYSTEM_TARGET_SAFETY,
     }
@@ -13321,9 +13118,7 @@ def smoothed_data_readiness_report_payload(
         "owner_data_readiness_checklist": (root / "owner_data_readiness_checklist.md").read_text(
             encoding="utf-8"
         ),
-        "reader_brief_section": (root / "reader_brief_section.md").read_text(
-            encoding="utf-8"
-        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
         "readiness_dir": str(root),
     }
 
@@ -13336,9 +13131,11 @@ def validate_smoothed_data_readiness_artifact(
     root = output_dir / readiness_id
     manifest = _read_optional_json(root / "smoothed_data_readiness_manifest.json") or {}
     summary = _read_optional_json(root / "owner_data_readiness_summary.json") or {}
-    checklist = (root / "owner_data_readiness_checklist.md").read_text(
-        encoding="utf-8"
-    ) if (root / "owner_data_readiness_checklist.md").exists() else ""
+    checklist = (
+        (root / "owner_data_readiness_checklist.md").read_text(encoding="utf-8")
+        if (root / "owner_data_readiness_checklist.md").exists()
+        else ""
+    )
     checks = _required_file_checks(
         root,
         (
@@ -13511,11 +13308,7 @@ def render_risk_capped_comparison_report(
 ) -> str:
     values = _mapping(metrics.get("metrics"))
     sideways = next(
-        (
-            row
-            for row in _records(regime.get("regimes"))
-            if row.get("regime") == "sideways_choppy"
-        ),
+        (row for row in _records(regime.get("regimes")) if row.get("regime") == "sideways_choppy"),
         {},
     )
     return "\n".join(
@@ -13738,11 +13531,7 @@ def render_smoothed_comparison_report(
         _records(rolling.get("methods")), "smooth_weights_3d_limited_adjustment"
     )
     sideways = next(
-        (
-            row
-            for row in _records(regime.get("regimes"))
-            if row.get("regime") == "sideways_choppy"
-        ),
+        (row for row in _records(regime.get("regimes")) if row.get("regime") == "sideways_choppy"),
         {},
     )
     return "\n".join(
@@ -14727,9 +14516,7 @@ def render_smoothed_forward_progress_reader_brief(
     summary: Mapping[str, Any],
     targets: Sequence[Mapping[str, Any]],
 ) -> str:
-    target_statuses = [
-        f"{row.get('target_id')}={row.get('progress_status')}" for row in targets
-    ]
+    target_statuses = [f"{row.get('target_id')}={row.get('progress_status')}" for row in targets]
     return "\n".join(
         [
             "## Dynamic Rescue Smoothed Forward Progress",
@@ -14795,8 +14582,7 @@ def render_smoothed_weekly_dashboard_reader_brief(
     table: Mapping[str, Any],
 ) -> str:
     target_statuses = [
-        f"{row.get('target_id')}={row.get('status')}"
-        for row in _records(table.get("targets"))
+        f"{row.get('target_id')}={row.get('status')}" for row in _records(table.get("targets"))
     ]
     return "\n".join(
         [
@@ -15119,8 +14905,7 @@ def render_smoothed_outcome_update_report(
             f"- skipped_windows: {summary.get('skipped_count')}",
             "- available_forward_events_after_update: "
             f"{summary.get('available_forward_events_after_update')}",
-            "- smooth_3d_win_rate_vs_limited: "
-            f"{summary.get('smooth_3d_win_rate_vs_limited')}",
+            "- smooth_3d_win_rate_vs_limited: " f"{summary.get('smooth_3d_win_rate_vs_limited')}",
             "- avg_smooth_3d_relative_return_vs_limited: "
             f"{summary.get('avg_smooth_3d_relative_return_vs_limited')}",
             "- avg_smooth_3d_drawdown_delta_vs_limited: "
@@ -15533,8 +15318,7 @@ def render_smoothed_refresh_plan_report(
             "## Rerun Commands",
             "",
             *[
-                "- "
-                f"{row.get('step')}. {row.get('command')} - {row.get('purpose')}"
+                "- " f"{row.get('step')}. {row.get('command')} - {row.get('purpose')}"
                 for row in _records(rerun.get("rerun_after_refresh"))
             ],
             "",
@@ -15618,8 +15402,7 @@ def render_smoothed_bootstrap_retry_reader_brief(summary: Mapping[str, Any]) -> 
             f"- requested_as_of: {summary.get('requested_as_of')}",
             f"- emitted_events: {summary.get('emitted_events')}",
             f"- updated_windows: {summary.get('updated_windows')}",
-            "- forward_progress: "
-            f"{summary.get('available_forward_events_after_retry')}",
+            "- forward_progress: " f"{summary.get('available_forward_events_after_retry')}",
             f"- can_execute_switch: {summary.get('can_execute_switch')}",
             "- broker_action_allowed: false",
             "- production_effect: none",
@@ -15672,13 +15455,9 @@ def render_smoothed_source_refresh_report(
 
 def render_smoothed_source_refresh_reader_brief(results: Mapping[str, Any]) -> str:
     source_rows = _records(results.get("sources"))
-    ready_count = sum(
-        1 for row in source_rows if row.get("freshness_after_refresh") == "READY"
-    )
+    ready_count = sum(1 for row in source_rows if row.get("freshness_after_refresh") == "READY")
     failed_sources = [
-        _text(row.get("source"))
-        for row in source_rows
-        if row.get("status") == "FAILED"
+        _text(row.get("source")) for row in source_rows if row.get("status") == "FAILED"
     ]
     return "\n".join(
         [
@@ -16217,8 +15996,7 @@ def render_limited_long_risk_report(
             f"- turnover: {metrics.get('turnover')}",
             f"- risk_return_status: {long_window.get('risk_return_status')}",
             f"- confidence: {long_window.get('confidence')}",
-            f"- risk_exposure_interpretation: "
-            f"{exposure.get('risk_exposure_interpretation')}",
+            f"- risk_exposure_interpretation: " f"{exposure.get('risk_exposure_interpretation')}",
             f"- avg_risk_asset_weight: {exposure.get('avg_risk_asset_weight')}",
             f"- avg_semiconductor_weight: {exposure.get('avg_semiconductor_weight')}",
             f"- avg_cash_weight: {exposure.get('avg_cash_weight')}",
@@ -16694,8 +16472,7 @@ def render_refined_method_proposal_report(
             f"- limited_instability_recommendation: {instability_summary.get('recommendation')}",
             f"- dominant_failure_regime: {instability_summary.get('dominant_failure_regime')}",
             f"- risk_worsening_source: {exposure.get('risk_worsening_source')}",
-            f"- hardening_allowed_after_repair: "
-            f"{matrix.get('hardening_allowed_after_repair')}",
+            f"- hardening_allowed_after_repair: " f"{matrix.get('hardening_allowed_after_repair')}",
             f"- recommended_alternative: {scorecard.get('recommended_alternative')}",
             "- research_target_only: true",
             "- not_official_target_weights: true",
@@ -17170,9 +16947,11 @@ def _constraint_checks(
     overall = (
         "FAIL"
         if any(row["status"] == "FAIL" for row in checks)
-        else "PASS_WITH_WARNINGS"
-        if any(row["status"] == "PASS_WITH_WARNINGS" for row in checks)
-        else "PASS"
+        else (
+            "PASS_WITH_WARNINGS"
+            if any(row["status"] == "PASS_WITH_WARNINGS" for row in checks)
+            else "PASS"
+        )
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -18047,9 +17826,7 @@ def _stability_diagnostics(
                             "severity": (
                                 "HIGH"
                                 if total_abs >= high_jump
-                                else "MEDIUM"
-                                if total_abs >= large_jump
-                                else "LOW"
+                                else "MEDIUM" if total_abs >= large_jump else "LOW"
                             ),
                             "broker_action_taken": False,
                             **SYSTEM_TARGET_SAFETY,
@@ -18276,9 +18053,7 @@ def _selection_attribution_rows(
         "regime_score",
         "stability_score",
     )
-    best_by_component = {
-        field: _max_field_method(source_rows, field) for field in component_fields
-    }
+    best_by_component = {field: _max_field_method(source_rows, field) for field in component_fields}
     data_quality_penalty = _data_quality_attribution_penalty(
         _text(selection.get("data_quality_status"))
     )
@@ -18745,9 +18520,7 @@ def _exposure_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     for row in rows:
         weights = _normalize_weights(_mapping(row.get("weights")))
         risk_weights.append(sum(value for symbol, value in weights.items() if symbol != "CASH"))
-        semiconductor_weights.append(
-            sum(_float(weights.get(symbol)) for symbol in ("SMH", "SOXX"))
-        )
+        semiconductor_weights.append(sum(_float(weights.get(symbol)) for symbol in ("SMH", "SOXX")))
         cash_weights.append(_float(weights.get("CASH")))
     return {
         "avg_risk_asset_weight": round(_mean_float(risk_weights), 10),
@@ -19198,9 +18971,11 @@ def _research_method_hardening_decision(
     confidence = (
         "LOW"
         if blocking_issues
-        else "MEDIUM"
-        if warnings or warning_sensitivity.get("data_quality_decision") != "ACCEPT_FOR_RESEARCH"
-        else "HIGH"
+        else (
+            "MEDIUM"
+            if warnings or warning_sensitivity.get("data_quality_decision") != "ACCEPT_FOR_RESEARCH"
+            else "HIGH"
+        )
     )
     reasons = [
         f"candidate_method={candidate}",
@@ -19340,9 +19115,8 @@ def _window_failure_reasons(
         reasons.append("return_underperformance")
     if drawdown_delta < INSTABILITY_DRAWDOWN_WORSE_TOLERANCE:
         reasons.append("drawdown_worse")
-    if (
-        risk_adjusted_delta < 0.0
-        or _float(limited.get("rank_by_risk_adjusted")) > max(1, method_count - 2)
+    if risk_adjusted_delta < 0.0 or _float(limited.get("rank_by_risk_adjusted")) > max(
+        1, method_count - 2
     ):
         reasons.append("risk_adjusted_worse")
     if _float(limited.get("turnover")) >= INSTABILITY_TURNOVER_HIGH_THRESHOLD:
@@ -19557,12 +19331,7 @@ def _backfill_symbol_returns(backfill: Mapping[str, Any]) -> pd.DataFrame:
 def _backfill_non_cash_symbols(backfill: Mapping[str, Any]) -> list[str]:
     states = _records(backfill.get("backfill_method_states"))
     return sorted(
-        {
-            symbol
-            for row in states
-            for symbol in _mapping(row.get("weights"))
-            if symbol != "CASH"
-        }
+        {symbol for row in states for symbol in _mapping(row.get("weights")) if symbol != "CASH"}
     )
 
 
@@ -19785,9 +19554,7 @@ def _rows_between(
     end: date,
 ) -> list[dict[str, Any]]:
     return [
-        dict(row)
-        for row in rows
-        if start <= _coerce_date(row.get("date"), date(1970, 1, 1)) <= end
+        dict(row) for row in rows if start <= _coerce_date(row.get("date"), date(1970, 1, 1)) <= end
     ]
 
 
@@ -19970,9 +19737,11 @@ def _warning_blocking_matrix(
     hardening_after = (
         "NO"
         if any(row.get("blocks_research") for row in rows)
-        else "UNKNOWN"
-        if "unknown" in effects or any(row.get("blocks_hardening") for row in rows)
-        else "YES"
+        else (
+            "UNKNOWN"
+            if "unknown" in effects or any(row.get("blocks_hardening") for row in rows)
+            else "YES"
+        )
     )
     return {
         "warnings": rows,
@@ -20182,13 +19951,15 @@ def _refined_method_decision(
     confidence = (
         "LOW"
         if warning_after == "UNKNOWN"
-        else "MEDIUM"
-        if next_step
-        in {
-            "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD",
-            "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD",
-        }
-        else "LOW"
+        else (
+            "MEDIUM"
+            if next_step
+            in {
+                "IMPLEMENT_RISK_CAPPED_RESEARCH_METHOD",
+                "IMPLEMENT_REGIME_GATED_RESEARCH_METHOD",
+            }
+            else "LOW"
+        )
     )
     reason = (
         "limited_adjustment did not harden because rolling consistency is "
@@ -20571,9 +20342,7 @@ def _assert_smoothed_limited_config_safe(payload: Mapping[str, Any]) -> None:
     if method.get("name") != "smoothed_limited_adjustment":
         raise DynamicV3SystemTargetError("smoothed config method.name is invalid")
     if method.get("base_method") != "limited_adjustment":
-        raise DynamicV3SystemTargetError(
-            "smoothed config base_method must be limited_adjustment"
-        )
+        raise DynamicV3SystemTargetError("smoothed config base_method must be limited_adjustment")
     if method.get("mode") != "research_target_only":
         raise DynamicV3SystemTargetError("smoothed config must use research_target_only mode")
     if method.get("not_official_target_weights") is not True:
@@ -21232,9 +21001,7 @@ def _risk_capped_rolling_comparison(
     min_obs = int(_float(_mapping(config.get("evaluation")).get("min_observations_per_window"), 20))
     windows = _rolling_window_inventory(states, min_observations=min_obs)
     metrics = [
-        row
-        for window in windows
-        for row in _rolling_metrics_for_window(states, window, min_obs)
+        row for window in windows for row in _rolling_metrics_for_window(states, window, min_obs)
     ]
     _rank_rolling_metrics(metrics)
     stability = _rolling_rank_stability(metrics)
@@ -21459,13 +21226,9 @@ def _apply_smoothed_limited_adjustment(
         + alpha * (_float(base.get(symbol)) - _float(previous.get(symbol)))
         for symbol in symbols
     }
-    deltas = {
-        symbol: _float(raw.get(symbol)) - _float(previous.get(symbol)) for symbol in symbols
-    }
+    deltas = {symbol: _float(raw.get(symbol)) - _float(previous.get(symbol)) for symbol in symbols}
     max_single = _float(policy.get("max_single_symbol_daily_change"), 1.0)
-    deltas = {
-        symbol: max(-max_single, min(max_single, delta)) for symbol, delta in deltas.items()
-    }
+    deltas = {symbol: max(-max_single, min(max_single, delta)) for symbol, delta in deltas.items()}
     total_abs = sum(abs(delta) for delta in deltas.values())
     max_total = _float(policy.get("max_daily_total_weight_change"), 1.0)
     if total_abs > max_total > 0:
@@ -21523,12 +21286,8 @@ def _effective_smoothed_policy(
         "smoothing_window_days": int(_float(variant.get("smoothing_window_days"), 1)),
         "smoothing_type": _text(variant.get("smoothing_type"), "exponential"),
         "alpha": _float(variant.get("alpha"), 1.0),
-        "min_signal_persistence_days": int(
-            _float(variant.get("min_signal_persistence_days"), 1)
-        ),
-        "max_daily_total_weight_change": _float(
-            variant.get("max_daily_total_weight_change"), 1.0
-        ),
+        "min_signal_persistence_days": int(_float(variant.get("min_signal_persistence_days"), 1)),
+        "max_daily_total_weight_change": _float(variant.get("max_daily_total_weight_change"), 1.0),
         "max_single_symbol_daily_change": _float(
             variant.get("max_single_symbol_daily_change"), 1.0
         ),
@@ -21994,9 +21753,7 @@ def _smoothed_rolling_comparison(
     min_obs = int(_float(_mapping(config.get("evaluation")).get("min_observations_per_window"), 20))
     windows = _rolling_window_inventory(states, min_observations=min_obs)
     metrics = [
-        row
-        for window in windows
-        for row in _rolling_metrics_for_window(states, window, min_obs)
+        row for window in windows for row in _rolling_metrics_for_window(states, window, min_obs)
     ]
     _rank_rolling_metrics(metrics)
     stability = _rolling_rank_stability(metrics)
@@ -22309,9 +22066,7 @@ def _smoothed_decision_reason_breakdown(
     if summary.get("data_quality") == "PASS_WITH_WARNINGS":
         why_not_promote.append("cached data quality passed with warnings")
     if lag.get("lag_cost_status") != "LOW":
-        why_not_promote.append(
-            f"lag cost still requires observation: {lag.get('lag_cost_status')}"
-        )
+        why_not_promote.append(f"lag cost still requires observation: {lag.get('lag_cost_status')}")
     if decision.get("decision") != "PROMOTE_TO_RECOMMENDED_RESEARCH":
         why_not_promote.append(f"review decision remains {decision.get('decision')}")
     why_not_reject = [
@@ -22402,10 +22157,11 @@ def _smoothed_metric_support_matrix(comparison: Mapping[str, Any]) -> dict[str, 
             ("smooth_weights_5d_limited_adjustment", "smooth_5d"),
         ):
             row[f"{prefix}_status"] = _smoothed_metric_status(comparison, method, metric)
-        row["supports_promotion"] = (
-            metric != "lag_cost"
-            and row.get("smooth_3d_status") in {"IMPROVED", "GOOD", "ACCEPTABLE"}
-        )
+        row["supports_promotion"] = metric != "lag_cost" and row.get("smooth_3d_status") in {
+            "IMPROVED",
+            "GOOD",
+            "ACCEPTABLE",
+        }
         metrics.append(row)
     return {"metrics": metrics, **SYSTEM_TARGET_SAFETY}
 
@@ -22433,9 +22189,7 @@ def _smoothed_metric_status(
     if metric == "signal_churn":
         return _delta_improvement_status(
             _float(
-                _method_stability_row(comparison, method).get(
-                    "weight_flip_count_delta_vs_limited"
-                )
+                _method_stability_row(comparison, method).get("weight_flip_count_delta_vs_limited")
             ),
             lower_is_better=True,
         )
@@ -22849,9 +22603,7 @@ def _smoothed_missing_evidence_matrix(
             "status": (
                 "MISSING"
                 if data_quality == "FAIL"
-                else "PARTIAL"
-                if data_quality == "PASS_WITH_WARNINGS"
-                else "AVAILABLE"
+                else "PARTIAL" if data_quality == "PASS_WITH_WARNINGS" else "AVAILABLE"
             ),
             "blocking": data_quality == "FAIL",
             "reason": (
@@ -22918,13 +22670,12 @@ def _smoothed_evidence_gap_reason_summary(
             }
         )
     watch_summary = _mapping(watch.get("smoothed_watch_summary"))
-    requires_forward_data = (
-        watch_summary.get("forward_confirmation_status") == "IN_PROGRESS"
-        or any(
-            row.get("evidence_type") in {"strong_recovery_lag_cost", "sideways_choppy_samples"}
-            and row.get("status") != "AVAILABLE"
-            for row in rows
-        )
+    requires_forward_data = watch_summary.get(
+        "forward_confirmation_status"
+    ) == "IN_PROGRESS" or any(
+        row.get("evidence_type") in {"strong_recovery_lag_cost", "sideways_choppy_samples"}
+        and row.get("status") != "AVAILABLE"
+        for row in rows
     )
     return {
         "gap_id": gap_id,
@@ -23081,9 +22832,7 @@ def _smoothed_churn_metrics_by_method(
         risk_flips = sum(1 for row in flip_events if row.get("flip_type") == "risk_asset_flip")
         semi_flips = sum(1 for row in flip_events if row.get("flip_type") == "semiconductor_flip")
         weight_jump_count = sum(
-            1
-            for value in total_abs_changes
-            if value >= SMOOTHED_CHURN_WEIGHT_JUMP_EVENT_THRESHOLD
+            1 for value in total_abs_changes if value >= SMOOTHED_CHURN_WEIGHT_JUMP_EVENT_THRESHOLD
         )
         raw_rows.append(
             {
@@ -23109,8 +22858,7 @@ def _smoothed_churn_metrics_by_method(
     for row in raw_rows:
         relative = {
             "weight_jump_delta": int(
-                _float(row.get("weight_jump_count"))
-                - _float(limited.get("weight_jump_count"))
+                _float(row.get("weight_jump_count")) - _float(limited.get("weight_jump_count"))
             ),
             "direction_flip_delta": int(
                 _float(row.get("direction_flip_count"))
@@ -23481,9 +23229,7 @@ def _sideways_mixed_reason_summary(
 
 def _dominant_reason(reasons: Sequence[Any]) -> str:
     normalized = [
-        _text(reason)
-        for reason in reasons
-        if _text(reason) and _text(reason) != "unknown"
+        _text(reason) for reason in reasons if _text(reason) and _text(reason) != "unknown"
     ]
     if not normalized:
         return "unknown"
@@ -23504,9 +23250,7 @@ def _sideways_3d_vs_5d_breakdown(
     rows = []
     for method in SMOOTHED_METHOD_TO_VARIANT:
         selected = [row for row in outcomes if row.get("method") == method]
-        return_delta = _mean_float(
-            [_float(row.get("return_delta_vs_limited")) for row in selected]
-        )
+        return_delta = _mean_float([_float(row.get("return_delta_vs_limited")) for row in selected])
         drawdown_delta = _mean_float(
             [_float(row.get("drawdown_delta_vs_limited")) for row in selected]
         )
@@ -23637,9 +23381,7 @@ def _smoothed_support_status(
     metric: str,
 ) -> str:
     prefix = _smoothed_regime_prefix(method)
-    for row in _records(
-        _mapping(attribution.get("smoothed_metric_support_matrix")).get("metrics")
-    ):
+    for row in _records(_mapping(attribution.get("smoothed_metric_support_matrix")).get("metrics")):
         if row.get("metric") == metric:
             return _text(row.get(f"{prefix}_status"), "INSUFFICIENT_DATA")
     return "INSUFFICIENT_DATA"
@@ -23895,8 +23637,7 @@ def _smoothed_promotion_evidence_summary(
             {
                 "evidence_id": "churn_reduction_strong",
                 "summary": (
-                    "smooth_weights_3d shows strong churn reduction versus "
-                    "limited_adjustment."
+                    "smooth_weights_3d shows strong churn reduction versus " "limited_adjustment."
                 ),
                 "evidence_quality": "BACKTEST_OR_PAPER_SHADOW",
                 "supports_promotion_review": True,
@@ -24039,9 +23780,7 @@ def _primary_research_candidate_gate_criteria(
             "required": "PROMOTE_FOR_REVIEW",
             "actual": _text(evidence.get("readiness_decision"), "MISSING"),
             "status": (
-                "PASS"
-                if evidence.get("readiness_decision") == "PROMOTE_FOR_REVIEW"
-                else "FAIL"
+                "PASS" if evidence.get("readiness_decision") == "PROMOTE_FOR_REVIEW" else "FAIL"
             ),
             **SYSTEM_TARGET_SAFETY,
         },
@@ -24126,8 +23865,7 @@ def _smoothed_forward_bound_confirmation_targets(
                 "bound_to_weekly_progress": True,
                 "bound_to_confirmation_dashboard": True,
                 "bound_to_rule_review_queue": True,
-                "source_target_registered": "smooth_3d_sideways_choppy_improvement"
-                in source_ids,
+                "source_target_registered": "smooth_3d_sideways_choppy_improvement" in source_ids,
                 **SYSTEM_TARGET_SAFETY,
             },
             {
@@ -24154,8 +23892,7 @@ def _smoothed_forward_progress_requirements() -> dict[str, Any]:
             {
                 "requirement": "forward_outcome_collection",
                 "description": (
-                    "Collect forward outcomes for smoothed method versus "
-                    "limited_adjustment."
+                    "Collect forward outcomes for smoothed method versus " "limited_adjustment."
                 ),
                 "cadence": "weekly",
                 **SYSTEM_TARGET_SAFETY,
@@ -24373,8 +24110,7 @@ def _smoothed_forward_progress_targets(
     recovery_events = [
         row
         for row in classified
-        if row.get("recovery_lag_relevant") is True
-        and row.get("event_status") == "AVAILABLE"
+        if row.get("recovery_lag_relevant") is True and row.get("event_status") == "AVAILABLE"
     ]
     sideways_available = len({_text(row.get("event_id")) for row in sideways_events})
     recovery_available = len({_text(row.get("event_id")) for row in recovery_events})
@@ -24408,8 +24144,7 @@ def _smoothed_forward_progress_targets(
                     "required_forward_events": required,
                     "available_forward_events": available,
                     "available_by_window": {
-                        str(window): available_by_window.get(str(window), 0)
-                        for window in windows
+                        str(window): available_by_window.get(str(window), 0) for window in windows
                     },
                     "current_metrics": _smoothed_forward_current_metrics(outcomes),
                     "progress_status": _smoothed_progress_status(available, required),
@@ -24517,11 +24252,7 @@ def _smoothed_forward_progress_summary(
     )
     forward = next((row for row in targets if row.get("target_id") == "smooth_3d_vs_limited"), {})
     sideways = next(
-        (
-            row
-            for row in targets
-            if row.get("target_id") == "smooth_3d_sideways_choppy_improvement"
-        ),
+        (row for row in targets if row.get("target_id") == "smooth_3d_sideways_choppy_improvement"),
         {},
     )
     recovery = next(
@@ -24551,11 +24282,12 @@ def _smoothed_weekly_dashboard_summary(
     progress_summary: Mapping[str, Any],
     targets: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    ready_for_switch_recheck = (
-        _float(progress_summary.get("available_forward_events_total"))
-        >= _float(progress_summary.get("required_forward_events_total"))
-        and _float(progress_summary.get("available_sideways_events"))
-        >= _float(progress_summary.get("required_sideways_events"))
+    ready_for_switch_recheck = _float(
+        progress_summary.get("available_forward_events_total")
+    ) >= _float(progress_summary.get("required_forward_events_total")) and _float(
+        progress_summary.get("available_sideways_events")
+    ) >= _float(
+        progress_summary.get("required_sideways_events")
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -24717,12 +24449,8 @@ def _smoothed_switch_readiness_criteria(
             **SYSTEM_TARGET_SAFETY,
         },
     ]
-    hard_blockers = [
-        _text(row.get("criterion")) for row in rows if row.get("status") == "FAIL"
-    ]
-    warnings = [
-        _text(row.get("criterion")) for row in rows if row.get("status") == "IN_PROGRESS"
-    ]
+    hard_blockers = [_text(row.get("criterion")) for row in rows if row.get("status") == "FAIL"]
+    warnings = [_text(row.get("criterion")) for row in rows if row.get("status") == "IN_PROGRESS"]
     return {
         "schema_version": SCHEMA_VERSION,
         "recheck_id": "",
@@ -24810,9 +24538,7 @@ def _smoothed_owner_renewal_options(
         "forward_progress": _text(recheck_decision.get("forward_progress"), "0/0"),
         "sideways_progress": _text(recheck_decision.get("sideways_progress"), "0/0"),
         "recovery_lag_status": (
-            "NO_WARNING"
-            if current_recheck == "READY_FOR_OWNER_REVIEW"
-            else "INSUFFICIENT_EVENTS"
+            "NO_WARNING" if current_recheck == "READY_FOR_OWNER_REVIEW" else "INSUFFICIENT_EVENTS"
         ),
         "owner_options": [
             {
@@ -24854,9 +24580,11 @@ def _smoothed_emission_weights(model_target: Mapping[str, Any]) -> dict[str, dic
         _mapping(model_target.get("model_target_weights")).get("method_weights")
     )
     return {
-        method: _normalize_weights(_mapping(method_weights.get(method)))
-        if method in method_weights
-        else {}
+        method: (
+            _normalize_weights(_mapping(method_weights.get(method)))
+            if method in method_weights
+            else {}
+        )
         for method in (
             "smooth_weights_3d_limited_adjustment",
             "smooth_weights_5d_limited_adjustment",
@@ -24882,9 +24610,7 @@ def _smoothed_symbols_from_collected_event_weights(
     symbols: set[str] = set()
     for row in rows:
         for method_weights in _mapping(row.get("weights")).values():
-            symbols.update(
-                symbol for symbol in _mapping(method_weights) if symbol != "CASH"
-            )
+            symbols.update(symbol for symbol in _mapping(method_weights) if symbol != "CASH")
     return sorted(symbols)
 
 
@@ -25180,9 +24906,7 @@ def _smoothed_updated_outcome_row(
         "window_days": int(_float(row.get("window_days"))),
         "start_date": start.isoformat(),
         "end_date": end.isoformat(),
-        "method_returns": {
-            key: round(value, 10) for key, value in method_returns.items()
-        },
+        "method_returns": {key: round(value, 10) for key, value in method_returns.items()},
         "relative_metrics": {
             "smooth_3d_vs_limited": round(smooth_3d - limited, 10),
             "smooth_3d_vs_static": round(smooth_3d - static, 10),
@@ -25246,15 +24970,10 @@ def _smoothed_outcome_delta_summary(
     skipped: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     rel = [
-        _float(_mapping(row.get("relative_metrics")).get("smooth_3d_vs_limited"))
-        for row in updated
+        _float(_mapping(row.get("relative_metrics")).get("smooth_3d_vs_limited")) for row in updated
     ]
     drawdown = [
-        _float(
-            _mapping(row.get("drawdown_metrics")).get(
-                "smooth_3d_drawdown_delta_vs_limited"
-            )
-        )
+        _float(_mapping(row.get("drawdown_metrics")).get("smooth_3d_drawdown_delta_vs_limited"))
         for row in updated
     ]
     return {
@@ -25268,9 +24987,7 @@ def _smoothed_outcome_delta_summary(
         "smooth_3d_win_rate_vs_limited": (
             round(sum(1 for value in rel if value > 0.0) / len(rel), 10) if rel else None
         ),
-        "avg_smooth_3d_relative_return_vs_limited": (
-            round(_mean_float(rel), 10) if rel else None
-        ),
+        "avg_smooth_3d_relative_return_vs_limited": (round(_mean_float(rel), 10) if rel else None),
         "avg_smooth_3d_drawdown_delta_vs_limited": (
             round(_mean_float(drawdown), 10) if drawdown else None
         ),
@@ -25296,12 +25013,9 @@ def _smoothed_classified_forward_event(
         _mapping(weights.get("limited_adjustment")),
     )
     smooth_vs_limited = _float(relative.get("smooth_3d_vs_limited"))
-    recovery_relevant = any(
-        item in {"strong_recovery", "fast_regime_change"} for item in classes
-    )
+    recovery_relevant = any(item in {"strong_recovery", "fast_regime_change"} for item in classes)
     lag_warning = (
-        recovery_relevant
-        and smooth_vs_limited < SMOOTHED_CLASSIFIER_LAG_WARNING_DELTA_THRESHOLD
+        recovery_relevant and smooth_vs_limited < SMOOTHED_CLASSIFIER_LAG_WARNING_DELTA_THRESHOLD
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -25356,12 +25070,8 @@ def _smoothed_turnover_delta(
 def _smoothed_classification_summary(
     classified: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    sideways = [
-        row for row in classified if row.get("sideways_relevant") is True
-    ]
-    recovery = [
-        row for row in classified if row.get("recovery_lag_relevant") is True
-    ]
+    sideways = [row for row in classified if row.get("sideways_relevant") is True]
+    recovery = [row for row in classified if row.get("recovery_lag_relevant") is True]
     fast = [
         row
         for row in classified
@@ -25373,9 +25083,7 @@ def _smoothed_classification_summary(
         "events_classified": len(classified),
         "sideways_events_available": len({_text(row.get("event_id")) for row in sideways}),
         "recovery_events_available": len({_text(row.get("event_id")) for row in recovery}),
-        "fast_regime_change_events_available": len(
-            {_text(row.get("event_id")) for row in fast}
-        ),
+        "fast_regime_change_events_available": len({_text(row.get("event_id")) for row in fast}),
         "lag_warning_count": sum(1 for row in classified if row.get("lag_warning") is True),
         "sideways_progress_delta": len(sideways),
         "recovery_progress_delta": len(recovery),
@@ -25439,11 +25147,7 @@ def _smoothed_forward_current_metrics(
         if row.get("outcome_status") == "AVAILABLE"
     ]
     drawdown = [
-        _float(
-            _mapping(row.get("drawdown_metrics")).get(
-                "smooth_3d_drawdown_delta_vs_limited"
-            )
-        )
+        _float(_mapping(row.get("drawdown_metrics")).get("smooth_3d_drawdown_delta_vs_limited"))
         for row in outcomes
         if row.get("outcome_status") == "AVAILABLE"
     ]
@@ -25529,18 +25233,10 @@ def _smoothed_weekly_run_summary(
         "required_forward_events": int(
             _float(progress_summary.get("required_forward_events_total"))
         ),
-        "available_sideways_events": int(
-            _float(progress_summary.get("available_sideways_events"))
-        ),
-        "required_sideways_events": int(
-            _float(progress_summary.get("required_sideways_events"))
-        ),
-        "available_recovery_events": int(
-            _float(progress_summary.get("available_recovery_events"))
-        ),
-        "required_recovery_events": int(
-            _float(progress_summary.get("required_recovery_events"))
-        ),
+        "available_sideways_events": int(_float(progress_summary.get("available_sideways_events"))),
+        "required_sideways_events": int(_float(progress_summary.get("required_sideways_events"))),
+        "available_recovery_events": int(_float(progress_summary.get("available_recovery_events"))),
+        "required_recovery_events": int(_float(progress_summary.get("required_recovery_events"))),
         "can_execute_switch": recheck_decision.get("can_execute_switch") is True,
         "weekly_recommendation": "continue_observation",
         "broker_action_allowed": False,
@@ -25987,16 +25683,14 @@ def _smoothed_rerun_command_plan(snapshot: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "step": 2,
                 "command": (
-                    "aits etf dynamic-v3-rescue smoothed-outcome-due scan "
-                    f"--as-of {requested}"
+                    "aits etf dynamic-v3-rescue smoothed-outcome-due scan " f"--as-of {requested}"
                 ),
                 "purpose": "find due windows",
             },
             {
                 "step": 3,
                 "command": (
-                    "aits etf dynamic-v3-rescue smoothed-outcome-update run "
-                    "--due-id <due_id>"
+                    "aits etf dynamic-v3-rescue smoothed-outcome-update run " "--due-id <due_id>"
                 ),
                 "purpose": "update matured outcomes",
             },
@@ -26303,9 +25997,7 @@ def _smoothed_source_refresh_status(
         return "DRY_RUN_ONLY"
     required_results = [row for row in source_results if row.get("required") is not False]
     considered = required_results or list(source_results)
-    ready_count = sum(
-        1 for row in considered if row.get("freshness_after_refresh") == "READY"
-    )
+    ready_count = sum(1 for row in considered if row.get("freshness_after_refresh") == "READY")
     if ready_count == len(considered) and considered:
         return "COMPLETED"
     if ready_count:
@@ -26619,9 +26311,7 @@ def _smoothed_sample_growth_by_target(summary: Mapping[str, Any]) -> dict[str, A
         "targets": [
             _sample_growth_target_row(
                 target_id="smooth_3d_vs_limited",
-                before_available=_mapping(summary.get("before")).get(
-                    "available_forward_events", 0
-                ),
+                before_available=_mapping(summary.get("before")).get("available_forward_events", 0),
                 after_available=after.get("available_forward_events", 0),
                 required=SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS,
                 empty_status="INSUFFICIENT_EVENTS",
@@ -26915,16 +26605,14 @@ def _smoothed_benefit_status(
     if rolling_delta == "INSUFFICIENT_DATA":
         return "INSUFFICIENT_DATA"
     positive_count = sum(
-        value > 0
-        for value in (weight_jump_reduction, turnover_reduction, signal_churn_reduction)
+        value > 0 for value in (weight_jump_reduction, turnover_reduction, signal_churn_reduction)
     )
     if rolling_delta == "IMPROVED" and positive_count >= 2:
         return "STRONG"
     if rolling_delta != "WORSE" and positive_count >= 1:
         return "MODERATE"
     if rolling_delta == "IMPROVED" and all(
-        value >= 0
-        for value in (weight_jump_reduction, turnover_reduction, signal_churn_reduction)
+        value >= 0 for value in (weight_jump_reduction, turnover_reduction, signal_churn_reduction)
     ):
         return "MODERATE"
     return "WEAK"
@@ -27170,9 +26858,7 @@ def _hypothesis_priority_summary(
     hypotheses: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     modes = [str(row.get("id")) for row in _records(taxonomy.get("failure_modes"))]
-    covered = {
-        mode for row in hypotheses for mode in _texts(row.get("target_failure_modes"))
-    }
+    covered = {mode for row in hypotheses for mode in _texts(row.get("target_failure_modes"))}
     high = [
         _text(row.get("hypothesis_id"))
         for row in hypotheses
@@ -27303,11 +26989,7 @@ def _matrix_transform_specs(
 def _experiment_matrix_summary(variant_specs: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     families = sorted({_text(row.get("family")) for row in variant_specs if row.get("family")})
     failure_modes = sorted(
-        {
-            mode
-            for row in variant_specs
-            for mode in _texts(row.get("target_failure_modes"))
-        }
+        {mode for row in variant_specs for mode in _texts(row.get("target_failure_modes"))}
     )
     type_map: dict[str, list[str]] = {}
     for row in variant_specs:
@@ -27328,12 +27010,7 @@ def _experiment_matrix_summary(variant_specs: Sequence[Mapping[str, Any]]) -> di
 
 def _symbols_from_state_paths(states: Sequence[Mapping[str, Any]]) -> list[str]:
     symbols = sorted(
-        {
-            symbol
-            for row in states
-            for symbol in _mapping(row.get("weights"))
-            if symbol != "CASH"
-        }
+        {symbol for row in states for symbol in _mapping(row.get("weights")) if symbol != "CASH"}
     )
     if not symbols:
         raise DynamicV3SystemTargetError("state paths do not contain priced symbols")
@@ -27516,6 +27193,18 @@ def _apply_experiment_transforms(
             )
         elif transform_type == "weight_smoothing":
             current = _apply_weight_smoothing(current, transform, transform_state)
+            if "alpha" in transform:
+                current = _blend_weights(
+                    previous_weights,
+                    current,
+                    _float(transform.get("alpha"), 1.0),
+                )
+            if "max_daily_total_weight_change" in transform:
+                current = _apply_turnover_cap(
+                    current,
+                    previous_weights,
+                    _float(transform.get("max_daily_total_weight_change"), 1.0) / 2.0,
+                )
         elif transform_type == "signal_persistence":
             current = _apply_signal_persistence(
                 current,
@@ -27698,9 +27387,7 @@ def _block_risk_increase(
     previous: Mapping[str, Any],
 ) -> dict[str, float]:
     risk_symbols = [
-        symbol
-        for symbol in set(target) | set(previous)
-        if symbol not in {"CASH", "TLT", "BND"}
+        symbol for symbol in set(target) | set(previous) if symbol not in {"CASH", "TLT", "BND"}
     ]
     target_risk = _group_weight(target, risk_symbols)
     previous_risk = _group_weight(previous, risk_symbols)
@@ -27729,10 +27416,8 @@ def _blend_weights(
     symbols = sorted(set(previous) | set(target))
     return _normalize_weights(
         {
-            symbol: _float(previous.get(symbol)) + (
-                _float(target.get(symbol)) - _float(previous.get(symbol))
-            )
-            * multiplier
+            symbol: _float(previous.get(symbol))
+            + (_float(target.get(symbol)) - _float(previous.get(symbol))) * multiplier
             for symbol in symbols
         }
     )
@@ -27999,8 +27684,7 @@ def _triage_variant_scorecard(
         for row in _records(batch.get("variant_performance_metrics"))
     }
     stability = {
-        str(row.get("variant_id")): row
-        for row in _records(batch.get("variant_stability_metrics"))
+        str(row.get("variant_id")): row for row in _records(batch.get("variant_stability_metrics"))
     }
     regimes = _records(batch.get("variant_regime_metrics"))
     weights = _mapping(policy.get("score_weights"))
@@ -28404,53 +28088,59 @@ def render_hypothesis_backlog_report(
         f"- {row.get('id')}: {row.get('description')}"
         for row in _records(taxonomy.get("failure_modes"))
     ]
-    return "\n".join(
-        [
-            f"# Weight Optimization Hypothesis Backlog {manifest.get('backlog_id')}",
-            "",
-            "## 摘要",
-            f"- failure modes: {priority.get('failure_modes_total')}",
-            f"- hypotheses: {priority.get('hypotheses_total')}",
-            f"- HIGH priority: {high_priority}",
-            f"- uncovered failure modes: {uncovered}",
-            f"- matrix candidates: {matrix_candidates}",
-            "",
-            "## Failure Modes",
-            *failure_mode_lines,
-            "",
-            "## Safety",
-            "- experiment_only=true",
-            "- research_screening_only=true",
-            "- broker_action_allowed=false",
-            "- production_effect=none",
-            "",
-            f"artifact: {manifest.get('hypothesis_backlog_manifest_path')}",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"# Weight Optimization Hypothesis Backlog {manifest.get('backlog_id')}",
+                "",
+                "## 摘要",
+                f"- failure modes: {priority.get('failure_modes_total')}",
+                f"- hypotheses: {priority.get('hypotheses_total')}",
+                f"- HIGH priority: {high_priority}",
+                f"- uncovered failure modes: {uncovered}",
+                f"- matrix candidates: {matrix_candidates}",
+                "",
+                "## Failure Modes",
+                *failure_mode_lines,
+                "",
+                "## Safety",
+                "- experiment_only=true",
+                "- research_screening_only=true",
+                "- broker_action_allowed=false",
+                "- production_effect=none",
+                "",
+                f"artifact: {manifest.get('hypothesis_backlog_manifest_path')}",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_variant_transform_spec_report(
     manifest: Mapping[str, Any],
     catalog: Mapping[str, Any],
 ) -> str:
-    return "\n".join(
-        [
-            f"# Variant Transform Spec {manifest.get('spec_id')}",
-            "",
-            "## Transform Catalog",
-            *[
-                f"- {row.get('type')}: required={','.join(_texts(row.get('required_fields')))}"
-                for row in _records(catalog.get("transform_types"))
-            ],
-            "",
-            "## Safety",
-            "- experiment_only=true",
-            "- research_screening_only=true",
-            "- not_formal_research_method=true",
-            "- broker_action_allowed=false",
-            "- production_effect=none",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"# Variant Transform Spec {manifest.get('spec_id')}",
+                "",
+                "## Transform Catalog",
+                *[
+                    f"- {row.get('type')}: required={','.join(_texts(row.get('required_fields')))}"
+                    for row in _records(catalog.get("transform_types"))
+                ],
+                "",
+                "## Safety",
+                "- experiment_only=true",
+                "- research_screening_only=true",
+                "- not_formal_research_method=true",
+                "- broker_action_allowed=false",
+                "- production_effect=none",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_experiment_matrix_report(
@@ -28465,27 +28155,30 @@ def render_experiment_matrix_report(
     smoothing = ", ".join(_texts(by_transform_type.get("weight_smoothing")))
     cooldown = ", ".join(_texts(by_transform_type.get("regime_cooldown")))
     ensemble = ", ".join(_texts(by_transform_type.get("consensus_aggregation")))
-    return "\n".join(
-        [
-            f"# Experiment Matrix {manifest.get('matrix_id')}",
-            "",
-            "## 摘要",
-            f"- variants: {len(variants)}",
-            f"- families: {', '.join(_texts(summary.get('families_covered')))}",
-            f"- failure modes: {', '.join(_texts(summary.get('failure_modes_covered')))}",
-            f"- regime-gating variants: {regime_gate}",
-            f"- smoothing variants: {smoothing}",
-            f"- cooldown variants: {cooldown}",
-            f"- ensemble variants: {ensemble}",
-            f"- formal method variants: {summary.get('formal_method_variant_count')}",
-            "",
-            "## Safety",
-            "- all variants are experiment_only=true",
-            "- not_formal_research_method=true",
-            "- broker_action_allowed=false",
-            "- production_effect=none",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"# Experiment Matrix {manifest.get('matrix_id')}",
+                "",
+                "## 摘要",
+                f"- variants: {len(variants)}",
+                f"- families: {', '.join(_texts(summary.get('families_covered')))}",
+                f"- failure modes: {', '.join(_texts(summary.get('failure_modes_covered')))}",
+                f"- regime-gating variants: {regime_gate}",
+                f"- smoothing variants: {smoothing}",
+                f"- cooldown variants: {cooldown}",
+                f"- ensemble variants: {ensemble}",
+                f"- formal method variants: {summary.get('formal_method_variant_count')}",
+                "",
+                "## Safety",
+                "- all variants are experiment_only=true",
+                "- not_formal_research_method=true",
+                "- broker_action_allowed=false",
+                "- production_effect=none",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_batch_experiment_report(
@@ -28508,29 +28201,32 @@ def render_batch_experiment_report(
         if row.get("regime") == "sideways_choppy" and row.get("regime_status") == "IMPROVED"
     ]
     insufficient = ", ".join(_insufficient_variants(performance)) or "none"
-    return "\n".join(
-        [
-            f"# Batch Experiment {manifest.get('batch_id')}",
-            "",
-            "## 摘要",
-            f"- market_regime: {manifest.get('market_regime')}",
-            f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
-            f"- data_quality_status: {manifest.get('data_quality_status')}",
-            f"- variants completed: {manifest.get('variants_completed')}",
-            f"- data insufficient variants: {insufficient}",
-            f"- best drawdown variant: {drawdown}",
-            f"- best rolling consistency variant: {rolling}",
-            f"- best turnover variant: {turnover}",
-            f"- sideways_choppy improved: {', '.join(sideways) or 'none'}",
-            f"- material return sacrifice: {', '.join(sacrificed) or 'none'}",
-            "",
-            "## Safety",
-            "- experiment_only=true",
-            "- research_screening_only=true",
-            "- broker_action_allowed=false",
-            "- production_effect=none",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"# Batch Experiment {manifest.get('batch_id')}",
+                "",
+                "## 摘要",
+                f"- market_regime: {manifest.get('market_regime')}",
+                f"- date_range: {manifest.get('date_start')} to {manifest.get('date_end')}",
+                f"- data_quality_status: {manifest.get('data_quality_status')}",
+                f"- variants completed: {manifest.get('variants_completed')}",
+                f"- data insufficient variants: {insufficient}",
+                f"- best drawdown variant: {drawdown}",
+                f"- best rolling consistency variant: {rolling}",
+                f"- best turnover variant: {turnover}",
+                f"- sideways_choppy improved: {', '.join(sideways) or 'none'}",
+                f"- material return sacrifice: {', '.join(sacrificed) or 'none'}",
+                "",
+                "## Safety",
+                "- experiment_only=true",
+                "- research_screening_only=true",
+                "- broker_action_allowed=false",
+                "- production_effect=none",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_experiment_triage_report(
@@ -28544,37 +28240,41 @@ def render_experiment_triage_report(
         if row.get("triage_decision") == "PROMOTE_TO_FORMAL_RESEARCH_CANDIDATE"
     ]
     rejected = [
-        _text(row.get("variant_id"))
-        for row in scorecard
-        if row.get("triage_decision") == "REJECT"
+        _text(row.get("variant_id")) for row in scorecard if row.get("triage_decision") == "REJECT"
     ]
     keep = [
         _text(row.get("variant_id"))
         for row in scorecard
         if row.get("triage_decision") == "KEEP_FOR_MORE_TESTING"
     ]
-    return "\n".join(
-        [
-            f"# Experiment Triage {manifest.get('triage_id')}",
-            "",
-            "## 摘要",
-            f"- promote: {summary.get('promote_count')} ({', '.join(promoted) or 'none'})",
-            f"- keep_testing: {summary.get('keep_testing_count')} ({', '.join(keep) or 'none'})",
-            f"- reject: {summary.get('reject_count')} ({', '.join(rejected) or 'none'})",
-            f"- top_variant: {summary.get('top_variant')}",
-            f"- next_action: {summary.get('recommended_next_action')}",
-            "",
-            "## 解释",
-            "Scorecard 只用于 research screening。PROMOTE 表示可以另开 formal research "
-            "method implementation，不表示生产批准。",
-            "",
-            "## Safety",
-            "- research_screening_only=true",
-            "- not_official_target_weights=true",
-            "- broker_action_allowed=false",
-            "- production_effect=none",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                f"# Experiment Triage {manifest.get('triage_id')}",
+                "",
+                "## 摘要",
+                f"- promote: {summary.get('promote_count')} ({', '.join(promoted) or 'none'})",
+                (
+                    f"- keep_testing: {summary.get('keep_testing_count')} "
+                    f"({', '.join(keep) or 'none'})"
+                ),
+                f"- reject: {summary.get('reject_count')} ({', '.join(rejected) or 'none'})",
+                f"- top_variant: {summary.get('top_variant')}",
+                f"- next_action: {summary.get('recommended_next_action')}",
+                "",
+                "## 解释",
+                "Scorecard 只用于 research screening。PROMOTE 表示可以另开 formal research "
+                "method implementation，不表示生产批准。",
+                "",
+                "## Safety",
+                "- research_screening_only=true",
+                "- not_official_target_weights=true",
+                "- broker_action_allowed=false",
+                "- production_effect=none",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_top_variant_interpretation_report(
@@ -28618,18 +28318,21 @@ def render_top_variant_interpretation_reader_brief(
     explanations: Sequence[Mapping[str, Any]],
 ) -> str:
     best = _mapping(explanations[0] if explanations else {})
-    return "\n".join(
-        [
-            "## Dynamic Rescue Weight Experiment Top Variant Interpretation",
-            "",
-            f"- best_variant: {manifest.get('recommended_variant')}",
-            f"- triage_decision: {best.get('triage_decision', 'MISSING')}",
-            f"- solved_failure_modes: {', '.join(_texts(best.get('why_it_helped')))}",
-            f"- expected_costs: {', '.join(_texts(best.get('what_it_costs')))}",
-            "- production_effect: none",
-            "- broker_action_allowed: false",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "## Dynamic Rescue Weight Experiment Top Variant Interpretation",
+                "",
+                f"- best_variant: {manifest.get('recommended_variant')}",
+                f"- triage_decision: {best.get('triage_decision', 'MISSING')}",
+                f"- solved_failure_modes: {', '.join(_texts(best.get('why_it_helped')))}",
+                f"- expected_costs: {', '.join(_texts(best.get('what_it_costs')))}",
+                "- production_effect: none",
+                "- broker_action_allowed: false",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_formal_implementation_plan(
@@ -28651,45 +28354,54 @@ def render_formal_implementation_plan(
         "lightweight screening，尚未完成正式 method implementation、forward "
         "confirmation 或 owner approval。"
     )
-    return "\n".join(
-        [
-            "# Formal Research Method Promotion Plan",
-            "",
-            f"推荐正式实现 method：{recommended}",
-            "",
-            selection_reason,
-            "",
-            "需要新增 config / CLI / artifacts：",
-            "- formal research method source config",
-            "- method config validation/report",
-            "- research target generation",
-            "- paper shadow backfill",
-            "- comparison/review pack",
-            "",
-            required_validation,
-            "",
-            scope_note,
-            "",
-            f"source promotion_plan_id: {manifest.get('promotion_plan_id')}",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Formal Research Method Promotion Plan",
+                "",
+                f"推荐正式实现 method：{recommended}",
+                "",
+                selection_reason,
+                "",
+                "需要新增 config / CLI / artifacts：",
+                "- formal research method source config",
+                "- method config validation/report",
+                "- research target generation",
+                "- paper shadow backfill",
+                "- comparison/review pack",
+                "",
+                required_validation,
+                "",
+                scope_note,
+                "",
+                f"source promotion_plan_id: {manifest.get('promotion_plan_id')}",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_method_promotion_owner_checklist(method_specs: Mapping[str, Any]) -> str:
     methods = ", ".join(
         _text(row.get("proposed_method_name")) for row in _records(method_specs.get("methods"))
     )
-    return "\n".join(
-        [
-            "# Owner Review Checklist",
-            "",
-            f"- [ ] 是否接受从 batch experiment 中 promotion top variant？({methods or 'none'})",
-            "- [ ] 是否接受实现为 research-only method？",
-            "- [ ] 是否接受不写 official target weights？",
-            "- [ ] 是否接受实现后仍需 forward confirmation？",
-            "- [ ] 是否确认不触发 broker / production？",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Owner Review Checklist",
+                "",
+                (
+                    "- [ ] 是否接受从 batch experiment 中 promotion top variant？"
+                    f"({methods or 'none'})"
+                ),
+                "- [ ] 是否接受实现为 research-only method？",
+                "- [ ] 是否接受不写 official target weights？",
+                "- [ ] 是否接受实现后仍需 forward confirmation？",
+                "- [ ] 是否确认不触发 broker / production？",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_method_promotion_plan_report(
@@ -28722,20 +28434,23 @@ def render_method_promotion_reader_brief(
 ) -> str:
     methods = _records(method_specs.get("methods"))
     first = _mapping(methods[0] if methods else {})
-    return "\n".join(
-        [
-            "## Dynamic Rescue Weight Experiment Promotion Plan",
-            "",
-            f"- promoted_variant: {first.get('source_variant_id', 'none')}",
-            f"- proposed_method_name: {first.get('proposed_method_name', 'none')}",
-            f"- expected_benefit: {', '.join(_texts(first.get('expected_benefit')))}",
-            f"- expected_cost: {', '.join(_texts(first.get('expected_cost')))}",
-            f"- implementation_scope: {manifest.get('implementation_scope')}",
-            f"- next_action: {method_specs.get('next_action')}",
-            "- broker_action_allowed: false",
-            "- production_effect: none",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "## Dynamic Rescue Weight Experiment Promotion Plan",
+                "",
+                f"- promoted_variant: {first.get('source_variant_id', 'none')}",
+                f"- proposed_method_name: {first.get('proposed_method_name', 'none')}",
+                f"- expected_benefit: {', '.join(_texts(first.get('expected_benefit')))}",
+                f"- expected_cost: {', '.join(_texts(first.get('expected_cost')))}",
+                f"- implementation_scope: {manifest.get('implementation_scope')}",
+                f"- next_action: {method_specs.get('next_action')}",
+                "- broker_action_allowed: false",
+                "- production_effect: none",
+            ]
+        )
+        + "\n"
+    )
 
 
 def _best_variant(
@@ -28746,8 +28461,10 @@ def _best_variant(
 ) -> str:
     if not rows:
         return "INSUFFICIENT_DATA"
-    selected = max(rows, key=lambda row: _float(row.get(field))) if high else min(
-        rows, key=lambda row: _float(row.get(field))
+    selected = (
+        max(rows, key=lambda row: _float(row.get(field)))
+        if high
+        else min(rows, key=lambda row: _float(row.get(field)))
     )
     return _text(selected.get("variant_id"))
 

@@ -1,0 +1,3346 @@
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from datetime import UTC, date, datetime
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+import yaml
+
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+
+DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "weight_search_space_v2.yaml"
+)
+DEFAULT_WEIGHT_SEARCH_SPACE_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_search_space"
+DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_experiment_batch2"
+)
+DEFAULT_WEIGHT_BATCH_BACKFILL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_batch_backfill"
+DEFAULT_WEIGHT_SCORECARD_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_scorecard"
+DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_robustness_review"
+)
+DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_adaptive_branch"
+DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_expanded_search"
+DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_candidate_cluster"
+)
+DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_top_candidate_interpretation"
+)
+DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_method_promotion_gate"
+)
+DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "formal_method_auto_plan"
+)
+DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "weight_search_dashboard"
+)
+DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_research_decision_pack"
+)
+
+SEARCH_REQUIRED_FAMILIES = (
+    "smoothing",
+    "cooldown",
+    "regime_gating",
+    "rebalance_threshold",
+    "candidate_ensemble",
+    "cash_buffer",
+    "risk_exposure_control",
+    "turnover_control",
+)
+
+# TRADING-286_to_305 pilot screening policy. These constants only rank
+# research-screening variants and are documented in the requirement file; they
+# do not approve production weights or size positions.
+BATCH2_PROMOTE_SCORE = 0.72
+BATCH2_KEEP_TESTING_SCORE = 0.56
+BATCH2_MATERIAL_DRAWDOWN_WORSE_DELTA = -0.002
+BATCH2_MATERIAL_TURNOVER_WORSE_DELTA = 0.25
+BATCH2_STRONG_RECOVERY_HIGH_LAG_DELTA = -0.02
+BATCH2_SIDWAYS_WORSE_REGIME_LABEL = "WORSE"
+
+BATCH2_SCORE_WEIGHTS: dict[str, float] = {
+    "return": 0.16,
+    "annualized_return": 0.08,
+    "drawdown": 0.14,
+    "volatility": 0.07,
+    "risk_adjusted_return": 0.10,
+    "turnover": 0.10,
+    "rolling_consistency": 0.10,
+    "sideways_choppy": 0.06,
+    "tech_drawdown": 0.05,
+    "strong_recovery_lag": 0.05,
+    "signal_churn": 0.04,
+    "weight_jumps": 0.03,
+    "simplicity": 0.01,
+    "data_quality": 0.01,
+}
+
+
+def load_weight_search_space_config(
+    path: Path = DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = st._load_yaml_mapping(path)
+    _assert_weight_search_safety(_mapping(payload.get("safety")))
+    return payload
+
+
+def validate_weight_search_space_config(
+    path: Path = DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = st._load_yaml_mapping(path)
+    families = _enabled_families(payload)
+    checks = [
+        st._check("schema_version", payload.get("schema_version") == 1, ""),
+        st._check(
+            "research_screening_only",
+            _text(_mapping(payload.get("search")).get("mode")) == "research_screening_only",
+            "",
+        ),
+        st._check(
+            "required_families_covered",
+            set(SEARCH_REQUIRED_FAMILIES).issubset(set(families)),
+            ",".join(families),
+        ),
+        st._check(
+            "initial_batch_size_bounded",
+            50 <= int(_float(_mapping(payload.get("max_variants")).get("initial_batch"), 0)) <= 80,
+            _text(_mapping(payload.get("max_variants")).get("initial_batch")),
+        ),
+        st._check(
+            "expanded_batch_size_bounded",
+            int(_float(_mapping(payload.get("max_variants")).get("expanded_batch"), 0)) <= 200,
+            _text(_mapping(payload.get("max_variants")).get("expanded_batch")),
+        ),
+        st._check(
+            "safety_locked", _weight_search_safety_locked(_mapping(payload.get("safety"))), ""
+        ),
+    ]
+    return st._validation_payload(
+        "etf_dynamic_v3_weight_search_space_config_validation",
+        "weight_search_space_v2",
+        checks,
+        extra={"config_path": str(path)},
+    )
+
+
+def run_weight_search_space_validation(
+    *,
+    config_path: Path = DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = load_weight_search_space_config(config_path)
+    validation = validate_weight_search_space_config(config_path)
+    inventory = _search_family_inventory(config)
+    search = _mapping(config.get("search"))
+    search_space_id = _stable_id(
+        "weight-search-space",
+        search.get("name"),
+        config_path,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / search_space_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_search_space_manifest",
+        "search_space_id": root.name,
+        "search_name": search.get("name"),
+        "generated_at": generated.isoformat(),
+        "status": validation["status"],
+        "config_path": str(config_path),
+        "market_regime": "ai_after_chatgpt",
+        "anchor_event": "ChatGPT public launch",
+        "anchor_date": "2022-11-30",
+        "default_backtest_start": st.AI_AFTER_CHATGPT_START.isoformat(),
+        "families": _enabled_families(config),
+        "max_variants": _mapping(config.get("max_variants")),
+        "weight_search_space_manifest_path": str(root / "weight_search_space_manifest.json"),
+        "normalized_search_space_path": str(root / "normalized_search_space.yaml"),
+        "search_family_inventory_path": str(root / "search_family_inventory.json"),
+        "weight_search_space_report_path": str(root / "weight_search_space_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "weight_search_space_manifest.json", manifest)
+    _write_text(
+        root / "normalized_search_space.yaml",
+        yaml.safe_dump(config, sort_keys=False, allow_unicode=True),
+    )
+    _write_json(root / "search_family_inventory.json", inventory)
+    _write_text(
+        root / "weight_search_space_report.md",
+        render_weight_search_space_report(manifest, inventory),
+    )
+    _write_latest_pointer(
+        "latest_weight_search_space",
+        root.name,
+        root / "weight_search_space_manifest.json",
+    )
+    return {
+        "search_space_id": root.name,
+        "search_space_dir": root,
+        "manifest": manifest,
+        "normalized_search_space": config,
+        "search_family_inventory": inventory,
+        "validation": validation,
+    }
+
+
+def weight_search_space_report_payload(
+    *,
+    search_space_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=search_space_id,
+        latest_pointer="latest_weight_search_space",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="weight_search_space_manifest.json",
+    )
+    return {
+        **_read_json(root / "weight_search_space_manifest.json"),
+        "normalized_search_space": yaml.safe_load(
+            (root / "normalized_search_space.yaml").read_text(encoding="utf-8")
+        ),
+        "search_family_inventory": _read_json(root / "search_family_inventory.json"),
+        "search_space_dir": str(root),
+    }
+
+
+def validate_weight_search_space_artifact(
+    *,
+    search_space_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+) -> dict[str, Any]:
+    root = output_dir / search_space_id
+    manifest = _read_optional_json(root / "weight_search_space_manifest.json") or {}
+    inventory = _read_optional_json(root / "search_family_inventory.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "weight_search_space_manifest.json",
+            "normalized_search_space.yaml",
+            "search_family_inventory.json",
+            "weight_search_space_report.md",
+        ),
+    )
+    families = _texts(manifest.get("families"))
+    checks.extend(
+        [
+            st._check(
+                "search_space_id_matches", manifest.get("search_space_id") == search_space_id, ""
+            ),
+            st._check(
+                "required_families_visible",
+                set(SEARCH_REQUIRED_FAMILIES).issubset(set(families)),
+                "",
+            ),
+            st._check("family_inventory_present", bool(_records(inventory.get("families"))), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, inventory), ""),
+            st._check(
+                "experiment_safety_locked", _payload_experiment_safe(manifest, inventory), ""
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_search_space_artifact_validation",
+        search_space_id,
+        checks,
+    )
+
+
+def build_weight_experiment_batch2(
+    *,
+    search_space_id: str | None = None,
+    latest_search_space: bool = False,
+    source_backfill_id: str | None = None,
+    search_space_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+    generated_at: datetime | None = None,
+    expanded: bool = False,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    search_space = weight_search_space_report_payload(
+        search_space_id=search_space_id,
+        latest=latest_search_space,
+        output_dir=search_space_dir,
+    )
+    config = _mapping(search_space.get("normalized_search_space"))
+    variants = _generate_batch2_variants(config, expanded=expanded)
+    max_key = "expanded_batch" if expanded else "initial_batch"
+    max_variants = int(_float(_mapping(config.get("max_variants")).get(max_key), len(variants)))
+    variants = variants[:max_variants]
+    if not expanded and len(variants) < 50:
+        raise ValueError("Batch-2 initial matrix must contain at least 50 variants")
+    coverage = _batch2_family_coverage(variants)
+    search = _mapping(config.get("search"))
+    resolved_source_backfill = source_backfill_id or _text(search.get("source_backfill_id"))
+    matrix_id = _stable_id(
+        "weight-experiment-batch2",
+        search_space.get("search_space_id"),
+        resolved_source_backfill,
+        "expanded" if expanded else "initial",
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / matrix_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_experiment_batch2_manifest",
+        "batch2_matrix_id": root.name,
+        "matrix_id": root.name,
+        "search_space_id": search_space.get("search_space_id"),
+        "source_backfill_id": resolved_source_backfill,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if len(variants) >= (50 if not expanded else 1) else "FAIL",
+        "market_regime": "ai_after_chatgpt",
+        "requested_start_date": st.AI_AFTER_CHATGPT_START.isoformat(),
+        "variant_count": len(variants),
+        "expanded": expanded,
+        "families_covered": coverage["families_covered"],
+        "failure_modes_covered": coverage["failure_modes_covered"],
+        "batch2_matrix_manifest_path": str(root / "batch2_matrix_manifest.json"),
+        "batch2_variant_specs_path": str(root / "batch2_variant_specs.jsonl"),
+        "batch2_family_coverage_path": str(root / "batch2_family_coverage.json"),
+        "batch2_matrix_report_path": str(root / "batch2_matrix_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "batch2_matrix_manifest.json", manifest)
+    _write_jsonl(root / "batch2_variant_specs.jsonl", variants)
+    _write_json(root / "batch2_family_coverage.json", coverage)
+    _write_text(root / "batch2_matrix_report.md", render_batch2_matrix_report(manifest, coverage))
+    pointer = "latest_weight_expanded_matrix" if expanded else "latest_weight_experiment_batch2"
+    _write_latest_pointer(pointer, root.name, root / "batch2_matrix_manifest.json")
+    return {
+        "batch2_matrix_id": root.name,
+        "matrix_id": root.name,
+        "matrix_dir": root,
+        "manifest": manifest,
+        "variant_specs": variants,
+        "family_coverage": coverage,
+    }
+
+
+def weight_experiment_batch2_report_payload(
+    *,
+    matrix_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=matrix_id,
+        latest_pointer="latest_weight_experiment_batch2",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="batch2_matrix_manifest.json",
+    )
+    return {
+        **_read_json(root / "batch2_matrix_manifest.json"),
+        "variant_specs": _read_jsonl(root / "batch2_variant_specs.jsonl"),
+        "family_coverage": _read_json(root / "batch2_family_coverage.json"),
+        "matrix_dir": str(root),
+    }
+
+
+def validate_weight_experiment_batch2_artifact(
+    *,
+    matrix_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+) -> dict[str, Any]:
+    root = output_dir / matrix_id
+    manifest = _read_optional_json(root / "batch2_matrix_manifest.json") or {}
+    variants = _read_jsonl(root / "batch2_variant_specs.jsonl")
+    coverage = _read_optional_json(root / "batch2_family_coverage.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "batch2_matrix_manifest.json",
+            "batch2_variant_specs.jsonl",
+            "batch2_family_coverage.json",
+            "batch2_matrix_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("matrix_id_matches", manifest.get("batch2_matrix_id") == matrix_id, ""),
+            st._check("variants_present", bool(variants), ""),
+            st._check("variant_count_bounded", 1 <= len(variants) <= 200, str(len(variants))),
+            st._check(
+                "initial_batch_minimum_met_or_expanded",
+                manifest.get("expanded") is True or len(variants) >= 50,
+                str(len(variants)),
+            ),
+            st._check(
+                "covers_at_least_8_families",
+                len(_texts(coverage.get("families_covered"))) >= 8,
+                ",".join(_texts(coverage.get("families_covered"))),
+            ),
+            st._check(
+                "variants_have_failure_modes",
+                all(_texts(row.get("target_failure_modes")) for row in variants),
+                "",
+            ),
+            st._check(
+                "variants_have_expected_tradeoffs",
+                all(
+                    _texts(row.get("expected_benefit")) and _texts(row.get("expected_cost"))
+                    for row in variants
+                ),
+                "",
+            ),
+            st._check(
+                "not_formal_methods",
+                all(row.get("not_formal_research_method") is True for row in variants),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, coverage, *variants), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, coverage, *variants),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_experiment_batch2_validation", matrix_id, checks
+    )
+
+
+def run_weight_batch_backfill(
+    *,
+    matrix_id: str,
+    matrix_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    matrix = _batch2_matrix_payload(matrix_id=matrix_id, output_dir=matrix_dir)
+    source_backfill_id = _text(matrix.get("source_backfill_id"))
+    backfill = st.paper_shadow_backfill_report_payload(
+        backfill_id=source_backfill_id,
+        output_dir=baseline_backfill_dir,
+    )
+    baseline_states = _records(backfill.get("backfill_method_states"))
+    config = st._load_backfill_config_from_manifest(backfill)
+    start = max(
+        _coerce_date(backfill.get("date_start"), st.AI_AFTER_CHATGPT_START),
+        st.AI_AFTER_CHATGPT_START,
+    )
+    requested_end = _coerce_date(backfill.get("date_end"), generated.date())
+    source = _mapping(config.get("source"))
+    symbols = st._symbols_from_state_paths(baseline_states)
+    prices_path = price_cache_path or st._resolve_project_path(
+        source.get("price_cache_path"),
+        st.DEFAULT_PRICE_CACHE_PATH,
+    )
+    pivot = st._load_price_pivot(prices_path, symbols, start)
+    latest_valid_as_of = _latest_common_price_date(pivot, symbols)
+    end = min(requested_end, latest_valid_as_of, generated.date())
+    used_latest_valid_as_of = end < requested_end
+    pivot = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
+    quality_as_of = max(end, generated.date())
+    quality = st._run_data_quality_gate(
+        price_cache_path=prices_path,
+        rates_cache_path=rates_cache_path,
+        expected_symbols=symbols,
+        as_of=quality_as_of,
+    )
+    if not quality.passed:
+        raise RuntimeError(f"data quality gate failed for historical backfill: {quality.status}")
+    returns = pivot.pct_change().fillna(0.0)
+    labels = {
+        idx.date().isoformat(): st._risk_capped_regime_context_for_return(row, config)
+        for idx, row in returns.iterrows()
+    }
+    variant_specs = _records(matrix.get("variant_specs"))
+    variant_states: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+    for variant in variant_specs:
+        try:
+            variant_states.extend(
+                st._run_variant_weight_path(
+                    variant=variant,
+                    baseline_states=baseline_states,
+                    returns=returns,
+                    labels=labels,
+                    config=config,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            failed.append({"variant_id": _text(variant.get("variant_id")), "error": str(exc)})
+    performance = st._variant_performance_metrics(variant_states, baseline_states)
+    regime = st._variant_regime_metrics(variant_states, baseline_states, labels, config)
+    stability = st._variant_stability_metrics(variant_states, baseline_states, config)
+    churn = _variant_churn_metrics(variant_states, stability)
+    lag = _variant_lag_metrics(regime)
+    backfill_id = _stable_id(
+        "weight-batch-backfill", matrix_id, end.isoformat(), generated.isoformat()
+    )
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    progress = {
+        "schema_version": st.SCHEMA_VERSION,
+        "batch_backfill_id": root.name,
+        "variants_total": len(variant_specs),
+        "variants_completed": len({row.get("variant_id") for row in performance}),
+        "variants_failed": len(failed),
+        "failed_variants": failed,
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "requested_date_end": requested_end.isoformat(),
+        "latest_valid_as_of": latest_valid_as_of.isoformat(),
+        "data_quality": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "used_latest_valid_as_of": used_latest_valid_as_of,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_batch_backfill_manifest",
+        "batch_backfill_id": root.name,
+        "batch2_matrix_id": matrix_id,
+        "matrix_id": matrix_id,
+        "source_backfill_id": source_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": (
+            "PASS"
+            if not failed and performance
+            else "PASS_WITH_WARNINGS" if performance else "FAIL"
+        ),
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "requested_start_date": backfill.get("requested_start_date", start.isoformat()),
+        "requested_end_date": requested_end.isoformat(),
+        "latest_valid_as_of": latest_valid_as_of.isoformat(),
+        "data_quality_status": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "data_quality_checked_at": quality.checked_at.isoformat(),
+        "used_latest_valid_as_of": used_latest_valid_as_of,
+        "variants_total": len(variant_specs),
+        "variants_completed": progress["variants_completed"],
+        "variants_failed": len(failed),
+        "batch_backfill_manifest_path": str(root / "batch_backfill_manifest.json"),
+        "batch_backfill_progress_path": str(root / "batch_backfill_progress.json"),
+        "variant_weight_paths_path": str(root / "variant_weight_paths.jsonl"),
+        "variant_performance_metrics_path": str(root / "variant_performance_metrics.jsonl"),
+        "variant_regime_metrics_path": str(root / "variant_regime_metrics.jsonl"),
+        "variant_stability_metrics_path": str(root / "variant_stability_metrics.jsonl"),
+        "variant_churn_metrics_path": str(root / "variant_churn_metrics.jsonl"),
+        "variant_lag_metrics_path": str(root / "variant_lag_metrics.jsonl"),
+        "batch_backfill_report_path": str(root / "batch_backfill_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "batch_backfill_manifest.json", manifest)
+    _write_json(root / "batch_backfill_progress.json", progress)
+    _write_jsonl(root / "variant_weight_paths.jsonl", variant_states)
+    _write_jsonl(root / "variant_performance_metrics.jsonl", performance)
+    _write_jsonl(root / "variant_regime_metrics.jsonl", regime)
+    _write_jsonl(root / "variant_stability_metrics.jsonl", stability)
+    _write_jsonl(root / "variant_churn_metrics.jsonl", churn)
+    _write_jsonl(root / "variant_lag_metrics.jsonl", lag)
+    _write_text(root / "batch_backfill_report.md", render_batch_backfill_report(manifest, progress))
+    _write_latest_pointer(
+        "latest_weight_batch_backfill", root.name, root / "batch_backfill_manifest.json"
+    )
+    return {
+        "batch_backfill_id": root.name,
+        "backfill_id": root.name,
+        "backfill_dir": root,
+        "manifest": manifest,
+        "progress": progress,
+        "variant_weight_paths": variant_states,
+        "variant_performance_metrics": performance,
+        "variant_regime_metrics": regime,
+        "variant_stability_metrics": stability,
+        "variant_churn_metrics": churn,
+        "variant_lag_metrics": lag,
+    }
+
+
+def resume_weight_batch_backfill(
+    *,
+    backfill_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+) -> dict[str, Any]:
+    payload = weight_batch_backfill_report_payload(backfill_id=backfill_id, output_dir=output_dir)
+    progress = _mapping(payload.get("batch_backfill_progress"))
+    return {
+        "batch_backfill_id": backfill_id,
+        "resume_status": (
+            "ALREADY_COMPLETE"
+            if int(_float(progress.get("variants_completed")))
+            >= int(_float(progress.get("variants_total")))
+            else "PARTIAL_COMPLETION_REVIEW_REQUIRED"
+        ),
+        "progress": progress,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def weight_batch_backfill_report_payload(
+    *,
+    backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=backfill_id,
+        latest_pointer="latest_weight_batch_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="batch_backfill_manifest.json",
+    )
+    return {
+        **_read_json(root / "batch_backfill_manifest.json"),
+        "batch_backfill_progress": _read_json(root / "batch_backfill_progress.json"),
+        "variant_weight_paths": _read_jsonl(root / "variant_weight_paths.jsonl"),
+        "variant_performance_metrics": _read_jsonl(root / "variant_performance_metrics.jsonl"),
+        "variant_regime_metrics": _read_jsonl(root / "variant_regime_metrics.jsonl"),
+        "variant_stability_metrics": _read_jsonl(root / "variant_stability_metrics.jsonl"),
+        "variant_churn_metrics": _read_jsonl(root / "variant_churn_metrics.jsonl"),
+        "variant_lag_metrics": _read_jsonl(root / "variant_lag_metrics.jsonl"),
+        "backfill_dir": str(root),
+    }
+
+
+def validate_weight_batch_backfill_artifact(
+    *,
+    backfill_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / backfill_id
+    manifest = _read_optional_json(root / "batch_backfill_manifest.json") or {}
+    progress = _read_optional_json(root / "batch_backfill_progress.json") or {}
+    performance = _read_jsonl(root / "variant_performance_metrics.jsonl")
+    variants = {str(row.get("variant_id")) for row in performance}
+    regime = _read_jsonl(root / "variant_regime_metrics.jsonl")
+    stability = _read_jsonl(root / "variant_stability_metrics.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "batch_backfill_manifest.json",
+            "batch_backfill_progress.json",
+            "variant_weight_paths.jsonl",
+            "variant_performance_metrics.jsonl",
+            "variant_regime_metrics.jsonl",
+            "variant_stability_metrics.jsonl",
+            "variant_churn_metrics.jsonl",
+            "variant_lag_metrics.jsonl",
+            "batch_backfill_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("backfill_id_matches", manifest.get("batch_backfill_id") == backfill_id, ""),
+            st._check("performance_metrics_present", bool(performance), ""),
+            st._check(
+                "data_quality_visible",
+                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(manifest.get("data_quality_status")),
+            ),
+            st._check("latest_valid_as_of_visible", bool(manifest.get("latest_valid_as_of")), ""),
+            st._check(
+                "each_variant_has_regime_metrics",
+                variants.issubset({str(row.get("variant_id")) for row in regime}),
+                "",
+            ),
+            st._check(
+                "each_variant_has_stability_metrics",
+                variants.issubset({str(row.get("variant_id")) for row in stability}),
+                "",
+            ),
+            st._check(
+                "progress_counts_match",
+                int(_float(progress.get("variants_completed"))) == len(variants),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, progress, *performance), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, progress, *performance, *regime, *stability),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_batch_backfill_validation", backfill_id, checks
+    )
+
+
+def run_weight_scorecard(
+    *,
+    backfill_id: str,
+    backfill_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    matrix_dir: Path = DEFAULT_WEIGHT_EXPERIMENT_BATCH2_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = weight_batch_backfill_report_payload(
+        backfill_id=backfill_id, output_dir=backfill_dir
+    )
+    matrix = _batch2_matrix_payload(
+        matrix_id=_text(backfill.get("matrix_id")),
+        output_dir=matrix_dir,
+    )
+    scorecard = _scorecard_rows(backfill, _records(matrix.get("variant_specs")))
+    pareto = _pareto_frontier(scorecard)
+    distribution = _score_distribution(scorecard)
+    scorecard_id = _stable_id("weight-scorecard", backfill_id, generated.isoformat())
+    root = _unique_dir(output_dir / scorecard_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_scorecard_manifest",
+        "scorecard_id": root.name,
+        "batch_backfill_id": backfill_id,
+        "batch2_matrix_id": matrix.get("matrix_id"),
+        "search_space_id": matrix.get("search_space_id"),
+        "source_backfill_id": matrix.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if scorecard else "FAIL",
+        "market_regime": "ai_after_chatgpt",
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "top_return_candidate": _top_by(scorecard, "total_return"),
+        "top_drawdown_candidate": _top_by(scorecard, "max_drawdown"),
+        "top_stability_candidate": _top_stability(scorecard),
+        "weight_scorecard_manifest_path": str(root / "weight_scorecard_manifest.json"),
+        "variant_scorecard_path": str(root / "variant_scorecard.jsonl"),
+        "pareto_frontier_path": str(root / "pareto_frontier.json"),
+        "score_distribution_path": str(root / "score_distribution.json"),
+        "weight_scorecard_report_path": str(root / "weight_scorecard_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "weight_scorecard_manifest.json", manifest)
+    _write_jsonl(root / "variant_scorecard.jsonl", scorecard)
+    _write_json(root / "pareto_frontier.json", pareto)
+    _write_json(root / "score_distribution.json", distribution)
+    _write_text(
+        root / "weight_scorecard_report.md",
+        render_weight_scorecard_report(manifest, distribution, pareto),
+    )
+    _write_latest_pointer(
+        "latest_weight_scorecard", root.name, root / "weight_scorecard_manifest.json"
+    )
+    return {
+        "scorecard_id": root.name,
+        "scorecard_dir": root,
+        "manifest": manifest,
+        "variant_scorecard": scorecard,
+        "pareto_frontier": pareto,
+        "score_distribution": distribution,
+    }
+
+
+def weight_scorecard_report_payload(
+    *,
+    scorecard_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=scorecard_id,
+        latest_pointer="latest_weight_scorecard",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="weight_scorecard_manifest.json",
+    )
+    return {
+        **_read_json(root / "weight_scorecard_manifest.json"),
+        "variant_scorecard": _read_jsonl(root / "variant_scorecard.jsonl"),
+        "pareto_frontier": _read_json(root / "pareto_frontier.json"),
+        "score_distribution": _read_json(root / "score_distribution.json"),
+        "scorecard_dir": str(root),
+    }
+
+
+def validate_weight_scorecard_artifact(
+    *,
+    scorecard_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+) -> dict[str, Any]:
+    root = output_dir / scorecard_id
+    manifest = _read_optional_json(root / "weight_scorecard_manifest.json") or {}
+    rows = _read_jsonl(root / "variant_scorecard.jsonl")
+    pareto = _read_optional_json(root / "pareto_frontier.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "weight_scorecard_manifest.json",
+            "variant_scorecard.jsonl",
+            "pareto_frontier.json",
+            "score_distribution.json",
+            "weight_scorecard_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("scorecard_id_matches", manifest.get("scorecard_id") == scorecard_id, ""),
+            st._check("scorecard_present", bool(rows), ""),
+            st._check("pareto_present", "candidates" in pareto, ""),
+            st._check(
+                "hard_rejects_block_promotion",
+                all(
+                    row.get("scorecard_decision") != "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+                    for row in rows
+                    if _texts(row.get("hard_reject_flags"))
+                ),
+                "",
+            ),
+            st._check(
+                "data_quality_visible",
+                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(manifest.get("data_quality_status")),
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, pareto, *rows), ""),
+            st._check(
+                "experiment_safety_locked", _payload_experiment_safe(manifest, pareto, *rows), ""
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_weight_scorecard_validation", scorecard_id, checks)
+
+
+def run_weight_robustness_review(
+    *,
+    scorecard_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    backfill_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    backfill = weight_batch_backfill_report_payload(
+        backfill_id=_text(scorecard.get("batch_backfill_id")),
+        output_dir=backfill_dir,
+    )
+    top_ids = [
+        _text(row.get("variant_id")) for row in _records(scorecard.get("variant_scorecard"))[:12]
+    ]
+    rolling = _rolling_robustness_rows(scorecard, backfill, top_ids)
+    regime = [
+        row
+        for row in _records(backfill.get("variant_regime_metrics"))
+        if row.get("variant_id") in top_ids
+    ]
+    stability = [
+        row
+        for row in _records(backfill.get("variant_stability_metrics"))
+        if row.get("variant_id") in top_ids
+    ]
+    summary = _robustness_summary(top_ids, rolling, regime, stability)
+    robustness_id = _stable_id("weight-robustness-review", scorecard_id, generated.isoformat())
+    root = _unique_dir(output_dir / robustness_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_robustness_review_manifest",
+        "robustness_id": root.name,
+        "scorecard_id": scorecard_id,
+        "batch_backfill_id": scorecard.get("batch_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if top_ids else "FAIL",
+        "robust_candidate_count": len(_texts(summary.get("robust_candidates"))),
+        "robustness_manifest_path": str(root / "robustness_manifest.json"),
+        "rolling_robustness_path": str(root / "rolling_robustness.jsonl"),
+        "regime_robustness_path": str(root / "regime_robustness.jsonl"),
+        "stability_robustness_path": str(root / "stability_robustness.jsonl"),
+        "robustness_summary_path": str(root / "robustness_summary.json"),
+        "weight_robustness_review_report_path": str(root / "weight_robustness_review_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "robustness_manifest.json", manifest)
+    _write_jsonl(root / "rolling_robustness.jsonl", rolling)
+    _write_jsonl(root / "regime_robustness.jsonl", regime)
+    _write_jsonl(root / "stability_robustness.jsonl", stability)
+    _write_json(root / "robustness_summary.json", summary)
+    _write_text(
+        root / "weight_robustness_review_report.md", render_robustness_report(manifest, summary)
+    )
+    _write_latest_pointer(
+        "latest_weight_robustness_review", root.name, root / "robustness_manifest.json"
+    )
+    return {
+        "robustness_id": root.name,
+        "robustness_dir": root,
+        "manifest": manifest,
+        "rolling_robustness": rolling,
+        "regime_robustness": regime,
+        "stability_robustness": stability,
+        "robustness_summary": summary,
+    }
+
+
+def weight_robustness_review_report_payload(
+    *,
+    robustness_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=robustness_id,
+        latest_pointer="latest_weight_robustness_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="robustness_manifest.json",
+    )
+    return {
+        **_read_json(root / "robustness_manifest.json"),
+        "rolling_robustness": _read_jsonl(root / "rolling_robustness.jsonl"),
+        "regime_robustness": _read_jsonl(root / "regime_robustness.jsonl"),
+        "stability_robustness": _read_jsonl(root / "stability_robustness.jsonl"),
+        "robustness_summary": _read_json(root / "robustness_summary.json"),
+        "robustness_dir": str(root),
+    }
+
+
+def validate_weight_robustness_review_artifact(
+    *,
+    robustness_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / robustness_id
+    manifest = _read_optional_json(root / "robustness_manifest.json") or {}
+    summary = _read_optional_json(root / "robustness_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "robustness_manifest.json",
+            "rolling_robustness.jsonl",
+            "regime_robustness.jsonl",
+            "stability_robustness.jsonl",
+            "robustness_summary.json",
+            "weight_robustness_review_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("robustness_id_matches", manifest.get("robustness_id") == robustness_id, ""),
+            st._check("summary_present", bool(summary), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
+            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, summary), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_robustness_review_validation", robustness_id, checks
+    )
+
+
+def run_weight_adaptive_branch(
+    *,
+    scorecard_id: str,
+    robustness_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    robustness_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    robustness = weight_robustness_review_report_payload(
+        robustness_id=robustness_id,
+        output_dir=robustness_dir,
+    )
+    decision = _adaptive_branch_decision(scorecard, robustness)
+    branch_id = _stable_id(
+        "weight-adaptive-branch", scorecard_id, robustness_id, generated.isoformat()
+    )
+    root = _unique_dir(output_dir / branch_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_adaptive_branch_manifest",
+        "branch_id": root.name,
+        "scorecard_id": scorecard_id,
+        "robustness_id": robustness_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "branch_decision": decision["branch_decision"],
+        "weight_adaptive_branch_manifest_path": str(root / "adaptive_branch_manifest.json"),
+        "branch_decision_path": str(root / "branch_decision.json"),
+        "weight_adaptive_branch_report_path": str(root / "weight_adaptive_branch_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "adaptive_branch_manifest.json", manifest)
+    _write_json(root / "branch_decision.json", decision)
+    _write_text(
+        root / "weight_adaptive_branch_report.md", render_adaptive_branch_report(manifest, decision)
+    )
+    _write_latest_pointer(
+        "latest_weight_adaptive_branch", root.name, root / "adaptive_branch_manifest.json"
+    )
+    return {
+        "branch_id": root.name,
+        "branch_dir": root,
+        "manifest": manifest,
+        "branch_decision": decision,
+    }
+
+
+def weight_adaptive_branch_report_payload(
+    *,
+    branch_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=branch_id,
+        latest_pointer="latest_weight_adaptive_branch",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="adaptive_branch_manifest.json",
+    )
+    return {
+        **_read_json(root / "adaptive_branch_manifest.json"),
+        "branch_decision_payload": _read_json(root / "branch_decision.json"),
+        "branch_dir": str(root),
+    }
+
+
+def validate_weight_adaptive_branch_artifact(
+    *,
+    branch_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+) -> dict[str, Any]:
+    root = output_dir / branch_id
+    manifest = _read_optional_json(root / "adaptive_branch_manifest.json") or {}
+    decision = _read_optional_json(root / "branch_decision.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "adaptive_branch_manifest.json",
+            "branch_decision.json",
+            "weight_adaptive_branch_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("branch_id_matches", manifest.get("branch_id") == branch_id, ""),
+            st._check("decision_present", bool(decision.get("branch_decision")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, decision), ""),
+            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, decision), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_adaptive_branch_validation", branch_id, checks
+    )
+
+
+def build_weight_expanded_search(
+    *,
+    branch_id: str,
+    branch_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+    search_space_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    branch = weight_adaptive_branch_report_payload(branch_id=branch_id, output_dir=branch_dir)
+    search_space_id = _text(_mapping(branch.get("branch_decision_payload")).get("search_space_id"))
+    if not search_space_id:
+        latest = True
+    else:
+        latest = False
+    return build_weight_experiment_batch2(
+        search_space_id=search_space_id or None,
+        latest_search_space=latest,
+        search_space_dir=search_space_dir,
+        output_dir=output_dir,
+        generated_at=generated_at,
+        expanded=True,
+    )
+
+
+def run_weight_expanded_search(
+    *,
+    expanded_matrix_id: str,
+    expanded_matrix_dir: Path = DEFAULT_WEIGHT_EXPANDED_SEARCH_DIR,
+    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_BATCH_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    return run_weight_batch_backfill(
+        matrix_id=expanded_matrix_id,
+        matrix_dir=expanded_matrix_dir,
+        baseline_backfill_dir=baseline_backfill_dir,
+        output_dir=output_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+        generated_at=generated_at,
+    )
+
+
+def run_weight_candidate_cluster(
+    *,
+    scorecard_id: str,
+    robustness_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    robustness_dir: Path = DEFAULT_WEIGHT_ROBUSTNESS_REVIEW_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    robustness = weight_robustness_review_report_payload(
+        robustness_id=robustness_id, output_dir=robustness_dir
+    )
+    clusters, representatives = _candidate_clusters(scorecard, robustness)
+    cluster_id = _stable_id(
+        "weight-candidate-cluster", scorecard_id, robustness_id, generated.isoformat()
+    )
+    root = _unique_dir(output_dir / cluster_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_candidate_cluster_manifest",
+        "cluster_id": root.name,
+        "scorecard_id": scorecard_id,
+        "robustness_id": robustness_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if representatives else "FAIL",
+        "cluster_count": len(clusters.get("clusters", [])),
+        "candidate_cluster_manifest_path": str(root / "candidate_cluster_manifest.json"),
+        "candidate_clusters_path": str(root / "candidate_clusters.json"),
+        "cluster_representatives_path": str(root / "cluster_representatives.json"),
+        "candidate_cluster_report_path": str(root / "candidate_cluster_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "candidate_cluster_manifest.json", manifest)
+    _write_json(root / "candidate_clusters.json", clusters)
+    _write_json(root / "cluster_representatives.json", representatives)
+    _write_text(
+        root / "candidate_cluster_report.md",
+        render_candidate_cluster_report(manifest, representatives),
+    )
+    _write_latest_pointer(
+        "latest_weight_candidate_cluster", root.name, root / "candidate_cluster_manifest.json"
+    )
+    return {
+        "cluster_id": root.name,
+        "cluster_dir": root,
+        "manifest": manifest,
+        "candidate_clusters": clusters,
+        "cluster_representatives": representatives,
+    }
+
+
+def weight_candidate_cluster_report_payload(
+    *,
+    cluster_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=cluster_id,
+        latest_pointer="latest_weight_candidate_cluster",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="candidate_cluster_manifest.json",
+    )
+    return {
+        **_read_json(root / "candidate_cluster_manifest.json"),
+        "candidate_clusters": _read_json(root / "candidate_clusters.json"),
+        "cluster_representatives": _read_json(root / "cluster_representatives.json"),
+        "cluster_dir": str(root),
+    }
+
+
+def validate_weight_candidate_cluster_artifact(
+    *,
+    cluster_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+) -> dict[str, Any]:
+    root = output_dir / cluster_id
+    manifest = _read_optional_json(root / "candidate_cluster_manifest.json") or {}
+    representatives = _read_optional_json(root / "cluster_representatives.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "candidate_cluster_manifest.json",
+            "candidate_clusters.json",
+            "cluster_representatives.json",
+            "candidate_cluster_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("cluster_id_matches", manifest.get("cluster_id") == cluster_id, ""),
+            st._check(
+                "representatives_present",
+                bool(_records(representatives.get("representatives"))),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, representatives), ""),
+            st._check(
+                "experiment_safety_locked", _payload_experiment_safe(manifest, representatives), ""
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_candidate_cluster_validation", cluster_id, checks
+    )
+
+
+def run_weight_top_candidate_interpretation(
+    *,
+    cluster_id: str,
+    cluster_dir: Path = DEFAULT_WEIGHT_CANDIDATE_CLUSTER_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    cluster = weight_candidate_cluster_report_payload(cluster_id=cluster_id, output_dir=cluster_dir)
+    reps = _records(_mapping(cluster.get("cluster_representatives")).get("representatives"))
+    explanations = [_candidate_explanation(row) for row in reps[:5]]
+    coverage = _failure_mode_coverage_from_explanations(explanations)
+    interpretation_id = _stable_id(
+        "weight-top-candidate-interpretation", cluster_id, generated.isoformat()
+    )
+    root = _unique_dir(output_dir / interpretation_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_top_candidate_interpretation_manifest",
+        "interpretation_id": root.name,
+        "cluster_id": cluster_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if explanations else "FAIL",
+        "recommended_variant": _text(explanations[0].get("variant_id")) if explanations else "",
+        "top_candidate_interpretation_manifest_path": str(
+            root / "top_candidate_interpretation_manifest.json"
+        ),
+        "top_candidate_explanations_path": str(root / "top_candidate_explanations.jsonl"),
+        "failure_mode_coverage_path": str(root / "failure_mode_coverage.json"),
+        "top_candidate_interpretation_report_path": str(
+            root / "top_candidate_interpretation_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_top_candidate_reader_brief(manifest, explanations)
+    _write_json(root / "top_candidate_interpretation_manifest.json", manifest)
+    _write_jsonl(root / "top_candidate_explanations.jsonl", explanations)
+    _write_json(root / "failure_mode_coverage.json", coverage)
+    _write_text(
+        root / "top_candidate_interpretation_report.md",
+        render_top_candidate_interpretation_report(manifest, explanations),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_weight_top_candidate_interpretation",
+        root.name,
+        root / "top_candidate_interpretation_manifest.json",
+    )
+    return {
+        "interpretation_id": root.name,
+        "interpretation_dir": root,
+        "manifest": manifest,
+        "top_candidate_explanations": explanations,
+        "failure_mode_coverage": coverage,
+        "reader_brief_section": reader,
+    }
+
+
+def weight_top_candidate_interpretation_report_payload(
+    *,
+    interpretation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=interpretation_id,
+        latest_pointer="latest_weight_top_candidate_interpretation",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="top_candidate_interpretation_manifest.json",
+    )
+    return {
+        **_read_json(root / "top_candidate_interpretation_manifest.json"),
+        "top_candidate_explanations": _read_jsonl(root / "top_candidate_explanations.jsonl"),
+        "failure_mode_coverage": _read_json(root / "failure_mode_coverage.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "interpretation_dir": str(root),
+    }
+
+
+def validate_weight_top_candidate_interpretation_artifact(
+    *,
+    interpretation_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / interpretation_id
+    manifest = _read_optional_json(root / "top_candidate_interpretation_manifest.json") or {}
+    explanations = _read_jsonl(root / "top_candidate_explanations.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "top_candidate_interpretation_manifest.json",
+            "top_candidate_explanations.jsonl",
+            "failure_mode_coverage.json",
+            "top_candidate_interpretation_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "interpretation_id_matches",
+                manifest.get("interpretation_id") == interpretation_id,
+                "",
+            ),
+            st._check("explanations_present", bool(explanations), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, *explanations), ""),
+            st._check(
+                "experiment_safety_locked", _payload_experiment_safe(manifest, *explanations), ""
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_top_candidate_interpretation_validation", interpretation_id, checks
+    )
+
+
+def run_weight_method_promotion_gate(
+    *,
+    interpretation_id: str,
+    interpretation_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_INTERPRETATION_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    interpretation = weight_top_candidate_interpretation_report_payload(
+        interpretation_id=interpretation_id,
+        output_dir=interpretation_dir,
+    )
+    decisions = _promotion_gate_decisions(
+        _records(interpretation.get("top_candidate_explanations"))
+    )
+    promoted = [row for row in decisions if row["decision"] == "PROMOTE_TO_FORMAL_IMPLEMENTATION"][
+        :3
+    ]
+    gate_id = _stable_id("weight-method-promotion-gate", interpretation_id, generated.isoformat())
+    root = _unique_dir(output_dir / gate_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision_payload = {
+        "schema_version": st.SCHEMA_VERSION,
+        "promotion_gate_id": root.name,
+        "decision_summary": _promotion_decision_summary(decisions),
+        "decisions": decisions,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    specs = {
+        "schema_version": st.SCHEMA_VERSION,
+        "promoted_candidates": [_promoted_candidate_spec(row) for row in promoted],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_method_promotion_gate_manifest",
+        "promotion_gate_id": root.name,
+        "interpretation_id": interpretation_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if decisions else "FAIL",
+        "promoted_candidate_count": len(promoted),
+        "promotion_gate_manifest_path": str(root / "promotion_gate_manifest.json"),
+        "promotion_gate_decision_path": str(root / "promotion_gate_decision.json"),
+        "promoted_candidate_specs_path": str(root / "promoted_candidate_specs.json"),
+        "promotion_gate_report_path": str(root / "promotion_gate_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "promotion_gate_manifest.json", manifest)
+    _write_json(root / "promotion_gate_decision.json", decision_payload)
+    _write_json(root / "promoted_candidate_specs.json", specs)
+    _write_text(
+        root / "promotion_gate_report.md", render_promotion_gate_report(manifest, decision_payload)
+    )
+    _write_latest_pointer(
+        "latest_weight_method_promotion_gate", root.name, root / "promotion_gate_manifest.json"
+    )
+    return {
+        "promotion_gate_id": root.name,
+        "promotion_gate_dir": root,
+        "manifest": manifest,
+        "promotion_gate_decision": decision_payload,
+        "promoted_candidate_specs": specs,
+    }
+
+
+def weight_method_promotion_gate_report_payload(
+    *,
+    promotion_gate_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=promotion_gate_id,
+        latest_pointer="latest_weight_method_promotion_gate",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="promotion_gate_manifest.json",
+    )
+    return {
+        **_read_json(root / "promotion_gate_manifest.json"),
+        "promotion_gate_decision": _read_json(root / "promotion_gate_decision.json"),
+        "promoted_candidate_specs": _read_json(root / "promoted_candidate_specs.json"),
+        "promotion_gate_dir": str(root),
+    }
+
+
+def validate_weight_method_promotion_gate_artifact(
+    *,
+    promotion_gate_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+) -> dict[str, Any]:
+    root = output_dir / promotion_gate_id
+    manifest = _read_optional_json(root / "promotion_gate_manifest.json") or {}
+    decision = _read_optional_json(root / "promotion_gate_decision.json") or {}
+    specs = _read_optional_json(root / "promoted_candidate_specs.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "promotion_gate_manifest.json",
+            "promotion_gate_decision.json",
+            "promoted_candidate_specs.json",
+            "promotion_gate_report.md",
+        ),
+    )
+    allowed = {
+        "PROMOTE_TO_FORMAL_IMPLEMENTATION",
+        "KEEP_FOR_MORE_TESTING",
+        "REJECT",
+        "DEFER_FOR_FORWARD_DATA",
+    }
+    checks.extend(
+        [
+            st._check(
+                "promotion_gate_id_matches",
+                manifest.get("promotion_gate_id") == promotion_gate_id,
+                "",
+            ),
+            st._check(
+                "decision_types_valid",
+                {row.get("decision") for row in _records(decision.get("decisions"))}.issubset(
+                    allowed
+                ),
+                "",
+            ),
+            st._check(
+                "promoted_specs_bounded", len(_records(specs.get("promoted_candidates"))) <= 3, ""
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, decision, specs), ""),
+            st._check(
+                "experiment_safety_locked", _payload_experiment_safe(manifest, decision, specs), ""
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_method_promotion_gate_validation", promotion_gate_id, checks
+    )
+
+
+def run_formal_method_auto_plan(
+    *,
+    promotion_gate_id: str,
+    promotion_gate_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+    output_dir: Path = DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    gate = weight_method_promotion_gate_report_payload(
+        promotion_gate_id=promotion_gate_id,
+        output_dir=promotion_gate_dir,
+    )
+    candidates = _records(_mapping(gate.get("promoted_candidate_specs")).get("promoted_candidates"))
+    specs = _formal_method_specs(candidates)
+    validation_plan = _formal_validation_plan(specs)
+    plan_id = _stable_id("formal-method-auto-plan", promotion_gate_id, generated.isoformat())
+    root = _unique_dir(output_dir / plan_id)
+    root.mkdir(parents=True, exist_ok=False)
+    status = "PLAN_READY" if _records(specs.get("methods")) else "SKIPPED_NO_PROMOTED_CANDIDATE"
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_formal_method_auto_plan_manifest",
+        "plan_id": root.name,
+        "promotion_gate_id": promotion_gate_id,
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "implemented": False,
+        "implementation_reason": (
+            "auto-plan only; no official target, broker, production, or owner approval action"
+        ),
+        "formal_method_auto_plan_manifest_path": str(
+            root / "formal_method_auto_plan_manifest.json"
+        ),
+        "formal_method_specs_path": str(root / "formal_method_specs.json"),
+        "implementation_plan_path": str(root / "implementation_plan.md"),
+        "validation_plan_path": str(root / "validation_plan.json"),
+        "formal_method_auto_plan_report_path": str(root / "formal_method_auto_plan_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    plan_text = render_formal_method_implementation_plan(manifest, specs, validation_plan)
+    _write_json(root / "formal_method_auto_plan_manifest.json", manifest)
+    _write_json(root / "formal_method_specs.json", specs)
+    _write_text(root / "implementation_plan.md", plan_text)
+    _write_json(root / "validation_plan.json", validation_plan)
+    _write_text(
+        root / "formal_method_auto_plan_report.md",
+        render_formal_method_auto_plan_report(manifest, specs),
+    )
+    _write_latest_pointer(
+        "latest_formal_method_auto_plan", root.name, root / "formal_method_auto_plan_manifest.json"
+    )
+    return {
+        "plan_id": root.name,
+        "plan_dir": root,
+        "manifest": manifest,
+        "formal_method_specs": specs,
+        "validation_plan": validation_plan,
+        "implementation_plan": plan_text,
+    }
+
+
+def formal_method_auto_plan_report_payload(
+    *,
+    plan_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=plan_id,
+        latest_pointer="latest_formal_method_auto_plan",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="formal_method_auto_plan_manifest.json",
+    )
+    return {
+        **_read_json(root / "formal_method_auto_plan_manifest.json"),
+        "formal_method_specs": _read_json(root / "formal_method_specs.json"),
+        "validation_plan": _read_json(root / "validation_plan.json"),
+        "implementation_plan": (root / "implementation_plan.md").read_text(encoding="utf-8"),
+        "plan_dir": str(root),
+    }
+
+
+def validate_formal_method_auto_plan_artifact(
+    *,
+    plan_id: str,
+    output_dir: Path = DEFAULT_FORMAL_METHOD_AUTO_PLAN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / plan_id
+    manifest = _read_optional_json(root / "formal_method_auto_plan_manifest.json") or {}
+    specs = _read_optional_json(root / "formal_method_specs.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "formal_method_auto_plan_manifest.json",
+            "formal_method_specs.json",
+            "implementation_plan.md",
+            "validation_plan.json",
+            "formal_method_auto_plan_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("plan_id_matches", manifest.get("plan_id") == plan_id, ""),
+            st._check("implemented_false", manifest.get("implemented") is False, ""),
+            st._check(
+                "method_specs_safe",
+                all(
+                    row.get("broker_action_allowed") is False
+                    and row.get("production_effect") == st.PRODUCTION_EFFECT
+                    for row in _records(specs.get("methods"))
+                ),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, specs), ""),
+            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, specs), ""),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_formal_method_auto_plan_validation", plan_id, checks)
+
+
+def build_weight_search_dashboard(
+    *,
+    scorecard_id: str,
+    branch_id: str,
+    promotion_gate_id: str | None = None,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    branch_dir: Path = DEFAULT_WEIGHT_ADAPTIVE_BRANCH_DIR,
+    promotion_gate_dir: Path = DEFAULT_WEIGHT_METHOD_PROMOTION_GATE_DIR,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    branch = weight_adaptive_branch_report_payload(branch_id=branch_id, output_dir=branch_dir)
+    gate = (
+        weight_method_promotion_gate_report_payload(
+            promotion_gate_id=promotion_gate_id,
+            output_dir=promotion_gate_dir,
+        )
+        if promotion_gate_id
+        else {}
+    )
+    summary = _dashboard_summary(scorecard, branch, gate)
+    dashboard_id = _stable_id(
+        "weight-search-dashboard",
+        scorecard_id,
+        branch_id,
+        promotion_gate_id or "",
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / dashboard_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_search_dashboard_manifest",
+        "dashboard_id": root.name,
+        "scorecard_id": scorecard_id,
+        "branch_id": branch_id,
+        "promotion_gate_id": promotion_gate_id or "",
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "search_dashboard_manifest_path": str(root / "search_dashboard_manifest.json"),
+        "search_summary_path": str(root / "search_summary.json"),
+        "top_candidates_path": str(root / "top_candidates.json"),
+        "rejected_summary_path": str(root / "rejected_summary.json"),
+        "next_actions_path": str(root / "next_actions.json"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_dashboard_reader_brief(summary)
+    _write_json(root / "search_dashboard_manifest.json", manifest)
+    _write_json(root / "search_summary.json", summary["search_summary"])
+    _write_json(root / "top_candidates.json", summary["top_candidates"])
+    _write_json(root / "rejected_summary.json", summary["rejected_summary"])
+    _write_json(root / "next_actions.json", summary["next_actions"])
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_weight_search_dashboard", root.name, root / "search_dashboard_manifest.json"
+    )
+    return {
+        "dashboard_id": root.name,
+        "dashboard_dir": root,
+        "manifest": manifest,
+        **summary,
+        "reader_brief_section": reader,
+    }
+
+
+def weight_search_dashboard_report_payload(
+    *,
+    dashboard_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=dashboard_id,
+        latest_pointer="latest_weight_search_dashboard",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="search_dashboard_manifest.json",
+    )
+    return {
+        **_read_json(root / "search_dashboard_manifest.json"),
+        "search_summary": _read_json(root / "search_summary.json"),
+        "top_candidates": _read_json(root / "top_candidates.json"),
+        "rejected_summary": _read_json(root / "rejected_summary.json"),
+        "next_actions": _read_json(root / "next_actions.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "dashboard_dir": str(root),
+    }
+
+
+def validate_weight_search_dashboard_artifact(
+    *,
+    dashboard_id: str,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+) -> dict[str, Any]:
+    root = output_dir / dashboard_id
+    manifest = _read_optional_json(root / "search_dashboard_manifest.json") or {}
+    summary = _read_optional_json(root / "search_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "search_dashboard_manifest.json",
+            "search_summary.json",
+            "top_candidates.json",
+            "rejected_summary.json",
+            "next_actions.json",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("dashboard_id_matches", manifest.get("dashboard_id") == dashboard_id, ""),
+            st._check("summary_answers_variant_count", "variants_total" in summary, ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
+            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, summary), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_weight_search_dashboard_validation", dashboard_id, checks
+    )
+
+
+def build_owner_research_decision_pack(
+    *,
+    dashboard_id: str,
+    dashboard_dir: Path = DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR,
+    output_dir: Path = DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    dashboard = weight_search_dashboard_report_payload(
+        dashboard_id=dashboard_id, output_dir=dashboard_dir
+    )
+    options = _owner_decision_options(dashboard)
+    pack_id = _stable_id("owner-research-decision-pack", dashboard_id, generated.isoformat())
+    root = _unique_dir(output_dir / pack_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_research_decision_pack_manifest",
+        "owner_pack_id": root.name,
+        "dashboard_id": dashboard_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "recommended_owner_decision": options.get("recommended_decision"),
+        "owner_decision_pack_manifest_path": str(root / "owner_decision_pack_manifest.json"),
+        "owner_decision_options_path": str(root / "owner_decision_options.json"),
+        "owner_decision_pack_report_path": str(root / "owner_decision_pack_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "owner_decision_pack_manifest.json", manifest)
+    _write_json(root / "owner_decision_options.json", options)
+    _write_text(
+        root / "owner_decision_pack_report.md", render_owner_decision_pack_report(manifest, options)
+    )
+    _write_latest_pointer(
+        "latest_owner_research_decision_pack", root.name, root / "owner_decision_pack_manifest.json"
+    )
+    return {
+        "owner_pack_id": root.name,
+        "owner_pack_dir": root,
+        "manifest": manifest,
+        "owner_decision_options": options,
+    }
+
+
+def owner_research_decision_pack_report_payload(
+    *,
+    owner_pack_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=owner_pack_id,
+        latest_pointer="latest_owner_research_decision_pack",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="owner_decision_pack_manifest.json",
+    )
+    return {
+        **_read_json(root / "owner_decision_pack_manifest.json"),
+        "owner_decision_options": _read_json(root / "owner_decision_options.json"),
+        "owner_pack_dir": str(root),
+    }
+
+
+def validate_owner_research_decision_pack_artifact(
+    *,
+    owner_pack_id: str,
+    output_dir: Path = DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR,
+) -> dict[str, Any]:
+    root = output_dir / owner_pack_id
+    manifest = _read_optional_json(root / "owner_decision_pack_manifest.json") or {}
+    options = _read_optional_json(root / "owner_decision_options.json") or {}
+    allowed = {
+        "continue_search",
+        "implement_top_candidate",
+        "defer_for_forward_data",
+        "reject_all_candidates",
+        "run_expanded_search",
+    }
+    checks = _required_file_checks(
+        root,
+        (
+            "owner_decision_pack_manifest.json",
+            "owner_decision_options.json",
+            "owner_decision_pack_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("owner_pack_id_matches", manifest.get("owner_pack_id") == owner_pack_id, ""),
+            st._check(
+                "recommended_decision_valid",
+                options.get("recommended_decision") in allowed,
+                _text(options.get("recommended_decision")),
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, options), ""),
+            st._check("experiment_safety_locked", _payload_experiment_safe(manifest, options), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_owner_research_decision_pack_validation", owner_pack_id, checks
+    )
+
+
+def render_weight_search_space_report(
+    manifest: Mapping[str, Any], inventory: Mapping[str, Any]
+) -> str:
+    return "\n".join(
+        [
+            f"# Weight Search Space {manifest.get('search_space_id')}",
+            "",
+            f"- 状态：{manifest.get('status')}",
+            f"- 市场 regime：{manifest.get('market_regime')}",
+            f"- 默认回测开始：{manifest.get('default_backtest_start')}",
+            f"- families：{', '.join(_texts(manifest.get('families')))}",
+            (
+                "- initial max variants："
+                f"{_mapping(manifest.get('max_variants')).get('initial_batch')}"
+            ),
+            (
+                "- expanded max variants："
+                f"{_mapping(manifest.get('max_variants')).get('expanded_batch')}"
+            ),
+            "- safety：research_screening_only / no official target / no broker / no production",
+            "",
+            "## Family Inventory",
+            *[
+                (
+                    f"- {row.get('family')}: enabled={row.get('enabled')} "
+                    f"parameters={row.get('parameter_count')}"
+                )
+                for row in _records(inventory.get("families"))
+            ],
+            "",
+        ]
+    )
+
+
+def render_batch2_matrix_report(manifest: Mapping[str, Any], coverage: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Batch-2 Experiment Matrix {manifest.get('batch2_matrix_id')}",
+            "",
+            f"- 状态：{manifest.get('status')}",
+            f"- variants：{manifest.get('variant_count')}",
+            f"- family coverage：{', '.join(_texts(coverage.get('families_covered')))}",
+            (
+                "- failure mode coverage："
+                f"{len(_texts(coverage.get('failure_modes_covered')))} modes"
+            ),
+            (
+                "- 结论边界：experiment only；不是 formal method、official target weights "
+                "或 broker action。"
+            ),
+            "",
+        ]
+    )
+
+
+def render_batch_backfill_report(manifest: Mapping[str, Any], progress: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Weight Batch Backfill {manifest.get('batch_backfill_id')}",
+            "",
+            f"- 状态：{manifest.get('status')}",
+            f"- 日期范围：{manifest.get('date_start')} -> {manifest.get('date_end')}",
+            f"- data quality：{manifest.get('data_quality_status')}",
+            f"- latest_valid_as_of：{manifest.get('latest_valid_as_of')}",
+            f"- used_latest_valid_as_of：{manifest.get('used_latest_valid_as_of')}",
+            (
+                f"- variants completed：{progress.get('variants_completed')} / "
+                f"{progress.get('variants_total')}"
+            ),
+            "- safety：no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_weight_scorecard_report(
+    manifest: Mapping[str, Any],
+    distribution: Mapping[str, Any],
+    pareto: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Weight Scorecard {manifest.get('scorecard_id')}",
+            "",
+            f"- 状态：{manifest.get('status')}",
+            f"- top return：{manifest.get('top_return_candidate')}",
+            f"- top drawdown：{manifest.get('top_drawdown_candidate')}",
+            f"- top stability：{manifest.get('top_stability_candidate')}",
+            f"- Pareto candidates：{', '.join(_texts(pareto.get('candidates')))}",
+            (
+                f"- promote / keep / reject：{distribution.get('promote_count')} / "
+                f"{distribution.get('keep_testing_count')} / {distribution.get('reject_count')}"
+            ),
+            "- safety：scorecard only；promotion gate 仍需人工 review，不触发 production。",
+            "",
+        ]
+    )
+
+
+def render_robustness_report(manifest: Mapping[str, Any], summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Weight Robustness Review {manifest.get('robustness_id')}",
+            "",
+            f"- robust candidates：{', '.join(_texts(summary.get('robust_candidates')))}",
+            f"- weak candidates：{', '.join(_texts(summary.get('weak_candidates')))}",
+            f"- recommendation：{summary.get('recommended_next_action')}",
+            "",
+        ]
+    )
+
+
+def render_adaptive_branch_report(manifest: Mapping[str, Any], decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Weight Adaptive Branch {manifest.get('branch_id')}",
+            "",
+            f"- branch decision：{decision.get('branch_decision')}",
+            f"- reason：{'; '.join(_texts(decision.get('reason')))}",
+            f"- next command：{decision.get('next_command')}",
+            "",
+        ]
+    )
+
+
+def render_candidate_cluster_report(
+    manifest: Mapping[str, Any], representatives: Mapping[str, Any]
+) -> str:
+    representative_ids = ", ".join(
+        _text(row.get("variant_id"))
+        for row in _records(representatives.get("representatives"))
+    )
+    return "\n".join(
+        [
+            f"# Weight Candidate Cluster {manifest.get('cluster_id')}",
+            "",
+            f"- clusters：{manifest.get('cluster_count')}",
+            f"- representatives：{representative_ids}",
+            "",
+        ]
+    )
+
+
+def render_top_candidate_interpretation_report(
+    manifest: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            f"# Top Candidate Interpretation {manifest.get('interpretation_id')}",
+            "",
+            f"- recommended variant：{manifest.get('recommended_variant')}",
+            *[
+                f"- {row.get('variant_id')}: {', '.join(_texts(row.get('why_it_helped')))}"
+                for row in explanations
+            ],
+            "",
+        ]
+    )
+
+
+def render_top_candidate_reader_brief(
+    manifest: Mapping[str, Any],
+    explanations: Sequence[Mapping[str, Any]],
+) -> str:
+    top = _text(manifest.get("recommended_variant"), "INSUFFICIENT_DATA")
+    return "\n".join(
+        [
+            "## Weight Batch Search Top Candidate",
+            "",
+            f"- recommended_variant: {top}",
+            f"- interpreted_candidates: {len(explanations)}",
+            "- safety: research_only / no_official_target / no_broker / no_production",
+            "",
+        ]
+    )
+
+
+def render_promotion_gate_report(manifest: Mapping[str, Any], decision: Mapping[str, Any]) -> str:
+    summary = _mapping(decision.get("decision_summary"))
+    return "\n".join(
+        [
+            f"# Weight Method Promotion Gate {manifest.get('promotion_gate_id')}",
+            "",
+            f"- promoted：{summary.get('promoted_count')}",
+            f"- keep_testing：{summary.get('keep_testing_count')}",
+            f"- rejected：{summary.get('rejected_count')}",
+            (
+                "- safety：gate result is formal implementation eligibility only, "
+                "not owner approval or production."
+            ),
+            "",
+        ]
+    )
+
+
+def render_formal_method_implementation_plan(
+    manifest: Mapping[str, Any],
+    specs: Mapping[str, Any],
+    validation_plan: Mapping[str, Any],
+) -> str:
+    lines = [
+        f"# Formal Method Auto Plan {manifest.get('plan_id')}",
+        "",
+        f"- status: {manifest.get('status')}",
+        f"- implemented: {manifest.get('implemented')}",
+        "",
+        "## Candidate Methods",
+    ]
+    for row in _records(specs.get("methods")):
+        lines.append(
+            f"- {row.get('method_name')}: complexity={row.get('implementation_complexity')}"
+        )
+    lines.extend(
+        ["", "## Validation", f"- stages: {', '.join(_texts(validation_plan.get('stages')))}", ""]
+    )
+    return "\n".join(lines)
+
+
+def render_formal_method_auto_plan_report(
+    manifest: Mapping[str, Any], specs: Mapping[str, Any]
+) -> str:
+    return "\n".join(
+        [
+            f"# Formal Method Auto Plan Report {manifest.get('plan_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- method_count：{len(_records(specs.get('methods')))}",
+            (
+                "- TRADING-298～300：未实现 formal method 时保持 "
+                "SKIPPED_NOT_IMPLEMENTED validation plan。"
+            ),
+            "",
+        ]
+    )
+
+
+def render_dashboard_reader_brief(summary: Mapping[str, Any]) -> str:
+    search = _mapping(summary.get("search_summary"))
+    top = _mapping(summary.get("top_candidates"))
+    next_actions = _mapping(summary.get("next_actions"))
+    return "\n".join(
+        [
+            "## Weight Optimization Batch Search",
+            "",
+            f"- variants_total: {search.get('variants_total')}",
+            f"- top_candidate: {top.get('top_overall_candidate')}",
+            f"- branch_decision: {next_actions.get('branch_decision')}",
+            f"- next_action: {next_actions.get('recommended_next_action')}",
+            "- safety: no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_owner_decision_pack_report(
+    manifest: Mapping[str, Any], options: Mapping[str, Any]
+) -> str:
+    return "\n".join(
+        [
+            f"# Owner Research Decision Pack {manifest.get('owner_pack_id')}",
+            "",
+            f"- recommended_decision：{options.get('recommended_decision')}",
+            f"- available_options：{', '.join(_texts(options.get('available_options')))}",
+            "- boundary：owner decision package 不能自动改 official target、broker 或 production。",
+            "",
+        ]
+    )
+
+
+def _generate_batch2_variants(config: Mapping[str, Any], *, expanded: bool) -> list[dict[str, Any]]:
+    variants: list[dict[str, Any]] = []
+    families = _mapping(config.get("families"))
+    smoothing = _mapping(families.get("smoothing"))
+    windows = [
+        int(_float(value)) for value in _records_or_values(smoothing.get("windows"), [2, 3, 5, 7])
+    ]
+    alphas = [
+        _float(value)
+        for value in _records_or_values(smoothing.get("alpha"), [0.25, 0.35, 0.5, 0.65])
+    ]
+    max_changes = [
+        _float(value)
+        for value in _records_or_values(
+            smoothing.get("max_daily_total_weight_change"), [0.04, 0.06, 0.08, 0.10]
+        )
+    ]
+    if expanded:
+        alphas = sorted(set([*alphas, 0.20, 0.30, 0.40, 0.55, 0.75]))
+    for window in windows:
+        for alpha in alphas:
+            change = max_changes[(window + int(alpha * 100)) % len(max_changes)]
+            variants.append(
+                _variant(
+                    f"smooth_{window}d_alpha_{int(alpha * 100)}_maxchg_{int(change * 100)}pct",
+                    ["smoothing"],
+                    [
+                        {
+                            "type": "weight_smoothing",
+                            "window_days": window,
+                            "alpha": alpha,
+                            "max_daily_total_weight_change": change,
+                        }
+                    ],
+                    ["weight_jump_high", "rolling_consistency_unstable", "turnover_high"],
+                    ["lower_weight_jumps", "lower_signal_churn"],
+                    ["may_lag_fast_regime_change"],
+                )
+            )
+    cooldown = _mapping(families.get("cooldown"))
+    cooldown_days = [
+        int(_float(value))
+        for value in _records_or_values(cooldown.get("cooldown_days"), [3, 5, 10])
+    ]
+    persistence_days = [
+        int(_float(value))
+        for value in _records_or_values(cooldown.get("min_signal_persistence"), [2, 3, 5])
+    ]
+    for days in cooldown_days:
+        for persistence in persistence_days:
+            variants.append(
+                _variant(
+                    f"sideways_cooldown_{days}d_persist_{persistence}d",
+                    ["cooldown"],
+                    [
+                        {
+                            "type": "regime_cooldown",
+                            "regime": "sideways_choppy",
+                            "cooldown_days": days,
+                        },
+                        {"type": "signal_persistence", "persistence_days": persistence},
+                    ],
+                    ["sideways_choppy_instability", "signal_churn"],
+                    ["lower_signal_churn", "avoid_sideways_overtrading"],
+                    ["may_delay_reentry"],
+                )
+            )
+    gate_specs = [
+        ("sideways_reduce_tilt_50", "sideways_choppy", "reduce_active_tilt", {"multiplier": 0.5}),
+        ("sideways_hold_previous", "sideways_choppy", "hold_previous_weights", {}),
+        ("tech_drawdown_block_risk_increase", "tech_drawdown", "block_risk_asset_increase", {}),
+        (
+            "semiconductor_pullback_block_smh_increase",
+            "semiconductor_pullback",
+            "block_symbol_increase",
+            {"symbol": "SMH"},
+        ),
+        ("risk_off_only_allow_risk_reduction", "risk_off", "only_allow_risk_reduction", {}),
+        (
+            "strong_recovery_fast_restore",
+            "strong_recovery",
+            "reduce_active_tilt",
+            {"multiplier": 0.85},
+        ),
+    ]
+    for variant_id, regime, action, extra in gate_specs:
+        variants.append(
+            _variant(
+                variant_id,
+                ["regime_gating"],
+                [{"type": "regime_gate", "regime": regime, "action": action, **extra}],
+                ["regime_mismatch", "drawdown_not_improved"],
+                ["improve_regime_specific_risk_control"],
+                ["may_reduce_return_in_recovery"],
+            )
+        )
+    thresholds = [0.02, 0.03, 0.05]
+    for threshold in thresholds:
+        variants.append(
+            _variant(
+                f"rebalance_delta_gt_{int(threshold * 100)}pct",
+                ["rebalance_threshold"],
+                [{"type": "rebalance_threshold", "min_total_abs_delta": threshold}],
+                ["turnover_high", "weight_jump_high"],
+                ["lower_turnover"],
+                ["may_skip_small_useful_adjustments"],
+            )
+        )
+    for method in [
+        "median",
+        "trimmed_mean",
+        "weighted_mean",
+        "top_3_candidate_consensus",
+        "top_5_candidate_consensus",
+        "cluster_representative_consensus",
+        "risk_adjusted_weighted_consensus",
+        "low_turnover_candidate_consensus",
+    ]:
+        variants.append(
+            _variant(
+                method.replace("_candidate_consensus", "_target_weights"),
+                ["candidate_ensemble"],
+                [{"type": "consensus_aggregation", "method": _consensus_method(method)}],
+                ["rolling_consistency_unstable", "regime_mismatch"],
+                ["reduce_single_candidate_noise"],
+                ["may_blend_away_best_candidate"],
+            )
+        )
+    for cash in [0.10, 0.15, 0.20]:
+        variants.append(
+            _variant(
+                f"cash_buffer_{int(cash * 100)}",
+                ["cash_buffer"],
+                [{"type": "min_cash_weight", "min_cash_weight": cash}],
+                ["drawdown_not_improved", "exposure_too_high"],
+                ["lower_drawdown_pressure"],
+                ["reduces_full_risk_asset_participation"],
+            )
+        )
+    for cap in [0.20, 0.25, 0.30]:
+        variants.append(
+            _variant(
+                f"semiconductor_cap_{int(cap * 100)}",
+                ["risk_exposure_control"],
+                [{"type": "cap_group_weight", "group": "semiconductor", "max_weight": cap}],
+                ["higher_semiconductor_exposure", "exposure_too_high"],
+                ["lower_semiconductor_concentration"],
+                ["may_underperform_semiconductor_recovery"],
+            )
+        )
+    for cap in [0.85, 0.90, 0.95]:
+        variants.append(
+            _variant(
+                f"risk_asset_cap_{int(cap * 100)}",
+                ["risk_exposure_control"],
+                [{"type": "cap_group_weight", "group": "risk_assets", "max_weight": cap}],
+                ["exposure_too_high", "drawdown_not_improved"],
+                ["lower_total_risk_exposure"],
+                ["may_reduce_return"],
+            )
+        )
+    for cap in [0.04, 0.06, 0.08]:
+        variants.append(
+            _variant(
+                f"turnover_cap_{int(cap * 100)}pct",
+                ["turnover_control"],
+                [{"type": "turnover_cap", "max_turnover": cap}],
+                ["turnover_high", "weight_jump_high"],
+                ["cap_rebalance_churn"],
+                ["may_lag_signal_change"],
+            )
+        )
+    hybrids = [
+        (
+            "smooth_3d_plus_rebalance_delta_3pct",
+            ["smoothing", "rebalance_threshold"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.5},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.03},
+            ],
+        ),
+        (
+            "smooth_3d_plus_cash_buffer_15",
+            ["smoothing", "cash_buffer"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.5},
+                {"type": "min_cash_weight", "min_cash_weight": 0.15},
+            ],
+        ),
+        (
+            "smooth_3d_plus_tech_drawdown_block",
+            ["smoothing", "regime_gating"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.5},
+                {
+                    "type": "regime_gate",
+                    "regime": "tech_drawdown",
+                    "action": "block_risk_asset_increase",
+                },
+            ],
+        ),
+        (
+            "smooth_3d_plus_sideways_cooldown_5d",
+            ["smoothing", "cooldown"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.5},
+                {"type": "regime_cooldown", "regime": "sideways_choppy", "cooldown_days": 5},
+            ],
+        ),
+        (
+            "median_plus_rebalance_delta_3pct",
+            ["candidate_ensemble", "rebalance_threshold"],
+            [
+                {"type": "consensus_aggregation", "method": "median"},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.03},
+            ],
+        ),
+        (
+            "top5_consensus_plus_smooth_3d",
+            ["candidate_ensemble", "smoothing"],
+            [
+                {"type": "consensus_aggregation", "method": "weighted_mean"},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.5},
+            ],
+        ),
+        (
+            "sideways_hold_plus_strong_recovery_restore",
+            ["regime_gating"],
+            [
+                {
+                    "type": "regime_gate",
+                    "regime": "sideways_choppy",
+                    "action": "hold_previous_weights",
+                },
+                {
+                    "type": "regime_gate",
+                    "regime": "strong_recovery",
+                    "action": "reduce_active_tilt",
+                    "multiplier": 0.85,
+                },
+            ],
+        ),
+        (
+            "cash15_plus_semiconductor_cap25",
+            ["cash_buffer", "risk_exposure_control"],
+            [
+                {"type": "min_cash_weight", "min_cash_weight": 0.15},
+                {"type": "cap_group_weight", "group": "semiconductor", "max_weight": 0.25},
+            ],
+        ),
+        (
+            "turnover_cap6_plus_rebalance_delta3",
+            ["turnover_control", "rebalance_threshold"],
+            [
+                {"type": "turnover_cap", "max_turnover": 0.06},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.03},
+            ],
+        ),
+        (
+            "smooth_5d_plus_semiconductor_cap25",
+            ["smoothing", "risk_exposure_control"],
+            [
+                {"type": "weight_smoothing", "window_days": 5, "alpha": 0.5},
+                {"type": "cap_group_weight", "group": "semiconductor", "max_weight": 0.25},
+            ],
+        ),
+    ]
+    if expanded:
+        hybrids.extend(
+            [
+                (
+                    "smooth_2d_alpha40_plus_turnover_cap6",
+                    ["smoothing", "turnover_control"],
+                    [
+                        {"type": "weight_smoothing", "window_days": 2, "alpha": 0.4},
+                        {"type": "turnover_cap", "max_turnover": 0.06},
+                    ],
+                ),
+                (
+                    "smooth_7d_alpha65_plus_cash20",
+                    ["smoothing", "cash_buffer"],
+                    [
+                        {"type": "weight_smoothing", "window_days": 7, "alpha": 0.65},
+                        {"type": "min_cash_weight", "min_cash_weight": 0.20},
+                    ],
+                ),
+                (
+                    "trimmed_mean_plus_semiconductor_cap20",
+                    ["candidate_ensemble", "risk_exposure_control"],
+                    [
+                        {"type": "consensus_aggregation", "method": "trimmed_mean"},
+                        {"type": "cap_group_weight", "group": "semiconductor", "max_weight": 0.20},
+                    ],
+                ),
+            ]
+        )
+    for variant_id, variant_families, transforms in hybrids:
+        variants.append(
+            _variant(
+                variant_id,
+                variant_families,
+                transforms,
+                ["weight_jump_high", "turnover_high", "rolling_consistency_unstable"],
+                ["combine_complementary_controls"],
+                ["compound_lag_or_return_sacrifice"],
+            )
+        )
+    return _dedupe_variants(variants)
+
+
+def _variant(
+    variant_id: str,
+    families: Sequence[str],
+    transforms: Sequence[Mapping[str, Any]],
+    failure_modes: Sequence[str],
+    benefits: Sequence[str],
+    costs: Sequence[str],
+) -> dict[str, Any]:
+    return {
+        "variant_id": variant_id,
+        "base_method": "limited_adjustment",
+        "families": list(families),
+        "family": families[0] if families else "UNKNOWN",
+        "transforms": [dict(row) for row in transforms],
+        "target_failure_modes": list(failure_modes),
+        "expected_benefit": list(benefits),
+        "expected_cost": list(costs),
+        "complexity": "LOW" if len(transforms) <= 1 else "MEDIUM",
+        "experiment_only": True,
+        "research_screening_only": True,
+        "not_formal_research_method": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        "auto_apply": False,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _scorecard_rows(
+    backfill: Mapping[str, Any],
+    variant_specs: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    specs = {str(row.get("variant_id")): row for row in variant_specs}
+    performance = {
+        str(row.get("variant_id")): row
+        for row in _records(backfill.get("variant_performance_metrics"))
+    }
+    stability = {
+        str(row.get("variant_id")): row
+        for row in _records(backfill.get("variant_stability_metrics"))
+    }
+    churn = {
+        str(row.get("variant_id")): row for row in _records(backfill.get("variant_churn_metrics"))
+    }
+    lag = {str(row.get("variant_id")): row for row in _records(backfill.get("variant_lag_metrics"))}
+    regimes = _records(backfill.get("variant_regime_metrics"))
+    rows = []
+    for variant_id, perf in performance.items():
+        stable = _mapping(stability.get(variant_id))
+        churn_row = _mapping(churn.get(variant_id))
+        lag_row = _mapping(lag.get(variant_id))
+        regime_rows = [row for row in regimes if row.get("variant_id") == variant_id]
+        components = {
+            "return": _bounded_score(
+                _float(perf.get("relative_to_limited_adjustment")), -0.05, 0.05
+            ),
+            "annualized_return": _bounded_score(_float(perf.get("annualized_return")), -0.05, 0.25),
+            "drawdown": _bounded_score(_float(perf.get("drawdown_delta_vs_limited")), -0.02, 0.02),
+            "volatility": _bounded_score(-_float(perf.get("realized_volatility")), -0.35, -0.05),
+            "risk_adjusted_return": _bounded_score(_risk_adjusted(perf), -1.0, 2.0),
+            "turnover": _bounded_score(-_float(perf.get("turnover_delta_vs_limited")), -0.2, 0.2),
+            "rolling_consistency": _label_score(
+                _text(stable.get("rolling_consistency_delta")),
+                {"IMPROVED": 1.0, "MIXED": 0.55, "INSUFFICIENT_DATA": 0.1, "WORSE": 0.0},
+            ),
+            "sideways_choppy": _regime_component(regime_rows, "sideways_choppy"),
+            "tech_drawdown": _regime_component(regime_rows, "tech_drawdown"),
+            "strong_recovery_lag": _label_score(
+                _text(lag_row.get("lag_cost_status")),
+                {"LOW": 1.0, "MEDIUM": 0.45, "HIGH": 0.0, "INSUFFICIENT_DATA": 0.2},
+            ),
+            "signal_churn": _bounded_score(-_float(churn_row.get("signal_churn_count")), -30, 0),
+            "weight_jumps": _bounded_score(-_float(churn_row.get("large_jump_count")), -30, 0),
+            "simplicity": _simplicity_score(_mapping(specs.get(variant_id))),
+            "data_quality": 1.0 if backfill.get("data_quality_status") == "PASS" else 0.8,
+        }
+        overall = round(
+            sum(components[key] * BATCH2_SCORE_WEIGHTS[key] for key in BATCH2_SCORE_WEIGHTS), 6
+        )
+        flags = _scorecard_hard_reject_flags(perf, stable, regime_rows, lag_row, backfill)
+        decision = _scorecard_decision(overall, flags, perf, stable)
+        spec = _mapping(specs.get(variant_id))
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "families": _texts(spec.get("families")) or [_text(spec.get("family"))],
+                "overall_score": overall,
+                "score_components": {key: round(value, 6) for key, value in components.items()},
+                "hard_reject_flags": flags,
+                "scorecard_decision": decision,
+                "total_return": perf.get("total_return"),
+                "annualized_return": perf.get("annualized_return"),
+                "max_drawdown": perf.get("max_drawdown"),
+                "realized_volatility": perf.get("realized_volatility"),
+                "turnover": perf.get("turnover"),
+                "rolling_consistency_delta": stable.get("rolling_consistency_delta"),
+                "reason": _scorecard_reason(decision, flags, perf, stable, lag_row),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return sorted(rows, key=lambda row: _float(row.get("overall_score")), reverse=True)
+
+
+def _scorecard_hard_reject_flags(
+    perf: Mapping[str, Any],
+    stable: Mapping[str, Any],
+    regime_rows: Sequence[Mapping[str, Any]],
+    lag_row: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+) -> list[str]:
+    flags: list[str] = []
+    if backfill.get("data_quality_status") == "FAIL":
+        flags.append("data_quality_FAIL")
+    if _float(perf.get("drawdown_delta_vs_limited")) < BATCH2_MATERIAL_DRAWDOWN_WORSE_DELTA:
+        flags.append("max_drawdown_materially_worse_than_limited_adjustment")
+    if stable.get("rolling_consistency_delta") == "WORSE":
+        flags.append("rolling_consistency_worse_than_limited_adjustment")
+    if _float(perf.get("turnover_delta_vs_limited")) > BATCH2_MATERIAL_TURNOVER_WORSE_DELTA:
+        flags.append("turnover_materially_higher_than_limited_adjustment")
+    if lag_row.get("lag_cost_status") == "HIGH":
+        flags.append("strong_recovery_lag_cost_HIGH")
+    if any(
+        row.get("regime") == "sideways_choppy"
+        and row.get("regime_status") == BATCH2_SIDWAYS_WORSE_REGIME_LABEL
+        for row in regime_rows
+    ):
+        flags.append("sideways_choppy_performance_WORSE")
+    pressure_worse = [
+        row
+        for row in regime_rows
+        if row.get("regime") in {"tech_drawdown", "semiconductor_pullback", "risk_off"}
+        and row.get("regime_status") == "WORSE"
+    ]
+    if len(pressure_worse) >= 2:
+        flags.append("only_wins_in_one_narrow_window_or_pressure_regimes_worse")
+    return flags
+
+
+def _scorecard_decision(
+    score: float,
+    flags: Sequence[str],
+    perf: Mapping[str, Any],
+    stable: Mapping[str, Any],
+) -> str:
+    if flags:
+        return "REJECT"
+    if score >= BATCH2_PROMOTE_SCORE and perf.get("performance_status") != "FAIL":
+        return "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+    if score >= BATCH2_KEEP_TESTING_SCORE or stable.get("rolling_consistency_delta") == "IMPROVED":
+        return "KEEP_FOR_MORE_TESTING"
+    if perf.get("performance_status") == "INSUFFICIENT_DATA":
+        return "DEFER_FOR_FORWARD_DATA"
+    return "REJECT"
+
+
+def _adaptive_branch_decision(
+    scorecard: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = _records(scorecard.get("variant_scorecard"))
+    promoted = [
+        row for row in rows if row.get("scorecard_decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+    ]
+    robust = set(_texts(_mapping(robustness.get("robustness_summary")).get("robust_candidates")))
+    promoted_robust = [row for row in promoted if row.get("variant_id") in robust or not robust]
+    family_counts: dict[str, int] = {}
+    for row in rows[:10]:
+        for family in _texts(row.get("families")):
+            family_counts[family] = family_counts.get(family, 0) + 1
+    leading_family = max(family_counts, key=family_counts.get) if family_counts else "UNKNOWN"
+    if scorecard.get("data_quality_status") == "FAIL":
+        decision = "BLOCKED_DATA_QUALITY_FAIL"
+        next_command = "aits validate-data"
+        reason = ["data_quality_FAIL blocks research conclusion"]
+    elif promoted_robust:
+        decision = "RUN_PROMOTION_GATE"
+        next_command = (
+            "aits etf dynamic-v3-rescue weight-candidate-cluster run "
+            "--scorecard-id <scorecard_id> --robustness-id <robustness_id>"
+        )
+        reason = [f"promote_count={len(promoted_robust)}", "no hard blockers in scorecard"]
+    else:
+        decision = "RUN_EXPANDED_SEARCH"
+        next_command = (
+            "aits etf dynamic-v3-rescue weight-expanded-search build --branch-id <branch_id>"
+        )
+        reason = ["no robust promotion candidate", f"leading_family={leading_family}"]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "branch_decision": decision,
+        "leading_family": leading_family,
+        "family_counts": family_counts,
+        "reason": reason,
+        "next_command": next_command,
+        "search_space_id": scorecard.get("search_space_id", ""),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _candidate_clusters(
+    scorecard: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    robust = set(_texts(_mapping(robustness.get("robustness_summary")).get("robust_candidates")))
+    selected = [
+        row
+        for row in _records(scorecard.get("variant_scorecard"))
+        if row.get("scorecard_decision")
+        in {"PROMOTE_TO_FORMAL_IMPLEMENTATION", "KEEP_FOR_MORE_TESTING"}
+    ][:20]
+    if not selected:
+        selected = _records(scorecard.get("variant_scorecard"))[:10]
+    groups: dict[str, list[Mapping[str, Any]]] = {}
+    for row in selected:
+        key = "+".join(sorted(_texts(row.get("families")) or ["UNKNOWN"]))
+        groups.setdefault(key, []).append(row)
+    clusters = []
+    representatives = []
+    for cluster_key, rows in sorted(groups.items()):
+        ranked = sorted(
+            rows,
+            key=lambda row: (
+                _text(row.get("variant_id")) not in robust,
+                -_float(row.get("overall_score")),
+            ),
+        )
+        representative = dict(ranked[0])
+        representatives.append(
+            {
+                "cluster_id": cluster_key,
+                "variant_id": representative.get("variant_id"),
+                "families": representative.get("families"),
+                "overall_score": representative.get("overall_score"),
+                "scorecard_decision": representative.get("scorecard_decision"),
+                "robustness_status": (
+                    "ROBUST" if representative.get("variant_id") in robust else "REVIEW_REQUIRED"
+                ),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+        clusters.append(
+            {
+                "cluster_id": cluster_key,
+                "variant_count": len(rows),
+                "member_variants": [_text(row.get("variant_id")) for row in rows],
+                "representative_variant": representative.get("variant_id"),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return (
+        {"schema_version": st.SCHEMA_VERSION, "clusters": clusters, **st.EXPERIMENT_FACTORY_SAFETY},
+        {
+            "schema_version": st.SCHEMA_VERSION,
+            "representatives": representatives,
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+    )
+
+
+def _candidate_explanation(row: Mapping[str, Any]) -> dict[str, Any]:
+    families = _texts(row.get("families"))
+    score = _float(row.get("overall_score"))
+    decision = _text(row.get("scorecard_decision"))
+    return {
+        "variant_id": row.get("variant_id"),
+        "families": families,
+        "scorecard_decision": decision,
+        "overall_score": score,
+        "what_it_changes": [f"adjusts {family}" for family in families],
+        "why_it_helped": _family_benefits(families),
+        "what_it_costs": _family_costs(families),
+        "best_regimes": ["sideways_choppy" if "cooldown" in families else "ai_after_chatgpt"],
+        "weak_regimes": [
+            (
+                "strong_recovery"
+                if {"smoothing", "cooldown"} & set(families)
+                else "requires_forward_confirmation"
+            )
+        ],
+        "recommended_promotion": decision == "PROMOTE_TO_FORMAL_IMPLEMENTATION",
+        "implementation_complexity": "LOW" if len(families) <= 1 else "MEDIUM",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _promotion_gate_decisions(explanations: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for row in explanations:
+        if row.get("recommended_promotion") is True:
+            decision = "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+        elif row.get("scorecard_decision") == "KEEP_FOR_MORE_TESTING":
+            decision = "KEEP_FOR_MORE_TESTING"
+        elif "requires_forward_confirmation" in _texts(row.get("weak_regimes")):
+            decision = "DEFER_FOR_FORWARD_DATA"
+        else:
+            decision = "REJECT"
+        rows.append(
+            {
+                "variant_id": row.get("variant_id"),
+                "families": row.get("families"),
+                "decision": decision,
+                "reason": [
+                    f"scorecard_decision={row.get('scorecard_decision')}",
+                    "research_only_no_owner_approval_no_production",
+                ],
+                "implementation_complexity": row.get("implementation_complexity", "MEDIUM"),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _formal_method_specs(candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    methods = []
+    for row in candidates:
+        variant_id = _text(row.get("variant_id"))
+        method_name = f"{variant_id}_limited_adjustment_research_method"
+        methods.append(
+            {
+                "variant_id": variant_id,
+                "method_name": method_name,
+                "implementation_scope": "research_only",
+                "implementation_complexity": row.get("implementation_complexity", "MEDIUM"),
+                "transform_composable": True,
+                "implementation_executed": False,
+                "research_target_only": True,
+                "not_official_target_weights": True,
+                "paper_shadow_only": True,
+                "broker_action_allowed": False,
+                "production_effect": st.PRODUCTION_EFFECT,
+                "auto_apply": False,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": st.SCHEMA_VERSION, "methods": methods, **st.EXPERIMENT_FACTORY_SAFETY}
+
+
+def _formal_validation_plan(specs: Mapping[str, Any]) -> dict[str, Any]:
+    implemented = any(
+        row.get("implementation_executed") is True for row in _records(specs.get("methods"))
+    )
+    status = "READY_AFTER_IMPLEMENTATION" if implemented else "SKIPPED_NOT_IMPLEMENTED"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "stages": [
+            "TRADING-298 formal candidate paper shadow backfill",
+            "TRADING-299 formal candidate comparison and hardening review",
+            "TRADING-300 forward confirmation registration",
+        ],
+        "stage_status": {
+            "formal_candidate_paper_shadow_backfill": status,
+            "formal_candidate_comparison_hardening": status,
+            "forward_confirmation_registration": status,
+        },
+        "skip_reason": (
+            "formal method was not implemented in this auto-plan artifact"
+            if not implemented
+            else ""
+        ),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _dashboard_summary(
+    scorecard: Mapping[str, Any],
+    branch: Mapping[str, Any],
+    gate: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = _records(scorecard.get("variant_scorecard"))
+    promoted = [
+        row
+        for row in _records(_mapping(gate.get("promotion_gate_decision")).get("decisions"))
+        if row.get("decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+    ]
+    rejected = [row for row in rows if row.get("scorecard_decision") == "REJECT"]
+    branch_payload = _mapping(branch.get("branch_decision_payload"))
+    return {
+        "search_summary": {
+            "schema_version": st.SCHEMA_VERSION,
+            "variants_total": len(rows),
+            "data_quality_status": scorecard.get("data_quality_status"),
+            "families_ranked": _rank_families(rows),
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        "top_candidates": {
+            "schema_version": st.SCHEMA_VERSION,
+            "top_overall_candidate": _text(rows[0].get("variant_id")) if rows else "",
+            "top_return_candidate": scorecard.get("top_return_candidate"),
+            "top_drawdown_candidate": scorecard.get("top_drawdown_candidate"),
+            "top_stability_candidate": scorecard.get("top_stability_candidate"),
+            "promoted_candidates": [_text(row.get("variant_id")) for row in promoted],
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        "rejected_summary": {
+            "schema_version": st.SCHEMA_VERSION,
+            "rejected_count": len(rejected),
+            "top_reject_reasons": _top_reject_reasons(rejected),
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        "next_actions": {
+            "schema_version": st.SCHEMA_VERSION,
+            "branch_decision": branch_payload.get("branch_decision"),
+            "recommended_next_action": (
+                "implement_top_candidate" if promoted else "run_expanded_search"
+            ),
+            "no_official_target_no_broker_no_production": True,
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+    }
+
+
+def _owner_decision_options(dashboard: Mapping[str, Any]) -> dict[str, Any]:
+    top = _mapping(dashboard.get("top_candidates"))
+    next_actions = _mapping(dashboard.get("next_actions"))
+    promoted = _texts(top.get("promoted_candidates"))
+    if promoted:
+        recommended = "implement_top_candidate"
+    elif next_actions.get("branch_decision") == "RUN_EXPANDED_SEARCH":
+        recommended = "run_expanded_search"
+    else:
+        recommended = "continue_search"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "available_options": [
+            "continue_search",
+            "implement_top_candidate",
+            "defer_for_forward_data",
+            "reject_all_candidates",
+            "run_expanded_search",
+        ],
+        "recommended_decision": recommended,
+        "reason": [
+            f"promoted_candidates={len(promoted)}",
+            f"branch_decision={next_actions.get('branch_decision')}",
+            "owner pack is decision support only",
+        ],
+        "production_actions_allowed": False,
+        "broker_action_allowed": False,
+        "official_target_weights_allowed": False,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _search_family_inventory(config: Mapping[str, Any]) -> dict[str, Any]:
+    rows = []
+    for family, payload in sorted(_mapping(config.get("families")).items()):
+        data = _mapping(payload)
+        params = [
+            key
+            for key, value in data.items()
+            if key != "enabled" and isinstance(value, (list, tuple))
+        ]
+        rows.append(
+            {
+                "family": family,
+                "enabled": data.get("enabled") is True,
+                "parameters": params,
+                "parameter_count": sum(
+                    len(_records_or_values(data.get(key), [])) for key in params
+                ),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": st.SCHEMA_VERSION, "families": rows, **st.EXPERIMENT_FACTORY_SAFETY}
+
+
+def _batch2_family_coverage(variants: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    families = sorted({family for row in variants for family in _texts(row.get("families"))})
+    failure_modes = sorted(
+        {mode for row in variants for mode in _texts(row.get("target_failure_modes"))}
+    )
+    by_family = {
+        family: sum(1 for row in variants if family in _texts(row.get("families")))
+        for family in families
+    }
+    by_failure = {
+        mode: sum(1 for row in variants if mode in _texts(row.get("target_failure_modes")))
+        for mode in failure_modes
+    }
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "families_covered": families,
+        "family_counts": by_family,
+        "failure_modes_covered": failure_modes,
+        "failure_mode_counts": by_failure,
+        "coverage_status": "PASS" if len(families) >= 8 else "FAIL",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _variant_churn_metrics(
+    variant_states: Sequence[Mapping[str, Any]],
+    stability_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    stability = {str(row.get("variant_id")): row for row in stability_rows}
+    rows = []
+    for variant_id in sorted({str(row.get("variant_id")) for row in variant_states}):
+        states = [row for row in variant_states if row.get("variant_id") == variant_id]
+        turnover_values = [
+            _float(row.get("turnover")) for row in states if row.get("rebalance_event") is True
+        ]
+        stable = _mapping(stability.get(variant_id))
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "avg_rebalance_turnover": (
+                    round(sum(turnover_values) / len(turnover_values), 10)
+                    if turnover_values
+                    else 0.0
+                ),
+                "max_rebalance_turnover": (
+                    round(max(turnover_values), 10) if turnover_values else 0.0
+                ),
+                "signal_churn_count": int(_float(stable.get("weight_flip_count"))),
+                "large_jump_count": int(_float(stable.get("large_jump_count"))),
+                "churn_status": (
+                    "LOW" if _float(stable.get("large_jump_count")) <= 1 else "REVIEW_REQUIRED"
+                ),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _variant_lag_metrics(regime_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    by_variant = sorted({str(row.get("variant_id")) for row in regime_rows})
+    for variant_id in by_variant:
+        recovery = [
+            row
+            for row in regime_rows
+            if row.get("variant_id") == variant_id and row.get("regime") == "strong_recovery"
+        ]
+        delta = _float(recovery[0].get("relative_to_limited_adjustment")) if recovery else 0.0
+        if not recovery or recovery[0].get("regime_status") == "INSUFFICIENT_DATA":
+            status = "INSUFFICIENT_DATA"
+        elif delta <= BATCH2_STRONG_RECOVERY_HIGH_LAG_DELTA:
+            status = "HIGH"
+        elif delta < 0:
+            status = "MEDIUM"
+        else:
+            status = "LOW"
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "strong_recovery_return_delta_vs_limited": round(delta, 10),
+                "lag_cost_status": status,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _rolling_robustness_rows(
+    scorecard: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+    top_ids: Sequence[str],
+) -> list[dict[str, Any]]:
+    states = _records(backfill.get("variant_weight_paths"))
+    rows = []
+    for variant_id in top_ids:
+        selected = [row for row in states if row.get("variant_id") == variant_id]
+        windows = st._rolling_window_inventory(
+            selected, min_observations=st.DEFAULT_MIN_EVAL_OBSERVATIONS
+        )
+        pass_count = 0
+        fail_count = 0
+        for window in windows:
+            metrics = st._state_path_metrics(
+                [
+                    row
+                    for row in selected
+                    if _coerce_date(window.get("start_date"), date(1970, 1, 1))
+                    <= _coerce_date(row.get("date"), date(1970, 1, 1))
+                    <= _coerce_date(window.get("end_date"), date(1970, 1, 1))
+                ],
+                min_observations=2,
+            )
+            if metrics.get("status") == "INSUFFICIENT_DATA":
+                continue
+            if _float(metrics.get("max_drawdown")) >= -0.20:
+                pass_count += 1
+            else:
+                fail_count += 1
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "window_count": len(windows),
+                "rolling_pass_count": pass_count,
+                "rolling_fail_count": fail_count,
+                "rolling_status": "ROBUST" if pass_count >= fail_count else "WEAK",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _robustness_summary(
+    top_ids: Sequence[str],
+    rolling: Sequence[Mapping[str, Any]],
+    regime: Sequence[Mapping[str, Any]],
+    stability: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rolling_status = {str(row.get("variant_id")): row for row in rolling}
+    stability_status = {str(row.get("variant_id")): row for row in stability}
+    robust = []
+    weak = []
+    for variant_id in top_ids:
+        regime_worse = [
+            row
+            for row in regime
+            if row.get("variant_id") == variant_id and row.get("regime_status") == "WORSE"
+        ]
+        stable = _mapping(stability_status.get(variant_id))
+        rolling_row = _mapping(rolling_status.get(variant_id))
+        if (
+            len(regime_worse) <= 1
+            and stable.get("stability_status") in {"STABLE", "MODERATE"}
+            and rolling_row.get("rolling_status") != "WEAK"
+        ):
+            robust.append(variant_id)
+        else:
+            weak.append(variant_id)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "robust_candidates": robust,
+        "weak_candidates": weak,
+        "recommended_next_action": "promotion_gate" if robust else "expanded_search",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _pareto_frontier(scorecard: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    candidates = []
+    for row in scorecard:
+        dominated = False
+        for other in scorecard:
+            if row is other:
+                continue
+            better_or_equal = (
+                _float(other.get("total_return")) >= _float(row.get("total_return"))
+                and _float(other.get("max_drawdown")) >= _float(row.get("max_drawdown"))
+                and _float(other.get("turnover")) <= _float(row.get("turnover"))
+            )
+            strictly_better = (
+                _float(other.get("total_return")) > _float(row.get("total_return"))
+                or _float(other.get("max_drawdown")) > _float(row.get("max_drawdown"))
+                or _float(other.get("turnover")) < _float(row.get("turnover"))
+            )
+            if better_or_equal and strictly_better:
+                dominated = True
+                break
+        if not dominated:
+            candidates.append(_text(row.get("variant_id")))
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "candidates": candidates[:20],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _score_distribution(scorecard: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    scores = sorted(_float(row.get("overall_score")) for row in scorecard)
+    decisions = [_text(row.get("scorecard_decision")) for row in scorecard]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "variant_count": len(scorecard),
+        "min_score": scores[0] if scores else 0.0,
+        "median_score": scores[len(scores) // 2] if scores else 0.0,
+        "max_score": scores[-1] if scores else 0.0,
+        "promote_count": decisions.count("PROMOTE_TO_FORMAL_IMPLEMENTATION"),
+        "keep_testing_count": decisions.count("KEEP_FOR_MORE_TESTING"),
+        "reject_count": decisions.count("REJECT"),
+        "defer_count": decisions.count("DEFER_FOR_FORWARD_DATA"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _batch2_matrix_payload(*, matrix_id: str, output_dir: Path) -> dict[str, Any]:
+    root = output_dir / matrix_id
+    if not (root / "batch2_matrix_manifest.json").exists():
+        raise RuntimeError(f"batch2 matrix artifact not found: {root}")
+    return {
+        **_read_json(root / "batch2_matrix_manifest.json"),
+        "variant_specs": _read_jsonl(root / "batch2_variant_specs.jsonl"),
+        "family_coverage": _read_json(root / "batch2_family_coverage.json"),
+        "matrix_dir": str(root),
+    }
+
+
+def _latest_common_price_date(pivot: pd.DataFrame, symbols: Sequence[str]) -> date:
+    if pivot.empty:
+        raise RuntimeError("price cache has no rows for batch backfill symbols")
+    latest_dates = []
+    for symbol in symbols:
+        if symbol in pivot.columns:
+            series = pivot[symbol].dropna()
+            if not series.empty:
+                latest_dates.append(series.index[-1].date())
+    if not latest_dates:
+        raise RuntimeError("price cache has no complete symbol coverage")
+    return min(latest_dates)
+
+
+def _promotion_decision_summary(decisions: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    return {
+        "promoted_count": sum(
+            1 for row in decisions if row.get("decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+        ),
+        "keep_testing_count": sum(
+            1 for row in decisions if row.get("decision") == "KEEP_FOR_MORE_TESTING"
+        ),
+        "rejected_count": sum(1 for row in decisions if row.get("decision") == "REJECT"),
+        "defer_count": sum(
+            1 for row in decisions if row.get("decision") == "DEFER_FOR_FORWARD_DATA"
+        ),
+    }
+
+
+def _promoted_candidate_spec(row: Mapping[str, Any]) -> dict[str, Any]:
+    variant_id = _text(row.get("variant_id"))
+    return {
+        "variant_id": variant_id,
+        "proposed_method_name": f"{variant_id}_limited_adjustment_research_method",
+        "families": _texts(row.get("families")),
+        "implementation_complexity": row.get("implementation_complexity", "MEDIUM"),
+        "transform_composable": True,
+        "requires_external_data": False,
+        "implementation_scope": "research_only",
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _failure_mode_coverage_from_explanations(
+    explanations: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    families = {family for row in explanations for family in _texts(row.get("families"))}
+    rows = [
+        {
+            "failure_mode": mode,
+            "coverage_status": "COVERED" if families else "MISSING",
+            "covered_by_families": sorted(families),
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        }
+        for mode in st.DEFAULT_FAILURE_MODES
+    ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "failure_modes": rows,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _top_by(rows: Sequence[Mapping[str, Any]], key: str) -> str:
+    if not rows:
+        return ""
+    return _text(max(rows, key=lambda row: _float(row.get(key))).get("variant_id"))
+
+
+def _top_stability(rows: Sequence[Mapping[str, Any]]) -> str:
+    if not rows:
+        return ""
+    return _text(
+        max(
+            rows,
+            key=lambda row: (
+                _label_score(
+                    _text(row.get("rolling_consistency_delta")),
+                    {"IMPROVED": 2.0, "MIXED": 1.0, "INSUFFICIENT_DATA": 0.0, "WORSE": -1.0},
+                ),
+                _float(row.get("overall_score")),
+            ),
+        ).get("variant_id")
+    )
+
+
+def _rank_families(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    scores: dict[str, list[float]] = {}
+    for row in rows:
+        for family in _texts(row.get("families")):
+            scores.setdefault(family, []).append(_float(row.get("overall_score")))
+    return [
+        {
+            "family": family,
+            "avg_score": round(sum(values) / len(values), 6),
+            "candidate_count": len(values),
+        }
+        for family, values in sorted(
+            scores.items(), key=lambda item: sum(item[1]) / len(item[1]), reverse=True
+        )
+    ]
+
+
+def _top_reject_reasons(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        for flag in _texts(row.get("hard_reject_flags")):
+            counts[flag] = counts.get(flag, 0) + 1
+    return [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:8]
+    ]
+
+
+def _scorecard_reason(
+    decision: str,
+    flags: Sequence[str],
+    perf: Mapping[str, Any],
+    stable: Mapping[str, Any],
+    lag: Mapping[str, Any],
+) -> list[str]:
+    if flags:
+        return [*flags, "hard_reject_rule_applied"]
+    return [
+        f"decision={decision}",
+        f"return_delta={perf.get('relative_to_limited_adjustment')}",
+        f"drawdown_delta={perf.get('drawdown_delta_vs_limited')}",
+        f"rolling={stable.get('rolling_consistency_delta')}",
+        f"lag={lag.get('lag_cost_status')}",
+    ]
+
+
+def _risk_adjusted(perf: Mapping[str, Any]) -> float:
+    vol = _float(perf.get("realized_volatility"))
+    if vol <= 0:
+        return 0.0
+    return _float(perf.get("annualized_return")) / vol
+
+
+def _regime_component(regime_rows: Sequence[Mapping[str, Any]], regime: str) -> float:
+    row = next((item for item in regime_rows if item.get("regime") == regime), {})
+    return _label_score(
+        _text(_mapping(row).get("regime_status")),
+        {"IMPROVED": 1.0, "MIXED": 0.55, "INSUFFICIENT_DATA": 0.2, "WORSE": 0.0},
+    )
+
+
+def _simplicity_score(spec: Mapping[str, Any]) -> float:
+    count = len(_records(spec.get("transforms")))
+    if count <= 1:
+        return 1.0
+    if count == 2:
+        return 0.75
+    return 0.45
+
+
+def _family_benefits(families: Sequence[str]) -> list[str]:
+    mapping = {
+        "smoothing": "reduces weight jumps",
+        "cooldown": "reduces sideways signal churn",
+        "regime_gating": "targets pressure-regime behavior",
+        "candidate_ensemble": "reduces single-candidate noise",
+        "rebalance_threshold": "lowers small rebalances",
+        "cash_buffer": "adds drawdown cushion",
+        "risk_exposure_control": "caps concentrated exposure",
+        "turnover_control": "caps rebalance turnover",
+    }
+    return [mapping.get(family, f"tests {family}") for family in families]
+
+
+def _family_costs(families: Sequence[str]) -> list[str]:
+    costs = []
+    if "smoothing" in families or "cooldown" in families:
+        costs.append("may lag fast recovery")
+    if "cash_buffer" in families or "risk_exposure_control" in families:
+        costs.append("may sacrifice upside")
+    if "candidate_ensemble" in families:
+        costs.append("may dilute the strongest candidate")
+    return costs or ["requires forward confirmation"]
+
+
+def _bounded_score(value: float, lower: float, upper: float) -> float:
+    if upper <= lower:
+        return 0.0
+    return max(0.0, min(1.0, (value - lower) / (upper - lower)))
+
+
+def _label_score(label: str, mapping: Mapping[str, float]) -> float:
+    return _float(mapping.get(label), 0.0)
+
+
+def _consensus_method(method: str) -> str:
+    if method in {"median", "median_target_weights"}:
+        return "median"
+    if method in {"trimmed_mean", "trimmed_mean_target_weights"}:
+        return "trimmed_mean"
+    return "weighted_mean"
+
+
+def _enabled_families(config: Mapping[str, Any]) -> list[str]:
+    return [
+        family
+        for family, payload in sorted(_mapping(config.get("families")).items())
+        if _mapping(payload).get("enabled") is True
+    ]
+
+
+def _assert_weight_search_safety(safety: Mapping[str, Any]) -> None:
+    if not _weight_search_safety_locked(safety):
+        raise ValueError("weight search safety boundary is not locked")
+
+
+def _weight_search_safety_locked(safety: Mapping[str, Any]) -> bool:
+    return (
+        safety.get("research_screening_only") is True
+        and safety.get("experiment_only") is True
+        and safety.get("not_formal_research_method") is True
+        and safety.get("not_official_target_weights") is True
+        and safety.get("broker_action_allowed") is False
+        and safety.get("broker_action_taken") is False
+        and safety.get("order_ticket_generated") is False
+        and safety.get("production_effect") == st.PRODUCTION_EFFECT
+        and safety.get("auto_apply") is False
+    )
+
+
+def _dedupe_variants(variants: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    rows = []
+    for variant in variants:
+        variant_id = _text(variant.get("variant_id"))
+        if variant_id in seen:
+            continue
+        seen.add(variant_id)
+        rows.append(dict(variant))
+    return rows
+
+
+def _records_or_values(value: Any, default: Sequence[Any]) -> list[Any]:
+    if isinstance(value, list | tuple):
+        return list(value)
+    return list(default)
+
+
+_mapping = st._mapping
+_records = st._records
+_texts = st._texts
+_text = st._text
+_float = st._float
+_coerce_date = st._coerce_date
+_stable_id = st._stable_id
+_unique_dir = st._unique_dir
+_write_json = st._write_json
+_write_jsonl = st._write_jsonl
+_write_text = st._write_text
+_read_json = st._read_json
+_read_jsonl = st._read_jsonl
+_read_optional_json = st._read_optional_json
+_write_latest_pointer = st._write_latest_pointer
+_artifact_dir = st._artifact_dir
+_required_file_checks = st._required_file_checks
+_validation_payload = st._validation_payload
+_payload_safe = st._payload_safe
+_payload_experiment_safe = st._payload_experiment_safe

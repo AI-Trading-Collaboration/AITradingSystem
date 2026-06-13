@@ -3796,6 +3796,264 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_search_space
+    title: ETF Dynamic v3 Weight Search Space
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-search-space report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/weight_search_space_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/normalized_search_space.yaml
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/search_family_inventory.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_space/*/weight_search_space_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-286 records the governed batch2 weight search space, required
+      families, variant limits, pilot scoring policy, and no-production safety
+      boundary before variants are generated.
+    owner_action: review_weight_search_space_before_batch2_matrix
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_experiment_batch2
+    title: ETF Dynamic v3 Weight Experiment Batch2 Matrix
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-experiment-batch2 report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_matrix_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_variant_specs.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_family_coverage.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_experiment_batch2/*/batch2_matrix_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-288 records 50 to 80 research-only variants, family coverage,
+      failure-mode coverage, and source backfill linkage before historical
+      screening.
+    owner_action: review_batch2_matrix_before_weight_batch_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_batch_backfill
+    title: ETF Dynamic v3 Weight Batch Backfill
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-batch-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/batch_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/batch_backfill_progress.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_weight_paths.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_performance_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_regime_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_stability_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_churn_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/variant_lag_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_batch_backfill/*/batch_backfill_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-289 runs cached-data-quality-gated historical screening and
+      exposes actual date range, latest_valid_as_of, data quality status,
+      progress, performance, regime, stability, churn, and lag metrics.
+    owner_action: review_weight_batch_backfill_before_scorecard
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_scorecard
+    title: ETF Dynamic v3 Weight Search Scorecard
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-scorecard report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/weight_scorecard_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/variant_scorecard.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/pareto_frontier.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/score_distribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_scorecard/*/weight_scorecard_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-290 ranks variants with pilot score weights, hard reject flags,
+      pareto frontier, and score distribution while keeping promotion
+      interpretation separate from production approval.
+    owner_action: review_weight_scorecard_before_robustness_or_adaptive_branch
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_robustness_review
+    title: ETF Dynamic v3 Weight Robustness Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-robustness-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/robustness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/rolling_robustness.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/regime_robustness.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/stability_robustness.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/robustness_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_robustness_review/*/weight_robustness_review_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-291 reviews top variants across rolling, regime, and stability
+      evidence before adaptive branching and candidate clustering.
+    owner_action: review_weight_robustness_before_adaptive_branch
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_adaptive_branch
+    title: ETF Dynamic v3 Weight Adaptive Branch
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-adaptive-branch report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/adaptive_branch_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/branch_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_adaptive_branch/*/weight_adaptive_branch_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-292 chooses whether to run promotion gate, expanded search, or
+      stop/review while preserving no-production safety fields.
+    owner_action: review_adaptive_branch_before_expanded_search_or_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_candidate_cluster
+    title: ETF Dynamic v3 Weight Candidate Cluster
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-candidate-cluster report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/candidate_cluster_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/candidate_clusters.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/cluster_representatives.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_candidate_cluster/*/candidate_cluster_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-294 groups top variants and selects representative candidates
+      for interpretation without approving any method.
+    owner_action: review_candidate_clusters_before_top_interpretation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_top_candidate_interpretation
+    title: ETF Dynamic v3 Weight Top Candidate Interpretation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-top-candidate-interpretation report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/top_candidate_interpretation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/top_candidate_explanations.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/failure_mode_coverage.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/top_candidate_interpretation_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_top_candidate_interpretation/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-295 explains representative candidate benefits, costs, weak
+      regimes, failure-mode coverage, and implementation risk before promotion
+      gate review.
+    owner_action: review_weight_top_candidate_interpretation_before_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_method_promotion_gate
+    title: ETF Dynamic v3 Weight Method Promotion Gate
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-method-promotion-gate report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promotion_gate_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promotion_gate_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promoted_candidate_specs.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_method_promotion_gate/*/promotion_gate_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-296 gates top candidates into formal implementation planning
+      eligibility only; it cannot approve, apply, or mutate production state.
+    owner_action: review_promotion_gate_before_formal_method_auto_plan
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_formal_method_auto_plan
+    title: ETF Dynamic v3 Formal Method Auto Plan
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue formal-method-auto-plan report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/formal_method_auto_plan_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/formal_method_specs.json
+      - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/implementation_plan.md
+      - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/validation_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/formal_method_auto_plan/*/formal_method_auto_plan_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-297 to TRADING-300 generate formal method specs, implementation
+      plan, and validation plan without implementation, owner approval, official
+      target weights, or broker action.
+    owner_action: review_formal_method_auto_plan_before_any_implementation_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_search_dashboard
+    title: ETF Dynamic v3 Weight Search Dashboard
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-search-dashboard report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/search_dashboard_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/search_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/top_candidates.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/rejected_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/next_actions.json
+      - reports/etf_portfolio/dynamic_v3_rescue/weight_search_dashboard/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-301 summarizes batch search status, top candidates, rejected
+      reasons, adaptive branch, promotion gate, and next actions for owner
+      review.
+    owner_action: review_weight_search_dashboard_before_owner_decision_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_owner_research_decision_pack
+    title: ETF Dynamic v3 Owner Research Decision Pack
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue owner-research-decision-pack report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_decision_pack_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_decision_options.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_decision_pack/*/owner_decision_pack_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-302 packages manual owner options and recommended decision while
+      keeping production, official weights, portfolio, order ticket, and broker
+      mutation forbidden.
+    owner_action: owner_review_research_decision_pack_before_any_followup_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance
