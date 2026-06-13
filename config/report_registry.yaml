@@ -2909,6 +2909,107 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_review_attribution
+    title: ETF Dynamic v3 Rescue Smoothed Review Attribution
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-review-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution/*/smoothed_review_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution/*/smoothed_decision_reason_breakdown.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution/*/smoothed_metric_support_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution/*/smoothed_review_attribution_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-251 explains why smoothed review remains continue-observation /
+      low confidence before owner uses it for forward confirmation.
+    owner_action: review_smoothed_attribution_before_promotion_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothing_benefit_lag
+    title: ETF Dynamic v3 Rescue Smoothing Benefit Lag Drilldown
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothing-benefit-lag report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothing_benefit_lag/*/smoothing_benefit_lag_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothing_benefit_lag/*/smoothing_benefit_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothing_benefit_lag/*/lag_cost_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothing_benefit_lag/*/benefit_lag_tradeoff_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothing_benefit_lag/*/smoothing_benefit_lag_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-252 separates smoothing benefits from lag cost so owner can assess
+      whether smooth_weights_3d remains worth forward observation.
+    owner_action: review_benefit_lag_tradeoff_before_forward_confirmation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_regime_validation
+    title: ETF Dynamic v3 Rescue Smoothed Regime Validation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-regime-validation report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_regime_validation/*/smoothed_regime_validation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_regime_validation/*/sideways_validation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_regime_validation/*/recovery_lag_validation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_regime_validation/*/smoothed_regime_validation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-253 validates sideways_choppy benefit and strong_recovery lag risk
+      before treating smoothed evidence as promotion-ready.
+    owner_action: review_sideways_and_recovery_evidence_before_confirmation_targets
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_confirmation
+    title: ETF Dynamic v3 Rescue Smoothed Forward Confirmation Targets
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-confirmation report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_confirmation/*/smoothed_confirmation_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_confirmation/*/smoothed_confirmation_targets.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_confirmation/*/smoothed_confirmation_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-254 registers forward evidence targets for smooth_weights_3d while
+      keeping auto_apply false and production_effect none.
+    owner_action: review_smoothed_confirmation_targets_before_weekly_watch
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_watch_pack
+    title: ETF Dynamic v3 Rescue Smoothed Method Watch Pack
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-watch-pack report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_watch_pack/*/smoothed_watch_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_watch_pack/*/smoothed_watch_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_watch_pack/*/owner_smoothed_watch_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_watch_pack/*/smoothed_watch_pack_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_watch_pack/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-255 summarizes smoothed method watch evidence for weekly paper
+      shadow / owner review without broker or production effect.
+    owner_action: review_smoothed_watch_pack_during_weekly_operations
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research

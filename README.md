@@ -1182,6 +1182,25 @@ decision；所有输出固定 `research_target_only=true`、`paper_shadow_only=t
 `production_effect=none`，不得写 official target weights、`position_advisory_v1.yaml`、
 paper/real portfolio、baseline/production state、policy、order ticket 或 broker。
 
+TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
+在上述 smoothed review 之后新增 evidence drilldown 和 weekly watch 闭环。CLI 入口为
+`smoothed-review-attribution run/report`、`validate-smoothed-review-attribution`、
+`smoothing-benefit-lag run/report`、`validate-smoothing-benefit-lag`、
+`smoothed-regime-validation run/report`、`validate-smoothed-regime-validation`、
+`smoothed-confirmation register/report`、`validate-smoothed-confirmation`、
+`smoothed-watch-pack run/report` 和 `validate-smoothed-watch-pack`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/smoothed_review_attribution|smoothing_benefit_lag|smoothed_regime_validation|smoothed_forward_confirmation|smoothed_watch_pack/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Method Watch`。该链路解释
+`CONTINUE_OBSERVATION` / `LOW` confidence 原因，拆解 smoothing benefit vs lag cost，
+验证 `sideways_choppy` 和 `strong_recovery` 表现，登记 `smooth_3d_vs_limited`、
+`smooth_3d_vs_static_baseline`、`smooth_3d_sideways_choppy_improvement` 和
+`smooth_3d_recovery_lag_watch` forward confirmation targets，并生成 owner weekly watch
+pack。所有输出继续固定 `research_target_only=true`、`paper_shadow_only=true`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、
+`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`production_effect=none`；达标后也不自动 promotion，不写 official target weights、不触发
+broker/order/production。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

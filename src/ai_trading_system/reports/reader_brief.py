@@ -2344,6 +2344,42 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "smoothed_watch_pack_id",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_pack_id"),
+                    ),
+                    (
+                        "smoothed_watch_current_decision",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_current_decision"),
+                    ),
+                    (
+                        "smoothed_watch_benefit_lag_tradeoff",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_benefit_lag_tradeoff"
+                        ),
+                    ),
+                    (
+                        "smoothed_watch_sideways_validation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_sideways_validation_status"
+                        ),
+                    ),
+                    (
+                        "smoothed_watch_recovery_lag_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_recovery_lag_status"
+                        ),
+                    ),
+                    (
+                        "smoothed_watch_forward_confirmation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_forward_confirmation_status"
+                        ),
+                    ),
+                    (
+                        "smoothed_watch_recommended_action",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_recommended_action"),
+                    ),
+                    (
                         "experiment_triage_id",
                         etf_dynamic_v3_system_target.get("experiment_triage_id"),
                     ),
@@ -2489,6 +2525,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_system_target.get("smoothed_review_path"),
                     ),
                     (
+                        "smoothed_watch_pack_path",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_pack_path"),
+                    ),
+                    (
                         "experiment_triage_path",
                         etf_dynamic_v3_system_target.get("experiment_triage_path"),
                     ),
@@ -2499,6 +2539,65 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "method_promotion_plan_path",
                         etf_dynamic_v3_system_target.get("method_promotion_plan_path"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Smoothed Method Watch",
+            _definition_table(
+                [
+                    (
+                        "watch_pack_id",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_pack_id"),
+                    ),
+                    (
+                        "candidate_method",
+                        etf_dynamic_v3_system_target.get("smoothed_recommended_method"),
+                    ),
+                    (
+                        "current_decision",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_current_decision"),
+                    ),
+                    (
+                        "benefit_lag_tradeoff",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_benefit_lag_tradeoff"
+                        ),
+                    ),
+                    (
+                        "sideways_validation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_sideways_validation_status"
+                        ),
+                    ),
+                    (
+                        "recovery_lag_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_recovery_lag_status"
+                        ),
+                    ),
+                    (
+                        "forward_confirmation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_watch_forward_confirmation_status"
+                        ),
+                    ),
+                    (
+                        "recommended_action",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_recommended_action"),
+                    ),
+                    (
+                        "broker_action_allowed",
+                        etf_dynamic_v3_system_target.get("broker_action_allowed"),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_system_target.get("production_effect"),
+                    ),
+                    (
+                        "watch_pack_path",
+                        etf_dynamic_v3_system_target.get("smoothed_watch_pack_path"),
                     ),
                 ]
             ),
@@ -8335,6 +8434,13 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_review_manifest.json",
     )
+    smoothed_watch_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_watch_pack",
+        ),
+        "smoothed_watch_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -8359,6 +8465,7 @@ def _etf_dynamic_v3_system_target_summary(
     review_manifest = _read_optional_json(review_path)
     risk_capped_review_manifest = _read_optional_json(risk_capped_review_path)
     smoothed_review_manifest = _read_optional_json(smoothed_review_path)
+    smoothed_watch_manifest = _read_optional_json(smoothed_watch_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
@@ -8366,6 +8473,7 @@ def _etf_dynamic_v3_system_target_summary(
         not review_manifest
         and not risk_capped_review_manifest
         and not smoothed_review_manifest
+        and not smoothed_watch_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -8476,6 +8584,12 @@ def _etf_dynamic_v3_system_target_summary(
         _dynamic_v3_sibling_artifact_path(
             smoothed_review_path,
             "smoothed_decision.json",
+        )
+    )
+    smoothed_watch_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_watch_path,
+            "smoothed_watch_summary.json",
         )
     )
     experiment_triage_summary = _read_optional_json(
@@ -8591,6 +8705,8 @@ def _etf_dynamic_v3_system_target_summary(
         smoothed_lag_cost,
         smoothed_review_manifest,
         smoothed_decision,
+        smoothed_watch_manifest,
+        smoothed_watch_summary,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -8678,6 +8794,7 @@ def _etf_dynamic_v3_system_target_summary(
             f"refined_next_step={refined_next_step}; "
             f"risk_capped={risk_capped_decision_label}; "
             f"smoothed={smoothed_decision_label}; "
+            f"smoothed_watch={_text(smoothed_watch_summary.get('recommended_action'), 'MISSING')}; "
             f"experiment_top={experiment_top_variant}; "
             f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
@@ -8851,6 +8968,34 @@ def _etf_dynamic_v3_system_target_summary(
             "lag_event_count",
             "MISSING",
         ),
+        "smoothed_watch_pack_id": _text(
+            smoothed_watch_manifest.get("watch_pack_id"),
+            "MISSING",
+        ),
+        "smoothed_watch_current_decision": _text(
+            smoothed_watch_summary.get("current_decision"),
+            "MISSING",
+        ),
+        "smoothed_watch_recommended_action": _text(
+            smoothed_watch_summary.get("recommended_action"),
+            "MISSING",
+        ),
+        "smoothed_watch_forward_confirmation_status": _text(
+            smoothed_watch_summary.get("forward_confirmation_status"),
+            "MISSING",
+        ),
+        "smoothed_watch_benefit_lag_tradeoff": _text(
+            smoothed_watch_summary.get("benefit_lag_tradeoff"),
+            "MISSING",
+        ),
+        "smoothed_watch_sideways_validation_status": _text(
+            smoothed_watch_summary.get("sideways_validation_status"),
+            "MISSING",
+        ),
+        "smoothed_watch_recovery_lag_status": _text(
+            smoothed_watch_summary.get("recovery_lag_status"),
+            "MISSING",
+        ),
         "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
         "smoothed_backfill_path": (
             "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
@@ -8859,6 +9004,7 @@ def _etf_dynamic_v3_system_target_summary(
             "" if smoothed_comparison_path is None else str(smoothed_comparison_path)
         ),
         "smoothed_review_path": "" if smoothed_review_path is None else str(smoothed_review_path),
+        "smoothed_watch_pack_path": "" if smoothed_watch_path is None else str(smoothed_watch_path),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
             "MISSING",
@@ -9025,10 +9171,18 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_lag_cost_status": "MISSING",
         "smoothed_smoothing_event_count": "MISSING",
         "smoothed_lag_event_count": "MISSING",
+        "smoothed_watch_pack_id": "MISSING",
+        "smoothed_watch_current_decision": "MISSING",
+        "smoothed_watch_recommended_action": "MISSING",
+        "smoothed_watch_forward_confirmation_status": "MISSING",
+        "smoothed_watch_benefit_lag_tradeoff": "MISSING",
+        "smoothed_watch_sideways_validation_status": "MISSING",
+        "smoothed_watch_recovery_lag_status": "MISSING",
         "smoothed_path": "",
         "smoothed_backfill_path": "",
         "smoothed_comparison_path": "",
         "smoothed_review_path": "",
+        "smoothed_watch_pack_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",

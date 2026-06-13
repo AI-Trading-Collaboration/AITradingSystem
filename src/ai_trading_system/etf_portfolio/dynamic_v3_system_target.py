@@ -145,6 +145,19 @@ DEFAULT_SMOOTHED_LIMITED_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_limi
 DEFAULT_SMOOTHED_BACKFILL_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_backfill"
 DEFAULT_SMOOTHED_COMPARISON_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_comparison"
 DEFAULT_SMOOTHED_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_review"
+DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_review_attribution"
+)
+DEFAULT_SMOOTHING_BENEFIT_LAG_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothing_benefit_lag"
+)
+DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_regime_validation"
+)
+DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_confirmation"
+)
+DEFAULT_SMOOTHED_WATCH_PACK_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_watch_pack"
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
 DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
@@ -216,6 +229,14 @@ SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR = -0.03
 # Reporting-only threshold for lag cost labels in smoothed comparison artifacts.
 SMOOTHED_LAG_COST_HIGH_THRESHOLD = -0.02
 SMOOTHED_LAG_COST_MEDIUM_THRESHOLD = -0.005
+
+# Owner-requested pilot baselines for TRADING-254 forward confirmation targets.
+# They are research watch thresholds, not production promotion gates.
+SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS = 10
+SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS = 5
+SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS = 5
+SMOOTHED_CONFIRMATION_WINDOWS = (1, 5, 10, 20)
+SMOOTHED_CONFIRMATION_RETURN_DELTA_MIN = -0.001
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -6936,6 +6957,760 @@ def validate_smoothed_review_artifact(
     )
 
 
+def run_smoothed_review_attribution(
+    *,
+    review_id: str,
+    comparison_id: str,
+    backfill_id: str,
+    review_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
+    comparison_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
+    backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    review = smoothed_review_report_payload(review_id=review_id, output_dir=review_dir)
+    comparison = smoothed_comparison_report_payload(
+        comparison_id=comparison_id,
+        output_dir=comparison_dir,
+    )
+    backfill = smoothed_backfill_report_payload(backfill_id=backfill_id, output_dir=backfill_dir)
+    breakdown = _smoothed_decision_reason_breakdown(review, comparison, backfill)
+    support_matrix = _smoothed_metric_support_matrix(comparison)
+    attribution_id = _stable_id(
+        "smoothed-review-attribution",
+        review_id,
+        comparison_id,
+        backfill_id,
+        breakdown,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / attribution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_review_attribution_manifest",
+        "attribution_id": root.name,
+        "review_id": review_id,
+        "comparison_id": comparison_id,
+        "smoothed_backfill_id": backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": _mapping(backfill.get("smoothed_backfill_summary")).get(
+            "data_quality"
+        ),
+        "smoothed_review_attribution_manifest_path": str(
+            root / "smoothed_review_attribution_manifest.json"
+        ),
+        "smoothed_decision_reason_breakdown_path": str(
+            root / "smoothed_decision_reason_breakdown.json"
+        ),
+        "smoothed_metric_support_matrix_path": str(root / "smoothed_metric_support_matrix.json"),
+        "smoothed_review_attribution_report_path": str(
+            root / "smoothed_review_attribution_report.md"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_review_attribution_manifest.json", manifest)
+    _write_json(root / "smoothed_decision_reason_breakdown.json", breakdown)
+    _write_json(root / "smoothed_metric_support_matrix.json", support_matrix)
+    _write_text(
+        root / "smoothed_review_attribution_report.md",
+        render_smoothed_review_attribution_report(manifest, breakdown, support_matrix),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_review_attribution",
+        root.name,
+        root / "smoothed_review_attribution_manifest.json",
+    )
+    return {
+        "attribution_id": root.name,
+        "attribution_dir": root,
+        "manifest": manifest,
+        "smoothed_decision_reason_breakdown": breakdown,
+        "smoothed_metric_support_matrix": support_matrix,
+    }
+
+
+def smoothed_review_attribution_report_payload(
+    *,
+    attribution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=attribution_id,
+        latest_pointer="latest_smoothed_review_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_review_attribution_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_review_attribution_manifest.json"),
+        "smoothed_decision_reason_breakdown": _read_json(
+            root / "smoothed_decision_reason_breakdown.json"
+        ),
+        "smoothed_metric_support_matrix": _read_json(
+            root / "smoothed_metric_support_matrix.json"
+        ),
+        "attribution_dir": str(root),
+    }
+
+
+def validate_smoothed_review_attribution_artifact(
+    *,
+    attribution_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / attribution_id
+    manifest = _read_optional_json(root / "smoothed_review_attribution_manifest.json") or {}
+    breakdown = _read_optional_json(root / "smoothed_decision_reason_breakdown.json") or {}
+    support_matrix = _read_optional_json(root / "smoothed_metric_support_matrix.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_review_attribution_manifest.json",
+            "smoothed_decision_reason_breakdown.json",
+            "smoothed_metric_support_matrix.json",
+            "smoothed_review_attribution_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "attribution_id_matches",
+                manifest.get("attribution_id") == attribution_id,
+                "",
+            ),
+            _check(
+                "decision_visible",
+                breakdown.get("decision")
+                in {
+                    "PROMOTE_TO_RECOMMENDED_RESEARCH",
+                    "CONTINUE_OBSERVATION",
+                    "REJECT",
+                    "REVIEW_REQUIRED",
+                },
+                _text(breakdown.get("decision")),
+            ),
+            _check(
+                "supporting_reasons_present",
+                bool(_records(breakdown.get("supporting_reasons"))),
+                "",
+            ),
+            _check(
+                "blocking_reasons_present",
+                bool(_records(breakdown.get("blocking_reasons"))),
+                "",
+            ),
+            _check("why_not_promote_present", bool(breakdown.get("why_not_promote")), ""),
+            _check("why_not_reject_present", bool(breakdown.get("why_not_reject")), ""),
+            _check(
+                "metric_matrix_present",
+                bool(_records(support_matrix.get("metrics"))),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, breakdown, support_matrix), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_review_attribution_validation",
+        attribution_id,
+        checks,
+    )
+
+
+def run_smoothing_benefit_lag_drilldown(
+    *,
+    smoothed_backfill_id: str,
+    comparison_id: str,
+    backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+    comparison_dir: Path = DEFAULT_SMOOTHED_COMPARISON_DIR,
+    output_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = smoothed_backfill_report_payload(
+        backfill_id=smoothed_backfill_id,
+        output_dir=backfill_dir,
+    )
+    comparison = smoothed_comparison_report_payload(
+        comparison_id=comparison_id,
+        output_dir=comparison_dir,
+    )
+    benefit = _smoothing_benefit_summary(comparison)
+    lag = _smoothing_lag_cost_summary(comparison)
+    tradeoff = _smoothing_benefit_lag_tradeoff_matrix(benefit, lag)
+    drilldown_id = _stable_id(
+        "smoothing-benefit-lag",
+        smoothed_backfill_id,
+        comparison_id,
+        benefit,
+        lag,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / drilldown_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothing_benefit_lag_manifest",
+        "drilldown_id": root.name,
+        "smoothed_backfill_id": smoothed_backfill_id,
+        "comparison_id": comparison_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": _mapping(backfill.get("smoothed_backfill_summary")).get(
+            "data_quality"
+        ),
+        "smoothing_benefit_lag_manifest_path": str(
+            root / "smoothing_benefit_lag_manifest.json"
+        ),
+        "smoothing_benefit_summary_path": str(root / "smoothing_benefit_summary.json"),
+        "lag_cost_summary_path": str(root / "lag_cost_summary.json"),
+        "benefit_lag_tradeoff_matrix_path": str(root / "benefit_lag_tradeoff_matrix.json"),
+        "smoothing_benefit_lag_report_path": str(root / "smoothing_benefit_lag_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothing_benefit_lag_manifest.json", manifest)
+    _write_json(root / "smoothing_benefit_summary.json", benefit)
+    _write_json(root / "lag_cost_summary.json", lag)
+    _write_json(root / "benefit_lag_tradeoff_matrix.json", tradeoff)
+    _write_text(
+        root / "smoothing_benefit_lag_report.md",
+        render_smoothing_benefit_lag_report(manifest, benefit, lag, tradeoff),
+    )
+    _write_latest_pointer(
+        "latest_smoothing_benefit_lag",
+        root.name,
+        root / "smoothing_benefit_lag_manifest.json",
+    )
+    return {
+        "drilldown_id": root.name,
+        "drilldown_dir": root,
+        "manifest": manifest,
+        "smoothing_benefit_summary": benefit,
+        "lag_cost_summary": lag,
+        "benefit_lag_tradeoff_matrix": tradeoff,
+    }
+
+
+def smoothing_benefit_lag_report_payload(
+    *,
+    drilldown_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=drilldown_id,
+        latest_pointer="latest_smoothing_benefit_lag",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothing_benefit_lag_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothing_benefit_lag_manifest.json"),
+        "smoothing_benefit_summary": _read_json(root / "smoothing_benefit_summary.json"),
+        "lag_cost_summary": _read_json(root / "lag_cost_summary.json"),
+        "benefit_lag_tradeoff_matrix": _read_json(root / "benefit_lag_tradeoff_matrix.json"),
+        "drilldown_dir": str(root),
+    }
+
+
+def validate_smoothing_benefit_lag_artifact(
+    *,
+    drilldown_id: str,
+    output_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
+) -> dict[str, Any]:
+    root = output_dir / drilldown_id
+    manifest = _read_optional_json(root / "smoothing_benefit_lag_manifest.json") or {}
+    benefit = _read_optional_json(root / "smoothing_benefit_summary.json") or {}
+    lag = _read_optional_json(root / "lag_cost_summary.json") or {}
+    tradeoff = _read_optional_json(root / "benefit_lag_tradeoff_matrix.json") or {}
+    methods = {row.get("method") for row in _records(benefit.get("methods"))}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothing_benefit_lag_manifest.json",
+            "smoothing_benefit_summary.json",
+            "lag_cost_summary.json",
+            "benefit_lag_tradeoff_matrix.json",
+            "smoothing_benefit_lag_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("drilldown_id_matches", manifest.get("drilldown_id") == drilldown_id, ""),
+            _check(
+                "smoothed_methods_present",
+                set(SMOOTHED_METHOD_TO_VARIANT).issubset(methods),
+                ",".join(sorted(str(item) for item in methods)),
+            ),
+            _check("lag_methods_present", bool(_records(lag.get("methods"))), ""),
+            _check("tradeoff_present", bool(_records(tradeoff.get("methods"))), ""),
+            _check("broker_forbidden", _payload_safe(manifest, benefit, lag, tradeoff), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothing_benefit_lag_validation",
+        drilldown_id,
+        checks,
+    )
+
+
+def run_smoothed_regime_validation(
+    *,
+    smoothed_backfill_id: str,
+    smoothed_backfill_dir: Path = DEFAULT_SMOOTHED_BACKFILL_DIR,
+    baseline_backfill_dir: Path = DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    smoothed = smoothed_backfill_report_payload(
+        backfill_id=smoothed_backfill_id,
+        output_dir=smoothed_backfill_dir,
+    )
+    source_id = _text(smoothed.get("source_paper_shadow_backfill_id"))
+    baseline = paper_shadow_backfill_report_payload(
+        backfill_id=source_id,
+        output_dir=baseline_backfill_dir,
+    )
+    sideways = _smoothed_sideways_validation_summary(smoothed, baseline)
+    recovery = _smoothed_recovery_lag_validation_summary(smoothed, baseline)
+    regime_validation_id = _stable_id(
+        "smoothed-regime-validation",
+        smoothed_backfill_id,
+        source_id,
+        sideways,
+        recovery,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / regime_validation_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_regime_validation_manifest",
+        "regime_validation_id": root.name,
+        "smoothed_backfill_id": smoothed_backfill_id,
+        "baseline_backfill_id": source_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": smoothed.get("market_regime", "ai_after_chatgpt"),
+        "date_start": smoothed.get("date_start"),
+        "date_end": smoothed.get("date_end"),
+        "data_quality_status": _mapping(smoothed.get("smoothed_backfill_summary")).get(
+            "data_quality"
+        ),
+        "smoothed_regime_validation_manifest_path": str(
+            root / "smoothed_regime_validation_manifest.json"
+        ),
+        "sideways_validation_summary_path": str(root / "sideways_validation_summary.json"),
+        "recovery_lag_validation_summary_path": str(
+            root / "recovery_lag_validation_summary.json"
+        ),
+        "smoothed_regime_validation_report_path": str(
+            root / "smoothed_regime_validation_report.md"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_regime_validation_manifest.json", manifest)
+    _write_json(root / "sideways_validation_summary.json", sideways)
+    _write_json(root / "recovery_lag_validation_summary.json", recovery)
+    _write_text(
+        root / "smoothed_regime_validation_report.md",
+        render_smoothed_regime_validation_report(manifest, sideways, recovery),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_regime_validation",
+        root.name,
+        root / "smoothed_regime_validation_manifest.json",
+    )
+    return {
+        "regime_validation_id": root.name,
+        "regime_validation_dir": root,
+        "manifest": manifest,
+        "sideways_validation_summary": sideways,
+        "recovery_lag_validation_summary": recovery,
+    }
+
+
+def smoothed_regime_validation_report_payload(
+    *,
+    regime_validation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=regime_validation_id,
+        latest_pointer="latest_smoothed_regime_validation",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_regime_validation_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_regime_validation_manifest.json"),
+        "sideways_validation_summary": _read_json(root / "sideways_validation_summary.json"),
+        "recovery_lag_validation_summary": _read_json(
+            root / "recovery_lag_validation_summary.json"
+        ),
+        "regime_validation_dir": str(root),
+    }
+
+
+def validate_smoothed_regime_validation_artifact(
+    *,
+    regime_validation_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / regime_validation_id
+    manifest = _read_optional_json(root / "smoothed_regime_validation_manifest.json") or {}
+    sideways = _read_optional_json(root / "sideways_validation_summary.json") or {}
+    recovery = _read_optional_json(root / "recovery_lag_validation_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_regime_validation_manifest.json",
+            "sideways_validation_summary.json",
+            "recovery_lag_validation_summary.json",
+            "smoothed_regime_validation_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "regime_validation_id_matches",
+                manifest.get("regime_validation_id") == regime_validation_id,
+                "",
+            ),
+            _check("sideways_methods_present", bool(_records(sideways.get("methods"))), ""),
+            _check("recovery_methods_present", bool(_records(recovery.get("methods"))), ""),
+            _check(
+                "sideways_regime_visible",
+                sideways.get("regime") == "sideways_choppy",
+                _text(sideways.get("regime")),
+            ),
+            _check(
+                "recovery_regime_visible",
+                recovery.get("regime") == "strong_recovery",
+                _text(recovery.get("regime")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, sideways, recovery), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_regime_validation_validation",
+        regime_validation_id,
+        checks,
+    )
+
+
+def register_smoothed_confirmation_targets(
+    *,
+    review_id: str,
+    regime_validation_id: str,
+    review_dir: Path = DEFAULT_SMOOTHED_REVIEW_DIR,
+    regime_validation_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    review = smoothed_review_report_payload(review_id=review_id, output_dir=review_dir)
+    regime = smoothed_regime_validation_report_payload(
+        regime_validation_id=regime_validation_id,
+        output_dir=regime_validation_dir,
+    )
+    targets = _smoothed_confirmation_targets(review, regime)
+    confirmation_id = _stable_id(
+        "smoothed-confirmation",
+        review_id,
+        regime_validation_id,
+        targets,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / confirmation_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_confirmation_manifest",
+        "confirmation_id": root.name,
+        "review_id": review_id,
+        "regime_validation_id": regime_validation_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "target_count": len(_records(targets.get("targets"))),
+        "smoothed_confirmation_manifest_path": str(root / "smoothed_confirmation_manifest.json"),
+        "smoothed_confirmation_targets_path": str(root / "smoothed_confirmation_targets.json"),
+        "smoothed_confirmation_report_path": str(root / "smoothed_confirmation_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_confirmation_manifest.json", manifest)
+    _write_json(root / "smoothed_confirmation_targets.json", targets)
+    _write_text(
+        root / "smoothed_confirmation_report.md",
+        render_smoothed_confirmation_report(manifest, targets),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_confirmation",
+        root.name,
+        root / "smoothed_confirmation_manifest.json",
+    )
+    return {
+        "confirmation_id": root.name,
+        "confirmation_dir": root,
+        "manifest": manifest,
+        "smoothed_confirmation_targets": targets,
+    }
+
+
+def smoothed_confirmation_report_payload(
+    *,
+    confirmation_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=confirmation_id,
+        latest_pointer="latest_smoothed_confirmation",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_confirmation_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_confirmation_manifest.json"),
+        "smoothed_confirmation_targets": _read_json(root / "smoothed_confirmation_targets.json"),
+        "confirmation_dir": str(root),
+    }
+
+
+def validate_smoothed_confirmation_artifact(
+    *,
+    confirmation_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / confirmation_id
+    manifest = _read_optional_json(root / "smoothed_confirmation_manifest.json") or {}
+    targets = _read_optional_json(root / "smoothed_confirmation_targets.json") or {}
+    target_rows = _records(targets.get("targets"))
+    target_ids = {row.get("target_id") for row in target_rows}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_confirmation_manifest.json",
+            "smoothed_confirmation_targets.json",
+            "smoothed_confirmation_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "confirmation_id_matches",
+                manifest.get("confirmation_id") == confirmation_id,
+                "",
+            ),
+            _check(
+                "required_targets_present",
+                {
+                    "smooth_3d_vs_limited",
+                    "smooth_3d_vs_static_baseline",
+                    "smooth_3d_sideways_choppy_improvement",
+                    "smooth_3d_recovery_lag_watch",
+                }.issubset(target_ids),
+                ",".join(sorted(str(item) for item in target_ids)),
+            ),
+            _check("auto_apply_false", targets.get("auto_apply") is False, ""),
+            _check(
+                "broker_action_allowed_false",
+                targets.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", targets.get("production_effect") == "none", ""),
+            _check(
+                "watch_only_target_present",
+                any(row.get("status") == "WATCH_ONLY" for row in target_rows),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, targets, *target_rows), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_confirmation_validation",
+        confirmation_id,
+        checks,
+    )
+
+
+def run_smoothed_watch_pack(
+    *,
+    review_attribution_id: str,
+    benefit_lag_id: str,
+    regime_validation_id: str,
+    confirmation_id: str,
+    attribution_dir: Path = DEFAULT_SMOOTHED_REVIEW_ATTRIBUTION_DIR,
+    benefit_lag_dir: Path = DEFAULT_SMOOTHING_BENEFIT_LAG_DIR,
+    regime_validation_dir: Path = DEFAULT_SMOOTHED_REGIME_VALIDATION_DIR,
+    confirmation_dir: Path = DEFAULT_SMOOTHED_FORWARD_CONFIRMATION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    attribution = smoothed_review_attribution_report_payload(
+        attribution_id=review_attribution_id,
+        output_dir=attribution_dir,
+    )
+    benefit_lag = smoothing_benefit_lag_report_payload(
+        drilldown_id=benefit_lag_id,
+        output_dir=benefit_lag_dir,
+    )
+    regime = smoothed_regime_validation_report_payload(
+        regime_validation_id=regime_validation_id,
+        output_dir=regime_validation_dir,
+    )
+    confirmation = smoothed_confirmation_report_payload(
+        confirmation_id=confirmation_id,
+        output_dir=confirmation_dir,
+    )
+    summary = _smoothed_watch_summary(attribution, benefit_lag, regime, confirmation)
+    watch_pack_id = _stable_id(
+        "smoothed-watch-pack",
+        review_attribution_id,
+        benefit_lag_id,
+        regime_validation_id,
+        confirmation_id,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / watch_pack_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_watch_manifest",
+        "watch_pack_id": root.name,
+        "review_attribution_id": review_attribution_id,
+        "benefit_lag_id": benefit_lag_id,
+        "regime_validation_id": regime_validation_id,
+        "confirmation_id": confirmation_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_watch_manifest_path": str(root / "smoothed_watch_manifest.json"),
+        "smoothed_watch_summary_path": str(root / "smoothed_watch_summary.json"),
+        "owner_smoothed_watch_checklist_path": str(root / "owner_smoothed_watch_checklist.md"),
+        "smoothed_watch_pack_report_path": str(root / "smoothed_watch_pack_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_watch_reader_brief(summary)
+    _write_json(root / "smoothed_watch_manifest.json", manifest)
+    _write_json(root / "smoothed_watch_summary.json", summary)
+    _write_text(
+        root / "owner_smoothed_watch_checklist.md",
+        render_smoothed_watch_checklist(summary),
+    )
+    _write_text(
+        root / "smoothed_watch_pack_report.md",
+        render_smoothed_watch_pack_report(
+            manifest,
+            summary,
+            attribution,
+            benefit_lag,
+            regime,
+            confirmation,
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_watch_pack",
+        root.name,
+        root / "smoothed_watch_manifest.json",
+    )
+    return {
+        "watch_pack_id": root.name,
+        "watch_pack_dir": root,
+        "manifest": manifest,
+        "smoothed_watch_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_watch_pack_report_payload(
+    *,
+    watch_pack_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=watch_pack_id,
+        latest_pointer="latest_smoothed_watch_pack",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_watch_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_watch_manifest.json"),
+        "smoothed_watch_summary": _read_json(root / "smoothed_watch_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "watch_pack_dir": str(root),
+    }
+
+
+def validate_smoothed_watch_pack_artifact(
+    *,
+    watch_pack_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_WATCH_PACK_DIR,
+) -> dict[str, Any]:
+    root = output_dir / watch_pack_id
+    manifest = _read_optional_json(root / "smoothed_watch_manifest.json") or {}
+    summary = _read_optional_json(root / "smoothed_watch_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_watch_manifest.json",
+            "smoothed_watch_summary.json",
+            "owner_smoothed_watch_checklist.md",
+            "smoothed_watch_pack_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("watch_pack_id_matches", manifest.get("watch_pack_id") == watch_pack_id, ""),
+            _check(
+                "candidate_method_smoothed_3d",
+                summary.get("candidate_method") == "smooth_weights_3d_limited_adjustment",
+                _text(summary.get("candidate_method")),
+            ),
+            _check(
+                "forward_confirmation_in_progress",
+                summary.get("forward_confirmation_status") == "IN_PROGRESS",
+                _text(summary.get("forward_confirmation_status")),
+            ),
+            _check("research_target_only_true", summary.get("research_target_only") is True, ""),
+            _check(
+                "not_official_target_weights_true",
+                summary.get("not_official_target_weights") is True,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                summary.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", summary.get("production_effect") == "none", ""),
+            _check("broker_forbidden", _payload_safe(manifest, summary), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_watch_pack_validation",
+        watch_pack_id,
+        checks,
+    )
+
+
 def render_risk_capped_limited_config_report(
     manifest: Mapping[str, Any],
     config: Mapping[str, Any],
@@ -7380,6 +8155,255 @@ def render_smoothed_review_reader_brief(decision: Mapping[str, Any]) -> str:
             "- research_target_only: true",
             "- requires_forward_confirmation: true",
             f"- next_action: {decision.get('next_action')}",
+            "",
+        ]
+    )
+
+
+def render_smoothed_review_attribution_report(
+    manifest: Mapping[str, Any],
+    breakdown: Mapping[str, Any],
+    support_matrix: Mapping[str, Any],
+) -> str:
+    supporting = _records(breakdown.get("supporting_reasons"))
+    blocking = _records(breakdown.get("blocking_reasons"))
+    matrix = _records(support_matrix.get("metrics"))
+    return "\n".join(
+        [
+            f"# Smoothed Review Attribution {manifest.get('attribution_id')}",
+            "",
+            f"- review_id: {manifest.get('review_id')}",
+            f"- decision: {breakdown.get('decision')}",
+            f"- confidence: {breakdown.get('confidence')}",
+            f"- recommended_method: {breakdown.get('recommended_method')}",
+            f"- secondary_method: {breakdown.get('secondary_method')}",
+            f"- supporting_reasons: {supporting}",
+            f"- blocking_reasons: {blocking}",
+            f"- metric_support_matrix: {matrix}",
+            f"- why_not_promote: {breakdown.get('why_not_promote')}",
+            f"- why_not_reject: {breakdown.get('why_not_reject')}",
+            f"- next_required_evidence: {breakdown.get('next_required_evidence')}",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "CONTINUE_OBSERVATION 的主因是 forward confirmation 尚未成熟、confidence 仍为 "
+            "LOW，并且 lag cost 仍需要在 forward strong_recovery / fast regime change 中观察。",
+            "当前没有直接 REJECT 理由，因为 3d 相对 limited_adjustment 仍保留收益和 turnover "
+            "改善证据；也没有直接 PROMOTE 理由，因为证据主要来自 backtest / paper-shadow "
+            "historical evidence。",
+            "",
+        ]
+    )
+
+
+def render_smoothing_benefit_lag_report(
+    manifest: Mapping[str, Any],
+    benefit: Mapping[str, Any],
+    lag: Mapping[str, Any],
+    tradeoff: Mapping[str, Any],
+) -> str:
+    primary_benefit = _find_method(
+        _records(benefit.get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    primary_lag = _find_method(
+        _records(lag.get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    primary_tradeoff = _find_method(
+        _records(tradeoff.get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    secondary_tradeoff = _find_method(
+        _records(tradeoff.get("methods")),
+        "smooth_weights_5d_limited_adjustment",
+    )
+    return "\n".join(
+        [
+            f"# Smoothing Benefit Lag Drilldown {manifest.get('drilldown_id')}",
+            "",
+            f"- smooth_3d_weight_jump_reduction: "
+            f"{primary_benefit.get('weight_jump_reduction')}",
+            f"- smooth_3d_turnover_reduction: {primary_benefit.get('turnover_reduction')}",
+            f"- smooth_3d_signal_churn_reduction: "
+            f"{primary_benefit.get('signal_churn_reduction')}",
+            f"- smooth_3d_rolling_consistency_delta: "
+            f"{primary_benefit.get('rolling_consistency_delta')}",
+            f"- smooth_3d_benefit_status: {primary_benefit.get('benefit_status')}",
+            f"- smooth_3d_lag_cost_status: {primary_lag.get('lag_cost_status')}",
+            f"- smooth_3d_tradeoff_status: {primary_tradeoff.get('tradeoff_status')}",
+            f"- smooth_5d_tradeoff_status: {secondary_tradeoff.get('tradeoff_status')}",
+            "- primary_candidate: smooth_weights_3d_limited_adjustment",
+            "- research_target_only: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "benefit 主要看 weight jump、turnover、signal churn 和 rolling consistency；cost "
+            "主要看 strong_recovery / fast regime change 的 missed upside 和 delayed risk-on。"
+            "即使 tradeoff 有利，建议仍是 forward confirmation，而不是 automatic promotion。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_regime_validation_report(
+    manifest: Mapping[str, Any],
+    sideways: Mapping[str, Any],
+    recovery: Mapping[str, Any],
+) -> str:
+    sideways_3d = _find_method(
+        _records(sideways.get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    recovery_3d = _find_method(
+        _records(recovery.get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    recovery_5d = _find_method(
+        _records(recovery.get("methods")),
+        "smooth_weights_5d_limited_adjustment",
+    )
+    return "\n".join(
+        [
+            f"# Smoothed Regime Validation {manifest.get('regime_validation_id')}",
+            "",
+            f"- sideways_status: {sideways_3d.get('sideways_status')}",
+            f"- sideways_sample_count: {sideways_3d.get('sample_count')}",
+            f"- sideways_turnover_delta_vs_limited: "
+            f"{sideways_3d.get('turnover_delta_vs_limited')}",
+            f"- sideways_signal_churn_delta_vs_limited: "
+            f"{sideways_3d.get('signal_churn_delta_vs_limited')}",
+            f"- sideways_weight_jump_delta_vs_limited: "
+            f"{sideways_3d.get('weight_jump_delta_vs_limited')}",
+            f"- smooth_3d_recovery_lag_status: {recovery_3d.get('lag_status')}",
+            f"- smooth_3d_missed_upside: {recovery_3d.get('missed_upside')}",
+            f"- smooth_5d_recovery_lag_status: {recovery_5d.get('lag_status')}",
+            "- requires_forward_confirmation: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "sideways_choppy validation 用于判断 smoothing 是否降低 churn、turnover 和 weight "
+            "jump；strong_recovery validation 用于披露 smoothing 是否拖慢 risk-on response。"
+            "本报告不降级或晋级任何 method，只提供 owner review 和 weekly watch evidence。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_confirmation_report(
+    manifest: Mapping[str, Any],
+    targets: Mapping[str, Any],
+) -> str:
+    target_rows = _records(targets.get("targets"))
+    watch_only = [row.get("target_id") for row in target_rows if row.get("status") == "WATCH_ONLY"]
+    return "\n".join(
+        [
+            f"# Smoothed Forward Confirmation {manifest.get('confirmation_id')}",
+            "",
+            f"- registered_targets: {[row.get('target_id') for row in target_rows]}",
+            f"- required_forward_events: {SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS}",
+            f"- required_sideways_events: {SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS}",
+            f"- required_recovery_events: {SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS}",
+            f"- windows: {list(SMOOTHED_CONFIRMATION_WINDOWS)}",
+            f"- watch_only_targets: {watch_only}",
+            "- auto_apply: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "达标后仍不自动 promotion。confirmation targets 只定义 forward evidence "
+            "收集口径，owner review 仍是任何方法晋级前置条件。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_watch_checklist(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Owner Smoothed Watch Checklist",
+            "",
+            "- [ ] 是否继续观察 smooth_weights_3d？",
+            "- [ ] 是否保留 smooth_weights_5d 作为 sensitivity candidate？",
+            "- [ ] 是否接受 limited_adjustment 降为 baseline / reference？",
+            "- [ ] 是否要求更多 forward confirmation？",
+            "- [ ] 是否有 lag warning？",
+            "- [ ] 是否确认不写 official target weights？",
+            "- [ ] 是否确认 no broker / no production？",
+            "",
+            f"- current_decision: {summary.get('current_decision')}",
+            f"- recommended_action: {summary.get('recommended_action')}",
+            f"- forward_confirmation_status: {summary.get('forward_confirmation_status')}",
+            "",
+        ]
+    )
+
+
+def render_smoothed_watch_pack_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    attribution: Mapping[str, Any],
+    benefit_lag: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    confirmation: Mapping[str, Any],
+) -> str:
+    breakdown = _mapping(attribution.get("smoothed_decision_reason_breakdown"))
+    tradeoff = _find_method(
+        _records(_mapping(benefit_lag.get("benefit_lag_tradeoff_matrix")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    targets = _records(_mapping(confirmation.get("smoothed_confirmation_targets")).get("targets"))
+    sideways = _find_method(
+        _records(_mapping(regime.get("sideways_validation_summary")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    return "\n".join(
+        [
+            f"# Smoothed Watch Pack {manifest.get('watch_pack_id')}",
+            "",
+            f"- candidate_method: {summary.get('candidate_method')}",
+            f"- current_decision: {summary.get('current_decision')}",
+            f"- confidence: {summary.get('confidence')}",
+            f"- benefit_lag_tradeoff: {summary.get('benefit_lag_tradeoff')}",
+            f"- sideways_validation_status: {summary.get('sideways_validation_status')}",
+            f"- recovery_lag_status: {summary.get('recovery_lag_status')}",
+            f"- forward_confirmation_status: {summary.get('forward_confirmation_status')}",
+            f"- recommended_action: {summary.get('recommended_action')}",
+            f"- supporting_reasons: {breakdown.get('supporting_reasons')}",
+            f"- blocking_reasons: {breakdown.get('blocking_reasons')}",
+            f"- tradeoff_recommendation: {tradeoff.get('recommendation')}",
+            f"- sideways_turnover_delta_vs_limited: "
+            f"{sideways.get('turnover_delta_vs_limited')}",
+            f"- registered_targets: {[row.get('target_id') for row in targets]}",
+            "- research_target_only: true",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "smoothed method 当前仍值得继续观察，但最大风险是 recovery lag。最大支持证据"
+            "来自 turnover / churn / rolling consistency 方向；forward confirmation 仍缺真实"
+            "前向事件样本。owner 暂不需要批准 production，只需要决定是否继续观察和是否"
+            "调整后续确认样本口径。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_watch_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Method Watch",
+            "",
+            f"- candidate_method: {summary.get('candidate_method')}",
+            f"- current_decision: {summary.get('current_decision')}",
+            f"- benefit_lag_tradeoff: {summary.get('benefit_lag_tradeoff')}",
+            f"- sideways_validation_status: {summary.get('sideways_validation_status')}",
+            f"- recovery_lag_status: {summary.get('recovery_lag_status')}",
+            f"- forward_confirmation_status: {summary.get('forward_confirmation_status')}",
+            f"- recommended_action: {summary.get('recommended_action')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
             "",
         ]
     )
@@ -11884,7 +12908,9 @@ def _metric_for(rows: Sequence[Mapping[str, Any]], method: str, field: str) -> f
 
 def _find_method(rows: Sequence[Mapping[str, Any]], method: str) -> dict[str, Any]:
     for row in rows:
-        if row.get("target_method") == method:
+        if row.get("target_method") == method or row.get("method") == method:
+            return dict(row)
+        if row.get("method_id") == method:
             return dict(row)
     return {}
 
@@ -13676,6 +14702,707 @@ def _smoothed_return_preservation_decision(delta: float) -> str:
     if delta >= SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR:
         return "ACCEPTABLE"
     return "POOR"
+
+
+def _smoothed_decision_reason_breakdown(
+    review: Mapping[str, Any],
+    comparison: Mapping[str, Any],
+    backfill: Mapping[str, Any],
+) -> dict[str, Any]:
+    decision = _mapping(review.get("smoothed_decision"))
+    support = _smoothed_metric_support_matrix(comparison)
+    primary = _primary_smoothed_comparison(comparison, "smooth_weights_3d_limited_adjustment")
+    lag = _method_lag_row(comparison, "smooth_weights_3d_limited_adjustment")
+    summary = _mapping(backfill.get("smoothed_backfill_summary"))
+    confidence = _text(decision.get("decision_confidence"), "LOW")
+    supporting = _smoothed_supporting_reasons(decision, support, primary)
+    blocking = [
+        {
+            "reason": "requires_forward_confirmation",
+            "severity": "REVIEW_REQUIRED",
+            "blocking": True,
+            "evidence": [
+                {
+                    "field": "requires_forward_confirmation",
+                    "value": decision.get("requires_forward_confirmation"),
+                }
+            ],
+            **SYSTEM_TARGET_SAFETY,
+        }
+    ]
+    if confidence == "LOW":
+        blocking.append(
+            {
+                "reason": "confidence_low",
+                "severity": "REVIEW_REQUIRED",
+                "blocking": True,
+                "evidence": [{"field": "decision_confidence", "value": confidence}],
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    if summary.get("data_quality") == "PASS_WITH_WARNINGS":
+        blocking.append(
+            {
+                "reason": "data_quality_pass_with_warnings",
+                "severity": "WARNING",
+                "blocking": False,
+                "evidence": [{"field": "data_quality", "value": summary.get("data_quality")}],
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    if lag.get("lag_cost_status") in {"MEDIUM", "HIGH", "INSUFFICIENT_DATA"}:
+        blocking.append(
+            {
+                "reason": "lag_cost_requires_forward_watch",
+                "severity": "REVIEW_REQUIRED",
+                "blocking": lag.get("lag_cost_status") == "HIGH",
+                "evidence": [
+                    {"field": "lag_cost_status", "value": lag.get("lag_cost_status")},
+                    {
+                        "field": "strong_recovery_lag_cost",
+                        "value": lag.get("strong_recovery_lag_cost"),
+                    },
+                ],
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    why_not_promote = [
+        "forward confirmation target events have not matured",
+        f"decision_confidence={confidence}",
+    ]
+    if summary.get("data_quality") == "PASS_WITH_WARNINGS":
+        why_not_promote.append("cached data quality passed with warnings")
+    if lag.get("lag_cost_status") != "LOW":
+        why_not_promote.append(
+            f"lag cost still requires observation: {lag.get('lag_cost_status')}"
+        )
+    if decision.get("decision") != "PROMOTE_TO_RECOMMENDED_RESEARCH":
+        why_not_promote.append(f"review decision remains {decision.get('decision')}")
+    why_not_reject = [
+        f"smooth_3d_vs_limited_conclusion={primary.get('conclusion')}",
+        f"return_delta_vs_limited={primary.get('total_return_delta')}",
+        f"turnover_delta_vs_limited={primary.get('turnover_delta')}",
+        "no broker or production mutation is proposed",
+    ]
+    return {
+        "review_id": review.get("review_id"),
+        "decision": decision.get("decision"),
+        "confidence": confidence,
+        "candidate_methods": list(decision.get("candidate_methods") or []),
+        "recommended_method": decision.get("recommended_method"),
+        "secondary_method": decision.get("secondary_method"),
+        "supporting_reasons": supporting,
+        "blocking_reasons": blocking,
+        "why_not_promote": why_not_promote,
+        "why_not_reject": why_not_reject,
+        "next_required_evidence": [
+            "smooth_3d_vs_limited forward events",
+            "smooth_3d_vs_static_baseline forward events",
+            "sideways_choppy improvement samples",
+            "strong_recovery lag watch samples",
+        ],
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_supporting_reasons(
+    decision: Mapping[str, Any],
+    support: Mapping[str, Any],
+    primary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    rows = _records(support.get("metrics"))
+    by_metric = {row.get("metric"): row for row in rows}
+    reasons: list[dict[str, Any]] = []
+    for metric, reason in (
+        ("turnover", "reduces_turnover"),
+        ("weight_jump", "reduces_weight_jump_or_signal_churn"),
+        ("rolling_consistency", "improves_rolling_consistency"),
+        ("return_preservation", "preserves_limited_adjustment_return_edge"),
+        ("sideways_choppy", "sideways_choppy_observation_supported"),
+    ):
+        row = _mapping(by_metric.get(metric))
+        status = _text(row.get("smooth_3d_status"), "INSUFFICIENT_DATA")
+        if status in {"IMPROVED", "MIXED", "GOOD", "ACCEPTABLE"}:
+            reasons.append(
+                {
+                    "reason": reason,
+                    "evidence": [
+                        {"metric": metric, "smooth_3d_status": status},
+                        {
+                            "metric": "smooth_3d_vs_limited_conclusion",
+                            "value": primary.get("conclusion"),
+                        },
+                    ],
+                    "confidence": decision.get("decision_confidence", "LOW"),
+                    **SYSTEM_TARGET_SAFETY,
+                }
+            )
+    if not reasons:
+        reasons.append(
+            {
+                "reason": "historical_smoothed_comparison_available",
+                "evidence": [{"metric": "comparison", "value": primary.get("conclusion")}],
+                "confidence": decision.get("decision_confidence", "LOW"),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return reasons
+
+
+def _smoothed_metric_support_matrix(comparison: Mapping[str, Any]) -> dict[str, Any]:
+    metrics: list[dict[str, Any]] = []
+    for metric in (
+        "rolling_consistency",
+        "turnover",
+        "weight_jump",
+        "signal_churn",
+        "return_preservation",
+        "sideways_choppy",
+        "lag_cost",
+    ):
+        row: dict[str, Any] = {"metric": metric, **SYSTEM_TARGET_SAFETY}
+        for method, prefix in (
+            ("smooth_weights_3d_limited_adjustment", "smooth_3d"),
+            ("smooth_weights_5d_limited_adjustment", "smooth_5d"),
+        ):
+            row[f"{prefix}_status"] = _smoothed_metric_status(comparison, method, metric)
+        row["supports_promotion"] = (
+            metric != "lag_cost"
+            and row.get("smooth_3d_status") in {"IMPROVED", "GOOD", "ACCEPTABLE"}
+        )
+        metrics.append(row)
+    return {"metrics": metrics, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_metric_status(
+    comparison: Mapping[str, Any],
+    method: str,
+    metric: str,
+) -> str:
+    primary = _primary_smoothed_comparison(comparison, method)
+    if metric == "turnover":
+        return _delta_improvement_status(
+            _float(primary.get("turnover_delta")),
+            lower_is_better=True,
+        )
+    if metric == "weight_jump":
+        return _delta_improvement_status(
+            _float(primary.get("large_jump_count_delta")),
+            lower_is_better=True,
+        )
+    if metric == "return_preservation":
+        return _smoothed_return_preservation_decision(_float(primary.get("total_return_delta")))
+    if metric == "rolling_consistency":
+        return _text(_method_rolling_row(comparison, method).get("rolling_consistency_delta"))
+    if metric == "signal_churn":
+        return _delta_improvement_status(
+            _float(
+                _method_stability_row(comparison, method).get(
+                    "weight_flip_count_delta_vs_limited"
+                )
+            ),
+            lower_is_better=True,
+        )
+    if metric == "sideways_choppy":
+        return _status_upper(
+            _text(
+                _sideways_regime_row(comparison).get(
+                    _smoothed_regime_prefix(method) + "_conclusion"
+                )
+            )
+        )
+    if metric == "lag_cost":
+        return _text(_method_lag_row(comparison, method).get("lag_cost_status"))
+    return "INSUFFICIENT_DATA"
+
+
+def _smoothing_benefit_summary(comparison: Mapping[str, Any]) -> dict[str, Any]:
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        primary = _primary_smoothed_comparison(comparison, method)
+        rolling = _method_rolling_row(comparison, method)
+        stability = _method_stability_row(comparison, method)
+        weight_jump_reduction = round(-_float(primary.get("large_jump_count_delta")), 10)
+        turnover_reduction = round(-_float(primary.get("turnover_delta")), 10)
+        signal_churn_reduction = round(
+            -_float(stability.get("weight_flip_count_delta_vs_limited")),
+            10,
+        )
+        rolling_delta = _text(rolling.get("rolling_consistency_delta"), "INSUFFICIENT_DATA")
+        rows.append(
+            {
+                "method": method,
+                "weight_jump_reduction": weight_jump_reduction,
+                "turnover_reduction": turnover_reduction,
+                "signal_churn_reduction": signal_churn_reduction,
+                "rolling_consistency_delta": rolling_delta,
+                "benefit_status": _smoothed_benefit_status(
+                    weight_jump_reduction,
+                    turnover_reduction,
+                    signal_churn_reduction,
+                    rolling_delta,
+                ),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothing_lag_cost_summary(comparison: Mapping[str, Any]) -> dict[str, Any]:
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        lag = _method_lag_row(comparison, method)
+        missed_upside_count = int(_float(lag.get("missed_upside_count")))
+        rows.append(
+            {
+                "method": method,
+                "strong_recovery_lag_cost": round(
+                    _float(lag.get("strong_recovery_lag_cost")),
+                    10,
+                ),
+                "fast_regime_change_lag_cost": round(
+                    _float(lag.get("fast_regime_change_lag_cost")),
+                    10,
+                ),
+                "missed_upside_count": missed_upside_count,
+                "delayed_risk_on_count": missed_upside_count,
+                "lag_cost_status": _text(lag.get("lag_cost_status"), "INSUFFICIENT_DATA"),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothing_benefit_lag_tradeoff_matrix(
+    benefit: Mapping[str, Any],
+    lag: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        benefit_row = _find_method(_records(benefit.get("methods")), method)
+        lag_row = _find_method(_records(lag.get("methods")), method)
+        benefit_status = _text(benefit_row.get("benefit_status"), "INSUFFICIENT_DATA")
+        lag_status = _text(lag_row.get("lag_cost_status"), "INSUFFICIENT_DATA")
+        tradeoff = _smoothed_tradeoff_status(benefit_status, lag_status)
+        rows.append(
+            {
+                "method": method,
+                "benefit_status": benefit_status,
+                "lag_cost_status": lag_status,
+                "tradeoff_status": tradeoff,
+                "recommendation": _smoothed_tradeoff_recommendation(tradeoff),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_sideways_validation_summary(
+    smoothed: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    states = [
+        *_records(baseline.get("backfill_method_states")),
+        *_records(smoothed.get("smoothed_method_states")),
+    ]
+    labels = _regime_labels_from_states(states, _load_backfill_config_from_manifest(baseline))
+    sideways_dates = {day for day, label in labels.items() if label == "sideways_choppy"}
+    limited_rows = _method_rows_for_dates(
+        _records(baseline.get("backfill_method_states")),
+        "limited_adjustment",
+        sideways_dates,
+    )
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        method_rows = _method_rows_for_dates(
+            _records(smoothed.get("smoothed_method_states")),
+            method,
+            sideways_dates,
+        )
+        return_delta, drawdown_delta = _return_drawdown_delta(method_rows, limited_rows)
+        turnover_delta = round(
+            sum(_float(row.get("turnover")) for row in method_rows)
+            - sum(_float(row.get("turnover")) for row in limited_rows),
+            10,
+        )
+        signal_churn_delta = _weight_flip_count(method_rows) - _weight_flip_count(limited_rows)
+        weight_jump_delta = _large_jump_count(method_rows) - _large_jump_count(limited_rows)
+        rows.append(
+            {
+                "method": method,
+                "sample_count": len(method_rows),
+                "return_delta_vs_limited": return_delta,
+                "drawdown_delta_vs_limited": drawdown_delta,
+                "turnover_delta_vs_limited": turnover_delta,
+                "signal_churn_delta_vs_limited": signal_churn_delta,
+                "weight_jump_delta_vs_limited": weight_jump_delta,
+                "sideways_status": _smoothed_sideways_status(
+                    len(method_rows),
+                    return_delta,
+                    drawdown_delta,
+                    turnover_delta,
+                    signal_churn_delta,
+                    weight_jump_delta,
+                ),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"regime": "sideways_choppy", "methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_recovery_lag_validation_summary(
+    smoothed: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    states = [
+        *_records(baseline.get("backfill_method_states")),
+        *_records(smoothed.get("smoothed_method_states")),
+    ]
+    labels = _regime_labels_from_states(states, _load_backfill_config_from_manifest(baseline))
+    recovery_dates = {day for day, label in labels.items() if label == "strong_recovery"}
+    limited_rows = _method_rows_for_dates(
+        _records(baseline.get("backfill_method_states")),
+        "limited_adjustment",
+        recovery_dates,
+    )
+    ledger = _records(smoothed.get("smoothed_trade_ledger"))
+    rows = []
+    for method in SMOOTHED_METHOD_TO_VARIANT:
+        method_rows = _method_rows_for_dates(
+            _records(smoothed.get("smoothed_method_states")),
+            method,
+            recovery_dates,
+        )
+        return_delta, _drawdown_delta = _return_drawdown_delta(method_rows, limited_rows)
+        delay_days = _risk_on_delay_proxy_days(ledger, method, recovery_dates)
+        rows.append(
+            {
+                "method": method,
+                "sample_count": len(method_rows),
+                "return_delta_vs_limited": return_delta,
+                "risk_on_response_delay_days": delay_days,
+                "missed_upside": round(max(0.0, -return_delta), 10),
+                "lag_status": (
+                    "INSUFFICIENT_DATA"
+                    if not method_rows
+                    else _smoothed_lag_cost_status(return_delta)
+                ),
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"regime": "strong_recovery", "methods": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_confirmation_targets(
+    review: Mapping[str, Any],
+    regime: Mapping[str, Any],
+) -> dict[str, Any]:
+    decision = _mapping(review.get("smoothed_decision"))
+    sideways = _find_method(
+        _records(_mapping(regime.get("sideways_validation_summary")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    recovery = _find_method(
+        _records(_mapping(regime.get("recovery_lag_validation_summary")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    targets = [
+        {
+            "target_id": "smooth_3d_vs_limited",
+            "method": "smooth_weights_3d_limited_adjustment",
+            "baseline": "limited_adjustment",
+            "required_forward_events": SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS,
+            "windows": list(SMOOTHED_CONFIRMATION_WINDOWS),
+            "success_criteria": {
+                "rolling_consistency_delta": "IMPROVED",
+                "turnover_delta_max": 0.0,
+                "return_delta_min": SMOOTHED_CONFIRMATION_RETURN_DELTA_MIN,
+                "drawdown_delta_max": 0.0,
+            },
+            "status": "IN_PROGRESS",
+            **SYSTEM_TARGET_SAFETY,
+        },
+        {
+            "target_id": "smooth_3d_vs_static_baseline",
+            "method": "smooth_weights_3d_limited_adjustment",
+            "baseline": "static_baseline",
+            "required_forward_events": SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS,
+            "windows": list(SMOOTHED_CONFIRMATION_WINDOWS),
+            "success_criteria": {
+                "return_delta_min": SMOOTHED_CONFIRMATION_RETURN_DELTA_MIN,
+                "drawdown_delta_max": 0.0,
+                "turnover_delta_max": 0.0,
+            },
+            "status": "IN_PROGRESS",
+            **SYSTEM_TARGET_SAFETY,
+        },
+        {
+            "target_id": "smooth_3d_sideways_choppy_improvement",
+            "method": "smooth_weights_3d_limited_adjustment",
+            "baseline": "limited_adjustment",
+            "required_sideways_events": SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS,
+            "current_backtest_sideways_status": sideways.get("sideways_status"),
+            "success_criteria": {
+                "signal_churn_delta_max": 0.0,
+                "weight_jump_delta_max": 0,
+                "turnover_delta_max": 0.0,
+            },
+            "status": "IN_PROGRESS",
+            **SYSTEM_TARGET_SAFETY,
+        },
+        {
+            "target_id": "smooth_3d_recovery_lag_watch",
+            "method": "smooth_weights_3d_limited_adjustment",
+            "baseline": "limited_adjustment",
+            "required_recovery_events": SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS,
+            "current_backtest_lag_status": recovery.get("lag_status"),
+            "failure_conditions": {
+                "missed_upside_too_large": True,
+                "risk_on_response_delay_too_high": True,
+            },
+            "status": "WATCH_ONLY",
+            **SYSTEM_TARGET_SAFETY,
+        },
+    ]
+    return {
+        "review_id": review.get("review_id"),
+        "decision": decision.get("decision"),
+        "confidence": decision.get("decision_confidence"),
+        "targets": targets,
+        "auto_apply": False,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_watch_summary(
+    attribution: Mapping[str, Any],
+    benefit_lag: Mapping[str, Any],
+    regime: Mapping[str, Any],
+    confirmation: Mapping[str, Any],
+) -> dict[str, Any]:
+    breakdown = _mapping(attribution.get("smoothed_decision_reason_breakdown"))
+    tradeoff = _find_method(
+        _records(_mapping(benefit_lag.get("benefit_lag_tradeoff_matrix")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    sideways = _find_method(
+        _records(_mapping(regime.get("sideways_validation_summary")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    recovery = _find_method(
+        _records(_mapping(regime.get("recovery_lag_validation_summary")).get("methods")),
+        "smooth_weights_3d_limited_adjustment",
+    )
+    target_rows = _records(
+        _mapping(confirmation.get("smoothed_confirmation_targets")).get("targets")
+    )
+    forward_status = (
+        "IN_PROGRESS"
+        if any(row.get("status") in {"IN_PROGRESS", "WATCH_ONLY"} for row in target_rows)
+        else "NOT_REGISTERED"
+    )
+    recommended_action = _smoothed_watch_recommended_action(
+        _text(breakdown.get("decision")),
+        _text(tradeoff.get("tradeoff_status")),
+        _text(recovery.get("lag_status")),
+        forward_status,
+    )
+    return {
+        "candidate_method": "smooth_weights_3d_limited_adjustment",
+        "secondary_method": "smooth_weights_5d_limited_adjustment",
+        "current_decision": breakdown.get("decision"),
+        "confidence": breakdown.get("confidence"),
+        "benefit_lag_tradeoff": tradeoff.get("tradeoff_status", "INSUFFICIENT_DATA"),
+        "sideways_validation_status": sideways.get("sideways_status", "INSUFFICIENT_DATA"),
+        "recovery_lag_status": recovery.get("lag_status", "INSUFFICIENT_DATA"),
+        "forward_confirmation_status": forward_status,
+        "recommended_action": recommended_action,
+        "research_target_only": True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _primary_smoothed_comparison(comparison: Mapping[str, Any], method: str) -> dict[str, Any]:
+    return _find_comparison(
+        _records(_mapping(comparison.get("smoothed_vs_limited_metrics")).get("comparisons")),
+        method,
+        "limited_adjustment",
+    )
+
+
+def _method_rolling_row(comparison: Mapping[str, Any], method: str) -> dict[str, Any]:
+    return _find_method(
+        _records(_mapping(comparison.get("smoothed_rolling_comparison")).get("methods")),
+        method,
+    )
+
+
+def _method_stability_row(comparison: Mapping[str, Any], method: str) -> dict[str, Any]:
+    return _find_method(
+        _records(_mapping(comparison.get("smoothed_stability_comparison")).get("methods")),
+        method,
+    )
+
+
+def _method_lag_row(comparison: Mapping[str, Any], method: str) -> dict[str, Any]:
+    return _find_method(
+        _records(_mapping(comparison.get("smoothing_lag_cost_analysis")).get("methods")),
+        method,
+    )
+
+
+def _sideways_regime_row(comparison: Mapping[str, Any]) -> dict[str, Any]:
+    for row in _records(_mapping(comparison.get("smoothed_regime_comparison")).get("regimes")):
+        if row.get("regime") == "sideways_choppy":
+            return row
+    return {}
+
+
+def _smoothed_regime_prefix(method: str) -> str:
+    return "smooth_5d" if method == "smooth_weights_5d_limited_adjustment" else "smooth_3d"
+
+
+def _status_upper(value: str) -> str:
+    normalized = value.strip().upper()
+    if normalized in {"IMPROVED", "WORSE", "MIXED", "INSUFFICIENT_DATA"}:
+        return normalized
+    return "INSUFFICIENT_DATA"
+
+
+def _smoothed_benefit_status(
+    weight_jump_reduction: float,
+    turnover_reduction: float,
+    signal_churn_reduction: float,
+    rolling_delta: str,
+) -> str:
+    if rolling_delta == "INSUFFICIENT_DATA":
+        return "INSUFFICIENT_DATA"
+    positive_count = sum(
+        value > 0
+        for value in (weight_jump_reduction, turnover_reduction, signal_churn_reduction)
+    )
+    if rolling_delta == "IMPROVED" and positive_count >= 2:
+        return "STRONG"
+    if rolling_delta != "WORSE" and positive_count >= 1:
+        return "MODERATE"
+    if rolling_delta == "IMPROVED" and all(
+        value >= 0
+        for value in (weight_jump_reduction, turnover_reduction, signal_churn_reduction)
+    ):
+        return "MODERATE"
+    return "WEAK"
+
+
+def _smoothed_tradeoff_status(benefit_status: str, lag_status: str) -> str:
+    if "INSUFFICIENT_DATA" in {benefit_status, lag_status}:
+        return "INSUFFICIENT_DATA"
+    if lag_status == "HIGH" or benefit_status == "WEAK":
+        return "UNFAVORABLE"
+    if benefit_status in {"STRONG", "MODERATE"} and lag_status == "LOW":
+        return "FAVORABLE"
+    return "MIXED"
+
+
+def _smoothed_tradeoff_recommendation(tradeoff_status: str) -> str:
+    if tradeoff_status == "FAVORABLE":
+        return "needs_forward_confirmation"
+    if tradeoff_status == "UNFAVORABLE":
+        return "reject"
+    if tradeoff_status == "INSUFFICIENT_DATA":
+        return "needs_forward_confirmation"
+    return "continue_observation"
+
+
+def _method_rows_for_dates(
+    rows: Sequence[Mapping[str, Any]],
+    method: str,
+    dates: set[str],
+) -> list[dict[str, Any]]:
+    return [
+        dict(row)
+        for row in rows
+        if row.get("target_method") == method and _text(row.get("date")) in dates
+    ]
+
+
+def _return_drawdown_delta(
+    method_rows: Sequence[Mapping[str, Any]],
+    limited_rows: Sequence[Mapping[str, Any]],
+) -> tuple[float, float]:
+    method_metrics = _sample_return_metrics(method_rows, min_sample=1)
+    limited_metrics = _sample_return_metrics(limited_rows, min_sample=1)
+    return (
+        round(
+            _float(method_metrics.get("total_return"))
+            - _float(limited_metrics.get("total_return")),
+            10,
+        ),
+        round(
+            _float(method_metrics.get("max_drawdown"))
+            - _float(limited_metrics.get("max_drawdown")),
+            10,
+        ),
+    )
+
+
+def _smoothed_sideways_status(
+    sample_count: int,
+    return_delta: float,
+    drawdown_delta: float,
+    turnover_delta: float,
+    signal_churn_delta: float,
+    weight_jump_delta: float,
+) -> str:
+    if sample_count <= 0:
+        return "INSUFFICIENT_DATA"
+    if (
+        return_delta >= SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR
+        and drawdown_delta >= 0
+        and turnover_delta <= 0
+        and signal_churn_delta <= 0
+        and weight_jump_delta <= 0
+    ):
+        return "IMPROVED"
+    if return_delta < SMOOTHED_ACCEPTABLE_RETURN_DELTA_FLOOR and drawdown_delta < 0:
+        return "WORSE"
+    return "MIXED"
+
+
+def _risk_on_delay_proxy_days(
+    ledger: Sequence[Mapping[str, Any]],
+    method: str,
+    recovery_dates: set[str],
+) -> float:
+    delayed = 0
+    for row in ledger:
+        if row.get("target_method") != method or _text(row.get("date")) not in recovery_dates:
+            continue
+        delayed += sum(
+            1
+            for event in _records(row.get("lag_events"))
+            if event.get("lag_risk") in {"MEDIUM", "HIGH"}
+        )
+    return float(delayed)
+
+
+def _smoothed_watch_recommended_action(
+    decision: str,
+    tradeoff_status: str,
+    recovery_lag_status: str,
+    forward_status: str,
+) -> str:
+    if decision == "REJECT":
+        return "reject"
+    if recovery_lag_status == "HIGH" or tradeoff_status == "UNFAVORABLE":
+        return "owner_review_required"
+    if decision == "PROMOTE_TO_RECOMMENDED_RESEARCH" and forward_status == "IN_PROGRESS":
+        return "promote_for_review"
+    return "continue_observation"
 
 
 def _delta_improvement_status(value: float, *, lower_is_better: bool) -> str:
