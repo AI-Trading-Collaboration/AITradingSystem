@@ -1262,6 +1262,30 @@ renewal 闭环。CLI 入口为 `smoothed-forward-progress update/report`、
 修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production state、policy、
 order ticket 或 broker。
 
+TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
+在 owner renewal 继续观察之后新增 smoothed forward sample 自动采集闭环。CLI 入口为
+`smoothed-daily-emission run/report`、`validate-smoothed-daily-emission`、
+`smoothed-outcome-due scan/report`、`validate-smoothed-outcome-due`、
+`smoothed-outcome-update run/report`、`validate-smoothed-outcome-update`、
+`smoothed-forward-classify run/report`、`validate-smoothed-forward-classify`、
+`smoothed-forward-weekly-run run/report` 和 `validate-smoothed-forward-weekly-run`。
+Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission|smoothed_outcome_due|smoothed_outcome_update|smoothed_forward_classification|smoothed_forward_weekly_run/`，
+并登记 report registry / Reader Brief `Dynamic Rescue Smoothed Forward Sample Bootstrap`。
+Daily emission 只在 as-of price / model target / weights / data-quality 条件满足时记录
+research-only forward observation event；due scan 只标记 1/5/10/20-day windows 是否可更新；
+outcome update 只写 due 且价格可用的 realized windows；classification 只把 updated outcomes
+归入 sideways/recovery/fast-regime-change/lag-warning evidence buckets；weekly runner 串接
+sample collection、progress、dashboard、monitor、readiness recheck 和 owner renewal，但固定
+`can_execute_switch=false`。读取 cached ETF prices 的 run/scan/update/weekly-run CLI 会先执行
+`aits validate-data` 等价质量门禁，并在 CLI output 中披露 `validate_data_status` 和
+`validate_data_report`。所有输出继续固定 `research_target_only=true`、
+`paper_shadow_only=true`、`not_official_target_weights=true`、`broker_action_allowed=false`、
+`broker_action_taken=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`production_effect=none`；不得使用未来数据、补造 outcome、自动 switch、写 official target
+weights、修改 `position_advisory_v1.yaml`、paper/real portfolio、baseline/production state、
+policy、order ticket 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

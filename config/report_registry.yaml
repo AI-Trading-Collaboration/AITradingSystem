@@ -3324,6 +3324,113 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_daily_emission
+    title: ETF Dynamic v3 Rescue Smoothed Daily Emission
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-daily-emission report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_daily_emission_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_forward_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_event_weights.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_emission_data_quality.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/smoothed_daily_emission_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_daily_emission/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-271 emits one auditable smoothed forward observation event per
+      eligible trading date and records data-quality status without future data.
+    owner_action: review_smoothed_daily_emission_before_outcome_due_updates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_outcome_due
+    title: ETF Dynamic v3 Rescue Smoothed Outcome Due Scan
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-outcome-due report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/smoothed_outcome_due_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/due_windows.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/due_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_due/*/smoothed_outcome_due_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-272 scans prior smoothed forward events for due 1/5/10/20-day
+      outcome windows and blocks future-as-of updates.
+    owner_action: review_smoothed_due_windows_before_outcome_update
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_outcome_update
+    title: ETF Dynamic v3 Rescue Smoothed Outcome Update
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-outcome-update report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/smoothed_outcome_update_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/updated_smoothed_outcomes.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/skipped_smoothed_outcomes.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/smoothed_outcome_delta_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/smoothed_outcome_update_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_outcome_update/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-273 writes realized smoothed vs limited forward outcome deltas
+      only for due windows with available cached prices.
+    owner_action: review_smoothed_outcome_update_before_classification
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_forward_classification
+    title: ETF Dynamic v3 Rescue Smoothed Forward Classification
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-forward-classify report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/smoothed_forward_classification_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/classified_forward_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/classification_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_classification/*/smoothed_forward_classification_report.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-274 classifies updated smoothed forward outcomes into sideways,
+      recovery, fast-regime-change, and lag-warning evidence buckets.
+    owner_action: review_smoothed_classification_before_progress_and_monitor_updates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_forward_weekly_run
+    title: ETF Dynamic v3 Rescue Smoothed Forward Weekly Run
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-forward-weekly-run report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/smoothed_forward_weekly_run_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/weekly_run_steps.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/weekly_run_artifacts.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/weekly_run_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/smoothed_forward_weekly_run_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_weekly_run/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-275 orchestrates daily emission, due scan, outcome update,
+      classification, progress, dashboard, monitor, readiness, and owner renewal
+      artifacts while preserving can_execute_switch=false.
+    owner_action: review_smoothed_weekly_run_and_owner_renewal_before_any_followup_switch_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research

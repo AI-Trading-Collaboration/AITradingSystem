@@ -197,6 +197,19 @@ DEFAULT_SMOOTHED_SWITCH_READINESS_DIR = (
 DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_renewal"
 )
+DEFAULT_SMOOTHED_DAILY_EMISSION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_daily_emission"
+)
+DEFAULT_SMOOTHED_OUTCOME_DUE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_outcome_due"
+DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_outcome_update"
+)
+DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_classification"
+)
+DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_weekly_run"
+)
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
 DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
@@ -297,6 +310,14 @@ SMOOTHED_READINESS_SCORE_WEIGHTS: dict[str, float] = {
 }
 SMOOTHED_READINESS_PROMOTE_REVIEW_SCORE = 0.75
 SMOOTHED_READINESS_CONTINUE_OBSERVATION_SCORE = 0.45
+
+# TRADING-274 reporting-only regime proxy thresholds. They classify forward
+# evidence samples when no explicit pressure-regime tag is available; they do
+# not change target weights, scoring, promotion gates, or any trading action.
+SMOOTHED_CLASSIFIER_SIDEWAYS_ABS_RETURN_THRESHOLD = 0.01
+SMOOTHED_CLASSIFIER_STRONG_RECOVERY_RETURN_THRESHOLD = 0.02
+SMOOTHED_CLASSIFIER_FAST_REGIME_CHANGE_ABS_RETURN_THRESHOLD = 0.04
+SMOOTHED_CLASSIFIER_LAG_WARNING_DELTA_THRESHOLD = -0.01
 
 SYSTEM_TARGET_SAFETY: dict[str, Any] = {
     "research_target_only": True,
@@ -9410,11 +9431,32 @@ def update_smoothed_forward_progress(
     binding_id: str,
     binding_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
     output_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    outcome_update_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+    classification_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     binding = smoothed_forward_binding_report_payload(binding_id=binding_id, output_dir=binding_dir)
-    targets = _smoothed_forward_progress_targets(binding, generated)
+    effective_update_dir = (
+        output_dir.parent / "smoothed_outcome_update"
+        if outcome_update_dir == DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR
+        and output_dir != DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR
+        else outcome_update_dir
+    )
+    effective_classification_dir = (
+        output_dir.parent / "smoothed_forward_classification"
+        if classification_dir == DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR
+        and output_dir != DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR
+        else classification_dir
+    )
+    updated_outcomes = _collect_updated_smoothed_outcomes(effective_update_dir)
+    classifications = _collect_classified_smoothed_events(effective_classification_dir)
+    targets = _smoothed_forward_progress_targets(
+        binding,
+        generated,
+        updated_outcomes=updated_outcomes,
+        classifications=classifications,
+    )
     summary = _smoothed_forward_progress_summary(binding_id, targets)
     progress_id = _stable_id(
         "smoothed-forward-progress",
@@ -9697,6 +9739,7 @@ def update_smoothed_event_monitor(
     progress_id: str,
     progress_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
     output_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+    classification_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
@@ -9705,8 +9748,19 @@ def update_smoothed_event_monitor(
         output_dir=progress_dir,
     )
     progress_summary = _mapping(progress.get("smoothed_forward_progress_summary"))
-    sideways_events: list[dict[str, Any]] = []
-    recovery_events: list[dict[str, Any]] = []
+    effective_classification_dir = (
+        output_dir.parent / "smoothed_forward_classification"
+        if classification_dir == DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR
+        and output_dir != DEFAULT_SMOOTHED_EVENT_MONITOR_DIR
+        else classification_dir
+    )
+    classified = _collect_classified_smoothed_events(effective_classification_dir)
+    sideways_events = [
+        row for row in classified if row.get("sideways_relevant") is True
+    ]
+    recovery_events = [
+        row for row in classified if row.get("recovery_lag_relevant") is True
+    ]
     summary = _smoothed_event_accumulation_summary(
         progress_summary,
         sideways_events,
@@ -10146,6 +10200,1015 @@ def validate_smoothed_owner_renewal_artifact(
     return _validation_payload(
         "etf_dynamic_v3_smoothed_owner_renewal_validation",
         renewal_id,
+        checks,
+    )
+
+
+def run_smoothed_daily_emission(
+    *,
+    as_of: date,
+    target_id: str | None = None,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    model_target = (
+        model_target_report_payload(target_id=target_id, output_dir=model_target_dir)
+        if target_id
+        else _optional_latest_model_target_payload(model_target_dir)
+    )
+    weights = _smoothed_emission_weights(model_target)
+    symbols = _smoothed_symbols_from_weight_map(weights)
+    pivot = _smoothed_price_pivot_or_empty(
+        price_cache_path,
+        symbols,
+        start=as_of - timedelta(days=60),
+    )
+    latest_price = _smoothed_latest_price_date_or_none(pivot)
+    regime_context = _smoothed_regime_context_for_as_of(pivot, as_of)
+    weight_validation = _smoothed_weight_validation(weights)
+    data_quality = _smoothed_emission_data_quality(
+        as_of=as_of,
+        latest_price_date=latest_price,
+        target_present=bool(model_target),
+        weights_valid=weight_validation.get("constraint_status") != "FAIL",
+        regime_context=regime_context,
+    )
+    event_status, skip_reasons = _smoothed_daily_event_status(
+        as_of=as_of,
+        latest_price_date=latest_price,
+        target_present=bool(model_target),
+        weights_valid=weight_validation.get("constraint_status") != "FAIL",
+        data_quality=data_quality,
+    )
+    event_id = _stable_id(
+        "smoothed-forward-event",
+        as_of.isoformat(),
+        model_target.get("target_id"),
+        weights,
+    )
+    event = {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": event_id,
+        "as_of": as_of.isoformat(),
+        "event_type": "SMOOTHED_FORWARD_OBSERVATION",
+        "candidate_method": "smooth_weights_3d_limited_adjustment",
+        "baseline_method": "limited_adjustment",
+        "secondary_method": "smooth_weights_5d_limited_adjustment",
+        "outcome_windows": list(SMOOTHED_CONFIRMATION_WINDOWS),
+        "regime_context": regime_context,
+        "data_quality": data_quality["data_quality"],
+        "event_status": event_status,
+        "skip_reasons": skip_reasons,
+        "source_model_target_id": _text(model_target.get("target_id")),
+        "source_model_target_as_of": _text(model_target.get("as_of")),
+        "requested_as_of": as_of.isoformat(),
+        "latest_price_date": latest_price.isoformat() if latest_price else None,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    event_weights = {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": event_id,
+        "as_of": as_of.isoformat(),
+        "weights": weights,
+        "weight_validation": weight_validation,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    emission_id = _stable_id(
+        "smoothed-daily-emission",
+        as_of.isoformat(),
+        event,
+        event_weights,
+        data_quality,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / emission_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_daily_emission_manifest",
+        "emission_id": root.name,
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "emitted_event_count": 1 if event_status == "ACTIVE" else 0,
+        "event_status": event_status,
+        "data_quality": data_quality["data_quality"],
+        "future_data_used": False,
+        "smoothed_daily_emission_manifest_path": str(
+            root / "smoothed_daily_emission_manifest.json"
+        ),
+        "smoothed_forward_events_path": str(root / "smoothed_forward_events.jsonl"),
+        "smoothed_event_weights_path": str(root / "smoothed_event_weights.json"),
+        "smoothed_emission_data_quality_path": str(
+            root / "smoothed_emission_data_quality.json"
+        ),
+        "smoothed_daily_emission_report_path": str(
+            root / "smoothed_daily_emission_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_daily_emission_reader_brief(manifest, event, data_quality)
+    _write_json(root / "smoothed_daily_emission_manifest.json", manifest)
+    _write_jsonl(root / "smoothed_forward_events.jsonl", [event])
+    _write_json(root / "smoothed_event_weights.json", event_weights)
+    _write_json(root / "smoothed_emission_data_quality.json", data_quality)
+    _write_text(
+        root / "smoothed_daily_emission_report.md",
+        render_smoothed_daily_emission_report(
+            manifest,
+            event,
+            event_weights,
+            data_quality,
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_daily_emission",
+        root.name,
+        root / "smoothed_daily_emission_manifest.json",
+    )
+    return {
+        "emission_id": root.name,
+        "emission_dir": root,
+        "manifest": manifest,
+        "smoothed_forward_events": [event],
+        "smoothed_event_weights": event_weights,
+        "smoothed_emission_data_quality": data_quality,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_daily_emission_report_payload(
+    *,
+    emission_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=emission_id,
+        latest_pointer="latest_smoothed_daily_emission",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_daily_emission_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_daily_emission_manifest.json"),
+        "smoothed_forward_events": _read_jsonl(root / "smoothed_forward_events.jsonl"),
+        "smoothed_event_weights": _read_json(root / "smoothed_event_weights.json"),
+        "smoothed_emission_data_quality": _read_json(
+            root / "smoothed_emission_data_quality.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "emission_dir": str(root),
+    }
+
+
+def validate_smoothed_daily_emission_artifact(
+    *,
+    emission_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / emission_id
+    manifest = _read_optional_json(root / "smoothed_daily_emission_manifest.json") or {}
+    events = _read_jsonl(root / "smoothed_forward_events.jsonl")
+    event_weights = _read_optional_json(root / "smoothed_event_weights.json") or {}
+    data_quality = _read_optional_json(root / "smoothed_emission_data_quality.json") or {}
+    validation = _mapping(event_weights.get("weight_validation"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_daily_emission_manifest.json",
+            "smoothed_forward_events.jsonl",
+            "smoothed_event_weights.json",
+            "smoothed_emission_data_quality.json",
+            "smoothed_daily_emission_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check("emission_id_matches", manifest.get("emission_id") == emission_id, ""),
+            _check("single_event_recorded", len(events) == 1, str(len(events))),
+            _check(
+                "event_status_allowed",
+                all(
+                    row.get("event_status")
+                    in {"ACTIVE", "SKIPPED", "INSUFFICIENT_DATA"}
+                    for row in events
+                ),
+                "",
+            ),
+            _check(
+                "future_data_used_false",
+                manifest.get("future_data_used") is False
+                and data_quality.get("future_data_used") is False,
+                "",
+            ),
+            _check(
+                "weights_non_negative_when_present",
+                validation.get("no_negative_weights") is True,
+                _text(validation.get("constraint_status")),
+            ),
+            _check(
+                "broker_action_allowed_false",
+                manifest.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", manifest.get("production_effect") == "none", ""),
+            _check("broker_forbidden", _payload_safe(manifest, event_weights, *events), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_daily_emission_validation",
+        emission_id,
+        checks,
+    )
+
+
+def scan_smoothed_outcome_due(
+    *,
+    as_of: date,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    emissions = _collect_smoothed_daily_emissions(emission_dir)
+    events = [
+        event
+        for emission in emissions
+        for event in emission["events"]
+        if event.get("event_status") == "ACTIVE"
+    ]
+    active_event_ids = {_text(event.get("event_id")) for event in events if event.get("event_id")}
+    event_weights = {
+        weights["event_id"]: weights
+        for emission in emissions
+        for weights in [emission["weights"]]
+        if weights.get("event_id") in active_event_ids
+    }
+    symbols = _smoothed_symbols_from_collected_event_weights(event_weights.values())
+    pivot = _smoothed_price_pivot_or_empty(
+        price_cache_path,
+        symbols,
+        start=AI_AFTER_CHATGPT_START,
+    )
+    trading_dates = [idx.date() for idx in pivot.index]
+    due_rows = [
+        _smoothed_due_window_row(
+            event,
+            window_days=int(_float(window)),
+            scanner_as_of=as_of,
+            trading_dates=trading_dates,
+            pivot=pivot,
+        )
+        for event in events
+        for window in _texts(event.get("outcome_windows"))
+    ]
+    summary = _smoothed_due_summary(as_of=as_of, rows=due_rows)
+    due_id = _stable_id(
+        "smoothed-outcome-due",
+        as_of.isoformat(),
+        due_rows,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / due_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["due_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_outcome_due_manifest",
+        "due_id": root.name,
+        "scanner_as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_outcome_due_manifest_path": str(
+            root / "smoothed_outcome_due_manifest.json"
+        ),
+        "due_windows_path": str(root / "due_windows.jsonl"),
+        "due_summary_path": str(root / "due_summary.json"),
+        "smoothed_outcome_due_report_path": str(root / "smoothed_outcome_due_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_outcome_due_manifest.json", manifest)
+    _write_jsonl(root / "due_windows.jsonl", due_rows)
+    _write_json(root / "due_summary.json", summary)
+    _write_text(
+        root / "smoothed_outcome_due_report.md",
+        render_smoothed_outcome_due_report(manifest, summary, due_rows),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_outcome_due",
+        root.name,
+        root / "smoothed_outcome_due_manifest.json",
+    )
+    return {
+        "due_id": root.name,
+        "due_dir": root,
+        "manifest": manifest,
+        "due_windows": due_rows,
+        "due_summary": summary,
+    }
+
+
+def smoothed_outcome_due_report_payload(
+    *,
+    due_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=due_id,
+        latest_pointer="latest_smoothed_outcome_due",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_outcome_due_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_outcome_due_manifest.json"),
+        "due_windows": _read_jsonl(root / "due_windows.jsonl"),
+        "due_summary": _read_json(root / "due_summary.json"),
+        "due_dir": str(root),
+    }
+
+
+def validate_smoothed_outcome_due_artifact(
+    *,
+    due_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+) -> dict[str, Any]:
+    root = output_dir / due_id
+    manifest = _read_optional_json(root / "smoothed_outcome_due_manifest.json") or {}
+    rows = _read_jsonl(root / "due_windows.jsonl")
+    summary = _read_optional_json(root / "due_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_outcome_due_manifest.json",
+            "due_windows.jsonl",
+            "due_summary.json",
+            "smoothed_outcome_due_report.md",
+        ),
+    )
+    due_logic_valid = all(
+        row.get("can_update") is False
+        if row.get("due_status") != "DUE"
+        else row.get("price_available") is True
+        for row in rows
+    )
+    no_future_update = all(
+        row.get("can_update") is False
+        for row in rows
+        if _coerce_date(row.get("expected_end_date"), date.max)
+        > _coerce_date(row.get("scanner_as_of"), date.min)
+    )
+    checks.extend(
+        [
+            _check(
+                "due_id_matches",
+                manifest.get("due_id") == due_id and summary.get("due_id") == due_id,
+                "",
+            ),
+            _check(
+                "total_windows_matches",
+                int(_float(summary.get("total_windows_scanned"))) == len(rows),
+                str(len(rows)),
+            ),
+            _check("due_logic_valid", due_logic_valid, ""),
+            _check("no_future_as_of_update", no_future_update, ""),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *rows), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_outcome_due_validation",
+        due_id,
+        checks,
+    )
+
+
+def run_smoothed_outcome_update(
+    *,
+    due_id: str,
+    due_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    due = smoothed_outcome_due_report_payload(due_id=due_id, output_dir=due_dir)
+    due_rows = _records(due.get("due_windows"))
+    event_weights = _smoothed_event_weights_by_id(emission_dir)
+    symbols = _smoothed_symbols_from_collected_event_weights(event_weights.values())
+    pivot = _smoothed_price_pivot_or_empty(
+        price_cache_path,
+        symbols,
+        start=AI_AFTER_CHATGPT_START,
+    )
+    updated: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for row in due_rows:
+        if row.get("can_update") is not True:
+            skipped.append(_smoothed_skipped_outcome_row(row, _text(row.get("due_status"))))
+            continue
+        weights = _mapping(event_weights.get(_text(row.get("event_id"))))
+        result = _smoothed_updated_outcome_row(row, weights, pivot)
+        if result is None:
+            skipped.append(_smoothed_skipped_outcome_row(row, "PRICE_MISSING"))
+        else:
+            updated.append(result)
+    summary = _smoothed_outcome_delta_summary(updated, skipped)
+    update_id = _stable_id(
+        "smoothed-outcome-update",
+        due_id,
+        updated,
+        skipped,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / update_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["update_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_outcome_update_manifest",
+        "update_id": root.name,
+        "due_id": due_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "future_data_used": False,
+        "smoothed_outcome_update_manifest_path": str(
+            root / "smoothed_outcome_update_manifest.json"
+        ),
+        "updated_smoothed_outcomes_path": str(root / "updated_smoothed_outcomes.jsonl"),
+        "skipped_smoothed_outcomes_path": str(root / "skipped_smoothed_outcomes.jsonl"),
+        "smoothed_outcome_delta_summary_path": str(
+            root / "smoothed_outcome_delta_summary.json"
+        ),
+        "smoothed_outcome_update_report_path": str(
+            root / "smoothed_outcome_update_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_outcome_update_reader_brief(summary)
+    _write_json(root / "smoothed_outcome_update_manifest.json", manifest)
+    _write_jsonl(root / "updated_smoothed_outcomes.jsonl", updated)
+    _write_jsonl(root / "skipped_smoothed_outcomes.jsonl", skipped)
+    _write_json(root / "smoothed_outcome_delta_summary.json", summary)
+    _write_text(
+        root / "smoothed_outcome_update_report.md",
+        render_smoothed_outcome_update_report(manifest, summary, updated, skipped),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_outcome_update",
+        root.name,
+        root / "smoothed_outcome_update_manifest.json",
+    )
+    return {
+        "update_id": root.name,
+        "update_dir": root,
+        "manifest": manifest,
+        "updated_smoothed_outcomes": updated,
+        "skipped_smoothed_outcomes": skipped,
+        "smoothed_outcome_delta_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_outcome_update_report_payload(
+    *,
+    update_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=update_id,
+        latest_pointer="latest_smoothed_outcome_update",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_outcome_update_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_outcome_update_manifest.json"),
+        "updated_smoothed_outcomes": _read_jsonl(root / "updated_smoothed_outcomes.jsonl"),
+        "skipped_smoothed_outcomes": _read_jsonl(root / "skipped_smoothed_outcomes.jsonl"),
+        "smoothed_outcome_delta_summary": _read_json(
+            root / "smoothed_outcome_delta_summary.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "update_dir": str(root),
+    }
+
+
+def validate_smoothed_outcome_update_artifact(
+    *,
+    update_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+) -> dict[str, Any]:
+    root = output_dir / update_id
+    manifest = _read_optional_json(root / "smoothed_outcome_update_manifest.json") or {}
+    updated = _read_jsonl(root / "updated_smoothed_outcomes.jsonl")
+    skipped = _read_jsonl(root / "skipped_smoothed_outcomes.jsonl")
+    summary = _read_optional_json(root / "smoothed_outcome_delta_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_outcome_update_manifest.json",
+            "updated_smoothed_outcomes.jsonl",
+            "skipped_smoothed_outcomes.jsonl",
+            "smoothed_outcome_delta_summary.json",
+            "smoothed_outcome_update_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "update_id_matches",
+                manifest.get("update_id") == update_id
+                and summary.get("update_id") == update_id,
+                "",
+            ),
+            _check(
+                "updated_count_matches",
+                int(_float(summary.get("updated_count"))) == len(updated),
+                str(len(updated)),
+            ),
+            _check(
+                "skipped_count_matches",
+                int(_float(summary.get("skipped_count"))) == len(skipped),
+                str(len(skipped)),
+            ),
+            _check(
+                "all_updated_available",
+                all(row.get("outcome_status") == "AVAILABLE" for row in updated),
+                "",
+            ),
+            _check(
+                "future_data_used_false",
+                manifest.get("future_data_used") is False
+                and all(row.get("future_data_used") is False for row in updated),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *updated, *skipped), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_outcome_update_validation",
+        update_id,
+        checks,
+    )
+
+
+def run_smoothed_forward_classification(
+    *,
+    update_id: str,
+    update_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    update = smoothed_outcome_update_report_payload(update_id=update_id, output_dir=update_dir)
+    outcomes = _records(update.get("updated_smoothed_outcomes"))
+    events = _smoothed_events_by_id(emission_dir)
+    weights = _smoothed_event_weights_by_id(emission_dir)
+    classified = [
+        _smoothed_classified_forward_event(row, events, weights) for row in outcomes
+    ]
+    summary = _smoothed_classification_summary(classified)
+    classification_id = _stable_id(
+        "smoothed-forward-classification",
+        update_id,
+        classified,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / classification_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["classification_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_forward_classification_manifest",
+        "classification_id": root.name,
+        "update_id": update_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_forward_classification_manifest_path": str(
+            root / "smoothed_forward_classification_manifest.json"
+        ),
+        "classified_forward_events_path": str(root / "classified_forward_events.jsonl"),
+        "classification_summary_path": str(root / "classification_summary.json"),
+        "smoothed_forward_classification_report_path": str(
+            root / "smoothed_forward_classification_report.md"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_forward_classification_manifest.json", manifest)
+    _write_jsonl(root / "classified_forward_events.jsonl", classified)
+    _write_json(root / "classification_summary.json", summary)
+    _write_text(
+        root / "smoothed_forward_classification_report.md",
+        render_smoothed_forward_classification_report(manifest, summary, classified),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_forward_classification",
+        root.name,
+        root / "smoothed_forward_classification_manifest.json",
+    )
+    return {
+        "classification_id": root.name,
+        "classification_dir": root,
+        "manifest": manifest,
+        "classified_forward_events": classified,
+        "classification_summary": summary,
+    }
+
+
+def smoothed_forward_classification_report_payload(
+    *,
+    classification_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=classification_id,
+        latest_pointer="latest_smoothed_forward_classification",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_forward_classification_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_forward_classification_manifest.json"),
+        "classified_forward_events": _read_jsonl(root / "classified_forward_events.jsonl"),
+        "classification_summary": _read_json(root / "classification_summary.json"),
+        "classification_dir": str(root),
+    }
+
+
+def validate_smoothed_forward_classification_artifact(
+    *,
+    classification_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / classification_id
+    manifest = _read_optional_json(root / "smoothed_forward_classification_manifest.json") or {}
+    classified = _read_jsonl(root / "classified_forward_events.jsonl")
+    summary = _read_optional_json(root / "classification_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_forward_classification_manifest.json",
+            "classified_forward_events.jsonl",
+            "classification_summary.json",
+            "smoothed_forward_classification_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "classification_id_matches",
+                manifest.get("classification_id") == classification_id
+                and summary.get("classification_id") == classification_id,
+                "",
+            ),
+            _check(
+                "events_classified_matches",
+                int(_float(summary.get("events_classified"))) == len(classified),
+                str(len(classified)),
+            ),
+            _check(
+                "confidence_allowed",
+                all(
+                    row.get("classification_confidence") in {"LOW", "MEDIUM", "HIGH"}
+                    for row in classified
+                ),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *classified), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_forward_classification_validation",
+        classification_id,
+        checks,
+    )
+
+
+def run_smoothed_forward_weekly_run(
+    *,
+    week_ending: date,
+    target_id: str | None = None,
+    binding_id: str | None = None,
+    switch_plan_id: str | None = None,
+    owner_promotion_id: str | None = None,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    due_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+    update_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+    classification_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
+    binding_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
+    progress_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    dashboard_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+    monitor_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+    switch_plan_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
+    recheck_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+    owner_promotion_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
+    renewal_dir: Path = DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    steps: list[dict[str, Any]] = []
+    artifacts: dict[str, Any] = {}
+
+    emission = run_smoothed_daily_emission(
+        as_of=week_ending,
+        target_id=target_id,
+        model_target_dir=model_target_dir,
+        output_dir=emission_dir,
+        price_cache_path=price_cache_path,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "daily_emission", emission["emission_id"])
+
+    due = scan_smoothed_outcome_due(
+        as_of=week_ending,
+        emission_dir=emission_dir,
+        output_dir=due_dir,
+        price_cache_path=price_cache_path,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "outcome_due_scan", due["due_id"])
+
+    update = run_smoothed_outcome_update(
+        due_id=due["due_id"],
+        due_dir=due_dir,
+        emission_dir=emission_dir,
+        output_dir=update_dir,
+        price_cache_path=price_cache_path,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "outcome_update", update["update_id"])
+
+    classification = run_smoothed_forward_classification(
+        update_id=update["update_id"],
+        update_dir=update_dir,
+        emission_dir=emission_dir,
+        output_dir=classification_dir,
+        generated_at=generated,
+    )
+    _record_weekly_step(
+        steps,
+        artifacts,
+        "forward_classification",
+        classification["classification_id"],
+    )
+
+    resolved_binding_id = binding_id or _latest_pointer_artifact_id(
+        "latest_smoothed_forward_binding"
+    )
+    resolved_switch_plan_id = switch_plan_id or _latest_pointer_artifact_id(
+        "latest_paper_shadow_primary_switch"
+    )
+    resolved_owner_promotion_id = owner_promotion_id or _latest_pointer_artifact_id(
+        "latest_smoothed_owner_promotion"
+    )
+    progress = update_smoothed_forward_progress(
+        binding_id=resolved_binding_id,
+        binding_dir=binding_dir,
+        output_dir=progress_dir,
+        outcome_update_dir=update_dir,
+        classification_dir=classification_dir,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "progress_update", progress["progress_id"])
+
+    dashboard = build_smoothed_weekly_dashboard(
+        progress_id=progress["progress_id"],
+        progress_dir=progress_dir,
+        output_dir=dashboard_dir,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "weekly_dashboard", dashboard["dashboard_id"])
+
+    monitor = update_smoothed_event_monitor(
+        progress_id=progress["progress_id"],
+        progress_dir=progress_dir,
+        output_dir=monitor_dir,
+        classification_dir=classification_dir,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "event_monitor", monitor["monitor_id"])
+
+    recheck = recheck_smoothed_switch_readiness(
+        dashboard_id=dashboard["dashboard_id"],
+        monitor_id=monitor["monitor_id"],
+        switch_plan_id=resolved_switch_plan_id,
+        dashboard_dir=dashboard_dir,
+        monitor_dir=monitor_dir,
+        switch_plan_dir=switch_plan_dir,
+        output_dir=recheck_dir,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "switch_readiness", recheck["recheck_id"])
+
+    renewal = build_smoothed_owner_renewal_pack(
+        recheck_id=recheck["recheck_id"],
+        owner_promotion_id=resolved_owner_promotion_id,
+        recheck_dir=recheck_dir,
+        owner_promotion_dir=owner_promotion_dir,
+        output_dir=renewal_dir,
+        generated_at=generated,
+    )
+    _record_weekly_step(steps, artifacts, "owner_renewal", renewal["renewal_id"])
+
+    summary = _smoothed_weekly_run_summary(
+        week_ending=week_ending,
+        emission=emission,
+        due=due,
+        update=update,
+        classification=classification,
+        progress=progress,
+        recheck=recheck,
+    )
+    weekly_run_id = _stable_id(
+        "smoothed-forward-weekly-run",
+        week_ending.isoformat(),
+        steps,
+        artifacts,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / weekly_run_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["weekly_run_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_forward_weekly_run_manifest",
+        "weekly_run_id": root.name,
+        "week_ending": week_ending.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_forward_weekly_run_manifest_path": str(
+            root / "smoothed_forward_weekly_run_manifest.json"
+        ),
+        "weekly_run_steps_path": str(root / "weekly_run_steps.json"),
+        "weekly_run_artifacts_path": str(root / "weekly_run_artifacts.json"),
+        "weekly_run_summary_path": str(root / "weekly_run_summary.json"),
+        "smoothed_forward_weekly_run_report_path": str(
+            root / "smoothed_forward_weekly_run_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    step_payload = {"schema_version": SCHEMA_VERSION, "steps": steps, **SYSTEM_TARGET_SAFETY}
+    artifact_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "artifacts": artifacts,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_forward_weekly_run_reader_brief(summary)
+    _write_json(root / "smoothed_forward_weekly_run_manifest.json", manifest)
+    _write_json(root / "weekly_run_steps.json", step_payload)
+    _write_json(root / "weekly_run_artifacts.json", artifact_payload)
+    _write_json(root / "weekly_run_summary.json", summary)
+    _write_text(
+        root / "smoothed_forward_weekly_run_report.md",
+        render_smoothed_forward_weekly_run_report(manifest, step_payload, summary),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_forward_weekly_run",
+        root.name,
+        root / "smoothed_forward_weekly_run_manifest.json",
+    )
+    return {
+        "weekly_run_id": root.name,
+        "weekly_run_dir": root,
+        "manifest": manifest,
+        "weekly_run_steps": step_payload,
+        "weekly_run_artifacts": artifact_payload,
+        "weekly_run_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_forward_weekly_run_report_payload(
+    *,
+    weekly_run_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=weekly_run_id,
+        latest_pointer="latest_smoothed_forward_weekly_run",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_forward_weekly_run_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_forward_weekly_run_manifest.json"),
+        "weekly_run_steps": _read_json(root / "weekly_run_steps.json"),
+        "weekly_run_artifacts": _read_json(root / "weekly_run_artifacts.json"),
+        "weekly_run_summary": _read_json(root / "weekly_run_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "weekly_run_dir": str(root),
+    }
+
+
+def validate_smoothed_forward_weekly_run_artifact(
+    *,
+    weekly_run_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / weekly_run_id
+    manifest = _read_optional_json(root / "smoothed_forward_weekly_run_manifest.json") or {}
+    steps_payload = _read_optional_json(root / "weekly_run_steps.json") or {}
+    artifacts_payload = _read_optional_json(root / "weekly_run_artifacts.json") or {}
+    summary = _read_optional_json(root / "weekly_run_summary.json") or {}
+    steps = _records(steps_payload.get("steps"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_forward_weekly_run_manifest.json",
+            "weekly_run_steps.json",
+            "weekly_run_artifacts.json",
+            "weekly_run_summary.json",
+            "smoothed_forward_weekly_run_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    required_steps = {
+        "daily_emission",
+        "outcome_due_scan",
+        "outcome_update",
+        "forward_classification",
+        "progress_update",
+        "weekly_dashboard",
+        "event_monitor",
+        "switch_readiness",
+        "owner_renewal",
+    }
+    present_steps = {_text(row.get("step")) for row in steps}
+    checks.extend(
+        [
+            _check(
+                "weekly_run_id_matches",
+                manifest.get("weekly_run_id") == weekly_run_id
+                and summary.get("weekly_run_id") == weekly_run_id,
+                "",
+            ),
+            _check(
+                "required_steps_present",
+                required_steps.issubset(present_steps),
+                ",".join(sorted(present_steps)),
+            ),
+            _check(
+                "all_steps_pass_or_skipped",
+                all(row.get("status") in {"PASS", "SKIPPED"} for row in steps),
+                "",
+            ),
+            _check(
+                "can_execute_switch_false",
+                summary.get("can_execute_switch") is False,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                summary.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check(
+                "production_effect_none",
+                summary.get("production_effect") == "none",
+                _text(summary.get("production_effect")),
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, steps_payload, artifacts_payload, summary),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_forward_weekly_run_validation",
+        weekly_run_id,
         checks,
     )
 
@@ -11735,6 +12798,293 @@ def render_smoothed_owner_renewal_reader_brief(options: Mapping[str, Any]) -> st
             f"- sideways_progress: {options.get('sideways_progress')}",
             f"- recovery_lag_status: {options.get('recovery_lag_status')}",
             "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_daily_emission_report(
+    manifest: Mapping[str, Any],
+    event: Mapping[str, Any],
+    event_weights: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+) -> str:
+    validation = _mapping(event_weights.get("weight_validation"))
+    weights = _mapping(event_weights.get("weights"))
+    return "\n".join(
+        [
+            f"# Smoothed Daily Emission {manifest.get('emission_id')}",
+            "",
+            f"- as_of: {manifest.get('as_of')}",
+            f"- emitted_event_count: {manifest.get('emitted_event_count')}",
+            f"- event_status: {event.get('event_status')}",
+            f"- data_quality: {data_quality.get('data_quality')}",
+            f"- regime_context: {event.get('regime_context')}",
+            f"- outcome_windows: {', '.join(_texts(event.get('outcome_windows')))}",
+            f"- future_data_used: {data_quality.get('future_data_used')}",
+            "- order_ticket_generated: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Weight Validation",
+            "",
+            f"- all_weights_sum_to_one: {validation.get('all_weights_sum_to_one')}",
+            f"- no_negative_weights: {validation.get('no_negative_weights')}",
+            f"- constraint_status: {validation.get('constraint_status')}",
+            "",
+            "## Method Weights",
+            "",
+            *[
+                f"- {method}: {weights.get(method)}"
+                for method in (
+                    "smooth_weights_3d_limited_adjustment",
+                    "smooth_weights_5d_limited_adjustment",
+                    "limited_adjustment",
+                    "static_baseline",
+                    "no_trade_baseline",
+                )
+            ],
+            "",
+            "该 artifact 只生成 forward evidence tracking event，不是 trading signal、"
+            "official target weights、order ticket 或 production change。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_daily_emission_reader_brief(
+    manifest: Mapping[str, Any],
+    event: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Daily Emission",
+            "",
+            f"- emission_id: {manifest.get('emission_id')}",
+            f"- as_of: {manifest.get('as_of')}",
+            f"- emitted_event_count: {manifest.get('emitted_event_count')}",
+            f"- event_status: {event.get('event_status')}",
+            f"- data_quality: {data_quality.get('data_quality')}",
+            f"- future_data_used: {data_quality.get('future_data_used')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_outcome_due_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Outcome Due {manifest.get('due_id')}",
+            "",
+            f"- scanner_as_of: {summary.get('scanner_as_of')}",
+            f"- events_scanned: {summary.get('events_scanned')}",
+            f"- total_windows_scanned: {summary.get('total_windows_scanned')}",
+            f"- due_windows: {summary.get('due_windows')}",
+            f"- not_due_windows: {summary.get('not_due_windows')}",
+            f"- price_missing_windows: {summary.get('price_missing_windows')}",
+            f"- blocked_future_as_of: {summary.get('blocked_future_as_of')}",
+            f"- update_ready_count: {summary.get('update_ready_count')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Due Windows",
+            "",
+            *[
+                "- "
+                f"{row.get('event_id')} window={row.get('window_days')} "
+                f"expected_end={row.get('expected_end_date')} "
+                f"status={row.get('due_status')} can_update={row.get('can_update')}"
+                for row in rows
+            ],
+            "",
+            "Due scanner 只判断窗口是否到期，不直接更新 outcome，不使用 scanner_as_of "
+            "之后的价格。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_outcome_update_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    updated: Sequence[Mapping[str, Any]],
+    skipped: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Outcome Update {manifest.get('update_id')}",
+            "",
+            f"- due_id: {manifest.get('due_id')}",
+            f"- updated_windows: {summary.get('updated_count')}",
+            f"- skipped_windows: {summary.get('skipped_count')}",
+            "- available_forward_events_after_update: "
+            f"{summary.get('available_forward_events_after_update')}",
+            "- smooth_3d_win_rate_vs_limited: "
+            f"{summary.get('smooth_3d_win_rate_vs_limited')}",
+            "- avg_smooth_3d_relative_return_vs_limited: "
+            f"{summary.get('avg_smooth_3d_relative_return_vs_limited')}",
+            "- avg_smooth_3d_drawdown_delta_vs_limited: "
+            f"{summary.get('avg_smooth_3d_drawdown_delta_vs_limited')}",
+            f"- summary_recommendation: {summary.get('summary_recommendation')}",
+            "- future_data_used: false",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Updated Windows",
+            "",
+            *[
+                "- "
+                f"{row.get('event_id')} window={row.get('window_days')} "
+                f"smooth_3d_vs_limited="
+                f"{_mapping(row.get('relative_metrics')).get('smooth_3d_vs_limited')}"
+                for row in updated
+            ],
+            "",
+            "## Skipped Windows",
+            "",
+            *[
+                "- "
+                f"{row.get('event_id')} window={row.get('window_days')} "
+                f"reason={row.get('skip_reason')}"
+                for row in skipped
+            ],
+            "",
+            "Updater 只更新 due scanner 标记为 can_update=true 的窗口，不写 official "
+            "target weights，不触发 broker 或 production。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_outcome_update_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Outcome Update",
+            "",
+            f"- update_id: {summary.get('update_id')}",
+            f"- updated_windows: {summary.get('updated_count')}",
+            f"- skipped_windows: {summary.get('skipped_count')}",
+            "- available_forward_events_after_update: "
+            f"{summary.get('available_forward_events_after_update')}",
+            "- avg_smooth_3d_relative_return_vs_limited: "
+            f"{summary.get('avg_smooth_3d_relative_return_vs_limited')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_forward_classification_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Forward Classification {manifest.get('classification_id')}",
+            "",
+            f"- update_id: {manifest.get('update_id')}",
+            f"- events_classified: {summary.get('events_classified')}",
+            f"- sideways_events_available: {summary.get('sideways_events_available')}",
+            f"- recovery_events_available: {summary.get('recovery_events_available')}",
+            "- fast_regime_change_events_available: "
+            f"{summary.get('fast_regime_change_events_available')}",
+            f"- lag_warning_count: {summary.get('lag_warning_count')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Classified Events",
+            "",
+            *[
+                "- "
+                f"{row.get('event_id')} window={row.get('window_days')} "
+                f"class={','.join(_texts(row.get('regime_classification')))} "
+                f"confidence={row.get('classification_confidence')} "
+                f"lag_warning={row.get('lag_warning')}"
+                for row in rows
+            ],
+            "",
+            "Classification 只影响 evidence progress，不影响交易、target weights 或 "
+            "production state。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_forward_weekly_run_report(
+    manifest: Mapping[str, Any],
+    steps: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Forward Weekly Run {manifest.get('weekly_run_id')}",
+            "",
+            f"- week_ending: {summary.get('week_ending')}",
+            f"- emitted_events: {summary.get('emitted_events')}",
+            f"- due_windows: {summary.get('due_windows')}",
+            f"- updated_windows: {summary.get('updated_windows')}",
+            f"- classified_events: {summary.get('classified_events')}",
+            "- forward_progress: "
+            f"{summary.get('available_forward_events')}/"
+            f"{summary.get('required_forward_events')}",
+            "- sideways_progress: "
+            f"{summary.get('available_sideways_events')}/"
+            f"{summary.get('required_sideways_events')}",
+            "- recovery_progress: "
+            f"{summary.get('available_recovery_events')}/"
+            f"{summary.get('required_recovery_events')}",
+            f"- can_execute_switch: {summary.get('can_execute_switch')}",
+            f"- weekly_recommendation: {summary.get('weekly_recommendation')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Steps",
+            "",
+            *[
+                "- "
+                f"{row.get('step')}: status={row.get('status')}, "
+                f"artifact_id={row.get('artifact_id')}"
+                for row in _records(steps.get("steps"))
+            ],
+            "",
+            "Weekly runner 串联 smoothed forward evidence，但默认安全模式仍不切换、"
+            "不写 official target weights、不触发 broker、不产生 production effect。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_forward_weekly_run_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Forward Weekly Run",
+            "",
+            f"- weekly_run_id: {summary.get('weekly_run_id')}",
+            f"- week_ending: {summary.get('week_ending')}",
+            f"- emitted_events: {summary.get('emitted_events')}",
+            f"- updated_windows: {summary.get('updated_windows')}",
+            "- forward_progress: "
+            f"{summary.get('available_forward_events')}/"
+            f"{summary.get('required_forward_events')}",
+            "- sideways_progress: "
+            f"{summary.get('available_sideways_events')}/"
+            f"{summary.get('required_sideways_events')}",
+            "- recovery_progress: "
+            f"{summary.get('available_recovery_events')}/"
+            f"{summary.get('required_recovery_events')}",
+            f"- can_execute_switch: {summary.get('can_execute_switch')}",
+            f"- weekly_recommendation: {summary.get('weekly_recommendation')}",
             "- broker_action_allowed: false",
             "- production_effect: none",
             "",
@@ -20147,8 +21497,34 @@ def _write_smoothed_owner_promotion_files(
 def _smoothed_forward_progress_targets(
     binding: Mapping[str, Any],
     generated: datetime,
+    *,
+    updated_outcomes: Sequence[Mapping[str, Any]] | None = None,
+    classifications: Sequence[Mapping[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     source_targets = _records(_mapping(binding.get("bound_confirmation_targets")).get("targets"))
+    outcomes = list(updated_outcomes or [])
+    classified = list(classifications or [])
+    available_by_window = _available_events_by_window(outcomes)
+    forward_available = len(
+        {
+            _text(row.get("event_id"))
+            for row in outcomes
+            if row.get("outcome_status") == "AVAILABLE" and row.get("event_id")
+        }
+    )
+    sideways_events = [
+        row
+        for row in classified
+        if row.get("sideways_relevant") is True and row.get("event_status") == "AVAILABLE"
+    ]
+    recovery_events = [
+        row
+        for row in classified
+        if row.get("recovery_lag_relevant") is True
+        and row.get("event_status") == "AVAILABLE"
+    ]
+    sideways_available = len({_text(row.get("event_id")) for row in sideways_events})
+    recovery_available = len({_text(row.get("event_id")) for row in recovery_events})
     rows: list[dict[str, Any]] = []
     for source in source_targets:
         target_id = _text(source.get("target_id"))
@@ -20169,7 +21545,7 @@ def _smoothed_forward_progress_targets(
                     )
                 )
             )
-            available = 0
+            available = forward_available
             windows = _texts(source.get("windows")) or [
                 str(window) for window in SMOOTHED_CONFIRMATION_WINDOWS
             ]
@@ -20178,14 +21554,11 @@ def _smoothed_forward_progress_targets(
                     **common,
                     "required_forward_events": required,
                     "available_forward_events": available,
-                    "available_by_window": {str(window): 0 for window in windows},
-                    "current_metrics": {
-                        "avg_relative_return": None,
-                        "win_rate_vs_limited": None,
-                        "drawdown_delta": None,
-                        "turnover_delta": None,
-                        "rolling_consistency_delta": None,
+                    "available_by_window": {
+                        str(window): available_by_window.get(str(window), 0)
+                        for window in windows
                     },
+                    "current_metrics": _smoothed_forward_current_metrics(outcomes),
                     "progress_status": _smoothed_progress_status(available, required),
                     "blocking_reasons": (
                         ["not_enough_forward_events"] if available < required else []
@@ -20202,22 +21575,18 @@ def _smoothed_forward_progress_targets(
                     )
                 )
             )
-            available = 0
+            available = sideways_available
             rows.append(
                 {
                     **common,
                     "required_sideways_events": required,
                     "available_sideways_events": available,
-                    "available_forward_events": 0,
-                    "available_by_window": {"5": 0},
-                    "current_metrics": {
-                        "avg_relative_return": None,
-                        "win_rate_vs_limited": None,
-                        "drawdown_delta": None,
-                        "turnover_delta": None,
-                        "signal_churn_delta": None,
-                        "weight_jump_delta": None,
-                    },
+                    "available_forward_events": available,
+                    "available_by_window": {"5": available},
+                    "current_metrics": _smoothed_classified_metric_summary(
+                        classified,
+                        relevant_field="sideways_relevant",
+                    ),
                     "progress_status": _smoothed_progress_status(available, required),
                     "blocking_reasons": (
                         ["not_enough_sideways_events"] if available < required else []
@@ -20234,20 +21603,16 @@ def _smoothed_forward_progress_targets(
                     )
                 )
             )
-            available = 0
+            available = recovery_available
             rows.append(
                 {
                     **common,
                     "target_mode": "WATCH_ONLY",
                     "required_recovery_events": required,
                     "available_recovery_events": available,
-                    "available_forward_events": 0,
-                    "available_by_window": {"5": 0},
-                    "current_metrics": {
-                        "missed_upside": None,
-                        "risk_on_response_delay_days": None,
-                        "lag_warning": False,
-                    },
+                    "available_forward_events": available,
+                    "available_by_window": {"5": available},
+                    "current_metrics": _smoothed_recovery_metric_summary(classified),
                     "progress_status": _smoothed_progress_status(available, required),
                     "blocking_reasons": (
                         ["not_enough_recovery_events"] if available < required else []
@@ -20625,6 +21990,706 @@ def _smoothed_owner_renewal_options(
         ],
         "auto_switch": False,
         "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_emission_weights(model_target: Mapping[str, Any]) -> dict[str, dict[str, float]]:
+    method_weights = _mapping(
+        _mapping(model_target.get("model_target_weights")).get("method_weights")
+    )
+    return {
+        method: _normalize_weights(_mapping(method_weights.get(method)))
+        if method in method_weights
+        else {}
+        for method in (
+            "smooth_weights_3d_limited_adjustment",
+            "smooth_weights_5d_limited_adjustment",
+            "limited_adjustment",
+            "static_baseline",
+            "no_trade_baseline",
+        )
+    }
+
+
+def _smoothed_symbols_from_weight_map(weights: Mapping[str, Any]) -> list[str]:
+    symbols: set[str] = set()
+    for method_weights in weights.values():
+        for symbol in _mapping(method_weights):
+            if symbol != "CASH":
+                symbols.add(symbol)
+    return sorted(symbols)
+
+
+def _smoothed_symbols_from_collected_event_weights(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    symbols: set[str] = set()
+    for row in rows:
+        for method_weights in _mapping(row.get("weights")).values():
+            symbols.update(
+                symbol for symbol in _mapping(method_weights) if symbol != "CASH"
+            )
+    return sorted(symbols)
+
+
+def _smoothed_price_pivot_or_empty(
+    price_cache_path: Path,
+    symbols: Sequence[str],
+    *,
+    start: date,
+) -> pd.DataFrame:
+    if not symbols or not price_cache_path.exists():
+        return pd.DataFrame()
+    try:
+        return _load_price_pivot(price_cache_path, symbols, start)
+    except (DynamicV3SystemTargetError, ValueError, FileNotFoundError):
+        return pd.DataFrame()
+
+
+def _smoothed_latest_price_date_or_none(pivot: pd.DataFrame) -> date | None:
+    if pivot.empty:
+        return None
+    return pivot.index[-1].date()
+
+
+def _smoothed_weight_validation(weights: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    required_present = all(bool(_mapping(row)) for row in weights.values())
+    sums_to_one = required_present and all(
+        abs(sum(_float(value) for value in _mapping(row).values()) - 1.0) <= 0.0001
+        for row in weights.values()
+    )
+    no_negative = all(
+        all(_float(value) >= -0.0000001 for value in _mapping(row).values())
+        for row in weights.values()
+    )
+    status = "PASS" if required_present and sums_to_one and no_negative else "FAIL"
+    return {
+        "all_required_methods_present": required_present,
+        "all_weights_sum_to_one": sums_to_one,
+        "no_negative_weights": no_negative,
+        "constraint_status": status,
+    }
+
+
+def _smoothed_regime_context_for_as_of(pivot: pd.DataFrame, as_of: date) -> str:
+    if pivot.empty:
+        return "unknown"
+    history = pivot.loc[pivot.index.date <= as_of].tail(6)
+    if len(history) < 2:
+        return "unknown"
+    returns = history.pct_change().dropna(how="all").fillna(0.0)
+    qqq = returns["QQQ"] if "QQQ" in returns.columns else pd.Series(dtype=float)
+    smh = returns["SMH"] if "SMH" in returns.columns else pd.Series(dtype=float)
+    basket = pd.concat([qqq, smh], axis=1).mean(axis=1).dropna()
+    if basket.empty:
+        return "unknown"
+    total = float((1.0 + basket).prod() - 1.0)
+    if abs(total) <= SMOOTHED_CLASSIFIER_SIDEWAYS_ABS_RETURN_THRESHOLD:
+        return "sideways_choppy"
+    if total >= SMOOTHED_CLASSIFIER_STRONG_RECOVERY_RETURN_THRESHOLD:
+        return "strong_recovery"
+    if total <= -SMOOTHED_CLASSIFIER_STRONG_RECOVERY_RETURN_THRESHOLD:
+        return "tech_drawdown"
+    if "SMH" in history.columns:
+        smh_total = float(history["SMH"].iloc[-1] / history["SMH"].iloc[0] - 1.0)
+        if smh_total <= -SMOOTHED_CLASSIFIER_STRONG_RECOVERY_RETURN_THRESHOLD:
+            return "semiconductor_pullback"
+    return "ai_trend" if total > 0 else "unknown"
+
+
+def _smoothed_emission_data_quality(
+    *,
+    as_of: date,
+    latest_price_date: date | None,
+    target_present: bool,
+    weights_valid: bool,
+    regime_context: str,
+) -> dict[str, Any]:
+    price_status = (
+        "FAIL"
+        if latest_price_date is None
+        else ("PASS_WITH_WARNINGS" if as_of > latest_price_date else "PASS")
+    )
+    target_status = "PASS" if target_present and weights_valid else "FAIL"
+    regime_status = "PASS_WITH_WARNINGS" if regime_context == "unknown" else "PASS"
+    statuses = [price_status, target_status, regime_status]
+    data_quality = (
+        "FAIL"
+        if "FAIL" in statuses
+        else ("PASS_WITH_WARNINGS" if "PASS_WITH_WARNINGS" in statuses else "PASS")
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "as_of": as_of.isoformat(),
+        "latest_price_date": latest_price_date.isoformat() if latest_price_date else None,
+        "price_cache_status": price_status,
+        "target_generation_status": target_status,
+        "regime_tag_status": regime_status,
+        "future_data_used": False,
+        "data_quality": data_quality,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_daily_event_status(
+    *,
+    as_of: date,
+    latest_price_date: date | None,
+    target_present: bool,
+    weights_valid: bool,
+    data_quality: Mapping[str, Any],
+) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+    if latest_price_date is None:
+        reasons.append("price_cache_missing")
+    elif as_of > latest_price_date:
+        reasons.append("as_of_after_latest_price_date")
+    if not target_present:
+        reasons.append("model_target_missing")
+    if not weights_valid:
+        reasons.append("target_weights_invalid")
+    if data_quality.get("data_quality") == "FAIL":
+        reasons.append("data_quality_fail")
+    if reasons:
+        return "INSUFFICIENT_DATA", reasons
+    return "ACTIVE", []
+
+
+def _collect_smoothed_daily_emissions(root: Path) -> list[dict[str, Any]]:
+    if not root.exists():
+        return []
+    emissions: list[dict[str, Any]] = []
+    for manifest_path in sorted(root.glob("*/smoothed_daily_emission_manifest.json")):
+        emission_root = manifest_path.parent
+        manifest = _read_optional_json(manifest_path) or {}
+        events = _read_jsonl(emission_root / "smoothed_forward_events.jsonl")
+        weights = _read_optional_json(emission_root / "smoothed_event_weights.json") or {}
+        for event in events:
+            event.setdefault("source_emission_id", manifest.get("emission_id"))
+        emissions.append({"manifest": manifest, "events": events, "weights": weights})
+    return emissions
+
+
+def _smoothed_events_by_id(emission_dir: Path) -> dict[str, dict[str, Any]]:
+    events: dict[str, dict[str, Any]] = {}
+    for emission in _collect_smoothed_daily_emissions(emission_dir):
+        for event in emission["events"]:
+            if event.get("event_id"):
+                events[_text(event.get("event_id"))] = dict(event)
+    return events
+
+
+def _smoothed_event_weights_by_id(emission_dir: Path) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for emission in _collect_smoothed_daily_emissions(emission_dir):
+        weights = _mapping(emission.get("weights"))
+        if weights.get("event_id"):
+            rows[_text(weights.get("event_id"))] = weights
+    return rows
+
+
+def _smoothed_due_window_row(
+    event: Mapping[str, Any],
+    *,
+    window_days: int,
+    scanner_as_of: date,
+    trading_dates: Sequence[date],
+    pivot: pd.DataFrame,
+) -> dict[str, Any]:
+    event_as_of = _coerce_date(event.get("as_of"), scanner_as_of)
+    expected = _smoothed_expected_end_date(event_as_of, window_days, trading_dates)
+    block_reasons: list[str] = []
+    if event.get("event_status") != "ACTIVE":
+        due_status = "PRICE_MISSING"
+        block_reasons.append("event_not_active")
+    elif expected > scanner_as_of:
+        due_status = "NOT_DUE"
+    elif expected not in set(trading_dates):
+        due_status = "PRICE_MISSING"
+        block_reasons.append("expected_end_price_missing")
+    elif not _smoothed_price_date_available(pivot, expected):
+        due_status = "PRICE_MISSING"
+        block_reasons.append("expected_end_price_missing")
+    else:
+        due_status = "DUE"
+    can_update = due_status == "DUE"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": event.get("event_id"),
+        "as_of": event_as_of.isoformat(),
+        "window_days": window_days,
+        "expected_end_date": expected.isoformat(),
+        "scanner_as_of": scanner_as_of.isoformat(),
+        "due_status": due_status,
+        "price_available": due_status == "DUE",
+        "can_update": can_update,
+        "block_reasons": block_reasons,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_expected_end_date(
+    event_as_of: date,
+    window_days: int,
+    trading_dates: Sequence[date],
+) -> date:
+    future_dates = [item for item in sorted(set(trading_dates)) if item > event_as_of]
+    if len(future_dates) >= window_days:
+        return future_dates[window_days - 1]
+    return _add_weekdays(event_as_of, window_days)
+
+
+def _add_weekdays(start: date, days: int) -> date:
+    current = start
+    remaining = days
+    while remaining > 0:
+        current += timedelta(days=1)
+        if current.weekday() < 5:
+            remaining -= 1
+    return current
+
+
+def _smoothed_price_date_available(pivot: pd.DataFrame, target_date: date) -> bool:
+    if pivot.empty:
+        return False
+    rows = pivot.loc[pivot.index.date == target_date]
+    return not rows.empty and rows.notna().any(axis=None)
+
+
+def _smoothed_due_summary(
+    *,
+    as_of: date,
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    statuses = [_text(row.get("due_status")) for row in rows]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "due_id": "",
+        "scanner_as_of": as_of.isoformat(),
+        "events_scanned": len({_text(row.get("event_id")) for row in rows if row.get("event_id")}),
+        "total_windows_scanned": len(rows),
+        "due_windows": statuses.count("DUE"),
+        "not_due_windows": statuses.count("NOT_DUE"),
+        "price_missing_windows": statuses.count("PRICE_MISSING"),
+        "blocked_future_as_of": statuses.count("BLOCKED_FUTURE_AS_OF"),
+        "update_ready_count": sum(1 for row in rows if row.get("can_update") is True),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_skipped_outcome_row(row: Mapping[str, Any], reason: str) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": row.get("event_id"),
+        "window_days": int(_float(row.get("window_days"))),
+        "skip_reason": reason or "DATA_QUALITY_FAIL",
+        "old_status": "PENDING",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_updated_outcome_row(
+    row: Mapping[str, Any],
+    event_weights: Mapping[str, Any],
+    pivot: pd.DataFrame,
+) -> dict[str, Any] | None:
+    weights = _mapping(event_weights.get("weights"))
+    if not weights or pivot.empty:
+        return None
+    start = _coerce_date(row.get("as_of"), date.min)
+    end = _coerce_date(row.get("expected_end_date"), date.min)
+    if not _smoothed_price_date_available(pivot, start):
+        return None
+    if not _smoothed_price_date_available(pivot, end):
+        return None
+    method_returns = {
+        method: _smoothed_portfolio_window_return(_mapping(method_weights), pivot, start, end)
+        for method, method_weights in weights.items()
+    }
+    drawdowns = {
+        method: _smoothed_portfolio_window_drawdown(_mapping(method_weights), pivot, start, end)
+        for method, method_weights in weights.items()
+    }
+    smooth_3d = _float(method_returns.get("smooth_weights_3d_limited_adjustment"))
+    smooth_5d = _float(method_returns.get("smooth_weights_5d_limited_adjustment"))
+    limited = _float(method_returns.get("limited_adjustment"))
+    static = _float(method_returns.get("static_baseline"))
+    no_trade = _float(method_returns.get("no_trade_baseline"))
+    smooth_dd = _float(drawdowns.get("smooth_weights_3d_limited_adjustment"))
+    limited_dd = _float(drawdowns.get("limited_adjustment"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": row.get("event_id"),
+        "as_of": start.isoformat(),
+        "window_days": int(_float(row.get("window_days"))),
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+        "method_returns": {
+            key: round(value, 10) for key, value in method_returns.items()
+        },
+        "relative_metrics": {
+            "smooth_3d_vs_limited": round(smooth_3d - limited, 10),
+            "smooth_3d_vs_static": round(smooth_3d - static, 10),
+            "smooth_3d_vs_no_trade": round(smooth_3d - no_trade, 10),
+            "smooth_5d_vs_smooth_3d": round(smooth_5d - smooth_3d, 10),
+        },
+        "drawdown_metrics": {
+            "smooth_3d_drawdown": round(smooth_dd, 10),
+            "limited_drawdown": round(limited_dd, 10),
+            "smooth_3d_drawdown_delta_vs_limited": round(smooth_dd - limited_dd, 10),
+        },
+        "outcome_status": "AVAILABLE",
+        "future_data_used": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_portfolio_window_return(
+    weights: Mapping[str, Any],
+    pivot: pd.DataFrame,
+    start: date,
+    end: date,
+) -> float:
+    start_row = pivot.loc[pivot.index.date == start].iloc[-1]
+    end_row = pivot.loc[pivot.index.date == end].iloc[-1]
+    value = 0.0
+    for symbol, weight in weights.items():
+        if symbol == "CASH":
+            continue
+        if symbol not in pivot.columns:
+            continue
+        start_price = _float(start_row.get(symbol))
+        end_price = _float(end_row.get(symbol))
+        if start_price > 0:
+            value += _float(weight) * (end_price / start_price - 1.0)
+    return round(value, 10)
+
+
+def _smoothed_portfolio_window_drawdown(
+    weights: Mapping[str, Any],
+    pivot: pd.DataFrame,
+    start: date,
+    end: date,
+) -> float:
+    window = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
+    if len(window) < 2:
+        return 0.0
+    returns = window.pct_change().dropna(how="all").fillna(0.0)
+    series = pd.Series(0.0, index=returns.index)
+    for symbol, weight in weights.items():
+        if symbol == "CASH" or symbol not in returns.columns:
+            continue
+        series = series + returns[symbol].fillna(0.0) * _float(weight)
+    equity = (1.0 + series).cumprod()
+    drawdown = equity / equity.cummax() - 1.0
+    return round(float(drawdown.min()), 10)
+
+
+def _smoothed_outcome_delta_summary(
+    updated: Sequence[Mapping[str, Any]],
+    skipped: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rel = [
+        _float(_mapping(row.get("relative_metrics")).get("smooth_3d_vs_limited"))
+        for row in updated
+    ]
+    drawdown = [
+        _float(
+            _mapping(row.get("drawdown_metrics")).get(
+                "smooth_3d_drawdown_delta_vs_limited"
+            )
+        )
+        for row in updated
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "update_id": "",
+        "updated_count": len(updated),
+        "skipped_count": len(skipped),
+        "available_forward_events_after_update": len(
+            {_text(row.get("event_id")) for row in updated if row.get("event_id")}
+        ),
+        "smooth_3d_win_rate_vs_limited": (
+            round(sum(1 for value in rel if value > 0.0) / len(rel), 10) if rel else None
+        ),
+        "avg_smooth_3d_relative_return_vs_limited": (
+            round(_mean_float(rel), 10) if rel else None
+        ),
+        "avg_smooth_3d_drawdown_delta_vs_limited": (
+            round(_mean_float(drawdown), 10) if drawdown else None
+        ),
+        "summary_recommendation": "continue_tracking",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_classified_forward_event(
+    outcome: Mapping[str, Any],
+    events: Mapping[str, Mapping[str, Any]],
+    weights_by_id: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    event_id = _text(outcome.get("event_id"))
+    event = _mapping(events.get(event_id))
+    relative = _mapping(outcome.get("relative_metrics"))
+    method_returns = _mapping(outcome.get("method_returns"))
+    regime_context = _text(event.get("regime_context"), "unknown")
+    classes, confidence = _smoothed_regime_classes_from_outcome(regime_context, outcome)
+    weights = _mapping(_mapping(weights_by_id.get(event_id)).get("weights"))
+    turnover_delta = _smoothed_turnover_delta(
+        _mapping(weights.get("smooth_weights_3d_limited_adjustment")),
+        _mapping(weights.get("limited_adjustment")),
+    )
+    smooth_vs_limited = _float(relative.get("smooth_3d_vs_limited"))
+    recovery_relevant = any(
+        item in {"strong_recovery", "fast_regime_change"} for item in classes
+    )
+    lag_warning = (
+        recovery_relevant
+        and smooth_vs_limited < SMOOTHED_CLASSIFIER_LAG_WARNING_DELTA_THRESHOLD
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": event_id,
+        "as_of": outcome.get("as_of"),
+        "window_days": int(_float(outcome.get("window_days"))),
+        "regime_classification": classes,
+        "classification_confidence": confidence,
+        "sideways_relevant": "sideways_choppy" in classes,
+        "recovery_lag_relevant": recovery_relevant,
+        "smooth_3d_vs_limited": round(smooth_vs_limited, 10),
+        "turnover_delta": round(turnover_delta, 10),
+        "signal_churn_delta": None,
+        "lag_warning": lag_warning,
+        "event_status": "AVAILABLE" if method_returns else "INSUFFICIENT_DATA",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_regime_classes_from_outcome(
+    regime_context: str,
+    outcome: Mapping[str, Any],
+) -> tuple[list[str], str]:
+    if regime_context in {"sideways_choppy", "strong_recovery"}:
+        return [regime_context], "HIGH"
+    if regime_context in {"tech_drawdown", "semiconductor_pullback"}:
+        return ["fast_regime_change"], "MEDIUM"
+    returns = _mapping(outcome.get("method_returns"))
+    limited = _float(returns.get("limited_adjustment"))
+    smooth = _float(returns.get("smooth_weights_3d_limited_adjustment"))
+    proxy = max(abs(limited), abs(smooth))
+    if proxy <= SMOOTHED_CLASSIFIER_SIDEWAYS_ABS_RETURN_THRESHOLD:
+        return ["sideways_choppy"], "LOW"
+    if max(limited, smooth) >= SMOOTHED_CLASSIFIER_STRONG_RECOVERY_RETURN_THRESHOLD:
+        return ["strong_recovery"], "LOW"
+    if proxy >= SMOOTHED_CLASSIFIER_FAST_REGIME_CHANGE_ABS_RETURN_THRESHOLD:
+        return ["fast_regime_change"], "LOW"
+    return ["normal"], "LOW"
+
+
+def _smoothed_turnover_delta(
+    smooth_weights: Mapping[str, Any],
+    limited_weights: Mapping[str, Any],
+) -> float:
+    symbols = set(smooth_weights) | set(limited_weights)
+    return 0.5 * sum(
+        abs(_float(smooth_weights.get(symbol)) - _float(limited_weights.get(symbol)))
+        for symbol in symbols
+    )
+
+
+def _smoothed_classification_summary(
+    classified: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    sideways = [
+        row for row in classified if row.get("sideways_relevant") is True
+    ]
+    recovery = [
+        row for row in classified if row.get("recovery_lag_relevant") is True
+    ]
+    fast = [
+        row
+        for row in classified
+        if "fast_regime_change" in _texts(row.get("regime_classification"))
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "classification_id": "",
+        "events_classified": len(classified),
+        "sideways_events_available": len({_text(row.get("event_id")) for row in sideways}),
+        "recovery_events_available": len({_text(row.get("event_id")) for row in recovery}),
+        "fast_regime_change_events_available": len(
+            {_text(row.get("event_id")) for row in fast}
+        ),
+        "lag_warning_count": sum(1 for row in classified if row.get("lag_warning") is True),
+        "sideways_progress_delta": len(sideways),
+        "recovery_progress_delta": len(recovery),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _collect_updated_smoothed_outcomes(root: Path) -> list[dict[str, Any]]:
+    if not root.exists():
+        return []
+    rows_by_key: dict[tuple[str, int], dict[str, Any]] = {}
+    paths = sorted(
+        root.glob("*/updated_smoothed_outcomes.jsonl"),
+        key=lambda path: path.stat().st_mtime,
+    )
+    for path in paths:
+        for row in _read_jsonl(path):
+            key = (_text(row.get("event_id")), int(_float(row.get("window_days"))))
+            if key[0]:
+                rows_by_key[key] = row
+    return list(rows_by_key.values())
+
+
+def _collect_classified_smoothed_events(root: Path) -> list[dict[str, Any]]:
+    if not root.exists():
+        return []
+    rows_by_key: dict[tuple[str, int], dict[str, Any]] = {}
+    paths = sorted(
+        root.glob("*/classified_forward_events.jsonl"),
+        key=lambda path: path.stat().st_mtime,
+    )
+    for path in paths:
+        for row in _read_jsonl(path):
+            key = (_text(row.get("event_id")), int(_float(row.get("window_days"))))
+            if key[0]:
+                rows_by_key[key] = row
+    return list(rows_by_key.values())
+
+
+def _available_events_by_window(
+    outcomes: Sequence[Mapping[str, Any]],
+) -> dict[str, int]:
+    by_window: dict[str, set[str]] = {
+        str(window): set() for window in SMOOTHED_CONFIRMATION_WINDOWS
+    }
+    for row in outcomes:
+        if row.get("outcome_status") != "AVAILABLE":
+            continue
+        window = str(int(_float(row.get("window_days"))))
+        if window in by_window and row.get("event_id"):
+            by_window[window].add(_text(row.get("event_id")))
+    return {window: len(events) for window, events in by_window.items()}
+
+
+def _smoothed_forward_current_metrics(
+    outcomes: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rel = [
+        _float(_mapping(row.get("relative_metrics")).get("smooth_3d_vs_limited"))
+        for row in outcomes
+        if row.get("outcome_status") == "AVAILABLE"
+    ]
+    drawdown = [
+        _float(
+            _mapping(row.get("drawdown_metrics")).get(
+                "smooth_3d_drawdown_delta_vs_limited"
+            )
+        )
+        for row in outcomes
+        if row.get("outcome_status") == "AVAILABLE"
+    ]
+    return {
+        "avg_relative_return": round(_mean_float(rel), 10) if rel else None,
+        "win_rate_vs_limited": (
+            round(sum(1 for value in rel if value > 0.0) / len(rel), 10) if rel else None
+        ),
+        "drawdown_delta": round(_mean_float(drawdown), 10) if drawdown else None,
+        "turnover_delta": None,
+        "rolling_consistency_delta": None,
+    }
+
+
+def _smoothed_classified_metric_summary(
+    classified: Sequence[Mapping[str, Any]],
+    *,
+    relevant_field: str,
+) -> dict[str, Any]:
+    rows = [row for row in classified if row.get(relevant_field) is True]
+    rel = [_float(row.get("smooth_3d_vs_limited")) for row in rows]
+    turnover = [_float(row.get("turnover_delta")) for row in rows]
+    return {
+        "avg_relative_return": round(_mean_float(rel), 10) if rel else None,
+        "win_rate_vs_limited": (
+            round(sum(1 for value in rel if value > 0.0) / len(rel), 10) if rel else None
+        ),
+        "drawdown_delta": None,
+        "turnover_delta": round(_mean_float(turnover), 10) if turnover else None,
+        "signal_churn_delta": None,
+        "weight_jump_delta": None,
+    }
+
+
+def _smoothed_recovery_metric_summary(
+    classified: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rows = [row for row in classified if row.get("recovery_lag_relevant") is True]
+    return {
+        "missed_upside": None,
+        "risk_on_response_delay_days": None,
+        "lag_warning": any(row.get("lag_warning") is True for row in rows),
+    }
+
+
+def _record_weekly_step(
+    steps: list[dict[str, Any]],
+    artifacts: dict[str, Any],
+    step: str,
+    artifact_id: str,
+) -> None:
+    steps.append({"step": step, "status": "PASS", "artifact_id": artifact_id})
+    artifacts[step] = {"artifact_id": artifact_id}
+
+
+def _smoothed_weekly_run_summary(
+    *,
+    week_ending: date,
+    emission: Mapping[str, Any],
+    due: Mapping[str, Any],
+    update: Mapping[str, Any],
+    classification: Mapping[str, Any],
+    progress: Mapping[str, Any],
+    recheck: Mapping[str, Any],
+) -> dict[str, Any]:
+    emission_manifest = _mapping(emission.get("manifest"))
+    due_summary = _mapping(due.get("due_summary"))
+    update_summary = _mapping(update.get("smoothed_outcome_delta_summary"))
+    classification_summary = _mapping(classification.get("classification_summary"))
+    progress_summary = _mapping(progress.get("smoothed_forward_progress_summary"))
+    recheck_decision = _mapping(recheck.get("switch_readiness_decision"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "weekly_run_id": "",
+        "week_ending": week_ending.isoformat(),
+        "emitted_events": int(_float(emission_manifest.get("emitted_event_count"))),
+        "due_windows": int(_float(due_summary.get("due_windows"))),
+        "updated_windows": int(_float(update_summary.get("updated_count"))),
+        "classified_events": int(_float(classification_summary.get("events_classified"))),
+        "available_forward_events": int(
+            _float(progress_summary.get("available_forward_events_total"))
+        ),
+        "required_forward_events": int(
+            _float(progress_summary.get("required_forward_events_total"))
+        ),
+        "available_sideways_events": int(
+            _float(progress_summary.get("available_sideways_events"))
+        ),
+        "required_sideways_events": int(
+            _float(progress_summary.get("required_sideways_events"))
+        ),
+        "available_recovery_events": int(
+            _float(progress_summary.get("available_recovery_events"))
+        ),
+        "required_recovery_events": int(
+            _float(progress_summary.get("required_recovery_events"))
+        ),
+        "can_execute_switch": recheck_decision.get("can_execute_switch") is True,
+        "weekly_recommendation": "continue_observation",
         "broker_action_allowed": False,
         "production_effect": "none",
         **SYSTEM_TARGET_SAFETY,
