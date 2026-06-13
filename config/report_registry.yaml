@@ -3219,6 +3219,111 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_forward_progress
+    title: ETF Dynamic v3 Rescue Smoothed Forward Progress
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-forward-progress report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_target_progress.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/smoothed_forward_progress_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_forward_progress/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-266 tracks smoothed forward, sideways, and recovery evidence
+      progress from the bound confirmation targets.
+    owner_action: review_smoothed_forward_progress_before_readiness_recheck
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_weekly_dashboard
+    title: ETF Dynamic v3 Rescue Smoothed Weekly Evidence Dashboard
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-weekly-dashboard report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_weekly_dashboard_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_dashboard_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_target_status_table.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/smoothed_weekly_dashboard_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_weekly_dashboard/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-267 summarizes smoothed forward progress, owner decision status,
+      readiness, and no-production safety for weekly review.
+    owner_action: review_smoothed_weekly_dashboard_before_owner_recheck
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_event_monitor
+    title: ETF Dynamic v3 Rescue Smoothed Event Monitor
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-event-monitor report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/smoothed_event_monitor_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/sideways_event_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/recovery_event_inventory.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/event_accumulation_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_event_monitor/*/smoothed_event_monitor_report.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-268 tracks sideways_choppy and recovery event accumulation for
+      smoothed method readiness without applying any switch.
+    owner_action: review_smoothed_sideways_and_recovery_event_accumulation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_switch_readiness
+    title: ETF Dynamic v3 Rescue Smoothed Switch Readiness Recheck
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-switch-readiness report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/smoothed_switch_readiness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/switch_readiness_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/switch_readiness_criteria.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/smoothed_switch_readiness_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_switch_readiness/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-269 rechecks whether smoothed evidence is ready for another owner
+      review while keeping can_execute_switch=false.
+    owner_action: review_smoothed_switch_readiness_before_any_owner_renewal_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_owner_renewal
+    title: ETF Dynamic v3 Rescue Smoothed Owner Renewal
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-owner-renewal report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/smoothed_owner_renewal_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/owner_renewal_options.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/owner_renewal_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/smoothed_owner_renewal_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_owner_renewal/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-270 packages smoothed readiness recheck evidence into owner
+      renewal options without executing a primary candidate switch.
+    owner_action: owner_review_smoothed_renewal_options_before_any_followup_switch_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research

@@ -715,6 +715,62 @@ def run_smoothed_promotion_chain_fixture(tmp_path: Path) -> dict[str, Any]:
     }
 
 
+def run_smoothed_forward_ops_chain_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_smoothed_promotion_chain_fixture(tmp_path)
+    progress = system_target.update_smoothed_forward_progress(
+        binding_id=fixture["binding"]["binding_id"],
+        binding_dir=tmp_path / "smoothed_forward_binding",
+        output_dir=tmp_path / "smoothed_forward_progress",
+        generated_at=datetime(2024, 3, 12, tzinfo=UTC),
+    )
+    dashboard = system_target.build_smoothed_weekly_dashboard(
+        progress_id=progress["progress_id"],
+        progress_dir=tmp_path / "smoothed_forward_progress",
+        output_dir=tmp_path / "smoothed_weekly_dashboard",
+        generated_at=datetime(2024, 3, 13, tzinfo=UTC),
+    )
+    monitor = system_target.update_smoothed_event_monitor(
+        progress_id=progress["progress_id"],
+        progress_dir=tmp_path / "smoothed_forward_progress",
+        output_dir=tmp_path / "smoothed_event_monitor",
+        generated_at=datetime(2024, 3, 14, tzinfo=UTC),
+    )
+    recheck = system_target.recheck_smoothed_switch_readiness(
+        dashboard_id=dashboard["dashboard_id"],
+        monitor_id=monitor["monitor_id"],
+        switch_plan_id=fixture["switch_plan"]["switch_plan_id"],
+        dashboard_dir=tmp_path / "smoothed_weekly_dashboard",
+        monitor_dir=tmp_path / "smoothed_event_monitor",
+        switch_plan_dir=tmp_path / "paper_shadow_primary_switch",
+        output_dir=tmp_path / "smoothed_switch_readiness",
+        generated_at=datetime(2024, 3, 15, tzinfo=UTC),
+    )
+    owner_promotion = system_target.record_smoothed_owner_promotion_decision(
+        decision_id=fixture["owner_promotion"]["decision_id"],
+        decision="continue_observation",
+        decision_reason="Forward confirmation remains in progress.",
+        output_dir=tmp_path / "smoothed_owner_promotion",
+        recorded_at=datetime(2024, 3, 16, tzinfo=UTC),
+    )
+    renewal = system_target.build_smoothed_owner_renewal_pack(
+        recheck_id=recheck["recheck_id"],
+        owner_promotion_id=owner_promotion["decision_id"],
+        recheck_dir=tmp_path / "smoothed_switch_readiness",
+        owner_promotion_dir=tmp_path / "smoothed_owner_promotion",
+        output_dir=tmp_path / "smoothed_owner_renewal",
+        generated_at=datetime(2024, 3, 17, tzinfo=UTC),
+    )
+    return {
+        **fixture,
+        "progress": progress,
+        "dashboard": dashboard,
+        "monitor": monitor,
+        "recheck": recheck,
+        "recorded_owner_promotion": owner_promotion,
+        "renewal": renewal,
+    }
+
+
 def force_promotable_batch_metrics(
     batch_dir: Path,
     *,

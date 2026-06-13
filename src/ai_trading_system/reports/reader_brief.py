@@ -2428,6 +2428,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "smoothed_forward_progress",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_progress_forward_events"
+                        ),
+                    ),
+                    (
+                        "smoothed_weekly_recommendation",
+                        etf_dynamic_v3_system_target.get("smoothed_weekly_recommendation"),
+                    ),
+                    (
+                        "smoothed_switch_recheck_decision",
+                        etf_dynamic_v3_system_target.get("smoothed_switch_recheck_decision"),
+                    ),
+                    (
+                        "smoothed_owner_renewal_action",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_renewal_recommended_action"
+                        ),
+                    ),
+                    (
                         "experiment_triage_id",
                         etf_dynamic_v3_system_target.get("experiment_triage_id"),
                     ),
@@ -2828,6 +2848,135 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "owner_promotion_path",
                         etf_dynamic_v3_system_target.get("smoothed_owner_promotion_path"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Smoothed Owner Renewal",
+            _definition_table(
+                [
+                    (
+                        "forward_progress_id",
+                        etf_dynamic_v3_system_target.get("smoothed_forward_progress_id"),
+                    ),
+                    (
+                        "forward_events",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_progress_forward_events"
+                        ),
+                    ),
+                    (
+                        "sideways_events",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_progress_sideways_events"
+                        ),
+                    ),
+                    (
+                        "recovery_events",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_progress_recovery_events"
+                        ),
+                    ),
+                    (
+                        "progress_statuses",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_forward_progress_statuses"
+                        ),
+                    ),
+                    (
+                        "weekly_dashboard_id",
+                        etf_dynamic_v3_system_target.get("smoothed_weekly_dashboard_id"),
+                    ),
+                    (
+                        "forward_confirmation_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_weekly_forward_confirmation_status"
+                        ),
+                    ),
+                    (
+                        "ready_for_switch_recheck",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_weekly_ready_for_switch_recheck"
+                        ),
+                    ),
+                    (
+                        "weekly_recommendation",
+                        etf_dynamic_v3_system_target.get("smoothed_weekly_recommendation"),
+                    ),
+                    (
+                        "event_monitor_id",
+                        etf_dynamic_v3_system_target.get("smoothed_event_monitor_id"),
+                    ),
+                    (
+                        "event_sideways_available_required",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_event_sideways_available_required"
+                        ),
+                    ),
+                    (
+                        "event_recovery_available_required",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_event_recovery_available_required"
+                        ),
+                    ),
+                    (
+                        "recovery_lag_status",
+                        etf_dynamic_v3_system_target.get("smoothed_event_recovery_lag_status"),
+                    ),
+                    (
+                        "lag_warning_count",
+                        etf_dynamic_v3_system_target.get("smoothed_event_lag_warning_count"),
+                    ),
+                    (
+                        "switch_readiness_id",
+                        etf_dynamic_v3_system_target.get("smoothed_switch_readiness_id"),
+                    ),
+                    (
+                        "recheck_decision",
+                        etf_dynamic_v3_system_target.get("smoothed_switch_recheck_decision"),
+                    ),
+                    (
+                        "criteria_not_met",
+                        etf_dynamic_v3_system_target.get("smoothed_switch_criteria_not_met"),
+                    ),
+                    (
+                        "can_execute_switch",
+                        etf_dynamic_v3_system_target.get("smoothed_switch_can_execute_switch"),
+                    ),
+                    (
+                        "owner_renewal_id",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_renewal_id"),
+                    ),
+                    (
+                        "previous_owner_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_renewal_previous_decision"
+                        ),
+                    ),
+                    (
+                        "owner_renewal_recheck_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_renewal_recheck_decision"
+                        ),
+                    ),
+                    (
+                        "recommended_owner_action",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_owner_renewal_recommended_action"
+                        ),
+                    ),
+                    (
+                        "owner_options",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_renewal_options"),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_system_target.get("production_effect"),
+                    ),
+                    (
+                        "owner_renewal_path",
+                        etf_dynamic_v3_system_target.get("smoothed_owner_renewal_path"),
                     ),
                 ]
             ),
@@ -8713,6 +8862,41 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_owner_promotion_manifest.json",
     )
+    smoothed_forward_progress_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_forward_progress",
+        ),
+        "smoothed_forward_progress_manifest.json",
+    )
+    smoothed_weekly_dashboard_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_weekly_dashboard",
+        ),
+        "smoothed_weekly_dashboard_manifest.json",
+    )
+    smoothed_event_monitor_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_event_monitor",
+        ),
+        "smoothed_event_monitor_manifest.json",
+    )
+    smoothed_switch_readiness_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_switch_readiness",
+        ),
+        "smoothed_switch_readiness_manifest.json",
+    )
+    smoothed_owner_renewal_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_owner_renewal",
+        ),
+        "smoothed_owner_renewal_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -8744,6 +8928,11 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_forward_binding_manifest = _read_optional_json(smoothed_forward_binding_path)
     paper_shadow_primary_switch_manifest = _read_optional_json(paper_shadow_primary_switch_path)
     smoothed_owner_promotion_manifest = _read_optional_json(smoothed_owner_promotion_path)
+    smoothed_forward_progress_manifest = _read_optional_json(smoothed_forward_progress_path)
+    smoothed_weekly_dashboard_manifest = _read_optional_json(smoothed_weekly_dashboard_path)
+    smoothed_event_monitor_manifest = _read_optional_json(smoothed_event_monitor_path)
+    smoothed_switch_readiness_manifest = _read_optional_json(smoothed_switch_readiness_path)
+    smoothed_owner_renewal_manifest = _read_optional_json(smoothed_owner_renewal_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
@@ -8758,6 +8947,11 @@ def _etf_dynamic_v3_system_target_summary(
         and not smoothed_forward_binding_manifest
         and not paper_shadow_primary_switch_manifest
         and not smoothed_owner_promotion_manifest
+        and not smoothed_forward_progress_manifest
+        and not smoothed_weekly_dashboard_manifest
+        and not smoothed_event_monitor_manifest
+        and not smoothed_switch_readiness_manifest
+        and not smoothed_owner_renewal_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -8936,6 +9130,54 @@ def _etf_dynamic_v3_system_target_summary(
             "owner_promotion_decision.json",
         )
     )
+    smoothed_forward_progress_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_forward_progress_path,
+            "smoothed_forward_progress_summary.json",
+        )
+    )
+    smoothed_target_progress = _read_optional_jsonl(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_forward_progress_path,
+            "smoothed_target_progress.jsonl",
+        )
+    )
+    smoothed_dashboard_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_weekly_dashboard_path,
+            "smoothed_dashboard_summary.json",
+        )
+    )
+    smoothed_target_status_table = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_weekly_dashboard_path,
+            "smoothed_target_status_table.json",
+        )
+    )
+    smoothed_event_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_event_monitor_path,
+            "event_accumulation_summary.json",
+        )
+    )
+    smoothed_switch_readiness_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_switch_readiness_path,
+            "switch_readiness_decision.json",
+        )
+    )
+    smoothed_switch_readiness_criteria = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_switch_readiness_path,
+            "switch_readiness_criteria.json",
+        )
+    )
+    smoothed_owner_renewal_options = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_owner_renewal_path,
+            "owner_renewal_options.json",
+        )
+    )
     experiment_triage_summary = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(experiment_triage_path, "triage_summary.json")
     )
@@ -9067,6 +9309,19 @@ def _etf_dynamic_v3_system_target_summary(
         paper_shadow_switch_safety,
         smoothed_owner_promotion_manifest,
         smoothed_owner_promotion_decision,
+        smoothed_forward_progress_manifest,
+        smoothed_forward_progress_summary,
+        *smoothed_target_progress,
+        smoothed_weekly_dashboard_manifest,
+        smoothed_dashboard_summary,
+        smoothed_target_status_table,
+        smoothed_event_monitor_manifest,
+        smoothed_event_summary,
+        smoothed_switch_readiness_manifest,
+        smoothed_switch_readiness_decision,
+        smoothed_switch_readiness_criteria,
+        smoothed_owner_renewal_manifest,
+        smoothed_owner_renewal_options,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -9135,6 +9390,20 @@ def _etf_dynamic_v3_system_target_summary(
     proposed_method_names = ",".join(
         _texts([row.get("proposed_method_name") for row in promoted_methods])
     )
+    smoothed_readiness_not_met = ",".join(
+        _texts(
+            [
+                row.get("criterion")
+                for row in _records(smoothed_switch_readiness_criteria.get("criteria"))
+                if row.get("status") != "PASS"
+            ]
+        )
+    )
+    smoothed_owner_renewal_option_names = ",".join(
+        _texts([row.get("decision") for row in _records(smoothed_owner_renewal_options.get("owner_options"))])
+    )
+    smoothed_event_sideways = _mapping(smoothed_event_summary.get("sideways_events"))
+    smoothed_event_recovery = _mapping(smoothed_event_summary.get("recovery_events"))
     primary_status = _text(
         review_manifest.get("status"),
         _text(
@@ -9163,6 +9432,14 @@ def _etf_dynamic_v3_system_target_summary(
             f"{_text(primary_research_gate_decision.get('gate_decision'), 'MISSING')}; "
             "owner_promotion="
             f"{_text(smoothed_owner_promotion_decision.get('owner_decision'), 'MISSING')}; "
+            "forward_progress="
+            f"{_text(smoothed_forward_progress_summary.get('summary_recommendation'), 'MISSING')}; "
+            "weekly_dashboard="
+            f"{_text(smoothed_dashboard_summary.get('weekly_recommendation'), 'MISSING')}; "
+            "switch_readiness="
+            f"{_text(smoothed_switch_readiness_decision.get('recheck_decision'), 'MISSING')}; "
+            "owner_renewal="
+            f"{_text(smoothed_owner_renewal_options.get('recommended_owner_action'), 'MISSING')}; "
             f"experiment_top={experiment_top_variant}; "
             f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
@@ -9488,6 +9765,106 @@ def _etf_dynamic_v3_system_target_summary(
             )
             is True
         ),
+        "smoothed_forward_progress_id": _text(
+            smoothed_forward_progress_manifest.get("progress_id"),
+            "MISSING",
+        ),
+        "smoothed_forward_progress_forward_events": (
+            f"{smoothed_forward_progress_summary.get('available_forward_events_total', 'MISSING')}/"
+            f"{smoothed_forward_progress_summary.get('required_forward_events_total', 'MISSING')}"
+        ),
+        "smoothed_forward_progress_sideways_events": (
+            f"{smoothed_forward_progress_summary.get('available_sideways_events', 'MISSING')}/"
+            f"{smoothed_forward_progress_summary.get('required_sideways_events', 'MISSING')}"
+        ),
+        "smoothed_forward_progress_recovery_events": (
+            f"{smoothed_forward_progress_summary.get('available_recovery_events', 'MISSING')}/"
+            f"{smoothed_forward_progress_summary.get('required_recovery_events', 'MISSING')}"
+        ),
+        "smoothed_forward_progress_statuses": ",".join(
+            _texts(
+                [
+                    f"{row.get('target_id')}={row.get('progress_status')}"
+                    for row in smoothed_target_progress
+                ]
+            )
+        ),
+        "smoothed_forward_progress_recommendation": _text(
+            smoothed_forward_progress_summary.get("summary_recommendation"),
+            "MISSING",
+        ),
+        "smoothed_weekly_dashboard_id": _text(
+            smoothed_weekly_dashboard_manifest.get("dashboard_id"),
+            "MISSING",
+        ),
+        "smoothed_weekly_forward_confirmation_status": _text(
+            smoothed_dashboard_summary.get("forward_confirmation_status"),
+            "MISSING",
+        ),
+        "smoothed_weekly_ready_for_switch_recheck": (
+            smoothed_dashboard_summary.get("ready_for_switch_recheck") is True
+        ),
+        "smoothed_weekly_recommendation": _text(
+            smoothed_dashboard_summary.get("weekly_recommendation"),
+            "MISSING",
+        ),
+        "smoothed_weekly_target_statuses": ",".join(
+            _texts(
+                [
+                    f"{row.get('target_id')}={row.get('status')}"
+                    for row in _records(smoothed_target_status_table.get("targets"))
+                ]
+            )
+        ),
+        "smoothed_event_monitor_id": _text(
+            smoothed_event_monitor_manifest.get("monitor_id"),
+            "MISSING",
+        ),
+        "smoothed_event_sideways_available_required": (
+            f"{smoothed_event_sideways.get('available', 'MISSING')}/"
+            f"{smoothed_event_sideways.get('required', 'MISSING')}"
+        ),
+        "smoothed_event_recovery_available_required": (
+            f"{smoothed_event_recovery.get('available', 'MISSING')}/"
+            f"{smoothed_event_recovery.get('required', 'MISSING')}"
+        ),
+        "smoothed_event_recovery_lag_status": _text(
+            smoothed_event_summary.get("recovery_lag_status"),
+            "MISSING",
+        ),
+        "smoothed_event_lag_warning_count": smoothed_event_summary.get(
+            "lag_warning_count",
+            "MISSING",
+        ),
+        "smoothed_switch_readiness_id": _text(
+            smoothed_switch_readiness_manifest.get("recheck_id"),
+            "MISSING",
+        ),
+        "smoothed_switch_recheck_decision": _text(
+            smoothed_switch_readiness_decision.get("recheck_decision"),
+            "MISSING",
+        ),
+        "smoothed_switch_criteria_not_met": smoothed_readiness_not_met,
+        "smoothed_switch_can_execute_switch": (
+            smoothed_switch_readiness_decision.get("can_execute_switch") is True
+        ),
+        "smoothed_owner_renewal_id": _text(
+            smoothed_owner_renewal_manifest.get("renewal_id"),
+            "MISSING",
+        ),
+        "smoothed_owner_renewal_previous_decision": _text(
+            smoothed_owner_renewal_options.get("previous_owner_decision"),
+            "MISSING",
+        ),
+        "smoothed_owner_renewal_recheck_decision": _text(
+            smoothed_owner_renewal_options.get("current_recheck_decision"),
+            "MISSING",
+        ),
+        "smoothed_owner_renewal_recommended_action": _text(
+            smoothed_owner_renewal_options.get("recommended_owner_action"),
+            "MISSING",
+        ),
+        "smoothed_owner_renewal_options": smoothed_owner_renewal_option_names,
         "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
         "smoothed_backfill_path": (
             "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
@@ -9518,6 +9895,21 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_owner_promotion_path": (
             "" if smoothed_owner_promotion_path is None else str(smoothed_owner_promotion_path)
+        ),
+        "smoothed_forward_progress_path": (
+            "" if smoothed_forward_progress_path is None else str(smoothed_forward_progress_path)
+        ),
+        "smoothed_weekly_dashboard_path": (
+            "" if smoothed_weekly_dashboard_path is None else str(smoothed_weekly_dashboard_path)
+        ),
+        "smoothed_event_monitor_path": (
+            "" if smoothed_event_monitor_path is None else str(smoothed_event_monitor_path)
+        ),
+        "smoothed_switch_readiness_path": (
+            "" if smoothed_switch_readiness_path is None else str(smoothed_switch_readiness_path)
+        ),
+        "smoothed_owner_renewal_path": (
+            "" if smoothed_owner_renewal_path is None else str(smoothed_owner_renewal_path)
         ),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
@@ -9720,6 +10112,31 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_owner_promotion_decision": "MISSING",
         "smoothed_owner_promotion_recommended_action": "MISSING",
         "smoothed_owner_promotion_change_allowed": False,
+        "smoothed_forward_progress_id": "MISSING",
+        "smoothed_forward_progress_forward_events": "MISSING/MISSING",
+        "smoothed_forward_progress_sideways_events": "MISSING/MISSING",
+        "smoothed_forward_progress_recovery_events": "MISSING/MISSING",
+        "smoothed_forward_progress_statuses": "",
+        "smoothed_forward_progress_recommendation": "MISSING",
+        "smoothed_weekly_dashboard_id": "MISSING",
+        "smoothed_weekly_forward_confirmation_status": "MISSING",
+        "smoothed_weekly_ready_for_switch_recheck": False,
+        "smoothed_weekly_recommendation": "MISSING",
+        "smoothed_weekly_target_statuses": "",
+        "smoothed_event_monitor_id": "MISSING",
+        "smoothed_event_sideways_available_required": "MISSING/MISSING",
+        "smoothed_event_recovery_available_required": "MISSING/MISSING",
+        "smoothed_event_recovery_lag_status": "MISSING",
+        "smoothed_event_lag_warning_count": "MISSING",
+        "smoothed_switch_readiness_id": "MISSING",
+        "smoothed_switch_recheck_decision": "MISSING",
+        "smoothed_switch_criteria_not_met": "",
+        "smoothed_switch_can_execute_switch": False,
+        "smoothed_owner_renewal_id": "MISSING",
+        "smoothed_owner_renewal_previous_decision": "MISSING",
+        "smoothed_owner_renewal_recheck_decision": "MISSING",
+        "smoothed_owner_renewal_recommended_action": "MISSING",
+        "smoothed_owner_renewal_options": "",
         "smoothed_path": "",
         "smoothed_backfill_path": "",
         "smoothed_comparison_path": "",
@@ -9731,6 +10148,11 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_forward_binding_path": "",
         "paper_shadow_primary_switch_path": "",
         "smoothed_owner_promotion_path": "",
+        "smoothed_forward_progress_path": "",
+        "smoothed_weekly_dashboard_path": "",
+        "smoothed_event_monitor_path": "",
+        "smoothed_switch_readiness_path": "",
+        "smoothed_owner_renewal_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",

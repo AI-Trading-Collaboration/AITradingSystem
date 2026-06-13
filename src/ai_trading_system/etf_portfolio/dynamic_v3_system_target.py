@@ -184,6 +184,19 @@ DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR = (
 DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_promotion"
 )
+DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_forward_progress"
+)
+DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_weekly_dashboard"
+)
+DEFAULT_SMOOTHED_EVENT_MONITOR_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_event_monitor"
+DEFAULT_SMOOTHED_SWITCH_READINESS_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_switch_readiness"
+)
+DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_owner_renewal"
+)
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
 DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "variant_transform_spec"
@@ -9392,6 +9405,751 @@ def validate_smoothed_owner_promotion_artifact(
     )
 
 
+def update_smoothed_forward_progress(
+    *,
+    binding_id: str,
+    binding_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    binding = smoothed_forward_binding_report_payload(binding_id=binding_id, output_dir=binding_dir)
+    targets = _smoothed_forward_progress_targets(binding, generated)
+    summary = _smoothed_forward_progress_summary(binding_id, targets)
+    progress_id = _stable_id(
+        "smoothed-forward-progress",
+        binding_id,
+        targets,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / progress_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["progress_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_forward_progress_manifest",
+        "progress_id": root.name,
+        "binding_id": binding_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_forward_progress_manifest_path": str(
+            root / "smoothed_forward_progress_manifest.json"
+        ),
+        "smoothed_target_progress_path": str(root / "smoothed_target_progress.jsonl"),
+        "smoothed_forward_progress_summary_path": str(
+            root / "smoothed_forward_progress_summary.json"
+        ),
+        "smoothed_forward_progress_report_path": str(
+            root / "smoothed_forward_progress_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_forward_progress_reader_brief(summary, targets)
+    _write_json(root / "smoothed_forward_progress_manifest.json", manifest)
+    _write_jsonl(root / "smoothed_target_progress.jsonl", targets)
+    _write_json(root / "smoothed_forward_progress_summary.json", summary)
+    _write_text(
+        root / "smoothed_forward_progress_report.md",
+        render_smoothed_forward_progress_report(manifest, summary, targets),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_forward_progress",
+        root.name,
+        root / "smoothed_forward_progress_manifest.json",
+    )
+    return {
+        "progress_id": root.name,
+        "progress_dir": root,
+        "manifest": manifest,
+        "smoothed_target_progress": targets,
+        "smoothed_forward_progress_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_forward_progress_report_payload(
+    *,
+    progress_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=progress_id,
+        latest_pointer="latest_smoothed_forward_progress",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_forward_progress_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_forward_progress_manifest.json"),
+        "smoothed_target_progress": _read_jsonl(root / "smoothed_target_progress.jsonl"),
+        "smoothed_forward_progress_summary": _read_json(
+            root / "smoothed_forward_progress_summary.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "progress_dir": str(root),
+    }
+
+
+def validate_smoothed_forward_progress_artifact(
+    *,
+    progress_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+) -> dict[str, Any]:
+    root = output_dir / progress_id
+    manifest = _read_optional_json(root / "smoothed_forward_progress_manifest.json") or {}
+    targets = _read_jsonl(root / "smoothed_target_progress.jsonl")
+    summary = _read_optional_json(root / "smoothed_forward_progress_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_forward_progress_manifest.json",
+            "smoothed_target_progress.jsonl",
+            "smoothed_forward_progress_summary.json",
+            "smoothed_forward_progress_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    not_ready_when_insufficient = all(
+        row.get("progress_status") != "READY_FOR_REVIEW"
+        for row in targets
+        if _smoothed_target_available_events(row) < _smoothed_target_required_events(row)
+    )
+    checks.extend(
+        [
+            _check(
+                "progress_id_matches",
+                manifest.get("progress_id") == progress_id
+                and summary.get("progress_id") == progress_id,
+                "",
+            ),
+            _check("targets_total_three", len(targets) == 3, str(len(targets))),
+            _check(
+                "each_target_has_progress_status",
+                all(_text(row.get("progress_status")) for row in targets),
+                "",
+            ),
+            _check("insufficient_events_not_ready", not_ready_when_insufficient, ""),
+            _check(
+                "summary_recommends_continue_observation",
+                summary.get("summary_recommendation") == "continue_observation",
+                _text(summary.get("summary_recommendation")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *targets), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_forward_progress_validation",
+        progress_id,
+        checks,
+    )
+
+
+def build_smoothed_weekly_dashboard(
+    *,
+    progress_id: str,
+    progress_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    progress = smoothed_forward_progress_report_payload(
+        progress_id=progress_id,
+        output_dir=progress_dir,
+    )
+    progress_summary = _mapping(progress.get("smoothed_forward_progress_summary"))
+    target_rows = _records(progress.get("smoothed_target_progress"))
+    dashboard_summary = _smoothed_weekly_dashboard_summary(progress_summary, target_rows)
+    status_table = _smoothed_target_status_table(target_rows)
+    dashboard_id = _stable_id(
+        "smoothed-weekly-dashboard",
+        progress_id,
+        dashboard_summary,
+        status_table,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / dashboard_id)
+    root.mkdir(parents=True, exist_ok=False)
+    dashboard_summary["dashboard_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_weekly_dashboard_manifest",
+        "dashboard_id": root.name,
+        "progress_id": progress_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_weekly_dashboard_manifest_path": str(
+            root / "smoothed_weekly_dashboard_manifest.json"
+        ),
+        "smoothed_dashboard_summary_path": str(root / "smoothed_dashboard_summary.json"),
+        "smoothed_target_status_table_path": str(root / "smoothed_target_status_table.json"),
+        "smoothed_weekly_dashboard_report_path": str(
+            root / "smoothed_weekly_dashboard_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_weekly_dashboard_reader_brief(dashboard_summary, status_table)
+    _write_json(root / "smoothed_weekly_dashboard_manifest.json", manifest)
+    _write_json(root / "smoothed_dashboard_summary.json", dashboard_summary)
+    _write_json(root / "smoothed_target_status_table.json", status_table)
+    _write_text(
+        root / "smoothed_weekly_dashboard_report.md",
+        render_smoothed_weekly_dashboard_report(manifest, dashboard_summary, status_table),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_weekly_dashboard",
+        root.name,
+        root / "smoothed_weekly_dashboard_manifest.json",
+    )
+    return {
+        "dashboard_id": root.name,
+        "dashboard_dir": root,
+        "manifest": manifest,
+        "smoothed_dashboard_summary": dashboard_summary,
+        "smoothed_target_status_table": status_table,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_weekly_dashboard_report_payload(
+    *,
+    dashboard_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=dashboard_id,
+        latest_pointer="latest_smoothed_weekly_dashboard",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_weekly_dashboard_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_weekly_dashboard_manifest.json"),
+        "smoothed_dashboard_summary": _read_json(root / "smoothed_dashboard_summary.json"),
+        "smoothed_target_status_table": _read_json(root / "smoothed_target_status_table.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "dashboard_dir": str(root),
+    }
+
+
+def validate_smoothed_weekly_dashboard_artifact(
+    *,
+    dashboard_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+) -> dict[str, Any]:
+    root = output_dir / dashboard_id
+    manifest = _read_optional_json(root / "smoothed_weekly_dashboard_manifest.json") or {}
+    summary = _read_optional_json(root / "smoothed_dashboard_summary.json") or {}
+    table = _read_optional_json(root / "smoothed_target_status_table.json") or {}
+    targets = _records(table.get("targets"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_weekly_dashboard_manifest.json",
+            "smoothed_dashboard_summary.json",
+            "smoothed_target_status_table.json",
+            "smoothed_weekly_dashboard_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "dashboard_id_matches",
+                manifest.get("dashboard_id") == dashboard_id
+                and summary.get("dashboard_id") == dashboard_id,
+                "",
+            ),
+            _check("target_status_table_readable", len(targets) == 3, str(len(targets))),
+            _check(
+                "ready_for_switch_recheck_false_when_in_progress",
+                summary.get("ready_for_switch_recheck") is False
+                or summary.get("forward_confirmation_status") == "READY_FOR_REVIEW",
+                _text(summary.get("forward_confirmation_status")),
+            ),
+            _check(
+                "weekly_recommendation_continue_observation",
+                summary.get("weekly_recommendation") == "continue_observation",
+                _text(summary.get("weekly_recommendation")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, table, *targets), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_weekly_dashboard_validation",
+        dashboard_id,
+        checks,
+    )
+
+
+def update_smoothed_event_monitor(
+    *,
+    progress_id: str,
+    progress_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    progress = smoothed_forward_progress_report_payload(
+        progress_id=progress_id,
+        output_dir=progress_dir,
+    )
+    progress_summary = _mapping(progress.get("smoothed_forward_progress_summary"))
+    sideways_events: list[dict[str, Any]] = []
+    recovery_events: list[dict[str, Any]] = []
+    summary = _smoothed_event_accumulation_summary(
+        progress_summary,
+        sideways_events,
+        recovery_events,
+    )
+    monitor_id = _stable_id(
+        "smoothed-event-monitor",
+        progress_id,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / monitor_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["monitor_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_event_monitor_manifest",
+        "monitor_id": root.name,
+        "progress_id": progress_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_event_monitor_manifest_path": str(
+            root / "smoothed_event_monitor_manifest.json"
+        ),
+        "sideways_event_inventory_path": str(root / "sideways_event_inventory.jsonl"),
+        "recovery_event_inventory_path": str(root / "recovery_event_inventory.jsonl"),
+        "event_accumulation_summary_path": str(root / "event_accumulation_summary.json"),
+        "smoothed_event_monitor_report_path": str(root / "smoothed_event_monitor_report.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    _write_json(root / "smoothed_event_monitor_manifest.json", manifest)
+    _write_jsonl(root / "sideways_event_inventory.jsonl", sideways_events)
+    _write_jsonl(root / "recovery_event_inventory.jsonl", recovery_events)
+    _write_json(root / "event_accumulation_summary.json", summary)
+    _write_text(
+        root / "smoothed_event_monitor_report.md",
+        render_smoothed_event_monitor_report(
+            manifest,
+            summary,
+            sideways_events,
+            recovery_events,
+        ),
+    )
+    _write_latest_pointer(
+        "latest_smoothed_event_monitor",
+        root.name,
+        root / "smoothed_event_monitor_manifest.json",
+    )
+    return {
+        "monitor_id": root.name,
+        "monitor_dir": root,
+        "manifest": manifest,
+        "sideways_event_inventory": sideways_events,
+        "recovery_event_inventory": recovery_events,
+        "event_accumulation_summary": summary,
+    }
+
+
+def smoothed_event_monitor_report_payload(
+    *,
+    monitor_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=monitor_id,
+        latest_pointer="latest_smoothed_event_monitor",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_event_monitor_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_event_monitor_manifest.json"),
+        "sideways_event_inventory": _read_jsonl(root / "sideways_event_inventory.jsonl"),
+        "recovery_event_inventory": _read_jsonl(root / "recovery_event_inventory.jsonl"),
+        "event_accumulation_summary": _read_json(root / "event_accumulation_summary.json"),
+        "monitor_dir": str(root),
+    }
+
+
+def validate_smoothed_event_monitor_artifact(
+    *,
+    monitor_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+) -> dict[str, Any]:
+    root = output_dir / monitor_id
+    manifest = _read_optional_json(root / "smoothed_event_monitor_manifest.json") or {}
+    sideways = _read_jsonl(root / "sideways_event_inventory.jsonl")
+    recovery = _read_jsonl(root / "recovery_event_inventory.jsonl")
+    summary = _read_optional_json(root / "event_accumulation_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_event_monitor_manifest.json",
+            "sideways_event_inventory.jsonl",
+            "recovery_event_inventory.jsonl",
+            "event_accumulation_summary.json",
+            "smoothed_event_monitor_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "monitor_id_matches",
+                manifest.get("monitor_id") == monitor_id
+                and summary.get("monitor_id") == monitor_id,
+                "",
+            ),
+            _check(
+                "sideways_summary_present",
+                bool(_mapping(summary.get("sideways_events"))),
+                "",
+            ),
+            _check(
+                "recovery_summary_present",
+                bool(_mapping(summary.get("recovery_events"))),
+                "",
+            ),
+            _check(
+                "lag_warning_false_without_events",
+                not any(row.get("lag_warning") is True for row in recovery),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, *sideways, *recovery), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_event_monitor_validation",
+        monitor_id,
+        checks,
+    )
+
+
+def recheck_smoothed_switch_readiness(
+    *,
+    dashboard_id: str,
+    monitor_id: str,
+    switch_plan_id: str,
+    dashboard_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+    monitor_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+    switch_plan_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    dashboard = smoothed_weekly_dashboard_report_payload(
+        dashboard_id=dashboard_id,
+        output_dir=dashboard_dir,
+    )
+    monitor = smoothed_event_monitor_report_payload(monitor_id=monitor_id, output_dir=monitor_dir)
+    switch_plan = paper_shadow_primary_switch_report_payload(
+        switch_plan_id=switch_plan_id,
+        output_dir=switch_plan_dir,
+    )
+    dashboard_summary = _mapping(dashboard.get("smoothed_dashboard_summary"))
+    event_summary = _mapping(monitor.get("event_accumulation_summary"))
+    plan = _mapping(switch_plan.get("primary_switch_plan"))
+    criteria = _smoothed_switch_readiness_criteria(dashboard_summary, event_summary)
+    decision = _smoothed_switch_readiness_decision(dashboard_summary, plan, criteria)
+    recheck_id = _stable_id(
+        "smoothed-switch-readiness",
+        dashboard_id,
+        monitor_id,
+        switch_plan_id,
+        decision,
+        criteria,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / recheck_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["recheck_id"] = root.name
+    criteria["recheck_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_switch_readiness_manifest",
+        "recheck_id": root.name,
+        "dashboard_id": dashboard_id,
+        "monitor_id": monitor_id,
+        "switch_plan_id": switch_plan_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_switch_readiness_manifest_path": str(
+            root / "smoothed_switch_readiness_manifest.json"
+        ),
+        "switch_readiness_decision_path": str(root / "switch_readiness_decision.json"),
+        "switch_readiness_criteria_path": str(root / "switch_readiness_criteria.json"),
+        "smoothed_switch_readiness_report_path": str(
+            root / "smoothed_switch_readiness_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_switch_readiness_reader_brief(decision, criteria)
+    _write_json(root / "smoothed_switch_readiness_manifest.json", manifest)
+    _write_json(root / "switch_readiness_decision.json", decision)
+    _write_json(root / "switch_readiness_criteria.json", criteria)
+    _write_text(
+        root / "smoothed_switch_readiness_report.md",
+        render_smoothed_switch_readiness_report(manifest, decision, criteria),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_switch_readiness",
+        root.name,
+        root / "smoothed_switch_readiness_manifest.json",
+    )
+    return {
+        "recheck_id": root.name,
+        "recheck_dir": root,
+        "manifest": manifest,
+        "switch_readiness_decision": decision,
+        "switch_readiness_criteria": criteria,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_switch_readiness_report_payload(
+    *,
+    recheck_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=recheck_id,
+        latest_pointer="latest_smoothed_switch_readiness",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_switch_readiness_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_switch_readiness_manifest.json"),
+        "switch_readiness_decision": _read_json(root / "switch_readiness_decision.json"),
+        "switch_readiness_criteria": _read_json(root / "switch_readiness_criteria.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "recheck_dir": str(root),
+    }
+
+
+def validate_smoothed_switch_readiness_artifact(
+    *,
+    recheck_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+) -> dict[str, Any]:
+    root = output_dir / recheck_id
+    manifest = _read_optional_json(root / "smoothed_switch_readiness_manifest.json") or {}
+    decision = _read_optional_json(root / "switch_readiness_decision.json") or {}
+    criteria = _read_optional_json(root / "switch_readiness_criteria.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_switch_readiness_manifest.json",
+            "switch_readiness_decision.json",
+            "switch_readiness_criteria.json",
+            "smoothed_switch_readiness_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "recheck_id_matches",
+                manifest.get("recheck_id") == recheck_id
+                and decision.get("recheck_id") == recheck_id,
+                "",
+            ),
+            _check("criteria_present", len(_records(criteria.get("criteria"))) == 3, ""),
+            _check("can_execute_switch_false", decision.get("can_execute_switch") is False, ""),
+            _check(
+                "owner_decision_required_true",
+                decision.get("owner_decision_required") is True,
+                "",
+            ),
+            _check("auto_switch_false", decision.get("auto_switch") is False, ""),
+            _check(
+                "production_effect_none",
+                decision.get("production_effect") == "none",
+                _text(decision.get("production_effect")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, decision, criteria), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_switch_readiness_validation",
+        recheck_id,
+        checks,
+    )
+
+
+def build_smoothed_owner_renewal_pack(
+    *,
+    recheck_id: str,
+    owner_promotion_id: str,
+    recheck_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+    owner_promotion_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    recheck = smoothed_switch_readiness_report_payload(
+        recheck_id=recheck_id,
+        output_dir=recheck_dir,
+    )
+    owner = smoothed_owner_promotion_report_payload(
+        decision_id=owner_promotion_id,
+        output_dir=owner_promotion_dir,
+    )
+    recheck_decision = _mapping(recheck.get("switch_readiness_decision"))
+    owner_decision = _mapping(owner.get("owner_promotion_decision"))
+    options = _smoothed_owner_renewal_options(recheck_decision, owner_decision)
+    renewal_id = _stable_id(
+        "smoothed-owner-renewal",
+        recheck_id,
+        owner_promotion_id,
+        options,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / renewal_id)
+    root.mkdir(parents=True, exist_ok=False)
+    options["renewal_id"] = root.name
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_owner_renewal_manifest",
+        "renewal_id": root.name,
+        "recheck_id": recheck_id,
+        "owner_promotion_id": owner_promotion_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "smoothed_owner_renewal_manifest_path": str(
+            root / "smoothed_owner_renewal_manifest.json"
+        ),
+        "owner_renewal_options_path": str(root / "owner_renewal_options.json"),
+        "owner_renewal_checklist_path": str(root / "owner_renewal_checklist.md"),
+        "smoothed_owner_renewal_report_path": str(root / "smoothed_owner_renewal_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    checklist = render_smoothed_owner_renewal_checklist(options)
+    reader = render_smoothed_owner_renewal_reader_brief(options)
+    _write_json(root / "smoothed_owner_renewal_manifest.json", manifest)
+    _write_json(root / "owner_renewal_options.json", options)
+    _write_text(root / "owner_renewal_checklist.md", checklist)
+    _write_text(
+        root / "smoothed_owner_renewal_report.md",
+        render_smoothed_owner_renewal_report(manifest, options),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_owner_renewal",
+        root.name,
+        root / "smoothed_owner_renewal_manifest.json",
+    )
+    return {
+        "renewal_id": root.name,
+        "renewal_dir": root,
+        "manifest": manifest,
+        "owner_renewal_options": options,
+        "owner_renewal_checklist": checklist,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_owner_renewal_report_payload(
+    *,
+    renewal_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=renewal_id,
+        latest_pointer="latest_smoothed_owner_renewal",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_owner_renewal_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_owner_renewal_manifest.json"),
+        "owner_renewal_options": _read_json(root / "owner_renewal_options.json"),
+        "owner_renewal_checklist": (root / "owner_renewal_checklist.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "renewal_dir": str(root),
+    }
+
+
+def validate_smoothed_owner_renewal_artifact(
+    *,
+    renewal_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / renewal_id
+    manifest = _read_optional_json(root / "smoothed_owner_renewal_manifest.json") or {}
+    options = _read_optional_json(root / "owner_renewal_options.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_owner_renewal_manifest.json",
+            "owner_renewal_options.json",
+            "owner_renewal_checklist.md",
+            "smoothed_owner_renewal_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "renewal_id_matches",
+                manifest.get("renewal_id") == renewal_id
+                and options.get("renewal_id") == renewal_id,
+                "",
+            ),
+            _check("owner_options_present", len(_records(options.get("owner_options"))) == 5, ""),
+            _check(
+                "recommended_owner_action_visible",
+                _text(options.get("recommended_owner_action")) != "",
+                _text(options.get("recommended_owner_action")),
+            ),
+            _check("auto_switch_false", options.get("auto_switch") is False, ""),
+            _check(
+                "not_official_target_weights_true",
+                options.get("not_official_target_weights") is True,
+                "",
+            ),
+            _check(
+                "broker_action_allowed_false",
+                options.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check("production_effect_none", options.get("production_effect") == "none", ""),
+            _check("broker_forbidden", _payload_safe(manifest, options), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_owner_renewal_validation",
+        renewal_id,
+        checks,
+    )
+
+
 def render_risk_capped_limited_config_report(
     manifest: Mapping[str, Any],
     config: Mapping[str, Any],
@@ -10663,6 +11421,319 @@ def render_smoothed_owner_promotion_reader_brief(decision: Mapping[str, Any]) ->
             f"- paper_shadow_primary_candidate_change_allowed: "
             f"{decision.get('paper_shadow_primary_candidate_change_allowed')}",
             f"- forward_confirmation_status: {decision.get('forward_confirmation_status')}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_forward_progress_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    targets: Sequence[Mapping[str, Any]],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Forward Progress {manifest.get('progress_id')}",
+            "",
+            f"- binding_id: {manifest.get('binding_id')}",
+            f"- available_forward_events_total: {summary.get('available_forward_events_total')}",
+            f"- required_forward_events_total: {summary.get('required_forward_events_total')}",
+            f"- available_sideways_events: {summary.get('available_sideways_events')}",
+            f"- required_sideways_events: {summary.get('required_sideways_events')}",
+            f"- available_recovery_events: {summary.get('available_recovery_events')}",
+            f"- required_recovery_events: {summary.get('required_recovery_events')}",
+            f"- ready_for_review_count: {summary.get('ready_for_review_count')}",
+            f"- summary_recommendation: {summary.get('summary_recommendation')}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Target Progress",
+            "",
+            *[
+                "- "
+                f"{row.get('target_id')}: status={row.get('progress_status')}, "
+                f"available={_smoothed_target_available_events(row)}, "
+                f"required={_smoothed_target_required_events(row)}, "
+                f"blocking={', '.join(_texts(row.get('blocking_reasons')))}"
+                for row in targets
+            ],
+            "",
+            "当前 progress 只跟踪可审计 forward evidence。样本不足时不能标记 "
+            "READY_FOR_REVIEW，也不能触发 primary candidate switch。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_forward_progress_reader_brief(
+    summary: Mapping[str, Any],
+    targets: Sequence[Mapping[str, Any]],
+) -> str:
+    target_statuses = [
+        f"{row.get('target_id')}={row.get('progress_status')}" for row in targets
+    ]
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Forward Progress",
+            "",
+            f"- progress_id: {summary.get('progress_id')}",
+            f"- binding_id: {summary.get('binding_id')}",
+            f"- forward_progress: {summary.get('available_forward_events_total')}/"
+            f"{summary.get('required_forward_events_total')}",
+            f"- sideways_progress: {summary.get('available_sideways_events')}/"
+            f"{summary.get('required_sideways_events')}",
+            f"- recovery_progress: {summary.get('available_recovery_events')}/"
+            f"{summary.get('required_recovery_events')}",
+            f"- target_statuses: {', '.join(target_statuses)}",
+            f"- summary_recommendation: {summary.get('summary_recommendation')}",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_weekly_dashboard_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    table: Mapping[str, Any],
+) -> str:
+    targets = _records(table.get("targets"))
+    return "\n".join(
+        [
+            f"# Smoothed Weekly Evidence Dashboard {manifest.get('dashboard_id')}",
+            "",
+            f"- candidate_method: {summary.get('candidate_method')}",
+            f"- current_owner_decision: {summary.get('current_owner_decision')}",
+            f"- gate_decision: {summary.get('gate_decision')}",
+            f"- decision_confidence: {summary.get('decision_confidence')}",
+            f"- forward_confirmation_status: {summary.get('forward_confirmation_status')}",
+            f"- ready_for_switch_recheck: {summary.get('ready_for_switch_recheck')}",
+            f"- weekly_recommendation: {summary.get('weekly_recommendation')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Target Status",
+            "",
+            *[
+                "- "
+                f"{row.get('target_id')}: status={row.get('status')}, "
+                f"available={row.get('available_events')}, "
+                f"required={row.get('required_events')}, "
+                f"progress_pct={row.get('progress_pct')}, decision={row.get('decision')}"
+                for row in targets
+            ],
+            "",
+            "Dashboard 只汇总 weekly evidence；ready_for_switch_recheck=false 时仍建议 "
+            "continue_observation，且不允许 broker / production 行为。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_weekly_dashboard_reader_brief(
+    summary: Mapping[str, Any],
+    table: Mapping[str, Any],
+) -> str:
+    target_statuses = [
+        f"{row.get('target_id')}={row.get('status')}"
+        for row in _records(table.get("targets"))
+    ]
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Weekly Dashboard",
+            "",
+            f"- dashboard_id: {summary.get('dashboard_id')}",
+            f"- candidate_method: {summary.get('candidate_method')}",
+            f"- forward_confirmation_status: {summary.get('forward_confirmation_status')}",
+            f"- ready_for_switch_recheck: {summary.get('ready_for_switch_recheck')}",
+            f"- weekly_recommendation: {summary.get('weekly_recommendation')}",
+            f"- target_statuses: {', '.join(target_statuses)}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_event_monitor_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    sideways_events: Sequence[Mapping[str, Any]],
+    recovery_events: Sequence[Mapping[str, Any]],
+) -> str:
+    sideways = _mapping(summary.get("sideways_events"))
+    recovery = _mapping(summary.get("recovery_events"))
+    lag_warnings = sum(1 for row in recovery_events if row.get("lag_warning") is True)
+    return "\n".join(
+        [
+            f"# Smoothed Event Monitor {manifest.get('monitor_id')}",
+            "",
+            f"- progress_id: {manifest.get('progress_id')}",
+            "- sideways_available_required: "
+            f"{sideways.get('available')}/{sideways.get('required')}",
+            "- recovery_available_required: "
+            f"{recovery.get('available')}/{recovery.get('required')}",
+            f"- sideways_pending: {sideways.get('pending')}",
+            f"- recovery_pending: {recovery.get('pending')}",
+            f"- sideways_status: {summary.get('sideways_status')}",
+            f"- recovery_lag_status: {summary.get('recovery_lag_status')}",
+            f"- lag_warning_count: {lag_warnings}",
+            f"- recommended_action: {summary.get('recommended_action')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "Event monitor 只累计 sideways / recovery observation inventory。当前没有 "
+            "available samples 时保持 continue_event_collection。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_switch_readiness_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    criteria: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Switch Readiness Recheck {manifest.get('recheck_id')}",
+            "",
+            f"- candidate_method: {decision.get('candidate_method')}",
+            f"- current_owner_decision: {decision.get('current_owner_decision')}",
+            f"- previous_gate_decision: {decision.get('previous_gate_decision')}",
+            f"- recheck_decision: {decision.get('recheck_decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- can_execute_switch: {decision.get('can_execute_switch')}",
+            f"- owner_decision_required: {decision.get('owner_decision_required')}",
+            f"- auto_switch: {decision.get('auto_switch')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Criteria",
+            "",
+            *[
+                "- "
+                f"{row.get('criterion')}: required={row.get('required')}, "
+                f"available={row.get('available', row.get('actual'))}, "
+                f"status={row.get('status')}"
+                for row in _records(criteria.get("criteria"))
+            ],
+            "",
+            f"- hard_blockers: {', '.join(_texts(criteria.get('hard_blockers')))}",
+            f"- warnings: {', '.join(_texts(criteria.get('warnings')))}",
+            "",
+            "Readiness recheck 不执行 switch。can_execute_switch 必须保持 false，任何 "
+            "promotion 都需要 owner decision 和后续独立任务。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_switch_readiness_reader_brief(
+    decision: Mapping[str, Any],
+    criteria: Mapping[str, Any],
+) -> str:
+    not_met = [
+        row.get("criterion")
+        for row in _records(criteria.get("criteria"))
+        if row.get("status") != "PASS"
+    ]
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Switch Readiness",
+            "",
+            f"- recheck_id: {decision.get('recheck_id')}",
+            f"- recheck_decision: {decision.get('recheck_decision')}",
+            f"- decision_confidence: {decision.get('decision_confidence')}",
+            f"- criteria_not_met: {', '.join(_texts(not_met))}",
+            f"- can_execute_switch: {decision.get('can_execute_switch')}",
+            f"- owner_decision_required: {decision.get('owner_decision_required')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_owner_renewal_checklist(options: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Smoothed Owner Renewal Checklist",
+            "",
+            "- [ ] 当前是否仍继续观察？",
+            "- [ ] forward events 是否足够？",
+            "- [ ] sideways samples 是否足够？",
+            "- [ ] recovery lag 是否有 warning？",
+            "- [ ] 是否需要 request more forward data？",
+            "- [ ] 是否可进入 promote_to_primary_research_candidate？",
+            "- [ ] 是否确认不写 official target weights？",
+            "- [ ] 是否确认 no broker / no production？",
+            "",
+            f"- previous_owner_decision: {options.get('previous_owner_decision')}",
+            f"- current_recheck_decision: {options.get('current_recheck_decision')}",
+            f"- recommended_owner_action: {options.get('recommended_owner_action')}",
+            f"- forward_progress: {options.get('forward_progress')}",
+            f"- sideways_progress: {options.get('sideways_progress')}",
+            f"- recovery_lag_status: {options.get('recovery_lag_status')}",
+            "",
+        ]
+    )
+
+
+def render_smoothed_owner_renewal_report(
+    manifest: Mapping[str, Any],
+    options: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Owner Renewal {manifest.get('renewal_id')}",
+            "",
+            f"- candidate_method: {options.get('candidate_method')}",
+            f"- previous_owner_decision: {options.get('previous_owner_decision')}",
+            f"- current_recheck_decision: {options.get('current_recheck_decision')}",
+            f"- recommended_owner_action: {options.get('recommended_owner_action')}",
+            f"- forward_progress: {options.get('forward_progress')}",
+            f"- sideways_progress: {options.get('sideways_progress')}",
+            f"- recovery_lag_status: {options.get('recovery_lag_status')}",
+            "- auto_switch: false",
+            "- not_official_target_weights: true",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Owner Options",
+            "",
+            *[
+                "- "
+                f"{row.get('decision')}: recommended={row.get('recommended')}, "
+                f"reason={row.get('reason')}"
+                for row in _records(options.get("owner_options"))
+            ],
+            "",
+            "Renewal pack 只生成 owner review 材料，不自动切换 primary candidate，不写 "
+            "official target weights，不触发 broker 或 production。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_owner_renewal_reader_brief(options: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Owner Renewal",
+            "",
+            f"- candidate_method: {options.get('candidate_method')}",
+            f"- previous_owner_decision: {options.get('previous_owner_decision')}",
+            f"- current_recheck_decision: {options.get('current_recheck_decision')}",
+            f"- recommended_owner_action: {options.get('recommended_owner_action')}",
+            f"- forward_progress: {options.get('forward_progress')}",
+            f"- sideways_progress: {options.get('sideways_progress')}",
+            f"- recovery_lag_status: {options.get('recovery_lag_status')}",
             "- not_official_target_weights: true",
             "- broker_action_allowed: false",
             "- production_effect: none",
@@ -19071,6 +20142,493 @@ def _write_smoothed_owner_promotion_files(
         render_smoothed_owner_promotion_report(manifest, decision),
     )
     _write_text(root / "reader_brief_section.md", reader)
+
+
+def _smoothed_forward_progress_targets(
+    binding: Mapping[str, Any],
+    generated: datetime,
+) -> list[dict[str, Any]]:
+    source_targets = _records(_mapping(binding.get("bound_confirmation_targets")).get("targets"))
+    rows: list[dict[str, Any]] = []
+    for source in source_targets:
+        target_id = _text(source.get("target_id"))
+        common = {
+            "schema_version": SCHEMA_VERSION,
+            "target_id": target_id,
+            "method": _text(source.get("method"), "smooth_weights_3d_limited_adjustment"),
+            "baseline": _text(source.get("baseline"), "limited_adjustment"),
+            "last_updated": generated.isoformat(),
+            **SYSTEM_TARGET_SAFETY,
+        }
+        if target_id == "smooth_3d_vs_limited":
+            required = int(
+                _float(
+                    source.get(
+                        "required_forward_events",
+                        SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS,
+                    )
+                )
+            )
+            available = 0
+            windows = _texts(source.get("windows")) or [
+                str(window) for window in SMOOTHED_CONFIRMATION_WINDOWS
+            ]
+            rows.append(
+                {
+                    **common,
+                    "required_forward_events": required,
+                    "available_forward_events": available,
+                    "available_by_window": {str(window): 0 for window in windows},
+                    "current_metrics": {
+                        "avg_relative_return": None,
+                        "win_rate_vs_limited": None,
+                        "drawdown_delta": None,
+                        "turnover_delta": None,
+                        "rolling_consistency_delta": None,
+                    },
+                    "progress_status": _smoothed_progress_status(available, required),
+                    "blocking_reasons": (
+                        ["not_enough_forward_events"] if available < required else []
+                    ),
+                    "watch_only": False,
+                }
+            )
+        elif target_id == "smooth_3d_sideways_choppy_improvement":
+            required = int(
+                _float(
+                    source.get(
+                        "required_sideways_events",
+                        SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS,
+                    )
+                )
+            )
+            available = 0
+            rows.append(
+                {
+                    **common,
+                    "required_sideways_events": required,
+                    "available_sideways_events": available,
+                    "available_forward_events": 0,
+                    "available_by_window": {"5": 0},
+                    "current_metrics": {
+                        "avg_relative_return": None,
+                        "win_rate_vs_limited": None,
+                        "drawdown_delta": None,
+                        "turnover_delta": None,
+                        "signal_churn_delta": None,
+                        "weight_jump_delta": None,
+                    },
+                    "progress_status": _smoothed_progress_status(available, required),
+                    "blocking_reasons": (
+                        ["not_enough_sideways_events"] if available < required else []
+                    ),
+                    "watch_only": False,
+                }
+            )
+        elif target_id == "smooth_3d_recovery_lag_watch":
+            required = int(
+                _float(
+                    source.get(
+                        "required_recovery_events",
+                        SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS,
+                    )
+                )
+            )
+            available = 0
+            rows.append(
+                {
+                    **common,
+                    "target_mode": "WATCH_ONLY",
+                    "required_recovery_events": required,
+                    "available_recovery_events": available,
+                    "available_forward_events": 0,
+                    "available_by_window": {"5": 0},
+                    "current_metrics": {
+                        "missed_upside": None,
+                        "risk_on_response_delay_days": None,
+                        "lag_warning": False,
+                    },
+                    "progress_status": _smoothed_progress_status(available, required),
+                    "blocking_reasons": (
+                        ["not_enough_recovery_events"] if available < required else []
+                    ),
+                    "watch_only": True,
+                }
+            )
+    return rows
+
+
+def _smoothed_progress_status(available: int, required: int) -> str:
+    if available <= 0:
+        return "INSUFFICIENT_EVENTS"
+    if available < required:
+        return "IN_PROGRESS"
+    return "READY_FOR_REVIEW"
+
+
+def _smoothed_target_required_events(row: Mapping[str, Any]) -> int:
+    if "required_forward_events" in row and row.get("target_id") == "smooth_3d_vs_limited":
+        return int(_float(row.get("required_forward_events")))
+    if "required_sideways_events" in row:
+        return int(_float(row.get("required_sideways_events")))
+    if "required_recovery_events" in row:
+        return int(_float(row.get("required_recovery_events")))
+    return 0
+
+
+def _smoothed_target_available_events(row: Mapping[str, Any]) -> int:
+    if row.get("target_id") == "smooth_3d_vs_limited":
+        return int(_float(row.get("available_forward_events")))
+    if "available_sideways_events" in row:
+        return int(_float(row.get("available_sideways_events")))
+    if "available_recovery_events" in row:
+        return int(_float(row.get("available_recovery_events")))
+    return int(_float(row.get("available_forward_events")))
+
+
+def _smoothed_forward_progress_summary(
+    binding_id: str,
+    targets: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    ready_count = sum(1 for row in targets if row.get("progress_status") == "READY_FOR_REVIEW")
+    watch_count = sum(1 for row in targets if row.get("watch_only") is True)
+    in_progress_count = sum(
+        1
+        for row in targets
+        if row.get("watch_only") is not True and row.get("progress_status") != "READY_FOR_REVIEW"
+    )
+    forward = next((row for row in targets if row.get("target_id") == "smooth_3d_vs_limited"), {})
+    sideways = next(
+        (
+            row
+            for row in targets
+            if row.get("target_id") == "smooth_3d_sideways_choppy_improvement"
+        ),
+        {},
+    )
+    recovery = next(
+        (row for row in targets if row.get("target_id") == "smooth_3d_recovery_lag_watch"),
+        {},
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "progress_id": "",
+        "binding_id": binding_id,
+        "targets_total": len(targets),
+        "ready_for_review_count": ready_count,
+        "in_progress_count": in_progress_count,
+        "watch_only_count": watch_count,
+        "required_forward_events_total": _smoothed_target_required_events(forward),
+        "available_forward_events_total": _smoothed_target_available_events(forward),
+        "required_sideways_events": _smoothed_target_required_events(sideways),
+        "available_sideways_events": _smoothed_target_available_events(sideways),
+        "required_recovery_events": _smoothed_target_required_events(recovery),
+        "available_recovery_events": _smoothed_target_available_events(recovery),
+        "summary_recommendation": "continue_observation",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_weekly_dashboard_summary(
+    progress_summary: Mapping[str, Any],
+    targets: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    ready_for_switch_recheck = (
+        _float(progress_summary.get("available_forward_events_total"))
+        >= _float(progress_summary.get("required_forward_events_total"))
+        and _float(progress_summary.get("available_sideways_events"))
+        >= _float(progress_summary.get("required_sideways_events"))
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "dashboard_id": "",
+        "candidate_method": "smooth_weights_3d_limited_adjustment",
+        "secondary_method": "smooth_weights_5d_limited_adjustment",
+        "current_owner_decision": "continue_observation",
+        "gate_decision": "ELIGIBLE_FOR_OWNER_APPROVAL",
+        "decision_confidence": "LOW",
+        "forward_confirmation_status": (
+            "READY_FOR_REVIEW" if ready_for_switch_recheck else "IN_PROGRESS"
+        ),
+        "ready_for_switch_recheck": bool(ready_for_switch_recheck),
+        "weekly_recommendation": "continue_observation",
+        "required_forward_events_total": progress_summary.get("required_forward_events_total", 0),
+        "available_forward_events_total": progress_summary.get(
+            "available_forward_events_total",
+            0,
+        ),
+        "required_sideways_events": progress_summary.get("required_sideways_events", 0),
+        "available_sideways_events": progress_summary.get("available_sideways_events", 0),
+        "required_recovery_events": progress_summary.get("required_recovery_events", 0),
+        "available_recovery_events": progress_summary.get("available_recovery_events", 0),
+        "target_status_count": len(targets),
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_target_status_table(
+    targets: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rows = []
+    for row in targets:
+        required = _smoothed_target_required_events(row)
+        available = _smoothed_target_available_events(row)
+        progress_pct = round((available / required) * 100.0, 4) if required else 0.0
+        target_id = _text(row.get("target_id"))
+        if row.get("watch_only") is True:
+            status = "WATCH_ONLY"
+            decision = "watch_for_recovery_lag"
+        elif row.get("progress_status") == "READY_FOR_REVIEW":
+            status = "READY_FOR_REVIEW"
+            decision = "ready_for_review"
+        elif target_id == "smooth_3d_sideways_choppy_improvement":
+            status = "IN_PROGRESS"
+            decision = "wait_for_sideways_events"
+        else:
+            status = "IN_PROGRESS"
+            decision = "continue_tracking"
+        rows.append(
+            {
+                "target_id": target_id,
+                "status": status,
+                "available_events": available,
+                "required_events": required,
+                "progress_pct": progress_pct,
+                "decision": decision,
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {"schema_version": SCHEMA_VERSION, "targets": rows, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_event_accumulation_summary(
+    progress_summary: Mapping[str, Any],
+    sideways_events: Sequence[Mapping[str, Any]],
+    recovery_events: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    sideways_required = int(_float(progress_summary.get("required_sideways_events")))
+    sideways_available = int(_float(progress_summary.get("available_sideways_events")))
+    recovery_required = int(_float(progress_summary.get("required_recovery_events")))
+    recovery_available = int(_float(progress_summary.get("available_recovery_events")))
+    lag_warning = any(row.get("lag_warning") is True for row in recovery_events)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "monitor_id": "",
+        "sideways_events": {
+            "required": sideways_required,
+            "available": sideways_available,
+            "pending": sum(1 for row in sideways_events if row.get("event_status") == "PENDING"),
+            "progress_pct": (
+                round((sideways_available / sideways_required) * 100.0, 4)
+                if sideways_required
+                else 0.0
+            ),
+        },
+        "recovery_events": {
+            "required": recovery_required,
+            "available": recovery_available,
+            "pending": sum(1 for row in recovery_events if row.get("event_status") == "PENDING"),
+            "progress_pct": (
+                round((recovery_available / recovery_required) * 100.0, 4)
+                if recovery_required
+                else 0.0
+            ),
+        },
+        "sideways_status": _smoothed_event_status(sideways_available, sideways_required),
+        "recovery_lag_status": (
+            "WARNING"
+            if lag_warning
+            else (
+                "NO_WARNING"
+                if recovery_available >= recovery_required and recovery_required > 0
+                else "INSUFFICIENT_EVENTS"
+            )
+        ),
+        "lag_warning_count": sum(1 for row in recovery_events if row.get("lag_warning") is True),
+        "recommended_action": "continue_event_collection",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_event_status(available: int, required: int) -> str:
+    if available <= 0:
+        return "INSUFFICIENT_EVENTS"
+    if available < required:
+        return "IN_PROGRESS"
+    return "READY"
+
+
+def _smoothed_switch_readiness_criteria(
+    dashboard_summary: Mapping[str, Any],
+    event_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    forward_required = int(_float(dashboard_summary.get("required_forward_events_total")))
+    forward_available = int(_float(dashboard_summary.get("available_forward_events_total")))
+    sideways = _mapping(event_summary.get("sideways_events"))
+    recovery = _mapping(event_summary.get("recovery_events"))
+    sideways_required = int(_float(sideways.get("required")))
+    sideways_available = int(_float(sideways.get("available")))
+    recovery_lag_status = _text(event_summary.get("recovery_lag_status"), "INSUFFICIENT_EVENTS")
+    rows = [
+        {
+            "criterion": "smooth_3d_vs_limited_forward_events",
+            "required": forward_required,
+            "available": forward_available,
+            "status": "PASS" if forward_available >= forward_required else "IN_PROGRESS",
+            **SYSTEM_TARGET_SAFETY,
+        },
+        {
+            "criterion": "sideways_events",
+            "required": sideways_required,
+            "available": sideways_available,
+            "status": "PASS" if sideways_available >= sideways_required else "IN_PROGRESS",
+            **SYSTEM_TARGET_SAFETY,
+        },
+        {
+            "criterion": "recovery_lag_watch",
+            "required": "NO_HIGH_LAG_WARNING",
+            "actual": recovery_lag_status,
+            "available": int(_float(recovery.get("available"))),
+            "status": (
+                "FAIL"
+                if recovery_lag_status == "WARNING"
+                else ("PASS" if recovery_lag_status == "NO_WARNING" else "IN_PROGRESS")
+            ),
+            **SYSTEM_TARGET_SAFETY,
+        },
+    ]
+    hard_blockers = [
+        _text(row.get("criterion")) for row in rows if row.get("status") == "FAIL"
+    ]
+    warnings = [
+        _text(row.get("criterion")) for row in rows if row.get("status") == "IN_PROGRESS"
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "recheck_id": "",
+        "criteria": rows,
+        "hard_blockers": hard_blockers,
+        "warnings": warnings,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_switch_readiness_decision(
+    dashboard_summary: Mapping[str, Any],
+    switch_plan: Mapping[str, Any],
+    criteria: Mapping[str, Any],
+) -> dict[str, Any]:
+    statuses = {_text(row.get("status")) for row in _records(criteria.get("criteria"))}
+    if "FAIL" in statuses:
+        recheck_decision = "REJECT"
+    elif statuses == {"PASS"}:
+        recheck_decision = "READY_FOR_OWNER_REVIEW"
+    elif "IN_PROGRESS" in statuses:
+        recheck_decision = "WAIT_FOR_MORE_FORWARD_DATA"
+    else:
+        recheck_decision = "CONTINUE_OBSERVATION"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "recheck_id": "",
+        "candidate_method": _text(
+            switch_plan.get("proposed_primary_research_candidate"),
+            "smooth_weights_3d_limited_adjustment",
+        ),
+        "current_owner_decision": _text(
+            dashboard_summary.get("current_owner_decision"),
+            "continue_observation",
+        ),
+        "previous_gate_decision": _text(
+            dashboard_summary.get("gate_decision"),
+            "ELIGIBLE_FOR_OWNER_APPROVAL",
+        ),
+        "switch_plan_id": _text(switch_plan.get("switch_plan_id")),
+        "recheck_decision": recheck_decision,
+        "decision_confidence": _text(dashboard_summary.get("decision_confidence"), "LOW"),
+        "can_execute_switch": False,
+        "owner_decision_required": True,
+        "auto_switch": False,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        "forward_progress": (
+            f"{dashboard_summary.get('available_forward_events_total')}/"
+            f"{dashboard_summary.get('required_forward_events_total')}"
+        ),
+        "sideways_progress": (
+            f"{dashboard_summary.get('available_sideways_events')}/"
+            f"{dashboard_summary.get('required_sideways_events')}"
+        ),
+        "recovery_progress": (
+            f"{dashboard_summary.get('available_recovery_events')}/"
+            f"{dashboard_summary.get('required_recovery_events')}"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_owner_renewal_options(
+    recheck_decision: Mapping[str, Any],
+    owner_decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    current_recheck = _text(
+        recheck_decision.get("recheck_decision"),
+        "CONTINUE_OBSERVATION",
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "renewal_id": "",
+        "candidate_method": _text(
+            recheck_decision.get("candidate_method"),
+            "smooth_weights_3d_limited_adjustment",
+        ),
+        "previous_owner_decision": _text(
+            owner_decision.get("owner_decision"),
+            "continue_observation",
+        ),
+        "current_recheck_decision": current_recheck,
+        "recommended_owner_action": "continue_observation",
+        "forward_progress": _text(recheck_decision.get("forward_progress"), "0/0"),
+        "sideways_progress": _text(recheck_decision.get("sideways_progress"), "0/0"),
+        "recovery_lag_status": (
+            "NO_WARNING"
+            if current_recheck == "READY_FOR_OWNER_REVIEW"
+            else "INSUFFICIENT_EVENTS"
+        ),
+        "owner_options": [
+            {
+                "decision": "continue_observation",
+                "recommended": True,
+                "reason": "Forward confirmation remains in progress.",
+            },
+            {
+                "decision": "request_more_forward_data",
+                "recommended": False,
+                "reason": "Use if owner wants stronger forward evidence before switch.",
+            },
+            {
+                "decision": "promote_to_primary_research_candidate",
+                "recommended": False,
+                "reason": "Only appropriate if readiness recheck returns READY_FOR_OWNER_REVIEW.",
+            },
+            {
+                "decision": "defer",
+                "recommended": False,
+                "reason": "Use if owner wants to wait for next weekly cycle.",
+            },
+            {
+                "decision": "reject",
+                "recommended": False,
+                "reason": "Use if lag warning or forward underperformance appears.",
+            },
+        ],
+        "auto_switch": False,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
 
 
 def _primary_smoothed_comparison(comparison: Mapping[str, Any], method: str) -> dict[str, Any]:
