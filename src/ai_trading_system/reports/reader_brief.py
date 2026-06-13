@@ -3236,6 +3236,117 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
+            "Dynamic Rescue Smoothed Data Readiness",
+            _definition_table(
+                [
+                    (
+                        "source_refresh_id",
+                        etf_dynamic_v3_system_target.get("smoothed_source_refresh_id"),
+                    ),
+                    (
+                        "source_refresh_status",
+                        etf_dynamic_v3_system_target.get("smoothed_source_refresh_status"),
+                    ),
+                    (
+                        "ready_source_count",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_source_refresh_ready_source_count"
+                        ),
+                    ),
+                    (
+                        "external_refresh_executed",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_source_refresh_external_refresh_executed"
+                        ),
+                    ),
+                    (
+                        "post_refresh_id",
+                        etf_dynamic_v3_system_target.get("smoothed_post_refresh_id"),
+                    ),
+                    (
+                        "post_refresh_retry_decision",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_post_refresh_retry_decision"
+                        ),
+                    ),
+                    (
+                        "post_refresh_blocking_errors",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_post_refresh_blocking_errors"
+                        ),
+                    ),
+                    (
+                        "retry_resume_id",
+                        etf_dynamic_v3_system_target.get("smoothed_retry_resume_id"),
+                    ),
+                    (
+                        "retry_resume_status",
+                        etf_dynamic_v3_system_target.get("smoothed_retry_resume_status"),
+                    ),
+                    (
+                        "retry_resume_updated_windows",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_retry_resume_updated_windows"
+                        ),
+                    ),
+                    (
+                        "sample_growth_status",
+                        etf_dynamic_v3_system_target.get("smoothed_sample_growth_status"),
+                    ),
+                    (
+                        "sample_growth_delta",
+                        "forward="
+                        f"{etf_dynamic_v3_system_target.get('smoothed_sample_growth_forward_delta')},"
+                        "sideways="
+                        f"{etf_dynamic_v3_system_target.get('smoothed_sample_growth_sideways_delta')},"
+                        "recovery="
+                        f"{etf_dynamic_v3_system_target.get('smoothed_sample_growth_recovery_delta')}",
+                    ),
+                    (
+                        "readiness_id",
+                        etf_dynamic_v3_system_target.get("smoothed_data_readiness_id"),
+                    ),
+                    (
+                        "current_status",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_readiness_current_status"
+                        ),
+                    ),
+                    (
+                        "recommended_owner_action",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_readiness_recommended_owner_action"
+                        ),
+                    ),
+                    (
+                        "source_statuses",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_readiness_source_statuses"
+                        ),
+                    ),
+                    (
+                        "readiness_progress",
+                        "forward="
+                        f"{etf_dynamic_v3_system_target.get('smoothed_data_readiness_forward_progress')},"
+                        "sideways="
+                        f"{etf_dynamic_v3_system_target.get('smoothed_data_readiness_sideways_progress')},"
+                        "recovery="
+                        f"{etf_dynamic_v3_system_target.get('smoothed_data_readiness_recovery_progress')}",
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_system_target.get("production_effect"),
+                    ),
+                    (
+                        "readiness_path",
+                        etf_dynamic_v3_system_target.get(
+                            "smoothed_data_readiness_path"
+                        ),
+                    ),
+                ]
+            ),
+        ),
+        _section(
             "Dynamic Rescue Simulation Advisory Review",
             _definition_table(
                 [
@@ -9221,6 +9332,41 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_bootstrap_retry_manifest.json",
     )
+    smoothed_source_refresh_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_source_refresh",
+        ),
+        "smoothed_source_refresh_manifest.json",
+    )
+    smoothed_post_refresh_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_post_refresh_validation",
+        ),
+        "smoothed_post_refresh_manifest.json",
+    )
+    smoothed_retry_resume_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_retry_resume",
+        ),
+        "smoothed_retry_resume_manifest.json",
+    )
+    smoothed_sample_growth_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_sample_growth",
+        ),
+        "smoothed_sample_growth_manifest.json",
+    )
+    smoothed_data_readiness_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_smoothed_data_readiness",
+        ),
+        "smoothed_data_readiness_manifest.json",
+    )
     experiment_triage_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -9271,6 +9417,11 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_blocked_explain_manifest = _read_optional_json(smoothed_blocked_explain_path)
     smoothed_refresh_plan_manifest = _read_optional_json(smoothed_refresh_plan_path)
     smoothed_bootstrap_retry_manifest = _read_optional_json(smoothed_bootstrap_retry_path)
+    smoothed_source_refresh_manifest = _read_optional_json(smoothed_source_refresh_path)
+    smoothed_post_refresh_manifest = _read_optional_json(smoothed_post_refresh_path)
+    smoothed_retry_resume_manifest = _read_optional_json(smoothed_retry_resume_path)
+    smoothed_sample_growth_manifest = _read_optional_json(smoothed_sample_growth_path)
+    smoothed_data_readiness_manifest = _read_optional_json(smoothed_data_readiness_path)
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
@@ -9300,6 +9451,11 @@ def _etf_dynamic_v3_system_target_summary(
         and not smoothed_blocked_explain_manifest
         and not smoothed_refresh_plan_manifest
         and not smoothed_bootstrap_retry_manifest
+        and not smoothed_source_refresh_manifest
+        and not smoothed_post_refresh_manifest
+        and not smoothed_retry_resume_manifest
+        and not smoothed_sample_growth_manifest
+        and not smoothed_data_readiness_manifest
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
@@ -9622,6 +9778,48 @@ def _etf_dynamic_v3_system_target_summary(
             "retry_summary.json",
         )
     )
+    smoothed_source_refresh_results = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_source_refresh_path,
+            "source_refresh_results.json",
+        )
+    )
+    smoothed_post_refresh_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_post_refresh_path,
+            "post_refresh_decision.json",
+        )
+    )
+    smoothed_post_refresh_preflight = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_post_refresh_path,
+            "post_refresh_preflight_result.json",
+        )
+    )
+    smoothed_retry_resume_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_retry_resume_path,
+            "resume_summary.json",
+        )
+    )
+    smoothed_retry_resume_precondition = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_retry_resume_path,
+            "resume_precondition_check.json",
+        )
+    )
+    smoothed_sample_growth_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_sample_growth_path,
+            "sample_growth_summary.json",
+        )
+    )
+    smoothed_data_readiness_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            smoothed_data_readiness_path,
+            "owner_data_readiness_summary.json",
+        )
+    )
     experiment_triage_summary = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(experiment_triage_path, "triage_summary.json")
     )
@@ -9792,6 +9990,18 @@ def _etf_dynamic_v3_system_target_summary(
         smoothed_retry_preflight_result,
         smoothed_retry_steps,
         smoothed_retry_summary,
+        smoothed_source_refresh_manifest,
+        smoothed_source_refresh_results,
+        smoothed_post_refresh_manifest,
+        smoothed_post_refresh_decision,
+        smoothed_post_refresh_preflight,
+        smoothed_retry_resume_manifest,
+        smoothed_retry_resume_precondition,
+        smoothed_retry_resume_summary,
+        smoothed_sample_growth_manifest,
+        smoothed_sample_growth_summary,
+        smoothed_data_readiness_manifest,
+        smoothed_data_readiness_summary,
         experiment_triage_manifest,
         experiment_triage_summary,
         *experiment_scorecard,
@@ -9931,6 +10141,32 @@ def _etf_dynamic_v3_system_target_summary(
             ]
         )
     )
+    smoothed_source_refresh_rows = _records(smoothed_source_refresh_results.get("sources"))
+    smoothed_source_refresh_ready_count = sum(
+        1 for row in smoothed_source_refresh_rows if row.get("freshness_after_refresh") == "READY"
+    )
+    smoothed_source_refresh_failed_sources = ",".join(
+        _texts(
+            [
+                row.get("source")
+                for row in smoothed_source_refresh_rows
+                if row.get("status") == "FAILED"
+            ]
+        )
+    )
+    smoothed_post_refresh_blocking_errors = ",".join(
+        _texts(smoothed_post_refresh_preflight.get("blocking_errors"))
+    )
+    smoothed_sample_growth_progress = _mapping(
+        smoothed_sample_growth_summary.get("progress")
+    )
+    smoothed_sample_growth_delta = _mapping(smoothed_sample_growth_summary.get("delta"))
+    smoothed_data_readiness_sources = _mapping(
+        smoothed_data_readiness_summary.get("sources_status")
+    )
+    smoothed_data_readiness_source_statuses = ",".join(
+        f"{key}={value}" for key, value in sorted(smoothed_data_readiness_sources.items())
+    )
     primary_status = _text(
         review_manifest.get("status"),
         _text(
@@ -9969,6 +10205,8 @@ def _etf_dynamic_v3_system_target_summary(
             f"{_text(smoothed_owner_renewal_options.get('recommended_owner_action'), 'MISSING')}; "
             "sample_bootstrap="
             f"{smoothed_bootstrap_recommendation}; "
+            "data_readiness="
+            f"{_text(smoothed_data_readiness_summary.get('current_status'), 'MISSING')}; "
             f"experiment_top={experiment_top_variant}; "
             f"promotion_next={_text(promoted_method_specs.get('next_action'), 'MISSING')}; "
             f"data_quality={_text(performance_summary.get('data_quality_status'), 'MISSING')}; "
@@ -10590,6 +10828,122 @@ def _etf_dynamic_v3_system_target_summary(
             smoothed_retry_summary.get("can_execute_switch") is True
         ),
         "smoothed_bootstrap_retry_step_statuses": smoothed_retry_step_statuses,
+        "smoothed_source_refresh_id": _text(
+            smoothed_source_refresh_manifest.get("refresh_execution_id"),
+            "MISSING",
+        ),
+        "smoothed_source_refresh_status": _text(
+            smoothed_source_refresh_manifest.get("refresh_status"),
+            _text(smoothed_source_refresh_results.get("refresh_status"), "MISSING"),
+        ),
+        "smoothed_source_refresh_ready_source_count": smoothed_source_refresh_ready_count,
+        "smoothed_source_refresh_failed_sources": smoothed_source_refresh_failed_sources,
+        "smoothed_source_refresh_external_refresh_executed": (
+            smoothed_source_refresh_results.get("external_refresh_executed")
+        ),
+        "smoothed_post_refresh_id": _text(
+            smoothed_post_refresh_manifest.get("post_refresh_id"),
+            "MISSING",
+        ),
+        "smoothed_post_refresh_validate_data_status": _text(
+            smoothed_post_refresh_manifest.get("validate_data_status"),
+            "MISSING",
+        ),
+        "smoothed_post_refresh_freshness_status": _text(
+            smoothed_post_refresh_manifest.get("freshness_status"),
+            _text(smoothed_post_refresh_preflight.get("freshness_status"), "MISSING"),
+        ),
+        "smoothed_post_refresh_retry_decision": _text(
+            smoothed_post_refresh_manifest.get("retry_decision"),
+            _text(smoothed_post_refresh_decision.get("retry_decision"), "MISSING"),
+        ),
+        "smoothed_post_refresh_blocking_errors": smoothed_post_refresh_blocking_errors,
+        "smoothed_retry_resume_id": _text(
+            smoothed_retry_resume_manifest.get("resume_id"),
+            "MISSING",
+        ),
+        "smoothed_retry_resume_status": _text(
+            smoothed_retry_resume_manifest.get("resume_status"),
+            _text(smoothed_retry_resume_summary.get("resume_status"), "MISSING"),
+        ),
+        "smoothed_retry_resume_can_resume": (
+            smoothed_retry_resume_precondition.get("can_resume") is True
+        ),
+        "smoothed_retry_resume_updated_windows": smoothed_retry_resume_summary.get(
+            "updated_windows",
+            "MISSING",
+        ),
+        "smoothed_retry_resume_can_execute_switch": (
+            smoothed_retry_resume_summary.get("can_execute_switch") is True
+        ),
+        "smoothed_sample_growth_id": _text(
+            smoothed_sample_growth_manifest.get("growth_id"),
+            "MISSING",
+        ),
+        "smoothed_sample_growth_status": _text(
+            smoothed_sample_growth_manifest.get("growth_status"),
+            _text(smoothed_sample_growth_summary.get("growth_status"), "MISSING"),
+        ),
+        "smoothed_sample_growth_forward_delta": smoothed_sample_growth_delta.get(
+            "forward_events",
+            "MISSING",
+        ),
+        "smoothed_sample_growth_sideways_delta": smoothed_sample_growth_delta.get(
+            "sideways_events",
+            "MISSING",
+        ),
+        "smoothed_sample_growth_recovery_delta": smoothed_sample_growth_delta.get(
+            "recovery_events",
+            "MISSING",
+        ),
+        "smoothed_sample_growth_forward_progress": smoothed_sample_growth_progress.get(
+            "forward",
+            "MISSING",
+        ),
+        "smoothed_sample_growth_sideways_progress": smoothed_sample_growth_progress.get(
+            "sideways",
+            "MISSING",
+        ),
+        "smoothed_sample_growth_recovery_progress": smoothed_sample_growth_progress.get(
+            "recovery",
+            "MISSING",
+        ),
+        "smoothed_data_readiness_id": _text(
+            smoothed_data_readiness_manifest.get("readiness_id"),
+            "MISSING",
+        ),
+        "smoothed_data_readiness_current_status": _text(
+            smoothed_data_readiness_manifest.get("current_status"),
+            _text(smoothed_data_readiness_summary.get("current_status"), "MISSING"),
+        ),
+        "smoothed_data_readiness_recommended_owner_action": _text(
+            smoothed_data_readiness_manifest.get("recommended_owner_action"),
+            _text(
+                smoothed_data_readiness_summary.get("recommended_owner_action"),
+                "MISSING",
+            ),
+        ),
+        "smoothed_data_readiness_source_statuses": smoothed_data_readiness_source_statuses,
+        "smoothed_data_readiness_retry_status": _text(
+            smoothed_data_readiness_summary.get("retry_status"),
+            "MISSING",
+        ),
+        "smoothed_data_readiness_sample_growth_status": _text(
+            smoothed_data_readiness_summary.get("sample_growth_status"),
+            "MISSING",
+        ),
+        "smoothed_data_readiness_forward_progress": _text(
+            smoothed_data_readiness_summary.get("forward_progress"),
+            "MISSING",
+        ),
+        "smoothed_data_readiness_sideways_progress": _text(
+            smoothed_data_readiness_summary.get("sideways_progress"),
+            "MISSING",
+        ),
+        "smoothed_data_readiness_recovery_progress": _text(
+            smoothed_data_readiness_summary.get("recovery_progress"),
+            "MISSING",
+        ),
         "smoothed_path": "" if smoothed_limited_path is None else str(smoothed_limited_path),
         "smoothed_backfill_path": (
             "" if smoothed_backfill_path is None else str(smoothed_backfill_path)
@@ -10671,6 +11025,21 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "smoothed_bootstrap_retry_path": (
             "" if smoothed_bootstrap_retry_path is None else str(smoothed_bootstrap_retry_path)
+        ),
+        "smoothed_source_refresh_path": (
+            "" if smoothed_source_refresh_path is None else str(smoothed_source_refresh_path)
+        ),
+        "smoothed_post_refresh_path": (
+            "" if smoothed_post_refresh_path is None else str(smoothed_post_refresh_path)
+        ),
+        "smoothed_retry_resume_path": (
+            "" if smoothed_retry_resume_path is None else str(smoothed_retry_resume_path)
+        ),
+        "smoothed_sample_growth_path": (
+            "" if smoothed_sample_growth_path is None else str(smoothed_sample_growth_path)
+        ),
+        "smoothed_data_readiness_path": (
+            "" if smoothed_data_readiness_path is None else str(smoothed_data_readiness_path)
         ),
         "experiment_triage_id": _text(
             experiment_triage_manifest.get("triage_id"),
@@ -10953,6 +11322,38 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_bootstrap_retry_emitted_events": "MISSING",
         "smoothed_bootstrap_retry_can_execute_switch": False,
         "smoothed_bootstrap_retry_step_statuses": "",
+        "smoothed_source_refresh_id": "MISSING",
+        "smoothed_source_refresh_status": "MISSING",
+        "smoothed_source_refresh_ready_source_count": "MISSING",
+        "smoothed_source_refresh_failed_sources": "",
+        "smoothed_source_refresh_external_refresh_executed": "MISSING",
+        "smoothed_post_refresh_id": "MISSING",
+        "smoothed_post_refresh_validate_data_status": "MISSING",
+        "smoothed_post_refresh_freshness_status": "MISSING",
+        "smoothed_post_refresh_retry_decision": "MISSING",
+        "smoothed_post_refresh_blocking_errors": "",
+        "smoothed_retry_resume_id": "MISSING",
+        "smoothed_retry_resume_status": "MISSING",
+        "smoothed_retry_resume_can_resume": False,
+        "smoothed_retry_resume_updated_windows": "MISSING",
+        "smoothed_retry_resume_can_execute_switch": False,
+        "smoothed_sample_growth_id": "MISSING",
+        "smoothed_sample_growth_status": "MISSING",
+        "smoothed_sample_growth_forward_delta": "MISSING",
+        "smoothed_sample_growth_sideways_delta": "MISSING",
+        "smoothed_sample_growth_recovery_delta": "MISSING",
+        "smoothed_sample_growth_forward_progress": "MISSING",
+        "smoothed_sample_growth_sideways_progress": "MISSING",
+        "smoothed_sample_growth_recovery_progress": "MISSING",
+        "smoothed_data_readiness_id": "MISSING",
+        "smoothed_data_readiness_current_status": "MISSING",
+        "smoothed_data_readiness_recommended_owner_action": "MISSING",
+        "smoothed_data_readiness_source_statuses": "",
+        "smoothed_data_readiness_retry_status": "MISSING",
+        "smoothed_data_readiness_sample_growth_status": "MISSING",
+        "smoothed_data_readiness_forward_progress": "MISSING",
+        "smoothed_data_readiness_sideways_progress": "MISSING",
+        "smoothed_data_readiness_recovery_progress": "MISSING",
         "smoothed_path": "",
         "smoothed_backfill_path": "",
         "smoothed_comparison_path": "",
@@ -10979,6 +11380,11 @@ def _missing_etf_dynamic_v3_system_target_summary() -> dict[str, Any]:
         "smoothed_blocked_explain_path": "",
         "smoothed_refresh_plan_path": "",
         "smoothed_bootstrap_retry_path": "",
+        "smoothed_source_refresh_path": "",
+        "smoothed_post_refresh_path": "",
+        "smoothed_retry_resume_path": "",
+        "smoothed_sample_growth_path": "",
+        "smoothed_data_readiness_path": "",
         "experiment_triage_id": "MISSING",
         "experiment_batch_id": "MISSING",
         "experiment_matrix_id": "MISSING",

@@ -1311,6 +1311,29 @@ preflight；只有 fresh 状态才执行完整 weekly runner，blocked 状态直
 补造 outcome、自动 switch、写 official target weights、修改 `position_advisory_v1.yaml`、
 paper/real portfolio、baseline/production state、policy、order ticket 或 broker。
 
+TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
+在上述 freshness bootstrap 后新增受控 source refresh execution、post-refresh validation、
+retry resume、sample growth dashboard 和 owner data readiness status pack。CLI 入口为
+`smoothed-source-refresh plan/execute/report`、`validate-smoothed-source-refresh`、
+`smoothed-post-refresh-validate run/report`、`validate-smoothed-post-refresh`、
+`smoothed-retry-resume run/report`、`validate-smoothed-retry-resume`、
+`smoothed-sample-growth build/report`、`validate-smoothed-sample-growth`、
+`smoothed-data-readiness pack/report` 和 `validate-smoothed-data-readiness`。
+Refresh execution 使用
+`config/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh_v1.yaml`，默认 dry-run；
+写 cache 必须显式传入 `--execute-refresh`，并记录每个 source 的 before/after row count、
+latest date、checksum、provider error 和 `refresh_status`。Post-refresh validation 重新运行
+`aits validate-data` 等价门禁和 smoothed preflight；只有 `retry_decision=RETRY_READY`
+时 retry resume 才能继续完整 weekly runner，否则 fail closed 写 blocked artifact。Sample
+growth 输出 forward/sideways/recovery before/after/delta 和 target progress；data readiness
+把 refresh、validation、resume、growth 汇总为 owner-readable `current_status` 与
+`recommended_owner_action`，并接入 report registry / Reader Brief
+`Dynamic Rescue Smoothed Data Readiness`。所有输出仍固定 `can_execute_switch=false`、
+`broker_action_allowed=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`production_effect=none`；缺 provider credentials、network failure、stale-after-refresh 或
+validation failure 必须显式记录 blocker，不得伪造 fresh cache、绕过 validate-data、补造 outcome
+或自动修改 official target weights / portfolio / broker state。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -3539,6 +3539,115 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_source_refresh
+    title: ETF Dynamic v3 Rescue Smoothed Source Refresh
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-source-refresh report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/smoothed_source_refresh_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/refresh_execution_request.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/source_refresh_results.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/source_refresh_audit.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/smoothed_source_refresh_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_source_refresh/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-281 records controlled cache refresh execution, before/after
+      source row counts, latest dates, checksums, and provider errors.
+    owner_action: review_source_refresh_audit_then_run_post_refresh_validation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_post_refresh_validation
+    title: ETF Dynamic v3 Rescue Smoothed Post Refresh Validation
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-post-refresh-validate report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/smoothed_post_refresh_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/post_refresh_data_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/post_refresh_preflight_result.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/post_refresh_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/smoothed_post_refresh_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_post_refresh_validation/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-282 reruns validate-data and smoothed preflight after source
+      refresh, and exposes retry_decision before any resume step.
+    owner_action: proceed_to_retry_resume_only_when_retry_decision_is_RETRY_READY
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_retry_resume
+    title: ETF Dynamic v3 Rescue Smoothed Retry Resume
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-retry-resume report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/smoothed_retry_resume_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/resume_precondition_check.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/resume_steps.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/resume_artifacts.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/resume_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/smoothed_retry_resume_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_retry_resume/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-283 resumes the smoothed retry chain only after post-refresh
+      validation says RETRY_READY; otherwise it records a blocked resume.
+    owner_action: review_resume_summary_before_building_sample_growth_dashboard
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_sample_growth
+    title: ETF Dynamic v3 Rescue Smoothed Sample Growth
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-sample-growth report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/smoothed_sample_growth_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/sample_growth_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/sample_growth_by_target.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/sample_growth_dashboard_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_sample_growth/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-284 records before/after/delta sample counts and target progress
+      after retry resume, including insufficient-data states.
+    owner_action: review_sample_growth_before_interpreting_forward_confirmation_progress
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_smoothed_data_readiness
+    title: ETF Dynamic v3 Rescue Smoothed Data Readiness
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue smoothed-data-readiness report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/smoothed_data_readiness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/owner_data_readiness_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/owner_data_readiness_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/smoothed_data_readiness_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/smoothed_data_readiness/*/reader_brief_section.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-285 packages source refresh, post-refresh validation, retry
+      resume, and sample growth into owner-readable current_status.
+    owner_action: follow_recommended_owner_action_without_treating_pack_as_production_approval
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research

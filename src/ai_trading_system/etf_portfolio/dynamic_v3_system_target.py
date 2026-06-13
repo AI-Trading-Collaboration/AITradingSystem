@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Mapping, Sequence
+import os
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
@@ -17,6 +18,12 @@ from ai_trading_system.config import (
     configured_rate_series,
     load_data_quality,
     load_universe,
+)
+from ai_trading_system.data.download import download_daily_data
+from ai_trading_system.data.market_data import (
+    FmpPriceProvider,
+    MarketstackPriceProvider,
+    YFinancePriceProvider,
 )
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
 from ai_trading_system.etf_portfolio.dynamic_v3_paper_tracking import DEFAULT_RATES_CACHE_PATH
@@ -230,6 +237,28 @@ DEFAULT_SMOOTHED_REFRESH_PLAN_DIR = (
 )
 DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR = (
     DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_bootstrap_retry"
+)
+DEFAULT_SMOOTHED_SOURCE_REFRESH_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "smoothed_source_refresh_v1.yaml"
+)
+DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_source_refresh"
+)
+DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_post_refresh_validation"
+)
+DEFAULT_SMOOTHED_RETRY_RESUME_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_retry_resume"
+)
+DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_sample_growth"
+)
+DEFAULT_SMOOTHED_DATA_READINESS_DIR = (
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "smoothed_data_readiness"
 )
 DEFAULT_HYPOTHESIS_BACKLOG_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "hypothesis_backlog"
 DEFAULT_VARIANT_TRANSFORM_SPEC_DIR = (
@@ -12279,6 +12308,1102 @@ def validate_smoothed_bootstrap_retry_artifact(
     )
 
 
+def run_smoothed_source_refresh(
+    *,
+    refresh_plan_id: str,
+    execute_refresh: bool = False,
+    refresh_plan_dir: Path = DEFAULT_SMOOTHED_REFRESH_PLAN_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR,
+    config_path: Path = DEFAULT_SMOOTHED_SOURCE_REFRESH_CONFIG_PATH,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    marketstack_cache_path: Path | None = None,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+    refresh_executor: Callable[[Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = _load_smoothed_source_refresh_config(config_path)
+    plan = smoothed_refresh_plan_report_payload(
+        refresh_plan_id=refresh_plan_id,
+        output_dir=refresh_plan_dir,
+    )
+    requirements = _mapping(plan.get("source_refresh_requirements"))
+    requested_date = _coerce_date(
+        requirements.get("requested_as_of") or plan.get("requested_as_of"),
+        date.min,
+    )
+    if requested_date == date.min:
+        raise DynamicV3SystemTargetError("refresh plan requested_as_of is missing")
+
+    source_rows = _records(requirements.get("source_requirements"))
+    source_specs = _smoothed_refresh_source_specs(
+        source_rows=source_rows,
+        price_cache_path=price_cache_path,
+        marketstack_cache_path=marketstack_cache_path
+        or _smoothed_marketstack_prices_path(price_cache_path),
+        rates_path=rates_path,
+    )
+    before_states = {
+        spec["source"]: _cache_file_audit_state(spec["source"], Path(spec["cache_path"]))
+        for spec in source_specs
+    }
+    refresh_error: str | None = None
+    if execute_refresh:
+        context = {
+            "refresh_plan_id": refresh_plan_id,
+            "requested_as_of": requested_date.isoformat(),
+            "source_specs": source_specs,
+            "config": config,
+            "price_cache_path": str(price_cache_path),
+            "marketstack_cache_path": str(
+                marketstack_cache_path or _smoothed_marketstack_prices_path(price_cache_path)
+            ),
+            "rates_path": str(rates_path),
+        }
+        try:
+            if refresh_executor is not None:
+                refresh_executor(context)
+            else:
+                _execute_smoothed_project_data_refresh(
+                    requested_as_of=requested_date,
+                    config=config,
+                    output_dir=price_cache_path.parent,
+                )
+        except Exception as exc:  # pragma: no cover - real provider failures are environment-bound.
+            refresh_error = _text(exc)
+
+    after_states = {
+        spec["source"]: _cache_file_audit_state(spec["source"], Path(spec["cache_path"]))
+        for spec in source_specs
+    }
+    source_results = [
+        _smoothed_source_refresh_result_row(
+            spec=spec,
+            before=before_states[spec["source"]],
+            after=after_states[spec["source"]],
+            requested_as_of=requested_date,
+            execute_refresh=execute_refresh,
+            refresh_error=refresh_error,
+        )
+        for spec in source_specs
+    ]
+    refresh_status = _smoothed_source_refresh_status(source_results, execute_refresh)
+    refresh_execution_id = _stable_id(
+        "smoothed-source-refresh",
+        refresh_plan_id,
+        requested_date.isoformat(),
+        execute_refresh,
+        source_results,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / refresh_execution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    request_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "refresh_execution_id": root.name,
+        "source_refresh_plan_id": refresh_plan_id,
+        "requested_as_of": requested_date.isoformat(),
+        "execute_refresh": execute_refresh,
+        "sources_requested": [spec["source"] for spec in source_specs],
+        "dry_run": not execute_refresh,
+        "config_path": str(config_path),
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+    results_payload = {
+        "schema_version": SCHEMA_VERSION,
+        "refresh_execution_id": root.name,
+        "sources": source_results,
+        "all_sources_refreshed": refresh_status == "COMPLETED",
+        "partial_refresh": refresh_status == "PARTIAL",
+        "refresh_status": refresh_status,
+        "external_refresh_executed": execute_refresh,
+        "refresh_error": refresh_error,
+        **SYSTEM_TARGET_SAFETY,
+    }
+    audit_payload = _smoothed_source_refresh_audit(
+        refresh_execution_id=root.name,
+        before_states=before_states,
+        after_states=after_states,
+        source_results=source_results,
+        external_refresh_executed=execute_refresh,
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_source_refresh_manifest",
+        "refresh_execution_id": root.name,
+        "source_refresh_plan_id": refresh_plan_id,
+        "requested_as_of": requested_date.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "refresh_status": refresh_status,
+        "execute_refresh": execute_refresh,
+        "smoothed_source_refresh_manifest_path": str(
+            root / "smoothed_source_refresh_manifest.json"
+        ),
+        "refresh_execution_request_path": str(root / "refresh_execution_request.json"),
+        "source_refresh_results_path": str(root / "source_refresh_results.json"),
+        "source_refresh_audit_path": str(root / "source_refresh_audit.json"),
+        "smoothed_source_refresh_report_path": str(
+            root / "smoothed_source_refresh_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_source_refresh_reader_brief(results_payload)
+    _write_json(root / "smoothed_source_refresh_manifest.json", manifest)
+    _write_json(root / "refresh_execution_request.json", request_payload)
+    _write_json(root / "source_refresh_results.json", results_payload)
+    _write_json(root / "source_refresh_audit.json", audit_payload)
+    _write_text(
+        root / "smoothed_source_refresh_report.md",
+        render_smoothed_source_refresh_report(manifest, request_payload, results_payload),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_source_refresh",
+        root.name,
+        root / "smoothed_source_refresh_manifest.json",
+    )
+    return {
+        "refresh_execution_id": root.name,
+        "refresh_execution_dir": root,
+        "manifest": manifest,
+        "refresh_execution_request": request_payload,
+        "source_refresh_results": results_payload,
+        "source_refresh_audit": audit_payload,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_source_refresh_report_payload(
+    *,
+    refresh_execution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=refresh_execution_id,
+        latest_pointer="latest_smoothed_source_refresh",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_source_refresh_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_source_refresh_manifest.json"),
+        "refresh_execution_request": _read_json(root / "refresh_execution_request.json"),
+        "source_refresh_results": _read_json(root / "source_refresh_results.json"),
+        "source_refresh_audit": _read_json(root / "source_refresh_audit.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "refresh_execution_dir": str(root),
+    }
+
+
+def validate_smoothed_source_refresh_artifact(
+    *,
+    refresh_execution_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR,
+) -> dict[str, Any]:
+    root = output_dir / refresh_execution_id
+    manifest = _read_optional_json(root / "smoothed_source_refresh_manifest.json") or {}
+    request_payload = _read_optional_json(root / "refresh_execution_request.json") or {}
+    results = _read_optional_json(root / "source_refresh_results.json") or {}
+    audit = _read_optional_json(root / "source_refresh_audit.json") or {}
+    source_rows = _records(results.get("sources"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_source_refresh_manifest.json",
+            "refresh_execution_request.json",
+            "source_refresh_results.json",
+            "source_refresh_audit.json",
+            "smoothed_source_refresh_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "refresh_execution_id_matches",
+                manifest.get("refresh_execution_id") == refresh_execution_id
+                and request_payload.get("refresh_execution_id") == refresh_execution_id
+                and results.get("refresh_execution_id") == refresh_execution_id,
+                "",
+            ),
+            _check(
+                "execute_flag_controls_dry_run",
+                (
+                    request_payload.get("execute_refresh") is True
+                    and request_payload.get("dry_run") is False
+                )
+                or (
+                    request_payload.get("execute_refresh") is False
+                    and request_payload.get("dry_run") is True
+                    and results.get("refresh_status") == "DRY_RUN_ONLY"
+                ),
+                _text(results.get("refresh_status")),
+            ),
+            _check("source_results_present", bool(source_rows), str(len(source_rows))),
+            _check(
+                "source_status_allowed",
+                all(
+                    row.get("status")
+                    in {"REFRESHED", "SKIPPED", "FAILED", "DRY_RUN_ONLY"}
+                    for row in source_rows
+                ),
+                "",
+            ),
+            _check(
+                "before_after_latest_recorded",
+                all(
+                    "before_latest_date" in row and "after_latest_date" in row
+                    for row in source_rows
+                ),
+                "",
+            ),
+            _check(
+                "audit_checksums_recorded",
+                all(
+                    "checksum_before" in row and "checksum_after" in row
+                    for row in _records(audit.get("audit_entries"))
+                ),
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, request_payload, results, audit),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_source_refresh_validation",
+        refresh_execution_id,
+        checks,
+    )
+
+
+def run_smoothed_post_refresh_validation(
+    *,
+    refresh_execution_id: str,
+    requested_as_of: date | None = None,
+    refresh_execution_dir: Path = DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR,
+    preflight_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    refresh = smoothed_source_refresh_report_payload(
+        refresh_execution_id=refresh_execution_id,
+        output_dir=refresh_execution_dir,
+    )
+    requested_date = requested_as_of or _coerce_date(refresh.get("requested_as_of"), date.min)
+    if requested_date == date.min:
+        raise DynamicV3SystemTargetError("source refresh requested_as_of is missing")
+    preflight = run_smoothed_data_preflight(
+        requested_as_of=requested_date,
+        output_dir=preflight_dir,
+        price_cache_path=price_cache_path,
+        rates_path=rates_path,
+        model_target_dir=model_target_dir,
+        generated_at=generated,
+    )
+    snapshot = _mapping(preflight.get("data_freshness_snapshot"))
+    post_refresh_id = _stable_id(
+        "smoothed-post-refresh",
+        refresh_execution_id,
+        requested_date.isoformat(),
+        snapshot,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / post_refresh_id)
+    root.mkdir(parents=True, exist_ok=False)
+    data_validation = {
+        "schema_version": SCHEMA_VERSION,
+        "post_refresh_id": root.name,
+        "refresh_execution_id": refresh_execution_id,
+        "requested_as_of": requested_date.isoformat(),
+        "validate_data_status": snapshot.get("validate_data_status"),
+        "errors": _texts(snapshot.get("blocking_errors")),
+        "warnings": _texts(snapshot.get("warnings")),
+        "latest_available": _mapping(snapshot.get("latest_available")),
+        "source_refresh_status": _mapping(refresh.get("source_refresh_results")).get(
+            "refresh_status"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    preflight_result = {
+        "schema_version": SCHEMA_VERSION,
+        "post_refresh_id": root.name,
+        "source_preflight_id": preflight["preflight_id"],
+        "requested_as_of": requested_date.isoformat(),
+        "freshness_status": snapshot.get("freshness_status"),
+        "latest_valid_as_of": snapshot.get("latest_valid_as_of"),
+        "blocking_errors": _texts(snapshot.get("blocking_errors")),
+        "can_run_full_retry": snapshot.get("freshness_status")
+        in {"READY", "READY_WITH_WARNINGS"},
+        "can_run_latest_available_emission_only": (
+            snapshot.get("freshness_status") == "LATEST_AVAILABLE_ONLY"
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    decision = _smoothed_post_refresh_decision(
+        post_refresh_id=root.name,
+        requested_as_of=requested_date,
+        data_validation=data_validation,
+        preflight_result=preflight_result,
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_post_refresh_validation_manifest",
+        "post_refresh_id": root.name,
+        "refresh_execution_id": refresh_execution_id,
+        "requested_as_of": requested_date.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "validate_data_status": data_validation.get("validate_data_status"),
+        "freshness_status": preflight_result.get("freshness_status"),
+        "retry_decision": decision.get("retry_decision"),
+        "smoothed_post_refresh_manifest_path": str(
+            root / "smoothed_post_refresh_manifest.json"
+        ),
+        "post_refresh_data_validation_path": str(root / "post_refresh_data_validation.json"),
+        "post_refresh_preflight_result_path": str(root / "post_refresh_preflight_result.json"),
+        "post_refresh_decision_path": str(root / "post_refresh_decision.json"),
+        "smoothed_post_refresh_report_path": str(root / "smoothed_post_refresh_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_post_refresh_reader_brief(decision, preflight_result)
+    _write_json(root / "smoothed_post_refresh_manifest.json", manifest)
+    _write_json(root / "post_refresh_data_validation.json", data_validation)
+    _write_json(root / "post_refresh_preflight_result.json", preflight_result)
+    _write_json(root / "post_refresh_decision.json", decision)
+    _write_text(
+        root / "smoothed_post_refresh_report.md",
+        render_smoothed_post_refresh_report(manifest, data_validation, preflight_result, decision),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_post_refresh_validation",
+        root.name,
+        root / "smoothed_post_refresh_manifest.json",
+    )
+    return {
+        "post_refresh_id": root.name,
+        "post_refresh_dir": root,
+        "manifest": manifest,
+        "post_refresh_data_validation": data_validation,
+        "post_refresh_preflight_result": preflight_result,
+        "post_refresh_decision": decision,
+        "preflight": preflight,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_post_refresh_validation_report_payload(
+    *,
+    post_refresh_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=post_refresh_id,
+        latest_pointer="latest_smoothed_post_refresh_validation",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_post_refresh_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_post_refresh_manifest.json"),
+        "post_refresh_data_validation": _read_json(root / "post_refresh_data_validation.json"),
+        "post_refresh_preflight_result": _read_json(root / "post_refresh_preflight_result.json"),
+        "post_refresh_decision": _read_json(root / "post_refresh_decision.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "post_refresh_dir": str(root),
+    }
+
+
+def validate_smoothed_post_refresh_artifact(
+    *,
+    post_refresh_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / post_refresh_id
+    manifest = _read_optional_json(root / "smoothed_post_refresh_manifest.json") or {}
+    data_validation = _read_optional_json(root / "post_refresh_data_validation.json") or {}
+    preflight = _read_optional_json(root / "post_refresh_preflight_result.json") or {}
+    decision = _read_optional_json(root / "post_refresh_decision.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_post_refresh_manifest.json",
+            "post_refresh_data_validation.json",
+            "post_refresh_preflight_result.json",
+            "post_refresh_decision.json",
+            "smoothed_post_refresh_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "post_refresh_id_matches",
+                manifest.get("post_refresh_id") == post_refresh_id
+                and data_validation.get("post_refresh_id") == post_refresh_id
+                and preflight.get("post_refresh_id") == post_refresh_id
+                and decision.get("post_refresh_id") == post_refresh_id,
+                "",
+            ),
+            _check(
+                "validate_data_status_allowed",
+                data_validation.get("validate_data_status")
+                in {"PASS", "PASS_WITH_WARNINGS", "FAIL"},
+                _text(data_validation.get("validate_data_status")),
+            ),
+            _check(
+                "freshness_status_allowed",
+                preflight.get("freshness_status")
+                in {
+                    "READY",
+                    "READY_WITH_WARNINGS",
+                    "BLOCKED_STALE_DATA",
+                    "BLOCKED_FUTURE_AS_OF",
+                    "BLOCKED_MISSING_PRICE",
+                    "BLOCKED_DATA_QUALITY_FAIL",
+                    "LATEST_AVAILABLE_ONLY",
+                },
+                _text(preflight.get("freshness_status")),
+            ),
+            _check(
+                "retry_decision_allowed",
+                decision.get("retry_decision")
+                in {
+                    "RETRY_READY",
+                    "STILL_BLOCKED",
+                    "PARTIAL_RETRY_ONLY",
+                    "MANUAL_REVIEW_REQUIRED",
+                },
+                _text(decision.get("retry_decision")),
+            ),
+            _check(
+                "retry_ready_requires_full_retry",
+                decision.get("retry_decision") != "RETRY_READY"
+                or preflight.get("can_run_full_retry") is True,
+                "",
+            ),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, data_validation, preflight, decision),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_post_refresh_validation",
+        post_refresh_id,
+        checks,
+    )
+
+
+def run_smoothed_retry_resume(
+    *,
+    post_refresh_id: str,
+    post_refresh_dir: Path = DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_RETRY_RESUME_DIR,
+    bootstrap_retry_dir: Path = DEFAULT_SMOOTHED_BOOTSTRAP_RETRY_DIR,
+    preflight_dir: Path = DEFAULT_SMOOTHED_DATA_PREFLIGHT_DIR,
+    latest_emission_dir: Path = DEFAULT_SMOOTHED_LATEST_EMISSION_DIR,
+    model_target_dir: Path = DEFAULT_MODEL_TARGET_DIR,
+    emission_dir: Path = DEFAULT_SMOOTHED_DAILY_EMISSION_DIR,
+    due_dir: Path = DEFAULT_SMOOTHED_OUTCOME_DUE_DIR,
+    update_dir: Path = DEFAULT_SMOOTHED_OUTCOME_UPDATE_DIR,
+    classification_dir: Path = DEFAULT_SMOOTHED_FORWARD_CLASSIFICATION_DIR,
+    binding_dir: Path = DEFAULT_SMOOTHED_FORWARD_BINDING_DIR,
+    progress_dir: Path = DEFAULT_SMOOTHED_FORWARD_PROGRESS_DIR,
+    dashboard_dir: Path = DEFAULT_SMOOTHED_WEEKLY_DASHBOARD_DIR,
+    monitor_dir: Path = DEFAULT_SMOOTHED_EVENT_MONITOR_DIR,
+    switch_plan_dir: Path = DEFAULT_PAPER_SHADOW_PRIMARY_SWITCH_DIR,
+    recheck_dir: Path = DEFAULT_SMOOTHED_SWITCH_READINESS_DIR,
+    owner_promotion_dir: Path = DEFAULT_SMOOTHED_OWNER_PROMOTION_DIR,
+    renewal_dir: Path = DEFAULT_SMOOTHED_OWNER_RENEWAL_DIR,
+    weekly_run_dir: Path = DEFAULT_SMOOTHED_FORWARD_WEEKLY_RUN_DIR,
+    binding_id: str | None = None,
+    switch_plan_id: str | None = None,
+    owner_promotion_id: str | None = None,
+    price_cache_path: Path = DEFAULT_PRICE_CACHE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    post_refresh = smoothed_post_refresh_validation_report_payload(
+        post_refresh_id=post_refresh_id,
+        output_dir=post_refresh_dir,
+    )
+    decision = _mapping(post_refresh.get("post_refresh_decision"))
+    data_validation = _mapping(post_refresh.get("post_refresh_data_validation"))
+    preflight_result = _mapping(post_refresh.get("post_refresh_preflight_result"))
+    requested_date = _coerce_date(preflight_result.get("requested_as_of"), date.min)
+    if requested_date == date.min:
+        raise DynamicV3SystemTargetError("post-refresh requested_as_of is missing")
+    before_counts = _latest_smoothed_progress_counts(progress_dir)
+    can_resume = (
+        decision.get("retry_decision") == "RETRY_READY"
+        and data_validation.get("validate_data_status") in {"PASS", "PASS_WITH_WARNINGS"}
+        and preflight_result.get("can_run_full_retry") is True
+    )
+    resume_id = _stable_id(
+        "smoothed-retry-resume",
+        post_refresh_id,
+        requested_date.isoformat(),
+        can_resume,
+        before_counts,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / resume_id)
+    root.mkdir(parents=True, exist_ok=False)
+    retry: dict[str, Any] | None = None
+    if can_resume:
+        retry = run_smoothed_bootstrap_retry(
+            requested_as_of=requested_date,
+            output_dir=bootstrap_retry_dir,
+            preflight_dir=preflight_dir,
+            latest_emission_dir=latest_emission_dir,
+            model_target_dir=model_target_dir,
+            emission_dir=emission_dir,
+            due_dir=due_dir,
+            update_dir=update_dir,
+            classification_dir=classification_dir,
+            binding_dir=binding_dir,
+            progress_dir=progress_dir,
+            dashboard_dir=dashboard_dir,
+            monitor_dir=monitor_dir,
+            switch_plan_dir=switch_plan_dir,
+            recheck_dir=recheck_dir,
+            owner_promotion_dir=owner_promotion_dir,
+            renewal_dir=renewal_dir,
+            weekly_run_dir=weekly_run_dir,
+            binding_id=binding_id,
+            switch_plan_id=switch_plan_id,
+            owner_promotion_id=owner_promotion_id,
+            price_cache_path=price_cache_path,
+            rates_path=rates_path,
+            generated_at=generated,
+        )
+    precondition = {
+        "schema_version": SCHEMA_VERSION,
+        "resume_id": root.name,
+        "post_refresh_id": post_refresh_id,
+        "retry_decision": decision.get("retry_decision"),
+        "can_resume": can_resume,
+        "blocking_errors": _texts(preflight_result.get("blocking_errors")),
+        "required_sources_fresh": preflight_result.get("can_run_full_retry") is True,
+        "validate_data_status": data_validation.get("validate_data_status"),
+        "available_forward_events_before_resume": before_counts["forward"],
+        "available_sideways_events_before_resume": before_counts["sideways"],
+        "available_recovery_events_before_resume": before_counts["recovery"],
+        **SYSTEM_TARGET_SAFETY,
+    }
+    steps = _smoothed_retry_resume_steps(can_resume=can_resume, retry=retry)
+    artifacts = _smoothed_retry_resume_artifacts(retry)
+    summary = _smoothed_retry_resume_summary(
+        resume_id=root.name,
+        requested_as_of=requested_date,
+        can_resume=can_resume,
+        retry=retry,
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_retry_resume_manifest",
+        "resume_id": root.name,
+        "post_refresh_id": post_refresh_id,
+        "requested_as_of": requested_date.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "resume_status": summary.get("resume_status"),
+        "smoothed_retry_resume_manifest_path": str(
+            root / "smoothed_retry_resume_manifest.json"
+        ),
+        "resume_precondition_check_path": str(root / "resume_precondition_check.json"),
+        "resume_steps_path": str(root / "resume_steps.json"),
+        "resume_artifacts_path": str(root / "resume_artifacts.json"),
+        "resume_summary_path": str(root / "resume_summary.json"),
+        "smoothed_retry_resume_report_path": str(root / "smoothed_retry_resume_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_retry_resume_reader_brief(summary)
+    _write_json(root / "smoothed_retry_resume_manifest.json", manifest)
+    _write_json(root / "resume_precondition_check.json", precondition)
+    _write_json(root / "resume_steps.json", steps)
+    _write_json(root / "resume_artifacts.json", artifacts)
+    _write_json(root / "resume_summary.json", summary)
+    _write_text(
+        root / "smoothed_retry_resume_report.md",
+        render_smoothed_retry_resume_report(manifest, precondition, steps, summary),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_retry_resume",
+        root.name,
+        root / "smoothed_retry_resume_manifest.json",
+    )
+    return {
+        "resume_id": root.name,
+        "resume_dir": root,
+        "manifest": manifest,
+        "resume_precondition_check": precondition,
+        "resume_steps": steps,
+        "resume_artifacts": artifacts,
+        "resume_summary": summary,
+        "bootstrap_retry": retry,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_retry_resume_report_payload(
+    *,
+    resume_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_RETRY_RESUME_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=resume_id,
+        latest_pointer="latest_smoothed_retry_resume",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_retry_resume_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_retry_resume_manifest.json"),
+        "resume_precondition_check": _read_json(root / "resume_precondition_check.json"),
+        "resume_steps": _read_json(root / "resume_steps.json"),
+        "resume_artifacts": _read_json(root / "resume_artifacts.json"),
+        "resume_summary": _read_json(root / "resume_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "resume_dir": str(root),
+    }
+
+
+def validate_smoothed_retry_resume_artifact(
+    *,
+    resume_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_RETRY_RESUME_DIR,
+) -> dict[str, Any]:
+    root = output_dir / resume_id
+    manifest = _read_optional_json(root / "smoothed_retry_resume_manifest.json") or {}
+    precondition = _read_optional_json(root / "resume_precondition_check.json") or {}
+    steps_payload = _read_optional_json(root / "resume_steps.json") or {}
+    artifacts = _read_optional_json(root / "resume_artifacts.json") or {}
+    summary = _read_optional_json(root / "resume_summary.json") or {}
+    steps = _records(steps_payload.get("steps"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_retry_resume_manifest.json",
+            "resume_precondition_check.json",
+            "resume_steps.json",
+            "resume_artifacts.json",
+            "resume_summary.json",
+            "smoothed_retry_resume_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    required = {
+        "smoothed_bootstrap_retry",
+        "smoothed_forward_progress_update",
+        "smoothed_weekly_dashboard",
+        "smoothed_event_monitor",
+        "smoothed_switch_readiness",
+        "smoothed_owner_renewal",
+    }
+    present = {_text(row.get("step")) for row in steps}
+    checks.extend(
+        [
+            _check(
+                "resume_id_matches",
+                manifest.get("resume_id") == resume_id
+                and precondition.get("resume_id") == resume_id
+                and summary.get("resume_id") == resume_id,
+                "",
+            ),
+            _check("required_steps_present", required.issubset(present), ",".join(sorted(present))),
+            _check(
+                "blocked_when_not_retry_ready",
+                precondition.get("can_resume") is True
+                or summary.get("resume_status") == "BLOCKED",
+                _text(summary.get("resume_status")),
+            ),
+            _check(
+                "resume_status_allowed",
+                summary.get("resume_status") in {"COMPLETED", "BLOCKED", "PARTIAL", "FAIL"},
+                _text(summary.get("resume_status")),
+            ),
+            _check(
+                "can_execute_switch_false",
+                summary.get("can_execute_switch") is False,
+                "",
+            ),
+            _check("artifacts_payload_present", isinstance(artifacts, dict), ""),
+            _check(
+                "broker_forbidden",
+                _payload_safe(manifest, precondition, steps_payload, artifacts, summary),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_retry_resume_validation",
+        resume_id,
+        checks,
+    )
+
+
+def build_smoothed_sample_growth(
+    *,
+    resume_id: str,
+    resume_dir: Path = DEFAULT_SMOOTHED_RETRY_RESUME_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    resume = smoothed_retry_resume_report_payload(resume_id=resume_id, output_dir=resume_dir)
+    precondition = _mapping(resume.get("resume_precondition_check"))
+    summary = _mapping(resume.get("resume_summary"))
+    growth_id = _stable_id(
+        "smoothed-sample-growth",
+        resume_id,
+        precondition,
+        summary,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / growth_id)
+    root.mkdir(parents=True, exist_ok=False)
+    growth_summary = _smoothed_sample_growth_summary(
+        growth_id=root.name,
+        resume_id=resume_id,
+        precondition=precondition,
+        resume_summary=summary,
+    )
+    by_target = _smoothed_sample_growth_by_target(growth_summary)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_sample_growth_manifest",
+        "growth_id": root.name,
+        "resume_id": resume_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "growth_status": growth_summary.get("growth_status"),
+        "smoothed_sample_growth_manifest_path": str(
+            root / "smoothed_sample_growth_manifest.json"
+        ),
+        "sample_growth_summary_path": str(root / "sample_growth_summary.json"),
+        "sample_growth_by_target_path": str(root / "sample_growth_by_target.json"),
+        "sample_growth_dashboard_report_path": str(
+            root / "sample_growth_dashboard_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_sample_growth_reader_brief(growth_summary)
+    _write_json(root / "smoothed_sample_growth_manifest.json", manifest)
+    _write_json(root / "sample_growth_summary.json", growth_summary)
+    _write_json(root / "sample_growth_by_target.json", by_target)
+    _write_text(
+        root / "sample_growth_dashboard_report.md",
+        render_smoothed_sample_growth_report(manifest, growth_summary, by_target),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_sample_growth",
+        root.name,
+        root / "smoothed_sample_growth_manifest.json",
+    )
+    return {
+        "growth_id": root.name,
+        "growth_dir": root,
+        "manifest": manifest,
+        "sample_growth_summary": growth_summary,
+        "sample_growth_by_target": by_target,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_sample_growth_report_payload(
+    *,
+    growth_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=growth_id,
+        latest_pointer="latest_smoothed_sample_growth",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_sample_growth_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_sample_growth_manifest.json"),
+        "sample_growth_summary": _read_json(root / "sample_growth_summary.json"),
+        "sample_growth_by_target": _read_json(root / "sample_growth_by_target.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "growth_dir": str(root),
+    }
+
+
+def validate_smoothed_sample_growth_artifact(
+    *,
+    growth_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR,
+) -> dict[str, Any]:
+    root = output_dir / growth_id
+    manifest = _read_optional_json(root / "smoothed_sample_growth_manifest.json") or {}
+    summary = _read_optional_json(root / "sample_growth_summary.json") or {}
+    by_target = _read_optional_json(root / "sample_growth_by_target.json") or {}
+    targets = _records(by_target.get("targets"))
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_sample_growth_manifest.json",
+            "sample_growth_summary.json",
+            "sample_growth_by_target.json",
+            "sample_growth_dashboard_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "growth_id_matches",
+                manifest.get("growth_id") == growth_id
+                and summary.get("growth_id") == growth_id,
+                "",
+            ),
+            _check(
+                "growth_status_allowed",
+                summary.get("growth_status")
+                in {"IMPROVED", "NO_CHANGE", "PARTIAL", "INSUFFICIENT_DATA"},
+                _text(summary.get("growth_status")),
+            ),
+            _check("targets_present", len(targets) >= 3, str(len(targets))),
+            _check(
+                "delta_consistent",
+                _smoothed_sample_growth_delta_consistent(summary),
+                "",
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary, by_target), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_sample_growth_validation",
+        growth_id,
+        checks,
+    )
+
+
+def pack_smoothed_data_readiness(
+    *,
+    refresh_execution_id: str,
+    post_refresh_id: str,
+    resume_id: str,
+    growth_id: str,
+    refresh_execution_dir: Path = DEFAULT_SMOOTHED_SOURCE_REFRESH_DIR,
+    post_refresh_dir: Path = DEFAULT_SMOOTHED_POST_REFRESH_VALIDATION_DIR,
+    resume_dir: Path = DEFAULT_SMOOTHED_RETRY_RESUME_DIR,
+    growth_dir: Path = DEFAULT_SMOOTHED_SAMPLE_GROWTH_DIR,
+    output_dir: Path = DEFAULT_SMOOTHED_DATA_READINESS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    refresh = smoothed_source_refresh_report_payload(
+        refresh_execution_id=refresh_execution_id,
+        output_dir=refresh_execution_dir,
+    )
+    post_refresh = smoothed_post_refresh_validation_report_payload(
+        post_refresh_id=post_refresh_id,
+        output_dir=post_refresh_dir,
+    )
+    resume = smoothed_retry_resume_report_payload(resume_id=resume_id, output_dir=resume_dir)
+    growth = smoothed_sample_growth_report_payload(growth_id=growth_id, output_dir=growth_dir)
+    readiness_id = _stable_id(
+        "smoothed-data-readiness",
+        refresh_execution_id,
+        post_refresh_id,
+        resume_id,
+        growth_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / readiness_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary = _smoothed_data_readiness_summary(
+        readiness_id=root.name,
+        refresh=refresh,
+        post_refresh=post_refresh,
+        resume=resume,
+        growth=growth,
+    )
+    checklist = render_smoothed_data_readiness_checklist(summary)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_data_readiness_manifest",
+        "readiness_id": root.name,
+        "refresh_execution_id": refresh_execution_id,
+        "post_refresh_id": post_refresh_id,
+        "resume_id": resume_id,
+        "growth_id": growth_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "current_status": summary.get("current_status"),
+        "recommended_owner_action": summary.get("recommended_owner_action"),
+        "smoothed_data_readiness_manifest_path": str(
+            root / "smoothed_data_readiness_manifest.json"
+        ),
+        "owner_data_readiness_summary_path": str(root / "owner_data_readiness_summary.json"),
+        "owner_data_readiness_checklist_path": str(root / "owner_data_readiness_checklist.md"),
+        "smoothed_data_readiness_report_path": str(
+            root / "smoothed_data_readiness_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **SYSTEM_TARGET_SAFETY,
+    }
+    reader = render_smoothed_data_readiness_reader_brief(summary)
+    _write_json(root / "smoothed_data_readiness_manifest.json", manifest)
+    _write_json(root / "owner_data_readiness_summary.json", summary)
+    _write_text(root / "owner_data_readiness_checklist.md", checklist)
+    _write_text(
+        root / "smoothed_data_readiness_report.md",
+        render_smoothed_data_readiness_report(manifest, summary, checklist),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_smoothed_data_readiness",
+        root.name,
+        root / "smoothed_data_readiness_manifest.json",
+    )
+    return {
+        "readiness_id": root.name,
+        "readiness_dir": root,
+        "manifest": manifest,
+        "owner_data_readiness_summary": summary,
+        "owner_data_readiness_checklist": checklist,
+        "reader_brief_section": reader,
+    }
+
+
+def smoothed_data_readiness_report_payload(
+    *,
+    readiness_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SMOOTHED_DATA_READINESS_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=readiness_id,
+        latest_pointer="latest_smoothed_data_readiness",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="smoothed_data_readiness_manifest.json",
+    )
+    return {
+        **_read_json(root / "smoothed_data_readiness_manifest.json"),
+        "owner_data_readiness_summary": _read_json(root / "owner_data_readiness_summary.json"),
+        "owner_data_readiness_checklist": (root / "owner_data_readiness_checklist.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "readiness_dir": str(root),
+    }
+
+
+def validate_smoothed_data_readiness_artifact(
+    *,
+    readiness_id: str,
+    output_dir: Path = DEFAULT_SMOOTHED_DATA_READINESS_DIR,
+) -> dict[str, Any]:
+    root = output_dir / readiness_id
+    manifest = _read_optional_json(root / "smoothed_data_readiness_manifest.json") or {}
+    summary = _read_optional_json(root / "owner_data_readiness_summary.json") or {}
+    checklist = (root / "owner_data_readiness_checklist.md").read_text(
+        encoding="utf-8"
+    ) if (root / "owner_data_readiness_checklist.md").exists() else ""
+    checks = _required_file_checks(
+        root,
+        (
+            "smoothed_data_readiness_manifest.json",
+            "owner_data_readiness_summary.json",
+            "owner_data_readiness_checklist.md",
+            "smoothed_data_readiness_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            _check(
+                "readiness_id_matches",
+                manifest.get("readiness_id") == readiness_id
+                and summary.get("readiness_id") == readiness_id,
+                "",
+            ),
+            _check(
+                "current_status_allowed",
+                summary.get("current_status")
+                in {
+                    "WAIT_FOR_REFRESH",
+                    "REFRESH_REQUIRED",
+                    "REFRESH_EXECUTED",
+                    "RETRY_READY",
+                    "RETRY_BLOCKED",
+                    "RETRY_COMPLETED",
+                    "CONTINUE_OBSERVATION",
+                },
+                _text(summary.get("current_status")),
+            ),
+            _check(
+                "recommended_owner_action_allowed",
+                summary.get("recommended_owner_action")
+                in {
+                    "wait_for_refresh",
+                    "run_refresh",
+                    "rerun_retry",
+                    "continue_observation",
+                    "manual_review_required",
+                },
+                _text(summary.get("recommended_owner_action")),
+            ),
+            _check("checklist_mentions_no_broker", "no broker" in checklist.lower(), ""),
+            _check(
+                "broker_action_allowed_false",
+                summary.get("broker_action_allowed") is False,
+                "",
+            ),
+            _check(
+                "production_effect_none",
+                summary.get("production_effect") == "none",
+                _text(summary.get("production_effect")),
+            ),
+            _check("broker_forbidden", _payload_safe(manifest, summary), ""),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_smoothed_data_readiness_validation",
+        readiness_id,
+        checks,
+    )
+
+
 def render_risk_capped_limited_config_report(
     manifest: Mapping[str, Any],
     config: Mapping[str, Any],
@@ -14496,6 +15621,314 @@ def render_smoothed_bootstrap_retry_reader_brief(summary: Mapping[str, Any]) -> 
             "- forward_progress: "
             f"{summary.get('available_forward_events_after_retry')}",
             f"- can_execute_switch: {summary.get('can_execute_switch')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_source_refresh_report(
+    manifest: Mapping[str, Any],
+    request: Mapping[str, Any],
+    results: Mapping[str, Any],
+) -> str:
+    source_rows = _records(results.get("sources"))
+    return "\n".join(
+        [
+            f"# Smoothed Source Refresh {manifest.get('refresh_execution_id')}",
+            "",
+            f"- source_refresh_plan_id: {manifest.get('source_refresh_plan_id')}",
+            f"- requested_as_of: {manifest.get('requested_as_of')}",
+            f"- execute_refresh: {request.get('execute_refresh')}",
+            f"- refresh_status: {results.get('refresh_status')}",
+            f"- all_sources_refreshed: {results.get('all_sources_refreshed')}",
+            f"- partial_refresh: {results.get('partial_refresh')}",
+            f"- refresh_error: {results.get('refresh_error') or ''}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Source Audit",
+            "",
+            *[
+                "- "
+                f"{row.get('source')}: status={row.get('status')} "
+                f"required={row.get('required')} "
+                f"before_latest={row.get('latest_date_before')} "
+                f"after_latest={row.get('latest_date_after')} "
+                f"before_rows={row.get('row_count_before')} "
+                f"after_rows={row.get('row_count_after')} "
+                f"freshness={row.get('freshness_after_refresh')}"
+                for row in source_rows
+            ],
+            "",
+            "Source refresh 默认 dry-run；只有显式 execute_refresh=true 时才允许写入 "
+            "local cache。刷新结果只更新 research cache，不生成 official target weights、"
+            "order ticket 或 broker action。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_source_refresh_reader_brief(results: Mapping[str, Any]) -> str:
+    source_rows = _records(results.get("sources"))
+    ready_count = sum(
+        1 for row in source_rows if row.get("freshness_after_refresh") == "READY"
+    )
+    failed_sources = [
+        _text(row.get("source"))
+        for row in source_rows
+        if row.get("status") == "FAILED"
+    ]
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Source Refresh",
+            "",
+            f"- refresh_execution_id: {results.get('refresh_execution_id')}",
+            f"- refresh_status: {results.get('refresh_status')}",
+            f"- ready_source_count: {ready_count}",
+            f"- failed_sources: {', '.join(failed_sources)}",
+            f"- external_refresh_executed: {results.get('external_refresh_executed')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_post_refresh_report(
+    manifest: Mapping[str, Any],
+    data_validation: Mapping[str, Any],
+    preflight: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Post Refresh Validation {manifest.get('post_refresh_id')}",
+            "",
+            f"- source_refresh_id: {manifest.get('source_refresh_id')}",
+            f"- requested_as_of: {manifest.get('requested_as_of')}",
+            f"- validate_data_status: {data_validation.get('validate_data_status')}",
+            f"- freshness_status: {preflight.get('freshness_status')}",
+            f"- latest_valid_as_of: {preflight.get('latest_valid_as_of')}",
+            f"- retry_decision: {decision.get('retry_decision')}",
+            f"- reason: {decision.get('reason')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "Post-refresh validation 复用 smoothed data preflight / validate-data 等价路径。"
+            "只有 retry_decision=RETRY_READY 时，后续 retry resume 才能继续完整链路。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_post_refresh_reader_brief(
+    decision: Mapping[str, Any],
+    preflight: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Post Refresh Validation",
+            "",
+            f"- post_refresh_id: {decision.get('post_refresh_id')}",
+            f"- retry_decision: {decision.get('retry_decision')}",
+            f"- freshness_status: {preflight.get('freshness_status')}",
+            f"- latest_valid_as_of: {preflight.get('latest_valid_as_of')}",
+            f"- reason: {decision.get('reason')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_retry_resume_report(
+    manifest: Mapping[str, Any],
+    precondition: Mapping[str, Any],
+    steps: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Smoothed Retry Resume {manifest.get('resume_id')}",
+            "",
+            f"- post_refresh_id: {manifest.get('post_refresh_id')}",
+            f"- requested_as_of: {summary.get('requested_as_of')}",
+            f"- resume_status: {summary.get('resume_status')}",
+            f"- precondition_status: {precondition.get('precondition_status')}",
+            f"- retry_decision: {precondition.get('retry_decision')}",
+            f"- updated_windows: {summary.get('updated_windows')}",
+            f"- classified_events: {summary.get('classified_events')}",
+            f"- can_execute_switch: {summary.get('can_execute_switch')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Resume Steps",
+            "",
+            *[
+                "- "
+                f"{row.get('step')}: status={row.get('status')} "
+                f"artifact_id={row.get('artifact_id')} reason={row.get('reason')}"
+                for row in _records(steps.get("steps"))
+            ],
+            "",
+            "Retry resume fail-close：post-refresh validation 未达到 RETRY_READY 时，"
+            "不会运行 outcome update、switch readiness 或 owner renewal。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_retry_resume_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Retry Resume",
+            "",
+            f"- resume_id: {summary.get('resume_id')}",
+            f"- resume_status: {summary.get('resume_status')}",
+            f"- requested_as_of: {summary.get('requested_as_of')}",
+            f"- updated_windows: {summary.get('updated_windows')}",
+            f"- forward_events_after_resume: "
+            f"{summary.get('available_forward_events_after_resume')}",
+            f"- can_execute_switch: {summary.get('can_execute_switch')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_sample_growth_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    by_target: Mapping[str, Any],
+) -> str:
+    before = _mapping(summary.get("before"))
+    after = _mapping(summary.get("after"))
+    delta = _mapping(summary.get("delta"))
+    progress = _mapping(summary.get("progress"))
+    return "\n".join(
+        [
+            f"# Smoothed Sample Growth {manifest.get('growth_id')}",
+            "",
+            f"- resume_id: {manifest.get('resume_id')}",
+            f"- growth_status: {summary.get('growth_status')}",
+            f"- forward_before_after_delta: {before.get('available_forward_events')} -> "
+            f"{after.get('available_forward_events')} ({delta.get('forward_events')})",
+            f"- sideways_before_after_delta: {before.get('available_sideways_events')} -> "
+            f"{after.get('available_sideways_events')} ({delta.get('sideways_events')})",
+            f"- recovery_before_after_delta: {before.get('available_recovery_events')} -> "
+            f"{after.get('available_recovery_events')} ({delta.get('recovery_events')})",
+            f"- forward_progress: {progress.get('forward')}",
+            f"- sideways_progress: {progress.get('sideways')}",
+            f"- recovery_progress: {progress.get('recovery')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Target Progress",
+            "",
+            *[
+                "- "
+                f"{row.get('target_id')}: status={row.get('status')} "
+                f"before={row.get('before_available')} "
+                f"after={row.get('after_available')} required={row.get('required')}"
+                for row in _records(by_target.get("targets"))
+            ],
+            "",
+        ]
+    )
+
+
+def render_smoothed_sample_growth_reader_brief(summary: Mapping[str, Any]) -> str:
+    progress = _mapping(summary.get("progress"))
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Sample Growth",
+            "",
+            f"- growth_id: {summary.get('growth_id')}",
+            f"- growth_status: {summary.get('growth_status')}",
+            f"- forward_progress: {progress.get('forward')}",
+            f"- sideways_progress: {progress.get('sideways')}",
+            f"- recovery_progress: {progress.get('recovery')}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_data_readiness_checklist(summary: Mapping[str, Any]) -> str:
+    sources = _mapping(summary.get("sources_status"))
+    return "\n".join(
+        [
+            f"# Smoothed Data Readiness Checklist {summary.get('readiness_id')}",
+            "",
+            f"- current_status: {summary.get('current_status')}",
+            f"- recommended_owner_action: {summary.get('recommended_owner_action')}",
+            f"- prices_daily: {sources.get('prices_daily')}",
+            f"- prices_marketstack_daily: {sources.get('prices_marketstack_daily')}",
+            f"- rates_daily: {sources.get('rates_daily')}",
+            f"- retry_status: {summary.get('retry_status')}",
+            f"- sample_growth_status: {summary.get('sample_growth_status')}",
+            f"- forward_progress: {summary.get('forward_progress')}",
+            f"- sideways_progress: {summary.get('sideways_progress')}",
+            f"- recovery_progress: {summary.get('recovery_progress')}",
+            "- no broker / no production: confirmed",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+        ]
+    )
+
+
+def render_smoothed_data_readiness_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    checklist: str,
+) -> str:
+    checklist_path = manifest.get("owner_data_readiness_checklist_path")
+    return "\n".join(
+        [
+            f"# Smoothed Data Readiness {manifest.get('readiness_id')}",
+            "",
+            f"- requested_as_of: {summary.get('requested_as_of')}",
+            f"- current_status: {summary.get('current_status')}",
+            f"- recommended_owner_action: {summary.get('recommended_owner_action')}",
+            f"- sources_status: {json.dumps(summary.get('sources_status'), ensure_ascii=False)}",
+            f"- retry_status: {summary.get('retry_status')}",
+            f"- sample_growth_status: {summary.get('sample_growth_status')}",
+            f"- forward_progress: {summary.get('forward_progress')}",
+            f"- sideways_progress: {summary.get('sideways_progress')}",
+            f"- recovery_progress: {summary.get('recovery_progress')}",
+            f"- owner_data_readiness_checklist_path: {checklist_path}",
+            "- broker_action_allowed: false",
+            "- production_effect: none",
+            "",
+            "## Owner Checklist",
+            "",
+            checklist,
+            "",
+            "该 status pack 是 owner 决策输入，不会自动改变 official target weights，"
+            "也不会生成 broker order 或 production effect。",
+            "",
+        ]
+    )
+
+
+def render_smoothed_data_readiness_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Dynamic Rescue Smoothed Data Readiness",
+            "",
+            f"- readiness_id: {summary.get('readiness_id')}",
+            f"- current_status: {summary.get('current_status')}",
+            f"- recommended_owner_action: {summary.get('recommended_owner_action')}",
+            f"- retry_status: {summary.get('retry_status')}",
+            f"- sample_growth_status: {summary.get('sample_growth_status')}",
+            f"- forward_progress: {summary.get('forward_progress')}",
+            f"- sideways_progress: {summary.get('sideways_progress')}",
+            f"- recovery_progress: {summary.get('recovery_progress')}",
             "- broker_action_allowed: false",
             "- production_effect: none",
             "",
@@ -24676,6 +26109,681 @@ def _smoothed_empty_retry_summary(
         "production_effect": "none",
         **SYSTEM_TARGET_SAFETY,
     }
+
+
+def _load_smoothed_source_refresh_config(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "refresh": {
+                "mode": "controlled_cache_refresh",
+                "default_execute": False,
+                "require_explicit_execute_flag": True,
+                "allow_partial_refresh": True,
+            },
+            "sources": {},
+            "safety": dict(SYSTEM_TARGET_SAFETY),
+        }
+    payload = safe_load_yaml_path(path)
+    if not isinstance(payload, dict):
+        raise DynamicV3SystemTargetError(f"source refresh config must be a mapping: {path}")
+    safety = {**SYSTEM_TARGET_SAFETY, **_mapping(payload.get("safety"))}
+    return {**payload, "safety": safety}
+
+
+def _smoothed_refresh_source_specs(
+    *,
+    source_rows: Sequence[Mapping[str, Any]],
+    price_cache_path: Path,
+    marketstack_cache_path: Path,
+    rates_path: Path,
+) -> list[dict[str, Any]]:
+    rows = list(source_rows) or [
+        {"source": "prices_daily.csv", "required": True},
+        {"source": "prices_marketstack_daily.csv", "required": True},
+        {"source": "rates_daily.csv", "required": True},
+    ]
+    path_by_source = {
+        "prices_daily": price_cache_path,
+        "prices_marketstack_daily": marketstack_cache_path,
+        "rates_daily": rates_path,
+    }
+    specs: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        source = _smoothed_normalize_source_name(row.get("source"))
+        if source in seen or source not in path_by_source:
+            continue
+        seen.add(source)
+        specs.append(
+            {
+                "source": source,
+                "cache_path": str(path_by_source[source]),
+                "required": row.get("required", True) is not False,
+                "required_through": _text(row.get("required_through")),
+                "planned_status": _text(row.get("status")),
+                "required_action": _text(row.get("required_action")),
+            }
+        )
+    return specs
+
+
+def _smoothed_normalize_source_name(value: object) -> str:
+    text = _text(value).removesuffix(".csv")
+    if text == "prices":
+        return "prices_daily"
+    if text == "marketstack":
+        return "prices_marketstack_daily"
+    if text == "rates":
+        return "rates_daily"
+    return text
+
+
+def _cache_file_audit_state(source: str, path: Path) -> dict[str, Any]:
+    exists = path.exists()
+    row_count = 0
+    latest: str | None = None
+    read_error: str | None = None
+    if exists:
+        try:
+            frame = pd.read_csv(path, usecols=["date"])
+            row_count = int(len(frame))
+            dates = pd.to_datetime(frame["date"], errors="coerce").dropna()
+            if not dates.empty:
+                latest = dates.max().date().isoformat()
+        except (OSError, ValueError, pd.errors.ParserError) as exc:
+            read_error = _text(exc)
+    return {
+        "source": source,
+        "cache_path": str(path),
+        "exists": exists,
+        "row_count": row_count,
+        "latest_date": latest,
+        "checksum": _file_sha256(path) if exists else None,
+        "read_error": read_error,
+    }
+
+
+def _file_sha256(path: Path) -> str | None:
+    try:
+        digest = sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+    except OSError:
+        return None
+
+
+def _execute_smoothed_project_data_refresh(
+    *,
+    requested_as_of: date,
+    config: Mapping[str, Any],
+    output_dir: Path,
+) -> None:
+    refresh = _mapping(config.get("refresh"))
+    start_date = _coerce_date(refresh.get("start"), AI_AFTER_CHATGPT_START)
+    provider_name = _text(refresh.get("price_provider"), "fmp").lower()
+    if provider_name == "fmp" and os.getenv("FMP_API_KEY"):
+        price_provider = FmpPriceProvider(api_key=os.environ["FMP_API_KEY"])
+    elif provider_name == "fmp":
+        price_provider = YFinancePriceProvider()
+    elif provider_name == "yahoo":
+        price_provider = YFinancePriceProvider()
+    else:
+        raise DynamicV3SystemTargetError(
+            f"unsupported smoothed source refresh price_provider: {provider_name}"
+        )
+    marketstack_provider = (
+        MarketstackPriceProvider(api_key=os.environ["MARKETSTACK_API_KEY"])
+        if os.getenv("MARKETSTACK_API_KEY")
+        else None
+    )
+    download_daily_data(
+        load_universe(),
+        start=start_date,
+        end=requested_as_of,
+        output_dir=output_dir,
+        include_full_ai_chain=bool(refresh.get("include_full_ai_chain", False)),
+        price_provider=price_provider,
+        secondary_price_provider=marketstack_provider,
+    )
+
+
+def _smoothed_source_refresh_result_row(
+    *,
+    spec: Mapping[str, Any],
+    before: Mapping[str, Any],
+    after: Mapping[str, Any],
+    requested_as_of: date,
+    execute_refresh: bool,
+    refresh_error: str | None,
+) -> dict[str, Any]:
+    after_latest = _coerce_date(after.get("latest_date"), date.min)
+    ready = after_latest >= requested_as_of
+    if not execute_refresh:
+        status = "DRY_RUN_ONLY"
+        error = None
+    elif refresh_error and not ready:
+        status = "FAILED"
+        error = refresh_error
+    elif ready:
+        status = (
+            "REFRESHED"
+            if before.get("checksum") != after.get("checksum")
+            or before.get("latest_date") != after.get("latest_date")
+            else "SKIPPED"
+        )
+        error = None
+    else:
+        status = "FAILED"
+        error = refresh_error or "source_still_stale_after_refresh"
+    freshness = "READY" if ready else ("STILL_STALE" if after.get("latest_date") else "UNKNOWN")
+    return {
+        "source": spec.get("source"),
+        "status": status,
+        "before_latest_date": before.get("latest_date"),
+        "after_latest_date": after.get("latest_date"),
+        "required_through": requested_as_of.isoformat(),
+        "freshness_after_refresh": freshness,
+        "before_row_count": before.get("row_count", 0),
+        "after_row_count": after.get("row_count", 0),
+        "cache_path": spec.get("cache_path"),
+        "required": spec.get("required") is not False,
+        "error": error,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_source_refresh_status(
+    source_results: Sequence[Mapping[str, Any]],
+    execute_refresh: bool,
+) -> str:
+    if not execute_refresh:
+        return "DRY_RUN_ONLY"
+    required_results = [row for row in source_results if row.get("required") is not False]
+    considered = required_results or list(source_results)
+    ready_count = sum(
+        1 for row in considered if row.get("freshness_after_refresh") == "READY"
+    )
+    if ready_count == len(considered) and considered:
+        return "COMPLETED"
+    if ready_count:
+        return "PARTIAL"
+    return "FAILED"
+
+
+def _smoothed_source_refresh_audit(
+    *,
+    refresh_execution_id: str,
+    before_states: Mapping[str, Mapping[str, Any]],
+    after_states: Mapping[str, Mapping[str, Any]],
+    source_results: Sequence[Mapping[str, Any]],
+    external_refresh_executed: bool,
+) -> dict[str, Any]:
+    entries: list[dict[str, Any]] = []
+    touched: list[str] = []
+    for row in source_results:
+        source = _text(row.get("source"))
+        before = _mapping(before_states.get(source))
+        after = _mapping(after_states.get(source))
+        changed = before.get("checksum") != after.get("checksum")
+        if changed:
+            touched.append(Path(_text(after.get("cache_path"))).name)
+        entries.append(
+            {
+                "source": source,
+                "cache_path": after.get("cache_path"),
+                "before_row_count": before.get("row_count", 0),
+                "after_row_count": after.get("row_count", 0),
+                "before_latest_date": before.get("latest_date"),
+                "after_latest_date": after.get("latest_date"),
+                "checksum_before": before.get("checksum"),
+                "checksum_after": after.get("checksum"),
+                "status": "PASS" if row.get("status") != "FAILED" else "FAIL",
+                **SYSTEM_TARGET_SAFETY,
+            }
+        )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "audit_id": _stable_id("smoothed-source-refresh-audit", refresh_execution_id, entries),
+        "refresh_execution_id": refresh_execution_id,
+        "cache_files_touched": touched,
+        "audit_entries": entries,
+        "external_refresh_executed": external_refresh_executed,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_post_refresh_decision(
+    *,
+    post_refresh_id: str,
+    requested_as_of: date,
+    data_validation: Mapping[str, Any],
+    preflight_result: Mapping[str, Any],
+) -> dict[str, Any]:
+    freshness_status = _text(preflight_result.get("freshness_status"))
+    validate_status = _text(data_validation.get("validate_data_status"))
+    if validate_status == "FAIL" and freshness_status == "BLOCKED_DATA_QUALITY_FAIL":
+        decision = "MANUAL_REVIEW_REQUIRED"
+        reason = "validate_data_failed"
+    elif preflight_result.get("can_run_full_retry") is True:
+        decision = "RETRY_READY"
+        reason = "all_required_sources_fresh"
+    elif freshness_status == "LATEST_AVAILABLE_ONLY":
+        decision = "PARTIAL_RETRY_ONLY"
+        reason = "requested_as_of_after_latest_valid_as_of"
+    else:
+        decision = "STILL_BLOCKED"
+        reason = "blocking_errors_remain"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "post_refresh_id": post_refresh_id,
+        "retry_decision": decision,
+        "reason": reason,
+        "allowed_next_commands": (
+            [
+                "aits etf dynamic-v3-rescue smoothed-bootstrap-retry run "
+                f"--requested-as-of {requested_as_of.isoformat()}"
+            ]
+            if decision == "RETRY_READY"
+            else []
+        ),
+        "blocked_commands": (
+            []
+            if decision == "RETRY_READY"
+            else [
+                "aits etf dynamic-v3-rescue smoothed-retry-resume run "
+                f"--post-refresh-id {post_refresh_id}"
+            ]
+        ),
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _latest_smoothed_progress_counts(progress_dir: Path) -> dict[str, int]:
+    latest = _latest_child_dir_with(progress_dir, "smoothed_forward_progress_summary.json")
+    if latest is None:
+        return {"forward": 0, "sideways": 0, "recovery": 0}
+    summary = _read_optional_json(latest / "smoothed_forward_progress_summary.json") or {}
+    return {
+        "forward": int(_float(summary.get("available_forward_events_total"))),
+        "sideways": int(_float(summary.get("available_sideways_events"))),
+        "recovery": int(_float(summary.get("available_recovery_events"))),
+    }
+
+
+def _smoothed_retry_resume_steps(
+    *,
+    can_resume: bool,
+    retry: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    retry_summary = _mapping(_mapping(retry or {}).get("retry_summary"))
+    retry_status = _text(retry_summary.get("retry_status"))
+    artifacts = _mapping(_mapping(retry or {}).get("retry_artifacts")).get("artifacts", {})
+    artifact_map = _mapping(artifacts)
+    if not can_resume:
+        steps = [
+            {"step": "smoothed_bootstrap_retry", "status": "BLOCKED", "artifact_id": None},
+        ]
+        steps.extend(
+            {
+                "step": name,
+                "status": "SKIPPED",
+                "artifact_id": None,
+                "reason": "post_refresh_not_retry_ready",
+            }
+            for name in (
+                "smoothed_forward_progress_update",
+                "smoothed_weekly_dashboard",
+                "smoothed_event_monitor",
+                "smoothed_switch_readiness",
+                "smoothed_owner_renewal",
+            )
+        )
+    else:
+        step_status = "PASS" if retry_status == "COMPLETED" else retry_status or "FAIL"
+        steps = [
+            {
+                "step": "smoothed_bootstrap_retry",
+                "status": step_status,
+                "artifact_id": _mapping(retry or {}).get("retry_id"),
+            },
+            {
+                "step": "smoothed_forward_progress_update",
+                "status": "PASS" if retry_status == "COMPLETED" else "SKIPPED",
+                "artifact_id": _mapping(artifact_map.get("progress_update")).get("artifact_id"),
+            },
+            {
+                "step": "smoothed_weekly_dashboard",
+                "status": "PASS" if retry_status == "COMPLETED" else "SKIPPED",
+                "artifact_id": _mapping(artifact_map.get("weekly_dashboard")).get("artifact_id"),
+            },
+            {
+                "step": "smoothed_event_monitor",
+                "status": "PASS" if retry_status == "COMPLETED" else "SKIPPED",
+                "artifact_id": _mapping(artifact_map.get("event_monitor")).get("artifact_id"),
+            },
+            {
+                "step": "smoothed_switch_readiness",
+                "status": "PASS" if retry_status == "COMPLETED" else "SKIPPED",
+                "artifact_id": _mapping(artifact_map.get("switch_readiness")).get("artifact_id"),
+            },
+            {
+                "step": "smoothed_owner_renewal",
+                "status": "PASS" if retry_status == "COMPLETED" else "SKIPPED",
+                "artifact_id": _mapping(artifact_map.get("owner_renewal")).get("artifact_id"),
+            },
+        ]
+    return {"schema_version": SCHEMA_VERSION, "steps": steps, **SYSTEM_TARGET_SAFETY}
+
+
+def _smoothed_retry_resume_artifacts(retry: Mapping[str, Any] | None) -> dict[str, Any]:
+    if retry is None:
+        return {"schema_version": SCHEMA_VERSION, "artifacts": {}, **SYSTEM_TARGET_SAFETY}
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "bootstrap_retry_id": retry.get("retry_id"),
+        "artifacts": _mapping(_mapping(retry.get("retry_artifacts")).get("artifacts")),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_retry_resume_summary(
+    *,
+    resume_id: str,
+    requested_as_of: date,
+    can_resume: bool,
+    retry: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    if not can_resume or retry is None:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "resume_id": resume_id,
+            "resume_status": "BLOCKED",
+            "requested_as_of": requested_as_of.isoformat(),
+            "emitted_events": 0,
+            "due_windows": 0,
+            "updated_windows": 0,
+            "classified_events": 0,
+            "available_forward_events_after_resume": 0,
+            "available_sideways_events_after_resume": 0,
+            "available_recovery_events_after_resume": 0,
+            "can_execute_switch": False,
+            "weekly_recommendation": "continue_observation",
+            "broker_action_allowed": False,
+            "production_effect": "none",
+            **SYSTEM_TARGET_SAFETY,
+        }
+    retry_summary = _mapping(retry.get("retry_summary"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "resume_id": resume_id,
+        "resume_status": retry_summary.get("retry_status", "FAIL"),
+        "requested_as_of": requested_as_of.isoformat(),
+        "emitted_events": int(_float(retry_summary.get("emitted_events"))),
+        "due_windows": int(_float(retry_summary.get("due_windows"))),
+        "updated_windows": int(_float(retry_summary.get("updated_windows"))),
+        "classified_events": int(_float(retry_summary.get("classified_events"))),
+        "available_forward_events_after_resume": int(
+            _float(retry_summary.get("available_forward_events_after_retry"))
+        ),
+        "available_sideways_events_after_resume": int(
+            _float(retry_summary.get("available_sideways_events_after_retry"))
+        ),
+        "available_recovery_events_after_resume": int(
+            _float(retry_summary.get("available_recovery_events_after_retry"))
+        ),
+        "can_execute_switch": False,
+        "weekly_recommendation": "continue_observation",
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_sample_growth_summary(
+    *,
+    growth_id: str,
+    resume_id: str,
+    precondition: Mapping[str, Any],
+    resume_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    before = {
+        "available_forward_events": int(
+            _float(precondition.get("available_forward_events_before_resume"))
+        ),
+        "available_sideways_events": int(
+            _float(precondition.get("available_sideways_events_before_resume"))
+        ),
+        "available_recovery_events": int(
+            _float(precondition.get("available_recovery_events_before_resume"))
+        ),
+    }
+    after = {
+        "available_forward_events": int(
+            _float(resume_summary.get("available_forward_events_after_resume"))
+        ),
+        "available_sideways_events": int(
+            _float(resume_summary.get("available_sideways_events_after_resume"))
+        ),
+        "available_recovery_events": int(
+            _float(resume_summary.get("available_recovery_events_after_resume"))
+        ),
+    }
+    delta = {
+        "forward_events": after["available_forward_events"] - before["available_forward_events"],
+        "sideways_events": after["available_sideways_events"] - before["available_sideways_events"],
+        "recovery_events": after["available_recovery_events"] - before["available_recovery_events"],
+    }
+    if any(value > 0 for value in delta.values()):
+        status = "IMPROVED"
+    elif any(after.values()):
+        status = "NO_CHANGE"
+    else:
+        status = "INSUFFICIENT_DATA"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "growth_id": growth_id,
+        "resume_id": resume_id,
+        "before": before,
+        "after": after,
+        "delta": delta,
+        "progress": {
+            "forward": (
+                f"{after['available_forward_events']}/"
+                f"{SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS}"
+            ),
+            "sideways": (
+                f"{after['available_sideways_events']}/"
+                f"{SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS}"
+            ),
+            "recovery": (
+                f"{after['available_recovery_events']}/"
+                f"{SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS}"
+            ),
+        },
+        "growth_status": status,
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_sample_growth_by_target(summary: Mapping[str, Any]) -> dict[str, Any]:
+    after = _mapping(summary.get("after"))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "targets": [
+            _sample_growth_target_row(
+                target_id="smooth_3d_vs_limited",
+                before_available=_mapping(summary.get("before")).get(
+                    "available_forward_events", 0
+                ),
+                after_available=after.get("available_forward_events", 0),
+                required=SMOOTHED_CONFIRMATION_REQUIRED_FORWARD_EVENTS,
+                empty_status="INSUFFICIENT_EVENTS",
+            ),
+            _sample_growth_target_row(
+                target_id="smooth_3d_sideways_choppy_improvement",
+                before_available=_mapping(summary.get("before")).get(
+                    "available_sideways_events", 0
+                ),
+                after_available=after.get("available_sideways_events", 0),
+                required=SMOOTHED_CONFIRMATION_REQUIRED_SIDEWAYS_EVENTS,
+                empty_status="INSUFFICIENT_EVENTS",
+            ),
+            _sample_growth_target_row(
+                target_id="smooth_3d_recovery_lag_watch",
+                before_available=_mapping(summary.get("before")).get(
+                    "available_recovery_events", 0
+                ),
+                after_available=after.get("available_recovery_events", 0),
+                required=SMOOTHED_CONFIRMATION_REQUIRED_RECOVERY_EVENTS,
+                empty_status="WATCH_ONLY",
+            ),
+        ],
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _sample_growth_target_row(
+    *,
+    target_id: str,
+    before_available: object,
+    after_available: object,
+    required: int,
+    empty_status: str,
+) -> dict[str, Any]:
+    before_int = int(_float(before_available))
+    after_int = int(_float(after_available))
+    return {
+        "target_id": target_id,
+        "before_available": before_int,
+        "after_available": after_int,
+        "required": required,
+        "progress_pct": round(after_int / required, 4) if required else 0.0,
+        "status": (
+            "READY_FOR_REVIEW"
+            if after_int >= required
+            else ("IN_PROGRESS" if after_int > 0 else empty_status)
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_sample_growth_delta_consistent(summary: Mapping[str, Any]) -> bool:
+    before = _mapping(summary.get("before"))
+    after = _mapping(summary.get("after"))
+    delta = _mapping(summary.get("delta"))
+    return (
+        int(_float(delta.get("forward_events")))
+        == int(_float(after.get("available_forward_events")))
+        - int(_float(before.get("available_forward_events")))
+        and int(_float(delta.get("sideways_events")))
+        == int(_float(after.get("available_sideways_events")))
+        - int(_float(before.get("available_sideways_events")))
+        and int(_float(delta.get("recovery_events")))
+        == int(_float(after.get("available_recovery_events")))
+        - int(_float(before.get("available_recovery_events")))
+    )
+
+
+def _smoothed_data_readiness_summary(
+    *,
+    readiness_id: str,
+    refresh: Mapping[str, Any],
+    post_refresh: Mapping[str, Any],
+    resume: Mapping[str, Any],
+    growth: Mapping[str, Any],
+) -> dict[str, Any]:
+    refresh_results = _mapping(refresh.get("source_refresh_results"))
+    post_decision = _mapping(post_refresh.get("post_refresh_decision"))
+    resume_summary = _mapping(resume.get("resume_summary"))
+    growth_summary = _mapping(growth.get("sample_growth_summary"))
+    requested_as_of = _text(
+        post_refresh.get("requested_as_of"),
+        _text(refresh.get("requested_as_of"), _text(resume_summary.get("requested_as_of"))),
+    )
+    retry_status = _text(resume_summary.get("resume_status"), "NOT_RUN")
+    growth_status = _text(growth_summary.get("growth_status"), "INSUFFICIENT_DATA")
+    current_status = _smoothed_data_readiness_status(
+        refresh_status=_text(refresh_results.get("refresh_status")),
+        retry_decision=_text(post_decision.get("retry_decision")),
+        retry_status=retry_status,
+        growth_status=growth_status,
+        can_execute_switch=resume_summary.get("can_execute_switch") is True,
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "readiness_id": readiness_id,
+        "current_status": current_status,
+        "requested_as_of": requested_as_of,
+        "sources_status": _smoothed_readiness_source_status(refresh_results),
+        "retry_status": retry_status,
+        "sample_growth_status": growth_status,
+        "forward_progress": _mapping(growth_summary.get("progress")).get("forward", "0/10"),
+        "sideways_progress": _mapping(growth_summary.get("progress")).get("sideways", "0/5"),
+        "recovery_progress": _mapping(growth_summary.get("progress")).get("recovery", "0/5"),
+        "recommended_owner_action": _smoothed_recommended_owner_action(current_status),
+        "broker_action_allowed": False,
+        "production_effect": "none",
+        **SYSTEM_TARGET_SAFETY,
+    }
+
+
+def _smoothed_data_readiness_status(
+    *,
+    refresh_status: str,
+    retry_decision: str,
+    retry_status: str,
+    growth_status: str,
+    can_execute_switch: bool,
+) -> str:
+    if refresh_status == "DRY_RUN_ONLY":
+        return "REFRESH_REQUIRED"
+    if retry_decision in {"STILL_BLOCKED", "MANUAL_REVIEW_REQUIRED"}:
+        return "RETRY_BLOCKED"
+    if retry_decision == "RETRY_READY" and retry_status in {"NOT_RUN", "BLOCKED"}:
+        return "RETRY_READY"
+    if retry_status == "COMPLETED" and not can_execute_switch:
+        return "CONTINUE_OBSERVATION"
+    if retry_status == "COMPLETED":
+        return "RETRY_COMPLETED"
+    if refresh_status in {"COMPLETED", "PARTIAL"}:
+        return "REFRESH_EXECUTED"
+    if growth_status == "INSUFFICIENT_DATA":
+        return "WAIT_FOR_REFRESH"
+    return "WAIT_FOR_REFRESH"
+
+
+def _smoothed_recommended_owner_action(current_status: str) -> str:
+    if current_status in {"WAIT_FOR_REFRESH", "REFRESH_REQUIRED"}:
+        return "run_refresh"
+    if current_status == "RETRY_READY":
+        return "rerun_retry"
+    if current_status in {"RETRY_COMPLETED", "CONTINUE_OBSERVATION"}:
+        return "continue_observation"
+    return "manual_review_required"
+
+
+def _smoothed_readiness_source_status(refresh_results: Mapping[str, Any]) -> dict[str, str]:
+    statuses = {
+        "prices_daily": "UNKNOWN",
+        "prices_marketstack_daily": "UNKNOWN",
+        "rates_daily": "UNKNOWN",
+    }
+    for row in _records(refresh_results.get("sources")):
+        source = _text(row.get("source"))
+        if row.get("freshness_after_refresh") == "READY":
+            statuses[source] = "READY"
+        elif row.get("status") == "FAILED":
+            statuses[source] = "FAILED"
+        elif row.get("freshness_after_refresh") == "STILL_STALE":
+            statuses[source] = "STALE"
+    return statuses
 
 
 def _smoothed_issue_codes(report: DataQualityReport, *, severity: str) -> list[str]:

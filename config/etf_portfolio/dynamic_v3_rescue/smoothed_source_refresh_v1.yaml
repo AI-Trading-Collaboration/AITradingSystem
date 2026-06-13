@@ -1,0 +1,74 @@
+schema_version: 1
+policy_id: smoothed_source_refresh_v1
+owner: project_owner
+status: active
+market_regime: ai_after_chatgpt
+default_backtest_start: 2022-12-01
+
+purpose: >
+  Controlled source refresh policy for TRADING-281 to TRADING-285 smoothed
+  forward data recovery. The policy refreshes local research caches only after
+  an explicit execute flag and records before/after source audit metadata.
+
+refresh:
+  mode: controlled_cache_refresh
+  default_execute: false
+  require_explicit_execute_flag: true
+  refresh_command: aits download-data
+  price_provider: fmp
+  secondary_price_provider: marketstack
+  fallback_price_provider: yfinance
+  start: 2022-12-01
+  include_full_ai_chain: false
+  allow_partial_refresh: true
+  stop_on_validation_failure: true
+
+sources:
+  prices_daily:
+    provider_role: primary_or_fallback
+    cache_path: data/raw/prices_daily.csv
+    required: true
+    freshness_column: date
+    audit:
+      record_row_count: true
+      record_latest_date: true
+      record_checksum: true
+  prices_marketstack_daily:
+    provider_role: secondary_public_vendor
+    cache_path: data/raw/prices_marketstack_daily.csv
+    required: false
+    freshness_column: date
+    audit:
+      record_row_count: true
+      record_latest_date: true
+      record_checksum: true
+  rates_daily:
+    provider_role: macro_cache
+    cache_path: data/raw/rates_daily.csv
+    required: true
+    freshness_column: date
+    audit:
+      record_row_count: true
+      record_latest_date: true
+      record_checksum: true
+
+safety:
+  research_target_only: true
+  paper_shadow_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_effect: none
+  official_target_weights_mutated: false
+  auto_apply: false
+
+blocked_execution_policy:
+  missing_provider_credentials: manual_review_required
+  provider_network_failure: manual_review_required
+  post_refresh_validation_failure: stop_before_retry_resume
+  stale_after_refresh: stop_before_retry_resume
+  notes: >
+    Missing credentials or network failures must be recorded in the source
+    refresh artifact. Do not fabricate fresh cache values or bypass
+    aits validate-data / smoothed preflight.
