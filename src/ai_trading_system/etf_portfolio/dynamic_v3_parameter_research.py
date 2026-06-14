@@ -124,9 +124,7 @@ DEFAULT_MANUAL_PORTFOLIO_SNAPSHOT_DIR = (
 DEFAULT_PORTFOLIO_EXPOSURE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "portfolio_exposure"
 DEFAULT_POSITION_DRIFT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_drift"
 DEFAULT_EXECUTION_GUARDRAILS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "execution_guardrails"
-DEFAULT_MANUAL_EXECUTION_REVIEW_DIR = (
-    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "manual_execution_review"
-)
+DEFAULT_MANUAL_EXECUTION_REVIEW_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "manual_execution_review"
 DEFAULT_POSITION_ADVISORY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_advisory"
 DEFAULT_POSITION_ADVISORY_DAILY_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "position_advisory_daily"
 DEFAULT_CONSENSUS_DRIFT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "consensus_drift"
@@ -154,11 +152,7 @@ DEFAULT_PORTFOLIO_EXPOSURE_POLICY_CONFIG_PATH = (
     / "portfolio_exposure_policy_v1.yaml"
 )
 DEFAULT_EXECUTION_GUARDRAILS_CONFIG_PATH = (
-    PROJECT_ROOT
-    / "config"
-    / "etf_portfolio"
-    / "dynamic_v3_rescue"
-    / "execution_guardrails_v1.yaml"
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "execution_guardrails_v1.yaml"
 )
 DEFAULT_CURRENT_PORTFOLIO_SNAPSHOT_EXAMPLE_PATH = (
     PROJECT_ROOT
@@ -4400,7 +4394,9 @@ def run_shadow_shortlist_monitor(
     summary_recommendation = (
         "pause_monitoring"
         if active_count == 0
-        else "manual_review_required" if downgrade_count else "continue_monitoring"
+        else "manual_review_required"
+        if downgrade_count
+        else "continue_monitoring"
     )
     summary = {
         "schema_version": SCHEMA_VERSION,
@@ -4918,7 +4914,9 @@ def run_consensus_drift(
     implication = (
         "manual_review_required"
         if disagreement_status in {"HIGH_DISAGREEMENT", "INSUFFICIENT_DATA"}
-        else "monitor" if disagreement_status == "MODERATE_DISAGREEMENT" else "continue_monitoring"
+        else "monitor"
+        if disagreement_status == "MODERATE_DISAGREEMENT"
+        else "continue_monitoring"
     )
     drift_id = _stable_id(
         "consensus-drift",
@@ -5406,9 +5404,7 @@ def portfolio_exposure_report_payload(
     return {
         **_read_json(exposure_dir / "portfolio_exposure_manifest.json"),
         "exposure_summary": _read_optional_json(exposure_dir / "exposure_summary.json") or {},
-        "concentration_warnings": _read_optional_json(
-            exposure_dir / "concentration_warnings.json"
-        )
+        "concentration_warnings": _read_optional_json(exposure_dir / "concentration_warnings.json")
         or {},
         "currency_exposure": _read_optional_json(exposure_dir / "currency_exposure.json") or {},
         "exposure_dir": str(exposure_dir),
@@ -5432,8 +5428,7 @@ def validate_portfolio_exposure_artifact(
         "portfolio_exposure_report.md",
     ]
     checks = [
-        _check(f"artifact_exists:{name}", (exposure_dir / name).exists(), name)
-        for name in required
+        _check(f"artifact_exists:{name}", (exposure_dir / name).exists(), name) for name in required
     ]
     checks.extend(
         [
@@ -5707,9 +5702,7 @@ def run_execution_guardrails_check(
         "blocked_count": summary["blocked_count"],
         "capped_count": summary["capped_count"],
         "config_path": str(config_path),
-        "proposed_adjustment_checks_path": str(
-            guardrail_dir / "proposed_adjustment_checks.jsonl"
-        ),
+        "proposed_adjustment_checks_path": str(guardrail_dir / "proposed_adjustment_checks.jsonl"),
         "guardrail_summary_path": str(guardrail_dir / "guardrail_summary.json"),
         "stepwise_adjustment_plan_path": str(guardrail_dir / "stepwise_adjustment_plan.json"),
         "execution_guardrails_report_path": str(guardrail_dir / "execution_guardrails_report.md"),
@@ -10592,7 +10585,7 @@ def _real_policy_for_sweep_candidate(
             "policy_metadata": policy.policy_metadata.model_copy(
                 update={
                     "version": (
-                        f"{policy.policy_metadata.version}_sweep_" f"{_stable_id(parameters)[:8]}"
+                        f"{policy.policy_metadata.version}_sweep_{_stable_id(parameters)[:8]}"
                     ),
                     "status": "pilot_sweep_real_evaluator",
                 }
@@ -14282,9 +14275,7 @@ def _normalize_manual_portfolio_snapshot(
         ),
         _check(
             "source_allowed",
-            (not enforce_schema_source)
-            or (not allowed_sources)
-            or source in allowed_sources,
+            (not enforce_schema_source) or (not allowed_sources) or source in allowed_sources,
             source,
         ),
         _check(
@@ -14582,9 +14573,7 @@ def _portfolio_exposure_artifacts(
         6,
     )
     currency_status = (
-        "FAIL"
-        if non_base > _float(limits.get("max_non_base_currency_weight"))
-        else "PASS"
+        "FAIL" if non_base > _float(limits.get("max_non_base_currency_weight")) else "PASS"
     )
     warnings.append(
         _threshold_warning(
@@ -14718,9 +14707,8 @@ def _position_drift_consensus_summary(
         values = [_float(_mapping(row.get("target_weights")).get(symbol)) for row in target_rows]
         median_value = _median(values)
         dispersion = max(values) - min(values)
-        agreement = (
-            sum(1 for value in values if abs(value - median_value) <= max_dispersion)
-            / len(values)
+        agreement = sum(1 for value in values if abs(value - median_value) <= max_dispersion) / len(
+            values
         )
         medians[symbol] = round(median_value, 6)
         mins[symbol] = round(min(values), 6)
@@ -14736,9 +14724,7 @@ def _position_drift_consensus_summary(
     }
     total_abs = round(sum(abs(value) for value in deltas.values()), 6)
     agreement_status = (
-        "HIGH_DISAGREEMENT"
-        if high
-        else "MODERATE_DISAGREEMENT" if moderate else "CONSENSUS"
+        "HIGH_DISAGREEMENT" if high else "MODERATE_DISAGREEMENT" if moderate else "CONSENSUS"
     )
     drift_status = _drift_status(total_abs, config)
     return {
@@ -15069,38 +15055,41 @@ def render_manual_portfolio_snapshot_markdown(
     normalized: Mapping[str, Any],
     weight_check: Mapping[str, Any],
 ) -> str:
-    return "\n".join(
-        [
-            "# Dynamic Rescue Manual Portfolio Snapshot",
-            "",
-            f"- snapshot_id: `{manifest.get('snapshot_id')}`",
-            f"- status: `{manifest.get('status')}`",
-            f"- as_of: `{manifest.get('as_of')}`",
-            f"- total_equity: `{normalized.get('total_equity')}`",
-            f"- total_weight: `{normalized.get('total_weight')}`",
-            f"- cash_weight: `{normalized.get('cash_weight')}`",
-            f"- risk_asset_weight: `{normalized.get('risk_asset_weight')}`",
-            f"- broker_imported: `{normalized.get('broker_imported')}`",
-            f"- broker_action_taken: `{normalized.get('broker_action_taken')}`",
-            f"- owner_reviewed: `{normalized.get('owner_reviewed')}`",
-            "",
-            "## Required Questions",
-            "",
-            f"1. 当前持仓快照是否有效：`{manifest.get('status')}`。",
-            f"2. 权重是否合计为 100%：`{weight_check.get('status')}`。",
-            (
-                "3. value 是否和 total_equity 匹配："
-                f"`{_check_passed_text(normalized, 'value_sum_matches_total_equity')}`。"
-            ),
-            f"4. cash weight：`{normalized.get('cash_weight')}`。",
-            f"5. risk asset weight：`{normalized.get('risk_asset_weight')}`。",
-            f"6. 是否有 broker import：`{normalized.get('broker_imported')}`，必须为否。",
-            f"7. 是否有 broker action：`{normalized.get('broker_action_taken')}`，必须为否。",
-            f"8. 是否需要 owner review：`{normalized.get('manual_review_required')}`。",
-            "",
-            "production_effect=none; broker_action=none.",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Dynamic Rescue Manual Portfolio Snapshot",
+                "",
+                f"- snapshot_id: `{manifest.get('snapshot_id')}`",
+                f"- status: `{manifest.get('status')}`",
+                f"- as_of: `{manifest.get('as_of')}`",
+                f"- total_equity: `{normalized.get('total_equity')}`",
+                f"- total_weight: `{normalized.get('total_weight')}`",
+                f"- cash_weight: `{normalized.get('cash_weight')}`",
+                f"- risk_asset_weight: `{normalized.get('risk_asset_weight')}`",
+                f"- broker_imported: `{normalized.get('broker_imported')}`",
+                f"- broker_action_taken: `{normalized.get('broker_action_taken')}`",
+                f"- owner_reviewed: `{normalized.get('owner_reviewed')}`",
+                "",
+                "## Required Questions",
+                "",
+                f"1. 当前持仓快照是否有效：`{manifest.get('status')}`。",
+                f"2. 权重是否合计为 100%：`{weight_check.get('status')}`。",
+                (
+                    "3. value 是否和 total_equity 匹配："
+                    f"`{_check_passed_text(normalized, 'value_sum_matches_total_equity')}`。"
+                ),
+                f"4. cash weight：`{normalized.get('cash_weight')}`。",
+                f"5. risk asset weight：`{normalized.get('risk_asset_weight')}`。",
+                f"6. 是否有 broker import：`{normalized.get('broker_imported')}`，必须为否。",
+                f"7. 是否有 broker action：`{normalized.get('broker_action_taken')}`，必须为否。",
+                f"8. 是否需要 owner review：`{normalized.get('manual_review_required')}`。",
+                "",
+                "production_effect=none; broker_action=none.",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_portfolio_exposure_markdown(
@@ -15110,39 +15099,40 @@ def render_portfolio_exposure_markdown(
     currency: Mapping[str, Any],
 ) -> str:
     warnings = _records(concentration.get("warnings"))
-    warning_text = ", ".join(
-        f"{row.get('warning_id')}={row.get('severity')}" for row in warnings
+    warning_text = ", ".join(f"{row.get('warning_id')}={row.get('severity')}" for row in warnings)
+    return (
+        "\n".join(
+            [
+                "# Dynamic Rescue Portfolio Exposure Validation",
+                "",
+                f"- exposure_id: `{manifest.get('exposure_id')}`",
+                f"- status: `{summary.get('status')}`",
+                f"- max_single_symbol: `{summary.get('max_single_symbol')}`",
+                f"- tech_weight: `{summary.get('tech_weight')}`",
+                f"- semiconductor_weight: `{summary.get('semiconductor_weight')}`",
+                f"- defensive_weight: `{summary.get('defensive_weight')}`",
+                f"- cash_weight: `{summary.get('cash_weight')}`",
+                f"- non_base_currency_weight: `{currency.get('non_base_currency_weight')}`",
+                "",
+                "## Required Questions",
+                "",
+                f"1. 当前最大单一资产权重：`{summary.get('max_single_symbol')}`。",
+                f"2. 科技暴露：`{summary.get('tech_weight')}`。",
+                f"3. 半导体暴露：`{summary.get('semiconductor_weight')}`。",
+                (
+                    f"4. 现金 / 防御资产：`{summary.get('cash_weight')}` / "
+                    f"`{summary.get('defensive_weight')}`。"
+                ),
+                f"5. 是否违反集中度限制：`{summary.get('status') == 'FAIL'}`。",
+                f"6. 是否存在币种异常：`{currency.get('status') == 'FAIL'}`。",
+                f"7. 是否需要 manual review：`{summary.get('manual_review_required')}`。",
+                "",
+                f"warnings: `{warning_text}`",
+                "production_effect=none; broker_action=none.",
+            ]
+        )
+        + "\n"
     )
-    return "\n".join(
-        [
-            "# Dynamic Rescue Portfolio Exposure Validation",
-            "",
-            f"- exposure_id: `{manifest.get('exposure_id')}`",
-            f"- status: `{summary.get('status')}`",
-            f"- max_single_symbol: `{summary.get('max_single_symbol')}`",
-            f"- tech_weight: `{summary.get('tech_weight')}`",
-            f"- semiconductor_weight: `{summary.get('semiconductor_weight')}`",
-            f"- defensive_weight: `{summary.get('defensive_weight')}`",
-            f"- cash_weight: `{summary.get('cash_weight')}`",
-            f"- non_base_currency_weight: `{currency.get('non_base_currency_weight')}`",
-            "",
-            "## Required Questions",
-            "",
-            f"1. 当前最大单一资产权重：`{summary.get('max_single_symbol')}`。",
-            f"2. 科技暴露：`{summary.get('tech_weight')}`。",
-            f"3. 半导体暴露：`{summary.get('semiconductor_weight')}`。",
-            (
-                f"4. 现金 / 防御资产：`{summary.get('cash_weight')}` / "
-                f"`{summary.get('defensive_weight')}`。"
-            ),
-            f"5. 是否违反集中度限制：`{summary.get('status') == 'FAIL'}`。",
-            f"6. 是否存在币种异常：`{currency.get('status') == 'FAIL'}`。",
-            f"7. 是否需要 manual review：`{summary.get('manual_review_required')}`。",
-            "",
-            f"warnings: `{warning_text}`",
-            "production_effect=none; broker_action=none.",
-        ]
-    ) + "\n"
 
 
 def render_position_drift_markdown(
@@ -15152,33 +15142,36 @@ def render_position_drift_markdown(
     matrix: Sequence[Mapping[str, Any]],
 ) -> str:
     largest = _largest_consensus_deltas(_mapping(summary.get("consensus_deltas")))
-    return "\n".join(
-        [
-            "# Dynamic Rescue Position Drift",
-            "",
-            f"- drift_id: `{manifest.get('drift_id')}`",
-            f"- status: `{manifest.get('status')}`",
-            f"- total_abs_drift_to_consensus: `{summary.get('total_abs_drift_to_consensus')}`",
-            f"- candidate_agreement_status: `{summary.get('candidate_agreement_status')}`",
-            f"- drift_status: `{summary.get('drift_status')}`",
-            f"- recommended_action: `{actions.get('recommended_action')}`",
-            "",
-            "## Required Questions",
-            "",
-            (
-                "1. 当前持仓和 consensus target 差异："
-                f"`{summary.get('total_abs_drift_to_consensus')}`。"
-            ),
-            f"2. 最大差异资产：`{largest}`。",
-            f"3. 候选之间是否一致：`{summary.get('candidate_agreement_status')}`。",
-            f"4. drift 是否触发 manual review：`{actions.get('manual_review_required')}`。",
-            f"5. 当前建议：`{actions.get('recommended_action')}`。",
-            "6. broker_action_allowed: `False`，必须为否。",
-            "",
-            f"candidate_rows: `{len(matrix)}`",
-            "production_effect=none; broker_action=none.",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Dynamic Rescue Position Drift",
+                "",
+                f"- drift_id: `{manifest.get('drift_id')}`",
+                f"- status: `{manifest.get('status')}`",
+                f"- total_abs_drift_to_consensus: `{summary.get('total_abs_drift_to_consensus')}`",
+                f"- candidate_agreement_status: `{summary.get('candidate_agreement_status')}`",
+                f"- drift_status: `{summary.get('drift_status')}`",
+                f"- recommended_action: `{actions.get('recommended_action')}`",
+                "",
+                "## Required Questions",
+                "",
+                (
+                    "1. 当前持仓和 consensus target 差异："
+                    f"`{summary.get('total_abs_drift_to_consensus')}`。"
+                ),
+                f"2. 最大差异资产：`{largest}`。",
+                f"3. 候选之间是否一致：`{summary.get('candidate_agreement_status')}`。",
+                f"4. drift 是否触发 manual review：`{actions.get('manual_review_required')}`。",
+                f"5. 当前建议：`{actions.get('recommended_action')}`。",
+                "6. broker_action_allowed: `False`，必须为否。",
+                "",
+                f"candidate_rows: `{len(matrix)}`",
+                "production_effect=none; broker_action=none.",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_execution_guardrails_markdown(
@@ -15187,35 +15180,39 @@ def render_execution_guardrails_markdown(
     stepwise: Mapping[str, Any],
     checks: Sequence[Mapping[str, Any]],
 ) -> str:
-    return "\n".join(
-        [
-            "# Dynamic Rescue Execution Guardrails",
-            "",
-            f"- guardrail_id: `{manifest.get('guardrail_id')}`",
-            f"- recommended_action: `{summary.get('recommended_action')}`",
-            f"- total_raw_adjustment: `{summary.get('total_raw_adjustment')}`",
-            f"- total_capped_adjustment: `{summary.get('total_capped_adjustment')}`",
-            f"- capped_count: `{summary.get('capped_count')}`",
-            f"- blocked_count: `{summary.get('blocked_count')}`",
-            f"- broker_action_allowed: `{summary.get('broker_action_allowed')}`",
-            (
-                "- order_ticket_generation_allowed: "
-                f"`{summary.get('order_ticket_generation_allowed')}`"
-            ),
-            "",
-            "## Required Questions",
-            "",
-            f"1. 原始建议调整幅度：`{summary.get('total_raw_adjustment')}`。",
-            f"2. capped 调整数量：`{summary.get('capped_count')}`。",
-            f"3. blocked 调整数量：`{summary.get('blocked_count')}`。",
-            f"4. 是否需要分步执行：`{stepwise.get('enabled')}`。",
-            "5. 是否允许生成订单：`False`，必须为否。",
-            f"6. 是否需要 owner approval：`{summary.get('owner_approval_required')}`，必须为是。",
-            "",
-            f"adjustment_rows: `{len(checks)}`",
-            "production_effect=none; broker_action=none.",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Dynamic Rescue Execution Guardrails",
+                "",
+                f"- guardrail_id: `{manifest.get('guardrail_id')}`",
+                f"- recommended_action: `{summary.get('recommended_action')}`",
+                f"- total_raw_adjustment: `{summary.get('total_raw_adjustment')}`",
+                f"- total_capped_adjustment: `{summary.get('total_capped_adjustment')}`",
+                f"- capped_count: `{summary.get('capped_count')}`",
+                f"- blocked_count: `{summary.get('blocked_count')}`",
+                f"- broker_action_allowed: `{summary.get('broker_action_allowed')}`",
+                (
+                    "- order_ticket_generation_allowed: "
+                    f"`{summary.get('order_ticket_generation_allowed')}`"
+                ),
+                "",
+                "## Required Questions",
+                "",
+                f"1. 原始建议调整幅度：`{summary.get('total_raw_adjustment')}`。",
+                f"2. capped 调整数量：`{summary.get('capped_count')}`。",
+                f"3. blocked 调整数量：`{summary.get('blocked_count')}`。",
+                f"4. 是否需要分步执行：`{stepwise.get('enabled')}`。",
+                "5. 是否允许生成订单：`False`，必须为否。",
+                "6. 是否需要 owner approval："
+                f"`{summary.get('owner_approval_required')}`，必须为是。",
+                "",
+                f"adjustment_rows: `{len(checks)}`",
+                "production_effect=none; broker_action=none.",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_owner_execution_checklist(decision: Mapping[str, Any]) -> str:
@@ -15255,42 +15252,42 @@ def render_manual_execution_review_markdown(
     guardrail_summary: Mapping[str, Any],
     decision: Mapping[str, Any],
 ) -> str:
-    return "\n".join(
-        [
-            "# Dynamic Rescue Manual Execution Review",
-            "",
-            f"- manual_review_id: `{manifest.get('manual_review_id')}`",
-            f"- snapshot_status: `{normalized.get('status')}`",
-            f"- exposure_status: `{exposure_manifest.get('status')}`",
-            f"- drift_status: `{drift_summary.get('drift_status')}`",
-            f"- guardrail_status: `{guardrail_manifest.get('status')}`",
-            f"- recommended_action: `{decision.get('recommended_action')}`",
-            f"- order_ticket_generated: `{decision.get('order_ticket_generated')}`",
-            f"- broker_action_allowed: `{decision.get('broker_action_allowed')}`",
-            f"- owner_approval_required: `{decision.get('owner_approval_required')}`",
-            "",
-            "## Required Questions",
-            "",
-            (
-                f"1. 当前组合状态：snapshot `{normalized.get('status')}`，"
-                f"exposure `{exposure_summary.get('status')}`。"
-            ),
-            (
-                "2. 和系统建议差异："
-                f"`{drift_summary.get('total_abs_drift_to_consensus')}`。"
-            ),
-            f"3. 是否存在过度集中：`{exposure_summary.get('status') == 'FAIL'}`。",
-            f"4. 是否建议调仓：`{decision.get('recommended_action')}`。",
-            "5. 如有建议，仅为 paper review，不是实际执行。",
-            "6. 是否生成订单：`False`，必须为否。",
-            "7. 是否允许 broker action：`False`，必须为否。",
-            "8. 下一步 owner 应复核 checklist 并选择 no_trade / monitor / paper review。",
-            "",
-            f"source_drift_id: `{drift_manifest.get('drift_id')}`",
-            f"source_guardrail_id: `{guardrail_summary.get('guardrail_id')}`",
-            "production_effect=none; broker_action=none.",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Dynamic Rescue Manual Execution Review",
+                "",
+                f"- manual_review_id: `{manifest.get('manual_review_id')}`",
+                f"- snapshot_status: `{normalized.get('status')}`",
+                f"- exposure_status: `{exposure_manifest.get('status')}`",
+                f"- drift_status: `{drift_summary.get('drift_status')}`",
+                f"- guardrail_status: `{guardrail_manifest.get('status')}`",
+                f"- recommended_action: `{decision.get('recommended_action')}`",
+                f"- order_ticket_generated: `{decision.get('order_ticket_generated')}`",
+                f"- broker_action_allowed: `{decision.get('broker_action_allowed')}`",
+                f"- owner_approval_required: `{decision.get('owner_approval_required')}`",
+                "",
+                "## Required Questions",
+                "",
+                (
+                    f"1. 当前组合状态：snapshot `{normalized.get('status')}`，"
+                    f"exposure `{exposure_summary.get('status')}`。"
+                ),
+                (f"2. 和系统建议差异：`{drift_summary.get('total_abs_drift_to_consensus')}`。"),
+                f"3. 是否存在过度集中：`{exposure_summary.get('status') == 'FAIL'}`。",
+                f"4. 是否建议调仓：`{decision.get('recommended_action')}`。",
+                "5. 如有建议，仅为 paper review，不是实际执行。",
+                "6. 是否生成订单：`False`，必须为否。",
+                "7. 是否允许 broker action：`False`，必须为否。",
+                "8. 下一步 owner 应复核 checklist 并选择 no_trade / monitor / paper review。",
+                "",
+                f"source_drift_id: `{drift_manifest.get('drift_id')}`",
+                f"source_guardrail_id: `{guardrail_summary.get('guardrail_id')}`",
+                "production_effect=none; broker_action=none.",
+            ]
+        )
+        + "\n"
+    )
 
 
 def render_manual_execution_reader_brief(
@@ -15300,21 +15297,24 @@ def render_manual_execution_reader_brief(
     guardrail: Mapping[str, Any],
     decision: Mapping[str, Any],
 ) -> str:
-    return "\n".join(
-        [
-            "## Dynamic Rescue Manual Execution Review",
-            "",
-            f"- snapshot_status: `{snapshot.get('status')}`",
-            f"- exposure_status: `{exposure.get('status')}`",
-            f"- drift_status: `{drift.get('drift_status')}`",
-            f"- guardrail_status: `{guardrail.get('recommended_action')}`",
-            f"- recommended_action: `{decision.get('recommended_action')}`",
-            f"- owner_approval_required: `{decision.get('owner_approval_required')}`",
-            f"- broker_action_allowed: `{decision.get('broker_action_allowed')}`",
-            "",
-            "order_ticket_generated=false; production_effect=none.",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "## Dynamic Rescue Manual Execution Review",
+                "",
+                f"- snapshot_status: `{snapshot.get('status')}`",
+                f"- exposure_status: `{exposure.get('status')}`",
+                f"- drift_status: `{drift.get('drift_status')}`",
+                f"- guardrail_status: `{guardrail.get('recommended_action')}`",
+                f"- recommended_action: `{decision.get('recommended_action')}`",
+                f"- owner_approval_required: `{decision.get('owner_approval_required')}`",
+                f"- broker_action_allowed: `{decision.get('broker_action_allowed')}`",
+                "",
+                "order_ticket_generated=false; production_effect=none.",
+            ]
+        )
+        + "\n"
+    )
 
 
 def _max_weight_symbol(weights: Mapping[str, Any]) -> tuple[str, float]:
@@ -15371,8 +15371,7 @@ def _drift_status(total_abs: float, config: Mapping[str, Any]) -> str:
 
 def _largest_consensus_deltas(deltas: Mapping[str, Any]) -> list[dict[str, Any]]:
     rows = [
-        {"symbol": symbol, "delta": round(_float(delta), 6)}
-        for symbol, delta in deltas.items()
+        {"symbol": symbol, "delta": round(_float(delta), 6)} for symbol, delta in deltas.items()
     ]
     rows.sort(key=lambda row: abs(_float(row["delta"])), reverse=True)
     return rows[:3]
@@ -17098,7 +17097,11 @@ def _cache_file_inventory(path: Path, *, file_role: str) -> dict[str, Any]:
     symbol_column = (
         "ticker"
         if "ticker" in frame
-        else "symbol" if "symbol" in frame else "series" if "series" in frame else ""
+        else "symbol"
+        if "symbol" in frame
+        else "series"
+        if "series" in frame
+        else ""
     )
     if symbol_column:
         summary["symbols"] = sorted(str(value) for value in frame[symbol_column].dropna().unique())
@@ -18668,23 +18671,17 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
         },
         {
             "pointer_name": "latest_real_execution_owner_review",
-            "pattern": (
-                "real_execution_owner_review/*/real_execution_owner_review_manifest.json"
-            ),
+            "pattern": ("real_execution_owner_review/*/real_execution_owner_review_manifest.json"),
             "id_keys": ("review_id",),
         },
         {
             "pointer_name": "latest_real_snapshot_paper_action",
-            "pattern": (
-                "real_snapshot_paper_action/*/real_snapshot_paper_action_manifest.json"
-            ),
+            "pattern": ("real_snapshot_paper_action/*/real_snapshot_paper_action_manifest.json"),
             "id_keys": ("paper_action_id",),
         },
         {
             "pointer_name": "latest_weekly_real_snapshot_review",
-            "pattern": (
-                "weekly_real_snapshot_review/*/weekly_real_snapshot_review_manifest.json"
-            ),
+            "pattern": ("weekly_real_snapshot_review/*/weekly_real_snapshot_review_manifest.json"),
             "id_keys": ("weekly_real_review_id",),
         },
         {
@@ -18791,6 +18788,56 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pointer_name": "latest_replay_forward_bridge",
             "pattern": "replay_forward_bridge/*/bridge_manifest.json",
             "id_keys": ("bridge_id",),
+        },
+        {
+            "pointer_name": "latest_no_promotion_review",
+            "pattern": "no_promotion_review/*/no_promotion_review_manifest.json",
+            "id_keys": ("review_id",),
+        },
+        {
+            "pointer_name": "latest_near_miss_candidates",
+            "pattern": "near_miss_candidates/*/near_miss_manifest.json",
+            "id_keys": ("near_miss_id",),
+        },
+        {
+            "pointer_name": "latest_cash_buffer_attribution",
+            "pattern": "cash_buffer_attribution/*/cash_buffer_attribution_manifest.json",
+            "id_keys": ("attribution_id",),
+        },
+        {
+            "pointer_name": "latest_search_coverage_gap",
+            "pattern": "search_coverage_gap/*/search_coverage_gap_manifest.json",
+            "id_keys": ("coverage_gap_id",),
+        },
+        {
+            "pointer_name": "latest_targeted_search_v3",
+            "pattern": "targeted_search_v3/*/targeted_search_v3_manifest.json",
+            "id_keys": ("v3_matrix_id",),
+        },
+        {
+            "pointer_name": "latest_targeted_v3_backfill",
+            "pattern": "targeted_v3_backfill/*/targeted_v3_backfill_manifest.json",
+            "id_keys": ("v3_backfill_id",),
+        },
+        {
+            "pointer_name": "latest_near_miss_ab_comparison",
+            "pattern": "near_miss_ab_comparison/*/near_miss_ab_manifest.json",
+            "id_keys": ("ab_id",),
+        },
+        {
+            "pointer_name": "latest_promotion_threshold_sensitivity",
+            "pattern": ("promotion_threshold_sensitivity/*/threshold_sensitivity_manifest.json"),
+            "id_keys": ("sensitivity_id",),
+        },
+        {
+            "pointer_name": "latest_candidate_promotion_v2",
+            "pattern": "candidate_promotion_v2/*/candidate_promotion_v2_manifest.json",
+            "id_keys": ("promotion_v2_id",),
+        },
+        {
+            "pointer_name": "latest_next_formal_or_search_plan",
+            "pattern": "next_formal_or_search_plan/*/next_formal_or_search_manifest.json",
+            "id_keys": ("plan_id",),
         },
     )
 

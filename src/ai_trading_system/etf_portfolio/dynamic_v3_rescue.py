@@ -795,6 +795,24 @@ def build_dynamic_v3_rescue_validation_report(
         all(report_id in registry_text for report_id in outcome_loop_report_ids),
         "report registry exposes outcome update loop artifacts",
     )
+    no_promotion_v3_report_ids = (
+        "etf_dynamic_v3_no_promotion_review",
+        "etf_dynamic_v3_near_miss_candidates",
+        "etf_dynamic_v3_cash_buffer_attribution",
+        "etf_dynamic_v3_search_coverage_gap",
+        "etf_dynamic_v3_targeted_search_v3",
+        "etf_dynamic_v3_targeted_v3_backfill",
+        "etf_dynamic_v3_near_miss_ab_comparison",
+        "etf_dynamic_v3_promotion_threshold_sensitivity",
+        "etf_dynamic_v3_candidate_promotion_v2",
+        "etf_dynamic_v3_next_formal_or_search_plan",
+    )
+    _append_check(
+        checks,
+        "no_promotion_v3_report_registry_visibility",
+        all(report_id in registry_text for report_id in no_promotion_v3_report_ids),
+        "report registry exposes no-promotion diagnostics and targeted search v3 artifacts",
+    )
     reader_text = _safe_read_text(reader_brief_path)
     _append_check(
         checks,
@@ -808,6 +826,13 @@ def build_dynamic_v3_rescue_validation_report(
         "outcome_update_review_status" in reader_text
         and "forward_outcome_decision_action" in reader_text,
         "Reader Brief exposes outcome update loop summary fields",
+    )
+    _append_check(
+        checks,
+        "no_promotion_v3_reader_brief_integration_available",
+        "candidate_promotion_v2_decision" in reader_text
+        and "next_formal_or_search_plan_decision" in reader_text,
+        "Reader Brief exposes no-promotion v3 promotion and next-plan fields",
     )
     cli_text = _safe_read_text(cli_path)
     _append_check(
@@ -830,6 +855,26 @@ def build_dynamic_v3_rescue_validation_report(
             )
         ),
         "CLI exposes outcome update loop namespaces",
+    )
+    _append_check(
+        checks,
+        "no_promotion_v3_cli_namespace_available",
+        all(
+            command in cli_text
+            for command in (
+                "no-promotion-review",
+                "near-miss-candidates",
+                "cash-buffer-attribution",
+                "search-coverage-gap",
+                "targeted-search-v3",
+                "targeted-v3-backfill",
+                "near-miss-ab-comparison",
+                "promotion-threshold-sensitivity",
+                "candidate-promotion-v2",
+                "next-formal-or-search-plan",
+            )
+        ),
+        "CLI exposes no-promotion diagnostics and targeted search v3 namespaces",
     )
     failed = [check for check in checks if check["status"] != "PASS"]
     payload = {

@@ -1648,6 +1648,46 @@ dynamic_v3_owner_research_decision_pack_app = typer.Typer(
     help="Dynamic v3 rescue owner research decision pack workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_no_promotion_review_app = typer.Typer(
+    help="Dynamic v3 rescue no-promotion diagnostics workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_near_miss_candidates_app = typer.Typer(
+    help="Dynamic v3 rescue near-miss candidate extraction workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_cash_buffer_attribution_app = typer.Typer(
+    help="Dynamic v3 rescue cash buffer attribution workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_search_coverage_gap_app = typer.Typer(
+    help="Dynamic v3 rescue search coverage gap analysis workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_targeted_search_v3_app = typer.Typer(
+    help="Dynamic v3 rescue targeted search v3 matrix workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_targeted_v3_backfill_app = typer.Typer(
+    help="Dynamic v3 rescue targeted v3 historical backfill workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_near_miss_ab_comparison_app = typer.Typer(
+    help="Dynamic v3 rescue near-miss A/B comparison workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_promotion_threshold_sensitivity_app = typer.Typer(
+    help="Dynamic v3 rescue promotion threshold sensitivity workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_candidate_promotion_v2_app = typer.Typer(
+    help="Dynamic v3 rescue candidate promotion decision v2 workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_next_formal_or_search_plan_app = typer.Typer(
+    help="Dynamic v3 rescue next formal method or search plan workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2249,6 +2289,34 @@ dynamic_v3_rescue_app.add_typer(
     dynamic_v3_owner_research_decision_pack_app,
     name="owner-research-decision-pack",
 )
+dynamic_v3_rescue_app.add_typer(dynamic_v3_no_promotion_review_app, name="no-promotion-review")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_near_miss_candidates_app,
+    name="near-miss-candidates",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_cash_buffer_attribution_app,
+    name="cash-buffer-attribution",
+)
+dynamic_v3_rescue_app.add_typer(dynamic_v3_search_coverage_gap_app, name="search-coverage-gap")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_targeted_search_v3_app, name="targeted-search-v3")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_targeted_v3_backfill_app, name="targeted-v3-backfill")
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_near_miss_ab_comparison_app,
+    name="near-miss-ab-comparison",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_promotion_threshold_sensitivity_app,
+    name="promotion-threshold-sensitivity",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_candidate_promotion_v2_app,
+    name="candidate-promotion-v2",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_next_formal_or_search_plan_app,
+    name="next-formal-or-search-plan",
+)
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_experiment_matrix_app, name="experiment-matrix")
@@ -2614,8 +2682,7 @@ def baseline_review_eligibility_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="eligibility JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
-    / "eligibility",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "eligibility",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -2682,8 +2749,7 @@ def baseline_review_matrix_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence matrix JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
-    / "matrix",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "matrix",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -3330,10 +3396,7 @@ def trend_calibration_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3950,10 +4013,7 @@ def dynamic_robustness_report_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4178,10 +4238,7 @@ def dynamic_rescue_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4716,10 +4773,7 @@ def dynamic_v3_rescue_real_evaluate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -4935,10 +4989,7 @@ def dynamic_v3_rescue_failure_attribution_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认使用 real evaluation end date。"),
@@ -5238,10 +5289,7 @@ def dynamic_v3_data_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data audit artifact root。"),
@@ -5318,10 +5366,7 @@ def dynamic_v3_data_provenance_inspect_price_cache_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="data provenance artifact root。"),
@@ -5354,10 +5399,7 @@ def dynamic_v3_data_provenance_repair_price_manifest_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
     try:
@@ -5384,10 +5426,7 @@ def dynamic_v3_data_provenance_validate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """校验 TRADING-113 price cache provenance。"""
     payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
@@ -5582,10 +5621,7 @@ def dynamic_v3_sweep_run_profile_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -5636,10 +5672,7 @@ def dynamic_v3_injection_audit_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="injection audit artifact root。"),
@@ -5745,10 +5778,7 @@ def dynamic_v3_sweep_run_command(
             "--rates-path",
             help="real evaluator FRED rates cache for validate-data gate。",
         ),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option(
@@ -13663,10 +13693,7 @@ def dynamic_v3_smoothed_daily_emission_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -13767,10 +13794,7 @@ def dynamic_v3_smoothed_outcome_due_scan_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -13862,10 +13886,7 @@ def dynamic_v3_smoothed_outcome_update_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -13892,8 +13913,7 @@ def dynamic_v3_smoothed_outcome_update_run_command(
     typer.echo(f"updated_windows={summary['updated_count']}")
     typer.echo(f"skipped_windows={summary['skipped_count']}")
     typer.echo(
-        "available_forward_events_after_update="
-        f"{summary['available_forward_events_after_update']}"
+        f"available_forward_events_after_update={summary['available_forward_events_after_update']}"
     )
     typer.echo("future_data_used=false")
     typer.echo("broker_action_allowed=false")
@@ -14059,10 +14079,7 @@ def dynamic_v3_smoothed_forward_weekly_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     data_quality_output_path: Annotated[
         Path | None,
         typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
@@ -14188,10 +14205,7 @@ def dynamic_v3_smoothed_data_preflight_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """运行 TRADING-276 smoothed data freshness preflight。"""
     result = system_target.run_smoothed_data_preflight(
@@ -14558,10 +14572,7 @@ def dynamic_v3_smoothed_bootstrap_retry_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
 ) -> None:
     """运行 TRADING-280 smoothed bootstrap retry runner。"""
     result = system_target.run_smoothed_bootstrap_retry(
@@ -16156,6 +16167,808 @@ def dynamic_v3_validate_owner_research_decision_pack_command(
 ) -> None:
     payload = weight_batch_search.validate_owner_research_decision_pack_artifact(
         owner_pack_id=owner_pack_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_no_promotion_review_app.command("run")
+def dynamic_v3_no_promotion_review_run_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="source scorecard id。")],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="no-promotion review artifact root。"),
+    ] = weight_batch_search.DEFAULT_NO_PROMOTION_REVIEW_DIR,
+) -> None:
+    result = weight_batch_search.run_no_promotion_review(
+        scorecard_id=scorecard_id,
+        scorecard_dir=scorecard_dir,
+        output_dir=output_dir,
+    )
+    summary = result["no_promotion_reason_summary"]
+    typer.echo(f"review_id={result['review_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"promoted_candidate_count={summary['promoted_candidate_count']}")
+    typer.echo(f"gate_assessment={summary['gate_assessment']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_no_promotion_review_app.command("report")
+def dynamic_v3_no_promotion_review_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest review。")
+    ] = False,
+    review_id: Annotated[str | None, typer.Option("--review-id", help="review id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="no-promotion review artifact root。"),
+    ] = weight_batch_search.DEFAULT_NO_PROMOTION_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.no_promotion_review_report_payload(
+        review_id=review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("no_promotion_reason_summary"))
+    typer.echo(f"review_id={payload['review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"gate_assessment={summary.get('gate_assessment')}")
+    typer.echo(f"report_path={payload['no_promotion_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-no-promotion-review")
+def dynamic_v3_validate_no_promotion_review_command(
+    review_id: Annotated[str, typer.Option("--review-id", help="review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="no-promotion review artifact root。"),
+    ] = weight_batch_search.DEFAULT_NO_PROMOTION_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.validate_no_promotion_review_artifact(
+        review_id=review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_near_miss_candidates_app.command("extract")
+def dynamic_v3_near_miss_candidates_extract_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="source scorecard id。")],
+    no_promotion_review_id: Annotated[
+        str,
+        typer.Option("--no-promotion-review-id", help="no-promotion review id。"),
+    ],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    review_dir: Annotated[
+        Path,
+        typer.Option("--review-dir", help="no-promotion review artifact root。"),
+    ] = weight_batch_search.DEFAULT_NO_PROMOTION_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+) -> None:
+    result = weight_batch_search.extract_near_miss_candidates(
+        scorecard_id=scorecard_id,
+        no_promotion_review_id=no_promotion_review_id,
+        scorecard_dir=scorecard_dir,
+        review_dir=review_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"near_miss_id={result['near_miss_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"candidate_count={result['manifest']['candidate_count']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_near_miss_candidates_app.command("report")
+def dynamic_v3_near_miss_candidates_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest near-miss。")
+    ] = False,
+    near_miss_id: Annotated[
+        str | None, typer.Option("--near-miss-id", help="near-miss id。")
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+) -> None:
+    payload = weight_batch_search.near_miss_candidates_report_payload(
+        near_miss_id=near_miss_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"near_miss_id={payload['near_miss_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo(f"report_path={payload['near_miss_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-near-miss-candidates")
+def dynamic_v3_validate_near_miss_candidates_command(
+    near_miss_id: Annotated[str, typer.Option("--near-miss-id", help="near-miss id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+) -> None:
+    payload = weight_batch_search.validate_near_miss_candidates_artifact(
+        near_miss_id=near_miss_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_cash_buffer_attribution_app.command("run")
+def dynamic_v3_cash_buffer_attribution_run_command(
+    variant_id: Annotated[str, typer.Option("--variant-id", help="cash buffer variant id。")],
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="source scorecard id。")],
+    near_miss_id: Annotated[str, typer.Option("--near-miss-id", help="near-miss id。")],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    near_miss_dir: Annotated[
+        Path,
+        typer.Option("--near-miss-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cash buffer attribution root。"),
+    ] = weight_batch_search.DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+) -> None:
+    result = weight_batch_search.run_cash_buffer_attribution(
+        variant_id=variant_id,
+        scorecard_id=scorecard_id,
+        near_miss_id=near_miss_id,
+        scorecard_dir=scorecard_dir,
+        near_miss_dir=near_miss_dir,
+        output_dir=output_dir,
+    )
+    failure = result["cash_buffer_failure_reason"]
+    typer.echo(f"attribution_id={result['attribution_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"primary_failure_reason={failure['primary_failure_reason']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_cash_buffer_attribution_app.command("report")
+def dynamic_v3_cash_buffer_attribution_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest attribution。")
+    ] = False,
+    attribution_id: Annotated[
+        str | None,
+        typer.Option("--attribution-id", help="cash buffer attribution id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cash buffer attribution root。"),
+    ] = weight_batch_search.DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.cash_buffer_attribution_report_payload(
+        attribution_id=attribution_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    failure = _mapping_obj(payload.get("cash_buffer_failure_reason"))
+    typer.echo(f"attribution_id={payload['attribution_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"primary_failure_reason={failure.get('primary_failure_reason')}")
+    typer.echo(f"report_path={payload['cash_buffer_attribution_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-cash-buffer-attribution")
+def dynamic_v3_validate_cash_buffer_attribution_command(
+    attribution_id: Annotated[str, typer.Option("--attribution-id", help="attribution id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cash buffer attribution root。"),
+    ] = weight_batch_search.DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.validate_cash_buffer_attribution_artifact(
+        attribution_id=attribution_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_search_coverage_gap_app.command("run")
+def dynamic_v3_search_coverage_gap_run_command(
+    search_space_id: Annotated[str, typer.Option("--search-space-id", help="search space id。")],
+    near_miss_id: Annotated[str, typer.Option("--near-miss-id", help="near-miss id。")],
+    cash_buffer_attribution_id: Annotated[
+        str,
+        typer.Option("--cash-buffer-attribution-id", help="cash buffer attribution id。"),
+    ],
+    search_space_dir: Annotated[
+        Path,
+        typer.Option("--search-space-dir", help="weight search space artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    near_miss_dir: Annotated[
+        Path,
+        typer.Option("--near-miss-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    attribution_dir: Annotated[
+        Path,
+        typer.Option("--attribution-dir", help="cash buffer attribution root。"),
+    ] = weight_batch_search.DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="search coverage gap root。"),
+    ] = weight_batch_search.DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+) -> None:
+    result = weight_batch_search.run_search_coverage_gap(
+        search_space_id=search_space_id,
+        near_miss_id=near_miss_id,
+        cash_buffer_attribution_id=cash_buffer_attribution_id,
+        search_space_dir=search_space_dir,
+        near_miss_dir=near_miss_dir,
+        attribution_dir=attribution_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"coverage_gap_id={result['coverage_gap_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(
+        "recommended_focus="
+        + ",".join(_texts(result["targeted_v3_recommendations"].get("recommended_focus")))
+    )
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_search_coverage_gap_app.command("report")
+def dynamic_v3_search_coverage_gap_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest coverage gap。")
+    ] = False,
+    coverage_gap_id: Annotated[
+        str | None, typer.Option("--coverage-gap-id", help="coverage gap id。")
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="search coverage gap root。"),
+    ] = weight_batch_search.DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+) -> None:
+    payload = weight_batch_search.search_coverage_gap_report_payload(
+        coverage_gap_id=coverage_gap_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"coverage_gap_id={payload['coverage_gap_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"report_path={payload['search_coverage_gap_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-search-coverage-gap")
+def dynamic_v3_validate_search_coverage_gap_command(
+    coverage_gap_id: Annotated[str, typer.Option("--coverage-gap-id", help="coverage gap id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="search coverage gap root。"),
+    ] = weight_batch_search.DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+) -> None:
+    payload = weight_batch_search.validate_search_coverage_gap_artifact(
+        coverage_gap_id=coverage_gap_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_targeted_search_v3_app.command("build")
+def dynamic_v3_targeted_search_v3_build_command(
+    coverage_gap_id: Annotated[str, typer.Option("--coverage-gap-id", help="coverage gap id。")],
+    coverage_gap_dir: Annotated[
+        Path,
+        typer.Option("--coverage-gap-dir", help="search coverage gap root。"),
+    ] = weight_batch_search.DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+    near_miss_dir: Annotated[
+        Path,
+        typer.Option("--near-miss-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+) -> None:
+    result = weight_batch_search.build_targeted_search_v3(
+        coverage_gap_id=coverage_gap_id,
+        coverage_gap_dir=coverage_gap_dir,
+        near_miss_dir=near_miss_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"v3_matrix_id={result['v3_matrix_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"variant_count={result['manifest']['variant_count']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_targeted_search_v3_app.command("report")
+def dynamic_v3_targeted_search_v3_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest v3 matrix。")
+    ] = False,
+    v3_matrix_id: Annotated[
+        str | None, typer.Option("--v3-matrix-id", help="v3 matrix id。")
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+) -> None:
+    payload = weight_batch_search.targeted_search_v3_report_payload(
+        v3_matrix_id=v3_matrix_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"v3_matrix_id={payload['v3_matrix_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant_count={payload['variant_count']}")
+    typer.echo(f"report_path={payload['targeted_search_v3_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-targeted-search-v3")
+def dynamic_v3_validate_targeted_search_v3_command(
+    v3_matrix_id: Annotated[str, typer.Option("--v3-matrix-id", help="v3 matrix id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+) -> None:
+    payload = weight_batch_search.validate_targeted_search_v3_artifact(
+        v3_matrix_id=v3_matrix_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_targeted_v3_backfill_app.command("run")
+def dynamic_v3_targeted_v3_backfill_run_command(
+    v3_matrix_id: Annotated[str, typer.Option("--v3-matrix-id", help="v3 matrix id。")],
+    v3_matrix_dir: Annotated[
+        Path,
+        typer.Option("--v3-matrix-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+    baseline_backfill_dir: Annotated[
+        Path,
+        typer.Option("--baseline-backfill-dir", help="paper shadow backfill root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    price_cache_path: Annotated[
+        Path | None,
+        typer.Option("--price-cache-path", help="price cache override。"),
+    ] = None,
+    rates_cache_path: Annotated[
+        Path,
+        typer.Option("--rates-cache-path", help="rates cache path。"),
+    ] = system_target.DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    result = weight_batch_search.run_targeted_v3_backfill(
+        v3_matrix_id=v3_matrix_id,
+        v3_matrix_dir=v3_matrix_dir,
+        baseline_backfill_dir=baseline_backfill_dir,
+        output_dir=output_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"v3_backfill_id={result['v3_backfill_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo(f"variants_completed={manifest['variants_completed']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_targeted_v3_backfill_app.command("resume")
+def dynamic_v3_targeted_v3_backfill_resume_command(
+    v3_backfill_id: Annotated[str, typer.Option("--v3-backfill-id", help="v3 backfill id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+) -> None:
+    result = weight_batch_search.resume_targeted_v3_backfill(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=output_dir,
+    )
+    progress = _mapping_obj(result["progress"])
+    typer.echo(f"v3_backfill_id={result['v3_backfill_id']}")
+    typer.echo(f"resume_status={result['resume_status']}")
+    typer.echo(f"variants_completed={progress.get('variants_completed')}")
+
+
+@dynamic_v3_targeted_v3_backfill_app.command("report")
+def dynamic_v3_targeted_v3_backfill_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest v3 backfill。")
+    ] = False,
+    v3_backfill_id: Annotated[
+        str | None, typer.Option("--v3-backfill-id", help="v3 backfill id。")
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.targeted_v3_backfill_report_payload(
+        v3_backfill_id=v3_backfill_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"v3_backfill_id={payload['v3_backfill_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"report_path={payload['targeted_v3_backfill_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-targeted-v3-backfill")
+def dynamic_v3_validate_targeted_v3_backfill_command(
+    v3_backfill_id: Annotated[str, typer.Option("--v3-backfill-id", help="v3 backfill id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.validate_targeted_v3_backfill_artifact(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_near_miss_ab_comparison_app.command("run")
+def dynamic_v3_near_miss_ab_comparison_run_command(
+    v3_backfill_id: Annotated[str, typer.Option("--v3-backfill-id", help="v3 backfill id。")],
+    near_miss_id: Annotated[str, typer.Option("--near-miss-id", help="near-miss id。")],
+    v3_backfill_dir: Annotated[
+        Path,
+        typer.Option("--v3-backfill-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Annotated[
+        Path,
+        typer.Option("--v3-matrix-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+    near_miss_dir: Annotated[
+        Path,
+        typer.Option("--near-miss-dir", help="near-miss artifact root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard artifact root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="A/B comparison root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+) -> None:
+    result = weight_batch_search.run_near_miss_ab_comparison(
+        v3_backfill_id=v3_backfill_id,
+        near_miss_id=near_miss_id,
+        v3_backfill_dir=v3_backfill_dir,
+        v3_matrix_dir=v3_matrix_dir,
+        near_miss_dir=near_miss_dir,
+        scorecard_dir=scorecard_dir,
+        output_dir=output_dir,
+    )
+    summary = result["ab_winner_summary"]
+    typer.echo(f"ab_id={result['ab_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"best_v3_variant={summary['best_v3_variant']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_near_miss_ab_comparison_app.command("report")
+def dynamic_v3_near_miss_ab_comparison_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest A/B。")] = False,
+    ab_id: Annotated[str | None, typer.Option("--ab-id", help="A/B id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="A/B comparison root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+) -> None:
+    payload = weight_batch_search.near_miss_ab_comparison_report_payload(
+        ab_id=ab_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("ab_winner_summary"))
+    typer.echo(f"ab_id={payload['ab_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"best_v3_variant={summary.get('best_v3_variant')}")
+    typer.echo(f"report_path={payload['near_miss_ab_comparison_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-near-miss-ab-comparison")
+def dynamic_v3_validate_near_miss_ab_comparison_command(
+    ab_id: Annotated[str, typer.Option("--ab-id", help="A/B id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="A/B comparison root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+) -> None:
+    payload = weight_batch_search.validate_near_miss_ab_comparison_artifact(
+        ab_id=ab_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_promotion_threshold_sensitivity_app.command("run")
+def dynamic_v3_promotion_threshold_sensitivity_run_command(
+    v3_backfill_id: Annotated[
+        str,
+        typer.Option("--v3-backfill-id", help="targeted v3 backfill id。"),
+    ],
+    ab_id: Annotated[str, typer.Option("--ab-id", help="A/B id。")],
+    v3_backfill_dir: Annotated[
+        Path,
+        typer.Option("--v3-backfill-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Annotated[
+        Path,
+        typer.Option("--v3-matrix-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+    ab_dir: Annotated[
+        Path,
+        typer.Option("--ab-dir", help="A/B comparison root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="threshold sensitivity root。"),
+    ] = weight_batch_search.DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+) -> None:
+    result = weight_batch_search.run_promotion_threshold_sensitivity(
+        v3_backfill_id=v3_backfill_id,
+        ab_id=ab_id,
+        v3_backfill_dir=v3_backfill_dir,
+        v3_matrix_dir=v3_matrix_dir,
+        ab_dir=ab_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"sensitivity_id={result['sensitivity_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"scenario_count={len(result['threshold_scenarios'])}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_promotion_threshold_sensitivity_app.command("report")
+def dynamic_v3_promotion_threshold_sensitivity_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest sensitivity。")
+    ] = False,
+    sensitivity_id: Annotated[
+        str | None,
+        typer.Option("--sensitivity-id", help="threshold sensitivity id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="threshold sensitivity root。"),
+    ] = weight_batch_search.DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+) -> None:
+    payload = weight_batch_search.promotion_threshold_sensitivity_report_payload(
+        sensitivity_id=sensitivity_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    impact = _mapping_obj(payload.get("threshold_candidate_impact"))
+    typer.echo(f"sensitivity_id={payload['sensitivity_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"relaxed_only_count={impact.get('relaxed_only_count')}")
+    typer.echo(f"report_path={payload['threshold_sensitivity_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-promotion-threshold-sensitivity")
+def dynamic_v3_validate_promotion_threshold_sensitivity_command(
+    sensitivity_id: Annotated[
+        str,
+        typer.Option("--sensitivity-id", help="threshold sensitivity id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="threshold sensitivity root。"),
+    ] = weight_batch_search.DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+) -> None:
+    payload = weight_batch_search.validate_promotion_threshold_sensitivity_artifact(
+        sensitivity_id=sensitivity_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_candidate_promotion_v2_app.command("run")
+def dynamic_v3_candidate_promotion_v2_run_command(
+    v3_backfill_id: Annotated[
+        str,
+        typer.Option("--v3-backfill-id", help="targeted v3 backfill id。"),
+    ],
+    ab_id: Annotated[str, typer.Option("--ab-id", help="A/B id。")],
+    sensitivity_id: Annotated[
+        str,
+        typer.Option("--sensitivity-id", help="threshold sensitivity id。"),
+    ],
+    v3_backfill_dir: Annotated[
+        Path,
+        typer.Option("--v3-backfill-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Annotated[
+        Path,
+        typer.Option("--v3-matrix-dir", help="targeted search v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+    ab_dir: Annotated[
+        Path,
+        typer.Option("--ab-dir", help="A/B comparison root。"),
+    ] = weight_batch_search.DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+    sensitivity_dir: Annotated[
+        Path,
+        typer.Option("--sensitivity-dir", help="threshold sensitivity root。"),
+    ] = weight_batch_search.DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate promotion v2 root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+) -> None:
+    result = weight_batch_search.run_candidate_promotion_v2(
+        v3_backfill_id=v3_backfill_id,
+        ab_id=ab_id,
+        sensitivity_id=sensitivity_id,
+        v3_backfill_dir=v3_backfill_dir,
+        v3_matrix_dir=v3_matrix_dir,
+        ab_dir=ab_dir,
+        sensitivity_dir=sensitivity_dir,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(result.get("promotion_v2_decision"))
+    typer.echo(f"promotion_v2_id={result['promotion_v2_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo(f"promoted_count={decision.get('promoted_count')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_candidate_promotion_v2_app.command("report")
+def dynamic_v3_candidate_promotion_v2_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest promotion v2。")
+    ] = False,
+    promotion_v2_id: Annotated[
+        str | None,
+        typer.Option("--promotion-v2-id", help="candidate promotion v2 id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate promotion v2 root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+) -> None:
+    payload = weight_batch_search.candidate_promotion_v2_report_payload(
+        promotion_v2_id=promotion_v2_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("promotion_v2_decision"))
+    typer.echo(f"promotion_v2_id={payload['promotion_v2_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo(f"report_path={payload['candidate_promotion_v2_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-candidate-promotion-v2")
+def dynamic_v3_validate_candidate_promotion_v2_command(
+    promotion_v2_id: Annotated[
+        str,
+        typer.Option("--promotion-v2-id", help="candidate promotion v2 id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate promotion v2 root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+) -> None:
+    payload = weight_batch_search.validate_candidate_promotion_v2_artifact(
+        promotion_v2_id=promotion_v2_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_next_formal_or_search_plan_app.command("run")
+def dynamic_v3_next_formal_or_search_plan_run_command(
+    promotion_v2_id: Annotated[
+        str,
+        typer.Option("--promotion-v2-id", help="candidate promotion v2 id。"),
+    ],
+    promotion_v2_dir: Annotated[
+        Path,
+        typer.Option("--promotion-v2-dir", help="candidate promotion v2 root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="next formal/search plan root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR,
+) -> None:
+    result = weight_batch_search.run_next_formal_or_search_plan(
+        promotion_v2_id=promotion_v2_id,
+        promotion_v2_dir=promotion_v2_dir,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(result.get("next_plan_decision"))
+    typer.echo(f"plan_id={result['plan_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_next_formal_or_search_plan_app.command("report")
+def dynamic_v3_next_formal_or_search_plan_report_command(
+    latest: Annotated[
+        bool, typer.Option("--latest/--no-latest", help="读取 latest next plan。")
+    ] = False,
+    plan_id: Annotated[str | None, typer.Option("--plan-id", help="next plan id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="next formal/search plan root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR,
+) -> None:
+    payload = weight_batch_search.next_formal_or_search_plan_report_payload(
+        plan_id=plan_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("next_plan_decision"))
+    typer.echo(f"plan_id={payload['plan_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo(f"report_path={payload['next_formal_or_search_plan_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-next-formal-or-search-plan")
+def dynamic_v3_validate_next_formal_or_search_plan_command(
+    plan_id: Annotated[str, typer.Option("--plan-id", help="next plan id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="next formal/search plan root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR,
+) -> None:
+    payload = weight_batch_search.validate_next_formal_or_search_plan_artifact(
+        plan_id=plan_id,
         output_dir=output_dir,
     )
     typer.echo(f"status={payload['status']}")
@@ -22903,10 +23716,7 @@ def dynamic_shadow_update_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     registry_path: Annotated[
         Path,
         typer.Option("--registry-path", help="dynamic shadow candidate registry path。"),
@@ -24583,8 +25393,7 @@ def governance_summary_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出目录。"),
-    ] = DEFAULT_ETF_REPORT_DIR
-    / "governance",
+    ] = DEFAULT_ETF_REPORT_DIR / "governance",
 ) -> None:
     """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
     config = load_etf_config_bundle()
@@ -24981,9 +25790,7 @@ def experiments_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT
-    / "config"
-    / "report_registry.yaml",
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
 ) -> None:
     """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
     generated = datetime.now(UTC)
@@ -25190,9 +25997,7 @@ def forward_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT
-    / "config"
-    / "report_registry.yaml",
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
     output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
         DEFAULT_ETF_FORWARD_REPORT_DIR / "validation"
     ),
@@ -27372,11 +28177,7 @@ def p2_derive_edgar_events_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "sec_edgar"
-    / "filing_timeline.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Canonical edgar_text_events 输出路径，默认读取 p2.yaml。"),
@@ -27421,27 +28222,15 @@ def p2_fetch_edgar_text_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "sec_edgar"
-    / "filing_timeline.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
     document_dir: Annotated[
         Path,
         typer.Option(help="SEC filing 文本缓存目录。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents",
     output_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index 输出路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
     manifest_path: Annotated[Path, typer.Option(help="P2 source manifest 输出路径。")] = (
         DEFAULT_ETF_P2_MANIFEST_PATH
     ),
@@ -27495,11 +28284,7 @@ def p2_edgar_topics_command(
     input_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index CSV。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "etf_portfolio"
-    / "p2"
-    / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
     date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
     output_dir: Annotated[Path, typer.Option(help="EDGAR topic audit 输出目录。")] = (
         DEFAULT_ETF_REPORT_DIR / "p2"

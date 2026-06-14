@@ -4054,6 +4054,221 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_no_promotion_review
+    title: ETF Dynamic v3 No-Promotion Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue no-promotion-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/no_promotion_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/no_promotion_reason_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/gate_failure_distribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/score_component_failure_matrix.json
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/no_promotion_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/no_promotion_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-306 diagnoses why the expanded weight search produced no formal
+      promotion candidate before any new search space is generated.
+    owner_action: review_no_promotion_reasons_before_near_miss_extraction
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_near_miss_candidates
+    title: ETF Dynamic v3 Near-Miss Candidates
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue near-miss-candidates report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_candidates.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_family_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/near_miss_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_candidates/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-307 records candidates close enough to promotion gates to justify
+      targeted follow-up without treating them as promoted methods.
+    owner_action: review_near_miss_list_before_cash_buffer_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_cash_buffer_attribution
+    title: ETF Dynamic v3 Cash Buffer Attribution
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue cash-buffer-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_effect_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_failure_reason.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_variant_recommendations.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cash_buffer_attribution/*/cash_buffer_attribution_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-308 explains whether the cash-buffer near miss improves drawdown
+      or stability at a return/recovery cost before expanding the grid.
+    owner_action: review_cash_buffer_tradeoff_before_coverage_gap
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_search_coverage_gap
+    title: ETF Dynamic v3 Search Coverage Gap
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue search-coverage-gap report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/search_coverage_gap_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/family_coverage_gap.json
+      - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/parameter_coverage_gap.json
+      - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/targeted_v3_recommendations.json
+      - reports/etf_portfolio/dynamic_v3_rescue/search_coverage_gap/*/search_coverage_gap_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-309 compares near-miss families against the v2 search space and
+      bounds the targeted v3 search size.
+    owner_action: review_coverage_gap_before_targeted_search_v3
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_targeted_search_v3
+    title: ETF Dynamic v3 Targeted Search v3 Matrix
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue targeted-search-v3 report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/targeted_search_v3_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/v3_variant_specs.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/v3_family_coverage.json
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_search_v3/*/targeted_search_v3_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-310 materializes a bounded 60-120 variant follow-up matrix from
+      explicit gaps rather than broad ungoverned search.
+    owner_action: review_targeted_search_v3_before_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_targeted_v3_backfill
+    title: ETF Dynamic v3 Targeted v3 Backfill
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue targeted-v3-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/targeted_v3_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/v3_backfill_progress.json
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/v3_variant_performance.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/v3_variant_regime_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/v3_variant_stability_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/v3_variant_churn_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/targeted_v3_backfill_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/targeted_v3_backfill/*/validate_data_quality_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-311 runs the required cached-data quality gate before evaluating
+      targeted v3 variants in the ai_after_chatgpt regime.
+    owner_action: review_targeted_v3_data_quality_and_backfill_before_ab_comparison
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_near_miss_ab_comparison
+    title: ETF Dynamic v3 Near-Miss A/B Comparison
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue near-miss-ab-comparison report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/near_miss_ab_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/ab_comparison_matrix.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/ab_winner_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/near_miss_ab_comparison/*/near_miss_ab_comparison_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-312 compares targeted v3 candidates against their near-miss
+      parents and smoothing references before promotion sensitivity review.
+    owner_action: review_ab_comparison_before_threshold_sensitivity
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_promotion_threshold_sensitivity
+    title: ETF Dynamic v3 Promotion Threshold Sensitivity
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue promotion-threshold-sensitivity report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_sensitivity_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_scenarios.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_candidate_impact.json
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion_threshold_sensitivity/*/threshold_sensitivity_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-313 shows diagnostic-only effects of threshold relaxation without
+      changing promotion policy or auto-promoting candidates.
+    owner_action: review_threshold_sensitivity_before_candidate_promotion_v2
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_promotion_v2
+    title: ETF Dynamic v3 Candidate Promotion v2
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-promotion-v2 report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/candidate_promotion_v2_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/promotion_v2_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/promoted_candidates_v2.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/rejected_candidates_v2.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/keep_testing_candidates_v2.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/candidate_promotion_v2_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_promotion_v2/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-314 converts v3 scorecard, A/B, and threshold sensitivity into
+      manual promotion/keep-testing/reject evidence only.
+    owner_action: owner_review_candidate_promotion_v2_before_any_formal_method_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_next_formal_or_search_plan
+    title: ETF Dynamic v3 Next Formal or Search Plan
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue next-formal-or-search-plan report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/next_formal_or_search_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/next_plan_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/formal_method_candidates.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/continue_search_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/owner_next_action_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/next_formal_or_search_plan_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/next_formal_or_search_plan/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-315 records whether to draft a formal research-only method plan
+      or continue targeted search, without implementation or owner approval.
+    owner_action: owner_review_next_plan_before_formal_method_or_search_followup
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

@@ -174,3 +174,138 @@ def run_owner_research_decision_pack_fixture(tmp_path: Path) -> dict[str, Any]:
         generated_at=datetime(2024, 3, 12, tzinfo=UTC),
     )
     return {**fixture, "owner_pack": owner_pack}
+
+
+def run_no_promotion_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_weight_scorecard_fixture(tmp_path)
+    review = weight_search.run_no_promotion_review(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        output_dir=tmp_path / "no_promotion_review",
+        generated_at=datetime(2024, 3, 13, tzinfo=UTC),
+    )
+    return {**fixture, "no_promotion_review": review}
+
+
+def run_near_miss_candidates_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_no_promotion_review_fixture(tmp_path)
+    near_miss = weight_search.extract_near_miss_candidates(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        no_promotion_review_id=fixture["no_promotion_review"]["review_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        review_dir=tmp_path / "no_promotion_review",
+        output_dir=tmp_path / "near_miss_candidates",
+        generated_at=datetime(2024, 3, 14, tzinfo=UTC),
+    )
+    return {**fixture, "near_miss": near_miss}
+
+
+def run_cash_buffer_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_near_miss_candidates_fixture(tmp_path)
+    attribution = weight_search.run_cash_buffer_attribution(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        near_miss_id=fixture["near_miss"]["near_miss_id"],
+        variant_id="cash_buffer_10",
+        scorecard_dir=tmp_path / "weight_scorecard",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        output_dir=tmp_path / "cash_buffer_attribution",
+        generated_at=datetime(2024, 3, 15, tzinfo=UTC),
+    )
+    return {**fixture, "cash_buffer_attribution": attribution}
+
+
+def run_search_coverage_gap_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_cash_buffer_attribution_fixture(tmp_path)
+    coverage_gap = weight_search.run_search_coverage_gap(
+        search_space_id=fixture["search_space"]["search_space_id"],
+        near_miss_id=fixture["near_miss"]["near_miss_id"],
+        cash_buffer_attribution_id=fixture["cash_buffer_attribution"]["attribution_id"],
+        search_space_dir=tmp_path / "weight_search_space",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        attribution_dir=tmp_path / "cash_buffer_attribution",
+        output_dir=tmp_path / "search_coverage_gap",
+        generated_at=datetime(2024, 3, 16, tzinfo=UTC),
+    )
+    return {**fixture, "coverage_gap": coverage_gap}
+
+
+def run_targeted_search_v3_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_search_coverage_gap_fixture(tmp_path)
+    targeted_v3 = weight_search.build_targeted_search_v3(
+        coverage_gap_id=fixture["coverage_gap"]["coverage_gap_id"],
+        coverage_gap_dir=tmp_path / "search_coverage_gap",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        output_dir=tmp_path / "targeted_search_v3",
+        generated_at=datetime(2024, 3, 17, tzinfo=UTC),
+    )
+    return {**fixture, "targeted_v3": targeted_v3}
+
+
+def run_targeted_v3_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_targeted_search_v3_fixture(tmp_path)
+    targeted_v3_backfill = weight_search.run_targeted_v3_backfill(
+        v3_matrix_id=fixture["targeted_v3"]["v3_matrix_id"],
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "targeted_v3_backfill",
+        price_cache_path=fixture["prices_path"],
+        rates_cache_path=fixture["rates_path"],
+        generated_at=datetime(2024, 3, 3, 2, tzinfo=UTC),
+    )
+    return {**fixture, "targeted_v3_backfill": targeted_v3_backfill}
+
+
+def run_near_miss_ab_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_targeted_v3_backfill_fixture(tmp_path)
+    ab = weight_search.run_near_miss_ab_comparison(
+        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
+        near_miss_id=fixture["near_miss"]["near_miss_id"],
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        near_miss_dir=tmp_path / "near_miss_candidates",
+        scorecard_dir=tmp_path / "weight_scorecard",
+        output_dir=tmp_path / "near_miss_ab_comparison",
+        generated_at=datetime(2024, 3, 19, tzinfo=UTC),
+    )
+    return {**fixture, "near_miss_ab": ab}
+
+
+def run_promotion_threshold_sensitivity_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_near_miss_ab_comparison_fixture(tmp_path)
+    sensitivity = weight_search.run_promotion_threshold_sensitivity(
+        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
+        ab_id=fixture["near_miss_ab"]["ab_id"],
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        ab_dir=tmp_path / "near_miss_ab_comparison",
+        output_dir=tmp_path / "promotion_threshold_sensitivity",
+        generated_at=datetime(2024, 3, 20, tzinfo=UTC),
+    )
+    return {**fixture, "sensitivity": sensitivity}
+
+
+def run_candidate_promotion_v2_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_promotion_threshold_sensitivity_fixture(tmp_path)
+    promotion_v2 = weight_search.run_candidate_promotion_v2(
+        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
+        ab_id=fixture["near_miss_ab"]["ab_id"],
+        sensitivity_id=fixture["sensitivity"]["sensitivity_id"],
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        ab_dir=tmp_path / "near_miss_ab_comparison",
+        sensitivity_dir=tmp_path / "promotion_threshold_sensitivity",
+        output_dir=tmp_path / "candidate_promotion_v2",
+        generated_at=datetime(2024, 3, 21, tzinfo=UTC),
+    )
+    return {**fixture, "promotion_v2": promotion_v2}
+
+
+def run_next_formal_or_search_plan_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_candidate_promotion_v2_fixture(tmp_path)
+    next_plan = weight_search.run_next_formal_or_search_plan(
+        promotion_v2_id=fixture["promotion_v2"]["promotion_v2_id"],
+        promotion_v2_dir=tmp_path / "candidate_promotion_v2",
+        output_dir=tmp_path / "next_formal_or_search_plan",
+        generated_at=datetime(2024, 3, 22, tzinfo=UTC),
+    )
+    return {**fixture, "next_plan": next_plan}

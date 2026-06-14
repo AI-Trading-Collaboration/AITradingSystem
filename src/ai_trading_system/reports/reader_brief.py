@@ -2260,21 +2260,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "risk_capped_rolling_consistency_delta",
-                        etf_dynamic_v3_system_target.get(
-                            "risk_capped_rolling_consistency_delta"
-                        ),
+                        etf_dynamic_v3_system_target.get("risk_capped_rolling_consistency_delta"),
                     ),
                     (
                         "risk_capped_generated_cap_event_count",
-                        etf_dynamic_v3_system_target.get(
-                            "risk_capped_generated_cap_event_count"
-                        ),
+                        etf_dynamic_v3_system_target.get("risk_capped_generated_cap_event_count"),
                     ),
                     (
                         "risk_capped_backfill_cap_event_count",
-                        etf_dynamic_v3_system_target.get(
-                            "risk_capped_backfill_cap_event_count"
-                        ),
+                        etf_dynamic_v3_system_target.get("risk_capped_backfill_cap_event_count"),
                     ),
                     (
                         "risk_capped_reallocated_to_cash",
@@ -2329,9 +2323,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "smoothed_rolling_consistency_delta",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_rolling_consistency_delta"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_rolling_consistency_delta"),
                     ),
                     (
                         "smoothed_lag_risk",
@@ -2339,9 +2331,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "smoothed_requires_forward_confirmation",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_requires_forward_confirmation"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_requires_forward_confirmation"),
                     ),
                     (
                         "smoothed_watch_pack_id",
@@ -2353,9 +2343,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "smoothed_watch_benefit_lag_tradeoff",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_watch_benefit_lag_tradeoff"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_watch_benefit_lag_tradeoff"),
                     ),
                     (
                         "smoothed_watch_sideways_validation_status",
@@ -2365,9 +2353,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "smoothed_watch_recovery_lag_status",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_watch_recovery_lag_status"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_watch_recovery_lag_status"),
                     ),
                     (
                         "smoothed_watch_forward_confirmation_status",
@@ -2385,15 +2371,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "smoothed_owner_readiness_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_readiness_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_readiness_decision"),
                     ),
                     (
                         "smoothed_owner_recommended_action",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_recommended_action"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_recommended_action"),
                     ),
                     (
                         "smoothed_owner_forward_confirmation_status",
@@ -2417,15 +2399,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_primary_switch_auto_switch",
-                        etf_dynamic_v3_system_target.get(
-                            "paper_shadow_primary_switch_auto_switch"
-                        ),
+                        etf_dynamic_v3_system_target.get("paper_shadow_primary_switch_auto_switch"),
                     ),
                     (
                         "smoothed_owner_promotion_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_promotion_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_promotion_decision"),
                     ),
                     (
                         "smoothed_forward_progress",
@@ -2612,9 +2590,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "primary_research_candidate_gate_path",
-                        etf_dynamic_v3_system_target.get(
-                            "primary_research_candidate_gate_path"
-                        ),
+                        etf_dynamic_v3_system_target.get("primary_research_candidate_gate_path"),
                     ),
                     (
                         "smoothed_forward_binding_path",
@@ -2622,9 +2598,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_primary_switch_path",
-                        etf_dynamic_v3_system_target.get(
-                            "paper_shadow_primary_switch_path"
-                        ),
+                        etf_dynamic_v3_system_target.get("paper_shadow_primary_switch_path"),
                     ),
                     (
                         "smoothed_owner_promotion_path",
@@ -2663,9 +2637,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "benefit_lag_tradeoff",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_watch_benefit_lag_tradeoff"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_watch_benefit_lag_tradeoff"),
                     ),
                     (
                         "sideways_validation_status",
@@ -2675,9 +2647,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "recovery_lag_status",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_watch_recovery_lag_status"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_watch_recovery_lag_status"),
                     ),
                     (
                         "forward_confirmation_status",
@@ -2714,15 +2684,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "readiness_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_readiness_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_readiness_decision"),
                     ),
                     (
                         "recommended_owner_action",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_recommended_action"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_recommended_action"),
                     ),
                     (
                         "forward_confirmation_status",
@@ -2755,15 +2721,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "readiness_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_promotion_readiness_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_readiness_decision"),
                     ),
                     (
                         "decision_confidence",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_promotion_decision_confidence"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_decision_confidence"),
                     ),
                     (
                         "can_enter_owner_review",
@@ -2773,15 +2735,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "supporting_evidence",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_promotion_supporting_evidence"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_supporting_evidence"),
                     ),
                     (
                         "blocking_issues",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_promotion_blocking_issues"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_promotion_blocking_issues"),
                     ),
                     (
                         "gate_decision",
@@ -2803,9 +2761,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "bound_targets",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_forward_binding_bound_targets"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_forward_binding_bound_targets"),
                     ),
                     (
                         "watch_only_targets",
@@ -2821,9 +2777,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "auto_switch",
-                        etf_dynamic_v3_system_target.get(
-                            "paper_shadow_primary_switch_auto_switch"
-                        ),
+                        etf_dynamic_v3_system_target.get("paper_shadow_primary_switch_auto_switch"),
                     ),
                     (
                         "rollback_method",
@@ -2833,15 +2787,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "owner_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_promotion_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_promotion_decision"),
                     ),
                     (
                         "paper_shadow_primary_candidate_change_allowed",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_promotion_change_allowed"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_promotion_change_allowed"),
                     ),
                     (
                         "broker_action_allowed",
@@ -2886,9 +2836,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "progress_statuses",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_forward_progress_statuses"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_forward_progress_statuses"),
                     ),
                     (
                         "weekly_dashboard_id",
@@ -2962,9 +2910,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "owner_renewal_recheck_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_owner_renewal_recheck_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_owner_renewal_recheck_decision"),
                     ),
                     (
                         "recommended_owner_action",
@@ -3001,21 +2947,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "daily_event_status",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_daily_emission_event_status"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_daily_emission_event_status"),
                     ),
                     (
                         "daily_data_quality",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_daily_emission_data_quality"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_daily_emission_data_quality"),
                     ),
                     (
                         "emitted_event_count",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_daily_emission_event_count"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_daily_emission_event_count"),
                     ),
                     (
                         "outcome_due_id",
@@ -3027,9 +2967,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "update_ready_count",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_outcome_due_update_ready_count"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_outcome_due_update_ready_count"),
                     ),
                     (
                         "blocked_future_as_of",
@@ -3043,9 +2981,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "updated_skipped_windows",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_outcome_update_updated_skipped"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_outcome_update_updated_skipped"),
                     ),
                     (
                         "available_forward_events_after_update",
@@ -3055,9 +2991,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "classification_id",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_forward_classification_id"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_forward_classification_id"),
                     ),
                     (
                         "sideways_events",
@@ -3079,9 +3013,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "weekly_run_id",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_forward_weekly_run_id"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_forward_weekly_run_id"),
                     ),
                     (
                         "weekly_recommendation",
@@ -3101,9 +3033,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "weekly_run_path",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_forward_weekly_run_path"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_forward_weekly_run_path"),
                     ),
                 ]
             ),
@@ -3136,9 +3066,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "blocking_errors",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_data_preflight_blocking_errors"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_data_preflight_blocking_errors"),
                     ),
                     (
                         "latest_available_fallback_commands",
@@ -3152,15 +3080,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "latest_emission_resolved_as_of",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_latest_emission_resolved_as_of"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_latest_emission_resolved_as_of"),
                     ),
                     (
                         "latest_emission_event_status",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_latest_emission_event_status"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_latest_emission_event_status"),
                     ),
                     (
                         "outcome_update_allowed",
@@ -3174,9 +3098,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "blocked_commands",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_blocked_explain_commands"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_blocked_explain_commands"),
                     ),
                     (
                         "refresh_plan_id",
@@ -3184,15 +3106,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "required_sources",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_refresh_plan_required_sources"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_refresh_plan_required_sources"),
                     ),
                     (
                         "rerun_allowed_now",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_refresh_plan_rerun_allowed_now"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_refresh_plan_rerun_allowed_now"),
                     ),
                     (
                         "bootstrap_retry_id",
@@ -3200,9 +3118,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "bootstrap_retry_status",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_bootstrap_retry_status"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_bootstrap_retry_status"),
                     ),
                     (
                         "retry_preflight_status",
@@ -3228,9 +3144,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "bootstrap_retry_path",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_bootstrap_retry_path"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_bootstrap_retry_path"),
                     ),
                 ]
             ),
@@ -3265,15 +3179,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "post_refresh_retry_decision",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_post_refresh_retry_decision"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_post_refresh_retry_decision"),
                     ),
                     (
                         "post_refresh_blocking_errors",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_post_refresh_blocking_errors"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_post_refresh_blocking_errors"),
                     ),
                     (
                         "retry_resume_id",
@@ -3285,9 +3195,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "retry_resume_updated_windows",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_retry_resume_updated_windows"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_retry_resume_updated_windows"),
                     ),
                     (
                         "sample_growth_status",
@@ -3308,9 +3216,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "current_status",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_data_readiness_current_status"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_data_readiness_current_status"),
                     ),
                     (
                         "recommended_owner_action",
@@ -3320,9 +3226,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "source_statuses",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_data_readiness_source_statuses"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_data_readiness_source_statuses"),
                     ),
                     (
                         "readiness_progress",
@@ -3339,9 +3243,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "readiness_path",
-                        etf_dynamic_v3_system_target.get(
-                            "smoothed_data_readiness_path"
-                        ),
+                        etf_dynamic_v3_system_target.get("smoothed_data_readiness_path"),
                     ),
                 ]
             ),
@@ -9388,6 +9290,76 @@ def _etf_dynamic_v3_system_target_summary(
         ),
         "method_promotion_manifest.json",
     )
+    no_promotion_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_no_promotion_review",
+        ),
+        "no_promotion_review_manifest.json",
+    )
+    near_miss_candidates_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_near_miss_candidates",
+        ),
+        "near_miss_manifest.json",
+    )
+    cash_buffer_attribution_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_cash_buffer_attribution",
+        ),
+        "cash_buffer_attribution_manifest.json",
+    )
+    search_coverage_gap_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_search_coverage_gap",
+        ),
+        "search_coverage_gap_manifest.json",
+    )
+    targeted_search_v3_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_targeted_search_v3",
+        ),
+        "targeted_search_v3_manifest.json",
+    )
+    targeted_v3_backfill_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_targeted_v3_backfill",
+        ),
+        "targeted_v3_backfill_manifest.json",
+    )
+    near_miss_ab_comparison_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_near_miss_ab_comparison",
+        ),
+        "near_miss_ab_manifest.json",
+    )
+    promotion_threshold_sensitivity_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_promotion_threshold_sensitivity",
+        ),
+        "threshold_sensitivity_manifest.json",
+    )
+    candidate_promotion_v2_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_candidate_promotion_v2",
+        ),
+        "candidate_promotion_v2_manifest.json",
+    )
+    next_formal_or_search_plan_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_next_formal_or_search_plan",
+        ),
+        "next_formal_or_search_manifest.json",
+    )
     review_manifest = _read_optional_json(review_path)
     risk_capped_review_manifest = _read_optional_json(risk_capped_review_path)
     smoothed_review_manifest = _read_optional_json(smoothed_review_path)
@@ -9409,9 +9381,7 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_forward_classification_manifest = _read_optional_json(
         smoothed_forward_classification_path
     )
-    smoothed_forward_weekly_run_manifest = _read_optional_json(
-        smoothed_forward_weekly_run_path
-    )
+    smoothed_forward_weekly_run_manifest = _read_optional_json(smoothed_forward_weekly_run_path)
     smoothed_data_preflight_manifest = _read_optional_json(smoothed_data_preflight_path)
     smoothed_latest_emission_manifest = _read_optional_json(smoothed_latest_emission_path)
     smoothed_blocked_explain_manifest = _read_optional_json(smoothed_blocked_explain_path)
@@ -9425,6 +9395,18 @@ def _etf_dynamic_v3_system_target_summary(
     experiment_triage_manifest = _read_optional_json(experiment_triage_path)
     top_variant_interpretation_manifest = _read_optional_json(top_variant_interpretation_path)
     method_promotion_plan_manifest = _read_optional_json(method_promotion_plan_path)
+    no_promotion_review_manifest = _read_optional_json(no_promotion_review_path)
+    near_miss_candidates_manifest = _read_optional_json(near_miss_candidates_path)
+    cash_buffer_attribution_manifest = _read_optional_json(cash_buffer_attribution_path)
+    search_coverage_gap_manifest = _read_optional_json(search_coverage_gap_path)
+    targeted_search_v3_manifest = _read_optional_json(targeted_search_v3_path)
+    targeted_v3_backfill_manifest = _read_optional_json(targeted_v3_backfill_path)
+    near_miss_ab_comparison_manifest = _read_optional_json(near_miss_ab_comparison_path)
+    promotion_threshold_sensitivity_manifest = _read_optional_json(
+        promotion_threshold_sensitivity_path
+    )
+    candidate_promotion_v2_manifest = _read_optional_json(candidate_promotion_v2_path)
+    next_formal_or_search_plan_manifest = _read_optional_json(next_formal_or_search_plan_path)
     if (
         not review_manifest
         and not risk_capped_review_manifest
@@ -9459,6 +9441,16 @@ def _etf_dynamic_v3_system_target_summary(
         and not experiment_triage_manifest
         and not top_variant_interpretation_manifest
         and not method_promotion_plan_manifest
+        and not no_promotion_review_manifest
+        and not near_miss_candidates_manifest
+        and not cash_buffer_attribution_manifest
+        and not search_coverage_gap_manifest
+        and not targeted_search_v3_manifest
+        and not targeted_v3_backfill_manifest
+        and not near_miss_ab_comparison_manifest
+        and not promotion_threshold_sensitivity_manifest
+        and not candidate_promotion_v2_manifest
+        and not next_formal_or_search_plan_manifest
     ):
         return _missing_etf_dynamic_v3_system_target_summary()
 
@@ -9844,6 +9836,78 @@ def _etf_dynamic_v3_system_target_summary(
             "promoted_method_specs.json",
         )
     )
+    no_promotion_reason_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            no_promotion_review_path,
+            "no_promotion_reason_summary.json",
+        )
+    )
+    near_miss_candidates = _read_optional_jsonl(
+        _dynamic_v3_sibling_artifact_path(
+            near_miss_candidates_path,
+            "near_miss_candidates.jsonl",
+        )
+    )
+    near_miss_family_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            near_miss_candidates_path,
+            "near_miss_family_summary.json",
+        )
+    )
+    cash_buffer_effect_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            cash_buffer_attribution_path,
+            "cash_buffer_effect_summary.json",
+        )
+    )
+    cash_buffer_failure_reason = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            cash_buffer_attribution_path,
+            "cash_buffer_failure_reason.json",
+        )
+    )
+    targeted_v3_recommendations = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            search_coverage_gap_path,
+            "targeted_v3_recommendations.json",
+        )
+    )
+    v3_family_coverage = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            targeted_search_v3_path,
+            "v3_family_coverage.json",
+        )
+    )
+    v3_backfill_progress = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            targeted_v3_backfill_path,
+            "v3_backfill_progress.json",
+        )
+    )
+    ab_winner_summary = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            near_miss_ab_comparison_path,
+            "ab_winner_summary.json",
+        )
+    )
+    threshold_candidate_impact = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            promotion_threshold_sensitivity_path,
+            "threshold_candidate_impact.json",
+        )
+    )
+    promotion_v2_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            candidate_promotion_v2_path,
+            "promotion_v2_decision.json",
+        )
+    )
+    next_plan_decision = _read_optional_json(
+        _dynamic_v3_sibling_artifact_path(
+            next_formal_or_search_plan_path,
+            "next_plan_decision.json",
+        )
+    )
     paper_state = _read_optional_json(
         _dynamic_v3_sibling_artifact_path(paper_path, "paper_shadow_state.json")
     )
@@ -10010,6 +10074,28 @@ def _etf_dynamic_v3_system_target_summary(
         *top_variant_explanations,
         method_promotion_plan_manifest,
         promoted_method_specs,
+        no_promotion_review_manifest,
+        no_promotion_reason_summary,
+        near_miss_candidates_manifest,
+        *near_miss_candidates,
+        near_miss_family_summary,
+        cash_buffer_attribution_manifest,
+        cash_buffer_effect_summary,
+        cash_buffer_failure_reason,
+        search_coverage_gap_manifest,
+        targeted_v3_recommendations,
+        targeted_search_v3_manifest,
+        v3_family_coverage,
+        targeted_v3_backfill_manifest,
+        v3_backfill_progress,
+        near_miss_ab_comparison_manifest,
+        ab_winner_summary,
+        promotion_threshold_sensitivity_manifest,
+        threshold_candidate_impact,
+        candidate_promotion_v2_manifest,
+        promotion_v2_decision,
+        next_formal_or_search_plan_manifest,
+        next_plan_decision,
     )
     hardening_decision_label = _text(hardening_decision.get("hardening_decision"), "MISSING")
     refined_next_step = _text(refined_decision.get("recommended_next_step"), "MISSING")
@@ -10157,9 +10243,7 @@ def _etf_dynamic_v3_system_target_summary(
     smoothed_post_refresh_blocking_errors = ",".join(
         _texts(smoothed_post_refresh_preflight.get("blocking_errors"))
     )
-    smoothed_sample_growth_progress = _mapping(
-        smoothed_sample_growth_summary.get("progress")
-    )
+    smoothed_sample_growth_progress = _mapping(smoothed_sample_growth_summary.get("progress"))
     smoothed_sample_growth_delta = _mapping(smoothed_sample_growth_summary.get("delta"))
     smoothed_data_readiness_sources = _mapping(
         smoothed_data_readiness_summary.get("sources_status")
@@ -10240,9 +10324,7 @@ def _etf_dynamic_v3_system_target_summary(
             hardening_decision.get("decision_confidence"),
             "MISSING",
         ),
-        "hardening_blocking_issues": ",".join(
-            _texts(hardening_decision.get("blocking_issues"))
-        ),
+        "hardening_blocking_issues": ",".join(_texts(hardening_decision.get("blocking_issues"))),
         "hardening_path": "" if hardening_path is None else str(hardening_path),
         "refined_proposal_id": _text(refined_manifest.get("proposal_id"), "MISSING"),
         "refined_recommended_next_step": refined_next_step,
@@ -10527,9 +10609,7 @@ def _etf_dynamic_v3_system_target_summary(
             "MISSING",
         ),
         "smoothed_owner_promotion_change_allowed": (
-            smoothed_owner_promotion_decision.get(
-                "paper_shadow_primary_candidate_change_allowed"
-            )
+            smoothed_owner_promotion_decision.get("paper_shadow_primary_candidate_change_allowed")
             is True
         ),
         "smoothed_forward_progress_id": _text(
@@ -10957,9 +11037,7 @@ def _etf_dynamic_v3_system_target_summary(
             "" if smoothed_owner_update_path is None else str(smoothed_owner_update_path)
         ),
         "smoothed_promotion_review_path": (
-            ""
-            if smoothed_promotion_review_path is None
-            else str(smoothed_promotion_review_path)
+            "" if smoothed_promotion_review_path is None else str(smoothed_promotion_review_path)
         ),
         "primary_research_candidate_gate_path": (
             "" if primary_research_gate_path is None else str(primary_research_gate_path)
@@ -11013,9 +11091,7 @@ def _etf_dynamic_v3_system_target_summary(
             "" if smoothed_data_preflight_path is None else str(smoothed_data_preflight_path)
         ),
         "smoothed_latest_emission_path": (
-            ""
-            if smoothed_latest_emission_path is None
-            else str(smoothed_latest_emission_path)
+            "" if smoothed_latest_emission_path is None else str(smoothed_latest_emission_path)
         ),
         "smoothed_blocked_explain_path": (
             "" if smoothed_blocked_explain_path is None else str(smoothed_blocked_explain_path)
@@ -11069,9 +11145,7 @@ def _etf_dynamic_v3_system_target_summary(
             top_variant_interpretation_manifest.get("recommended_variant"),
             experiment_top_variant,
         ),
-        "top_variant_solved_failure_modes": ",".join(
-            _texts(best_explanation.get("why_it_helped"))
-        ),
+        "top_variant_solved_failure_modes": ",".join(_texts(best_explanation.get("why_it_helped"))),
         "top_variant_expected_costs": ",".join(_texts(best_explanation.get("what_it_costs"))),
         "method_promotion_plan_id": _text(
             method_promotion_plan_manifest.get("promotion_plan_id"),
@@ -11087,9 +11161,7 @@ def _etf_dynamic_v3_system_target_summary(
             "" if experiment_triage_path is None else str(experiment_triage_path)
         ),
         "top_variant_interpretation_path": (
-            ""
-            if top_variant_interpretation_path is None
-            else str(top_variant_interpretation_path)
+            "" if top_variant_interpretation_path is None else str(top_variant_interpretation_path)
         ),
         "method_promotion_plan_path": (
             "" if method_promotion_plan_path is None else str(method_promotion_plan_path)
@@ -11741,6 +11813,52 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "forward_decision_manifest.json",
     )
+    no_promotion_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_no_promotion_review"),
+        "no_promotion_review_manifest.json",
+    )
+    near_miss_candidates_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_near_miss_candidates"),
+        "near_miss_manifest.json",
+    )
+    cash_buffer_attribution_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_cash_buffer_attribution"),
+        "cash_buffer_attribution_manifest.json",
+    )
+    search_coverage_gap_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_search_coverage_gap"),
+        "search_coverage_gap_manifest.json",
+    )
+    targeted_search_v3_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_targeted_search_v3"),
+        "targeted_search_v3_manifest.json",
+    )
+    targeted_v3_backfill_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_targeted_v3_backfill"),
+        "targeted_v3_backfill_manifest.json",
+    )
+    near_miss_ab_comparison_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_near_miss_ab_comparison"),
+        "near_miss_ab_manifest.json",
+    )
+    promotion_threshold_sensitivity_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_promotion_threshold_sensitivity",
+        ),
+        "threshold_sensitivity_manifest.json",
+    )
+    candidate_promotion_v2_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_candidate_promotion_v2"),
+        "candidate_promotion_v2_manifest.json",
+    )
+    next_formal_or_search_plan_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_next_formal_or_search_plan",
+        ),
+        "next_formal_or_search_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -11924,6 +12042,78 @@ def _etf_dynamic_v3_parameter_research_summary(
         if forward_outcome_decision_path is not None
         else None
     )
+    no_promotion_review_manifest = _read_optional_json(no_promotion_review_path)
+    no_promotion_reason_summary = _read_optional_json(
+        no_promotion_review_path.parent / "no_promotion_reason_summary.json"
+        if no_promotion_review_path is not None
+        else None
+    )
+    near_miss_candidates_manifest = _read_optional_json(near_miss_candidates_path)
+    near_miss_candidates = _read_optional_jsonl(
+        near_miss_candidates_path.parent / "near_miss_candidates.jsonl"
+        if near_miss_candidates_path is not None
+        else None
+    )
+    near_miss_family_summary = _read_optional_json(
+        near_miss_candidates_path.parent / "near_miss_family_summary.json"
+        if near_miss_candidates_path is not None
+        else None
+    )
+    cash_buffer_attribution_manifest = _read_optional_json(cash_buffer_attribution_path)
+    cash_buffer_effect_summary = _read_optional_json(
+        cash_buffer_attribution_path.parent / "cash_buffer_effect_summary.json"
+        if cash_buffer_attribution_path is not None
+        else None
+    )
+    cash_buffer_failure_reason = _read_optional_json(
+        cash_buffer_attribution_path.parent / "cash_buffer_failure_reason.json"
+        if cash_buffer_attribution_path is not None
+        else None
+    )
+    search_coverage_gap_manifest = _read_optional_json(search_coverage_gap_path)
+    targeted_v3_recommendations = _read_optional_json(
+        search_coverage_gap_path.parent / "targeted_v3_recommendations.json"
+        if search_coverage_gap_path is not None
+        else None
+    )
+    targeted_search_v3_manifest = _read_optional_json(targeted_search_v3_path)
+    v3_family_coverage = _read_optional_json(
+        targeted_search_v3_path.parent / "v3_family_coverage.json"
+        if targeted_search_v3_path is not None
+        else None
+    )
+    targeted_v3_backfill_manifest = _read_optional_json(targeted_v3_backfill_path)
+    v3_backfill_progress = _read_optional_json(
+        targeted_v3_backfill_path.parent / "v3_backfill_progress.json"
+        if targeted_v3_backfill_path is not None
+        else None
+    )
+    near_miss_ab_comparison_manifest = _read_optional_json(near_miss_ab_comparison_path)
+    ab_winner_summary = _read_optional_json(
+        near_miss_ab_comparison_path.parent / "ab_winner_summary.json"
+        if near_miss_ab_comparison_path is not None
+        else None
+    )
+    promotion_threshold_sensitivity_manifest = _read_optional_json(
+        promotion_threshold_sensitivity_path
+    )
+    threshold_candidate_impact = _read_optional_json(
+        promotion_threshold_sensitivity_path.parent / "threshold_candidate_impact.json"
+        if promotion_threshold_sensitivity_path is not None
+        else None
+    )
+    candidate_promotion_v2_manifest = _read_optional_json(candidate_promotion_v2_path)
+    promotion_v2_decision = _read_optional_json(
+        candidate_promotion_v2_path.parent / "promotion_v2_decision.json"
+        if candidate_promotion_v2_path is not None
+        else None
+    )
+    next_formal_or_search_plan_manifest = _read_optional_json(next_formal_or_search_plan_path)
+    next_plan_decision = _read_optional_json(
+        next_formal_or_search_plan_path.parent / "next_plan_decision.json"
+        if next_formal_or_search_plan_path is not None
+        else None
+    )
     outcome_loop_payloads = (
         outcome_update_review,
         outcome_update_safety,
@@ -12086,6 +12276,44 @@ def _etf_dynamic_v3_parameter_research_summary(
         if action.get("action") == "run_next_due_scan":
             forward_next_due_scan_date = _text(action.get("target_date"), "MISSING")
             break
+    no_promotion_reasons = _records(no_promotion_reason_summary.get("primary_reasons"))
+    no_promotion_top_reason = (
+        _text(no_promotion_reasons[0].get("reason"), "MISSING")
+        if no_promotion_reasons
+        else "MISSING"
+    )
+    candidate_promotion_v2_decision = _text(
+        promotion_v2_decision.get("decision"),
+        "MISSING",
+    )
+    next_formal_or_search_plan_decision = _text(
+        next_plan_decision.get("decision"),
+        "MISSING",
+    )
+    no_promotion_v3_payloads = (
+        no_promotion_review_manifest,
+        no_promotion_reason_summary,
+        near_miss_candidates_manifest,
+        *near_miss_candidates,
+        near_miss_family_summary,
+        cash_buffer_attribution_manifest,
+        cash_buffer_effect_summary,
+        cash_buffer_failure_reason,
+        search_coverage_gap_manifest,
+        targeted_v3_recommendations,
+        targeted_search_v3_manifest,
+        v3_family_coverage,
+        targeted_v3_backfill_manifest,
+        v3_backfill_progress,
+        near_miss_ab_comparison_manifest,
+        ab_winner_summary,
+        promotion_threshold_sensitivity_manifest,
+        threshold_candidate_impact,
+        candidate_promotion_v2_manifest,
+        promotion_v2_decision,
+        next_formal_or_search_plan_manifest,
+        next_plan_decision,
+    )
     return {
         "availability": "AVAILABLE",
         "status": _text(leaderboard.get("status"), "UNKNOWN"),
@@ -12124,6 +12352,16 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"evidence_trend={confidence_trend_summary.get('trend_status', 'MISSING')}; "
             f"forward_decision="
             f"{forward_go_no_go_matrix.get('recommended_action', 'MISSING')}; "
+            f"no_promotion_reason={no_promotion_top_reason}; "
+            f"near_miss_count={near_miss_candidates_manifest.get('candidate_count', 'MISSING')}; "
+            f"targeted_v3_variants={targeted_search_v3_manifest.get('variant_count', 'MISSING')}; "
+            f"targeted_v3_data_quality="
+            f"{targeted_v3_backfill_manifest.get('data_quality_status', 'MISSING')}; "
+            f"ab_best={ab_winner_summary.get('best_v3_variant', 'MISSING')}; "
+            f"threshold_relaxed_only="
+            f"{threshold_candidate_impact.get('relaxed_only_count', 'MISSING')}; "
+            f"candidate_promotion_v2={candidate_promotion_v2_decision}; "
+            f"next_formal_or_search_plan={next_formal_or_search_plan_decision}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -12629,6 +12867,96 @@ def _etf_dynamic_v3_parameter_research_summary(
             "MISSING",
         ),
         "forward_next_due_scan_date": forward_next_due_scan_date,
+        "no_promotion_review_id": _text(
+            no_promotion_review_manifest.get("review_id"),
+            "MISSING",
+        ),
+        "no_promotion_review_status": _text(
+            no_promotion_review_manifest.get("status"),
+            "MISSING",
+        ),
+        "no_promotion_top_reason": no_promotion_top_reason,
+        "no_promotion_gate_assessment": _text(
+            no_promotion_reason_summary.get("gate_assessment"),
+            "MISSING",
+        ),
+        "near_miss_id": _text(near_miss_candidates_manifest.get("near_miss_id"), "MISSING"),
+        "near_miss_candidate_count": near_miss_candidates_manifest.get("candidate_count", 0),
+        "near_miss_focus_families": ", ".join(
+            _texts(near_miss_family_summary.get("recommended_focus_families"))
+        )
+        or "MISSING",
+        "cash_buffer_attribution_id": _text(
+            cash_buffer_attribution_manifest.get("attribution_id"),
+            "MISSING",
+        ),
+        "cash_buffer_primary_failure": _text(
+            cash_buffer_failure_reason.get("primary_failure_reason"),
+            "MISSING",
+        ),
+        "cash_buffer_interpretation": _text(
+            cash_buffer_effect_summary.get("overall_interpretation"),
+            "MISSING",
+        ),
+        "search_coverage_gap_id": _text(
+            search_coverage_gap_manifest.get("coverage_gap_id"),
+            "MISSING",
+        ),
+        "targeted_v3_recommended_focus": ", ".join(
+            _texts(targeted_v3_recommendations.get("recommended_focus"))
+        )
+        or "MISSING",
+        "targeted_search_v3_id": _text(
+            targeted_search_v3_manifest.get("v3_matrix_id"),
+            "MISSING",
+        ),
+        "targeted_search_v3_variant_count": targeted_search_v3_manifest.get(
+            "variant_count",
+            0,
+        ),
+        "targeted_v3_backfill_id": _text(
+            targeted_v3_backfill_manifest.get("v3_backfill_id"),
+            "MISSING",
+        ),
+        "targeted_v3_backfill_status": _text(
+            targeted_v3_backfill_manifest.get("status"),
+            "MISSING",
+        ),
+        "targeted_v3_data_quality_status": _text(
+            targeted_v3_backfill_manifest.get("data_quality_status"),
+            "MISSING",
+        ),
+        "near_miss_ab_id": _text(near_miss_ab_comparison_manifest.get("ab_id"), "MISSING"),
+        "near_miss_ab_best_v3_variant": _text(
+            ab_winner_summary.get("best_v3_variant"),
+            "MISSING",
+        ),
+        "promotion_threshold_sensitivity_id": _text(
+            promotion_threshold_sensitivity_manifest.get("sensitivity_id"),
+            "MISSING",
+        ),
+        "promotion_threshold_relaxed_only_count": threshold_candidate_impact.get(
+            "relaxed_only_count",
+            0,
+        ),
+        "candidate_promotion_v2_id": _text(
+            candidate_promotion_v2_manifest.get("promotion_v2_id"),
+            "MISSING",
+        ),
+        "candidate_promotion_v2_decision": candidate_promotion_v2_decision,
+        "candidate_promotion_v2_promoted_count": promotion_v2_decision.get(
+            "promoted_count",
+            0,
+        ),
+        "next_formal_or_search_plan_id": _text(
+            next_formal_or_search_plan_manifest.get("plan_id"),
+            "MISSING",
+        ),
+        "next_formal_or_search_plan_decision": next_formal_or_search_plan_decision,
+        "next_formal_or_search_plan_action": _text(
+            next_plan_decision.get("recommended_next_action"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -12723,6 +13051,38 @@ def _etf_dynamic_v3_parameter_research_summary(
         "forward_outcome_decision": (
             "" if forward_outcome_decision_path is None else str(forward_outcome_decision_path)
         ),
+        "no_promotion_review": (
+            "" if no_promotion_review_path is None else str(no_promotion_review_path)
+        ),
+        "near_miss_candidates": (
+            "" if near_miss_candidates_path is None else str(near_miss_candidates_path)
+        ),
+        "cash_buffer_attribution": (
+            "" if cash_buffer_attribution_path is None else str(cash_buffer_attribution_path)
+        ),
+        "search_coverage_gap": (
+            "" if search_coverage_gap_path is None else str(search_coverage_gap_path)
+        ),
+        "targeted_search_v3": (
+            "" if targeted_search_v3_path is None else str(targeted_search_v3_path)
+        ),
+        "targeted_v3_backfill": (
+            "" if targeted_v3_backfill_path is None else str(targeted_v3_backfill_path)
+        ),
+        "near_miss_ab_comparison": (
+            "" if near_miss_ab_comparison_path is None else str(near_miss_ab_comparison_path)
+        ),
+        "promotion_threshold_sensitivity": (
+            ""
+            if promotion_threshold_sensitivity_path is None
+            else str(promotion_threshold_sensitivity_path)
+        ),
+        "candidate_promotion_v2": (
+            "" if candidate_promotion_v2_path is None else str(candidate_promotion_v2_path)
+        ),
+        "next_formal_or_search_plan": (
+            "" if next_formal_or_search_plan_path is None else str(next_formal_or_search_plan_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -12777,6 +13137,7 @@ def _etf_dynamic_v3_parameter_research_summary(
                     outcome_availability_matrix,
                     pending_reason_dashboard,
                     *outcome_loop_payloads,
+                    *no_promotion_v3_payloads,
                 ),
                 "production_candidate_generated",
             )
@@ -12831,6 +13192,7 @@ def _etf_dynamic_v3_parameter_research_summary(
                     outcome_availability_matrix,
                     pending_reason_dashboard,
                     *outcome_loop_payloads,
+                    *no_promotion_v3_payloads,
                 ),
                 "automatic_candidate_promotion",
             )
@@ -12885,6 +13247,7 @@ def _etf_dynamic_v3_parameter_research_summary(
                     outcome_availability_matrix,
                     pending_reason_dashboard,
                     *outcome_loop_payloads,
+                    *no_promotion_v3_payloads,
                 ),
                 "shadow_enrollment_allowed",
             )

@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data.quality import write_data_quality_report
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 DEFAULT_WEIGHT_SEARCH_SPACE_CONFIG_PATH = (
@@ -42,6 +43,24 @@ DEFAULT_WEIGHT_SEARCH_DASHBOARD_DIR = (
 )
 DEFAULT_OWNER_RESEARCH_DECISION_PACK_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_research_decision_pack"
+)
+DEFAULT_NO_PROMOTION_REVIEW_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "no_promotion_review"
+DEFAULT_NEAR_MISS_CANDIDATES_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "near_miss_candidates"
+DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "cash_buffer_attribution"
+)
+DEFAULT_SEARCH_COVERAGE_GAP_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "search_coverage_gap"
+DEFAULT_TARGETED_SEARCH_V3_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "targeted_search_v3"
+DEFAULT_TARGETED_V3_BACKFILL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "targeted_v3_backfill"
+DEFAULT_NEAR_MISS_AB_COMPARISON_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "near_miss_ab_comparison"
+)
+DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "promotion_threshold_sensitivity"
+)
+DEFAULT_CANDIDATE_PROMOTION_V2_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_promotion_v2"
+DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "next_formal_or_search_plan"
 )
 
 SEARCH_REQUIRED_FAMILIES = (
@@ -80,6 +99,36 @@ BATCH2_SCORE_WEIGHTS: dict[str, float] = {
     "weight_jumps": 0.03,
     "simplicity": 0.01,
     "data_quality": 0.01,
+}
+
+# TRADING-306_to_315 diagnostic pilot bands. They classify research-only
+# near-miss and sensitivity evidence and are documented in the requirement file;
+# they do not relax the production gate or approve target weights.
+NEAR_MISS_MIN_OVERALL_SCORE = 0.48
+NEAR_MISS_MIN_COMPONENT_SCORE = 0.65
+NEAR_MISS_MAX_FAILED_GATES = 2
+NO_PROMOTION_NEAR_MISS_MARGIN = 0.06
+TARGETED_V3_MAX_VARIANTS = 120
+
+PROMOTION_GATE_UNIVERSE = (
+    "composite_score_gate",
+    "return_preservation_gate",
+    "drawdown_gate",
+    "rolling_consistency_gate",
+    "turnover_gate",
+    "regime_gate",
+    "recovery_lag_gate",
+    "data_quality_gate",
+)
+
+HARD_REJECT_GATE_MAP = {
+    "data_quality_FAIL": "data_quality_gate",
+    "max_drawdown_materially_worse_than_limited_adjustment": "drawdown_gate",
+    "rolling_consistency_worse_than_limited_adjustment": "rolling_consistency_gate",
+    "turnover_materially_higher_than_limited_adjustment": "turnover_gate",
+    "strong_recovery_lag_cost_HIGH": "recovery_lag_gate",
+    "sideways_choppy_performance_WORSE": "regime_gate",
+    "only_wins_in_one_narrow_window_or_pressure_regimes_worse": "regime_gate",
 }
 
 
@@ -154,6 +203,7 @@ def run_weight_search_space_validation(
         "report_type": "etf_dynamic_v3_weight_search_space_manifest",
         "search_space_id": root.name,
         "search_name": search.get("name"),
+        "source_backfill_id": search.get("source_backfill_id"),
         "generated_at": generated.isoformat(),
         "status": validation["status"],
         "config_path": str(config_path),
@@ -491,6 +541,7 @@ def run_weight_batch_backfill(
     )
     root = _unique_dir(output_dir / backfill_id)
     root.mkdir(parents=True, exist_ok=False)
+    quality_report_path = root / "validate_data_quality_report.md"
     progress = {
         "schema_version": st.SCHEMA_VERSION,
         "batch_backfill_id": root.name,
@@ -504,6 +555,7 @@ def run_weight_batch_backfill(
         "latest_valid_as_of": latest_valid_as_of.isoformat(),
         "data_quality": quality.status,
         "data_quality_as_of": quality_as_of.isoformat(),
+        "validate_data_quality_report_path": str(quality_report_path),
         "used_latest_valid_as_of": used_latest_valid_as_of,
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
@@ -518,7 +570,9 @@ def run_weight_batch_backfill(
         "status": (
             "PASS"
             if not failed and performance
-            else "PASS_WITH_WARNINGS" if performance else "FAIL"
+            else "PASS_WITH_WARNINGS"
+            if performance
+            else "FAIL"
         ),
         "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
         "date_start": start.isoformat(),
@@ -529,6 +583,7 @@ def run_weight_batch_backfill(
         "data_quality_status": quality.status,
         "data_quality_as_of": quality_as_of.isoformat(),
         "data_quality_checked_at": quality.checked_at.isoformat(),
+        "validate_data_quality_report_path": str(quality_report_path),
         "used_latest_valid_as_of": used_latest_valid_as_of,
         "variants_total": len(variant_specs),
         "variants_completed": progress["variants_completed"],
@@ -546,6 +601,7 @@ def run_weight_batch_backfill(
     }
     _write_json(root / "batch_backfill_manifest.json", manifest)
     _write_json(root / "batch_backfill_progress.json", progress)
+    write_data_quality_report(quality, quality_report_path)
     _write_jsonl(root / "variant_weight_paths.jsonl", variant_states)
     _write_jsonl(root / "variant_performance_metrics.jsonl", performance)
     _write_jsonl(root / "variant_regime_metrics.jsonl", regime)
@@ -1805,6 +1861,1955 @@ def validate_owner_research_decision_pack_artifact(
     )
 
 
+def run_no_promotion_review(
+    *,
+    scorecard_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    rows = _records(scorecard.get("variant_scorecard"))
+    reason_summary = _no_promotion_reason_summary(scorecard)
+    failure_distribution = _gate_failure_distribution(rows)
+    component_matrix = _score_component_failure_matrix(rows)
+    review_id = _stable_id("no-promotion-review", scorecard_id, generated.isoformat())
+    root = _unique_dir(output_dir / review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_no_promotion_review_manifest",
+        "review_id": root.name,
+        "source_scorecard_id": scorecard_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if rows else "FAIL",
+        "market_regime": scorecard.get("market_regime", "ai_after_chatgpt"),
+        "date_start": scorecard.get("date_start"),
+        "date_end": scorecard.get("date_end"),
+        "data_quality_status": scorecard.get("data_quality_status"),
+        "variants_reviewed": len(rows),
+        "promoted_candidate_count": reason_summary["promoted_candidate_count"],
+        "no_promotion_review_manifest_path": str(root / "no_promotion_review_manifest.json"),
+        "no_promotion_reason_summary_path": str(root / "no_promotion_reason_summary.json"),
+        "gate_failure_distribution_path": str(root / "gate_failure_distribution.json"),
+        "score_component_failure_matrix_path": str(root / "score_component_failure_matrix.json"),
+        "no_promotion_review_report_path": str(root / "no_promotion_review_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_no_promotion_reader_brief(manifest, reason_summary)
+    _write_json(root / "no_promotion_review_manifest.json", manifest)
+    _write_json(root / "no_promotion_reason_summary.json", reason_summary)
+    _write_json(root / "gate_failure_distribution.json", failure_distribution)
+    _write_json(root / "score_component_failure_matrix.json", component_matrix)
+    _write_text(
+        root / "no_promotion_review_report.md",
+        render_no_promotion_review_report(
+            manifest, reason_summary, failure_distribution, component_matrix
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_no_promotion_review", root.name, root / "no_promotion_review_manifest.json"
+    )
+    return {
+        "review_id": root.name,
+        "review_dir": root,
+        "manifest": manifest,
+        "no_promotion_reason_summary": reason_summary,
+        "gate_failure_distribution": failure_distribution,
+        "score_component_failure_matrix": component_matrix,
+        "reader_brief_section": reader,
+    }
+
+
+def no_promotion_review_report_payload(
+    *,
+    review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=review_id,
+        latest_pointer="latest_no_promotion_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="no_promotion_review_manifest.json",
+    )
+    return {
+        **_read_json(root / "no_promotion_review_manifest.json"),
+        "no_promotion_reason_summary": _read_json(root / "no_promotion_reason_summary.json"),
+        "gate_failure_distribution": _read_json(root / "gate_failure_distribution.json"),
+        "score_component_failure_matrix": _read_json(root / "score_component_failure_matrix.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "review_dir": str(root),
+    }
+
+
+def validate_no_promotion_review_artifact(
+    *,
+    review_id: str,
+    output_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / review_id
+    manifest = _read_optional_json(root / "no_promotion_review_manifest.json") or {}
+    reason = _read_optional_json(root / "no_promotion_reason_summary.json") or {}
+    failure = _read_optional_json(root / "gate_failure_distribution.json") or {}
+    matrix = _read_optional_json(root / "score_component_failure_matrix.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "no_promotion_review_manifest.json",
+            "no_promotion_reason_summary.json",
+            "gate_failure_distribution.json",
+            "score_component_failure_matrix.json",
+            "no_promotion_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("review_id_matches", manifest.get("review_id") == review_id, ""),
+            st._check(
+                "promoted_candidate_count_visible",
+                "promoted_candidate_count" in reason,
+                "",
+            ),
+            st._check(
+                "gate_assessment_valid",
+                reason.get("gate_assessment")
+                in {"REASONABLE", "TOO_STRICT", "TOO_LOOSE", "INCONCLUSIVE"},
+                _text(reason.get("gate_assessment")),
+            ),
+            st._check("gate_failures_readable", bool(_records(failure.get("failures"))), ""),
+            st._check("component_matrix_readable", bool(_records(matrix.get("components"))), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, reason, failure, matrix), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, reason, failure, matrix),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_no_promotion_review_validation", review_id, checks)
+
+
+def extract_near_miss_candidates(
+    *,
+    scorecard_id: str,
+    no_promotion_review_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    review_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
+    output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    review = no_promotion_review_report_payload(
+        review_id=no_promotion_review_id, output_dir=review_dir
+    )
+    candidates = _near_miss_candidate_rows(scorecard)
+    family_summary = _near_miss_family_summary(candidates, scorecard)
+    near_miss_id = _stable_id(
+        "near-miss-candidates",
+        scorecard_id,
+        no_promotion_review_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / near_miss_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_near_miss_manifest",
+        "near_miss_id": root.name,
+        "source_scorecard_id": scorecard_id,
+        "no_promotion_review_id": no_promotion_review_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if candidates else "PASS_WITH_WARNINGS",
+        "market_regime": scorecard.get("market_regime", "ai_after_chatgpt"),
+        "date_start": scorecard.get("date_start"),
+        "date_end": scorecard.get("date_end"),
+        "candidate_count": len(candidates),
+        "cash_buffer_10_near_miss": any(
+            row.get("variant_id") == "cash_buffer_10" for row in candidates
+        ),
+        "source_review_gate_assessment": _mapping(review.get("no_promotion_reason_summary")).get(
+            "gate_assessment"
+        ),
+        "near_miss_manifest_path": str(root / "near_miss_manifest.json"),
+        "near_miss_candidates_path": str(root / "near_miss_candidates.jsonl"),
+        "near_miss_family_summary_path": str(root / "near_miss_family_summary.json"),
+        "near_miss_report_path": str(root / "near_miss_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_near_miss_reader_brief(manifest, family_summary)
+    _write_json(root / "near_miss_manifest.json", manifest)
+    _write_jsonl(root / "near_miss_candidates.jsonl", candidates)
+    _write_json(root / "near_miss_family_summary.json", family_summary)
+    _write_text(
+        root / "near_miss_report.md", render_near_miss_report(manifest, candidates, family_summary)
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_near_miss_candidates", root.name, root / "near_miss_manifest.json"
+    )
+    return {
+        "near_miss_id": root.name,
+        "near_miss_dir": root,
+        "manifest": manifest,
+        "near_miss_candidates": candidates,
+        "near_miss_family_summary": family_summary,
+        "reader_brief_section": reader,
+    }
+
+
+def near_miss_candidates_report_payload(
+    *,
+    near_miss_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=near_miss_id,
+        latest_pointer="latest_near_miss_candidates",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="near_miss_manifest.json",
+    )
+    return {
+        **_read_json(root / "near_miss_manifest.json"),
+        "near_miss_candidates": _read_jsonl(root / "near_miss_candidates.jsonl"),
+        "near_miss_family_summary": _read_json(root / "near_miss_family_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "near_miss_dir": str(root),
+    }
+
+
+def validate_near_miss_candidates_artifact(
+    *,
+    near_miss_id: str,
+    output_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+) -> dict[str, Any]:
+    root = output_dir / near_miss_id
+    manifest = _read_optional_json(root / "near_miss_manifest.json") or {}
+    candidates = _read_jsonl(root / "near_miss_candidates.jsonl")
+    summary = _read_optional_json(root / "near_miss_family_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "near_miss_manifest.json",
+            "near_miss_candidates.jsonl",
+            "near_miss_family_summary.json",
+            "near_miss_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("near_miss_id_matches", manifest.get("near_miss_id") == near_miss_id, ""),
+            st._check(
+                "candidate_count_matches",
+                int(_float(manifest.get("candidate_count"))) == len(candidates),
+                "",
+            ),
+            st._check(
+                "candidates_have_status",
+                all(row.get("candidate_status") == "NEAR_MISS" for row in candidates),
+                "",
+            ),
+            st._check(
+                "recommended_focus_visible",
+                bool(_texts(summary.get("recommended_focus_families"))),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *candidates), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *candidates),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_near_miss_candidates_validation", near_miss_id, checks
+    )
+
+
+def run_cash_buffer_attribution(
+    *,
+    variant_id: str,
+    scorecard_id: str,
+    near_miss_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    scorecard = weight_scorecard_report_payload(scorecard_id=scorecard_id, output_dir=scorecard_dir)
+    near_miss = near_miss_candidates_report_payload(
+        near_miss_id=near_miss_id, output_dir=near_miss_dir
+    )
+    row = _scorecard_row(scorecard, variant_id)
+    effect = _cash_buffer_effect_summary(row)
+    failure = _cash_buffer_failure_reason(row, near_miss)
+    recommendations = _cash_buffer_variant_recommendations(row)
+    attribution_id = _stable_id(
+        "cash-buffer-attribution", variant_id, scorecard_id, near_miss_id, generated.isoformat()
+    )
+    root = _unique_dir(output_dir / attribution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_cash_buffer_attribution_manifest",
+        "attribution_id": root.name,
+        "variant_id": variant_id,
+        "source_scorecard_id": scorecard_id,
+        "near_miss_id": near_miss_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if row else "FAIL",
+        "market_regime": scorecard.get("market_regime", "ai_after_chatgpt"),
+        "cash_buffer_attribution_manifest_path": str(
+            root / "cash_buffer_attribution_manifest.json"
+        ),
+        "cash_buffer_effect_summary_path": str(root / "cash_buffer_effect_summary.json"),
+        "cash_buffer_failure_reason_path": str(root / "cash_buffer_failure_reason.json"),
+        "cash_buffer_variant_recommendations_path": str(
+            root / "cash_buffer_variant_recommendations.json"
+        ),
+        "cash_buffer_attribution_report_path": str(root / "cash_buffer_attribution_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "cash_buffer_attribution_manifest.json", manifest)
+    _write_json(root / "cash_buffer_effect_summary.json", effect)
+    _write_json(root / "cash_buffer_failure_reason.json", failure)
+    _write_json(root / "cash_buffer_variant_recommendations.json", recommendations)
+    _write_text(
+        root / "cash_buffer_attribution_report.md",
+        render_cash_buffer_attribution_report(manifest, effect, failure, recommendations),
+    )
+    _write_latest_pointer(
+        "latest_cash_buffer_attribution",
+        root.name,
+        root / "cash_buffer_attribution_manifest.json",
+    )
+    return {
+        "attribution_id": root.name,
+        "attribution_dir": root,
+        "manifest": manifest,
+        "cash_buffer_effect_summary": effect,
+        "cash_buffer_failure_reason": failure,
+        "cash_buffer_variant_recommendations": recommendations,
+    }
+
+
+def cash_buffer_attribution_report_payload(
+    *,
+    attribution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=attribution_id,
+        latest_pointer="latest_cash_buffer_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="cash_buffer_attribution_manifest.json",
+    )
+    return {
+        **_read_json(root / "cash_buffer_attribution_manifest.json"),
+        "cash_buffer_effect_summary": _read_json(root / "cash_buffer_effect_summary.json"),
+        "cash_buffer_failure_reason": _read_json(root / "cash_buffer_failure_reason.json"),
+        "cash_buffer_variant_recommendations": _read_json(
+            root / "cash_buffer_variant_recommendations.json"
+        ),
+        "attribution_dir": str(root),
+    }
+
+
+def validate_cash_buffer_attribution_artifact(
+    *,
+    attribution_id: str,
+    output_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / attribution_id
+    manifest = _read_optional_json(root / "cash_buffer_attribution_manifest.json") or {}
+    effect = _read_optional_json(root / "cash_buffer_effect_summary.json") or {}
+    failure = _read_optional_json(root / "cash_buffer_failure_reason.json") or {}
+    recommendations = _read_optional_json(root / "cash_buffer_variant_recommendations.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "cash_buffer_attribution_manifest.json",
+            "cash_buffer_effect_summary.json",
+            "cash_buffer_failure_reason.json",
+            "cash_buffer_variant_recommendations.json",
+            "cash_buffer_attribution_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "attribution_id_matches", manifest.get("attribution_id") == attribution_id, ""
+            ),
+            st._check("variant_id_visible", bool(effect.get("variant_id")), ""),
+            st._check("failure_reason_visible", bool(failure.get("primary_failure_reason")), ""),
+            st._check(
+                "recommendations_visible",
+                bool(_texts(recommendations.get("recommended_variants"))),
+                "",
+            ),
+            st._check(
+                "broker_forbidden", _payload_safe(manifest, effect, failure, recommendations), ""
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, effect, failure, recommendations),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_cash_buffer_attribution_validation", attribution_id, checks
+    )
+
+
+def run_search_coverage_gap(
+    *,
+    search_space_id: str,
+    near_miss_id: str,
+    cash_buffer_attribution_id: str,
+    search_space_dir: Path = DEFAULT_WEIGHT_SEARCH_SPACE_DIR,
+    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    attribution_dir: Path = DEFAULT_CASH_BUFFER_ATTRIBUTION_DIR,
+    output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    search_space = weight_search_space_report_payload(
+        search_space_id=search_space_id, output_dir=search_space_dir
+    )
+    near_miss = near_miss_candidates_report_payload(
+        near_miss_id=near_miss_id, output_dir=near_miss_dir
+    )
+    attribution = cash_buffer_attribution_report_payload(
+        attribution_id=cash_buffer_attribution_id,
+        output_dir=attribution_dir,
+    )
+    family_gap = _family_coverage_gap(search_space, near_miss)
+    parameter_gap = _parameter_coverage_gap(search_space, attribution)
+    recommendations = _targeted_v3_recommendations(family_gap, parameter_gap)
+    coverage_gap_id = _stable_id(
+        "search-coverage-gap",
+        search_space_id,
+        near_miss_id,
+        cash_buffer_attribution_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / coverage_gap_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_search_coverage_gap_manifest",
+        "coverage_gap_id": root.name,
+        "search_space_id": search_space_id,
+        "near_miss_id": near_miss_id,
+        "cash_buffer_attribution_id": cash_buffer_attribution_id,
+        "source_scorecard_id": near_miss.get("source_scorecard_id"),
+        "source_backfill_id": _text(search_space.get("source_backfill_id"))
+        or _text(
+            _mapping(_mapping(search_space.get("normalized_search_space")).get("search")).get(
+                "source_backfill_id"
+            )
+        ),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "search_coverage_gap_manifest_path": str(root / "search_coverage_gap_manifest.json"),
+        "family_coverage_gap_path": str(root / "family_coverage_gap.json"),
+        "parameter_coverage_gap_path": str(root / "parameter_coverage_gap.json"),
+        "targeted_v3_recommendations_path": str(root / "targeted_v3_recommendations.json"),
+        "search_coverage_gap_report_path": str(root / "search_coverage_gap_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "search_coverage_gap_manifest.json", manifest)
+    _write_json(root / "family_coverage_gap.json", family_gap)
+    _write_json(root / "parameter_coverage_gap.json", parameter_gap)
+    _write_json(root / "targeted_v3_recommendations.json", recommendations)
+    _write_text(
+        root / "search_coverage_gap_report.md",
+        render_search_coverage_gap_report(manifest, family_gap, parameter_gap, recommendations),
+    )
+    _write_latest_pointer(
+        "latest_search_coverage_gap", root.name, root / "search_coverage_gap_manifest.json"
+    )
+    return {
+        "coverage_gap_id": root.name,
+        "coverage_gap_dir": root,
+        "manifest": manifest,
+        "family_coverage_gap": family_gap,
+        "parameter_coverage_gap": parameter_gap,
+        "targeted_v3_recommendations": recommendations,
+    }
+
+
+def search_coverage_gap_report_payload(
+    *,
+    coverage_gap_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=coverage_gap_id,
+        latest_pointer="latest_search_coverage_gap",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="search_coverage_gap_manifest.json",
+    )
+    return {
+        **_read_json(root / "search_coverage_gap_manifest.json"),
+        "family_coverage_gap": _read_json(root / "family_coverage_gap.json"),
+        "parameter_coverage_gap": _read_json(root / "parameter_coverage_gap.json"),
+        "targeted_v3_recommendations": _read_json(root / "targeted_v3_recommendations.json"),
+        "coverage_gap_dir": str(root),
+    }
+
+
+def validate_search_coverage_gap_artifact(
+    *,
+    coverage_gap_id: str,
+    output_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+) -> dict[str, Any]:
+    root = output_dir / coverage_gap_id
+    manifest = _read_optional_json(root / "search_coverage_gap_manifest.json") or {}
+    family_gap = _read_optional_json(root / "family_coverage_gap.json") or {}
+    parameter_gap = _read_optional_json(root / "parameter_coverage_gap.json") or {}
+    recommendations = _read_optional_json(root / "targeted_v3_recommendations.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "search_coverage_gap_manifest.json",
+            "family_coverage_gap.json",
+            "parameter_coverage_gap.json",
+            "targeted_v3_recommendations.json",
+            "search_coverage_gap_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "coverage_gap_id_matches", manifest.get("coverage_gap_id") == coverage_gap_id, ""
+            ),
+            st._check("family_gap_readable", bool(_records(family_gap.get("gaps"))), ""),
+            st._check("parameter_gap_readable", bool(_records(parameter_gap.get("gaps"))), ""),
+            st._check(
+                "targeted_recommendations_visible",
+                bool(_texts(recommendations.get("recommended_focus"))),
+                "",
+            ),
+            st._check(
+                "max_v3_variants_bounded",
+                int(_float(recommendations.get("max_v3_variants"))) <= TARGETED_V3_MAX_VARIANTS,
+                _text(recommendations.get("max_v3_variants")),
+            ),
+            st._check(
+                "broker_forbidden",
+                _payload_safe(manifest, family_gap, parameter_gap, recommendations),
+                "",
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, family_gap, parameter_gap, recommendations),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_search_coverage_gap_validation", coverage_gap_id, checks
+    )
+
+
+def build_targeted_search_v3(
+    *,
+    coverage_gap_id: str,
+    coverage_gap_dir: Path = DEFAULT_SEARCH_COVERAGE_GAP_DIR,
+    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    output_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    coverage = search_coverage_gap_report_payload(
+        coverage_gap_id=coverage_gap_id,
+        output_dir=coverage_gap_dir,
+    )
+    near_miss = near_miss_candidates_report_payload(
+        near_miss_id=_text(coverage.get("near_miss_id")),
+        output_dir=near_miss_dir,
+    )
+    variants = _targeted_v3_variant_specs(coverage, near_miss)
+    variants = variants[
+        : int(
+            _float(
+                _mapping(coverage.get("targeted_v3_recommendations")).get("max_v3_variants"),
+                TARGETED_V3_MAX_VARIANTS,
+            )
+        )
+    ]
+    family_coverage = _targeted_v3_family_coverage(variants)
+    matrix_id = _stable_id("targeted-search-v3", coverage_gap_id, generated.isoformat())
+    root = _unique_dir(output_dir / matrix_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_targeted_search_v3_manifest",
+        "v3_matrix_id": root.name,
+        "coverage_gap_id": coverage_gap_id,
+        "near_miss_id": coverage.get("near_miss_id"),
+        "source_scorecard_id": coverage.get("source_scorecard_id"),
+        "source_backfill_id": coverage.get("source_backfill_id"),
+        "search_space_id": coverage.get("search_space_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if 60 <= len(variants) <= TARGETED_V3_MAX_VARIANTS else "FAIL",
+        "market_regime": "ai_after_chatgpt",
+        "requested_start_date": st.AI_AFTER_CHATGPT_START.isoformat(),
+        "variant_count": len(variants),
+        "targeted_search_v3_manifest_path": str(root / "targeted_search_v3_manifest.json"),
+        "v3_variant_specs_path": str(root / "v3_variant_specs.jsonl"),
+        "v3_family_coverage_path": str(root / "v3_family_coverage.json"),
+        "targeted_search_v3_report_path": str(root / "targeted_search_v3_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "targeted_search_v3_manifest.json", manifest)
+    _write_jsonl(root / "v3_variant_specs.jsonl", variants)
+    _write_json(root / "v3_family_coverage.json", family_coverage)
+    _write_text(
+        root / "targeted_search_v3_report.md",
+        render_targeted_search_v3_report(manifest, family_coverage),
+    )
+    _write_latest_pointer(
+        "latest_targeted_search_v3", root.name, root / "targeted_search_v3_manifest.json"
+    )
+    return {
+        "v3_matrix_id": root.name,
+        "v3_matrix_dir": root,
+        "manifest": manifest,
+        "v3_variant_specs": variants,
+        "v3_family_coverage": family_coverage,
+    }
+
+
+def targeted_search_v3_report_payload(
+    *,
+    v3_matrix_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=v3_matrix_id,
+        latest_pointer="latest_targeted_search_v3",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="targeted_search_v3_manifest.json",
+    )
+    return {
+        **_read_json(root / "targeted_search_v3_manifest.json"),
+        "v3_variant_specs": _read_jsonl(root / "v3_variant_specs.jsonl"),
+        "v3_family_coverage": _read_json(root / "v3_family_coverage.json"),
+        "v3_matrix_dir": str(root),
+    }
+
+
+def validate_targeted_search_v3_artifact(
+    *,
+    v3_matrix_id: str,
+    output_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+) -> dict[str, Any]:
+    root = output_dir / v3_matrix_id
+    manifest = _read_optional_json(root / "targeted_search_v3_manifest.json") or {}
+    variants = _read_jsonl(root / "v3_variant_specs.jsonl")
+    coverage = _read_optional_json(root / "v3_family_coverage.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "targeted_search_v3_manifest.json",
+            "v3_variant_specs.jsonl",
+            "v3_family_coverage.json",
+            "targeted_search_v3_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("v3_matrix_id_matches", manifest.get("v3_matrix_id") == v3_matrix_id, ""),
+            st._check(
+                "variant_count_bounded",
+                60 <= len(variants) <= TARGETED_V3_MAX_VARIANTS,
+                str(len(variants)),
+            ),
+            st._check(
+                "each_variant_has_parent_or_gap",
+                all(
+                    row.get("near_miss_parent") or row.get("coverage_gap_reason")
+                    for row in variants
+                ),
+                "",
+            ),
+            st._check(
+                "focus_families_covered",
+                {"cash_buffer_smoothing_hybrid", "cash_buffer_threshold_hybrid"}.issubset(
+                    set(_texts(coverage.get("targeted_families_covered")))
+                ),
+                ",".join(_texts(coverage.get("targeted_families_covered"))),
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, coverage, *variants), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, coverage, *variants),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_targeted_search_v3_validation", v3_matrix_id, checks)
+
+
+def run_targeted_v3_backfill(
+    *,
+    v3_matrix_id: str,
+    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    matrix = targeted_search_v3_report_payload(v3_matrix_id=v3_matrix_id, output_dir=v3_matrix_dir)
+    source_backfill_id = _text(matrix.get("source_backfill_id"))
+    if not source_backfill_id:
+        raise RuntimeError("targeted v3 matrix is missing source_backfill_id")
+    backfill = st.paper_shadow_backfill_report_payload(
+        backfill_id=source_backfill_id,
+        output_dir=baseline_backfill_dir,
+    )
+    baseline_states = _records(backfill.get("backfill_method_states"))
+    config = st._load_backfill_config_from_manifest(backfill)
+    start = max(
+        _coerce_date(backfill.get("date_start"), st.AI_AFTER_CHATGPT_START),
+        st.AI_AFTER_CHATGPT_START,
+    )
+    requested_end = _coerce_date(backfill.get("date_end"), generated.date())
+    source = _mapping(config.get("source"))
+    symbols = st._symbols_from_state_paths(baseline_states)
+    prices_path = price_cache_path or st._resolve_project_path(
+        source.get("price_cache_path"),
+        st.DEFAULT_PRICE_CACHE_PATH,
+    )
+    pivot = st._load_price_pivot(prices_path, symbols, start)
+    latest_valid_as_of = _latest_common_price_date(pivot, symbols)
+    end = min(requested_end, latest_valid_as_of, generated.date())
+    used_latest_valid_as_of = end < requested_end
+    pivot = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
+    quality_as_of = max(end, generated.date())
+    quality = st._run_data_quality_gate(
+        price_cache_path=prices_path,
+        rates_cache_path=rates_cache_path,
+        expected_symbols=symbols,
+        as_of=quality_as_of,
+    )
+    if not quality.passed:
+        raise RuntimeError(f"data quality gate failed for targeted v3 backfill: {quality.status}")
+    returns = pivot.pct_change().fillna(0.0)
+    labels = {
+        idx.date().isoformat(): st._risk_capped_regime_context_for_return(row, config)
+        for idx, row in returns.iterrows()
+    }
+    variant_specs = _records(matrix.get("v3_variant_specs"))
+    variant_states: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+    for variant in variant_specs:
+        try:
+            variant_states.extend(
+                st._run_variant_weight_path(
+                    variant=variant,
+                    baseline_states=baseline_states,
+                    returns=returns,
+                    labels=labels,
+                    config=config,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            failed.append({"variant_id": _text(variant.get("variant_id")), "error": str(exc)})
+    performance = st._variant_performance_metrics(variant_states, baseline_states)
+    regime = st._variant_regime_metrics(variant_states, baseline_states, labels, config)
+    stability = st._variant_stability_metrics(variant_states, baseline_states, config)
+    churn = _variant_churn_metrics(variant_states, stability)
+    backfill_id = _stable_id(
+        "targeted-v3-backfill", v3_matrix_id, end.isoformat(), generated.isoformat()
+    )
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    quality_report_path = root / "validate_data_quality_report.md"
+    progress = {
+        "schema_version": st.SCHEMA_VERSION,
+        "v3_backfill_id": root.name,
+        "variants_total": len(variant_specs),
+        "variants_completed": len({row.get("variant_id") for row in performance}),
+        "variants_failed": len(failed),
+        "failed_variants": failed,
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "requested_date_end": requested_end.isoformat(),
+        "latest_valid_as_of": latest_valid_as_of.isoformat(),
+        "data_quality": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "validate_data_quality_report_path": str(quality_report_path),
+        "used_latest_valid_as_of": used_latest_valid_as_of,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_targeted_v3_backfill_manifest",
+        "v3_backfill_id": root.name,
+        "v3_matrix_id": v3_matrix_id,
+        "source_backfill_id": source_backfill_id,
+        "source_scorecard_id": matrix.get("source_scorecard_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS"
+        if not failed and performance
+        else "PASS_WITH_WARNINGS"
+        if performance
+        else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "requested_start_date": backfill.get("requested_start_date", start.isoformat()),
+        "requested_end_date": requested_end.isoformat(),
+        "latest_valid_as_of": latest_valid_as_of.isoformat(),
+        "data_quality_status": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "data_quality_checked_at": quality.checked_at.isoformat(),
+        "validate_data_quality_report_path": str(quality_report_path),
+        "used_latest_valid_as_of": used_latest_valid_as_of,
+        "variants_total": len(variant_specs),
+        "variants_completed": progress["variants_completed"],
+        "variants_failed": len(failed),
+        "targeted_v3_backfill_manifest_path": str(root / "targeted_v3_backfill_manifest.json"),
+        "v3_backfill_progress_path": str(root / "v3_backfill_progress.json"),
+        "v3_variant_performance_path": str(root / "v3_variant_performance.jsonl"),
+        "v3_variant_regime_metrics_path": str(root / "v3_variant_regime_metrics.jsonl"),
+        "v3_variant_stability_metrics_path": str(root / "v3_variant_stability_metrics.jsonl"),
+        "v3_variant_churn_metrics_path": str(root / "v3_variant_churn_metrics.jsonl"),
+        "targeted_v3_backfill_report_path": str(root / "targeted_v3_backfill_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "targeted_v3_backfill_manifest.json", manifest)
+    _write_json(root / "v3_backfill_progress.json", progress)
+    write_data_quality_report(quality, quality_report_path)
+    _write_jsonl(root / "v3_variant_performance.jsonl", performance)
+    _write_jsonl(root / "v3_variant_regime_metrics.jsonl", regime)
+    _write_jsonl(root / "v3_variant_stability_metrics.jsonl", stability)
+    _write_jsonl(root / "v3_variant_churn_metrics.jsonl", churn)
+    _write_text(
+        root / "targeted_v3_backfill_report.md",
+        render_targeted_v3_backfill_report(manifest, progress),
+    )
+    _write_latest_pointer(
+        "latest_targeted_v3_backfill", root.name, root / "targeted_v3_backfill_manifest.json"
+    )
+    return {
+        "v3_backfill_id": root.name,
+        "v3_backfill_dir": root,
+        "manifest": manifest,
+        "v3_backfill_progress": progress,
+        "v3_variant_performance": performance,
+        "v3_variant_regime_metrics": regime,
+        "v3_variant_stability_metrics": stability,
+        "v3_variant_churn_metrics": churn,
+    }
+
+
+def resume_targeted_v3_backfill(
+    *,
+    v3_backfill_id: str,
+    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+) -> dict[str, Any]:
+    payload = targeted_v3_backfill_report_payload(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=output_dir,
+    )
+    progress = _mapping(payload.get("v3_backfill_progress"))
+    return {
+        "v3_backfill_id": v3_backfill_id,
+        "resume_status": (
+            "ALREADY_COMPLETE"
+            if int(_float(progress.get("variants_completed")))
+            >= int(_float(progress.get("variants_total")))
+            else "PARTIAL_COMPLETION_REVIEW_REQUIRED"
+        ),
+        "progress": progress,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def targeted_v3_backfill_report_payload(
+    *,
+    v3_backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=v3_backfill_id,
+        latest_pointer="latest_targeted_v3_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="targeted_v3_backfill_manifest.json",
+    )
+    regime = _read_jsonl(root / "v3_variant_regime_metrics.jsonl")
+    return {
+        **_read_json(root / "targeted_v3_backfill_manifest.json"),
+        "v3_backfill_progress": _read_json(root / "v3_backfill_progress.json"),
+        "v3_variant_performance": _read_jsonl(root / "v3_variant_performance.jsonl"),
+        "v3_variant_regime_metrics": regime,
+        "v3_variant_stability_metrics": _read_jsonl(root / "v3_variant_stability_metrics.jsonl"),
+        "v3_variant_churn_metrics": _read_jsonl(root / "v3_variant_churn_metrics.jsonl"),
+        "v3_variant_lag_metrics": _variant_lag_metrics(regime),
+        "v3_backfill_dir": str(root),
+    }
+
+
+def validate_targeted_v3_backfill_artifact(
+    *,
+    v3_backfill_id: str,
+    output_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / v3_backfill_id
+    manifest = _read_optional_json(root / "targeted_v3_backfill_manifest.json") or {}
+    progress = _read_optional_json(root / "v3_backfill_progress.json") or {}
+    performance = _read_jsonl(root / "v3_variant_performance.jsonl")
+    regime = _read_jsonl(root / "v3_variant_regime_metrics.jsonl")
+    stability = _read_jsonl(root / "v3_variant_stability_metrics.jsonl")
+    churn = _read_jsonl(root / "v3_variant_churn_metrics.jsonl")
+    variants = {str(row.get("variant_id")) for row in performance}
+    checks = _required_file_checks(
+        root,
+        (
+            "targeted_v3_backfill_manifest.json",
+            "v3_backfill_progress.json",
+            "v3_variant_performance.jsonl",
+            "v3_variant_regime_metrics.jsonl",
+            "v3_variant_stability_metrics.jsonl",
+            "v3_variant_churn_metrics.jsonl",
+            "targeted_v3_backfill_report.md",
+            "validate_data_quality_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "v3_backfill_id_matches", manifest.get("v3_backfill_id") == v3_backfill_id, ""
+            ),
+            st._check("performance_metrics_present", bool(performance), ""),
+            st._check(
+                "data_quality_visible",
+                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(manifest.get("data_quality_status")),
+            ),
+            st._check("latest_valid_as_of_visible", bool(manifest.get("latest_valid_as_of")), ""),
+            st._check(
+                "each_variant_has_regime_metrics",
+                variants.issubset({str(row.get("variant_id")) for row in regime}),
+                "",
+            ),
+            st._check(
+                "each_variant_has_stability_metrics",
+                variants.issubset({str(row.get("variant_id")) for row in stability}),
+                "",
+            ),
+            st._check("churn_metrics_readable", isinstance(churn, list), ""),
+            st._check(
+                "progress_counts_match",
+                int(_float(progress.get("variants_completed"))) == len(variants),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, progress, *performance), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, progress, *performance, *regime, *stability),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_targeted_v3_backfill_validation", v3_backfill_id, checks
+    )
+
+
+def run_near_miss_ab_comparison(
+    *,
+    v3_backfill_id: str,
+    near_miss_id: str,
+    v3_backfill_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+    near_miss_dir: Path = DEFAULT_NEAR_MISS_CANDIDATES_DIR,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    output_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = targeted_v3_backfill_report_payload(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=v3_backfill_dir,
+    )
+    matrix = targeted_search_v3_report_payload(
+        v3_matrix_id=_text(backfill.get("v3_matrix_id")),
+        output_dir=v3_matrix_dir,
+    )
+    near_miss = near_miss_candidates_report_payload(
+        near_miss_id=near_miss_id, output_dir=near_miss_dir
+    )
+    scorecard = weight_scorecard_report_payload(
+        scorecard_id=_text(near_miss.get("source_scorecard_id")),
+        output_dir=scorecard_dir,
+    )
+    comparison = _ab_comparison_rows(backfill, matrix, scorecard)
+    winner_summary = _ab_winner_summary(comparison)
+    ab_id = _stable_id(
+        "near-miss-ab-comparison", v3_backfill_id, near_miss_id, generated.isoformat()
+    )
+    root = _unique_dir(output_dir / ab_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_near_miss_ab_manifest",
+        "ab_id": root.name,
+        "v3_backfill_id": v3_backfill_id,
+        "near_miss_id": near_miss_id,
+        "source_scorecard_id": near_miss.get("source_scorecard_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if comparison else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "near_miss_ab_manifest_path": str(root / "near_miss_ab_manifest.json"),
+        "ab_comparison_matrix_path": str(root / "ab_comparison_matrix.jsonl"),
+        "ab_winner_summary_path": str(root / "ab_winner_summary.json"),
+        "near_miss_ab_comparison_report_path": str(root / "near_miss_ab_comparison_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "near_miss_ab_manifest.json", manifest)
+    _write_jsonl(root / "ab_comparison_matrix.jsonl", comparison)
+    _write_json(root / "ab_winner_summary.json", winner_summary)
+    _write_text(
+        root / "near_miss_ab_comparison_report.md",
+        render_near_miss_ab_report(manifest, winner_summary),
+    )
+    _write_latest_pointer(
+        "latest_near_miss_ab_comparison", root.name, root / "near_miss_ab_manifest.json"
+    )
+    return {
+        "ab_id": root.name,
+        "ab_dir": root,
+        "manifest": manifest,
+        "ab_comparison_matrix": comparison,
+        "ab_winner_summary": winner_summary,
+    }
+
+
+def near_miss_ab_comparison_report_payload(
+    *,
+    ab_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=ab_id,
+        latest_pointer="latest_near_miss_ab_comparison",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="near_miss_ab_manifest.json",
+    )
+    return {
+        **_read_json(root / "near_miss_ab_manifest.json"),
+        "ab_comparison_matrix": _read_jsonl(root / "ab_comparison_matrix.jsonl"),
+        "ab_winner_summary": _read_json(root / "ab_winner_summary.json"),
+        "ab_dir": str(root),
+    }
+
+
+def validate_near_miss_ab_comparison_artifact(
+    *,
+    ab_id: str,
+    output_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = output_dir / ab_id
+    manifest = _read_optional_json(root / "near_miss_ab_manifest.json") or {}
+    rows = _read_jsonl(root / "ab_comparison_matrix.jsonl")
+    summary = _read_optional_json(root / "ab_winner_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "near_miss_ab_manifest.json",
+            "ab_comparison_matrix.jsonl",
+            "ab_winner_summary.json",
+            "near_miss_ab_comparison_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("ab_id_matches", manifest.get("ab_id") == ab_id, ""),
+            st._check("comparison_rows_present", bool(rows), ""),
+            st._check("winner_summary_present", bool(summary.get("best_v3_variant")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *rows), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *rows),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload("etf_dynamic_v3_near_miss_ab_comparison_validation", ab_id, checks)
+
+
+def run_promotion_threshold_sensitivity(
+    *,
+    v3_backfill_id: str,
+    ab_id: str,
+    v3_backfill_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+    ab_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+    output_dir: Path = DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = targeted_v3_backfill_report_payload(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=v3_backfill_dir,
+    )
+    matrix = targeted_search_v3_report_payload(
+        v3_matrix_id=_text(backfill.get("v3_matrix_id")),
+        output_dir=v3_matrix_dir,
+    )
+    ab = near_miss_ab_comparison_report_payload(ab_id=ab_id, output_dir=ab_dir)
+    score_rows = _targeted_v3_scorecard_rows(backfill, matrix)
+    scenarios = _threshold_scenarios(score_rows)
+    impact = _threshold_candidate_impact(score_rows, ab, scenarios)
+    sensitivity_id = _stable_id(
+        "promotion-threshold-sensitivity",
+        v3_backfill_id,
+        ab_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / sensitivity_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_threshold_sensitivity_manifest",
+        "sensitivity_id": root.name,
+        "v3_backfill_id": v3_backfill_id,
+        "ab_id": ab_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if scenarios else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "threshold_sensitivity_manifest_path": str(root / "threshold_sensitivity_manifest.json"),
+        "threshold_scenarios_path": str(root / "threshold_scenarios.jsonl"),
+        "threshold_candidate_impact_path": str(root / "threshold_candidate_impact.json"),
+        "threshold_sensitivity_report_path": str(root / "threshold_sensitivity_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "threshold_sensitivity_manifest.json", manifest)
+    _write_jsonl(root / "threshold_scenarios.jsonl", scenarios)
+    _write_json(root / "threshold_candidate_impact.json", impact)
+    _write_text(
+        root / "threshold_sensitivity_report.md",
+        render_threshold_sensitivity_report(manifest, scenarios, impact),
+    )
+    _write_latest_pointer(
+        "latest_promotion_threshold_sensitivity",
+        root.name,
+        root / "threshold_sensitivity_manifest.json",
+    )
+    return {
+        "sensitivity_id": root.name,
+        "sensitivity_dir": root,
+        "manifest": manifest,
+        "threshold_scenarios": scenarios,
+        "threshold_candidate_impact": impact,
+    }
+
+
+def promotion_threshold_sensitivity_report_payload(
+    *,
+    sensitivity_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=sensitivity_id,
+        latest_pointer="latest_promotion_threshold_sensitivity",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="threshold_sensitivity_manifest.json",
+    )
+    return {
+        **_read_json(root / "threshold_sensitivity_manifest.json"),
+        "threshold_scenarios": _read_jsonl(root / "threshold_scenarios.jsonl"),
+        "threshold_candidate_impact": _read_json(root / "threshold_candidate_impact.json"),
+        "sensitivity_dir": str(root),
+    }
+
+
+def validate_promotion_threshold_sensitivity_artifact(
+    *,
+    sensitivity_id: str,
+    output_dir: Path = DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+) -> dict[str, Any]:
+    root = output_dir / sensitivity_id
+    manifest = _read_optional_json(root / "threshold_sensitivity_manifest.json") or {}
+    scenarios = _read_jsonl(root / "threshold_scenarios.jsonl")
+    impact = _read_optional_json(root / "threshold_candidate_impact.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "threshold_sensitivity_manifest.json",
+            "threshold_scenarios.jsonl",
+            "threshold_candidate_impact.json",
+            "threshold_sensitivity_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "sensitivity_id_matches", manifest.get("sensitivity_id") == sensitivity_id, ""
+            ),
+            st._check(
+                "base_threshold_present",
+                any(row.get("scenario") == "base_threshold" for row in scenarios),
+                "",
+            ),
+            st._check(
+                "relaxed_not_recommended",
+                all(
+                    row.get("recommended") is False
+                    for row in scenarios
+                    if row.get("scenario") != "base_threshold"
+                ),
+                "",
+            ),
+            st._check(
+                "review_required_for_relaxed_candidates",
+                all(
+                    row.get("candidate_status") == "REVIEW_REQUIRED"
+                    for row in _records(impact.get("relaxed_only_candidates"))
+                ),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, impact, *scenarios), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, impact, *scenarios),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_promotion_threshold_sensitivity_validation", sensitivity_id, checks
+    )
+
+
+def run_candidate_promotion_v2(
+    *,
+    v3_backfill_id: str,
+    ab_id: str,
+    sensitivity_id: str,
+    v3_backfill_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+    ab_dir: Path = DEFAULT_NEAR_MISS_AB_COMPARISON_DIR,
+    sensitivity_dir: Path = DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = targeted_v3_backfill_report_payload(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=v3_backfill_dir,
+    )
+    matrix = targeted_search_v3_report_payload(
+        v3_matrix_id=_text(backfill.get("v3_matrix_id")),
+        output_dir=v3_matrix_dir,
+    )
+    ab = near_miss_ab_comparison_report_payload(ab_id=ab_id, output_dir=ab_dir)
+    sensitivity = promotion_threshold_sensitivity_report_payload(
+        sensitivity_id=sensitivity_id,
+        output_dir=sensitivity_dir,
+    )
+    rows = _targeted_v3_scorecard_rows(backfill, matrix)
+    promoted, keep_testing, rejected = _promotion_v2_candidate_lists(rows, ab, sensitivity)
+    decision = _promotion_v2_decision(promoted, keep_testing, rejected)
+    promotion_v2_id = _stable_id(
+        "candidate-promotion-v2",
+        v3_backfill_id,
+        ab_id,
+        sensitivity_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / promotion_v2_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["promotion_v2_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_promotion_v2_manifest",
+        "promotion_v2_id": root.name,
+        "v3_backfill_id": v3_backfill_id,
+        "ab_id": ab_id,
+        "sensitivity_id": sensitivity_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "candidate_promotion_v2_manifest_path": str(root / "candidate_promotion_v2_manifest.json"),
+        "promotion_v2_decision_path": str(root / "promotion_v2_decision.json"),
+        "promoted_candidates_v2_path": str(root / "promoted_candidates_v2.jsonl"),
+        "rejected_candidates_v2_path": str(root / "rejected_candidates_v2.jsonl"),
+        "keep_testing_candidates_v2_path": str(root / "keep_testing_candidates_v2.jsonl"),
+        "candidate_promotion_v2_report_path": str(root / "candidate_promotion_v2_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_candidate_promotion_v2_reader_brief(decision)
+    _write_json(root / "candidate_promotion_v2_manifest.json", manifest)
+    _write_json(root / "promotion_v2_decision.json", decision)
+    _write_jsonl(root / "promoted_candidates_v2.jsonl", promoted)
+    _write_jsonl(root / "rejected_candidates_v2.jsonl", rejected)
+    _write_jsonl(root / "keep_testing_candidates_v2.jsonl", keep_testing)
+    _write_text(
+        root / "candidate_promotion_v2_report.md",
+        render_candidate_promotion_v2_report(manifest, decision),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_candidate_promotion_v2",
+        root.name,
+        root / "candidate_promotion_v2_manifest.json",
+    )
+    return {
+        "promotion_v2_id": root.name,
+        "promotion_v2_dir": root,
+        "manifest": manifest,
+        "promotion_v2_decision": decision,
+        "promoted_candidates_v2": promoted,
+        "rejected_candidates_v2": rejected,
+        "keep_testing_candidates_v2": keep_testing,
+        "reader_brief_section": reader,
+    }
+
+
+def candidate_promotion_v2_report_payload(
+    *,
+    promotion_v2_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=promotion_v2_id,
+        latest_pointer="latest_candidate_promotion_v2",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="candidate_promotion_v2_manifest.json",
+    )
+    return {
+        **_read_json(root / "candidate_promotion_v2_manifest.json"),
+        "promotion_v2_decision": _read_json(root / "promotion_v2_decision.json"),
+        "promoted_candidates_v2": _read_jsonl(root / "promoted_candidates_v2.jsonl"),
+        "rejected_candidates_v2": _read_jsonl(root / "rejected_candidates_v2.jsonl"),
+        "keep_testing_candidates_v2": _read_jsonl(root / "keep_testing_candidates_v2.jsonl"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "promotion_v2_dir": str(root),
+    }
+
+
+def validate_candidate_promotion_v2_artifact(
+    *,
+    promotion_v2_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+) -> dict[str, Any]:
+    root = output_dir / promotion_v2_id
+    manifest = _read_optional_json(root / "candidate_promotion_v2_manifest.json") or {}
+    decision = _read_optional_json(root / "promotion_v2_decision.json") or {}
+    promoted = _read_jsonl(root / "promoted_candidates_v2.jsonl")
+    rejected = _read_jsonl(root / "rejected_candidates_v2.jsonl")
+    keep = _read_jsonl(root / "keep_testing_candidates_v2.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "candidate_promotion_v2_manifest.json",
+            "promotion_v2_decision.json",
+            "promoted_candidates_v2.jsonl",
+            "rejected_candidates_v2.jsonl",
+            "keep_testing_candidates_v2.jsonl",
+            "candidate_promotion_v2_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "promotion_v2_id_matches",
+                manifest.get("promotion_v2_id") == promotion_v2_id,
+                "",
+            ),
+            st._check(
+                "decision_valid",
+                decision.get("decision")
+                in {
+                    "PROMOTE_CANDIDATE",
+                    "KEEP_TESTING",
+                    "RUN_ANOTHER_TARGETED_SEARCH",
+                    "NO_CANDIDATE",
+                },
+                _text(decision.get("decision")),
+            ),
+            st._check(
+                "counts_match",
+                int(_float(decision.get("promoted_count"))) == len(promoted)
+                and int(_float(decision.get("keep_testing_count"))) == len(keep)
+                and int(_float(decision.get("rejected_count"))) == len(rejected),
+                "",
+            ),
+            st._check(
+                "not_official_target_weights",
+                decision.get("not_official_target_weights") is True,
+                "",
+            ),
+            st._check(
+                "broker_action_allowed_false", decision.get("broker_action_allowed") is False, ""
+            ),
+            st._check(
+                "production_effect_none",
+                decision.get("production_effect") == st.PRODUCTION_EFFECT,
+                "",
+            ),
+            st._check(
+                "broker_forbidden",
+                _payload_safe(manifest, decision, *promoted, *rejected, *keep),
+                "",
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, decision, *promoted, *rejected, *keep),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_candidate_promotion_v2_validation", promotion_v2_id, checks
+    )
+
+
+def run_next_formal_or_search_plan(
+    *,
+    promotion_v2_id: str,
+    promotion_v2_dir: Path = DEFAULT_CANDIDATE_PROMOTION_V2_DIR,
+    output_dir: Path = DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    promotion = candidate_promotion_v2_report_payload(
+        promotion_v2_id=promotion_v2_id,
+        output_dir=promotion_v2_dir,
+    )
+    decision = _next_plan_decision(promotion)
+    formal_candidates = _next_formal_method_candidates(promotion)
+    continue_plan = _continue_search_plan(promotion, decision)
+    checklist = render_owner_next_action_checklist(decision, formal_candidates, continue_plan)
+    plan_id = _stable_id("next-formal-or-search-plan", promotion_v2_id, generated.isoformat())
+    root = _unique_dir(output_dir / plan_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["plan_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_next_formal_or_search_manifest",
+        "plan_id": root.name,
+        "promotion_v2_id": promotion_v2_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": promotion.get("market_regime", "ai_after_chatgpt"),
+        "next_formal_or_search_manifest_path": str(root / "next_formal_or_search_manifest.json"),
+        "next_plan_decision_path": str(root / "next_plan_decision.json"),
+        "formal_method_candidates_path": str(root / "formal_method_candidates.json"),
+        "continue_search_plan_path": str(root / "continue_search_plan.json"),
+        "owner_next_action_checklist_path": str(root / "owner_next_action_checklist.md"),
+        "next_formal_or_search_plan_report_path": str(
+            root / "next_formal_or_search_plan_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_next_plan_reader_brief(decision)
+    _write_json(root / "next_formal_or_search_manifest.json", manifest)
+    _write_json(root / "next_plan_decision.json", decision)
+    _write_json(root / "formal_method_candidates.json", formal_candidates)
+    _write_json(root / "continue_search_plan.json", continue_plan)
+    _write_text(root / "owner_next_action_checklist.md", checklist)
+    _write_text(
+        root / "next_formal_or_search_plan_report.md",
+        render_next_formal_or_search_plan_report(
+            manifest, decision, formal_candidates, continue_plan
+        ),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_next_formal_or_search_plan",
+        root.name,
+        root / "next_formal_or_search_manifest.json",
+    )
+    return {
+        "plan_id": root.name,
+        "plan_dir": root,
+        "manifest": manifest,
+        "next_plan_decision": decision,
+        "formal_method_candidates": formal_candidates,
+        "continue_search_plan": continue_plan,
+        "owner_next_action_checklist": checklist,
+        "reader_brief_section": reader,
+    }
+
+
+def next_formal_or_search_plan_report_payload(
+    *,
+    plan_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=plan_id,
+        latest_pointer="latest_next_formal_or_search_plan",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="next_formal_or_search_manifest.json",
+    )
+    return {
+        **_read_json(root / "next_formal_or_search_manifest.json"),
+        "next_plan_decision": _read_json(root / "next_plan_decision.json"),
+        "formal_method_candidates": _read_json(root / "formal_method_candidates.json"),
+        "continue_search_plan": _read_json(root / "continue_search_plan.json"),
+        "owner_next_action_checklist": (root / "owner_next_action_checklist.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "plan_dir": str(root),
+    }
+
+
+def validate_next_formal_or_search_plan_artifact(
+    *,
+    plan_id: str,
+    output_dir: Path = DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / plan_id
+    manifest = _read_optional_json(root / "next_formal_or_search_manifest.json") or {}
+    decision = _read_optional_json(root / "next_plan_decision.json") or {}
+    formal = _read_optional_json(root / "formal_method_candidates.json") or {}
+    continue_plan = _read_optional_json(root / "continue_search_plan.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "next_formal_or_search_manifest.json",
+            "next_plan_decision.json",
+            "formal_method_candidates.json",
+            "continue_search_plan.json",
+            "owner_next_action_checklist.md",
+            "next_formal_or_search_plan_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("plan_id_matches", manifest.get("plan_id") == plan_id, ""),
+            st._check(
+                "decision_valid",
+                decision.get("decision")
+                in {
+                    "FORMAL_METHOD_PLAN",
+                    "KEEP_TESTING_PLAN",
+                    "CONTINUE_SEARCH_PLAN",
+                    "NO_CANDIDATE_PLAN",
+                },
+                _text(decision.get("decision")),
+            ),
+            st._check("formal_candidates_readable", "candidates" in formal, ""),
+            st._check("continue_plan_readable", "recommended_actions" in continue_plan, ""),
+            st._check(
+                "broker_forbidden", _payload_safe(manifest, decision, formal, continue_plan), ""
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, decision, formal, continue_plan),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_next_formal_or_search_plan_validation", plan_id, checks
+    )
+
+
+def render_no_promotion_reader_brief(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    reasons = _records(summary.get("primary_reasons"))
+    top_reason = _text(reasons[0].get("reason")) if reasons else "INSUFFICIENT_DATA"
+    return "\n".join(
+        [
+            "## No-Promotion Review",
+            "",
+            f"- source_scorecard_id: {manifest.get('source_scorecard_id')}",
+            f"- variants_reviewed: {manifest.get('variants_reviewed')}",
+            f"- promoted_candidate_count: {manifest.get('promoted_candidate_count')}",
+            f"- top_reason: {top_reason}",
+            f"- gate_assessment: {summary.get('gate_assessment')}",
+            "- safety: no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_no_promotion_review_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    matrix: Mapping[str, Any],
+) -> str:
+    reasons = _records(summary.get("primary_reasons"))
+    failures = _records(failure.get("failures"))
+    components = _records(matrix.get("components"))
+    reason_lines = [
+        f"- {row.get('reason')}: "
+        f"count={row.get('variant_count')} severity={row.get('severity')}"
+        for row in reasons
+    ]
+    failure_lines = [
+        f"- {row.get('gate')}: "
+        f"failed={row.get('failed_count')} near_miss={row.get('near_miss_count')}"
+        for row in failures
+    ]
+    component_lines = [
+        f"- {row.get('component')}: "
+        f"avg={row.get('avg_score')} p90={row.get('p90_score')} "
+        f"top={row.get('top_variant')}"
+        for row in components[:8]
+    ]
+    return "\n".join(
+        [
+            f"# No-Promotion Review {manifest.get('review_id')}",
+            "",
+            f"- scorecard：{manifest.get('source_scorecard_id')}",
+            f"- variants reviewed：{summary.get('variants_reviewed')}",
+            f"- promoted candidates：{summary.get('promoted_candidate_count')}",
+            f"- gate assessment：{summary.get('gate_assessment')}",
+            f"- recommended next action：{summary.get('recommended_next_action')}",
+            "",
+            "## Primary Reasons",
+            *reason_lines,
+            "",
+            "## Gate Failures",
+            *failure_lines,
+            "",
+            "## Weak Components",
+            *component_lines,
+            "",
+            "结论：本报告只解释 no-promotion 原因，不放宽 promotion gate，"
+            "不生成 official target weights，不触发 broker 或 production。",
+            "",
+        ]
+    )
+
+
+def render_near_miss_reader_brief(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "## Near-Miss Candidates",
+            "",
+            f"- near_miss_id: {manifest.get('near_miss_id')}",
+            f"- candidate_count: {manifest.get('candidate_count')}",
+            f"- cash_buffer_10_near_miss: {manifest.get('cash_buffer_10_near_miss')}",
+            f"- focus_families: {', '.join(_texts(summary.get('recommended_focus_families')))}",
+            "- safety: research_only / no_official_target / no_broker / no_production",
+            "",
+        ]
+    )
+
+
+def render_near_miss_report(
+    manifest: Mapping[str, Any],
+    candidates: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> str:
+    candidate_lines = [
+        f"- rank {row.get('near_miss_rank')}: {row.get('variant_id')} "
+        f"failed={','.join(_texts(row.get('failed_gates')))} "
+        f"reason={row.get('near_miss_reason')}"
+        for row in candidates[:10]
+    ]
+    return "\n".join(
+        [
+            f"# Near-Miss Candidates {manifest.get('near_miss_id')}",
+            "",
+            f"- source scorecard：{manifest.get('source_scorecard_id')}",
+            f"- candidate count：{len(candidates)}",
+            f"- focus families：{', '.join(_texts(summary.get('recommended_focus_families')))}",
+            "",
+            "## Top Near-Miss",
+            *candidate_lines,
+            "",
+            "这些 candidates 只能进入 targeted v3 research search，"
+            "不代表 promotion、owner approval 或 production readiness。",
+            "",
+        ]
+    )
+
+
+def render_cash_buffer_attribution_report(
+    manifest: Mapping[str, Any],
+    effect: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    recommendations: Mapping[str, Any],
+) -> str:
+    improvements = _mapping(effect.get("improvements"))
+    costs = _mapping(effect.get("costs"))
+    return "\n".join(
+        [
+            f"# Cash Buffer Attribution {manifest.get('attribution_id')}",
+            "",
+            f"- variant：{manifest.get('variant_id')}",
+            f"- promotion_failed：{failure.get('promotion_failed')}",
+            f"- primary_failure_reason：{failure.get('primary_failure_reason')}",
+            f"- overall_interpretation：{effect.get('overall_interpretation')}",
+            "",
+            "## Improvements",
+            *[f"- {key}: {value}" for key, value in improvements.items()],
+            "",
+            "## Costs",
+            *[f"- {key}: {value}" for key, value in costs.items()],
+            "",
+            f"- recommended_refinement：{', '.join(_texts(failure.get('recommended_refinement')))}",
+            "- recommended_variants："
+            f"{', '.join(_texts(recommendations.get('recommended_variants')))}",
+            "",
+        ]
+    )
+
+
+def render_search_coverage_gap_report(
+    manifest: Mapping[str, Any],
+    family_gap: Mapping[str, Any],
+    parameter_gap: Mapping[str, Any],
+    recommendations: Mapping[str, Any],
+) -> str:
+    parameter_lines = [
+        f"- {row.get('parameter')}: "
+        f"current={row.get('current_values')} "
+        f"recommended={row.get('recommended_values')}"
+        for row in _records(parameter_gap.get("gaps"))
+    ]
+    return "\n".join(
+        [
+            f"# Search Coverage Gap {manifest.get('coverage_gap_id')}",
+            "",
+            f"- search_space_id：{manifest.get('search_space_id')}",
+            f"- near_miss_id：{manifest.get('near_miss_id')}",
+            f"- recommended focus：{', '.join(_texts(recommendations.get('recommended_focus')))}",
+            f"- max_v3_variants：{recommendations.get('max_v3_variants')}",
+            "",
+            "## Family Gaps",
+            *[
+                f"- {row.get('gap')}: status={row.get('status')} reason={row.get('reason')}"
+                for row in _records(family_gap.get("gaps"))
+            ],
+            "",
+            "## Parameter Gaps",
+            *parameter_lines,
+            "",
+        ]
+    )
+
+
+def render_targeted_search_v3_report(
+    manifest: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Targeted Search v3 Matrix {manifest.get('v3_matrix_id')}",
+            "",
+            f"- variants：{manifest.get('variant_count')}",
+            f"- coverage_gap_id：{manifest.get('coverage_gap_id')}",
+            f"- targeted families：{', '.join(_texts(coverage.get('targeted_families_covered')))}",
+            "- every variant has a near_miss_parent or coverage_gap_reason",
+            "- safety：experiment only / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_targeted_v3_backfill_report(
+    manifest: Mapping[str, Any],
+    progress: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Targeted v3 Backfill {manifest.get('v3_backfill_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- date range：{manifest.get('date_start')} -> {manifest.get('date_end')}",
+            f"- data quality：{manifest.get('data_quality_status')}",
+            f"- latest_valid_as_of：{manifest.get('latest_valid_as_of')}",
+            "- variants completed："
+            f"{progress.get('variants_completed')} / {progress.get('variants_total')}",
+            "- safety：research screening only；no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_near_miss_ab_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Near-Miss A/B Comparison {manifest.get('ab_id')}",
+            "",
+            f"- best_v3_variant：{summary.get('best_v3_variant')}",
+            f"- v3_win_count：{summary.get('v3_win_count')}",
+            f"- parent_win_count：{summary.get('parent_win_count')}",
+            f"- inconclusive_count：{summary.get('inconclusive_count')}",
+            "- safety：A/B result is diagnostics only, not promotion approval.",
+            "",
+        ]
+    )
+
+
+def render_threshold_sensitivity_report(
+    manifest: Mapping[str, Any],
+    scenarios: Sequence[Mapping[str, Any]],
+    impact: Mapping[str, Any],
+) -> str:
+    scenario_lines = [
+        f"- {row.get('scenario')}: "
+        f"promote_count={row.get('promote_count')} "
+        f"high_risk={row.get('high_risk_promote_count')} "
+        f"recommended={row.get('recommended')}"
+        for row in scenarios
+    ]
+    return "\n".join(
+        [
+            f"# Promotion Threshold Sensitivity {manifest.get('sensitivity_id')}",
+            "",
+            *scenario_lines,
+            "",
+            f"- relaxed_only_count：{len(_records(impact.get('relaxed_only_candidates')))}",
+            "- rule：relaxed thresholds are diagnostics only and cannot auto-promote candidates.",
+            "",
+        ]
+    )
+
+
+def render_candidate_promotion_v2_reader_brief(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Candidate Promotion v2",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- promoted_count: {decision.get('promoted_count')}",
+            f"- keep_testing_count: {decision.get('keep_testing_count')}",
+            f"- recommended_next_action: {decision.get('recommended_next_action')}",
+            "- safety: no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_candidate_promotion_v2_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Candidate Promotion Decision v2 {manifest.get('promotion_v2_id')}",
+            "",
+            f"- decision：{decision.get('decision')}",
+            f"- promoted_count：{decision.get('promoted_count')}",
+            f"- keep_testing_count：{decision.get('keep_testing_count')}",
+            f"- rejected_count：{decision.get('rejected_count')}",
+            f"- recommended_next_action：{decision.get('recommended_next_action')}",
+            "- boundary：decision support only; no owner approval, no official weights, "
+            "no broker, no production.",
+            "",
+        ]
+    )
+
+
+def render_owner_next_action_checklist(
+    decision: Mapping[str, Any],
+    formal: Mapping[str, Any],
+    continue_plan: Mapping[str, Any],
+) -> str:
+    candidates = _records(formal.get("candidates"))
+    actions = _texts(continue_plan.get("recommended_actions"))
+    return "\n".join(
+        [
+            f"# Owner Next Action Checklist {decision.get('plan_id', '')}",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- recommended_next_action: {decision.get('recommended_next_action')}",
+            f"- formal_candidate_count: {len(candidates)}",
+            f"- continue_actions: {', '.join(actions)}",
+            "- owner_review_required: true",
+            "- confirm no official target weights are written",
+            "- confirm broker_action_allowed=false",
+            "- confirm production_effect=none",
+            "",
+        ]
+    )
+
+
+def render_next_plan_reader_brief(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Next Formal Or Search Plan",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- recommended_next_action: {decision.get('recommended_next_action')}",
+            "- should_continue_parameter_search: "
+            f"{decision.get('should_continue_parameter_search')}",
+            "- safety: no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_next_formal_or_search_plan_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    formal: Mapping[str, Any],
+    continue_plan: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Next Formal Or Search Plan {manifest.get('plan_id')}",
+            "",
+            f"- promotion_v2_id：{manifest.get('promotion_v2_id')}",
+            f"- decision：{decision.get('decision')}",
+            f"- recommended_next_action：{decision.get('recommended_next_action')}",
+            f"- formal candidates：{len(_records(formal.get('candidates')))}",
+            f"- continue actions：{', '.join(_texts(continue_plan.get('recommended_actions')))}",
+            "- boundary：plan only；no official target / no broker / no production.",
+            "",
+        ]
+    )
+
+
 def render_weight_search_space_report(
     manifest: Mapping[str, Any], inventory: Mapping[str, Any]
 ) -> str:
@@ -1934,8 +3939,7 @@ def render_candidate_cluster_report(
     manifest: Mapping[str, Any], representatives: Mapping[str, Any]
 ) -> str:
     representative_ids = ", ".join(
-        _text(row.get("variant_id"))
-        for row in _records(representatives.get("representatives"))
+        _text(row.get("variant_id")) for row in _records(representatives.get("representatives"))
     )
     return "\n".join(
         [
@@ -2829,6 +4833,1078 @@ def _owner_decision_options(dashboard: Mapping[str, Any]) -> dict[str, Any]:
         "official_target_weights_allowed": False,
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
+
+
+def _no_promotion_reason_summary(scorecard: Mapping[str, Any]) -> dict[str, Any]:
+    rows = _records(scorecard.get("variant_scorecard"))
+    promoted = [
+        row for row in rows if row.get("scorecard_decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+    ]
+    distribution = _gate_failure_distribution(rows)
+    component_matrix = _score_component_failure_matrix(rows)
+    primary = []
+    for row in _records(distribution.get("failures")):
+        count = int(_float(row.get("failed_count")))
+        if count <= 0:
+            continue
+        primary.append(
+            {
+                "reason": _reason_for_gate(_text(row.get("gate"))),
+                "variant_count": count,
+                "severity": _gate_failure_severity(_text(row.get("gate")), count, len(rows)),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    if not primary:
+        weak = [
+            row
+            for row in _records(component_matrix.get("components"))
+            if _float(row.get("avg_score")) < 0.50
+        ]
+        primary = [
+            {
+                "reason": f"{row.get('component')}_weak",
+                "variant_count": len(rows),
+                "severity": "MEDIUM",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+            for row in weak[:3]
+        ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "review_id": "",
+        "source_scorecard_id": scorecard.get("scorecard_id"),
+        "variants_reviewed": len(rows),
+        "promoted_candidate_count": len(promoted),
+        "primary_reasons": primary[:5],
+        "gate_assessment": _gate_assessment(scorecard, distribution),
+        "recommended_next_action": "extract_near_miss_candidates",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _gate_failure_distribution(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    failures = []
+    for gate in PROMOTION_GATE_UNIVERSE:
+        failed = [row for row in rows if gate in _failed_gates(row)]
+        near_miss = [row for row in failed if _is_near_miss_candidate(row)]
+        failures.append(
+            {
+                "gate": gate,
+                "failed_count": len(failed),
+                "near_miss_count": len(near_miss),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "failures": failures,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _score_component_failure_matrix(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    component_names = sorted(
+        {key for row in rows for key in _mapping(row.get("score_components")).keys()}
+    )
+    components = []
+    for component in component_names:
+        values = [_float(_mapping(row.get("score_components")).get(component)) for row in rows]
+        ranked = sorted(
+            rows,
+            key=lambda row: _float(_mapping(row.get("score_components")).get(component)),
+            reverse=True,
+        )
+        components.append(
+            {
+                "component": component,
+                "avg_score": round(sum(values) / len(values), 6) if values else 0.0,
+                "p90_score": round(_percentile(values, 0.90), 6),
+                "top_variant": _text(ranked[0].get("variant_id")) if ranked else "",
+                "weak_count": sum(1 for value in values if value < 0.50),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "components": sorted(components, key=lambda row: _float(row.get("avg_score"))),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _gate_assessment(scorecard: Mapping[str, Any], distribution: Mapping[str, Any]) -> str:
+    rows = _records(scorecard.get("variant_scorecard"))
+    if not rows or scorecard.get("data_quality_status") == "FAIL":
+        return "INCONCLUSIVE"
+    max_score = max(_float(row.get("overall_score")) for row in rows)
+    near_miss_count = sum(1 for row in rows if _is_near_miss_candidate(row))
+    severe_failure_count = sum(
+        int(_float(row.get("failed_count")))
+        for row in _records(distribution.get("failures"))
+        if row.get("gate") in {"drawdown_gate", "regime_gate", "recovery_lag_gate"}
+    )
+    if max_score >= BATCH2_PROMOTE_SCORE - NO_PROMOTION_NEAR_MISS_MARGIN and near_miss_count >= 3:
+        return "TOO_STRICT"
+    if severe_failure_count >= max(1, len(rows) // 2):
+        return "REASONABLE"
+    if max_score < BATCH2_KEEP_TESTING_SCORE:
+        return "REASONABLE"
+    return "INCONCLUSIVE"
+
+
+def _near_miss_candidate_rows(scorecard: Mapping[str, Any]) -> list[dict[str, Any]]:
+    candidates = []
+    for row in _records(scorecard.get("variant_scorecard")):
+        if not _is_near_miss_candidate(row):
+            continue
+        failed = _failed_gates(row)
+        candidates.append(
+            {
+                "variant_id": row.get("variant_id"),
+                "family": _texts(row.get("families"))[0]
+                if _texts(row.get("families"))
+                else "UNKNOWN",
+                "families": _texts(row.get("families")),
+                "overall_score": row.get("overall_score"),
+                "near_miss_rank": 0,
+                "passed_gates": _passed_gates(row),
+                "failed_gates": failed,
+                "near_miss_reason": _near_miss_reason(row, failed),
+                "suggested_adjustment": _suggested_adjustment(row, failed),
+                "candidate_status": "NEAR_MISS",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    for rank, row in enumerate(
+        sorted(candidates, key=lambda item: _float(item.get("overall_score")), reverse=True),
+        start=1,
+    ):
+        row["near_miss_rank"] = rank
+    return candidates[:20]
+
+
+def _is_near_miss_candidate(row: Mapping[str, Any]) -> bool:
+    if row.get("scorecard_decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION":
+        return False
+    failed = _failed_gates(row)
+    components = _mapping(row.get("score_components"))
+    strong_component = max((_float(value) for value in components.values()), default=0.0)
+    return len(failed) <= NEAR_MISS_MAX_FAILED_GATES and (
+        _float(row.get("overall_score")) >= NEAR_MISS_MIN_OVERALL_SCORE
+        or strong_component >= NEAR_MISS_MIN_COMPONENT_SCORE
+    )
+
+
+def _failed_gates(row: Mapping[str, Any]) -> list[str]:
+    gates = []
+    for flag in _texts(row.get("hard_reject_flags")):
+        gate = HARD_REJECT_GATE_MAP.get(flag)
+        if gate and gate not in gates:
+            gates.append(gate)
+    components = _mapping(row.get("score_components"))
+    if _float(row.get("overall_score")) < BATCH2_PROMOTE_SCORE:
+        gates.append("composite_score_gate")
+    if _float(components.get("return")) < 0.45:
+        gates.append("return_preservation_gate")
+    return [gate for gate in PROMOTION_GATE_UNIVERSE if gate in set(gates)]
+
+
+def _passed_gates(row: Mapping[str, Any]) -> list[str]:
+    failed = set(_failed_gates(row))
+    return [gate for gate in PROMOTION_GATE_UNIVERSE if gate not in failed]
+
+
+def _near_miss_reason(row: Mapping[str, Any], failed: Sequence[str]) -> str:
+    families = set(_texts(row.get("families")))
+    if "cash_buffer" in families and "return_preservation_gate" in failed:
+        return "strong_drawdown_but_weak_return"
+    if "smoothing" in families and "recovery_lag_gate" in failed:
+        return "smoothing_helped_stability_but_recovery_lagged"
+    if "composite_score_gate" in failed and len(failed) == 1:
+        return "below_promotion_score_but_no_hard_reject"
+    if failed:
+        return "limited_gate_failures_with_positive_components"
+    return "requires_forward_confirmation"
+
+
+def _suggested_adjustment(row: Mapping[str, Any], failed: Sequence[str]) -> str:
+    families = set(_texts(row.get("families")))
+    if "cash_buffer" in families:
+        return "test_cash_buffer_8_or_hybrid_with_smoothing"
+    if "smoothing" in families:
+        return "test_shorter_smoothing_or_fast_restore_hybrid"
+    if "candidate_ensemble" in families:
+        return "test_top_k_consensus_with_threshold"
+    if "rebalance_threshold" in families:
+        return "test_threshold_2pct_to_4pct_grid"
+    if "return_preservation_gate" in failed:
+        return "reduce_defensive_drag_or_add_recovery_restore"
+    return "targeted_v3_hybrid_search"
+
+
+def _near_miss_family_summary(
+    candidates: Sequence[Mapping[str, Any]],
+    scorecard: Mapping[str, Any],
+) -> dict[str, Any]:
+    family_rows = []
+    families = sorted({family for row in candidates for family in _texts(row.get("families"))})
+    for family in families:
+        rows = [row for row in candidates if family in _texts(row.get("families"))]
+        best = max(rows, key=lambda row: _float(row.get("overall_score"))) if rows else {}
+        family_rows.append(
+            {
+                "family": family,
+                "near_miss_count": len(rows),
+                "best_variant": best.get("variant_id", ""),
+                "common_failure": _common_failed_gate(rows),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    recommended = _recommended_focus_families(candidates, scorecard)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "families": family_rows,
+        "recommended_focus_families": recommended,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _common_failed_gate(rows: Sequence[Mapping[str, Any]]) -> str:
+    counts: dict[str, int] = {}
+    for row in rows:
+        for gate in _texts(row.get("failed_gates")):
+            counts[gate] = counts.get(gate, 0) + 1
+    return max(counts, key=counts.get) if counts else "none"
+
+
+def _recommended_focus_families(
+    candidates: Sequence[Mapping[str, Any]],
+    scorecard: Mapping[str, Any],
+) -> list[str]:
+    families = []
+    for family in ("cash_buffer", "smoothing", "candidate_ensemble", "rebalance_threshold"):
+        if any(family in _texts(row.get("families")) for row in candidates):
+            families.append(family)
+    if not families:
+        ranked = _rank_families(_records(scorecard.get("variant_scorecard")))
+        families = [_text(row.get("family")) for row in ranked[:4]]
+    for required in ("cash_buffer", "smoothing", "candidate_ensemble", "rebalance_threshold"):
+        if required not in families:
+            families.append(required)
+    return families[:6]
+
+
+def _scorecard_row(scorecard: Mapping[str, Any], variant_id: str) -> dict[str, Any]:
+    for row in _records(scorecard.get("variant_scorecard")):
+        if row.get("variant_id") == variant_id:
+            return dict(row)
+    return {}
+
+
+def _cash_buffer_effect_summary(row: Mapping[str, Any]) -> dict[str, Any]:
+    components = _mapping(row.get("score_components"))
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "variant_id": row.get("variant_id", "cash_buffer_10"),
+        "family": "cash_buffer",
+        "improvements": {
+            "drawdown": _component_label(_float(components.get("drawdown"))),
+            "turnover": _component_label(_float(components.get("turnover"))),
+            "rolling_consistency": _component_label(_float(components.get("rolling_consistency"))),
+            "sideways_choppy": _component_label(_float(components.get("sideways_choppy"))),
+        },
+        "costs": {
+            "return_preservation": _cost_label(_float(components.get("return"))),
+            "strong_recovery_lag": _lag_label(_float(components.get("strong_recovery_lag"))),
+        },
+        "overall_interpretation": _cash_buffer_interpretation(row),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _cash_buffer_failure_reason(
+    row: Mapping[str, Any],
+    near_miss: Mapping[str, Any],
+) -> dict[str, Any]:
+    failed = _failed_gates(row)
+    failure = "unknown"
+    if "return_preservation_gate" in failed:
+        failure = "return_preservation_weak"
+    elif "recovery_lag_gate" in failed:
+        failure = "insufficient_robustness"
+    elif "regime_gate" in failed:
+        failure = "regime_mixed"
+    elif "composite_score_gate" in failed:
+        failure = "insufficient_robustness"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "variant_id": row.get("variant_id", "cash_buffer_10"),
+        "promotion_failed": row.get("scorecard_decision") != "PROMOTE_TO_FORMAL_IMPLEMENTATION",
+        "failed_gates": failed,
+        "primary_failure_reason": failure,
+        "can_be_refined": True,
+        "recommended_refinement": [
+            "cash_buffer_8",
+            "cash_buffer_10_plus_smoothing_3d",
+            "cash_buffer_10_plus_rebalance_threshold_3pct",
+            "cash_buffer_10_plus_median_consensus",
+        ],
+        "near_miss_status": (
+            "NEAR_MISS"
+            if any(
+                item.get("variant_id") == row.get("variant_id")
+                for item in _records(near_miss.get("near_miss_candidates"))
+            )
+            else "NOT_SELECTED"
+        ),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _cash_buffer_variant_recommendations(row: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "source_variant_id": row.get("variant_id", "cash_buffer_10"),
+        "recommended_variants": [
+            "cash_buffer_6_plus_smooth_2d",
+            "cash_buffer_8_plus_smooth_3d",
+            "cash_buffer_10_plus_rebalance_threshold_3pct",
+            "cash_buffer_12_plus_median_consensus",
+            "sideways_cooldown_5d_plus_cash_buffer_8",
+        ],
+        "recommended_direction": "hybrid_component_not_standalone_method",
+        "reason": [
+            "cash_buffer can help drawdown but may drag return",
+            "targeted v3 should test smaller cash and hybrid controls",
+        ],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _family_coverage_gap(
+    search_space: Mapping[str, Any],
+    near_miss: Mapping[str, Any],
+) -> dict[str, Any]:
+    covered = set(_texts(search_space.get("families")))
+    near_families = set(
+        _texts(
+            _mapping(near_miss.get("near_miss_family_summary")).get("recommended_focus_families")
+        )
+    )
+    gaps = [
+        {
+            "gap": "cash_buffer_smoothing_hybrid",
+            "status": "MISSING_TARGETED_GRID",
+            "reason": "near-miss cash buffer needs lower return drag and smoothing support",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        {
+            "gap": "cash_buffer_threshold_hybrid",
+            "status": "MISSING_TARGETED_GRID",
+            "reason": "cash buffer and rebalance threshold were mostly tested separately",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        {
+            "gap": "top_k_consensus_threshold",
+            "status": "MISSING_TARGETED_GRID",
+            "reason": "ensemble variants need threshold controls around near-miss families",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        {
+            "gap": "smoothing_recovery_fast_restore",
+            "status": "UNDER_COVERED",
+            "reason": "smoothing can lag recovery and needs explicit restore hybrids",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+    ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "covered_families": sorted(covered),
+        "near_miss_focus_families": sorted(near_families),
+        "gaps": gaps,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _parameter_coverage_gap(
+    search_space: Mapping[str, Any],
+    attribution: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = _mapping(search_space.get("normalized_search_space"))
+    families = _mapping(config.get("families"))
+    cash_values = _records_or_values(
+        _mapping(families.get("cash_buffer")).get("min_cash_weight"), []
+    )
+    smoothing_values = _records_or_values(_mapping(families.get("smoothing")).get("windows"), [])
+    gaps = [
+        {
+            "parameter": "cash_buffer",
+            "current_values": cash_values,
+            "recommended_values": [0.06, 0.08, 0.10, 0.12, 0.15],
+            "reason": "cash_buffer_10 ranked high but smaller/larger grid is not fine enough",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        {
+            "parameter": "smoothing_window",
+            "current_values": smoothing_values,
+            "recommended_values": [2, 3, 4],
+            "reason": "hybrids should test shorter smoothing to reduce recovery lag",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        {
+            "parameter": "rebalance_threshold",
+            "current_values": [0.02, 0.03, 0.05],
+            "recommended_values": [0.02, 0.025, 0.03, 0.04],
+            "reason": "threshold grid needs finer low-turnover control around near misses",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        {
+            "parameter": "top_k",
+            "current_values": [3, 5],
+            "recommended_values": [3, 5, 7],
+            "reason": "top-k ensemble variants should be paired with threshold controls",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+    ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "attribution_id": attribution.get("attribution_id"),
+        "gaps": gaps,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _targeted_v3_recommendations(
+    family_gap: Mapping[str, Any],
+    parameter_gap: Mapping[str, Any],
+) -> dict[str, Any]:
+    _ = (family_gap, parameter_gap)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "recommended_focus": [
+            "cash_buffer_smoothing_hybrid",
+            "cash_buffer_threshold_hybrid",
+            "median_consensus_smoothing",
+            "top5_consensus_threshold",
+            "sideways_cooldown_cash_buffer",
+            "smoothing_recovery_fast_restore",
+        ],
+        "new_parameter_ranges": {
+            "cash_buffer": [0.06, 0.08, 0.10, 0.12, 0.15],
+            "smoothing_window": [2, 3, 4],
+            "rebalance_threshold": [0.02, 0.025, 0.03, 0.04],
+            "top_k": [3, 5, 7],
+        },
+        "max_v3_variants": TARGETED_V3_MAX_VARIANTS,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _targeted_v3_variant_specs(
+    coverage: Mapping[str, Any],
+    near_miss: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    recommendations = _mapping(coverage.get("targeted_v3_recommendations"))
+    ranges = _mapping(recommendations.get("new_parameter_ranges"))
+    cash_values = [
+        _float(value) for value in _records_or_values(ranges.get("cash_buffer"), [0.08, 0.10])
+    ]
+    windows = [
+        int(_float(value))
+        for value in _records_or_values(ranges.get("smoothing_window"), [2, 3, 4])
+    ]
+    thresholds = [
+        _float(value)
+        for value in _records_or_values(ranges.get("rebalance_threshold"), [0.02, 0.03])
+    ]
+    top_k_values = [int(_float(value)) for value in _records_or_values(ranges.get("top_k"), [3, 5])]
+    near_rows = _records(near_miss.get("near_miss_candidates"))
+    default_parent = (
+        _text(near_rows[0].get("variant_id"), "cash_buffer_10") if near_rows else "cash_buffer_10"
+    )
+    variants: list[dict[str, Any]] = []
+    for cash in cash_values:
+        for window in windows:
+            for alpha in (0.40, 0.55):
+                variant_id = (
+                    f"cash_buffer_{int(cash * 100)}_plus_smooth_{window}d_"
+                    f"alpha_{int(alpha * 100)}"
+                )
+                variants.append(
+                    _targeted_v3_variant(
+                        variant_id,
+                        ["cash_buffer", "smoothing"],
+                        "cash_buffer_smoothing_hybrid",
+                        [
+                            {"type": "min_cash_weight", "min_cash_weight": cash},
+                            {"type": "weight_smoothing", "window_days": window, "alpha": alpha},
+                        ],
+                        default_parent,
+                        "cash_buffer_smoothing_hybrid_gap",
+                    )
+                )
+    for cash in cash_values:
+        for threshold in thresholds:
+            variants.append(
+                _targeted_v3_variant(
+                    f"cash_buffer_{int(cash * 100)}_plus_rebalance_delta_{int(threshold * 1000)}bp",
+                    ["cash_buffer", "rebalance_threshold"],
+                    "cash_buffer_threshold_hybrid",
+                    [
+                        {"type": "min_cash_weight", "min_cash_weight": cash},
+                        {"type": "rebalance_threshold", "min_total_abs_delta": threshold},
+                    ],
+                    default_parent,
+                    "cash_buffer_threshold_hybrid_gap",
+                )
+            )
+    for method in ("median", "trimmed_mean", "weighted_mean"):
+        for window in windows:
+            variants.append(
+                _targeted_v3_variant(
+                    f"{method}_consensus_plus_smooth_{window}d",
+                    ["candidate_ensemble", "smoothing"],
+                    "median_consensus_smoothing",
+                    [
+                        {"type": "consensus_aggregation", "method": method},
+                        {"type": "weight_smoothing", "window_days": window, "alpha": 0.50},
+                    ],
+                    default_parent,
+                    "ensemble_smoothing_gap",
+                )
+            )
+    for top_k in top_k_values:
+        for threshold in thresholds:
+            variants.append(
+                _targeted_v3_variant(
+                    f"top{top_k}_consensus_plus_threshold_{int(threshold * 1000)}bp",
+                    ["candidate_ensemble", "rebalance_threshold"],
+                    "top_k_consensus_threshold",
+                    [
+                        {"type": "candidate_subset", "top_k": top_k},
+                        {"type": "consensus_aggregation", "method": "weighted_mean"},
+                        {"type": "rebalance_threshold", "min_total_abs_delta": threshold},
+                    ],
+                    default_parent,
+                    "top_k_threshold_gap",
+                )
+            )
+    for cooldown_days in (3, 5):
+        for cash in cash_values:
+            variants.append(
+                _targeted_v3_variant(
+                    f"sideways_cooldown_{cooldown_days}d_plus_cash_buffer_{int(cash * 100)}",
+                    ["cooldown", "cash_buffer"],
+                    "sideways_cooldown_cash_buffer",
+                    [
+                        {
+                            "type": "regime_cooldown",
+                            "regime": "sideways_choppy",
+                            "cooldown_days": cooldown_days,
+                        },
+                        {"type": "min_cash_weight", "min_cash_weight": cash},
+                    ],
+                    default_parent,
+                    "sideways_cash_buffer_gap",
+                )
+            )
+    for window in windows:
+        for multiplier in (0.85, 0.95):
+            variants.append(
+                _targeted_v3_variant(
+                    f"smooth_{window}d_plus_strong_recovery_restore_{int(multiplier * 100)}",
+                    ["smoothing", "regime_gating"],
+                    "smoothing_recovery_fast_restore",
+                    [
+                        {"type": "weight_smoothing", "window_days": window, "alpha": 0.50},
+                        {
+                            "type": "regime_gate",
+                            "regime": "strong_recovery",
+                            "action": "reduce_active_tilt",
+                            "multiplier": multiplier,
+                        },
+                    ],
+                    default_parent,
+                    "recovery_fast_restore_gap",
+                )
+            )
+    return _dedupe_variants(variants)
+
+
+def _targeted_v3_variant(
+    variant_id: str,
+    families: Sequence[str],
+    targeted_family: str,
+    transforms: Sequence[Mapping[str, Any]],
+    near_miss_parent: str,
+    gap_reason: str,
+) -> dict[str, Any]:
+    variant = _variant(
+        variant_id,
+        families,
+        transforms,
+        ["return_preservation_weak", "rolling_consistency_unstable", "turnover_high"],
+        ["target near-miss weakness with narrower hybrid search"],
+        ["may still fail promotion or recovery confirmation"],
+    )
+    variant.update(
+        {
+            "targeted_family": targeted_family,
+            "near_miss_parent": near_miss_parent,
+            "coverage_gap_reason": gap_reason,
+            "expected_benefit": [
+                "retain near-miss benefit while reducing the most common failed gate"
+            ],
+            "expected_cost": ["may still lag strong recovery or dilute return"],
+        }
+    )
+    return variant
+
+
+def _targeted_v3_family_coverage(variants: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    targeted = sorted(
+        {_text(row.get("targeted_family")) for row in variants if row.get("targeted_family")}
+    )
+    by_targeted = {
+        family: sum(1 for row in variants if row.get("targeted_family") == family)
+        for family in targeted
+    }
+    base_coverage = _batch2_family_coverage(variants)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "targeted_families_covered": targeted,
+        "targeted_family_counts": by_targeted,
+        "base_family_coverage": base_coverage,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _targeted_v3_scorecard_rows(
+    backfill: Mapping[str, Any],
+    matrix: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    payload = {
+        "data_quality_status": backfill.get("data_quality_status"),
+        "variant_performance_metrics": backfill.get("v3_variant_performance"),
+        "variant_stability_metrics": backfill.get("v3_variant_stability_metrics"),
+        "variant_churn_metrics": backfill.get("v3_variant_churn_metrics"),
+        "variant_lag_metrics": backfill.get("v3_variant_lag_metrics"),
+        "variant_regime_metrics": backfill.get("v3_variant_regime_metrics"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    return _scorecard_rows(payload, _records(matrix.get("v3_variant_specs")))
+
+
+def _ab_comparison_rows(
+    backfill: Mapping[str, Any],
+    matrix: Mapping[str, Any],
+    source_scorecard: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    score_rows = _targeted_v3_scorecard_rows(backfill, matrix)
+    source_rows = {
+        _text(row.get("variant_id")): row
+        for row in _records(source_scorecard.get("variant_scorecard"))
+    }
+    specs = {_text(row.get("variant_id")): row for row in _records(matrix.get("v3_variant_specs"))}
+    rows = []
+    for row in score_rows:
+        spec = _mapping(specs.get(_text(row.get("variant_id"))))
+        parent_id = _text(spec.get("near_miss_parent"), "cash_buffer_10")
+        parent = _mapping(source_rows.get(parent_id))
+        smooth = _mapping(
+            source_rows.get("smooth_weights_3d")
+            or source_rows.get("smooth_3d_plus_rebalance_delta_3pct")
+        )
+        rows.append(
+            {
+                "variant_id": row.get("variant_id"),
+                "near_miss_parent": parent_id,
+                "overall_score": row.get("overall_score"),
+                "parent_overall_score": parent.get("overall_score", 0.0),
+                "smooth_reference_score": smooth.get("overall_score", 0.0),
+                "score_delta_vs_parent": round(
+                    _float(row.get("overall_score")) - _float(parent.get("overall_score")), 6
+                ),
+                "return_delta_vs_parent": round(
+                    _float(row.get("total_return")) - _float(parent.get("total_return")), 10
+                ),
+                "drawdown_delta_vs_parent": round(
+                    _float(row.get("max_drawdown")) - _float(parent.get("max_drawdown")), 10
+                ),
+                "turnover_delta_vs_parent": round(
+                    _float(row.get("turnover")) - _float(parent.get("turnover")), 10
+                ),
+                "ab_status": _ab_status(row, parent),
+                "failed_gates": _failed_gates(row),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return sorted(rows, key=lambda item: _float(item.get("overall_score")), reverse=True)
+
+
+def _ab_status(row: Mapping[str, Any], parent: Mapping[str, Any]) -> str:
+    if not parent:
+        return "V3_REVIEW_REQUIRED"
+    score_delta = _float(row.get("overall_score")) - _float(parent.get("overall_score"))
+    return_delta = _float(row.get("total_return")) - _float(parent.get("total_return"))
+    drawdown_delta = _float(row.get("max_drawdown")) - _float(parent.get("max_drawdown"))
+    if score_delta > 0 and drawdown_delta >= 0 and return_delta >= -0.005:
+        return "V3_WINS"
+    if score_delta < -0.03 and return_delta < 0 and drawdown_delta < 0:
+        return "PARENT_WINS"
+    return "MIXED"
+
+
+def _ab_winner_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    best = max(rows, key=lambda row: _float(row.get("overall_score"))) if rows else {}
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "best_v3_variant": best.get("variant_id", ""),
+        "best_v3_score": best.get("overall_score", 0.0),
+        "v3_win_count": sum(1 for row in rows if row.get("ab_status") == "V3_WINS"),
+        "parent_win_count": sum(1 for row in rows if row.get("ab_status") == "PARENT_WINS"),
+        "inconclusive_count": sum(
+            1 for row in rows if row.get("ab_status") in {"MIXED", "V3_REVIEW_REQUIRED"}
+        ),
+        "recommended_next_action": "promotion_threshold_sensitivity",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _threshold_scenarios(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    scenario_specs = [
+        (
+            "base_threshold",
+            BATCH2_PROMOTE_SCORE,
+            True,
+            "Base promotion gate remains authoritative.",
+        ),
+        (
+            "slightly_relaxed_return_preservation",
+            BATCH2_PROMOTE_SCORE - NO_PROMOTION_NEAR_MISS_MARGIN,
+            False,
+            "For diagnostics only; do not auto-promote under relaxed thresholds.",
+        ),
+        (
+            "slightly_relaxed_composite_score",
+            BATCH2_PROMOTE_SCORE - 0.03,
+            False,
+            "For diagnostics only; score-only relaxation requires owner review.",
+        ),
+    ]
+    scenarios = []
+    for name, threshold, recommended, reason in scenario_specs:
+        promoted = [
+            row
+            for row in rows
+            if _float(row.get("overall_score")) >= threshold and not _high_risk_gate_failure(row)
+        ]
+        scenarios.append(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "scenario": name,
+                "score_threshold": round(threshold, 6),
+                "promote_count": len(promoted),
+                "high_risk_promote_count": sum(
+                    1 for row in promoted if _high_risk_gate_failure(row)
+                ),
+                "recommended": recommended,
+                "reason": reason,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return scenarios
+
+
+def _threshold_candidate_impact(
+    rows: Sequence[Mapping[str, Any]],
+    ab: Mapping[str, Any],
+    scenarios: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    _ = scenarios
+    ab_rows = {
+        _text(row.get("variant_id")): row for row in _records(ab.get("ab_comparison_matrix"))
+    }
+    base = {
+        _text(row.get("variant_id"))
+        for row in rows
+        if row.get("scorecard_decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+    }
+    relaxed = [
+        row
+        for row in rows
+        if _float(row.get("overall_score")) >= BATCH2_PROMOTE_SCORE - NO_PROMOTION_NEAR_MISS_MARGIN
+        and not _high_risk_gate_failure(row)
+        and _text(row.get("variant_id")) not in base
+    ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "base_promoted_candidates": sorted(base),
+        "relaxed_only_candidates": [
+            {
+                "variant_id": row.get("variant_id"),
+                "overall_score": row.get("overall_score"),
+                "failed_gates": _failed_gates(row),
+                "ab_status": _mapping(ab_rows.get(_text(row.get("variant_id")))).get(
+                    "ab_status", "MIXED"
+                ),
+                "candidate_status": "REVIEW_REQUIRED",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+            for row in relaxed[:20]
+        ],
+        "policy_effect": "diagnostic_only_no_gate_change",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _promotion_v2_candidate_lists(
+    rows: Sequence[Mapping[str, Any]],
+    ab: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    ab_rows = {
+        _text(row.get("variant_id")): row for row in _records(ab.get("ab_comparison_matrix"))
+    }
+    relaxed = {
+        _text(row.get("variant_id"))
+        for row in _records(
+            _mapping(sensitivity.get("threshold_candidate_impact")).get("relaxed_only_candidates")
+        )
+    }
+    promoted: list[dict[str, Any]] = []
+    keep: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for row in rows:
+        variant_id = _text(row.get("variant_id"))
+        ab_status = _text(_mapping(ab_rows.get(variant_id)).get("ab_status"), "MIXED")
+        payload = {
+            "variant_id": variant_id,
+            "overall_score": row.get("overall_score"),
+            "scorecard_decision": row.get("scorecard_decision"),
+            "failed_gates": _failed_gates(row),
+            "ab_status": ab_status,
+            "candidate_status": "",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        }
+        if (
+            row.get("scorecard_decision") == "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+            and ab_status in {"V3_WINS", "MIXED", "V3_REVIEW_REQUIRED"}
+            and not _high_risk_gate_failure(row)
+        ):
+            payload["candidate_status"] = "PROMOTED_V2"
+            promoted.append(payload)
+        elif row.get("scorecard_decision") == "KEEP_FOR_MORE_TESTING" or variant_id in relaxed:
+            payload["candidate_status"] = "KEEP_TESTING"
+            keep.append(payload)
+        else:
+            payload["candidate_status"] = "REJECTED_V2"
+            rejected.append(payload)
+    return promoted[:3], keep[:20], rejected
+
+
+def _promotion_v2_decision(
+    promoted: Sequence[Mapping[str, Any]],
+    keep: Sequence[Mapping[str, Any]],
+    rejected: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    if promoted:
+        decision = "PROMOTE_CANDIDATE"
+        next_action = "formal_method_auto_plan"
+    elif keep:
+        decision = "KEEP_TESTING"
+        next_action = "continue_targeted_search"
+    elif rejected:
+        decision = "RUN_ANOTHER_TARGETED_SEARCH"
+        next_action = "continue_targeted_search"
+    else:
+        decision = "NO_CANDIDATE"
+        next_action = "owner_review"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "promotion_v2_id": "",
+        "decision": decision,
+        "promoted_count": len(promoted),
+        "keep_testing_count": len(keep),
+        "rejected_count": len(rejected),
+        "recommended_next_action": next_action,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _next_plan_decision(promotion: Mapping[str, Any]) -> dict[str, Any]:
+    decision = _mapping(promotion.get("promotion_v2_decision"))
+    promotion_decision = _text(decision.get("decision"))
+    if promotion_decision == "PROMOTE_CANDIDATE":
+        plan_decision = "FORMAL_METHOD_PLAN"
+        next_action = "draft_research_only_formal_method_plan"
+        continue_search = False
+    elif promotion_decision == "KEEP_TESTING":
+        plan_decision = "KEEP_TESTING_PLAN"
+        next_action = "continue_paper_shadow_observation"
+        continue_search = True
+    elif promotion_decision == "RUN_ANOTHER_TARGETED_SEARCH":
+        plan_decision = "CONTINUE_SEARCH_PLAN"
+        next_action = "run_smaller_v4_or_signal_level_diagnosis"
+        continue_search = True
+    else:
+        plan_decision = "NO_CANDIDATE_PLAN"
+        next_action = "return_to_signal_level_diagnosis"
+        continue_search = False
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "plan_id": "",
+        "decision": plan_decision,
+        "source_promotion_v2_decision": promotion_decision,
+        "recommended_next_action": next_action,
+        "should_continue_parameter_search": continue_search,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _next_formal_method_candidates(promotion: Mapping[str, Any]) -> dict[str, Any]:
+    rows = []
+    for row in _records(promotion.get("promoted_candidates_v2")):
+        rows.append(
+            {
+                "variant_id": row.get("variant_id"),
+                "implementation_scope": "research_only",
+                "transform_composable": True,
+                "requires_external_data": False,
+                "implementation_complexity": "MEDIUM",
+                "implementation_allowed_without_owner_approval": False,
+                "not_official_target_weights": True,
+                "broker_action_allowed": False,
+                "production_effect": st.PRODUCTION_EFFECT,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": st.SCHEMA_VERSION, "candidates": rows, **st.EXPERIMENT_FACTORY_SAFETY}
+
+
+def _continue_search_plan(
+    promotion: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    promotion_decision = _text(_mapping(promotion.get("promotion_v2_decision")).get("decision"))
+    if promotion_decision == "KEEP_TESTING":
+        actions = [
+            "continue paper shadow observation",
+            "collect forward confirmation",
+            "run small v4 around keep-testing candidates only",
+        ]
+        priority = "targeted_observation"
+    elif promotion_decision == "RUN_ANOTHER_TARGETED_SEARCH":
+        actions = [
+            "do not blindly expand parameters",
+            "return to signal-level diagnosis",
+            "only run v4 if a specific gate failure hypothesis is documented",
+        ]
+        priority = "signal_level_diagnosis"
+    elif promotion_decision == "PROMOTE_CANDIDATE":
+        actions = [
+            "prepare formal method implementation plan",
+            "run owner review before implementation",
+        ]
+        priority = "formal_plan"
+    else:
+        actions = [
+            "keep smooth_weights_3d as primary observation candidate",
+            "lower batch search priority",
+            "return to feature and signal diagnosis",
+        ]
+        priority = "stop_parameter_expansion"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "recommended_actions": actions,
+        "priority": priority,
+        "should_continue_parameter_search": decision.get("should_continue_parameter_search"),
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _component_label(score: float) -> str:
+    if score >= 0.65:
+        return "IMPROVED"
+    if score >= 0.40:
+        return "MIXED"
+    if score > 0:
+        return "WORSE"
+    return "INSUFFICIENT_DATA"
+
+
+def _cost_label(score: float) -> str:
+    if score >= 0.70:
+        return "GOOD"
+    if score >= 0.45:
+        return "ACCEPTABLE"
+    if score > 0:
+        return "POOR"
+    return "INSUFFICIENT_DATA"
+
+
+def _lag_label(score: float) -> str:
+    if score >= 0.70:
+        return "LOW"
+    if score >= 0.35:
+        return "MEDIUM"
+    if score > 0:
+        return "HIGH"
+    return "INSUFFICIENT_DATA"
+
+
+def _cash_buffer_interpretation(row: Mapping[str, Any]) -> str:
+    components = _mapping(row.get("score_components"))
+    if _float(components.get("drawdown")) >= 0.60 and _float(components.get("return")) < 0.45:
+        return "defensive_buffer_helped_but_return_cost_too_high"
+    if _float(components.get("drawdown")) >= 0.60:
+        return "defensive_buffer_helped_but_needs_confirmation"
+    return "cash_buffer_effect_mixed"
+
+
+def _reason_for_gate(gate: str) -> str:
+    return {
+        "composite_score_gate": "composite_score_below_promotion_threshold",
+        "return_preservation_gate": "return_preservation_weak",
+        "drawdown_gate": "insufficient_drawdown_improvement",
+        "rolling_consistency_gate": "rolling_consistency_not_strong_enough",
+        "turnover_gate": "turnover_not_low_enough",
+        "regime_gate": "regime_behavior_mixed",
+        "recovery_lag_gate": "strong_recovery_lag_too_high",
+        "data_quality_gate": "data_quality_warning_or_failure",
+    }.get(gate, gate)
+
+
+def _gate_failure_severity(gate: str, count: int, total: int) -> str:
+    if gate in {"drawdown_gate", "regime_gate", "data_quality_gate", "recovery_lag_gate"}:
+        return "HIGH"
+    if total and count / total >= 0.50:
+        return "HIGH"
+    return "MEDIUM"
+
+
+def _high_risk_gate_failure(row: Mapping[str, Any]) -> bool:
+    return bool(
+        {"drawdown_gate", "regime_gate", "data_quality_gate", "recovery_lag_gate"}
+        & set(_failed_gates(row))
+    )
+
+
+def _percentile(values: Sequence[float], percentile: float) -> float:
+    clean = sorted(values)
+    if not clean:
+        return 0.0
+    idx = min(len(clean) - 1, max(0, int(round((len(clean) - 1) * percentile))))
+    return clean[idx]
 
 
 def _search_family_inventory(config: Mapping[str, Any]) -> dict[str, Any]:
