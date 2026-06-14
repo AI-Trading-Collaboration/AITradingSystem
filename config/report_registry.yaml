@@ -4269,6 +4269,222 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_gate_calibration_review
+    title: ETF Dynamic v3 Gate Calibration Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue gate-calibration-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/gate_calibration_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/gate_strictness_diagnosis.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/gate_component_impact.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/diagnostic_relaxed_gate_result.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/gate_calibration_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-316 diagnoses whether current promotion gates are too strict
+      after targeted v3 no-promotion, without changing official gate policy.
+    owner_action: review_gate_calibration_before_micro_search_v4_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_scorecard_attribution
+    title: ETF Dynamic v3 Scorecard Attribution
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue scorecard-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/scorecard_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/score_component_distribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/rejected_variant_component_matrix.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/family_component_weakness.json
+      - reports/etf_portfolio/dynamic_v3_rescue/scorecard_attribution/*/scorecard_attribution_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-317 attributes rejected v3 variants to score components and
+      family-level weaknesses before deciding whether more parameter search is useful.
+    owner_action: review_scorecard_attribution_before_signal_diagnosis
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_instability_diagnosis
+    title: ETF Dynamic v3 Signal Instability Diagnosis
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-instability-diagnosis report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_instability_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/method_signal_stability.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_flip_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/regime_mismatch_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_instability_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/signal_instability_diagnosis_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_instability_diagnosis/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-318 separates signal churn and regime mismatch from pure
+      parameter weakness before another bounded search.
+    owner_action: review_signal_instability_before_consensus_quality_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_consensus_quality_review
+    title: ETF Dynamic v3 Consensus Quality Review
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue consensus-quality-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_quality_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_dispersion_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/ensemble_method_quality.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_failure_reasons.json
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/consensus_quality_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/consensus_quality_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-319 records ensemble dispersion and consensus failure reasons
+      before designing a signal-targeted micro search.
+    owner_action: review_consensus_quality_before_micro_search_v4_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_micro_search_v4_design
+    title: ETF Dynamic v3 Micro Search v4 Design
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue micro-search-v4-design report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/micro_search_v4_design_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/v4_design_rationale.json
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/v4_variant_specs.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_design/*/micro_search_v4_design_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-320 materializes a bounded 20-40 variant micro search from
+      documented gate, signal, consensus, and scorecard diagnostics.
+    owner_action: review_micro_search_v4_design_before_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_micro_search_v4_backfill
+    title: ETF Dynamic v3 Micro Search v4 Backfill
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue micro-search-v4-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/micro_search_v4_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/v4_backfill_progress.json
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/v4_variant_performance.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/v4_variant_regime_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/v4_variant_stability_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/v4_variant_signal_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/micro_search_v4_backfill_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/micro_search_v4_backfill/*/validate_data_quality_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-321 evaluates micro search v4 variants only after the required
+      cached-data quality gate and exposes actual date range.
+    owner_action: review_micro_search_v4_backfill_before_gate_calibrated_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_gate_calibrated_review
+    title: ETF Dynamic v3 Gate-Calibrated Review
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue gate-calibrated-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/gate_calibrated_review_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/official_gate_results.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/diagnostic_gate_results.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/gate_calibrated_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/gate_calibrated_review/*/gate_calibrated_review_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-322 compares official and diagnostic gate outcomes without
+      creating an automatic gate policy change.
+    owner_action: review_gate_calibrated_results_before_failure_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_vs_parameter_attribution
+    title: ETF Dynamic v3 Signal vs Parameter Attribution
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-vs-parameter-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/signal_vs_parameter_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/failure_source_attribution.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/recommended_research_shift.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/signal_vs_parameter_attribution_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_vs_parameter_attribution/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-323 determines whether failure comes mainly from signal quality,
+      consensus, gate policy, regime tagging, or parameter space.
+    owner_action: review_failure_source_before_next_research_direction
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_next_research_direction
+    title: ETF Dynamic v3 Next Research Direction
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue next-research-direction report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_research_direction_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_research_direction_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_task_plan.json
+      - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/next_research_direction_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/next_research_direction/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-324 records the next manual research branch and task plan after
+      signal-vs-parameter attribution.
+    owner_action: owner_review_next_research_direction_before_roadmap_update
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_owner_research_roadmap
+    title: ETF Dynamic v3 Owner Research Roadmap
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue owner-research-roadmap report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_research_roadmap_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_roadmap_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_roadmap_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/owner_research_roadmap_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_research_roadmap/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-325 preserves the owner-facing roadmap and checklist for the
+      next research step without production or broker side effects.
+    owner_action: owner_review_roadmap_before_starting_followup_research
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

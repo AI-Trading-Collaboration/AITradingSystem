@@ -309,3 +309,165 @@ def run_next_formal_or_search_plan_fixture(tmp_path: Path) -> dict[str, Any]:
         generated_at=datetime(2024, 3, 22, tzinfo=UTC),
     )
     return {**fixture, "next_plan": next_plan}
+
+
+def run_gate_calibration_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_promotion_threshold_sensitivity_fixture(tmp_path)
+    gate_calibration = weight_search.run_gate_calibration_review(
+        no_promotion_review_id=fixture["no_promotion_review"]["review_id"],
+        threshold_sensitivity_id=fixture["sensitivity"]["sensitivity_id"],
+        review_dir=tmp_path / "no_promotion_review",
+        sensitivity_dir=tmp_path / "promotion_threshold_sensitivity",
+        output_dir=tmp_path / "gate_calibration_review",
+        generated_at=datetime(2024, 3, 23, tzinfo=UTC),
+    )
+    return {**fixture, "gate_calibration": gate_calibration}
+
+
+def run_scorecard_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_targeted_v3_backfill_fixture(tmp_path)
+    scorecard_attribution = weight_search.run_scorecard_attribution(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        output_dir=tmp_path / "scorecard_attribution",
+        generated_at=datetime(2024, 3, 23, 1, tzinfo=UTC),
+    )
+    return {**fixture, "scorecard_attribution": scorecard_attribution}
+
+
+def run_signal_instability_diagnosis_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_scorecard_attribution_fixture(tmp_path)
+    signal_diagnosis = weight_search.run_signal_instability_diagnosis(
+        scorecard_attribution_id=fixture["scorecard_attribution"][
+            "scorecard_attribution_id"
+        ],
+        attribution_dir=tmp_path / "scorecard_attribution",
+        output_dir=tmp_path / "signal_instability_diagnosis",
+        generated_at=datetime(2024, 3, 24, tzinfo=UTC),
+    )
+    return {**fixture, "signal_diagnosis": signal_diagnosis}
+
+
+def run_consensus_quality_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_signal_instability_diagnosis_fixture(tmp_path)
+    consensus_review = weight_search.run_consensus_quality_review(
+        signal_diagnosis_id=fixture["signal_diagnosis"]["signal_diagnosis_id"],
+        signal_dir=tmp_path / "signal_instability_diagnosis",
+        attribution_dir=tmp_path / "scorecard_attribution",
+        output_dir=tmp_path / "consensus_quality_review",
+        generated_at=datetime(2024, 3, 24, 1, tzinfo=UTC),
+    )
+    return {**fixture, "consensus_review": consensus_review}
+
+
+def run_micro_search_v4_design_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_gate_calibration_review_fixture(tmp_path)
+    scorecard_attribution = weight_search.run_scorecard_attribution(
+        scorecard_id=fixture["scorecard"]["scorecard_id"],
+        v3_backfill_id=fixture["targeted_v3_backfill"]["v3_backfill_id"],
+        scorecard_dir=tmp_path / "weight_scorecard",
+        v3_backfill_dir=tmp_path / "targeted_v3_backfill",
+        v3_matrix_dir=tmp_path / "targeted_search_v3",
+        output_dir=tmp_path / "scorecard_attribution",
+        generated_at=datetime(2024, 3, 23, 1, tzinfo=UTC),
+    )
+    signal_diagnosis = weight_search.run_signal_instability_diagnosis(
+        scorecard_attribution_id=scorecard_attribution["scorecard_attribution_id"],
+        attribution_dir=tmp_path / "scorecard_attribution",
+        output_dir=tmp_path / "signal_instability_diagnosis",
+        generated_at=datetime(2024, 3, 24, tzinfo=UTC),
+    )
+    consensus_review = weight_search.run_consensus_quality_review(
+        signal_diagnosis_id=signal_diagnosis["signal_diagnosis_id"],
+        signal_dir=tmp_path / "signal_instability_diagnosis",
+        attribution_dir=tmp_path / "scorecard_attribution",
+        output_dir=tmp_path / "consensus_quality_review",
+        generated_at=datetime(2024, 3, 24, 1, tzinfo=UTC),
+    )
+    v4_design = weight_search.run_micro_search_v4_design(
+        gate_calibration_id=fixture["gate_calibration"]["gate_calibration_id"],
+        scorecard_attribution_id=scorecard_attribution["scorecard_attribution_id"],
+        signal_diagnosis_id=signal_diagnosis["signal_diagnosis_id"],
+        consensus_review_id=consensus_review["consensus_review_id"],
+        gate_calibration_dir=tmp_path / "gate_calibration_review",
+        attribution_dir=tmp_path / "scorecard_attribution",
+        signal_dir=tmp_path / "signal_instability_diagnosis",
+        consensus_dir=tmp_path / "consensus_quality_review",
+        output_dir=tmp_path / "micro_search_v4_design",
+        generated_at=datetime(2024, 3, 25, tzinfo=UTC),
+    )
+    return {
+        **fixture,
+        "scorecard_attribution": scorecard_attribution,
+        "signal_diagnosis": signal_diagnosis,
+        "consensus_review": consensus_review,
+        "v4_design": v4_design,
+    }
+
+
+def run_micro_search_v4_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_micro_search_v4_design_fixture(tmp_path)
+    v4_backfill = weight_search.run_micro_search_v4_backfill(
+        v4_design_id=fixture["v4_design"]["v4_design_id"],
+        v4_design_dir=tmp_path / "micro_search_v4_design",
+        baseline_backfill_dir=tmp_path / "paper_shadow_backfill",
+        output_dir=tmp_path / "micro_search_v4_backfill",
+        price_cache_path=fixture["prices_path"],
+        rates_cache_path=fixture["rates_path"],
+        generated_at=datetime(2024, 3, 3, 3, tzinfo=UTC),
+    )
+    return {**fixture, "v4_backfill": v4_backfill}
+
+
+def run_gate_calibrated_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_micro_search_v4_backfill_fixture(tmp_path)
+    gate_review = weight_search.run_gate_calibrated_review(
+        v4_backfill_id=fixture["v4_backfill"]["v4_backfill_id"],
+        gate_calibration_id=fixture["gate_calibration"]["gate_calibration_id"],
+        v4_backfill_dir=tmp_path / "micro_search_v4_backfill",
+        v4_design_dir=tmp_path / "micro_search_v4_design",
+        gate_calibration_dir=tmp_path / "gate_calibration_review",
+        output_dir=tmp_path / "gate_calibrated_review",
+        generated_at=datetime(2024, 3, 26, tzinfo=UTC),
+    )
+    return {**fixture, "gate_review": gate_review}
+
+
+def run_signal_vs_parameter_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_gate_calibrated_review_fixture(tmp_path)
+    signal_vs_parameter = weight_search.run_signal_vs_parameter_attribution(
+        signal_diagnosis_id=fixture["signal_diagnosis"]["signal_diagnosis_id"],
+        consensus_review_id=fixture["consensus_review"]["consensus_review_id"],
+        gate_review_id=fixture["gate_review"]["gate_review_id"],
+        signal_dir=tmp_path / "signal_instability_diagnosis",
+        consensus_dir=tmp_path / "consensus_quality_review",
+        gate_review_dir=tmp_path / "gate_calibrated_review",
+        output_dir=tmp_path / "signal_vs_parameter_attribution",
+        generated_at=datetime(2024, 3, 27, tzinfo=UTC),
+    )
+    return {**fixture, "signal_vs_parameter": signal_vs_parameter}
+
+
+def run_next_research_direction_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_signal_vs_parameter_attribution_fixture(tmp_path)
+    next_direction = weight_search.run_next_research_direction(
+        attribution_id=fixture["signal_vs_parameter"]["signal_vs_parameter_id"],
+        attribution_dir=tmp_path / "signal_vs_parameter_attribution",
+        output_dir=tmp_path / "next_research_direction",
+        generated_at=datetime(2024, 3, 28, tzinfo=UTC),
+    )
+    return {**fixture, "next_direction": next_direction}
+
+
+def run_owner_research_roadmap_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_next_research_direction_fixture(tmp_path)
+    owner_roadmap = weight_search.update_owner_research_roadmap(
+        direction_id=fixture["next_direction"]["direction_id"],
+        direction_dir=tmp_path / "next_research_direction",
+        output_dir=tmp_path / "owner_research_roadmap",
+        generated_at=datetime(2024, 3, 29, tzinfo=UTC),
+    )
+    return {**fixture, "owner_roadmap": owner_roadmap}

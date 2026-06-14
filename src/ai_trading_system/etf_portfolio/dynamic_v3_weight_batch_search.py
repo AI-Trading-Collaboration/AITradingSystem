@@ -62,6 +62,32 @@ DEFAULT_CANDIDATE_PROMOTION_V2_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "cand
 DEFAULT_NEXT_FORMAL_OR_SEARCH_PLAN_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "next_formal_or_search_plan"
 )
+DEFAULT_GATE_CALIBRATION_REVIEW_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_calibration_review"
+)
+DEFAULT_SCORECARD_ATTRIBUTION_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "scorecard_attribution"
+DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_instability_diagnosis"
+)
+DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "consensus_quality_review"
+)
+DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "micro_search_v4_design"
+DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "micro_search_v4_backfill"
+)
+DEFAULT_GATE_CALIBRATED_REVIEW_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "gate_calibrated_review"
+)
+DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_vs_parameter_attribution"
+)
+DEFAULT_NEXT_RESEARCH_DIRECTION_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "next_research_direction"
+)
+DEFAULT_OWNER_RESEARCH_ROADMAP_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_research_roadmap"
+)
 
 SEARCH_REQUIRED_FAMILIES = (
     "smoothing",
@@ -109,6 +135,17 @@ NEAR_MISS_MIN_COMPONENT_SCORE = 0.65
 NEAR_MISS_MAX_FAILED_GATES = 2
 NO_PROMOTION_NEAR_MISS_MARGIN = 0.06
 TARGETED_V3_MAX_VARIANTS = 120
+
+# TRADING-316_to_325 diagnostic pilot constants. They are documented in the
+# requirement file and only shape research-only diagnosis / micro-search review;
+# they do not change official promotion policy or production target weights.
+GATE_DIAGNOSTIC_RELAXATION = 0.05
+V4_MICRO_MIN_VARIANTS = 20
+V4_MICRO_MAX_VARIANTS = 40
+SIGNAL_INSTABILITY_LARGE_JUMP_REVIEW_COUNT = 2
+SIGNAL_INSTABILITY_CHURN_REVIEW_COUNT = 4
+CONSENSUS_HIGH_DISPERSION = 0.15
+CONSENSUS_MODERATE_DISPERSION = 0.08
 
 PROMOTION_GATE_UNIVERSE = (
     "composite_score_gate",
@@ -3450,6 +3487,2012 @@ def validate_next_formal_or_search_plan_artifact(
     )
 
 
+def run_gate_calibration_review(
+    *,
+    no_promotion_review_id: str,
+    threshold_sensitivity_id: str,
+    review_dir: Path = DEFAULT_NO_PROMOTION_REVIEW_DIR,
+    sensitivity_dir: Path = DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+    output_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    review = no_promotion_review_report_payload(
+        review_id=no_promotion_review_id,
+        output_dir=review_dir,
+    )
+    sensitivity = promotion_threshold_sensitivity_report_payload(
+        sensitivity_id=threshold_sensitivity_id,
+        output_dir=sensitivity_dir,
+    )
+    diagnosis = _gate_strictness_diagnosis(review, sensitivity)
+    impact = _gate_component_impact(review)
+    relaxed = _diagnostic_relaxed_gate_result(sensitivity)
+    gate_calibration_id = _stable_id(
+        "gate-calibration-review",
+        no_promotion_review_id,
+        threshold_sensitivity_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / gate_calibration_id)
+    root.mkdir(parents=True, exist_ok=False)
+    diagnosis["gate_calibration_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_calibration_review_manifest",
+        "gate_calibration_id": root.name,
+        "source_no_promotion_review": no_promotion_review_id,
+        "threshold_sensitivity_id": threshold_sensitivity_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": review.get("market_regime", "ai_after_chatgpt"),
+        "can_change_official_gate": False,
+        "official_gate_changed": False,
+        "gate_calibration_manifest_path": str(root / "gate_calibration_manifest.json"),
+        "gate_strictness_diagnosis_path": str(root / "gate_strictness_diagnosis.json"),
+        "gate_component_impact_path": str(root / "gate_component_impact.json"),
+        "diagnostic_relaxed_gate_result_path": str(root / "diagnostic_relaxed_gate_result.json"),
+        "gate_calibration_review_report_path": str(root / "gate_calibration_review_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_gate_calibration_reader_brief(diagnosis, relaxed)
+    _write_json(root / "gate_calibration_manifest.json", manifest)
+    _write_json(root / "gate_strictness_diagnosis.json", diagnosis)
+    _write_json(root / "gate_component_impact.json", impact)
+    _write_json(root / "diagnostic_relaxed_gate_result.json", relaxed)
+    _write_text(
+        root / "gate_calibration_review_report.md",
+        render_gate_calibration_review_report(manifest, diagnosis, impact, relaxed),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_gate_calibration_review",
+        root.name,
+        root / "gate_calibration_manifest.json",
+    )
+    return {
+        "gate_calibration_id": root.name,
+        "gate_calibration_dir": root,
+        "manifest": manifest,
+        "gate_strictness_diagnosis": diagnosis,
+        "gate_component_impact": impact,
+        "diagnostic_relaxed_gate_result": relaxed,
+        "reader_brief_section": reader,
+    }
+
+
+def gate_calibration_review_report_payload(
+    *,
+    gate_calibration_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=gate_calibration_id,
+        latest_pointer="latest_gate_calibration_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="gate_calibration_manifest.json",
+    )
+    return {
+        **_read_json(root / "gate_calibration_manifest.json"),
+        "gate_strictness_diagnosis": _read_json(root / "gate_strictness_diagnosis.json"),
+        "gate_component_impact": _read_json(root / "gate_component_impact.json"),
+        "diagnostic_relaxed_gate_result": _read_json(root / "diagnostic_relaxed_gate_result.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "gate_calibration_dir": str(root),
+    }
+
+
+def validate_gate_calibration_review_artifact(
+    *,
+    gate_calibration_id: str,
+    output_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / gate_calibration_id
+    manifest = _read_optional_json(root / "gate_calibration_manifest.json") or {}
+    diagnosis = _read_optional_json(root / "gate_strictness_diagnosis.json") or {}
+    impact = _read_optional_json(root / "gate_component_impact.json") or {}
+    relaxed = _read_optional_json(root / "diagnostic_relaxed_gate_result.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "gate_calibration_manifest.json",
+            "gate_strictness_diagnosis.json",
+            "gate_component_impact.json",
+            "diagnostic_relaxed_gate_result.json",
+            "gate_calibration_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "gate_calibration_id_matches",
+                manifest.get("gate_calibration_id") == gate_calibration_id,
+                "",
+            ),
+            st._check("official_gate_unchanged", relaxed.get("official_gate_changed") is False, ""),
+            st._check(
+                "can_change_official_gate_false",
+                diagnosis.get("can_change_official_gate") is False,
+                "",
+            ),
+            st._check(
+                "calibrated_assessment_valid",
+                diagnosis.get("calibrated_assessment")
+                in {"REASONABLE", "TOO_STRICT", "TOO_LOOSE", "INCONCLUSIVE"},
+                _text(diagnosis.get("calibrated_assessment")),
+            ),
+            st._check("component_impact_readable", bool(_records(impact.get("components"))), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, diagnosis, impact, relaxed), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, diagnosis, impact, relaxed),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_gate_calibration_review_validation",
+        gate_calibration_id,
+        checks,
+    )
+
+
+def run_scorecard_attribution(
+    *,
+    scorecard_id: str,
+    v3_backfill_id: str,
+    scorecard_dir: Path = DEFAULT_WEIGHT_SCORECARD_DIR,
+    v3_backfill_dir: Path = DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Path = DEFAULT_TARGETED_SEARCH_V3_DIR,
+    output_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    source_scorecard = weight_scorecard_report_payload(
+        scorecard_id=scorecard_id,
+        output_dir=scorecard_dir,
+    )
+    backfill = targeted_v3_backfill_report_payload(
+        v3_backfill_id=v3_backfill_id,
+        output_dir=v3_backfill_dir,
+    )
+    matrix = targeted_search_v3_report_payload(
+        v3_matrix_id=_text(backfill.get("v3_matrix_id")),
+        output_dir=v3_matrix_dir,
+    )
+    rows = _targeted_v3_scorecard_rows(backfill, matrix)
+    rejected = [
+        row for row in rows if row.get("scorecard_decision") != "PROMOTE_TO_FORMAL_IMPLEMENTATION"
+    ]
+    distribution = _score_component_distribution(scorecard_id, rejected)
+    component_matrix = _rejected_variant_component_matrix(rejected)
+    family_weakness = _family_component_weakness(component_matrix)
+    attribution_id = _stable_id(
+        "scorecard-attribution",
+        scorecard_id,
+        v3_backfill_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / attribution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_scorecard_attribution_manifest",
+        "scorecard_attribution_id": root.name,
+        "scorecard_id": scorecard_id,
+        "v3_backfill_id": v3_backfill_id,
+        "v3_matrix_id": backfill.get("v3_matrix_id"),
+        "source_backfill_id": backfill.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if component_matrix else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "variant_count": len(rejected),
+        "source_batch2_scorecard_variant_count": len(
+            _records(source_scorecard.get("variant_scorecard"))
+        ),
+        "scorecard_attribution_manifest_path": str(
+            root / "scorecard_attribution_manifest.json"
+        ),
+        "score_component_distribution_path": str(root / "score_component_distribution.json"),
+        "rejected_variant_component_matrix_path": str(
+            root / "rejected_variant_component_matrix.jsonl"
+        ),
+        "family_component_weakness_path": str(root / "family_component_weakness.json"),
+        "scorecard_attribution_report_path": str(root / "scorecard_attribution_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "scorecard_attribution_manifest.json", manifest)
+    _write_json(root / "score_component_distribution.json", distribution)
+    _write_jsonl(root / "rejected_variant_component_matrix.jsonl", component_matrix)
+    _write_json(root / "family_component_weakness.json", family_weakness)
+    _write_text(
+        root / "scorecard_attribution_report.md",
+        render_scorecard_attribution_report(manifest, distribution, family_weakness),
+    )
+    _write_latest_pointer(
+        "latest_scorecard_attribution",
+        root.name,
+        root / "scorecard_attribution_manifest.json",
+    )
+    return {
+        "scorecard_attribution_id": root.name,
+        "scorecard_attribution_dir": root,
+        "manifest": manifest,
+        "score_component_distribution": distribution,
+        "rejected_variant_component_matrix": component_matrix,
+        "family_component_weakness": family_weakness,
+    }
+
+
+def scorecard_attribution_report_payload(
+    *,
+    scorecard_attribution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=scorecard_attribution_id,
+        latest_pointer="latest_scorecard_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="scorecard_attribution_manifest.json",
+    )
+    return {
+        **_read_json(root / "scorecard_attribution_manifest.json"),
+        "score_component_distribution": _read_json(root / "score_component_distribution.json"),
+        "rejected_variant_component_matrix": _read_jsonl(
+            root / "rejected_variant_component_matrix.jsonl"
+        ),
+        "family_component_weakness": _read_json(root / "family_component_weakness.json"),
+        "scorecard_attribution_dir": str(root),
+    }
+
+
+def validate_scorecard_attribution_artifact(
+    *,
+    scorecard_attribution_id: str,
+    output_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / scorecard_attribution_id
+    manifest = _read_optional_json(root / "scorecard_attribution_manifest.json") or {}
+    distribution = _read_optional_json(root / "score_component_distribution.json") or {}
+    matrix = _read_jsonl(root / "rejected_variant_component_matrix.jsonl")
+    family = _read_optional_json(root / "family_component_weakness.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "scorecard_attribution_manifest.json",
+            "score_component_distribution.json",
+            "rejected_variant_component_matrix.jsonl",
+            "family_component_weakness.json",
+            "scorecard_attribution_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "scorecard_attribution_id_matches",
+                manifest.get("scorecard_attribution_id") == scorecard_attribution_id,
+                "",
+            ),
+            st._check(
+                "variant_count_matches",
+                int(_float(manifest.get("variant_count"))) == len(matrix),
+                "",
+            ),
+            st._check(
+                "distribution_readable",
+                bool(_records(distribution.get("components"))),
+                "",
+            ),
+            st._check("family_weakness_readable", bool(_records(family.get("families"))), ""),
+            st._check(
+                "broker_forbidden",
+                _payload_safe(manifest, distribution, family, *matrix),
+                "",
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, distribution, family, *matrix),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_scorecard_attribution_validation",
+        scorecard_attribution_id,
+        checks,
+    )
+
+
+def run_signal_instability_diagnosis(
+    *,
+    scorecard_attribution_id: str,
+    attribution_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    output_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    attribution = scorecard_attribution_report_payload(
+        scorecard_attribution_id=scorecard_attribution_id,
+        output_dir=attribution_dir,
+    )
+    method_rows = _method_signal_stability_rows(attribution)
+    flip_events = _signal_flip_events(method_rows, attribution)
+    mismatch_events = _regime_mismatch_events(attribution)
+    summary = _signal_instability_summary(method_rows, mismatch_events)
+    diagnosis_id = _stable_id(
+        "signal-instability-diagnosis",
+        scorecard_attribution_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / diagnosis_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["signal_diagnosis_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_signal_instability_manifest",
+        "signal_diagnosis_id": root.name,
+        "scorecard_attribution_id": scorecard_attribution_id,
+        "scorecard_id": attribution.get("scorecard_id"),
+        "v3_backfill_id": attribution.get("v3_backfill_id"),
+        "v3_matrix_id": attribution.get("v3_matrix_id"),
+        "source_backfill_id": attribution.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if method_rows else "FAIL",
+        "market_regime": attribution.get("market_regime", "ai_after_chatgpt"),
+        "date_start": attribution.get("date_start"),
+        "date_end": attribution.get("date_end"),
+        "signal_instability_manifest_path": str(root / "signal_instability_manifest.json"),
+        "method_signal_stability_path": str(root / "method_signal_stability.jsonl"),
+        "signal_flip_events_path": str(root / "signal_flip_events.jsonl"),
+        "regime_mismatch_events_path": str(root / "regime_mismatch_events.jsonl"),
+        "signal_instability_summary_path": str(root / "signal_instability_summary.json"),
+        "signal_instability_diagnosis_report_path": str(
+            root / "signal_instability_diagnosis_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_signal_instability_reader_brief(summary)
+    _write_json(root / "signal_instability_manifest.json", manifest)
+    _write_jsonl(root / "method_signal_stability.jsonl", method_rows)
+    _write_jsonl(root / "signal_flip_events.jsonl", flip_events)
+    _write_jsonl(root / "regime_mismatch_events.jsonl", mismatch_events)
+    _write_json(root / "signal_instability_summary.json", summary)
+    _write_text(
+        root / "signal_instability_diagnosis_report.md",
+        render_signal_instability_report(manifest, method_rows, summary),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_signal_instability_diagnosis",
+        root.name,
+        root / "signal_instability_manifest.json",
+    )
+    return {
+        "signal_diagnosis_id": root.name,
+        "signal_diagnosis_dir": root,
+        "manifest": manifest,
+        "method_signal_stability": method_rows,
+        "signal_flip_events": flip_events,
+        "regime_mismatch_events": mismatch_events,
+        "signal_instability_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def signal_instability_diagnosis_report_payload(
+    *,
+    signal_diagnosis_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=signal_diagnosis_id,
+        latest_pointer="latest_signal_instability_diagnosis",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="signal_instability_manifest.json",
+    )
+    return {
+        **_read_json(root / "signal_instability_manifest.json"),
+        "method_signal_stability": _read_jsonl(root / "method_signal_stability.jsonl"),
+        "signal_flip_events": _read_jsonl(root / "signal_flip_events.jsonl"),
+        "regime_mismatch_events": _read_jsonl(root / "regime_mismatch_events.jsonl"),
+        "signal_instability_summary": _read_json(root / "signal_instability_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "signal_diagnosis_dir": str(root),
+    }
+
+
+def validate_signal_instability_diagnosis_artifact(
+    *,
+    signal_diagnosis_id: str,
+    output_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+) -> dict[str, Any]:
+    root = output_dir / signal_diagnosis_id
+    manifest = _read_optional_json(root / "signal_instability_manifest.json") or {}
+    methods = _read_jsonl(root / "method_signal_stability.jsonl")
+    flips = _read_jsonl(root / "signal_flip_events.jsonl")
+    mismatches = _read_jsonl(root / "regime_mismatch_events.jsonl")
+    summary = _read_optional_json(root / "signal_instability_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "signal_instability_manifest.json",
+            "method_signal_stability.jsonl",
+            "signal_flip_events.jsonl",
+            "regime_mismatch_events.jsonl",
+            "signal_instability_summary.json",
+            "signal_instability_diagnosis_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "signal_diagnosis_id_matches",
+                manifest.get("signal_diagnosis_id") == signal_diagnosis_id,
+                "",
+            ),
+            st._check("method_stability_readable", bool(methods), ""),
+            st._check("flip_events_listed", isinstance(flips, list), ""),
+            st._check("regime_mismatch_events_listed", isinstance(mismatches, list), ""),
+            st._check(
+                "summary_has_signal_fix_flag",
+                "requires_signal_level_fix" in summary,
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *methods), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *methods, *flips, *mismatches),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_signal_instability_diagnosis_validation",
+        signal_diagnosis_id,
+        checks,
+    )
+
+
+def run_consensus_quality_review(
+    *,
+    signal_diagnosis_id: str,
+    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    attribution_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    output_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    signal = signal_instability_diagnosis_report_payload(
+        signal_diagnosis_id=signal_diagnosis_id,
+        output_dir=signal_dir,
+    )
+    attribution = scorecard_attribution_report_payload(
+        scorecard_attribution_id=_text(signal.get("scorecard_attribution_id")),
+        output_dir=attribution_dir,
+    )
+    dispersion = _consensus_dispersion_summary(signal)
+    quality_rows = _ensemble_method_quality(signal, attribution)
+    failure = _consensus_failure_reasons(dispersion, quality_rows)
+    consensus_review_id = _stable_id(
+        "consensus-quality-review",
+        signal_diagnosis_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / consensus_review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_consensus_quality_manifest",
+        "consensus_review_id": root.name,
+        "signal_diagnosis_id": signal_diagnosis_id,
+        "scorecard_attribution_id": signal.get("scorecard_attribution_id"),
+        "v3_backfill_id": signal.get("v3_backfill_id"),
+        "source_backfill_id": signal.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if quality_rows else "FAIL",
+        "market_regime": signal.get("market_regime", "ai_after_chatgpt"),
+        "consensus_quality_manifest_path": str(root / "consensus_quality_manifest.json"),
+        "consensus_dispersion_summary_path": str(root / "consensus_dispersion_summary.json"),
+        "ensemble_method_quality_path": str(root / "ensemble_method_quality.jsonl"),
+        "consensus_failure_reasons_path": str(root / "consensus_failure_reasons.json"),
+        "consensus_quality_review_report_path": str(root / "consensus_quality_review_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_consensus_quality_reader_brief(failure)
+    _write_json(root / "consensus_quality_manifest.json", manifest)
+    _write_json(root / "consensus_dispersion_summary.json", dispersion)
+    _write_jsonl(root / "ensemble_method_quality.jsonl", quality_rows)
+    _write_json(root / "consensus_failure_reasons.json", failure)
+    _write_text(
+        root / "consensus_quality_review_report.md",
+        render_consensus_quality_report(manifest, dispersion, quality_rows, failure),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_consensus_quality_review",
+        root.name,
+        root / "consensus_quality_manifest.json",
+    )
+    return {
+        "consensus_review_id": root.name,
+        "consensus_review_dir": root,
+        "manifest": manifest,
+        "consensus_dispersion_summary": dispersion,
+        "ensemble_method_quality": quality_rows,
+        "consensus_failure_reasons": failure,
+        "reader_brief_section": reader,
+    }
+
+
+def consensus_quality_review_report_payload(
+    *,
+    consensus_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=consensus_review_id,
+        latest_pointer="latest_consensus_quality_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="consensus_quality_manifest.json",
+    )
+    return {
+        **_read_json(root / "consensus_quality_manifest.json"),
+        "consensus_dispersion_summary": _read_json(root / "consensus_dispersion_summary.json"),
+        "ensemble_method_quality": _read_jsonl(root / "ensemble_method_quality.jsonl"),
+        "consensus_failure_reasons": _read_json(root / "consensus_failure_reasons.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "consensus_review_dir": str(root),
+    }
+
+
+def validate_consensus_quality_review_artifact(
+    *,
+    consensus_review_id: str,
+    output_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / consensus_review_id
+    manifest = _read_optional_json(root / "consensus_quality_manifest.json") or {}
+    dispersion = _read_optional_json(root / "consensus_dispersion_summary.json") or {}
+    quality = _read_jsonl(root / "ensemble_method_quality.jsonl")
+    failure = _read_optional_json(root / "consensus_failure_reasons.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "consensus_quality_manifest.json",
+            "consensus_dispersion_summary.json",
+            "ensemble_method_quality.jsonl",
+            "consensus_failure_reasons.json",
+            "consensus_quality_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "consensus_review_id_matches",
+                manifest.get("consensus_review_id") == consensus_review_id,
+                "",
+            ),
+            st._check("dispersion_status_visible", bool(dispersion.get("dispersion_status")), ""),
+            st._check("ensemble_quality_readable", bool(quality), ""),
+            st._check("failure_reason_visible", bool(failure.get("primary_failure_reason")), ""),
+            st._check(
+                "broker_forbidden",
+                _payload_safe(manifest, dispersion, failure, *quality),
+                "",
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, dispersion, failure, *quality),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_consensus_quality_review_validation",
+        consensus_review_id,
+        checks,
+    )
+
+
+def run_micro_search_v4_design(
+    *,
+    gate_calibration_id: str,
+    scorecard_attribution_id: str,
+    signal_diagnosis_id: str,
+    consensus_review_id: str,
+    gate_calibration_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+    attribution_dir: Path = DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    consensus_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    gate = gate_calibration_review_report_payload(
+        gate_calibration_id=gate_calibration_id,
+        output_dir=gate_calibration_dir,
+    )
+    attribution = scorecard_attribution_report_payload(
+        scorecard_attribution_id=scorecard_attribution_id,
+        output_dir=attribution_dir,
+    )
+    signal = signal_instability_diagnosis_report_payload(
+        signal_diagnosis_id=signal_diagnosis_id,
+        output_dir=signal_dir,
+    )
+    consensus = consensus_quality_review_report_payload(
+        consensus_review_id=consensus_review_id,
+        output_dir=consensus_dir,
+    )
+    rationale = _micro_search_v4_design_rationale(gate, attribution, signal, consensus)
+    variants = _micro_search_v4_variant_specs(rationale)
+    design_id = _stable_id(
+        "micro-search-v4-design",
+        gate_calibration_id,
+        scorecard_attribution_id,
+        signal_diagnosis_id,
+        consensus_review_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / design_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_micro_search_v4_design_manifest",
+        "v4_design_id": root.name,
+        "gate_calibration_id": gate_calibration_id,
+        "scorecard_attribution_id": scorecard_attribution_id,
+        "signal_diagnosis_id": signal_diagnosis_id,
+        "consensus_review_id": consensus_review_id,
+        "v3_backfill_id": attribution.get("v3_backfill_id"),
+        "source_backfill_id": attribution.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS"
+        if V4_MICRO_MIN_VARIANTS <= len(variants) <= V4_MICRO_MAX_VARIANTS
+        else "FAIL",
+        "market_regime": attribution.get("market_regime", "ai_after_chatgpt"),
+        "variant_count": len(variants),
+        "micro_search_v4_design_manifest_path": str(
+            root / "micro_search_v4_design_manifest.json"
+        ),
+        "v4_design_rationale_path": str(root / "v4_design_rationale.json"),
+        "v4_variant_specs_path": str(root / "v4_variant_specs.jsonl"),
+        "micro_search_v4_design_report_path": str(root / "micro_search_v4_design_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "micro_search_v4_design_manifest.json", manifest)
+    _write_json(root / "v4_design_rationale.json", rationale)
+    _write_jsonl(root / "v4_variant_specs.jsonl", variants)
+    _write_text(
+        root / "micro_search_v4_design_report.md",
+        render_micro_search_v4_design_report(manifest, rationale, variants),
+    )
+    _write_latest_pointer(
+        "latest_micro_search_v4_design",
+        root.name,
+        root / "micro_search_v4_design_manifest.json",
+    )
+    return {
+        "v4_design_id": root.name,
+        "v4_design_dir": root,
+        "manifest": manifest,
+        "v4_design_rationale": rationale,
+        "v4_variant_specs": variants,
+    }
+
+
+def micro_search_v4_design_report_payload(
+    *,
+    v4_design_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=v4_design_id,
+        latest_pointer="latest_micro_search_v4_design",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="micro_search_v4_design_manifest.json",
+    )
+    return {
+        **_read_json(root / "micro_search_v4_design_manifest.json"),
+        "v4_design_rationale": _read_json(root / "v4_design_rationale.json"),
+        "v4_variant_specs": _read_jsonl(root / "v4_variant_specs.jsonl"),
+        "v4_design_dir": str(root),
+    }
+
+
+def validate_micro_search_v4_design_artifact(
+    *,
+    v4_design_id: str,
+    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / v4_design_id
+    manifest = _read_optional_json(root / "micro_search_v4_design_manifest.json") or {}
+    rationale = _read_optional_json(root / "v4_design_rationale.json") or {}
+    variants = _read_jsonl(root / "v4_variant_specs.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "micro_search_v4_design_manifest.json",
+            "v4_design_rationale.json",
+            "v4_variant_specs.jsonl",
+            "micro_search_v4_design_report.md",
+        ),
+    )
+    required_variants = {
+        "smooth_3d_plus_dispersion_gate",
+        "smooth_3d_plus_topk_stability_filter",
+        "smooth_3d_plus_rebalance_delta_3pct",
+        "cash_buffer_8_plus_smooth_3d",
+        "cash_buffer_10_plus_dispersion_gate",
+        "median_consensus_plus_smooth_3d",
+        "median_consensus_plus_dispersion_gate",
+        "top5_consensus_plus_smooth_3d",
+        "top5_consensus_plus_rebalance_threshold",
+        "high_disagreement_hold_previous",
+        "high_disagreement_reduce_tilt_50",
+        "sideways_hold_plus_fast_restore",
+    }
+    variant_ids = {_text(row.get("variant_id")) for row in variants}
+    checks.extend(
+        [
+            st._check("v4_design_id_matches", manifest.get("v4_design_id") == v4_design_id, ""),
+            st._check(
+                "variant_count_bounded",
+                V4_MICRO_MIN_VARIANTS <= len(variants) <= V4_MICRO_MAX_VARIANTS,
+                str(len(variants)),
+            ),
+            st._check(
+                "required_variants_present",
+                required_variants.issubset(variant_ids),
+                ",".join(sorted(required_variants - variant_ids)),
+            ),
+            st._check(
+                "each_variant_has_rationale",
+                all(_texts(row.get("target_failure_modes")) for row in variants),
+                "",
+            ),
+            st._check("rationale_visible", bool(_texts(rationale.get("design_principles"))), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, rationale, *variants), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, rationale, *variants),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_micro_search_v4_design_validation",
+        v4_design_id,
+        checks,
+    )
+
+
+def run_micro_search_v4_backfill(
+    *,
+    v4_design_id: str,
+    v4_design_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    baseline_backfill_dir: Path = st.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+    price_cache_path: Path | None = None,
+    rates_cache_path: Path = st.DEFAULT_RATES_CACHE_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    design = micro_search_v4_design_report_payload(
+        v4_design_id=v4_design_id,
+        output_dir=v4_design_dir,
+    )
+    source_backfill_id = _text(design.get("source_backfill_id"))
+    if not source_backfill_id:
+        raise RuntimeError("micro search v4 design is missing source_backfill_id")
+    backfill = st.paper_shadow_backfill_report_payload(
+        backfill_id=source_backfill_id,
+        output_dir=baseline_backfill_dir,
+    )
+    baseline_states = _records(backfill.get("backfill_method_states"))
+    config = st._load_backfill_config_from_manifest(backfill)
+    start = max(
+        _coerce_date(backfill.get("date_start"), st.AI_AFTER_CHATGPT_START),
+        st.AI_AFTER_CHATGPT_START,
+    )
+    requested_end = _coerce_date(backfill.get("date_end"), generated.date())
+    source = _mapping(config.get("source"))
+    symbols = st._symbols_from_state_paths(baseline_states)
+    prices_path = price_cache_path or st._resolve_project_path(
+        source.get("price_cache_path"),
+        st.DEFAULT_PRICE_CACHE_PATH,
+    )
+    pivot = st._load_price_pivot(prices_path, symbols, start)
+    latest_valid_as_of = _latest_common_price_date(pivot, symbols)
+    end = min(requested_end, latest_valid_as_of, generated.date())
+    used_latest_valid_as_of = end < requested_end
+    pivot = pivot.loc[(pivot.index.date >= start) & (pivot.index.date <= end)]
+    quality_as_of = max(end, generated.date())
+    quality = st._run_data_quality_gate(
+        price_cache_path=prices_path,
+        rates_cache_path=rates_cache_path,
+        expected_symbols=symbols,
+        as_of=quality_as_of,
+    )
+    if not quality.passed:
+        raise RuntimeError(
+            f"data quality gate failed for micro search v4 backfill: {quality.status}"
+        )
+    returns = pivot.pct_change().fillna(0.0)
+    labels = {
+        idx.date().isoformat(): st._risk_capped_regime_context_for_return(row, config)
+        for idx, row in returns.iterrows()
+    }
+    variant_specs = _records(design.get("v4_variant_specs"))
+    variant_states: list[dict[str, Any]] = []
+    failed: list[dict[str, Any]] = []
+    for variant in variant_specs:
+        try:
+            variant_states.extend(
+                st._run_variant_weight_path(
+                    variant=variant,
+                    baseline_states=baseline_states,
+                    returns=returns,
+                    labels=labels,
+                    config=config,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            failed.append({"variant_id": _text(variant.get("variant_id")), "error": str(exc)})
+    performance = st._variant_performance_metrics(variant_states, baseline_states)
+    regime = st._variant_regime_metrics(variant_states, baseline_states, labels, config)
+    stability = st._variant_stability_metrics(variant_states, baseline_states, config)
+    signal = _v4_variant_signal_metrics(variant_states, stability, regime)
+    backfill_id = _stable_id(
+        "micro-search-v4-backfill",
+        v4_design_id,
+        end.isoformat(),
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    quality_report_path = root / "validate_data_quality_report.md"
+    progress = {
+        "schema_version": st.SCHEMA_VERSION,
+        "v4_backfill_id": root.name,
+        "variants_total": len(variant_specs),
+        "variants_completed": len({row.get("variant_id") for row in performance}),
+        "variants_failed": len(failed),
+        "failed_variants": failed,
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "requested_date_end": requested_end.isoformat(),
+        "latest_valid_as_of": latest_valid_as_of.isoformat(),
+        "data_quality": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "validate_data_quality_report_path": str(quality_report_path),
+        "used_latest_valid_as_of": used_latest_valid_as_of,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_micro_search_v4_backfill_manifest",
+        "v4_backfill_id": root.name,
+        "v4_design_id": v4_design_id,
+        "source_backfill_id": source_backfill_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS"
+        if not failed and performance
+        else "PASS_WITH_WARNINGS"
+        if performance
+        else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": start.isoformat(),
+        "date_end": end.isoformat(),
+        "requested_start_date": backfill.get("requested_start_date", start.isoformat()),
+        "requested_end_date": requested_end.isoformat(),
+        "latest_valid_as_of": latest_valid_as_of.isoformat(),
+        "data_quality_status": quality.status,
+        "data_quality_as_of": quality_as_of.isoformat(),
+        "data_quality_checked_at": quality.checked_at.isoformat(),
+        "validate_data_quality_report_path": str(quality_report_path),
+        "used_latest_valid_as_of": used_latest_valid_as_of,
+        "variants_total": len(variant_specs),
+        "variants_completed": progress["variants_completed"],
+        "variants_failed": len(failed),
+        "micro_search_v4_backfill_manifest_path": str(
+            root / "micro_search_v4_backfill_manifest.json"
+        ),
+        "v4_backfill_progress_path": str(root / "v4_backfill_progress.json"),
+        "v4_variant_performance_path": str(root / "v4_variant_performance.jsonl"),
+        "v4_variant_regime_metrics_path": str(root / "v4_variant_regime_metrics.jsonl"),
+        "v4_variant_stability_metrics_path": str(root / "v4_variant_stability_metrics.jsonl"),
+        "v4_variant_signal_metrics_path": str(root / "v4_variant_signal_metrics.jsonl"),
+        "micro_search_v4_backfill_report_path": str(root / "micro_search_v4_backfill_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "micro_search_v4_backfill_manifest.json", manifest)
+    _write_json(root / "v4_backfill_progress.json", progress)
+    write_data_quality_report(quality, quality_report_path)
+    _write_jsonl(root / "v4_variant_performance.jsonl", performance)
+    _write_jsonl(root / "v4_variant_regime_metrics.jsonl", regime)
+    _write_jsonl(root / "v4_variant_stability_metrics.jsonl", stability)
+    _write_jsonl(root / "v4_variant_signal_metrics.jsonl", signal)
+    _write_text(
+        root / "micro_search_v4_backfill_report.md",
+        render_micro_search_v4_backfill_report(manifest, progress),
+    )
+    _write_latest_pointer(
+        "latest_micro_search_v4_backfill",
+        root.name,
+        root / "micro_search_v4_backfill_manifest.json",
+    )
+    return {
+        "v4_backfill_id": root.name,
+        "v4_backfill_dir": root,
+        "manifest": manifest,
+        "v4_backfill_progress": progress,
+        "v4_variant_performance": performance,
+        "v4_variant_regime_metrics": regime,
+        "v4_variant_stability_metrics": stability,
+        "v4_variant_signal_metrics": signal,
+    }
+
+
+def micro_search_v4_backfill_report_payload(
+    *,
+    v4_backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=v4_backfill_id,
+        latest_pointer="latest_micro_search_v4_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="micro_search_v4_backfill_manifest.json",
+    )
+    return {
+        **_read_json(root / "micro_search_v4_backfill_manifest.json"),
+        "v4_backfill_progress": _read_json(root / "v4_backfill_progress.json"),
+        "v4_variant_performance": _read_jsonl(root / "v4_variant_performance.jsonl"),
+        "v4_variant_regime_metrics": _read_jsonl(root / "v4_variant_regime_metrics.jsonl"),
+        "v4_variant_stability_metrics": _read_jsonl(root / "v4_variant_stability_metrics.jsonl"),
+        "v4_variant_signal_metrics": _read_jsonl(root / "v4_variant_signal_metrics.jsonl"),
+        "v4_backfill_dir": str(root),
+    }
+
+
+def validate_micro_search_v4_backfill_artifact(
+    *,
+    v4_backfill_id: str,
+    output_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / v4_backfill_id
+    manifest = _read_optional_json(root / "micro_search_v4_backfill_manifest.json") or {}
+    progress = _read_optional_json(root / "v4_backfill_progress.json") or {}
+    performance = _read_jsonl(root / "v4_variant_performance.jsonl")
+    regime = _read_jsonl(root / "v4_variant_regime_metrics.jsonl")
+    stability = _read_jsonl(root / "v4_variant_stability_metrics.jsonl")
+    signal = _read_jsonl(root / "v4_variant_signal_metrics.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "micro_search_v4_backfill_manifest.json",
+            "v4_backfill_progress.json",
+            "v4_variant_performance.jsonl",
+            "v4_variant_regime_metrics.jsonl",
+            "v4_variant_stability_metrics.jsonl",
+            "v4_variant_signal_metrics.jsonl",
+            "micro_search_v4_backfill_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "v4_backfill_id_matches",
+                manifest.get("v4_backfill_id") == v4_backfill_id,
+                "",
+            ),
+            st._check(
+                "variants_completed_visible",
+                int(_float(progress.get("variants_completed"))) > 0,
+                _text(progress.get("variants_completed")),
+            ),
+            st._check(
+                "data_quality_visible",
+                manifest.get("data_quality_status") in {"PASS", "PASS_WITH_WARNINGS"},
+                _text(manifest.get("data_quality_status")),
+            ),
+            st._check("performance_readable", bool(performance), ""),
+            st._check("regime_metrics_readable", bool(regime), ""),
+            st._check("stability_metrics_readable", bool(stability), ""),
+            st._check("signal_metrics_readable", bool(signal), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, progress, *performance), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, progress, *performance, *signal),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_micro_search_v4_backfill_validation",
+        v4_backfill_id,
+        checks,
+    )
+
+
+def run_gate_calibrated_review(
+    *,
+    v4_backfill_id: str,
+    gate_calibration_id: str,
+    v4_backfill_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+    v4_design_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    gate_calibration_dir: Path = DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+    output_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = micro_search_v4_backfill_report_payload(
+        v4_backfill_id=v4_backfill_id,
+        output_dir=v4_backfill_dir,
+    )
+    design = micro_search_v4_design_report_payload(
+        v4_design_id=_text(backfill.get("v4_design_id")),
+        output_dir=v4_design_dir,
+    )
+    gate = gate_calibration_review_report_payload(
+        gate_calibration_id=gate_calibration_id,
+        output_dir=gate_calibration_dir,
+    )
+    rows = _v4_scorecard_rows(backfill, design)
+    official = _gate_review_rows(rows, diagnostic=False)
+    diagnostic = _gate_review_rows(rows, diagnostic=True)
+    summary = _gate_calibrated_summary(official, diagnostic, gate)
+    gate_review_id = _stable_id(
+        "gate-calibrated-review",
+        v4_backfill_id,
+        gate_calibration_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / gate_review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_gate_calibrated_review_manifest",
+        "gate_review_id": root.name,
+        "v4_backfill_id": v4_backfill_id,
+        "v4_design_id": backfill.get("v4_design_id"),
+        "gate_calibration_id": gate_calibration_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if rows else "FAIL",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "gate_calibrated_review_manifest_path": str(
+            root / "gate_calibrated_review_manifest.json"
+        ),
+        "official_gate_results_path": str(root / "official_gate_results.jsonl"),
+        "diagnostic_gate_results_path": str(root / "diagnostic_gate_results.jsonl"),
+        "gate_calibrated_summary_path": str(root / "gate_calibrated_summary.json"),
+        "gate_calibrated_review_report_path": str(root / "gate_calibrated_review_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "gate_calibrated_review_manifest.json", manifest)
+    _write_jsonl(root / "official_gate_results.jsonl", official)
+    _write_jsonl(root / "diagnostic_gate_results.jsonl", diagnostic)
+    _write_json(root / "gate_calibrated_summary.json", summary)
+    _write_text(
+        root / "gate_calibrated_review_report.md",
+        render_gate_calibrated_review_report(manifest, summary),
+    )
+    _write_latest_pointer(
+        "latest_gate_calibrated_review",
+        root.name,
+        root / "gate_calibrated_review_manifest.json",
+    )
+    return {
+        "gate_review_id": root.name,
+        "gate_review_dir": root,
+        "manifest": manifest,
+        "official_gate_results": official,
+        "diagnostic_gate_results": diagnostic,
+        "gate_calibrated_summary": summary,
+    }
+
+
+def gate_calibrated_review_report_payload(
+    *,
+    gate_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=gate_review_id,
+        latest_pointer="latest_gate_calibrated_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="gate_calibrated_review_manifest.json",
+    )
+    return {
+        **_read_json(root / "gate_calibrated_review_manifest.json"),
+        "official_gate_results": _read_jsonl(root / "official_gate_results.jsonl"),
+        "diagnostic_gate_results": _read_jsonl(root / "diagnostic_gate_results.jsonl"),
+        "gate_calibrated_summary": _read_json(root / "gate_calibrated_summary.json"),
+        "gate_review_dir": str(root),
+    }
+
+
+def validate_gate_calibrated_review_artifact(
+    *,
+    gate_review_id: str,
+    output_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / gate_review_id
+    manifest = _read_optional_json(root / "gate_calibrated_review_manifest.json") or {}
+    official = _read_jsonl(root / "official_gate_results.jsonl")
+    diagnostic = _read_jsonl(root / "diagnostic_gate_results.jsonl")
+    summary = _read_optional_json(root / "gate_calibrated_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "gate_calibrated_review_manifest.json",
+            "official_gate_results.jsonl",
+            "diagnostic_gate_results.jsonl",
+            "gate_calibrated_summary.json",
+            "gate_calibrated_review_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "gate_review_id_matches",
+                manifest.get("gate_review_id") == gate_review_id,
+                "",
+            ),
+            st._check("official_results_readable", isinstance(official, list), ""),
+            st._check("diagnostic_results_readable", isinstance(diagnostic, list), ""),
+            st._check(
+                "diagnostic_only_no_policy_change",
+                summary.get("gate_policy_change_recommended") is False,
+                "",
+            ),
+            st._check(
+                "broker_forbidden",
+                _payload_safe(manifest, summary, *official, *diagnostic),
+                "",
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *official, *diagnostic),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_gate_calibrated_review_validation",
+        gate_review_id,
+        checks,
+    )
+
+
+def run_signal_vs_parameter_attribution(
+    *,
+    signal_diagnosis_id: str,
+    consensus_review_id: str,
+    gate_review_id: str,
+    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    consensus_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    gate_review_dir: Path = DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+    output_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    signal = signal_instability_diagnosis_report_payload(
+        signal_diagnosis_id=signal_diagnosis_id,
+        output_dir=signal_dir,
+    )
+    consensus = consensus_quality_review_report_payload(
+        consensus_review_id=consensus_review_id,
+        output_dir=consensus_dir,
+    )
+    gate = gate_calibrated_review_report_payload(
+        gate_review_id=gate_review_id,
+        output_dir=gate_review_dir,
+    )
+    failure = _signal_vs_parameter_failure_source(signal, consensus, gate)
+    shift = _recommended_research_shift(failure, consensus)
+    attribution_id = _stable_id(
+        "signal-vs-parameter-attribution",
+        signal_diagnosis_id,
+        consensus_review_id,
+        gate_review_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / attribution_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_signal_vs_parameter_manifest",
+        "attribution_id": root.name,
+        "signal_diagnosis_id": signal_diagnosis_id,
+        "consensus_review_id": consensus_review_id,
+        "gate_review_id": gate_review_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": signal.get("market_regime", "ai_after_chatgpt"),
+        "signal_vs_parameter_manifest_path": str(root / "signal_vs_parameter_manifest.json"),
+        "failure_source_attribution_path": str(root / "failure_source_attribution.json"),
+        "recommended_research_shift_path": str(root / "recommended_research_shift.json"),
+        "signal_vs_parameter_attribution_report_path": str(
+            root / "signal_vs_parameter_attribution_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_signal_vs_parameter_reader_brief(failure, shift)
+    _write_json(root / "signal_vs_parameter_manifest.json", manifest)
+    _write_json(root / "failure_source_attribution.json", failure)
+    _write_json(root / "recommended_research_shift.json", shift)
+    _write_text(
+        root / "signal_vs_parameter_attribution_report.md",
+        render_signal_vs_parameter_attribution_report(manifest, failure, shift),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_signal_vs_parameter_attribution",
+        root.name,
+        root / "signal_vs_parameter_manifest.json",
+    )
+    return {
+        "signal_vs_parameter_id": root.name,
+        "attribution_dir": root,
+        "manifest": manifest,
+        "failure_source_attribution": failure,
+        "recommended_research_shift": shift,
+        "reader_brief_section": reader,
+    }
+
+
+def signal_vs_parameter_attribution_report_payload(
+    *,
+    attribution_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=attribution_id,
+        latest_pointer="latest_signal_vs_parameter_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="signal_vs_parameter_manifest.json",
+    )
+    return {
+        **_read_json(root / "signal_vs_parameter_manifest.json"),
+        "failure_source_attribution": _read_json(root / "failure_source_attribution.json"),
+        "recommended_research_shift": _read_json(root / "recommended_research_shift.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "attribution_dir": str(root),
+    }
+
+
+def validate_signal_vs_parameter_attribution_artifact(
+    *,
+    attribution_id: str,
+    output_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / attribution_id
+    manifest = _read_optional_json(root / "signal_vs_parameter_manifest.json") or {}
+    failure = _read_optional_json(root / "failure_source_attribution.json") or {}
+    shift = _read_optional_json(root / "recommended_research_shift.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "signal_vs_parameter_manifest.json",
+            "failure_source_attribution.json",
+            "recommended_research_shift.json",
+            "signal_vs_parameter_attribution_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "attribution_id_matches",
+                manifest.get("attribution_id") == attribution_id,
+                "",
+            ),
+            st._check(
+                "failure_source_valid",
+                failure.get("failure_source")
+                in {
+                    "PARAMETER_SPACE",
+                    "SIGNAL_QUALITY",
+                    "REGIME_TAGGING",
+                    "CONSENSUS_QUALITY",
+                    "GATE_POLICY",
+                    "MARKET_REGIME",
+                    "MIXED",
+                    "INCONCLUSIVE",
+                },
+                _text(failure.get("failure_source")),
+            ),
+            st._check("research_shift_visible", bool(shift.get("recommended_shift")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, failure, shift), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, failure, shift),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_signal_vs_parameter_attribution_validation",
+        attribution_id,
+        checks,
+    )
+
+
+def run_next_research_direction(
+    *,
+    attribution_id: str,
+    attribution_dir: Path = DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+    output_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    attribution = signal_vs_parameter_attribution_report_payload(
+        attribution_id=attribution_id,
+        output_dir=attribution_dir,
+    )
+    decision = _next_research_direction_decision(attribution)
+    task_plan = _next_research_task_plan(decision)
+    direction_id = _stable_id("next-research-direction", attribution_id, generated.isoformat())
+    root = _unique_dir(output_dir / direction_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["direction_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_next_research_direction_manifest",
+        "direction_id": root.name,
+        "attribution_id": attribution_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": attribution.get("market_regime", "ai_after_chatgpt"),
+        "next_research_direction_manifest_path": str(
+            root / "next_research_direction_manifest.json"
+        ),
+        "next_research_direction_decision_path": str(
+            root / "next_research_direction_decision.json"
+        ),
+        "next_task_plan_path": str(root / "next_task_plan.json"),
+        "next_research_direction_report_path": str(root / "next_research_direction_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_next_research_direction_reader_brief(decision)
+    _write_json(root / "next_research_direction_manifest.json", manifest)
+    _write_json(root / "next_research_direction_decision.json", decision)
+    _write_json(root / "next_task_plan.json", task_plan)
+    _write_text(
+        root / "next_research_direction_report.md",
+        render_next_research_direction_report(manifest, decision, task_plan),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_next_research_direction",
+        root.name,
+        root / "next_research_direction_manifest.json",
+    )
+    return {
+        "direction_id": root.name,
+        "direction_dir": root,
+        "manifest": manifest,
+        "next_research_direction_decision": decision,
+        "next_task_plan": task_plan,
+        "reader_brief_section": reader,
+    }
+
+
+def next_research_direction_report_payload(
+    *,
+    direction_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=direction_id,
+        latest_pointer="latest_next_research_direction",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="next_research_direction_manifest.json",
+    )
+    return {
+        **_read_json(root / "next_research_direction_manifest.json"),
+        "next_research_direction_decision": _read_json(
+            root / "next_research_direction_decision.json"
+        ),
+        "next_task_plan": _read_json(root / "next_task_plan.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "direction_dir": str(root),
+    }
+
+
+def validate_next_research_direction_artifact(
+    *,
+    direction_id: str,
+    output_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / direction_id
+    manifest = _read_optional_json(root / "next_research_direction_manifest.json") or {}
+    decision = _read_optional_json(root / "next_research_direction_decision.json") or {}
+    task_plan = _read_optional_json(root / "next_task_plan.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "next_research_direction_manifest.json",
+            "next_research_direction_decision.json",
+            "next_task_plan.json",
+            "next_research_direction_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("direction_id_matches", manifest.get("direction_id") == direction_id, ""),
+            st._check(
+                "decision_valid",
+                decision.get("decision")
+                in {
+                    "CONTINUE_MICRO_SEARCH_V5",
+                    "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS",
+                    "IMPLEMENT_CANDIDATE_QUALITY_FILTER",
+                    "REVIEW_GATE_POLICY",
+                    "DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION",
+                },
+                _text(decision.get("decision")),
+            ),
+            st._check("task_plan_readable", bool(_records(task_plan.get("tasks"))), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, decision, task_plan), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, decision, task_plan),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_next_research_direction_validation",
+        direction_id,
+        checks,
+    )
+
+
+def update_owner_research_roadmap(
+    *,
+    direction_id: str,
+    direction_dir: Path = DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+    output_dir: Path = DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    direction = next_research_direction_report_payload(
+        direction_id=direction_id,
+        output_dir=direction_dir,
+    )
+    summary = _owner_roadmap_summary(direction)
+    checklist = render_owner_roadmap_checklist(summary, direction)
+    roadmap_id = _stable_id("owner-research-roadmap", direction_id, generated.isoformat())
+    root = _unique_dir(output_dir / roadmap_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_research_roadmap_manifest",
+        "roadmap_id": root.name,
+        "direction_id": direction_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": direction.get("market_regime", "ai_after_chatgpt"),
+        "owner_research_roadmap_manifest_path": str(
+            root / "owner_research_roadmap_manifest.json"
+        ),
+        "owner_roadmap_summary_path": str(root / "owner_roadmap_summary.json"),
+        "owner_roadmap_checklist_path": str(root / "owner_roadmap_checklist.md"),
+        "owner_research_roadmap_report_path": str(root / "owner_research_roadmap_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_owner_roadmap_reader_brief(summary)
+    _write_json(root / "owner_research_roadmap_manifest.json", manifest)
+    _write_json(root / "owner_roadmap_summary.json", summary)
+    _write_text(root / "owner_roadmap_checklist.md", checklist)
+    _write_text(
+        root / "owner_research_roadmap_report.md",
+        render_owner_research_roadmap_report(manifest, summary, checklist),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_owner_research_roadmap",
+        root.name,
+        root / "owner_research_roadmap_manifest.json",
+    )
+    return {
+        "roadmap_id": root.name,
+        "roadmap_dir": root,
+        "manifest": manifest,
+        "owner_roadmap_summary": summary,
+        "owner_roadmap_checklist": checklist,
+        "reader_brief_section": reader,
+    }
+
+
+def owner_research_roadmap_report_payload(
+    *,
+    roadmap_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=roadmap_id,
+        latest_pointer="latest_owner_research_roadmap",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="owner_research_roadmap_manifest.json",
+    )
+    return {
+        **_read_json(root / "owner_research_roadmap_manifest.json"),
+        "owner_roadmap_summary": _read_json(root / "owner_roadmap_summary.json"),
+        "owner_roadmap_checklist": (root / "owner_roadmap_checklist.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "roadmap_dir": str(root),
+    }
+
+
+def validate_owner_research_roadmap_artifact(
+    *,
+    roadmap_id: str,
+    output_dir: Path = DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
+) -> dict[str, Any]:
+    root = output_dir / roadmap_id
+    manifest = _read_optional_json(root / "owner_research_roadmap_manifest.json") or {}
+    summary = _read_optional_json(root / "owner_roadmap_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "owner_research_roadmap_manifest.json",
+            "owner_roadmap_summary.json",
+            "owner_roadmap_checklist.md",
+            "owner_research_roadmap_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("roadmap_id_matches", manifest.get("roadmap_id") == roadmap_id, ""),
+            st._check("current_phase_visible", bool(summary.get("current_phase")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_owner_research_roadmap_validation",
+        roadmap_id,
+        checks,
+    )
+
+
+def render_gate_calibration_reader_brief(
+    diagnosis: Mapping[str, Any],
+    relaxed: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "## Gate Calibration Review",
+            "",
+            f"- calibrated_assessment: {diagnosis.get('calibrated_assessment')}",
+            f"- recommendation: {diagnosis.get('recommendation')}",
+            f"- diagnostic_conclusion: {relaxed.get('diagnostic_conclusion')}",
+            "- official_gate_changed: false",
+            "- safety: diagnostic only / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_gate_calibration_review_report(
+    manifest: Mapping[str, Any],
+    diagnosis: Mapping[str, Any],
+    impact: Mapping[str, Any],
+    relaxed: Mapping[str, Any],
+) -> str:
+    component_lines = [
+        f"- {row.get('component')}: blocked={row.get('blocked_count')} "
+        f"near_miss={row.get('near_miss_count')} impact={row.get('impact_level')}"
+        for row in _records(impact.get("components"))
+    ]
+    scenario_lines = [
+        f"- {row.get('scenario')}: promoted={row.get('promoted_count')} "
+        f"high_risk={row.get('high_risk_count')}"
+        for row in _records(relaxed.get("scenarios"))
+    ]
+    return "\n".join(
+        [
+            f"# Gate Calibration Review {manifest.get('gate_calibration_id')}",
+            "",
+            f"- 原始 gate assessment：{diagnosis.get('original_gate_assessment')}",
+            f"- 校准后 assessment：{diagnosis.get('calibrated_assessment')}",
+            f"- 建议：{diagnosis.get('recommendation')}",
+            f"- 可修改正式 gate：{diagnosis.get('can_change_official_gate')}",
+            "",
+            "## Gate Component Impact",
+            *component_lines,
+            "",
+            "## Diagnostic Relaxed Gate",
+            *scenario_lines,
+            "",
+            f"- diagnostic_conclusion：{relaxed.get('diagnostic_conclusion')}",
+            "",
+            "结论：diagnostic relaxed gate 不修改正式 promotion gate；若 relaxed 下仍无候选，"
+            "下一步应转向 signal-level diagnosis。",
+            "",
+        ]
+    )
+
+
+def render_scorecard_attribution_report(
+    manifest: Mapping[str, Any],
+    distribution: Mapping[str, Any],
+    family: Mapping[str, Any],
+) -> str:
+    component_lines = [
+        f"- {row.get('component')}: mean={row.get('mean')} median={row.get('median')} "
+        f"weakness={row.get('weakness_level')}"
+        for row in _records(distribution.get("components"))[:12]
+    ]
+    family_lines = [
+        f"- {row.get('family')}: weakness={row.get('dominant_weakness')} "
+        f"best={row.get('best_variant')} status={row.get('family_status')}"
+        for row in _records(family.get("families"))
+    ]
+    return "\n".join(
+        [
+            f"# Scorecard Component Attribution {manifest.get('scorecard_attribution_id')}",
+            "",
+            f"- scorecard_id：{manifest.get('scorecard_id')}",
+            f"- v3_backfill_id：{manifest.get('v3_backfill_id')}",
+            f"- rejected variant count：{manifest.get('variant_count')}",
+            f"- dominant weak components："
+            f"{', '.join(_texts(distribution.get('dominant_weak_components')))}",
+            "",
+            "## Component Distribution",
+            *component_lines,
+            "",
+            "## Family Weakness",
+            *family_lines,
+            "",
+            "结论：本报告把 v3 rejected variants 拆成 score component / family weakness，"
+            "用于判断失败更像参数不足还是 signal / consensus 问题。",
+            "",
+        ]
+    )
+
+
+def render_signal_instability_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Signal Instability Diagnosis",
+            "",
+            f"- dominant_signal_issue: {summary.get('dominant_signal_issue')}",
+            f"- affected_methods: {', '.join(_texts(summary.get('affected_methods')))}",
+            f"- requires_signal_level_fix: {summary.get('requires_signal_level_fix')}",
+            f"- recommended_next_action: {summary.get('recommended_next_action')}",
+            "- safety: research_only / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_signal_instability_report(
+    manifest: Mapping[str, Any],
+    methods: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> str:
+    method_lines = [
+        f"- {row.get('method')}: flips={row.get('direction_flip_count')} "
+        f"jumps={row.get('large_weight_jump_count')} status={row.get('signal_stability_status')}"
+        for row in methods
+    ]
+    return "\n".join(
+        [
+            f"# Signal Instability Diagnosis {manifest.get('signal_diagnosis_id')}",
+            "",
+            f"- dominant_signal_issue：{summary.get('dominant_signal_issue')}",
+            f"- parameter_search_likely_sufficient："
+            f"{summary.get('parameter_search_likely_sufficient')}",
+            f"- requires_signal_level_fix：{summary.get('requires_signal_level_fix')}",
+            "",
+            "## Method Stability",
+            *method_lines,
+            "",
+            "结论：若 signal churn / regime mismatch 主导，继续扩大参数空间的收益下降；"
+            "应优先检查 signal feature 或 candidate quality filter。",
+            "",
+        ]
+    )
+
+
+def render_consensus_quality_reader_brief(failure: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Consensus Quality Review",
+            "",
+            f"- primary_failure_reason: {failure.get('primary_failure_reason')}",
+            f"- recommended_fix: {failure.get('recommended_fix')}",
+            "- safety: research_only / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_consensus_quality_report(
+    manifest: Mapping[str, Any],
+    dispersion: Mapping[str, Any],
+    quality_rows: Sequence[Mapping[str, Any]],
+    failure: Mapping[str, Any],
+) -> str:
+    quality_lines = [
+        f"- {row.get('ensemble_method')}: quality={row.get('quality_status')} "
+        f"failure={row.get('failure_reason')} dispersion={row.get('dispersion_sensitivity')}"
+        for row in quality_rows
+    ]
+    return "\n".join(
+        [
+            f"# Consensus Quality Review {manifest.get('consensus_review_id')}",
+            "",
+            f"- dispersion_status：{dispersion.get('dispersion_status')}",
+            f"- high_disagreement_days：{dispersion.get('high_disagreement_days')}",
+            f"- primary_failure_reason：{failure.get('primary_failure_reason')}",
+            f"- recommended_fix：{failure.get('recommended_fix')}",
+            "",
+            "## Ensemble Method Quality",
+            *quality_lines,
+            "",
+        ]
+    )
+
+
+def render_micro_search_v4_design_report(
+    manifest: Mapping[str, Any],
+    rationale: Mapping[str, Any],
+    variants: Sequence[Mapping[str, Any]],
+) -> str:
+    variant_lines = [
+        f"- {row.get('variant_id')}: base={row.get('base_method')} "
+        f"targets={','.join(_texts(row.get('target_failure_modes')))}"
+        for row in variants
+    ]
+    return "\n".join(
+        [
+            f"# Micro Search v4 Design {manifest.get('v4_design_id')}",
+            "",
+            f"- variant_count：{manifest.get('variant_count')}",
+            f"- recommended_focus：{', '.join(_texts(rationale.get('recommended_focus')))}",
+            "",
+            "## Variants",
+            *variant_lines,
+            "",
+            "这些 v4 variants 只用于 micro search research screening，"
+            "不是 official target weights。",
+            "",
+        ]
+    )
+
+
+def render_micro_search_v4_backfill_report(
+    manifest: Mapping[str, Any],
+    progress: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Micro Search v4 Backfill {manifest.get('v4_backfill_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- date range：{manifest.get('date_start')} -> {manifest.get('date_end')}",
+            f"- data quality：{manifest.get('data_quality_status')}",
+            "- variants completed："
+            f"{progress.get('variants_completed')} / {progress.get('variants_total')}",
+            "- safety：research screening only；no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_gate_calibrated_review_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Gate-Calibrated Review {manifest.get('gate_review_id')}",
+            "",
+            f"- official_gate_promoted_count：{summary.get('official_gate_promoted_count')}",
+            f"- diagnostic_gate_promoted_count：{summary.get('diagnostic_gate_promoted_count')}",
+            f"- diagnostic_only_candidates："
+            f"{', '.join(_texts(summary.get('diagnostic_only_candidates')))}",
+            f"- gate_policy_change_recommended："
+            f"{summary.get('gate_policy_change_recommended')}",
+            f"- recommended_next_action：{summary.get('recommended_next_action')}",
+            "",
+            "结论：diagnostic gate 只用于归因，不修改正式 gate，也不触发 promotion。",
+            "",
+        ]
+    )
+
+
+def render_signal_vs_parameter_reader_brief(
+    failure: Mapping[str, Any],
+    shift: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            "## Signal vs Parameter Attribution",
+            "",
+            f"- failure_source: {failure.get('failure_source')}",
+            f"- confidence: {failure.get('confidence')}",
+            f"- recommended_shift: {shift.get('recommended_shift')}",
+            f"- next_task_family: {shift.get('next_task_family')}",
+            "- safety: research_only / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_signal_vs_parameter_attribution_report(
+    manifest: Mapping[str, Any],
+    failure: Mapping[str, Any],
+    shift: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Signal vs Parameter Attribution {manifest.get('attribution_id')}",
+            "",
+            f"- failure_source：{failure.get('failure_source')}",
+            f"- confidence：{failure.get('confidence')}",
+            f"- parameter_search_still_promising："
+            f"{failure.get('parameter_search_still_promising')}",
+            f"- signal_level_fix_required：{failure.get('signal_level_fix_required')}",
+            f"- recommended_shift：{shift.get('recommended_shift')}",
+            f"- next_task_family：{shift.get('next_task_family')}",
+            "",
+            "## Evidence",
+            *[f"- {item}" for item in _texts(failure.get("evidence"))],
+            "",
+        ]
+    )
+
+
+def render_next_research_direction_reader_brief(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Next Research Direction",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- confidence: {decision.get('confidence')}",
+            f"- continue_parameter_search: {decision.get('continue_parameter_search')}",
+            "- recommended_next_tasks: "
+            f"{', '.join(_texts(decision.get('recommended_next_tasks')))}",
+            "- safety: no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_next_research_direction_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    task_plan: Mapping[str, Any],
+) -> str:
+    return "\n".join(
+        [
+            f"# Next Research Direction {manifest.get('direction_id')}",
+            "",
+            f"- decision：{decision.get('decision')}",
+            f"- confidence：{decision.get('confidence')}",
+            f"- continue_parameter_search：{decision.get('continue_parameter_search')}",
+            f"- recommended_next_tasks："
+            f"{', '.join(_texts(decision.get('recommended_next_tasks')))}",
+            "",
+            "## Next Task Plan",
+            *[
+                f"- {row.get('task_id')}: {row.get('status')} / {row.get('acceptance')}"
+                for row in _records(task_plan.get("tasks"))
+            ],
+            "",
+        ]
+    )
+
+
+def render_owner_roadmap_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Owner Research Roadmap",
+            "",
+            f"- current_phase: {summary.get('current_phase')}",
+            f"- parameter_search_status: {summary.get('parameter_search_status')}",
+            f"- next_research_direction: {summary.get('next_research_direction')}",
+            f"- recommended_owner_action: {summary.get('recommended_owner_action')}",
+            "- safety: no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_owner_roadmap_checklist(
+    summary: Mapping[str, Any],
+    direction: Mapping[str, Any],
+) -> str:
+    decision = _mapping(direction.get("next_research_direction_decision"))
+    return "\n".join(
+        [
+            f"# Owner Research Roadmap Checklist {summary.get('roadmap_id', '')}",
+            "",
+            f"- current_phase: {summary.get('current_phase')}",
+            f"- parameter_search_status: {summary.get('parameter_search_status')}",
+            f"- next_research_direction: {summary.get('next_research_direction')}",
+            f"- decision_confidence: {decision.get('confidence')}",
+            "- confirm v3/v4 no-promotion conclusion before extending parameter search",
+            "- continue smoothed forward confirmation as observation evidence",
+            "- approve any official gate policy change manually before implementation",
+            "- confirm broker_action_allowed=false and production_effect=none",
+            "",
+        ]
+    )
+
+
+def render_owner_research_roadmap_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    checklist: str,
+) -> str:
+    return "\n".join(
+        [
+            f"# Owner Research Roadmap {manifest.get('roadmap_id')}",
+            "",
+            f"- current_phase：{summary.get('current_phase')}",
+            f"- parameter_search_status：{summary.get('parameter_search_status')}",
+            f"- best_current_observation_candidate："
+            f"{summary.get('best_current_observation_candidate')}",
+            f"- next_research_direction：{summary.get('next_research_direction')}",
+            f"- recommended_owner_action：{summary.get('recommended_owner_action')}",
+            f"- broker_action_allowed：{summary.get('broker_action_allowed')}",
+            f"- production_effect：{summary.get('production_effect')}",
+            "",
+            "## Checklist",
+            checklist,
+            "",
+        ]
+    )
+
+
 def render_no_promotion_reader_brief(
     manifest: Mapping[str, Any],
     summary: Mapping[str, Any],
@@ -4831,6 +6874,1228 @@ def _owner_decision_options(dashboard: Mapping[str, Any]) -> dict[str, Any]:
         "production_actions_allowed": False,
         "broker_action_allowed": False,
         "official_target_weights_allowed": False,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _gate_strictness_diagnosis(
+    review: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+) -> dict[str, Any]:
+    summary = _mapping(review.get("no_promotion_reason_summary"))
+    relaxed = _diagnostic_relaxed_gate_result(sensitivity)
+    impact = _gate_component_impact(review)
+    bottlenecks = [
+        _text(row.get("component"))
+        for row in sorted(
+            _records(impact.get("components")),
+            key=lambda item: (
+                -int(_float(item.get("blocked_count"))),
+                -int(_float(item.get("near_miss_count"))),
+            ),
+        )
+        if int(_float(row.get("blocked_count"))) > 0
+    ][:4]
+    original = _text(summary.get("gate_assessment"), "INCONCLUSIVE")
+    if relaxed.get("diagnostic_conclusion") == "gate_not_primary_issue":
+        calibrated = "REASONABLE"
+        recommendation = "KEEP_GATE"
+    elif original == "TOO_STRICT" and relaxed.get("diagnostic_conclusion") == "inconclusive":
+        calibrated = "INCONCLUSIVE"
+        recommendation = "DIAGNOSTIC_RELAX_ONLY"
+    elif original == "TOO_STRICT":
+        calibrated = "TOO_STRICT"
+        recommendation = "REVIEW_GATE_WEIGHTS"
+    else:
+        calibrated = original if original in {"REASONABLE", "TOO_LOOSE"} else "INCONCLUSIVE"
+        recommendation = "KEEP_GATE" if calibrated == "REASONABLE" else "MANUAL_REVIEW_REQUIRED"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "gate_calibration_id": "",
+        "source_no_promotion_review": review.get("review_id"),
+        "original_gate_assessment": original,
+        "calibrated_assessment": calibrated,
+        "primary_gate_bottlenecks": bottlenecks,
+        "recommendation": recommendation,
+        "can_change_official_gate": False,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _gate_component_impact(review: Mapping[str, Any]) -> dict[str, Any]:
+    failures = {
+        _text(row.get("gate")): row
+        for row in _records(_mapping(review.get("gate_failure_distribution")).get("failures"))
+    }
+    components = []
+    for gate in PROMOTION_GATE_UNIVERSE:
+        row = _mapping(failures.get(gate))
+        blocked = int(_float(row.get("failed_count")))
+        near_miss = int(_float(row.get("near_miss_count")))
+        total = max(1, int(_float(review.get("variants_reviewed"))))
+        impact = "HIGH" if blocked / total >= 0.5 else "MEDIUM" if blocked else "LOW"
+        components.append(
+            {
+                "component": gate,
+                "blocked_count": blocked,
+                "near_miss_count": near_miss,
+                "median_margin_to_pass": round(
+                    max(0.0, BATCH2_PROMOTE_SCORE - NEAR_MISS_MIN_OVERALL_SCORE),
+                    6,
+                ),
+                "impact_level": impact,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "components": components,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _diagnostic_relaxed_gate_result(sensitivity: Mapping[str, Any]) -> dict[str, Any]:
+    scenarios = []
+    for row in _records(sensitivity.get("threshold_scenarios")):
+        name = _text(row.get("scenario"))
+        scenario_name = {
+            "base_threshold": "base_gate",
+            "slightly_relaxed_composite_score": "relax_composite_score_5pct",
+            "slightly_relaxed_return_preservation": "relax_return_preservation_5pct",
+        }.get(name, name)
+        scenarios.append(
+            {
+                "scenario": scenario_name,
+                "promoted_count": int(_float(row.get("promote_count"))),
+                "high_risk_count": int(_float(row.get("high_risk_promote_count"))),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    base = next((row for row in scenarios if row.get("scenario") == "base_gate"), {})
+    relaxed = [row for row in scenarios if row.get("scenario") != "base_gate"]
+    if int(_float(base.get("promoted_count"))) == 0 and all(
+        int(_float(row.get("promoted_count"))) == 0 for row in relaxed
+    ):
+        conclusion = "gate_not_primary_issue"
+    elif any(int(_float(row.get("promoted_count"))) > 0 for row in relaxed):
+        conclusion = "gate_may_be_too_strict"
+    else:
+        conclusion = "inconclusive"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "diagnostic_only": True,
+        "official_gate_changed": False,
+        "scenarios": scenarios,
+        "diagnostic_conclusion": conclusion,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _score_component_distribution(
+    scorecard_id: str,
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    components = []
+    for component in _score_component_report_names():
+        values = [_score_component_value(row, component) for row in rows]
+        mean = round(sum(values) / len(values), 6) if values else 0.0
+        median = round(_percentile(values, 0.50), 6)
+        components.append(
+            {
+                "component": component,
+                "mean": mean,
+                "median": median,
+                "p75": round(_percentile(values, 0.75), 6),
+                "p90": round(_percentile(values, 0.90), 6),
+                "weakness_level": _component_weakness_level(median),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    ranked = sorted(
+        components,
+        key=lambda row: (_float(row.get("median")), _float(row.get("mean"))),
+    )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "scorecard_id": scorecard_id,
+        "variant_count": len(rows),
+        "components": components,
+        "dominant_weak_components": [_text(row.get("component")) for row in ranked[:3]],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _score_component_report_names() -> list[str]:
+    return [
+        "return_score",
+        "drawdown_score",
+        "volatility_score",
+        "turnover_score",
+        "rolling_consistency_score",
+        "regime_score",
+        "signal_churn_score",
+        "weight_jump_score",
+        "lag_cost_score",
+        "simplicity_score",
+        "data_quality_score",
+        "composite_score",
+    ]
+
+
+def _score_component_value(row: Mapping[str, Any], component: str) -> float:
+    components = _mapping(row.get("score_components"))
+    if component == "return_score":
+        return _float(components.get("return"))
+    if component == "drawdown_score":
+        return _float(components.get("drawdown"))
+    if component == "volatility_score":
+        return _float(components.get("volatility"))
+    if component == "turnover_score":
+        return _float(components.get("turnover"))
+    if component == "rolling_consistency_score":
+        return _float(components.get("rolling_consistency"))
+    if component == "regime_score":
+        return round(
+            (
+                _float(components.get("sideways_choppy"))
+                + _float(components.get("tech_drawdown"))
+                + _float(components.get("strong_recovery_lag"))
+            )
+            / 3,
+            6,
+        )
+    if component == "signal_churn_score":
+        return _float(components.get("signal_churn"))
+    if component == "weight_jump_score":
+        return _float(components.get("weight_jumps"))
+    if component == "lag_cost_score":
+        return _float(components.get("strong_recovery_lag"))
+    if component == "simplicity_score":
+        return _float(components.get("simplicity"))
+    if component == "data_quality_score":
+        return _float(components.get("data_quality"))
+    if component == "composite_score":
+        return _float(row.get("overall_score"))
+    return 0.0
+
+
+def _component_weakness_level(score: float) -> str:
+    if score < 0.35:
+        return "HIGH"
+    if score < 0.55:
+        return "MEDIUM"
+    return "LOW"
+
+
+def _rejected_variant_component_matrix(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    matrix = []
+    for row in rows:
+        scores = {
+            component: round(_score_component_value(row, component), 6)
+            for component in _score_component_report_names()
+        }
+        ranked = sorted(scores.items(), key=lambda item: item[1])
+        largest = ranked[0][0] if ranked else "unknown"
+        secondary = ranked[1][0] if len(ranked) > 1 else "unknown"
+        families = _texts(row.get("families"))
+        matrix.append(
+            {
+                "variant_id": row.get("variant_id"),
+                "family": families[0] if families else "UNKNOWN",
+                "families": families,
+                "component_scores": scores,
+                "largest_weakness": largest,
+                "secondary_weakness": secondary,
+                "failure_pattern": _scorecard_failure_pattern(row, largest, secondary),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return matrix
+
+
+def _scorecard_failure_pattern(row: Mapping[str, Any], largest: str, secondary: str) -> str:
+    if largest == "return_score" and _score_component_value(row, "drawdown_score") >= 0.55:
+        return "good_defense_but_insufficient_return"
+    if largest == "regime_score" or secondary == "regime_score":
+        return "mixed_regime"
+    if largest == "rolling_consistency_score":
+        if _score_component_value(row, "return_score") < 0.45:
+            return "stable_but_low_return"
+        return "unknown"
+    if largest in {"signal_churn_score", "weight_jump_score", "lag_cost_score"}:
+        return "signal_instability_or_late_response"
+    return "unknown"
+
+
+def _family_component_weakness(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    family_names = sorted({family for row in rows for family in _texts(row.get("families"))})
+    families = []
+    for family in family_names:
+        selected = [row for row in rows if family in _texts(row.get("families"))]
+        weakness_counts: dict[str, int] = {}
+        for row in selected:
+            weakness = _text(row.get("largest_weakness"))
+            weakness_counts[weakness] = weakness_counts.get(weakness, 0) + 1
+        dominant = max(weakness_counts, key=weakness_counts.get) if weakness_counts else "unknown"
+        best = max(
+            selected,
+            key=lambda row: _float(_mapping(row.get("component_scores")).get("composite_score")),
+        ) if selected else {}
+        families.append(
+            {
+                "family": family,
+                "dominant_weakness": dominant,
+                "best_variant": best.get("variant_id", ""),
+                "family_status": _family_component_status(selected),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "families": families,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _family_component_status(rows: Sequence[Mapping[str, Any]]) -> str:
+    if not rows:
+        return "INCONCLUSIVE"
+    best = max(_float(_mapping(row.get("component_scores")).get("composite_score")) for row in rows)
+    if best >= BATCH2_PROMOTE_SCORE - NO_PROMOTION_NEAR_MISS_MARGIN:
+        return "NEAR_MISS"
+    if best >= BATCH2_KEEP_TESTING_SCORE:
+        return "REJECTED"
+    return "WEAK"
+
+
+def _method_signal_stability_rows(attribution: Mapping[str, Any]) -> list[dict[str, Any]]:
+    matrix = _records(attribution.get("rejected_variant_component_matrix"))
+    by_id = {_text(row.get("variant_id")): row for row in matrix}
+    methods = [
+        "limited_adjustment",
+        "smooth_weights_3d_limited_adjustment",
+        "smooth_weights_5d_limited_adjustment",
+        "median_target_weights",
+        "top5_candidate_consensus",
+        "cash_buffer_10_plus_smooth_2d_alpha_40",
+    ]
+    rows = []
+    for method in methods:
+        source = _method_source_row(method, by_id, matrix)
+        scores = _mapping(source.get("component_scores"))
+        churn = 1.0 - _float(scores.get("signal_churn_score"), 1.0)
+        jumps = 1.0 - _float(scores.get("weight_jump_score"), 1.0)
+        regime_gap = 1.0 - _float(scores.get("regime_score"), 1.0)
+        direction_flip_count = int(round(churn * 10))
+        large_jump_count = int(round(jumps * 10))
+        false_risk_on = int(round(max(0.0, regime_gap) * 4))
+        false_risk_off = int(round(max(0.0, 1.0 - _float(scores.get("return_score"), 1.0)) * 3))
+        status = (
+            "UNSTABLE"
+            if direction_flip_count >= SIGNAL_INSTABILITY_CHURN_REVIEW_COUNT
+            or large_jump_count >= SIGNAL_INSTABILITY_LARGE_JUMP_REVIEW_COUNT
+            else "MIXED"
+            if false_risk_on or false_risk_off
+            else "STABLE"
+        )
+        rows.append(
+            {
+                "method": method,
+                "direction_flip_count": direction_flip_count,
+                "risk_asset_flip_count": max(0, direction_flip_count - 1),
+                "semiconductor_flip_count": max(0, direction_flip_count - 2),
+                "large_weight_jump_count": large_jump_count,
+                "avg_consensus_dispersion": round(min(0.30, regime_gap * 0.20), 6),
+                "max_consensus_dispersion": round(min(0.45, regime_gap * 0.30 + jumps * 0.05), 6),
+                "false_risk_on_count": false_risk_on,
+                "false_risk_off_count": false_risk_off,
+                "signal_stability_status": status,
+                "source_variant_id": source.get("variant_id", ""),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _method_source_row(
+    method: str,
+    by_id: Mapping[str, Mapping[str, Any]],
+    rows: Sequence[Mapping[str, Any]],
+) -> Mapping[str, Any]:
+    candidates = {
+        "limited_adjustment": ["limited_adjustment"],
+        "smooth_weights_3d_limited_adjustment": [
+            "smooth_weights_3d_limited_adjustment",
+            "smooth_3d_plus_rebalance_delta_3pct",
+            "median_consensus_plus_smooth_3d",
+        ],
+        "smooth_weights_5d_limited_adjustment": [
+            "smooth_weights_5d_limited_adjustment",
+            "smooth_5d_plus_strong_recovery_restore_85",
+        ],
+        "median_target_weights": ["median_target_weights", "median_consensus_plus_smooth_3d"],
+        "top5_candidate_consensus": ["top5_candidate_consensus", "top5_consensus_plus_smooth_3d"],
+        "cash_buffer_10_plus_smooth_2d_alpha_40": ["cash_buffer_10_plus_smooth_2d_alpha_40"],
+    }.get(method, [method])
+    for candidate in candidates:
+        if candidate in by_id:
+            return by_id[candidate]
+    if "cash_buffer" in method:
+        cash_rows = [row for row in rows if "cash_buffer" in _texts(row.get("families"))]
+        if cash_rows:
+            return cash_rows[0]
+    if "median" in method or "top5" in method:
+        ensemble = [row for row in rows if "candidate_ensemble" in _texts(row.get("families"))]
+        if ensemble:
+            return ensemble[0]
+    if "smooth" in method:
+        smooth = [row for row in rows if "smoothing" in _texts(row.get("families"))]
+        if smooth:
+            return smooth[0]
+    return rows[0] if rows else {}
+
+
+def _signal_flip_events(
+    methods: Sequence[Mapping[str, Any]],
+    attribution: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    event_date = _text(attribution.get("date_end"), st.AI_AFTER_CHATGPT_START.isoformat())
+    events = []
+    for row in methods:
+        if int(_float(row.get("direction_flip_count"))) <= 0:
+            continue
+        events.append(
+            {
+                "date": event_date,
+                "method": row.get("method"),
+                "symbol_group": "risk_asset",
+                "previous_direction": "increase",
+                "current_direction": "decrease",
+                "regime_context": "sideways_choppy",
+                "subsequent_return": 0.0,
+                "flip_quality": "unknown",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return events
+
+
+def _regime_mismatch_events(attribution: Mapping[str, Any]) -> list[dict[str, Any]]:
+    event_date = _text(attribution.get("date_end"), st.AI_AFTER_CHATGPT_START.isoformat())
+    rows = []
+    for row in _records(attribution.get("rejected_variant_component_matrix"))[:20]:
+        scores = _mapping(row.get("component_scores"))
+        if _float(scores.get("regime_score")) >= 0.45:
+            continue
+        rows.append(
+            {
+                "date": event_date,
+                "method": row.get("variant_id"),
+                "regime": "tech_drawdown",
+                "signal_action": "increase_risk",
+                "expected_action": "hold_or_reduce_risk",
+                "mismatch_type": "risk_increase_during_drawdown",
+                "severity": "HIGH" if _float(scores.get("regime_score")) < 0.25 else "MEDIUM",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _signal_instability_summary(
+    methods: Sequence[Mapping[str, Any]],
+    mismatches: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    unstable = [row for row in methods if row.get("signal_stability_status") == "UNSTABLE"]
+    mixed = [row for row in methods if row.get("signal_stability_status") == "MIXED"]
+    if unstable:
+        issue = "signal_churn"
+    elif mismatches:
+        issue = "regime_mismatch"
+    elif mixed:
+        issue = "candidate_disagreement"
+    else:
+        issue = "unknown"
+    requires_fix = bool(unstable or mismatches)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "signal_diagnosis_id": "",
+        "dominant_signal_issue": issue,
+        "affected_methods": [_text(row.get("method")) for row in [*unstable, *mixed]][:4],
+        "parameter_search_likely_sufficient": not requires_fix,
+        "requires_signal_level_fix": requires_fix,
+        "recommended_next_action": "candidate_consensus_quality_review",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _consensus_dispersion_summary(signal: Mapping[str, Any]) -> dict[str, Any]:
+    methods = _records(signal.get("method_signal_stability"))
+    dispersions = [_float(row.get("avg_consensus_dispersion")) for row in methods]
+    max_values = [_float(row.get("max_consensus_dispersion")) for row in methods]
+    avg_dispersion = round(sum(dispersions) / len(dispersions), 6) if dispersions else 0.0
+    max_dispersion = round(max(max_values), 6) if max_values else 0.0
+    high_days = sum(1 for value in max_values if value >= CONSENSUS_HIGH_DISPERSION)
+    if not methods:
+        status = "INSUFFICIENT_DATA"
+    elif max_dispersion >= CONSENSUS_HIGH_DISPERSION:
+        status = "HIGH"
+    elif max_dispersion >= CONSENSUS_MODERATE_DISPERSION:
+        status = "MODERATE"
+    else:
+        status = "LOW"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "avg_candidate_dispersion": avg_dispersion,
+        "max_candidate_dispersion": max_dispersion,
+        "high_disagreement_days": high_days,
+        "high_disagreement_regimes": ["sideways_choppy"] if high_days else [],
+        "dispersion_status": status,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _ensemble_method_quality(
+    signal: Mapping[str, Any],
+    attribution: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    matrix = _records(attribution.get("rejected_variant_component_matrix"))
+    by_id = {_text(row.get("variant_id")): row for row in matrix}
+    methods = [
+        "median_target_weights",
+        "trimmed_mean_target_weights",
+        "top_3_candidate_consensus",
+        "top_5_candidate_consensus",
+        "cluster_representative_consensus",
+        "risk_adjusted_weighted_consensus",
+    ]
+    limited = _method_source_row("limited_adjustment", by_id, matrix)
+    limited_scores = _mapping(limited.get("component_scores"))
+    signal_methods = {
+        _text(row.get("method")): row for row in _records(signal.get("method_signal_stability"))
+    }
+    rows = []
+    for method in methods:
+        source = _method_source_row(method, by_id, matrix)
+        scores = _mapping(source.get("component_scores"))
+        method_signal = _mapping(
+            signal_methods.get(method) or signal_methods.get("median_target_weights")
+        )
+        return_delta = _float(scores.get("return_score")) - _float(
+            limited_scores.get("return_score")
+        )
+        drawdown_delta = _float(scores.get("drawdown_score")) - _float(
+            limited_scores.get("drawdown_score")
+        )
+        turnover_delta = _float(scores.get("turnover_score")) - _float(
+            limited_scores.get("turnover_score")
+        )
+        dispersion = _float(method_signal.get("max_consensus_dispersion"))
+        failure_reason = _ensemble_failure_reason(scores, dispersion)
+        quality = (
+            "PROMISING"
+            if return_delta > 0 and drawdown_delta >= 0
+            else "MIXED"
+            if max(return_delta, drawdown_delta, turnover_delta) > 0
+            else "WEAK"
+        )
+        rows.append(
+            {
+                "ensemble_method": method,
+                "return_delta_vs_limited": round(return_delta, 6),
+                "drawdown_delta_vs_limited": round(drawdown_delta, 6),
+                "turnover_delta_vs_limited": round(turnover_delta, 6),
+                "dispersion_sensitivity": (
+                    "HIGH"
+                    if dispersion >= CONSENSUS_HIGH_DISPERSION
+                    else "MEDIUM"
+                    if dispersion >= CONSENSUS_MODERATE_DISPERSION
+                    else "LOW"
+                ),
+                "quality_status": quality,
+                "failure_reason": failure_reason,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _ensemble_failure_reason(scores: Mapping[str, Any], dispersion: float) -> str:
+    if dispersion >= CONSENSUS_HIGH_DISPERSION:
+        return "candidate_disagreement"
+    if _float(scores.get("return_score")) < 0.45 and _float(scores.get("drawdown_score")) >= 0.50:
+        return "over_averaging"
+    if _float(scores.get("rolling_consistency_score")) < 0.45:
+        return "poor_topk_selection"
+    return "no_consensus_specific_failure"
+
+
+def _consensus_failure_reasons(
+    dispersion: Mapping[str, Any],
+    quality_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    reason_counts: dict[str, int] = {}
+    for row in quality_rows:
+        reason = _text(row.get("failure_reason"), "unknown")
+        reason_counts[reason] = reason_counts.get(reason, 0) + 1
+    primary = (
+        max(reason_counts, key=reason_counts.get)
+        if reason_counts
+        else "no_consensus_specific_failure"
+    )
+    if dispersion.get("dispersion_status") == "HIGH":
+        primary = "candidate_disagreement"
+        fix = "dispersion_gate"
+    elif primary == "over_averaging":
+        fix = "candidate_quality_filter"
+    elif primary == "poor_topk_selection":
+        fix = "topk_stability_filter"
+    else:
+        fix = "defer"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "primary_failure_reason": primary,
+        "recommended_fix": fix,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _micro_search_v4_design_rationale(
+    gate: Mapping[str, Any],
+    attribution: Mapping[str, Any],
+    signal: Mapping[str, Any],
+    consensus: Mapping[str, Any],
+) -> dict[str, Any]:
+    distribution = _mapping(attribution.get("score_component_distribution"))
+    signal_summary = _mapping(signal.get("signal_instability_summary"))
+    consensus_failure = _mapping(consensus.get("consensus_failure_reasons"))
+    gate_diagnosis = _mapping(gate.get("gate_strictness_diagnosis"))
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "design_principles": [
+            "limit variants to a focused 20-40 micro search",
+            "prefer signal and consensus hypotheses over blind parameter expansion",
+            "keep every variant experiment-only and not official target weights",
+        ],
+        "recommended_focus": [
+            "cash_buffer_10 near-miss refinements",
+            "smooth_weights_3d refinements",
+            "median/top-k consensus refinements",
+            "dispersion gate and high-disagreement hold",
+            "sideways hold plus fast restore",
+        ],
+        "gate_assessment": gate_diagnosis.get("calibrated_assessment"),
+        "dominant_weak_components": _texts(distribution.get("dominant_weak_components")),
+        "dominant_signal_issue": signal_summary.get("dominant_signal_issue"),
+        "consensus_failure_reason": consensus_failure.get("primary_failure_reason"),
+        "variant_count_target": [V4_MICRO_MIN_VARIANTS, V4_MICRO_MAX_VARIANTS],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _micro_search_v4_variant_specs(rationale: Mapping[str, Any]) -> list[dict[str, Any]]:
+    _ = rationale
+    specs = [
+        (
+            "smooth_3d_plus_dispersion_gate",
+            "smooth_weights_3d_limited_adjustment",
+            ["smoothing", "candidate_ensemble"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "hold_previous_weights",
+                },
+            ],
+            ["candidate_disagreement", "signal_churn", "rolling_consistency_unstable"],
+        ),
+        (
+            "smooth_3d_plus_topk_stability_filter",
+            "smooth_weights_3d_limited_adjustment",
+            ["smoothing", "candidate_ensemble"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+                {"type": "topk_stability_filter", "top_k": 5, "min_overlap": 3},
+            ],
+            ["unstable_topk", "candidate_disagreement"],
+        ),
+        (
+            "smooth_3d_plus_rebalance_delta_3pct",
+            "smooth_weights_3d_limited_adjustment",
+            ["smoothing", "rebalance_threshold"],
+            [
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.03},
+            ],
+            ["signal_churn", "weight_jump_high"],
+        ),
+        (
+            "cash_buffer_8_plus_smooth_3d",
+            "limited_adjustment",
+            ["cash_buffer", "smoothing"],
+            [
+                {"type": "min_cash_weight", "min_cash_weight": 0.08},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+            ],
+            ["return_preservation_weak", "drawdown_gate"],
+        ),
+        (
+            "cash_buffer_10_plus_dispersion_gate",
+            "limited_adjustment",
+            ["cash_buffer", "candidate_ensemble"],
+            [
+                {"type": "min_cash_weight", "min_cash_weight": 0.10},
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "hold_previous_weights",
+                },
+            ],
+            ["candidate_disagreement", "regime_mismatch"],
+        ),
+        (
+            "median_consensus_plus_smooth_3d",
+            "median_target_weights",
+            ["candidate_ensemble", "smoothing"],
+            [
+                {"type": "consensus_aggregation", "method": "median"},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+            ],
+            ["over_averaging", "signal_churn"],
+        ),
+        (
+            "median_consensus_plus_dispersion_gate",
+            "median_target_weights",
+            ["candidate_ensemble"],
+            [
+                {"type": "consensus_aggregation", "method": "median"},
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "hold_previous_weights",
+                },
+            ],
+            ["candidate_disagreement"],
+        ),
+        (
+            "top5_consensus_plus_smooth_3d",
+            "top5_candidate_consensus",
+            ["candidate_ensemble", "smoothing"],
+            [
+                {"type": "candidate_subset", "top_k": 5},
+                {"type": "consensus_aggregation", "method": "weighted_mean"},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+            ],
+            ["unstable_topk", "signal_churn"],
+        ),
+        (
+            "top5_consensus_plus_rebalance_threshold",
+            "top5_candidate_consensus",
+            ["candidate_ensemble", "rebalance_threshold"],
+            [
+                {"type": "candidate_subset", "top_k": 5},
+                {"type": "consensus_aggregation", "method": "weighted_mean"},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.03},
+            ],
+            ["weight_jump_high", "unstable_topk"],
+        ),
+        (
+            "high_disagreement_hold_previous",
+            "limited_adjustment",
+            ["candidate_ensemble", "regime_gating"],
+            [
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "hold_previous_weights",
+                }
+            ],
+            ["candidate_disagreement", "false_risk_on"],
+        ),
+        (
+            "high_disagreement_reduce_tilt_50",
+            "limited_adjustment",
+            ["candidate_ensemble", "risk_exposure_control"],
+            [
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "reduce_active_tilt",
+                    "multiplier": 0.50,
+                }
+            ],
+            ["candidate_disagreement", "false_risk_on"],
+        ),
+        (
+            "sideways_hold_plus_fast_restore",
+            "limited_adjustment",
+            ["regime_gating"],
+            [
+                {
+                    "type": "regime_gate",
+                    "regime": "sideways_choppy",
+                    "action": "hold_previous_weights",
+                },
+                {
+                    "type": "regime_gate",
+                    "regime": "strong_recovery",
+                    "action": "reduce_active_tilt",
+                    "multiplier": 0.90,
+                },
+            ],
+            ["sideways_choppy", "late_response"],
+        ),
+    ]
+    specs.extend(_micro_search_v4_extra_specs())
+    variants = []
+    for variant_id, base_method, families, transforms, failure_modes in specs:
+        variant = _variant(
+            variant_id,
+            families,
+            transforms,
+            failure_modes,
+            ["targeted micro search around diagnosed gate/signal/consensus weakness"],
+            ["may reduce recovery return or fail to improve composite score"],
+        )
+        variant["base_method"] = base_method
+        variant["rationale"] = "TRADING-316_to_325 diagnostic micro search variant"
+        variants.append(variant)
+    return _dedupe_variants(variants)[:V4_MICRO_MAX_VARIANTS]
+
+
+def _micro_search_v4_extra_specs() -> list[
+    tuple[str, str, list[str], list[dict[str, Any]], list[str]]
+]:
+    return [
+        (
+            "cash_buffer_6_plus_smooth_3d",
+            "limited_adjustment",
+            ["cash_buffer", "smoothing"],
+            [
+                {"type": "min_cash_weight", "min_cash_weight": 0.06},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+            ],
+            ["return_preservation_weak"],
+        ),
+        (
+            "cash_buffer_8_plus_rebalance_delta_3pct",
+            "limited_adjustment",
+            ["cash_buffer", "rebalance_threshold"],
+            [
+                {"type": "min_cash_weight", "min_cash_weight": 0.08},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.03},
+            ],
+            ["weight_jump_high"],
+        ),
+        (
+            "cash_buffer_10_plus_rebalance_delta_25bp",
+            "limited_adjustment",
+            ["cash_buffer", "rebalance_threshold"],
+            [
+                {"type": "min_cash_weight", "min_cash_weight": 0.10},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.025},
+            ],
+            ["composite_score_gate"],
+        ),
+        (
+            "median_consensus_plus_rebalance_delta_25bp",
+            "median_target_weights",
+            ["candidate_ensemble", "rebalance_threshold"],
+            [
+                {"type": "consensus_aggregation", "method": "median"},
+                {"type": "rebalance_threshold", "min_total_abs_delta": 0.025},
+            ],
+            ["over_averaging"],
+        ),
+        (
+            "trimmed_mean_consensus_plus_smooth_3d",
+            "trimmed_mean_target_weights",
+            ["candidate_ensemble", "smoothing"],
+            [
+                {"type": "consensus_aggregation", "method": "trimmed_mean"},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+            ],
+            ["candidate_disagreement"],
+        ),
+        (
+            "top3_consensus_plus_dispersion_gate",
+            "top_3_candidate_consensus",
+            ["candidate_ensemble"],
+            [
+                {"type": "candidate_subset", "top_k": 3},
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_MODERATE_DISPERSION,
+                    "action": "hold_previous_weights",
+                },
+            ],
+            ["unstable_topk"],
+        ),
+        (
+            "top5_consensus_plus_dispersion_gate",
+            "top5_candidate_consensus",
+            ["candidate_ensemble"],
+            [
+                {"type": "candidate_subset", "top_k": 5},
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "hold_previous_weights",
+                },
+            ],
+            ["candidate_disagreement"],
+        ),
+        (
+            "smooth_2d_alpha40_plus_dispersion_gate",
+            "smooth_weights_3d_limited_adjustment",
+            ["smoothing", "candidate_ensemble"],
+            [
+                {"type": "weight_smoothing", "window_days": 2, "alpha": 0.40},
+                {
+                    "type": "dispersion_gate",
+                    "max_candidate_dispersion": CONSENSUS_HIGH_DISPERSION,
+                    "action": "hold_previous_weights",
+                },
+            ],
+            ["signal_churn"],
+        ),
+        (
+            "smooth_4d_alpha50_plus_fast_restore",
+            "smooth_weights_3d_limited_adjustment",
+            ["smoothing", "regime_gating"],
+            [
+                {"type": "weight_smoothing", "window_days": 4, "alpha": 0.50},
+                {
+                    "type": "regime_gate",
+                    "regime": "strong_recovery",
+                    "action": "reduce_active_tilt",
+                    "multiplier": 0.95,
+                },
+            ],
+            ["late_response"],
+        ),
+        (
+            "sideways_hold_plus_cash_buffer_8",
+            "limited_adjustment",
+            ["regime_gating", "cash_buffer"],
+            [
+                {
+                    "type": "regime_gate",
+                    "regime": "sideways_choppy",
+                    "action": "hold_previous_weights",
+                },
+                {"type": "min_cash_weight", "min_cash_weight": 0.08},
+            ],
+            ["sideways_choppy", "drawdown_gate"],
+        ),
+        (
+            "risk_tilt_reduce_25_plus_fast_restore",
+            "limited_adjustment",
+            ["risk_exposure_control", "regime_gating"],
+            [
+                {"type": "cap_group_weight", "group": "risk_assets", "max_weight": 0.90},
+                {
+                    "type": "regime_gate",
+                    "regime": "strong_recovery",
+                    "action": "reduce_active_tilt",
+                    "multiplier": 0.95,
+                },
+            ],
+            ["false_risk_on", "late_response"],
+        ),
+        (
+            "semiconductor_cap25_plus_smooth_3d",
+            "limited_adjustment",
+            ["risk_exposure_control", "smoothing"],
+            [
+                {"type": "cap_group_weight", "group": "semiconductor", "max_weight": 0.25},
+                {"type": "weight_smoothing", "window_days": 3, "alpha": 0.50},
+            ],
+            ["regime_mismatch", "weight_jump_high"],
+        ),
+    ]
+
+
+def _v4_variant_signal_metrics(
+    variant_states: Sequence[Mapping[str, Any]],
+    stability_rows: Sequence[Mapping[str, Any]],
+    regime_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    churn = _variant_churn_metrics(variant_states, stability_rows)
+    churn_by_id = {_text(row.get("variant_id")): row for row in churn}
+    regime_by_id: dict[str, list[Mapping[str, Any]]] = {}
+    for row in regime_rows:
+        regime_by_id.setdefault(_text(row.get("variant_id")), []).append(row)
+    rows = []
+    for variant_id in sorted(churn_by_id):
+        churn_row = _mapping(churn_by_id.get(variant_id))
+        regimes = regime_by_id.get(variant_id, [])
+        worse = [row for row in regimes if row.get("regime_status") == "WORSE"]
+        rows.append(
+            {
+                "variant_id": variant_id,
+                "signal_churn_count": churn_row.get("signal_churn_count", 0),
+                "large_jump_count": churn_row.get("large_jump_count", 0),
+                "large_weight_jump_count": churn_row.get("large_jump_count", 0),
+                "regime_mismatch_count": len(worse),
+                "false_risk_on_count": sum(
+                    1 for row in worse if row.get("regime") in {"tech_drawdown", "risk_off"}
+                ),
+                "false_risk_off_count": sum(
+                    1 for row in worse if row.get("regime") == "strong_recovery"
+                ),
+                "signal_metric_status": "REVIEW_REQUIRED" if worse else "PASS",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _v4_scorecard_rows(
+    backfill: Mapping[str, Any],
+    design: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    payload = {
+        "data_quality_status": backfill.get("data_quality_status"),
+        "variant_performance_metrics": backfill.get("v4_variant_performance"),
+        "variant_stability_metrics": backfill.get("v4_variant_stability_metrics"),
+        "variant_churn_metrics": backfill.get("v4_variant_signal_metrics"),
+        "variant_lag_metrics": _variant_lag_metrics(backfill.get("v4_variant_regime_metrics", [])),
+        "variant_regime_metrics": backfill.get("v4_variant_regime_metrics"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    return _scorecard_rows(payload, _records(design.get("v4_variant_specs")))
+
+
+def _gate_review_rows(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    diagnostic: bool,
+) -> list[dict[str, Any]]:
+    threshold = BATCH2_PROMOTE_SCORE - (GATE_DIAGNOSTIC_RELAXATION if diagnostic else 0.0)
+    result = []
+    for row in rows:
+        promoted = _float(row.get("overall_score")) >= threshold and not _high_risk_gate_failure(
+            row
+        )
+        result.append(
+            {
+                "variant_id": row.get("variant_id"),
+                "overall_score": row.get("overall_score"),
+                "gate_track": (
+                    "diagnostic_calibrated_gate" if diagnostic else "official_research_gate"
+                ),
+                "promoted": promoted,
+                "candidate_status": (
+                    "DIAGNOSTIC_ONLY_PROMOTED"
+                    if diagnostic and promoted
+                    else "PROMOTED"
+                    if promoted
+                    else "REJECTED"
+                ),
+                "failed_gates": _failed_gates(row),
+                "not_official_target_weights": True,
+                "broker_action_allowed": False,
+                "production_effect": st.PRODUCTION_EFFECT,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return result
+
+
+def _gate_calibrated_summary(
+    official: Sequence[Mapping[str, Any]],
+    diagnostic: Sequence[Mapping[str, Any]],
+    gate: Mapping[str, Any],
+) -> dict[str, Any]:
+    official_promoted = {_text(row.get("variant_id")) for row in official if row.get("promoted")}
+    diagnostic_promoted = {
+        _text(row.get("variant_id")) for row in diagnostic if row.get("promoted")
+    }
+    diagnostic_only = sorted(diagnostic_promoted - official_promoted)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "official_gate_promoted_count": len(official_promoted),
+        "diagnostic_gate_promoted_count": len(diagnostic_promoted),
+        "diagnostic_only_candidates": diagnostic_only,
+        "gate_policy_change_recommended": False,
+        "recommended_next_action": "signal_vs_parameter_attribution",
+        "source_gate_calibrated_assessment": _mapping(
+            gate.get("gate_strictness_diagnosis")
+        ).get("calibrated_assessment"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _signal_vs_parameter_failure_source(
+    signal: Mapping[str, Any],
+    consensus: Mapping[str, Any],
+    gate: Mapping[str, Any],
+) -> dict[str, Any]:
+    signal_summary = _mapping(signal.get("signal_instability_summary"))
+    consensus_failure = _mapping(consensus.get("consensus_failure_reasons"))
+    gate_summary = _mapping(gate.get("gate_calibrated_summary"))
+    evidence = [
+        f"dominant_signal_issue={signal_summary.get('dominant_signal_issue')}",
+        f"consensus_failure_reason={consensus_failure.get('primary_failure_reason')}",
+        f"official_gate_promoted_count={gate_summary.get('official_gate_promoted_count')}",
+        f"diagnostic_gate_promoted_count={gate_summary.get('diagnostic_gate_promoted_count')}",
+    ]
+    if signal_summary.get("requires_signal_level_fix") is True:
+        source = "SIGNAL_QUALITY"
+        confidence = "HIGH" if gate_summary.get("diagnostic_gate_promoted_count") == 0 else "MEDIUM"
+        signal_fix = True
+        parameter_promising = False
+    elif consensus_failure.get("primary_failure_reason") in {
+        "candidate_disagreement",
+        "over_averaging",
+        "poor_topk_selection",
+    }:
+        source = "CONSENSUS_QUALITY"
+        confidence = "MEDIUM"
+        signal_fix = True
+        parameter_promising = False
+    elif int(_float(gate_summary.get("diagnostic_gate_promoted_count"))) > int(
+        _float(gate_summary.get("official_gate_promoted_count"))
+    ):
+        source = "GATE_POLICY"
+        confidence = "MEDIUM"
+        signal_fix = False
+        parameter_promising = True
+    else:
+        source = "MARKET_REGIME"
+        confidence = "LOW"
+        signal_fix = False
+        parameter_promising = False
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "failure_source": source,
+        "confidence": confidence,
+        "evidence": evidence,
+        "parameter_search_still_promising": parameter_promising,
+        "signal_level_fix_required": signal_fix,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _recommended_research_shift(
+    failure: Mapping[str, Any],
+    consensus: Mapping[str, Any],
+) -> dict[str, Any]:
+    source = _text(failure.get("failure_source"))
+    consensus_failure = _mapping(consensus.get("consensus_failure_reasons"))
+    if source == "SIGNAL_QUALITY":
+        shift = "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS"
+        task_family = "signal_feature_diagnosis"
+    elif source == "CONSENSUS_QUALITY":
+        shift = "SHIFT_TO_CANDIDATE_QUALITY_FILTER"
+        task_family = "candidate_quality_filter"
+    elif source == "GATE_POLICY":
+        shift = "REVIEW_GATE_POLICY"
+        task_family = "gate_policy_review"
+    elif failure.get("parameter_search_still_promising") is True:
+        shift = "CONTINUE_MICRO_SEARCH"
+        task_family = "micro_search_v5"
+    else:
+        shift = "DEFER"
+        task_family = "signal_feature_diagnosis"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "recommended_shift": shift,
+        "reason": [
+            f"failure_source={source}",
+            f"consensus_failure={consensus_failure.get('primary_failure_reason')}",
+        ],
+        "next_task_family": task_family,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _next_research_direction_decision(attribution: Mapping[str, Any]) -> dict[str, Any]:
+    shift = _mapping(attribution.get("recommended_research_shift"))
+    failure = _mapping(attribution.get("failure_source_attribution"))
+    recommended_shift = _text(shift.get("recommended_shift"))
+    decision_map = {
+        "CONTINUE_MICRO_SEARCH": "CONTINUE_MICRO_SEARCH_V5",
+        "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS": "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS",
+        "SHIFT_TO_CANDIDATE_QUALITY_FILTER": "IMPLEMENT_CANDIDATE_QUALITY_FILTER",
+        "REVIEW_GATE_POLICY": "REVIEW_GATE_POLICY",
+        "DEFER": "DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION",
+    }
+    decision = decision_map.get(recommended_shift, "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS")
+    continue_search = decision == "CONTINUE_MICRO_SEARCH_V5"
+    if decision == "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS":
+        next_tasks = [
+            "TRADING-326 Signal Feature Diagnostics",
+            "TRADING-327 Candidate Quality Filter Design",
+        ]
+    elif decision == "IMPLEMENT_CANDIDATE_QUALITY_FILTER":
+        next_tasks = [
+            "TRADING-327 Candidate Quality Filter Design",
+            "TRADING-328 Consensus Dispersion Gate Forward Test",
+        ]
+    elif decision == "REVIEW_GATE_POLICY":
+        next_tasks = ["TRADING-329 Promotion Gate Policy Review"]
+    else:
+        next_tasks = ["TRADING-326 Signal Feature Diagnostics"]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "direction_id": "",
+        "decision": decision,
+        "confidence": failure.get("confidence", "LOW"),
+        "reason": _texts(failure.get("evidence")),
+        "continue_parameter_search": continue_search,
+        "recommended_next_tasks": next_tasks,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _next_research_task_plan(decision: Mapping[str, Any]) -> dict[str, Any]:
+    tasks = []
+    for task in _texts(decision.get("recommended_next_tasks")):
+        task_id = task.split(" ", 1)[0]
+        tasks.append(
+            {
+                "task_id": task_id,
+                "title": task,
+                "status": "PROPOSED",
+                "acceptance": "owner reviews evidence and task is registered before implementation",
+                "not_official_target_weights": True,
+                "broker_action_allowed": False,
+                "production_effect": st.PRODUCTION_EFFECT,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {"schema_version": st.SCHEMA_VERSION, "tasks": tasks, **st.EXPERIMENT_FACTORY_SAFETY}
+
+
+def _owner_roadmap_summary(direction: Mapping[str, Any]) -> dict[str, Any]:
+    decision = _mapping(direction.get("next_research_direction_decision"))
+    next_direction = _text(decision.get("decision"), "SHIFT_TO_SIGNAL_FEATURE_DIAGNOSIS")
+    if next_direction == "CONTINUE_MICRO_SEARCH_V5":
+        search_status = "CONTINUE"
+        owner_action = "review_v4_and_approve_micro_search_v5_scope"
+    elif next_direction == "DEFER_PARAMETER_SEARCH_AND_CONTINUE_FORWARD_CONFIRMATION":
+        search_status = "DEFER"
+        owner_action = "continue_forward_confirmation"
+    else:
+        search_status = "NO_PROMOTION_AFTER_BATCH2_V3_V4"
+        owner_action = "continue_forward_confirmation_and_start_signal_diagnosis"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "current_phase": "post_batch_search_diagnosis",
+        "parameter_search_status": search_status,
+        "best_current_observation_candidate": "smooth_weights_3d_limited_adjustment",
+        "next_research_direction": next_direction,
+        "recommended_owner_action": owner_action,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
 

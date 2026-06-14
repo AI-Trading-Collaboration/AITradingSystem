@@ -1688,6 +1688,46 @@ dynamic_v3_next_formal_or_search_plan_app = typer.Typer(
     help="Dynamic v3 rescue next formal method or search plan workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_gate_calibration_review_app = typer.Typer(
+    help="Dynamic v3 rescue promotion gate calibration review workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_scorecard_attribution_app = typer.Typer(
+    help="Dynamic v3 rescue scorecard component attribution workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_signal_instability_diagnosis_app = typer.Typer(
+    help="Dynamic v3 rescue signal-level instability diagnosis workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_consensus_quality_review_app = typer.Typer(
+    help="Dynamic v3 rescue candidate consensus quality review workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_micro_search_v4_design_app = typer.Typer(
+    help="Dynamic v3 rescue micro search v4 design workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_micro_search_v4_backfill_app = typer.Typer(
+    help="Dynamic v3 rescue micro search v4 backfill workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_gate_calibrated_review_app = typer.Typer(
+    help="Dynamic v3 rescue gate-calibrated candidate review workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_signal_vs_parameter_attribution_app = typer.Typer(
+    help="Dynamic v3 rescue signal-vs-parameter attribution workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_next_research_direction_app = typer.Typer(
+    help="Dynamic v3 rescue next research direction workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_owner_research_roadmap_app = typer.Typer(
+    help="Dynamic v3 rescue owner research roadmap workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2316,6 +2356,46 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_next_formal_or_search_plan_app,
     name="next-formal-or-search-plan",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_gate_calibration_review_app,
+    name="gate-calibration-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_scorecard_attribution_app,
+    name="scorecard-attribution",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_instability_diagnosis_app,
+    name="signal-instability-diagnosis",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_consensus_quality_review_app,
+    name="consensus-quality-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_micro_search_v4_design_app,
+    name="micro-search-v4-design",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_micro_search_v4_backfill_app,
+    name="micro-search-v4-backfill",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_gate_calibrated_review_app,
+    name="gate-calibrated-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_vs_parameter_attribution_app,
+    name="signal-vs-parameter-attribution",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_next_research_direction_app,
+    name="next-research-direction",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_owner_research_roadmap_app,
+    name="owner-research-roadmap",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -16969,6 +17049,818 @@ def dynamic_v3_validate_next_formal_or_search_plan_command(
 ) -> None:
     payload = weight_batch_search.validate_next_formal_or_search_plan_artifact(
         plan_id=plan_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_gate_calibration_review_app.command("run")
+def dynamic_v3_gate_calibration_review_run_command(
+    no_promotion_review_id: Annotated[
+        str,
+        typer.Option("--no-promotion-review-id", help="no-promotion review id。"),
+    ],
+    threshold_sensitivity_id: Annotated[
+        str,
+        typer.Option("--threshold-sensitivity-id", help="threshold sensitivity id。"),
+    ],
+    review_dir: Annotated[
+        Path,
+        typer.Option("--review-dir", help="no-promotion review root。"),
+    ] = weight_batch_search.DEFAULT_NO_PROMOTION_REVIEW_DIR,
+    sensitivity_dir: Annotated[
+        Path,
+        typer.Option("--sensitivity-dir", help="threshold sensitivity root。"),
+    ] = weight_batch_search.DEFAULT_PROMOTION_THRESHOLD_SENSITIVITY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="gate calibration root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+) -> None:
+    result = weight_batch_search.run_gate_calibration_review(
+        no_promotion_review_id=no_promotion_review_id,
+        threshold_sensitivity_id=threshold_sensitivity_id,
+        review_dir=review_dir,
+        sensitivity_dir=sensitivity_dir,
+        output_dir=output_dir,
+    )
+    diagnosis = _mapping_obj(result.get("gate_strictness_diagnosis"))
+    typer.echo(f"gate_calibration_id={result['gate_calibration_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"calibrated_assessment={diagnosis.get('calibrated_assessment')}")
+    typer.echo("official_gate_changed=false")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_gate_calibration_review_app.command("report")
+def dynamic_v3_gate_calibration_review_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    gate_calibration_id: Annotated[
+        str | None,
+        typer.Option("--gate-calibration-id", help="gate calibration id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="gate calibration root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.gate_calibration_review_report_payload(
+        gate_calibration_id=gate_calibration_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    diagnosis = _mapping_obj(payload.get("gate_strictness_diagnosis"))
+    typer.echo(f"gate_calibration_id={payload['gate_calibration_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"calibrated_assessment={diagnosis.get('calibrated_assessment')}")
+    typer.echo(f"report_path={payload['gate_calibration_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-gate-calibration-review")
+def dynamic_v3_validate_gate_calibration_review_command(
+    gate_calibration_id: Annotated[
+        str,
+        typer.Option("--gate-calibration-id", help="gate calibration id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="gate calibration root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.validate_gate_calibration_review_artifact(
+        gate_calibration_id=gate_calibration_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_scorecard_attribution_app.command("run")
+def dynamic_v3_scorecard_attribution_run_command(
+    scorecard_id: Annotated[str, typer.Option("--scorecard-id", help="source scorecard id。")],
+    v3_backfill_id: Annotated[str, typer.Option("--v3-backfill-id", help="v3 backfill id。")],
+    scorecard_dir: Annotated[
+        Path,
+        typer.Option("--scorecard-dir", help="weight scorecard root。"),
+    ] = weight_batch_search.DEFAULT_WEIGHT_SCORECARD_DIR,
+    v3_backfill_dir: Annotated[
+        Path,
+        typer.Option("--v3-backfill-dir", help="targeted v3 backfill root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_V3_BACKFILL_DIR,
+    v3_matrix_dir: Annotated[
+        Path,
+        typer.Option("--v3-matrix-dir", help="targeted v3 matrix root。"),
+    ] = weight_batch_search.DEFAULT_TARGETED_SEARCH_V3_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="scorecard attribution root。"),
+    ] = weight_batch_search.DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+) -> None:
+    result = weight_batch_search.run_scorecard_attribution(
+        scorecard_id=scorecard_id,
+        v3_backfill_id=v3_backfill_id,
+        scorecard_dir=scorecard_dir,
+        v3_backfill_dir=v3_backfill_dir,
+        v3_matrix_dir=v3_matrix_dir,
+        output_dir=output_dir,
+    )
+    distribution = _mapping_obj(result.get("score_component_distribution"))
+    typer.echo(f"scorecard_attribution_id={result['scorecard_attribution_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"variant_count={result['manifest']['variant_count']}")
+    typer.echo(
+        "dominant_weak_components="
+        + ",".join(_texts(distribution.get("dominant_weak_components")))
+    )
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_scorecard_attribution_app.command("report")
+def dynamic_v3_scorecard_attribution_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    scorecard_attribution_id: Annotated[
+        str | None,
+        typer.Option("--scorecard-attribution-id", help="scorecard attribution id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="scorecard attribution root。"),
+    ] = weight_batch_search.DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.scorecard_attribution_report_payload(
+        scorecard_attribution_id=scorecard_attribution_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    distribution = _mapping_obj(payload.get("score_component_distribution"))
+    typer.echo(f"scorecard_attribution_id={payload['scorecard_attribution_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(
+        "dominant_weak_components="
+        + ",".join(_texts(distribution.get("dominant_weak_components")))
+    )
+    typer.echo(f"report_path={payload['scorecard_attribution_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-scorecard-attribution")
+def dynamic_v3_validate_scorecard_attribution_command(
+    scorecard_attribution_id: Annotated[
+        str,
+        typer.Option("--scorecard-attribution-id", help="scorecard attribution id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="scorecard attribution root。"),
+    ] = weight_batch_search.DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.validate_scorecard_attribution_artifact(
+        scorecard_attribution_id=scorecard_attribution_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_signal_instability_diagnosis_app.command("run")
+def dynamic_v3_signal_instability_diagnosis_run_command(
+    scorecard_attribution_id: Annotated[
+        str,
+        typer.Option("--scorecard-attribution-id", help="scorecard attribution id。"),
+    ],
+    attribution_dir: Annotated[
+        Path,
+        typer.Option("--attribution-dir", help="scorecard attribution root。"),
+    ] = weight_batch_search.DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+) -> None:
+    result = weight_batch_search.run_signal_instability_diagnosis(
+        scorecard_attribution_id=scorecard_attribution_id,
+        attribution_dir=attribution_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("signal_instability_summary"))
+    typer.echo(f"signal_diagnosis_id={result['signal_diagnosis_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"dominant_signal_issue={summary.get('dominant_signal_issue')}")
+    typer.echo(f"requires_signal_level_fix={summary.get('requires_signal_level_fix')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_signal_instability_diagnosis_app.command("report")
+def dynamic_v3_signal_instability_diagnosis_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    signal_diagnosis_id: Annotated[
+        str | None,
+        typer.Option("--signal-diagnosis-id", help="signal diagnosis id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+) -> None:
+    payload = weight_batch_search.signal_instability_diagnosis_report_payload(
+        signal_diagnosis_id=signal_diagnosis_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("signal_instability_summary"))
+    typer.echo(f"signal_diagnosis_id={payload['signal_diagnosis_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"dominant_signal_issue={summary.get('dominant_signal_issue')}")
+    typer.echo(f"report_path={payload['signal_instability_diagnosis_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-instability-diagnosis")
+def dynamic_v3_validate_signal_instability_diagnosis_command(
+    signal_diagnosis_id: Annotated[
+        str,
+        typer.Option("--signal-diagnosis-id", help="signal diagnosis id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+) -> None:
+    payload = weight_batch_search.validate_signal_instability_diagnosis_artifact(
+        signal_diagnosis_id=signal_diagnosis_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_consensus_quality_review_app.command("run")
+def dynamic_v3_consensus_quality_review_run_command(
+    signal_diagnosis_id: Annotated[
+        str,
+        typer.Option("--signal-diagnosis-id", help="signal diagnosis id。"),
+    ],
+    signal_dir: Annotated[
+        Path,
+        typer.Option("--signal-dir", help="signal diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    attribution_dir: Annotated[
+        Path,
+        typer.Option("--attribution-dir", help="scorecard attribution root。"),
+    ] = weight_batch_search.DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus review root。"),
+    ] = weight_batch_search.DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+) -> None:
+    result = weight_batch_search.run_consensus_quality_review(
+        signal_diagnosis_id=signal_diagnosis_id,
+        signal_dir=signal_dir,
+        attribution_dir=attribution_dir,
+        output_dir=output_dir,
+    )
+    failure = _mapping_obj(result.get("consensus_failure_reasons"))
+    typer.echo(f"consensus_review_id={result['consensus_review_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"primary_failure_reason={failure.get('primary_failure_reason')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_consensus_quality_review_app.command("report")
+def dynamic_v3_consensus_quality_review_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    consensus_review_id: Annotated[
+        str | None,
+        typer.Option("--consensus-review-id", help="consensus review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus review root。"),
+    ] = weight_batch_search.DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.consensus_quality_review_report_payload(
+        consensus_review_id=consensus_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    failure = _mapping_obj(payload.get("consensus_failure_reasons"))
+    typer.echo(f"consensus_review_id={payload['consensus_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"primary_failure_reason={failure.get('primary_failure_reason')}")
+    typer.echo(f"report_path={payload['consensus_quality_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-consensus-quality-review")
+def dynamic_v3_validate_consensus_quality_review_command(
+    consensus_review_id: Annotated[
+        str,
+        typer.Option("--consensus-review-id", help="consensus review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="consensus review root。"),
+    ] = weight_batch_search.DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.validate_consensus_quality_review_artifact(
+        consensus_review_id=consensus_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_micro_search_v4_design_app.command("run")
+def dynamic_v3_micro_search_v4_design_run_command(
+    gate_calibration_id: Annotated[
+        str,
+        typer.Option("--gate-calibration-id", help="gate calibration id。"),
+    ],
+    scorecard_attribution_id: Annotated[
+        str,
+        typer.Option("--scorecard-attribution-id", help="scorecard attribution id。"),
+    ],
+    signal_diagnosis_id: Annotated[
+        str,
+        typer.Option("--signal-diagnosis-id", help="signal diagnosis id。"),
+    ],
+    consensus_review_id: Annotated[
+        str,
+        typer.Option("--consensus-review-id", help="consensus review id。"),
+    ],
+    gate_calibration_dir: Annotated[
+        Path,
+        typer.Option("--gate-calibration-dir", help="gate calibration root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+    attribution_dir: Annotated[
+        Path,
+        typer.Option("--attribution-dir", help="scorecard attribution root。"),
+    ] = weight_batch_search.DEFAULT_SCORECARD_ATTRIBUTION_DIR,
+    signal_dir: Annotated[
+        Path,
+        typer.Option("--signal-dir", help="signal diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    consensus_dir: Annotated[
+        Path,
+        typer.Option("--consensus-dir", help="consensus review root。"),
+    ] = weight_batch_search.DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="micro search v4 design root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+) -> None:
+    result = weight_batch_search.run_micro_search_v4_design(
+        gate_calibration_id=gate_calibration_id,
+        scorecard_attribution_id=scorecard_attribution_id,
+        signal_diagnosis_id=signal_diagnosis_id,
+        consensus_review_id=consensus_review_id,
+        gate_calibration_dir=gate_calibration_dir,
+        attribution_dir=attribution_dir,
+        signal_dir=signal_dir,
+        consensus_dir=consensus_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"v4_design_id={result['v4_design_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"variant_count={result['manifest']['variant_count']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_micro_search_v4_design_app.command("report")
+def dynamic_v3_micro_search_v4_design_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    v4_design_id: Annotated[
+        str | None,
+        typer.Option("--v4-design-id", help="v4 design id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="micro search v4 design root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+) -> None:
+    payload = weight_batch_search.micro_search_v4_design_report_payload(
+        v4_design_id=v4_design_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"v4_design_id={payload['v4_design_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"variant_count={payload['variant_count']}")
+    typer.echo(f"report_path={payload['micro_search_v4_design_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-micro-search-v4-design")
+def dynamic_v3_validate_micro_search_v4_design_command(
+    v4_design_id: Annotated[str, typer.Option("--v4-design-id", help="v4 design id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="micro search v4 design root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+) -> None:
+    payload = weight_batch_search.validate_micro_search_v4_design_artifact(
+        v4_design_id=v4_design_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_micro_search_v4_backfill_app.command("run")
+def dynamic_v3_micro_search_v4_backfill_run_command(
+    v4_design_id: Annotated[str, typer.Option("--v4-design-id", help="v4 design id。")],
+    v4_design_dir: Annotated[
+        Path,
+        typer.Option("--v4-design-dir", help="micro search v4 design root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    baseline_backfill_dir: Annotated[
+        Path,
+        typer.Option("--baseline-backfill-dir", help="paper shadow backfill root。"),
+    ] = system_target.DEFAULT_PAPER_SHADOW_BACKFILL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="micro search v4 backfill root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+    price_cache_path: Annotated[
+        Path | None,
+        typer.Option("--price-cache-path", help="price cache override。"),
+    ] = None,
+    rates_cache_path: Annotated[
+        Path,
+        typer.Option("--rates-cache-path", help="rates cache path。"),
+    ] = system_target.DEFAULT_RATES_CACHE_PATH,
+) -> None:
+    result = weight_batch_search.run_micro_search_v4_backfill(
+        v4_design_id=v4_design_id,
+        v4_design_dir=v4_design_dir,
+        baseline_backfill_dir=baseline_backfill_dir,
+        output_dir=output_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"v4_backfill_id={result['v4_backfill_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"data_quality_status={manifest['data_quality_status']}")
+    typer.echo(f"variants_completed={manifest['variants_completed']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_micro_search_v4_backfill_app.command("report")
+def dynamic_v3_micro_search_v4_backfill_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    v4_backfill_id: Annotated[
+        str | None,
+        typer.Option("--v4-backfill-id", help="v4 backfill id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="micro search v4 backfill root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.micro_search_v4_backfill_report_payload(
+        v4_backfill_id=v4_backfill_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"v4_backfill_id={payload['v4_backfill_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"report_path={payload['micro_search_v4_backfill_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-micro-search-v4-backfill")
+def dynamic_v3_validate_micro_search_v4_backfill_command(
+    v4_backfill_id: Annotated[str, typer.Option("--v4-backfill-id", help="v4 backfill id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="micro search v4 backfill root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.validate_micro_search_v4_backfill_artifact(
+        v4_backfill_id=v4_backfill_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_gate_calibrated_review_app.command("run")
+def dynamic_v3_gate_calibrated_review_run_command(
+    v4_backfill_id: Annotated[str, typer.Option("--v4-backfill-id", help="v4 backfill id。")],
+    gate_calibration_id: Annotated[
+        str,
+        typer.Option("--gate-calibration-id", help="gate calibration id。"),
+    ],
+    v4_backfill_dir: Annotated[
+        Path,
+        typer.Option("--v4-backfill-dir", help="micro search v4 backfill root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+    v4_design_dir: Annotated[
+        Path,
+        typer.Option("--v4-design-dir", help="micro search v4 design root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    gate_calibration_dir: Annotated[
+        Path,
+        typer.Option("--gate-calibration-dir", help="gate calibration root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATION_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="gate calibrated review root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+) -> None:
+    result = weight_batch_search.run_gate_calibrated_review(
+        v4_backfill_id=v4_backfill_id,
+        gate_calibration_id=gate_calibration_id,
+        v4_backfill_dir=v4_backfill_dir,
+        v4_design_dir=v4_design_dir,
+        gate_calibration_dir=gate_calibration_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("gate_calibrated_summary"))
+    typer.echo(f"gate_review_id={result['gate_review_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"official_gate_promoted_count={summary.get('official_gate_promoted_count')}")
+    typer.echo(f"diagnostic_gate_promoted_count={summary.get('diagnostic_gate_promoted_count')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_gate_calibrated_review_app.command("report")
+def dynamic_v3_gate_calibrated_review_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    gate_review_id: Annotated[
+        str | None,
+        typer.Option("--gate-review-id", help="gate review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="gate calibrated review root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.gate_calibrated_review_report_payload(
+        gate_review_id=gate_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("gate_calibrated_summary"))
+    typer.echo(f"gate_review_id={payload['gate_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"official_gate_promoted_count={summary.get('official_gate_promoted_count')}")
+    typer.echo(f"report_path={payload['gate_calibrated_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-gate-calibrated-review")
+def dynamic_v3_validate_gate_calibrated_review_command(
+    gate_review_id: Annotated[str, typer.Option("--gate-review-id", help="gate review id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="gate calibrated review root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.validate_gate_calibrated_review_artifact(
+        gate_review_id=gate_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_signal_vs_parameter_attribution_app.command("run")
+def dynamic_v3_signal_vs_parameter_attribution_run_command(
+    signal_diagnosis_id: Annotated[
+        str,
+        typer.Option("--signal-diagnosis-id", help="signal diagnosis id。"),
+    ],
+    consensus_review_id: Annotated[
+        str,
+        typer.Option("--consensus-review-id", help="consensus review id。"),
+    ],
+    gate_review_id: Annotated[str, typer.Option("--gate-review-id", help="gate review id。")],
+    signal_dir: Annotated[
+        Path,
+        typer.Option("--signal-dir", help="signal diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    consensus_dir: Annotated[
+        Path,
+        typer.Option("--consensus-dir", help="consensus review root。"),
+    ] = weight_batch_search.DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    gate_review_dir: Annotated[
+        Path,
+        typer.Option("--gate-review-dir", help="gate calibrated review root。"),
+    ] = weight_batch_search.DEFAULT_GATE_CALIBRATED_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal-vs-parameter attribution root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+) -> None:
+    result = weight_batch_search.run_signal_vs_parameter_attribution(
+        signal_diagnosis_id=signal_diagnosis_id,
+        consensus_review_id=consensus_review_id,
+        gate_review_id=gate_review_id,
+        signal_dir=signal_dir,
+        consensus_dir=consensus_dir,
+        gate_review_dir=gate_review_dir,
+        output_dir=output_dir,
+    )
+    failure = _mapping_obj(result.get("failure_source_attribution"))
+    typer.echo(f"attribution_id={result['signal_vs_parameter_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"failure_source={failure.get('failure_source')}")
+    typer.echo(f"confidence={failure.get('confidence')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_signal_vs_parameter_attribution_app.command("report")
+def dynamic_v3_signal_vs_parameter_attribution_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    attribution_id: Annotated[
+        str | None,
+        typer.Option("--attribution-id", help="signal-vs-parameter attribution id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal-vs-parameter attribution root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.signal_vs_parameter_attribution_report_payload(
+        attribution_id=attribution_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    failure = _mapping_obj(payload.get("failure_source_attribution"))
+    typer.echo(f"attribution_id={payload['attribution_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failure_source={failure.get('failure_source')}")
+    typer.echo(f"report_path={payload['signal_vs_parameter_attribution_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-vs-parameter-attribution")
+def dynamic_v3_validate_signal_vs_parameter_attribution_command(
+    attribution_id: Annotated[
+        str,
+        typer.Option("--attribution-id", help="signal-vs-parameter attribution id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal-vs-parameter attribution root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.validate_signal_vs_parameter_attribution_artifact(
+        attribution_id=attribution_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_next_research_direction_app.command("run")
+def dynamic_v3_next_research_direction_run_command(
+    attribution_id: Annotated[
+        str,
+        typer.Option("--attribution-id", help="signal-vs-parameter attribution id。"),
+    ],
+    attribution_dir: Annotated[
+        Path,
+        typer.Option("--attribution-dir", help="signal-vs-parameter attribution root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_VS_PARAMETER_ATTRIBUTION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="next research direction root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+) -> None:
+    result = weight_batch_search.run_next_research_direction(
+        attribution_id=attribution_id,
+        attribution_dir=attribution_dir,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(result.get("next_research_direction_decision"))
+    typer.echo(f"direction_id={result['direction_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_next_research_direction_app.command("report")
+def dynamic_v3_next_research_direction_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    direction_id: Annotated[
+        str | None,
+        typer.Option("--direction-id", help="next research direction id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="next research direction root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+) -> None:
+    payload = weight_batch_search.next_research_direction_report_payload(
+        direction_id=direction_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("next_research_direction_decision"))
+    typer.echo(f"direction_id={payload['direction_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo(f"report_path={payload['next_research_direction_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-next-research-direction")
+def dynamic_v3_validate_next_research_direction_command(
+    direction_id: Annotated[
+        str,
+        typer.Option("--direction-id", help="next research direction id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="next research direction root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+) -> None:
+    payload = weight_batch_search.validate_next_research_direction_artifact(
+        direction_id=direction_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_owner_research_roadmap_app.command("update")
+def dynamic_v3_owner_research_roadmap_update_command(
+    direction_id: Annotated[
+        str,
+        typer.Option("--direction-id", help="next research direction id。"),
+    ],
+    direction_dir: Annotated[
+        Path,
+        typer.Option("--direction-dir", help="next research direction root。"),
+    ] = weight_batch_search.DEFAULT_NEXT_RESEARCH_DIRECTION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner research roadmap root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
+) -> None:
+    result = weight_batch_search.update_owner_research_roadmap(
+        direction_id=direction_id,
+        direction_dir=direction_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("owner_roadmap_summary"))
+    typer.echo(f"roadmap_id={result['roadmap_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"next_research_direction={summary.get('next_research_direction')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_owner_research_roadmap_app.command("report")
+def dynamic_v3_owner_research_roadmap_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    roadmap_id: Annotated[
+        str | None,
+        typer.Option("--roadmap-id", help="owner roadmap id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner research roadmap root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
+) -> None:
+    payload = weight_batch_search.owner_research_roadmap_report_payload(
+        roadmap_id=roadmap_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("owner_roadmap_summary"))
+    typer.echo(f"roadmap_id={payload['roadmap_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"next_research_direction={summary.get('next_research_direction')}")
+    typer.echo(f"report_path={payload['owner_research_roadmap_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-owner-research-roadmap")
+def dynamic_v3_validate_owner_research_roadmap_command(
+    roadmap_id: Annotated[str, typer.Option("--roadmap-id", help="owner roadmap id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner research roadmap root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_RESEARCH_ROADMAP_DIR,
+) -> None:
+    payload = weight_batch_search.validate_owner_research_roadmap_artifact(
+        roadmap_id=roadmap_id,
         output_dir=output_dir,
     )
     typer.echo(f"status={payload['status']}")

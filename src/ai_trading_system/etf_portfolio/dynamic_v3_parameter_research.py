@@ -18839,6 +18839,56 @@ def _latest_pointer_repair_specs() -> tuple[dict[str, Any], ...]:
             "pattern": "next_formal_or_search_plan/*/next_formal_or_search_manifest.json",
             "id_keys": ("plan_id",),
         },
+        {
+            "pointer_name": "latest_gate_calibration_review",
+            "pattern": "gate_calibration_review/*/gate_calibration_manifest.json",
+            "id_keys": ("gate_calibration_id",),
+        },
+        {
+            "pointer_name": "latest_scorecard_attribution",
+            "pattern": "scorecard_attribution/*/scorecard_attribution_manifest.json",
+            "id_keys": ("scorecard_attribution_id",),
+        },
+        {
+            "pointer_name": "latest_signal_instability_diagnosis",
+            "pattern": "signal_instability_diagnosis/*/signal_instability_manifest.json",
+            "id_keys": ("signal_diagnosis_id",),
+        },
+        {
+            "pointer_name": "latest_consensus_quality_review",
+            "pattern": "consensus_quality_review/*/consensus_quality_manifest.json",
+            "id_keys": ("consensus_review_id",),
+        },
+        {
+            "pointer_name": "latest_micro_search_v4_design",
+            "pattern": "micro_search_v4_design/*/micro_search_v4_design_manifest.json",
+            "id_keys": ("v4_design_id",),
+        },
+        {
+            "pointer_name": "latest_micro_search_v4_backfill",
+            "pattern": "micro_search_v4_backfill/*/micro_search_v4_backfill_manifest.json",
+            "id_keys": ("v4_backfill_id",),
+        },
+        {
+            "pointer_name": "latest_gate_calibrated_review",
+            "pattern": "gate_calibrated_review/*/gate_calibrated_review_manifest.json",
+            "id_keys": ("gate_review_id",),
+        },
+        {
+            "pointer_name": "latest_signal_vs_parameter_attribution",
+            "pattern": "signal_vs_parameter_attribution/*/signal_vs_parameter_manifest.json",
+            "id_keys": ("attribution_id",),
+        },
+        {
+            "pointer_name": "latest_next_research_direction",
+            "pattern": "next_research_direction/*/next_research_direction_manifest.json",
+            "id_keys": ("direction_id",),
+        },
+        {
+            "pointer_name": "latest_owner_research_roadmap",
+            "pattern": "owner_research_roadmap/*/owner_research_roadmap_manifest.json",
+            "id_keys": ("roadmap_id",),
+        },
     )
 
 

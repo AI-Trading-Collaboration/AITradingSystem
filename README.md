@@ -1370,6 +1370,24 @@ threshold sensitivity 是 diagnostic-only，不改变 base gate；candidate prom
 或 `model_target_portfolio_v1.yaml`、paper/real portfolio、baseline/production state、policy、
 order ticket 或 broker。
 
+TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
+在 targeted v3 仍未给出正式 promotion 后，追加 signal-level diagnosis、gate calibration
+review 和 bounded micro-search v4。CLI 入口为 `gate-calibration-review run/report`、
+`scorecard-attribution run/report`、`signal-instability-diagnosis run/report`、
+`consensus-quality-review run/report`、`micro-search-v4-design run/report`、
+`micro-search-v4-backfill run/report`、`gate-calibrated-review run/report`、
+`signal-vs-parameter-attribution run/report`、`next-research-direction run/report`、
+`owner-research-roadmap update/report` 和对应 `validate-*` 命令。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/gate_calibration_review|scorecard_attribution|signal_instability_diagnosis|consensus_quality_review|micro_search_v4_design|micro_search_v4_backfill|gate_calibrated_review|signal_vs_parameter_attribution|next_research_direction|owner_research_roadmap/`，
+并登记 report registry / latest pointers / Reader Brief 摘要。`micro-search-v4-backfill`
+必须先执行 `aits validate-data` 等价质量门禁并披露 `data_quality_status`、
+actual date range、`latest_valid_as_of` 和数据质量报告路径。Gate calibration 只允许
+diagnostic relaxed scenario，不改变 official gate；v4 design 限制 20～40 variants；
+gate-calibrated review 只能比较 official gate 与 diagnostic gate；next direction 和
+owner roadmap 只生成 owner research checklist。所有输出继续固定 no broker / no order /
+`production_effect=none`，不得修改 `position_advisory_v1.yaml`、official target weights、
+paper/real portfolio、baseline/production state、policy 或 broker。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
