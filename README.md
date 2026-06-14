@@ -1407,6 +1407,25 @@ action。所有输出固定 `experiment_only=true`、`research_screening_only=tr
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `auto_apply=false`、`production_effect=none`。
 
+TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
+在 TRADING-334/335 将 `median_plus_regime_mismatch_filter` 留在继续验证状态后，追加
+research-only evidence expansion、spec review、stress backfill、drawdown mismatch / flip
+rotation diagnostics、A/B review、confirmation target registration、formalization readiness、
+owner review pack 和 next decision。CLI 入口为 `filtered-candidate-evidence run/report`、
+`median-regime-filter-spec review/report`、`filtered-candidate-stress-backfill run/report`、
+`drawdown-mismatch-reduction run/report`、`flip-rotation-reduction run/report`、
+`filtered-candidate-ab-review run/report`、`signal-gate-confirmation register/report`、
+`filtered-formalization-readiness run/report`、`owner-filtered-candidate-review pack/report`、
+`filtered-next-decision run/report` 和对应 `validate-*` 命令。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_evidence|median_regime_filter_spec|filtered_candidate_stress_backfill|drawdown_mismatch_reduction|flip_rotation_reduction|filtered_candidate_ab_review|signal_gate_confirmation|filtered_formalization_readiness|owner_filtered_candidate_review|filtered_next_decision/`，
+并登记 report registry / latest pointers / Reader Brief 摘要。该链路只读既有 filtered
+comparison / promotion review evidence 和本链路上游 artifacts，不新增 official signal gate、
+formal method config、official target weights、portfolio mutation、order ticket 或 broker action；
+所有输出继续固定 `experiment_only=true`、`research_screening_only=true`、
+`not_formal_research_method=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
+`auto_apply=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

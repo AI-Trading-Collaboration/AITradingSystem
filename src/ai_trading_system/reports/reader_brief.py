@@ -1714,6 +1714,179 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
+            "Dynamic Rescue Filtered Candidate Readiness",
+            _definition_table(
+                [
+                    (
+                        "filtered_candidate_evidence",
+                        etf_dynamic_v3_parameter_research.get("filtered_candidate_evidence_id"),
+                    ),
+                    (
+                        "evidence_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_evidence_status"
+                        ),
+                    ),
+                    (
+                        "primary_improvements",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_primary_improvements"
+                        ),
+                    ),
+                    (
+                        "primary_weaknesses",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_primary_weaknesses"
+                        ),
+                    ),
+                    (
+                        "median_regime_filter_spec",
+                        etf_dynamic_v3_parameter_research.get("median_regime_filter_spec_id"),
+                    ),
+                    (
+                        "contract_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "median_regime_filter_contract_status"
+                        ),
+                    ),
+                    (
+                        "formalization_complexity",
+                        etf_dynamic_v3_parameter_research.get(
+                            "median_regime_filter_complexity"
+                        ),
+                    ),
+                    (
+                        "stress_backfill",
+                        etf_dynamic_v3_parameter_research.get("filtered_candidate_stress_id"),
+                    ),
+                    (
+                        "stress_status",
+                        etf_dynamic_v3_parameter_research.get("filtered_candidate_stress_status"),
+                    ),
+                    (
+                        "stress_improved_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_stress_improved_count"
+                        ),
+                    ),
+                    (
+                        "drawdown_mismatch_reduction",
+                        etf_dynamic_v3_parameter_research.get("drawdown_mismatch_reduction_id"),
+                    ),
+                    (
+                        "drawdown_mismatch_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_mismatch_reduction_status"
+                        ),
+                    ),
+                    (
+                        "drawdown_mismatch_reduction_pct",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_mismatch_reduction_pct"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_reduction",
+                        etf_dynamic_v3_parameter_research.get("flip_rotation_reduction_id"),
+                    ),
+                    (
+                        "flip_reduction_status",
+                        etf_dynamic_v3_parameter_research.get("flip_reduction_status"),
+                    ),
+                    (
+                        "rotation_reduction_status",
+                        etf_dynamic_v3_parameter_research.get("rotation_reduction_status"),
+                    ),
+                    (
+                        "filtered_candidate_ab_review",
+                        etf_dynamic_v3_parameter_research.get("filtered_candidate_ab_review_id"),
+                    ),
+                    (
+                        "filtered_candidate_ab_status",
+                        etf_dynamic_v3_parameter_research.get("filtered_candidate_ab_status"),
+                    ),
+                    (
+                        "filtered_candidate_ab_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_ab_next_action"
+                        ),
+                    ),
+                    (
+                        "signal_gate_confirmation",
+                        etf_dynamic_v3_parameter_research.get("signal_gate_confirmation_id"),
+                    ),
+                    (
+                        "confirmation_target_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_gate_confirmation_target_count"
+                        ),
+                    ),
+                    (
+                        "confirmation_auto_apply",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_gate_confirmation_auto_apply"
+                        ),
+                    ),
+                    (
+                        "formalization_readiness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_formalization_readiness_id"
+                        ),
+                    ),
+                    (
+                        "formalization_decision",
+                        etf_dynamic_v3_parameter_research.get("filtered_formalization_decision"),
+                    ),
+                    (
+                        "formalization_confidence",
+                        etf_dynamic_v3_parameter_research.get("filtered_formalization_confidence"),
+                    ),
+                    (
+                        "can_write_official_target_weights",
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_formalization_can_write_official_target_weights"
+                        ),
+                    ),
+                    (
+                        "owner_filtered_candidate_review",
+                        etf_dynamic_v3_parameter_research.get(
+                            "owner_filtered_candidate_review_id"
+                        ),
+                    ),
+                    (
+                        "owner_filtered_candidate_action",
+                        etf_dynamic_v3_parameter_research.get("owner_filtered_candidate_action"),
+                    ),
+                    (
+                        "owner_filtered_candidate_readiness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "owner_filtered_candidate_readiness_decision"
+                        ),
+                    ),
+                    (
+                        "filtered_next_decision",
+                        etf_dynamic_v3_parameter_research.get("filtered_next_decision"),
+                    ),
+                    (
+                        "filtered_next_action",
+                        etf_dynamic_v3_parameter_research.get("filtered_next_action"),
+                    ),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_parameter_research.get("production_effect"),
+                    ),
+                    (
+                        "automatic_candidate_promotion",
+                        etf_dynamic_v3_parameter_research.get("automatic_candidate_promotion"),
+                    ),
+                    (
+                        "shadow_enrollment_allowed",
+                        etf_dynamic_v3_parameter_research.get("shadow_enrollment_allowed"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
             "Dynamic Rescue Historical Replay Performance",
             _definition_table(
                 [
@@ -11908,6 +12081,55 @@ def _etf_dynamic_v3_parameter_research_summary(
         _report_index_artifact_path(report_index, "etf_dynamic_v3_owner_signal_roadmap"),
         "owner_signal_roadmap_manifest.json",
     )
+    filtered_candidate_evidence_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_filtered_candidate_evidence"),
+        "filtered_candidate_evidence_manifest.json",
+    )
+    median_regime_filter_spec_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_median_regime_filter_spec"),
+        "median_regime_filter_spec_manifest.json",
+    )
+    filtered_candidate_stress_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_filtered_candidate_stress_backfill",
+        ),
+        "filtered_candidate_stress_manifest.json",
+    )
+    drawdown_mismatch_reduction_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_drawdown_mismatch_reduction"),
+        "drawdown_mismatch_reduction_manifest.json",
+    )
+    flip_rotation_reduction_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_flip_rotation_reduction"),
+        "flip_rotation_reduction_manifest.json",
+    )
+    filtered_candidate_ab_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_filtered_candidate_ab_review"),
+        "filtered_candidate_ab_manifest.json",
+    )
+    signal_gate_confirmation_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_signal_gate_confirmation"),
+        "signal_gate_confirmation_manifest.json",
+    )
+    filtered_formalization_readiness_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_filtered_formalization_readiness",
+        ),
+        "filtered_formalization_manifest.json",
+    )
+    owner_filtered_candidate_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_owner_filtered_candidate_review",
+        ),
+        "owner_filtered_candidate_manifest.json",
+    )
+    filtered_next_decision_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_filtered_next_decision"),
+        "filtered_next_decision_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12224,6 +12446,88 @@ def _etf_dynamic_v3_parameter_research_summary(
         if owner_signal_roadmap_path is not None
         else None
     )
+    filtered_candidate_evidence_manifest = _read_optional_json(filtered_candidate_evidence_path)
+    filtered_candidate_evidence_summary = _read_optional_json(
+        filtered_candidate_evidence_path.parent / "filtered_candidate_evidence_summary.json"
+        if filtered_candidate_evidence_path is not None
+        else None
+    )
+    median_regime_filter_spec_manifest = _read_optional_json(median_regime_filter_spec_path)
+    median_regime_filter_contract = _read_optional_json(
+        median_regime_filter_spec_path.parent / "median_regime_filter_contract.json"
+        if median_regime_filter_spec_path is not None
+        else None
+    )
+    filtered_candidate_stress_manifest = _read_optional_json(filtered_candidate_stress_path)
+    filtered_candidate_stress_summary = _read_optional_json(
+        filtered_candidate_stress_path.parent / "filtered_candidate_stress_summary.json"
+        if filtered_candidate_stress_path is not None
+        else None
+    )
+    drawdown_mismatch_reduction_manifest = _read_optional_json(drawdown_mismatch_reduction_path)
+    mismatch_reduction_summary = _read_optional_json(
+        drawdown_mismatch_reduction_path.parent / "mismatch_reduction_summary.json"
+        if drawdown_mismatch_reduction_path is not None
+        else None
+    )
+    flip_rotation_reduction_manifest = _read_optional_json(flip_rotation_reduction_path)
+    flip_rotation_reduction_summary = _read_optional_json(
+        flip_rotation_reduction_path.parent / "flip_rotation_reduction_summary.json"
+        if flip_rotation_reduction_path is not None
+        else None
+    )
+    filtered_candidate_ab_manifest = _read_optional_json(filtered_candidate_ab_review_path)
+    filtered_candidate_ab_summary = _read_optional_json(
+        filtered_candidate_ab_review_path.parent / "ab_summary.json"
+        if filtered_candidate_ab_review_path is not None
+        else None
+    )
+    signal_gate_confirmation_manifest = _read_optional_json(signal_gate_confirmation_path)
+    signal_gate_confirmation_targets = _read_optional_json(
+        signal_gate_confirmation_path.parent / "signal_gate_confirmation_targets.json"
+        if signal_gate_confirmation_path is not None
+        else None
+    )
+    filtered_formalization_manifest = _read_optional_json(filtered_formalization_readiness_path)
+    formalization_readiness_decision = _read_optional_json(
+        filtered_formalization_readiness_path.parent / "formalization_readiness_decision.json"
+        if filtered_formalization_readiness_path is not None
+        else None
+    )
+    owner_filtered_candidate_manifest = _read_optional_json(owner_filtered_candidate_review_path)
+    owner_filtered_candidate_summary = _read_optional_json(
+        owner_filtered_candidate_review_path.parent / "owner_filtered_candidate_summary.json"
+        if owner_filtered_candidate_review_path is not None
+        else None
+    )
+    filtered_next_decision_manifest = _read_optional_json(filtered_next_decision_path)
+    filtered_next_decision = _read_optional_json(
+        filtered_next_decision_path.parent / "filtered_next_decision.json"
+        if filtered_next_decision_path is not None
+        else None
+    )
+    filtered_candidate_readiness_payloads = (
+        filtered_candidate_evidence_manifest,
+        filtered_candidate_evidence_summary,
+        median_regime_filter_spec_manifest,
+        median_regime_filter_contract,
+        filtered_candidate_stress_manifest,
+        filtered_candidate_stress_summary,
+        drawdown_mismatch_reduction_manifest,
+        mismatch_reduction_summary,
+        flip_rotation_reduction_manifest,
+        flip_rotation_reduction_summary,
+        filtered_candidate_ab_manifest,
+        filtered_candidate_ab_summary,
+        signal_gate_confirmation_manifest,
+        signal_gate_confirmation_targets,
+        filtered_formalization_manifest,
+        formalization_readiness_decision,
+        owner_filtered_candidate_manifest,
+        owner_filtered_candidate_summary,
+        filtered_next_decision_manifest,
+        filtered_next_decision,
+    )
     outcome_loop_payloads = (
         outcome_update_review,
         outcome_update_safety,
@@ -12394,6 +12698,7 @@ def _etf_dynamic_v3_parameter_research_summary(
         pending_reason_dashboard,
         *outcome_loop_payloads,
         *signal_filter_payloads,
+        *filtered_candidate_readiness_payloads,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -12421,6 +12726,9 @@ def _etf_dynamic_v3_parameter_research_summary(
     next_formal_or_search_plan_decision = _text(
         next_plan_decision.get("decision"),
         "MISSING",
+    )
+    signal_gate_confirmation_target_count = len(
+        _records(signal_gate_confirmation_targets.get("targets"))
     )
     signal_filter_payloads = (
         signal_failure_taxonomy_manifest,
@@ -12467,6 +12775,7 @@ def _etf_dynamic_v3_parameter_research_summary(
         next_formal_or_search_plan_manifest,
         next_plan_decision,
         *signal_filter_payloads,
+        *filtered_candidate_readiness_payloads,
     )
     return {
         "availability": "AVAILABLE",
@@ -12536,6 +12845,25 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"{filtered_promotion_decision.get('decision', 'MISSING')}; "
             f"owner_signal_action="
             f"{owner_signal_roadmap_summary.get('recommended_owner_action', 'MISSING')}; "
+            f"filtered_candidate_evidence="
+            f"{filtered_candidate_evidence_summary.get('evidence_status', 'MISSING')}; "
+            f"median_regime_contract="
+            f"{median_regime_filter_contract.get('contract_status', 'MISSING')}; "
+            f"filtered_stress="
+            f"{filtered_candidate_stress_summary.get('stress_robustness_status', 'MISSING')}; "
+            f"drawdown_mismatch_reduction="
+            f"{mismatch_reduction_summary.get('drawdown_mismatch_reduction_status', 'MISSING')}; "
+            f"flip_reduction="
+            f"{flip_rotation_reduction_summary.get('flip_reduction_status', 'MISSING')}; "
+            f"filtered_ab="
+            f"{filtered_candidate_ab_summary.get('overall_ab_status', 'MISSING')}; "
+            f"confirmation_targets={signal_gate_confirmation_target_count}; "
+            f"formalization="
+            f"{formalization_readiness_decision.get('decision', 'MISSING')}; "
+            f"owner_filtered_action="
+            f"{owner_filtered_candidate_summary.get('recommended_owner_action', 'MISSING')}; "
+            f"filtered_next="
+            f"{filtered_next_decision.get('decision', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -13212,6 +13540,127 @@ def _etf_dynamic_v3_parameter_research_summary(
             owner_signal_roadmap_summary.get("recommended_owner_action"),
             "MISSING",
         ),
+        "filtered_candidate_evidence_id": _text(
+            filtered_candidate_evidence_manifest.get("evidence_id"),
+            "MISSING",
+        ),
+        "filtered_candidate_evidence_status": _text(
+            filtered_candidate_evidence_summary.get("evidence_status"),
+            "MISSING",
+        ),
+        "filtered_candidate_primary_improvements": ", ".join(
+            _texts(filtered_candidate_evidence_summary.get("primary_improvements"))
+        )
+        or "MISSING",
+        "filtered_candidate_primary_weaknesses": ", ".join(
+            _texts(filtered_candidate_evidence_summary.get("primary_weaknesses"))
+        )
+        or "MISSING",
+        "median_regime_filter_spec_id": _text(
+            median_regime_filter_spec_manifest.get("spec_id"),
+            "MISSING",
+        ),
+        "median_regime_filter_contract_status": _text(
+            median_regime_filter_contract.get("contract_status"),
+            "MISSING",
+        ),
+        "median_regime_filter_complexity": _text(
+            median_regime_filter_contract.get("formalization_complexity"),
+            "MISSING",
+        ),
+        "filtered_candidate_stress_id": _text(
+            filtered_candidate_stress_manifest.get("stress_backfill_id"),
+            "MISSING",
+        ),
+        "filtered_candidate_stress_status": _text(
+            filtered_candidate_stress_summary.get("stress_robustness_status"),
+            "MISSING",
+        ),
+        "filtered_candidate_stress_improved_count": filtered_candidate_stress_summary.get(
+            "improved_count",
+            0,
+        ),
+        "drawdown_mismatch_reduction_id": _text(
+            drawdown_mismatch_reduction_manifest.get("reduction_id"),
+            "MISSING",
+        ),
+        "drawdown_mismatch_reduction_status": _text(
+            mismatch_reduction_summary.get("drawdown_mismatch_reduction_status"),
+            "MISSING",
+        ),
+        "drawdown_mismatch_reduction_pct": mismatch_reduction_summary.get(
+            "reduction_pct",
+            0.0,
+        ),
+        "flip_rotation_reduction_id": _text(
+            flip_rotation_reduction_manifest.get("flip_reduction_id"),
+            "MISSING",
+        ),
+        "flip_reduction_status": _text(
+            flip_rotation_reduction_summary.get("flip_reduction_status"),
+            "MISSING",
+        ),
+        "rotation_reduction_status": _text(
+            flip_rotation_reduction_summary.get("rotation_reduction_status"),
+            "MISSING",
+        ),
+        "filtered_candidate_ab_review_id": _text(
+            filtered_candidate_ab_manifest.get("ab_review_id"),
+            "MISSING",
+        ),
+        "filtered_candidate_ab_status": _text(
+            filtered_candidate_ab_summary.get("overall_ab_status"),
+            "MISSING",
+        ),
+        "filtered_candidate_ab_next_action": _text(
+            filtered_candidate_ab_summary.get("recommended_next_action"),
+            "MISSING",
+        ),
+        "signal_gate_confirmation_id": _text(
+            signal_gate_confirmation_manifest.get("confirmation_id"),
+            "MISSING",
+        ),
+        "signal_gate_confirmation_target_count": signal_gate_confirmation_target_count,
+        "signal_gate_confirmation_auto_apply": (
+            signal_gate_confirmation_targets.get("auto_apply")
+            if "auto_apply" in signal_gate_confirmation_targets
+            else False
+        ),
+        "filtered_formalization_readiness_id": _text(
+            filtered_formalization_manifest.get("readiness_id"),
+            "MISSING",
+        ),
+        "filtered_formalization_decision": _text(
+            formalization_readiness_decision.get("decision"),
+            "MISSING",
+        ),
+        "filtered_formalization_confidence": _text(
+            formalization_readiness_decision.get("confidence"),
+            "MISSING",
+        ),
+        "filtered_formalization_can_write_official_target_weights": (
+            formalization_readiness_decision.get("can_write_official_target_weights")
+            if "can_write_official_target_weights" in formalization_readiness_decision
+            else False
+        ),
+        "owner_filtered_candidate_review_id": _text(
+            owner_filtered_candidate_manifest.get("owner_review_id"),
+            "MISSING",
+        ),
+        "owner_filtered_candidate_action": _text(
+            owner_filtered_candidate_summary.get("recommended_owner_action"),
+            "MISSING",
+        ),
+        "owner_filtered_candidate_readiness_decision": _text(
+            owner_filtered_candidate_summary.get("readiness_decision"),
+            "MISSING",
+        ),
+        "filtered_next_decision_id": _text(
+            filtered_next_decision_manifest.get("decision_id"),
+            "MISSING",
+        ),
+        "filtered_next_decision": _text(filtered_next_decision.get("decision"), "MISSING"),
+        "filtered_next_action": _text(filtered_next_decision.get("next_action"), "MISSING"),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -14196,6 +14645,38 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "forward_outcome_decision_action": "MISSING",
         "forward_rule_calibration_readiness": "MISSING",
         "forward_next_due_scan_date": "MISSING",
+        "filtered_candidate_evidence_id": "MISSING",
+        "filtered_candidate_evidence_status": "MISSING",
+        "filtered_candidate_primary_improvements": "MISSING",
+        "filtered_candidate_primary_weaknesses": "MISSING",
+        "median_regime_filter_spec_id": "MISSING",
+        "median_regime_filter_contract_status": "MISSING",
+        "median_regime_filter_complexity": "MISSING",
+        "filtered_candidate_stress_id": "MISSING",
+        "filtered_candidate_stress_status": "MISSING",
+        "filtered_candidate_stress_improved_count": 0,
+        "drawdown_mismatch_reduction_id": "MISSING",
+        "drawdown_mismatch_reduction_status": "MISSING",
+        "drawdown_mismatch_reduction_pct": 0.0,
+        "flip_rotation_reduction_id": "MISSING",
+        "flip_reduction_status": "MISSING",
+        "rotation_reduction_status": "MISSING",
+        "filtered_candidate_ab_review_id": "MISSING",
+        "filtered_candidate_ab_status": "MISSING",
+        "filtered_candidate_ab_next_action": "MISSING",
+        "signal_gate_confirmation_id": "MISSING",
+        "signal_gate_confirmation_target_count": 0,
+        "signal_gate_confirmation_auto_apply": False,
+        "filtered_formalization_readiness_id": "MISSING",
+        "filtered_formalization_decision": "MISSING",
+        "filtered_formalization_confidence": "MISSING",
+        "filtered_formalization_can_write_official_target_weights": False,
+        "owner_filtered_candidate_review_id": "MISSING",
+        "owner_filtered_candidate_action": "MISSING",
+        "owner_filtered_candidate_readiness_decision": "MISSING",
+        "filtered_next_decision_id": "MISSING",
+        "filtered_next_decision": "MISSING",
+        "filtered_next_action": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
