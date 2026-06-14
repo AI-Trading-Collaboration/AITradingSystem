@@ -1728,6 +1728,46 @@ dynamic_v3_owner_research_roadmap_app = typer.Typer(
     help="Dynamic v3 rescue owner research roadmap workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_signal_failure_taxonomy_app = typer.Typer(
+    help="Dynamic v3 rescue signal feature failure taxonomy workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_candidate_signal_ledger_app = typer.Typer(
+    help="Dynamic v3 rescue candidate signal ledger workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_signal_churn_root_cause_app = typer.Typer(
+    help="Dynamic v3 rescue signal churn root-cause workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_regime_mismatch_attribution_app = typer.Typer(
+    help="Dynamic v3 rescue regime mismatch attribution workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_candidate_quality_filter_design_app = typer.Typer(
+    help="Dynamic v3 rescue candidate quality filter design workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_filtered_candidate_backfill_app = typer.Typer(
+    help="Dynamic v3 rescue filtered candidate backfill workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_filtered_vs_original_comparison_app = typer.Typer(
+    help="Dynamic v3 rescue filtered versus original comparison workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_signal_gate_experiment_app = typer.Typer(
+    help="Dynamic v3 rescue signal gate experiment workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_filtered_candidate_promotion_review_app = typer.Typer(
+    help="Dynamic v3 rescue filtered candidate promotion review workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_owner_signal_roadmap_app = typer.Typer(
+    help="Dynamic v3 rescue owner signal roadmap workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2396,6 +2436,46 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_owner_research_roadmap_app,
     name="owner-research-roadmap",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_failure_taxonomy_app,
+    name="signal-failure-taxonomy",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_candidate_signal_ledger_app,
+    name="candidate-signal-ledger",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_churn_root_cause_app,
+    name="signal-churn-root-cause",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_regime_mismatch_attribution_app,
+    name="regime-mismatch-attribution",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_candidate_quality_filter_design_app,
+    name="candidate-quality-filter-design",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_filtered_candidate_backfill_app,
+    name="filtered-candidate-backfill",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_filtered_vs_original_comparison_app,
+    name="filtered-vs-original-comparison",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_gate_experiment_app,
+    name="signal-gate-experiment",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_filtered_candidate_promotion_review_app,
+    name="filtered-candidate-promotion-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_owner_signal_roadmap_app,
+    name="owner-signal-roadmap",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -17861,6 +17941,736 @@ def dynamic_v3_validate_owner_research_roadmap_command(
 ) -> None:
     payload = weight_batch_search.validate_owner_research_roadmap_artifact(
         roadmap_id=roadmap_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_signal_failure_taxonomy_app.command("validate")
+def dynamic_v3_signal_failure_taxonomy_validate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="signal failure taxonomy config。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal failure taxonomy artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+) -> None:
+    result = weight_batch_search.run_signal_failure_taxonomy_validation(
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+    manifest = result["manifest"]
+    typer.echo(f"taxonomy_id={result['taxonomy_id']}")
+    typer.echo(f"status={manifest['status']}")
+    typer.echo(f"failure_mode_count={manifest['failure_mode_count']}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_signal_failure_taxonomy_app.command("report")
+def dynamic_v3_signal_failure_taxonomy_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    taxonomy_id: Annotated[
+        str | None,
+        typer.Option("--taxonomy-id", help="signal failure taxonomy id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal failure taxonomy artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+) -> None:
+    payload = weight_batch_search.signal_failure_taxonomy_report_payload(
+        taxonomy_id=taxonomy_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"taxonomy_id={payload['taxonomy_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failure_mode_count={payload['failure_mode_count']}")
+    typer.echo(f"report_path={payload['signal_failure_taxonomy_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-failure-taxonomy")
+def dynamic_v3_validate_signal_failure_taxonomy_command(
+    taxonomy_id: Annotated[str, typer.Option("--taxonomy-id", help="taxonomy id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal failure taxonomy artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+) -> None:
+    payload = weight_batch_search.validate_signal_failure_taxonomy_artifact(
+        taxonomy_id=taxonomy_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_candidate_signal_ledger_app.command("build")
+def dynamic_v3_candidate_signal_ledger_build_command(
+    taxonomy_id: Annotated[str, typer.Option("--taxonomy-id", help="taxonomy id。")],
+    source_backfill_id: Annotated[
+        str,
+        typer.Option("--source-backfill-id", help="micro-search-v4 backfill id。"),
+    ],
+    taxonomy_dir: Annotated[
+        Path,
+        typer.Option("--taxonomy-dir", help="signal failure taxonomy artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+    source_backfill_dir: Annotated[
+        Path,
+        typer.Option("--source-backfill-dir", help="micro-search-v4 backfill root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+    v4_design_dir: Annotated[
+        Path,
+        typer.Option("--v4-design-dir", help="micro-search-v4 design root。"),
+    ] = weight_batch_search.DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    signal_dir: Annotated[
+        Path,
+        typer.Option("--signal-dir", help="signal instability diagnosis root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    consensus_dir: Annotated[
+        Path,
+        typer.Option("--consensus-dir", help="consensus quality review root。"),
+    ] = weight_batch_search.DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+) -> None:
+    result = weight_batch_search.build_candidate_signal_ledger(
+        taxonomy_id=taxonomy_id,
+        source_backfill_id=source_backfill_id,
+        taxonomy_dir=taxonomy_dir,
+        source_backfill_dir=source_backfill_dir,
+        v4_design_dir=v4_design_dir,
+        signal_dir=signal_dir,
+        consensus_dir=consensus_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("candidate_signal_summary"))
+    typer.echo(f"ledger_id={result['ledger_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"data_quality_status={result['manifest']['data_quality_status']}")
+    typer.echo(f"dominant_failure_mode={summary.get('dominant_failure_mode')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_candidate_signal_ledger_app.command("report")
+def dynamic_v3_candidate_signal_ledger_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    ledger_id: Annotated[str | None, typer.Option("--ledger-id", help="ledger id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+) -> None:
+    payload = weight_batch_search.candidate_signal_ledger_report_payload(
+        ledger_id=ledger_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("candidate_signal_summary"))
+    typer.echo(f"ledger_id={payload['ledger_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"dominant_failure_mode={summary.get('dominant_failure_mode')}")
+    typer.echo(f"report_path={payload['candidate_signal_ledger_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-candidate-signal-ledger")
+def dynamic_v3_validate_candidate_signal_ledger_command(
+    ledger_id: Annotated[str, typer.Option("--ledger-id", help="ledger id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+) -> None:
+    payload = weight_batch_search.validate_candidate_signal_ledger_artifact(
+        ledger_id=ledger_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_signal_churn_root_cause_app.command("run")
+def dynamic_v3_signal_churn_root_cause_run_command(
+    ledger_id: Annotated[str, typer.Option("--ledger-id", help="candidate signal ledger id。")],
+    ledger_dir: Annotated[
+        Path,
+        typer.Option("--ledger-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal churn root-cause artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+) -> None:
+    result = weight_batch_search.run_signal_churn_root_cause_review(
+        ledger_id=ledger_id,
+        ledger_dir=ledger_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("churn_root_cause_summary"))
+    typer.echo(f"root_cause_id={result['root_cause_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"dominant_root_cause={summary.get('dominant_root_cause')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_signal_churn_root_cause_app.command("report")
+def dynamic_v3_signal_churn_root_cause_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    root_cause_id: Annotated[
+        str | None,
+        typer.Option("--root-cause-id", help="signal churn root-cause id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal churn root-cause artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+) -> None:
+    payload = weight_batch_search.signal_churn_root_cause_report_payload(
+        root_cause_id=root_cause_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("churn_root_cause_summary"))
+    typer.echo(f"root_cause_id={payload['root_cause_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"dominant_root_cause={summary.get('dominant_root_cause')}")
+    typer.echo(f"report_path={payload['signal_churn_root_cause_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-churn-root-cause")
+def dynamic_v3_validate_signal_churn_root_cause_command(
+    root_cause_id: Annotated[str, typer.Option("--root-cause-id", help="root-cause id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal churn root-cause artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+) -> None:
+    payload = weight_batch_search.validate_signal_churn_root_cause_artifact(
+        root_cause_id=root_cause_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_regime_mismatch_attribution_app.command("run")
+def dynamic_v3_regime_mismatch_attribution_run_command(
+    ledger_id: Annotated[str, typer.Option("--ledger-id", help="candidate signal ledger id。")],
+    ledger_dir: Annotated[
+        Path,
+        typer.Option("--ledger-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="regime mismatch attribution artifact root。"),
+    ] = weight_batch_search.DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+) -> None:
+    result = weight_batch_search.run_regime_mismatch_attribution(
+        ledger_id=ledger_id,
+        ledger_dir=ledger_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("regime_mismatch_summary"))
+    typer.echo(f"mismatch_id={result['mismatch_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"dominant_mismatch_type={summary.get('dominant_mismatch_type')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_regime_mismatch_attribution_app.command("report")
+def dynamic_v3_regime_mismatch_attribution_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    mismatch_id: Annotated[str | None, typer.Option("--mismatch-id", help="mismatch id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="regime mismatch attribution artifact root。"),
+    ] = weight_batch_search.DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.regime_mismatch_attribution_report_payload(
+        mismatch_id=mismatch_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("regime_mismatch_summary"))
+    typer.echo(f"mismatch_id={payload['mismatch_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"dominant_mismatch_type={summary.get('dominant_mismatch_type')}")
+    typer.echo(f"report_path={payload['regime_mismatch_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-regime-mismatch-attribution")
+def dynamic_v3_validate_regime_mismatch_attribution_command(
+    mismatch_id: Annotated[str, typer.Option("--mismatch-id", help="mismatch id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="regime mismatch attribution artifact root。"),
+    ] = weight_batch_search.DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+) -> None:
+    payload = weight_batch_search.validate_regime_mismatch_attribution_artifact(
+        mismatch_id=mismatch_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_candidate_quality_filter_design_app.command("run")
+def dynamic_v3_candidate_quality_filter_design_run_command(
+    root_cause_id: Annotated[str, typer.Option("--root-cause-id", help="root-cause id。")],
+    mismatch_id: Annotated[str, typer.Option("--mismatch-id", help="mismatch id。")],
+    root_cause_dir: Annotated[
+        Path,
+        typer.Option("--root-cause-dir", help="signal churn root-cause artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+    mismatch_dir: Annotated[
+        Path,
+        typer.Option("--mismatch-dir", help="regime mismatch attribution artifact root。"),
+    ] = weight_batch_search.DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate quality filter design artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+) -> None:
+    result = weight_batch_search.run_candidate_quality_filter_design(
+        root_cause_id=root_cause_id,
+        mismatch_id=mismatch_id,
+        root_cause_dir=root_cause_dir,
+        mismatch_dir=mismatch_dir,
+        output_dir=output_dir,
+    )
+    filters = _mapping_obj(result.get("proposed_quality_filters"))
+    typer.echo(f"filter_design_id={result['filter_design_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"filter_count={len(_records_obj(filters.get('filters')))}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_candidate_quality_filter_design_app.command("report")
+def dynamic_v3_candidate_quality_filter_design_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    filter_design_id: Annotated[
+        str | None,
+        typer.Option("--filter-design-id", help="filter design id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate quality filter design artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+) -> None:
+    payload = weight_batch_search.candidate_quality_filter_design_report_payload(
+        filter_design_id=filter_design_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    filters = _mapping_obj(payload.get("proposed_quality_filters"))
+    typer.echo(f"filter_design_id={payload['filter_design_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"filter_count={len(_records_obj(filters.get('filters')))}")
+    typer.echo(f"report_path={payload['candidate_quality_filter_design_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-candidate-quality-filter-design")
+def dynamic_v3_validate_candidate_quality_filter_design_command(
+    filter_design_id: Annotated[str, typer.Option("--filter-design-id", help="filter design id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate quality filter design artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+) -> None:
+    payload = weight_batch_search.validate_candidate_quality_filter_design_artifact(
+        filter_design_id=filter_design_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_filtered_candidate_backfill_app.command("run")
+def dynamic_v3_filtered_candidate_backfill_run_command(
+    filter_design_id: Annotated[
+        str,
+        typer.Option("--filter-design-id", help="filter design id。"),
+    ],
+    filter_design_dir: Annotated[
+        Path,
+        typer.Option("--filter-design-dir", help="candidate quality filter design root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+    ledger_dir: Annotated[
+        Path,
+        typer.Option("--ledger-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered candidate backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+) -> None:
+    result = weight_batch_search.run_filtered_candidate_backfill(
+        filter_design_id=filter_design_id,
+        filter_design_dir=filter_design_dir,
+        ledger_dir=ledger_dir,
+        output_dir=output_dir,
+    )
+    typer.echo(f"filtered_backfill_id={result['filtered_backfill_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"data_quality_status={result['manifest']['data_quality_status']}")
+    typer.echo(f"variant_count={len(result['filtered_variant_specs'])}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_filtered_candidate_backfill_app.command("report")
+def dynamic_v3_filtered_candidate_backfill_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    filtered_backfill_id: Annotated[
+        str | None,
+        typer.Option("--filtered-backfill-id", help="filtered backfill id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered candidate backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.filtered_candidate_backfill_report_payload(
+        filtered_backfill_id=filtered_backfill_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"filtered_backfill_id={payload['filtered_backfill_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"report_path={payload['filtered_candidate_backfill_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-filtered-candidate-backfill")
+def dynamic_v3_validate_filtered_candidate_backfill_command(
+    filtered_backfill_id: Annotated[
+        str,
+        typer.Option("--filtered-backfill-id", help="filtered backfill id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered candidate backfill artifact root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+) -> None:
+    payload = weight_batch_search.validate_filtered_candidate_backfill_artifact(
+        filtered_backfill_id=filtered_backfill_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_filtered_vs_original_comparison_app.command("run")
+def dynamic_v3_filtered_vs_original_comparison_run_command(
+    filtered_backfill_id: Annotated[
+        str,
+        typer.Option("--filtered-backfill-id", help="filtered backfill id。"),
+    ],
+    filtered_backfill_dir: Annotated[
+        Path,
+        typer.Option("--filtered-backfill-dir", help="filtered candidate backfill root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered-vs-original comparison artifact root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+) -> None:
+    result = weight_batch_search.run_filtered_vs_original_comparison(
+        filtered_backfill_id=filtered_backfill_id,
+        filtered_backfill_dir=filtered_backfill_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("filtered_improvement_summary"))
+    typer.echo(f"comparison_id={result['comparison_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"best_filtered_variant={summary.get('best_filtered_variant')}")
+    typer.echo(f"recommendation={summary.get('recommendation')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_filtered_vs_original_comparison_app.command("report")
+def dynamic_v3_filtered_vs_original_comparison_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    comparison_id: Annotated[
+        str | None,
+        typer.Option("--comparison-id", help="filtered-vs-original comparison id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered-vs-original comparison artifact root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+) -> None:
+    payload = weight_batch_search.filtered_vs_original_comparison_report_payload(
+        comparison_id=comparison_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("filtered_improvement_summary"))
+    typer.echo(f"comparison_id={payload['comparison_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"best_filtered_variant={summary.get('best_filtered_variant')}")
+    typer.echo(f"report_path={payload['filtered_vs_original_comparison_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-filtered-vs-original-comparison")
+def dynamic_v3_validate_filtered_vs_original_comparison_command(
+    comparison_id: Annotated[str, typer.Option("--comparison-id", help="comparison id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered-vs-original comparison artifact root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+) -> None:
+    payload = weight_batch_search.validate_filtered_vs_original_comparison_artifact(
+        comparison_id=comparison_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_signal_gate_experiment_app.command("run")
+def dynamic_v3_signal_gate_experiment_run_command(
+    filter_design_id: Annotated[
+        str,
+        typer.Option("--filter-design-id", help="filter design id。"),
+    ],
+    filter_design_dir: Annotated[
+        Path,
+        typer.Option("--filter-design-dir", help="candidate quality filter design root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+    ledger_dir: Annotated[
+        Path,
+        typer.Option("--ledger-dir", help="candidate signal ledger artifact root。"),
+    ] = weight_batch_search.DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal gate experiment artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+) -> None:
+    result = weight_batch_search.run_signal_gate_experiment(
+        filter_design_id=filter_design_id,
+        filter_design_dir=filter_design_dir,
+        ledger_dir=ledger_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("signal_gate_experiment_summary"))
+    typer.echo(f"signal_gate_experiment_id={result['signal_gate_experiment_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"recommended_next_action={summary.get('recommended_next_action')}")
+    typer.echo(f"formalization_ready={summary.get('formalization_ready')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_signal_gate_experiment_app.command("report")
+def dynamic_v3_signal_gate_experiment_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    signal_gate_experiment_id: Annotated[
+        str | None,
+        typer.Option("--signal-gate-experiment-id", help="signal gate experiment id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal gate experiment artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+) -> None:
+    payload = weight_batch_search.signal_gate_experiment_report_payload(
+        signal_gate_experiment_id=signal_gate_experiment_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("signal_gate_experiment_summary"))
+    typer.echo(f"signal_gate_experiment_id={payload['signal_gate_experiment_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"recommended_next_action={summary.get('recommended_next_action')}")
+    typer.echo(f"report_path={payload['signal_gate_experiment_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-gate-experiment")
+def dynamic_v3_validate_signal_gate_experiment_command(
+    signal_gate_experiment_id: Annotated[
+        str,
+        typer.Option("--signal-gate-experiment-id", help="signal gate experiment id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal gate experiment artifact root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+) -> None:
+    payload = weight_batch_search.validate_signal_gate_experiment_artifact(
+        signal_gate_experiment_id=signal_gate_experiment_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_filtered_candidate_promotion_review_app.command("run")
+def dynamic_v3_filtered_candidate_promotion_review_run_command(
+    comparison_id: Annotated[str, typer.Option("--comparison-id", help="comparison id。")],
+    signal_gate_experiment_id: Annotated[
+        str,
+        typer.Option("--signal-gate-experiment-id", help="signal gate experiment id。"),
+    ],
+    comparison_dir: Annotated[
+        Path,
+        typer.Option("--comparison-dir", help="filtered-vs-original comparison root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+    experiment_dir: Annotated[
+        Path,
+        typer.Option("--experiment-dir", help="signal gate experiment root。"),
+    ] = weight_batch_search.DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered candidate promotion review root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+) -> None:
+    result = weight_batch_search.run_filtered_candidate_promotion_review(
+        comparison_id=comparison_id,
+        signal_gate_experiment_id=signal_gate_experiment_id,
+        comparison_dir=comparison_dir,
+        experiment_dir=experiment_dir,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(result.get("filtered_promotion_decision"))
+    typer.echo(f"filtered_review_id={result['filtered_review_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo(f"confidence={decision.get('confidence')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_filtered_candidate_promotion_review_app.command("report")
+def dynamic_v3_filtered_candidate_promotion_review_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    filtered_review_id: Annotated[
+        str | None,
+        typer.Option("--filtered-review-id", help="filtered candidate promotion review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered candidate promotion review root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.filtered_candidate_promotion_review_report_payload(
+        filtered_review_id=filtered_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("filtered_promotion_decision"))
+    typer.echo(f"filtered_review_id={payload['filtered_review_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"decision={decision.get('decision')}")
+    typer.echo(f"report_path={payload['filtered_candidate_promotion_review_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-filtered-candidate-promotion-review")
+def dynamic_v3_validate_filtered_candidate_promotion_review_command(
+    filtered_review_id: Annotated[
+        str,
+        typer.Option("--filtered-review-id", help="filtered review id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="filtered candidate promotion review root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+) -> None:
+    payload = weight_batch_search.validate_filtered_candidate_promotion_review_artifact(
+        filtered_review_id=filtered_review_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_owner_signal_roadmap_app.command("build")
+def dynamic_v3_owner_signal_roadmap_build_command(
+    filtered_review_id: Annotated[
+        str,
+        typer.Option("--filtered-review-id", help="filtered review id。"),
+    ],
+    review_dir: Annotated[
+        Path,
+        typer.Option("--review-dir", help="filtered candidate promotion review root。"),
+    ] = weight_batch_search.DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner signal roadmap root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_SIGNAL_ROADMAP_DIR,
+) -> None:
+    result = weight_batch_search.build_owner_signal_roadmap(
+        filtered_review_id=filtered_review_id,
+        review_dir=review_dir,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(result.get("owner_signal_roadmap_summary"))
+    typer.echo(f"owner_signal_roadmap_id={result['owner_signal_roadmap_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"recommended_owner_action={summary.get('recommended_owner_action')}")
+    typer.echo("broker_action_allowed=false")
+
+
+@dynamic_v3_owner_signal_roadmap_app.command("report")
+def dynamic_v3_owner_signal_roadmap_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    owner_signal_roadmap_id: Annotated[
+        str | None,
+        typer.Option("--owner-signal-roadmap-id", help="owner signal roadmap id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner signal roadmap root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_SIGNAL_ROADMAP_DIR,
+) -> None:
+    payload = weight_batch_search.owner_signal_roadmap_report_payload(
+        owner_signal_roadmap_id=owner_signal_roadmap_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    summary = _mapping_obj(payload.get("owner_signal_roadmap_summary"))
+    typer.echo(f"owner_signal_roadmap_id={payload['owner_signal_roadmap_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"recommended_owner_action={summary.get('recommended_owner_action')}")
+    typer.echo(f"report_path={payload['owner_signal_roadmap_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-owner-signal-roadmap")
+def dynamic_v3_validate_owner_signal_roadmap_command(
+    owner_signal_roadmap_id: Annotated[
+        str,
+        typer.Option("--owner-signal-roadmap-id", help="owner signal roadmap id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="owner signal roadmap root。"),
+    ] = weight_batch_search.DEFAULT_OWNER_SIGNAL_ROADMAP_DIR,
+) -> None:
+    payload = weight_batch_search.validate_owner_signal_roadmap_artifact(
+        owner_signal_roadmap_id=owner_signal_roadmap_id,
         output_dir=output_dir,
     )
     typer.echo(f"status={payload['status']}")

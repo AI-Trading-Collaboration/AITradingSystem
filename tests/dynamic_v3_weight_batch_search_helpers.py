@@ -471,3 +471,125 @@ def run_owner_research_roadmap_fixture(tmp_path: Path) -> dict[str, Any]:
         generated_at=datetime(2024, 3, 29, tzinfo=UTC),
     )
     return {**fixture, "owner_roadmap": owner_roadmap}
+
+
+def run_signal_failure_taxonomy_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_micro_search_v4_backfill_fixture(tmp_path)
+    taxonomy = weight_search.run_signal_failure_taxonomy_validation(
+        config_path=weight_search.DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH,
+        output_dir=tmp_path / "signal_failure_taxonomy",
+        generated_at=datetime(2024, 3, 30, tzinfo=UTC),
+    )
+    return {**fixture, "signal_failure_taxonomy": taxonomy}
+
+
+def run_candidate_signal_ledger_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_signal_failure_taxonomy_fixture(tmp_path)
+    ledger = weight_search.build_candidate_signal_ledger(
+        taxonomy_id=fixture["signal_failure_taxonomy"]["taxonomy_id"],
+        source_backfill_id=fixture["v4_backfill"]["v4_backfill_id"],
+        taxonomy_dir=tmp_path / "signal_failure_taxonomy",
+        source_backfill_dir=tmp_path / "micro_search_v4_backfill",
+        v4_design_dir=tmp_path / "micro_search_v4_design",
+        signal_dir=tmp_path / "signal_instability_diagnosis",
+        consensus_dir=tmp_path / "consensus_quality_review",
+        output_dir=tmp_path / "candidate_signal_ledger",
+        generated_at=datetime(2024, 3, 31, tzinfo=UTC),
+    )
+    return {**fixture, "candidate_signal_ledger": ledger}
+
+
+def run_signal_churn_root_cause_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_candidate_signal_ledger_fixture(tmp_path)
+    root_cause = weight_search.run_signal_churn_root_cause_review(
+        ledger_id=fixture["candidate_signal_ledger"]["ledger_id"],
+        ledger_dir=tmp_path / "candidate_signal_ledger",
+        output_dir=tmp_path / "signal_churn_root_cause",
+        generated_at=datetime(2024, 4, 1, tzinfo=UTC),
+    )
+    return {**fixture, "signal_churn_root_cause": root_cause}
+
+
+def run_regime_mismatch_attribution_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_signal_churn_root_cause_fixture(tmp_path)
+    mismatch = weight_search.run_regime_mismatch_attribution(
+        ledger_id=fixture["candidate_signal_ledger"]["ledger_id"],
+        ledger_dir=tmp_path / "candidate_signal_ledger",
+        output_dir=tmp_path / "regime_mismatch_attribution",
+        generated_at=datetime(2024, 4, 2, tzinfo=UTC),
+    )
+    return {**fixture, "regime_mismatch_attribution": mismatch}
+
+
+def run_candidate_quality_filter_design_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_regime_mismatch_attribution_fixture(tmp_path)
+    filter_design = weight_search.run_candidate_quality_filter_design(
+        root_cause_id=fixture["signal_churn_root_cause"]["root_cause_id"],
+        mismatch_id=fixture["regime_mismatch_attribution"]["mismatch_id"],
+        root_cause_dir=tmp_path / "signal_churn_root_cause",
+        mismatch_dir=tmp_path / "regime_mismatch_attribution",
+        output_dir=tmp_path / "candidate_quality_filter_design",
+        generated_at=datetime(2024, 4, 3, tzinfo=UTC),
+    )
+    return {**fixture, "candidate_quality_filter_design": filter_design}
+
+
+def run_filtered_candidate_backfill_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_candidate_quality_filter_design_fixture(tmp_path)
+    filtered_backfill = weight_search.run_filtered_candidate_backfill(
+        filter_design_id=fixture["candidate_quality_filter_design"]["filter_design_id"],
+        filter_design_dir=tmp_path / "candidate_quality_filter_design",
+        ledger_dir=tmp_path / "candidate_signal_ledger",
+        output_dir=tmp_path / "filtered_candidate_backfill",
+        generated_at=datetime(2024, 4, 4, tzinfo=UTC),
+    )
+    return {**fixture, "filtered_candidate_backfill": filtered_backfill}
+
+
+def run_filtered_vs_original_comparison_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_filtered_candidate_backfill_fixture(tmp_path)
+    comparison = weight_search.run_filtered_vs_original_comparison(
+        filtered_backfill_id=fixture["filtered_candidate_backfill"]["filtered_backfill_id"],
+        filtered_backfill_dir=tmp_path / "filtered_candidate_backfill",
+        output_dir=tmp_path / "filtered_vs_original_comparison",
+        generated_at=datetime(2024, 4, 5, tzinfo=UTC),
+    )
+    return {**fixture, "filtered_vs_original_comparison": comparison}
+
+
+def run_signal_gate_experiment_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_filtered_vs_original_comparison_fixture(tmp_path)
+    gate_experiment = weight_search.run_signal_gate_experiment(
+        filter_design_id=fixture["candidate_quality_filter_design"]["filter_design_id"],
+        filter_design_dir=tmp_path / "candidate_quality_filter_design",
+        ledger_dir=tmp_path / "candidate_signal_ledger",
+        output_dir=tmp_path / "signal_gate_experiment",
+        generated_at=datetime(2024, 4, 6, tzinfo=UTC),
+    )
+    return {**fixture, "signal_gate_experiment": gate_experiment}
+
+
+def run_filtered_candidate_promotion_review_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_signal_gate_experiment_fixture(tmp_path)
+    review = weight_search.run_filtered_candidate_promotion_review(
+        comparison_id=fixture["filtered_vs_original_comparison"]["comparison_id"],
+        signal_gate_experiment_id=fixture["signal_gate_experiment"][
+            "signal_gate_experiment_id"
+        ],
+        comparison_dir=tmp_path / "filtered_vs_original_comparison",
+        experiment_dir=tmp_path / "signal_gate_experiment",
+        output_dir=tmp_path / "filtered_candidate_promotion_review",
+        generated_at=datetime(2024, 4, 7, tzinfo=UTC),
+    )
+    return {**fixture, "filtered_candidate_promotion_review": review}
+
+
+def run_owner_signal_roadmap_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_filtered_candidate_promotion_review_fixture(tmp_path)
+    roadmap = weight_search.build_owner_signal_roadmap(
+        filtered_review_id=fixture["filtered_candidate_promotion_review"]["filtered_review_id"],
+        review_dir=tmp_path / "filtered_candidate_promotion_review",
+        output_dir=tmp_path / "owner_signal_roadmap",
+        generated_at=datetime(2024, 4, 8, tzinfo=UTC),
+    )
+    return {**fixture, "owner_signal_roadmap": roadmap}

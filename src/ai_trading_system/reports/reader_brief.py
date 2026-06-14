@@ -11859,6 +11859,55 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "next_formal_or_search_manifest.json",
     )
+    signal_failure_taxonomy_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_signal_failure_taxonomy"),
+        "signal_failure_taxonomy_manifest.json",
+    )
+    candidate_signal_ledger_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_candidate_signal_ledger"),
+        "candidate_signal_ledger_manifest.json",
+    )
+    signal_churn_root_cause_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_signal_churn_root_cause"),
+        "signal_churn_root_cause_manifest.json",
+    )
+    regime_mismatch_attribution_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_regime_mismatch_attribution"),
+        "regime_mismatch_manifest.json",
+    )
+    candidate_quality_filter_design_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_candidate_quality_filter_design",
+        ),
+        "candidate_quality_filter_manifest.json",
+    )
+    filtered_candidate_backfill_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_filtered_candidate_backfill"),
+        "filtered_candidate_backfill_manifest.json",
+    )
+    filtered_vs_original_comparison_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_filtered_vs_original_comparison",
+        ),
+        "filtered_vs_original_manifest.json",
+    )
+    signal_gate_experiment_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_signal_gate_experiment"),
+        "signal_gate_experiment_manifest.json",
+    )
+    filtered_candidate_promotion_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_filtered_candidate_promotion_review",
+        ),
+        "filtered_promotion_manifest.json",
+    )
+    owner_signal_roadmap_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(report_index, "etf_dynamic_v3_owner_signal_roadmap"),
+        "owner_signal_roadmap_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12114,6 +12163,67 @@ def _etf_dynamic_v3_parameter_research_summary(
         if next_formal_or_search_plan_path is not None
         else None
     )
+    signal_failure_taxonomy_manifest = _read_optional_json(signal_failure_taxonomy_path)
+    signal_failure_mode_catalog = _read_optional_json(
+        signal_failure_taxonomy_path.parent / "signal_failure_mode_catalog.json"
+        if signal_failure_taxonomy_path is not None
+        else None
+    )
+    candidate_signal_ledger_manifest = _read_optional_json(candidate_signal_ledger_path)
+    candidate_signal_summary = _read_optional_json(
+        candidate_signal_ledger_path.parent / "candidate_signal_summary.json"
+        if candidate_signal_ledger_path is not None
+        else None
+    )
+    signal_churn_root_cause_manifest = _read_optional_json(signal_churn_root_cause_path)
+    churn_root_cause_summary = _read_optional_json(
+        signal_churn_root_cause_path.parent / "churn_root_cause_summary.json"
+        if signal_churn_root_cause_path is not None
+        else None
+    )
+    regime_mismatch_attribution_manifest = _read_optional_json(regime_mismatch_attribution_path)
+    regime_mismatch_summary = _read_optional_json(
+        regime_mismatch_attribution_path.parent / "regime_mismatch_summary.json"
+        if regime_mismatch_attribution_path is not None
+        else None
+    )
+    candidate_quality_filter_design_manifest = _read_optional_json(
+        candidate_quality_filter_design_path
+    )
+    proposed_quality_filters = _read_optional_json(
+        candidate_quality_filter_design_path.parent / "proposed_quality_filters.json"
+        if candidate_quality_filter_design_path is not None
+        else None
+    )
+    filtered_candidate_backfill_manifest = _read_optional_json(filtered_candidate_backfill_path)
+    filtered_vs_original_comparison_manifest = _read_optional_json(
+        filtered_vs_original_comparison_path
+    )
+    filtered_improvement_summary = _read_optional_json(
+        filtered_vs_original_comparison_path.parent / "filtered_improvement_summary.json"
+        if filtered_vs_original_comparison_path is not None
+        else None
+    )
+    signal_gate_experiment_manifest = _read_optional_json(signal_gate_experiment_path)
+    signal_gate_experiment_summary = _read_optional_json(
+        signal_gate_experiment_path.parent / "signal_gate_experiment_summary.json"
+        if signal_gate_experiment_path is not None
+        else None
+    )
+    filtered_candidate_promotion_review_manifest = _read_optional_json(
+        filtered_candidate_promotion_review_path
+    )
+    filtered_promotion_decision = _read_optional_json(
+        filtered_candidate_promotion_review_path.parent / "filtered_promotion_decision.json"
+        if filtered_candidate_promotion_review_path is not None
+        else None
+    )
+    owner_signal_roadmap_manifest = _read_optional_json(owner_signal_roadmap_path)
+    owner_signal_roadmap_summary = _read_optional_json(
+        owner_signal_roadmap_path.parent / "owner_signal_roadmap_summary.json"
+        if owner_signal_roadmap_path is not None
+        else None
+    )
     outcome_loop_payloads = (
         outcome_update_review,
         outcome_update_safety,
@@ -12214,6 +12324,27 @@ def _etf_dynamic_v3_parameter_research_summary(
     promotion_blocking_flags = (
         ", ".join(_texts(evidence.get("promotion_blocking_flags"))) or "MISSING"
     )
+    signal_filter_payloads = (
+        signal_failure_taxonomy_manifest,
+        signal_failure_mode_catalog,
+        candidate_signal_ledger_manifest,
+        candidate_signal_summary,
+        signal_churn_root_cause_manifest,
+        churn_root_cause_summary,
+        regime_mismatch_attribution_manifest,
+        regime_mismatch_summary,
+        candidate_quality_filter_design_manifest,
+        proposed_quality_filters,
+        filtered_candidate_backfill_manifest,
+        filtered_vs_original_comparison_manifest,
+        filtered_improvement_summary,
+        signal_gate_experiment_manifest,
+        signal_gate_experiment_summary,
+        filtered_candidate_promotion_review_manifest,
+        filtered_promotion_decision,
+        owner_signal_roadmap_manifest,
+        owner_signal_roadmap_summary,
+    )
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(
         leaderboard,
         promotion,
@@ -12262,6 +12393,7 @@ def _etf_dynamic_v3_parameter_research_summary(
         outcome_availability_matrix,
         pending_reason_dashboard,
         *outcome_loop_payloads,
+        *signal_filter_payloads,
     )
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -12290,6 +12422,27 @@ def _etf_dynamic_v3_parameter_research_summary(
         next_plan_decision.get("decision"),
         "MISSING",
     )
+    signal_filter_payloads = (
+        signal_failure_taxonomy_manifest,
+        signal_failure_mode_catalog,
+        candidate_signal_ledger_manifest,
+        candidate_signal_summary,
+        signal_churn_root_cause_manifest,
+        churn_root_cause_summary,
+        regime_mismatch_attribution_manifest,
+        regime_mismatch_summary,
+        candidate_quality_filter_design_manifest,
+        proposed_quality_filters,
+        filtered_candidate_backfill_manifest,
+        filtered_vs_original_comparison_manifest,
+        filtered_improvement_summary,
+        signal_gate_experiment_manifest,
+        signal_gate_experiment_summary,
+        filtered_candidate_promotion_review_manifest,
+        filtered_promotion_decision,
+        owner_signal_roadmap_manifest,
+        owner_signal_roadmap_summary,
+    )
     no_promotion_v3_payloads = (
         no_promotion_review_manifest,
         no_promotion_reason_summary,
@@ -12313,6 +12466,7 @@ def _etf_dynamic_v3_parameter_research_summary(
         promotion_v2_decision,
         next_formal_or_search_plan_manifest,
         next_plan_decision,
+        *signal_filter_payloads,
     )
     return {
         "availability": "AVAILABLE",
@@ -12362,6 +12516,26 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"{threshold_candidate_impact.get('relaxed_only_count', 'MISSING')}; "
             f"candidate_promotion_v2={candidate_promotion_v2_decision}; "
             f"next_formal_or_search_plan={next_formal_or_search_plan_decision}; "
+            f"signal_taxonomy_modes="
+            f"{signal_failure_taxonomy_manifest.get('failure_mode_count', 'MISSING')}; "
+            f"signal_ledger_dominant="
+            f"{candidate_signal_summary.get('dominant_failure_mode', 'MISSING')}; "
+            f"churn_root_cause="
+            f"{churn_root_cause_summary.get('dominant_root_cause', 'MISSING')}; "
+            f"regime_mismatch="
+            f"{regime_mismatch_summary.get('dominant_mismatch_type', 'MISSING')}; "
+            f"quality_filter_count="
+            f"{len(_records(proposed_quality_filters.get('filters')))}; "
+            f"filtered_backfill="
+            f"{filtered_candidate_backfill_manifest.get('status', 'MISSING')}; "
+            f"filtered_comparison="
+            f"{filtered_improvement_summary.get('recommendation', 'MISSING')}; "
+            f"signal_gate="
+            f"{signal_gate_experiment_summary.get('recommended_next_action', 'MISSING')}; "
+            f"filtered_promotion="
+            f"{filtered_promotion_decision.get('decision', 'MISSING')}; "
+            f"owner_signal_action="
+            f"{owner_signal_roadmap_summary.get('recommended_owner_action', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -12957,6 +13131,87 @@ def _etf_dynamic_v3_parameter_research_summary(
             next_plan_decision.get("recommended_next_action"),
             "MISSING",
         ),
+        "signal_failure_taxonomy_id": _text(
+            signal_failure_taxonomy_manifest.get("taxonomy_id"),
+            "MISSING",
+        ),
+        "signal_failure_mode_count": signal_failure_taxonomy_manifest.get(
+            "failure_mode_count",
+            0,
+        ),
+        "candidate_signal_ledger_id": _text(
+            candidate_signal_ledger_manifest.get("ledger_id"),
+            "MISSING",
+        ),
+        "candidate_signal_dominant_failure": _text(
+            candidate_signal_summary.get("dominant_failure_mode"),
+            "MISSING",
+        ),
+        "candidate_signal_unstable_method_count": candidate_signal_summary.get(
+            "unstable_method_count",
+            0,
+        ),
+        "signal_churn_root_cause_id": _text(
+            signal_churn_root_cause_manifest.get("root_cause_id"),
+            "MISSING",
+        ),
+        "signal_churn_dominant_root_cause": _text(
+            churn_root_cause_summary.get("dominant_root_cause"),
+            "MISSING",
+        ),
+        "regime_mismatch_attribution_id": _text(
+            regime_mismatch_attribution_manifest.get("mismatch_id"),
+            "MISSING",
+        ),
+        "regime_mismatch_dominant_type": _text(
+            regime_mismatch_summary.get("dominant_mismatch_type"),
+            "MISSING",
+        ),
+        "candidate_quality_filter_design_id": _text(
+            candidate_quality_filter_design_manifest.get("filter_design_id"),
+            "MISSING",
+        ),
+        "candidate_quality_filter_count": len(_records(proposed_quality_filters.get("filters"))),
+        "filtered_candidate_backfill_id": _text(
+            filtered_candidate_backfill_manifest.get("filtered_backfill_id"),
+            "MISSING",
+        ),
+        "filtered_candidate_data_quality_status": _text(
+            filtered_candidate_backfill_manifest.get("data_quality_status"),
+            "MISSING",
+        ),
+        "filtered_vs_original_comparison_id": _text(
+            filtered_vs_original_comparison_manifest.get("comparison_id"),
+            "MISSING",
+        ),
+        "filtered_vs_original_recommendation": _text(
+            filtered_improvement_summary.get("recommendation"),
+            "MISSING",
+        ),
+        "signal_gate_experiment_id": _text(
+            signal_gate_experiment_manifest.get("signal_gate_experiment_id"),
+            "MISSING",
+        ),
+        "signal_gate_recommended_next_action": _text(
+            signal_gate_experiment_summary.get("recommended_next_action"),
+            "MISSING",
+        ),
+        "filtered_candidate_promotion_review_id": _text(
+            filtered_candidate_promotion_review_manifest.get("filtered_review_id"),
+            "MISSING",
+        ),
+        "filtered_candidate_promotion_decision": _text(
+            filtered_promotion_decision.get("decision"),
+            "MISSING",
+        ),
+        "owner_signal_roadmap_id": _text(
+            owner_signal_roadmap_manifest.get("owner_signal_roadmap_id"),
+            "MISSING",
+        ),
+        "owner_signal_recommended_action": _text(
+            owner_signal_roadmap_summary.get("recommended_owner_action"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -13082,6 +13337,46 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "next_formal_or_search_plan": (
             "" if next_formal_or_search_plan_path is None else str(next_formal_or_search_plan_path)
+        ),
+        "signal_failure_taxonomy": (
+            "" if signal_failure_taxonomy_path is None else str(signal_failure_taxonomy_path)
+        ),
+        "candidate_signal_ledger": (
+            "" if candidate_signal_ledger_path is None else str(candidate_signal_ledger_path)
+        ),
+        "signal_churn_root_cause": (
+            "" if signal_churn_root_cause_path is None else str(signal_churn_root_cause_path)
+        ),
+        "regime_mismatch_attribution": (
+            ""
+            if regime_mismatch_attribution_path is None
+            else str(regime_mismatch_attribution_path)
+        ),
+        "candidate_quality_filter_design": (
+            ""
+            if candidate_quality_filter_design_path is None
+            else str(candidate_quality_filter_design_path)
+        ),
+        "filtered_candidate_backfill": (
+            ""
+            if filtered_candidate_backfill_path is None
+            else str(filtered_candidate_backfill_path)
+        ),
+        "filtered_vs_original_comparison": (
+            ""
+            if filtered_vs_original_comparison_path is None
+            else str(filtered_vs_original_comparison_path)
+        ),
+        "signal_gate_experiment": (
+            "" if signal_gate_experiment_path is None else str(signal_gate_experiment_path)
+        ),
+        "filtered_candidate_promotion_review": (
+            ""
+            if filtered_candidate_promotion_review_path is None
+            else str(filtered_candidate_promotion_review_path)
+        ),
+        "owner_signal_roadmap": (
+            "" if owner_signal_roadmap_path is None else str(owner_signal_roadmap_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,

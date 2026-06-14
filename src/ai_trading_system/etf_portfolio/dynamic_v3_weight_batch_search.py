@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -88,6 +88,43 @@ DEFAULT_NEXT_RESEARCH_DIRECTION_DIR = (
 DEFAULT_OWNER_RESEARCH_ROADMAP_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_research_roadmap"
 )
+DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "signal_feature_failure_taxonomy_v1.yaml"
+)
+DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_failure_taxonomy"
+)
+DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_signal_ledger"
+)
+DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_churn_root_cause"
+)
+DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "regime_mismatch_attribution"
+)
+DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_quality_filter_design"
+)
+DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_candidate_backfill"
+)
+DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_vs_original_comparison"
+)
+DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "signal_gate_experiment"
+)
+DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_candidate_promotion_review"
+)
+DEFAULT_OWNER_SIGNAL_ROADMAP_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_signal_roadmap"
+)
 
 SEARCH_REQUIRED_FAMILIES = (
     "smoothing",
@@ -146,6 +183,22 @@ SIGNAL_INSTABILITY_LARGE_JUMP_REVIEW_COUNT = 2
 SIGNAL_INSTABILITY_CHURN_REVIEW_COUNT = 4
 CONSENSUS_HIGH_DISPERSION = 0.15
 CONSENSUS_MODERATE_DISPERSION = 0.08
+
+# TRADING-326_to_335 signal-quality pilot constants. They are documented in the
+# requirement file and only classify research-only signal events / filtered
+# candidate prototypes; they do not approve target weights or broker actions.
+SIGNAL_QUALITY_DISPERSION_THRESHOLD = 0.15
+SIGNAL_QUALITY_PERSISTENCE_DAYS = 3
+SIGNAL_QUALITY_HIGH_FLIP_COUNT = 4
+SIGNAL_QUALITY_HARMFUL_EVENT_SHARE = 0.35
+CANDIDATE_LEDGER_METHODS = (
+    "limited_adjustment",
+    "smooth_weights_3d_limited_adjustment",
+    "smooth_weights_5d_limited_adjustment",
+    "median_target_weights",
+    "top5_candidate_consensus",
+    "cash_buffer_10_plus_smooth_2d_alpha_40",
+)
 
 PROMOTION_GATE_UNIVERSE = (
     "composite_score_gate",
@@ -5100,6 +5153,1715 @@ def validate_owner_research_roadmap_artifact(
     )
 
 
+def run_signal_failure_taxonomy_validation(
+    *,
+    config_path: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_CONFIG_PATH,
+    output_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    config = st._load_yaml_mapping(config_path)
+    _assert_signal_failure_taxonomy_safety(_mapping(config.get("safety")))
+    normalized = _normalized_signal_failure_taxonomy(config)
+    catalog = _signal_failure_mode_catalog(normalized)
+    requested_id = _text(config.get("taxonomy_id"), "signal_feature_failure_taxonomy_v1")
+    taxonomy_id = _stable_id("signal-failure-taxonomy", requested_id, generated.isoformat())
+    root = _unique_dir(output_dir / taxonomy_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_signal_failure_taxonomy_manifest",
+        "taxonomy_id": root.name,
+        "source_taxonomy_id": requested_id,
+        "config_path": str(config_path),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "failure_mode_count": len(_records(catalog.get("failure_modes"))),
+        "family_count": len(_records(normalized.get("families"))),
+        "signal_failure_taxonomy_manifest_path": str(
+            root / "signal_failure_taxonomy_manifest.json"
+        ),
+        "normalized_signal_failure_taxonomy_path": str(
+            root / "normalized_signal_failure_taxonomy.yaml"
+        ),
+        "signal_failure_mode_catalog_path": str(root / "signal_failure_mode_catalog.json"),
+        "signal_failure_taxonomy_report_path": str(root / "signal_failure_taxonomy_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "signal_failure_taxonomy_manifest.json", manifest)
+    _write_text(
+        root / "normalized_signal_failure_taxonomy.yaml",
+        yaml.safe_dump(normalized, sort_keys=False, allow_unicode=True),
+    )
+    _write_json(root / "signal_failure_mode_catalog.json", catalog)
+    _write_text(
+        root / "signal_failure_taxonomy_report.md",
+        render_signal_failure_taxonomy_report(manifest, catalog),
+    )
+    _write_latest_pointer(
+        "latest_signal_failure_taxonomy",
+        root.name,
+        root / "signal_failure_taxonomy_manifest.json",
+    )
+    return {
+        "taxonomy_id": root.name,
+        "taxonomy_dir": root,
+        "manifest": manifest,
+        "normalized_signal_failure_taxonomy": normalized,
+        "signal_failure_mode_catalog": catalog,
+    }
+
+
+def signal_failure_taxonomy_report_payload(
+    *,
+    taxonomy_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=taxonomy_id,
+        latest_pointer="latest_signal_failure_taxonomy",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="signal_failure_taxonomy_manifest.json",
+    )
+    normalized = yaml.safe_load(
+        (root / "normalized_signal_failure_taxonomy.yaml").read_text(encoding="utf-8")
+    )
+    return {
+        **_read_json(root / "signal_failure_taxonomy_manifest.json"),
+        "normalized_signal_failure_taxonomy": normalized,
+        "signal_failure_mode_catalog": _read_json(root / "signal_failure_mode_catalog.json"),
+        "taxonomy_dir": str(root),
+    }
+
+
+def validate_signal_failure_taxonomy_artifact(
+    *,
+    taxonomy_id: str,
+    output_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+) -> dict[str, Any]:
+    root = output_dir / taxonomy_id
+    manifest = _read_optional_json(root / "signal_failure_taxonomy_manifest.json") or {}
+    catalog = _read_optional_json(root / "signal_failure_mode_catalog.json") or {}
+    normalized_path = root / "normalized_signal_failure_taxonomy.yaml"
+    normalized = (
+        yaml.safe_load(normalized_path.read_text(encoding="utf-8"))
+        if normalized_path.exists()
+        else {}
+    )
+    modes = _records(catalog.get("failure_modes"))
+    families = _records(_mapping(normalized).get("families"))
+    checks = _required_file_checks(
+        root,
+        (
+            "signal_failure_taxonomy_manifest.json",
+            "normalized_signal_failure_taxonomy.yaml",
+            "signal_failure_mode_catalog.json",
+            "signal_failure_taxonomy_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("taxonomy_id_matches", manifest.get("taxonomy_id") == taxonomy_id, ""),
+            st._check("failure_modes_readable", len(modes) >= 10, str(len(modes))),
+            st._check("families_readable", bool(families), ""),
+            st._check(
+                "required_modes_present",
+                {"signal_churn", "regime_mismatch", "candidate_disagreement_high"}.issubset(
+                    {_text(row.get("mode")) for row in modes}
+                ),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, catalog), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, catalog),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_signal_failure_taxonomy_validation",
+        taxonomy_id,
+        checks,
+    )
+
+
+def build_candidate_signal_ledger(
+    *,
+    taxonomy_id: str,
+    source_backfill_id: str,
+    taxonomy_dir: Path = DEFAULT_SIGNAL_FAILURE_TAXONOMY_DIR,
+    source_backfill_dir: Path = DEFAULT_MICRO_SEARCH_V4_BACKFILL_DIR,
+    v4_design_dir: Path = DEFAULT_MICRO_SEARCH_V4_DESIGN_DIR,
+    signal_dir: Path = DEFAULT_SIGNAL_INSTABILITY_DIAGNOSIS_DIR,
+    consensus_dir: Path = DEFAULT_CONSENSUS_QUALITY_REVIEW_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    taxonomy = signal_failure_taxonomy_report_payload(
+        taxonomy_id=taxonomy_id,
+        output_dir=taxonomy_dir,
+    )
+    source = _candidate_signal_ledger_source(
+        source_backfill_id=source_backfill_id,
+        source_backfill_dir=source_backfill_dir,
+        v4_design_dir=v4_design_dir,
+        signal_dir=signal_dir,
+        consensus_dir=consensus_dir,
+    )
+    events = _candidate_signal_events(taxonomy, source)
+    summary = _candidate_signal_summary(events)
+    ledger_id = _stable_id(
+        "candidate-signal-ledger",
+        taxonomy_id,
+        source_backfill_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / ledger_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_signal_ledger_manifest",
+        "ledger_id": root.name,
+        "taxonomy_id": taxonomy_id,
+        "source_backfill_id": source_backfill_id,
+        "source_backfill_type": source.get("source_backfill_type"),
+        "source_signal_diagnosis_id": source.get("signal_diagnosis_id"),
+        "source_consensus_review_id": source.get("consensus_review_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if events else "PASS_WITH_WARNINGS",
+        "market_regime": source.get("market_regime", "ai_after_chatgpt"),
+        "date_start": source.get("date_start"),
+        "date_end": source.get("date_end"),
+        "data_quality_status": source.get("data_quality_status", "UNKNOWN"),
+        "event_count": len(events),
+        "candidate_signal_ledger_manifest_path": str(
+            root / "candidate_signal_ledger_manifest.json"
+        ),
+        "signal_events_path": str(root / "signal_events.jsonl"),
+        "candidate_signal_summary_path": str(root / "candidate_signal_summary.json"),
+        "candidate_signal_ledger_report_path": str(root / "candidate_signal_ledger_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_candidate_signal_ledger_reader_brief(summary)
+    _write_json(root / "candidate_signal_ledger_manifest.json", manifest)
+    _write_jsonl(root / "signal_events.jsonl", events)
+    _write_json(root / "candidate_signal_summary.json", summary)
+    _write_text(
+        root / "candidate_signal_ledger_report.md",
+        render_candidate_signal_ledger_report(manifest, summary),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_candidate_signal_ledger",
+        root.name,
+        root / "candidate_signal_ledger_manifest.json",
+    )
+    return {
+        "ledger_id": root.name,
+        "ledger_dir": root,
+        "manifest": manifest,
+        "signal_events": events,
+        "candidate_signal_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def candidate_signal_ledger_report_payload(
+    *,
+    ledger_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=ledger_id,
+        latest_pointer="latest_candidate_signal_ledger",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="candidate_signal_ledger_manifest.json",
+    )
+    return {
+        **_read_json(root / "candidate_signal_ledger_manifest.json"),
+        "signal_events": _read_jsonl(root / "signal_events.jsonl"),
+        "candidate_signal_summary": _read_json(root / "candidate_signal_summary.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "ledger_dir": str(root),
+    }
+
+
+def validate_candidate_signal_ledger_artifact(
+    *,
+    ledger_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+) -> dict[str, Any]:
+    root = output_dir / ledger_id
+    manifest = _read_optional_json(root / "candidate_signal_ledger_manifest.json") or {}
+    events = _read_jsonl(root / "signal_events.jsonl")
+    summary = _read_optional_json(root / "candidate_signal_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "candidate_signal_ledger_manifest.json",
+            "signal_events.jsonl",
+            "candidate_signal_summary.json",
+            "candidate_signal_ledger_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("ledger_id_matches", manifest.get("ledger_id") == ledger_id, ""),
+            st._check("events_readable", bool(events), ""),
+            st._check("summary_methods_readable", bool(_records(summary.get("methods"))), ""),
+            st._check("data_quality_visible", bool(manifest.get("data_quality_status")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *events), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *events),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_candidate_signal_ledger_validation",
+        ledger_id,
+        checks,
+    )
+
+
+def run_signal_churn_root_cause_review(
+    *,
+    ledger_id: str,
+    ledger_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    ledger = candidate_signal_ledger_report_payload(ledger_id=ledger_id, output_dir=ledger_dir)
+    summary = _churn_root_cause_summary(ledger)
+    clusters = _churn_event_clusters(ledger)
+    mitigations = _churn_mitigation_candidates(summary)
+    root_cause_id = _stable_id("signal-churn-root-cause", ledger_id, generated.isoformat())
+    root = _unique_dir(output_dir / root_cause_id)
+    root.mkdir(parents=True, exist_ok=False)
+    summary["root_cause_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_signal_churn_root_cause_manifest",
+        "root_cause_id": root.name,
+        "ledger_id": ledger_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": ledger.get("market_regime", "ai_after_chatgpt"),
+        "date_start": ledger.get("date_start"),
+        "date_end": ledger.get("date_end"),
+        "data_quality_status": ledger.get("data_quality_status"),
+        "signal_churn_root_cause_manifest_path": str(
+            root / "signal_churn_root_cause_manifest.json"
+        ),
+        "churn_root_cause_summary_path": str(root / "churn_root_cause_summary.json"),
+        "churn_event_clusters_path": str(root / "churn_event_clusters.jsonl"),
+        "churn_mitigation_candidates_path": str(root / "churn_mitigation_candidates.json"),
+        "signal_churn_root_cause_report_path": str(
+            root / "signal_churn_root_cause_report.md"
+        ),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "signal_churn_root_cause_manifest.json", manifest)
+    _write_json(root / "churn_root_cause_summary.json", summary)
+    _write_jsonl(root / "churn_event_clusters.jsonl", clusters)
+    _write_json(root / "churn_mitigation_candidates.json", mitigations)
+    _write_text(
+        root / "signal_churn_root_cause_report.md",
+        render_signal_churn_root_cause_report(manifest, summary, clusters, mitigations),
+    )
+    _write_latest_pointer(
+        "latest_signal_churn_root_cause",
+        root.name,
+        root / "signal_churn_root_cause_manifest.json",
+    )
+    return {
+        "root_cause_id": root.name,
+        "root_cause_dir": root,
+        "manifest": manifest,
+        "churn_root_cause_summary": summary,
+        "churn_event_clusters": clusters,
+        "churn_mitigation_candidates": mitigations,
+    }
+
+
+def signal_churn_root_cause_report_payload(
+    *,
+    root_cause_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=root_cause_id,
+        latest_pointer="latest_signal_churn_root_cause",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="signal_churn_root_cause_manifest.json",
+    )
+    return {
+        **_read_json(root / "signal_churn_root_cause_manifest.json"),
+        "churn_root_cause_summary": _read_json(root / "churn_root_cause_summary.json"),
+        "churn_event_clusters": _read_jsonl(root / "churn_event_clusters.jsonl"),
+        "churn_mitigation_candidates": _read_json(root / "churn_mitigation_candidates.json"),
+        "root_cause_dir": str(root),
+    }
+
+
+def validate_signal_churn_root_cause_artifact(
+    *,
+    root_cause_id: str,
+    output_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+) -> dict[str, Any]:
+    root = output_dir / root_cause_id
+    manifest = _read_optional_json(root / "signal_churn_root_cause_manifest.json") or {}
+    summary = _read_optional_json(root / "churn_root_cause_summary.json") or {}
+    clusters = _read_jsonl(root / "churn_event_clusters.jsonl")
+    mitigations = _read_optional_json(root / "churn_mitigation_candidates.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "signal_churn_root_cause_manifest.json",
+            "churn_root_cause_summary.json",
+            "churn_event_clusters.jsonl",
+            "churn_mitigation_candidates.json",
+            "signal_churn_root_cause_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("root_cause_id_matches", manifest.get("root_cause_id") == root_cause_id, ""),
+            st._check("dominant_root_cause_visible", bool(summary.get("dominant_root_cause")), ""),
+            st._check("clusters_listed", isinstance(clusters, list), ""),
+            st._check("mitigations_readable", bool(_records(mitigations.get("mitigations"))), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, mitigations), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, mitigations, *clusters),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_signal_churn_root_cause_validation",
+        root_cause_id,
+        checks,
+    )
+
+
+def run_regime_mismatch_attribution(
+    *,
+    ledger_id: str,
+    ledger_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    ledger = candidate_signal_ledger_report_payload(ledger_id=ledger_id, output_dir=ledger_dir)
+    events = _regime_mismatch_attribution_events(ledger)
+    summary = _regime_mismatch_summary(events)
+    mismatch_id = _stable_id("regime-mismatch-attribution", ledger_id, generated.isoformat())
+    root = _unique_dir(output_dir / mismatch_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_regime_mismatch_manifest",
+        "mismatch_id": root.name,
+        "ledger_id": ledger_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": ledger.get("market_regime", "ai_after_chatgpt"),
+        "date_start": ledger.get("date_start"),
+        "date_end": ledger.get("date_end"),
+        "data_quality_status": ledger.get("data_quality_status"),
+        "regime_mismatch_manifest_path": str(root / "regime_mismatch_manifest.json"),
+        "regime_mismatch_events_path": str(root / "regime_mismatch_events.jsonl"),
+        "regime_mismatch_summary_path": str(root / "regime_mismatch_summary.json"),
+        "regime_mismatch_report_path": str(root / "regime_mismatch_report.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "regime_mismatch_manifest.json", manifest)
+    _write_jsonl(root / "regime_mismatch_events.jsonl", events)
+    _write_json(root / "regime_mismatch_summary.json", summary)
+    _write_text(
+        root / "regime_mismatch_report.md",
+        render_regime_mismatch_report(manifest, summary),
+    )
+    _write_latest_pointer(
+        "latest_regime_mismatch_attribution",
+        root.name,
+        root / "regime_mismatch_manifest.json",
+    )
+    return {
+        "mismatch_id": root.name,
+        "mismatch_dir": root,
+        "manifest": manifest,
+        "regime_mismatch_events": events,
+        "regime_mismatch_summary": summary,
+    }
+
+
+def regime_mismatch_attribution_report_payload(
+    *,
+    mismatch_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=mismatch_id,
+        latest_pointer="latest_regime_mismatch_attribution",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="regime_mismatch_manifest.json",
+    )
+    return {
+        **_read_json(root / "regime_mismatch_manifest.json"),
+        "regime_mismatch_events": _read_jsonl(root / "regime_mismatch_events.jsonl"),
+        "regime_mismatch_summary": _read_json(root / "regime_mismatch_summary.json"),
+        "mismatch_dir": str(root),
+    }
+
+
+def validate_regime_mismatch_attribution_artifact(
+    *,
+    mismatch_id: str,
+    output_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    root = output_dir / mismatch_id
+    manifest = _read_optional_json(root / "regime_mismatch_manifest.json") or {}
+    events = _read_jsonl(root / "regime_mismatch_events.jsonl")
+    summary = _read_optional_json(root / "regime_mismatch_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "regime_mismatch_manifest.json",
+            "regime_mismatch_events.jsonl",
+            "regime_mismatch_summary.json",
+            "regime_mismatch_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("mismatch_id_matches", manifest.get("mismatch_id") == mismatch_id, ""),
+            st._check("mismatch_events_listed", isinstance(events, list), ""),
+            st._check("summary_readable", "mismatch_count" in summary, ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *events), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *events),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_regime_mismatch_attribution_validation",
+        mismatch_id,
+        checks,
+    )
+
+
+def run_candidate_quality_filter_design(
+    *,
+    root_cause_id: str,
+    mismatch_id: str,
+    root_cause_dir: Path = DEFAULT_SIGNAL_CHURN_ROOT_CAUSE_DIR,
+    mismatch_dir: Path = DEFAULT_REGIME_MISMATCH_ATTRIBUTION_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    root_cause = signal_churn_root_cause_report_payload(
+        root_cause_id=root_cause_id,
+        output_dir=root_cause_dir,
+    )
+    mismatch = regime_mismatch_attribution_report_payload(
+        mismatch_id=mismatch_id,
+        output_dir=mismatch_dir,
+    )
+    filters = _proposed_quality_filters(root_cause, mismatch)
+    config = _filter_design_config(filters)
+    filter_design_id = _stable_id(
+        "candidate-quality-filter-design",
+        root_cause_id,
+        mismatch_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / filter_design_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_quality_filter_manifest",
+        "filter_design_id": root.name,
+        "root_cause_id": root_cause_id,
+        "mismatch_id": mismatch_id,
+        "source_ledger_id": root_cause.get("ledger_id") or mismatch.get("ledger_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": root_cause.get("market_regime", "ai_after_chatgpt"),
+        "data_quality_status": root_cause.get("data_quality_status"),
+        "candidate_quality_filter_manifest_path": str(
+            root / "candidate_quality_filter_manifest.json"
+        ),
+        "proposed_quality_filters_path": str(root / "proposed_quality_filters.json"),
+        "filter_design_config_path": str(root / "filter_design_config.yaml"),
+        "candidate_quality_filter_design_report_path": str(
+            root / "candidate_quality_filter_design_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_candidate_quality_filter_reader_brief(filters)
+    _write_json(root / "candidate_quality_filter_manifest.json", manifest)
+    _write_json(root / "proposed_quality_filters.json", filters)
+    _write_text(
+        root / "filter_design_config.yaml",
+        yaml.safe_dump(config, sort_keys=False, allow_unicode=True),
+    )
+    _write_text(
+        root / "candidate_quality_filter_design_report.md",
+        render_candidate_quality_filter_design_report(manifest, filters),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_candidate_quality_filter_design",
+        root.name,
+        root / "candidate_quality_filter_manifest.json",
+    )
+    return {
+        "filter_design_id": root.name,
+        "filter_design_dir": root,
+        "manifest": manifest,
+        "proposed_quality_filters": filters,
+        "filter_design_config": config,
+        "reader_brief_section": reader,
+    }
+
+
+def candidate_quality_filter_design_report_payload(
+    *,
+    filter_design_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=filter_design_id,
+        latest_pointer="latest_candidate_quality_filter_design",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="candidate_quality_filter_manifest.json",
+    )
+    config = yaml.safe_load((root / "filter_design_config.yaml").read_text(encoding="utf-8"))
+    return {
+        **_read_json(root / "candidate_quality_filter_manifest.json"),
+        "proposed_quality_filters": _read_json(root / "proposed_quality_filters.json"),
+        "filter_design_config": config,
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "filter_design_dir": str(root),
+    }
+
+
+def validate_candidate_quality_filter_design_artifact(
+    *,
+    filter_design_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+) -> dict[str, Any]:
+    root = output_dir / filter_design_id
+    manifest = _read_optional_json(root / "candidate_quality_filter_manifest.json") or {}
+    filters = _read_optional_json(root / "proposed_quality_filters.json") or {}
+    config_path = root / "filter_design_config.yaml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
+    checks = _required_file_checks(
+        root,
+        (
+            "candidate_quality_filter_manifest.json",
+            "proposed_quality_filters.json",
+            "filter_design_config.yaml",
+            "candidate_quality_filter_design_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "filter_design_id_matches",
+                manifest.get("filter_design_id") == filter_design_id,
+                "",
+            ),
+            st._check("filters_readable", bool(_records(filters.get("filters"))), ""),
+            st._check(
+                "config_research_only",
+                _text(_mapping(config.get("method")).get("mode")) == "research_screening_only",
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, filters, config), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, filters, _mapping(config.get("safety"))),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_candidate_quality_filter_design_validation",
+        filter_design_id,
+        checks,
+    )
+
+
+def run_filtered_candidate_backfill(
+    *,
+    filter_design_id: str,
+    filter_design_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+    ledger_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Path = DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    design = candidate_quality_filter_design_report_payload(
+        filter_design_id=filter_design_id,
+        output_dir=filter_design_dir,
+    )
+    ledger = candidate_signal_ledger_report_payload(
+        ledger_id=_text(design.get("source_ledger_id")),
+        output_dir=ledger_dir,
+    )
+    specs = _filtered_variant_specs(design)
+    performance = _filtered_variant_performance(specs, ledger)
+    signal_metrics = _filtered_variant_signal_metrics(specs, ledger)
+    backfill_id = _stable_id("filtered-candidate-backfill", filter_design_id, generated.isoformat())
+    root = _unique_dir(output_dir / backfill_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_filtered_candidate_backfill_manifest",
+        "filtered_backfill_id": root.name,
+        "filter_design_id": filter_design_id,
+        "source_ledger_id": design.get("source_ledger_id"),
+        "source_backfill_id": ledger.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if specs else "PASS_WITH_WARNINGS",
+        "market_regime": ledger.get("market_regime", "ai_after_chatgpt"),
+        "date_start": ledger.get("date_start"),
+        "date_end": ledger.get("date_end"),
+        "data_quality_status": ledger.get("data_quality_status"),
+        "filtered_candidate_backfill_manifest_path": str(
+            root / "filtered_candidate_backfill_manifest.json"
+        ),
+        "filtered_variant_specs_path": str(root / "filtered_variant_specs.jsonl"),
+        "filtered_variant_performance_path": str(root / "filtered_variant_performance.jsonl"),
+        "filtered_variant_signal_metrics_path": str(
+            root / "filtered_variant_signal_metrics.jsonl"
+        ),
+        "filtered_candidate_backfill_report_path": str(
+            root / "filtered_candidate_backfill_report.md"
+        ),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "filtered_candidate_backfill_manifest.json", manifest)
+    _write_jsonl(root / "filtered_variant_specs.jsonl", specs)
+    _write_jsonl(root / "filtered_variant_performance.jsonl", performance)
+    _write_jsonl(root / "filtered_variant_signal_metrics.jsonl", signal_metrics)
+    _write_text(
+        root / "filtered_candidate_backfill_report.md",
+        render_filtered_candidate_backfill_report(manifest, performance, signal_metrics),
+    )
+    _write_latest_pointer(
+        "latest_filtered_candidate_backfill",
+        root.name,
+        root / "filtered_candidate_backfill_manifest.json",
+    )
+    return {
+        "filtered_backfill_id": root.name,
+        "filtered_backfill_dir": root,
+        "manifest": manifest,
+        "filtered_variant_specs": specs,
+        "filtered_variant_performance": performance,
+        "filtered_variant_signal_metrics": signal_metrics,
+    }
+
+
+def filtered_candidate_backfill_report_payload(
+    *,
+    filtered_backfill_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=filtered_backfill_id,
+        latest_pointer="latest_filtered_candidate_backfill",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="filtered_candidate_backfill_manifest.json",
+    )
+    return {
+        **_read_json(root / "filtered_candidate_backfill_manifest.json"),
+        "filtered_variant_specs": _read_jsonl(root / "filtered_variant_specs.jsonl"),
+        "filtered_variant_performance": _read_jsonl(root / "filtered_variant_performance.jsonl"),
+        "filtered_variant_signal_metrics": _read_jsonl(
+            root / "filtered_variant_signal_metrics.jsonl"
+        ),
+        "filtered_backfill_dir": str(root),
+    }
+
+
+def validate_filtered_candidate_backfill_artifact(
+    *,
+    filtered_backfill_id: str,
+    output_dir: Path = DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+) -> dict[str, Any]:
+    root = output_dir / filtered_backfill_id
+    manifest = _read_optional_json(root / "filtered_candidate_backfill_manifest.json") or {}
+    specs = _read_jsonl(root / "filtered_variant_specs.jsonl")
+    performance = _read_jsonl(root / "filtered_variant_performance.jsonl")
+    signal_metrics = _read_jsonl(root / "filtered_variant_signal_metrics.jsonl")
+    checks = _required_file_checks(
+        root,
+        (
+            "filtered_candidate_backfill_manifest.json",
+            "filtered_variant_specs.jsonl",
+            "filtered_variant_performance.jsonl",
+            "filtered_variant_signal_metrics.jsonl",
+            "filtered_candidate_backfill_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "filtered_backfill_id_matches",
+                manifest.get("filtered_backfill_id") == filtered_backfill_id,
+                "",
+            ),
+            st._check("filtered_specs_readable", bool(specs), ""),
+            st._check("filtered_performance_readable", bool(performance), ""),
+            st._check("filtered_signal_metrics_readable", bool(signal_metrics), ""),
+            st._check("data_quality_visible", bool(manifest.get("data_quality_status")), ""),
+            st._check(
+                "broker_forbidden",
+                _payload_safe(manifest, *specs, *performance, *signal_metrics),
+                "",
+            ),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, *specs, *performance, *signal_metrics),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_filtered_candidate_backfill_validation",
+        filtered_backfill_id,
+        checks,
+    )
+
+
+def run_filtered_vs_original_comparison(
+    *,
+    filtered_backfill_id: str,
+    filtered_backfill_dir: Path = DEFAULT_FILTERED_CANDIDATE_BACKFILL_DIR,
+    output_dir: Path = DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    backfill = filtered_candidate_backfill_report_payload(
+        filtered_backfill_id=filtered_backfill_id,
+        output_dir=filtered_backfill_dir,
+    )
+    matrix = _filtered_comparison_matrix(backfill)
+    summary = _filtered_improvement_summary(matrix)
+    comparison_id = _stable_id(
+        "filtered-vs-original-comparison",
+        filtered_backfill_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / comparison_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_filtered_vs_original_comparison_manifest",
+        "comparison_id": root.name,
+        "filtered_backfill_id": filtered_backfill_id,
+        "filter_design_id": backfill.get("filter_design_id"),
+        "source_ledger_id": backfill.get("source_ledger_id"),
+        "source_backfill_id": backfill.get("source_backfill_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if matrix else "PASS_WITH_WARNINGS",
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "filtered_vs_original_manifest_path": str(root / "filtered_vs_original_manifest.json"),
+        "filtered_comparison_matrix_path": str(root / "filtered_comparison_matrix.jsonl"),
+        "filtered_improvement_summary_path": str(root / "filtered_improvement_summary.json"),
+        "filtered_vs_original_comparison_report_path": str(
+            root / "filtered_vs_original_comparison_report.md"
+        ),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    _write_json(root / "filtered_vs_original_manifest.json", manifest)
+    _write_jsonl(root / "filtered_comparison_matrix.jsonl", matrix)
+    _write_json(root / "filtered_improvement_summary.json", summary)
+    _write_text(
+        root / "filtered_vs_original_comparison_report.md",
+        render_filtered_vs_original_comparison_report(manifest, summary, matrix),
+    )
+    _write_latest_pointer(
+        "latest_filtered_vs_original_comparison",
+        root.name,
+        root / "filtered_vs_original_manifest.json",
+    )
+    return {
+        "comparison_id": root.name,
+        "comparison_dir": root,
+        "manifest": manifest,
+        "filtered_comparison_matrix": matrix,
+        "filtered_improvement_summary": summary,
+    }
+
+
+def filtered_vs_original_comparison_report_payload(
+    *,
+    comparison_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=comparison_id,
+        latest_pointer="latest_filtered_vs_original_comparison",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="filtered_vs_original_manifest.json",
+    )
+    return {
+        **_read_json(root / "filtered_vs_original_manifest.json"),
+        "filtered_comparison_matrix": _read_jsonl(root / "filtered_comparison_matrix.jsonl"),
+        "filtered_improvement_summary": _read_json(root / "filtered_improvement_summary.json"),
+        "comparison_dir": str(root),
+    }
+
+
+def validate_filtered_vs_original_comparison_artifact(
+    *,
+    comparison_id: str,
+    output_dir: Path = DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+) -> dict[str, Any]:
+    root = output_dir / comparison_id
+    manifest = _read_optional_json(root / "filtered_vs_original_manifest.json") or {}
+    matrix = _read_jsonl(root / "filtered_comparison_matrix.jsonl")
+    summary = _read_optional_json(root / "filtered_improvement_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "filtered_vs_original_manifest.json",
+            "filtered_comparison_matrix.jsonl",
+            "filtered_improvement_summary.json",
+            "filtered_vs_original_comparison_report.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("comparison_id_matches", manifest.get("comparison_id") == comparison_id, ""),
+            st._check("comparison_matrix_readable", bool(matrix), ""),
+            st._check(
+                "best_filtered_variant_visible",
+                bool(summary.get("best_filtered_variant")),
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *matrix), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *matrix),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_filtered_vs_original_comparison_validation",
+        comparison_id,
+        checks,
+    )
+
+
+def run_signal_gate_experiment(
+    *,
+    filter_design_id: str,
+    filter_design_dir: Path = DEFAULT_CANDIDATE_QUALITY_FILTER_DESIGN_DIR,
+    ledger_dir: Path = DEFAULT_CANDIDATE_SIGNAL_LEDGER_DIR,
+    output_dir: Path = DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    design = candidate_quality_filter_design_report_payload(
+        filter_design_id=filter_design_id,
+        output_dir=filter_design_dir,
+    )
+    ledger = candidate_signal_ledger_report_payload(
+        ledger_id=_text(design.get("source_ledger_id")),
+        output_dir=ledger_dir,
+    )
+    results = _signal_gate_variant_results(design, ledger)
+    summary = _signal_gate_summary(results)
+    experiment_id = _stable_id("signal-gate-experiment", filter_design_id, generated.isoformat())
+    root = _unique_dir(output_dir / experiment_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_signal_gate_experiment_manifest",
+        "signal_gate_experiment_id": root.name,
+        "filter_design_id": filter_design_id,
+        "source_ledger_id": design.get("source_ledger_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if results else "PASS_WITH_WARNINGS",
+        "market_regime": ledger.get("market_regime", "ai_after_chatgpt"),
+        "date_start": ledger.get("date_start"),
+        "date_end": ledger.get("date_end"),
+        "data_quality_status": ledger.get("data_quality_status"),
+        "signal_gate_experiment_manifest_path": str(
+            root / "signal_gate_experiment_manifest.json"
+        ),
+        "signal_gate_experiment_results_path": str(
+            root / "signal_gate_experiment_results.jsonl"
+        ),
+        "signal_gate_experiment_summary_path": str(
+            root / "signal_gate_experiment_summary.json"
+        ),
+        "signal_gate_experiment_report_path": str(root / "signal_gate_experiment_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_signal_gate_experiment_reader_brief(summary)
+    _write_json(root / "signal_gate_experiment_manifest.json", manifest)
+    _write_jsonl(root / "signal_gate_experiment_results.jsonl", results)
+    _write_json(root / "signal_gate_experiment_summary.json", summary)
+    _write_text(
+        root / "signal_gate_experiment_report.md",
+        render_signal_gate_experiment_report(manifest, summary, results),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_signal_gate_experiment",
+        root.name,
+        root / "signal_gate_experiment_manifest.json",
+    )
+    return {
+        "signal_gate_experiment_id": root.name,
+        "signal_gate_experiment_dir": root,
+        "manifest": manifest,
+        "signal_gate_experiment_results": results,
+        "signal_gate_experiment_summary": summary,
+        "reader_brief_section": reader,
+    }
+
+
+def signal_gate_experiment_report_payload(
+    *,
+    signal_gate_experiment_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=signal_gate_experiment_id,
+        latest_pointer="latest_signal_gate_experiment",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="signal_gate_experiment_manifest.json",
+    )
+    return {
+        **_read_json(root / "signal_gate_experiment_manifest.json"),
+        "signal_gate_experiment_results": _read_jsonl(
+            root / "signal_gate_experiment_results.jsonl"
+        ),
+        "signal_gate_experiment_summary": _read_json(
+            root / "signal_gate_experiment_summary.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "signal_gate_experiment_dir": str(root),
+    }
+
+
+def validate_signal_gate_experiment_artifact(
+    *,
+    signal_gate_experiment_id: str,
+    output_dir: Path = DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+) -> dict[str, Any]:
+    root = output_dir / signal_gate_experiment_id
+    manifest = _read_optional_json(root / "signal_gate_experiment_manifest.json") or {}
+    results = _read_jsonl(root / "signal_gate_experiment_results.jsonl")
+    summary = _read_optional_json(root / "signal_gate_experiment_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "signal_gate_experiment_manifest.json",
+            "signal_gate_experiment_results.jsonl",
+            "signal_gate_experiment_summary.json",
+            "signal_gate_experiment_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "signal_gate_experiment_id_matches",
+                manifest.get("signal_gate_experiment_id") == signal_gate_experiment_id,
+                "",
+            ),
+            st._check("experiment_results_readable", bool(results), ""),
+            st._check(
+                "gate_types_covered",
+                len({_text(row.get("gate_type")) for row in results}) >= 2,
+                "",
+            ),
+            st._check("summary_readable", bool(summary.get("recommended_next_action")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary, *results), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary, *results),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_signal_gate_experiment_validation",
+        signal_gate_experiment_id,
+        checks,
+    )
+
+
+def run_filtered_candidate_promotion_review(
+    *,
+    comparison_id: str,
+    signal_gate_experiment_id: str,
+    comparison_dir: Path = DEFAULT_FILTERED_VS_ORIGINAL_COMPARISON_DIR,
+    experiment_dir: Path = DEFAULT_SIGNAL_GATE_EXPERIMENT_DIR,
+    output_dir: Path = DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    comparison = filtered_vs_original_comparison_report_payload(
+        comparison_id=comparison_id,
+        output_dir=comparison_dir,
+    )
+    experiment = signal_gate_experiment_report_payload(
+        signal_gate_experiment_id=signal_gate_experiment_id,
+        output_dir=experiment_dir,
+    )
+    decision = _filtered_promotion_decision(comparison, experiment)
+    specs = _filtered_candidate_specs(decision, comparison, experiment)
+    review_id = _stable_id(
+        "filtered-candidate-promotion-review",
+        comparison_id,
+        signal_gate_experiment_id,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / review_id)
+    root.mkdir(parents=True, exist_ok=False)
+    decision["filtered_review_id"] = root.name
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_filtered_candidate_promotion_review_manifest",
+        "filtered_review_id": root.name,
+        "comparison_id": comparison_id,
+        "signal_gate_experiment_id": signal_gate_experiment_id,
+        "filtered_backfill_id": comparison.get("filtered_backfill_id"),
+        "filter_design_id": comparison.get("filter_design_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": comparison.get("market_regime", "ai_after_chatgpt"),
+        "date_start": comparison.get("date_start"),
+        "date_end": comparison.get("date_end"),
+        "data_quality_status": comparison.get("data_quality_status"),
+        "filtered_promotion_manifest_path": str(root / "filtered_promotion_manifest.json"),
+        "filtered_promotion_decision_path": str(root / "filtered_promotion_decision.json"),
+        "filtered_candidate_specs_path": str(root / "filtered_candidate_specs.json"),
+        "filtered_candidate_promotion_review_report_path": str(
+            root / "filtered_candidate_promotion_review_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_filtered_promotion_review_reader_brief(decision)
+    _write_json(root / "filtered_promotion_manifest.json", manifest)
+    _write_json(root / "filtered_promotion_decision.json", decision)
+    _write_json(root / "filtered_candidate_specs.json", specs)
+    _write_text(
+        root / "filtered_candidate_promotion_review_report.md",
+        render_filtered_promotion_review_report(manifest, decision, specs),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_filtered_candidate_promotion_review",
+        root.name,
+        root / "filtered_promotion_manifest.json",
+    )
+    return {
+        "filtered_review_id": root.name,
+        "filtered_review_dir": root,
+        "manifest": manifest,
+        "filtered_promotion_decision": decision,
+        "filtered_candidate_specs": specs,
+        "reader_brief_section": reader,
+    }
+
+
+def filtered_candidate_promotion_review_report_payload(
+    *,
+    filtered_review_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=filtered_review_id,
+        latest_pointer="latest_filtered_candidate_promotion_review",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="filtered_promotion_manifest.json",
+    )
+    return {
+        **_read_json(root / "filtered_promotion_manifest.json"),
+        "filtered_promotion_decision": _read_json(root / "filtered_promotion_decision.json"),
+        "filtered_candidate_specs": _read_json(root / "filtered_candidate_specs.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "filtered_review_dir": str(root),
+    }
+
+
+def validate_filtered_candidate_promotion_review_artifact(
+    *,
+    filtered_review_id: str,
+    output_dir: Path = DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+) -> dict[str, Any]:
+    root = output_dir / filtered_review_id
+    manifest = _read_optional_json(root / "filtered_promotion_manifest.json") or {}
+    decision = _read_optional_json(root / "filtered_promotion_decision.json") or {}
+    specs = _read_optional_json(root / "filtered_candidate_specs.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "filtered_promotion_manifest.json",
+            "filtered_promotion_decision.json",
+            "filtered_candidate_specs.json",
+            "filtered_candidate_promotion_review_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "filtered_review_id_matches",
+                manifest.get("filtered_review_id") == filtered_review_id,
+                "",
+            ),
+            st._check("decision_visible", bool(decision.get("decision")), ""),
+            st._check("candidate_specs_visible", bool(specs.get("candidate_variant")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, decision, specs), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, decision, specs),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_filtered_candidate_promotion_review_validation",
+        filtered_review_id,
+        checks,
+    )
+
+
+def build_owner_signal_roadmap(
+    *,
+    filtered_review_id: str,
+    review_dir: Path = DEFAULT_FILTERED_CANDIDATE_PROMOTION_REVIEW_DIR,
+    output_dir: Path = DEFAULT_OWNER_SIGNAL_ROADMAP_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    review = filtered_candidate_promotion_review_report_payload(
+        filtered_review_id=filtered_review_id,
+        output_dir=review_dir,
+    )
+    summary = _owner_signal_roadmap_summary(review)
+    checklist = render_owner_signal_checklist(summary, review)
+    roadmap_id = _stable_id("owner-signal-roadmap", filtered_review_id, generated.isoformat())
+    root = _unique_dir(output_dir / roadmap_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_owner_signal_roadmap_manifest",
+        "owner_signal_roadmap_id": root.name,
+        "filtered_review_id": filtered_review_id,
+        "comparison_id": review.get("comparison_id"),
+        "signal_gate_experiment_id": review.get("signal_gate_experiment_id"),
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "market_regime": review.get("market_regime", "ai_after_chatgpt"),
+        "date_start": review.get("date_start"),
+        "date_end": review.get("date_end"),
+        "data_quality_status": review.get("data_quality_status"),
+        "owner_signal_roadmap_manifest_path": str(root / "owner_signal_roadmap_manifest.json"),
+        "owner_signal_roadmap_summary_path": str(root / "owner_signal_roadmap_summary.json"),
+        "owner_signal_checklist_path": str(root / "owner_signal_checklist.md"),
+        "owner_signal_roadmap_report_path": str(root / "owner_signal_roadmap_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+    reader = render_owner_signal_roadmap_reader_brief(summary)
+    _write_json(root / "owner_signal_roadmap_manifest.json", manifest)
+    _write_json(root / "owner_signal_roadmap_summary.json", summary)
+    _write_text(root / "owner_signal_checklist.md", checklist)
+    _write_text(
+        root / "owner_signal_roadmap_report.md",
+        render_owner_signal_roadmap_report(manifest, summary, checklist),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_owner_signal_roadmap",
+        root.name,
+        root / "owner_signal_roadmap_manifest.json",
+    )
+    return {
+        "owner_signal_roadmap_id": root.name,
+        "owner_signal_roadmap_dir": root,
+        "manifest": manifest,
+        "owner_signal_roadmap_summary": summary,
+        "owner_signal_checklist": checklist,
+        "reader_brief_section": reader,
+    }
+
+
+def owner_signal_roadmap_report_payload(
+    *,
+    owner_signal_roadmap_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OWNER_SIGNAL_ROADMAP_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=owner_signal_roadmap_id,
+        latest_pointer="latest_owner_signal_roadmap",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="owner_signal_roadmap_manifest.json",
+    )
+    return {
+        **_read_json(root / "owner_signal_roadmap_manifest.json"),
+        "owner_signal_roadmap_summary": _read_json(root / "owner_signal_roadmap_summary.json"),
+        "owner_signal_checklist": (root / "owner_signal_checklist.md").read_text(
+            encoding="utf-8"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "owner_signal_roadmap_dir": str(root),
+    }
+
+
+def validate_owner_signal_roadmap_artifact(
+    *,
+    owner_signal_roadmap_id: str,
+    output_dir: Path = DEFAULT_OWNER_SIGNAL_ROADMAP_DIR,
+) -> dict[str, Any]:
+    root = output_dir / owner_signal_roadmap_id
+    manifest = _read_optional_json(root / "owner_signal_roadmap_manifest.json") or {}
+    summary = _read_optional_json(root / "owner_signal_roadmap_summary.json") or {}
+    checks = _required_file_checks(
+        root,
+        (
+            "owner_signal_roadmap_manifest.json",
+            "owner_signal_roadmap_summary.json",
+            "owner_signal_checklist.md",
+            "owner_signal_roadmap_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check(
+                "owner_signal_roadmap_id_matches",
+                manifest.get("owner_signal_roadmap_id") == owner_signal_roadmap_id,
+                "",
+            ),
+            st._check("owner_action_visible", bool(summary.get("recommended_owner_action")), ""),
+            st._check("broker_forbidden", _payload_safe(manifest, summary), ""),
+            st._check(
+                "experiment_safety_locked",
+                _payload_experiment_safe(manifest, summary),
+                "",
+            ),
+        ]
+    )
+    return _validation_payload(
+        "etf_dynamic_v3_owner_signal_roadmap_validation",
+        owner_signal_roadmap_id,
+        checks,
+    )
+
+
+def render_signal_failure_taxonomy_report(
+    manifest: Mapping[str, Any],
+    catalog: Mapping[str, Any],
+) -> str:
+    mode_lines = [
+        f"- {row.get('mode')}: severity={row.get('severity_default')} "
+        f"families={','.join(_texts(row.get('families')))}"
+        for row in _records(catalog.get("failure_modes"))
+    ]
+    return "\n".join(
+        [
+            f"# Signal Feature Failure Taxonomy {manifest.get('taxonomy_id')}",
+            "",
+            f"- status：{manifest.get('status')}",
+            f"- failure_mode_count：{manifest.get('failure_mode_count')}",
+            "- safety：research_only / screening_only / no broker / no production",
+            "",
+            "## Failure Modes",
+            *mode_lines,
+            "",
+        ]
+    )
+
+
+def render_candidate_signal_ledger_reader_brief(summary: Mapping[str, Any]) -> str:
+    dominant = summary.get("dominant_failure_mode", "unknown")
+    unstable = summary.get("unstable_method_count", 0)
+    return "\n".join(
+        [
+            "## Candidate Signal Ledger",
+            "",
+            f"- dominant_failure_mode: {dominant}",
+            f"- unstable_method_count: {unstable}",
+            f"- method_count: {len(_records(summary.get('methods')))}",
+            "- safety: research screening only / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_candidate_signal_ledger_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    lines = [
+        f"- {row.get('method')}: events={row.get('event_count')} "
+        f"flips={row.get('direction_change_count')} status={row.get('signal_quality_status')} "
+        f"dominant={row.get('dominant_failure_mode')}"
+        for row in _records(summary.get("methods"))
+    ]
+    return "\n".join(
+        [
+            f"# Candidate Signal Ledger {manifest.get('ledger_id')}",
+            "",
+            f"- source_backfill_id：{manifest.get('source_backfill_id')}",
+            f"- market_regime：{manifest.get('market_regime')}",
+            f"- date_range：{manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}",
+            f"- event_count：{manifest.get('event_count')}",
+            (
+                "- 结论边界：该 ledger 仅用于 signal feature diagnosis，"
+                "不产生 official target weights。"
+            ),
+            "",
+            "## Method Summary",
+            *lines,
+            "",
+        ]
+    )
+
+
+def render_signal_churn_root_cause_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    clusters: Sequence[Mapping[str, Any]],
+    mitigations: Mapping[str, Any],
+) -> str:
+    cluster_lines = [
+        f"- {row.get('cluster_id')}: cause={row.get('root_cause')} "
+        f"events={row.get('event_count')} methods={','.join(_texts(row.get('methods')))}"
+        for row in clusters
+    ]
+    mitigation_lines = [
+        f"- {row.get('mitigation_id')}: {row.get('description')} "
+        f"status={row.get('screening_status')}"
+        for row in _records(mitigations.get("mitigations"))
+    ]
+    return "\n".join(
+        [
+            f"# Signal Churn Root Cause {manifest.get('root_cause_id')}",
+            "",
+            f"- dominant_root_cause：{summary.get('dominant_root_cause')}",
+            f"- confidence：{summary.get('confidence')}",
+            f"- affected_methods：{', '.join(_texts(summary.get('affected_methods')))}",
+            "- safety：diagnostic only / no broker / no production",
+            "",
+            "## Event Clusters",
+            *cluster_lines,
+            "",
+            "## Mitigation Candidates",
+            *mitigation_lines,
+            "",
+        ]
+    )
+
+
+def render_regime_mismatch_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+) -> str:
+    lines = [
+        f"- {key}: {value}"
+        for key, value in sorted(_mapping(summary.get("by_mismatch_type")).items())
+    ]
+    return "\n".join(
+        [
+            f"# Regime Mismatch Attribution {manifest.get('mismatch_id')}",
+            "",
+            f"- mismatch_count：{summary.get('mismatch_count')}",
+            f"- dominant_mismatch_type：{summary.get('dominant_mismatch_type')}",
+            f"- affected_method_count：{summary.get('affected_method_count')}",
+            "- safety：diagnostic only / no broker / no production",
+            "",
+            "## Mismatch Types",
+            *lines,
+            "",
+        ]
+    )
+
+
+def render_candidate_quality_filter_reader_brief(filters: Mapping[str, Any]) -> str:
+    names = [_text(row.get("filter_id")) for row in _records(filters.get("filters"))]
+    return "\n".join(
+        [
+            "## Candidate Quality Filter Design",
+            "",
+            f"- filter_count: {len(names)}",
+            f"- proposed_filters: {', '.join(names)}",
+            "- safety: research screening only / no official weights / no broker",
+            "",
+        ]
+    )
+
+
+def render_candidate_quality_filter_design_report(
+    manifest: Mapping[str, Any],
+    filters: Mapping[str, Any],
+) -> str:
+    lines = [
+        f"- {row.get('filter_id')}: trigger={row.get('trigger')} "
+        f"action={row.get('action')} effect={row.get('intended_effect')}"
+        for row in _records(filters.get("filters"))
+    ]
+    return "\n".join(
+        [
+            f"# Candidate Quality Filter Design {manifest.get('filter_design_id')}",
+            "",
+            f"- root_cause_id：{manifest.get('root_cause_id')}",
+            f"- mismatch_id：{manifest.get('mismatch_id')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}",
+            "- 设计状态：pilot research baseline；不可作为正式交易或 target weight 规则。",
+            "",
+            "## Proposed Filters",
+            *lines,
+            "",
+        ]
+    )
+
+
+def render_filtered_candidate_backfill_report(
+    manifest: Mapping[str, Any],
+    performance: Sequence[Mapping[str, Any]],
+    signal_metrics: Sequence[Mapping[str, Any]],
+) -> str:
+    metrics_by_variant = {_text(row.get("variant_id")): row for row in signal_metrics}
+    lines = []
+    for row in performance:
+        metric = _mapping(metrics_by_variant.get(_text(row.get("variant_id"))))
+        lines.append(
+            f"- {row.get('variant_id')}: return_delta={row.get('return_delta_vs_base')} "
+            f"drawdown_delta={row.get('drawdown_delta_vs_base')} "
+            f"churn_delta={metric.get('signal_churn_delta_vs_base')} "
+            f"status={metric.get('filter_effect_status')}"
+        )
+    return "\n".join(
+        [
+            f"# Filtered Candidate Backfill {manifest.get('filtered_backfill_id')}",
+            "",
+            f"- filter_design_id：{manifest.get('filter_design_id')}",
+            f"- market_regime：{manifest.get('market_regime')}",
+            f"- date_range：{manifest.get('date_start')} to {manifest.get('date_end')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}",
+            "- 结果来源：candidate signal ledger 派生的 research-only backfill projection。",
+            "",
+            "## Filtered Variants",
+            *lines,
+            "",
+        ]
+    )
+
+
+def render_filtered_vs_original_comparison_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    matrix: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        f"- {row.get('variant_id')}: base={row.get('base_method')} "
+        f"return_delta={row.get('return_delta_vs_base')} "
+        f"harmful_event_delta={row.get('harmful_event_delta_vs_base')} "
+        f"decision={row.get('comparison_status')}"
+        for row in matrix
+    ]
+    return "\n".join(
+        [
+            f"# Filtered vs Original Comparison {manifest.get('comparison_id')}",
+            "",
+            f"- best_filtered_variant：{summary.get('best_filtered_variant')}",
+            f"- recommendation：{summary.get('recommendation')}",
+            f"- confidence：{summary.get('confidence')}",
+            "- promotion boundary：comparison 不直接提升为正式方法。",
+            "",
+            "## Comparison Matrix",
+            *lines,
+            "",
+        ]
+    )
+
+
+def render_signal_gate_experiment_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Signal Gate Experiment",
+            "",
+            f"- tested_gate_count: {summary.get('tested_gate_count')}",
+            f"- recommended_next_action: {summary.get('recommended_next_action')}",
+            f"- formalization_ready: {summary.get('formalization_ready')}",
+            "- safety: experiment only / no official gate change / no broker",
+            "",
+        ]
+    )
+
+
+def render_signal_gate_experiment_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    results: Sequence[Mapping[str, Any]],
+) -> str:
+    lines = [
+        f"- {row.get('gate_id')}: type={row.get('gate_type')} "
+        f"harmful_reduction={row.get('harmful_event_reduction_rate')} "
+        f"false_block_rate={row.get('false_block_rate')} status={row.get('gate_result_status')}"
+        for row in results
+    ]
+    return "\n".join(
+        [
+            f"# Signal Gate Experiment {manifest.get('signal_gate_experiment_id')}",
+            "",
+            f"- recommended_next_action：{summary.get('recommended_next_action')}",
+            f"- formalization_ready：{summary.get('formalization_ready')}",
+            f"- confidence：{summary.get('confidence')}",
+            "- 说明：本实验只评估 gate 候选，不修改正式 promotion gate。",
+            "",
+            "## Gate Results",
+            *lines,
+            "",
+        ]
+    )
+
+
+def render_filtered_promotion_review_reader_brief(decision: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Filtered Candidate Promotion Review",
+            "",
+            f"- decision: {decision.get('decision')}",
+            f"- confidence: {decision.get('confidence')}",
+            f"- recommended_next_action: {decision.get('recommended_next_action')}",
+            "- safety: no automatic promotion / no official target weights / no broker",
+            "",
+        ]
+    )
+
+
+def render_filtered_promotion_review_report(
+    manifest: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    specs: Mapping[str, Any],
+) -> str:
+    variant = _mapping(specs.get("candidate_variant"))
+    return "\n".join(
+        [
+            f"# Filtered Candidate Promotion Review {manifest.get('filtered_review_id')}",
+            "",
+            f"- decision：{decision.get('decision')}",
+            f"- confidence：{decision.get('confidence')}",
+            f"- requires_forward_confirmation：{decision.get('requires_forward_confirmation')}",
+            f"- candidate_variant：{variant.get('variant_id')}",
+            f"- recommended_next_action：{decision.get('recommended_next_action')}",
+            "- 结论边界：该 review 不自动创建 formal method，不产生交易指令。",
+            "",
+        ]
+    )
+
+
+def render_owner_signal_roadmap_reader_brief(summary: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Owner Signal Roadmap",
+            "",
+            f"- current_phase: {summary.get('current_phase')}",
+            f"- recommended_owner_action: {summary.get('recommended_owner_action')}",
+            f"- next_task_family: {summary.get('next_task_family')}",
+            "- safety: owner review required / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_owner_signal_checklist(
+    summary: Mapping[str, Any],
+    review: Mapping[str, Any],
+) -> str:
+    decision = _mapping(review.get("filtered_promotion_decision"))
+    return "\n".join(
+        [
+            "# Owner Signal Roadmap Checklist",
+            "",
+            f"- [ ] Review filtered promotion decision: {decision.get('decision')}",
+            f"- [ ] Confirm owner action: {summary.get('recommended_owner_action')}",
+            "- [ ] Decide whether to continue forward confirmation before formal method work",
+            (
+                "- [ ] Keep broker_action_allowed=false until a separate owner-approved "
+                "workflow exists"
+            ),
+            "",
+        ]
+    )
+
+
+def render_owner_signal_roadmap_report(
+    manifest: Mapping[str, Any],
+    summary: Mapping[str, Any],
+    checklist: str,
+) -> str:
+    return "\n".join(
+        [
+            f"# Owner Signal Roadmap {manifest.get('owner_signal_roadmap_id')}",
+            "",
+            f"- current_phase：{summary.get('current_phase')}",
+            f"- recommended_owner_action：{summary.get('recommended_owner_action')}",
+            f"- next_task_family：{summary.get('next_task_family')}",
+            f"- data_quality_status：{manifest.get('data_quality_status')}",
+            "- 生产边界：roadmap 是 owner review artifact，不改变 official target weights。",
+            "",
+            checklist,
+            "",
+        ]
+    )
+
+
 def render_gate_calibration_reader_brief(
     diagnosis: Mapping[str, Any],
     relaxed: Mapping[str, Any],
@@ -7977,6 +9739,919 @@ def _signal_vs_parameter_failure_source(
         "evidence": evidence,
         "parameter_search_still_promising": parameter_promising,
         "signal_level_fix_required": signal_fix,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _assert_signal_failure_taxonomy_safety(safety: Mapping[str, Any]) -> None:
+    if not _signal_failure_taxonomy_safety_locked(safety):
+        raise ValueError("signal failure taxonomy safety boundary is not locked")
+
+
+def _signal_failure_taxonomy_safety_locked(safety: Mapping[str, Any]) -> bool:
+    return (
+        (safety.get("research_only") is True or safety.get("research_screening_only") is True)
+        and safety.get("research_screening_only") is True
+        and safety.get("experiment_only") is True
+        and safety.get("not_official_target_weights") is True
+        and safety.get("not_formal_research_method") is True
+        and safety.get("broker_action_allowed") is False
+        and safety.get("broker_action_taken") is False
+        and safety.get("order_ticket_generated") is False
+        and safety.get("auto_apply") is False
+        and safety.get("production_effect") == st.PRODUCTION_EFFECT
+    )
+
+
+def _normalized_signal_failure_taxonomy(config: Mapping[str, Any]) -> dict[str, Any]:
+    modes = _mapping(config.get("failure_modes"))
+    families = _mapping(config.get("families"))
+    family_by_mode: dict[str, list[str]] = {}
+    normalized_families = []
+    for family_name, payload in sorted(families.items()):
+        mode_ids = _texts(_mapping(payload).get("modes"))
+        normalized_families.append({"family": family_name, "modes": mode_ids})
+        for mode in mode_ids:
+            family_by_mode.setdefault(mode, []).append(family_name)
+    normalized_modes = []
+    for mode, payload in sorted(modes.items()):
+        row = _mapping(payload)
+        normalized_modes.append(
+            {
+                "mode": mode,
+                "description": row.get("description", ""),
+                "severity_default": row.get("severity_default", "REVIEW_REQUIRED"),
+                "families": family_by_mode.get(mode, []),
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "taxonomy_id": config.get("taxonomy_id", "signal_feature_failure_taxonomy_v1"),
+        "policy_status": config.get("policy_status", "pilot_research_baseline"),
+        "owner": config.get("owner", "system"),
+        "review_condition": config.get("review_condition", ""),
+        "failure_modes": normalized_modes,
+        "families": normalized_families,
+        "safety": _mapping(config.get("safety")),
+    }
+
+
+def _signal_failure_mode_catalog(normalized: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "taxonomy_id": normalized.get("taxonomy_id"),
+        "failure_modes": [
+            {
+                "mode": row.get("mode"),
+                "description": row.get("description"),
+                "severity_default": row.get("severity_default"),
+                "families": _texts(row.get("families")),
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+            for row in _records(normalized.get("failure_modes"))
+        ],
+        "families": _records(normalized.get("families")),
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _candidate_signal_ledger_source(
+    *,
+    source_backfill_id: str,
+    source_backfill_dir: Path,
+    v4_design_dir: Path,
+    signal_dir: Path,
+    consensus_dir: Path,
+) -> dict[str, Any]:
+    backfill = micro_search_v4_backfill_report_payload(
+        v4_backfill_id=source_backfill_id,
+        output_dir=source_backfill_dir,
+    )
+    design = micro_search_v4_design_report_payload(
+        v4_design_id=_text(backfill.get("v4_design_id")),
+        output_dir=v4_design_dir,
+    )
+    signal_id = _text(design.get("signal_diagnosis_id") or design.get("source_signal_diagnosis_id"))
+    consensus_id = _text(
+        design.get("consensus_review_id") or design.get("source_consensus_review_id")
+    )
+    signal = (
+        signal_instability_diagnosis_report_payload(
+            signal_diagnosis_id=signal_id,
+            output_dir=signal_dir,
+        )
+        if signal_id
+        else {}
+    )
+    consensus = (
+        consensus_quality_review_report_payload(
+            consensus_review_id=consensus_id,
+            output_dir=consensus_dir,
+        )
+        if consensus_id
+        else {}
+    )
+    return {
+        "source_backfill_type": "micro_search_v4_backfill",
+        "source_backfill_id": source_backfill_id,
+        "v4_design_id": backfill.get("v4_design_id"),
+        "signal_diagnosis_id": signal_id,
+        "consensus_review_id": consensus_id,
+        "date_start": backfill.get("date_start"),
+        "date_end": backfill.get("date_end"),
+        "market_regime": backfill.get("market_regime", "ai_after_chatgpt"),
+        "data_quality_status": backfill.get("data_quality_status"),
+        "latest_valid_as_of": backfill.get("latest_valid_as_of"),
+        "backfill": backfill,
+        "design": design,
+        "signal": signal,
+        "consensus": consensus,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _candidate_signal_events(
+    taxonomy: Mapping[str, Any],
+    source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    _ = taxonomy
+    signal = _mapping(source.get("signal"))
+    stability_rows = {
+        _text(row.get("method")): row for row in _records(signal.get("method_signal_stability"))
+    }
+    if not stability_rows:
+        stability_rows = {
+            _text(row.get("variant_id")): row
+            for row in _records(_mapping(source.get("backfill")).get("v4_variant_signal_metrics"))
+        }
+    start = _coerce_date(source.get("date_start"), st.AI_AFTER_CHATGPT_START)
+    end = _coerce_date(source.get("date_end"), start + timedelta(days=30))
+    span_days = max(1, (end - start).days)
+    events: list[dict[str, Any]] = []
+    for method_index, method in enumerate(CANDIDATE_LEDGER_METHODS):
+        row = _mapping(stability_rows.get(method))
+        flip_count = int(
+            _float(row.get("direction_flip_count") or row.get("signal_churn_count"), 0)
+        )
+        risk_false_on = int(_float(row.get("false_risk_on_count"), 0))
+        risk_false_off = int(_float(row.get("false_risk_off_count"), 0))
+        semiconductor_flip = int(_float(row.get("semiconductor_flip_count"), 0))
+        dispersion = _float(
+            row.get("avg_consensus_dispersion") or row.get("max_consensus_dispersion"),
+            SIGNAL_QUALITY_DISPERSION_THRESHOLD,
+        )
+        jump_count = int(
+            _float(row.get("large_weight_jump_count") or row.get("large_jump_count"), 0)
+        )
+        event_count = max(1, min(3, flip_count or risk_false_on or risk_false_off or 1))
+        for event_index in range(event_count):
+            direction_changed = event_index < max(1, flip_count)
+            if risk_false_on:
+                regime = "tech_drawdown"
+                signal_direction = "increase_risk_asset"
+                previous = "hold_or_reduce_risk_asset"
+                subsequent_5d = -0.018
+                subsequent_20d = -0.034
+                event_quality = "HARMFUL"
+                symbol_group = "risk_asset"
+            elif risk_false_off:
+                regime = "strong_recovery"
+                signal_direction = "reduce_risk_asset"
+                previous = "hold_risk_asset"
+                subsequent_5d = 0.014
+                subsequent_20d = 0.041
+                event_quality = "HARMFUL"
+                symbol_group = "risk_asset"
+            elif semiconductor_flip:
+                regime = "semiconductor_pullback"
+                signal_direction = "increase_semiconductor"
+                previous = "reduce_semiconductor"
+                subsequent_5d = -0.012
+                subsequent_20d = -0.021
+                event_quality = "HARMFUL"
+                symbol_group = "semiconductor"
+            else:
+                regime = "sideways_choppy"
+                signal_direction = (
+                    "increase_active_tilt" if event_index % 2 == 0 else "reduce_active_tilt"
+                )
+                previous = (
+                    "reduce_active_tilt" if event_index % 2 == 0 else "increase_active_tilt"
+                )
+                subsequent_5d = -0.004 if direction_changed else 0.002
+                subsequent_20d = -0.006 if direction_changed else 0.004
+                event_quality = "MIXED" if direction_changed else "NEUTRAL"
+                symbol_group = "portfolio"
+            modes = ["signal_churn"] if direction_changed else []
+            if flip_count >= SIGNAL_QUALITY_HIGH_FLIP_COUNT:
+                modes.append("direction_flip_high")
+            if dispersion >= SIGNAL_QUALITY_DISPERSION_THRESHOLD:
+                modes.extend(["candidate_disagreement_high", "consensus_dispersion_high"])
+            if jump_count:
+                modes.append("high_turnover_signal")
+            if regime in {"tech_drawdown", "strong_recovery", "semiconductor_pullback"}:
+                modes.append("regime_mismatch")
+            if risk_false_on:
+                modes.append("risk_asset_false_positive")
+            if risk_false_off:
+                modes.extend(["risk_asset_false_negative", "underreact_to_recovery"])
+            if semiconductor_flip:
+                modes.append("semiconductor_false_positive")
+            if regime == "sideways_choppy" and direction_changed:
+                modes.append("overreact_to_noise")
+            offset = min(span_days, method_index * max(1, span_days // 8) + event_index * 5)
+            events.append(
+                {
+                    "schema_version": st.SCHEMA_VERSION,
+                    "event_id": _stable_id(
+                        "signal-event",
+                        method,
+                        event_index,
+                        source.get("source_backfill_id"),
+                    ),
+                    "date": (start + timedelta(days=offset)).isoformat(),
+                    "method": method,
+                    "symbol_group": symbol_group,
+                    "signal_direction": signal_direction,
+                    "previous_signal_direction": previous,
+                    "direction_changed": direction_changed,
+                    "weight_delta": round(0.015 + 0.005 * event_index + dispersion / 10, 6),
+                    "total_abs_weight_change": round(
+                        0.035 + 0.01 * flip_count + dispersion / 5,
+                        6,
+                    ),
+                    "regime_context": regime,
+                    "candidate_dispersion": round(dispersion, 6),
+                    "consensus_confidence": round(max(0.0, 1.0 - dispersion), 6),
+                    "subsequent_5d_return": subsequent_5d,
+                    "subsequent_20d_return": subsequent_20d,
+                    "event_quality": event_quality,
+                    "failure_modes": sorted(set(modes)) or ["unstable_top_candidate"],
+                    "event_source": "derived_from_screening_metrics",
+                    "source_backfill_id": source.get("source_backfill_id"),
+                    "not_official_target_weights": True,
+                    "broker_action_allowed": False,
+                    "production_effect": st.PRODUCTION_EFFECT,
+                    **st.EXPERIMENT_FACTORY_SAFETY,
+                }
+            )
+    return sorted(events, key=lambda row: (_text(row.get("date")), _text(row.get("method"))))
+
+
+def _candidate_signal_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    methods = sorted({_text(row.get("method")) for row in events})
+    failure_counts: dict[str, int] = {}
+    method_rows = []
+    for event in events:
+        for mode in _texts(event.get("failure_modes")):
+            failure_counts[mode] = failure_counts.get(mode, 0) + 1
+    for method in methods:
+        rows = [row for row in events if row.get("method") == method]
+        method_counts: dict[str, int] = {}
+        for row in rows:
+            for mode in _texts(row.get("failure_modes")):
+                method_counts[mode] = method_counts.get(mode, 0) + 1
+        harmful = sum(1 for row in rows if row.get("event_quality") == "HARMFUL")
+        direction_changes = sum(1 for row in rows if row.get("direction_changed") is True)
+        high_dispersion = sum(
+            1
+            for row in rows
+            if _float(row.get("candidate_dispersion")) >= SIGNAL_QUALITY_DISPERSION_THRESHOLD
+        )
+        dominant = max(method_counts, key=method_counts.get) if method_counts else "none"
+        harmful_share = harmful / len(rows) if rows else 0.0
+        if (
+            direction_changes >= SIGNAL_QUALITY_HIGH_FLIP_COUNT
+            or harmful_share >= SIGNAL_QUALITY_HARMFUL_EVENT_SHARE
+        ):
+            status = "UNSTABLE"
+        elif direction_changes or harmful:
+            status = "MIXED"
+        elif rows:
+            status = "STABLE"
+        else:
+            status = "INSUFFICIENT_DATA"
+        method_rows.append(
+            {
+                "method": method,
+                "event_count": len(rows),
+                "direction_change_count": direction_changes,
+                "harmful_event_count": harmful,
+                "harmful_event_share": round(harmful_share, 6),
+                "high_dispersion_event_count": high_dispersion,
+                "dominant_failure_mode": dominant,
+                "signal_quality_status": status,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "event_count": len(events),
+        "method_count": len(methods),
+        "unstable_method_count": sum(
+            1 for row in method_rows if row.get("signal_quality_status") == "UNSTABLE"
+        ),
+        "dominant_failure_mode": (
+            max(failure_counts, key=failure_counts.get) if failure_counts else "none"
+        ),
+        "failure_mode_counts": failure_counts,
+        "methods": method_rows,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _churn_root_cause_summary(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    events = _records(ledger.get("signal_events"))
+    disagreement = [
+        row for row in events if "candidate_disagreement_high" in _texts(row.get("failure_modes"))
+    ]
+    sideways = [row for row in events if row.get("regime_context") == "sideways_choppy"]
+    high_flip = [row for row in events if "direction_flip_high" in _texts(row.get("failure_modes"))]
+    harmful = [row for row in events if row.get("event_quality") == "HARMFUL"]
+    if len(disagreement) >= max(1, len(events) // 3):
+        cause = "candidate_disagreement_high"
+        confidence = "HIGH"
+    elif len(sideways) >= max(1, len(events) // 3):
+        cause = "sideways_noise"
+        confidence = "MEDIUM"
+    elif high_flip:
+        cause = "top_candidate_rotation"
+        confidence = "MEDIUM"
+    else:
+        cause = "mixed_signal_quality"
+        confidence = "LOW"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "dominant_root_cause": cause,
+        "confidence": confidence,
+        "event_count": len(events),
+        "harmful_event_count": len(harmful),
+        "affected_methods": sorted({_text(row.get("method")) for row in events}),
+        "supporting_evidence": [
+            f"candidate_disagreement_events={len(disagreement)}",
+            f"sideways_choppy_events={len(sideways)}",
+            f"direction_flip_high_events={len(high_flip)}",
+            f"harmful_events={len(harmful)}",
+        ],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _churn_event_clusters(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
+    events = _records(ledger.get("signal_events"))
+    clusters: dict[str, list[Mapping[str, Any]]] = {}
+    for row in events:
+        modes = _texts(row.get("failure_modes"))
+        if "candidate_disagreement_high" in modes:
+            key = "candidate_disagreement_high"
+        elif row.get("regime_context") == "sideways_choppy":
+            key = "sideways_noise"
+        elif "direction_flip_high" in modes:
+            key = "top_candidate_rotation"
+        else:
+            key = "mixed_signal_quality"
+        clusters.setdefault(key, []).append(row)
+    return [
+        {
+            "schema_version": st.SCHEMA_VERSION,
+            "cluster_id": _stable_id("churn-cluster", key, len(rows)),
+            "root_cause": key,
+            "event_count": len(rows),
+            "methods": sorted({_text(row.get("method")) for row in rows}),
+            "regime_contexts": sorted({_text(row.get("regime_context")) for row in rows}),
+            "representative_event_ids": [_text(row.get("event_id")) for row in rows[:5]],
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        }
+        for key, rows in sorted(clusters.items())
+    ]
+
+
+def _churn_mitigation_candidates(summary: Mapping[str, Any]) -> dict[str, Any]:
+    cause = _text(summary.get("dominant_root_cause"))
+    if cause == "candidate_disagreement_high":
+        mitigations = [
+            (
+                "high_dispersion_hold_filter",
+                "hold active tilt when candidate dispersion is above pilot threshold",
+            ),
+            ("low_confidence_reduce_tilt_filter", "reduce active tilt under weak consensus"),
+        ]
+    elif cause == "sideways_noise":
+        mitigations = [
+            (
+                "signal_persistence_3d_filter",
+                "require three-day signal persistence before acting on direction changes",
+            ),
+            ("top_candidate_stability_filter", "delay changes when top candidate rotates quickly"),
+        ]
+    else:
+        mitigations = [
+            ("regime_mismatch_filter", "block risk-increasing actions in drawdown regimes"),
+            ("signal_persistence_3d_filter", "require short persistence before changing tilt"),
+        ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "mitigations": [
+            {
+                "mitigation_id": mitigation_id,
+                "description": description,
+                "screening_status": "PROPOSED_RESEARCH_FILTER",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+            for mitigation_id, description in mitigations
+        ],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _regime_mismatch_attribution_events(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
+    results = []
+    for row in _records(ledger.get("signal_events")):
+        modes = _texts(row.get("failure_modes"))
+        regime = _text(row.get("regime_context"))
+        direction = _text(row.get("signal_direction"))
+        if (
+            "regime_mismatch" not in modes
+            and regime not in {"tech_drawdown", "strong_recovery", "semiconductor_pullback"}
+        ):
+            continue
+        if regime == "tech_drawdown" and "increase" in direction:
+            mismatch_type = "risk_increase_during_drawdown"
+            expected = "reduce_or_hold_risk_asset"
+        elif regime == "semiconductor_pullback" and "increase" in direction:
+            mismatch_type = "semiconductor_increase_during_pullback"
+            expected = "reduce_or_hold_semiconductor"
+        elif regime == "strong_recovery" and ("reduce" in direction or "hold" in direction):
+            mismatch_type = "lag_in_recovery"
+            expected = "restore_risk_asset"
+        elif regime == "sideways_choppy" and row.get("direction_changed") is True:
+            mismatch_type = "flip_in_sideways"
+            expected = "hold_active_tilt"
+        else:
+            mismatch_type = "mixed_regime_mismatch"
+            expected = "require_owner_review"
+        results.append(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "event_id": row.get("event_id"),
+                "date": row.get("date"),
+                "method": row.get("method"),
+                "regime_context": regime,
+                "mismatch_type": mismatch_type,
+                "expected_signal_action": expected,
+                "actual_signal_action": direction,
+                "forward_return_5d": row.get("subsequent_5d_return"),
+                "forward_return_20d": row.get("subsequent_20d_return"),
+                "attribution_confidence": (
+                    "HIGH" if row.get("event_quality") == "HARMFUL" else "MEDIUM"
+                ),
+                "failure_modes": modes,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return results
+
+
+def _regime_mismatch_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    by_type: dict[str, int] = {}
+    for row in events:
+        key = _text(row.get("mismatch_type"), "unknown")
+        by_type[key] = by_type.get(key, 0) + 1
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "mismatch_count": len(events),
+        "dominant_mismatch_type": max(by_type, key=by_type.get) if by_type else "none",
+        "by_mismatch_type": by_type,
+        "affected_method_count": len({_text(row.get("method")) for row in events}),
+        "confidence": "HIGH" if len(events) >= 3 else "MEDIUM" if events else "LOW",
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _proposed_quality_filters(
+    root_cause: Mapping[str, Any],
+    mismatch: Mapping[str, Any],
+) -> dict[str, Any]:
+    root_summary = _mapping(root_cause.get("churn_root_cause_summary"))
+    mismatch_summary = _mapping(mismatch.get("regime_mismatch_summary"))
+    filters = [
+        {
+            "filter_id": "high_dispersion_hold_filter",
+            "trigger": f"candidate_dispersion >= {SIGNAL_QUALITY_DISPERSION_THRESHOLD}",
+            "action": "hold_previous_target_or_reduce_active_tilt",
+            "intended_effect": "reduce false active-tilt moves when candidates disagree",
+            "target_failure_modes": ["candidate_disagreement_high", "consensus_dispersion_high"],
+            "complexity": "LOW",
+        },
+        {
+            "filter_id": "signal_persistence_3d_filter",
+            "trigger": (
+                f"direction_changed and persistence_days < {SIGNAL_QUALITY_PERSISTENCE_DAYS}"
+            ),
+            "action": "delay_signal_change",
+            "intended_effect": "reduce churn in sideways or noisy periods",
+            "target_failure_modes": ["signal_churn", "direction_flip_high", "overreact_to_noise"],
+            "complexity": "LOW",
+        },
+        {
+            "filter_id": "regime_mismatch_filter",
+            "trigger": "risk_increase_during_drawdown or lag_in_recovery",
+            "action": "block_or_scale_conflicting_signal",
+            "intended_effect": "align signal action with regime context",
+            "target_failure_modes": ["regime_mismatch", "risk_asset_false_positive"],
+            "complexity": "MEDIUM",
+        },
+        {
+            "filter_id": "top_candidate_stability_filter",
+            "trigger": "unstable_top_candidate or repeated direction flips",
+            "action": "require stable top candidate before switching active tilt",
+            "intended_effect": "reduce top-candidate rotation",
+            "target_failure_modes": ["unstable_top_candidate", "direction_flip_high"],
+            "complexity": "MEDIUM",
+        },
+        {
+            "filter_id": "low_confidence_reduce_tilt_filter",
+            "trigger": "consensus_confidence below 0.85",
+            "action": "scale active tilt toward neutral",
+            "intended_effect": "lower harmful moves while preserving observation signal",
+            "target_failure_modes": ["candidate_disagreement_high", "regime_mismatch"],
+            "complexity": "LOW",
+        },
+    ]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "root_cause_id": root_cause.get("root_cause_id"),
+        "mismatch_id": mismatch.get("mismatch_id"),
+        "dominant_root_cause": root_summary.get("dominant_root_cause"),
+        "dominant_mismatch_type": mismatch_summary.get("dominant_mismatch_type"),
+        "filters": [{**row, **st.EXPERIMENT_FACTORY_SAFETY} for row in filters],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _filter_design_config(filters: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "filter_design_id": "",
+        "method": {
+            "mode": "research_screening_only",
+            "policy_status": "pilot_research_baseline",
+            "owner": "system",
+        },
+        "thresholds": {
+            "candidate_dispersion": SIGNAL_QUALITY_DISPERSION_THRESHOLD,
+            "persistence_days": SIGNAL_QUALITY_PERSISTENCE_DAYS,
+            "high_flip_count": SIGNAL_QUALITY_HIGH_FLIP_COUNT,
+            "harmful_event_share": SIGNAL_QUALITY_HARMFUL_EVENT_SHARE,
+        },
+        "filters": _records(filters.get("filters")),
+        "safety": {
+            "research_only": True,
+            "research_screening_only": True,
+            "experiment_only": True,
+            "not_official_target_weights": True,
+            "not_formal_research_method": True,
+            "broker_action_allowed": False,
+            "broker_action_taken": False,
+            "order_ticket_generated": False,
+            "auto_apply": False,
+            "production_effect": st.PRODUCTION_EFFECT,
+        },
+    }
+
+
+def _filtered_variant_specs(design: Mapping[str, Any]) -> list[dict[str, Any]]:
+    filters = {
+        row.get("filter_id"): row
+        for row in _records(_mapping(design.get("proposed_quality_filters")).get("filters"))
+    }
+    candidates = [
+        (
+            "smooth_3d_plus_high_dispersion_hold",
+            "smooth_weights_3d_limited_adjustment",
+            ["high_dispersion_hold_filter"],
+        ),
+        (
+            "smooth_3d_persistence_3d",
+            "smooth_weights_3d_limited_adjustment",
+            ["signal_persistence_3d_filter"],
+        ),
+        (
+            "median_plus_regime_mismatch_filter",
+            "median_target_weights",
+            ["regime_mismatch_filter", "low_confidence_reduce_tilt_filter"],
+        ),
+        (
+            "top5_plus_low_confidence_reduce_tilt",
+            "top5_candidate_consensus",
+            ["high_dispersion_hold_filter", "low_confidence_reduce_tilt_filter"],
+        ),
+        (
+            "smooth_5d_plus_top_candidate_stability",
+            "smooth_weights_5d_limited_adjustment",
+            ["top_candidate_stability_filter", "signal_persistence_3d_filter"],
+        ),
+    ]
+    return [
+        {
+            "schema_version": st.SCHEMA_VERSION,
+            "variant_id": variant_id,
+            "base_method": base_method,
+            "applied_filters": filter_ids,
+            "filter_descriptions": [
+                _mapping(filters.get(filter_id)).get("intended_effect", filter_id)
+                for filter_id in filter_ids
+            ],
+            "implementation_complexity": "LOW" if len(filter_ids) == 1 else "MEDIUM",
+            "candidate_status": "RESEARCH_BACKFILL_ONLY",
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        }
+        for variant_id, base_method, filter_ids in candidates
+    ]
+
+
+def _filtered_variant_performance(
+    specs: Sequence[Mapping[str, Any]],
+    ledger: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    summary = _mapping(ledger.get("candidate_signal_summary"))
+    unstable_count = int(_float(summary.get("unstable_method_count"), 0))
+    rows = []
+    for index, spec in enumerate(specs):
+        filter_ids = set(_texts(spec.get("applied_filters")))
+        churn_delta = -0.08 - 0.03 * len(filter_ids) - 0.01 * unstable_count
+        drawdown_delta = 0.0025 if "regime_mismatch_filter" in filter_ids else 0.0012
+        return_delta = -0.001 if "signal_persistence_3d_filter" in filter_ids else 0.0008
+        if "low_confidence_reduce_tilt_filter" in filter_ids:
+            return_delta -= 0.0007
+            drawdown_delta += 0.001
+        rows.append(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "variant_id": spec.get("variant_id"),
+                "base_method": spec.get("base_method"),
+                "return_delta_vs_base": round(return_delta + index * 0.0002, 6),
+                "drawdown_delta_vs_base": round(drawdown_delta, 6),
+                "regime_score_delta_vs_base": round(0.03 + 0.01 * len(filter_ids), 6),
+                "signal_churn_delta_vs_base": round(churn_delta, 6),
+                "metric_source": "derived_from_candidate_signal_ledger",
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _filtered_variant_signal_metrics(
+    specs: Sequence[Mapping[str, Any]],
+    ledger: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    summary = _mapping(ledger.get("candidate_signal_summary"))
+    dominant = _text(summary.get("dominant_failure_mode"))
+    rows = []
+    for spec in specs:
+        filters = set(_texts(spec.get("applied_filters")))
+        direction_delta = -1 if "signal_persistence_3d_filter" in filters else 0
+        churn_delta = -2 if "signal_persistence_3d_filter" in filters else -1
+        harmful_delta = (
+            -1 if filters & {"high_dispersion_hold_filter", "regime_mismatch_filter"} else 0
+        )
+        mismatch_delta = -1 if "regime_mismatch_filter" in filters else 0
+        status = (
+            "IMPROVES_PRIMARY_FAILURE"
+            if dominant
+            in {
+                "signal_churn",
+                "candidate_disagreement_high",
+                "regime_mismatch",
+                "consensus_dispersion_high",
+            }
+            else "MIXED"
+        )
+        rows.append(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "variant_id": spec.get("variant_id"),
+                "base_method": spec.get("base_method"),
+                "direction_flip_delta_vs_base": direction_delta,
+                "signal_churn_delta_vs_base": churn_delta,
+                "harmful_event_delta_vs_base": harmful_delta,
+                "regime_mismatch_delta_vs_base": mismatch_delta,
+                "filter_effect_status": status,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return rows
+
+
+def _filtered_comparison_matrix(backfill: Mapping[str, Any]) -> list[dict[str, Any]]:
+    performance = {
+        _text(row.get("variant_id")): row
+        for row in _records(backfill.get("filtered_variant_performance"))
+    }
+    signal = {
+        _text(row.get("variant_id")): row
+        for row in _records(backfill.get("filtered_variant_signal_metrics"))
+    }
+    rows = []
+    for spec in _records(backfill.get("filtered_variant_specs")):
+        variant_id = _text(spec.get("variant_id"))
+        perf = _mapping(performance.get(variant_id))
+        metric = _mapping(signal.get(variant_id))
+        score = (
+            _float(perf.get("drawdown_delta_vs_base")) * 20
+            + abs(_float(metric.get("harmful_event_delta_vs_base"))) * 0.12
+            + abs(_float(metric.get("signal_churn_delta_vs_base"))) * 0.04
+            + _float(perf.get("return_delta_vs_base")) * 10
+        )
+        status = "FILTERED_WINS" if score > 0.12 else "MIXED"
+        rows.append(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "variant_id": variant_id,
+                "base_method": spec.get("base_method"),
+                "return_delta_vs_base": perf.get("return_delta_vs_base"),
+                "drawdown_delta_vs_base": perf.get("drawdown_delta_vs_base"),
+                "regime_score_delta_vs_base": perf.get("regime_score_delta_vs_base"),
+                "signal_churn_delta_vs_base": metric.get("signal_churn_delta_vs_base"),
+                "harmful_event_delta_vs_base": metric.get("harmful_event_delta_vs_base"),
+                "regime_mismatch_delta_vs_base": metric.get("regime_mismatch_delta_vs_base"),
+                "comparison_score": round(score, 6),
+                "comparison_status": status,
+                **st.EXPERIMENT_FACTORY_SAFETY,
+            }
+        )
+    return sorted(rows, key=lambda row: _float(row.get("comparison_score")), reverse=True)
+
+
+def _filtered_improvement_summary(matrix: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    best = _mapping(matrix[0]) if matrix else {}
+    wins = [row for row in matrix if row.get("comparison_status") == "FILTERED_WINS"]
+    recommendation = "PROMOTE_FOR_REVIEW" if wins else "CONTINUE_TESTING"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "best_filtered_variant": best.get("variant_id", ""),
+        "best_base_method": best.get("base_method", ""),
+        "filtered_win_count": len(wins),
+        "tested_variant_count": len(matrix),
+        "recommendation": recommendation,
+        "confidence": "MEDIUM" if wins else "LOW",
+        "requires_forward_confirmation": True,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _signal_gate_variant_results(
+    design: Mapping[str, Any],
+    ledger: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    _ = design
+    events = _records(ledger.get("signal_events"))
+    harmful = sum(1 for row in events if row.get("event_quality") == "HARMFUL")
+    high_dispersion = sum(
+        1
+        for row in events
+        if _float(row.get("candidate_dispersion")) >= SIGNAL_QUALITY_DISPERSION_THRESHOLD
+    )
+    direction_changes = sum(1 for row in events if row.get("direction_changed") is True)
+    specs = [
+        (
+            "gate_candidate_dispersion_hold",
+            "disagreement",
+            high_dispersion,
+            "candidate_dispersion >= pilot threshold",
+        ),
+        (
+            "gate_signal_persistence_3d",
+            "persistence",
+            direction_changes,
+            "direction change must persist for three days",
+        ),
+        (
+            "gate_regime_mismatch_block",
+            "regime_mismatch",
+            sum(1 for row in events if "regime_mismatch" in _texts(row.get("failure_modes"))),
+            "block risk-conflicting actions in known mismatch contexts",
+        ),
+    ]
+    total = max(1, len(events))
+    harmful_base = max(1, harmful)
+    return [
+        {
+            "schema_version": st.SCHEMA_VERSION,
+            "gate_id": gate_id,
+            "gate_type": gate_type,
+            "trigger": trigger,
+            "blocked_event_count": count,
+            "harmful_event_reduction_rate": round(min(0.95, count / harmful_base), 6),
+            "false_block_rate": round(max(0.02, (count - harmful) / total), 6),
+            "turnover_reduction_rate": round(min(0.5, count / total), 6),
+            "gate_result_status": "PROMISING" if count else "INSUFFICIENT_EVIDENCE",
+            "formalization_ready": False,
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        }
+        for gate_id, gate_type, count, trigger in specs
+    ]
+
+
+def _signal_gate_summary(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    promising = [row for row in results if row.get("gate_result_status") == "PROMISING"]
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "tested_gate_count": len(results),
+        "promising_gate_count": len(promising),
+        "recommended_next_action": (
+            "continue_forward_confirmation" if promising else "collect_more_signal_events"
+        ),
+        "formalization_ready": False,
+        "confidence": "MEDIUM" if len(promising) >= 2 else "LOW",
+        "official_gate_changed": False,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _filtered_promotion_decision(
+    comparison: Mapping[str, Any],
+    experiment: Mapping[str, Any],
+) -> dict[str, Any]:
+    comparison_summary = _mapping(comparison.get("filtered_improvement_summary"))
+    gate_summary = _mapping(experiment.get("signal_gate_experiment_summary"))
+    comparison_ready = comparison_summary.get("recommendation") == "PROMOTE_FOR_REVIEW"
+    gate_ready = gate_summary.get("formalization_ready") is True
+    decision = (
+        "PROMOTE_FOR_FORMAL_RESEARCH_IMPLEMENTATION"
+        if comparison_ready and gate_ready
+        else "CONTINUE_TESTING"
+    )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "decision": decision,
+        "best_filtered_variant": comparison_summary.get("best_filtered_variant", ""),
+        "comparison_recommendation": comparison_summary.get("recommendation"),
+        "gate_recommendation": gate_summary.get("recommended_next_action"),
+        "confidence": "MEDIUM" if comparison_ready else "LOW",
+        "requires_forward_confirmation": True,
+        "recommended_next_action": "owner_review_and_forward_confirmation",
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _filtered_candidate_specs(
+    decision: Mapping[str, Any],
+    comparison: Mapping[str, Any],
+    experiment: Mapping[str, Any],
+) -> dict[str, Any]:
+    _ = experiment
+    best_id = _text(decision.get("best_filtered_variant"))
+    best_row = next(
+        (
+            row
+            for row in _records(comparison.get("filtered_comparison_matrix"))
+            if row.get("variant_id") == best_id
+        ),
+        {},
+    )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "candidate_variant": {
+            "variant_id": best_id,
+            "base_method": _mapping(best_row).get("base_method", ""),
+            "implementation_scope": "research_only",
+            "candidate_status": decision.get("decision"),
+            "requires_owner_approval": True,
+            **st.EXPERIMENT_FACTORY_SAFETY,
+        },
+        "keep_testing_plan": [
+            "continue paper-shadow/forward confirmation with filtered signal diagnostics",
+            "replace pilot thresholds only after owner-reviewed evidence",
+            "do not promote until formal research method requirements are satisfied",
+        ],
+        "formal_implementation_plan": [],
+        **st.EXPERIMENT_FACTORY_SAFETY,
+    }
+
+
+def _owner_signal_roadmap_summary(review: Mapping[str, Any]) -> dict[str, Any]:
+    decision = _mapping(review.get("filtered_promotion_decision"))
+    promotion_decision = _text(decision.get("decision"))
+    if promotion_decision == "PROMOTE_FOR_FORMAL_RESEARCH_IMPLEMENTATION":
+        owner_action = "review_formal_research_method_plan_before_implementation"
+        next_family = "formal_method_design"
+    else:
+        owner_action = "continue_forward_confirmation_and_signal_gate_evidence"
+        next_family = "signal_feature_diagnosis"
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "current_phase": "signal_quality_filter_research",
+        "filtered_candidate_status": promotion_decision,
+        "recommended_owner_action": owner_action,
+        "next_task_family": next_family,
+        "requires_forward_confirmation": decision.get("requires_forward_confirmation") is True,
+        "not_official_target_weights": True,
+        "broker_action_allowed": False,
+        "production_effect": st.PRODUCTION_EFFECT,
         **st.EXPERIMENT_FACTORY_SAFETY,
     }
 

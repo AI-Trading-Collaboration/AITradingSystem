@@ -1388,6 +1388,25 @@ owner roadmap 只生成 owner research checklist。所有输出继续固定 no b
 `production_effect=none`，不得修改 `position_advisory_v1.yaml`、official target weights、
 paper/real portfolio、baseline/production state、policy 或 broker。
 
+TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
+在 TRADING-316～325 判断需要 signal-level fix 后，追加 research-only signal feature
+diagnosis 与 candidate quality filter pipeline。CLI 入口为 `signal-failure-taxonomy
+validate/report`、`candidate-signal-ledger build/report`、`signal-churn-root-cause
+run/report`、`regime-mismatch-attribution run/report`、`candidate-quality-filter-design
+run/report`、`filtered-candidate-backfill run/report`、`filtered-vs-original-comparison
+run/report`、`signal-gate-experiment run/report`、`filtered-candidate-promotion-review
+run/report`、`owner-signal-roadmap build/report` 和对应 `validate-*` 命令。Runtime artifacts
+写入
+`reports/etf_portfolio/dynamic_v3_rescue/signal_failure_taxonomy|candidate_signal_ledger|signal_churn_root_cause|regime_mismatch_attribution|candidate_quality_filter_design|filtered_candidate_backfill|filtered_vs_original_comparison|signal_gate_experiment|filtered_candidate_promotion_review|owner_signal_roadmap/`，
+并登记 report registry / latest pointers / Reader Brief 摘要。Filtered backfill 只从已披露
+`data_quality_status` 的 source v4 backfill / signal ledger 派生，不重新绕过 cached data quality
+gate；promotion review 只能输出 `CONTINUE_TESTING` 或 owner-reviewed formal research planning
+候选，不自动创建 formal method、official target weights、portfolio mutation、order ticket 或 broker
+action。所有输出固定 `experiment_only=true`、`research_screening_only=true`、
+`not_formal_research_method=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
+`auto_apply=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

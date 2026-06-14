@@ -1,0 +1,92 @@
+schema_version: 1
+
+taxonomy_id: signal_feature_failure_taxonomy_v1
+policy_status: pilot_research_baseline
+owner: system
+review_condition: Replace pilot severity labels and thresholds after owner-reviewed signal ledger evidence.
+
+failure_modes:
+  signal_churn:
+    description: Signal direction flips too frequently without improving outcome.
+    severity_default: REVIEW_REQUIRED
+  direction_flip_high:
+    description: Direction changes are concentrated in a method or regime.
+    severity_default: REVIEW_REQUIRED
+  risk_asset_false_positive:
+    description: Risk asset increase appears during a drawdown or weak forward outcome.
+    severity_default: WARNING
+  risk_asset_false_negative:
+    description: Risk asset reduction or hold misses a recovery window.
+    severity_default: WARNING
+  semiconductor_false_positive:
+    description: Semiconductor sleeve increase appears during semiconductor pullback.
+    severity_default: WARNING
+  semiconductor_false_negative:
+    description: Semiconductor sleeve reduction misses a semiconductor recovery.
+    severity_default: WARNING
+  late_risk_reduction:
+    description: Risk reduction signal arrives after drawdown has already occurred.
+    severity_default: WARNING
+  late_risk_restore:
+    description: Risk restore signal lags strong recovery.
+    severity_default: WARNING
+  regime_mismatch:
+    description: Signal action conflicts with current regime expectation.
+    severity_default: WARNING
+  candidate_disagreement_high:
+    description: Candidate targets disagree materially; active tilt may be unreliable.
+    severity_default: REVIEW_REQUIRED
+  consensus_dispersion_high:
+    description: Consensus dispersion is high enough to make active tilt unstable.
+    severity_default: REVIEW_REQUIRED
+  overreact_to_noise:
+    description: Candidate reacts to small noisy changes in sideways or choppy regimes.
+    severity_default: WARNING
+  underreact_to_recovery:
+    description: Candidate keeps a defensive or hold posture into strong recovery.
+    severity_default: WARNING
+  high_turnover_signal:
+    description: Weight path has excessive turnover or jump activity.
+    severity_default: REVIEW_REQUIRED
+  unstable_top_candidate:
+    description: Top candidate identity rotates frequently across nearby variants.
+    severity_default: WARNING
+  weak_drawdown_response:
+    description: Signal does not reduce drawdown or worsens drawdown score.
+    severity_default: REVIEW_REQUIRED
+
+families:
+  churn:
+    modes:
+      - signal_churn
+      - direction_flip_high
+      - high_turnover_signal
+      - overreact_to_noise
+  mismatch:
+    modes:
+      - regime_mismatch
+      - risk_asset_false_positive
+      - risk_asset_false_negative
+      - semiconductor_false_positive
+      - semiconductor_false_negative
+      - late_risk_reduction
+      - late_risk_restore
+      - underreact_to_recovery
+      - weak_drawdown_response
+  disagreement:
+    modes:
+      - candidate_disagreement_high
+      - consensus_dispersion_high
+      - unstable_top_candidate
+
+safety:
+  research_only: true
+  research_screening_only: true
+  experiment_only: true
+  not_official_target_weights: true
+  not_formal_research_method: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  auto_apply: false
+  production_effect: none

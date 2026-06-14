@@ -4485,6 +4485,191 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_failure_taxonomy
+    title: ETF Dynamic v3 Signal Failure Taxonomy
+    group: governance
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-failure-taxonomy report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_failure_taxonomy/*/signal_failure_taxonomy_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_failure_taxonomy/*/signal_failure_mode_catalog.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_failure_taxonomy/*/signal_failure_taxonomy_report.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-326 defines the research-only signal failure taxonomy used by candidate signal diagnosis.
+    owner_action: review_signal_failure_taxonomy_before_using_signal_filter_outputs
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_signal_ledger
+    title: ETF Dynamic v3 Candidate Signal Ledger
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-signal-ledger report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_signal_ledger/*/candidate_signal_ledger_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_signal_ledger/*/signal_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_signal_ledger/*/candidate_signal_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_signal_ledger/*/candidate_signal_ledger_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_signal_ledger/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-327 turns v4 signal/backfill evidence into an auditable candidate signal event ledger with data quality status visible.
+    owner_action: review_candidate_signal_ledger_before_churn_or_filter_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_churn_root_cause
+    title: ETF Dynamic v3 Signal Churn Root Cause
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-churn-root-cause report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_churn_root_cause/*/signal_churn_root_cause_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_churn_root_cause/*/churn_root_cause_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_churn_root_cause/*/churn_event_clusters.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_churn_root_cause/*/signal_churn_root_cause_report.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-328 explains whether churn is caused by disagreement, sideways noise, top-candidate rotation, or mixed signal quality.
+    owner_action: review_churn_root_cause_before_filter_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_regime_mismatch_attribution
+    title: ETF Dynamic v3 Regime Mismatch Attribution
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue regime-mismatch-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_mismatch_attribution/*/regime_mismatch_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_mismatch_attribution/*/regime_mismatch_events.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_mismatch_attribution/*/regime_mismatch_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/regime_mismatch_attribution/*/regime_mismatch_report.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-329 attributes risk and semiconductor signal actions to regime mismatch patterns before filter design.
+    owner_action: review_regime_mismatch_attribution_before_filter_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_quality_filter_design
+    title: ETF Dynamic v3 Candidate Quality Filter Design
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-quality-filter-design report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_quality_filter_design/*/candidate_quality_filter_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_quality_filter_design/*/proposed_quality_filters.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_quality_filter_design/*/filter_design_config.yaml
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_quality_filter_design/*/candidate_quality_filter_design_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_quality_filter_design/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-330 proposes research-screening filters with explicit pilot thresholds and no production effect.
+    owner_action: review_filter_design_before_filtered_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_filtered_candidate_backfill
+    title: ETF Dynamic v3 Filtered Candidate Backfill
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue filtered-candidate-backfill report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_backfill/*/filtered_candidate_backfill_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_backfill/*/filtered_variant_specs.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_backfill/*/filtered_variant_performance.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_backfill/*/filtered_variant_signal_metrics.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_backfill/*/filtered_candidate_backfill_report.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-331 derives filtered candidate backfill projections from a ledger whose data quality status is already visible.
+    owner_action: review_filtered_backfill_before_comparison
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_filtered_vs_original_comparison
+    title: ETF Dynamic v3 Filtered vs Original Comparison
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue filtered-vs-original-comparison report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_vs_original_comparison/*/filtered_vs_original_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_vs_original_comparison/*/filtered_comparison_matrix.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_vs_original_comparison/*/filtered_improvement_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_vs_original_comparison/*/filtered_vs_original_comparison_report.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-332 compares filtered candidate projections to the original candidate without automatic promotion.
+    owner_action: review_filtered_vs_original_comparison_before_promotion_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_gate_experiment
+    title: ETF Dynamic v3 Signal Gate Experiment
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-gate-experiment report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_gate_experiment/*/signal_gate_experiment_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_gate_experiment/*/signal_gate_experiment_results.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_gate_experiment/*/signal_gate_experiment_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_gate_experiment/*/signal_gate_experiment_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_gate_experiment/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-333 tests persistence and disagreement gates as experiment-only evidence, with no official gate mutation.
+    owner_action: review_signal_gate_experiment_before_promotion_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_filtered_candidate_promotion_review
+    title: ETF Dynamic v3 Filtered Candidate Promotion Review
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue filtered-candidate-promotion-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_promotion_review/*/filtered_promotion_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_promotion_review/*/filtered_promotion_decision.json
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_promotion_review/*/filtered_candidate_specs.json
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_promotion_review/*/filtered_candidate_promotion_review_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_promotion_review/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-334 performs owner-facing promotion review without automatic formal method creation or production mutation.
+    owner_action: owner_review_filtered_promotion_decision_before_formal_method_work
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_owner_signal_roadmap
+    title: ETF Dynamic v3 Owner Signal Roadmap
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue owner-signal-roadmap report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_signal_roadmap/*/owner_signal_roadmap_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_signal_roadmap/*/owner_signal_roadmap_summary.json
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_signal_roadmap/*/owner_signal_checklist.md
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_signal_roadmap/*/owner_signal_roadmap_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/owner_signal_roadmap/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-335 records the next owner signal roadmap and checklist for continued confirmation.
+    owner_action: owner_review_signal_roadmap_before_followup_research
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance
