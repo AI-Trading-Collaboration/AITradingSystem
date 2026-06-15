@@ -1,6 +1,6 @@
 # TRADING-357 Drawdown Event Casebook
 
-最后更新：2026-06-15
+最后更新：2026-06-16
 
 ## 1. 背景
 
@@ -108,3 +108,11 @@ All outputs are read-only and fixed to:
   visibility），Reader Brief OK，Reader Brief quality OK。保持 research diagnostic only /
   not trading signal / no data refresh / no stress or backtest executor / no official target /
   no broker / no production。
+- 2026-06-16：复验完成并转 DONE；真实只读 report 生成
+  `drawdown-event-casebook_48f9104b90984b64`，`event_count=5`，
+  `worst_event=semiconductor_pullback_2024_07`，
+  `regime_coverage=risk_off,semiconductor_pullback,sideways_choppy,strong_recovery,tech_drawdown`，
+  `next_review_action=use_casebook_in_next_drawdown_mismatch_review`，
+  `validate-drawdown-event-casebook` 返回 PASS / failed=0。验证通过
+  `python -m pytest tests/test_drawdown_event_casebook.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q`
+  36 passed。
