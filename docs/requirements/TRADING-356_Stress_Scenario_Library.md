@@ -1,6 +1,6 @@
 # TRADING-356 Stress Scenario Library
 
-最后更新：2026-06-15
+最后更新：2026-06-16
 
 ## 1. 背景
 
@@ -108,3 +108,11 @@ All outputs are read-only and fixed to:
   contract PASS，report index `PASS_WITH_WARNINGS` 仅保留既有 missing/stale visibility，
   Reader Brief OK，Reader Brief quality OK。安全边界保持 read-only / no stress backfill /
   no data refresh / no upstream rerun / no official target / no broker / no production。
+- 2026-06-16：复验完成并转 DONE；真实只读 report 生成
+  `stress-scenario-library_7a867b70836eba2b`，`scenario_count=9`，
+  `required_scenarios_present=True`，
+  `candidate_validation_use=standardized_dynamic_v3_candidate_stress_validation`，
+  `next_validation_action=use_library_ids_in_next_stress_backfill_or_case_review`，
+  `validate-stress-scenario-library` 返回 PASS / failed=0。验证通过
+  `python -m pytest tests/test_stress_scenario_library.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q`
+  36 passed。
