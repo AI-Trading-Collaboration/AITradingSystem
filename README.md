@@ -1598,6 +1598,26 @@ candidate decision ledger、不写 target weights、不触发 broker/order，所
 `pipelines_executed_by_monitor=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-354C_SHADOW_CONTINUATION_READINESS 在 staleness monitor 后新增单一 paper-shadow
+continuation readiness answer。CLI 入口为
+`aits etf dynamic-v3-rescue shadow-continuation-readiness run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue shadow-continuation-readiness report --latest` 和
+`aits etf dynamic-v3-rescue validate-shadow-continuation-readiness --latest`。该报告只读
+latest paper-shadow daily observation、drift monitor、weekly review、evidence staleness
+monitor、latest data quality report 和可用 source safety boundary payloads，输出
+`READY_TO_CONTINUE`、`READY_WITH_WARNINGS`、`MANUAL_REVIEW_REQUIRED`、
+`BLOCKED_MISSING_ARTIFACTS`、`BLOCKED_STALE_DATA` 或 `BLOCKED_SAFETY_BOUNDARY`，
+并显式披露 `safe_to_continue_shadow`、`missing_artifacts`、`blocking_artifacts`、
+`stale_artifacts`、`coverage_status`、`manual_review_required`、`next_required_action`、
+`data_validation_status` 和 `safety_boundary_status`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/shadow_continuation_readiness/`，包含 manifest、
+report JSON、Markdown report、Reader Brief section 和 validation JSON/Markdown。该 readiness
+report 不运行 `aits validate-data`、不刷新数据、不重跑上游、不修改 candidate ledger、不写
+official target weights、不触发 broker/order、不修改 paper account 或 production state，所有输出固定
+`shadow_continuation_readiness_only=true`、`advisory_only=true`、
+`data_downloaded_by_readiness=false`、`pipelines_executed_by_readiness=false`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
+
 TRADING-356_STRESS_SCENARIO_LIBRARY 在 evidence freshness guard 后新增 Dynamic v3 rescue
 专用 stress scenario library。CLI 入口为
 `aits etf dynamic-v3-rescue stress-scenario-library report`、`... report --latest` 和

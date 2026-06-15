@@ -63,6 +63,9 @@ DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR = (
 DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_staleness_monitor"
 )
+DEFAULT_SHADOW_CONTINUATION_READINESS_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_continuation_readiness"
+)
 DEFAULT_EVIDENCE_STALENESS_POLICY_PATH = (
     st.PROJECT_ROOT
     / "config"
@@ -130,6 +133,41 @@ EVIDENCE_STALENESS_MONITOR_SAFETY = {
     "data_downloaded_by_monitor": False,
     "pipelines_executed_by_monitor": False,
 }
+SHADOW_CONTINUATION_READINESS_SAFETY = {
+    **st.SYSTEM_TARGET_SAFETY,
+    "manual_review_only": True,
+    "shadow_continuation_readiness_only": True,
+    "advisory_only": True,
+    "paper_shadow_only": True,
+    "data_downloaded_by_readiness": False,
+    "pipelines_executed_by_readiness": False,
+    "official_target_weights": False,
+    "official_target_weights_mutated": False,
+    "not_official_target_weights": True,
+    "broker_action_allowed": False,
+    "broker_action_taken": False,
+    "order_ticket_generated": False,
+    "paper_account_state_mutated": False,
+    "production_state_mutated": False,
+    "automatic_candidate_promotion": False,
+    "auto_apply": False,
+    "production_effect": "none",
+}
+SHADOW_CONTINUATION_READINESS_STATES = (
+    "READY_TO_CONTINUE",
+    "READY_WITH_WARNINGS",
+    "MANUAL_REVIEW_REQUIRED",
+    "BLOCKED_MISSING_ARTIFACTS",
+    "BLOCKED_STALE_DATA",
+    "BLOCKED_SAFETY_BOUNDARY",
+)
+SHADOW_CONTINUATION_REQUIRED_SOURCES = (
+    "paper_shadow_daily_observation",
+    "paper_shadow_drift_monitor",
+    "paper_shadow_weekly_review",
+    "evidence_staleness_monitor",
+    "data_validation_result",
+)
 
 # TRADING-336_to_345 pilot readiness constants. They are documented in the
 # requirement file and classify research-only evidence; they do not approve
@@ -2585,6 +2623,419 @@ def validate_evidence_staleness_monitor_artifact(
     return validation
 
 
+def run_shadow_continuation_readiness_report(
+    *,
+    as_of: date | None = None,
+    candidate: str = TOP_FILTERED_CANDIDATE,
+    paper_shadow_daily_id: str | None = None,
+    paper_shadow_drift_monitor_id: str | None = None,
+    paper_shadow_weekly_review_id: str | None = None,
+    evidence_staleness_monitor_id: str | None = None,
+    data_quality_report_path: Path | None = None,
+    data_quality_report_dir: Path = DEFAULT_MARKET_PANEL_REPORT_DIR,
+    paper_shadow_daily_dir: Path = DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    paper_shadow_drift_monitor_dir: Path = DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+    paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    evidence_staleness_monitor_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    output_dir: Path = DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    effective_as_of = as_of or generated.date()
+    source_artifacts = _shadow_continuation_source_artifacts(
+        paper_shadow_daily_id=paper_shadow_daily_id,
+        paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
+        paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
+        evidence_staleness_monitor_id=evidence_staleness_monitor_id,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
+        evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+    )
+    data_validation = _data_quality_report_summary(
+        data_quality_report_path=data_quality_report_path,
+        data_quality_report_dir=data_quality_report_dir,
+        as_of=effective_as_of,
+    )
+    source_artifacts["data_validation_result"] = data_validation
+    evidence_report = _mapping(source_artifacts["evidence_staleness_monitor"].get("detail"))
+    weekly_detail = _mapping(source_artifacts["paper_shadow_weekly_review"].get("detail"))
+    weekly_manifest = _mapping(source_artifacts["paper_shadow_weekly_review"].get("manifest"))
+    coverage_status = _text(
+        evidence_report.get("coverage_status")
+        or weekly_detail.get("coverage_status")
+        or weekly_manifest.get("coverage_status")
+        or "MISSING"
+    )
+    stale_artifacts = _dedupe_texts(evidence_report.get("stale_artifacts"))
+    blocking_artifacts = _dedupe_texts(evidence_report.get("blocking_artifacts"))
+    missing_artifacts = _dedupe_texts(
+        [
+            source_id
+            for source_id in SHADOW_CONTINUATION_REQUIRED_SOURCES
+            if source_artifacts[source_id].get("exists") is not True
+        ]
+        + _texts(evidence_report.get("missing_artifacts"))
+    )
+    data_validation_status = _text(data_validation.get("status"), "MISSING")
+    if data_validation.get("exists") is True and data_validation_status not in {
+        "PASS",
+        "PASS_WITH_WARNINGS",
+    }:
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "data_validation_result"])
+    safety_audit = _shadow_continuation_safety_audit(source_artifacts)
+    readiness = _shadow_continuation_readiness_decision(
+        missing_artifacts=missing_artifacts,
+        blocking_artifacts=blocking_artifacts,
+        stale_artifacts=stale_artifacts,
+        coverage_status=coverage_status,
+        evidence_report=evidence_report,
+        data_validation=data_validation,
+        safety_audit=safety_audit,
+    )
+    safe_to_continue = readiness in {"READY_TO_CONTINUE", "READY_WITH_WARNINGS"}
+    next_required_action = _shadow_continuation_next_action(readiness)
+    readiness_id = _stable_id(
+        "shadow-continuation-readiness",
+        candidate,
+        effective_as_of.isoformat(),
+        readiness,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / readiness_id)
+    root.mkdir(parents=True, exist_ok=False)
+    source_summary = {
+        source_id: _shadow_continuation_source_summary(payload)
+        for source_id, payload in source_artifacts.items()
+    }
+    report = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_continuation_readiness_report",
+        "readiness_id": root.name,
+        "candidate": candidate,
+        "as_of": effective_as_of.isoformat(),
+        "requested_as_of": effective_as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "shadow_continuation_readiness": readiness,
+        "safe_to_continue_shadow": safe_to_continue,
+        "missing_artifacts": missing_artifacts,
+        "blocking_artifacts": blocking_artifacts,
+        "stale_artifacts": stale_artifacts,
+        "coverage_status": coverage_status,
+        "manual_review_required": readiness != "READY_TO_CONTINUE",
+        "next_required_action": next_required_action,
+        "data_validation_result": data_validation,
+        "data_validation_status": data_validation_status,
+        "data_validation_warning_count": data_validation.get("warning_count"),
+        "source_artifacts": source_summary,
+        "safety_boundary_audit": safety_audit,
+        "safety_boundary_status": safety_audit.get("status"),
+        "advisory_only": True,
+        "readiness_decision_policy": {
+            "states": list(SHADOW_CONTINUATION_READINESS_STATES),
+            "ready_states": ["READY_TO_CONTINUE", "READY_WITH_WARNINGS"],
+            "manual_review_for_warnings": True,
+            "blocked_missing_precedence": True,
+            "blocked_safety_boundary_precedence": True,
+        },
+        **SHADOW_CONTINUATION_READINESS_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_continuation_readiness_manifest",
+        "readiness_id": root.name,
+        "candidate": candidate,
+        "as_of": effective_as_of.isoformat(),
+        "requested_as_of": effective_as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if safe_to_continue else "MANUAL_REVIEW_REQUIRED",
+        "shadow_continuation_readiness": readiness,
+        "safe_to_continue_shadow": safe_to_continue,
+        "coverage_status": coverage_status,
+        "manual_review_required": readiness != "READY_TO_CONTINUE",
+        "next_required_action": next_required_action,
+        "shadow_continuation_readiness_manifest_path": str(
+            root / "shadow_continuation_readiness_manifest.json"
+        ),
+        "shadow_continuation_readiness_report_path": str(
+            root / "shadow_continuation_readiness_report.json"
+        ),
+        "shadow_continuation_readiness_markdown_path": str(
+            root / "shadow_continuation_readiness_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        "validation_path": str(root / "shadow_continuation_readiness_validation.json"),
+        **SHADOW_CONTINUATION_READINESS_SAFETY,
+    }
+    reader = render_shadow_continuation_readiness_reader_brief(report)
+    _write_json(root / "shadow_continuation_readiness_manifest.json", manifest)
+    _write_json(root / "shadow_continuation_readiness_report.json", report)
+    _write_text(
+        root / "shadow_continuation_readiness_report.md",
+        render_shadow_continuation_readiness_report(manifest, report),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_shadow_continuation_readiness",
+        root.name,
+        root / "shadow_continuation_readiness_manifest.json",
+    )
+    validation = validate_shadow_continuation_readiness_artifact(
+        readiness_id=root.name,
+        output_dir=output_dir,
+        write_output=True,
+    )
+    return {
+        "readiness_id": root.name,
+        "readiness_dir": root,
+        "manifest": manifest,
+        "shadow_continuation_readiness_report": report,
+        "reader_brief_section": reader,
+        "shadow_continuation_readiness_validation": validation,
+    }
+
+
+def shadow_continuation_readiness_report_payload(
+    *,
+    readiness_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=readiness_id,
+        latest_pointer="latest_shadow_continuation_readiness",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="shadow_continuation_readiness_manifest.json",
+    )
+    payload = {
+        **_read_json(root / "shadow_continuation_readiness_manifest.json"),
+        "shadow_continuation_readiness_report": _read_json(
+            root / "shadow_continuation_readiness_report.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(
+            encoding="utf-8"
+        ),
+        "readiness_dir": str(root),
+    }
+    validation = _read_optional_json(root / "shadow_continuation_readiness_validation.json")
+    if validation:
+        payload["shadow_continuation_readiness_validation"] = validation
+    return payload
+
+
+def validate_shadow_continuation_readiness_artifact(
+    *,
+    readiness_id: str,
+    output_dir: Path = DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+    write_output: bool = True,
+) -> dict[str, Any]:
+    root = output_dir / readiness_id
+    manifest = _read_optional_json(root / "shadow_continuation_readiness_manifest.json") or {}
+    report = _read_optional_json(root / "shadow_continuation_readiness_report.json") or {}
+    reader = (
+        (root / "reader_brief_section.md").read_text(encoding="utf-8")
+        if (root / "reader_brief_section.md").exists()
+        else ""
+    )
+    source_artifacts = _mapping(report.get("source_artifacts"))
+    readiness = _text(report.get("shadow_continuation_readiness"))
+    checks = _required_file_checks(
+        root,
+        (
+            "shadow_continuation_readiness_manifest.json",
+            "shadow_continuation_readiness_report.json",
+            "shadow_continuation_readiness_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("readiness_id_matches", manifest.get("readiness_id") == readiness_id, ""),
+            st._check(
+                "readiness_state_valid",
+                readiness in SHADOW_CONTINUATION_READINESS_STATES,
+                readiness,
+            ),
+            st._check(
+                "required_sources_visible",
+                set(SHADOW_CONTINUATION_REQUIRED_SOURCES).issubset(source_artifacts),
+                ",".join(sorted(source_artifacts)),
+            ),
+            st._check(
+                "decision_fields_visible",
+                report.get("safe_to_continue_shadow") in (True, False)
+                and report.get("manual_review_required") in (True, False)
+                and bool(report.get("coverage_status"))
+                and bool(report.get("next_required_action")),
+                "",
+            ),
+            st._check(
+                "safe_to_continue_consistent",
+                report.get("safe_to_continue_shadow")
+                == (readiness in {"READY_TO_CONTINUE", "READY_WITH_WARNINGS"}),
+                "",
+            ),
+            st._check(
+                "manual_review_consistent",
+                report.get("manual_review_required") == (readiness != "READY_TO_CONTINUE"),
+                "",
+            ),
+            st._check(
+                "missing_state_consistent",
+                (
+                    not _texts(report.get("missing_artifacts"))
+                    or readiness == "BLOCKED_MISSING_ARTIFACTS"
+                ),
+                ",".join(_texts(report.get("missing_artifacts"))),
+            ),
+            st._check(
+                "safety_boundary_status_visible",
+                report.get("safety_boundary_status") in {"PASS", "FAIL"},
+                "",
+            ),
+            st._check(
+                "safety_state_consistent",
+                (
+                    report.get("safety_boundary_status") == "PASS"
+                    or readiness == "BLOCKED_SAFETY_BOUNDARY"
+                ),
+                "",
+            ),
+            st._check(
+                "data_validation_result_visible",
+                _mapping(report.get("data_validation_result")).get("status") not in (None, ""),
+                "",
+            ),
+            st._check(
+                "reader_brief_quality_fields",
+                "shadow_continuation_readiness" in reader
+                and "safe_to_continue_shadow" in reader,
+                "",
+            ),
+            st._check(
+                "read_only_advisory",
+                report.get("data_downloaded_by_readiness") is False
+                and report.get("pipelines_executed_by_readiness") is False
+                and report.get("advisory_only") is True,
+                "",
+            ),
+            st._check("broker_forbidden", _payload_safe(manifest, report), ""),
+        ]
+    )
+    validation = _validation_payload(
+        "etf_dynamic_v3_shadow_continuation_readiness_validation",
+        readiness_id,
+        checks,
+    )
+    if write_output:
+        _write_json(root / "shadow_continuation_readiness_validation.json", validation)
+        _write_text(
+            root / "shadow_continuation_readiness_validation.md",
+            render_shadow_continuation_readiness_validation_report(validation),
+        )
+    return validation
+
+
+def render_shadow_continuation_readiness_reader_brief(report: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Shadow Continuation Readiness",
+            "",
+            f"- summary: {report.get('candidate')} paper-shadow continuation gate.",
+            f"- shadow_continuation_readiness: {report.get('shadow_continuation_readiness')}",
+            f"- safe_to_continue_shadow: {report.get('safe_to_continue_shadow')}",
+            f"- missing_artifacts: {', '.join(_texts(report.get('missing_artifacts'))) or 'none'}",
+            f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
+            f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
+            f"- coverage_status: {report.get('coverage_status')}",
+            f"- manual_review_required: {report.get('manual_review_required')}",
+            f"- next_required_action: {report.get('next_required_action')}",
+            f"- data_validation_status: {report.get('data_validation_status')}",
+            f"- safety_boundary_status: {report.get('safety_boundary_status')}",
+            "- safety_boundary: advisory paper-shadow readiness only / no official target / no broker / no paper account or production mutation",
+            "",
+        ]
+    )
+
+
+def render_shadow_continuation_readiness_report(
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+) -> str:
+    source_lines = [
+        f"- {source_id}: exists={payload.get('exists')} artifact_id={payload.get('artifact_id')} status={payload.get('status')} validation={payload.get('validation_status')} path={payload.get('source_path')}"
+        for source_id, payload in sorted(_mapping(report.get("source_artifacts")).items())
+    ]
+    safety = _mapping(report.get("safety_boundary_audit"))
+    return "\n".join(
+        [
+            f"# Shadow Continuation Readiness {manifest.get('readiness_id')}",
+            "",
+            "## Purpose",
+            "汇总 paper-shadow daily、drift、weekly、freshness monitor 与数据质量结果，给出是否可以继续 paper-shadow observation 的只读结论。本报告不刷新数据、不运行上游、不生成 official target weights、不触发 broker、不修改 paper account 或 production state。",
+            "",
+            "## Summary",
+            f"- candidate: {report.get('candidate')}",
+            f"- as_of: {report.get('as_of')}",
+            f"- shadow_continuation_readiness: {report.get('shadow_continuation_readiness')}",
+            f"- safe_to_continue_shadow: {report.get('safe_to_continue_shadow')}",
+            f"- missing_artifacts: {', '.join(_texts(report.get('missing_artifacts'))) or 'none'}",
+            f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
+            f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
+            f"- coverage_status: {report.get('coverage_status')}",
+            f"- manual_review_required: {report.get('manual_review_required')}",
+            f"- next_required_action: {report.get('next_required_action')}",
+            f"- data_validation_status: {report.get('data_validation_status')}",
+            f"- data_validation_warning_count: {report.get('data_validation_warning_count')}",
+            f"- safety_boundary_status: {report.get('safety_boundary_status')}",
+            "",
+            "## Source Artifacts",
+            *source_lines,
+            "",
+            "## Safety Boundary Audit",
+            f"- status: {safety.get('status')}",
+            f"- unsafe_sources: {', '.join(_texts(safety.get('unsafe_sources'))) or 'none'}",
+            "- advisory only",
+            "- no data refresh",
+            "- no upstream pipeline execution",
+            "- no official target weights",
+            "- no broker integration",
+            "- no order tickets",
+            "- no paper account mutation",
+            "- no production mutation",
+            "",
+            "## Limitations",
+            "- READY_WITH_WARNINGS 仍要求 owner review 数据质量 warning；它不是 production approval。",
+            "- MANUAL_REVIEW_REQUIRED 通常来自 weekly coverage 不足或 staleness monitor 明确要求人工覆盖。",
+            "- BLOCKED_* 状态必须先修复对应 artifact、staleness、data quality 或 safety boundary。",
+            "",
+        ]
+    )
+
+
+def render_shadow_continuation_readiness_validation_report(
+    validation: Mapping[str, Any],
+) -> str:
+    check_lines = [
+        f"- {row.get('check_id')}: passed={row.get('passed')} detail={row.get('detail')}"
+        for row in _records(validation.get("checks"))
+    ]
+    return "\n".join(
+        [
+            f"# Shadow Continuation Readiness Validation {validation.get('artifact_id')}",
+            "",
+            f"- status: {validation.get('status')}",
+            f"- failed_check_count: {validation.get('failed_check_count')}",
+            "- production_effect: none",
+            "",
+            "## Checks",
+            *check_lines,
+            "",
+        ]
+    )
+
+
 def render_filtered_candidate_evidence_reader_brief(summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
@@ -4828,6 +5279,355 @@ def _evidence_weekly_coverage_status(
         if safe
         else ["paper_shadow_weekly_review"],
     }
+
+
+def _shadow_continuation_source_artifacts(
+    *,
+    paper_shadow_daily_id: str | None,
+    paper_shadow_drift_monitor_id: str | None,
+    paper_shadow_weekly_review_id: str | None,
+    evidence_staleness_monitor_id: str | None,
+    paper_shadow_daily_dir: Path,
+    paper_shadow_drift_monitor_dir: Path,
+    paper_shadow_weekly_review_dir: Path,
+    evidence_staleness_monitor_dir: Path,
+) -> dict[str, dict[str, Any]]:
+    return {
+        "paper_shadow_daily_observation": _shadow_continuation_source_artifact(
+            source_id="paper_shadow_daily_observation",
+            source_label="Paper-shadow daily observation",
+            artifact_id=paper_shadow_daily_id,
+            latest_pointer="latest_paper_shadow_daily",
+            output_dir=paper_shadow_daily_dir,
+            manifest_name="paper_shadow_daily_manifest.json",
+            detail_name="paper_shadow_daily_observation.json",
+            validation_name="paper_shadow_daily_validation.json",
+            id_fields=("observation_id",),
+            status_fields=("observation_status", "status"),
+        ),
+        "paper_shadow_drift_monitor": _shadow_continuation_source_artifact(
+            source_id="paper_shadow_drift_monitor",
+            source_label="Paper-shadow drift monitor",
+            artifact_id=paper_shadow_drift_monitor_id,
+            latest_pointer="latest_paper_shadow_drift_monitor",
+            output_dir=paper_shadow_drift_monitor_dir,
+            manifest_name="paper_shadow_drift_manifest.json",
+            detail_name="paper_shadow_drift_report.json",
+            validation_name="paper_shadow_drift_validation.json",
+            id_fields=("monitor_id",),
+            status_fields=("drift_severity", "status"),
+        ),
+        "paper_shadow_weekly_review": _shadow_continuation_source_artifact(
+            source_id="paper_shadow_weekly_review",
+            source_label="Paper-shadow weekly review",
+            artifact_id=paper_shadow_weekly_review_id,
+            latest_pointer="latest_paper_shadow_weekly_review",
+            output_dir=paper_shadow_weekly_review_dir,
+            manifest_name="paper_shadow_weekly_manifest.json",
+            detail_name="paper_shadow_weekly_review.json",
+            validation_name="paper_shadow_weekly_validation.json",
+            id_fields=("weekly_review_id",),
+            status_fields=("coverage_status", "weekly_decision", "status"),
+        ),
+        "evidence_staleness_monitor": _shadow_continuation_source_artifact(
+            source_id="evidence_staleness_monitor",
+            source_label="Evidence staleness monitor",
+            artifact_id=evidence_staleness_monitor_id,
+            latest_pointer="latest_evidence_staleness_monitor",
+            output_dir=evidence_staleness_monitor_dir,
+            manifest_name="evidence_staleness_manifest.json",
+            detail_name="evidence_staleness_report.json",
+            validation_name="evidence_staleness_validation.json",
+            id_fields=("monitor_id",),
+            status_fields=("evidence_freshness_status", "status"),
+        ),
+    }
+
+
+def _shadow_continuation_source_artifact(
+    *,
+    source_id: str,
+    source_label: str,
+    artifact_id: str | None,
+    latest_pointer: str,
+    output_dir: Path,
+    manifest_name: str,
+    detail_name: str,
+    validation_name: str,
+    id_fields: Sequence[str],
+    status_fields: Sequence[str],
+) -> dict[str, Any]:
+    root = _optional_dynamic_v3_artifact_dir(
+        artifact_id=artifact_id,
+        latest_pointer=latest_pointer,
+        output_dir=output_dir,
+        required_name=manifest_name,
+    )
+    if root is None:
+        return {
+            "source_id": source_id,
+            "source_label": source_label,
+            "exists": False,
+            "artifact_id": _text(artifact_id),
+            "source_path": "",
+            "manifest": {},
+            "detail": {},
+            "validation": {},
+            "status": "MISSING",
+            "validation_status": "MISSING",
+        }
+    manifest = _read_optional_json(root / manifest_name) or {}
+    detail = _read_optional_json(root / detail_name) or {}
+    validation = _read_optional_json(root / validation_name) or {}
+    resolved_id = _first_text(*(manifest.get(field) for field in id_fields))
+    if not resolved_id:
+        resolved_id = _first_text(*(detail.get(field) for field in id_fields))
+    status = _first_text(*(detail.get(field) for field in status_fields))
+    if not status:
+        status = _first_text(*(manifest.get(field) for field in status_fields))
+    return {
+        "source_id": source_id,
+        "source_label": source_label,
+        "exists": bool(manifest),
+        "artifact_id": resolved_id or root.name,
+        "source_path": str(root / manifest_name),
+        "root": str(root),
+        "manifest": manifest,
+        "detail": detail,
+        "validation": validation,
+        "status": status or "UNKNOWN",
+        "validation_status": _text(validation.get("status"), "NOT_RUN"),
+        "generated_at": _text(manifest.get("generated_at") or detail.get("generated_at")),
+    }
+
+
+def _shadow_continuation_source_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
+    manifest = _mapping(payload.get("manifest"))
+    detail = _mapping(payload.get("detail"))
+    validation = _mapping(payload.get("validation"))
+    return {
+        "source_id": payload.get("source_id"),
+        "source_label": payload.get("source_label"),
+        "exists": payload.get("exists") is True,
+        "artifact_id": _text(payload.get("artifact_id")),
+        "source_path": _text(payload.get("source_path")),
+        "root": _text(payload.get("root")),
+        "status": _text(payload.get("status"), "MISSING"),
+        "validation_status": _text(payload.get("validation_status"), "MISSING"),
+        "manifest_report_type": _text(manifest.get("report_type")),
+        "detail_report_type": _text(detail.get("report_type")),
+        "validation_report_type": _text(validation.get("report_type")),
+        "generated_at": _text(payload.get("generated_at")),
+    }
+
+
+def _shadow_continuation_safety_audit(
+    source_artifacts: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    source_results: list[dict[str, Any]] = []
+    unsafe_sources: list[str] = []
+    for source_id, payload in source_artifacts.items():
+        if source_id == "data_validation_result":
+            continue
+        manifest = _mapping(payload.get("manifest"))
+        detail = _mapping(payload.get("detail"))
+        validation = _mapping(payload.get("validation"))
+        checked = bool(manifest or detail or validation)
+        passed = _payload_safe(manifest, detail, validation) if checked else True
+        if checked and not passed:
+            unsafe_sources.append(source_id)
+        source_results.append(
+            {
+                "source_id": source_id,
+                "checked": checked,
+                "passed": passed,
+                "artifact_id": _text(payload.get("artifact_id")),
+            }
+        )
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "status": "FAIL" if unsafe_sources else "PASS",
+        "source_count": len(source_results),
+        "sources_checked": source_results,
+        "unsafe_sources": unsafe_sources,
+        "readiness_boundary": dict(SHADOW_CONTINUATION_READINESS_SAFETY),
+    }
+
+
+def _shadow_continuation_readiness_decision(
+    *,
+    missing_artifacts: Sequence[str],
+    blocking_artifacts: Sequence[str],
+    stale_artifacts: Sequence[str],
+    coverage_status: str,
+    evidence_report: Mapping[str, Any],
+    data_validation: Mapping[str, Any],
+    safety_audit: Mapping[str, Any],
+) -> str:
+    if _texts(missing_artifacts):
+        return "BLOCKED_MISSING_ARTIFACTS"
+    if safety_audit.get("status") != "PASS":
+        return "BLOCKED_SAFETY_BOUNDARY"
+    data_status = _text(data_validation.get("status"), "MISSING")
+    if (
+        _texts(blocking_artifacts)
+        or _texts(stale_artifacts)
+        or data_status not in {"PASS", "PASS_WITH_WARNINGS"}
+    ):
+        return "BLOCKED_STALE_DATA"
+    if (
+        coverage_status != "PASS"
+        or evidence_report.get("safe_to_continue_shadow") is not True
+    ):
+        return "MANUAL_REVIEW_REQUIRED"
+    if data_status == "PASS_WITH_WARNINGS" or _int_or_none(
+        data_validation.get("warning_count")
+    ) not in (None, 0):
+        return "READY_WITH_WARNINGS"
+    return "READY_TO_CONTINUE"
+
+
+def _shadow_continuation_next_action(readiness: str) -> str:
+    return {
+        "READY_TO_CONTINUE": "continue_paper_shadow_observation",
+        "READY_WITH_WARNINGS": "continue_with_manual_warning_review",
+        "MANUAL_REVIEW_REQUIRED": "complete_full_weekly_review_or_record_manual_coverage_override",
+        "BLOCKED_MISSING_ARTIFACTS": "restore_missing_shadow_readiness_artifacts",
+        "BLOCKED_STALE_DATA": "refresh_or_regenerate_stale_shadow_readiness_inputs",
+        "BLOCKED_SAFETY_BOUNDARY": "stop_until_safety_boundary_is_restored",
+    }.get(readiness, "manual_review_required")
+
+
+def _data_quality_report_summary(
+    *,
+    data_quality_report_path: Path | None,
+    data_quality_report_dir: Path,
+    as_of: date | None,
+) -> dict[str, Any]:
+    path = data_quality_report_path or _latest_data_quality_report_path(
+        data_quality_report_dir,
+        as_of=as_of,
+    )
+    if path is None or not path.exists():
+        return {
+            "source_id": "data_validation_result",
+            "source_label": "Data quality validation result",
+            "exists": False,
+            "artifact_id": "",
+            "source_path": "" if path is None else str(path),
+            "status": "MISSING",
+            "generated_at": "",
+            "as_of": "",
+            "error_count": None,
+            "warning_count": None,
+            "info_count": None,
+            "validation_status": "MISSING",
+        }
+    if path.suffix.lower() == ".json":
+        payload = _read_optional_json(path) or {}
+        status = _first_text(payload.get("status"), payload.get("data_quality_status"))
+        generated_at = _first_text(payload.get("generated_at"), payload.get("check_time"))
+        as_of = _first_text(payload.get("as_of"), payload.get("evaluation_date"))
+        error_count = _int_or_none(payload.get("error_count"))
+        warning_count = _int_or_none(payload.get("warning_count"))
+        info_count = _int_or_none(payload.get("info_count"))
+    else:
+        parsed = _parse_data_quality_markdown(path)
+        status = _text(parsed.get("status"), "UNKNOWN")
+        generated_at = _text(parsed.get("generated_at"))
+        as_of = _text(parsed.get("as_of"))
+        error_count = _int_or_none(parsed.get("error_count"))
+        warning_count = _int_or_none(parsed.get("warning_count"))
+        info_count = _int_or_none(parsed.get("info_count"))
+    return {
+        "source_id": "data_validation_result",
+        "source_label": "Data quality validation result",
+        "exists": True,
+        "artifact_id": path.name,
+        "source_path": str(path),
+        "status": status or "UNKNOWN",
+        "generated_at": generated_at,
+        "as_of": as_of,
+        "error_count": error_count,
+        "warning_count": warning_count,
+        "info_count": info_count,
+        "validation_status": status or "UNKNOWN",
+    }
+
+
+def _latest_data_quality_report_path(report_dir: Path, *, as_of: date | None) -> Path | None:
+    candidates = [
+        path
+        for pattern in ("data_quality_*.json", "data_quality_*.md")
+        for path in report_dir.glob(pattern)
+        if path.is_file()
+        and (as_of is None or (_date_from_data_quality_path(path) or date.min) <= as_of)
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: (_date_from_data_quality_path(path) or date.min, path.stat().st_mtime, path.name))
+
+
+def _parse_data_quality_markdown(path: Path) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    key_map = {
+        "状态": "status",
+        "status": "status",
+        "检查时间": "generated_at",
+        "check time": "generated_at",
+        "评估日期": "as_of",
+        "as of": "as_of",
+        "错误数": "error_count",
+        "error count": "error_count",
+        "警告数": "warning_count",
+        "warning count": "warning_count",
+        "信息数": "info_count",
+        "info count": "info_count",
+    }
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("- "):
+            continue
+        item = stripped.removeprefix("- ").strip()
+        if "：" in item:
+            raw_key, raw_value = item.split("：", 1)
+        elif ":" in item:
+            raw_key, raw_value = item.split(":", 1)
+        else:
+            continue
+        key = key_map.get(raw_key.strip().lower()) or key_map.get(raw_key.strip())
+        if key:
+            fields[key] = raw_value.strip().strip("`")
+    return fields
+
+
+def _date_from_data_quality_path(path: Path) -> date | None:
+    return _date_or_none(path.stem.removeprefix("data_quality_"))
+
+
+def _first_text(*values: object) -> str:
+    for value in values:
+        text = _text(value)
+        if text:
+            return text
+    return ""
+
+
+def _int_or_none(value: object) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _dedupe_texts(value: object) -> list[str]:
+    result: list[str] = []
+    for item in _texts(value):
+        if item not in result:
+            result.append(item)
+    return result
 
 
 def _optional_dynamic_v3_artifact_payload(

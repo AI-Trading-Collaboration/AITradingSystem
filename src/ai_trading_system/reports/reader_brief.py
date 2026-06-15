@@ -2230,6 +2230,78 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "shadow_continuation_readiness_id",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_readiness_id"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_readiness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_readiness"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_safe_to_continue_shadow",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_safe_to_continue_shadow"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_missing_artifacts",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_missing_artifacts"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_blocking_artifacts",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_blocking_artifacts"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_stale_artifacts",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_stale_artifacts"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_coverage_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_coverage_status"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_manual_review_required",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_manual_review_required"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_next_required_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_next_required_action"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_data_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_data_validation_status"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_safety_boundary_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_safety_boundary_status"
+                        ),
+                    ),
+                    (
+                        "shadow_continuation_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_validation_status"
+                        ),
+                    ),
+                    (
                         "stress_scenario_library",
                         etf_dynamic_v3_parameter_research.get(
                             "stress_scenario_library_run_id"
@@ -12660,6 +12732,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "evidence_staleness_manifest.json",
     )
+    shadow_continuation_readiness_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shadow_continuation_readiness",
+        ),
+        "shadow_continuation_readiness_manifest.json",
+    )
     stress_scenario_library_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -13157,6 +13236,19 @@ def _etf_dynamic_v3_parameter_research_summary(
         if evidence_staleness_monitor_path is not None
         else None
     )
+    shadow_continuation_manifest = _read_optional_json(shadow_continuation_readiness_path)
+    shadow_continuation_report = _read_optional_json(
+        shadow_continuation_readiness_path.parent
+        / "shadow_continuation_readiness_report.json"
+        if shadow_continuation_readiness_path is not None
+        else None
+    )
+    shadow_continuation_validation = _read_optional_json(
+        shadow_continuation_readiness_path.parent
+        / "shadow_continuation_readiness_validation.json"
+        if shadow_continuation_readiness_path is not None
+        else None
+    )
     stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
     stress_scenario_library = _read_optional_json(
         stress_scenario_library_path.parent / "stress_scenario_library.json"
@@ -13237,6 +13329,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         evidence_staleness_manifest,
         evidence_staleness_report,
         evidence_staleness_validation,
+        shadow_continuation_manifest,
+        shadow_continuation_report,
+        shadow_continuation_validation,
         stress_scenario_manifest,
         stress_scenario_library,
         stress_scenario_validation,
@@ -14717,6 +14812,54 @@ def _etf_dynamic_v3_parameter_research_summary(
             evidence_staleness_validation.get("status"),
             "MISSING",
         ),
+        "shadow_continuation_readiness_id": _text(
+            shadow_continuation_manifest.get("readiness_id"),
+            "MISSING",
+        ),
+        "shadow_continuation_readiness": _text(
+            shadow_continuation_report.get("shadow_continuation_readiness"),
+            "MISSING",
+        ),
+        "shadow_continuation_safe_to_continue_shadow": shadow_continuation_report.get(
+            "safe_to_continue_shadow",
+            "MISSING",
+        ),
+        "shadow_continuation_missing_artifacts": (
+            ", ".join(_texts(shadow_continuation_report.get("missing_artifacts")))
+            or "none"
+        ),
+        "shadow_continuation_blocking_artifacts": (
+            ", ".join(_texts(shadow_continuation_report.get("blocking_artifacts")))
+            or "none"
+        ),
+        "shadow_continuation_stale_artifacts": (
+            ", ".join(_texts(shadow_continuation_report.get("stale_artifacts")))
+            or "none"
+        ),
+        "shadow_continuation_coverage_status": _text(
+            shadow_continuation_report.get("coverage_status"),
+            "MISSING",
+        ),
+        "shadow_continuation_manual_review_required": shadow_continuation_report.get(
+            "manual_review_required",
+            "MISSING",
+        ),
+        "shadow_continuation_next_required_action": _text(
+            shadow_continuation_report.get("next_required_action"),
+            "MISSING",
+        ),
+        "shadow_continuation_data_validation_status": _text(
+            shadow_continuation_report.get("data_validation_status"),
+            "MISSING",
+        ),
+        "shadow_continuation_safety_boundary_status": _text(
+            shadow_continuation_report.get("safety_boundary_status"),
+            "MISSING",
+        ),
+        "shadow_continuation_validation_status": _text(
+            shadow_continuation_validation.get("status"),
+            "MISSING",
+        ),
         "stress_scenario_library_run_id": _text(
             stress_scenario_manifest.get("library_run_id"),
             "MISSING",
@@ -15006,6 +15149,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if evidence_staleness_monitor_path is None
             else str(evidence_staleness_monitor_path)
+        ),
+        "shadow_continuation_readiness_report": (
+            ""
+            if shadow_continuation_readiness_path is None
+            else str(shadow_continuation_readiness_path)
         ),
         "stress_scenario_library": (
             ""
@@ -15948,6 +16096,18 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_safe_to_continue_shadow": "MISSING",
         "evidence_safety_boundary_status": "MISSING",
         "evidence_staleness_validation_status": "MISSING",
+        "shadow_continuation_readiness_id": "MISSING",
+        "shadow_continuation_readiness": "MISSING",
+        "shadow_continuation_safe_to_continue_shadow": "MISSING",
+        "shadow_continuation_missing_artifacts": "MISSING",
+        "shadow_continuation_blocking_artifacts": "MISSING",
+        "shadow_continuation_stale_artifacts": "MISSING",
+        "shadow_continuation_coverage_status": "MISSING",
+        "shadow_continuation_manual_review_required": "MISSING",
+        "shadow_continuation_next_required_action": "MISSING",
+        "shadow_continuation_data_validation_status": "MISSING",
+        "shadow_continuation_safety_boundary_status": "MISSING",
+        "shadow_continuation_validation_status": "MISSING",
         "stress_scenario_library_run_id": "MISSING",
         "stress_scenario_library_id": "MISSING",
         "stress_scenario_count": "MISSING",
@@ -16018,6 +16178,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_weekly_review": "",
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
+        "shadow_continuation_readiness_report": "",
         "stress_scenario_library": "",
         "drawdown_event_casebook": "",
         "flip_rotation_event_casebook": "",

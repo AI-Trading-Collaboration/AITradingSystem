@@ -1548,6 +1548,60 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    shadow_continuation_dir = tmp_path / "shadow_continuation_readiness" / "continue123"
+    shadow_continuation_dir.mkdir(parents=True)
+    shadow_continuation_path = (
+        shadow_continuation_dir / "shadow_continuation_readiness_manifest.json"
+    )
+    shadow_continuation_path.write_text(
+        json.dumps(
+            {
+                "readiness_id": "continue123",
+                "shadow_continuation_readiness": "MANUAL_REVIEW_REQUIRED",
+                "safe_to_continue_shadow": False,
+                "status": "MANUAL_REVIEW_REQUIRED",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (shadow_continuation_dir / "shadow_continuation_readiness_report.json").write_text(
+        json.dumps(
+            {
+                "readiness_id": "continue123",
+                "shadow_continuation_readiness": "MANUAL_REVIEW_REQUIRED",
+                "safe_to_continue_shadow": False,
+                "missing_artifacts": [],
+                "blocking_artifacts": [],
+                "stale_artifacts": [],
+                "coverage_status": "MANUAL_REVIEW_REQUIRED",
+                "manual_review_required": True,
+                "next_required_action": (
+                    "complete_full_weekly_review_or_record_manual_coverage_override"
+                ),
+                "data_validation_status": "PASS_WITH_WARNINGS",
+                "safety_boundary_status": "PASS",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+                "automatic_candidate_promotion": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (shadow_continuation_dir / "shadow_continuation_readiness_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     stress_dir = tmp_path / "stress_scenario_library" / "stress123"
     stress_dir.mkdir(parents=True)
     stress_path = stress_dir / "stress_scenario_manifest.json"
@@ -1714,6 +1768,10 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_paper_shadow_drift_monitor", drift_path),
             _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
             _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
+            _report_record(
+                "etf_dynamic_v3_shadow_continuation_readiness",
+                shadow_continuation_path,
+            ),
             _report_record("etf_dynamic_v3_stress_scenario_library", stress_path),
             _report_record("etf_dynamic_v3_drawdown_event_casebook", drawdown_path),
             _report_record("etf_dynamic_v3_flip_rotation_event_casebook", flip_path),
@@ -1828,6 +1886,21 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["evidence_safe_to_continue_shadow"] is True
     assert summary["evidence_safety_boundary_status"] == "PASS"
     assert summary["evidence_staleness_validation_status"] == "PASS"
+    assert summary["shadow_continuation_readiness_id"] == "continue123"
+    assert summary["shadow_continuation_readiness"] == "MANUAL_REVIEW_REQUIRED"
+    assert summary["shadow_continuation_safe_to_continue_shadow"] is False
+    assert summary["shadow_continuation_missing_artifacts"] == "none"
+    assert summary["shadow_continuation_blocking_artifacts"] == "none"
+    assert summary["shadow_continuation_stale_artifacts"] == "none"
+    assert summary["shadow_continuation_coverage_status"] == "MANUAL_REVIEW_REQUIRED"
+    assert summary["shadow_continuation_manual_review_required"] is True
+    assert (
+        summary["shadow_continuation_next_required_action"]
+        == "complete_full_weekly_review_or_record_manual_coverage_override"
+    )
+    assert summary["shadow_continuation_data_validation_status"] == "PASS_WITH_WARNINGS"
+    assert summary["shadow_continuation_safety_boundary_status"] == "PASS"
+    assert summary["shadow_continuation_validation_status"] == "PASS"
     assert summary["stress_scenario_library_run_id"] == "stress123"
     assert (
         summary["stress_scenario_library_id"]

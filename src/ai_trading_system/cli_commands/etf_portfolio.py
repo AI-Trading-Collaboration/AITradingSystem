@@ -1850,6 +1850,10 @@ dynamic_v3_evidence_staleness_monitor_app = typer.Typer(
     help="Dynamic v3 rescue evidence staleness monitor workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_shadow_continuation_readiness_app = typer.Typer(
+    help="Dynamic v3 rescue shadow continuation readiness workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_stress_scenario_library_app = typer.Typer(
     help="Dynamic v3 rescue stress scenario library workflow。",
     no_args_is_help=True,
@@ -2642,6 +2646,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_evidence_staleness_monitor_app,
     name="evidence-staleness-monitor",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_shadow_continuation_readiness_app,
+    name="shadow-continuation-readiness",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_stress_scenario_library_app,
@@ -20593,6 +20601,192 @@ def dynamic_v3_validate_evidence_staleness_monitor_command(
             monitor_id=monitor_id,
             output_dir=output_dir,
             policy_path=policy_path,
+        )
+    )
+
+
+@dynamic_v3_shadow_continuation_readiness_app.command("run")
+def dynamic_v3_shadow_continuation_readiness_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="readiness as-of date YYYY-MM-DD；省略时使用当前 UTC 日期。",
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    paper_shadow_daily_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-daily-id",
+            "--daily-observation-id",
+            help="paper-shadow daily observation id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_drift_monitor_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-drift-monitor-id",
+            "--drift-monitor-id",
+            help="paper-shadow drift monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_weekly_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-weekly-review-id",
+            "--weekly-review-id",
+            help="paper-shadow weekly review id；缺省读取 latest。",
+        ),
+    ] = None,
+    evidence_staleness_monitor_id: Annotated[
+        str | None,
+        typer.Option(
+            "--evidence-staleness-monitor-id",
+            "--staleness-monitor-id",
+            help="evidence staleness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option("--data-quality-report-path", help="data quality report path。"),
+    ] = None,
+    data_quality_report_dir: Annotated[
+        Path,
+        typer.Option("--data-quality-report-dir", help="data quality report directory。"),
+    ] = filtered_readiness.DEFAULT_MARKET_PANEL_REPORT_DIR,
+    paper_shadow_daily_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-daily-dir", help="paper-shadow daily artifact root。"),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    paper_shadow_drift_monitor_dir: Annotated[
+        Path,
+        typer.Option(
+            "--paper-shadow-drift-monitor-dir",
+            help="paper-shadow drift monitor artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+    paper_shadow_weekly_review_dir: Annotated[
+        Path,
+        typer.Option(
+            "--paper-shadow-weekly-review-dir",
+            help="paper-shadow weekly review artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    evidence_staleness_monitor_dir: Annotated[
+        Path,
+        typer.Option(
+            "--evidence-staleness-monitor-dir",
+            help="evidence staleness monitor artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow continuation readiness artifact root。"),
+    ] = filtered_readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+) -> None:
+    result = filtered_readiness.run_shadow_continuation_readiness_report(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        paper_shadow_daily_id=paper_shadow_daily_id,
+        paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
+        paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
+        evidence_staleness_monitor_id=evidence_staleness_monitor_id,
+        data_quality_report_path=data_quality_report_path,
+        data_quality_report_dir=data_quality_report_dir,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
+        evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(result.get("shadow_continuation_readiness_report"))
+    validation = _mapping_obj(result.get("shadow_continuation_readiness_validation"))
+    typer.echo(f"readiness_id={result['readiness_id']}")
+    typer.echo(f"shadow_continuation_readiness={report.get('shadow_continuation_readiness')}")
+    typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
+    typer.echo(f"missing_artifacts={','.join(_texts(report.get('missing_artifacts')))}")
+    typer.echo(f"blocking_artifacts={','.join(_texts(report.get('blocking_artifacts')))}")
+    typer.echo(f"stale_artifacts={','.join(_texts(report.get('stale_artifacts')))}")
+    typer.echo(f"coverage_status={report.get('coverage_status')}")
+    typer.echo(f"manual_review_required={report.get('manual_review_required')}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"data_validation_status={report.get('data_validation_status')}")
+    typer.echo(f"safety_boundary_status={report.get('safety_boundary_status')}")
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("shadow_continuation_readiness_only=true")
+    typer.echo("advisory_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_shadow_continuation_readiness_app.command("report")
+def dynamic_v3_shadow_continuation_readiness_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    readiness_id: Annotated[
+        str | None,
+        typer.Option("--readiness-id", help="shadow continuation readiness id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow continuation readiness artifact root。"),
+    ] = filtered_readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+) -> None:
+    if not latest and not readiness_id:
+        raise typer.BadParameter("--readiness-id or --latest is required")
+    payload = filtered_readiness.shadow_continuation_readiness_report_payload(
+        readiness_id=readiness_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(payload.get("shadow_continuation_readiness_report"))
+    validation = _mapping_obj(payload.get("shadow_continuation_readiness_validation"))
+    typer.echo(f"readiness_id={payload['readiness_id']}")
+    typer.echo(f"shadow_continuation_readiness={report.get('shadow_continuation_readiness')}")
+    typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
+    typer.echo(f"missing_artifacts={','.join(_texts(report.get('missing_artifacts')))}")
+    typer.echo(f"blocking_artifacts={','.join(_texts(report.get('blocking_artifacts')))}")
+    typer.echo(f"stale_artifacts={','.join(_texts(report.get('stale_artifacts')))}")
+    typer.echo(f"coverage_status={report.get('coverage_status')}")
+    typer.echo(f"manual_review_required={report.get('manual_review_required')}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"data_validation_status={report.get('data_validation_status')}")
+    typer.echo(f"safety_boundary_status={report.get('safety_boundary_status')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={payload['shadow_continuation_readiness_markdown_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-continuation-readiness")
+def dynamic_v3_validate_shadow_continuation_readiness_command(
+    readiness_id: Annotated[
+        str | None,
+        typer.Option("--readiness-id", help="shadow continuation readiness id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow continuation readiness artifact root。"),
+    ] = filtered_readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+) -> None:
+    resolved_id = readiness_id
+    if latest:
+        payload = filtered_readiness.shadow_continuation_readiness_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("readiness_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--readiness-id or --latest is required")
+    _echo_validation_payload(
+        filtered_readiness.validate_shadow_continuation_readiness_artifact(
+            readiness_id=resolved_id,
+            output_dir=output_dir,
         )
     )
 
