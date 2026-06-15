@@ -20401,6 +20401,30 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         str | None,
         typer.Option("--owner-review-id", help="owner filtered review id；缺省读取 latest。"),
     ] = None,
+    paper_shadow_daily_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-daily-id",
+            "--daily-observation-id",
+            help="paper-shadow daily observation id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_drift_monitor_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-drift-monitor-id",
+            "--drift-monitor-id",
+            help="paper-shadow drift monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_weekly_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-weekly-review-id",
+            "--weekly-review-id",
+            help="paper-shadow weekly review id；缺省读取 latest。",
+        ),
+    ] = None,
     policy_path: Annotated[
         Path,
         typer.Option("--policy-path", help="evidence staleness policy YAML。"),
@@ -20413,6 +20437,24 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         Path,
         typer.Option("--market-panel-dir", help="market panel report directory。"),
     ] = filtered_readiness.DEFAULT_MARKET_PANEL_REPORT_DIR,
+    paper_shadow_daily_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-daily-dir", help="paper-shadow daily artifact root。"),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    paper_shadow_drift_monitor_dir: Annotated[
+        Path,
+        typer.Option(
+            "--paper-shadow-drift-monitor-dir",
+            help="paper-shadow drift monitor artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+    paper_shadow_weekly_review_dir: Annotated[
+        Path,
+        typer.Option(
+            "--paper-shadow-weekly-review-dir",
+            help="paper-shadow weekly review artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence staleness monitor artifact root。"),
@@ -20425,9 +20467,15 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         stress_backfill_id=stress_backfill_id,
         ab_review_id=ab_review_id,
         owner_review_id=owner_review_id,
+        paper_shadow_daily_id=paper_shadow_daily_id,
+        paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
+        paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
         policy_path=policy_path,
         price_cache_path=price_cache_path,
         market_panel_dir=market_panel_dir,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
         output_dir=output_dir,
     )
     report = _mapping_obj(result.get("evidence_staleness_report"))
@@ -20436,7 +20484,10 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
     typer.echo(f"evidence_freshness_status={report.get('evidence_freshness_status')}")
     typer.echo(f"stale_artifacts={','.join(_texts(report.get('stale_artifacts')))}")
     typer.echo(f"blocking_artifacts={','.join(_texts(report.get('blocking_artifacts')))}")
+    typer.echo(f"missing_artifacts={','.join(_texts(report.get('missing_artifacts')))}")
     typer.echo(f"next_refresh_action={report.get('next_refresh_action')}")
+    typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
+    typer.echo(f"safety_boundary_status={report.get('safety_boundary_status')}")
     typer.echo(f"validation_status={validation.get('status')}")
     typer.echo("evidence_staleness_monitor_only=true")
     typer.echo("data_downloaded_by_monitor=false")
@@ -20467,7 +20518,10 @@ def dynamic_v3_evidence_staleness_monitor_report_command(
     typer.echo(f"evidence_freshness_status={report.get('evidence_freshness_status')}")
     typer.echo(f"stale_artifacts={','.join(_texts(report.get('stale_artifacts')))}")
     typer.echo(f"blocking_artifacts={','.join(_texts(report.get('blocking_artifacts')))}")
+    typer.echo(f"missing_artifacts={','.join(_texts(report.get('missing_artifacts')))}")
     typer.echo(f"next_refresh_action={report.get('next_refresh_action')}")
+    typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
+    typer.echo(f"safety_boundary_status={report.get('safety_boundary_status')}")
     typer.echo(f"report_path={payload['evidence_staleness_markdown_path']}")
     typer.echo("production_effect=none")
 

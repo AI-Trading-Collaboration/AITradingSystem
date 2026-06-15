@@ -49,6 +49,13 @@ DEFAULT_PAPER_SHADOW_PROTOCOL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper
 DEFAULT_CANDIDATE_DECISION_LEDGER_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_decision_ledger"
 )
+DEFAULT_PAPER_SHADOW_DAILY_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_daily"
+DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_drift_monitor"
+)
+DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_weekly_review"
+)
 DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_staleness_monitor"
 )
@@ -2235,10 +2242,16 @@ def run_evidence_staleness_monitor(
     stress_backfill_id: str | None = None,
     ab_review_id: str | None = None,
     owner_review_id: str | None = None,
+    paper_shadow_daily_id: str | None = None,
+    paper_shadow_drift_monitor_id: str | None = None,
+    paper_shadow_weekly_review_id: str | None = None,
     evidence_dir: Path = DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR,
     stress_backfill_dir: Path = DEFAULT_FILTERED_CANDIDATE_STRESS_BACKFILL_DIR,
     ab_review_dir: Path = DEFAULT_FILTERED_CANDIDATE_AB_REVIEW_DIR,
     owner_review_dir: Path = DEFAULT_OWNER_FILTERED_CANDIDATE_REVIEW_DIR,
+    paper_shadow_daily_dir: Path = DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    paper_shadow_drift_monitor_dir: Path = DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+    paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     output_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -2255,10 +2268,16 @@ def run_evidence_staleness_monitor(
         stress_backfill_id=stress_backfill_id,
         ab_review_id=ab_review_id,
         owner_review_id=owner_review_id,
+        paper_shadow_daily_id=paper_shadow_daily_id,
+        paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
+        paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
         evidence_dir=evidence_dir,
         stress_backfill_dir=stress_backfill_dir,
         ab_review_dir=ab_review_dir,
         owner_review_dir=owner_review_dir,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
     )
     status = _overall_evidence_freshness_status(policy, findings)
     stale_artifacts = [
@@ -2267,6 +2286,14 @@ def run_evidence_staleness_monitor(
     blocking_artifacts = [
         row.get("source_id") for row in findings if row.get("severity") == "BLOCKING"
     ]
+    missing_artifacts = [
+        row.get("source_id") for row in findings if row.get("missing") is True
+    ]
+    safe_to_continue_shadow = (
+        status in {"FRESH", "ACCEPTABLE"}
+        and not blocking_artifacts
+        and not missing_artifacts
+    )
     next_refresh_action = _mapping(policy.get("default_next_actions")).get(
         status,
         "manual_review_required",
@@ -2292,10 +2319,14 @@ def run_evidence_staleness_monitor(
         "evidence_freshness_status": status,
         "stale_artifacts": _texts(stale_artifacts),
         "blocking_artifacts": _texts(blocking_artifacts),
+        "missing_artifacts": _texts(missing_artifacts),
         "next_refresh_action": next_refresh_action,
+        "safe_to_continue_shadow": safe_to_continue_shadow,
+        "safety_boundary_status": "PASS",
         "finding_count": len(findings),
         "stale_count": len(stale_artifacts),
         "blocking_count": len(blocking_artifacts),
+        "missing_count": len(missing_artifacts),
         "findings": findings,
         **EVIDENCE_STALENESS_MONITOR_SAFETY,
     }
@@ -2397,6 +2428,9 @@ def validate_evidence_staleness_monitor_artifact(
         "stress_backfill_result",
         "ab_review",
         "owner_review",
+        "paper_shadow_daily_observation",
+        "paper_shadow_drift_monitor",
+        "paper_shadow_weekly_review",
     }
     finding_sources = {row.get("source_id") for row in findings}
     checks = _required_file_checks(
@@ -2436,6 +2470,32 @@ def validate_evidence_staleness_monitor_artifact(
                 "blocking_artifacts_consistent",
                 set(_texts(report.get("blocking_artifacts")))
                 == {row.get("source_id") for row in findings if row.get("severity") == "BLOCKING"},
+                "",
+            ),
+            st._check(
+                "missing_artifacts_consistent",
+                set(_texts(report.get("missing_artifacts")))
+                == {row.get("source_id") for row in findings if row.get("missing") is True},
+                "",
+            ),
+            st._check(
+                "safe_to_continue_shadow_visible",
+                report.get("safe_to_continue_shadow") in (True, False),
+                "",
+            ),
+            st._check(
+                "safe_to_continue_shadow_consistent",
+                report.get("safe_to_continue_shadow")
+                == (
+                    report.get("evidence_freshness_status") in {"FRESH", "ACCEPTABLE"}
+                    and not _texts(report.get("blocking_artifacts"))
+                    and not _texts(report.get("missing_artifacts"))
+                ),
+                "",
+            ),
+            st._check(
+                "safety_boundary_status_visible",
+                report.get("safety_boundary_status") == "PASS",
                 "",
             ),
             st._check("reader_brief_quality_fields", "evidence_freshness_status" in reader, ""),
@@ -3151,7 +3211,10 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- key_result: evidence_freshness_status={report.get('evidence_freshness_status')}",
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
+            f"- missing_artifacts: {', '.join(_texts(report.get('missing_artifacts'))) or 'none'}",
             f"- next_refresh_action: {report.get('next_refresh_action')}",
+            f"- safe_to_continue_shadow: {report.get('safe_to_continue_shadow')}",
+            f"- safety_boundary_status: {report.get('safety_boundary_status')}",
             f"- policy_version: {report.get('policy_id')} / {report.get('policy_version')}",
             "- safety_boundary: read-only freshness monitor / no refresh / no upstream rerun / no official target / no broker / no production",
             "",
@@ -3180,7 +3243,10 @@ def render_evidence_staleness_report(
             f"- evidence_freshness_status: {report.get('evidence_freshness_status')}",
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
+            f"- missing_artifacts: {', '.join(_texts(report.get('missing_artifacts'))) or 'none'}",
             f"- next_refresh_action: {report.get('next_refresh_action')}",
+            f"- safe_to_continue_shadow: {report.get('safe_to_continue_shadow')}",
+            f"- safety_boundary_status: {report.get('safety_boundary_status')}",
             f"- policy: {report.get('policy_id')} / {report.get('policy_version')}",
             "",
             "## Findings",
@@ -4216,10 +4282,16 @@ def _evidence_staleness_findings(
     stress_backfill_id: str | None,
     ab_review_id: str | None,
     owner_review_id: str | None,
+    paper_shadow_daily_id: str | None,
+    paper_shadow_drift_monitor_id: str | None,
+    paper_shadow_weekly_review_id: str | None,
     evidence_dir: Path,
     stress_backfill_dir: Path,
     ab_review_dir: Path,
     owner_review_dir: Path,
+    paper_shadow_daily_dir: Path,
+    paper_shadow_drift_monitor_dir: Path,
+    paper_shadow_weekly_review_dir: Path,
 ) -> list[dict[str, Any]]:
     rules = _mapping(policy.get("rules"))
     latest_price_date = _latest_price_cache_date(price_cache_path)
@@ -4246,6 +4318,27 @@ def _evidence_staleness_findings(
         owner_review_id=owner_review_id,
         latest=owner_review_id is None,
         output_dir=owner_review_dir,
+    )
+    paper_shadow_daily = _optional_dynamic_v3_artifact_payload(
+        artifact_id=paper_shadow_daily_id,
+        latest_pointer="latest_paper_shadow_daily",
+        output_dir=paper_shadow_daily_dir,
+        required_name="paper_shadow_daily_manifest.json",
+        detail_name="paper_shadow_daily_observation.json",
+    )
+    paper_shadow_drift = _optional_dynamic_v3_artifact_payload(
+        artifact_id=paper_shadow_drift_monitor_id,
+        latest_pointer="latest_paper_shadow_drift_monitor",
+        output_dir=paper_shadow_drift_monitor_dir,
+        required_name="paper_shadow_drift_manifest.json",
+        detail_name="paper_shadow_drift_report.json",
+    )
+    paper_shadow_weekly = _optional_dynamic_v3_artifact_payload(
+        artifact_id=paper_shadow_weekly_review_id,
+        latest_pointer="latest_paper_shadow_weekly_review",
+        output_dir=paper_shadow_weekly_review_dir,
+        required_name="paper_shadow_weekly_manifest.json",
+        detail_name="paper_shadow_weekly_review.json",
     )
     evidence_date = _date_or_none(evidence.get("date_end")) or _date_or_none(
         evidence.get("generated_at")
@@ -4280,7 +4373,7 @@ def _evidence_staleness_findings(
             candidate=candidate,
             timestamp=evidence_date,
             timestamp_basis="evidence_date_end_or_generated_at",
-            source_path=Path(_text(evidence.get("filtered_candidate_evidence_manifest_path"))),
+            source_path=_path_or_none(evidence.get("filtered_candidate_evidence_manifest_path")),
             artifact_id=_text(evidence.get("evidence_id")),
             rule=_mapping(rules.get("signal_artifact")),
             as_of=as_of,
@@ -4292,7 +4385,7 @@ def _evidence_staleness_findings(
             candidate=candidate,
             timestamp=_date_or_none(stress.get("generated_at")),
             timestamp_basis="stress_backfill_generated_at",
-            source_path=Path(_text(stress.get("filtered_candidate_stress_manifest_path"))),
+            source_path=_path_or_none(stress.get("filtered_candidate_stress_manifest_path")),
             artifact_id=_text(stress.get("stress_backfill_id")),
             rule=_mapping(rules.get("stress_backfill_result")),
             as_of=as_of,
@@ -4304,7 +4397,7 @@ def _evidence_staleness_findings(
             candidate=candidate,
             timestamp=_date_or_none(ab_review.get("generated_at")),
             timestamp_basis="ab_review_generated_at",
-            source_path=Path(_text(ab_review.get("filtered_candidate_ab_manifest_path"))),
+            source_path=_path_or_none(ab_review.get("filtered_candidate_ab_manifest_path")),
             artifact_id=_text(ab_review.get("ab_review_id")),
             rule=_mapping(rules.get("ab_review")),
             as_of=as_of,
@@ -4316,11 +4409,68 @@ def _evidence_staleness_findings(
             candidate=candidate,
             timestamp=_date_or_none(owner_review.get("generated_at")),
             timestamp_basis="owner_review_generated_at",
-            source_path=Path(_text(owner_review.get("owner_filtered_candidate_manifest_path"))),
+            source_path=_path_or_none(owner_review.get("owner_filtered_candidate_manifest_path")),
             artifact_id=_text(owner_review.get("owner_review_id")),
             rule=_mapping(rules.get("owner_review")),
             as_of=as_of,
             artifact_status=_text(owner_review.get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="paper_shadow_daily_observation",
+            source_label="Paper-shadow daily observation",
+            candidate=candidate,
+            timestamp=_date_or_none(
+                _mapping(paper_shadow_daily.get("detail")).get("observation_date")
+            )
+            or _date_or_none(_mapping(paper_shadow_daily.get("manifest")).get("generated_at")),
+            timestamp_basis="paper_shadow_daily_observation_date_or_generated_at",
+            source_path=_path_or_none(
+                _mapping(paper_shadow_daily.get("manifest")).get(
+                    "paper_shadow_daily_manifest_path"
+                )
+            ),
+            artifact_id=_text(_mapping(paper_shadow_daily.get("manifest")).get("observation_id")),
+            rule=_mapping(rules.get("paper_shadow_daily_observation")),
+            as_of=as_of,
+            artifact_status=_text(_mapping(paper_shadow_daily.get("manifest")).get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="paper_shadow_drift_monitor",
+            source_label="Paper-shadow drift monitor",
+            candidate=candidate,
+            timestamp=_date_or_none(
+                _mapping(paper_shadow_drift.get("manifest")).get("generated_at")
+            )
+            or _date_or_none(_mapping(paper_shadow_drift.get("detail")).get("observation_date")),
+            timestamp_basis="paper_shadow_drift_monitor_generated_at",
+            source_path=_path_or_none(
+                _mapping(paper_shadow_drift.get("manifest")).get(
+                    "paper_shadow_drift_manifest_path"
+                )
+            ),
+            artifact_id=_text(_mapping(paper_shadow_drift.get("manifest")).get("monitor_id")),
+            rule=_mapping(rules.get("paper_shadow_drift_monitor")),
+            as_of=as_of,
+            artifact_status=_text(_mapping(paper_shadow_drift.get("manifest")).get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="paper_shadow_weekly_review",
+            source_label="Paper-shadow weekly review",
+            candidate=candidate,
+            timestamp=_date_or_none(_mapping(paper_shadow_weekly.get("detail")).get("week_end"))
+            or _date_or_none(_mapping(paper_shadow_weekly.get("manifest")).get("generated_at")),
+            timestamp_basis="paper_shadow_weekly_week_end_or_generated_at",
+            source_path=_path_or_none(
+                _mapping(paper_shadow_weekly.get("manifest")).get(
+                    "paper_shadow_weekly_manifest_path"
+                )
+            ),
+            artifact_id=_text(
+                _mapping(paper_shadow_weekly.get("manifest")).get("weekly_review_id")
+            ),
+            rule=_mapping(rules.get("paper_shadow_weekly_review")),
+            as_of=as_of,
+            artifact_status=_text(_mapping(paper_shadow_weekly.get("manifest")).get("status")),
         ),
     ]
 
@@ -4341,6 +4491,15 @@ def _evidence_freshness_finding(
     raw_age = (as_of - timestamp).days if timestamp is not None else None
     age_days = raw_age if raw_age is not None else None
     severity = "BLOCKING" if raw_age is not None and raw_age < 0 else _freshness_severity(age_days, rule)
+    source_exists = source_path.exists() if source_path is not None else False
+    missing = (
+        rule.get("required") is not False
+        and (
+            timestamp is None
+            or not _text(artifact_id)
+            or (source_path is not None and not source_exists)
+        )
+    )
     return {
         "schema_version": st.SCHEMA_VERSION,
         "source_id": source_id,
@@ -4349,6 +4508,7 @@ def _evidence_freshness_finding(
         "artifact_id": artifact_id,
         "artifact_status": artifact_status,
         "source_path": "" if source_path is None else str(source_path),
+        "source_exists": source_exists,
         "timestamp": "" if timestamp is None else timestamp.isoformat(),
         "timestamp_basis": timestamp_basis,
         "as_of": as_of.isoformat(),
@@ -4359,6 +4519,7 @@ def _evidence_freshness_finding(
         "acceptable_days": rule.get("acceptable_days"),
         "blocking_days": rule.get("blocking_days"),
         "required": rule.get("required") is not False,
+        "missing": missing,
         "severity": severity,
         "recommended_action": _freshness_recommended_action(severity, source_id),
         **EVIDENCE_STALENESS_MONITOR_SAFETY,
@@ -4388,6 +4549,55 @@ def _freshness_recommended_action(severity: str, source_id: str) -> str:
     if severity == "STALE":
         return f"refresh_or_regenerate_{source_id}"
     return f"block_until_{source_id}_is_refreshed"
+
+
+def _optional_dynamic_v3_artifact_payload(
+    *,
+    artifact_id: str | None,
+    latest_pointer: str,
+    output_dir: Path,
+    required_name: str,
+    detail_name: str,
+) -> dict[str, Any]:
+    root = _optional_dynamic_v3_artifact_dir(
+        artifact_id=artifact_id,
+        latest_pointer=latest_pointer,
+        output_dir=output_dir,
+        required_name=required_name,
+    )
+    if root is None:
+        return {"manifest": {}, "detail": {}, "root": ""}
+    return {
+        "manifest": _read_optional_json(root / required_name) or {},
+        "detail": _read_optional_json(root / detail_name) or {},
+        "root": str(root),
+    }
+
+
+def _optional_dynamic_v3_artifact_dir(
+    *,
+    artifact_id: str | None,
+    latest_pointer: str,
+    output_dir: Path,
+    required_name: str,
+) -> Path | None:
+    try:
+        return _artifact_dir(
+            artifact_id=artifact_id,
+            latest_pointer=latest_pointer,
+            latest=artifact_id is None,
+            output_dir=output_dir,
+            required_name=required_name,
+        )
+    except st.DynamicV3SystemTargetError:
+        if artifact_id is not None:
+            return None
+    return st._latest_child_dir_with(output_dir, required_name)
+
+
+def _path_or_none(value: object) -> Path | None:
+    text = _text(value)
+    return Path(text) if text else None
 
 
 def _overall_evidence_freshness_status(

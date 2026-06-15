@@ -87,3 +87,33 @@ rules:
     rationale: >
       Owner review is the most decision-facing artifact and should be revisited
       before the next candidate step if it becomes stale.
+  paper_shadow_daily_observation:
+    required: true
+    timestamp_basis: paper_shadow_daily_observation_date_or_generated_at
+    fresh_days: 3
+    acceptable_days: 7
+    blocking_days: 14
+    rationale: >
+      Daily paper-shadow observations are the most recent behavior evidence for
+      the candidate. A missing or dated observation should block interpretation
+      of current paper-shadow behavior.
+  paper_shadow_drift_monitor:
+    required: true
+    timestamp_basis: paper_shadow_drift_monitor_generated_at
+    fresh_days: 3
+    acceptable_days: 7
+    blocking_days: 14
+    rationale: >
+      Drift severity is only meaningful when it is close to the daily
+      observation being reviewed. Stale drift findings should not support a new
+      weekly or owner decision.
+  paper_shadow_weekly_review:
+    required: true
+    timestamp_basis: paper_shadow_weekly_week_end_or_generated_at
+    fresh_days: 7
+    acceptable_days: 14
+    blocking_days: 30
+    rationale: >
+      Weekly review is the owner-facing paper-shadow aggregation layer. Missing
+      or stale weekly review evidence must be explicit before the next candidate
+      step continues.

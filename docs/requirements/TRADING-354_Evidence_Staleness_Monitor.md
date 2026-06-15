@@ -1,18 +1,20 @@
 # TRADING-354 Evidence Staleness Monitor
 
-最后更新：2026-06-15
+最后更新：2026-06-16
 
 ## 1. 背景
 
 TRADING-349 已建立 candidate decision ledger，但 ledger 只能记录当时的候选决策状态。
-如果上游 price data、market panel、signal evidence、stress backfill、A/B review 或 owner
+如果上游 price data、market panel、signal evidence、stress backfill、A/B review、owner
+review、paper-shadow daily observation、paper-shadow drift monitor 或 paper-shadow weekly
 review 已经陈旧，后续 candidate decision 仍可能被误读为当前可用证据。
 
 ## 2. 目标
 
 1. 新增 evidence timestamp extraction。
 2. 用 policy YAML 定义 price data、market panel、signal artifact、stress backfill result、
-   A/B review 和 owner review 的 freshness rules。
+   A/B review、owner review、paper-shadow daily observation、paper-shadow drift monitor 和
+   paper-shadow weekly review 的 freshness rules。
 3. 输出 FRESH、ACCEPTABLE、STALE、BLOCKING severity。
 4. 新增 validate CLI。
 5. 新增 report CLI 和 Reader Brief summary。
@@ -54,7 +56,10 @@ Expected summary fields:
 - `evidence_freshness_status`
 - `stale_artifacts`
 - `blocking_artifacts`
+- `missing_artifacts`
 - `next_refresh_action`
+- `safe_to_continue_shadow`
+- `safety_boundary_status`
 
 ## 6. Safety Boundary
 
@@ -77,7 +82,8 @@ All outputs are read-only and fixed to:
 
 - `evidence-staleness-monitor run/report` 可运行。
 - `validate-evidence-staleness-monitor` 返回 PASS。
-- Reader Brief 显示 freshness status、stale artifacts、blocking artifacts 和 next action。
+- Reader Brief 显示 freshness status、stale artifacts、blocking artifacts、missing artifacts、
+  safe-to-continue-shadow、safety boundary status 和 next action。
 - README、operations runbook、system flow、artifact catalog、report registry、requirements 和
   task register 同步更新。
 - focused pytest、contract-validation suite、ruff、compileall、git diff check、documentation
@@ -95,3 +101,14 @@ All outputs are read-only and fixed to:
   PASS，report index `PASS_WITH_WARNINGS` 仅保留既有 missing/stale visibility，Reader Brief OK，
   Reader Brief quality OK。安全边界保持 read-only / no data refresh / no upstream rerun /
   no official target / no broker / no production。
+- 2026-06-16：补齐附件验收范围并转 DONE；monitor 现在把 paper-shadow daily observation、
+  paper-shadow drift monitor 和 paper-shadow weekly review 纳入 policy-governed freshness
+  findings，输出 `missing_artifacts`、`safe_to_continue_shadow` 和
+  `safety_boundary_status`，并在缺失 weekly review 时 fail-closed 为 `BLOCKING`。真实只读
+  run 生成 `evidence-staleness-monitor_39cc2b41171c8b6d`，当前
+  `evidence_freshness_status=BLOCKING`、`blocking_artifacts=paper_shadow_weekly_review`、
+  `missing_artifacts=paper_shadow_weekly_review`、`safe_to_continue_shadow=false`，
+  `validate-evidence-staleness-monitor` 返回 PASS / failed=0。验证通过
+  `python -m pytest tests/test_evidence_staleness_monitor.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q`
+  36 passed、`python -m ruff check src tests`、`python -m compileall src` 和
+  `git diff --check`。

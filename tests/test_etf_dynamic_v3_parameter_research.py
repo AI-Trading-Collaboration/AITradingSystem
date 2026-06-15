@@ -1519,7 +1519,10 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
                 "evidence_freshness_status": "ACCEPTABLE",
                 "stale_artifacts": [],
                 "blocking_artifacts": [],
+                "missing_artifacts": [],
                 "next_refresh_action": "continue_with_manual_freshness_note",
+                "safe_to_continue_shadow": True,
+                "safety_boundary_status": "PASS",
                 "production_effect": "none",
                 "broker_action_taken": False,
                 "production_candidate_generated": False,
@@ -1800,10 +1803,13 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["evidence_freshness_status"] == "ACCEPTABLE"
     assert summary["evidence_stale_artifacts"] == "none"
     assert summary["evidence_blocking_artifacts"] == "none"
+    assert summary["evidence_missing_artifacts"] == "none"
     assert (
         summary["evidence_next_refresh_action"]
         == "continue_with_manual_freshness_note"
     )
+    assert summary["evidence_safe_to_continue_shadow"] is True
+    assert summary["evidence_safety_boundary_status"] == "PASS"
     assert summary["evidence_staleness_validation_status"] == "PASS"
     assert summary["stress_scenario_library_run_id"] == "stress123"
     assert (

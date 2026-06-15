@@ -2146,9 +2146,25 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "evidence_missing_artifacts",
+                        etf_dynamic_v3_parameter_research.get("evidence_missing_artifacts"),
+                    ),
+                    (
                         "evidence_next_refresh_action",
                         etf_dynamic_v3_parameter_research.get(
                             "evidence_next_refresh_action"
+                        ),
+                    ),
+                    (
+                        "evidence_safe_to_continue_shadow",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_safe_to_continue_shadow"
+                        ),
+                    ),
+                    (
+                        "evidence_safety_boundary_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_safety_boundary_status"
                         ),
                     ),
                     (
@@ -14575,8 +14591,20 @@ def _etf_dynamic_v3_parameter_research_summary(
             ", ".join(_texts(evidence_staleness_report.get("blocking_artifacts")))
             or "none"
         ),
+        "evidence_missing_artifacts": (
+            ", ".join(_texts(evidence_staleness_report.get("missing_artifacts")))
+            or "none"
+        ),
         "evidence_next_refresh_action": _text(
             evidence_staleness_report.get("next_refresh_action"),
+            "MISSING",
+        ),
+        "evidence_safe_to_continue_shadow": evidence_staleness_report.get(
+            "safe_to_continue_shadow",
+            "MISSING",
+        ),
+        "evidence_safety_boundary_status": _text(
+            evidence_staleness_report.get("safety_boundary_status"),
             "MISSING",
         ),
         "evidence_staleness_validation_status": _text(
@@ -15799,7 +15827,10 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_freshness_status": "MISSING",
         "evidence_stale_artifacts": "MISSING",
         "evidence_blocking_artifacts": "MISSING",
+        "evidence_missing_artifacts": "MISSING",
         "evidence_next_refresh_action": "MISSING",
+        "evidence_safe_to_continue_shadow": "MISSING",
+        "evidence_safety_boundary_status": "MISSING",
         "evidence_staleness_validation_status": "MISSING",
         "stress_scenario_library_run_id": "MISSING",
         "stress_scenario_library_id": "MISSING",

@@ -1568,12 +1568,14 @@ guard。CLI 入口为 `aits etf dynamic-v3-rescue evidence-staleness-monitor run
 `aits etf dynamic-v3-rescue validate-evidence-staleness-monitor --monitor-id <monitor_id>`。
 Freshness thresholds 由
 `config/etf_portfolio/dynamic_v3_rescue/evidence_staleness_policy_v1.yaml` 管理，覆盖
-price data、market panel、signal artifact、stress backfill result、A/B review 和 owner review。
+price data、market panel、signal artifact、stress backfill result、A/B review、owner review、
+paper-shadow daily observation、paper-shadow drift monitor 和 paper-shadow weekly review。
 Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/`，包含 manifest、
 report JSON、findings JSONL、Markdown report、Reader Brief section 和 validation JSON/Markdown。
-输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts` 和
-`next_refresh_action`；该 monitor 不刷新数据、不运行 market panel 或 research 上游、不修改
+输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts`、
+`missing_artifacts`、`next_refresh_action`、`safe_to_continue_shadow` 和
+`safety_boundary_status`；该 monitor 不刷新数据、不运行 market panel 或 research 上游、不修改
 candidate decision ledger、不写 target weights、不触发 broker/order，所有输出固定
 `evidence_staleness_monitor_only=true`、`data_downloaded_by_monitor=false`、
 `pipelines_executed_by_monitor=false`、`not_official_target_weights=true`、

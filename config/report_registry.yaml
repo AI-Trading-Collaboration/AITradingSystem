@@ -5067,9 +5067,10 @@ reports:
     freshness_sla_days: 7
     freshness_rationale: >
       TRADING-354 checks whether price data, market panel, signal evidence,
-      stress backfill, A/B review, and owner review inputs are stale before the
-      next candidate decision, while preserving read-only and no-production
-      safety boundaries.
+      stress backfill, A/B review, owner review, paper-shadow daily observation,
+      paper-shadow drift monitor, and paper-shadow weekly review inputs are
+      stale or missing before the next candidate decision, while preserving
+      read-only and no-production safety boundaries.
     owner_action: refresh_or_regenerate_stale_evidence_before_next_candidate_decision
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
