@@ -10,6 +10,7 @@ from ai_trading_system.trading_calendar import (
     previous_us_equity_trading_day,
     us_equity_full_day_holidays,
     us_equity_market_session,
+    us_equity_partial_trading_days,
 )
 
 
@@ -40,6 +41,19 @@ def test_regular_weekday_is_trading_day() -> None:
     assert session.session_status == "TRADING_DAY"
     assert session.is_trading_day is True
     assert session.reason == "regular_trading_day"
+    assert session.session_kind == "NORMAL_TRADING_DAY"
+
+
+def test_partial_trading_day_uses_early_close_session() -> None:
+    partial_days = us_equity_partial_trading_days(2026)
+    session = us_equity_market_session(date(2026, 11, 27))
+
+    assert partial_days[date(2026, 11, 27)] == "Day after Thanksgiving early close"
+    assert session.session_status == "PARTIAL_TRADING_DAY"
+    assert session.session_kind == "PARTIAL_TRADING_DAY"
+    assert session.is_trading_day is True
+    assert session.close_time is not None
+    assert session.close_time.isoformat() == "13:00:00"
 
 
 def test_new_years_day_saturday_is_not_observed_on_prior_friday() -> None:

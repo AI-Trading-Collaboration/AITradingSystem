@@ -13,10 +13,7 @@ import yaml
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
-from ai_trading_system.trading_calendar import (
-    latest_completed_us_equity_trading_day,
-    us_equity_market_session,
-)
+from ai_trading_system.market_calendar_freshness import resolve_us_equity_market_freshness
 
 DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_candidate_evidence"
@@ -2366,6 +2363,12 @@ def run_evidence_staleness_monitor(
         "latest_complete_market_date": market_calendar.get("latest_complete_market_date"),
         "market_calendar_status": market_calendar.get("market_calendar_status"),
         "market_calendar_reason": market_calendar.get("market_calendar_reason"),
+        "market_session_kind": market_calendar.get("market_session_kind"),
+        "calendar_adjustment_reason": market_calendar.get("calendar_adjustment_reason"),
+        "calendar_adjusted_staleness": market_calendar.get("calendar_adjusted_staleness"),
+        "market_close_time": market_calendar.get("market_close_time"),
+        "data_ready_time": market_calendar.get("data_ready_time"),
+        "data_vendor_delay_minutes": market_calendar.get("data_vendor_delay_minutes"),
         "generated_at": generated.isoformat(),
         "policy_id": policy.get("policy_id"),
         "policy_version": policy_version,
@@ -2404,6 +2407,9 @@ def run_evidence_staleness_monitor(
         "freshness_reference_date": market_calendar.get("freshness_reference_date"),
         "latest_complete_market_date": market_calendar.get("latest_complete_market_date"),
         "market_calendar_status": market_calendar.get("market_calendar_status"),
+        "market_session_kind": market_calendar.get("market_session_kind"),
+        "calendar_adjustment_reason": market_calendar.get("calendar_adjustment_reason"),
+        "calendar_adjusted_staleness": market_calendar.get("calendar_adjusted_staleness"),
         "coverage_status": weekly_coverage.get("coverage_status"),
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
@@ -2540,10 +2546,14 @@ def validate_evidence_staleness_monitor_artifact(
                 bool(report.get("requested_as_of"))
                 and bool(report.get("freshness_reference_date"))
                 and bool(report.get("latest_complete_market_date"))
+                and "calendar_adjusted_staleness" in report
+                and bool(report.get("calendar_adjustment_reason"))
+                and bool(report.get("market_session_kind"))
                 and all(
                     bool(row.get("requested_as_of"))
                     and bool(row.get("freshness_reference_date"))
                     and bool(row.get("stale_reason"))
+                    and "calendar_adjusted_staleness" in row
                     for row in findings
                 ),
                 "",
@@ -3734,6 +3744,10 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- requested_as_of: {report.get('requested_as_of')}",
             f"- freshness_reference_date: {report.get('freshness_reference_date')}",
             f"- latest_complete_market_date: {report.get('latest_complete_market_date')}",
+            f"- market_calendar_status: {report.get('market_calendar_status')}",
+            f"- market_session_kind: {report.get('market_session_kind')}",
+            f"- calendar_adjustment_reason: {report.get('calendar_adjustment_reason')}",
+            f"- calendar_adjusted_staleness: {report.get('calendar_adjusted_staleness')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- weekly_review_coverage_classification: "
             f"{report.get('weekly_review_coverage_classification')}",
@@ -3758,6 +3772,7 @@ def render_evidence_staleness_report(
         f"age_days={row.get('age_days')} timestamp={row.get('timestamp')} "
         f"basis={row.get('timestamp_basis')} "
         f"freshness_reference_date={row.get('freshness_reference_date')} "
+        f"calendar_adjusted_staleness={row.get('calendar_adjusted_staleness')} "
         f"coverage_classification={row.get('coverage_classification', '')} "
         f"stale_reason={row.get('stale_reason')} "
         f"action={row.get('recommended_action')}"
@@ -3778,6 +3793,11 @@ def render_evidence_staleness_report(
             f"- latest_complete_market_date: {report.get('latest_complete_market_date')}",
             f"- market_calendar_status: {report.get('market_calendar_status')}",
             f"- market_calendar_reason: {report.get('market_calendar_reason')}",
+            f"- market_session_kind: {report.get('market_session_kind')}",
+            f"- calendar_adjustment_reason: {report.get('calendar_adjustment_reason')}",
+            f"- calendar_adjusted_staleness: {report.get('calendar_adjusted_staleness')}",
+            f"- market_close_time: {report.get('market_close_time')}",
+            f"- data_ready_time: {report.get('data_ready_time')}",
             f"- evidence_freshness_status: {report.get('evidence_freshness_status')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- coverage_blocking_artifacts: "
@@ -5052,6 +5072,9 @@ def _evidence_freshness_finding(
 ) -> dict[str, Any]:
     effective_requested_as_of = requested_as_of or as_of
     calendar_context = _mapping(market_calendar)
+    calendar_adjusted_staleness = bool(
+        calendar_context.get("calendar_adjusted_staleness")
+    )
     raw_age = (as_of - timestamp).days if timestamp is not None else None
     source_after_reference_but_not_requested = (
         raw_age is not None
@@ -5091,7 +5114,14 @@ def _evidence_freshness_finding(
         "latest_complete_market_date": _text(calendar_context.get("latest_complete_market_date")),
         "market_calendar_status": _text(calendar_context.get("market_calendar_status")),
         "market_calendar_reason": _text(calendar_context.get("market_calendar_reason")),
-        "calendar_adjusted_staleness": severity in {"STALE", "BLOCKING"} or missing,
+        "market_session_kind": _text(calendar_context.get("market_session_kind")),
+        "calendar_adjustment_reason": _text(
+            calendar_context.get("calendar_adjustment_reason")
+        ),
+        "calendar_adjusted_staleness": calendar_adjusted_staleness,
+        "market_close_time": _text(calendar_context.get("market_close_time")),
+        "data_ready_time": _text(calendar_context.get("data_ready_time")),
+        "data_vendor_delay_minutes": calendar_context.get("data_vendor_delay_minutes"),
         "stale_reason": _evidence_stale_reason(
             severity=severity,
             missing=missing,
@@ -5119,25 +5149,10 @@ def _market_data_freshness_context(
     requested_as_of: date,
     generated_at: datetime,
 ) -> dict[str, Any]:
-    latest_complete = latest_completed_us_equity_trading_day(generated_at)
-    session = us_equity_market_session(requested_as_of)
-    reference = min(requested_as_of, latest_complete)
-    if requested_as_of > latest_complete:
-        adjustment_reason = "requested_as_of_after_latest_complete_market_date"
-    elif not session.is_trading_day:
-        adjustment_reason = "requested_as_of_non_trading_day"
-    else:
-        adjustment_reason = "requested_as_of_is_latest_complete_or_historical_market_date"
-    return {
-        "market": "US_EQUITY",
-        "requested_as_of": requested_as_of.isoformat(),
-        "latest_complete_market_date": latest_complete.isoformat(),
-        "freshness_reference_date": reference.isoformat(),
-        "market_calendar_status": session.session_status,
-        "market_calendar_reason": session.reason,
-        "calendar_adjustment_reason": adjustment_reason,
-        "calendar_source": session.calendar_source,
-    }
+    return resolve_us_equity_market_freshness(
+        requested_as_of=requested_as_of,
+        observed_at=generated_at,
+    ).to_report_dict()
 
 
 def _freshness_severity(age_days: int | None, rule: Mapping[str, Any]) -> str:

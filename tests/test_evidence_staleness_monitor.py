@@ -89,6 +89,11 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
     assert report["freshness_reference_date"] == "2024-04-19"
     assert report["latest_complete_market_date"] == "2024-04-19"
     assert report["market_calendar_status"] == "TRADING_DAY"
+    assert report["market_session_kind"] == "NORMAL_TRADING_DAY"
+    assert report["calendar_adjustment_reason"] == (
+        "requested_as_of_after_latest_complete_market_date"
+    )
+    assert report["calendar_adjusted_staleness"] is True
     assert report["stale_artifacts"] == []
     assert report["blocking_artifacts"] == []
     assert report["missing_artifacts"] == []
@@ -105,6 +110,10 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
     assert findings["price_data"]["severity"] == "FRESH"
     assert findings["price_data"]["requested_as_of"] == "2024-04-22"
     assert findings["price_data"]["freshness_reference_date"] == "2024-04-19"
+    assert findings["price_data"]["calendar_adjusted_staleness"] is True
+    assert findings["price_data"]["calendar_adjustment_reason"] == (
+        "requested_as_of_after_latest_complete_market_date"
+    )
     assert findings["price_data"]["stale_reason"] == (
         "calendar_adjusted_to_latest_complete_market_date"
     )
@@ -149,6 +158,47 @@ def test_evidence_staleness_future_timestamp_blocks() -> None:
     assert finding["age_days"] == -1
     assert finding["timestamp_relation"] == "AFTER_AS_OF"
     assert finding["severity"] == "BLOCKING"
+
+
+def test_evidence_staleness_weekend_market_reference_does_not_hide_real_stale_data() -> None:
+    calendar_context = readiness._market_data_freshness_context(
+        requested_as_of=date(2024, 4, 20),
+        generated_at=datetime(2024, 4, 22, 16, 0, tzinfo=UTC),
+    )
+    fresh_finding = readiness._evidence_freshness_finding(
+        source_id="price_data",
+        source_label="Price data",
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        timestamp=date(2024, 4, 19),
+        timestamp_basis="latest_price_cache_date",
+        source_path=None,
+        artifact_id="prices_daily.csv",
+        rule={"fresh_days": 1, "acceptable_days": 3, "blocking_days": 7},
+        as_of=date(2024, 4, 19),
+        requested_as_of=date(2024, 4, 20),
+        market_calendar=calendar_context,
+    )
+    stale_finding = readiness._evidence_freshness_finding(
+        source_id="price_data",
+        source_label="Price data",
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        timestamp=date(2024, 4, 10),
+        timestamp_basis="latest_price_cache_date",
+        source_path=None,
+        artifact_id="prices_daily.csv",
+        rule={"fresh_days": 1, "acceptable_days": 3, "blocking_days": 7},
+        as_of=date(2024, 4, 19),
+        requested_as_of=date(2024, 4, 20),
+        market_calendar=calendar_context,
+    )
+
+    assert calendar_context["freshness_reference_date"] == "2024-04-19"
+    assert calendar_context["market_session_kind"] == "WEEKEND"
+    assert fresh_finding["severity"] == "FRESH"
+    assert fresh_finding["calendar_adjusted_staleness"] is True
+    assert fresh_finding["stale_reason"] == "calendar_adjusted_to_latest_complete_market_date"
+    assert stale_finding["severity"] == "BLOCKING"
+    assert stale_finding["stale_reason"] == "older_than_blocking_policy_window"
 
 
 def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path) -> None:

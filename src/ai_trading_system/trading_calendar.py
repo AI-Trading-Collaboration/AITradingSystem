@@ -10,8 +10,14 @@ NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE = (
     "Memorial Day, Juneteenth, Independence Day, Labor Day, Thanksgiving Day, "
     "and Christmas Day. Does not include unscheduled special closures."
 )
+NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE = (
+    "NYSE scheduled partial trading day baseline: Independence Day Eve when it "
+    "is a trading day, day after Thanksgiving, and Christmas Eve when it is a "
+    "trading day. Does not include unscheduled special early closures."
+)
 US_EQUITY_MARKET_TIMEZONE = ZoneInfo("America/New_York")
 US_EQUITY_REGULAR_CLOSE_TIME = time(16, 0)
+US_EQUITY_PARTIAL_CLOSE_TIME = time(13, 0)
 US_EQUITY_DEFAULT_POST_CLOSE_BUFFER = timedelta(minutes=30)
 
 
@@ -24,10 +30,14 @@ class MarketSession:
     reason: str
     previous_trading_day: date
     calendar_source: str = NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE
+    session_kind: str = "UNKNOWN"
+    close_time: time | None = None
+    market_timezone: str = "America/New_York"
 
 
 def us_equity_market_session(as_of: date) -> MarketSession:
     holiday_name = us_equity_full_day_holidays(as_of.year).get(as_of)
+    partial_name = us_equity_partial_trading_days(as_of.year).get(as_of)
     if as_of.weekday() >= 5:
         return MarketSession(
             as_of=as_of,
@@ -36,6 +46,7 @@ def us_equity_market_session(as_of: date) -> MarketSession:
             is_trading_day=False,
             reason="weekend",
             previous_trading_day=previous_us_equity_trading_day(as_of),
+            session_kind="WEEKEND",
         )
     if holiday_name is not None:
         return MarketSession(
@@ -45,6 +56,22 @@ def us_equity_market_session(as_of: date) -> MarketSession:
             is_trading_day=False,
             reason=holiday_name,
             previous_trading_day=previous_us_equity_trading_day(as_of),
+            session_kind="US_MARKET_HOLIDAY",
+        )
+    if partial_name is not None:
+        return MarketSession(
+            as_of=as_of,
+            market="US_EQUITY",
+            session_status="PARTIAL_TRADING_DAY",
+            is_trading_day=True,
+            reason=partial_name,
+            previous_trading_day=previous_us_equity_trading_day(as_of),
+            calendar_source=(
+                f"{NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE} "
+                f"{NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE}"
+            ),
+            session_kind="PARTIAL_TRADING_DAY",
+            close_time=US_EQUITY_PARTIAL_CLOSE_TIME,
         )
     return MarketSession(
         as_of=as_of,
@@ -53,6 +80,8 @@ def us_equity_market_session(as_of: date) -> MarketSession:
         is_trading_day=True,
         reason="regular_trading_day",
         previous_trading_day=previous_us_equity_trading_day(as_of),
+        session_kind="NORMAL_TRADING_DAY",
+        close_time=US_EQUITY_REGULAR_CLOSE_TIME,
     )
 
 
@@ -82,10 +111,12 @@ def latest_completed_us_equity_trading_day(
     market_now = current.astimezone(US_EQUITY_MARKET_TIMEZONE)
     market_date = market_now.date()
     if is_us_equity_trading_day(market_date):
+        session = us_equity_market_session(market_date)
+        close_time = session.close_time or US_EQUITY_REGULAR_CLOSE_TIME
         ready_at = (
             datetime.combine(
                 market_date,
-                US_EQUITY_REGULAR_CLOSE_TIME,
+                close_time,
                 tzinfo=US_EQUITY_MARKET_TIMEZONE,
             )
             + post_close_buffer
@@ -110,6 +141,19 @@ def us_equity_full_day_holidays(year: int) -> dict[date, str]:
             if observed_date is not None and observed_date.year == year:
                 holidays[observed_date] = holiday_name
     return holidays
+
+
+def us_equity_partial_trading_days(year: int) -> dict[date, str]:
+    partial_days: dict[date, str] = {}
+    candidates = (
+        (date(year, 7, 3), "Independence Day Eve early close"),
+        (_nth_weekday(year, 11, 3, 4) + timedelta(days=1), "Day after Thanksgiving early close"),
+        (date(year, 12, 24), "Christmas Eve early close"),
+    )
+    for candidate, partial_name in candidates:
+        if candidate.year == year and is_us_equity_trading_day(candidate):
+            partial_days[candidate] = partial_name
+    return partial_days
 
 
 def _regular_holiday_dates(year: int) -> tuple[tuple[date, str], ...]:

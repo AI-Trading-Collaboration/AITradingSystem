@@ -1577,12 +1577,17 @@ Freshness thresholds 由
 price data、market panel、signal artifact、stress backfill result、A/B review、owner review、
 paper-shadow daily observation、paper-shadow drift monitor 和 paper-shadow weekly review。
 TRADING-354B 明确 price data 与 market panel 的 freshness age 使用
-`freshness_reference_date`，该日期由 `requested_as_of` 和 latest completed U.S. equity market
-date 共同决定；signal、stress、A/B、owner review 和 paper-shadow artifacts 仍按 requested
-as-of 的 research freshness 口径评估。CLI summary、manifest、report、Markdown 和 Reader
-Brief 会披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`、
-`market_calendar_status` 和 per-source `stale_reason`，避免 pre-close / holiday local calendar
-date 把已覆盖 latest complete market session 的 price / market panel 误判为 stale。TRADING-353A
+`freshness_reference_date`。TRADING-366 将该日期计算提升为共享
+`resolve_us_equity_market_freshness` policy，按 U.S. equity calendar 区分 normal trading day、
+weekend、U.S. market holiday、partial trading day 和 data vendor delay window：closed-market
+requested dates 使用上一交易日，未完成或 vendor-ready buffer 内的交易日使用 latest completed
+market date。Signal、stress、A/B、owner review 和 paper-shadow artifacts 仍按 requested as-of 的
+research freshness 口径评估。CLI summary、manifest、report、Markdown 和 Reader Brief 会披露
+`requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`、
+`market_calendar_status`、`market_session_kind`、`calendar_adjustment_reason`、
+`calendar_adjusted_staleness` 和 per-source `stale_reason`，避免 pre-close / weekend / holiday
+local calendar date 把已覆盖 latest complete market session 的 price / market panel 误判为
+stale，同时 source timestamp 早于 `freshness_reference_date` 时仍 fail-closed。TRADING-353A
 后，monitor 也读取 latest `paper_shadow_weekly_review` 的 `coverage_status` 和
 `coverage_safe_for_continuation`；coverage 不足时 freshness status 可以保持 ACCEPTABLE，但
 `safe_to_continue_shadow=false`，`next_refresh_action` 会要求 full weekly review 或显式 manual
