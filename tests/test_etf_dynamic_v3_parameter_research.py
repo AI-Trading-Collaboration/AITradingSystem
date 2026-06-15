@@ -1521,6 +1521,9 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
                 "latest_complete_market_date": "2026-06-12",
                 "market_calendar_status": "TRADING_DAY",
                 "evidence_freshness_status": "ACCEPTABLE",
+                "coverage_status": "MANUAL_REVIEW_REQUIRED",
+                "weekly_review_coverage_classification": "RECOVERY_MODE_REVIEW",
+                "weekly_review_coverage_safe_for_continuation": False,
                 "stale_artifacts": [],
                 "blocking_artifacts": [],
                 "missing_artifacts": [],
@@ -1805,6 +1808,12 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["paper_shadow_drift_monitor"] == str(drift_path)
     assert summary["evidence_staleness_monitor_id"] == "stale123"
     assert summary["evidence_freshness_status"] == "ACCEPTABLE"
+    assert summary["evidence_coverage_status"] == "MANUAL_REVIEW_REQUIRED"
+    assert (
+        summary["evidence_weekly_review_coverage_classification"]
+        == "RECOVERY_MODE_REVIEW"
+    )
+    assert summary["evidence_weekly_review_coverage_safe_for_continuation"] is False
     assert summary["evidence_requested_as_of"] == "2026-06-16"
     assert summary["evidence_freshness_reference_date"] == "2026-06-12"
     assert summary["evidence_latest_complete_market_date"] == "2026-06-12"

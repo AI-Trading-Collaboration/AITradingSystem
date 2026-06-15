@@ -92,8 +92,15 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
     assert report["stale_artifacts"] == []
     assert report["blocking_artifacts"] == []
     assert report["missing_artifacts"] == []
-    assert report["next_refresh_action"] == "continue_candidate_review"
-    assert report["safe_to_continue_shadow"] is True
+    assert report["coverage_status"] == "MANUAL_REVIEW_REQUIRED"
+    assert report["coverage_blocking_artifacts"] == ["paper_shadow_weekly_review"]
+    assert report["weekly_review_coverage_classification"] == "RECOVERY_MODE_REVIEW"
+    assert report["weekly_review_coverage_safe_for_continuation"] is False
+    assert (
+        report["next_refresh_action"]
+        == "complete_full_weekly_review_or_record_manual_coverage_override"
+    )
+    assert report["safe_to_continue_shadow"] is False
     assert report["safety_boundary_status"] == "PASS"
     assert findings["price_data"]["severity"] == "FRESH"
     assert findings["price_data"]["requested_as_of"] == "2024-04-22"
@@ -113,8 +120,13 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
     assert findings["paper_shadow_weekly_review"]["timestamp_basis"] == (
         "paper_shadow_weekly_week_end_or_generated_at"
     )
+    assert findings["paper_shadow_weekly_review"]["coverage_classification"] == (
+        "RECOVERY_MODE_REVIEW"
+    )
+    assert findings["paper_shadow_weekly_review"]["coverage_safe_for_continuation"] is False
     assert "evidence_freshness_status" in result["reader_brief_section"]
     assert "missing_artifacts" in result["reader_brief_section"]
+    assert "weekly_review_coverage_classification" in result["reader_brief_section"]
     assert result["manifest"]["data_downloaded_by_monitor"] is False
     assert result["manifest"]["pipelines_executed_by_monitor"] is False
     assert_research_safe(result["manifest"])
@@ -236,11 +248,15 @@ def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Pa
 
     assert "paper_shadow_weekly_review" not in report["missing_artifacts"]
     assert "paper_shadow_weekly_review" not in report["blocking_artifacts"]
-    assert report["safe_to_continue_shadow"] is True
+    assert report["safe_to_continue_shadow"] is False
+    assert report["coverage_status"] == "MANUAL_REVIEW_REQUIRED"
     assert findings["paper_shadow_weekly_review"]["artifact_id"] == fixture[
         "paper_shadow_weekly"
     ]["weekly_review_id"]
     assert findings["paper_shadow_weekly_review"]["missing"] is False
+    assert findings["paper_shadow_weekly_review"]["coverage_classification"] == (
+        "RECOVERY_MODE_REVIEW"
+    )
 
 
 def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:

@@ -20146,6 +20146,20 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
         Path,
         typer.Option("--output-dir", help="paper-shadow weekly review artifact root。"),
     ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    manual_coverage_override: Annotated[
+        bool,
+        typer.Option(
+            "--manual-coverage-override/--no-manual-coverage-override",
+            help="显式允许 partial/recovery coverage 继续，仅限人工复核留痕。",
+        ),
+    ] = False,
+    manual_coverage_override_reason: Annotated[
+        str,
+        typer.Option(
+            "--manual-coverage-override-reason",
+            help="manual coverage override 的原因；启用 override 时必填。",
+        ),
+    ] = "",
 ) -> None:
     result = paper_shadow_weekly.build_paper_shadow_weekly_review(
         candidate=candidate,
@@ -20160,6 +20174,8 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
         contract_dir=contract_dir,
         ledger_dir=ledger_dir,
         output_dir=output_dir,
+        manual_coverage_override=manual_coverage_override,
+        manual_coverage_override_reason=manual_coverage_override_reason,
     )
     review = _mapping_obj(result.get("paper_shadow_weekly_review"))
     summary = _mapping_obj(review.get("summary"))
@@ -20169,6 +20185,10 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
     typer.echo(f"week_start={review.get('week_start')}")
     typer.echo(f"week_end={review.get('week_end')}")
     typer.echo(f"weekly_decision={review.get('weekly_decision')}")
+    typer.echo(f"coverage_classification={review.get('coverage_classification')}")
+    typer.echo(f"coverage_safe_for_continuation={review.get('coverage_safe_for_continuation')}")
+    typer.echo(f"coverage_status={review.get('coverage_status')}")
+    typer.echo(f"coverage_ratio={review.get('coverage_ratio')}")
     typer.echo(
         "missing_input_artifacts="
         f"{','.join(_texts(summary.get('missing_input_artifacts')))}"
@@ -20207,6 +20227,10 @@ def dynamic_v3_paper_shadow_weekly_review_report_command(
     typer.echo(f"week_start={review.get('week_start')}")
     typer.echo(f"week_end={review.get('week_end')}")
     typer.echo(f"weekly_decision={review.get('weekly_decision')}")
+    typer.echo(f"coverage_classification={review.get('coverage_classification')}")
+    typer.echo(f"coverage_safe_for_continuation={review.get('coverage_safe_for_continuation')}")
+    typer.echo(f"coverage_status={review.get('coverage_status')}")
+    typer.echo(f"coverage_ratio={review.get('coverage_ratio')}")
     typer.echo(
         "missing_input_artifacts="
         f"{','.join(_texts(summary.get('missing_input_artifacts')))}"
@@ -20489,6 +20513,15 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
     typer.echo(f"freshness_reference_date={report.get('freshness_reference_date')}")
     typer.echo(f"latest_complete_market_date={report.get('latest_complete_market_date')}")
     typer.echo(f"market_calendar_status={report.get('market_calendar_status')}")
+    typer.echo(f"coverage_status={report.get('coverage_status')}")
+    typer.echo(
+        "weekly_review_coverage_classification="
+        f"{report.get('weekly_review_coverage_classification')}"
+    )
+    typer.echo(
+        "weekly_review_coverage_safe_for_continuation="
+        f"{report.get('weekly_review_coverage_safe_for_continuation')}"
+    )
     typer.echo(f"next_refresh_action={report.get('next_refresh_action')}")
     typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
     typer.echo(f"safety_boundary_status={report.get('safety_boundary_status')}")
@@ -20527,6 +20560,15 @@ def dynamic_v3_evidence_staleness_monitor_report_command(
     typer.echo(f"freshness_reference_date={report.get('freshness_reference_date')}")
     typer.echo(f"latest_complete_market_date={report.get('latest_complete_market_date')}")
     typer.echo(f"market_calendar_status={report.get('market_calendar_status')}")
+    typer.echo(f"coverage_status={report.get('coverage_status')}")
+    typer.echo(
+        "weekly_review_coverage_classification="
+        f"{report.get('weekly_review_coverage_classification')}"
+    )
+    typer.echo(
+        "weekly_review_coverage_safe_for_continuation="
+        f"{report.get('weekly_review_coverage_safe_for_continuation')}"
+    )
     typer.echo(f"next_refresh_action={report.get('next_refresh_action')}")
     typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
     typer.echo(f"safety_boundary_status={report.get('safety_boundary_status')}")

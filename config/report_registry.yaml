@@ -5011,14 +5011,16 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/paper_shadow_weekly_validation.md
     freshness_sla_days: 7
     freshness_rationale: >
-      TRADING-353 aggregates one week of existing paper-shadow daily
-      observations and drift monitor artifacts with the formal research method
-      contract and candidate decision ledger. It produces a manual review-only
-      CONTINUE/WATCH/RETURN_TO_RESEARCH/REJECT label with missing inputs and
-      stability summaries. It cannot refresh data, rerun upstream workflows,
-      mutate the candidate decision ledger, create official target weights,
-      generate orders, touch broker systems, mutate paper account state, or
-      mutate production state.
+      TRADING-353 aggregates existing paper-shadow daily observations and drift
+      monitor artifacts with the formal research method contract and candidate
+      decision ledger. TRADING-353A adds coverage sufficiency fields so a
+      one-day recovery artifact is classified as RECOVERY_MODE_REVIEW rather
+      than a full market-week review. It produces a manual review-only
+      CONTINUE/WATCH/RETURN_TO_RESEARCH/REJECT label with missing inputs,
+      coverage status, and stability summaries. It cannot refresh data, rerun
+      upstream workflows, mutate the candidate decision ledger, create official
+      target weights, generate orders, touch broker systems, mutate paper
+      account state, or mutate production state.
     owner_action: owner_review_paper_shadow_weekly_before_candidate_decision_update
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -5072,8 +5074,10 @@ reports:
       stale or missing before the next candidate decision. TRADING-354B records
       requested_as_of, latest_complete_market_date, freshness_reference_date,
       and market_calendar_status so price and market panel freshness is aligned
-      to the latest completed U.S. equity market session while preserving
-      read-only and no-production safety boundaries.
+      to the latest completed U.S. equity market session. TRADING-353A weekly
+      coverage status is also consumed so a recovery-mode weekly artifact can
+      keep safe_to_continue_shadow false even when freshness is acceptable,
+      while preserving read-only and no-production safety boundaries.
     owner_action: refresh_or_regenerate_stale_evidence_before_next_candidate_decision
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

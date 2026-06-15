@@ -2294,15 +2294,20 @@ def run_evidence_staleness_monitor(
     missing_artifacts = [
         row.get("source_id") for row in findings if row.get("missing") is True
     ]
+    weekly_coverage = _evidence_weekly_coverage_status(findings)
+    coverage_blocking_artifacts = _texts(weekly_coverage.get("coverage_blocking_artifacts"))
     safe_to_continue_shadow = (
         status in {"FRESH", "ACCEPTABLE"}
         and not blocking_artifacts
         and not missing_artifacts
+        and not coverage_blocking_artifacts
     )
     next_refresh_action = _mapping(policy.get("default_next_actions")).get(
         status,
         "manual_review_required",
     )
+    if coverage_blocking_artifacts:
+        next_refresh_action = "complete_full_weekly_review_or_record_manual_coverage_override"
     policy_version = _text(policy.get("version"))
     monitor_id = _stable_id(
         "evidence-staleness-monitor",
@@ -2330,6 +2335,17 @@ def run_evidence_staleness_monitor(
         "stale_artifacts": _texts(stale_artifacts),
         "blocking_artifacts": _texts(blocking_artifacts),
         "missing_artifacts": _texts(missing_artifacts),
+        "coverage_status": weekly_coverage.get("coverage_status"),
+        "coverage_blocking_artifacts": coverage_blocking_artifacts,
+        "weekly_review_coverage_classification": weekly_coverage.get(
+            "coverage_classification"
+        ),
+        "weekly_review_coverage_safe_for_continuation": weekly_coverage.get(
+            "coverage_safe_for_continuation"
+        ),
+        "weekly_review_manual_coverage_override": weekly_coverage.get(
+            "manual_coverage_override"
+        ),
         "next_refresh_action": next_refresh_action,
         "safe_to_continue_shadow": safe_to_continue_shadow,
         "safety_boundary_status": "PASS",
@@ -2350,6 +2366,13 @@ def run_evidence_staleness_monitor(
         "freshness_reference_date": market_calendar.get("freshness_reference_date"),
         "latest_complete_market_date": market_calendar.get("latest_complete_market_date"),
         "market_calendar_status": market_calendar.get("market_calendar_status"),
+        "coverage_status": weekly_coverage.get("coverage_status"),
+        "weekly_review_coverage_classification": weekly_coverage.get(
+            "coverage_classification"
+        ),
+        "weekly_review_coverage_safe_for_continuation": weekly_coverage.get(
+            "coverage_safe_for_continuation"
+        ),
         "generated_at": generated.isoformat(),
         "status": "PASS" if status != "BLOCKING" else "BLOCKING",
         "policy_path": str(policy_path),
@@ -2506,6 +2529,23 @@ def validate_evidence_staleness_monitor_artifact(
                 "",
             ),
             st._check(
+                "weekly_coverage_status_visible",
+                bool(report.get("coverage_status"))
+                and "weekly_review_coverage_classification" in report
+                and "weekly_review_coverage_safe_for_continuation" in report,
+                "",
+            ),
+            st._check(
+                "weekly_coverage_finding_visible",
+                any(
+                    row.get("source_id") == "paper_shadow_weekly_review"
+                    and bool(row.get("coverage_classification"))
+                    and row.get("coverage_safe_for_continuation") in (True, False)
+                    for row in findings
+                ),
+                "",
+            ),
+            st._check(
                 "safe_to_continue_shadow_visible",
                 report.get("safe_to_continue_shadow") in (True, False),
                 "",
@@ -2517,6 +2557,7 @@ def validate_evidence_staleness_monitor_artifact(
                     report.get("evidence_freshness_status") in {"FRESH", "ACCEPTABLE"}
                     and not _texts(report.get("blocking_artifacts"))
                     and not _texts(report.get("missing_artifacts"))
+                    and not _texts(report.get("coverage_blocking_artifacts"))
                 ),
                 "",
             ),
@@ -3242,6 +3283,11 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- requested_as_of: {report.get('requested_as_of')}",
             f"- freshness_reference_date: {report.get('freshness_reference_date')}",
             f"- latest_complete_market_date: {report.get('latest_complete_market_date')}",
+            f"- coverage_status: {report.get('coverage_status')}",
+            "- weekly_review_coverage_classification: "
+            f"{report.get('weekly_review_coverage_classification')}",
+            "- weekly_review_coverage_safe_for_continuation: "
+            f"{report.get('weekly_review_coverage_safe_for_continuation')}",
             f"- next_refresh_action: {report.get('next_refresh_action')}",
             f"- safe_to_continue_shadow: {report.get('safe_to_continue_shadow')}",
             f"- safety_boundary_status: {report.get('safety_boundary_status')}",
@@ -3261,6 +3307,7 @@ def render_evidence_staleness_report(
         f"age_days={row.get('age_days')} timestamp={row.get('timestamp')} "
         f"basis={row.get('timestamp_basis')} "
         f"freshness_reference_date={row.get('freshness_reference_date')} "
+        f"coverage_classification={row.get('coverage_classification', '')} "
         f"stale_reason={row.get('stale_reason')} "
         f"action={row.get('recommended_action')}"
         for row in _records(report.get("findings"))
@@ -3281,6 +3328,13 @@ def render_evidence_staleness_report(
             f"- market_calendar_status: {report.get('market_calendar_status')}",
             f"- market_calendar_reason: {report.get('market_calendar_reason')}",
             f"- evidence_freshness_status: {report.get('evidence_freshness_status')}",
+            f"- coverage_status: {report.get('coverage_status')}",
+            "- coverage_blocking_artifacts: "
+            f"{', '.join(_texts(report.get('coverage_blocking_artifacts'))) or 'none'}",
+            "- weekly_review_coverage_classification: "
+            f"{report.get('weekly_review_coverage_classification')}",
+            "- weekly_review_coverage_safe_for_continuation: "
+            f"{report.get('weekly_review_coverage_safe_for_continuation')}",
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
             f"- missing_artifacts: {', '.join(_texts(report.get('missing_artifacts'))) or 'none'}",
@@ -4523,6 +4577,10 @@ def _evidence_staleness_findings(
             artifact_status=_text(_mapping(paper_shadow_weekly.get("manifest")).get("status")),
         ),
     ]
+    weekly_coverage = _paper_shadow_weekly_coverage_fields(paper_shadow_weekly)
+    for row in findings:
+        if row.get("source_id") == "paper_shadow_weekly_review":
+            row.update(weekly_coverage)
     return findings, market_calendar
 
 
@@ -4678,6 +4736,98 @@ def _evidence_stale_reason(
     if requested_as_of > freshness_reference_date:
         return "calendar_adjusted_to_latest_complete_market_date"
     return "within_policy_window"
+
+
+def _paper_shadow_weekly_coverage_fields(payload: Mapping[str, Any]) -> dict[str, Any]:
+    detail = _mapping(payload.get("detail"))
+    manifest = _mapping(payload.get("manifest"))
+    summary = _mapping(detail.get("summary"))
+    classification = _text(
+        detail.get("coverage_classification")
+        or summary.get("coverage_classification")
+        or manifest.get("coverage_classification")
+        or "UNKNOWN"
+    )
+    safe_value = detail.get("coverage_safe_for_continuation")
+    if not isinstance(safe_value, bool):
+        safe_value = summary.get("coverage_safe_for_continuation")
+    if not isinstance(safe_value, bool):
+        safe_value = manifest.get("coverage_safe_for_continuation")
+    safe = safe_value if isinstance(safe_value, bool) else False
+    coverage_status = _text(
+        detail.get("coverage_status")
+        or summary.get("coverage_status")
+        or manifest.get("coverage_status")
+        or ("PASS" if safe else "MANUAL_REVIEW_REQUIRED")
+    )
+    return {
+        "coverage_status": coverage_status,
+        "coverage_classification": classification,
+        "coverage_safe_for_continuation": safe,
+        "selected_window_start": _text(
+            detail.get("selected_window_start") or summary.get("selected_window_start")
+        ),
+        "selected_window_end": _text(
+            detail.get("selected_window_end") or summary.get("selected_window_end")
+        ),
+        "expected_market_days": _texts(
+            detail.get("expected_market_days") or summary.get("expected_market_days")
+        ),
+        "covered_market_days": _texts(
+            detail.get("covered_market_days") or summary.get("covered_market_days")
+        ),
+        "missing_market_days": _texts(
+            detail.get("missing_market_days") or summary.get("missing_market_days")
+        ),
+        "coverage_ratio": detail.get("coverage_ratio", summary.get("coverage_ratio")),
+        "manual_coverage_override": bool(
+            detail.get("manual_coverage_override")
+            or summary.get("manual_coverage_override")
+            or manifest.get("manual_coverage_override")
+        ),
+        "manual_coverage_override_reason": _text(
+            detail.get("manual_coverage_override_reason")
+            or summary.get("manual_coverage_override_reason")
+        ),
+    }
+
+
+def _evidence_weekly_coverage_status(
+    findings: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    weekly = next(
+        (row for row in findings if row.get("source_id") == "paper_shadow_weekly_review"),
+        {},
+    )
+    if not weekly:
+        return {
+            "coverage_status": "MISSING",
+            "coverage_classification": "MISSING",
+            "coverage_safe_for_continuation": False,
+            "manual_coverage_override": False,
+            "coverage_blocking_artifacts": ["paper_shadow_weekly_review"],
+        }
+    if weekly.get("missing") is True:
+        return {
+            "coverage_status": "MISSING",
+            "coverage_classification": "MISSING",
+            "coverage_safe_for_continuation": False,
+            "manual_coverage_override": False,
+            "coverage_blocking_artifacts": [],
+        }
+    safe = weekly.get("coverage_safe_for_continuation") is True
+    return {
+        "coverage_status": _text(
+            weekly.get("coverage_status"),
+            "PASS" if safe else "MANUAL_REVIEW_REQUIRED",
+        ),
+        "coverage_classification": _text(weekly.get("coverage_classification"), "UNKNOWN"),
+        "coverage_safe_for_continuation": safe,
+        "manual_coverage_override": weekly.get("manual_coverage_override") is True,
+        "coverage_blocking_artifacts": []
+        if safe
+        else ["paper_shadow_weekly_review"],
+    }
 
 
 def _optional_dynamic_v3_artifact_payload(

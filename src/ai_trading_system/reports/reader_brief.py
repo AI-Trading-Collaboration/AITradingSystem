@@ -2070,6 +2070,24 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "paper_shadow_weekly_coverage_classification",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_coverage_classification"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_weekly_coverage_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_coverage_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_weekly_coverage_safe_for_continuation",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_coverage_safe_for_continuation"
+                        ),
+                    ),
+                    (
                         "paper_shadow_weekly_missing_inputs",
                         etf_dynamic_v3_parameter_research.get(
                             "paper_shadow_weekly_missing_inputs"
@@ -2133,6 +2151,22 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "evidence_freshness_status",
                         etf_dynamic_v3_parameter_research.get(
                             "evidence_freshness_status"
+                        ),
+                    ),
+                    (
+                        "evidence_coverage_status",
+                        etf_dynamic_v3_parameter_research.get("evidence_coverage_status"),
+                    ),
+                    (
+                        "evidence_weekly_review_coverage_classification",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_weekly_review_coverage_classification"
+                        ),
+                    ),
+                    (
+                        "evidence_weekly_review_coverage_safe_for_continuation",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_weekly_review_coverage_safe_for_continuation"
                         ),
                     ),
                     (
@@ -14539,6 +14573,25 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_weekly_review.get("weekly_decision"),
             "MISSING",
         ),
+        "paper_shadow_weekly_coverage_classification": _text(
+            paper_shadow_weekly_review.get("coverage_classification")
+            or paper_shadow_weekly_summary.get("coverage_classification"),
+            "MISSING",
+        ),
+        "paper_shadow_weekly_coverage_status": _text(
+            paper_shadow_weekly_review.get("coverage_status")
+            or paper_shadow_weekly_summary.get("coverage_status"),
+            "MISSING",
+        ),
+        "paper_shadow_weekly_coverage_safe_for_continuation": (
+            paper_shadow_weekly_review.get(
+                "coverage_safe_for_continuation",
+                paper_shadow_weekly_summary.get(
+                    "coverage_safe_for_continuation",
+                    "MISSING",
+                ),
+            )
+        ),
         "paper_shadow_weekly_missing_inputs": paper_shadow_weekly_missing_inputs,
         "paper_shadow_weekly_drift_trend": paper_shadow_weekly_drift_trend_text,
         "paper_shadow_weekly_validation_status": _text(
@@ -14604,6 +14657,20 @@ def _etf_dynamic_v3_parameter_research_summary(
         "evidence_freshness_status": _text(
             evidence_staleness_report.get("evidence_freshness_status"),
             "MISSING",
+        ),
+        "evidence_coverage_status": _text(
+            evidence_staleness_report.get("coverage_status"),
+            "MISSING",
+        ),
+        "evidence_weekly_review_coverage_classification": _text(
+            evidence_staleness_report.get("weekly_review_coverage_classification"),
+            "MISSING",
+        ),
+        "evidence_weekly_review_coverage_safe_for_continuation": (
+            evidence_staleness_report.get(
+                "weekly_review_coverage_safe_for_continuation",
+                "MISSING",
+            )
         ),
         "evidence_requested_as_of": _text(
             evidence_staleness_report.get("requested_as_of")
@@ -15846,6 +15913,9 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_weekly_candidate": "MISSING",
         "paper_shadow_weekly_window": "MISSING",
         "paper_shadow_weekly_decision": "MISSING",
+        "paper_shadow_weekly_coverage_classification": "MISSING",
+        "paper_shadow_weekly_coverage_status": "MISSING",
+        "paper_shadow_weekly_coverage_safe_for_continuation": "MISSING",
         "paper_shadow_weekly_missing_inputs": "MISSING",
         "paper_shadow_weekly_drift_trend": "MISSING",
         "paper_shadow_weekly_validation_status": "MISSING",
@@ -15864,6 +15934,9 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "candidate_decision_ledger_validation_status": "MISSING",
         "evidence_staleness_monitor_id": "MISSING",
         "evidence_freshness_status": "MISSING",
+        "evidence_coverage_status": "MISSING",
+        "evidence_weekly_review_coverage_classification": "MISSING",
+        "evidence_weekly_review_coverage_safe_for_continuation": "MISSING",
         "evidence_requested_as_of": "MISSING",
         "evidence_freshness_reference_date": "MISSING",
         "evidence_latest_complete_market_date": "MISSING",

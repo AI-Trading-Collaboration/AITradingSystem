@@ -43,6 +43,18 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None
     )
 
     assert review["weekly_decision"] == "CONTINUE"
+    assert review["coverage_classification"] == "FULL_WEEK_REVIEW"
+    assert review["coverage_safe_for_continuation"] is True
+    assert review["expected_market_days"] == [
+        "2026-06-08",
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11",
+        "2026-06-12",
+    ]
+    assert review["covered_market_days"] == review["expected_market_days"]
+    assert review["missing_market_days"] == []
+    assert review["coverage_ratio"] == 1.0
     assert review["summary"]["signal_stability"] == "STABLE"
     assert review["summary"]["missing_input_artifacts"] == []
     assert validation["status"] == "PASS"
@@ -85,6 +97,11 @@ def test_paper_shadow_weekly_review_discloses_missing_daily_input(
 def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> None:
     fixture = _weekly_fixture(tmp_path)
     output_dir = tmp_path / "paper_shadow_weekly_review"
+    source_args: list[str] = []
+    for daily_id in fixture["daily_ids"]:
+        source_args.extend(["--daily-observation-id", daily_id])
+    for drift_id in fixture["drift_ids"]:
+        source_args.extend(["--drift-monitor-id", drift_id])
     result = CliRunner().invoke(
         app,
         [
@@ -98,14 +115,7 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
             "2026-06-08",
             "--week-end",
             "2026-06-12",
-            "--daily-observation-id",
-            fixture["daily_ids"][0],
-            "--daily-observation-id",
-            fixture["daily_ids"][1],
-            "--drift-monitor-id",
-            fixture["drift_ids"][0],
-            "--drift-monitor-id",
-            fixture["drift_ids"][1],
+            *source_args,
             "--contract-id",
             fixture["contract_id"],
             "--ledger-run-id",
@@ -124,6 +134,8 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
     )
     assert result.exit_code == 0
     assert "weekly_decision=CONTINUE" in result.output
+    assert "coverage_classification=FULL_WEEK_REVIEW" in result.output
+    assert "coverage_safe_for_continuation=True" in result.output
     weekly_review_id = next(
         line.split("=", 1)[1]
         for line in result.output.splitlines()
@@ -145,6 +157,7 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
     )
     assert report.exit_code == 0
     assert "validation_status=PASS" in report.output
+    assert "coverage_status=PASS" in report.output
 
     validation = CliRunner().invoke(
         app,
@@ -204,16 +217,62 @@ def test_paper_shadow_weekly_validation_rejects_illegal_decision(
     assert "weekly_decision_valid" in failed
 
 
+def test_paper_shadow_weekly_recovery_window_is_not_full_week(
+    tmp_path: Path,
+) -> None:
+    fixture = _weekly_fixture(tmp_path, days=("2026-06-12",))
+    result = weekly.build_paper_shadow_weekly_review(
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        week_start="2026-06-12",
+        week_end="2026-06-12",
+        daily_observation_ids=fixture["daily_ids"],
+        drift_monitor_ids=fixture["drift_ids"],
+        contract_id=fixture["contract_id"],
+        ledger_run_id=fixture["ledger_run_id"],
+        observation_dir=tmp_path / "paper_shadow_daily",
+        drift_dir=tmp_path / "paper_shadow_drift_monitor",
+        contract_dir=tmp_path / "formal_research_method_contract",
+        ledger_dir=tmp_path / "candidate_decision_ledger",
+        output_dir=tmp_path / "paper_shadow_weekly_review",
+        generated_at=datetime(2026, 6, 15, tzinfo=UTC),
+    )
+    review = result["paper_shadow_weekly_review"]
+
+    assert result["paper_shadow_weekly_validation"]["status"] == "PASS"
+    assert review["weekly_decision"] == "CONTINUE"
+    assert review["selected_window_start"] == "2026-06-12"
+    assert review["selected_window_end"] == "2026-06-12"
+    assert review["coverage_classification"] == "RECOVERY_MODE_REVIEW"
+    assert review["coverage_safe_for_continuation"] is False
+    assert review["coverage_status"] == "MANUAL_REVIEW_REQUIRED"
+    assert review["covered_market_days"] == ["2026-06-12"]
+    assert review["missing_market_days"] == [
+        "2026-06-08",
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11",
+    ]
+    assert review["coverage_ratio"] == 0.2
+    assert "paper_shadow_weekly_coverage_classification" in result["reader_brief_section"]
+
+
 def _weekly_fixture(
     tmp_path: Path,
     *,
     missing_market_panel: bool = False,
+    days: tuple[str, ...] = (
+        "2026-06-08",
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11",
+        "2026-06-12",
+    ),
 ) -> dict[str, Any]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path)
     ledger = _candidate_decision_ledger_fixture(tmp_path, fixture)
     daily_ids: list[str] = []
     drift_ids: list[str] = []
-    for day in ("2026-06-10", "2026-06-12"):
+    for day in days:
         market_panel = tmp_path / f"market_panel_{day}.json"
         if not missing_market_panel or day != "2026-06-12":
             market_panel.write_text(

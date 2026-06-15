@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -9,11 +9,18 @@ from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readin
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_weekly_review"
 )
 WEEKLY_DECISIONS = ("CONTINUE", "WATCH", "RETURN_TO_RESEARCH", "REJECT")
+WEEKLY_COVERAGE_CLASSIFICATIONS = (
+    "FULL_WEEK_REVIEW",
+    "PARTIAL_ARTIFACT_WINDOW_REVIEW",
+    "RECOVERY_MODE_REVIEW",
+    "INSUFFICIENT_REVIEW",
+)
 WEEKLY_DECISION_POLICY = {
     "policy_id": "TRADING-353_SOURCE_SEVERITY_MAPPING",
     "policy_version": "2026-06-15",
@@ -48,6 +55,44 @@ WEEKLY_DECISION_POLICY = {
         {
             "decision": "CONTINUE",
             "condition": "all source states are clean and stable enough for manual continuation",
+        },
+    ],
+}
+WEEKLY_COVERAGE_POLICY = {
+    "policy_id": "TRADING-353A_WEEKLY_REVIEW_COVERAGE_SUFFICIENCY",
+    "policy_version": "2026-06-16",
+    "status": "pilot_manual_review_baseline",
+    "owner": "system_validation",
+    "rationale": (
+        "Paper-shadow weekly review must distinguish a full market-week review "
+        "from a partial or recovery artifact window so continuation decisions do "
+        "not silently treat one-day recovery evidence as full weekly coverage."
+    ),
+    "rules": [
+        {
+            "classification": "FULL_WEEK_REVIEW",
+            "condition": (
+                "selected window covers all expected U.S. equity market days in "
+                "the week and daily observations cover every expected market day"
+            ),
+        },
+        {
+            "classification": "RECOVERY_MODE_REVIEW",
+            "condition": (
+                "selected artifact window is shorter than the full market week "
+                "but every selected market day has a daily observation"
+            ),
+        },
+        {
+            "classification": "PARTIAL_ARTIFACT_WINDOW_REVIEW",
+            "condition": (
+                "some daily observations exist, but either the selected window "
+                "or the covered market days do not satisfy full-week coverage"
+            ),
+        },
+        {
+            "classification": "INSUFFICIENT_REVIEW",
+            "condition": "no selected market-day daily observation is available",
         },
     ],
 }
@@ -90,12 +135,18 @@ def build_paper_shadow_weekly_review(
     ledger_dir: Path = readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
     output_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     generated_at: datetime | None = None,
+    manual_coverage_override: bool = False,
+    manual_coverage_override_reason: str = "",
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     start_date = _parse_date(week_start)
     end_date = _parse_date(week_end)
     if start_date > end_date:
         raise st.DynamicV3SystemTargetError("week_start must be on or before week_end")
+    if manual_coverage_override and not _text(manual_coverage_override_reason):
+        raise st.DynamicV3SystemTargetError(
+            "manual_coverage_override requires manual_coverage_override_reason"
+        )
 
     daily_payloads = _load_daily_payloads(
         daily_observation_ids,
@@ -128,6 +179,13 @@ def build_paper_shadow_weekly_review(
         for payload in daily_payloads
     ]
     drift_records = [_drift_record(payload) for payload in drift_payloads]
+    coverage = _weekly_review_coverage(
+        selected_window_start=start_date,
+        selected_window_end=end_date,
+        daily_records=daily_records,
+        manual_coverage_override=manual_coverage_override,
+        manual_coverage_override_reason=manual_coverage_override_reason,
+    )
     contract_decision = _mapping(
         contract_payload.get("formal_research_method_decision")
     )
@@ -164,6 +222,8 @@ def build_paper_shadow_weekly_review(
         ",".join(_text(payload.get("monitor_id")) for payload in drift_payloads),
         _text(contract_payload.get("contract_id")),
         _text(ledger_payload.get("ledger_run_id")),
+        str(manual_coverage_override),
+        _text(manual_coverage_override_reason),
         generated.isoformat(),
     )
     root = st._unique_dir(output_dir / weekly_review_id)
@@ -187,8 +247,10 @@ def build_paper_shadow_weekly_review(
         "source_artifacts": source_artifacts,
         "daily_observations": daily_records,
         "drift_monitors": drift_records,
+        **coverage,
         "summary": {
             **stability,
+            **coverage,
             "missing_input_artifacts": missing_inputs,
             "reviewer_notes_placeholder": (
                 "manual_reviewer_notes_required_before_owner_decision"
@@ -198,6 +260,7 @@ def build_paper_shadow_weekly_review(
         "weekly_decision_reasons": decision_reasons,
         "next_required_action": _next_required_action(decision),
         "decision_policy": WEEKLY_DECISION_POLICY,
+        "coverage_policy": WEEKLY_COVERAGE_POLICY,
         "limitations": [
             "manual weekly aggregation of existing paper-shadow source artifacts",
             "does not download data or rerun daily/drift/source pipelines",
@@ -216,6 +279,12 @@ def build_paper_shadow_weekly_review(
         "generated_at": generated.isoformat(),
         "status": "PASS",
         "weekly_decision": decision,
+        "coverage_classification": coverage["coverage_classification"],
+        "coverage_safe_for_continuation": coverage["coverage_safe_for_continuation"],
+        "coverage_status": coverage["coverage_status"],
+        "manual_coverage_override": coverage["manual_coverage_override"],
+        "coverage_policy_id": WEEKLY_COVERAGE_POLICY["policy_id"],
+        "coverage_policy_version": WEEKLY_COVERAGE_POLICY["policy_version"],
         "source_contract_id": contract_payload.get("contract_id"),
         "source_ledger_run_id": ledger_payload.get("ledger_run_id"),
         "paper_shadow_weekly_manifest_path": str(
@@ -368,6 +437,14 @@ def validate_paper_shadow_weekly_review_artifact(
                 "",
             ),
             st._check(
+                "coverage_policy_visible",
+                _mapping(review.get("coverage_policy")).get("policy_id")
+                == WEEKLY_COVERAGE_POLICY["policy_id"]
+                and manifest.get("coverage_policy_id")
+                == WEEKLY_COVERAGE_POLICY["policy_id"],
+                "",
+            ),
+            st._check(
                 "summary_fields_visible",
                 all(
                     field in summary
@@ -379,9 +456,52 @@ def validate_paper_shadow_weekly_review_artifact(
                         "flip_rotation_behavior",
                         "drift_severity_trend",
                         "benchmark_comparison_proxy",
+                        "selected_window_start",
+                        "selected_window_end",
+                        "expected_market_days",
+                        "covered_market_days",
+                        "missing_market_days",
+                        "coverage_ratio",
+                        "coverage_classification",
+                        "coverage_safe_for_continuation",
+                        "coverage_status",
+                        "manual_coverage_override",
+                        "manual_coverage_override_reason",
                         "missing_input_artifacts",
                         "reviewer_notes_placeholder",
                     )
+                ),
+                "",
+            ),
+            st._check(
+                "coverage_classification_valid",
+                review.get("coverage_classification") in WEEKLY_COVERAGE_CLASSIFICATIONS
+                and summary.get("coverage_classification")
+                in WEEKLY_COVERAGE_CLASSIFICATIONS
+                and manifest.get("coverage_classification")
+                in WEEKLY_COVERAGE_CLASSIFICATIONS,
+                "",
+            ),
+            st._check(
+                "coverage_fields_visible",
+                bool(_text(review.get("selected_window_start")))
+                and bool(_text(review.get("selected_window_end")))
+                and isinstance(review.get("expected_market_days"), list)
+                and isinstance(review.get("covered_market_days"), list)
+                and isinstance(review.get("missing_market_days"), list)
+                and isinstance(review.get("coverage_safe_for_continuation"), bool)
+                and isinstance(review.get("manual_coverage_override"), bool),
+                "",
+            ),
+            st._check(
+                "coverage_safe_for_continuation_consistent",
+                review.get("coverage_safe_for_continuation")
+                == _coverage_safe_for_continuation(
+                    classification=_text(review.get("coverage_classification")),
+                    manual_coverage_override=review.get("manual_coverage_override") is True,
+                    manual_coverage_override_reason=_text(
+                        review.get("manual_coverage_override_reason")
+                    ),
                 ),
                 "",
             ),
@@ -394,7 +514,8 @@ def validate_paper_shadow_weekly_review_artifact(
                 "reader_brief_fields",
                 "paper_shadow_weekly_review_id" in reader
                 and "paper_shadow_weekly_decision" in reader
-                and "paper_shadow_weekly_drift_trend" in reader,
+                and "paper_shadow_weekly_drift_trend" in reader
+                and "paper_shadow_weekly_coverage_classification" in reader,
                 "",
             ),
             st._check(
@@ -444,6 +565,12 @@ def render_paper_shadow_weekly_reader_brief(review: Mapping[str, Any]) -> str:
             f"- paper_shadow_weekly_candidate: {review.get('candidate')}",
             f"- paper_shadow_weekly_window: {review.get('week_start')}..{review.get('week_end')}",
             f"- paper_shadow_weekly_decision: {review.get('weekly_decision')}",
+            "- paper_shadow_weekly_coverage_classification: "
+            f"{review.get('coverage_classification')}",
+            "- paper_shadow_weekly_coverage_ratio: "
+            f"{review.get('coverage_ratio')}",
+            "- paper_shadow_weekly_coverage_safe_for_continuation: "
+            f"{review.get('coverage_safe_for_continuation')}",
             "- paper_shadow_weekly_missing_inputs: "
             f"{_join_or_none(summary.get('missing_input_artifacts'))}",
             "- paper_shadow_weekly_drift_trend: "
@@ -491,8 +618,25 @@ def render_paper_shadow_weekly_report(
             f"- weekly_decision: {review.get('weekly_decision')}",
             f"- next_required_action: {review.get('next_required_action')}",
             f"- decision_policy: {_mapping(review.get('decision_policy')).get('policy_id')}",
+            f"- coverage_policy: {_mapping(review.get('coverage_policy')).get('policy_id')}",
             "- decision_reasons: "
             f"{_join_or_none(review.get('weekly_decision_reasons'))}",
+            f"- selected_window_start: {review.get('selected_window_start')}",
+            f"- selected_window_end: {review.get('selected_window_end')}",
+            "- expected_market_days: "
+            f"{_join_or_none(review.get('expected_market_days'))}",
+            "- covered_market_days: "
+            f"{_join_or_none(review.get('covered_market_days'))}",
+            "- missing_market_days: "
+            f"{_join_or_none(review.get('missing_market_days'))}",
+            f"- coverage_ratio: {review.get('coverage_ratio')}",
+            f"- coverage_classification: {review.get('coverage_classification')}",
+            "- coverage_safe_for_continuation: "
+            f"{review.get('coverage_safe_for_continuation')}",
+            f"- coverage_status: {review.get('coverage_status')}",
+            f"- manual_coverage_override: {review.get('manual_coverage_override')}",
+            "- manual_coverage_override_reason: "
+            f"{review.get('manual_coverage_override_reason') or 'none'}",
             "",
             "## 周度摘要",
             f"- signal_stability: {summary.get('signal_stability')}",
@@ -636,6 +780,107 @@ def _drift_record(payload: Mapping[str, Any]) -> dict[str, Any]:
         "findings": _records(report.get("findings")),
         "manifest_path": payload.get("paper_shadow_drift_manifest_path"),
     }
+
+
+def _weekly_review_coverage(
+    *,
+    selected_window_start: date,
+    selected_window_end: date,
+    daily_records: Sequence[Mapping[str, Any]],
+    manual_coverage_override: bool,
+    manual_coverage_override_reason: str,
+) -> dict[str, Any]:
+    expected_days = _market_week_trading_days(selected_window_end)
+    selected_days = _trading_days_between(selected_window_start, selected_window_end)
+    selected_day_set = set(selected_days)
+    expected_day_set = set(expected_days)
+    covered_days = sorted(
+        {
+            parsed
+            for row in daily_records
+            if (parsed := _parse_optional_date(row.get("observation_date"))) is not None
+            and row.get("within_week_window") is True
+            and parsed in expected_day_set
+        }
+    )
+    covered_day_set = set(covered_days)
+    missing_days = [value for value in expected_days if value not in covered_day_set]
+    selected_covers_full_week = expected_day_set.issubset(selected_day_set)
+    covered_covers_full_week = expected_day_set.issubset(covered_day_set)
+    classification = _coverage_classification(
+        selected_covers_full_week=selected_covers_full_week,
+        covered_covers_full_week=covered_covers_full_week,
+        covered_days=covered_days,
+        selected_days=selected_days,
+    )
+    override_reason = _text(manual_coverage_override_reason)
+    coverage_safe = _coverage_safe_for_continuation(
+        classification=classification,
+        manual_coverage_override=manual_coverage_override,
+        manual_coverage_override_reason=override_reason,
+    )
+    return {
+        "selected_window_start": selected_window_start.isoformat(),
+        "selected_window_end": selected_window_end.isoformat(),
+        "expected_market_days": [value.isoformat() for value in expected_days],
+        "covered_market_days": [value.isoformat() for value in covered_days],
+        "missing_market_days": [value.isoformat() for value in missing_days],
+        "coverage_ratio": _coverage_ratio(covered_days, expected_days),
+        "coverage_classification": classification,
+        "coverage_safe_for_continuation": coverage_safe,
+        "coverage_status": "PASS" if coverage_safe else "MANUAL_REVIEW_REQUIRED",
+        "manual_coverage_override": manual_coverage_override,
+        "manual_coverage_override_reason": override_reason,
+    }
+
+
+def _market_week_trading_days(value: date) -> list[date]:
+    week_start = value - timedelta(days=value.weekday())
+    week_end = week_start + timedelta(days=4)
+    return _trading_days_between(week_start, week_end)
+
+
+def _trading_days_between(start: date, end: date) -> list[date]:
+    days: list[date] = []
+    current = start
+    while current <= end:
+        if is_us_equity_trading_day(current):
+            days.append(current)
+        current += timedelta(days=1)
+    return days
+
+
+def _coverage_ratio(covered_days: Sequence[date], expected_days: Sequence[date]) -> float:
+    if not expected_days:
+        return 0.0
+    return round(len(set(covered_days)) / len(set(expected_days)), 4)
+
+
+def _coverage_classification(
+    *,
+    selected_covers_full_week: bool,
+    covered_covers_full_week: bool,
+    covered_days: Sequence[date],
+    selected_days: Sequence[date],
+) -> str:
+    if not covered_days:
+        return "INSUFFICIENT_REVIEW"
+    if selected_covers_full_week and covered_covers_full_week:
+        return "FULL_WEEK_REVIEW"
+    if not selected_covers_full_week and set(selected_days).issubset(set(covered_days)):
+        return "RECOVERY_MODE_REVIEW"
+    return "PARTIAL_ARTIFACT_WINDOW_REVIEW"
+
+
+def _coverage_safe_for_continuation(
+    *,
+    classification: str,
+    manual_coverage_override: bool,
+    manual_coverage_override_reason: str,
+) -> bool:
+    return classification == "FULL_WEEK_REVIEW" or (
+        manual_coverage_override and bool(_text(manual_coverage_override_reason))
+    )
 
 
 def _weekly_stability(

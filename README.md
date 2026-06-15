@@ -1537,7 +1537,13 @@ manifest、review JSON、Markdown report、Reader Brief section 和 validation J
 paper-shadow daily observations、drift monitors、formal research method contract 和 candidate
 decision ledger，输出 signal / recommendation / turnover / drawdown / flip-rotation /
 benchmark stability、missing inputs、`weekly_decision=CONTINUE|WATCH|RETURN_TO_RESEARCH|REJECT`
-和 machine-readable decision policy。所有输出固定
+和 machine-readable decision policy。TRADING-353A 进一步输出 coverage sufficiency：
+`selected_window_start/end`、`expected_market_days`、`covered_market_days`、
+`missing_market_days`、`coverage_ratio`、`coverage_classification`、
+`coverage_safe_for_continuation` 和 `coverage_status`；一日 recovery artifact 会标记为
+`RECOVERY_MODE_REVIEW`，不会被静默当成 full weekly review。默认只有
+`FULL_WEEK_REVIEW` 支持 continuation；partial/recovery continuation 必须显式记录
+manual coverage override reason。所有输出固定
 `paper_shadow_weekly_review_only=true`、`read_only_review=true`、
 `data_downloaded_by_review=false`、`pipelines_executed_by_review=false`、
 `not_official_target_weights=true`、`broker_action_allowed=false`、
@@ -1576,7 +1582,11 @@ date 共同决定；signal、stress、A/B、owner review 和 paper-shadow artifa
 as-of 的 research freshness 口径评估。CLI summary、manifest、report、Markdown 和 Reader
 Brief 会披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`、
 `market_calendar_status` 和 per-source `stale_reason`，避免 pre-close / holiday local calendar
-date 把已覆盖 latest complete market session 的 price / market panel 误判为 stale。
+date 把已覆盖 latest complete market session 的 price / market panel 误判为 stale。TRADING-353A
+后，monitor 也读取 latest `paper_shadow_weekly_review` 的 `coverage_status` 和
+`coverage_safe_for_continuation`；coverage 不足时 freshness status 可以保持 ACCEPTABLE，但
+`safe_to_continue_shadow=false`，`next_refresh_action` 会要求 full weekly review 或显式 manual
+coverage override。
 Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/`，包含 manifest、
 report JSON、findings JSONL、Markdown report、Reader Brief section 和 validation JSON/Markdown。
