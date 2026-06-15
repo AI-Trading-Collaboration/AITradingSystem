@@ -175,6 +175,64 @@ def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path) -> None
     assert result["evidence_staleness_validation"]["status"] == "PASS"
 
 
+def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Path) -> None:
+    fixture = _paper_shadow_freshness_fixture(tmp_path)
+    evidence_manifest_path = Path(
+        fixture["filtered_candidate_evidence"]["manifest"][
+            "filtered_candidate_evidence_manifest_path"
+        ]
+    )
+    evidence_manifest = json.loads(evidence_manifest_path.read_text(encoding="utf-8"))
+    evidence_manifest["date_end"] = "2024-04-22"
+    evidence_manifest_path.write_text(
+        json.dumps(evidence_manifest, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    price_cache_path = tmp_path / "prices_daily.csv"
+    price_cache_path.write_text(
+        "date,ticker,close\n2024-04-22,QQQ,431\n",
+        encoding="utf-8",
+    )
+    market_panel_dir = tmp_path / "market_panel"
+    market_panel_dir.mkdir()
+    (market_panel_dir / "market_panel_2024-04-22.json").write_text(
+        json.dumps({"status": "PASS", "as_of": "2024-04-22"}),
+        encoding="utf-8",
+    )
+
+    result = readiness.run_evidence_staleness_monitor(
+        as_of=date(2024, 4, 22),
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        price_cache_path=price_cache_path,
+        market_panel_dir=market_panel_dir,
+        evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
+        stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
+        ab_review_id=fixture["filtered_candidate_ab_review"]["ab_review_id"],
+        owner_review_id=fixture["owner_filtered_candidate_review"]["owner_review_id"],
+        paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
+        paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
+        evidence_dir=tmp_path / "filtered_candidate_evidence",
+        stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
+        ab_review_dir=tmp_path / "filtered_candidate_ab_review",
+        owner_review_dir=tmp_path / "owner_filtered_candidate_review",
+        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        output_dir=tmp_path / "evidence_staleness_monitor_latest_weekly",
+        generated_at=datetime(2024, 4, 22, tzinfo=UTC),
+    )
+    report = result["evidence_staleness_report"]
+    findings = {row["source_id"]: row for row in report["findings"]}
+
+    assert "paper_shadow_weekly_review" not in report["missing_artifacts"]
+    assert "paper_shadow_weekly_review" not in report["blocking_artifacts"]
+    assert report["safe_to_continue_shadow"] is True
+    assert findings["paper_shadow_weekly_review"]["artifact_id"] == fixture[
+        "paper_shadow_weekly"
+    ]["weekly_review_id"]
+    assert findings["paper_shadow_weekly_review"]["missing"] is False
+
+
 def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path)
     ledger = readiness.record_candidate_decision_ledger(
