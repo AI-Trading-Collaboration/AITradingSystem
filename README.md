@@ -1451,6 +1451,21 @@ method implementation，不是 production approval。所有输出继续固定
 `not_official_target_weights=true`、`broker_action_allowed=false`、
 `order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`。
 
+TRADING-348_PROMOTION_GATE_THRESHOLD_CALIBRATION 将 TRADING-346 使用的
+promotion-facing gate bands 迁移到可审计治理配置。配置入口为
+`config/research/promotion_gate_thresholds.yaml`，owner-readable 说明在
+`docs/promotion_gates/threshold_calibration.md`。CLI 入口为
+`aits etf dynamic-v3-rescue promotion-gate-threshold-calibration report` 和
+`aits etf dynamic-v3-rescue promotion-gate-threshold-calibration validate`。Runtime
+artifacts 写入
+`run/review/register/promotion-gate-threshold-calibration/`，包含 calibration
+manifest、JSON/Markdown report、Reader Brief section 和 validation JSON/Markdown，并登记
+report registry / Reader Brief 摘要。该 policy 覆盖 stress strength、drawdown mismatch
+reduction、flip/rotation reduction、A/B review confidence 和 confirmation target count；
+它是 `pilot_baseline` / governance-only，不改变 formal contract decision logic，不为了当前
+candidate pass 而调参，不生成 official target weights、broker action、order ticket 或
+production mutation。
+
 TRADING-350_PAPER_SHADOW_PROTOCOL 在 formal contract 之后定义 observation-only
 paper-shadow protocol。CLI 入口为
 `aits etf dynamic-v3-rescue paper-shadow-protocol build`、

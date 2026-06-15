@@ -1339,6 +1339,55 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    threshold_dir = tmp_path / "promotion_gate_threshold_calibration" / "threshold123"
+    threshold_dir.mkdir(parents=True)
+    threshold_path = threshold_dir / "promotion_gate_threshold_calibration_manifest.json"
+    threshold_path.write_text(
+        json.dumps(
+            {
+                "calibration_id": "threshold123",
+                "status": "PASS",
+                "policy_id": "research_promotion_gate_thresholds_v1",
+                "policy_version": "2026-06-15",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (threshold_dir / "promotion_gate_threshold_calibration_report.json").write_text(
+        json.dumps(
+            {
+                "calibration_id": "threshold123",
+                "status": "PASS",
+                "policy_id": "research_promotion_gate_thresholds_v1",
+                "policy_version": "2026-06-15",
+                "current_threshold_interpretation": (
+                    "FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS"
+                ),
+                "stress_required": "STRONG",
+                "confirmation_target_minimum": 3,
+                "next_required_action": "continue_with_formal_research_governance_only",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+                "automatic_candidate_promotion": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (threshold_dir / "promotion_gate_threshold_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     daily_dir = tmp_path / "paper_shadow_daily" / "daily123"
     daily_dir.mkdir(parents=True)
     daily_path = daily_dir / "paper_shadow_daily_manifest.json"
@@ -1594,6 +1643,10 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_rolling_evidence_refresh", refresh_path),
             _report_record("etf_dynamic_v3_evidence_trend", trend_path),
             _report_record("etf_dynamic_v3_forward_outcome_decision", decision_path),
+            _report_record(
+                "etf_dynamic_v3_promotion_gate_threshold_calibration",
+                threshold_path,
+            ),
             _report_record("etf_dynamic_v3_paper_shadow_daily", daily_path),
             _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
             _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
@@ -1653,6 +1706,21 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         == "start_daily_paper_shadow_runner_design"
     )
     assert summary["candidate_decision_ledger_validation_status"] == "PASS"
+    assert summary["promotion_threshold_calibration_id"] == "threshold123"
+    assert summary["promotion_threshold_policy_id"] == "research_promotion_gate_thresholds_v1"
+    assert summary["promotion_threshold_policy_version"] == "2026-06-15"
+    assert summary["promotion_threshold_status"] == "PASS"
+    assert (
+        summary["promotion_threshold_current_interpretation"]
+        == "FORMAL_RESEARCH_READY_UNDER_PILOT_THRESHOLDS"
+    )
+    assert summary["promotion_threshold_stress_required"] == "STRONG"
+    assert summary["promotion_threshold_confirmation_minimum"] == 3
+    assert summary["promotion_threshold_validation_status"] == "PASS"
+    assert (
+        summary["promotion_threshold_next_action"]
+        == "continue_with_formal_research_governance_only"
+    )
     assert summary["paper_shadow_daily_observation_id"] == "daily123"
     assert summary["paper_shadow_daily_candidate"] == "median_plus_regime_mismatch_filter"
     assert summary["paper_shadow_daily_date"] == "2026-06-12"

@@ -1,0 +1,172 @@
+schema_version: 1
+policy_id: research_promotion_gate_thresholds_v1
+version: 2026-06-15
+status: pilot_baseline
+owner: system_validation
+production_effect: none
+rationale: >
+  TRADING-348 documents the pilot promotion-facing threshold bands used to
+  interpret the TRADING-346 formal research method contract. The policy makes
+  discrete gate requirements reviewable without changing current contract
+  decisions or fitting thresholds to force a candidate to pass.
+intended_effect: >
+  Keep formal research and paper-shadow eligibility conservative until enough
+  owner-reviewed paper-shadow and forward evidence exists for data-backed
+  recalibration.
+validation_evidence: >
+  Focused threshold calibration tests, real report/validate CLI, contract
+  validation suite, documentation contract, report index, and Reader Brief
+  quality checks.
+review_condition: >
+  Review after the first owner-reviewed paper-shadow weekly cycle, after any
+  material change to stress/A-B evidence generation, or before using these
+  bands in a production promotion workflow.
+
+calibration_method:
+  mode: discrete_status_policy
+  status: pilot_baseline
+  not_fit_to_current_candidate: true
+  no_outcome_backfit: true
+  no_production_approval: true
+  rationale: >
+    Current evidence artifacts expose discrete governance statuses rather than
+    calibrated probability estimates. Numeric tuning is deferred until a
+    reviewed forward evidence sample exists.
+
+safety_boundary:
+  manual_review_only: true
+  governance_only: true
+  threshold_policy_only: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_state_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_apply: false
+  production_effect: none
+
+threshold_bands:
+  stress_strength:
+    source_gate_id: stress_result
+    source_field: stress_robustness_status
+    ordered_bands:
+      - band: WEAK
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: MIXED
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: STRONG
+        qualifies_paper_shadow: true
+        qualifies_formal_research: true
+    required_for_paper_shadow: STRONG
+    required_for_formal_research: STRONG
+    rationale: >
+      Formalization should require the candidate to remain robust across the
+      reviewed stress windows; anything weaker stays in evidence collection.
+    intended_effect: >
+      Prevent a candidate with uneven stress behavior from entering paper-shadow
+      or formal research implementation.
+    review_condition: >
+      Revisit when stress backfill uses a data-backed scenario library and at
+      least one paper-shadow cycle has been reviewed.
+  drawdown_mismatch_reduction:
+    source_gate_id: drawdown_mismatch_reduction
+    source_field: drawdown_mismatch_reduction_status
+    ordered_bands:
+      - band: NOT_IMPROVED
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: PARTIAL
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: IMPROVED
+        qualifies_paper_shadow: true
+        qualifies_formal_research: true
+    required_for_paper_shadow: IMPROVED
+    required_for_formal_research: IMPROVED
+    rationale: >
+      The filtered candidate is only useful if it reduces drawdown mismatch
+      behavior rather than adding a new drawdown failure mode.
+    intended_effect: >
+      Keep candidates with unresolved drawdown mismatch regression out of
+      paper-shadow and formal research implementation.
+    review_condition: >
+      Revisit when drawdown event casebook labels are replaced with a
+      data-backed event extractor.
+  flip_rotation_reduction:
+    source_gate_id: flip_rotation_reduction
+    source_field: flip_reduction_status_and_rotation_reduction_status
+    ordered_bands:
+      - band: NOT_IMPROVED
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: PARTIAL
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: IMPROVED_BOTH
+        qualifies_paper_shadow: true
+        qualifies_formal_research: true
+    required_flip_reduction_status: IMPROVED
+    required_rotation_reduction_status: IMPROVED
+    required_for_paper_shadow: IMPROVED_BOTH
+    required_for_formal_research: IMPROVED_BOTH
+    rationale: >
+      Reducing only one side of noisy flips or top-candidate rotations is not
+      enough for formalization because churn can reappear through the other
+      channel.
+    intended_effect: >
+      Require both flip and rotation evidence to improve before a candidate is
+      treated as paper-shadow eligible.
+    review_condition: >
+      Revisit after signal flip/rotation clusters are extracted from a larger
+      forward sample instead of manual qualitative case labels.
+  ab_review_confidence:
+    source_gate_id: ab_review
+    source_field: overall_ab_status
+    ordered_bands:
+      - band: REJECT
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: INCONCLUSIVE
+        qualifies_paper_shadow: false
+        qualifies_formal_research: false
+      - band: PROMISING
+        qualifies_paper_shadow: true
+        qualifies_formal_research: true
+    required_for_paper_shadow: PROMISING
+    required_for_formal_research: PROMISING
+    rationale: >
+      A/B evidence must show the filtered candidate remains promising against
+      baseline alternatives before it receives formal research resources.
+    intended_effect: >
+      Avoid formalizing a candidate whose apparent improvements vanish in the
+      comparison layer.
+    review_condition: >
+      Revisit when A/B review includes a larger post-ChatGPT forward sample and
+      transaction-cost sensitivity.
+  confirmation_target_count:
+    source_gate_id: confirmation_targets
+    source_field: confirmation_target_count
+    minimum_for_paper_shadow: 3
+    minimum_for_formal_research: 3
+    maximum_without_owner_review: 0
+    rationale: >
+      At least three explicit confirmation targets are required so owner review
+      can compare forward behavior across drawdown, churn, and regime mismatch
+      dimensions rather than a single hand-picked signal.
+    intended_effect: >
+      Prevent one-off qualitative confirmation from being treated as formal
+      readiness.
+    review_condition: >
+      Revisit after enough confirmation targets have completed forward
+      evaluation to estimate which target families are most predictive.
+
+required_source_gate_ids:
+  - stress_result
+  - drawdown_mismatch_reduction
+  - flip_rotation_reduction
+  - ab_review
+  - confirmation_targets

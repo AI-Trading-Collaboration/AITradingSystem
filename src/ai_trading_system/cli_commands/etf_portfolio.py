@@ -30,6 +30,7 @@ from ai_trading_system.etf_portfolio import (
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
+from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio import (
@@ -1819,6 +1820,10 @@ dynamic_v3_formal_research_method_contract_app = typer.Typer(
     help="Dynamic v3 rescue formal research method contract workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_promotion_gate_threshold_calibration_app = typer.Typer(
+    help="Dynamic v3 rescue promotion gate threshold calibration workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_paper_shadow_protocol_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow protocol workflow。",
     no_args_is_help=True,
@@ -2599,6 +2604,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_formal_research_method_contract_app,
     name="research-method-contract",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_promotion_gate_threshold_calibration_app,
+    name="promotion-gate-threshold-calibration",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_protocol_app,
@@ -19655,6 +19664,90 @@ def dynamic_v3_validate_formal_research_method_contract_command(
         filtered_readiness.validate_formal_research_method_contract_artifact(
             contract_id=contract_id,
             output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_promotion_gate_threshold_calibration_app.command("report")
+def dynamic_v3_promotion_gate_threshold_calibration_report_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="promotion gate threshold policy config。"),
+    ] = promotion_thresholds.DEFAULT_PROMOTION_GATE_THRESHOLDS_CONFIG_PATH,
+    contract_id: Annotated[
+        str | None,
+        typer.Option("--contract-id", help="formal research method contract id；缺省 latest。"),
+    ] = None,
+    contract_dir: Annotated[
+        Path,
+        typer.Option("--contract-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion threshold calibration root。"),
+    ] = promotion_thresholds.DEFAULT_PROMOTION_GATE_THRESHOLD_CALIBRATION_DIR,
+) -> None:
+    result = promotion_thresholds.build_promotion_gate_threshold_calibration_report(
+        config_path=config_path,
+        contract_id=contract_id,
+        contract_dir=contract_dir,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(result.get("report"))
+    validation = _mapping_obj(result.get("validation"))
+    typer.echo(f"calibration_id={result['calibration_id']}")
+    typer.echo(f"status={report.get('status')}")
+    typer.echo(f"policy_id={report.get('policy_id')}")
+    typer.echo(f"policy_version={report.get('policy_version')}")
+    typer.echo(f"candidate={report.get('candidate')}")
+    typer.echo(
+        "current_threshold_interpretation="
+        f"{report.get('current_threshold_interpretation')}"
+    )
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("threshold_policy_only=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_promotion_gate_threshold_calibration_app.command("validate")
+def dynamic_v3_promotion_gate_threshold_calibration_validate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="promotion gate threshold policy config。"),
+    ] = promotion_thresholds.DEFAULT_PROMOTION_GATE_THRESHOLDS_CONFIG_PATH,
+    calibration_id: Annotated[
+        str | None,
+        typer.Option("--calibration-id", help="promotion threshold calibration id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="校验 latest artifact。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion threshold calibration root。"),
+    ] = promotion_thresholds.DEFAULT_PROMOTION_GATE_THRESHOLD_CALIBRATION_DIR,
+) -> None:
+    if calibration_id or latest:
+        resolved_id = calibration_id
+        if latest:
+            payload = promotion_thresholds.promotion_gate_threshold_calibration_report_payload(
+                latest=True,
+                output_dir=output_dir,
+            )
+            resolved_id = str(payload.get("calibration_id") or "")
+        if not resolved_id:
+            raise typer.BadParameter("--calibration-id or --latest is required")
+        _echo_validation_payload(
+            promotion_thresholds.validate_promotion_gate_threshold_calibration_artifact(
+                calibration_id=resolved_id,
+                output_dir=output_dir,
+            )
+        )
+        return
+    _echo_validation_payload(
+        promotion_thresholds.validate_promotion_gate_threshold_policy(
+            config_path=config_path,
         )
     )
 

@@ -1898,6 +1898,42 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "promotion_threshold_calibration",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_calibration_id"
+                        ),
+                    ),
+                    (
+                        "promotion_threshold_policy",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_policy_id"
+                        ),
+                    ),
+                    (
+                        "promotion_threshold_interpretation",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_current_interpretation"
+                        ),
+                    ),
+                    (
+                        "promotion_threshold_stress_required",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_stress_required"
+                        ),
+                    ),
+                    (
+                        "promotion_threshold_confirmation_minimum",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_confirmation_minimum"
+                        ),
+                    ),
+                    (
+                        "promotion_threshold_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_validation_status"
+                        ),
+                    ),
+                    (
                         "paper_shadow_protocol",
                         etf_dynamic_v3_parameter_research.get("paper_shadow_protocol_id"),
                     ),
@@ -12419,6 +12455,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "formal_research_method_contract_manifest.json",
     )
+    promotion_threshold_calibration_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_promotion_gate_threshold_calibration",
+        ),
+        "promotion_gate_threshold_calibration_manifest.json",
+    )
     paper_shadow_protocol_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -12863,6 +12906,21 @@ def _etf_dynamic_v3_parameter_research_summary(
         if formal_research_method_contract_path is not None
         else None
     )
+    promotion_threshold_manifest = _read_optional_json(
+        promotion_threshold_calibration_path
+    )
+    promotion_threshold_report = _read_optional_json(
+        promotion_threshold_calibration_path.parent
+        / "promotion_gate_threshold_calibration_report.json"
+        if promotion_threshold_calibration_path is not None
+        else None
+    )
+    promotion_threshold_validation = _read_optional_json(
+        promotion_threshold_calibration_path.parent
+        / "promotion_gate_threshold_validation.json"
+        if promotion_threshold_calibration_path is not None
+        else None
+    )
     paper_shadow_protocol_manifest = _read_optional_json(paper_shadow_protocol_path)
     paper_shadow_protocol = _read_optional_json(
         paper_shadow_protocol_path.parent / "paper_shadow_protocol.json"
@@ -12966,6 +13024,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         formal_research_method_contract,
         formal_research_method_decision,
         formal_research_method_validation,
+        promotion_threshold_manifest,
+        promotion_threshold_report,
+        promotion_threshold_validation,
         paper_shadow_protocol_manifest,
         paper_shadow_protocol,
         paper_shadow_protocol_validation,
@@ -14151,6 +14212,42 @@ def _etf_dynamic_v3_parameter_research_summary(
             formal_research_method_validation.get("status"),
             "MISSING",
         ),
+        "promotion_threshold_calibration_id": _text(
+            promotion_threshold_manifest.get("calibration_id"),
+            "MISSING",
+        ),
+        "promotion_threshold_policy_id": _text(
+            promotion_threshold_report.get("policy_id"),
+            "MISSING",
+        ),
+        "promotion_threshold_policy_version": _text(
+            promotion_threshold_report.get("policy_version"),
+            "MISSING",
+        ),
+        "promotion_threshold_status": _text(
+            promotion_threshold_report.get("status"),
+            "MISSING",
+        ),
+        "promotion_threshold_current_interpretation": _text(
+            promotion_threshold_report.get("current_threshold_interpretation"),
+            "MISSING",
+        ),
+        "promotion_threshold_stress_required": _text(
+            promotion_threshold_report.get("stress_required"),
+            "MISSING",
+        ),
+        "promotion_threshold_confirmation_minimum": promotion_threshold_report.get(
+            "confirmation_target_minimum",
+            "MISSING",
+        ),
+        "promotion_threshold_validation_status": _text(
+            promotion_threshold_validation.get("status"),
+            "MISSING",
+        ),
+        "promotion_threshold_next_action": _text(
+            promotion_threshold_report.get("next_required_action"),
+            "MISSING",
+        ),
         "paper_shadow_protocol_id": _text(
             paper_shadow_protocol_manifest.get("protocol_id"),
             "MISSING",
@@ -14540,6 +14637,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if formal_research_method_contract_path is None
             else str(formal_research_method_contract_path)
+        ),
+        "promotion_gate_threshold_calibration": (
+            ""
+            if promotion_threshold_calibration_path is None
+            else str(promotion_threshold_calibration_path)
         ),
         "paper_shadow_protocol": (
             "" if paper_shadow_protocol_path is None else str(paper_shadow_protocol_path)
@@ -15428,6 +15530,15 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "formal_research_method_paper_shadow_eligibility": "MISSING",
         "formal_research_method_safety_boundary_status": "MISSING",
         "formal_research_method_validation_status": "MISSING",
+        "promotion_threshold_calibration_id": "MISSING",
+        "promotion_threshold_policy_id": "MISSING",
+        "promotion_threshold_policy_version": "MISSING",
+        "promotion_threshold_status": "MISSING",
+        "promotion_threshold_current_interpretation": "MISSING",
+        "promotion_threshold_stress_required": "MISSING",
+        "promotion_threshold_confirmation_minimum": "MISSING",
+        "promotion_threshold_validation_status": "MISSING",
+        "promotion_threshold_next_action": "MISSING",
         "paper_shadow_protocol_id": "MISSING",
         "paper_shadow_protocol_status": "MISSING",
         "paper_shadow_protocol_eligibility_status": "MISSING",
@@ -15524,6 +15635,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "rolling_evidence_refresh": "",
         "evidence_trend": "",
         "forward_outcome_decision": "",
+        "promotion_gate_threshold_calibration": "",
         "paper_shadow_protocol": "",
         "paper_shadow_daily": "",
         "candidate_decision_ledger": "",

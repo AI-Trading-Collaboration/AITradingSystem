@@ -4882,6 +4882,34 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_promotion_gate_threshold_calibration
+    title: ETF Dynamic v3 Promotion Gate Threshold Calibration
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue promotion-gate-threshold-calibration report
+    artifact_globs:
+      - run/review/register/promotion-gate-threshold-calibration/*/promotion_gate_threshold_calibration_manifest.json
+      - run/review/register/promotion-gate-threshold-calibration/*/promotion_gate_threshold_calibration_report.json
+      - run/review/register/promotion-gate-threshold-calibration/*/promotion_gate_threshold_calibration_report.md
+      - run/review/register/promotion-gate-threshold-calibration/*/reader_brief_section.md
+      - run/review/register/promotion-gate-threshold-calibration/*/promotion_gate_threshold_validation.json
+      - run/review/register/promotion-gate-threshold-calibration/*/promotion_gate_threshold_validation.md
+      - config/research/promotion_gate_thresholds.yaml
+      - docs/promotion_gates/threshold_calibration.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-348 records reviewed pilot threshold bands for stress strength,
+      drawdown mismatch reduction, flip/rotation reduction, A/B confidence, and
+      confirmation target count. The calibration is governance-only and does not
+      change formal contract decisions, fit thresholds to force candidate pass,
+      create official target weights, touch broker systems, or mutate production
+      state.
+    owner_action: owner_review_promotion_gate_threshold_policy_before_recalibration
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_protocol
     title: ETF Dynamic v3 Paper Shadow Protocol
     group: governance

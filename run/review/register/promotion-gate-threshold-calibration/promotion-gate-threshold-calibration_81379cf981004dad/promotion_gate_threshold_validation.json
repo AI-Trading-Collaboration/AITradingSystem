@@ -1,0 +1,78 @@
+{
+  "artifact_id": "promotion-gate-threshold-calibration_81379cf981004dad",
+  "auto_apply": false,
+  "automatic_candidate_promotion": false,
+  "baseline_config_mutated": false,
+  "broker_action_allowed": false,
+  "broker_action_taken": false,
+  "checks": [
+    {
+      "check_id": "artifact_exists:promotion_gate_threshold_calibration_manifest.json",
+      "detail": "D:\\Work\\AITradingSystem\\run\\review\\register\\promotion-gate-threshold-calibration\\promotion-gate-threshold-calibration_81379cf981004dad\\promotion_gate_threshold_calibration_manifest.json",
+      "passed": true
+    },
+    {
+      "check_id": "artifact_exists:promotion_gate_threshold_calibration_report.json",
+      "detail": "D:\\Work\\AITradingSystem\\run\\review\\register\\promotion-gate-threshold-calibration\\promotion-gate-threshold-calibration_81379cf981004dad\\promotion_gate_threshold_calibration_report.json",
+      "passed": true
+    },
+    {
+      "check_id": "artifact_exists:promotion_gate_threshold_calibration_report.md",
+      "detail": "D:\\Work\\AITradingSystem\\run\\review\\register\\promotion-gate-threshold-calibration\\promotion-gate-threshold-calibration_81379cf981004dad\\promotion_gate_threshold_calibration_report.md",
+      "passed": true
+    },
+    {
+      "check_id": "artifact_exists:reader_brief_section.md",
+      "detail": "D:\\Work\\AITradingSystem\\run\\review\\register\\promotion-gate-threshold-calibration\\promotion-gate-threshold-calibration_81379cf981004dad\\reader_brief_section.md",
+      "passed": true
+    },
+    {
+      "check_id": "calibration_id_matches",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "check_id": "policy_id_visible",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "check_id": "source_contract_visible",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "check_id": "threshold_families_complete",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "check_id": "reader_brief_fields",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "check_id": "broker_forbidden",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "check_id": "no_auto_apply",
+      "detail": "",
+      "passed": true
+    }
+  ],
+  "failed_check_count": 0,
+  "not_official_target_weights": true,
+  "official_target_weights_mutated": false,
+  "order_ticket_generated": false,
+  "owner_approval_required": true,
+  "paper_shadow_only": true,
+  "production_candidate_generated": false,
+  "production_effect": "none",
+  "production_state_mutated": false,
+  "report_type": "etf_dynamic_v3_promotion_gate_threshold_calibration_validation",
+  "research_target_only": true,
+  "schema_version": 1,
+  "status": "PASS"
+}
