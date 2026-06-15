@@ -1,6 +1,6 @@
 # TRADING-358 Flip Rotation Event Casebook
 
-最后更新：2026-06-15
+最后更新：2026-06-16
 
 ## 1. 背景
 
@@ -109,3 +109,11 @@ All outputs are read-only and fixed to:
   missing/stale visibility），Reader Brief OK，Reader Brief quality OK。保持 research
   diagnostic only / not trading signal / no data refresh / no signal extraction or backtest
   executor / no official target / no broker / no production。
+- 2026-06-16：复验完成并转 DONE；真实只读 report 生成
+  `flip-rotation-event-casebook_146c806ccd4bb4b3`，`event_count=5`，
+  `useful_flip_count=3`，`false_positive_count=2`，
+  `dominant_trigger_signal=v_shaped_recovery_confirmation`，
+  `next_review_action=use_casebook_in_next_flip_rotation_review`，
+  `validate-flip-rotation-event-casebook` 返回 PASS / failed=0。验证通过
+  `python -m pytest tests/test_flip_rotation_event_casebook.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q`
+  36 passed。
