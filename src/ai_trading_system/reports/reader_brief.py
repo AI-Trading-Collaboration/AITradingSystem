@@ -164,6 +164,7 @@ def build_reader_brief_payload(
     )
     report_index_summary = _report_index_summary(report_index)
     pit_source_manifest = _pit_source_manifest_summary(report_index)
+    data_refresh_audit = _data_refresh_audit_summary(report_index)
     governance_summary = _backtest_shadow_governance(
         daily_decision_summary=daily_decision_summary,
         daily_task_dashboard=daily_task_dashboard,
@@ -320,6 +321,7 @@ def build_reader_brief_payload(
         "binding_gate_ladder": gate_ladder,
         "data_quality_pit_safety": data_quality_pit_safety,
         "pit_source_manifest": pit_source_manifest,
+        "data_refresh_audit": data_refresh_audit,
         "backtest_shadow_governance": governance_summary,
         "parameter_shadow_review": parameter_shadow_review,
         "etf_backtest_summary": etf_backtest_summary,
@@ -600,6 +602,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     gates = _records(_mapping(payload.get("binding_gate_ladder")).get("gates"))
     quality = _mapping(payload.get("data_quality_pit_safety"))
     pit_source_manifest = _mapping(payload.get("pit_source_manifest"))
+    data_refresh_audit = _mapping(payload.get("data_refresh_audit"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
@@ -4500,6 +4503,34 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         _section("Binding Gate Ladder", _gate_ladder_html(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section(
+            "Data Refresh Audit",
+            _definition_table(
+                [
+                    ("availability", data_refresh_audit.get("availability")),
+                    ("status", data_refresh_audit.get("status")),
+                    ("validation_status", data_refresh_audit.get("validation_status")),
+                    ("audit_record_count", data_refresh_audit.get("audit_record_count")),
+                    ("failed_record_count", data_refresh_audit.get("failed_record_count")),
+                    ("skipped_record_count", data_refresh_audit.get("skipped_record_count")),
+                    (
+                        "skipped_market_closed_count",
+                        data_refresh_audit.get("skipped_market_closed_count"),
+                    ),
+                    (
+                        "skipped_no_new_data_count",
+                        data_refresh_audit.get("skipped_no_new_data_count"),
+                    ),
+                    ("warning_count", data_refresh_audit.get("warning_count")),
+                    ("error_count", data_refresh_audit.get("error_count")),
+                    ("next_action", data_refresh_audit.get("next_action")),
+                    ("safety_status", data_refresh_audit.get("safety_status")),
+                    ("report_path", data_refresh_audit.get("report_path")),
+                    ("production_effect", data_refresh_audit.get("production_effect")),
+                    ("limitation", data_refresh_audit.get("limitation")),
+                ]
+            ),
+        ),
+        _section(
             "PIT Source Manifest",
             _definition_table(
                 [
@@ -6001,6 +6032,83 @@ def _missing_pit_source_manifest_summary(reason: str) -> dict[str, Any]:
         "non_strong_source_count": 0,
         "non_strong_source_ids": "MISSING",
         "policy_version": "UNKNOWN",
+        "safety_status": "MISSING",
+        "report_path": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "limitation": reason,
+    }
+
+
+def _data_refresh_audit_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_data_refresh_audit_summary(
+            "report_index_missing; Reader Brief 不补造 refresh/validation audit 结论。"
+        )
+    report_path = _report_index_artifact_path(report_index, "data_refresh_audit")
+    if report_path is None:
+        return _missing_data_refresh_audit_summary(
+            "data_refresh_audit artifact missing from report_index."
+        )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_data_refresh_audit_summary(
+            f"data_refresh_audit JSON unreadable: {report_path}"
+        )
+    summary = _mapping(payload.get("summary"))
+    safety = _mapping(payload.get("safety_boundary"))
+    safety_status = (
+        "PASS"
+        if _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and safety.get("read_only") is True
+        and safety.get("data_refresh_allowed") is False
+        and safety.get("data_downloaded_by_audit") is False
+        and safety.get("broker_action_allowed") is False
+        and safety.get("trading_action_allowed") is False
+        else "REVIEW_REQUIRED"
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "validation_status": _text(
+            payload.get("validation_status"),
+            _text(payload.get("status"), "UNKNOWN"),
+        ),
+        "audit_id": _text(payload.get("audit_id"), "UNKNOWN"),
+        "as_of": _text(payload.get("as_of"), "UNKNOWN"),
+        "audit_record_count": summary.get("audit_record_count", 0),
+        "failed_record_count": summary.get("failed_record_count", 0),
+        "skipped_record_count": summary.get("skipped_record_count", 0),
+        "skipped_market_closed_count": summary.get("skipped_market_closed_count", 0),
+        "skipped_no_new_data_count": summary.get("skipped_no_new_data_count", 0),
+        "warning_count": summary.get("warning_count", 0),
+        "error_count": summary.get("error_count", 0),
+        "next_action": _text(summary.get("next_action"), "UNKNOWN"),
+        "safety_status": safety_status,
+        "report_path": str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "limitation": (
+            "Refresh/validation governance only; audit status records evidence "
+            "for paper-shadow review but does not run refreshes or approve "
+            "production use."
+        ),
+    }
+
+
+def _missing_data_refresh_audit_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "validation_status": "MISSING",
+        "audit_id": "MISSING",
+        "as_of": "UNKNOWN",
+        "audit_record_count": 0,
+        "failed_record_count": 0,
+        "skipped_record_count": 0,
+        "skipped_market_closed_count": 0,
+        "skipped_no_new_data_count": 0,
+        "warning_count": 0,
+        "error_count": 0,
+        "next_action": "generate_data_refresh_audit",
         "safety_status": "MISSING",
         "report_path": "MISSING",
         "production_effect": PRODUCTION_EFFECT,

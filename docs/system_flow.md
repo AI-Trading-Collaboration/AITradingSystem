@@ -20,6 +20,8 @@ ARCH-001 第二十八批后，`aits reports ...` 命令组统一由 `src/ai_trad
 
 DATA-016 后，根级 `aits validate-data` 的下载 manifest provenance gate 按当前价格、第二行情源和宏观文件 checksum 的最新相关 manifest 记录判定 `RECONSTRUCTED_MANIFEST` warning；历史 reconstructed manifest 行继续留作审计历史，但当当前 checksum 已有更新的真实 provider 下载记录时，不再把当前数据质量状态降级。当前 checksum 缺失或最新相关记录仍为 reconstructed 时，门禁继续输出 warning 并要求下游披露 provenance 限制。Marketstack reconciliation companion CSV 仍逐行记录主源/二源 ticker-date 差异、分类规则、证据、主/二源数值和差异比例，只归因不改写价格缓存、评分或回测真值。
 
+TRADING-367 后，根级 `aits validate-data` 在写出数据质量报告后同步写入 `artifacts/data_refresh_audit/validation/` validation audit sidecar，记录 data type、source、start/end time、as-of、status、checksum、row count、warning/error count 和 quality gate 结果。`aits data refresh-audit report --as-of YYYY-MM-DD` 只读聚合 latest validation sidecar、既有 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json`、price cache checksum/row count 和 U.S. market calendar skip reason，输出 `reports/data_governance/data_refresh_audit/<audit_id>/data_refresh_audit.json/md`、validation JSON/Markdown 和 Reader Brief section；缺 validation sidecar fail closed，不刷新数据、不补造 cache、不降低 `aits validate-data` 门禁、不写 official target weights 或 broker/order state。`config/report_registry.yaml` 登记 `data_refresh_audit`，Reader Brief 只读展示 latest audit status、failed/skipped counts、warning/error counts 和 next action。
+
 ## ETF Portfolio P0 Baseline
 
 `TRADING-062` 新增隔离的 ETF 主仓组合闭环。该闭环不修改现有 production 参数、shadow promotion、broker 或真实交易动作；默认命令入口统一为 `aits etf ...`。
@@ -914,6 +916,7 @@ flowchart TD
     subgraph Gate["数据质量门禁"]
         V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>按 consistency_start_date 执行价格波动/复权、宏观变化和 Marketstack reconciliation<br/>可解释项转 INFO；已知拆股窗口日期口径差异可归因；主源和 raw close 未解决冲突仍 fail closed"]
         QR["outputs/reports/data_quality_YYYY-MM-DD.md<br/>+ data_quality_YYYY-MM-DD_marketstack_reconciliation.csv<br/>问题表标注价格主源 / 第二行情源 / 跨源核验 / FRED / manifest 来源"]
+        DQAUDREC["artifacts/data_refresh_audit/validation/validate_data_*.json<br/>validate-data audit sidecar：data type、source、start/end、as_of、status、checksum、row count、warning/error count"]
         YDG["aits data-sources yahoo-price-diagnostic<br/>只对 Marketstack self-check 异常 ticker/date 拉取 Yahoo raw OHLC<br/>不写主缓存、二源缓存、评分或回测真值"]
         YDR["outputs/reports/yahoo_price_diagnostic_YYYY-MM-DD.md<br/>provider、endpoint、request params、row count、checksum、FMP/Marketstack/Yahoo 对比"]
         Stop["错误时停止后续评分、特征、回测或报告"]
@@ -1014,6 +1017,8 @@ flowchart TD
         MDFR["artifacts/data_freshness/YYYY-MM-DD/market_data_freshness_summary.json/md<br/>freshness_status、calendar、asset coverage、tracking_readiness、suggested_actions；production_effect=none"]
         MDR["aits data refresh-market / validate-refresh / recover-freshness<br/>CLI module: src/ai_trading_system/cli_commands/data.py<br/>当 freshness 为 STALE/MISSING 时生成 refresh plan，合并 audited raw cache 历史段/单日段或调用 provider 补齐 required asset history 至 target date，更新 registry/manifest，并重跑 freshness 与 tracking；after freshness 非 OK 时 fail closed"]
         MDRR["artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_plan.json + market_data_refresh_summary.json/md<br/>refresh_status、required_start_date/target_date、source artifacts、source/symbol mapping、before/after freshness、registry/manifest/tracking recovery；production_effect=none"]
+        DRAUD["aits data refresh-audit report / validate<br/>只读聚合 validate-data sidecar、market refresh summary、price cache checksum/row count 和 U.S. market calendar skip reason"]
+        DRAUDR["reports/data_governance/data_refresh_audit/<audit_id>/data_refresh_audit.json/md<br/>audit records + validation JSON/Markdown + Reader Brief section；production_effect=none"]
         PCTRACK["aits portfolio track-candidate / validate-tracking / tracking-status<br/>读取 latest eligible review decision、market data freshness 和 latest valid manifest，按 readiness 输出 active/degraded/blocked shadow tracking"]
         PCTRACKR["artifacts/portfolio_candidate_tracking/YYYY-MM-DD/portfolio_candidate_tracking_summary.json/md<br/>+ state/active_shadow_candidates.json<br/>baseline vs candidate tracking metrics、date_resolution、data_gate、market_data_freshness/refresh、promotion impact；production_effect=none"]
         PTR["aits portfolio review-tracking / validate-tracking-review / tracking-window-status<br/>读取 active shadow candidate state、daily tracking summaries 和 tracking window policy，输出 rolling performance review、stage、剩余天数与 advisory recommendation"]
@@ -1951,6 +1956,8 @@ flowchart TD
     PCREC --> PBDIAGR
     PCRECR --> DREG
     BMREF --> PBDIAGR
+    V --> DQAUDREC
+    QR --> DQAUDREC
     SABLC --> SABL
     SPBTC --> SABL
     PPBC --> SABL
@@ -2009,6 +2016,12 @@ flowchart TD
     MDR --> MDRR
     MDR -. "refresh_backtest_manifest" .-> PBDIAGR
     MDRR -. "refresh recovery evidence" .-> MDF
+    DQAUDREC --> DRAUD
+    MDRR --> DRAUD
+    PR -. "checksum / row count only" .-> DRAUD
+    DRAUD --> DRAUDR
+    DRAUDR --> RIDX
+    DRAUDR -. "Reader Brief Data Refresh Audit section via report index" .-> RBRIEF
     PCREVR --> PCTRACK
     MDFR -. "freshness readiness gate；STALE/MISSING 阻断 tracking" .-> PCTRACK
     MDRR -. "latest refresh report / recovery status" .-> PCTRACK
@@ -2846,8 +2859,9 @@ flowchart TD
 |原始缓存|`data/raw/prices_marketstack_daily.csv`|Marketstack 股票/ETF 日线第二来源缓存，用于 cross-provider reconciliation；self-check 异常默认作为第二源健康告警，不覆盖主价格缓存|已实现基础版|
 |原始缓存|`data/raw/rates_daily.csv`|FRED 宏观序列长表，当前包含 DGS2、DGS10 和 `DTWEXBGS`；`DTWEXBGS` 不是 ICE DXY|已实现|
 |下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|
-|质量门禁|`aits validate-data` / `src/ai_trading_system/cli_commands/data_cache.py`|校验 schema、完整性、新鲜度、重复键、异常值；价格波动、复权比例和主价格缓存与 Marketstack 第二来源 reconciliation 默认只统计 `config/data_quality.yaml:prices.consistency_start_date` 以来样本；宏观 freshness 先用 `config/data_quality.yaml:rates.max_stale_calendar_days`，再应用 `rates.series_overrides` 的 series 级阈值，当前 `DTWEXBGS` 因 Federal Reserve H.10 周度发布机制允许更长日历滞后，DGS2/DGS10 仍保持默认阈值；宏观单日变化默认只统计 `config/data_quality.yaml:rates.consistency_start_date` 以来样本；配置化指数 volume 缺失、已知拆股复权跳变、已知拆股窗口内主源/二源 raw close 日期口径差异、Marketstack 自身坏点和 raw close 已核验的 adjusted close 分红复权口径差异进入 INFO 与 reconciliation 记录；主源错误、第二源缺失/不可读、重叠覆盖不足和 raw close 跨源未解决冲突仍 fail closed；根级命令和 direct dispatcher 均调用同一 data cache CLI 模块，不改变 quality report、Marketstack reconciliation 或下游停止条件|已实现；ARCH-001 第二十三批迁移 CLI 边界|
+|质量门禁|`aits validate-data` / `src/ai_trading_system/cli_commands/data_cache.py`|校验 schema、完整性、新鲜度、重复键、异常值；价格波动、复权比例和主价格缓存与 Marketstack 第二来源 reconciliation 默认只统计 `config/data_quality.yaml:prices.consistency_start_date` 以来样本；宏观 freshness 先用 `config/data_quality.yaml:rates.max_stale_calendar_days`，再应用 `rates.series_overrides` 的 series 级阈值，当前 `DTWEXBGS` 因 Federal Reserve H.10 周度发布机制允许更长日历滞后，DGS2/DGS10 仍保持默认阈值；宏观单日变化默认只统计 `config/data_quality.yaml:rates.consistency_start_date` 以来样本；配置化指数 volume 缺失、已知拆股复权跳变、已知拆股窗口内主源/二源 raw close 日期口径差异、Marketstack 自身坏点和 raw close 已核验的 adjusted close 分红复权口径差异进入 INFO 与 reconciliation 记录；主源错误、第二源缺失/不可读、重叠覆盖不足和 raw close 跨源未解决冲突仍 fail closed；门禁写出质量报告后同步写 `artifacts/data_refresh_audit/validation/validate_data_*.json` sidecar，记录 data type、source、start/end、as_of、status、checksum、row count、warning/error count；根级命令和 direct dispatcher 均调用同一 data cache CLI 模块，不改变 quality report、Marketstack reconciliation 或下游停止条件|已实现；ARCH-001 第二十三批迁移 CLI 边界；TRADING-367 增加 validation audit sidecar|
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md` / `data_quality_YYYY-MM-DD_marketstack_reconciliation.csv`|声明数据是否可用于下游结论，显示价格一致性和宏观变化检查窗口，并在问题表标注价格主源、第二行情源、跨源核验、FRED 宏观序列或下载审计清单来源；Marketstack reconciliation CSV 逐行记录 ticker/date、主/二源数值、分类规则、证据和 severity，不改写任何价格缓存|已实现|
+|Data Refresh Audit|`aits data refresh-audit report --as-of YYYY-MM-DD` / `aits data refresh-audit validate --latest`；CLI 实现位于 `src/ai_trading_system/cli_commands/data.py`，核心实现位于 `src/ai_trading_system/data_refresh_audit.py`|只读聚合 validate-data sidecar、latest market refresh summary、price cache checksum/row count 和 U.S. market calendar skip reason，输出 `reports/data_governance/data_refresh_audit/<audit_id>/data_refresh_audit.json/md`、validation JSON/Markdown 和 Reader Brief section；record status 限定为 `SUCCESS`、`SUCCESS_WITH_WARNINGS`、`FAILED`、`SKIPPED_MARKET_CLOSED`、`SKIPPED_NO_NEW_DATA`；缺 validation sidecar fail closed；report registry 和 Reader Brief 只读展示 latest status、failed/skipped counts、warning/error counts 和 next action；固定 `production_effect=none`，不刷新数据、不补造 cache、不降低 `aits validate-data` 门禁、不写 official target weights 或 broker/order state|TRADING-367 新增|
 |PIT 特征可见时间目录|`config/feature_availability.yaml` / `outputs/reports/feature_availability_YYYY-MM-DD.md`|统一记录价格、宏观、观察池、SEC/TSM 基本面、估值、风险事件和市场证据等输入族的 `event_time`、`source_published_at`、`available_time`、`decision_time`、默认保守滞后和缺少可见时间时的 A/B 级使用策略；`build-features`、`score-daily`、`backtest` 会写出 PIT 特征可见时间报告，报告包含字段级 source 检查、`available_time` 覆盖率、未来可见时间行数和保守 fallback 策略，失败时停止，trace bundle 记录该目录摘要|已实现基础版|
 |特征|`aits build-features` / `src/ai_trading_system/cli_commands/market_features.py`|先执行数据质量门禁，再生成可解释市场特征，并输出 PIT 特征可见时间报告；缺少 availability rule 的 source 会 fail closed，特征摘要引用该报告；CLI wrapper 已迁入 market features 命令模块，市场特征计算、PIT feature availability gate、数据质量报告和特征摘要输出语义不变|已实现；ARCH-001 第二十六批迁移 CLI 边界|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|

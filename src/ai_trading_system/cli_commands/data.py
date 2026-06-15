@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
@@ -11,6 +12,15 @@ from ai_trading_system.cli_commands.data_artifacts import (
     _parse_date,
     _resolve_market_data_freshness_path,
     _resolve_market_data_refresh_path,
+)
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data_refresh_audit import (
+    DEFAULT_DATA_REFRESH_AUDIT_DIR,
+    DEFAULT_VALIDATION_AUDIT_DIR,
+    build_and_write_data_refresh_audit,
+    load_data_refresh_audit_payload,
+    resolve_data_refresh_audit_path,
+    validate_data_refresh_audit_artifact,
 )
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     run_backtest_input_diagnostics,
@@ -43,6 +53,8 @@ from ai_trading_system.trading_engine.price_cache_reconcile import (
 
 console = Console()
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
+refresh_audit_app = typer.Typer(help="Data refresh audit trail 治理报告。")
+data_app.add_typer(refresh_audit_app, name="refresh-audit")
 
 
 @data_app.command("diagnose-backtest-inputs")
@@ -583,6 +595,117 @@ def data_validate_refresh_command(
     console.print(f"refresh_status={status}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
     if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
+@refresh_audit_app.command("report")
+def data_refresh_audit_report_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="audit 评估日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Data refresh audit artifact 根目录。"),
+    ] = DEFAULT_DATA_REFRESH_AUDIT_DIR,
+    validation_audit_dir: Annotated[
+        Path,
+        typer.Option(help="validate-data audit sidecar 根目录。"),
+    ] = DEFAULT_VALIDATION_AUDIT_DIR,
+    market_refresh_root: Annotated[
+        Path | None,
+        typer.Option(
+            help="market_data_refresh_summary.json 根目录；默认使用项目 artifact 根目录。"
+        ),
+    ] = None,
+    price_cache_path: Annotated[
+        Path,
+        typer.Option(help="只读 price cache 路径，用于 skipped refresh checksum/row count。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="只读取 latest artifact，不生成新 audit。"),
+    ] = False,
+) -> None:
+    """生成或读取 paper-shadow data refresh audit trail。"""
+    if latest:
+        audit_path = resolve_data_refresh_audit_path(latest=True, output_dir=output_dir)
+        payload = load_data_refresh_audit_payload(audit_path)
+        paths = {"audit_json": audit_path}
+    else:
+        evaluation_date = _parse_date(as_of) if as_of else None
+        if evaluation_date is None:
+            evaluation_date = date.today()
+        payload, paths = build_and_write_data_refresh_audit(
+            as_of=evaluation_date,
+            output_dir=output_dir,
+            validation_audit_dir=validation_audit_dir,
+            market_refresh_root=market_refresh_root,
+            price_cache_path=price_cache_path,
+        )
+
+    summary = payload.get("summary", {})
+    status = str(payload.get("status", "UNKNOWN"))
+    status_style = "green" if status == "PASS" else "yellow" if status != "FAIL" else "red"
+    console.print(f"[{status_style}]Data refresh audit status={status}[/{status_style}]")
+    console.print(f"audit_id={payload.get('audit_id')}")
+    if isinstance(summary, dict):
+        console.print(f"audit_record_count={summary.get('audit_record_count')}")
+        console.print(
+            "record_counts="
+            f"failed:{summary.get('failed_record_count')}, "
+            f"skipped:{summary.get('skipped_record_count')}, "
+            f"warnings:{summary.get('warning_count')}, "
+            f"errors:{summary.get('error_count')}"
+        )
+        console.print(f"next_action={summary.get('next_action')}")
+    console.print(f"report={paths.get('audit_json')}")
+    console.print(
+        "production_effect=none；只读治理报告，不刷新数据、不补造 cache、不触发 broker。"
+    )
+
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@refresh_audit_app.command("validate")
+def validate_data_refresh_audit_command(
+    audit_id: Annotated[
+        str | None,
+        typer.Option(help="要校验的 audit_id；不传时可用 --latest。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="校验 latest data refresh audit。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Data refresh audit artifact 根目录。"),
+    ] = DEFAULT_DATA_REFRESH_AUDIT_DIR,
+) -> None:
+    """校验 data refresh audit schema、status、checksum、record counts 和安全边界。"""
+    validation, audit_path = validate_data_refresh_audit_artifact(
+        audit_id=audit_id,
+        latest=latest or audit_id is None,
+        output_dir=output_dir,
+    )
+    status_style = (
+        "green" if validation.status == "PASS" else "yellow" if validation.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]Data refresh audit validation status={validation.status}"
+        f"[/{status_style}]"
+    )
+    console.print(f"audit_id={validation.audit_id}")
+    console.print(f"audit={audit_path}")
+    console.print(f"audit_record_count={validation.audit_record_count}")
+    console.print(f"error_count={validation.error_count}; warning_count={validation.warning_count}")
+    console.print("production_effect=none；校验只读 existing artifact。")
+
+    if not validation.passed:
         raise typer.Exit(code=1)
 
 

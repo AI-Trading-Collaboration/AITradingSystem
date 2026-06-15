@@ -1898,6 +1898,24 @@ aits data-sources pit-manifest validate --latest
 
 该 manifest 写入 `reports/data_governance/pit_source_manifest/<manifest_id>/`，每个 source 记录 source name、retrieval time、effective date、revision risk、`STRONG_PIT|APPROX_PIT|NON_PIT|UNKNOWN`、cache path、checksum、refresh policy 和 validation policy。它只建立未来研究数据治理 contract，不修复全部 PIT 数据问题；`APPROX_PIT`、`NON_PIT` 或 `UNKNOWN` 不能自动支持 backtest、scoring、paper shadow 或 production 结论。Reader Brief 只读 report index latest artifact 展示 grade counts 和 non-strong source ids；所有输出固定 `production_effect=none`，不刷新数据、不运行下游管线、不触发 broker。
 
+为 paper-shadow 依赖的数据刷新和数据质量门禁建立统一 audit trail：
+
+```powershell
+aits validate-data --as-of 2026-05-02
+aits data refresh-audit report --as-of 2026-05-02
+aits data refresh-audit validate --latest
+```
+
+`validate-data` 会同步写入 `artifacts/data_refresh_audit/validation/validate_data_*.json`
+sidecar，记录本次 validation gate 的 data type、source、start/end time、as-of date、
+status、checksum、record count、warning count 和 error count。`refresh-audit report`
+只读聚合 latest validation sidecar、既有 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json`
+和 U.S. market calendar skip reason，输出 `reports/data_governance/data_refresh_audit/<audit_id>/`。
+缺少 validation sidecar 会 fail closed；该报告不刷新数据、不补造 cache、不降低
+`aits validate-data` 门禁、不写 official target weights，也不触发 broker/order。Reader Brief
+只读 report index latest artifact 展示 audit status、failed/skipped counts、warning/error counts
+和 next action。
+
 建立并校验 forward-only PIT raw snapshot manifest：
 
 ```powershell

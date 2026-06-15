@@ -77,6 +77,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: data_refresh_audit
+    title: Data Refresh Audit
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits data refresh-audit report --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/data_governance/data_refresh_audit/*/data_refresh_audit.json
+      - reports/data_governance/data_refresh_audit/*/data_refresh_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 1
+    freshness_rationale: >
+      Paper-shadow data-dependent work needs same-day or latest complete-market
+      evidence for refresh attempts, validate-data sidecar, checksum, row count,
+      warning count and error count.
+    owner_action: run_aits_validate_data_then_data_refresh_audit_report_before_paper_shadow_use
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: backtest_input_diagnostics
     title: Backtest Input Diagnostics
     group: shadow

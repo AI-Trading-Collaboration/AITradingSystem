@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -31,6 +31,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data_refresh_audit import write_validate_data_audit_sidecar
 from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 
 console = Console()
@@ -204,6 +205,7 @@ def validate_data(
         validation_date,
     )
 
+    started_at = datetime.now(tz=UTC)
     report = validate_data_cache(
         prices_path=prices_path,
         rates_path=rates_path,
@@ -220,10 +222,17 @@ def validate_data(
         require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(report, report_path)
+    audit_record_path = write_validate_data_audit_sidecar(
+        report=report,
+        report_path=report_path,
+        started_at=started_at,
+        ended_at=datetime.now(tz=UTC),
+    )
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(f"[{status_style}]数据质量状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
+    console.print(f"Data refresh audit record：{audit_record_path}")
     if report.marketstack_reconciliation_records:
         reconciliation_path = marketstack_reconciliation_path(report_path)
         console.print(f"Marketstack reconciliation：{reconciliation_path}")
