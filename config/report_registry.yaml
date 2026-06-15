@@ -57,6 +57,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: true
+  - report_id: pit_source_manifest
+    title: Point-in-Time Source Manifest
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits data-sources pit-manifest report
+    artifact_globs:
+      - reports/data_governance/pit_source_manifest/*/pit_source_manifest.json
+      - reports/data_governance/pit_source_manifest/*/pit_source_manifest.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 45
+    freshness_rationale: >
+      Source-level PIT grade, revision risk, cache checksum, refresh policy and
+      validation policy should be refreshed during monthly data governance or
+      whenever data source catalog/cache contracts change.
+    owner_action: run_aits_data_sources_pit_manifest_report_before_using_new_research_sources
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: backtest_input_diagnostics
     title: Backtest Input Diagnostics
     group: shadow

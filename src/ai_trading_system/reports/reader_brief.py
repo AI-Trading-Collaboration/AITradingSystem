@@ -163,6 +163,7 @@ def build_reader_brief_payload(
         market_panel=market_panel,
     )
     report_index_summary = _report_index_summary(report_index)
+    pit_source_manifest = _pit_source_manifest_summary(report_index)
     governance_summary = _backtest_shadow_governance(
         daily_decision_summary=daily_decision_summary,
         daily_task_dashboard=daily_task_dashboard,
@@ -318,6 +319,7 @@ def build_reader_brief_payload(
         "component_score_explainability": component_explainability,
         "binding_gate_ladder": gate_ladder,
         "data_quality_pit_safety": data_quality_pit_safety,
+        "pit_source_manifest": pit_source_manifest,
         "backtest_shadow_governance": governance_summary,
         "parameter_shadow_review": parameter_shadow_review,
         "etf_backtest_summary": etf_backtest_summary,
@@ -597,6 +599,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     components = _records(_mapping(payload.get("component_score_explainability")).get("components"))
     gates = _records(_mapping(payload.get("binding_gate_ladder")).get("gates"))
     quality = _mapping(payload.get("data_quality_pit_safety"))
+    pit_source_manifest = _mapping(payload.get("pit_source_manifest"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
@@ -4496,6 +4499,34 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         _section("Component Explainability", _records_table(components)),
         _section("Binding Gate Ladder", _gate_ladder_html(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
+        _section(
+            "PIT Source Manifest",
+            _definition_table(
+                [
+                    ("availability", pit_source_manifest.get("availability")),
+                    ("status", pit_source_manifest.get("status")),
+                    ("validation_status", pit_source_manifest.get("validation_status")),
+                    ("source_count", pit_source_manifest.get("source_count")),
+                    ("STRONG_PIT", pit_source_manifest.get("strong_pit_count")),
+                    ("APPROX_PIT", pit_source_manifest.get("approx_pit_count")),
+                    ("NON_PIT", pit_source_manifest.get("non_pit_count")),
+                    ("UNKNOWN", pit_source_manifest.get("unknown_count")),
+                    (
+                        "non_strong_source_count",
+                        pit_source_manifest.get("non_strong_source_count"),
+                    ),
+                    (
+                        "non_strong_source_ids",
+                        pit_source_manifest.get("non_strong_source_ids"),
+                    ),
+                    ("policy_version", pit_source_manifest.get("policy_version")),
+                    ("safety_status", pit_source_manifest.get("safety_status")),
+                    ("report_path", pit_source_manifest.get("report_path")),
+                    ("production_effect", pit_source_manifest.get("production_effect")),
+                    ("limitation", pit_source_manifest.get("limitation")),
+                ]
+            ),
+        ),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
         _section(
             "ETF Backtest Summary",
@@ -5898,6 +5929,82 @@ def _data_quality_pit_safety(
             "不得据此补造 PIT 结论。"
         ),
         "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _pit_source_manifest_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_pit_source_manifest_summary(
+            "report_index_missing; Reader Brief 不补造 source-level PIT 结论。"
+        )
+    report_path = _report_index_artifact_path(report_index, "pit_source_manifest")
+    if report_path is None:
+        return _missing_pit_source_manifest_summary(
+            "pit_source_manifest artifact missing from report_index."
+        )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_pit_source_manifest_summary(
+            f"pit_source_manifest JSON unreadable: {report_path}"
+        )
+    summary = _mapping(payload.get("summary"))
+    policy = _mapping(payload.get("policy"))
+    safety = _mapping(payload.get("safety_boundary"))
+    non_strong = _texts(summary.get("non_strong_source_ids"))
+    safety_status = (
+        "PASS"
+        if _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and safety.get("read_only") is True
+        and safety.get("broker_action_allowed") is False
+        and safety.get("trading_action_allowed") is False
+        else "REVIEW_REQUIRED"
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "validation_status": _text(
+            payload.get("validation_status"),
+            _text(payload.get("status"), "UNKNOWN"),
+        ),
+        "manifest_id": _text(payload.get("manifest_id"), "UNKNOWN"),
+        "as_of": _text(payload.get("as_of"), "UNKNOWN"),
+        "source_count": summary.get("source_count"),
+        "strong_pit_count": summary.get("strong_pit_count"),
+        "approx_pit_count": summary.get("approx_pit_count"),
+        "non_pit_count": summary.get("non_pit_count"),
+        "unknown_count": summary.get("unknown_count"),
+        "non_strong_source_count": summary.get("non_strong_source_count"),
+        "non_strong_source_ids": ", ".join(non_strong) if non_strong else "none",
+        "policy_version": _text(policy.get("policy_version"), "UNKNOWN"),
+        "safety_status": safety_status,
+        "report_path": str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "limitation": (
+            "Source-level governance only; grade counts do not promote any source "
+            "to production-grade backtest evidence."
+        ),
+    }
+
+
+def _missing_pit_source_manifest_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "validation_status": "MISSING",
+        "manifest_id": "MISSING",
+        "as_of": "UNKNOWN",
+        "source_count": 0,
+        "strong_pit_count": 0,
+        "approx_pit_count": 0,
+        "non_pit_count": 0,
+        "unknown_count": 0,
+        "non_strong_source_count": 0,
+        "non_strong_source_ids": "MISSING",
+        "policy_version": "UNKNOWN",
+        "safety_status": "MISSING",
+        "report_path": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "limitation": reason,
     }
 
 

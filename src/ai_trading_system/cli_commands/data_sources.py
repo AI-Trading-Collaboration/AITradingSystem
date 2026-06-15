@@ -27,6 +27,13 @@ from ai_trading_system.data_sources import (
     write_data_source_health_report,
     write_data_sources_validation_report,
 )
+from ai_trading_system.pit_source_manifest import (
+    DEFAULT_PIT_SOURCE_MANIFEST_DIR,
+    build_and_write_pit_source_manifest,
+    load_pit_source_manifest_payload,
+    resolve_pit_source_manifest_path,
+    validate_pit_source_manifest_artifact,
+)
 from ai_trading_system.price_source_diagnostics import (
     build_yahoo_price_diagnostic_report,
     default_yahoo_price_diagnostic_report_path,
@@ -35,6 +42,8 @@ from ai_trading_system.price_source_diagnostics import (
 
 console = Console()
 data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", no_args_is_help=True)
+pit_manifest_app = typer.Typer(help="Point-in-time source manifest 治理报告。")
+data_sources_app.add_typer(pit_manifest_app, name="pit-manifest")
 
 
 @data_sources_app.command("list")
@@ -245,6 +254,108 @@ def yahoo_price_diagnostic(
     console.print(f"诊断目标：{len(diagnostic_report.targets)}")
     console.print(f"Yahoo 返回行数：{diagnostic_report.row_count}")
     console.print("治理边界：diagnostic only / production_effect=none，不写价格缓存或评分。")
+
+
+@pit_manifest_app.command("report")
+def pit_source_manifest_report(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录配置文件路径。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    download_manifest_path: Annotated[
+        Path,
+        typer.Option(help="download_manifest.csv 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "download_manifest.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="PIT source manifest artifact 根目录。"),
+    ] = DEFAULT_PIT_SOURCE_MANIFEST_DIR,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="只读取 latest artifact，不生成新 manifest。"),
+    ] = False,
+) -> None:
+    """生成或读取 source-level PIT source manifest。"""
+    if latest:
+        manifest_path = resolve_pit_source_manifest_path(latest=True, output_dir=output_dir)
+        payload = load_pit_source_manifest_payload(manifest_path)
+        paths = {"manifest_json": manifest_path}
+    else:
+        evaluation_date = _parse_date(as_of) if as_of else date.today()
+        payload, paths = build_and_write_pit_source_manifest(
+            config=load_data_sources(config_path),
+            as_of=evaluation_date,
+            download_manifest_path=download_manifest_path,
+            output_dir=output_dir,
+        )
+
+    summary = payload.get("summary", {})
+    status = str(payload.get("status", "UNKNOWN"))
+    status_style = "green" if status == "PASS" else "yellow" if status != "FAIL" else "red"
+    console.print(f"[{status_style}]PIT source manifest status={status}[/{status_style}]")
+    console.print(f"manifest_id={payload.get('manifest_id')}")
+    console.print(f"source_count={summary.get('source_count')}")
+    console.print(
+        "grade_counts="
+        f"STRONG_PIT:{summary.get('strong_pit_count')}, "
+        f"APPROX_PIT:{summary.get('approx_pit_count')}, "
+        f"NON_PIT:{summary.get('non_pit_count')}, "
+        f"UNKNOWN:{summary.get('unknown_count')}"
+    )
+    console.print(f"non_strong_source_count={summary.get('non_strong_source_count')}")
+    console.print(f"validation_status={payload.get('validation_status')}")
+    console.print(f"report={paths.get('manifest_json')}")
+    console.print(
+        "production_effect=none；只读治理报告，不刷新数据、不运行评分/回测、不触发 broker。"
+    )
+
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@pit_manifest_app.command("validate")
+def validate_pit_source_manifest(
+    manifest_id: Annotated[
+        str | None,
+        typer.Option(help="要校验的 manifest_id；不传时可用 --latest。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="校验 latest PIT source manifest。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="PIT source manifest artifact 根目录。"),
+    ] = DEFAULT_PIT_SOURCE_MANIFEST_DIR,
+) -> None:
+    """校验 source-level PIT source manifest schema、grade 和安全边界。"""
+    validation, manifest_path = validate_pit_source_manifest_artifact(
+        manifest_id=manifest_id,
+        latest=latest or manifest_id is None,
+        output_dir=output_dir,
+    )
+    status_style = (
+        "green" if validation.status == "PASS" else "yellow" if validation.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]PIT source manifest validation status={validation.status}"
+        f"[/{status_style}]"
+    )
+    console.print(f"manifest_id={validation.manifest_id}")
+    console.print(f"manifest={manifest_path}")
+    console.print(f"source_count={validation.source_count}")
+    console.print(f"error_count={validation.error_count}; warning_count={validation.warning_count}")
+    console.print("production_effect=none；校验只读 existing artifact。")
+
+    if not validation.passed:
+        raise typer.Exit(code=1)
 
 
 def _parse_date(value: str) -> date:

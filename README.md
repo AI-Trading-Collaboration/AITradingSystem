@@ -1884,6 +1884,15 @@ aits data-sources validate --as-of 2026-05-02
 
 数据源目录在 `config/data_sources.yaml`。它记录当前 FMP、Marketstack、FRED、本地手工输入和计划接入来源的 provider、endpoint、缓存路径、审计字段、校验项、限制说明和 provider 级 LLM 处理权限。这个命令不下载数据，只校验“来源是否可审计、限制是否明确”，用于后续接入财报、估值和新闻事件源前的来源纪律；外部 LLM 授权未知时默认 fail closed。
 
+生成并校验 source-level point-in-time source manifest：
+
+```powershell
+aits data-sources pit-manifest report --as-of 2026-05-02
+aits data-sources pit-manifest validate --latest
+```
+
+该 manifest 写入 `reports/data_governance/pit_source_manifest/<manifest_id>/`，每个 source 记录 source name、retrieval time、effective date、revision risk、`STRONG_PIT|APPROX_PIT|NON_PIT|UNKNOWN`、cache path、checksum、refresh policy 和 validation policy。它只建立未来研究数据治理 contract，不修复全部 PIT 数据问题；`APPROX_PIT`、`NON_PIT` 或 `UNKNOWN` 不能自动支持 backtest、scoring、paper shadow 或 production 结论。Reader Brief 只读 report index latest artifact 展示 grade counts 和 non-strong source ids；所有输出固定 `production_effect=none`，不刷新数据、不运行下游管线、不触发 broker。
+
 建立并校验 forward-only PIT raw snapshot manifest：
 
 ```powershell

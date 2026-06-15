@@ -1149,6 +1149,8 @@ flowchart TD
         DSR["outputs/reports/data_sources_validation_YYYY-MM-DD.md"]
         DSH["aits data-sources health<br/>provider health score + reconciliation 覆盖"]
         DSHR["outputs/reports/data_sources_health_YYYY-MM-DD.md<br/>manifest/cache/checksum/freshness/coverage"]
+        DSPIT["aits data-sources pit-manifest report/validate<br/>TRADING-355 source-level PIT source manifest<br/>STRONG_PIT / APPROX_PIT / NON_PIT / UNKNOWN"]
+        DSPITR["reports/data_governance/pit_source_manifest/<manifest_id>/<br/>pit_source_manifest.json/md + validation + reader_brief_section<br/>retrieval_time / effective_date / revision_risk / cache checksum / refresh policy / validation policy"]
         PSMF["aits pit-snapshots fetch-fmp-forward<br/>阶段 2：FMP forward-only PIT 抓取<br/>--continue-on-failure 可用于日常调度非阻断失败报告"]
         PSMB["aits pit-snapshots build-manifest<br/>现有 raw cache 归档"]
         PSV["aits pit-snapshots validate<br/>PIT raw snapshot 质量门禁"]
@@ -2319,6 +2321,12 @@ flowchart TD
     DSV --> DSR
     DS --> DSH
     DSH --> DSHR
+    DS --> DSPIT
+    DM --> DSPIT
+    PR -. "cache/checksum/effective date" .-> DSPIT
+    MSPR -. "cache/checksum/effective date" .-> DSPIT
+    RR -. "cache/checksum/effective date" .-> DSPIT
+    DSPIT --> DSPITR
     DS --> PSMF
     FMP --> PSMF
     PSMF --> FMPFP
@@ -3083,6 +3091,8 @@ flowchart TD
 |数据源健康|`aits data-sources health` / `src/ai_trading_system/cli_commands/data_sources.py`|读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 存在性、latest manifest downloaded_at/row_count/checksum、checksum drift、manifest/cache 新鲜度和 source reconciliation 覆盖状态；`market_prices` 在 FMP + Marketstack 低成本组合下评估覆盖，跨供应商不足不自动平滑数据；inactive/diagnostic-only 来源的历史 manifest checksum 漂移只记为调查警告，active 来源 checksum mismatch 仍 fail closed；`data-sources` Typer 命令组已迁入低耦合命令模块，主入口仍保持命令名、参数、退出码和报告语义兼容|已实现基础版|
 |数据源健康报告|`outputs/reports/data_sources_health_YYYY-MM-DD.md`|中文报告展示方法边界、领域级 reconciliation 覆盖、provider health、latest manifest 明细、缓存问题和调查项；当前低成本版达到 `BASELINE_DONE`，生产级跨源校验仍依赖 owner 提供长期可用第二来源和授权策略|已实现基础版|
 |外部供应商请求级缓存|`data/raw/external_request_cache/<provider>/<api_family>/<cache_key>/metadata.json` + `response.body`|所有接入缓存 wrapper 的外部供应商请求先按 schema version、provider、api family、HTTP method、endpoint、脱敏 query/body/header identity 生成 cache key；FMP、Marketstack、Cboe VIX、FRED、SEC、TSMC IR、official policy、EODHD 和 yfinance 路径命中 cache 时不再请求供应商，MISS 才发送请求并写入响应体、status code、headers、body checksum 和脱敏请求身份；params、headers、json payload 和 response headers 在脱敏前先稳定快照，避免可变 mapping 在 identity/metadata 生成时阻断下载；Cboe VIX 的 `VIX_History.csv` 虽然 URL 固定，但 cache identity 包含 ticker/start/end/interval 业务窗口，且命中响应需校验 CSV 最大日期覆盖 `end`，避免可变静态 CSV 在后续交易日或同窗口 stale cache 中误用旧响应；API key、token、Authorization、Cookie、User-Agent 不写入原文；该底层请求 cache 不替代业务 raw cache、download manifest、PIT manifest 或日报质量门禁|已实现基础版|
+|Point-in-time source manifest|`aits data-sources pit-manifest report` / `aits data-sources pit-manifest validate --latest` / `src/ai_trading_system/pit_source_manifest.py`|读取 `config/data_sources.yaml`、`data/raw/download_manifest.csv` 和已配置 cache paths，只读生成 source-level PIT governance manifest；每个 source 记录 source name、retrieval time、effective date、revision risk、`STRONG_PIT|APPROX_PIT|NON_PIT|UNKNOWN`、cache path、checksum、refresh policy 和 validation policy；`APPROX_PIT`、`NON_PIT`、`UNKNOWN` 只作为调查/治理状态，不自动支持 backtest、scoring、paper shadow 或 production 结论；Reader Brief 只读 report index latest artifact 展示 grade counts 和 non-strong sources；所有输出固定 `production_effect=none`、不刷新数据、不运行下游管线、不触发 broker|已实现基础版；TRADING-355|
+|Point-in-time source manifest artifact|`reports/data_governance/pit_source_manifest/<manifest_id>/pit_source_manifest.json` / `.md` / `pit_source_manifest_validation.json` / `.md` / `reader_brief_section.md`|输出 manifest schema、policy metadata、safety boundary、download manifest 摘要、grade counts、non-strong source ids、source records、validation issues 和 Reader Brief section；`latest_pit_source_manifest.json` 只作为 latest pointer，不是数据输入；校验 failure 只表示 source manifest contract 不可用，warning 需要治理复核但不补造 retrieval/checksum|已实现基础版；TRADING-355|
 |PIT raw snapshot manifest|`data/raw/pit_snapshots/manifest.csv`|forward-only 自建 PIT 快照索引，记录 source、endpoint、request params、canonical/provider symbol、raw payload path、sha256、bytes、row count、`ingested_at`、`available_time`、PIT 可信度、回测用途和 provider 授权字段；缺跑日期不能事后补写成 strict PIT|已实现基础版|
 |FMP forward-only PIT 抓取|`aits pit-snapshots fetch-fmp-forward` / `src/ai_trading_system/cli_commands/pit_snapshots.py`|抓取 FMP analyst estimates、price target、ratings 和 earnings calendar，写入 `data/raw/fmp_forward_pit/` 与 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv`，`available_time` 固定为本系统下载写入时间；标准化 `normalized_id` 使用有界 ASCII slug + SHA256 checksum 短摘要，避免供应商非 ASCII/超长字段影响 PIT 标识稳定性；供应商、权限、写入或校验失败时输出脱敏中文失败报告；显式 `--continue-on-failure` 仅用于日常调度继续后续自带质量门禁的步骤，不把失败快照作为可用 PIT 输入；`pit-snapshots` Typer 命令组已迁入低耦合命令模块，主入口和 `cli_direct` 仍保持命令名、参数、退出码和报告语义兼容；不改变当前评分语义|已实现基础版|
 |FMP PIT as-of 修正查询|`aits valuation fetch-fmp --pit-normalized-path` / `src/ai_trading_system/cli_commands/valuation.py`|`eps_revision_90d_pct` 默认从 FMP PIT normalized 索引读取 analyst-estimates 历史，只使用 `available_time <= decision_time` 的同一 fiscal estimate date；自建历史不足 90 天时明确降级，不用未来快照或供应商当前历史视图补洞；`valuation` Typer 命令组已迁入低耦合命令模块，主入口仍保持命令名、参数、退出码和报告语义兼容|已实现基础版|
