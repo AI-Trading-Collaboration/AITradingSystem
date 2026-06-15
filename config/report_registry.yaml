@@ -4906,6 +4906,32 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_daily
+    title: ETF Dynamic v3 Paper Shadow Daily Observation
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-daily report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/*/paper_shadow_daily_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/*/paper_shadow_daily_observation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/*/paper_shadow_daily_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/*/paper_shadow_daily_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/*/paper_shadow_daily_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-351 records manual/date-gated paper-shadow daily observations
+      after the formal contract and paper-shadow protocol. The artifact captures
+      candidate signal behavior and paper-shadow-only hypothetical weights
+      without initializing paper accounts, creating official target weights,
+      generating order tickets, touching broker systems, or mutating production
+      state.
+    owner_action: owner_review_paper_shadow_daily_observation_before_extended_shadow_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_decision_ledger
     title: ETF Dynamic v3 Candidate Decision Ledger
     group: governance

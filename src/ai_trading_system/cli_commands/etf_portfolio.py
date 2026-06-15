@@ -29,6 +29,7 @@ from ai_trading_system.etf_portfolio import (
     dynamic_v3_filtered_candidate_readiness as filtered_readiness,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
+from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio import (
@@ -1822,6 +1823,10 @@ dynamic_v3_paper_shadow_protocol_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow protocol workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_shadow_daily_app = typer.Typer(
+    help="Dynamic v3 rescue paper-shadow daily observation workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
@@ -2598,6 +2603,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_protocol_app,
     name="paper-shadow-protocol",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_daily_app,
+    name="paper-shadow-daily",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
@@ -19718,6 +19727,152 @@ def dynamic_v3_validate_paper_shadow_protocol_command(
     _echo_validation_payload(
         filtered_readiness.validate_paper_shadow_protocol_artifact(
             protocol_id=protocol_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_paper_shadow_daily_app.command("run")
+def dynamic_v3_paper_shadow_daily_run_command(
+    candidate: Annotated[str, typer.Option("--candidate", help="candidate id。")],
+    observation_date: Annotated[str, typer.Option("--date", help="observation date。")],
+    market_panel_artifact: Annotated[
+        Path,
+        typer.Option("--market-panel-artifact", help="market panel artifact path。"),
+    ],
+    signal_artifact: Annotated[
+        Path,
+        typer.Option("--signal-artifact", help="latest signal artifact path。"),
+    ],
+    signal_output: Annotated[str, typer.Option("--signal-output", help="signal output。")],
+    hypothetical_weight_recommendation: Annotated[
+        str,
+        typer.Option("--hypothetical-weight-recommendation", help="paper-shadow-only weight。"),
+    ],
+    risk_off_risk_on_state: Annotated[
+        str,
+        typer.Option("--risk-state", help="risk-off / risk-on state。"),
+    ],
+    drawdown_state: Annotated[str, typer.Option("--drawdown-state", help="drawdown state。")],
+    rotation_event: Annotated[str, typer.Option("--rotation-event", help="rotation event。")],
+    mismatch_event: Annotated[str, typer.Option("--mismatch-event", help="mismatch event。")],
+    benchmark_comparison: Annotated[
+        str,
+        typer.Option("--benchmark-comparison", help="benchmark comparison。"),
+    ],
+    manual_reviewer_notes: Annotated[
+        str,
+        typer.Option("--manual-reviewer-notes", help="manual reviewer notes。"),
+    ],
+    contract_id: Annotated[
+        str | None,
+        typer.Option("--contract-id", help="formal research method contract id；缺省 latest。"),
+    ] = None,
+    protocol_id: Annotated[
+        str | None,
+        typer.Option("--protocol-id", help="paper-shadow protocol id；缺省 latest。"),
+    ] = None,
+    contract_dir: Annotated[
+        Path,
+        typer.Option("--contract-dir", help="formal research method contract artifact root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    protocol_dir: Annotated[
+        Path,
+        typer.Option("--protocol-dir", help="paper-shadow protocol artifact root。"),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow daily artifact root。"),
+    ] = paper_shadow_daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+) -> None:
+    result = paper_shadow_daily.run_paper_shadow_daily_observation(
+        candidate=candidate,
+        observation_date=observation_date,
+        market_panel_artifact=market_panel_artifact,
+        signal_artifact=signal_artifact,
+        signal_output=signal_output,
+        hypothetical_weight_recommendation=hypothetical_weight_recommendation,
+        risk_off_risk_on_state=risk_off_risk_on_state,
+        drawdown_state=drawdown_state,
+        rotation_event=rotation_event,
+        mismatch_event=mismatch_event,
+        benchmark_comparison=benchmark_comparison,
+        manual_reviewer_notes=manual_reviewer_notes,
+        contract_id=contract_id,
+        protocol_id=protocol_id,
+        contract_dir=contract_dir,
+        protocol_dir=protocol_dir,
+        output_dir=output_dir,
+    )
+    manifest = _mapping_obj(result.get("manifest"))
+    observation = _mapping_obj(result.get("paper_shadow_daily_observation"))
+    validation = _mapping_obj(result.get("paper_shadow_daily_validation"))
+    typer.echo(f"observation_id={manifest.get('observation_id')}")
+    typer.echo(f"candidate={observation.get('candidate')}")
+    typer.echo(f"observation_date={observation.get('observation_date')}")
+    typer.echo(f"observation_status={observation.get('observation_status')}")
+    daily_review = _mapping_obj(observation.get("daily_review"))
+    typer.echo(f"signal_output={daily_review.get('signal_output')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo("paper_shadow_daily_only=true")
+    typer.echo("hypothetical_weight_paper_shadow_only=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_paper_shadow_daily_app.command("report")
+def dynamic_v3_paper_shadow_daily_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    observation_id: Annotated[
+        str | None,
+        typer.Option("--observation-id", help="paper-shadow daily observation id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow daily artifact root。"),
+    ] = paper_shadow_daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+) -> None:
+    payload = paper_shadow_daily.paper_shadow_daily_report_payload(
+        observation_id=observation_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    observation = _mapping_obj(payload.get("paper_shadow_daily_observation"))
+    validation = _mapping_obj(payload.get("paper_shadow_daily_validation"))
+    typer.echo(f"observation_id={payload.get('observation_id')}")
+    typer.echo(f"candidate={payload.get('candidate')}")
+    typer.echo(f"observation_date={payload.get('observation_date')}")
+    typer.echo(f"observation_status={observation.get('observation_status')}")
+    typer.echo(f"next_required_action={observation.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={payload['paper_shadow_daily_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-daily")
+def dynamic_v3_validate_paper_shadow_daily_command(
+    observation_id: Annotated[
+        str | None,
+        typer.Option("--observation-id", help="paper-shadow daily observation id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow daily artifact root。"),
+    ] = paper_shadow_daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+) -> None:
+    resolved_id = observation_id
+    if latest:
+        payload = paper_shadow_daily.paper_shadow_daily_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("observation_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--observation-id or --latest is required")
+    _echo_validation_payload(
+        paper_shadow_daily.validate_paper_shadow_daily_artifact(
+            observation_id=resolved_id,
             output_dir=output_dir,
         )
     )

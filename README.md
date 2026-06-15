@@ -1461,10 +1461,26 @@ Runtime artifacts 写入 `reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_p
 validation JSON/Markdown，并登记 report registry / latest pointer / Reader Brief 摘要。
 Protocol 定义 eligibility、20 trading day pilot observation baseline、daily review fields
 和 exit conditions；`hypothetical_weight_recommendation` 必须标记为 paper-shadow-only，
-不能被 broker/order 系统消费。本任务不实现 daily runner、不初始化 paper account、不写
+不能被 broker/order 系统消费。Protocol 本身不初始化 paper account、不写
 official target weights、不触发 broker 或 order ticket，所有输出固定
 `paper_shadow_protocol_only=true`、`observation_only=true`、`manual_review_only=true`、
 `not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
+
+TRADING-351_PAPER_SHADOW_DAILY_RUNNER 在 formal contract 和 paper-shadow protocol
+之后新增 observation-only daily runner。CLI 入口为
+`aits etf dynamic-v3-rescue paper-shadow-daily run`、
+`aits etf dynamic-v3-rescue paper-shadow-daily report --latest` 和
+`aits etf dynamic-v3-rescue validate-paper-shadow-daily --latest`。Run 输入必须显式给出
+candidate id、observation date、market panel artifact、latest signal artifact、formal
+research method contract 和 paper-shadow protocol；输出写入
+`reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/`，包含 daily manifest、
+observation JSON、Markdown report、Reader Brief section 和 validation JSON/Markdown，并登记
+report registry / latest pointer / Reader Brief 摘要。`hypothetical_weight_recommendation`
+只表示 paper-shadow-only note，不是 official target weights；所有输出固定
+`manual_review_only=true`、`paper_shadow_daily_only=true`、`observation_only=true`、
+`hypothetical_weight_paper_shadow_only=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`order_ticket_generated=false`、`auto_apply=false`、
+`production_effect=none`，不得初始化或修改 paper account、broker、order 或 production state。
 
 TRADING-349_CANDIDATE_DECISION_LEDGER 在 formal contract 和 paper-shadow protocol
 之后记录 append-only candidate decision ledger。CLI 入口为

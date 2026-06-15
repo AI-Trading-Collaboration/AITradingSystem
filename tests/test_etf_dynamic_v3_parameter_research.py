@@ -1339,6 +1339,63 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    daily_dir = tmp_path / "paper_shadow_daily" / "daily123"
+    daily_dir.mkdir(parents=True)
+    daily_path = daily_dir / "paper_shadow_daily_manifest.json"
+    daily_path.write_text(
+        json.dumps(
+            {
+                "observation_id": "daily123",
+                "candidate": "median_plus_regime_mismatch_filter",
+                "observation_date": "2026-06-12",
+                "status": "PASS",
+                "observation_status": "RECORDED",
+                "production_effect": "none",
+                "broker_action": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (daily_dir / "paper_shadow_daily_observation.json").write_text(
+        json.dumps(
+            {
+                "observation_id": "daily123",
+                "candidate": "median_plus_regime_mismatch_filter",
+                "observation_date": "2026-06-12",
+                "observation_status": "RECORDED",
+                "daily_review": {
+                    "signal_output": "OBSERVE_RISK_ON",
+                    "risk_off_risk_on_state": "risk_on",
+                },
+                "next_required_action": "continue_daily_paper_shadow_observation",
+                "manual_review_only": True,
+                "observation_only": True,
+                "hypothetical_weight_paper_shadow_only": True,
+                "not_official_target_weights": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+                "production_state_mutated": False,
+                "automatic_candidate_promotion": False,
+                "shadow_enrollment_allowed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (daily_dir / "paper_shadow_daily_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     staleness_dir = tmp_path / "evidence_staleness_monitor" / "stale123"
     staleness_dir.mkdir(parents=True)
     staleness_path = staleness_dir / "evidence_staleness_manifest.json"
@@ -1537,6 +1594,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_rolling_evidence_refresh", refresh_path),
             _report_record("etf_dynamic_v3_evidence_trend", trend_path),
             _report_record("etf_dynamic_v3_forward_outcome_decision", decision_path),
+            _report_record("etf_dynamic_v3_paper_shadow_daily", daily_path),
             _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
             _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
             _report_record("etf_dynamic_v3_stress_scenario_library", stress_path),
@@ -1595,6 +1653,18 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         == "start_daily_paper_shadow_runner_design"
     )
     assert summary["candidate_decision_ledger_validation_status"] == "PASS"
+    assert summary["paper_shadow_daily_observation_id"] == "daily123"
+    assert summary["paper_shadow_daily_candidate"] == "median_plus_regime_mismatch_filter"
+    assert summary["paper_shadow_daily_date"] == "2026-06-12"
+    assert summary["paper_shadow_daily_status"] == "RECORDED"
+    assert summary["paper_shadow_daily_signal_output"] == "OBSERVE_RISK_ON"
+    assert summary["paper_shadow_daily_risk_state"] == "risk_on"
+    assert (
+        summary["paper_shadow_daily_next_action"]
+        == "continue_daily_paper_shadow_observation"
+    )
+    assert summary["paper_shadow_daily_validation_status"] == "PASS"
+    assert summary["paper_shadow_daily"] == str(daily_path)
     assert summary["evidence_staleness_monitor_id"] == "stale123"
     assert summary["evidence_freshness_status"] == "ACCEPTABLE"
     assert summary["evidence_stale_artifacts"] == "none"

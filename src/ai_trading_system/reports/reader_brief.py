@@ -1924,6 +1924,50 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "paper_shadow_daily_observation",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_observation_id"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_daily_candidate",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_candidate"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_daily_date",
+                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_date"),
+                    ),
+                    (
+                        "paper_shadow_daily_status",
+                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_status"),
+                    ),
+                    (
+                        "paper_shadow_daily_signal",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_signal_output"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_daily_risk_state",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_risk_state"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_daily_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_next_action"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_daily_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_validation_status"
+                        ),
+                    ),
+                    (
                         "candidate_decision_ledger",
                         etf_dynamic_v3_parameter_research.get(
                             "candidate_decision_ledger_id"
@@ -12382,6 +12426,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_protocol_manifest.json",
     )
+    paper_shadow_daily_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_shadow_daily",
+        ),
+        "paper_shadow_daily_manifest.json",
+    )
     candidate_decision_ledger_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -12823,6 +12874,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if paper_shadow_protocol_path is not None
         else None
     )
+    paper_shadow_daily_manifest = _read_optional_json(paper_shadow_daily_path)
+    paper_shadow_daily_observation = _read_optional_json(
+        paper_shadow_daily_path.parent / "paper_shadow_daily_observation.json"
+        if paper_shadow_daily_path is not None
+        else None
+    )
+    paper_shadow_daily_validation = _read_optional_json(
+        paper_shadow_daily_path.parent / "paper_shadow_daily_validation.json"
+        if paper_shadow_daily_path is not None
+        else None
+    )
     candidate_decision_ledger_manifest = _read_optional_json(candidate_decision_ledger_path)
     candidate_decision_record = _read_optional_json(
         candidate_decision_ledger_path.parent / "candidate_decision_record.json"
@@ -12907,6 +12969,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         paper_shadow_protocol_manifest,
         paper_shadow_protocol,
         paper_shadow_protocol_validation,
+        paper_shadow_daily_manifest,
+        paper_shadow_daily_observation,
+        paper_shadow_daily_validation,
         candidate_decision_ledger_manifest,
         candidate_decision_record,
         candidate_decision_ledger_validation,
@@ -13124,6 +13189,9 @@ def _etf_dynamic_v3_parameter_research_summary(
     )
     signal_gate_confirmation_target_count = len(
         _records(signal_gate_confirmation_targets.get("targets"))
+    )
+    paper_shadow_daily_review = _mapping(
+        paper_shadow_daily_observation.get("daily_review")
     )
     signal_filter_payloads = (
         signal_failure_taxonomy_manifest,
@@ -14106,6 +14174,38 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_protocol.get("next_required_action"),
             "MISSING",
         ),
+        "paper_shadow_daily_observation_id": _text(
+            paper_shadow_daily_manifest.get("observation_id"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_candidate": _text(
+            paper_shadow_daily_observation.get("candidate"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_date": _text(
+            paper_shadow_daily_observation.get("observation_date"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_status": _text(
+            paper_shadow_daily_observation.get("observation_status"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_signal_output": _text(
+            paper_shadow_daily_review.get("signal_output"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_risk_state": _text(
+            paper_shadow_daily_review.get("risk_off_risk_on_state"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_next_action": _text(
+            paper_shadow_daily_observation.get("next_required_action"),
+            "MISSING",
+        ),
+        "paper_shadow_daily_validation_status": _text(
+            paper_shadow_daily_validation.get("status"),
+            "MISSING",
+        ),
         "candidate_decision_ledger_id": _text(
             candidate_decision_ledger_manifest.get("ledger_run_id"),
             "MISSING",
@@ -14443,6 +14543,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_protocol": (
             "" if paper_shadow_protocol_path is None else str(paper_shadow_protocol_path)
+        ),
+        "paper_shadow_daily": (
+            "" if paper_shadow_daily_path is None else str(paper_shadow_daily_path)
         ),
         "candidate_decision_ledger": (
             ""
@@ -15331,6 +15434,14 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_protocol_min_observation_days": "MISSING",
         "paper_shadow_protocol_validation_status": "MISSING",
         "paper_shadow_protocol_next_action": "MISSING",
+        "paper_shadow_daily_observation_id": "MISSING",
+        "paper_shadow_daily_candidate": "MISSING",
+        "paper_shadow_daily_date": "MISSING",
+        "paper_shadow_daily_status": "MISSING",
+        "paper_shadow_daily_signal_output": "MISSING",
+        "paper_shadow_daily_risk_state": "MISSING",
+        "paper_shadow_daily_next_action": "MISSING",
+        "paper_shadow_daily_validation_status": "MISSING",
         "candidate_decision_ledger_id": "MISSING",
         "candidate_decision_record_id": "MISSING",
         "candidate_decision_candidate": "MISSING",
@@ -15414,6 +15525,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_trend": "",
         "forward_outcome_decision": "",
         "paper_shadow_protocol": "",
+        "paper_shadow_daily": "",
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
         "stress_scenario_library": "",
