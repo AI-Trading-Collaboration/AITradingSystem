@@ -4995,6 +4995,34 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_weekly_review
+    title: ETF Dynamic v3 Paper Shadow Weekly Review
+    group: governance
+    cadence: weekly
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-weekly-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/paper_shadow_weekly_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/paper_shadow_weekly_review.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/paper_shadow_weekly_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/paper_shadow_weekly_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_weekly_review/*/paper_shadow_weekly_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-353 aggregates one week of existing paper-shadow daily
+      observations and drift monitor artifacts with the formal research method
+      contract and candidate decision ledger. It produces a manual review-only
+      CONTINUE/WATCH/RETURN_TO_RESEARCH/REJECT label with missing inputs and
+      stability summaries. It cannot refresh data, rerun upstream workflows,
+      mutate the candidate decision ledger, create official target weights,
+      generate orders, touch broker systems, mutate paper account state, or
+      mutate production state.
+    owner_action: owner_review_paper_shadow_weekly_before_candidate_decision_update
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_decision_ledger
     title: ETF Dynamic v3 Candidate Decision Ledger
     group: governance

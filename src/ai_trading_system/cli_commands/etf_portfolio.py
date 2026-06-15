@@ -31,6 +31,7 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as paper_shadow_drift
+from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as paper_shadow_weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
@@ -1837,6 +1838,10 @@ dynamic_v3_paper_shadow_drift_monitor_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow drift monitor workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_shadow_weekly_review_app = typer.Typer(
+    help="Dynamic v3 rescue paper-shadow weekly review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
@@ -2625,6 +2630,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_drift_monitor_app,
     name="paper-shadow-drift-monitor",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_weekly_review_app,
+    name="paper-shadow-weekly-review",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
@@ -20073,6 +20082,164 @@ def dynamic_v3_validate_paper_shadow_drift_monitor_command(
     _echo_validation_payload(
         paper_shadow_drift.validate_paper_shadow_drift_monitor_artifact(
             monitor_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_paper_shadow_weekly_review_app.command("build")
+def dynamic_v3_paper_shadow_weekly_review_build_command(
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    week_start: Annotated[
+        str,
+        typer.Option("--week-start", help="weekly review start date YYYY-MM-DD。"),
+    ] = ...,
+    week_end: Annotated[
+        str,
+        typer.Option("--week-end", help="weekly review end date YYYY-MM-DD。"),
+    ] = ...,
+    daily_observation_id: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--daily-observation-id",
+            help="paper-shadow daily observation id；可重复；缺省读取 latest。",
+        ),
+    ] = None,
+    drift_monitor_id: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--drift-monitor-id",
+            help="paper-shadow drift monitor id；可重复；缺省读取 latest。",
+        ),
+    ] = None,
+    contract_id: Annotated[
+        str | None,
+        typer.Option(
+            "--contract-id",
+            help="formal research method contract id；缺省读取 daily source。",
+        ),
+    ] = None,
+    ledger_run_id: Annotated[
+        str | None,
+        typer.Option("--ledger-run-id", help="candidate decision ledger run id；缺省 latest。"),
+    ] = None,
+    observation_dir: Annotated[
+        Path,
+        typer.Option("--observation-dir", help="paper-shadow daily artifact root。"),
+    ] = paper_shadow_daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    drift_dir: Annotated[
+        Path,
+        typer.Option("--drift-dir", help="paper-shadow drift monitor artifact root。"),
+    ] = paper_shadow_drift.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+    contract_dir: Annotated[
+        Path,
+        typer.Option("--contract-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    ledger_dir: Annotated[
+        Path,
+        typer.Option("--ledger-dir", help="candidate decision ledger artifact root。"),
+    ] = filtered_readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+) -> None:
+    result = paper_shadow_weekly.build_paper_shadow_weekly_review(
+        candidate=candidate,
+        week_start=week_start,
+        week_end=week_end,
+        daily_observation_ids=daily_observation_id,
+        drift_monitor_ids=drift_monitor_id,
+        contract_id=contract_id,
+        ledger_run_id=ledger_run_id,
+        observation_dir=observation_dir,
+        drift_dir=drift_dir,
+        contract_dir=contract_dir,
+        ledger_dir=ledger_dir,
+        output_dir=output_dir,
+    )
+    review = _mapping_obj(result.get("paper_shadow_weekly_review"))
+    summary = _mapping_obj(review.get("summary"))
+    validation = _mapping_obj(result.get("paper_shadow_weekly_validation"))
+    typer.echo(f"weekly_review_id={result['weekly_review_id']}")
+    typer.echo(f"candidate={review.get('candidate')}")
+    typer.echo(f"week_start={review.get('week_start')}")
+    typer.echo(f"week_end={review.get('week_end')}")
+    typer.echo(f"weekly_decision={review.get('weekly_decision')}")
+    typer.echo(
+        "missing_input_artifacts="
+        f"{','.join(_texts(summary.get('missing_input_artifacts')))}"
+    )
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("paper_shadow_weekly_review_only=true")
+    typer.echo("read_only_review=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_paper_shadow_weekly_review_app.command("report")
+def dynamic_v3_paper_shadow_weekly_review_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="paper-shadow weekly review id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+) -> None:
+    if not latest and not weekly_review_id:
+        raise typer.BadParameter("--weekly-review-id or --latest is required")
+    payload = paper_shadow_weekly.paper_shadow_weekly_review_report_payload(
+        weekly_review_id=weekly_review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    review = _mapping_obj(payload.get("paper_shadow_weekly_review"))
+    summary = _mapping_obj(review.get("summary"))
+    validation = _mapping_obj(payload.get("paper_shadow_weekly_validation"))
+    typer.echo(f"weekly_review_id={payload.get('weekly_review_id')}")
+    typer.echo(f"candidate={review.get('candidate')}")
+    typer.echo(f"week_start={review.get('week_start')}")
+    typer.echo(f"week_end={review.get('week_end')}")
+    typer.echo(f"weekly_decision={review.get('weekly_decision')}")
+    typer.echo(
+        "missing_input_artifacts="
+        f"{','.join(_texts(summary.get('missing_input_artifacts')))}"
+    )
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={payload['paper_shadow_weekly_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-weekly-review")
+def dynamic_v3_validate_paper_shadow_weekly_review_command(
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="paper-shadow weekly review id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+) -> None:
+    resolved_id = weekly_review_id
+    if latest:
+        payload = paper_shadow_weekly.paper_shadow_weekly_review_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("weekly_review_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--weekly-review-id or --latest is required")
+    _echo_validation_payload(
+        paper_shadow_weekly.validate_paper_shadow_weekly_review_artifact(
+            weekly_review_id=resolved_id,
             output_dir=output_dir,
         )
     )
