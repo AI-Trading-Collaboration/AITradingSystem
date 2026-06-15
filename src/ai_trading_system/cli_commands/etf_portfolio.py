@@ -28,6 +28,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_drawdown_casebook as draw
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_filtered_candidate_readiness as filtered_readiness,
 )
+from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio import (
@@ -1837,6 +1838,10 @@ dynamic_v3_drawdown_event_casebook_app = typer.Typer(
     help="Dynamic v3 rescue drawdown event casebook workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_flip_rotation_event_casebook_app = typer.Typer(
+    help="Dynamic v3 rescue flip/rotation event casebook workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2609,6 +2614,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_drawdown_event_casebook_app,
     name="drawdown-event-casebook",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_flip_rotation_event_casebook_app,
+    name="flip-rotation-event-casebook",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -20112,6 +20121,86 @@ def dynamic_v3_validate_drawdown_event_casebook_command(
         raise typer.BadParameter("--casebook-run-id or --latest is required")
     _echo_validation_payload(
         drawdown_casebook.validate_drawdown_event_casebook_artifact(
+            casebook_run_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_flip_rotation_event_casebook_app.command("report")
+def dynamic_v3_flip_rotation_event_casebook_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    casebook_run_id: Annotated[
+        str | None,
+        typer.Option("--casebook-run-id", help="flip/rotation event casebook run id。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="flip/rotation event casebook YAML。"),
+    ] = flip_casebook.DEFAULT_FLIP_ROTATION_EVENT_CASEBOOK_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="flip/rotation event casebook artifact root。"),
+    ] = flip_casebook.DEFAULT_FLIP_ROTATION_EVENT_CASEBOOK_DIR,
+) -> None:
+    if latest or casebook_run_id:
+        payload = flip_casebook.flip_rotation_event_casebook_report_payload(
+            casebook_run_id=casebook_run_id,
+            latest=latest,
+            output_dir=output_dir,
+        )
+        manifest = _mapping_obj(payload)
+        casebook = _mapping_obj(payload.get("flip_rotation_event_casebook"))
+        validation = _mapping_obj(payload.get("flip_rotation_event_casebook_validation"))
+    else:
+        result = flip_casebook.build_flip_rotation_event_casebook(
+            config_path=config_path,
+            output_dir=output_dir,
+        )
+        manifest = _mapping_obj(result.get("manifest"))
+        casebook = _mapping_obj(result.get("flip_rotation_event_casebook"))
+        validation = _mapping_obj(result.get("flip_rotation_event_casebook_validation"))
+    typer.echo(f"casebook_run_id={manifest.get('casebook_run_id')}")
+    typer.echo(f"flip_rotation_casebook_id={casebook.get('flip_rotation_casebook_id')}")
+    typer.echo(f"event_count={casebook.get('event_count')}")
+    typer.echo(f"useful_flip_count={casebook.get('useful_flip_count')}")
+    typer.echo(f"false_positive_count={casebook.get('false_positive_count')}")
+    typer.echo(f"dominant_trigger_signal={casebook.get('dominant_trigger_signal')}")
+    typer.echo(f"next_review_action={casebook.get('next_review_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('flip_rotation_event_casebook_report_path')}")
+    typer.echo("flip_rotation_event_casebook_only=true")
+    typer.echo("research_diagnostic_only=true")
+    typer.echo("not_trading_signal=true")
+    typer.echo("data_downloaded_by_casebook=false")
+    typer.echo("pipelines_executed_by_casebook=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-flip-rotation-event-casebook")
+def dynamic_v3_validate_flip_rotation_event_casebook_command(
+    casebook_run_id: Annotated[
+        str | None,
+        typer.Option("--casebook-run-id", help="flip/rotation event casebook run id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="flip/rotation event casebook artifact root。"),
+    ] = flip_casebook.DEFAULT_FLIP_ROTATION_EVENT_CASEBOOK_DIR,
+) -> None:
+    resolved_id = casebook_run_id
+    if latest:
+        payload = flip_casebook.flip_rotation_event_casebook_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("casebook_run_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--casebook-run-id or --latest is required")
+    _echo_validation_payload(
+        flip_casebook.validate_flip_rotation_event_casebook_artifact(
             casebook_run_id=resolved_id,
             output_dir=output_dir,
         )

@@ -1,0 +1,132 @@
+schema_version: 1
+casebook_id: dynamic_v3_rescue_flip_rotation_event_casebook_v1
+version: 2026-06-15
+status: manual_diagnostic_baseline
+owner: system_validation
+source_type: manual_research_casebook
+rationale: >
+  TRADING-358 records a small, explicit set of signal flip and rotation events
+  for qualitative review of Dynamic v3 candidate behavior. These events are
+  manual diagnostic baselines and must not be treated as recalculated signal or
+  turnover evidence.
+intended_effect: >
+  Give future signal churn, flip/rotation reduction, and paper-shadow reviews
+  stable event ids and review questions when discussing whether a candidate
+  reduced noisy rotations without missing useful regime changes.
+validation_evidence: >
+  Focused casebook tests, report/validate CLI, contract-validation suite,
+  documentation contract, report index, and Reader Brief quality checks.
+review_condition: >
+  Replace or recalibrate manual flip/rotation labels after a data-backed signal
+  event extractor is implemented, or when owner adds a new AI-cycle flip/rotation
+  event for qualitative review.
+
+safety:
+  manual_review_only: true
+  flip_rotation_event_casebook_only: true
+  research_diagnostic_only: true
+  not_trading_signal: true
+  data_downloaded_by_casebook: false
+  pipelines_executed_by_casebook: false
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  auto_apply: false
+  production_effect: none
+
+casebook_policy:
+  market_regime: ai_after_chatgpt
+  source_limitations:
+    - Manual baseline events use qualitative review labels.
+    - Casebook rows support signal churn review only.
+    - Investment-facing conclusions require a data-backed signal-event extraction artifact.
+  required_fields:
+    - date
+    - previous_state
+    - new_state
+    - trigger_signal
+    - flip_useful
+    - false_positive
+    - turnover_impact
+    - candidate_behavior
+  next_action: use_casebook_in_next_flip_rotation_review
+
+events:
+  - event_id: ai_risk_on_reentry_2024_05
+    event_name: May 2024 AI risk-on re-entry
+    event_type: useful_flip
+    date: 2024-05-03
+    previous_state: defensive_hold
+    new_state: risk_on_reentry
+    trigger_signal: breadth_recovery_plus_ai_momentum
+    flip_useful: true
+    false_positive: false
+    turnover_impact: moderate
+    candidate_behavior: allowed_reentry_after_confirmation
+    review_notes:
+      - Use to review whether candidate avoids excessive lag after drawdown.
+      - Confirm re-entry waited for breadth and AI momentum confirmation.
+      - Manual useful label is qualitative only.
+  - event_id: semiconductor_whipsaw_2024_08
+    event_name: August 2024 semiconductor whipsaw
+    event_type: false_positive_rotation
+    date: 2024-08-08
+    previous_state: semiconductor_overweight
+    new_state: broad_tech_rotation
+    trigger_signal: short_lived_semiconductor_rebound
+    flip_useful: false
+    false_positive: true
+    turnover_impact: high
+    candidate_behavior: should_hold_until_confirmation
+    review_notes:
+      - Use to review noisy semiconductor rotation control.
+      - Check whether candidate reduced turnover versus unfiltered signal.
+      - Manual turnover impact is qualitative only.
+  - event_id: rate_shock_defensive_shift_2025_01
+    event_name: January 2025 rate-shock defensive shift
+    event_type: useful_rotation
+    date: 2025-01-10
+    previous_state: risk_on_growth
+    new_state: defensive_risk_off
+    trigger_signal: rate_shock_and_drawdown_pressure
+    flip_useful: true
+    false_positive: false
+    turnover_impact: moderate
+    candidate_behavior: shifted_defensive_after_pressure_confirmed
+    review_notes:
+      - Use to review macro-sensitive risk-off rotation.
+      - Confirm whether signal distinguished rate shock from noisy tech pullback.
+      - Qualitative label requires future data-backed verification.
+  - event_id: sideways_noise_flip_2025_03
+    event_name: March 2025 sideways noise flip
+    event_type: false_positive_flip
+    date: 2025-03-14
+    previous_state: balanced_growth
+    new_state: defensive_hold
+    trigger_signal: high_volatility_sideways_signal
+    flip_useful: false
+    false_positive: true
+    turnover_impact: high
+    candidate_behavior: mixed_turnover_control
+    review_notes:
+      - Use to review flip suppression in choppy markets.
+      - Check whether candidate avoids repeated defensive/risk-on toggles.
+      - Manual false-positive classification is diagnostic only.
+  - event_id: recovery_rotation_lag_2025_05
+    event_name: May 2025 recovery rotation lag
+    event_type: missed_useful_flip
+    date: 2025-05-02
+    previous_state: defensive_hold
+    new_state: risk_on_ai_recovery
+    trigger_signal: v_shaped_recovery_confirmation
+    flip_useful: true
+    false_positive: false
+    turnover_impact: low
+    candidate_behavior: lagged_reentry_after_recovery_signal
+    review_notes:
+      - Use to review whether smoother filters miss useful recovery rotations.
+      - Check if lag reduced drawdown but gave up rebound participation.
+      - Manual label is not promotion evidence.

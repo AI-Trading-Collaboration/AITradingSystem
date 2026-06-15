@@ -2064,6 +2064,48 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "flip_rotation_event_casebook",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_casebook_run_id"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_casebook_event_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_casebook_event_count"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_useful_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_useful_count"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_false_positive_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_false_positive_count"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_dominant_trigger",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_dominant_trigger"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_next_action"
+                        ),
+                    ),
+                    (
+                        "flip_rotation_casebook_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_casebook_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12368,6 +12410,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "drawdown_casebook_manifest.json",
     )
+    flip_rotation_event_casebook_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_flip_rotation_event_casebook",
+        ),
+        "flip_rotation_casebook_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12818,6 +12867,18 @@ def _etf_dynamic_v3_parameter_research_summary(
         if drawdown_event_casebook_path is not None
         else None
     )
+    flip_rotation_casebook_manifest = _read_optional_json(flip_rotation_event_casebook_path)
+    flip_rotation_event_casebook = _read_optional_json(
+        flip_rotation_event_casebook_path.parent / "flip_rotation_event_casebook.json"
+        if flip_rotation_event_casebook_path is not None
+        else None
+    )
+    flip_rotation_casebook_validation = _read_optional_json(
+        flip_rotation_event_casebook_path.parent
+        / "flip_rotation_event_casebook_validation.json"
+        if flip_rotation_event_casebook_path is not None
+        else None
+    )
     filtered_candidate_readiness_payloads = (
         filtered_candidate_evidence_manifest,
         filtered_candidate_evidence_summary,
@@ -12858,6 +12919,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         drawdown_casebook_manifest,
         drawdown_event_casebook,
         drawdown_casebook_validation,
+        flip_rotation_casebook_manifest,
+        flip_rotation_event_casebook,
+        flip_rotation_casebook_validation,
     )
     outcome_loop_payloads = (
         outcome_update_review,
@@ -14174,6 +14238,38 @@ def _etf_dynamic_v3_parameter_research_summary(
             drawdown_casebook_validation.get("status"),
             "MISSING",
         ),
+        "flip_rotation_casebook_run_id": _text(
+            flip_rotation_casebook_manifest.get("casebook_run_id"),
+            "MISSING",
+        ),
+        "flip_rotation_casebook_id": _text(
+            flip_rotation_event_casebook.get("flip_rotation_casebook_id"),
+            "MISSING",
+        ),
+        "flip_rotation_casebook_event_count": flip_rotation_event_casebook.get(
+            "event_count",
+            "MISSING",
+        ),
+        "flip_rotation_useful_count": flip_rotation_event_casebook.get(
+            "useful_flip_count",
+            "MISSING",
+        ),
+        "flip_rotation_false_positive_count": flip_rotation_event_casebook.get(
+            "false_positive_count",
+            "MISSING",
+        ),
+        "flip_rotation_dominant_trigger": _text(
+            flip_rotation_event_casebook.get("dominant_trigger_signal"),
+            "MISSING",
+        ),
+        "flip_rotation_next_action": _text(
+            flip_rotation_event_casebook.get("next_review_action"),
+            "MISSING",
+        ),
+        "flip_rotation_casebook_validation_status": _text(
+            flip_rotation_casebook_validation.get("status"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -14367,6 +14463,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if drawdown_event_casebook_path is None
             else str(drawdown_event_casebook_path)
+        ),
+        "flip_rotation_event_casebook": (
+            ""
+            if flip_rotation_event_casebook_path is None
+            else str(flip_rotation_event_casebook_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -15263,6 +15364,14 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "drawdown_casebook_regime_coverage": "MISSING",
         "drawdown_casebook_next_action": "MISSING",
         "drawdown_casebook_validation_status": "MISSING",
+        "flip_rotation_casebook_run_id": "MISSING",
+        "flip_rotation_casebook_id": "MISSING",
+        "flip_rotation_casebook_event_count": "MISSING",
+        "flip_rotation_useful_count": "MISSING",
+        "flip_rotation_false_positive_count": "MISSING",
+        "flip_rotation_dominant_trigger": "MISSING",
+        "flip_rotation_next_action": "MISSING",
+        "flip_rotation_casebook_validation_status": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -15309,6 +15418,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_staleness_monitor": "",
         "stress_scenario_library": "",
         "drawdown_event_casebook": "",
+        "flip_rotation_event_casebook": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

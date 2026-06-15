@@ -1477,6 +1477,56 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    flip_dir = tmp_path / "flip_rotation_event_casebook" / "flip123"
+    flip_dir.mkdir(parents=True)
+    flip_path = flip_dir / "flip_rotation_casebook_manifest.json"
+    flip_path.write_text(
+        json.dumps(
+            {
+                "casebook_run_id": "flip123",
+                "flip_rotation_casebook_id": (
+                    "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
+                ),
+                "status": "PASS",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (flip_dir / "flip_rotation_event_casebook.json").write_text(
+        json.dumps(
+            {
+                "casebook_run_id": "flip123",
+                "flip_rotation_casebook_id": (
+                    "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
+                ),
+                "event_count": 5,
+                "useful_flip_count": 3,
+                "false_positive_count": 2,
+                "dominant_trigger_signal": "high_volatility_sideways_signal",
+                "next_review_action": "use_casebook_in_next_flip_rotation_review",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+                "automatic_candidate_promotion": False,
+                "shadow_enrollment_allowed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (flip_dir / "flip_rotation_event_casebook_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
@@ -1491,6 +1541,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
             _report_record("etf_dynamic_v3_stress_scenario_library", stress_path),
             _report_record("etf_dynamic_v3_drawdown_event_casebook", drawdown_path),
+            _report_record("etf_dynamic_v3_flip_rotation_event_casebook", flip_path),
         ]
     }
 
@@ -1585,6 +1636,23 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         == "use_casebook_in_next_drawdown_mismatch_review"
     )
     assert summary["drawdown_casebook_validation_status"] == "PASS"
+    assert summary["flip_rotation_casebook_run_id"] == "flip123"
+    assert (
+        summary["flip_rotation_casebook_id"]
+        == "dynamic_v3_rescue_flip_rotation_event_casebook_v1"
+    )
+    assert summary["flip_rotation_casebook_event_count"] == 5
+    assert summary["flip_rotation_useful_count"] == 3
+    assert summary["flip_rotation_false_positive_count"] == 2
+    assert (
+        summary["flip_rotation_dominant_trigger"]
+        == "high_volatility_sideways_signal"
+    )
+    assert (
+        summary["flip_rotation_next_action"]
+        == "use_casebook_in_next_flip_rotation_review"
+    )
+    assert summary["flip_rotation_casebook_validation_status"] == "PASS"
     assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
     assert summary["rolling_weekly_advisory_review_id"] == "weekly123"
     assert summary["evidence_trend_status"] == "INSUFFICIENT_HISTORY"
