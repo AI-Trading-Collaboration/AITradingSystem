@@ -4960,6 +4960,34 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_drift_monitor
+    title: ETF Dynamic v3 Paper Shadow Drift Monitor
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-drift-monitor report
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/paper_shadow_drift_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/paper_shadow_drift_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/paper_shadow_drift_findings.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/paper_shadow_drift_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/paper_shadow_drift_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/*/paper_shadow_drift_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-352 compares the latest paper-shadow daily observation against
+      historical validation behavior from the formal research contract and
+      reports drift severity for turnover, risk-off behavior, drawdown mismatch,
+      flip/rotation, benchmark lag, and missing inputs. The monitor is
+      read-only and cannot refresh data, rerun upstream evidence, mutate paper
+      account or production state, create official target weights, generate
+      orders, touch broker systems, or auto-promote/reject candidates.
+    owner_action: owner_review_paper_shadow_drift_before_weekly_shadow_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_decision_ledger
     title: ETF Dynamic v3 Candidate Decision Ledger
     group: governance

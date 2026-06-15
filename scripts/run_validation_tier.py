@@ -68,6 +68,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_promotion_gate_threshold_calibration.py",
             "tests/test_paper_shadow_protocol.py",
             "tests/test_paper_shadow_daily.py",
+            "tests/test_paper_shadow_drift_monitor.py",
             "tests/test_candidate_decision_ledger.py",
             "tests/test_evidence_staleness_monitor.py",
             "tests/test_stress_scenario_library.py",

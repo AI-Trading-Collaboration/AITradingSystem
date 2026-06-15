@@ -180,6 +180,8 @@ flowchart TD
     ETFV3FORMALCONTRACT --> ETFV3PROMOTHRESH["aits etf dynamic-v3-rescue promotion-gate-threshold-calibration report/validate<br/>TRADING-348 promotion gate threshold calibration<br/>config/research/promotion_gate_thresholds.yaml + run/review/register/promotion-gate-threshold-calibration/...<br/>governance_only / threshold_policy_only / no threshold tuning to force pass / no official target / production_effect=none"]
     ETFV3FORMALCONTRACT --> ETFV3PSPROTOCOL["aits etf dynamic-v3-rescue paper-shadow-protocol build/report/validate-paper-shadow-protocol<br/>TRADING-350 paper-shadow observation protocol<br/>reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/...<br/>observation_only / paper_shadow_protocol_only / not_official_target_weights=true / broker_action_allowed=false / production_effect=none"]
     ETFV3PSPROTOCOL --> ETFV3PSDAILY["aits etf dynamic-v3-rescue paper-shadow-daily run/report/validate-paper-shadow-daily<br/>TRADING-351 daily paper-shadow observation recorder<br/>reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/...<br/>paper_shadow_daily_only / hypothetical weight paper-shadow-only / no official target / no broker or paper account mutation / production_effect=none"]
+    ETFV3PSDAILY --> ETFV3PSDRIFT["aits etf dynamic-v3-rescue paper-shadow-drift-monitor report/validate-paper-shadow-drift-monitor<br/>TRADING-352 paper-shadow drift monitor<br/>reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/...<br/>read_only_monitor / drift severity NONE|WATCH|WARNING|BLOCKING / no data refresh / no paper account mutation / no broker / production_effect=none"]
+    ETFV3FORMALCONTRACT --> ETFV3PSDRIFT
     ETFV3PSPROTOCOL --> ETFV3DECISIONLEDGER["aits etf dynamic-v3-rescue candidate-decision-ledger record/report/validate-candidate-decision-ledger<br/>TRADING-349 append-only candidate decision ledger<br/>reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/...<br/>candidate_decision_ledger_only / append_only_ledger / no official target / no broker or order ticket / production_effect=none"]
     ETFV3DECISIONLEDGER --> ETFV3EVIDENCESTALE["aits etf dynamic-v3-rescue evidence-staleness-monitor run/report/validate-evidence-staleness-monitor<br/>TRADING-354 evidence staleness monitor<br/>reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/...<br/>freshness policy / read-only / no data refresh / no upstream rerun / broker_action_allowed=false / production_effect=none"]
     ETFV3EVIDENCESTALE --> ETFV3STRESSLIB["aits etf dynamic-v3-rescue stress-scenario-library report/validate-stress-scenario-library<br/>TRADING-356 reusable stress scenario library<br/>reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/...<br/>candidate validation taxonomy / no stress backfill / no data refresh / no broker / production_effect=none"]
@@ -213,6 +215,8 @@ flowchart TD
     ETFV3PSPROTOCOL --> ETFREAD
     ETFV3PSDAILY --> ETFRIDX
     ETFV3PSDAILY --> ETFREAD
+    ETFV3PSDRIFT --> ETFRIDX
+    ETFV3PSDRIFT --> ETFREAD
     ETFV3DECISIONLEDGER --> ETFRIDX
     ETFV3DECISIONLEDGER --> ETFREAD
     ETFV3EVIDENCESTALE --> ETFRIDX

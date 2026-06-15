@@ -1497,6 +1497,23 @@ report registry / latest pointer / Reader Brief 摘要。`hypothetical_weight_re
 `broker_action_allowed=false`、`order_ticket_generated=false`、`auto_apply=false`、
 `production_effect=none`，不得初始化或修改 paper account、broker、order 或 production state。
 
+TRADING-352_PAPER_SHADOW_DRIFT_MONITOR 在 daily paper-shadow observation 后新增
+只读 drift monitor。CLI 入口为
+`aits etf dynamic-v3-rescue paper-shadow-drift-monitor report` 和
+`aits etf dynamic-v3-rescue validate-paper-shadow-drift-monitor --monitor-id <monitor_id>`。
+Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_drift_monitor/`，包含 drift manifest、
+JSON report、JSONL findings、Markdown report、Reader Brief section 和 validation
+JSON/Markdown，并登记 report registry / latest pointer / Reader Brief 摘要。Monitor 比较
+当前 observation 与 formal research method contract 中的 validated behavior，输出
+`drift_severity=NONE|WATCH|WARNING|BLOCKING`、turnover / risk-off / drawdown mismatch /
+flip-rotation / benchmark / missing-input findings 和 next action。所有输出固定
+`paper_shadow_drift_monitor_only=true`、`read_only_monitor=true`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、
+`order_ticket_generated=false`、`paper_account_state_mutated=false`、`auto_apply=false`、
+`production_effect=none`；不得刷新数据、重跑上游、修改 paper account、生成 order 或自动
+promote/reject candidate。
+
 TRADING-349_CANDIDATE_DECISION_LEDGER 在 formal contract 和 paper-shadow protocol
 之后记录 append-only candidate decision ledger。CLI 入口为
 `aits etf dynamic-v3-rescue candidate-decision-ledger record`、

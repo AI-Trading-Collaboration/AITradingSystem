@@ -30,6 +30,7 @@ from ai_trading_system.etf_portfolio import (
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
+from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as paper_shadow_drift
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
@@ -1832,6 +1833,10 @@ dynamic_v3_paper_shadow_daily_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow daily observation workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_shadow_drift_monitor_app = typer.Typer(
+    help="Dynamic v3 rescue paper-shadow drift monitor workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
@@ -2616,6 +2621,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_daily_app,
     name="paper-shadow-daily",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_drift_monitor_app,
+    name="paper-shadow-drift-monitor",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
@@ -19966,6 +19975,104 @@ def dynamic_v3_validate_paper_shadow_daily_command(
     _echo_validation_payload(
         paper_shadow_daily.validate_paper_shadow_daily_artifact(
             observation_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_paper_shadow_drift_monitor_app.command("report")
+def dynamic_v3_paper_shadow_drift_monitor_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest drift monitor artifact。"),
+    ] = False,
+    monitor_id: Annotated[
+        str | None,
+        typer.Option("--monitor-id", help="paper-shadow drift monitor id。"),
+    ] = None,
+    observation_id: Annotated[
+        str | None,
+        typer.Option("--observation-id", help="paper-shadow daily observation id；缺省 latest。"),
+    ] = None,
+    observation_dir: Annotated[
+        Path,
+        typer.Option("--observation-dir", help="paper-shadow daily artifact root。"),
+    ] = paper_shadow_daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    contract_id: Annotated[
+        str | None,
+        typer.Option(
+            "--contract-id",
+            help="formal research method contract id；缺省 observation source。",
+        ),
+    ] = None,
+    contract_dir: Annotated[
+        Path,
+        typer.Option("--contract-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow drift monitor artifact root。"),
+    ] = paper_shadow_drift.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+) -> None:
+    if latest or monitor_id:
+        payload = paper_shadow_drift.paper_shadow_drift_monitor_report_payload(
+            monitor_id=monitor_id,
+            latest=latest,
+            output_dir=output_dir,
+        )
+        report = _mapping_obj(payload.get("paper_shadow_drift_report"))
+        validation = _mapping_obj(payload.get("paper_shadow_drift_validation"))
+        manifest = _mapping_obj(payload)
+    else:
+        result = paper_shadow_drift.build_paper_shadow_drift_monitor_report(
+            observation_id=observation_id,
+            observation_dir=observation_dir,
+            contract_id=contract_id,
+            contract_dir=contract_dir,
+            output_dir=output_dir,
+        )
+        report = _mapping_obj(result.get("paper_shadow_drift_report"))
+        validation = _mapping_obj(result.get("paper_shadow_drift_validation"))
+        manifest = _mapping_obj(result.get("manifest"))
+    typer.echo(f"monitor_id={manifest.get('monitor_id')}")
+    typer.echo(f"candidate={report.get('candidate')}")
+    typer.echo(f"observation_id={report.get('observation_id')}")
+    typer.echo(f"drift_severity={report.get('drift_severity')}")
+    typer.echo(f"blocking_count={report.get('blocking_count')}")
+    typer.echo(f"warning_count={report.get('warning_count')}")
+    typer.echo(f"next_action={report.get('next_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('paper_shadow_drift_markdown_path')}")
+    typer.echo("paper_shadow_drift_monitor_only=true")
+    typer.echo("read_only_monitor=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-drift-monitor")
+def dynamic_v3_validate_paper_shadow_drift_monitor_command(
+    monitor_id: Annotated[
+        str | None,
+        typer.Option("--monitor-id", help="paper-shadow drift monitor id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow drift monitor artifact root。"),
+    ] = paper_shadow_drift.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+) -> None:
+    resolved_id = monitor_id
+    if latest:
+        payload = paper_shadow_drift.paper_shadow_drift_monitor_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("monitor_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--monitor-id or --latest is required")
+    _echo_validation_payload(
+        paper_shadow_drift.validate_paper_shadow_drift_monitor_artifact(
+            monitor_id=resolved_id,
             output_dir=output_dir,
         )
     )

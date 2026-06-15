@@ -2004,6 +2004,48 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "paper_shadow_drift_monitor",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_monitor_id"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_drift_observation",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_observation_id"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_drift_severity",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_severity"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_drift_blocking_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_blocking_count"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_drift_warning_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_warning_count"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_drift_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_next_action"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_drift_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_validation_status"
+                        ),
+                    ),
+                    (
                         "candidate_decision_ledger",
                         etf_dynamic_v3_parameter_research.get(
                             "candidate_decision_ledger_id"
@@ -12476,6 +12518,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_daily_manifest.json",
     )
+    paper_shadow_drift_monitor_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_shadow_drift_monitor",
+        ),
+        "paper_shadow_drift_manifest.json",
+    )
     candidate_decision_ledger_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -12943,6 +12992,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if paper_shadow_daily_path is not None
         else None
     )
+    paper_shadow_drift_manifest = _read_optional_json(paper_shadow_drift_monitor_path)
+    paper_shadow_drift_report = _read_optional_json(
+        paper_shadow_drift_monitor_path.parent / "paper_shadow_drift_report.json"
+        if paper_shadow_drift_monitor_path is not None
+        else None
+    )
+    paper_shadow_drift_validation = _read_optional_json(
+        paper_shadow_drift_monitor_path.parent / "paper_shadow_drift_validation.json"
+        if paper_shadow_drift_monitor_path is not None
+        else None
+    )
     candidate_decision_ledger_manifest = _read_optional_json(candidate_decision_ledger_path)
     candidate_decision_record = _read_optional_json(
         candidate_decision_ledger_path.parent / "candidate_decision_record.json"
@@ -13033,6 +13093,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         paper_shadow_daily_manifest,
         paper_shadow_daily_observation,
         paper_shadow_daily_validation,
+        paper_shadow_drift_manifest,
+        paper_shadow_drift_report,
+        paper_shadow_drift_validation,
         candidate_decision_ledger_manifest,
         candidate_decision_record,
         candidate_decision_ledger_validation,
@@ -13390,6 +13453,10 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"{filtered_next_decision.get('decision', 'MISSING')}; "
             f"formal_research_contract="
             f"{formal_research_method_decision.get('promotion_state', 'MISSING')}; "
+            f"paper_shadow_daily="
+            f"{paper_shadow_daily_observation.get('observation_status', 'MISSING')}; "
+            f"paper_shadow_drift="
+            f"{paper_shadow_drift_report.get('drift_severity', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -14303,6 +14370,38 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_daily_validation.get("status"),
             "MISSING",
         ),
+        "paper_shadow_drift_monitor_id": _text(
+            paper_shadow_drift_manifest.get("monitor_id"),
+            "MISSING",
+        ),
+        "paper_shadow_drift_candidate": _text(
+            paper_shadow_drift_report.get("candidate"),
+            "MISSING",
+        ),
+        "paper_shadow_drift_observation_id": _text(
+            paper_shadow_drift_report.get("observation_id"),
+            "MISSING",
+        ),
+        "paper_shadow_drift_severity": _text(
+            paper_shadow_drift_report.get("drift_severity"),
+            "MISSING",
+        ),
+        "paper_shadow_drift_blocking_count": paper_shadow_drift_report.get(
+            "blocking_count",
+            "MISSING",
+        ),
+        "paper_shadow_drift_warning_count": paper_shadow_drift_report.get(
+            "warning_count",
+            "MISSING",
+        ),
+        "paper_shadow_drift_next_action": _text(
+            paper_shadow_drift_report.get("next_action"),
+            "MISSING",
+        ),
+        "paper_shadow_drift_validation_status": _text(
+            paper_shadow_drift_validation.get("status"),
+            "MISSING",
+        ),
         "candidate_decision_ledger_id": _text(
             candidate_decision_ledger_manifest.get("ledger_run_id"),
             "MISSING",
@@ -14648,6 +14747,11 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_daily": (
             "" if paper_shadow_daily_path is None else str(paper_shadow_daily_path)
+        ),
+        "paper_shadow_drift_monitor": (
+            ""
+            if paper_shadow_drift_monitor_path is None
+            else str(paper_shadow_drift_monitor_path)
         ),
         "candidate_decision_ledger": (
             ""
@@ -15553,6 +15657,14 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_daily_risk_state": "MISSING",
         "paper_shadow_daily_next_action": "MISSING",
         "paper_shadow_daily_validation_status": "MISSING",
+        "paper_shadow_drift_monitor_id": "MISSING",
+        "paper_shadow_drift_candidate": "MISSING",
+        "paper_shadow_drift_observation_id": "MISSING",
+        "paper_shadow_drift_severity": "MISSING",
+        "paper_shadow_drift_blocking_count": "MISSING",
+        "paper_shadow_drift_warning_count": "MISSING",
+        "paper_shadow_drift_next_action": "MISSING",
+        "paper_shadow_drift_validation_status": "MISSING",
         "candidate_decision_ledger_id": "MISSING",
         "candidate_decision_record_id": "MISSING",
         "candidate_decision_candidate": "MISSING",
@@ -15638,6 +15750,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "promotion_gate_threshold_calibration": "",
         "paper_shadow_protocol": "",
         "paper_shadow_daily": "",
+        "paper_shadow_drift_monitor": "",
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
         "stress_scenario_library": "",
