@@ -4981,6 +4981,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_drawdown_event_casebook
+    title: ETF Dynamic v3 Drawdown Event Casebook
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue drawdown-event-casebook report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/drawdown_casebook_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/drawdown_event_casebook.json
+      - reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/drawdown_event_casebook_reader_brief.md
+      - reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/drawdown_event_casebook_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/drawdown_event_casebook_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/drawdown_event_casebook_validation.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-357 records historical drawdown events for qualitative Dynamic v3
+      candidate review, including regime label, candidate response, benchmark
+      response, recovery behavior, review notes, and no-trading-signal safety
+      boundaries.
+    owner_action: use_casebook_in_next_drawdown_mismatch_or_paper_shadow_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: test_runtime_summary
     title: Test Runtime Summary
     group: governance

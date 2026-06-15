@@ -1426,6 +1426,57 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    drawdown_dir = tmp_path / "drawdown_event_casebook" / "casebook123"
+    drawdown_dir.mkdir(parents=True)
+    drawdown_path = drawdown_dir / "drawdown_casebook_manifest.json"
+    drawdown_path.write_text(
+        json.dumps(
+            {
+                "casebook_run_id": "casebook123",
+                "drawdown_casebook_id": "dynamic_v3_rescue_drawdown_event_casebook_v1",
+                "status": "PASS",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (drawdown_dir / "drawdown_event_casebook.json").write_text(
+        json.dumps(
+            {
+                "casebook_run_id": "casebook123",
+                "drawdown_casebook_id": "dynamic_v3_rescue_drawdown_event_casebook_v1",
+                "event_count": 5,
+                "worst_event": "semiconductor_pullback_2024_07",
+                "regime_coverage": [
+                    "risk_off",
+                    "semiconductor_pullback",
+                    "sideways_choppy",
+                    "strong_recovery",
+                    "tech_drawdown",
+                ],
+                "next_review_action": "use_casebook_in_next_drawdown_mismatch_review",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+                "automatic_candidate_promotion": False,
+                "shadow_enrollment_allowed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (drawdown_dir / "drawdown_event_casebook_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
@@ -1439,6 +1490,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
             _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
             _report_record("etf_dynamic_v3_stress_scenario_library", stress_path),
+            _report_record("etf_dynamic_v3_drawdown_event_casebook", drawdown_path),
         ]
     }
 
@@ -1517,6 +1569,22 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         == "use_library_ids_in_next_stress_backfill_or_case_review"
     )
     assert summary["stress_scenario_validation_status"] == "PASS"
+    assert summary["drawdown_casebook_run_id"] == "casebook123"
+    assert (
+        summary["drawdown_casebook_id"]
+        == "dynamic_v3_rescue_drawdown_event_casebook_v1"
+    )
+    assert summary["drawdown_casebook_event_count"] == 5
+    assert summary["drawdown_casebook_worst_event"] == "semiconductor_pullback_2024_07"
+    assert summary["drawdown_casebook_regime_coverage"] == (
+        "risk_off, semiconductor_pullback, sideways_choppy, strong_recovery, "
+        "tech_drawdown"
+    )
+    assert (
+        summary["drawdown_casebook_next_action"]
+        == "use_casebook_in_next_drawdown_mismatch_review"
+    )
+    assert summary["drawdown_casebook_validation_status"] == "PASS"
     assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
     assert summary["rolling_weekly_advisory_review_id"] == "weekly123"
     assert summary["evidence_trend_status"] == "INSUFFICIENT_HISTORY"

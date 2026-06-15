@@ -1519,6 +1519,24 @@ rationale、expected failure modes 和 required evidence，不运行 stress back
 `not_probability_forecast=true`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-357_DRAWDOWN_EVENT_CASEBOOK 在 stress scenario library 后新增 Dynamic v3 rescue
+历史 drawdown event casebook。CLI 入口为
+`aits etf dynamic-v3-rescue drawdown-event-casebook report`、`... report --latest` 和
+`aits etf dynamic-v3-rescue validate-drawdown-event-casebook --casebook-run-id <casebook_run_id>`。
+Casebook schema 由
+`config/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook_v1.yaml` 管理，每个事件必须记录
+event name、start/end date、max drawdown、recovery behavior、regime label、candidate
+response、benchmark response 和 review notes。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/`，包含 manifest、
+normalized `drawdown_event_casebook.json`、Reader Brief section、Markdown report 和
+validation JSON/Markdown。该 casebook 是 qualitative research diagnostic artifact，不是
+trading signal、data-backed performance evidence、stress/backtest executor 或 production
+gate；它不下载数据、不运行上游 pipeline、不修改 candidate ledger、不写 target weights、
+不触发 broker/order，所有输出固定 `drawdown_event_casebook_only=true`、
+`research_diagnostic_only=true`、`not_trading_signal=true`、
+`data_downloaded_by_casebook=false`、`pipelines_executed_by_casebook=false`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

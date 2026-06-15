@@ -69,6 +69,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_candidate_decision_ledger.py",
             "tests/test_evidence_staleness_monitor.py",
             "tests/test_stress_scenario_library.py",
+            "tests/test_drawdown_event_casebook.py",
         ),
     ),
     "report-validation": TierSpec(

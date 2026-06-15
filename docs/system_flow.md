@@ -180,6 +180,7 @@ flowchart TD
     ETFV3PSPROTOCOL --> ETFV3DECISIONLEDGER["aits etf dynamic-v3-rescue candidate-decision-ledger record/report/validate-candidate-decision-ledger<br/>TRADING-349 append-only candidate decision ledger<br/>reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/...<br/>candidate_decision_ledger_only / append_only_ledger / no official target / no broker or order ticket / production_effect=none"]
     ETFV3DECISIONLEDGER --> ETFV3EVIDENCESTALE["aits etf dynamic-v3-rescue evidence-staleness-monitor run/report/validate-evidence-staleness-monitor<br/>TRADING-354 evidence staleness monitor<br/>reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/...<br/>freshness policy / read-only / no data refresh / no upstream rerun / broker_action_allowed=false / production_effect=none"]
     ETFV3EVIDENCESTALE --> ETFV3STRESSLIB["aits etf dynamic-v3-rescue stress-scenario-library report/validate-stress-scenario-library<br/>TRADING-356 reusable stress scenario library<br/>reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/...<br/>candidate validation taxonomy / no stress backfill / no data refresh / no broker / production_effect=none"]
+    ETFV3STRESSLIB --> ETFV3DRAWDOWNCASE["aits etf dynamic-v3-rescue drawdown-event-casebook report/validate-drawdown-event-casebook<br/>TRADING-357 drawdown event casebook<br/>reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/...<br/>research diagnostic only / manual proxy limitations / not trading signal / no broker / production_effect=none"]
     ETFV3SMOOTH --> ETFRIDX
     ETFV3SMOOTH --> ETFREAD
     ETFV3SMOOTHWATCH --> ETFRIDX
@@ -210,6 +211,8 @@ flowchart TD
     ETFV3EVIDENCESTALE --> ETFREAD
     ETFV3STRESSLIB --> ETFRIDX
     ETFV3STRESSLIB --> ETFREAD
+    ETFV3DRAWDOWNCASE --> ETFRIDX
+    ETFV3DRAWDOWNCASE --> ETFREAD
     ETFV3SMOOTHFRESH --> ETFRIDX
     ETFV3SMOOTHFRESH --> ETFREAD
     ETFV3SMOOTHREFRESH --> ETFRIDX

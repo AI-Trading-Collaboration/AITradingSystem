@@ -2030,6 +2030,40 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "drawdown_event_casebook",
+                        etf_dynamic_v3_parameter_research.get("drawdown_casebook_run_id"),
+                    ),
+                    (
+                        "drawdown_casebook_event_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_event_count"
+                        ),
+                    ),
+                    (
+                        "drawdown_casebook_worst_event",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_worst_event"
+                        ),
+                    ),
+                    (
+                        "drawdown_casebook_regime_coverage",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_regime_coverage"
+                        ),
+                    ),
+                    (
+                        "drawdown_casebook_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_next_action"
+                        ),
+                    ),
+                    (
+                        "drawdown_casebook_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12327,6 +12361,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "stress_scenario_manifest.json",
     )
+    drawdown_event_casebook_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_drawdown_event_casebook",
+        ),
+        "drawdown_casebook_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12766,6 +12807,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if stress_scenario_library_path is not None
         else None
     )
+    drawdown_casebook_manifest = _read_optional_json(drawdown_event_casebook_path)
+    drawdown_event_casebook = _read_optional_json(
+        drawdown_event_casebook_path.parent / "drawdown_event_casebook.json"
+        if drawdown_event_casebook_path is not None
+        else None
+    )
+    drawdown_casebook_validation = _read_optional_json(
+        drawdown_event_casebook_path.parent / "drawdown_event_casebook_validation.json"
+        if drawdown_event_casebook_path is not None
+        else None
+    )
     filtered_candidate_readiness_payloads = (
         filtered_candidate_evidence_manifest,
         filtered_candidate_evidence_summary,
@@ -12803,6 +12855,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         stress_scenario_manifest,
         stress_scenario_library,
         stress_scenario_validation,
+        drawdown_casebook_manifest,
+        drawdown_event_casebook,
+        drawdown_casebook_validation,
     )
     outcome_loop_payloads = (
         outcome_update_review,
@@ -14091,6 +14146,34 @@ def _etf_dynamic_v3_parameter_research_summary(
             stress_scenario_validation.get("status"),
             "MISSING",
         ),
+        "drawdown_casebook_run_id": _text(
+            drawdown_casebook_manifest.get("casebook_run_id"),
+            "MISSING",
+        ),
+        "drawdown_casebook_id": _text(
+            drawdown_event_casebook.get("drawdown_casebook_id"),
+            "MISSING",
+        ),
+        "drawdown_casebook_event_count": drawdown_event_casebook.get(
+            "event_count",
+            "MISSING",
+        ),
+        "drawdown_casebook_worst_event": _text(
+            drawdown_event_casebook.get("worst_event"),
+            "MISSING",
+        ),
+        "drawdown_casebook_regime_coverage": (
+            ", ".join(_texts(drawdown_event_casebook.get("regime_coverage")))
+            or "MISSING"
+        ),
+        "drawdown_casebook_next_action": _text(
+            drawdown_event_casebook.get("next_review_action"),
+            "MISSING",
+        ),
+        "drawdown_casebook_validation_status": _text(
+            drawdown_casebook_validation.get("status"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -14279,6 +14362,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if stress_scenario_library_path is None
             else str(stress_scenario_library_path)
+        ),
+        "drawdown_event_casebook": (
+            ""
+            if drawdown_event_casebook_path is None
+            else str(drawdown_event_casebook_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -15168,6 +15256,13 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "stress_scenario_candidate_validation_use": "MISSING",
         "stress_scenario_next_action": "MISSING",
         "stress_scenario_validation_status": "MISSING",
+        "drawdown_casebook_run_id": "MISSING",
+        "drawdown_casebook_id": "MISSING",
+        "drawdown_casebook_event_count": "MISSING",
+        "drawdown_casebook_worst_event": "MISSING",
+        "drawdown_casebook_regime_coverage": "MISSING",
+        "drawdown_casebook_next_action": "MISSING",
+        "drawdown_casebook_validation_status": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -15213,6 +15308,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
         "stress_scenario_library": "",
+        "drawdown_event_casebook": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

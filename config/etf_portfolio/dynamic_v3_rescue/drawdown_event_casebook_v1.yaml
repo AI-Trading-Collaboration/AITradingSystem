@@ -1,0 +1,132 @@
+schema_version: 1
+casebook_id: dynamic_v3_rescue_drawdown_event_casebook_v1
+version: 2026-06-15
+status: manual_diagnostic_baseline
+owner: system_validation
+source_type: manual_research_casebook
+rationale: >
+  TRADING-357 records a small, explicit set of drawdown events for qualitative
+  review of Dynamic v3 candidate behavior. These events are manual diagnostic
+  baselines and must not be treated as recalculated performance evidence.
+intended_effect: >
+  Give future drawdown mismatch reviews, paper-shadow weekly reviews, and owner
+  research notes stable event ids and review questions when discussing candidate
+  response under historical drawdown conditions.
+validation_evidence: >
+  Focused casebook tests, report/validate CLI, contract-validation suite,
+  documentation contract, report index, and Reader Brief quality checks.
+review_condition: >
+  Replace or recalibrate manual drawdown proxies after a data-backed drawdown
+  event extractor is implemented, or when owner adds a new AI-cycle drawdown
+  event for qualitative review.
+
+safety:
+  manual_review_only: true
+  drawdown_event_casebook_only: true
+  research_diagnostic_only: true
+  not_trading_signal: true
+  data_downloaded_by_casebook: false
+  pipelines_executed_by_casebook: false
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  auto_apply: false
+  production_effect: none
+
+casebook_policy:
+  market_regime: ai_after_chatgpt
+  source_limitations:
+    - Manual baseline events use research proxy max drawdown values.
+    - Casebook rows support qualitative review only.
+    - Investment-facing conclusions require a data-backed drawdown extraction artifact.
+  required_fields:
+    - event_name
+    - start_date
+    - end_date
+    - max_drawdown
+    - recovery_behavior
+    - regime_label
+    - candidate_response
+    - benchmark_response
+    - review_notes
+  next_action: use_casebook_in_next_drawdown_mismatch_review
+
+events:
+  - event_id: tech_drawdown_2024_04
+    event_name: April 2024 AI/tech drawdown
+    start_date: 2024-04-01
+    end_date: 2024-04-19
+    max_drawdown: -0.09
+    max_drawdown_source: manual_proxy
+    recovery_behavior: partial_recovery_after_fast_selloff
+    regime_label: tech_drawdown
+    stress_scenario_id: rapid_drawdown
+    candidate_response: risk_increase_blocked_helpfully
+    benchmark_response: QQQ and semiconductor proxies sold off together
+    review_notes:
+      - Use as a drawdown mismatch review case.
+      - Confirm whether filtered candidate avoided adding risk into weakness.
+      - Data-backed recalculation is required before using the magnitude as evidence.
+  - event_id: semiconductor_pullback_2024_07
+    event_name: July 2024 semiconductor-led pullback
+    start_date: 2024-07-10
+    end_date: 2024-08-05
+    max_drawdown: -0.14
+    max_drawdown_source: manual_proxy
+    recovery_behavior: sharp_partial_recovery_with_rotation
+    regime_label: semiconductor_pullback
+    stress_scenario_id: semiconductor_led_selloff
+    candidate_response: reduced_semiconductor_overexposure
+    benchmark_response: semiconductor proxy underperformed broad tech
+    review_notes:
+      - Use to review semiconductor concentration control.
+      - Check whether candidate reduced hardware beta without missing recovery.
+      - Treat max drawdown as manual proxy until recalculated.
+  - event_id: rates_risk_off_2025_01
+    event_name: January 2025 rates-driven risk-off
+    start_date: 2025-01-07
+    end_date: 2025-01-27
+    max_drawdown: -0.07
+    max_drawdown_source: manual_proxy
+    recovery_behavior: gradual_recovery_after_macro_reset
+    regime_label: risk_off
+    stress_scenario_id: rate_shock
+    candidate_response: defensive_gate_improved_drawdown
+    benchmark_response: long-duration tech lagged defensive assets
+    review_notes:
+      - Use to review macro-sensitive risk-off handling.
+      - Check whether candidate distinguished rate shock from noisy tech pullback.
+      - Manual proxy magnitude must not be used as a backtest result.
+  - event_id: sideways_choppy_2025_03
+    event_name: March 2025 high-volatility sideways market
+    start_date: 2025-03-03
+    end_date: 2025-03-31
+    max_drawdown: -0.05
+    max_drawdown_source: manual_proxy
+    recovery_behavior: range_bound_rebounds_and_retests
+    regime_label: sideways_choppy
+    stress_scenario_id: high_volatility_sideways_market
+    candidate_response: mixed_turnover_control
+    benchmark_response: broad tech recovered but with repeated reversals
+    review_notes:
+      - Use to review whether candidate reduces noisy flip/rotation.
+      - Check turnover impact against drawdown improvement.
+      - Manual proxy magnitude is qualitative only.
+  - event_id: recovery_lag_2025_05
+    event_name: May 2025 strong recovery after pullback
+    start_date: 2025-04-21
+    end_date: 2025-05-16
+    max_drawdown: -0.04
+    max_drawdown_source: manual_proxy
+    recovery_behavior: v_shaped_recovery
+    regime_label: strong_recovery
+    stress_scenario_id: v_shaped_recovery
+    candidate_response: mixed_reentry_lag
+    benchmark_response: AI and tech benchmarks rebounded quickly
+    review_notes:
+      - Use to review whether drawdown protection creates recovery lag.
+      - Candidate should re-enter risk after valid recovery evidence.
+      - Manual proxy magnitude is not promotion evidence.
