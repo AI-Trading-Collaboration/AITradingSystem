@@ -1500,6 +1500,25 @@ candidate decision ledger、不写 target weights、不触发 broker/order，所
 `pipelines_executed_by_monitor=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-356_STRESS_SCENARIO_LIBRARY 在 evidence freshness guard 后新增 Dynamic v3 rescue
+专用 stress scenario library。CLI 入口为
+`aits etf dynamic-v3-rescue stress-scenario-library report`、`... report --latest` 和
+`aits etf dynamic-v3-rescue validate-stress-scenario-library --library-run-id <library_run_id>`。
+Scenario selection policy 由
+`config/etf_portfolio/dynamic_v3_rescue/stress_scenario_library_v1.yaml` 管理，覆盖
+rapid drawdown、slow drawdown、V-shaped recovery、high volatility sideways market、
+false risk-off cluster、rate shock、AI sector correction、semiconductor-led selloff 和
+liquidity squeeze。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/`，包含 manifest、
+normalized `stress_scenario_library.json`、Reader Brief section、Markdown report 和
+validation JSON/Markdown。该 library 只定义 candidate validation scenarios、selection
+rationale、expected failure modes 和 required evidence，不运行 stress backfill、不刷新数据、
+不修改 candidate ledger、不写 target weights、不触发 broker/order，所有输出固定
+`stress_scenario_library_only=true`、`candidate_validation_only=true`、
+`data_downloaded_by_library=false`、`pipelines_executed_by_library=false`、
+`not_probability_forecast=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

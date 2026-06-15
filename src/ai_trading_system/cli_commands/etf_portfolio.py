@@ -27,6 +27,7 @@ from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as def
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_filtered_candidate_readiness as filtered_readiness,
 )
+from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_weight_batch_search as weight_batch_search,
@@ -1827,6 +1828,10 @@ dynamic_v3_evidence_staleness_monitor_app = typer.Typer(
     help="Dynamic v3 rescue evidence staleness monitor workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_stress_scenario_library_app = typer.Typer(
+    help="Dynamic v3 rescue stress scenario library workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2591,6 +2596,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_evidence_staleness_monitor_app,
     name="evidence-staleness-monitor",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_stress_scenario_library_app,
+    name="stress-scenario-library",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -19940,6 +19949,83 @@ def dynamic_v3_validate_evidence_staleness_monitor_command(
             monitor_id=monitor_id,
             output_dir=output_dir,
             policy_path=policy_path,
+        )
+    )
+
+
+@dynamic_v3_stress_scenario_library_app.command("report")
+def dynamic_v3_stress_scenario_library_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    library_run_id: Annotated[
+        str | None,
+        typer.Option("--library-run-id", help="stress scenario library run id。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="stress scenario library YAML。"),
+    ] = stress_scenarios.DEFAULT_STRESS_SCENARIO_LIBRARY_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="stress scenario library artifact root。"),
+    ] = stress_scenarios.DEFAULT_STRESS_SCENARIO_LIBRARY_DIR,
+) -> None:
+    if latest or library_run_id:
+        payload = stress_scenarios.stress_scenario_library_report_payload(
+            library_run_id=library_run_id,
+            latest=latest,
+            output_dir=output_dir,
+        )
+        manifest = _mapping_obj(payload)
+        library = _mapping_obj(payload.get("stress_scenario_library"))
+        validation = _mapping_obj(payload.get("stress_scenario_validation"))
+    else:
+        result = stress_scenarios.build_stress_scenario_library(
+            config_path=config_path,
+            output_dir=output_dir,
+        )
+        manifest = _mapping_obj(result.get("manifest"))
+        library = _mapping_obj(result.get("stress_scenario_library"))
+        validation = _mapping_obj(result.get("stress_scenario_validation"))
+    typer.echo(f"library_run_id={manifest.get('library_run_id')}")
+    typer.echo(f"stress_scenario_library_id={library.get('stress_scenario_library_id')}")
+    typer.echo(f"scenario_count={library.get('scenario_count')}")
+    typer.echo(f"required_scenarios_present={library.get('required_scenarios_present')}")
+    typer.echo(f"candidate_validation_use={library.get('candidate_validation_use')}")
+    typer.echo(f"next_validation_action={library.get('next_validation_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('stress_scenario_report_path')}")
+    typer.echo("stress_scenario_library_only=true")
+    typer.echo("data_downloaded_by_library=false")
+    typer.echo("pipelines_executed_by_library=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-stress-scenario-library")
+def dynamic_v3_validate_stress_scenario_library_command(
+    library_run_id: Annotated[
+        str | None,
+        typer.Option("--library-run-id", help="stress scenario library run id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="stress scenario library artifact root。"),
+    ] = stress_scenarios.DEFAULT_STRESS_SCENARIO_LIBRARY_DIR,
+) -> None:
+    resolved_id = library_run_id
+    if latest:
+        payload = stress_scenarios.stress_scenario_library_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("library_run_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--library-run-id or --latest is required")
+    _echo_validation_payload(
+        stress_scenarios.validate_stress_scenario_library_artifact(
+            library_run_id=resolved_id,
+            output_dir=output_dir,
         )
     )
 

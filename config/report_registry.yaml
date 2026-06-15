@@ -4957,6 +4957,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_stress_scenario_library
+    title: ETF Dynamic v3 Stress Scenario Library
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue stress-scenario-library report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/stress_scenario_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/stress_scenario_library.json
+      - reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/stress_scenario_reader_brief.md
+      - reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/stress_scenario_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/stress_scenario_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/stress_scenario_validation.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-356 defines reusable stress scenarios for Dynamic v3 candidate
+      validation, including required scenario ids, metadata, selection policy,
+      expected failure modes, required evidence, and no-production safety
+      boundaries.
+    owner_action: use_scenario_ids_in_next_stress_backfill_or_case_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: test_runtime_summary
     title: Test Runtime Summary
     group: governance

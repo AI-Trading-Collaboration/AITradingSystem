@@ -1994,6 +1994,42 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "stress_scenario_library",
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_library_run_id"
+                        ),
+                    ),
+                    (
+                        "stress_scenario_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_count"
+                        ),
+                    ),
+                    (
+                        "stress_scenario_required_present",
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_required_present"
+                        ),
+                    ),
+                    (
+                        "stress_scenario_candidate_validation_use",
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_candidate_validation_use"
+                        ),
+                    ),
+                    (
+                        "stress_scenario_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_next_action"
+                        ),
+                    ),
+                    (
+                        "stress_scenario_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12284,6 +12320,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "evidence_staleness_manifest.json",
     )
+    stress_scenario_library_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_stress_scenario_library",
+        ),
+        "stress_scenario_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12712,6 +12755,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if evidence_staleness_monitor_path is not None
         else None
     )
+    stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
+    stress_scenario_library = _read_optional_json(
+        stress_scenario_library_path.parent / "stress_scenario_library.json"
+        if stress_scenario_library_path is not None
+        else None
+    )
+    stress_scenario_validation = _read_optional_json(
+        stress_scenario_library_path.parent / "stress_scenario_validation.json"
+        if stress_scenario_library_path is not None
+        else None
+    )
     filtered_candidate_readiness_payloads = (
         filtered_candidate_evidence_manifest,
         filtered_candidate_evidence_summary,
@@ -12746,6 +12800,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         evidence_staleness_manifest,
         evidence_staleness_report,
         evidence_staleness_validation,
+        stress_scenario_manifest,
+        stress_scenario_library,
+        stress_scenario_validation,
     )
     outcome_loop_payloads = (
         outcome_update_review,
@@ -14006,6 +14063,34 @@ def _etf_dynamic_v3_parameter_research_summary(
             evidence_staleness_validation.get("status"),
             "MISSING",
         ),
+        "stress_scenario_library_run_id": _text(
+            stress_scenario_manifest.get("library_run_id"),
+            "MISSING",
+        ),
+        "stress_scenario_library_id": _text(
+            stress_scenario_library.get("stress_scenario_library_id"),
+            "MISSING",
+        ),
+        "stress_scenario_count": stress_scenario_library.get(
+            "scenario_count",
+            "MISSING",
+        ),
+        "stress_scenario_required_present": stress_scenario_library.get(
+            "required_scenarios_present",
+            "MISSING",
+        ),
+        "stress_scenario_candidate_validation_use": _text(
+            stress_scenario_library.get("candidate_validation_use"),
+            "MISSING",
+        ),
+        "stress_scenario_next_action": _text(
+            stress_scenario_library.get("next_validation_action"),
+            "MISSING",
+        ),
+        "stress_scenario_validation_status": _text(
+            stress_scenario_validation.get("status"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -14189,6 +14274,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if evidence_staleness_monitor_path is None
             else str(evidence_staleness_monitor_path)
+        ),
+        "stress_scenario_library": (
+            ""
+            if stress_scenario_library_path is None
+            else str(stress_scenario_library_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -15071,6 +15161,13 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_blocking_artifacts": "MISSING",
         "evidence_next_refresh_action": "MISSING",
         "evidence_staleness_validation_status": "MISSING",
+        "stress_scenario_library_run_id": "MISSING",
+        "stress_scenario_library_id": "MISSING",
+        "stress_scenario_count": "MISSING",
+        "stress_scenario_required_present": "MISSING",
+        "stress_scenario_candidate_validation_use": "MISSING",
+        "stress_scenario_next_action": "MISSING",
+        "stress_scenario_validation_status": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -15115,6 +15212,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_protocol": "",
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
+        "stress_scenario_library": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

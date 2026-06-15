@@ -1,0 +1,250 @@
+schema_version: 1
+library_id: dynamic_v3_rescue_stress_scenario_library_v1
+version: 2026-06-15
+status: pilot_baseline
+owner: system_validation
+rationale: >
+  TRADING-356 establishes a reusable Dynamic v3 rescue stress scenario library
+  so candidate validation uses explicit, reviewable scenarios instead of ad hoc
+  stress labels. The library is qualitative scenario governance, not a
+  calibrated probability forecast or production trading threshold set.
+intended_effect: >
+  Make future stress backfills, qualitative case reviews, paper-shadow drift
+  checks, and owner review packs reference the same scenario ids, scenario
+  metadata, expected failure modes, and evidence requirements.
+validation_evidence: >
+  Focused scenario library tests, report/validate CLI, contract-validation
+  suite, documentation contract, report index, and Reader Brief quality checks.
+review_condition: >
+  Revisit after the first paper-shadow observation cycle or when owner adds a
+  new AI-market stress family that is not covered by the required scenarios.
+
+safety:
+  manual_review_only: true
+  stress_scenario_library_only: true
+  candidate_validation_only: true
+  data_downloaded_by_library: false
+  pipelines_executed_by_library: false
+  not_probability_forecast: true
+  not_official_target_weights: true
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  auto_apply: false
+  production_effect: none
+
+selection_policy:
+  market_regime: ai_after_chatgpt
+  default_selection_method: >
+    Include a scenario when the candidate changes exposure, signal gating,
+    drawdown handling, rotation behavior, or AI-sector concentration in a way
+    that could plausibly fail under that stress family.
+  required_scenario_ids:
+    - rapid_drawdown
+    - slow_drawdown
+    - v_shaped_recovery
+    - high_volatility_sideways_market
+    - false_risk_off_cluster
+    - rate_shock
+    - ai_sector_correction
+    - semiconductor_led_selloff
+    - liquidity_squeeze
+  scenario_selection_notes:
+    - Stress backfills should disclose which scenario ids are used and why.
+    - Qualitative reviews should explain omitted required scenarios.
+    - Scenario coverage does not imply candidate promotion readiness.
+    - Scenario definitions do not download data, rerun pipelines, or mutate
+      research artifacts.
+
+scenarios:
+  - scenario_id: rapid_drawdown
+    name: Rapid drawdown
+    scenario_group: drawdown
+    severity: high
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Captures abrupt risk-off windows where delayed de-risking can turn a
+      promising AI candidate into a drawdown amplifier.
+    candidate_validation_use: drawdown_response
+    expected_failure_modes:
+      - late_risk_off
+      - drawdown_mismatch
+      - semiconductor_overexposure
+    required_evidence:
+      - daily price path around abrupt drawdown
+      - candidate signal path
+      - benchmark comparison
+      - drawdown mismatch notes
+    review_questions:
+      - Did the candidate reduce risk before the worst drawdown days?
+      - Did signal gating avoid adding AI exposure into falling markets?
+  - scenario_id: slow_drawdown
+    name: Slow drawdown
+    scenario_group: drawdown
+    severity: medium
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Tests gradual weakness where short-lived risk-off triggers may miss
+      persistent deterioration.
+    candidate_validation_use: persistence_and_decay
+    expected_failure_modes:
+      - insufficient_persistence
+      - risk_off_decay
+      - benchmark_lag
+    required_evidence:
+      - multi-week return path
+      - signal persistence history
+      - turnover behavior
+      - benchmark comparison
+    review_questions:
+      - Did the candidate maintain defensive posture through the full decline?
+      - Did turnover increase without improving drawdown control?
+  - scenario_id: v_shaped_recovery
+    name: V-shaped recovery
+    scenario_group: recovery
+    severity: medium
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Tests whether drawdown protection creates harmful lag when AI/tech
+      rebounds sharply after a selloff.
+    candidate_validation_use: recovery_reentry
+    expected_failure_modes:
+      - recovery_lag
+      - underexposure_after_risk_off
+      - delayed_rotation
+    required_evidence:
+      - recovery window price path
+      - re-entry signal timing
+      - benchmark recovery comparison
+      - rotation event notes
+    review_questions:
+      - Did the candidate re-enter risk after the recovery signal became valid?
+      - Did defensive logic sacrifice most of the rebound?
+  - scenario_id: high_volatility_sideways_market
+    name: High volatility sideways market
+    scenario_group: sideways
+    severity: medium
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Captures choppy regimes where frequent signal flips can cause churn
+      without durable return improvement.
+    candidate_validation_use: churn_control
+    expected_failure_modes:
+      - signal_churn
+      - top_candidate_rotation
+      - turnover_spike
+    required_evidence:
+      - sideways market classification
+      - signal flip count
+      - turnover path
+      - candidate rotation notes
+    review_questions:
+      - Did the candidate avoid repeated flip/rotation events?
+      - Did any extra turnover produce measurable risk reduction?
+  - scenario_id: false_risk_off_cluster
+    name: False risk-off cluster
+    scenario_group: signal_quality
+    severity: medium
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Tests whether a candidate overreacts to repeated but non-persistent
+      risk-off signals that later reverse.
+    candidate_validation_use: false_positive_control
+    expected_failure_modes:
+      - false_risk_off
+      - whipsaw
+      - missed_upside
+    required_evidence:
+      - risk-off trigger log
+      - subsequent return path
+      - no-trade comparison
+      - reviewer false-positive notes
+    review_questions:
+      - Did the candidate avoid unnecessary de-risking?
+      - Did the false positives cluster around a specific signal source?
+  - scenario_id: rate_shock
+    name: Rate shock
+    scenario_group: macro
+    severity: high
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Captures valuation compression risk when rates move against long-duration
+      AI/tech exposures.
+    candidate_validation_use: macro_rate_sensitivity
+    expected_failure_modes:
+      - valuation_compression
+      - macro_signal_mismatch
+      - risk_off_late
+    required_evidence:
+      - rate or proxy move
+      - AI/tech return path
+      - candidate signal path
+      - macro context note
+    review_questions:
+      - Did the candidate distinguish rate-driven risk from temporary noise?
+      - Did concentration controls reduce AI/tech drawdown exposure?
+  - scenario_id: ai_sector_correction
+    name: AI sector correction
+    scenario_group: ai_sector
+    severity: high
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Tests broad AI theme weakness where multiple AI-linked holdings can fail
+      together.
+    candidate_validation_use: ai_theme_concentration
+    expected_failure_modes:
+      - ai_concentration_loss
+      - correlated_signal_failure
+      - benchmark_underperformance
+    required_evidence:
+      - AI basket return path
+      - affected ticker list
+      - candidate concentration path
+      - benchmark comparison
+    review_questions:
+      - Did the candidate reduce exposure to correlated AI losses?
+      - Did the filter distinguish sector correction from single-name noise?
+  - scenario_id: semiconductor_led_selloff
+    name: Semiconductor-led selloff
+    scenario_group: semiconductor
+    severity: high
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Captures AI hardware and semiconductor beta risk, especially when SMH or
+      SOXX leads the decline.
+    candidate_validation_use: semiconductor_exposure_control
+    expected_failure_modes:
+      - semiconductor_overexposure
+      - hardware_beta_mismatch
+      - drawdown_mismatch
+    required_evidence:
+      - semiconductor benchmark path
+      - semiconductor exposure path
+      - candidate signal path
+      - drawdown attribution note
+    review_questions:
+      - Did the candidate reduce semiconductor concentration fast enough?
+      - Did non-semiconductor holdings offset or amplify the selloff?
+  - scenario_id: liquidity_squeeze
+    name: Liquidity squeeze
+    scenario_group: liquidity
+    severity: critical
+    market_regime_relevance: ai_after_chatgpt
+    selection_rationale: >
+      Tests stress behavior when correlations rise, volatility jumps, and
+      liquidity conditions punish crowded AI exposure.
+    candidate_validation_use: liquidity_and_correlation_stress
+    expected_failure_modes:
+      - correlation_spike
+      - liquidity_proxy_failure
+      - forced_de_risking_lag
+    required_evidence:
+      - volatility or liquidity proxy
+      - cross-asset or benchmark comparison
+      - candidate turnover path
+      - manual liquidity review note
+    review_questions:
+      - Did the candidate avoid increasing turnover into poor liquidity?
+      - Did risk controls remain effective when correlations rose?

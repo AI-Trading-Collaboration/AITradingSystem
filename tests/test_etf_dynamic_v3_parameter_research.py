@@ -1379,6 +1379,53 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    stress_dir = tmp_path / "stress_scenario_library" / "stress123"
+    stress_dir.mkdir(parents=True)
+    stress_path = stress_dir / "stress_scenario_manifest.json"
+    stress_path.write_text(
+        json.dumps(
+            {
+                "library_run_id": "stress123",
+                "stress_scenario_library_id": "dynamic_v3_rescue_stress_scenario_library_v1",
+                "status": "PASS",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (stress_dir / "stress_scenario_library.json").write_text(
+        json.dumps(
+            {
+                "library_run_id": "stress123",
+                "stress_scenario_library_id": "dynamic_v3_rescue_stress_scenario_library_v1",
+                "scenario_count": 9,
+                "required_scenarios_present": True,
+                "candidate_validation_use": (
+                    "standardized_dynamic_v3_candidate_stress_validation"
+                ),
+                "next_validation_action": (
+                    "use_library_ids_in_next_stress_backfill_or_case_review"
+                ),
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (stress_dir / "stress_scenario_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
@@ -1391,6 +1438,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_forward_outcome_decision", decision_path),
             _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
             _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
+            _report_record("etf_dynamic_v3_stress_scenario_library", stress_path),
         ]
     }
 
@@ -1453,6 +1501,22 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         == "continue_with_manual_freshness_note"
     )
     assert summary["evidence_staleness_validation_status"] == "PASS"
+    assert summary["stress_scenario_library_run_id"] == "stress123"
+    assert (
+        summary["stress_scenario_library_id"]
+        == "dynamic_v3_rescue_stress_scenario_library_v1"
+    )
+    assert summary["stress_scenario_count"] == 9
+    assert summary["stress_scenario_required_present"] is True
+    assert (
+        summary["stress_scenario_candidate_validation_use"]
+        == "standardized_dynamic_v3_candidate_stress_validation"
+    )
+    assert (
+        summary["stress_scenario_next_action"]
+        == "use_library_ids_in_next_stress_backfill_or_case_review"
+    )
+    assert summary["stress_scenario_validation_status"] == "PASS"
     assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
     assert summary["rolling_weekly_advisory_review_id"] == "weekly123"
     assert summary["evidence_trend_status"] == "INSUFFICIENT_HISTORY"
