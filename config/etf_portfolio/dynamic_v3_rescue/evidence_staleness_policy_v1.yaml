@@ -1,0 +1,89 @@
+schema_version: 1
+policy_id: dynamic_v3_rescue_evidence_staleness_policy_v1
+version: 2026-06-15
+status: pilot_baseline
+owner: system_validation
+rationale: >
+  TRADING-354 adds a read-only freshness monitor after the candidate decision
+  ledger so future candidate decisions do not rely on stale price, market, or
+  research evidence. Calendar-day windows are pilot governance bands, not
+  production trading thresholds.
+intended_effect: >
+  Surface stale or blocking upstream evidence before a candidate decision is
+  reused for the next research step, while preserving manual review and
+  no-production safety boundaries.
+validation_evidence: >
+  Focused staleness monitor tests, real CLI run/report/validation, contract
+  validation suite, documentation contract, report index, and Reader Brief
+  quality checks.
+review_condition: >
+  Recalibrate after the first month of paper-shadow protocol operation or after
+  the project owner changes source update cadence.
+
+severity_order:
+  - FRESH
+  - ACCEPTABLE
+  - STALE
+  - BLOCKING
+
+default_next_actions:
+  FRESH: continue_candidate_review
+  ACCEPTABLE: continue_with_manual_freshness_note
+  STALE: refresh_or_regenerate_stale_evidence_before_next_decision
+  BLOCKING: stop_candidate_decision_until_blocking_evidence_is_refreshed
+
+rules:
+  price_data:
+    required: true
+    timestamp_basis: latest_price_cache_date
+    fresh_days: 1
+    acceptable_days: 3
+    blocking_days: 7
+    rationale: >
+      Price data can lag over weekends and holidays; more than one week of
+      calendar lag blocks current candidate interpretation.
+  market_panel_data:
+    required: true
+    timestamp_basis: market_panel_as_of
+    fresh_days: 1
+    acceptable_days: 3
+    blocking_days: 7
+    rationale: >
+      Market panel interpretation should align with the latest validated price
+      cache and daily report context.
+  signal_artifact:
+    required: true
+    timestamp_basis: evidence_date_end_or_generated_at
+    fresh_days: 7
+    acceptable_days: 14
+    blocking_days: 30
+    rationale: >
+      Signal evidence can remain useful for short research windows, but stale
+      signal evidence should be regenerated before further promotion decisions.
+  stress_backfill_result:
+    required: true
+    timestamp_basis: stress_backfill_generated_at
+    fresh_days: 14
+    acceptable_days: 30
+    blocking_days: 60
+    rationale: >
+      Stress backfill is slower-moving than daily market data, but should not be
+      treated as current after two months without review.
+  ab_review:
+    required: true
+    timestamp_basis: ab_review_generated_at
+    fresh_days: 14
+    acceptable_days: 30
+    blocking_days: 60
+    rationale: >
+      A/B review remains usable while source candidate evidence is stable, but
+      must be refreshed if the comparison becomes materially dated.
+  owner_review:
+    required: true
+    timestamp_basis: owner_review_generated_at
+    fresh_days: 7
+    acceptable_days: 14
+    blocking_days: 30
+    rationale: >
+      Owner review is the most decision-facing artifact and should be revisited
+      before the next candidate step if it becomes stale.

@@ -1823,6 +1823,10 @@ dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_evidence_staleness_monitor_app = typer.Typer(
+    help="Dynamic v3 rescue evidence staleness monitor workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2583,6 +2587,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
     name="candidate-decision-ledger",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_evidence_staleness_monitor_app,
+    name="evidence-staleness-monitor",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -19810,6 +19818,128 @@ def dynamic_v3_validate_candidate_decision_ledger_command(
         filtered_readiness.validate_candidate_decision_ledger_artifact(
             ledger_run_id=ledger_run_id,
             output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_evidence_staleness_monitor_app.command("run")
+def dynamic_v3_evidence_staleness_monitor_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="freshness as-of date YYYY-MM-DD；省略时使用当前 UTC 日期。",
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    evidence_id: Annotated[
+        str | None,
+        typer.Option("--evidence-id", help="filtered candidate evidence id；缺省读取 latest。"),
+    ] = None,
+    stress_backfill_id: Annotated[
+        str | None,
+        typer.Option("--stress-backfill-id", help="stress backfill id；缺省读取 latest。"),
+    ] = None,
+    ab_review_id: Annotated[
+        str | None,
+        typer.Option("--ab-review-id", help="filtered candidate A/B review id；缺省读取 latest。"),
+    ] = None,
+    owner_review_id: Annotated[
+        str | None,
+        typer.Option("--owner-review-id", help="owner filtered review id；缺省读取 latest。"),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy-path", help="evidence staleness policy YAML。"),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_POLICY_PATH,
+    price_cache_path: Annotated[
+        Path,
+        typer.Option("--price-cache-path", help="standardized price cache CSV。"),
+    ] = system_target.DEFAULT_PRICE_CACHE_PATH,
+    market_panel_dir: Annotated[
+        Path,
+        typer.Option("--market-panel-dir", help="market panel report directory。"),
+    ] = filtered_readiness.DEFAULT_MARKET_PANEL_REPORT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="evidence staleness monitor artifact root。"),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+) -> None:
+    result = filtered_readiness.run_evidence_staleness_monitor(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        evidence_id=evidence_id,
+        stress_backfill_id=stress_backfill_id,
+        ab_review_id=ab_review_id,
+        owner_review_id=owner_review_id,
+        policy_path=policy_path,
+        price_cache_path=price_cache_path,
+        market_panel_dir=market_panel_dir,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(result.get("evidence_staleness_report"))
+    validation = _mapping_obj(result.get("evidence_staleness_validation"))
+    typer.echo(f"monitor_id={result['monitor_id']}")
+    typer.echo(f"evidence_freshness_status={report.get('evidence_freshness_status')}")
+    typer.echo(f"stale_artifacts={','.join(_texts(report.get('stale_artifacts')))}")
+    typer.echo(f"blocking_artifacts={','.join(_texts(report.get('blocking_artifacts')))}")
+    typer.echo(f"next_refresh_action={report.get('next_refresh_action')}")
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("evidence_staleness_monitor_only=true")
+    typer.echo("data_downloaded_by_monitor=false")
+    typer.echo("pipelines_executed_by_monitor=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_evidence_staleness_monitor_app.command("report")
+def dynamic_v3_evidence_staleness_monitor_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    monitor_id: Annotated[
+        str | None,
+        typer.Option("--monitor-id", help="monitor id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="evidence staleness monitor artifact root。"),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+) -> None:
+    payload = filtered_readiness.evidence_staleness_monitor_report_payload(
+        monitor_id=monitor_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(payload.get("evidence_staleness_report"))
+    typer.echo(f"monitor_id={payload['monitor_id']}")
+    typer.echo(f"evidence_freshness_status={report.get('evidence_freshness_status')}")
+    typer.echo(f"stale_artifacts={','.join(_texts(report.get('stale_artifacts')))}")
+    typer.echo(f"blocking_artifacts={','.join(_texts(report.get('blocking_artifacts')))}")
+    typer.echo(f"next_refresh_action={report.get('next_refresh_action')}")
+    typer.echo(f"report_path={payload['evidence_staleness_markdown_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-evidence-staleness-monitor")
+def dynamic_v3_validate_evidence_staleness_monitor_command(
+    monitor_id: Annotated[str, typer.Option("--monitor-id", help="monitor id。")],
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy-path", help="evidence staleness policy YAML。"),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_POLICY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="evidence staleness monitor artifact root。"),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+) -> None:
+    _echo_validation_payload(
+        filtered_readiness.validate_evidence_staleness_monitor_artifact(
+            monitor_id=monitor_id,
+            output_dir=output_dir,
+            policy_path=policy_path,
         )
     )
 

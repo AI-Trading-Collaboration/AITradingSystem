@@ -1339,6 +1339,46 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    staleness_dir = tmp_path / "evidence_staleness_monitor" / "stale123"
+    staleness_dir.mkdir(parents=True)
+    staleness_path = staleness_dir / "evidence_staleness_manifest.json"
+    staleness_path.write_text(
+        json.dumps(
+            {
+                "monitor_id": "stale123",
+                "status": "PASS",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (staleness_dir / "evidence_staleness_report.json").write_text(
+        json.dumps(
+            {
+                "evidence_freshness_status": "ACCEPTABLE",
+                "stale_artifacts": [],
+                "blocking_artifacts": [],
+                "next_refresh_action": "continue_with_manual_freshness_note",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (staleness_dir / "evidence_staleness_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
@@ -1350,6 +1390,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_evidence_trend", trend_path),
             _report_record("etf_dynamic_v3_forward_outcome_decision", decision_path),
             _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
+            _report_record("etf_dynamic_v3_evidence_staleness_monitor", staleness_path),
         ]
     }
 
@@ -1403,6 +1444,15 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         == "start_daily_paper_shadow_runner_design"
     )
     assert summary["candidate_decision_ledger_validation_status"] == "PASS"
+    assert summary["evidence_staleness_monitor_id"] == "stale123"
+    assert summary["evidence_freshness_status"] == "ACCEPTABLE"
+    assert summary["evidence_stale_artifacts"] == "none"
+    assert summary["evidence_blocking_artifacts"] == "none"
+    assert (
+        summary["evidence_next_refresh_action"]
+        == "continue_with_manual_freshness_note"
+    )
+    assert summary["evidence_staleness_validation_status"] == "PASS"
     assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
     assert summary["rolling_weekly_advisory_review_id"] == "weekly123"
     assert summary["evidence_trend_status"] == "INSUFFICIENT_HISTORY"

@@ -4932,6 +4932,31 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_evidence_staleness_monitor
+    title: ETF Dynamic v3 Evidence Staleness Monitor
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue evidence-staleness-monitor report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/evidence_staleness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/evidence_staleness_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/evidence_staleness_findings.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/evidence_staleness_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/evidence_staleness_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/*/evidence_staleness_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-354 checks whether price data, market panel, signal evidence,
+      stress backfill, A/B review, and owner review inputs are stale before the
+      next candidate decision, while preserving read-only and no-production
+      safety boundaries.
+    owner_action: refresh_or_regenerate_stale_evidence_before_next_candidate_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: test_runtime_summary
     title: Test Runtime Summary
     group: governance

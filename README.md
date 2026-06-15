@@ -1483,6 +1483,23 @@ promotion。所有输出固定 `candidate_decision_ledger_only=true`、`append_o
 `manual_review_only=true`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-354_EVIDENCE_STALENESS_MONITOR 在 candidate decision ledger 后新增只读 freshness
+guard。CLI 入口为 `aits etf dynamic-v3-rescue evidence-staleness-monitor run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue evidence-staleness-monitor report --latest` 和
+`aits etf dynamic-v3-rescue validate-evidence-staleness-monitor --monitor-id <monitor_id>`。
+Freshness thresholds 由
+`config/etf_portfolio/dynamic_v3_rescue/evidence_staleness_policy_v1.yaml` 管理，覆盖
+price data、market panel、signal artifact、stress backfill result、A/B review 和 owner review。
+Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/`，包含 manifest、
+report JSON、findings JSONL、Markdown report、Reader Brief section 和 validation JSON/Markdown。
+输出 `evidence_freshness_status`、`stale_artifacts`、`blocking_artifacts` 和
+`next_refresh_action`；该 monitor 不刷新数据、不运行 market panel 或 research 上游、不修改
+candidate decision ledger、不写 target weights、不触发 broker/order，所有输出固定
+`evidence_staleness_monitor_only=true`、`data_downloaded_by_monitor=false`、
+`pipelines_executed_by_monitor=false`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

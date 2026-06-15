@@ -1960,6 +1960,40 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "evidence_staleness_monitor",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_staleness_monitor_id"
+                        ),
+                    ),
+                    (
+                        "evidence_freshness_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_freshness_status"
+                        ),
+                    ),
+                    (
+                        "evidence_stale_artifacts",
+                        etf_dynamic_v3_parameter_research.get("evidence_stale_artifacts"),
+                    ),
+                    (
+                        "evidence_blocking_artifacts",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_blocking_artifacts"
+                        ),
+                    ),
+                    (
+                        "evidence_next_refresh_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_next_refresh_action"
+                        ),
+                    ),
+                    (
+                        "evidence_staleness_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_staleness_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12243,6 +12277,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "candidate_decision_ledger_manifest.json",
     )
+    evidence_staleness_monitor_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_evidence_staleness_monitor",
+        ),
+        "evidence_staleness_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12660,6 +12701,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if candidate_decision_ledger_path is not None
         else None
     )
+    evidence_staleness_manifest = _read_optional_json(evidence_staleness_monitor_path)
+    evidence_staleness_report = _read_optional_json(
+        evidence_staleness_monitor_path.parent / "evidence_staleness_report.json"
+        if evidence_staleness_monitor_path is not None
+        else None
+    )
+    evidence_staleness_validation = _read_optional_json(
+        evidence_staleness_monitor_path.parent / "evidence_staleness_validation.json"
+        if evidence_staleness_monitor_path is not None
+        else None
+    )
     filtered_candidate_readiness_payloads = (
         filtered_candidate_evidence_manifest,
         filtered_candidate_evidence_summary,
@@ -12691,6 +12743,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         candidate_decision_ledger_manifest,
         candidate_decision_record,
         candidate_decision_ledger_validation,
+        evidence_staleness_manifest,
+        evidence_staleness_report,
+        evidence_staleness_validation,
     )
     outcome_loop_payloads = (
         outcome_update_review,
@@ -13927,6 +13982,30 @@ def _etf_dynamic_v3_parameter_research_summary(
             candidate_decision_ledger_validation.get("status"),
             "MISSING",
         ),
+        "evidence_staleness_monitor_id": _text(
+            evidence_staleness_manifest.get("monitor_id"),
+            "MISSING",
+        ),
+        "evidence_freshness_status": _text(
+            evidence_staleness_report.get("evidence_freshness_status"),
+            "MISSING",
+        ),
+        "evidence_stale_artifacts": (
+            ", ".join(_texts(evidence_staleness_report.get("stale_artifacts")))
+            or "none"
+        ),
+        "evidence_blocking_artifacts": (
+            ", ".join(_texts(evidence_staleness_report.get("blocking_artifacts")))
+            or "none"
+        ),
+        "evidence_next_refresh_action": _text(
+            evidence_staleness_report.get("next_refresh_action"),
+            "MISSING",
+        ),
+        "evidence_staleness_validation_status": _text(
+            evidence_staleness_validation.get("status"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -14105,6 +14184,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if candidate_decision_ledger_path is None
             else str(candidate_decision_ledger_path)
+        ),
+        "evidence_staleness_monitor": (
+            ""
+            if evidence_staleness_monitor_path is None
+            else str(evidence_staleness_monitor_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -14981,6 +15065,12 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "candidate_decision_final_decision": "MISSING",
         "candidate_decision_next_action": "MISSING",
         "candidate_decision_ledger_validation_status": "MISSING",
+        "evidence_staleness_monitor_id": "MISSING",
+        "evidence_freshness_status": "MISSING",
+        "evidence_stale_artifacts": "MISSING",
+        "evidence_blocking_artifacts": "MISSING",
+        "evidence_next_refresh_action": "MISSING",
+        "evidence_staleness_validation_status": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -15024,6 +15114,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "forward_outcome_decision": "",
         "paper_shadow_protocol": "",
         "candidate_decision_ledger": "",
+        "evidence_staleness_monitor": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

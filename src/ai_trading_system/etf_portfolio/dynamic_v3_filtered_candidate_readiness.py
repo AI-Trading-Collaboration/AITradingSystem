@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import csv
 import json
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +49,17 @@ DEFAULT_PAPER_SHADOW_PROTOCOL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper
 DEFAULT_CANDIDATE_DECISION_LEDGER_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_decision_ledger"
 )
+DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "evidence_staleness_monitor"
+)
+DEFAULT_EVIDENCE_STALENESS_POLICY_PATH = (
+    st.PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "evidence_staleness_policy_v1.yaml"
+)
+DEFAULT_MARKET_PANEL_REPORT_DIR = st.PROJECT_ROOT / "outputs" / "reports"
 
 TOP_FILTERED_CANDIDATE = "median_plus_regime_mismatch_filter"
 FORMAL_RESEARCH_PROMOTION_STATES = (
@@ -99,6 +111,13 @@ CANDIDATE_DECISION_LEDGER_SAFETY = {
     "manual_review_only": True,
     "candidate_decision_ledger_only": True,
     "append_only_ledger": True,
+}
+EVIDENCE_STALENESS_MONITOR_SAFETY = {
+    **st.SYSTEM_TARGET_SAFETY,
+    "manual_review_only": True,
+    "evidence_staleness_monitor_only": True,
+    "data_downloaded_by_monitor": False,
+    "pipelines_executed_by_monitor": False,
 }
 
 # TRADING-336_to_345 pilot readiness constants. They are documented in the
@@ -2205,6 +2224,239 @@ def validate_candidate_decision_ledger_artifact(
     return validation
 
 
+def run_evidence_staleness_monitor(
+    *,
+    as_of: date | None = None,
+    candidate: str = TOP_FILTERED_CANDIDATE,
+    price_cache_path: Path = st.DEFAULT_PRICE_CACHE_PATH,
+    market_panel_dir: Path = DEFAULT_MARKET_PANEL_REPORT_DIR,
+    policy_path: Path = DEFAULT_EVIDENCE_STALENESS_POLICY_PATH,
+    evidence_id: str | None = None,
+    stress_backfill_id: str | None = None,
+    ab_review_id: str | None = None,
+    owner_review_id: str | None = None,
+    evidence_dir: Path = DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR,
+    stress_backfill_dir: Path = DEFAULT_FILTERED_CANDIDATE_STRESS_BACKFILL_DIR,
+    ab_review_dir: Path = DEFAULT_FILTERED_CANDIDATE_AB_REVIEW_DIR,
+    owner_review_dir: Path = DEFAULT_OWNER_FILTERED_CANDIDATE_REVIEW_DIR,
+    output_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    effective_as_of = as_of or generated.date()
+    policy = _load_evidence_staleness_policy(policy_path)
+    findings = _evidence_staleness_findings(
+        as_of=effective_as_of,
+        candidate=candidate,
+        policy=policy,
+        price_cache_path=price_cache_path,
+        market_panel_dir=market_panel_dir,
+        evidence_id=evidence_id,
+        stress_backfill_id=stress_backfill_id,
+        ab_review_id=ab_review_id,
+        owner_review_id=owner_review_id,
+        evidence_dir=evidence_dir,
+        stress_backfill_dir=stress_backfill_dir,
+        ab_review_dir=ab_review_dir,
+        owner_review_dir=owner_review_dir,
+    )
+    status = _overall_evidence_freshness_status(policy, findings)
+    stale_artifacts = [
+        row.get("source_id") for row in findings if row.get("severity") == "STALE"
+    ]
+    blocking_artifacts = [
+        row.get("source_id") for row in findings if row.get("severity") == "BLOCKING"
+    ]
+    next_refresh_action = _mapping(policy.get("default_next_actions")).get(
+        status,
+        "manual_review_required",
+    )
+    policy_version = _text(policy.get("version"))
+    monitor_id = _stable_id(
+        "evidence-staleness-monitor",
+        candidate,
+        effective_as_of.isoformat(),
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / monitor_id)
+    root.mkdir(parents=True, exist_ok=False)
+    report = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_staleness_report",
+        "monitor_id": root.name,
+        "candidate": candidate,
+        "as_of": effective_as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy_version,
+        "evidence_freshness_status": status,
+        "stale_artifacts": _texts(stale_artifacts),
+        "blocking_artifacts": _texts(blocking_artifacts),
+        "next_refresh_action": next_refresh_action,
+        "finding_count": len(findings),
+        "stale_count": len(stale_artifacts),
+        "blocking_count": len(blocking_artifacts),
+        "findings": findings,
+        **EVIDENCE_STALENESS_MONITOR_SAFETY,
+    }
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_evidence_staleness_manifest",
+        "monitor_id": root.name,
+        "candidate": candidate,
+        "as_of": effective_as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if status != "BLOCKING" else "BLOCKING",
+        "policy_path": str(policy_path),
+        "policy_id": policy.get("policy_id"),
+        "policy_version": policy_version,
+        "evidence_staleness_manifest_path": str(root / "evidence_staleness_manifest.json"),
+        "evidence_staleness_report_path": str(root / "evidence_staleness_report.json"),
+        "evidence_staleness_findings_path": str(root / "evidence_staleness_findings.jsonl"),
+        "evidence_staleness_markdown_path": str(root / "evidence_staleness_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **EVIDENCE_STALENESS_MONITOR_SAFETY,
+    }
+    reader = render_evidence_staleness_reader_brief(report)
+    _write_json(root / "evidence_staleness_manifest.json", manifest)
+    _write_json(root / "evidence_staleness_report.json", report)
+    _write_jsonl(root / "evidence_staleness_findings.jsonl", findings)
+    _write_text(root / "evidence_staleness_report.md", render_evidence_staleness_report(manifest, report))
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_evidence_staleness_monitor",
+        root.name,
+        root / "evidence_staleness_manifest.json",
+    )
+    validation = validate_evidence_staleness_monitor_artifact(
+        monitor_id=root.name,
+        output_dir=output_dir,
+        policy_path=policy_path,
+        write_output=True,
+    )
+    return {
+        "monitor_id": root.name,
+        "monitor_dir": root,
+        "manifest": manifest,
+        "evidence_staleness_report": report,
+        "evidence_staleness_findings": findings,
+        "reader_brief_section": reader,
+        "evidence_staleness_validation": validation,
+    }
+
+
+def evidence_staleness_monitor_report_payload(
+    *,
+    monitor_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=monitor_id,
+        latest_pointer="latest_evidence_staleness_monitor",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="evidence_staleness_manifest.json",
+    )
+    payload = {
+        **_read_json(root / "evidence_staleness_manifest.json"),
+        "evidence_staleness_report": _read_json(root / "evidence_staleness_report.json"),
+        "evidence_staleness_findings": _read_jsonl(root / "evidence_staleness_findings.jsonl"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "monitor_dir": str(root),
+    }
+    validation = _read_optional_json(root / "evidence_staleness_validation.json")
+    if validation:
+        payload["evidence_staleness_validation"] = validation
+    return payload
+
+
+def validate_evidence_staleness_monitor_artifact(
+    *,
+    monitor_id: str,
+    output_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    policy_path: Path = DEFAULT_EVIDENCE_STALENESS_POLICY_PATH,
+    write_output: bool = True,
+) -> dict[str, Any]:
+    root = output_dir / monitor_id
+    manifest = _read_optional_json(root / "evidence_staleness_manifest.json") or {}
+    report = _read_optional_json(root / "evidence_staleness_report.json") or {}
+    findings = _read_jsonl(root / "evidence_staleness_findings.jsonl")
+    reader = (
+        (root / "reader_brief_section.md").read_text(encoding="utf-8")
+        if (root / "reader_brief_section.md").exists()
+        else ""
+    )
+    policy = _load_evidence_staleness_policy(policy_path) if policy_path.exists() else {}
+    rules = _mapping(policy.get("rules"))
+    severity_order = set(_texts(policy.get("severity_order")))
+    expected_sources = {
+        "price_data",
+        "market_panel_data",
+        "signal_artifact",
+        "stress_backfill_result",
+        "ab_review",
+        "owner_review",
+    }
+    finding_sources = {row.get("source_id") for row in findings}
+    checks = _required_file_checks(
+        root,
+        (
+            "evidence_staleness_manifest.json",
+            "evidence_staleness_report.json",
+            "evidence_staleness_findings.jsonl",
+            "evidence_staleness_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("monitor_id_matches", manifest.get("monitor_id") == monitor_id, ""),
+            st._check("policy_metadata_visible", bool(policy.get("policy_id")) and bool(policy.get("version")), ""),
+            st._check("freshness_rules_complete", expected_sources.issubset(set(rules)), ""),
+            st._check("severity_order_complete", {"FRESH", "ACCEPTABLE", "STALE", "BLOCKING"}.issubset(severity_order), ""),
+            st._check("expected_sources_present", expected_sources.issubset(finding_sources), ",".join(sorted(_texts(finding_sources)))),
+            st._check(
+                "finding_severities_valid",
+                all(row.get("severity") in severity_order for row in findings),
+                "",
+            ),
+            st._check(
+                "timestamp_basis_visible",
+                all(bool(row.get("timestamp_basis")) for row in findings),
+                "",
+            ),
+            st._check(
+                "stale_artifacts_consistent",
+                set(_texts(report.get("stale_artifacts")))
+                == {row.get("source_id") for row in findings if row.get("severity") == "STALE"},
+                "",
+            ),
+            st._check(
+                "blocking_artifacts_consistent",
+                set(_texts(report.get("blocking_artifacts")))
+                == {row.get("source_id") for row in findings if row.get("severity") == "BLOCKING"},
+                "",
+            ),
+            st._check("reader_brief_quality_fields", "evidence_freshness_status" in reader, ""),
+            st._check("read_only_monitor", report.get("data_downloaded_by_monitor") is False and report.get("pipelines_executed_by_monitor") is False, ""),
+            st._check("broker_forbidden", _payload_safe(manifest, report), ""),
+        ]
+    )
+    validation = _validation_payload(
+        "etf_dynamic_v3_evidence_staleness_monitor_validation",
+        monitor_id,
+        checks,
+    )
+    if write_output:
+        _write_json(root / "evidence_staleness_validation.json", validation)
+        _write_text(
+            root / "evidence_staleness_validation.md",
+            render_evidence_staleness_validation_report(validation),
+        )
+    return validation
+
+
 def render_filtered_candidate_evidence_reader_brief(summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
@@ -2878,6 +3130,89 @@ def render_candidate_decision_ledger_validation_report(validation: Mapping[str, 
     return "\n".join(
         [
             f"# Candidate Decision Ledger Validation {validation.get('artifact_id')}",
+            "",
+            f"- status: {validation.get('status')}",
+            f"- failed_check_count: {validation.get('failed_check_count')}",
+            "- production_effect: none",
+            "",
+            "## Checks",
+            *check_lines,
+            "",
+        ]
+    )
+
+
+def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Evidence Staleness Monitor",
+            "",
+            f"- summary: {report.get('candidate')} evidence freshness gate.",
+            f"- key_result: evidence_freshness_status={report.get('evidence_freshness_status')}",
+            f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
+            f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
+            f"- next_refresh_action: {report.get('next_refresh_action')}",
+            f"- policy_version: {report.get('policy_id')} / {report.get('policy_version')}",
+            "- safety_boundary: read-only freshness monitor / no refresh / no upstream rerun / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_evidence_staleness_report(
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+) -> str:
+    finding_lines = [
+        f"- {row.get('source_id')}: severity={row.get('severity')} age_days={row.get('age_days')} timestamp={row.get('timestamp')} basis={row.get('timestamp_basis')} action={row.get('recommended_action')}"
+        for row in _records(report.get("findings"))
+    ]
+    return "\n".join(
+        [
+            f"# Evidence Staleness Monitor {manifest.get('monitor_id')}",
+            "",
+            "## Purpose",
+            "检查 candidate decision 依赖的 price、market panel 和 filtered candidate evidence 是否陈旧；本报告只读，不刷新数据、不运行上游、不修改 ledger、不触发 broker 或 production。",
+            "",
+            "## Summary",
+            f"- candidate: {report.get('candidate')}",
+            f"- as_of: {report.get('as_of')}",
+            f"- evidence_freshness_status: {report.get('evidence_freshness_status')}",
+            f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
+            f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
+            f"- next_refresh_action: {report.get('next_refresh_action')}",
+            f"- policy: {report.get('policy_id')} / {report.get('policy_version')}",
+            "",
+            "## Findings",
+            *finding_lines,
+            "",
+            "## Safety Boundary",
+            "- read-only monitor",
+            "- no data refresh",
+            "- no upstream pipeline execution",
+            "- no candidate ledger mutation",
+            "- no official target weights",
+            "- no broker integration",
+            "- no order tickets",
+            "- no production mutation",
+            "",
+            "## Limitations",
+            "- Freshness windows are pilot policy bands from YAML, not production trading thresholds.",
+            "- The monitor reports stale inputs; it does not repair them or regenerate evidence.",
+            "- BLOCKING means the next candidate decision should stop until the source evidence is refreshed.",
+            "",
+        ]
+    )
+
+
+def render_evidence_staleness_validation_report(validation: Mapping[str, Any]) -> str:
+    check_lines = [
+        f"- {row.get('check_id')}: passed={row.get('passed')} detail={row.get('detail')}"
+        for row in _records(validation.get("checks"))
+    ]
+    return "\n".join(
+        [
+            f"# Evidence Staleness Monitor Validation {validation.get('artifact_id')}",
             "",
             f"- status: {validation.get('status')}",
             f"- failed_check_count: {validation.get('failed_check_count')}",
@@ -3863,6 +4198,277 @@ def _improvement_status(value: float, neutral: float) -> str:
     if value < neutral:
         return "WORSE"
     return "MIXED"
+
+
+def _load_evidence_staleness_policy(path: Path) -> dict[str, Any]:
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _evidence_staleness_findings(
+    *,
+    as_of: date,
+    candidate: str,
+    policy: Mapping[str, Any],
+    price_cache_path: Path,
+    market_panel_dir: Path,
+    evidence_id: str | None,
+    stress_backfill_id: str | None,
+    ab_review_id: str | None,
+    owner_review_id: str | None,
+    evidence_dir: Path,
+    stress_backfill_dir: Path,
+    ab_review_dir: Path,
+    owner_review_dir: Path,
+) -> list[dict[str, Any]]:
+    rules = _mapping(policy.get("rules"))
+    latest_price_date = _latest_price_cache_date(price_cache_path)
+    market_panel_path, market_panel = _latest_market_panel_payload(market_panel_dir, as_of=as_of)
+    market_panel_date = _date_or_none(market_panel.get("as_of")) or _date_from_market_panel_path(
+        market_panel_path
+    )
+    evidence = filtered_candidate_evidence_report_payload(
+        evidence_id=evidence_id,
+        latest=evidence_id is None,
+        output_dir=evidence_dir,
+    )
+    stress = filtered_candidate_stress_backfill_report_payload(
+        stress_backfill_id=stress_backfill_id,
+        latest=stress_backfill_id is None,
+        output_dir=stress_backfill_dir,
+    )
+    ab_review = filtered_candidate_ab_review_report_payload(
+        ab_review_id=ab_review_id,
+        latest=ab_review_id is None,
+        output_dir=ab_review_dir,
+    )
+    owner_review = owner_filtered_candidate_review_report_payload(
+        owner_review_id=owner_review_id,
+        latest=owner_review_id is None,
+        output_dir=owner_review_dir,
+    )
+    evidence_date = _date_or_none(evidence.get("date_end")) or _date_or_none(
+        evidence.get("generated_at")
+    )
+    return [
+        _evidence_freshness_finding(
+            source_id="price_data",
+            source_label="Price data",
+            candidate=candidate,
+            timestamp=latest_price_date,
+            timestamp_basis="latest_price_cache_date",
+            source_path=price_cache_path,
+            artifact_id=price_cache_path.name,
+            rule=_mapping(rules.get("price_data")),
+            as_of=as_of,
+        ),
+        _evidence_freshness_finding(
+            source_id="market_panel_data",
+            source_label="Market panel data",
+            candidate=candidate,
+            timestamp=market_panel_date,
+            timestamp_basis="market_panel_as_of",
+            source_path=market_panel_path,
+            artifact_id=market_panel_path.name if market_panel_path else "",
+            rule=_mapping(rules.get("market_panel_data")),
+            as_of=as_of,
+            artifact_status=_text(market_panel.get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="signal_artifact",
+            source_label="Filtered candidate signal evidence",
+            candidate=candidate,
+            timestamp=evidence_date,
+            timestamp_basis="evidence_date_end_or_generated_at",
+            source_path=Path(_text(evidence.get("filtered_candidate_evidence_manifest_path"))),
+            artifact_id=_text(evidence.get("evidence_id")),
+            rule=_mapping(rules.get("signal_artifact")),
+            as_of=as_of,
+            artifact_status=_text(evidence.get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="stress_backfill_result",
+            source_label="Stress backfill result",
+            candidate=candidate,
+            timestamp=_date_or_none(stress.get("generated_at")),
+            timestamp_basis="stress_backfill_generated_at",
+            source_path=Path(_text(stress.get("filtered_candidate_stress_manifest_path"))),
+            artifact_id=_text(stress.get("stress_backfill_id")),
+            rule=_mapping(rules.get("stress_backfill_result")),
+            as_of=as_of,
+            artifact_status=_text(stress.get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="ab_review",
+            source_label="Filtered candidate A/B review",
+            candidate=candidate,
+            timestamp=_date_or_none(ab_review.get("generated_at")),
+            timestamp_basis="ab_review_generated_at",
+            source_path=Path(_text(ab_review.get("filtered_candidate_ab_manifest_path"))),
+            artifact_id=_text(ab_review.get("ab_review_id")),
+            rule=_mapping(rules.get("ab_review")),
+            as_of=as_of,
+            artifact_status=_text(ab_review.get("status")),
+        ),
+        _evidence_freshness_finding(
+            source_id="owner_review",
+            source_label="Owner filtered candidate review",
+            candidate=candidate,
+            timestamp=_date_or_none(owner_review.get("generated_at")),
+            timestamp_basis="owner_review_generated_at",
+            source_path=Path(_text(owner_review.get("owner_filtered_candidate_manifest_path"))),
+            artifact_id=_text(owner_review.get("owner_review_id")),
+            rule=_mapping(rules.get("owner_review")),
+            as_of=as_of,
+            artifact_status=_text(owner_review.get("status")),
+        ),
+    ]
+
+
+def _evidence_freshness_finding(
+    *,
+    source_id: str,
+    source_label: str,
+    candidate: str,
+    timestamp: date | None,
+    timestamp_basis: str,
+    source_path: Path | None,
+    artifact_id: str,
+    rule: Mapping[str, Any],
+    as_of: date,
+    artifact_status: str = "",
+) -> dict[str, Any]:
+    raw_age = (as_of - timestamp).days if timestamp is not None else None
+    age_days = raw_age if raw_age is not None else None
+    severity = "BLOCKING" if raw_age is not None and raw_age < 0 else _freshness_severity(age_days, rule)
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "source_id": source_id,
+        "source_label": source_label,
+        "candidate": candidate,
+        "artifact_id": artifact_id,
+        "artifact_status": artifact_status,
+        "source_path": "" if source_path is None else str(source_path),
+        "timestamp": "" if timestamp is None else timestamp.isoformat(),
+        "timestamp_basis": timestamp_basis,
+        "as_of": as_of.isoformat(),
+        "age_days": age_days,
+        "raw_age_days": raw_age,
+        "timestamp_relation": _timestamp_relation(raw_age),
+        "fresh_days": rule.get("fresh_days"),
+        "acceptable_days": rule.get("acceptable_days"),
+        "blocking_days": rule.get("blocking_days"),
+        "required": rule.get("required") is not False,
+        "severity": severity,
+        "recommended_action": _freshness_recommended_action(severity, source_id),
+        **EVIDENCE_STALENESS_MONITOR_SAFETY,
+    }
+
+
+def _freshness_severity(age_days: int | None, rule: Mapping[str, Any]) -> str:
+    if age_days is None or not rule:
+        return "BLOCKING"
+    fresh_days = int(rule.get("fresh_days", 0))
+    acceptable_days = int(rule.get("acceptable_days", fresh_days))
+    blocking_days = int(rule.get("blocking_days", acceptable_days))
+    if age_days <= fresh_days:
+        return "FRESH"
+    if age_days <= acceptable_days:
+        return "ACCEPTABLE"
+    if age_days <= blocking_days:
+        return "STALE"
+    return "BLOCKING"
+
+
+def _freshness_recommended_action(severity: str, source_id: str) -> str:
+    if severity == "FRESH":
+        return "continue_candidate_review"
+    if severity == "ACCEPTABLE":
+        return f"continue_with_manual_note_for_{source_id}"
+    if severity == "STALE":
+        return f"refresh_or_regenerate_{source_id}"
+    return f"block_until_{source_id}_is_refreshed"
+
+
+def _overall_evidence_freshness_status(
+    policy: Mapping[str, Any],
+    findings: Sequence[Mapping[str, Any]],
+) -> str:
+    severity_order = _texts(policy.get("severity_order")) or [
+        "FRESH",
+        "ACCEPTABLE",
+        "STALE",
+        "BLOCKING",
+    ]
+    rank = {name: index for index, name in enumerate(severity_order)}
+    return max(
+        (_text(row.get("severity"), "BLOCKING") for row in findings),
+        key=lambda item: rank.get(item, 999),
+    )
+
+
+def _latest_price_cache_date(path: Path) -> date | None:
+    if not path.exists():
+        return None
+    latest: date | None = None
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            candidate = _date_or_none(row.get("date"))
+            if candidate is not None and (latest is None or candidate > latest):
+                latest = candidate
+    return latest
+
+
+def _latest_market_panel_payload(
+    report_dir: Path,
+    *,
+    as_of: date,
+) -> tuple[Path | None, dict[str, Any]]:
+    candidates: list[tuple[date, Path]] = []
+    for path in report_dir.glob("market_panel_*.json"):
+        candidate_date = _date_from_market_panel_path(path)
+        if candidate_date is None or candidate_date > as_of:
+            continue
+        candidates.append((candidate_date, path))
+    if not candidates:
+        return None, {}
+    _, path = max(candidates, key=lambda item: (item[0], item[1].name))
+    return path, _read_optional_json(path) or {}
+
+
+def _date_from_market_panel_path(path: Path | None) -> date | None:
+    if path is None:
+        return None
+    raw = path.stem.removeprefix("market_panel_")
+    return _date_or_none(raw)
+
+
+def _date_or_none(value: object) -> date | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value)
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(text[:10])
+        except ValueError:
+            return None
+
+
+def _timestamp_relation(raw_age: int | None) -> str:
+    if raw_age is None:
+        return "MISSING"
+    if raw_age < 0:
+        return "AFTER_AS_OF"
+    if raw_age == 0:
+        return "AS_OF"
+    return "BEFORE_AS_OF"
 
 
 _mapping = st._mapping
