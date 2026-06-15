@@ -4882,6 +4882,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_protocol
+    title: ETF Dynamic v3 Paper Shadow Protocol
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-protocol report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/*/paper_shadow_protocol_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/*/paper_shadow_protocol.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/*/paper_shadow_protocol_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/*/paper_shadow_protocol_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/*/paper_shadow_protocol_validation.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-350 defines the observation-only paper-shadow protocol after the
+      formal research method contract, including eligibility conditions, daily
+      review fields, exit conditions, validation, and no-production safety
+      boundaries.
+    owner_action: owner_review_paper_shadow_protocol_before_daily_runner_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: test_runtime_summary
     title: Test Runtime Summary
     group: governance

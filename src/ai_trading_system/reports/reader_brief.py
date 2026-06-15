@@ -1898,6 +1898,32 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "paper_shadow_protocol",
+                        etf_dynamic_v3_parameter_research.get("paper_shadow_protocol_id"),
+                    ),
+                    (
+                        "paper_shadow_protocol_status",
+                        etf_dynamic_v3_parameter_research.get("paper_shadow_protocol_status"),
+                    ),
+                    (
+                        "paper_shadow_protocol_eligibility",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_protocol_eligibility_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_min_observation_days",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_protocol_min_observation_days"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_protocol_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_protocol_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12167,6 +12193,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "formal_research_method_contract_manifest.json",
     )
+    paper_shadow_protocol_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_shadow_protocol",
+        ),
+        "paper_shadow_protocol_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12560,6 +12593,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         formal_research_method_contract_path.parent
         / "formal_research_method_contract_validation.json"
         if formal_research_method_contract_path is not None
+        else None
+    )
+    paper_shadow_protocol_manifest = _read_optional_json(paper_shadow_protocol_path)
+    paper_shadow_protocol = _read_optional_json(
+        paper_shadow_protocol_path.parent / "paper_shadow_protocol.json"
+        if paper_shadow_protocol_path is not None
+        else None
+    )
+    paper_shadow_protocol_validation = _read_optional_json(
+        paper_shadow_protocol_path.parent / "paper_shadow_protocol_validation.json"
+        if paper_shadow_protocol_path is not None
         else None
     )
     filtered_candidate_readiness_payloads = (
@@ -13748,6 +13792,29 @@ def _etf_dynamic_v3_parameter_research_summary(
             formal_research_method_validation.get("status"),
             "MISSING",
         ),
+        "paper_shadow_protocol_id": _text(
+            paper_shadow_protocol_manifest.get("protocol_id"),
+            "MISSING",
+        ),
+        "paper_shadow_protocol_status": _text(
+            paper_shadow_protocol.get("protocol_status"),
+            "MISSING",
+        ),
+        "paper_shadow_protocol_eligibility_status": _text(
+            paper_shadow_protocol.get("eligibility_status"),
+            "MISSING",
+        ),
+        "paper_shadow_protocol_min_observation_days": _mapping(
+            paper_shadow_protocol.get("required_observation_period")
+        ).get("minimum_trading_days", "MISSING"),
+        "paper_shadow_protocol_validation_status": _text(
+            paper_shadow_protocol_validation.get("status"),
+            "MISSING",
+        ),
+        "paper_shadow_protocol_next_action": _text(
+            paper_shadow_protocol.get("next_required_action"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -13918,6 +13985,9 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if formal_research_method_contract_path is None
             else str(formal_research_method_contract_path)
+        ),
+        "paper_shadow_protocol": (
+            "" if paper_shadow_protocol_path is None else str(paper_shadow_protocol_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -14775,6 +14845,12 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "formal_research_method_paper_shadow_eligibility": "MISSING",
         "formal_research_method_safety_boundary_status": "MISSING",
         "formal_research_method_validation_status": "MISSING",
+        "paper_shadow_protocol_id": "MISSING",
+        "paper_shadow_protocol_status": "MISSING",
+        "paper_shadow_protocol_eligibility_status": "MISSING",
+        "paper_shadow_protocol_min_observation_days": "MISSING",
+        "paper_shadow_protocol_validation_status": "MISSING",
+        "paper_shadow_protocol_next_action": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -14816,6 +14892,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "rolling_evidence_refresh": "",
         "evidence_trend": "",
         "forward_outcome_decision": "",
+        "paper_shadow_protocol": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

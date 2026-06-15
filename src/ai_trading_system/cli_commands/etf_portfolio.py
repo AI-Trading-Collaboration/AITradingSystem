@@ -1815,6 +1815,10 @@ dynamic_v3_formal_research_method_contract_app = typer.Typer(
     help="Dynamic v3 rescue formal research method contract workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_shadow_protocol_app = typer.Typer(
+    help="Dynamic v3 rescue paper-shadow protocol workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2567,6 +2571,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_formal_research_method_contract_app,
     name="research-method-contract",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_protocol_app,
+    name="paper-shadow-protocol",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -19594,6 +19602,79 @@ def dynamic_v3_validate_formal_research_method_contract_command(
     _echo_validation_payload(
         filtered_readiness.validate_formal_research_method_contract_artifact(
             contract_id=contract_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_paper_shadow_protocol_app.command("build")
+def dynamic_v3_paper_shadow_protocol_build_command(
+    contract_id: Annotated[
+        str | None,
+        typer.Option("--contract-id", help="formal research method contract id；缺省读取 latest。"),
+    ] = None,
+    contract_dir: Annotated[
+        Path,
+        typer.Option("--contract-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow protocol artifact root。"),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+) -> None:
+    result = filtered_readiness.build_paper_shadow_protocol(
+        contract_id=contract_id,
+        contract_dir=contract_dir,
+        output_dir=output_dir,
+    )
+    protocol = _mapping_obj(result.get("paper_shadow_protocol"))
+    validation = _mapping_obj(result.get("paper_shadow_protocol_validation"))
+    typer.echo(f"protocol_id={result['protocol_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"protocol_status={protocol.get('protocol_status')}")
+    typer.echo(f"eligibility_status={protocol.get('eligibility_status')}")
+    typer.echo(f"next_required_action={protocol.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("paper_shadow_protocol_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_paper_shadow_protocol_app.command("report")
+def dynamic_v3_paper_shadow_protocol_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    protocol_id: Annotated[str | None, typer.Option("--protocol-id", help="protocol id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow protocol artifact root。"),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+) -> None:
+    payload = filtered_readiness.paper_shadow_protocol_report_payload(
+        protocol_id=protocol_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    protocol = _mapping_obj(payload.get("paper_shadow_protocol"))
+    typer.echo(f"protocol_id={payload['protocol_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"protocol_status={protocol.get('protocol_status')}")
+    typer.echo(f"eligibility_status={protocol.get('eligibility_status')}")
+    typer.echo(f"report_path={payload['paper_shadow_protocol_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-protocol")
+def dynamic_v3_validate_paper_shadow_protocol_command(
+    protocol_id: Annotated[str, typer.Option("--protocol-id", help="protocol id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow protocol artifact root。"),
+    ] = filtered_readiness.DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+) -> None:
+    _echo_validation_payload(
+        filtered_readiness.validate_paper_shadow_protocol_artifact(
+            protocol_id=protocol_id,
             output_dir=output_dir,
         )
     )

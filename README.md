@@ -1451,6 +1451,21 @@ method implementation，不是 production approval。所有输出继续固定
 `not_official_target_weights=true`、`broker_action_allowed=false`、
 `order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`。
 
+TRADING-350_PAPER_SHADOW_PROTOCOL 在 formal contract 之后定义 observation-only
+paper-shadow protocol。CLI 入口为
+`aits etf dynamic-v3-rescue paper-shadow-protocol build`、
+`aits etf dynamic-v3-rescue paper-shadow-protocol report --latest` 和
+`aits etf dynamic-v3-rescue validate-paper-shadow-protocol --protocol-id <protocol_id>`。
+Runtime artifacts 写入 `reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/`，
+包含 protocol manifest、protocol JSON、Markdown report、Reader Brief section 和
+validation JSON/Markdown，并登记 report registry / latest pointer / Reader Brief 摘要。
+Protocol 定义 eligibility、20 trading day pilot observation baseline、daily review fields
+和 exit conditions；`hypothetical_weight_recommendation` 必须标记为 paper-shadow-only，
+不能被 broker/order 系统消费。本任务不实现 daily runner、不初始化 paper account、不写
+official target weights、不触发 broker 或 order ticket，所有输出固定
+`paper_shadow_protocol_only=true`、`observation_only=true`、`manual_review_only=true`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

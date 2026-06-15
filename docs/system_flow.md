@@ -176,6 +176,7 @@ flowchart TD
     ETFV3SIGNALCAL --> ETFV3SIGNALFILTER["aits etf dynamic-v3-rescue signal-failure-taxonomy/candidate-signal-ledger/signal-churn-root-cause/regime-mismatch-attribution/candidate-quality-filter-design/filtered-candidate-backfill/filtered-vs-original-comparison/signal-gate-experiment/filtered-candidate-promotion-review/owner-signal-roadmap validate|build|run|report<br/>TRADING-326_to_335 signal feature diagnosis + candidate quality filter pipeline<br/>config/etf_portfolio/dynamic_v3_rescue/signal_feature_failure_taxonomy_v1.yaml<br/>reports/etf_portfolio/dynamic_v3_rescue/signal_failure_taxonomy|candidate_signal_ledger|signal_churn_root_cause|regime_mismatch_attribution|candidate_quality_filter_design|filtered_candidate_backfill|filtered_vs_original_comparison|signal_gate_experiment|filtered_candidate_promotion_review|owner_signal_roadmap/...<br/>source data_quality_status inherited and visible / research_screening_only / no official gate mutation / broker_action_allowed=false / production_effect=none"]
     ETFV3SIGNALFILTER --> ETFV3FILTERREADY["aits etf dynamic-v3-rescue filtered-candidate-evidence/median-regime-filter-spec/filtered-candidate-stress-backfill/drawdown-mismatch-reduction/flip-rotation-reduction/filtered-candidate-ab-review/signal-gate-confirmation/filtered-formalization-readiness/owner-filtered-candidate-review/filtered-next-decision run|review|register|pack|report|validate<br/>TRADING-336_to_345 filtered signal candidate evidence expansion + formalization readiness<br/>reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_evidence|median_regime_filter_spec|filtered_candidate_stress_backfill|drawdown_mismatch_reduction|flip_rotation_reduction|filtered_candidate_ab_review|signal_gate_confirmation|filtered_formalization_readiness|owner_filtered_candidate_review|filtered_next_decision/...<br/>research_screening_only / no formal method auto-create / not_official_target_weights=true / no broker or order ticket / production_effect=none"]
     ETFV3FILTERREADY --> ETFV3FORMALCONTRACT["aits etf dynamic-v3-rescue research-method-contract build/report/validate-research-method-contract<br/>TRADING-346 formal research method contract over filtered readiness evidence<br/>reports/etf_portfolio/dynamic_v3_rescue/formal_research_method_contract/...<br/>formal_research_contract_only / not_formal_research_method=true / no official target weights / no broker or order ticket / production_effect=none"]
+    ETFV3FORMALCONTRACT --> ETFV3PSPROTOCOL["aits etf dynamic-v3-rescue paper-shadow-protocol build/report/validate-paper-shadow-protocol<br/>TRADING-350 paper-shadow observation protocol<br/>reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/...<br/>observation_only / paper_shadow_protocol_only / not_official_target_weights=true / broker_action_allowed=false / production_effect=none"]
     ETFV3SMOOTH --> ETFRIDX
     ETFV3SMOOTH --> ETFREAD
     ETFV3SMOOTHWATCH --> ETFRIDX
@@ -198,6 +199,8 @@ flowchart TD
     ETFV3FILTERREADY --> ETFREAD
     ETFV3FORMALCONTRACT --> ETFRIDX
     ETFV3FORMALCONTRACT --> ETFREAD
+    ETFV3PSPROTOCOL --> ETFRIDX
+    ETFV3PSPROTOCOL --> ETFREAD
     ETFV3SMOOTHFRESH --> ETFRIDX
     ETFV3SMOOTHFRESH --> ETFREAD
     ETFV3SMOOTHREFRESH --> ETFRIDX

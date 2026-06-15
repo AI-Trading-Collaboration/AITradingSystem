@@ -43,6 +43,7 @@ DEFAULT_FILTERED_NEXT_DECISION_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filt
 DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "formal_research_method_contract"
 )
+DEFAULT_PAPER_SHADOW_PROTOCOL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_protocol"
 
 TOP_FILTERED_CANDIDATE = "median_plus_regime_mismatch_filter"
 FORMAL_RESEARCH_PROMOTION_STATES = (
@@ -62,6 +63,33 @@ FORMAL_RESEARCH_CONTRACT_SAFETY = {
     "formal_research_contract_only": True,
     "not_formal_research_method": True,
 }
+PAPER_SHADOW_PROTOCOL_SAFETY = {
+    **st.SYSTEM_TARGET_SAFETY,
+    "manual_review_only": True,
+    "paper_shadow_protocol_only": True,
+    "observation_only": True,
+    "daily_runner_implemented": False,
+    "broker_order_system_consumable": False,
+}
+
+# TRADING-350 pilot baseline: this is only the minimum observation window for
+# paper-shadow protocol design. It is not a production approval threshold.
+PAPER_SHADOW_REQUIRED_OBSERVATION_DAYS = 20
+PAPER_SHADOW_DAILY_REVIEW_FIELDS = (
+    "signal_output",
+    "hypothetical_weight_recommendation",
+    "risk_off_risk_on_state",
+    "drawdown_state",
+    "rotation_event",
+    "mismatch_event",
+    "benchmark_comparison",
+    "manual_reviewer_notes",
+)
+PAPER_SHADOW_EXIT_CONDITIONS = (
+    "promote_to_extended_paper_shadow",
+    "return_to_research",
+    "reject",
+)
 
 # TRADING-336_to_345 pilot readiness constants. They are documented in the
 # requirement file and classify research-only evidence; they do not approve
@@ -1612,6 +1640,257 @@ def validate_formal_research_method_contract_artifact(
     return validation
 
 
+def build_paper_shadow_protocol(
+    *,
+    contract_id: str | None = None,
+    contract_dir: Path = DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    contract_payload = formal_research_method_contract_report_payload(
+        contract_id=contract_id,
+        latest=contract_id is None,
+        output_dir=contract_dir,
+    )
+    contract = _mapping(contract_payload.get("formal_research_method_contract"))
+    decision = _mapping(contract_payload.get("formal_research_method_decision"))
+    validation = _mapping(contract_payload.get("formal_research_method_contract_validation"))
+    candidate = _text(contract_payload.get("candidate"), TOP_FILTERED_CANDIDATE)
+    source_contract_id = _text(contract_payload.get("contract_id"))
+    eligible = decision.get("paper_shadow_eligibility") == "ELIGIBLE_FOR_PROTOCOL_DESIGN"
+    contract_validation_pass = validation.get("status") in ("PASS", "", None)
+    safety_pass = (
+        contract.get("safety_boundary_status") == "PASS"
+        and decision.get("safety_boundary_status") == "PASS"
+        and _payload_safe(contract_payload, contract, decision, PAPER_SHADOW_PROTOCOL_SAFETY)
+    )
+    eligibility_conditions = [
+        {
+            "condition_id": "formal_contract_ready",
+            "required_value": "FORMAL_RESEARCH_READY",
+            "actual_value": decision.get("promotion_state"),
+            "passed": decision.get("promotion_state") == "FORMAL_RESEARCH_READY",
+        },
+        {
+            "condition_id": "paper_shadow_eligible_for_protocol_design",
+            "required_value": "ELIGIBLE_FOR_PROTOCOL_DESIGN",
+            "actual_value": decision.get("paper_shadow_eligibility"),
+            "passed": eligible,
+        },
+        {
+            "condition_id": "contract_validation_pass",
+            "required_value": "PASS_OR_NOT_YET_RUN",
+            "actual_value": validation.get("status", "NOT_RUN"),
+            "passed": contract_validation_pass,
+        },
+        {
+            "condition_id": "safety_boundary_pass",
+            "required_value": "PASS",
+            "actual_value": decision.get("safety_boundary_status"),
+            "passed": safety_pass,
+        },
+    ]
+    blocking_reasons = [
+        condition["condition_id"]
+        for condition in eligibility_conditions
+        if condition.get("passed") is not True
+    ]
+    protocol_status = "PROTOCOL_READY" if not blocking_reasons else "PROTOCOL_BLOCKED"
+    protocol_id = _stable_id(
+        "paper-shadow-protocol",
+        candidate,
+        source_contract_id,
+        protocol_status,
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / protocol_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_paper_shadow_protocol_manifest",
+        "protocol_id": root.name,
+        "candidate": candidate,
+        "source_contract_id": source_contract_id,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if protocol_status == "PROTOCOL_READY" else "FAIL",
+        "protocol_status": protocol_status,
+        "paper_shadow_protocol_manifest_path": str(root / "paper_shadow_protocol_manifest.json"),
+        "paper_shadow_protocol_path": str(root / "paper_shadow_protocol.json"),
+        "paper_shadow_protocol_report_path": str(root / "paper_shadow_protocol_report.md"),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        "validation_path": str(root / "paper_shadow_protocol_validation.json"),
+        **PAPER_SHADOW_PROTOCOL_SAFETY,
+    }
+    protocol = {
+        "schema_version": st.SCHEMA_VERSION,
+        "protocol_id": root.name,
+        "candidate": candidate,
+        "source_contract_id": source_contract_id,
+        "protocol_status": protocol_status,
+        "eligibility_status": "ELIGIBLE" if not blocking_reasons else "BLOCKED",
+        "eligibility_conditions": eligibility_conditions,
+        "blocking_reasons": blocking_reasons,
+        "required_observation_period": {
+            "minimum_trading_days": PAPER_SHADOW_REQUIRED_OBSERVATION_DAYS,
+            "policy_status": "pilot_baseline",
+            "rationale": "Collect roughly one trading month of observation-only behavior before any extended paper-shadow decision.",
+            "not_production_approval": True,
+        },
+        "daily_review_fields": [
+            {
+                "field": field,
+                "required": True,
+                "paper_shadow_only": field == "hypothetical_weight_recommendation",
+            }
+            for field in PAPER_SHADOW_DAILY_REVIEW_FIELDS
+        ],
+        "exit_conditions": [
+            {
+                "exit_condition": condition,
+                "manual_review_required": True,
+                "production_effect": "none",
+            }
+            for condition in PAPER_SHADOW_EXIT_CONDITIONS
+        ],
+        "next_required_action": (
+            "start_daily_paper_shadow_runner_design"
+            if not blocking_reasons
+            else "return_to_research_contract_review"
+        ),
+        "safety_boundary": dict(PAPER_SHADOW_PROTOCOL_SAFETY),
+        **PAPER_SHADOW_PROTOCOL_SAFETY,
+    }
+    reader = render_paper_shadow_protocol_reader_brief(protocol)
+    _write_json(root / "paper_shadow_protocol_manifest.json", manifest)
+    _write_json(root / "paper_shadow_protocol.json", protocol)
+    _write_text(root / "paper_shadow_protocol_report.md", render_paper_shadow_protocol_report(manifest, protocol))
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_paper_shadow_protocol",
+        root.name,
+        root / "paper_shadow_protocol_manifest.json",
+    )
+    validation_payload = validate_paper_shadow_protocol_artifact(
+        protocol_id=root.name,
+        output_dir=output_dir,
+        write_output=True,
+    )
+    return {
+        "protocol_id": root.name,
+        "protocol_dir": root,
+        "manifest": manifest,
+        "paper_shadow_protocol": protocol,
+        "reader_brief_section": reader,
+        "paper_shadow_protocol_validation": validation_payload,
+    }
+
+
+def paper_shadow_protocol_report_payload(
+    *,
+    protocol_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=protocol_id,
+        latest_pointer="latest_paper_shadow_protocol",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="paper_shadow_protocol_manifest.json",
+    )
+    payload = {
+        **_read_json(root / "paper_shadow_protocol_manifest.json"),
+        "paper_shadow_protocol": _read_json(root / "paper_shadow_protocol.json"),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "protocol_dir": str(root),
+    }
+    validation = _read_optional_json(root / "paper_shadow_protocol_validation.json")
+    if validation:
+        payload["paper_shadow_protocol_validation"] = validation
+    return payload
+
+
+def validate_paper_shadow_protocol_artifact(
+    *,
+    protocol_id: str,
+    output_dir: Path = DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+    write_output: bool = True,
+) -> dict[str, Any]:
+    root = output_dir / protocol_id
+    manifest = _read_optional_json(root / "paper_shadow_protocol_manifest.json") or {}
+    protocol = _read_optional_json(root / "paper_shadow_protocol.json") or {}
+    reader = (
+        (root / "reader_brief_section.md").read_text(encoding="utf-8")
+        if (root / "reader_brief_section.md").exists()
+        else ""
+    )
+    daily_fields = {row.get("field") for row in _records(protocol.get("daily_review_fields"))}
+    exit_conditions = {row.get("exit_condition") for row in _records(protocol.get("exit_conditions"))}
+    eligibility_conditions = _records(protocol.get("eligibility_conditions"))
+    checks = _required_file_checks(
+        root,
+        (
+            "paper_shadow_protocol_manifest.json",
+            "paper_shadow_protocol.json",
+            "paper_shadow_protocol_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("protocol_id_matches", manifest.get("protocol_id") == protocol_id, ""),
+            st._check("source_contract_visible", bool(protocol.get("source_contract_id")), ""),
+            st._check("eligibility_conditions_visible", len(eligibility_conditions) >= 4, ""),
+            st._check(
+                "daily_review_fields_complete",
+                set(PAPER_SHADOW_DAILY_REVIEW_FIELDS).issubset(daily_fields),
+                ",".join(sorted(_texts(daily_fields))),
+            ),
+            st._check(
+                "exit_conditions_complete",
+                set(PAPER_SHADOW_EXIT_CONDITIONS).issubset(exit_conditions),
+                ",".join(sorted(_texts(exit_conditions))),
+            ),
+            st._check(
+                "observation_period_visible",
+                _mapping(protocol.get("required_observation_period")).get("minimum_trading_days")
+                == PAPER_SHADOW_REQUIRED_OBSERVATION_DAYS,
+                "",
+            ),
+            st._check(
+                "hypothetical_weight_marked_paper_shadow_only",
+                any(
+                    row.get("field") == "hypothetical_weight_recommendation"
+                    and row.get("paper_shadow_only") is True
+                    for row in _records(protocol.get("daily_review_fields"))
+                ),
+                "",
+            ),
+            st._check("reader_brief_quality_fields", "paper_shadow_protocol_status" in reader, ""),
+            st._check("broker_forbidden", _payload_safe(manifest, protocol), ""),
+            st._check(
+                "not_broker_consumable",
+                protocol.get("broker_order_system_consumable") is False
+                and manifest.get("broker_order_system_consumable") is False,
+                "",
+            ),
+        ]
+    )
+    validation = _validation_payload(
+        "etf_dynamic_v3_paper_shadow_protocol_validation",
+        protocol_id,
+        checks,
+    )
+    if write_output:
+        _write_json(root / "paper_shadow_protocol_validation.json", validation)
+        _write_text(
+            root / "paper_shadow_protocol_validation.md",
+            render_paper_shadow_protocol_validation_report(validation),
+        )
+    return validation
+
+
 def render_filtered_candidate_evidence_reader_brief(summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
@@ -2077,6 +2356,111 @@ def render_formal_research_method_contract_validation_report(
     return "\n".join(
         [
             f"# Formal Research Method Contract Validation {validation.get('artifact_id')}",
+            "",
+            f"- status: {validation.get('status')}",
+            f"- failed_check_count: {validation.get('failed_check_count')}",
+            "- production_effect: none",
+            "",
+            "## Checks",
+            *check_lines,
+            "",
+        ]
+    )
+
+
+def render_paper_shadow_protocol_reader_brief(protocol: Mapping[str, Any]) -> str:
+    blocking = _texts(protocol.get("blocking_reasons"))
+    period = _mapping(protocol.get("required_observation_period"))
+    return "\n".join(
+        [
+            "## Paper Shadow Protocol",
+            "",
+            f"- summary: {protocol.get('candidate')} observation-only paper-shadow protocol.",
+            f"- key_result: paper_shadow_protocol_status={protocol.get('protocol_status')}",
+            f"- blocking_issues: {', '.join(blocking) if blocking else 'none'}",
+            f"- recommended_next_step: {protocol.get('next_required_action')}",
+            f"- minimum_observation_trading_days: {period.get('minimum_trading_days')}",
+            "- safety_boundary: observation only / no official target / no broker / no order ticket / manual review only",
+            "",
+        ]
+    )
+
+
+def render_paper_shadow_protocol_report(
+    manifest: Mapping[str, Any],
+    protocol: Mapping[str, Any],
+) -> str:
+    condition_lines = [
+        f"- {row.get('condition_id')}: required={row.get('required_value')} actual={row.get('actual_value')} passed={row.get('passed')}"
+        for row in _records(protocol.get("eligibility_conditions"))
+    ]
+    field_lines = [
+        f"- {row.get('field')}: required={row.get('required')} paper_shadow_only={row.get('paper_shadow_only')}"
+        for row in _records(protocol.get("daily_review_fields"))
+    ]
+    exit_lines = [
+        f"- {row.get('exit_condition')}: manual_review_required={row.get('manual_review_required')} production_effect={row.get('production_effect')}"
+        for row in _records(protocol.get("exit_conditions"))
+    ]
+    period = _mapping(protocol.get("required_observation_period"))
+    return "\n".join(
+        [
+            f"# Paper Shadow Protocol {manifest.get('protocol_id')}",
+            "",
+            "## Purpose",
+            "定义 formal research contract 之后的 observation-only paper-shadow protocol；本报告不运行 daily runner、不写 official target weights、不触发 broker 或 order 系统。",
+            "",
+            "## Input Artifacts",
+            f"- source_contract_id: {protocol.get('source_contract_id')}",
+            "",
+            "## Output Decision",
+            f"- protocol_status: {protocol.get('protocol_status')}",
+            f"- eligibility_status: {protocol.get('eligibility_status')}",
+            f"- next_required_action: {protocol.get('next_required_action')}",
+            "",
+            "## Eligibility Conditions",
+            *condition_lines,
+            "",
+            "## Observation Period",
+            f"- minimum_trading_days: {period.get('minimum_trading_days')}",
+            f"- policy_status: {period.get('policy_status')}",
+            f"- rationale: {period.get('rationale')}",
+            "",
+            "## Daily Review Fields",
+            *field_lines,
+            "",
+            "## Exit Conditions",
+            *exit_lines,
+            "",
+            "## Safety Boundary",
+            "- observation only",
+            "- hypothetical weight recommendations must be paper-shadow-only",
+            "- no official target weights",
+            "- no broker integration",
+            "- no order tickets",
+            "- no production mutation",
+            "- manual review only",
+            "",
+            "## Limitations",
+            "- TRADING-350 defines protocol only; TRADING-351 must implement daily observation separately.",
+            "- The 20-trading-day observation period is a pilot baseline, not production approval.",
+            "- A ready protocol does not initialize or mutate any paper shadow account.",
+            "",
+            "## Next Action",
+            f"- {protocol.get('next_required_action')}",
+            "",
+        ]
+    )
+
+
+def render_paper_shadow_protocol_validation_report(validation: Mapping[str, Any]) -> str:
+    check_lines = [
+        f"- {row.get('check_id')}: passed={row.get('passed')} detail={row.get('detail')}"
+        for row in _records(validation.get("checks"))
+    ]
+    return "\n".join(
+        [
+            f"# Paper Shadow Protocol Validation {validation.get('artifact_id')}",
             "",
             f"- status: {validation.get('status')}",
             f"- failed_check_count: {validation.get('failed_check_count')}",
