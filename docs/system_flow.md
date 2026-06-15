@@ -8,7 +8,9 @@
 
 daily-run 会触达的核心 YAML 配置和估值/风险/thesis 输入，在进入 PyYAML 解析前先读取为稳定 UTF-8 文本快照，并通过项目统一安全 YAML loader（优先 `CSafeLoader`）解析；文件读取、解码或解析失败仍进入各自既有 fail-closed 校验路径。
 
-`config/report_registry.yaml` 是 `aits reports index`、Reader Brief freshness 摘要和 daily task dashboard 报告导航的只读 registry。每个 report entry 必须显式记录 `freshness_sla_days`、freshness rationale、owner action、visibility flags 和 `production_effect` 边界；presence-only runtime state 也要给出审计 SLA，不能以 null freshness 静默跳过 cadence 解释。
+`config/report_registry.yaml` 是 `aits reports index`、Reader Brief freshness 摘要和 daily task dashboard 报告导航的只读 registry。每个 report entry 必须显式记录 `freshness_sla_days`、freshness rationale、owner action、visibility flags 和 `production_effect` 边界；presence-only runtime state 也要给出审计 SLA，不能以 null freshness 静默跳过 cadence 解释。TRADING-352A 后，registry defaults 还定义 cadence-level `freshness_basis`，daily / weekly / biweekly report freshness 按 U.S. equity trading days 计算，避免 Friday artifact 在 Monday U.S. close 前被 calendar-day weekend aging 误判 stale；ad-hoc / monthly artifacts 继续按 calendar days 审计。
+
+`config/report_index_visibility_waivers.yaml` 是 report index visibility waiver source policy。`aits reports index` 仍只读扫描既有 artifacts，不运行上游、不补造 missing report；当 missing/stale visibility issue 全部匹配该 waiver policy 且没有 required daily missing 或 production-effect risk 时，report index 状态为 `PASS_WITH_EXPLICIT_WAIVERS`。payload 会输出 `visibility_audit`、`explicit_waivers`、per-report `freshness_basis`、`visibility_issue` 和 `visibility_waiver`；required daily missing artifact 和 production-effect risk 不允许被 waiver 静默压掉。
 
 TRADING-347 后，`python scripts/run_validation_tier.py` 是 pytest runtime suite contract 的统一入口。正式 suite 包括 `fast-unit`、`contract-validation`、`report-validation`、`integration`、`slow-research-regression` 和 `full`；旧 alias 只解析到这些正式 suite。带 `--write-runtime-artifact` 的运行会写出 `outputs/validation_runtime/<run_id>/test_runtime_summary.json` 和 `test_runtime_reader_brief.md`，披露 promotion-blocking、slow-suite 隔离、命令、worker、runtime、status 和 no-production safety boundary。该验证层只记录 pytest execution，不读取或修改 cached market data，不替代 `aits validate-data`。
 

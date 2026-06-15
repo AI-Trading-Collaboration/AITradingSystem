@@ -11,8 +11,10 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
     build_report_index_payload,
+    load_report_index_visibility_waivers,
     load_report_registry,
     render_report_index_html,
 )
@@ -68,12 +70,26 @@ def test_default_report_registry_loads() -> None:
     )
     assert any(item["report_id"] == "etf_dynamic_shadow_validation" for item in registry["reports"])
     assert all("freshness_rationale" in item for item in registry["reports"])
+    assert registry["defaults"]["freshness_basis_by_cadence"]["daily"] == (
+        "us_equity_trading_days"
+    )
     dynamic_v3_leaderboard = next(
         item
         for item in registry["reports"]
         if item["report_id"] == "etf_dynamic_v3_parameter_sweep_leaderboard"
     )
     assert dynamic_v3_leaderboard["artifact_selection_policy"] == "latest_available"
+
+
+def test_default_report_index_visibility_waivers_load() -> None:
+    policy = load_report_index_visibility_waivers(DEFAULT_REPORT_INDEX_WAIVER_PATH)
+
+    assert policy["schema_version"] == 1
+    assert policy["policy_id"] == "report_index_visibility_waivers_v1"
+    assert any(
+        "etf_dynamic_shadow_weekly_review" in item.get("report_ids", [])
+        for item in policy["waivers"]
+    )
 
 
 @pytest.mark.parametrize("value", [None, "missing"])
@@ -172,6 +188,122 @@ def test_report_index_latest_available_policy_can_select_after_as_of_artifact(
     assert reports["daily_score"]["freshness_status"] == "FRESH"
     assert reports["evidence_dashboard"]["freshness_status"] == "MISSING"
     assert reports["evidence_dashboard"]["artifact_selection_policy"] == "as_of_or_unknown"
+
+
+def test_report_index_can_use_us_equity_trading_day_freshness(tmp_path: Path) -> None:
+    registry_path = _write_registry(tmp_path)
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    registry["defaults"]["freshness_basis_by_cadence"] = {"daily": "us_equity_trading_days"}
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+    reports_dir = tmp_path / "outputs" / "reports"
+    reports_dir.mkdir(parents=True)
+    (reports_dir / "daily_score_2026-06-12.md").write_text("# Daily Score\n", encoding="utf-8")
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 6, 15),
+        project_root=tmp_path,
+        registry_path=registry_path,
+        waiver_path=None,
+    )
+    reports = {item["report_id"]: item for item in payload["reports"]}
+
+    assert reports["daily_score"]["freshness_basis"] == "us_equity_trading_days"
+    assert reports["daily_score"]["age_days"] == 1
+    assert reports["daily_score"]["freshness_status"] == "FRESH"
+    assert "us_equity_trading_days" in payload["visibility_audit"]["freshness_basis_values"]
+
+
+def test_report_index_explicit_waivers_clear_optional_visibility_warnings(
+    tmp_path: Path,
+) -> None:
+    registry_path = _write_custom_registry(
+        tmp_path,
+        [
+            _registry_entry(
+                "optional_missing",
+                "Optional Missing",
+                "outputs/reports/optional_missing_*.json",
+                freshness_sla_days=1,
+            ),
+            _registry_entry(
+                "optional_stale",
+                "Optional Stale",
+                "outputs/reports/optional_stale_*.json",
+                freshness_sla_days=1,
+            ),
+        ],
+    )
+    _write_json(
+        tmp_path / "outputs" / "reports" / "optional_stale_2026-05-01.json",
+        {"report_type": "optional_stale", "status": "PASS", "production_effect": "none"},
+    )
+    waiver_path = _write_waivers(
+        tmp_path,
+        [
+            {
+                "waiver_id": "optional_missing_waiver",
+                "issue_status": "MISSING",
+                "report_id": "optional_missing",
+            },
+            {
+                "waiver_id": "optional_stale_waiver",
+                "issue_status": "STALE",
+                "report_id": "optional_stale",
+            },
+        ],
+    )
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 4),
+        project_root=tmp_path,
+        registry_path=registry_path,
+        waiver_path=waiver_path,
+    )
+    reports = {item["report_id"]: item for item in payload["reports"]}
+
+    assert payload["status"] == "PASS_WITH_EXPLICIT_WAIVERS"
+    assert payload["warnings"] == []
+    assert payload["summary"]["explicit_waiver_count"] == 2
+    assert payload["visibility_audit"]["audit_status"] == "PASS"
+    assert reports["optional_missing"]["visibility_status"] == "WAIVED"
+    assert reports["optional_stale"]["visibility_status"] == "WAIVED"
+    assert reports["optional_stale"]["freshness_status"] == "STALE"
+
+
+def test_report_index_does_not_waive_required_missing_artifacts(tmp_path: Path) -> None:
+    registry_path = _write_custom_registry(
+        tmp_path,
+        [
+            _registry_entry(
+                "required_missing",
+                "Required Missing",
+                "outputs/reports/required_missing_*.json",
+                freshness_sla_days=1,
+                required=True,
+            ),
+        ],
+    )
+    waiver_path = _write_waivers(
+        tmp_path,
+        [
+            {
+                "waiver_id": "required_missing_waiver",
+                "issue_status": "MISSING",
+                "report_id": "required_missing",
+            },
+        ],
+    )
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 4),
+        project_root=tmp_path,
+        registry_path=registry_path,
+        waiver_path=waiver_path,
+    )
+
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["summary"]["explicit_waiver_count"] == 0
+    assert payload["warnings"] == ["required_missing_required_missing"]
 
 
 def test_reports_index_cli_writes_html_and_json(tmp_path: Path) -> None:
@@ -291,6 +423,30 @@ def _write_registry(tmp_path: Path) -> Path:
     return path
 
 
+def _write_custom_registry(tmp_path: Path, entries: list[dict[str, Any]]) -> Path:
+    registry: dict[str, Any] = {
+        "schema_version": 1,
+        "policy_version": "test_report_registry_v1",
+        "policy_metadata": {
+            "owner": "test",
+            "status": "test",
+            "rationale": "test",
+            "intended_effect": "test",
+            "validation_evidence": "test",
+            "review_condition": "test",
+        },
+        "defaults": {
+            "production_effect": "none",
+            "missing_status": "MISSING",
+            "stale_status": "STALE",
+        },
+        "reports": entries,
+    }
+    path = tmp_path / "report_registry.yaml"
+    path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+    return path
+
+
 def _registry_entry(
     report_id: str,
     title: str,
@@ -315,6 +471,35 @@ def _registry_entry(
         "include_in_daily_task_dashboard": False,
         "required_for_daily_reading": required,
     }
+
+
+def _write_waivers(tmp_path: Path, waivers: list[dict[str, str]]) -> Path:
+    normalized = []
+    for waiver in waivers:
+        normalized.append(
+            {
+                **waiver,
+                "owner": "test",
+                "reason": "test reason",
+                "accepted_impact": "test impact",
+                "validation_coverage": "test validation",
+                "exit_condition": "test exit",
+            }
+        )
+    path = tmp_path / "report_index_visibility_waivers.yaml"
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "policy_id": "test_report_index_visibility_waivers",
+                "policy_metadata": {"owner": "test", "status": "test"},
+                "waivers": normalized,
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

@@ -119,6 +119,7 @@ from ai_trading_system.reports.reader_brief import (
     write_reader_brief_quality_markdown,
 )
 from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
     build_report_index_payload,
     default_report_index_html_path,
@@ -1922,6 +1923,10 @@ def report_index_command(
         Path,
         typer.Option(help="report_registry.yaml 路径。"),
     ] = DEFAULT_REPORT_REGISTRY_PATH,
+    waiver_path: Annotated[
+        Path,
+        typer.Option(help="report index visibility waiver YAML 路径。"),
+    ] = DEFAULT_REPORT_INDEX_WAIVER_PATH,
     project_root: Annotated[
         Path,
         typer.Option(help="用于扫描 report artifacts 的项目根目录。"),
@@ -1952,6 +1957,7 @@ def report_index_command(
             as_of=report_date,
             project_root=project_root,
             registry_path=registry_path,
+            waiver_path=waiver_path,
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -1967,6 +1973,8 @@ def report_index_command(
         f"reports：{payload['summary']['report_count']}；"
         f"missing：{payload['summary']['missing_count']}；"
         f"stale：{payload['summary']['stale_count']}；"
+        f"waived：{payload['summary']['explicit_waiver_count']}；"
+        f"unwaived：{payload['summary']['unwaived_warning_count']}；"
         f"production_effect={payload['production_effect']}；"
         "只读扫描"
     )

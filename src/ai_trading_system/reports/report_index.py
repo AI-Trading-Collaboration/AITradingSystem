@@ -4,18 +4,20 @@ import html
 import json
 import re
 from collections.abc import Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from glob import glob
 from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "report_index"
 PRODUCTION_EFFECT = "none"
 DEFAULT_REPORT_REGISTRY_PATH = PROJECT_ROOT / "config" / "report_registry.yaml"
+DEFAULT_REPORT_INDEX_WAIVER_PATH = PROJECT_ROOT / "config" / "report_index_visibility_waivers.yaml"
 DEFAULT_ARTIFACT_SELECTION_POLICY = "as_of_or_unknown"
 ARTIFACT_SELECTION_POLICIES = frozenset(
     {
@@ -23,6 +25,14 @@ ARTIFACT_SELECTION_POLICIES = frozenset(
         "latest_available",
     }
 )
+DEFAULT_FRESHNESS_BASIS = "calendar_days"
+FRESHNESS_BASIS_VALUES = frozenset(
+    {
+        DEFAULT_FRESHNESS_BASIS,
+        "us_equity_trading_days",
+    }
+)
+WAIVABLE_VISIBILITY_ISSUES = frozenset({"MISSING", "STALE"})
 
 STATUS_KEYS: tuple[str, ...] = (
     "status",
@@ -98,6 +108,89 @@ def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str,
                 f"report registry {report_id} artifact_selection_policy must be one of "
                 f"{sorted(ARTIFACT_SELECTION_POLICIES)}"
             )
+        if "freshness_basis" in entry:
+            freshness_basis = _string(entry.get("freshness_basis"))
+            if freshness_basis and freshness_basis not in FRESHNESS_BASIS_VALUES:
+                raise ValueError(
+                    f"report registry {report_id} freshness_basis must be one of "
+                    f"{sorted(FRESHNESS_BASIS_VALUES)}"
+                )
+    defaults = _mapping(raw.get("defaults"))
+    default_basis = _string(defaults.get("freshness_basis"), DEFAULT_FRESHNESS_BASIS)
+    if default_basis not in FRESHNESS_BASIS_VALUES:
+        raise ValueError(
+            f"report registry defaults freshness_basis must be one of "
+            f"{sorted(FRESHNESS_BASIS_VALUES)}"
+        )
+    basis_by_cadence = _mapping(defaults.get("freshness_basis_by_cadence"))
+    for cadence, basis in basis_by_cadence.items():
+        if _string(basis) not in FRESHNESS_BASIS_VALUES:
+            raise ValueError(
+                f"report registry defaults freshness_basis_by_cadence[{cadence}] must be one "
+                f"of {sorted(FRESHNESS_BASIS_VALUES)}"
+            )
+    return raw
+
+
+def load_report_index_visibility_waivers(
+    path: Path = DEFAULT_REPORT_INDEX_WAIVER_PATH,
+) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "policy_id": "report_index_visibility_waivers_not_configured",
+            "policy_metadata": {
+                "owner": "system",
+                "status": "not_configured",
+                "rationale": "No report index visibility waiver file exists.",
+            },
+            "waivers": [],
+        }
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, dict):
+        raise ValueError("report index visibility waiver file must be a mapping")
+    if raw.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError(f"report index visibility waiver schema_version must be {SCHEMA_VERSION}")
+    waivers = raw.get("waivers")
+    if waivers is None:
+        raw["waivers"] = []
+        return raw
+    if not isinstance(waivers, list):
+        raise ValueError("report index visibility waiver file waivers must be a list")
+    seen: set[tuple[str, str]] = set()
+    for index, waiver in enumerate(waivers):
+        if not isinstance(waiver, Mapping):
+            raise ValueError(f"report index visibility waiver {index} must be a mapping")
+        waiver_id = _string(waiver.get("waiver_id"))
+        if not waiver_id:
+            raise ValueError(f"report index visibility waiver {index} missing waiver_id")
+        issue_status = _string(waiver.get("issue_status"))
+        if issue_status not in WAIVABLE_VISIBILITY_ISSUES:
+            raise ValueError(
+                f"report index visibility waiver {waiver_id} issue_status must be one of "
+                f"{sorted(WAIVABLE_VISIBILITY_ISSUES)}"
+            )
+        report_ids = _waiver_report_ids(waiver)
+        if not report_ids:
+            raise ValueError(f"report index visibility waiver {waiver_id} missing report_id(s)")
+        for field in (
+            "owner",
+            "reason",
+            "accepted_impact",
+            "validation_coverage",
+            "exit_condition",
+        ):
+            if not _string(waiver.get(field)):
+                raise ValueError(
+                    f"report index visibility waiver {waiver_id} missing required field: {field}"
+                )
+        for report_id in report_ids:
+            key = (report_id, issue_status)
+            if key in seen:
+                raise ValueError(
+                    f"duplicate report index visibility waiver for {report_id}/{issue_status}"
+                )
+            seen.add(key)
     return raw
 
 
@@ -106,6 +199,7 @@ def build_report_index_payload(
     as_of: date,
     project_root: Path = PROJECT_ROOT,
     registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
+    waiver_path: Path | None = DEFAULT_REPORT_INDEX_WAIVER_PATH,
 ) -> dict[str, Any]:
     registry = load_report_registry(registry_path)
     defaults = _mapping(registry.get("defaults"))
@@ -118,19 +212,28 @@ def build_report_index_payload(
         )
         for entry in _records(registry.get("reports"))
     ]
+    waiver_policy = (
+        load_report_index_visibility_waivers(waiver_path)
+        if waiver_path is not None
+        else load_report_index_visibility_waivers(Path("__missing_report_index_waivers__.yaml"))
+    )
+    reports, explicit_waivers, unwaived_issues = _apply_visibility_waivers(
+        reports=reports,
+        waiver_policy=waiver_policy,
+    )
     missing = [item for item in reports if item["freshness_status"] == "MISSING"]
     stale = [item for item in reports if item["freshness_status"] == "STALE"]
     required_missing = [item for item in missing if item.get("required_for_daily_reading") is True]
     production_effect_risks = [
         item for item in reports if item["artifact_production_effect_risk"] is True
     ]
-    warnings = _warnings(
-        missing=missing,
-        stale=stale,
-        required_missing=required_missing,
-        production_effect_risks=production_effect_risks,
-    )
-    status = "PASS_WITH_WARNINGS" if warnings else "PASS"
+    warnings = [_warning_text(issue) for issue in unwaived_issues]
+    if warnings:
+        status = "PASS_WITH_WARNINGS"
+    elif explicit_waivers:
+        status = "PASS_WITH_EXPLICIT_WAIVERS"
+    else:
+        status = "PASS"
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": REPORT_TYPE,
@@ -150,6 +253,8 @@ def build_report_index_payload(
             "stale_count": len(stale),
             "required_missing_count": len(required_missing),
             "production_effect_risk_count": len(production_effect_risks),
+            "explicit_waiver_count": len(explicit_waivers),
+            "unwaived_warning_count": len(warnings),
             "reader_brief_count": len(
                 [item for item in reports if item["include_in_reader_brief"] is True]
             ),
@@ -160,6 +265,28 @@ def build_report_index_payload(
         },
         "reports": reports,
         "warnings": warnings,
+        "explicit_waivers": explicit_waivers,
+        "waiver_policy": {
+            "path": "" if waiver_path is None else str(waiver_path),
+            "policy_id": _string(waiver_policy.get("policy_id")),
+            "policy_metadata": _mapping(waiver_policy.get("policy_metadata")),
+            "configured_waiver_count": len(_expanded_waivers(waiver_policy)),
+            "active_waiver_count": len(explicit_waivers),
+        },
+        "visibility_audit": {
+            "audit_status": "PASS" if not warnings else "WARN",
+            "freshness_basis_values": sorted(
+                {_string(item.get("freshness_basis"), DEFAULT_FRESHNESS_BASIS) for item in reports}
+            ),
+            "missing_report_ids": [item["report_id"] for item in missing],
+            "stale_report_ids": [item["report_id"] for item in stale],
+            "waived_report_ids": [item["report_id"] for item in explicit_waivers],
+            "unwaived_issue_ids": [item["issue_id"] for item in unwaived_issues],
+            "required_missing_report_ids": [item["report_id"] for item in required_missing],
+            "production_effect_risk_report_ids": [
+                item["report_id"] for item in production_effect_risks
+            ],
+        },
         "methodology": {
             "collector_mode": "read_existing_artifacts_only",
             "does_not_run_upstream_commands": True,
@@ -189,6 +316,8 @@ def render_report_index_html(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     reports = _records(payload.get("reports"))
     rows = "\n".join(_report_row(report) for report in reports)
+    waiver_summary = _mapping(payload.get("waiver_policy"))
+    visibility_audit = _mapping(payload.get("visibility_audit"))
     return "\n".join(
         [
             "<!doctype html>",
@@ -212,7 +341,17 @@ def render_report_index_html(payload: Mapping[str, Any]) -> str:
             _summary_item("missing", summary.get("missing_count")),
             _summary_item("stale", summary.get("stale_count")),
             _summary_item("required missing", summary.get("required_missing_count")),
+            _summary_item("explicit waivers", summary.get("explicit_waiver_count")),
+            _summary_item("unwaived warnings", summary.get("unwaived_warning_count")),
             _summary_item("production effect risk", summary.get("production_effect_risk_count")),
+            "</section>",
+            "<section>",
+            "<h2>Visibility Audit</h2>",
+            f"<p>Audit status: {_badge(visibility_audit.get('audit_status'))}</p>",
+            "<p>Explicit waiver policy: "
+            f"<code>{_escape(waiver_summary.get('policy_id'))}</code>；"
+            f"active waivers: {_escape(waiver_summary.get('active_waiver_count'))}；"
+            f"configured waivers: {_escape(waiver_summary.get('configured_waiver_count'))}</p>",
             "</section>",
             "<section>",
             "<h2>Report Freshness</h2>",
@@ -241,6 +380,7 @@ def _report_record(
     defaults: Mapping[str, Any],
 ) -> dict[str, Any]:
     artifact_selection_policy = _artifact_selection_policy(entry, defaults)
+    freshness_basis = _freshness_basis(entry, defaults)
     latest = _latest_artifact(
         report_id=_string(entry.get("report_id")),
         artifact_globs=_strings(entry.get("artifact_globs")),
@@ -255,6 +395,7 @@ def _report_record(
         as_of=as_of,
         artifact_date=artifact_date,
         artifact_selection_policy=artifact_selection_policy,
+        freshness_basis=freshness_basis,
     )
     artifact_temporal_relation = _artifact_temporal_relation(
         as_of=as_of,
@@ -292,6 +433,7 @@ def _report_record(
         "artifact_after_as_of": artifact_temporal_relation == "AFTER_AS_OF",
         "exists": exists,
         "freshness_status": freshness_status,
+        "freshness_basis": freshness_basis,
         "freshness_sla_days": entry.get("freshness_sla_days"),
         "age_days": age_days,
         "freshness_rationale": _string(entry.get("freshness_rationale")),
@@ -304,6 +446,9 @@ def _report_record(
         "include_in_reader_brief": bool(entry.get("include_in_reader_brief")),
         "include_in_daily_task_dashboard": bool(entry.get("include_in_daily_task_dashboard")),
         "required_for_daily_reading": bool(entry.get("required_for_daily_reading")),
+        "visibility_status": "OK",
+        "visibility_issue": {},
+        "visibility_waiver": {},
     }
 
 
@@ -353,18 +498,57 @@ def _artifact_selection_policy(
     return raw_policy
 
 
+def _freshness_basis(entry: Mapping[str, Any], defaults: Mapping[str, Any]) -> str:
+    raw_basis = _string(entry.get("freshness_basis"))
+    if raw_basis:
+        return raw_basis if raw_basis in FRESHNESS_BASIS_VALUES else DEFAULT_FRESHNESS_BASIS
+    basis_by_cadence = _mapping(defaults.get("freshness_basis_by_cadence"))
+    cadence = _string(entry.get("cadence"))
+    cadence_basis = _string(basis_by_cadence.get(cadence))
+    if cadence_basis:
+        return cadence_basis if cadence_basis in FRESHNESS_BASIS_VALUES else DEFAULT_FRESHNESS_BASIS
+    default_basis = _string(defaults.get("freshness_basis"), DEFAULT_FRESHNESS_BASIS)
+    return default_basis if default_basis in FRESHNESS_BASIS_VALUES else DEFAULT_FRESHNESS_BASIS
+
+
 def _artifact_age_days(
     *,
     as_of: date,
     artifact_date: date | None,
     artifact_selection_policy: str,
+    freshness_basis: str,
 ) -> int | None:
     if artifact_date is None:
         return None
+    if freshness_basis == "us_equity_trading_days":
+        return _us_equity_trading_day_age(
+            as_of=as_of,
+            artifact_date=artifact_date,
+            artifact_selection_policy=artifact_selection_policy,
+        )
     age_days = (as_of - artifact_date).days
     if artifact_selection_policy == "latest_available" and age_days < 0:
         return 0
     return age_days
+
+
+def _us_equity_trading_day_age(
+    *,
+    as_of: date,
+    artifact_date: date,
+    artifact_selection_policy: str,
+) -> int:
+    if artifact_selection_policy == "latest_available" and artifact_date > as_of:
+        return 0
+    if artifact_date >= as_of:
+        return 0
+    age = 0
+    current = artifact_date + timedelta(days=1)
+    while current <= as_of:
+        if is_us_equity_trading_day(current):
+            age += 1
+        current += timedelta(days=1)
+    return age
 
 
 def _artifact_temporal_relation(
@@ -454,6 +638,143 @@ def _warnings(
     return warnings
 
 
+def _apply_visibility_waivers(
+    *,
+    reports: Sequence[Mapping[str, Any]],
+    waiver_policy: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    waivers_by_key = {
+        (_string(waiver.get("report_id")), _string(waiver.get("issue_status"))): waiver
+        for waiver in _expanded_waivers(waiver_policy)
+    }
+    updated: list[dict[str, Any]] = []
+    explicit_waivers: list[dict[str, Any]] = []
+    unwaived_issues: list[dict[str, Any]] = []
+    for raw_report in reports:
+        report = dict(raw_report)
+        issue = _report_visibility_issue(report)
+        if issue is None:
+            report["visibility_status"] = "OK"
+            report["visibility_issue"] = {}
+            report["visibility_waiver"] = {}
+            updated.append(report)
+            continue
+        waiver = waivers_by_key.get((issue["report_id"], issue["issue_status"]))
+        if waiver is not None and _waiver_can_apply(issue):
+            applied = _applied_waiver(issue=issue, waiver=waiver)
+            report["visibility_status"] = "WAIVED"
+            report["visibility_issue"] = issue
+            report["visibility_waiver"] = applied
+            explicit_waivers.append(applied)
+        else:
+            report["visibility_status"] = "WARNING"
+            report["visibility_issue"] = issue
+            report["visibility_waiver"] = {}
+            unwaived_issues.append(issue)
+        updated.append(report)
+    return updated, explicit_waivers, unwaived_issues
+
+
+def _report_visibility_issue(report: Mapping[str, Any]) -> dict[str, Any] | None:
+    report_id = _string(report.get("report_id"))
+    if report.get("artifact_production_effect_risk") is True:
+        return {
+            "issue_id": f"{report_id}_production_effect_not_none",
+            "report_id": report_id,
+            "issue_status": "PRODUCTION_EFFECT_RISK",
+            "severity": "error",
+            "warning_text": (
+                f"{report_id}_production_effect_not_none:"
+                f"{_string(report.get('artifact_production_effect'))}"
+            ),
+            "required_for_daily_reading": bool(report.get("required_for_daily_reading")),
+        }
+    freshness_status = _string(report.get("freshness_status"))
+    if freshness_status == "MISSING":
+        required = bool(report.get("required_for_daily_reading"))
+        warning_text = (
+            f"{report_id}_required_missing"
+            if required
+            else f"{report_id}_missing:{_string(report.get('latest_artifact_path'))}"
+        )
+        return {
+            "issue_id": f"{report_id}_missing",
+            "report_id": report_id,
+            "issue_status": "MISSING",
+            "severity": "error" if required else "warning",
+            "warning_text": warning_text,
+            "required_for_daily_reading": required,
+            "latest_artifact_path": _string(report.get("latest_artifact_path")),
+            "freshness_basis": _string(report.get("freshness_basis")),
+        }
+    if freshness_status == "STALE":
+        return {
+            "issue_id": f"{report_id}_stale",
+            "report_id": report_id,
+            "issue_status": "STALE",
+            "severity": "warning",
+            "warning_text": (
+                f"{report_id}_stale:age_days={report.get('age_days')};"
+                f"sla={report.get('freshness_sla_days')}"
+            ),
+            "required_for_daily_reading": bool(report.get("required_for_daily_reading")),
+            "age_days": report.get("age_days"),
+            "freshness_sla_days": report.get("freshness_sla_days"),
+            "freshness_basis": _string(report.get("freshness_basis")),
+        }
+    return None
+
+
+def _waiver_can_apply(issue: Mapping[str, Any]) -> bool:
+    issue_status = _string(issue.get("issue_status"))
+    if issue_status not in WAIVABLE_VISIBILITY_ISSUES:
+        return False
+    if issue_status == "MISSING" and bool(issue.get("required_for_daily_reading")):
+        return False
+    return True
+
+
+def _applied_waiver(
+    *,
+    issue: Mapping[str, Any],
+    waiver: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "waiver_id": _string(waiver.get("waiver_id")),
+        "report_id": _string(issue.get("report_id")),
+        "issue_status": _string(issue.get("issue_status")),
+        "reason": _string(waiver.get("reason")),
+        "owner": _string(waiver.get("owner")),
+        "accepted_impact": _string(waiver.get("accepted_impact")),
+        "validation_coverage": _string(waiver.get("validation_coverage")),
+        "exit_condition": _string(waiver.get("exit_condition")),
+        "visibility_issue_id": _string(issue.get("issue_id")),
+        "warning_text": _string(issue.get("warning_text")),
+    }
+
+
+def _expanded_waivers(policy: Mapping[str, Any]) -> list[dict[str, Any]]:
+    expanded: list[dict[str, Any]] = []
+    for waiver in _records(policy.get("waivers")):
+        for report_id in _waiver_report_ids(waiver):
+            item = dict(waiver)
+            item["report_id"] = report_id
+            item.pop("report_ids", None)
+            expanded.append(item)
+    return expanded
+
+
+def _waiver_report_ids(waiver: Mapping[str, Any]) -> list[str]:
+    report_id = _string(waiver.get("report_id"))
+    if report_id:
+        return [report_id]
+    return _strings(waiver.get("report_ids"))
+
+
+def _warning_text(issue: Mapping[str, Any]) -> str:
+    return _string(issue.get("warning_text")) or _string(issue.get("issue_id"))
+
+
 def _group_counts(reports: Sequence[Mapping[str, Any]]) -> dict[str, int]:
     groups: dict[str, int] = {}
     for report in reports:
@@ -470,9 +791,11 @@ def _report_row(report: Mapping[str, Any]) -> str:
             _string(report.get("artifact_date")),
             _string(report.get("artifact_temporal_relation")),
             _string(report.get("artifact_selection_policy")),
+            _string(report.get("freshness_basis")),
         )
         if item
     )
+    visibility = _string(report.get("visibility_status"), "OK")
     return (
         "<tr>"
         f"<td><strong>{_escape(report.get('title'))}</strong><br>"
@@ -482,7 +805,7 @@ def _report_row(report: Mapping[str, Any]) -> str:
         f"<td>{_badge(report.get('freshness_status'))}</td>"
         f"<td><code>{_escape(artifact)}</code><br>"
         f"<small>{_escape(artifact_metadata)}</small></td>"
-        f"<td>{_escape(report.get('artifact_status'))}</td>"
+        f"<td>{_escape(report.get('artifact_status'))}<br><small>{_escape(visibility)}</small></td>"
         f"<td>{_escape(report.get('owner_action'))}</td>"
         "</tr>"
     )
@@ -503,7 +826,7 @@ def _badge(value: object) -> str:
     class_name = "badge"
     if normalized in {"fresh", "pass", "available"}:
         class_name += " ok"
-    elif normalized in {"missing", "stale"} or "warning" in normalized:
+    elif normalized in {"missing", "stale"} or "warning" in normalized or "waiver" in normalized:
         class_name += " warn"
     return f'<span class="{class_name}">{_escape(text)}</span>'
 

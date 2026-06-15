@@ -19,6 +19,13 @@ defaults:
   production_effect: none
   missing_status: MISSING
   stale_status: STALE
+  freshness_basis: calendar_days
+  freshness_basis_by_cadence:
+    daily: us_equity_trading_days
+    weekly: us_equity_trading_days
+    biweekly: us_equity_trading_days
+    monthly: calendar_days
+    ad_hoc: calendar_days
 reports:
   - report_id: daily_score
     title: Daily Score Report

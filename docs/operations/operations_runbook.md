@@ -113,7 +113,7 @@ aits ops daily-run --as-of YYYY-MM-DD
 |Daily PIT|验证 PIT manifest|`aits pit-snapshots validate --as-of {as_of}`|严重错误必须 fail closed。|
 |Daily scoring|生成每日评分和决策 artifact|`aits score-daily --as-of {as_of}`|必须先通过 `validate-data`；latest production daily-run 会向 `score-daily` 注入风险事件 OpenAI `visibility_cutoff`，历史 as-of 或无 cutoff 的 OpenAI request timestamp 仍按 as-of 当日 UTC 末尾 fail closed；失败时停止 Reader Brief、dashboard/latest 和下游报告。|
 |Dashboard/latest checks|生成 evidence dashboard|`aits reports dashboard --as-of {as_of}`|只读，不替代 `daily_score` 和 trace audit。|
-|Dashboard/latest checks|刷新 report index|`aits reports index --latest`|只读扫描既有报告；`STALE` / `MISSING` 需要进入人工复核。|
+|Dashboard/latest checks|刷新 report index|`aits reports index --latest`|只读扫描既有报告；`PASS_WITH_EXPLICIT_WAIVERS` 表示 missing/stale issue 已在 `config/report_index_visibility_waivers.yaml` 中逐项说明，仍不得把 waived artifact 当作 fresh evidence；unwaived `STALE` / `MISSING` 需要进入人工复核。|
 |Dashboard/latest checks|生成 ETF data quality governance report|`aits etf data-quality report --as-of {as_of}`|在 Reader Brief 前检查 ETF price/artifact/gate/report/link staleness；critical required findings 阻断 dependent research interpretation，optional missing 只 warning。|
 |Dashboard/latest checks|刷新 documentation contract|`aits docs report-contract --latest`|用于检查 registry 与 artifact catalog 文档覆盖。|
 |Dashboard/latest checks|刷新 research governance summary|`aits reports research-governance-summary --latest`|必须在 Reader Brief 前完成；缺失时 Reader Brief 只能披露受限上下文。|

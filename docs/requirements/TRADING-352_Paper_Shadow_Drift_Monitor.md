@@ -108,5 +108,9 @@ rules 或 promotion gates。后续如果进入 extended paper-shadow，应迁移
   `drift_severity=NONE`、`blocking_count=0`、`warning_count=0`、
   `next_action=continue_shadow`，artifact validate 与 standalone validate CLI 均 PASS。
   focused pytest 7 passed，contract-validation suite 41 passed / 9.42s，documentation
-  contract PASS，report index `PASS_WITH_WARNINGS`，Reader Brief OK，Reader Brief quality OK，
-  ruff、compileall 和 git diff check 通过。
+  contract PASS，report index 当时仍为 `PASS_WITH_WARNINGS`，Reader Brief OK，Reader Brief
+  quality OK，ruff、compileall 和 git diff check 通过。
+- 2026-06-15：TRADING-352A 将 report index missing/stale visibility 清理为显式 waiver
+  contract；`aits reports index --as-of 2026-06-15` 返回
+  `PASS_WITH_EXPLICIT_WAIVERS`，`unwaived_warning_count=0`。该清理只改变 report
+  visibility audit，不刷新数据、不补造 artifact、不改变 drift monitor 结论。
