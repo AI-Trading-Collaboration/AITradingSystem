@@ -157,6 +157,18 @@ def run_formal_research_method_contract_fixture(tmp_path: Path) -> dict[str, Any
     return {**fixture, "formal_research_method_contract": contract}
 
 
+def run_paper_shadow_protocol_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_formal_research_method_contract_fixture(tmp_path)
+    contract = fixture["formal_research_method_contract"]
+    protocol = readiness.build_paper_shadow_protocol(
+        contract_id=contract["contract_id"],
+        contract_dir=tmp_path / "formal_research_method_contract",
+        output_dir=tmp_path / "paper_shadow_protocol",
+        generated_at=datetime(2024, 4, 20, tzinfo=UTC),
+    )
+    return {**fixture, "paper_shadow_protocol": protocol}
+
+
 def assert_research_safe(payload: dict[str, Any]) -> None:
     assert payload["broker_action_allowed"] is False
     assert payload["not_official_target_weights"] is True

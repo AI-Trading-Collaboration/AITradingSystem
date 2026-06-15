@@ -4906,6 +4906,32 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_decision_ledger
+    title: ETF Dynamic v3 Candidate Decision Ledger
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-decision-ledger report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/candidate_decision_ledger_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/candidate_decision_record.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/candidate_decision_ledger_snapshot.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/candidate_decision_ledger_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/candidate_decision_ledger_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/*/candidate_decision_ledger_validation.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-349 records the filtered candidate decision chain in an append-only
+      ledger after formal research contract and paper-shadow protocol review,
+      including evidence status, stress/mismatch/rotation/A/B results,
+      confirmation count, owner action, final decision, next action, validation,
+      and no-production safety boundaries.
+    owner_action: owner_review_candidate_decision_ledger_before_next_candidate_step
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: test_runtime_summary
     title: Test Runtime Summary
     group: governance

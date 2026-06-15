@@ -177,6 +177,7 @@ flowchart TD
     ETFV3SIGNALFILTER --> ETFV3FILTERREADY["aits etf dynamic-v3-rescue filtered-candidate-evidence/median-regime-filter-spec/filtered-candidate-stress-backfill/drawdown-mismatch-reduction/flip-rotation-reduction/filtered-candidate-ab-review/signal-gate-confirmation/filtered-formalization-readiness/owner-filtered-candidate-review/filtered-next-decision run|review|register|pack|report|validate<br/>TRADING-336_to_345 filtered signal candidate evidence expansion + formalization readiness<br/>reports/etf_portfolio/dynamic_v3_rescue/filtered_candidate_evidence|median_regime_filter_spec|filtered_candidate_stress_backfill|drawdown_mismatch_reduction|flip_rotation_reduction|filtered_candidate_ab_review|signal_gate_confirmation|filtered_formalization_readiness|owner_filtered_candidate_review|filtered_next_decision/...<br/>research_screening_only / no formal method auto-create / not_official_target_weights=true / no broker or order ticket / production_effect=none"]
     ETFV3FILTERREADY --> ETFV3FORMALCONTRACT["aits etf dynamic-v3-rescue research-method-contract build/report/validate-research-method-contract<br/>TRADING-346 formal research method contract over filtered readiness evidence<br/>reports/etf_portfolio/dynamic_v3_rescue/formal_research_method_contract/...<br/>formal_research_contract_only / not_formal_research_method=true / no official target weights / no broker or order ticket / production_effect=none"]
     ETFV3FORMALCONTRACT --> ETFV3PSPROTOCOL["aits etf dynamic-v3-rescue paper-shadow-protocol build/report/validate-paper-shadow-protocol<br/>TRADING-350 paper-shadow observation protocol<br/>reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_protocol/...<br/>observation_only / paper_shadow_protocol_only / not_official_target_weights=true / broker_action_allowed=false / production_effect=none"]
+    ETFV3PSPROTOCOL --> ETFV3DECISIONLEDGER["aits etf dynamic-v3-rescue candidate-decision-ledger record/report/validate-candidate-decision-ledger<br/>TRADING-349 append-only candidate decision ledger<br/>reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/...<br/>candidate_decision_ledger_only / append_only_ledger / no official target / no broker or order ticket / production_effect=none"]
     ETFV3SMOOTH --> ETFRIDX
     ETFV3SMOOTH --> ETFREAD
     ETFV3SMOOTHWATCH --> ETFRIDX
@@ -201,6 +202,8 @@ flowchart TD
     ETFV3FORMALCONTRACT --> ETFREAD
     ETFV3PSPROTOCOL --> ETFRIDX
     ETFV3PSPROTOCOL --> ETFREAD
+    ETFV3DECISIONLEDGER --> ETFRIDX
+    ETFV3DECISIONLEDGER --> ETFREAD
     ETFV3SMOOTHFRESH --> ETFRIDX
     ETFV3SMOOTHFRESH --> ETFREAD
     ETFV3SMOOTHREFRESH --> ETFRIDX

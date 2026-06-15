@@ -1924,6 +1924,42 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "candidate_decision_ledger",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_ledger_id"
+                        ),
+                    ),
+                    (
+                        "candidate_decision_candidate",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_candidate"
+                        ),
+                    ),
+                    (
+                        "candidate_decision_final_decision",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_final_decision"
+                        ),
+                    ),
+                    (
+                        "candidate_decision_owner_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_owner_action"
+                        ),
+                    ),
+                    (
+                        "candidate_decision_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_next_action"
+                        ),
+                    ),
+                    (
+                        "candidate_decision_ledger_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_ledger_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12200,6 +12236,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_protocol_manifest.json",
     )
+    candidate_decision_ledger_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_candidate_decision_ledger",
+        ),
+        "candidate_decision_ledger_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12606,6 +12649,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         if paper_shadow_protocol_path is not None
         else None
     )
+    candidate_decision_ledger_manifest = _read_optional_json(candidate_decision_ledger_path)
+    candidate_decision_record = _read_optional_json(
+        candidate_decision_ledger_path.parent / "candidate_decision_record.json"
+        if candidate_decision_ledger_path is not None
+        else None
+    )
+    candidate_decision_ledger_validation = _read_optional_json(
+        candidate_decision_ledger_path.parent / "candidate_decision_ledger_validation.json"
+        if candidate_decision_ledger_path is not None
+        else None
+    )
     filtered_candidate_readiness_payloads = (
         filtered_candidate_evidence_manifest,
         filtered_candidate_evidence_summary,
@@ -12631,6 +12685,12 @@ def _etf_dynamic_v3_parameter_research_summary(
         formal_research_method_contract,
         formal_research_method_decision,
         formal_research_method_validation,
+        paper_shadow_protocol_manifest,
+        paper_shadow_protocol,
+        paper_shadow_protocol_validation,
+        candidate_decision_ledger_manifest,
+        candidate_decision_record,
+        candidate_decision_ledger_validation,
     )
     outcome_loop_payloads = (
         outcome_update_review,
@@ -13815,6 +13875,58 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_protocol.get("next_required_action"),
             "MISSING",
         ),
+        "candidate_decision_ledger_id": _text(
+            candidate_decision_ledger_manifest.get("ledger_run_id"),
+            "MISSING",
+        ),
+        "candidate_decision_record_id": _text(
+            candidate_decision_record.get("record_id"),
+            "MISSING",
+        ),
+        "candidate_decision_candidate": _text(
+            candidate_decision_record.get("candidate"),
+            "MISSING",
+        ),
+        "candidate_decision_evidence_status": _text(
+            candidate_decision_record.get("evidence_status"),
+            "MISSING",
+        ),
+        "candidate_decision_stress_result": _text(
+            candidate_decision_record.get("stress_result"),
+            "MISSING",
+        ),
+        "candidate_decision_mismatch_result": _text(
+            candidate_decision_record.get("mismatch_result"),
+            "MISSING",
+        ),
+        "candidate_decision_rotation_result": _text(
+            candidate_decision_record.get("rotation_result"),
+            "MISSING",
+        ),
+        "candidate_decision_ab_result": _text(
+            candidate_decision_record.get("ab_result"),
+            "MISSING",
+        ),
+        "candidate_decision_confirmation_count": candidate_decision_record.get(
+            "confirmation_count",
+            "MISSING",
+        ),
+        "candidate_decision_owner_action": _text(
+            candidate_decision_record.get("owner_action"),
+            "MISSING",
+        ),
+        "candidate_decision_final_decision": _text(
+            candidate_decision_record.get("final_decision"),
+            "MISSING",
+        ),
+        "candidate_decision_next_action": _text(
+            candidate_decision_record.get("next_required_action"),
+            "MISSING",
+        ),
+        "candidate_decision_ledger_validation_status": _text(
+            candidate_decision_ledger_validation.get("status"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -13988,6 +14100,11 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_protocol": (
             "" if paper_shadow_protocol_path is None else str(paper_shadow_protocol_path)
+        ),
+        "candidate_decision_ledger": (
+            ""
+            if candidate_decision_ledger_path is None
+            else str(candidate_decision_ledger_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -14851,6 +14968,19 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_protocol_min_observation_days": "MISSING",
         "paper_shadow_protocol_validation_status": "MISSING",
         "paper_shadow_protocol_next_action": "MISSING",
+        "candidate_decision_ledger_id": "MISSING",
+        "candidate_decision_record_id": "MISSING",
+        "candidate_decision_candidate": "MISSING",
+        "candidate_decision_evidence_status": "MISSING",
+        "candidate_decision_stress_result": "MISSING",
+        "candidate_decision_mismatch_result": "MISSING",
+        "candidate_decision_rotation_result": "MISSING",
+        "candidate_decision_ab_result": "MISSING",
+        "candidate_decision_confirmation_count": "MISSING",
+        "candidate_decision_owner_action": "MISSING",
+        "candidate_decision_final_decision": "MISSING",
+        "candidate_decision_next_action": "MISSING",
+        "candidate_decision_ledger_validation_status": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",
@@ -14893,6 +15023,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_trend": "",
         "forward_outcome_decision": "",
         "paper_shadow_protocol": "",
+        "candidate_decision_ledger": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

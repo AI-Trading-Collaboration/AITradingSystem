@@ -1466,6 +1466,23 @@ official target weights、不触发 broker 或 order ticket，所有输出固定
 `paper_shadow_protocol_only=true`、`observation_only=true`、`manual_review_only=true`、
 `not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-349_CANDIDATE_DECISION_LEDGER 在 formal contract 和 paper-shadow protocol
+之后记录 append-only candidate decision ledger。CLI 入口为
+`aits etf dynamic-v3-rescue candidate-decision-ledger record`、
+`aits etf dynamic-v3-rescue candidate-decision-ledger report --latest` 和
+`aits etf dynamic-v3-rescue validate-candidate-decision-ledger --ledger-run-id <ledger_run_id>`。
+Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/candidate_decision_ledger/`，canonical JSONL
+ledger 为 `candidate_decision_ledger.jsonl`；每次 record 还会写出 run-specific manifest、
+record JSON、ledger snapshot、Markdown report、Reader Brief section 和 validation JSON/Markdown，
+并登记 report registry / latest pointer / Reader Brief 摘要。Ledger 记录 candidate id、
+evidence status、stress / mismatch / rotation / A/B result、confirmation count、owner action、
+final decision 和 next required action；它只记录人工复核轨迹，不是 owner approval、
+paper account initializer、official target weights、broker/order workflow 或 production
+promotion。所有输出固定 `candidate_decision_ledger_only=true`、`append_only_ledger=true`、
+`manual_review_only=true`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -1291,6 +1291,54 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         ),
         encoding="utf-8",
     )
+    ledger_dir = tmp_path / "candidate_decision_ledger" / "ledger123"
+    ledger_dir.mkdir(parents=True)
+    ledger_path = ledger_dir / "candidate_decision_ledger_manifest.json"
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "ledger_run_id": "ledger123",
+                "record_id": "record123",
+                "status": "PASS",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (ledger_dir / "candidate_decision_record.json").write_text(
+        json.dumps(
+            {
+                "record_id": "record123",
+                "candidate": "median_plus_regime_mismatch_filter",
+                "evidence_status": "PROMISING",
+                "stress_result": "STRONG",
+                "mismatch_result": "IMPROVED",
+                "rotation_result": "IMPROVED",
+                "ab_result": "PROMISING",
+                "confirmation_count": 3,
+                "owner_action": "formalize_research_method",
+                "final_decision": "FORMALIZE_RESEARCH_METHOD",
+                "next_required_action": "start_daily_paper_shadow_runner_design",
+                "production_effect": "none",
+                "broker_action_taken": False,
+                "production_candidate_generated": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (ledger_dir / "candidate_decision_ledger_validation.json").write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "failed_check_count": 0,
+                "production_effect": "none",
+                "broker_action_taken": False,
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
@@ -1301,6 +1349,7 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
             _report_record("etf_dynamic_v3_rolling_evidence_refresh", refresh_path),
             _report_record("etf_dynamic_v3_evidence_trend", trend_path),
             _report_record("etf_dynamic_v3_forward_outcome_decision", decision_path),
+            _report_record("etf_dynamic_v3_candidate_decision_ledger", ledger_path),
         ]
     }
 
@@ -1338,6 +1387,22 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["rolling_evidence_refresh_status"] == "PASS"
     assert summary["rolling_limited_vs_notrade_count_before"] == 2
     assert summary["rolling_limited_vs_notrade_count_after"] == 3
+    assert summary["candidate_decision_ledger_id"] == "ledger123"
+    assert summary["candidate_decision_record_id"] == "record123"
+    assert summary["candidate_decision_candidate"] == "median_plus_regime_mismatch_filter"
+    assert summary["candidate_decision_evidence_status"] == "PROMISING"
+    assert summary["candidate_decision_stress_result"] == "STRONG"
+    assert summary["candidate_decision_mismatch_result"] == "IMPROVED"
+    assert summary["candidate_decision_rotation_result"] == "IMPROVED"
+    assert summary["candidate_decision_ab_result"] == "PROMISING"
+    assert summary["candidate_decision_confirmation_count"] == 3
+    assert summary["candidate_decision_owner_action"] == "formalize_research_method"
+    assert summary["candidate_decision_final_decision"] == "FORMALIZE_RESEARCH_METHOD"
+    assert (
+        summary["candidate_decision_next_action"]
+        == "start_daily_paper_shadow_runner_design"
+    )
+    assert summary["candidate_decision_ledger_validation_status"] == "PASS"
     assert summary["rolling_consensus_risk_after"] == "INSUFFICIENT_DATA"
     assert summary["rolling_weekly_advisory_review_id"] == "weekly123"
     assert summary["evidence_trend_status"] == "INSUFFICIENT_HISTORY"

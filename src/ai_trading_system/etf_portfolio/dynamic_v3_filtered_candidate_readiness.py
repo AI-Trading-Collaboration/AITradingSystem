@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -44,6 +45,9 @@ DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "formal_research_method_contract"
 )
 DEFAULT_PAPER_SHADOW_PROTOCOL_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_protocol"
+DEFAULT_CANDIDATE_DECISION_LEDGER_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_decision_ledger"
+)
 
 TOP_FILTERED_CANDIDATE = "median_plus_regime_mismatch_filter"
 FORMAL_RESEARCH_PROMOTION_STATES = (
@@ -90,6 +94,12 @@ PAPER_SHADOW_EXIT_CONDITIONS = (
     "return_to_research",
     "reject",
 )
+CANDIDATE_DECISION_LEDGER_SAFETY = {
+    **st.SYSTEM_TARGET_SAFETY,
+    "manual_review_only": True,
+    "candidate_decision_ledger_only": True,
+    "append_only_ledger": True,
+}
 
 # TRADING-336_to_345 pilot readiness constants. They are documented in the
 # requirement file and classify research-only evidence; they do not approve
@@ -1891,6 +1901,310 @@ def validate_paper_shadow_protocol_artifact(
     return validation
 
 
+def record_candidate_decision_ledger(
+    *,
+    candidate: str = TOP_FILTERED_CANDIDATE,
+    evidence_id: str | None = None,
+    stress_backfill_id: str | None = None,
+    mismatch_reduction_id: str | None = None,
+    flip_reduction_id: str | None = None,
+    ab_review_id: str | None = None,
+    confirmation_id: str | None = None,
+    owner_review_id: str | None = None,
+    next_decision_id: str | None = None,
+    contract_id: str | None = None,
+    protocol_id: str | None = None,
+    evidence_dir: Path = DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR,
+    stress_backfill_dir: Path = DEFAULT_FILTERED_CANDIDATE_STRESS_BACKFILL_DIR,
+    mismatch_reduction_dir: Path = DEFAULT_DRAWDOWN_MISMATCH_REDUCTION_DIR,
+    flip_reduction_dir: Path = DEFAULT_FLIP_ROTATION_REDUCTION_DIR,
+    ab_review_dir: Path = DEFAULT_FILTERED_CANDIDATE_AB_REVIEW_DIR,
+    confirmation_dir: Path = DEFAULT_SIGNAL_GATE_CONFIRMATION_DIR,
+    owner_review_dir: Path = DEFAULT_OWNER_FILTERED_CANDIDATE_REVIEW_DIR,
+    next_decision_dir: Path = DEFAULT_FILTERED_NEXT_DECISION_DIR,
+    contract_dir: Path = DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    protocol_dir: Path = DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    evidence = filtered_candidate_evidence_report_payload(
+        evidence_id=evidence_id, latest=evidence_id is None, output_dir=evidence_dir
+    )
+    stress = filtered_candidate_stress_backfill_report_payload(
+        stress_backfill_id=stress_backfill_id,
+        latest=stress_backfill_id is None,
+        output_dir=stress_backfill_dir,
+    )
+    mismatch = drawdown_mismatch_reduction_report_payload(
+        reduction_id=mismatch_reduction_id,
+        latest=mismatch_reduction_id is None,
+        output_dir=mismatch_reduction_dir,
+    )
+    flip = flip_rotation_reduction_report_payload(
+        flip_reduction_id=flip_reduction_id,
+        latest=flip_reduction_id is None,
+        output_dir=flip_reduction_dir,
+    )
+    ab_review = filtered_candidate_ab_review_report_payload(
+        ab_review_id=ab_review_id,
+        latest=ab_review_id is None,
+        output_dir=ab_review_dir,
+    )
+    confirmation = signal_gate_confirmation_report_payload(
+        confirmation_id=confirmation_id,
+        latest=confirmation_id is None,
+        output_dir=confirmation_dir,
+    )
+    owner_review = owner_filtered_candidate_review_report_payload(
+        owner_review_id=owner_review_id,
+        latest=owner_review_id is None,
+        output_dir=owner_review_dir,
+    )
+    next_decision = filtered_next_decision_report_payload(
+        decision_id=next_decision_id,
+        latest=next_decision_id is None,
+        output_dir=next_decision_dir,
+    )
+    contract = formal_research_method_contract_report_payload(
+        contract_id=contract_id,
+        latest=contract_id is None,
+        output_dir=contract_dir,
+    )
+    protocol = paper_shadow_protocol_report_payload(
+        protocol_id=protocol_id,
+        latest=protocol_id is None,
+        output_dir=protocol_dir,
+    )
+    evidence_summary = _mapping(evidence.get("filtered_candidate_evidence_summary"))
+    stress_summary = _mapping(stress.get("filtered_candidate_stress_summary"))
+    mismatch_summary = _mapping(mismatch.get("mismatch_reduction_summary"))
+    flip_summary = _mapping(flip.get("flip_rotation_reduction_summary"))
+    ab_summary = _mapping(ab_review.get("ab_summary"))
+    confirmation_targets = _mapping(confirmation.get("signal_gate_confirmation_targets"))
+    owner_summary = _mapping(owner_review.get("owner_filtered_candidate_summary"))
+    decision = _mapping(next_decision.get("filtered_next_decision"))
+    contract_decision = _mapping(contract.get("formal_research_method_decision"))
+    protocol_payload = _mapping(protocol.get("paper_shadow_protocol"))
+    confirmation_count = len(_records(confirmation_targets.get("targets")))
+    record_id = _stable_id(
+        "candidate-decision-ledger",
+        candidate,
+        _text(evidence.get("evidence_id")),
+        _text(next_decision.get("decision_id")),
+        _text(contract.get("contract_id")),
+        _text(protocol.get("protocol_id")),
+        generated.isoformat(),
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    ledger_path = output_dir / "candidate_decision_ledger.jsonl"
+    existing_rows = _read_jsonl(ledger_path) if ledger_path.exists() else []
+    record = {
+        "schema_version": st.SCHEMA_VERSION,
+        "record_id": record_id,
+        "candidate": candidate,
+        "generated_at": generated.isoformat(),
+        "ledger_sequence": len(existing_rows) + 1,
+        "evidence_status": evidence_summary.get("evidence_status"),
+        "stress_result": stress_summary.get("stress_robustness_status"),
+        "mismatch_result": mismatch_summary.get("drawdown_mismatch_reduction_status"),
+        "rotation_result": flip_summary.get("rotation_reduction_status")
+        or flip_summary.get("flip_reduction_status"),
+        "ab_result": ab_summary.get("overall_ab_status"),
+        "confirmation_count": confirmation_count,
+        "owner_action": owner_summary.get("recommended_owner_action"),
+        "final_decision": decision.get("decision")
+        or contract_decision.get("formal_research_method_status"),
+        "next_required_action": protocol_payload.get("next_required_action")
+        or contract_decision.get("next_required_action")
+        or decision.get("next_action"),
+        "source_artifacts": {
+            "evidence_id": evidence.get("evidence_id"),
+            "stress_backfill_id": stress.get("stress_backfill_id"),
+            "mismatch_reduction_id": mismatch.get("reduction_id"),
+            "flip_reduction_id": flip.get("flip_reduction_id"),
+            "ab_review_id": ab_review.get("ab_review_id"),
+            "confirmation_id": confirmation.get("confirmation_id"),
+            "owner_review_id": owner_review.get("owner_review_id"),
+            "next_decision_id": next_decision.get("decision_id"),
+            "contract_id": contract.get("contract_id"),
+            "protocol_id": protocol.get("protocol_id"),
+        },
+        "ledger_path": str(ledger_path),
+        **CANDIDATE_DECISION_LEDGER_SAFETY,
+    }
+    with ledger_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")
+    ledger_rows = _read_jsonl(ledger_path)
+    root = _unique_dir(output_dir / record_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_decision_ledger_manifest",
+        "ledger_run_id": root.name,
+        "record_id": record_id,
+        "candidate": candidate,
+        "generated_at": generated.isoformat(),
+        "status": "PASS",
+        "ledger_path": str(ledger_path),
+        "record_count": len(ledger_rows),
+        "candidate_decision_ledger_manifest_path": str(
+            root / "candidate_decision_ledger_manifest.json"
+        ),
+        "candidate_decision_record_path": str(root / "candidate_decision_record.json"),
+        "candidate_decision_ledger_snapshot_path": str(
+            root / "candidate_decision_ledger_snapshot.jsonl"
+        ),
+        "candidate_decision_ledger_report_path": str(
+            root / "candidate_decision_ledger_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **CANDIDATE_DECISION_LEDGER_SAFETY,
+    }
+    reader = render_candidate_decision_ledger_reader_brief(record)
+    _write_json(root / "candidate_decision_ledger_manifest.json", manifest)
+    _write_json(root / "candidate_decision_record.json", record)
+    _write_jsonl(root / "candidate_decision_ledger_snapshot.jsonl", ledger_rows)
+    _write_text(root / "candidate_decision_ledger_report.md", render_candidate_decision_ledger_report(manifest, record, ledger_rows))
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_candidate_decision_ledger",
+        root.name,
+        root / "candidate_decision_ledger_manifest.json",
+    )
+    validation = validate_candidate_decision_ledger_artifact(
+        ledger_run_id=root.name,
+        output_dir=output_dir,
+        write_output=True,
+    )
+    return {
+        "ledger_run_id": root.name,
+        "record_id": record_id,
+        "ledger_dir": root,
+        "manifest": manifest,
+        "candidate_decision_record": record,
+        "ledger_rows": ledger_rows,
+        "reader_brief_section": reader,
+        "candidate_decision_ledger_validation": validation,
+    }
+
+
+def candidate_decision_ledger_report_payload(
+    *,
+    ledger_run_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=ledger_run_id,
+        latest_pointer="latest_candidate_decision_ledger",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="candidate_decision_ledger_manifest.json",
+    )
+    payload = {
+        **_read_json(root / "candidate_decision_ledger_manifest.json"),
+        "candidate_decision_record": _read_json(root / "candidate_decision_record.json"),
+        "candidate_decision_ledger_snapshot": _read_jsonl(
+            root / "candidate_decision_ledger_snapshot.jsonl"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "ledger_dir": str(root),
+    }
+    validation = _read_optional_json(root / "candidate_decision_ledger_validation.json")
+    if validation:
+        payload["candidate_decision_ledger_validation"] = validation
+    return payload
+
+
+def validate_candidate_decision_ledger_artifact(
+    *,
+    ledger_run_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+    write_output: bool = True,
+) -> dict[str, Any]:
+    root = output_dir / ledger_run_id
+    manifest = _read_optional_json(root / "candidate_decision_ledger_manifest.json") or {}
+    record = _read_optional_json(root / "candidate_decision_record.json") or {}
+    snapshot = _read_jsonl(root / "candidate_decision_ledger_snapshot.jsonl")
+    ledger_path = Path(_text(manifest.get("ledger_path"), str(output_dir / "candidate_decision_ledger.jsonl")))
+    canonical_rows = _read_jsonl(ledger_path) if ledger_path.exists() else []
+    reader = (
+        (root / "reader_brief_section.md").read_text(encoding="utf-8")
+        if (root / "reader_brief_section.md").exists()
+        else ""
+    )
+    record_id = record.get("record_id")
+    required_fields = (
+        "candidate",
+        "evidence_status",
+        "stress_result",
+        "mismatch_result",
+        "rotation_result",
+        "ab_result",
+        "confirmation_count",
+        "owner_action",
+        "final_decision",
+        "next_required_action",
+    )
+    checks = _required_file_checks(
+        root,
+        (
+            "candidate_decision_ledger_manifest.json",
+            "candidate_decision_record.json",
+            "candidate_decision_ledger_snapshot.jsonl",
+            "candidate_decision_ledger_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("ledger_run_id_matches", manifest.get("ledger_run_id") == ledger_run_id, ""),
+            st._check("record_id_visible", bool(record_id), ""),
+            st._check(
+                "required_decision_fields_visible",
+                all(record.get(field) not in (None, "") for field in required_fields),
+                "",
+            ),
+            st._check(
+                "snapshot_contains_record",
+                any(row.get("record_id") == record_id for row in snapshot),
+                "",
+            ),
+            st._check(
+                "canonical_ledger_contains_record",
+                any(row.get("record_id") == record_id for row in canonical_rows),
+                "",
+            ),
+            st._check(
+                "append_only_count_visible",
+                manifest.get("record_count") == len(snapshot)
+                and len(canonical_rows) >= len(snapshot),
+                "",
+            ),
+            st._check(
+                "source_artifacts_visible",
+                len(_mapping(record.get("source_artifacts"))) >= 8,
+                "",
+            ),
+            st._check("reader_brief_quality_fields", "candidate_decision_ledger_status" in reader, ""),
+            st._check("broker_forbidden", _payload_safe(manifest, record), ""),
+        ]
+    )
+    validation = _validation_payload(
+        "etf_dynamic_v3_candidate_decision_ledger_validation",
+        ledger_run_id,
+        checks,
+    )
+    if write_output:
+        _write_json(root / "candidate_decision_ledger_validation.json", validation)
+        _write_text(
+            root / "candidate_decision_ledger_validation.md",
+            render_candidate_decision_ledger_validation_report(validation),
+        )
+    return validation
+
+
 def render_filtered_candidate_evidence_reader_brief(summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
@@ -2461,6 +2775,109 @@ def render_paper_shadow_protocol_validation_report(validation: Mapping[str, Any]
     return "\n".join(
         [
             f"# Paper Shadow Protocol Validation {validation.get('artifact_id')}",
+            "",
+            f"- status: {validation.get('status')}",
+            f"- failed_check_count: {validation.get('failed_check_count')}",
+            "- production_effect: none",
+            "",
+            "## Checks",
+            *check_lines,
+            "",
+        ]
+    )
+
+
+def render_candidate_decision_ledger_reader_brief(record: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "## Candidate Decision Ledger",
+            "",
+            f"- summary: {record.get('candidate')} append-only candidate decision record.",
+            f"- key_result: candidate_decision_ledger_status=RECORDED final_decision={record.get('final_decision')}",
+            f"- evidence_status: {record.get('evidence_status')}",
+            f"- stress_result: {record.get('stress_result')}",
+            f"- mismatch_result: {record.get('mismatch_result')}",
+            f"- rotation_result: {record.get('rotation_result')}",
+            f"- ab_result: {record.get('ab_result')}",
+            f"- confirmation_count: {record.get('confirmation_count')}",
+            f"- owner_action: {record.get('owner_action')}",
+            f"- next_required_action: {record.get('next_required_action')}",
+            "- safety_boundary: append-only ledger / manual review only / no official target / no broker / no production",
+            "",
+        ]
+    )
+
+
+def render_candidate_decision_ledger_report(
+    manifest: Mapping[str, Any],
+    record: Mapping[str, Any],
+    ledger_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    source_lines = [
+        f"- {name}: {artifact_id}"
+        for name, artifact_id in sorted(_mapping(record.get("source_artifacts")).items())
+    ]
+    recent_lines = [
+        f"- seq={row.get('ledger_sequence')} record_id={row.get('record_id')} candidate={row.get('candidate')} final_decision={row.get('final_decision')} next={row.get('next_required_action')}"
+        for row in ledger_rows[-10:]
+    ]
+    return "\n".join(
+        [
+            f"# Candidate Decision Ledger {manifest.get('ledger_run_id')}",
+            "",
+            "## Purpose",
+            "记录 filtered candidate research chain 的 append-only decision history；本报告不批准 production、不写 official target weights、不触发 broker 或 order 系统。",
+            "",
+            "## Current Record",
+            f"- record_id: {record.get('record_id')}",
+            f"- candidate: {record.get('candidate')}",
+            f"- ledger_sequence: {record.get('ledger_sequence')}",
+            f"- evidence_status: {record.get('evidence_status')}",
+            f"- stress_result: {record.get('stress_result')}",
+            f"- mismatch_result: {record.get('mismatch_result')}",
+            f"- rotation_result: {record.get('rotation_result')}",
+            f"- ab_result: {record.get('ab_result')}",
+            f"- confirmation_count: {record.get('confirmation_count')}",
+            f"- owner_action: {record.get('owner_action')}",
+            f"- final_decision: {record.get('final_decision')}",
+            f"- next_required_action: {record.get('next_required_action')}",
+            "",
+            "## Source Artifacts",
+            *source_lines,
+            "",
+            "## Ledger Snapshot",
+            f"- canonical_ledger_path: {manifest.get('ledger_path')}",
+            f"- record_count: {manifest.get('record_count')}",
+            *recent_lines,
+            "",
+            "## Safety Boundary",
+            "- append-only ledger",
+            "- manual review only",
+            "- no official target weights",
+            "- no broker integration",
+            "- no order tickets",
+            "- no production mutation",
+            "",
+            "## Limitations",
+            "- TRADING-349 records decision evidence state only; it does not approve implementation.",
+            "- A ledger record is not owner approval, a paper-shadow daily runner, or a production target.",
+            "- Later decisions must append a new record instead of rewriting prior records.",
+            "",
+            "## Next Action",
+            f"- {record.get('next_required_action')}",
+            "",
+        ]
+    )
+
+
+def render_candidate_decision_ledger_validation_report(validation: Mapping[str, Any]) -> str:
+    check_lines = [
+        f"- {row.get('check_id')}: passed={row.get('passed')} detail={row.get('detail')}"
+        for row in _records(validation.get("checks"))
+    ]
+    return "\n".join(
+        [
+            f"# Candidate Decision Ledger Validation {validation.get('artifact_id')}",
             "",
             f"- status: {validation.get('status')}",
             f"- failed_check_count: {validation.get('failed_check_count')}",

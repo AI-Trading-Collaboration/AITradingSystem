@@ -1819,6 +1819,10 @@ dynamic_v3_paper_shadow_protocol_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow protocol workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_candidate_decision_ledger_app = typer.Typer(
+    help="Dynamic v3 rescue candidate decision ledger workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2575,6 +2579,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_protocol_app,
     name="paper-shadow-protocol",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_candidate_decision_ledger_app,
+    name="candidate-decision-ledger",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -19675,6 +19683,132 @@ def dynamic_v3_validate_paper_shadow_protocol_command(
     _echo_validation_payload(
         filtered_readiness.validate_paper_shadow_protocol_artifact(
             protocol_id=protocol_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_candidate_decision_ledger_app.command("record")
+def dynamic_v3_candidate_decision_ledger_record_command(
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    evidence_id: Annotated[
+        str | None,
+        typer.Option("--evidence-id", help="filtered candidate evidence id；缺省读取 latest。"),
+    ] = None,
+    stress_backfill_id: Annotated[
+        str | None,
+        typer.Option("--stress-backfill-id", help="stress backfill id；缺省读取 latest。"),
+    ] = None,
+    mismatch_reduction_id: Annotated[
+        str | None,
+        typer.Option(
+            "--mismatch-reduction-id",
+            help="drawdown mismatch reduction id；缺省读取 latest。",
+        ),
+    ] = None,
+    flip_reduction_id: Annotated[
+        str | None,
+        typer.Option("--flip-reduction-id", help="flip rotation reduction id；缺省读取 latest。"),
+    ] = None,
+    ab_review_id: Annotated[
+        str | None,
+        typer.Option("--ab-review-id", help="filtered candidate A/B review id；缺省读取 latest。"),
+    ] = None,
+    confirmation_id: Annotated[
+        str | None,
+        typer.Option("--confirmation-id", help="signal gate confirmation id；缺省读取 latest。"),
+    ] = None,
+    owner_review_id: Annotated[
+        str | None,
+        typer.Option("--owner-review-id", help="owner filtered review id；缺省读取 latest。"),
+    ] = None,
+    next_decision_id: Annotated[
+        str | None,
+        typer.Option("--next-decision-id", help="filtered next decision id；缺省读取 latest。"),
+    ] = None,
+    contract_id: Annotated[
+        str | None,
+        typer.Option("--contract-id", help="formal research method contract id；缺省读取 latest。"),
+    ] = None,
+    protocol_id: Annotated[
+        str | None,
+        typer.Option("--protocol-id", help="paper-shadow protocol id；缺省读取 latest。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate decision ledger artifact root。"),
+    ] = filtered_readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+) -> None:
+    result = filtered_readiness.record_candidate_decision_ledger(
+        candidate=candidate,
+        evidence_id=evidence_id,
+        stress_backfill_id=stress_backfill_id,
+        mismatch_reduction_id=mismatch_reduction_id,
+        flip_reduction_id=flip_reduction_id,
+        ab_review_id=ab_review_id,
+        confirmation_id=confirmation_id,
+        owner_review_id=owner_review_id,
+        next_decision_id=next_decision_id,
+        contract_id=contract_id,
+        protocol_id=protocol_id,
+        output_dir=output_dir,
+    )
+    record = _mapping_obj(result.get("candidate_decision_record"))
+    validation = _mapping_obj(result.get("candidate_decision_ledger_validation"))
+    typer.echo(f"ledger_run_id={result['ledger_run_id']}")
+    typer.echo(f"record_id={result['record_id']}")
+    typer.echo(f"candidate={record.get('candidate')}")
+    typer.echo(f"final_decision={record.get('final_decision')}")
+    typer.echo(f"next_required_action={record.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("append_only_ledger=true")
+    typer.echo("candidate_decision_ledger_only=true")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_candidate_decision_ledger_app.command("report")
+def dynamic_v3_candidate_decision_ledger_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    ledger_run_id: Annotated[
+        str | None,
+        typer.Option("--ledger-run-id", help="ledger run id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate decision ledger artifact root。"),
+    ] = filtered_readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+) -> None:
+    payload = filtered_readiness.candidate_decision_ledger_report_payload(
+        ledger_run_id=ledger_run_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    record = _mapping_obj(payload.get("candidate_decision_record"))
+    typer.echo(f"ledger_run_id={payload['ledger_run_id']}")
+    typer.echo(f"record_id={payload['record_id']}")
+    typer.echo(f"candidate={record.get('candidate')}")
+    typer.echo(f"final_decision={record.get('final_decision')}")
+    typer.echo(f"next_required_action={record.get('next_required_action')}")
+    typer.echo(f"report_path={payload['candidate_decision_ledger_report_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-candidate-decision-ledger")
+def dynamic_v3_validate_candidate_decision_ledger_command(
+    ledger_run_id: Annotated[str, typer.Option("--ledger-run-id", help="ledger run id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate decision ledger artifact root。"),
+    ] = filtered_readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+) -> None:
+    _echo_validation_payload(
+        filtered_readiness.validate_candidate_decision_ledger_artifact(
+            ledger_run_id=ledger_run_id,
             output_dir=output_dir,
         )
     )
