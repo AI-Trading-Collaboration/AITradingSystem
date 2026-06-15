@@ -1426,6 +1426,22 @@ formal method config、official target weights、portfolio mutation、order tick
 `broker_action_allowed=false`、`broker_action_taken=false`、`order_ticket_generated=false`、
 `auto_apply=false`、`production_effect=none`。
 
+TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT 将上述 filtered candidate readiness
+chain 汇总为 research-only formal method contract。CLI 入口为
+`aits etf dynamic-v3-rescue research-method-contract build`、
+`aits etf dynamic-v3-rescue research-method-contract report --latest` 和
+`aits etf dynamic-v3-rescue validate-research-method-contract --contract-id <contract_id>`。
+Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/formal_research_method_contract/`，包含
+contract manifest、contract JSON、decision JSON、Reader Brief section、Markdown report 和
+validation JSON/Markdown，并登记 report registry / latest pointer / Reader Brief 摘要。
+该 contract 公开 promotion states、objective gates、failure conditions、paper-shadow
+eligibility 和 safety boundary；`FORMAL_RESEARCH_READY` 仅表示可以另开 research-only
+method implementation，不是 production approval。所有输出继续固定
+`formal_research_contract_only=true`、`not_formal_research_method=true`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、
+`order_ticket_generated=false`、`auto_apply=false`、`production_effect=none`。
+
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

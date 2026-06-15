@@ -127,6 +127,36 @@ def run_filtered_next_decision_fixture(tmp_path: Path) -> dict[str, Any]:
     return {**fixture, "filtered_next_decision": decision}
 
 
+def run_formal_research_method_contract_fixture(tmp_path: Path) -> dict[str, Any]:
+    fixture = run_filtered_next_decision_fixture(tmp_path)
+    contract = readiness.build_formal_research_method_contract(
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
+        spec_id=fixture["median_regime_filter_spec"]["spec_id"],
+        stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
+        mismatch_reduction_id=fixture["drawdown_mismatch_reduction"]["reduction_id"],
+        flip_reduction_id=fixture["flip_rotation_reduction"]["flip_reduction_id"],
+        ab_review_id=fixture["filtered_candidate_ab_review"]["ab_review_id"],
+        confirmation_id=fixture["signal_gate_confirmation"]["confirmation_id"],
+        readiness_id=fixture["filtered_formalization_readiness"]["readiness_id"],
+        owner_review_id=fixture["owner_filtered_candidate_review"]["owner_review_id"],
+        next_decision_id=fixture["filtered_next_decision"]["decision_id"],
+        evidence_dir=tmp_path / "filtered_candidate_evidence",
+        spec_dir=tmp_path / "median_regime_filter_spec",
+        stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
+        mismatch_reduction_dir=tmp_path / "drawdown_mismatch_reduction",
+        flip_reduction_dir=tmp_path / "flip_rotation_reduction",
+        ab_review_dir=tmp_path / "filtered_candidate_ab_review",
+        confirmation_dir=tmp_path / "signal_gate_confirmation",
+        readiness_dir=tmp_path / "filtered_formalization_readiness",
+        owner_review_dir=tmp_path / "owner_filtered_candidate_review",
+        next_decision_dir=tmp_path / "filtered_next_decision",
+        output_dir=tmp_path / "formal_research_method_contract",
+        generated_at=datetime(2024, 4, 19, tzinfo=UTC),
+    )
+    return {**fixture, "formal_research_method_contract": contract}
+
+
 def assert_research_safe(payload: dict[str, Any]) -> None:
     assert payload["broker_action_allowed"] is False
     assert payload["not_official_target_weights"] is True

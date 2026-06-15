@@ -1868,6 +1868,36 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_parameter_research.get("filtered_next_decision"),
                     ),
                     (
+                        "formal_research_method_contract",
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_contract_id"
+                        ),
+                    ),
+                    (
+                        "formal_research_method_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_status"
+                        ),
+                    ),
+                    (
+                        "formal_research_method_promotion_state",
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_promotion_state"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_eligibility",
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_paper_shadow_eligibility"
+                        ),
+                    ),
+                    (
+                        "contract_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_validation_status"
+                        ),
+                    ),
+                    (
                         "filtered_next_action",
                         etf_dynamic_v3_parameter_research.get("filtered_next_action"),
                     ),
@@ -12130,6 +12160,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         _report_index_artifact_path(report_index, "etf_dynamic_v3_filtered_next_decision"),
         "filtered_next_decision_manifest.json",
     )
+    formal_research_method_contract_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_formal_research_method_contract",
+        ),
+        "formal_research_method_contract_manifest.json",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
     evidence_path = (
@@ -12506,6 +12543,25 @@ def _etf_dynamic_v3_parameter_research_summary(
         if filtered_next_decision_path is not None
         else None
     )
+    formal_research_method_contract_manifest = _read_optional_json(
+        formal_research_method_contract_path
+    )
+    formal_research_method_contract = _read_optional_json(
+        formal_research_method_contract_path.parent / "formal_research_method_contract.json"
+        if formal_research_method_contract_path is not None
+        else None
+    )
+    formal_research_method_decision = _read_optional_json(
+        formal_research_method_contract_path.parent / "formal_research_method_decision.json"
+        if formal_research_method_contract_path is not None
+        else None
+    )
+    formal_research_method_validation = _read_optional_json(
+        formal_research_method_contract_path.parent
+        / "formal_research_method_contract_validation.json"
+        if formal_research_method_contract_path is not None
+        else None
+    )
     filtered_candidate_readiness_payloads = (
         filtered_candidate_evidence_manifest,
         filtered_candidate_evidence_summary,
@@ -12527,6 +12583,10 @@ def _etf_dynamic_v3_parameter_research_summary(
         owner_filtered_candidate_summary,
         filtered_next_decision_manifest,
         filtered_next_decision,
+        formal_research_method_contract_manifest,
+        formal_research_method_contract,
+        formal_research_method_decision,
+        formal_research_method_validation,
     )
     outcome_loop_payloads = (
         outcome_update_review,
@@ -12864,6 +12924,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"{owner_filtered_candidate_summary.get('recommended_owner_action', 'MISSING')}; "
             f"filtered_next="
             f"{filtered_next_decision.get('decision', 'MISSING')}; "
+            f"formal_research_contract="
+            f"{formal_research_method_decision.get('promotion_state', 'MISSING')}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -13661,6 +13723,31 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "filtered_next_decision": _text(filtered_next_decision.get("decision"), "MISSING"),
         "filtered_next_action": _text(filtered_next_decision.get("next_action"), "MISSING"),
+        "formal_research_method_contract_id": _text(
+            formal_research_method_contract_manifest.get("contract_id"),
+            "MISSING",
+        ),
+        "formal_research_method_status": _text(
+            formal_research_method_decision.get("formal_research_method_status"),
+            "MISSING",
+        ),
+        "formal_research_method_promotion_state": _text(
+            formal_research_method_decision.get("promotion_state"),
+            "MISSING",
+        ),
+        "formal_research_method_paper_shadow_eligibility": _text(
+            formal_research_method_decision.get("paper_shadow_eligibility"),
+            "MISSING",
+        ),
+        "formal_research_method_safety_boundary_status": _text(
+            formal_research_method_contract.get("safety_boundary_status")
+            or formal_research_method_decision.get("safety_boundary_status"),
+            "MISSING",
+        ),
+        "formal_research_method_validation_status": _text(
+            formal_research_method_validation.get("status"),
+            "MISSING",
+        ),
         "replay_calibration_priority": _text(replay_recommendation.get("priority"), "MISSING"),
         "replay_calibration_requires_owner_approval": (
             replay_recommendation.get("requires_owner_approval")
@@ -13826,6 +13913,11 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "owner_signal_roadmap": (
             "" if owner_signal_roadmap_path is None else str(owner_signal_roadmap_path)
+        ),
+        "formal_research_method_contract": (
+            ""
+            if formal_research_method_contract_path is None
+            else str(formal_research_method_contract_path)
         ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -14677,6 +14769,12 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "filtered_next_decision_id": "MISSING",
         "filtered_next_decision": "MISSING",
         "filtered_next_action": "MISSING",
+        "formal_research_method_contract_id": "MISSING",
+        "formal_research_method_status": "MISSING",
+        "formal_research_method_promotion_state": "MISSING",
+        "formal_research_method_paper_shadow_eligibility": "MISSING",
+        "formal_research_method_safety_boundary_status": "MISSING",
+        "formal_research_method_validation_status": "MISSING",
         "replay_next_action": "MISSING",
         "sweep_leaderboard": "",
         "promotion_manifest": "",

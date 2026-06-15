@@ -40,8 +40,28 @@ DEFAULT_OWNER_FILTERED_CANDIDATE_REVIEW_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "owner_filtered_candidate_review"
 )
 DEFAULT_FILTERED_NEXT_DECISION_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_next_decision"
+DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR = (
+    st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "formal_research_method_contract"
+)
 
 TOP_FILTERED_CANDIDATE = "median_plus_regime_mismatch_filter"
+FORMAL_RESEARCH_PROMOTION_STATES = (
+    "REJECTED",
+    "NEEDS_MORE_EVIDENCE",
+    "PROMISING",
+    "PAPER_SHADOW_ELIGIBLE",
+    "FORMAL_RESEARCH_READY",
+)
+# TRADING-346 backlog explicitly requires the current confirmation target count
+# to be evaluated as part of the contract. TRADING-348 owns later calibration.
+FORMAL_RESEARCH_MIN_CONFIRMATION_TARGETS = 3
+FORMAL_RESEARCH_CONTRACT_SAFETY = {
+    **st.SYSTEM_TARGET_SAFETY,
+    "research_screening_only": True,
+    "manual_review_only": True,
+    "formal_research_contract_only": True,
+    "not_formal_research_method": True,
+}
 
 # TRADING-336_to_345 pilot readiness constants. They are documented in the
 # requirement file and classify research-only evidence; they do not approve
@@ -1346,6 +1366,252 @@ def validate_filtered_next_decision_artifact(
     )
 
 
+def build_formal_research_method_contract(
+    *,
+    candidate: str = TOP_FILTERED_CANDIDATE,
+    evidence_id: str | None = None,
+    spec_id: str | None = None,
+    stress_backfill_id: str | None = None,
+    mismatch_reduction_id: str | None = None,
+    flip_reduction_id: str | None = None,
+    ab_review_id: str | None = None,
+    confirmation_id: str | None = None,
+    readiness_id: str | None = None,
+    owner_review_id: str | None = None,
+    next_decision_id: str | None = None,
+    evidence_dir: Path = DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR,
+    spec_dir: Path = DEFAULT_MEDIAN_REGIME_FILTER_SPEC_DIR,
+    stress_backfill_dir: Path = DEFAULT_FILTERED_CANDIDATE_STRESS_BACKFILL_DIR,
+    mismatch_reduction_dir: Path = DEFAULT_DRAWDOWN_MISMATCH_REDUCTION_DIR,
+    flip_reduction_dir: Path = DEFAULT_FLIP_ROTATION_REDUCTION_DIR,
+    ab_review_dir: Path = DEFAULT_FILTERED_CANDIDATE_AB_REVIEW_DIR,
+    confirmation_dir: Path = DEFAULT_SIGNAL_GATE_CONFIRMATION_DIR,
+    readiness_dir: Path = DEFAULT_FILTERED_FORMALIZATION_READINESS_DIR,
+    owner_review_dir: Path = DEFAULT_OWNER_FILTERED_CANDIDATE_REVIEW_DIR,
+    next_decision_dir: Path = DEFAULT_FILTERED_NEXT_DECISION_DIR,
+    output_dir: Path = DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sources = _formal_research_method_source_payloads(
+        evidence_id=evidence_id,
+        spec_id=spec_id,
+        stress_backfill_id=stress_backfill_id,
+        mismatch_reduction_id=mismatch_reduction_id,
+        flip_reduction_id=flip_reduction_id,
+        ab_review_id=ab_review_id,
+        confirmation_id=confirmation_id,
+        readiness_id=readiness_id,
+        owner_review_id=owner_review_id,
+        next_decision_id=next_decision_id,
+        evidence_dir=evidence_dir,
+        spec_dir=spec_dir,
+        stress_backfill_dir=stress_backfill_dir,
+        mismatch_reduction_dir=mismatch_reduction_dir,
+        flip_reduction_dir=flip_reduction_dir,
+        ab_review_dir=ab_review_dir,
+        confirmation_dir=confirmation_dir,
+        readiness_dir=readiness_dir,
+        owner_review_dir=owner_review_dir,
+        next_decision_dir=next_decision_dir,
+    )
+    source_artifacts = _formal_research_source_artifacts(sources)
+    objective_gates = _formal_research_objective_gates(sources, source_artifacts)
+    safety_status = "PASS" if _payload_safe(*sources.values(), FORMAL_RESEARCH_CONTRACT_SAFETY) else "FAIL"
+    failure_conditions = _formal_research_failure_conditions(objective_gates, safety_status)
+    paper_shadow = _formal_research_paper_shadow_eligibility(objective_gates, safety_status)
+    decision = _formal_research_method_decision(
+        candidate=candidate,
+        objective_gates=objective_gates,
+        failure_conditions=failure_conditions,
+        paper_shadow_eligibility=paper_shadow,
+        safety_boundary_status=safety_status,
+    )
+    contract_id = _stable_id(
+        "formal-research-method-contract",
+        candidate,
+        *[str(row.get("artifact_id")) for row in source_artifacts.values()],
+        generated.isoformat(),
+    )
+    root = _unique_dir(output_dir / contract_id)
+    root.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_formal_research_method_contract_manifest",
+        "contract_id": root.name,
+        "candidate": candidate,
+        "generated_at": generated.isoformat(),
+        "status": "PASS" if safety_status == "PASS" else "FAIL",
+        "market_regime": sources["evidence"].get("market_regime", "ai_after_chatgpt"),
+        "formal_research_method_contract_manifest_path": str(
+            root / "formal_research_method_contract_manifest.json"
+        ),
+        "formal_research_method_contract_path": str(
+            root / "formal_research_method_contract.json"
+        ),
+        "formal_research_method_decision_path": str(root / "formal_research_method_decision.json"),
+        "formal_research_method_contract_report_path": str(
+            root / "formal_research_method_contract_report.md"
+        ),
+        "reader_brief_section_path": str(root / "reader_brief_section.md"),
+        **FORMAL_RESEARCH_CONTRACT_SAFETY,
+    }
+    contract = {
+        "schema_version": st.SCHEMA_VERSION,
+        "contract_id": root.name,
+        "candidate": candidate,
+        "promotion_states": list(FORMAL_RESEARCH_PROMOTION_STATES),
+        "objective_gates": objective_gates,
+        "failure_conditions": failure_conditions,
+        "paper_shadow_eligibility": paper_shadow,
+        "source_artifacts": source_artifacts,
+        "safety_boundary_status": safety_status,
+        "safety_boundary": dict(FORMAL_RESEARCH_CONTRACT_SAFETY),
+        "method_boundary": {
+            "formal_research_ready_is_not_production_approval": True,
+            "official_target_weights_allowed": False,
+            "broker_or_order_flow_allowed": False,
+            "manual_review_only": True,
+            "threshold_calibration_owner_task": "TRADING-348",
+        },
+        **FORMAL_RESEARCH_CONTRACT_SAFETY,
+    }
+    reader = render_formal_research_method_contract_reader_brief(decision)
+    _write_json(root / "formal_research_method_contract_manifest.json", manifest)
+    _write_json(root / "formal_research_method_contract.json", contract)
+    _write_json(root / "formal_research_method_decision.json", decision)
+    _write_text(
+        root / "formal_research_method_contract_report.md",
+        render_formal_research_method_contract_report(manifest, contract, decision),
+    )
+    _write_text(root / "reader_brief_section.md", reader)
+    _write_latest_pointer(
+        "latest_formal_research_method_contract",
+        root.name,
+        root / "formal_research_method_contract_manifest.json",
+    )
+    return {
+        "contract_id": root.name,
+        "contract_dir": root,
+        "manifest": manifest,
+        "formal_research_method_contract": contract,
+        "formal_research_method_decision": decision,
+        "reader_brief_section": reader,
+    }
+
+
+def formal_research_method_contract_report_payload(
+    *,
+    contract_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+) -> dict[str, Any]:
+    root = _artifact_dir(
+        artifact_id=contract_id,
+        latest_pointer="latest_formal_research_method_contract",
+        latest=latest,
+        output_dir=output_dir,
+        required_name="formal_research_method_contract_manifest.json",
+    )
+    payload = {
+        **_read_json(root / "formal_research_method_contract_manifest.json"),
+        "formal_research_method_contract": _read_json(
+            root / "formal_research_method_contract.json"
+        ),
+        "formal_research_method_decision": _read_json(
+            root / "formal_research_method_decision.json"
+        ),
+        "reader_brief_section": (root / "reader_brief_section.md").read_text(encoding="utf-8"),
+        "contract_dir": str(root),
+    }
+    validation = _read_optional_json(root / "formal_research_method_contract_validation.json")
+    if validation:
+        payload["formal_research_method_contract_validation"] = validation
+    return payload
+
+
+def validate_formal_research_method_contract_artifact(
+    *,
+    contract_id: str,
+    output_dir: Path = DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+    write_output: bool = True,
+) -> dict[str, Any]:
+    root = output_dir / contract_id
+    manifest = _read_optional_json(root / "formal_research_method_contract_manifest.json") or {}
+    contract = _read_optional_json(root / "formal_research_method_contract.json") or {}
+    decision = _read_optional_json(root / "formal_research_method_decision.json") or {}
+    reader = (
+        (root / "reader_brief_section.md").read_text(encoding="utf-8")
+        if (root / "reader_brief_section.md").exists()
+        else ""
+    )
+    gates = _records(contract.get("objective_gates"))
+    states = set(_texts(contract.get("promotion_states")))
+    paper_shadow = _mapping(contract.get("paper_shadow_eligibility"))
+    checks = _required_file_checks(
+        root,
+        (
+            "formal_research_method_contract_manifest.json",
+            "formal_research_method_contract.json",
+            "formal_research_method_decision.json",
+            "formal_research_method_contract_report.md",
+            "reader_brief_section.md",
+        ),
+    )
+    checks.extend(
+        [
+            st._check("contract_id_matches", manifest.get("contract_id") == contract_id, ""),
+            st._check(
+                "promotion_states_complete",
+                set(FORMAL_RESEARCH_PROMOTION_STATES).issubset(states),
+                ",".join(sorted(states)),
+            ),
+            st._check("objective_gates_visible", len(gates) >= 9, str(len(gates))),
+            st._check(
+                "decision_fields_visible",
+                all(
+                    decision.get(field) is not None
+                    for field in (
+                        "formal_research_method_status",
+                        "promotion_state",
+                        "blocking_reasons",
+                        "paper_shadow_eligibility",
+                        "safety_boundary_status",
+                        "next_required_action",
+                    )
+                ),
+                "",
+            ),
+            st._check(
+                "promotion_state_valid",
+                decision.get("promotion_state") in FORMAL_RESEARCH_PROMOTION_STATES,
+                _text(decision.get("promotion_state")),
+            ),
+            st._check("paper_shadow_status_visible", bool(paper_shadow.get("status")), ""),
+            st._check(
+                "safety_boundary_pass",
+                contract.get("safety_boundary_status") == "PASS"
+                and decision.get("safety_boundary_status") == "PASS",
+                "",
+            ),
+            st._check("reader_brief_quality_fields", "blocking_issues" in reader, ""),
+            st._check("broker_forbidden", _payload_safe(manifest, contract, decision), ""),
+        ]
+    )
+    validation = _validation_payload(
+        "etf_dynamic_v3_formal_research_method_contract_validation",
+        contract_id,
+        checks,
+    )
+    if write_output:
+        _write_json(root / "formal_research_method_contract_validation.json", validation)
+        _write_text(
+            root / "formal_research_method_contract_validation.md",
+            render_formal_research_method_contract_validation_report(validation),
+        )
+    return validation
+
+
 def render_filtered_candidate_evidence_reader_brief(summary: Mapping[str, Any]) -> str:
     return "\n".join(
         [
@@ -1721,6 +1987,447 @@ def render_filtered_next_decision_report(
             "",
         ]
     )
+
+
+def render_formal_research_method_contract_reader_brief(decision: Mapping[str, Any]) -> str:
+    blocking = _texts(decision.get("blocking_reasons"))
+    return "\n".join(
+        [
+            "## Formal Research Method Contract",
+            "",
+            f"- summary: {decision.get('candidate')} research-only contract gate.",
+            f"- key_result: promotion_state={decision.get('promotion_state')} formal_research_method_status={decision.get('formal_research_method_status')}",
+            f"- blocking_issues: {', '.join(blocking) if blocking else 'none'}",
+            f"- recommended_next_step: {decision.get('next_required_action')}",
+            f"- paper_shadow_eligibility: {decision.get('paper_shadow_eligibility')}",
+            "- safety_boundary: no official target / no broker / no production / manual review only",
+            "",
+        ]
+    )
+
+
+def render_formal_research_method_contract_report(
+    manifest: Mapping[str, Any],
+    contract: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    artifacts = _mapping(contract.get("source_artifacts"))
+    artifact_lines = [
+        f"- {name}: artifact_id={_mapping(row).get('artifact_id')} status={_mapping(row).get('status')}"
+        for name, row in sorted(artifacts.items())
+    ]
+    gate_lines = [
+        f"- {row.get('gate_id')}: observed={row.get('observed_status')} required={row.get('required_status')} passed={row.get('passed')}"
+        for row in _records(contract.get("objective_gates"))
+    ]
+    failure_lines = [
+        f"- {row.get('failure_condition')}: active={row.get('active')} blocks_formal_research={row.get('blocks_formal_research')}"
+        for row in _records(contract.get("failure_conditions"))
+    ]
+    paper_shadow = _mapping(contract.get("paper_shadow_eligibility"))
+    return "\n".join(
+        [
+            f"# Formal Research Method Contract {manifest.get('contract_id')}",
+            "",
+            "## Purpose",
+            "将 filtered-candidate research chain 的离散证据状态映射为 research-only promotion state；本报告不批准 production、broker、order 或 official target weights。",
+            "",
+            "## Input Artifacts",
+            *artifact_lines,
+            "",
+            "## Output Decision",
+            f"- formal_research_method_status: {decision.get('formal_research_method_status')}",
+            f"- promotion_state: {decision.get('promotion_state')}",
+            f"- paper_shadow_eligibility: {paper_shadow.get('status')}",
+            f"- next_required_action: {decision.get('next_required_action')}",
+            "",
+            "## Objective Gates",
+            *gate_lines,
+            "",
+            "## Failure Conditions",
+            *failure_lines,
+            "",
+            "## Safety Boundary",
+            f"- safety_boundary_status: {contract.get('safety_boundary_status')}",
+            "- no official target weights",
+            "- no broker integration",
+            "- no order tickets",
+            "- no production mutation",
+            "- manual review only",
+            "",
+            "## Limitations",
+            "- TRADING-346 is a governance contract over existing evidence; it does not calibrate thresholds.",
+            "- Paper-shadow eligibility only means the candidate can be considered by a later paper-shadow protocol.",
+            "- FORMAL_RESEARCH_READY does not equal production approval.",
+            "",
+            "## Next Action",
+            f"- {decision.get('next_required_action')}",
+            "",
+        ]
+    )
+
+
+def render_formal_research_method_contract_validation_report(
+    validation: Mapping[str, Any],
+) -> str:
+    check_lines = [
+        f"- {row.get('check_id')}: passed={row.get('passed')} detail={row.get('detail')}"
+        for row in _records(validation.get("checks"))
+    ]
+    return "\n".join(
+        [
+            f"# Formal Research Method Contract Validation {validation.get('artifact_id')}",
+            "",
+            f"- status: {validation.get('status')}",
+            f"- failed_check_count: {validation.get('failed_check_count')}",
+            "- production_effect: none",
+            "",
+            "## Checks",
+            *check_lines,
+            "",
+        ]
+    )
+
+
+def _formal_research_method_source_payloads(
+    *,
+    evidence_id: str | None,
+    spec_id: str | None,
+    stress_backfill_id: str | None,
+    mismatch_reduction_id: str | None,
+    flip_reduction_id: str | None,
+    ab_review_id: str | None,
+    confirmation_id: str | None,
+    readiness_id: str | None,
+    owner_review_id: str | None,
+    next_decision_id: str | None,
+    evidence_dir: Path,
+    spec_dir: Path,
+    stress_backfill_dir: Path,
+    mismatch_reduction_dir: Path,
+    flip_reduction_dir: Path,
+    ab_review_dir: Path,
+    confirmation_dir: Path,
+    readiness_dir: Path,
+    owner_review_dir: Path,
+    next_decision_dir: Path,
+) -> dict[str, dict[str, Any]]:
+    return {
+        "evidence": filtered_candidate_evidence_report_payload(
+            evidence_id=evidence_id, latest=evidence_id is None, output_dir=evidence_dir
+        ),
+        "spec": median_regime_filter_spec_report_payload(
+            spec_id=spec_id, latest=spec_id is None, output_dir=spec_dir
+        ),
+        "stress": filtered_candidate_stress_backfill_report_payload(
+            stress_backfill_id=stress_backfill_id,
+            latest=stress_backfill_id is None,
+            output_dir=stress_backfill_dir,
+        ),
+        "mismatch": drawdown_mismatch_reduction_report_payload(
+            reduction_id=mismatch_reduction_id,
+            latest=mismatch_reduction_id is None,
+            output_dir=mismatch_reduction_dir,
+        ),
+        "flip": flip_rotation_reduction_report_payload(
+            flip_reduction_id=flip_reduction_id,
+            latest=flip_reduction_id is None,
+            output_dir=flip_reduction_dir,
+        ),
+        "ab": filtered_candidate_ab_review_report_payload(
+            ab_review_id=ab_review_id, latest=ab_review_id is None, output_dir=ab_review_dir
+        ),
+        "confirmation": signal_gate_confirmation_report_payload(
+            confirmation_id=confirmation_id,
+            latest=confirmation_id is None,
+            output_dir=confirmation_dir,
+        ),
+        "readiness": filtered_formalization_readiness_report_payload(
+            readiness_id=readiness_id, latest=readiness_id is None, output_dir=readiness_dir
+        ),
+        "owner_review": owner_filtered_candidate_review_report_payload(
+            owner_review_id=owner_review_id,
+            latest=owner_review_id is None,
+            output_dir=owner_review_dir,
+        ),
+        "next_decision": filtered_next_decision_report_payload(
+            decision_id=next_decision_id,
+            latest=next_decision_id is None,
+            output_dir=next_decision_dir,
+        ),
+    }
+
+
+def _formal_research_source_artifacts(
+    sources: Mapping[str, Mapping[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    source_specs = {
+        "evidence": ("evidence_id", "filtered_candidate_evidence_manifest_path", "filtered_candidate_evidence_summary", "evidence_status"),
+        "spec": ("spec_id", "median_regime_filter_spec_manifest_path", "median_regime_filter_contract", "contract_status"),
+        "stress": ("stress_backfill_id", "filtered_candidate_stress_manifest_path", "filtered_candidate_stress_summary", "stress_robustness_status"),
+        "mismatch": ("reduction_id", "drawdown_mismatch_reduction_manifest_path", "mismatch_reduction_summary", "drawdown_mismatch_reduction_status"),
+        "flip": ("flip_reduction_id", "flip_rotation_reduction_manifest_path", "flip_rotation_reduction_summary", "flip_reduction_status"),
+        "ab": ("ab_review_id", "filtered_candidate_ab_manifest_path", "ab_summary", "overall_ab_status"),
+        "confirmation": ("confirmation_id", "signal_gate_confirmation_manifest_path", "signal_gate_confirmation_targets", "targets"),
+        "readiness": ("readiness_id", "filtered_formalization_manifest_path", "formalization_readiness_decision", "decision"),
+        "owner_review": ("owner_review_id", "owner_filtered_candidate_manifest_path", "owner_filtered_candidate_summary", "recommended_owner_action"),
+        "next_decision": ("decision_id", "filtered_next_decision_manifest_path", "filtered_next_decision", "decision"),
+    }
+    rows: dict[str, dict[str, Any]] = {}
+    for name, (id_key, path_key, summary_key, status_key) in source_specs.items():
+        payload = _mapping(sources.get(name))
+        summary = _mapping(payload.get(summary_key))
+        if name == "confirmation":
+            status = str(len(_records(summary.get("targets"))))
+        else:
+            status = _text(summary.get(status_key))
+        rows[name] = {
+            "schema_version": st.SCHEMA_VERSION,
+            "artifact_id": payload.get(id_key),
+            "artifact_path": payload.get(path_key),
+            "status": status,
+            "candidate": payload.get("candidate", summary.get("candidate")),
+            **FORMAL_RESEARCH_CONTRACT_SAFETY,
+        }
+    return rows
+
+
+def _formal_research_objective_gates(
+    sources: Mapping[str, Mapping[str, Any]],
+    source_artifacts: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    evidence = _mapping(_mapping(sources.get("evidence")).get("filtered_candidate_evidence_summary"))
+    spec = _mapping(_mapping(sources.get("spec")).get("median_regime_filter_contract"))
+    stress = _mapping(_mapping(sources.get("stress")).get("filtered_candidate_stress_summary"))
+    mismatch = _mapping(_mapping(sources.get("mismatch")).get("mismatch_reduction_summary"))
+    flip = _mapping(_mapping(sources.get("flip")).get("flip_rotation_reduction_summary"))
+    ab = _mapping(_mapping(sources.get("ab")).get("ab_summary"))
+    confirmation = _mapping(_mapping(sources.get("confirmation")).get("signal_gate_confirmation_targets"))
+    readiness = _mapping(_mapping(sources.get("readiness")).get("formalization_readiness_decision"))
+    owner_review = _mapping(_mapping(sources.get("owner_review")).get("owner_filtered_candidate_summary"))
+    next_decision = _mapping(_mapping(sources.get("next_decision")).get("filtered_next_decision"))
+    confirmation_count = len(_records(confirmation.get("targets")))
+    return [
+        _formal_research_gate(
+            "evidence_result",
+            source_artifacts["evidence"],
+            _text(evidence.get("evidence_status")),
+            "PROMISING",
+            _text(evidence.get("evidence_status")) == "PROMISING",
+            "evidence_rejected_or_missing",
+        ),
+        _formal_research_gate(
+            "spec_contract",
+            source_artifacts["spec"],
+            _text(spec.get("contract_status")),
+            "PASS",
+            _text(spec.get("contract_status")) == "PASS",
+            "spec_contract_failed",
+        ),
+        _formal_research_gate(
+            "stress_result",
+            source_artifacts["stress"],
+            _text(stress.get("stress_robustness_status")),
+            "STRONG",
+            _text(stress.get("stress_robustness_status")) == "STRONG",
+            "stress_weak_or_missing",
+        ),
+        _formal_research_gate(
+            "drawdown_mismatch_reduction",
+            source_artifacts["mismatch"],
+            _text(mismatch.get("drawdown_mismatch_reduction_status")),
+            "IMPROVED",
+            _text(mismatch.get("drawdown_mismatch_reduction_status")) == "IMPROVED",
+            "drawdown_mismatch_not_improved",
+        ),
+        _formal_research_gate(
+            "flip_rotation_reduction",
+            source_artifacts["flip"],
+            f"flip={flip.get('flip_reduction_status')}; rotation={flip.get('rotation_reduction_status')}",
+            "flip=IMPROVED; rotation=IMPROVED",
+            _text(flip.get("flip_reduction_status")) == "IMPROVED"
+            and _text(flip.get("rotation_reduction_status")) == "IMPROVED",
+            "flip_rotation_not_improved",
+        ),
+        _formal_research_gate(
+            "ab_review",
+            source_artifacts["ab"],
+            _text(ab.get("overall_ab_status")),
+            "PROMISING",
+            _text(ab.get("overall_ab_status")) == "PROMISING",
+            "ab_review_weak_or_missing",
+        ),
+        _formal_research_gate(
+            "confirmation_targets",
+            source_artifacts["confirmation"],
+            str(confirmation_count),
+            f">={FORMAL_RESEARCH_MIN_CONFIRMATION_TARGETS}",
+            confirmation_count >= FORMAL_RESEARCH_MIN_CONFIRMATION_TARGETS,
+            "confirmation_targets_missing",
+        ),
+        _formal_research_gate(
+            "formalization_readiness",
+            source_artifacts["readiness"],
+            _text(readiness.get("decision")),
+            "READY_FOR_FORMAL_RESEARCH_IMPLEMENTATION",
+            _text(readiness.get("decision")) == "READY_FOR_FORMAL_RESEARCH_IMPLEMENTATION",
+            "formalization_readiness_not_ready",
+        ),
+        _formal_research_gate(
+            "owner_review",
+            source_artifacts["owner_review"],
+            _text(owner_review.get("recommended_owner_action")),
+            "formalize_research_method",
+            _text(owner_review.get("recommended_owner_action")) == "formalize_research_method",
+            "owner_did_not_request_formalization",
+        ),
+        _formal_research_gate(
+            "next_decision",
+            source_artifacts["next_decision"],
+            _text(next_decision.get("decision")),
+            "FORMALIZE_RESEARCH_METHOD",
+            _text(next_decision.get("decision")) == "FORMALIZE_RESEARCH_METHOD",
+            "next_decision_not_formalize",
+        ),
+    ]
+
+
+def _formal_research_gate(
+    gate_id: str,
+    source_artifact: Mapping[str, Any],
+    observed_status: str,
+    required_status: str,
+    passed: bool,
+    failure_condition: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "gate_id": gate_id,
+        "source_artifact": dict(source_artifact),
+        "observed_status": observed_status or "MISSING",
+        "required_status": required_status,
+        "passed": bool(passed),
+        "failure_condition": failure_condition,
+        "blocks_formal_research": True,
+        "blocks_paper_shadow": gate_id
+        in {
+            "evidence_result",
+            "stress_result",
+            "drawdown_mismatch_reduction",
+            "flip_rotation_reduction",
+            "ab_review",
+            "confirmation_targets",
+        },
+        **FORMAL_RESEARCH_CONTRACT_SAFETY,
+    }
+
+
+def _formal_research_failure_conditions(
+    objective_gates: Sequence[Mapping[str, Any]],
+    safety_boundary_status: str,
+) -> list[dict[str, Any]]:
+    rows = [
+        {
+            "schema_version": st.SCHEMA_VERSION,
+            "failure_condition": "safety_boundary_failed",
+            "active": safety_boundary_status != "PASS",
+            "blocks_formal_research": True,
+            "blocks_paper_shadow": True,
+            "source_gate": "safety_boundary",
+            **FORMAL_RESEARCH_CONTRACT_SAFETY,
+        }
+    ]
+    for gate in objective_gates:
+        rows.append(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "failure_condition": gate.get("failure_condition"),
+                "active": gate.get("passed") is not True,
+                "blocks_formal_research": gate.get("blocks_formal_research") is True,
+                "blocks_paper_shadow": gate.get("blocks_paper_shadow") is True,
+                "source_gate": gate.get("gate_id"),
+                **FORMAL_RESEARCH_CONTRACT_SAFETY,
+            }
+        )
+    return rows
+
+
+def _formal_research_paper_shadow_eligibility(
+    objective_gates: Sequence[Mapping[str, Any]],
+    safety_boundary_status: str,
+) -> dict[str, Any]:
+    blocking = [
+        _text(gate.get("gate_id"))
+        for gate in objective_gates
+        if gate.get("blocks_paper_shadow") is True and gate.get("passed") is not True
+    ]
+    eligible = safety_boundary_status == "PASS" and not blocking
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "eligible": eligible,
+        "status": "ELIGIBLE_FOR_PROTOCOL_DESIGN" if eligible else "NOT_ELIGIBLE",
+        "blocking_conditions": blocking,
+        "manual_review_required": True,
+        "paper_shadow_output_observation_only": True,
+        "can_create_official_target_weights": False,
+        "can_trigger_broker_or_orders": False,
+        "requires_separate_protocol_task": "TRADING-350",
+        **FORMAL_RESEARCH_CONTRACT_SAFETY,
+    }
+
+
+def _formal_research_method_decision(
+    *,
+    candidate: str,
+    objective_gates: Sequence[Mapping[str, Any]],
+    failure_conditions: Sequence[Mapping[str, Any]],
+    paper_shadow_eligibility: Mapping[str, Any],
+    safety_boundary_status: str,
+) -> dict[str, Any]:
+    active_failures = [
+        _text(row.get("failure_condition"))
+        for row in failure_conditions
+        if row.get("active") is True
+    ]
+    gate_pass = {str(gate.get("gate_id")): gate.get("passed") is True for gate in objective_gates}
+    hard_reject = bool({"safety_boundary_failed", "evidence_rejected_or_missing"} & set(active_failures))
+    if hard_reject:
+        promotion_state = "REJECTED"
+    elif all(gate_pass.values()) and safety_boundary_status == "PASS":
+        promotion_state = "FORMAL_RESEARCH_READY"
+    elif paper_shadow_eligibility.get("eligible") is True:
+        promotion_state = "PAPER_SHADOW_ELIGIBLE"
+    elif gate_pass.get("evidence_result") and gate_pass.get("stress_result") and gate_pass.get("ab_review"):
+        promotion_state = "PROMISING"
+    else:
+        promotion_state = "NEEDS_MORE_EVIDENCE"
+    status_by_state = {
+        "FORMAL_RESEARCH_READY": "READY_FOR_RESEARCH_ONLY_IMPLEMENTATION",
+        "PAPER_SHADOW_ELIGIBLE": "PAPER_SHADOW_PROTOCOL_REQUIRED",
+        "PROMISING": "NEEDS_OWNER_OR_CONFIRMATION_PROGRESS",
+        "NEEDS_MORE_EVIDENCE": "NOT_READY",
+        "REJECTED": "REJECTED",
+    }
+    next_action_by_state = {
+        "FORMAL_RESEARCH_READY": "implement_research_only_formal_method_contract",
+        "PAPER_SHADOW_ELIGIBLE": "complete_paper_shadow_protocol_before_observation",
+        "PROMISING": "collect_owner_or_confirmation_evidence",
+        "NEEDS_MORE_EVIDENCE": "collect_missing_research_evidence",
+        "REJECTED": "stop_candidate_or_rework_evidence",
+    }
+    return {
+        "schema_version": st.SCHEMA_VERSION,
+        "candidate": candidate,
+        "formal_research_method_status": status_by_state[promotion_state],
+        "promotion_state": promotion_state,
+        "blocking_reasons": active_failures,
+        "paper_shadow_eligibility": paper_shadow_eligibility.get("status"),
+        "safety_boundary_status": safety_boundary_status,
+        "next_required_action": next_action_by_state[promotion_state],
+        "manual_review_required": True,
+        "formal_research_ready_is_not_production_approval": True,
+        **FORMAL_RESEARCH_CONTRACT_SAFETY,
+    }
 
 
 def _evidence_component_breakdown(

@@ -1811,6 +1811,10 @@ dynamic_v3_filtered_next_decision_app = typer.Typer(
     help="Dynamic v3 rescue filtered next decision workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_formal_research_method_contract_app = typer.Typer(
+    help="Dynamic v3 rescue formal research method contract workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_hypothesis_backlog_app = typer.Typer(
     help="Dynamic v3 rescue weight optimization hypothesis backlog workflow。",
     no_args_is_help=True,
@@ -2559,6 +2563,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_filtered_next_decision_app,
     name="filtered-next-decision",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_formal_research_method_contract_app,
+    name="research-method-contract",
 )
 dynamic_v3_rescue_app.add_typer(dynamic_v3_hypothesis_backlog_app, name="hypothesis-backlog")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_variant_transform_app, name="variant-transform")
@@ -19471,6 +19479,121 @@ def dynamic_v3_validate_filtered_next_decision_command(
     _echo_validation_payload(
         filtered_readiness.validate_filtered_next_decision_artifact(
             decision_id=decision_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+@dynamic_v3_formal_research_method_contract_app.command("build")
+def dynamic_v3_formal_research_method_contract_build_command(
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    evidence_id: Annotated[
+        str | None,
+        typer.Option("--evidence-id", help="filtered candidate evidence id；缺省读取 latest。"),
+    ] = None,
+    spec_id: Annotated[
+        str | None,
+        typer.Option("--spec-id", help="median regime filter spec id；缺省读取 latest。"),
+    ] = None,
+    stress_backfill_id: Annotated[
+        str | None,
+        typer.Option("--stress-backfill-id", help="stress backfill id；缺省读取 latest。"),
+    ] = None,
+    mismatch_reduction_id: Annotated[
+        str | None,
+        typer.Option(
+            "--mismatch-reduction-id",
+            help="drawdown mismatch reduction id；缺省读取 latest。",
+        ),
+    ] = None,
+    flip_reduction_id: Annotated[
+        str | None,
+        typer.Option("--flip-reduction-id", help="flip rotation reduction id；缺省读取 latest。"),
+    ] = None,
+    ab_review_id: Annotated[
+        str | None,
+        typer.Option("--ab-review-id", help="filtered candidate A/B review id；缺省读取 latest。"),
+    ] = None,
+    confirmation_id: Annotated[
+        str | None,
+        typer.Option("--confirmation-id", help="signal gate confirmation id；缺省读取 latest。"),
+    ] = None,
+    readiness_id: Annotated[
+        str | None,
+        typer.Option("--readiness-id", help="formalization readiness id；缺省读取 latest。"),
+    ] = None,
+    owner_review_id: Annotated[
+        str | None,
+        typer.Option("--owner-review-id", help="owner filtered review id；缺省读取 latest。"),
+    ] = None,
+    next_decision_id: Annotated[
+        str | None,
+        typer.Option("--next-decision-id", help="filtered next decision id；缺省读取 latest。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+) -> None:
+    result = filtered_readiness.build_formal_research_method_contract(
+        candidate=candidate,
+        evidence_id=evidence_id,
+        spec_id=spec_id,
+        stress_backfill_id=stress_backfill_id,
+        mismatch_reduction_id=mismatch_reduction_id,
+        flip_reduction_id=flip_reduction_id,
+        ab_review_id=ab_review_id,
+        confirmation_id=confirmation_id,
+        readiness_id=readiness_id,
+        owner_review_id=owner_review_id,
+        next_decision_id=next_decision_id,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(result.get("formal_research_method_decision"))
+    typer.echo(f"contract_id={result['contract_id']}")
+    typer.echo(f"status={result['manifest']['status']}")
+    typer.echo(f"formal_research_method_status={decision.get('formal_research_method_status')}")
+    typer.echo(f"promotion_state={decision.get('promotion_state')}")
+    typer.echo(f"safety_boundary_status={decision.get('safety_boundary_status')}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_formal_research_method_contract_app.command("report")
+def dynamic_v3_formal_research_method_contract_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    contract_id: Annotated[str | None, typer.Option("--contract-id", help="contract id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+) -> None:
+    payload = filtered_readiness.formal_research_method_contract_report_payload(
+        contract_id=contract_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    decision = _mapping_obj(payload.get("formal_research_method_decision"))
+    typer.echo(f"contract_id={payload['contract_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"formal_research_method_status={decision.get('formal_research_method_status')}")
+    typer.echo(f"promotion_state={decision.get('promotion_state')}")
+    typer.echo(f"report_path={payload['formal_research_method_contract_report_path']}")
+
+
+@dynamic_v3_rescue_app.command("validate-research-method-contract")
+def dynamic_v3_validate_formal_research_method_contract_command(
+    contract_id: Annotated[str, typer.Option("--contract-id", help="contract id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="formal research method contract root。"),
+    ] = filtered_readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
+) -> None:
+    _echo_validation_payload(
+        filtered_readiness.validate_formal_research_method_contract_artifact(
+            contract_id=contract_id,
             output_dir=output_dir,
         )
     )
