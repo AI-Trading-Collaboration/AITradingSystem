@@ -1,13 +1,15 @@
 schema_version: 1
 policy_id: dynamic_v3_rescue_evidence_staleness_policy_v1
-version: 2026-06-15
+version: 2026-06-16
 status: pilot_baseline
 owner: system_validation
 rationale: >
   TRADING-354 adds a read-only freshness monitor after the candidate decision
   ledger so future candidate decisions do not rely on stale price, market, or
-  research evidence. Calendar-day windows are pilot governance bands, not
-  production trading thresholds.
+  research evidence. TRADING-354B clarifies that market-data sources are
+  evaluated against the latest completed U.S. equity trading day when the
+  requested as-of is ahead of available market close. Calendar-day windows are
+  pilot governance bands, not production trading thresholds.
 intended_effect: >
   Surface stale or blocking upstream evidence before a candidate decision is
   reused for the next research step, while preserving manual review and
@@ -35,22 +37,28 @@ default_next_actions:
 rules:
   price_data:
     required: true
-    timestamp_basis: latest_price_cache_date
+    timestamp_basis: latest_price_cache_date_adjusted_to_latest_complete_market_date
     fresh_days: 1
     acceptable_days: 3
     blocking_days: 7
     rationale: >
-      Price data can lag over weekends and holidays; more than one week of
-      calendar lag blocks current candidate interpretation.
+      Price data can lag over weekends, holidays, and pre-close local calendar
+      dates. Freshness must use the report's freshness_reference_date, normally
+      the latest completed U.S. equity trading day, so a cache covering the
+      latest complete market session is not marked stale only because the
+      requested as-of is a later local calendar date.
   market_panel_data:
     required: true
-    timestamp_basis: market_panel_as_of
+    timestamp_basis: market_panel_as_of_adjusted_to_latest_complete_market_date
     fresh_days: 1
     acceptable_days: 3
     blocking_days: 7
     rationale: >
       Market panel interpretation should align with the latest validated price
-      cache and daily report context.
+      cache and daily report context. Freshness uses the same
+      freshness_reference_date as price_data so pre-close or holiday as-of
+      requests do not create a false stale blocker when the panel covers the
+      latest completed market session.
   signal_artifact:
     required: true
     timestamp_basis: evidence_date_end_or_generated_at

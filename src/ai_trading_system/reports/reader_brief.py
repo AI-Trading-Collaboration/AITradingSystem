@@ -2136,6 +2136,28 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "evidence_requested_as_of",
+                        etf_dynamic_v3_parameter_research.get("evidence_requested_as_of"),
+                    ),
+                    (
+                        "evidence_freshness_reference_date",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_freshness_reference_date"
+                        ),
+                    ),
+                    (
+                        "evidence_latest_complete_market_date",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_latest_complete_market_date"
+                        ),
+                    ),
+                    (
+                        "evidence_market_calendar_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_market_calendar_status"
+                        ),
+                    ),
+                    (
                         "evidence_stale_artifacts",
                         etf_dynamic_v3_parameter_research.get("evidence_stale_artifacts"),
                     ),
@@ -14583,6 +14605,23 @@ def _etf_dynamic_v3_parameter_research_summary(
             evidence_staleness_report.get("evidence_freshness_status"),
             "MISSING",
         ),
+        "evidence_requested_as_of": _text(
+            evidence_staleness_report.get("requested_as_of")
+            or evidence_staleness_report.get("as_of"),
+            "MISSING",
+        ),
+        "evidence_freshness_reference_date": _text(
+            evidence_staleness_report.get("freshness_reference_date"),
+            "MISSING",
+        ),
+        "evidence_latest_complete_market_date": _text(
+            evidence_staleness_report.get("latest_complete_market_date"),
+            "MISSING",
+        ),
+        "evidence_market_calendar_status": _text(
+            evidence_staleness_report.get("market_calendar_status"),
+            "MISSING",
+        ),
         "evidence_stale_artifacts": (
             ", ".join(_texts(evidence_staleness_report.get("stale_artifacts")))
             or "none"
@@ -15825,6 +15864,10 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "candidate_decision_ledger_validation_status": "MISSING",
         "evidence_staleness_monitor_id": "MISSING",
         "evidence_freshness_status": "MISSING",
+        "evidence_requested_as_of": "MISSING",
+        "evidence_freshness_reference_date": "MISSING",
+        "evidence_latest_complete_market_date": "MISSING",
+        "evidence_market_calendar_status": "MISSING",
         "evidence_stale_artifacts": "MISSING",
         "evidence_blocking_artifacts": "MISSING",
         "evidence_missing_artifacts": "MISSING",

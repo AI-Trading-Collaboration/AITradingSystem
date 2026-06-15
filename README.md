@@ -1570,6 +1570,13 @@ Freshness thresholds 由
 `config/etf_portfolio/dynamic_v3_rescue/evidence_staleness_policy_v1.yaml` 管理，覆盖
 price data、market panel、signal artifact、stress backfill result、A/B review、owner review、
 paper-shadow daily observation、paper-shadow drift monitor 和 paper-shadow weekly review。
+TRADING-354B 明确 price data 与 market panel 的 freshness age 使用
+`freshness_reference_date`，该日期由 `requested_as_of` 和 latest completed U.S. equity market
+date 共同决定；signal、stress、A/B、owner review 和 paper-shadow artifacts 仍按 requested
+as-of 的 research freshness 口径评估。CLI summary、manifest、report、Markdown 和 Reader
+Brief 会披露 `requested_as_of`、`freshness_reference_date`、`latest_complete_market_date`、
+`market_calendar_status` 和 per-source `stale_reason`，避免 pre-close / holiday local calendar
+date 把已覆盖 latest complete market session 的 price / market panel 误判为 stale。
 Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/evidence_staleness_monitor/`，包含 manifest、
 report JSON、findings JSONL、Markdown report、Reader Brief section 和 validation JSON/Markdown。

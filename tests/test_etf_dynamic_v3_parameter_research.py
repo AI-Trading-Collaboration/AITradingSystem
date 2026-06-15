@@ -1516,6 +1516,10 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     (staleness_dir / "evidence_staleness_report.json").write_text(
         json.dumps(
             {
+                "requested_as_of": "2026-06-16",
+                "freshness_reference_date": "2026-06-12",
+                "latest_complete_market_date": "2026-06-12",
+                "market_calendar_status": "TRADING_DAY",
                 "evidence_freshness_status": "ACCEPTABLE",
                 "stale_artifacts": [],
                 "blocking_artifacts": [],
@@ -1801,6 +1805,10 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["paper_shadow_drift_monitor"] == str(drift_path)
     assert summary["evidence_staleness_monitor_id"] == "stale123"
     assert summary["evidence_freshness_status"] == "ACCEPTABLE"
+    assert summary["evidence_requested_as_of"] == "2026-06-16"
+    assert summary["evidence_freshness_reference_date"] == "2026-06-12"
+    assert summary["evidence_latest_complete_market_date"] == "2026-06-12"
+    assert summary["evidence_market_calendar_status"] == "TRADING_DAY"
     assert summary["evidence_stale_artifacts"] == "none"
     assert summary["evidence_blocking_artifacts"] == "none"
     assert summary["evidence_missing_artifacts"] == "none"

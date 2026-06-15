@@ -5069,7 +5069,10 @@ reports:
       TRADING-354 checks whether price data, market panel, signal evidence,
       stress backfill, A/B review, owner review, paper-shadow daily observation,
       paper-shadow drift monitor, and paper-shadow weekly review inputs are
-      stale or missing before the next candidate decision, while preserving
+      stale or missing before the next candidate decision. TRADING-354B records
+      requested_as_of, latest_complete_market_date, freshness_reference_date,
+      and market_calendar_status so price and market panel freshness is aligned
+      to the latest completed U.S. equity market session while preserving
       read-only and no-production safety boundaries.
     owner_action: refresh_or_regenerate_stale_evidence_before_next_candidate_decision
     include_in_reader_brief: true

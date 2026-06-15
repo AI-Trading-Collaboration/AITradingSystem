@@ -13,6 +13,10 @@ import yaml
 
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
+from ai_trading_system.trading_calendar import (
+    latest_completed_us_equity_trading_day,
+    us_equity_market_session,
+)
 
 DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "filtered_candidate_evidence"
@@ -2258,8 +2262,9 @@ def run_evidence_staleness_monitor(
     generated = generated_at or datetime.now(UTC)
     effective_as_of = as_of or generated.date()
     policy = _load_evidence_staleness_policy(policy_path)
-    findings = _evidence_staleness_findings(
+    findings, market_calendar = _evidence_staleness_findings(
         as_of=effective_as_of,
+        generated_at=generated,
         candidate=candidate,
         policy=policy,
         price_cache_path=price_cache_path,
@@ -2313,6 +2318,11 @@ def run_evidence_staleness_monitor(
         "monitor_id": root.name,
         "candidate": candidate,
         "as_of": effective_as_of.isoformat(),
+        "requested_as_of": effective_as_of.isoformat(),
+        "freshness_reference_date": market_calendar.get("freshness_reference_date"),
+        "latest_complete_market_date": market_calendar.get("latest_complete_market_date"),
+        "market_calendar_status": market_calendar.get("market_calendar_status"),
+        "market_calendar_reason": market_calendar.get("market_calendar_reason"),
         "generated_at": generated.isoformat(),
         "policy_id": policy.get("policy_id"),
         "policy_version": policy_version,
@@ -2336,6 +2346,10 @@ def run_evidence_staleness_monitor(
         "monitor_id": root.name,
         "candidate": candidate,
         "as_of": effective_as_of.isoformat(),
+        "requested_as_of": effective_as_of.isoformat(),
+        "freshness_reference_date": market_calendar.get("freshness_reference_date"),
+        "latest_complete_market_date": market_calendar.get("latest_complete_market_date"),
+        "market_calendar_status": market_calendar.get("market_calendar_status"),
         "generated_at": generated.isoformat(),
         "status": "PASS" if status != "BLOCKING" else "BLOCKING",
         "policy_path": str(policy_path),
@@ -2458,6 +2472,19 @@ def validate_evidence_staleness_monitor_artifact(
             st._check(
                 "timestamp_basis_visible",
                 all(bool(row.get("timestamp_basis")) for row in findings),
+                "",
+            ),
+            st._check(
+                "calendar_adjusted_fields_visible",
+                bool(report.get("requested_as_of"))
+                and bool(report.get("freshness_reference_date"))
+                and bool(report.get("latest_complete_market_date"))
+                and all(
+                    bool(row.get("requested_as_of"))
+                    and bool(row.get("freshness_reference_date"))
+                    and bool(row.get("stale_reason"))
+                    for row in findings
+                ),
                 "",
             ),
             st._check(
@@ -3212,6 +3239,9 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
             f"- missing_artifacts: {', '.join(_texts(report.get('missing_artifacts'))) or 'none'}",
+            f"- requested_as_of: {report.get('requested_as_of')}",
+            f"- freshness_reference_date: {report.get('freshness_reference_date')}",
+            f"- latest_complete_market_date: {report.get('latest_complete_market_date')}",
             f"- next_refresh_action: {report.get('next_refresh_action')}",
             f"- safe_to_continue_shadow: {report.get('safe_to_continue_shadow')}",
             f"- safety_boundary_status: {report.get('safety_boundary_status')}",
@@ -3227,7 +3257,12 @@ def render_evidence_staleness_report(
     report: Mapping[str, Any],
 ) -> str:
     finding_lines = [
-        f"- {row.get('source_id')}: severity={row.get('severity')} age_days={row.get('age_days')} timestamp={row.get('timestamp')} basis={row.get('timestamp_basis')} action={row.get('recommended_action')}"
+        f"- {row.get('source_id')}: severity={row.get('severity')} "
+        f"age_days={row.get('age_days')} timestamp={row.get('timestamp')} "
+        f"basis={row.get('timestamp_basis')} "
+        f"freshness_reference_date={row.get('freshness_reference_date')} "
+        f"stale_reason={row.get('stale_reason')} "
+        f"action={row.get('recommended_action')}"
         for row in _records(report.get("findings"))
     ]
     return "\n".join(
@@ -3240,6 +3275,11 @@ def render_evidence_staleness_report(
             "## Summary",
             f"- candidate: {report.get('candidate')}",
             f"- as_of: {report.get('as_of')}",
+            f"- requested_as_of: {report.get('requested_as_of')}",
+            f"- freshness_reference_date: {report.get('freshness_reference_date')}",
+            f"- latest_complete_market_date: {report.get('latest_complete_market_date')}",
+            f"- market_calendar_status: {report.get('market_calendar_status')}",
+            f"- market_calendar_reason: {report.get('market_calendar_reason')}",
             f"- evidence_freshness_status: {report.get('evidence_freshness_status')}",
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
@@ -4274,6 +4314,7 @@ def _load_evidence_staleness_policy(path: Path) -> dict[str, Any]:
 def _evidence_staleness_findings(
     *,
     as_of: date,
+    generated_at: datetime,
     candidate: str,
     policy: Mapping[str, Any],
     price_cache_path: Path,
@@ -4292,13 +4333,18 @@ def _evidence_staleness_findings(
     paper_shadow_daily_dir: Path,
     paper_shadow_drift_monitor_dir: Path,
     paper_shadow_weekly_review_dir: Path,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     rules = _mapping(policy.get("rules"))
     latest_price_date = _latest_price_cache_date(price_cache_path)
     market_panel_path, market_panel = _latest_market_panel_payload(market_panel_dir, as_of=as_of)
     market_panel_date = _date_or_none(market_panel.get("as_of")) or _date_from_market_panel_path(
         market_panel_path
     )
+    market_calendar = _market_data_freshness_context(
+        requested_as_of=as_of,
+        generated_at=generated_at,
+    )
+    market_reference = _date_or_none(market_calendar.get("freshness_reference_date")) or as_of
     evidence = filtered_candidate_evidence_report_payload(
         evidence_id=evidence_id,
         latest=evidence_id is None,
@@ -4343,7 +4389,7 @@ def _evidence_staleness_findings(
     evidence_date = _date_or_none(evidence.get("date_end")) or _date_or_none(
         evidence.get("generated_at")
     )
-    return [
+    findings = [
         _evidence_freshness_finding(
             source_id="price_data",
             source_label="Price data",
@@ -4353,7 +4399,9 @@ def _evidence_staleness_findings(
             source_path=price_cache_path,
             artifact_id=price_cache_path.name,
             rule=_mapping(rules.get("price_data")),
-            as_of=as_of,
+            as_of=market_reference,
+            requested_as_of=as_of,
+            market_calendar=market_calendar,
         ),
         _evidence_freshness_finding(
             source_id="market_panel_data",
@@ -4364,7 +4412,9 @@ def _evidence_staleness_findings(
             source_path=market_panel_path,
             artifact_id=market_panel_path.name if market_panel_path else "",
             rule=_mapping(rules.get("market_panel_data")),
-            as_of=as_of,
+            as_of=market_reference,
+            requested_as_of=as_of,
+            market_calendar=market_calendar,
             artifact_status=_text(market_panel.get("status")),
         ),
         _evidence_freshness_finding(
@@ -4473,6 +4523,7 @@ def _evidence_staleness_findings(
             artifact_status=_text(_mapping(paper_shadow_weekly.get("manifest")).get("status")),
         ),
     ]
+    return findings, market_calendar
 
 
 def _evidence_freshness_finding(
@@ -4486,11 +4537,25 @@ def _evidence_freshness_finding(
     artifact_id: str,
     rule: Mapping[str, Any],
     as_of: date,
+    requested_as_of: date | None = None,
+    market_calendar: Mapping[str, Any] | None = None,
     artifact_status: str = "",
 ) -> dict[str, Any]:
+    effective_requested_as_of = requested_as_of or as_of
+    calendar_context = _mapping(market_calendar)
     raw_age = (as_of - timestamp).days if timestamp is not None else None
-    age_days = raw_age if raw_age is not None else None
-    severity = "BLOCKING" if raw_age is not None and raw_age < 0 else _freshness_severity(age_days, rule)
+    source_after_reference_but_not_requested = (
+        raw_age is not None
+        and raw_age < 0
+        and timestamp is not None
+        and timestamp <= effective_requested_as_of
+    )
+    age_days = 0 if source_after_reference_but_not_requested else raw_age
+    severity = (
+        "BLOCKING"
+        if raw_age is not None and raw_age < 0 and not source_after_reference_but_not_requested
+        else _freshness_severity(age_days, rule)
+    )
     source_exists = source_path.exists() if source_path is not None else False
     missing = (
         rule.get("required") is not False
@@ -4512,6 +4577,20 @@ def _evidence_freshness_finding(
         "timestamp": "" if timestamp is None else timestamp.isoformat(),
         "timestamp_basis": timestamp_basis,
         "as_of": as_of.isoformat(),
+        "requested_as_of": effective_requested_as_of.isoformat(),
+        "freshness_reference_date": as_of.isoformat(),
+        "latest_complete_market_date": _text(calendar_context.get("latest_complete_market_date")),
+        "market_calendar_status": _text(calendar_context.get("market_calendar_status")),
+        "market_calendar_reason": _text(calendar_context.get("market_calendar_reason")),
+        "calendar_adjusted_staleness": severity in {"STALE", "BLOCKING"} or missing,
+        "stale_reason": _evidence_stale_reason(
+            severity=severity,
+            missing=missing,
+            raw_age=raw_age,
+            source_after_reference_but_not_requested=source_after_reference_but_not_requested,
+            requested_as_of=effective_requested_as_of,
+            freshness_reference_date=as_of,
+        ),
         "age_days": age_days,
         "raw_age_days": raw_age,
         "timestamp_relation": _timestamp_relation(raw_age),
@@ -4523,6 +4602,32 @@ def _evidence_freshness_finding(
         "severity": severity,
         "recommended_action": _freshness_recommended_action(severity, source_id),
         **EVIDENCE_STALENESS_MONITOR_SAFETY,
+    }
+
+
+def _market_data_freshness_context(
+    *,
+    requested_as_of: date,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    latest_complete = latest_completed_us_equity_trading_day(generated_at)
+    session = us_equity_market_session(requested_as_of)
+    reference = min(requested_as_of, latest_complete)
+    if requested_as_of > latest_complete:
+        adjustment_reason = "requested_as_of_after_latest_complete_market_date"
+    elif not session.is_trading_day:
+        adjustment_reason = "requested_as_of_non_trading_day"
+    else:
+        adjustment_reason = "requested_as_of_is_latest_complete_or_historical_market_date"
+    return {
+        "market": "US_EQUITY",
+        "requested_as_of": requested_as_of.isoformat(),
+        "latest_complete_market_date": latest_complete.isoformat(),
+        "freshness_reference_date": reference.isoformat(),
+        "market_calendar_status": session.session_status,
+        "market_calendar_reason": session.reason,
+        "calendar_adjustment_reason": adjustment_reason,
+        "calendar_source": session.calendar_source,
     }
 
 
@@ -4549,6 +4654,30 @@ def _freshness_recommended_action(severity: str, source_id: str) -> str:
     if severity == "STALE":
         return f"refresh_or_regenerate_{source_id}"
     return f"block_until_{source_id}_is_refreshed"
+
+
+def _evidence_stale_reason(
+    *,
+    severity: str,
+    missing: bool,
+    raw_age: int | None,
+    source_after_reference_but_not_requested: bool = False,
+    requested_as_of: date,
+    freshness_reference_date: date,
+) -> str:
+    if missing:
+        return "missing_required_artifact"
+    if source_after_reference_but_not_requested:
+        return "source_newer_than_calendar_reference_but_not_after_requested_as_of"
+    if raw_age is not None and raw_age < 0:
+        return "timestamp_after_freshness_reference_date"
+    if severity == "BLOCKING":
+        return "older_than_blocking_policy_window"
+    if severity == "STALE":
+        return "older_than_acceptable_policy_window"
+    if requested_as_of > freshness_reference_date:
+        return "calendar_adjusted_to_latest_complete_market_date"
+    return "within_policy_window"
 
 
 def _optional_dynamic_v3_artifact_payload(

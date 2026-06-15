@@ -84,15 +84,25 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
 
     assert validation["status"] == "PASS"
     assert report_payload["evidence_staleness_report"]["monitor_id"] == result["monitor_id"]
-    assert report["evidence_freshness_status"] == "ACCEPTABLE"
+    assert report["evidence_freshness_status"] == "FRESH"
+    assert report["requested_as_of"] == "2024-04-22"
+    assert report["freshness_reference_date"] == "2024-04-19"
+    assert report["latest_complete_market_date"] == "2024-04-19"
+    assert report["market_calendar_status"] == "TRADING_DAY"
     assert report["stale_artifacts"] == []
     assert report["blocking_artifacts"] == []
     assert report["missing_artifacts"] == []
-    assert report["next_refresh_action"] == "continue_with_manual_freshness_note"
+    assert report["next_refresh_action"] == "continue_candidate_review"
     assert report["safe_to_continue_shadow"] is True
     assert report["safety_boundary_status"] == "PASS"
-    assert findings["price_data"]["severity"] == "ACCEPTABLE"
-    assert findings["market_panel_data"]["severity"] == "ACCEPTABLE"
+    assert findings["price_data"]["severity"] == "FRESH"
+    assert findings["price_data"]["requested_as_of"] == "2024-04-22"
+    assert findings["price_data"]["freshness_reference_date"] == "2024-04-19"
+    assert findings["price_data"]["stale_reason"] == (
+        "calendar_adjusted_to_latest_complete_market_date"
+    )
+    assert findings["market_panel_data"]["severity"] == "FRESH"
+    assert findings["market_panel_data"]["freshness_reference_date"] == "2024-04-19"
     assert findings["signal_artifact"]["timestamp_basis"] == "evidence_date_end_or_generated_at"
     assert findings["stress_backfill_result"]["severity"] == "FRESH"
     assert findings["ab_review"]["severity"] == "FRESH"

@@ -53,6 +53,10 @@ Artifacts:
 
 Expected summary fields:
 
+- `requested_as_of`
+- `freshness_reference_date`
+- `latest_complete_market_date`
+- `market_calendar_status`
 - `evidence_freshness_status`
 - `stale_artifacts`
 - `blocking_artifacts`
@@ -60,6 +64,17 @@ Expected summary fields:
 - `next_refresh_action`
 - `safe_to_continue_shadow`
 - `safety_boundary_status`
+
+Expected per-source finding fields:
+
+- `source_id`
+- `timestamp_basis`
+- `source_timestamp`
+- `freshness_reference_date`
+- `age_days`
+- `severity`
+- `missing`
+- `stale_reason`
 
 ## 6. Safety Boundary
 
@@ -112,3 +127,8 @@ All outputs are read-only and fixed to:
   `python -m pytest tests/test_evidence_staleness_monitor.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q`
   36 passed、`python -m ruff check src tests`、`python -m compileall src` 和
   `git diff --check`。
+- 2026-06-16：TRADING-354B 更新 market-data freshness 口径；`price_data` 和
+  `market_panel_data` 现在使用 `freshness_reference_date` 计算 age，并在 report /
+  Reader Brief / CLI summary 中披露 `requested_as_of`、`latest_complete_market_date`、
+  `market_calendar_status` 和 per-source `stale_reason`。该变更不放宽 threshold，不增加
+  waiver，不刷新数据，也不运行 market panel 或 research 上游。
