@@ -46,7 +46,7 @@
 - full pytest 仍保留为完整 gate；若仍超时，记录明确慢点和下一步，不写成 PASS。
 - 更新 task register 和本文状态。
 - 通过 ruff、compileall、git diff check 和新增/修改工具测试。
-- 默认验证入口使用 8 worker 并行 pytest，并在命令/JSON summary 中披露 workers 和
+- 默认验证入口使用 16 worker 并行 pytest，并在命令/JSON summary 中披露 workers 和
   distribution 策略；同时保留 `--workers 1` 串行复现入口。
 
 ## 6. 进展记录
@@ -121,11 +121,17 @@
   - `python scripts/run_validation_tier.py full` 为 2314 passed、642 warnings，
     pytest runtime 137.22 秒（约 2 分 17 秒），script elapsed 138.04 秒；未观察到
     worker crash、latest pointer 竞争或 shared artifact 并发失败。
+- 2026-06-15：owner 要求默认并行度从 8 worker 提升到 16 worker。当前阶段只调整
+  validation tier runner 的默认 pytest-xdist worker 数和对应文档/测试断言，不改变测试
+  选择、full gate 范围、业务逻辑、数据质量 gate 或投资解释路径；串行复现入口仍为
+  `--workers 1`。验证通过 `python -m pytest tests/test_validation_tier_script.py -q`
+  3 passed，且 `python scripts/run_validation_tier.py full --print-only` 确认默认命令为
+  `-n 16 --dist loadfile`。
 
 ## 7. 当前使用规则
 
-本阶段不降低 full pytest gate，只改变日常反馈入口。默认命令使用 8 worker 并行
-pytest（`-n 8 --dist loadfile`），需要复现串行问题时显式加 `--workers 1`：
+本阶段不降低 full pytest gate，只改变日常反馈入口。默认命令使用 16 worker 并行
+pytest（`-n 16 --dist loadfile`），需要复现串行问题时显式加 `--workers 1`：
 
 - 普通 CLI wiring、report registry、documentation contract 改动：先跑
   `python scripts/run_validation_tier.py fast`。
@@ -136,7 +142,7 @@ pytest（`-n 8 --dist loadfile`），需要复现串行问题时显式加 `--wor
 - paper trading engine、scheduler、portfolio tooling 改动：跑
   `python scripts/run_validation_tier.py trading-engine`。
 - 跨模块、P0 投资解释、data quality、scoring、backtest、broker safety 或交付前最终验证：
-  跑 `python scripts/run_validation_tier.py full`；默认 8 worker 下本机 full gate 已进入
+  跑 `python scripts/run_validation_tier.py full`；默认 16 worker 下本机 full gate 已进入
   3 分钟内，若显式使用 `--workers 1` 串行复现，timeout 仍应按 25-30 分钟级设置。
 
 如果没有运行 full gate，交付说明必须明确已运行的 scoped tiers 和限制；如果 full gate

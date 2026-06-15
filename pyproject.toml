@@ -53,6 +53,13 @@ packages = ["src/ai_trading_system"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+  "fast_unit: fast local validation for CLI wiring, pure helpers, and lightweight contracts",
+  "contract_validation: documentation, report registry, artifact, and safety-boundary contracts",
+  "report_validation: Reader Brief, report index, report navigation, and reader UX validation",
+  "integration: scheduler, trading_engine, portfolio tooling, and cross-module integration tests",
+  "slow_research_regression: Dynamic v3, backtest simulation, and research regression tests",
+]
 
 [tool.ruff]
 line-length = 100

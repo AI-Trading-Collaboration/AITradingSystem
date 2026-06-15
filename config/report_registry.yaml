@@ -4882,6 +4882,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: test_runtime_summary
+    title: Test Runtime Summary
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: python scripts/run_validation_tier.py fast-unit --write-runtime-artifact
+    artifact_globs:
+      - outputs/validation_runtime/*/test_runtime_summary.json
+      - outputs/validation_runtime/*/test_runtime_reader_brief.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-347 records pytest suite runtime, promotion-blocking status, and
+      no-production safety boundaries so future promotion evidence does not rely
+      only on focused tests or a full pytest command that may exceed local timeout
+      budgets.
+    owner_action: run_relevant_promotion_blocking_validation_suites_before_promotion_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance

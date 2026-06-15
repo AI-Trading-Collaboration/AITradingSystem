@@ -74,26 +74,35 @@ python -m pip install -e ".[dev,data,dashboard,brokers]"
 python -m pytest
 ```
 
-日常开发不要盲等 full pytest。先按改动范围运行分层验证，默认使用 8 worker
-并行 pytest（`-n 8 --dist loadfile`），输出中会显示实际 pytest 命令、workers、
+日常开发不要盲等 full pytest。先按改动范围运行分层验证，默认使用 16 worker
+并行 pytest（`-n 16 --dist loadfile`），输出中会显示实际 pytest 命令、workers、
 distribution 和慢测试耗时：
 
 ```powershell
 python scripts/run_validation_tier.py --list
-python scripts/run_validation_tier.py fast
-python scripts/run_validation_tier.py reader-brief
-python scripts/run_validation_tier.py dynamic-v3
-python scripts/run_validation_tier.py trading-engine
-python scripts/run_validation_tier.py full
+python scripts/run_validation_tier.py fast-unit --write-runtime-artifact
+python scripts/run_validation_tier.py contract-validation --write-runtime-artifact
+python scripts/run_validation_tier.py report-validation --write-runtime-artifact
+python scripts/run_validation_tier.py integration --write-runtime-artifact
+python scripts/run_validation_tier.py slow-research-regression --write-runtime-artifact
+python scripts/run_validation_tier.py full --write-runtime-artifact
 ```
 
 需要复现串行行为时显式加 `--workers 1`；不要把并行失败静默改写成串行 PASS。
+`--write-runtime-artifact` 会写出
+`outputs/validation_runtime/<run_id>/test_runtime_summary.json` 和
+`test_runtime_reader_brief.md`，用于记录 suite、命令、runtime、promotion-blocking
+状态和 no-production safety boundary。
 
-`fast` 用于 CLI wiring、report registry 和 documentation contract 快速反馈；
-`dynamic-v3`、`reader-brief`、`trading-engine` 用于对应领域改动。涉及投资解释、
-data quality、scoring、backtest、report registry、Reader Brief、broker safety 或跨模块
-契约的改动，最终仍应跑对应领域 gate，并在交付前尽量跑 `full`；如果 full 仍因环境
-上限超时，不能记为 PASS，需要记录已通过的 scoped suites、超时时间和 top slow tests。
+`fast-unit` 用于 CLI wiring、轻量 helper、report registry 和 documentation contract
+快速反馈；`contract-validation` 是 docs/report/artifact/safety contract 的 promotion-facing
+门禁；`report-validation` 覆盖 Reader Brief 和报告导航；`integration` 覆盖 scheduler、
+trading_engine 和跨模块集成；`slow-research-regression` 单独承载 Dynamic v3、backtest
+simulation 和研究回归。旧命令 alias 仍可用：`fast`、`reader-brief`、`dynamic-v3`
+和 `trading-engine` 会分别解析到新的正式 suite。涉及投资解释、data quality、scoring、
+backtest、report registry、Reader Brief、broker safety 或跨模块契约的改动，最终仍应跑
+对应领域 gate，并在交付前尽量跑 `full`；如果 full 或 slow research suite 因环境上限
+超时，不能记为 PASS，需要记录已通过的 scoped suites、超时时间和 top slow tests。
 
 项目主线运行环境固定对齐 Python 3.11：CI 使用 3.11，`pyproject.toml` 的
 Ruff/Black/Mypy 目标也是 `py311`。Windows 本机如果裸 `python` 指向 3.12+
