@@ -2482,6 +2482,72 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "shadow_decision_comparison",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_comparison_id"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_comparison_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_comparison_status"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_changed",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_changed"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_change_classification",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_change_classification"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_change_reason",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_change_reason"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_previous_state",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_previous_state"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_current_state",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_current_state"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_previous_safe_to_continue",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_previous_safe_to_continue"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_current_safe_to_continue",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_current_safe_to_continue"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_recommended_owner_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_recommended_owner_action"
+                        ),
+                    ),
+                    (
+                        "shadow_decision_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_validation_status"
+                        ),
+                    ),
+                    (
                         "cost_sensitivity_review",
                         etf_dynamic_v3_parameter_research.get(
                             "cost_sensitivity_review_id"
@@ -13560,6 +13626,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_outcome_attribution_manifest.json",
     )
+    shadow_decision_comparison_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_shadow_decision_comparison",
+        ),
+        "shadow_decision_comparison_manifest.json",
+    )
     cost_sensitivity_review_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -14127,6 +14200,21 @@ def _etf_dynamic_v3_parameter_research_summary(
         paper_shadow_outcome_attribution_path.parent
         / "paper_shadow_outcome_attribution_validation.json"
         if paper_shadow_outcome_attribution_path is not None
+        else None
+    )
+    shadow_decision_comparison_manifest = _read_optional_json(
+        shadow_decision_comparison_path
+    )
+    shadow_decision_comparison_report = _read_optional_json(
+        shadow_decision_comparison_path.parent
+        / "shadow_decision_comparison_report.json"
+        if shadow_decision_comparison_path is not None
+        else None
+    )
+    shadow_decision_comparison_validation = _read_optional_json(
+        shadow_decision_comparison_path.parent
+        / "shadow_decision_comparison_validation.json"
+        if shadow_decision_comparison_path is not None
         else None
     )
     cost_sensitivity_manifest = _read_optional_json(cost_sensitivity_review_path)
@@ -15923,6 +16011,52 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_outcome_validation.get("status"),
             "MISSING",
         ),
+        "shadow_decision_comparison_id": _text(
+            shadow_decision_comparison_manifest.get("comparison_id"),
+            "MISSING",
+        ),
+        "shadow_decision_comparison_status": _text(
+            shadow_decision_comparison_report.get("shadow_decision_comparison_status"),
+            "MISSING",
+        ),
+        "shadow_decision_changed": shadow_decision_comparison_report.get(
+            "decision_changed",
+            "MISSING",
+        ),
+        "shadow_decision_change_classification": _text(
+            shadow_decision_comparison_report.get("change_classification"),
+            "MISSING",
+        ),
+        "shadow_decision_change_reason": _text(
+            shadow_decision_comparison_report.get("change_reason"),
+            "MISSING",
+        ),
+        "shadow_decision_previous_state": _text(
+            _mapping(shadow_decision_comparison_report.get("previous_state")).get(
+                "readiness_status"
+            ),
+            "MISSING",
+        ),
+        "shadow_decision_current_state": _text(
+            _mapping(shadow_decision_comparison_report.get("current_state")).get(
+                "readiness_status"
+            ),
+            "MISSING",
+        ),
+        "shadow_decision_previous_safe_to_continue": _mapping(
+            shadow_decision_comparison_report.get("previous_state")
+        ).get("safe_to_continue_shadow", "MISSING"),
+        "shadow_decision_current_safe_to_continue": _mapping(
+            shadow_decision_comparison_report.get("current_state")
+        ).get("safe_to_continue_shadow", "MISSING"),
+        "shadow_decision_recommended_owner_action": _text(
+            shadow_decision_comparison_report.get("recommended_owner_action"),
+            "MISSING",
+        ),
+        "shadow_decision_validation_status": _text(
+            shadow_decision_comparison_validation.get("status"),
+            "MISSING",
+        ),
         "cost_sensitivity_review_id": _text(
             cost_sensitivity_manifest.get("review_id"),
             "MISSING",
@@ -16345,6 +16479,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if paper_shadow_outcome_attribution_path is None
             else str(paper_shadow_outcome_attribution_path)
+        ),
+        "shadow_decision_comparison": (
+            ""
+            if shadow_decision_comparison_path is None
+            else str(shadow_decision_comparison_path)
         ),
         "cost_sensitivity_review": (
             ""
@@ -17346,6 +17485,17 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_outcome_unknown_driver_count": "MISSING",
         "paper_shadow_outcome_next_required_action": "MISSING",
         "paper_shadow_outcome_validation_status": "MISSING",
+        "shadow_decision_comparison_id": "MISSING",
+        "shadow_decision_comparison_status": "MISSING",
+        "shadow_decision_changed": "MISSING",
+        "shadow_decision_change_classification": "MISSING",
+        "shadow_decision_change_reason": "MISSING",
+        "shadow_decision_previous_state": "MISSING",
+        "shadow_decision_current_state": "MISSING",
+        "shadow_decision_previous_safe_to_continue": "MISSING",
+        "shadow_decision_current_safe_to_continue": "MISSING",
+        "shadow_decision_recommended_owner_action": "MISSING",
+        "shadow_decision_validation_status": "MISSING",
         "cost_sensitivity_review_id": "MISSING",
         "cost_sensitivity_status": "MISSING",
         "cost_sensitivity_policy": "MISSING",
@@ -17448,6 +17598,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "shadow_continuation_readiness_report": "",
         "paper_shadow_health": "",
         "paper_shadow_outcome_attribution": "",
+        "shadow_decision_comparison": "",
         "cost_sensitivity_review": "",
         "benchmark_baseline_control": "",
         "candidate_regression_replay": "",

@@ -1684,6 +1684,25 @@ production state，所有输出固定 `research_only=true`、`outcome_attributio
 `not_official_target_weights=true`、`broker_action_allowed=false`、
 `production_effect=none`。
 
+TRADING-374_SHADOW_DECISION_COMPARISON 在 paper-shadow continuation readiness 后新增
+current-vs-previous decision comparison。CLI 入口为
+`aits etf dynamic-v3-rescue shadow-decision-comparison run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue shadow-decision-comparison report --latest` 和
+`aits etf dynamic-v3-rescue validate-shadow-decision-comparison --latest`。该 report 只读
+current 和 previous shadow continuation readiness artifacts，并在可解析时引用 weekly/health
+context，比较 `safe_to_continue_shadow`、readiness status、weekly decision、drift severity、
+stale/missing artifacts、signal input completeness、fallback status 和 safety boundary status。
+输出 `decision_changed`、`change_reason`、`previous_state`、`current_state`、
+`recommended_owner_action`，并把变化分类为 `NO_CHANGE`、`IMPROVED`、`DETERIORATED`、
+`BLOCKED` 或 `RECOVERED`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/shadow_decision_comparison/`。该 comparison 不重算
+weekly decision、readiness、health、signal、regime 或 performance，不刷新数据、不补造 upstream
+artifact、不写 official target weights、不触发 broker/order、不修改 paper account 或 production
+state，所有输出固定 `research_only=true`、`shadow_decision_comparison_only=true`、
+`read_only_comparison=true`、`decision_mutated=false`、
+`data_downloaded_by_comparison=false`、`pipelines_executed_by_comparison=false`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
+
 TRADING-359_COST_SENSITIVITY_REVIEW 在 paper-shadow weekly/health 后新增 research-only
 transaction-cost sensitivity review。Policy config 为
 `config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`，披露

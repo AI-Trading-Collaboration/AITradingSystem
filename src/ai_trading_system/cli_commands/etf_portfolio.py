@@ -45,6 +45,9 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as paper_shadow_weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import (
+    dynamic_v3_shadow_decision_comparison as shadow_decision_comparison,
+)
+from ai_trading_system.etf_portfolio import (
     dynamic_v3_signal_input_completeness as signal_input_completeness,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
@@ -1868,6 +1871,10 @@ dynamic_v3_paper_shadow_outcome_attribution_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow outcome attribution workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_shadow_decision_comparison_app = typer.Typer(
+    help="Dynamic v3 rescue shadow decision comparison workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_cost_sensitivity_review_app = typer.Typer(
     help="Dynamic v3 rescue cost-sensitivity review workflow。",
     no_args_is_help=True,
@@ -2688,6 +2695,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_outcome_attribution_app,
     name="paper-shadow-outcome-attribution",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_shadow_decision_comparison_app,
+    name="shadow-decision-comparison",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_cost_sensitivity_review_app,
@@ -21583,6 +21594,176 @@ def dynamic_v3_validate_paper_shadow_outcome_attribution_command(
     _echo_validation_payload(
         paper_shadow_outcome_attribution.validate_paper_shadow_outcome_attribution_artifact(
             attribution_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_shadow_decision_comparison_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    previous_state = _mapping_obj(report.get("previous_state"))
+    current_state = _mapping_obj(report.get("current_state"))
+    typer.echo(
+        f"comparison_id={report.get('comparison_id') or manifest.get('comparison_id')}"
+    )
+    typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
+    typer.echo(
+        "shadow_decision_comparison_status="
+        f"{report.get('shadow_decision_comparison_status')}"
+    )
+    typer.echo(f"current_readiness_id={report.get('current_readiness_id')}")
+    typer.echo(f"previous_readiness_id={report.get('previous_readiness_id')}")
+    typer.echo(f"decision_changed={report.get('decision_changed')}")
+    typer.echo(f"change_classification={report.get('change_classification')}")
+    typer.echo(f"change_reason={report.get('change_reason')}")
+    typer.echo(
+        f"previous_state={previous_state.get('readiness_status')}:"
+        f"safe={previous_state.get('safe_to_continue_shadow')}:"
+        f"weekly={previous_state.get('weekly_decision')}:"
+        f"signal={previous_state.get('signal_input_completeness')}"
+    )
+    typer.echo(
+        f"current_state={current_state.get('readiness_status')}:"
+        f"safe={current_state.get('safe_to_continue_shadow')}:"
+        f"weekly={current_state.get('weekly_decision')}:"
+        f"signal={current_state.get('signal_input_completeness')}"
+    )
+    typer.echo(f"recommended_owner_action={report.get('recommended_owner_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(
+        "report_path="
+        f"{manifest.get('shadow_decision_comparison_markdown_path')}"
+    )
+    typer.echo("shadow_decision_comparison_only=true")
+    typer.echo("read_only_comparison=true")
+    typer.echo("decision_mutated=false")
+    typer.echo("data_downloaded_by_comparison=false")
+    typer.echo("pipelines_executed_by_comparison=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_shadow_decision_comparison_app.command("run")
+def dynamic_v3_shadow_decision_comparison_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help=(
+                "shadow decision comparison as-of date YYYY-MM-DD；"
+                "省略时使用 current readiness as_of 或当前 UTC 日期。"
+            ),
+        ),
+    ] = None,
+    current_readiness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--current-readiness-id",
+            "--current-shadow-continuation-readiness-id",
+            help="current shadow continuation readiness id；缺省读取 latest。",
+        ),
+    ] = None,
+    previous_readiness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--previous-readiness-id",
+            "--previous-shadow-continuation-readiness-id",
+            help=(
+                "previous shadow continuation readiness id；"
+                "缺省从 artifact root 解析 latest prior。"
+            ),
+        ),
+    ] = None,
+    readiness_dir: Annotated[
+        Path,
+        typer.Option("--readiness-dir", help="shadow continuation readiness artifact root。"),
+    ] = filtered_readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+    weekly_review_dir: Annotated[
+        Path,
+        typer.Option("--weekly-review-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    paper_shadow_health_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-health-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow decision comparison artifact root。"),
+    ] = shadow_decision_comparison.DEFAULT_SHADOW_DECISION_COMPARISON_DIR,
+) -> None:
+    result = shadow_decision_comparison.run_shadow_decision_comparison(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        current_readiness_id=current_readiness_id,
+        previous_readiness_id=previous_readiness_id,
+        readiness_dir=readiness_dir,
+        weekly_review_dir=weekly_review_dir,
+        paper_shadow_health_dir=paper_shadow_health_dir,
+        output_dir=output_dir,
+    )
+    _echo_shadow_decision_comparison_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("shadow_decision_comparison_report")),
+        validation=_mapping_obj(result.get("shadow_decision_comparison_validation")),
+    )
+
+
+@dynamic_v3_shadow_decision_comparison_app.command("report")
+def dynamic_v3_shadow_decision_comparison_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    comparison_id: Annotated[
+        str | None,
+        typer.Option("--comparison-id", help="shadow decision comparison artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow decision comparison artifact root。"),
+    ] = shadow_decision_comparison.DEFAULT_SHADOW_DECISION_COMPARISON_DIR,
+) -> None:
+    if not latest and not comparison_id:
+        raise typer.BadParameter("--comparison-id or --latest is required")
+    payload = shadow_decision_comparison.shadow_decision_comparison_report_payload(
+        comparison_id=comparison_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_shadow_decision_comparison_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("shadow_decision_comparison_report")),
+        validation=_mapping_obj(payload.get("shadow_decision_comparison_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-decision-comparison")
+def dynamic_v3_validate_shadow_decision_comparison_command(
+    comparison_id: Annotated[
+        str | None,
+        typer.Option("--comparison-id", help="shadow decision comparison artifact id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow decision comparison artifact root。"),
+    ] = shadow_decision_comparison.DEFAULT_SHADOW_DECISION_COMPARISON_DIR,
+) -> None:
+    resolved_id = comparison_id
+    if latest:
+        payload = shadow_decision_comparison.shadow_decision_comparison_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("comparison_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--comparison-id or --latest is required")
+    _echo_validation_payload(
+        shadow_decision_comparison.validate_shadow_decision_comparison_artifact(
+            comparison_id=resolved_id,
             output_dir=output_dir,
         )
     )
