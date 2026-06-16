@@ -1680,6 +1680,26 @@ validation artifact。Runtime artifacts 写入
 `broker_action_allowed=false`、`order_ticket_generated=false`、`not_official_target_weights=true`、
 `production_effect=none`。
 
+TRADING-370_BENCHMARK_BASELINE_CONTROL_PACK 在 paper-shadow weekly 和 cost-sensitivity
+后新增 research-only benchmark baseline controls。Policy config 为
+`config/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control_v1.yaml`，披露
+static allocation、no-trade、QQQ-only、SPY-only、equal-weight ETF baselines 的 baseline id、
+asset universe、rebalancing assumption、cost assumption、applicability、limitations、
+owner/version、rationale 和 review condition。CLI 入口为
+`aits etf dynamic-v3-rescue benchmark-baseline-control run --candidate-metrics-path <metrics.json> --baseline-metrics-path <baselines.json>`、
+`aits etf dynamic-v3-rescue benchmark-baseline-control report --latest` 和
+`aits etf dynamic-v3-rescue validate-benchmark-baseline-control --latest`。该 pack 只读
+candidate metrics、baseline metrics、paper-shadow weekly review 和 cost-sensitivity review，
+输出 candidate-vs-baseline comparison summary、monthly review pack inputs、Reader Brief
+section 和 validation artifact；缺 numeric metrics 时 fail closed 为
+`INSUFFICIENT_BASELINE_METRICS`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/`。该 control pack
+不运行 backtest、不刷新数据、不补造 metrics、不生成 execution model、不写 official target
+weights、不修改 paper account 或 production state，所有输出固定 `research_only=true`、
+`benchmark_control_pack_only=true`、`execution_model_ready=false`、
+`broker_action_allowed=false`、`order_ticket_generated=false`、
+`not_official_target_weights=true`、`production_effect=none`。
+
 TRADING-356_STRESS_SCENARIO_LIBRARY 在 evidence freshness guard 后新增 Dynamic v3 rescue
 专用 stress scenario library。CLI 入口为
 `aits etf dynamic-v3-rescue stress-scenario-library report`、`... report --latest` 和

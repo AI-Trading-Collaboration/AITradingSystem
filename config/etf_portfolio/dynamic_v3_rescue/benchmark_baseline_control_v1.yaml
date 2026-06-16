@@ -1,0 +1,101 @@
+policy_id: dynamic_v3_rescue_benchmark_baseline_control_v1
+version: "2026-06-16"
+status: pilot_manual_review_baseline
+owner: system_validation
+production_effect: none
+rationale: >
+  Paper-shadow candidate evidence should be compared against a stable set of
+  benchmark baselines so owner review does not overfit to a single favorable
+  reference case.
+intended_effect: >
+  Standardize candidate-vs-baseline interpretation for weekly, cost-sensitivity,
+  monthly, and promotion-board review while keeping all outputs research-only.
+validation_evidence: >
+  TRADING-370 focused tests, CLI smoke validation, and ongoing manual review.
+  Baseline definitions remain pilot baselines until calibrated with forward
+  paper-shadow evidence.
+review_condition: >
+  Revisit baseline definitions after enough ai_after_chatgpt paper-shadow
+  candidate samples exist, before any promotion board treats this pack as
+  acceptance evidence, and whenever ETF universe membership changes.
+comparison_summary:
+  minimum_outperformance_threshold: 0.0025
+  unit: decimal_return_proxy
+  interpretation: >
+    Candidate net performance proxy must exceed a baseline by at least 25 bps
+    before the comparison can count as outperformance. This is a review
+    threshold, not a production promotion rule.
+baselines:
+  - baseline_id: static_allocation
+    label: Static Allocation Baseline
+    baseline_type: static_allocation
+    asset_universe:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    rebalancing_assumption: fixed policy weights, periodic rebalance only
+    cost_assumption: use linked cost-sensitivity policy when metrics provide turnover
+    applicability: always
+    limitations:
+      - Does not represent a broker-executed portfolio.
+      - Requires explicit baseline metrics for numeric comparison.
+  - baseline_id: no_trade
+    label: No-Trade Baseline
+    baseline_type: no_trade
+    asset_universe:
+      - current paper-shadow holdings or current policy weights
+    rebalancing_assumption: no rebalance during comparison window
+    cost_assumption: zero incremental turnover unless explicit metrics say otherwise
+    applicability: always
+    limitations:
+      - Requires explicit starting holdings or no-trade metrics for numeric comparison.
+  - baseline_id: qqq_only
+    label: QQQ-Only Baseline
+    baseline_type: single_asset
+    asset_universe:
+      - QQQ
+    rebalancing_assumption: buy-and-hold QQQ for comparison window
+    cost_assumption: benchmark-level turnover only when explicit metrics provide it
+    applicability: when QQQ is in the ETF benchmark universe
+    limitations:
+      - Concentrated NASDAQ-100 exposure; not a risk-matched portfolio.
+  - baseline_id: spy_only
+    label: SPY-Only Baseline
+    baseline_type: single_asset
+    asset_universe:
+      - SPY
+    rebalancing_assumption: buy-and-hold SPY for comparison window
+    cost_assumption: benchmark-level turnover only when explicit metrics provide it
+    applicability: when SPY is in the ETF benchmark universe
+    limitations:
+      - Broad market reference; not an AI-sector exposure match.
+  - baseline_id: equal_weight_etf
+    label: Equal-Weight ETF Baseline
+    baseline_type: equal_weight
+    asset_universe:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+    rebalancing_assumption: equal-weight ETF basket, periodic rebalance only
+    cost_assumption: use explicit baseline turnover when available
+    applicability: when all ETF basket members have valid metrics
+    limitations:
+      - Requires all basket members and explicit metrics for numeric comparison.
+safety_boundaries:
+  manual_review_only: true
+  research_only: true
+  benchmark_control_pack_only: true
+  execution_model_ready: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  paper_account_state_mutated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  official_target_weights: false
+  not_official_target_weights: true
+  auto_apply: false
+  production_effect: none

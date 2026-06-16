@@ -2488,6 +2488,72 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "benchmark_baseline_control",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_control_id"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_status"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_policy",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_policy"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_count"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_outperformed_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_outperformed_count"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_underperformed_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_underperformed_count"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_insufficient_metric_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_insufficient_metric_count"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_worst_delta",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_worst_delta"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_best_delta",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_best_delta"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_next_required_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_next_required_action"
+                        ),
+                    ),
+                    (
+                        "benchmark_baseline_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_validation_status"
+                        ),
+                    ),
+                    (
                         "stress_scenario_library",
                         etf_dynamic_v3_parameter_research.get(
                             "stress_scenario_library_run_id"
@@ -13398,6 +13464,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "cost_sensitivity_manifest.json",
     )
+    benchmark_baseline_control_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_benchmark_baseline_control",
+        ),
+        "benchmark_baseline_manifest.json",
+    )
     stress_scenario_library_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -13941,6 +14014,20 @@ def _etf_dynamic_v3_parameter_research_summary(
         cost_sensitivity_review_path.parent / "cost_sensitivity_validation.json"
         if cost_sensitivity_review_path is not None
         else None
+    )
+    benchmark_baseline_manifest = _read_optional_json(benchmark_baseline_control_path)
+    benchmark_baseline_control = _read_optional_json(
+        benchmark_baseline_control_path.parent / "benchmark_baseline_control_pack.json"
+        if benchmark_baseline_control_path is not None
+        else None
+    )
+    benchmark_baseline_validation = _read_optional_json(
+        benchmark_baseline_control_path.parent / "benchmark_baseline_validation.json"
+        if benchmark_baseline_control_path is not None
+        else None
+    )
+    benchmark_baseline_summary = _mapping(
+        benchmark_baseline_control.get("comparison_summary")
     )
     stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
     stress_scenario_library = _read_optional_json(
@@ -15701,6 +15788,52 @@ def _etf_dynamic_v3_parameter_research_summary(
             cost_sensitivity_validation.get("status"),
             "MISSING",
         ),
+        "benchmark_baseline_control_id": _text(
+            benchmark_baseline_manifest.get("control_id"),
+            "MISSING",
+        ),
+        "benchmark_baseline_status": _text(
+            benchmark_baseline_control.get("benchmark_baseline_status"),
+            "MISSING",
+        ),
+        "benchmark_baseline_policy": (
+            f"{benchmark_baseline_control.get('policy_id')} / "
+            f"{benchmark_baseline_control.get('policy_version')}"
+            if benchmark_baseline_control.get("policy_id")
+            else "MISSING"
+        ),
+        "benchmark_baseline_count": benchmark_baseline_control.get(
+            "baseline_count",
+            "MISSING",
+        ),
+        "benchmark_baseline_outperformed_count": benchmark_baseline_summary.get(
+            "outperformed_baseline_count",
+            "MISSING",
+        ),
+        "benchmark_baseline_underperformed_count": benchmark_baseline_summary.get(
+            "underperformed_baseline_count",
+            "MISSING",
+        ),
+        "benchmark_baseline_insufficient_metric_count": benchmark_baseline_summary.get(
+            "insufficient_metric_baseline_count",
+            "MISSING",
+        ),
+        "benchmark_baseline_worst_delta": benchmark_baseline_summary.get(
+            "worst_baseline_delta",
+            "MISSING",
+        ),
+        "benchmark_baseline_best_delta": benchmark_baseline_summary.get(
+            "best_baseline_delta",
+            "MISSING",
+        ),
+        "benchmark_baseline_next_required_action": _text(
+            benchmark_baseline_control.get("next_required_action"),
+            "MISSING",
+        ),
+        "benchmark_baseline_validation_status": _text(
+            benchmark_baseline_validation.get("status"),
+            "MISSING",
+        ),
         "stress_scenario_library_run_id": _text(
             stress_scenario_manifest.get("library_run_id"),
             "MISSING",
@@ -16008,6 +16141,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if cost_sensitivity_review_path is None
             else str(cost_sensitivity_review_path)
+        ),
+        "benchmark_baseline_control": (
+            ""
+            if benchmark_baseline_control_path is None
+            else str(benchmark_baseline_control_path)
         ),
         "stress_scenario_library": (
             ""
@@ -16995,6 +17133,17 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "cost_sensitivity_high_cost_meaningful": "MISSING",
         "cost_sensitivity_next_required_action": "MISSING",
         "cost_sensitivity_validation_status": "MISSING",
+        "benchmark_baseline_control_id": "MISSING",
+        "benchmark_baseline_status": "MISSING",
+        "benchmark_baseline_policy": "MISSING",
+        "benchmark_baseline_count": "MISSING",
+        "benchmark_baseline_outperformed_count": "MISSING",
+        "benchmark_baseline_underperformed_count": "MISSING",
+        "benchmark_baseline_insufficient_metric_count": "MISSING",
+        "benchmark_baseline_worst_delta": "MISSING",
+        "benchmark_baseline_best_delta": "MISSING",
+        "benchmark_baseline_next_required_action": "MISSING",
+        "benchmark_baseline_validation_status": "MISSING",
         "stress_scenario_library_run_id": "MISSING",
         "stress_scenario_library_id": "MISSING",
         "stress_scenario_count": "MISSING",
@@ -17069,6 +17218,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "shadow_continuation_readiness_report": "",
         "paper_shadow_health": "",
         "cost_sensitivity_review": "",
+        "benchmark_baseline_control": "",
         "stress_scenario_library": "",
         "drawdown_event_casebook": "",
         "flip_rotation_event_casebook": "",

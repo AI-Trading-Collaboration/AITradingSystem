@@ -5266,6 +5266,31 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_benchmark_baseline_control
+    title: ETF Dynamic v3 Benchmark Baseline Control Pack
+    group: governance
+    cadence: weekly
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue benchmark-baseline-control report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/benchmark_baseline_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/benchmark_baseline_control_pack.json
+      - reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/benchmark_baseline_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/benchmark_baseline_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/benchmark_baseline_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-370 compares paper-shadow candidates against static allocation,
+      no-trade, QQQ-only, SPY-only, and equal-weight ETF baselines with explicit
+      metadata and fail-closed insufficient-metrics handling. It is a
+      research-only weekly/monthly review control input, not a production
+      promotion gate or broker execution workflow.
+    owner_action: review_candidate_vs_benchmark_baselines_before_promotion_board
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_stress_scenario_library
     title: ETF Dynamic v3 Stress Scenario Library
     group: governance

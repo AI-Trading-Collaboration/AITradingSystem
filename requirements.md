@@ -4,6 +4,16 @@
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
 
+## TRADING-370
+
+- 需求文档：`docs/requirements/TRADING-370_Benchmark_Baseline_Control_Pack.md`
+- 任务：Benchmark Baseline Control Pack
+- 状态：`DONE`
+- 需求：The system shall provide standardized benchmark baseline controls for paper-shadow candidate comparison, including static allocation, no-trade, QQQ-only, SPY-only, and equal-weight ETF baselines.
+- 安全边界：research-only benchmark controls；不运行 backtest、不刷新数据、不补造 metrics、不接 broker、不写 official target weights、不修改 shadow/paper/production state、不触发 order。
+- 主要输入：benchmark baseline policy config、candidate metrics JSON、baseline metrics JSON、latest paper-shadow weekly review、latest cost-sensitivity review。
+- 主要输出：`reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/<control_id>/benchmark_baseline_control_pack.json`、`.md`、validation JSON/Markdown、Reader Brief section、monthly review pack input summary。
+
 ## TRADING-359
 
 - 需求文档：`docs/requirements/TRADING-359_Cost_Sensitivity_Review.md`

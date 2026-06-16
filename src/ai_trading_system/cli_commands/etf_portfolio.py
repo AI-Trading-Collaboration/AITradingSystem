@@ -23,6 +23,9 @@ from ai_trading_system.data.quality import (
 from ai_trading_system.data.quality import (
     write_data_quality_report as write_cache_data_quality_report,
 )
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_benchmark_baseline_control as benchmark_baseline_control,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_cost_sensitivity as cost_sensitivity
 from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as defensive_evidence
 from ai_trading_system.etf_portfolio import dynamic_v3_drawdown_casebook as drawdown_casebook
@@ -1859,6 +1862,10 @@ dynamic_v3_cost_sensitivity_review_app = typer.Typer(
     help="Dynamic v3 rescue cost-sensitivity review workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_benchmark_baseline_control_app = typer.Typer(
+    help="Dynamic v3 rescue benchmark baseline control workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
@@ -2667,6 +2674,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_cost_sensitivity_review_app,
     name="cost-sensitivity-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_benchmark_baseline_control_app,
+    name="benchmark-baseline-control",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
@@ -21534,6 +21545,174 @@ def dynamic_v3_validate_cost_sensitivity_review_command(
     _echo_validation_payload(
         cost_sensitivity.validate_cost_sensitivity_artifact(
             review_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_benchmark_baseline_control_summary(
+    *,
+    manifest: Mapping[str, Any],
+    pack: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    summary = _mapping_obj(pack.get("comparison_summary"))
+    typer.echo(f"control_id={pack.get('control_id') or manifest.get('control_id')}")
+    typer.echo(f"candidate={pack.get('candidate') or manifest.get('candidate')}")
+    typer.echo(f"benchmark_baseline_status={pack.get('benchmark_baseline_status')}")
+    typer.echo(f"policy_id={pack.get('policy_id')}")
+    typer.echo(f"policy_version={pack.get('policy_version')}")
+    typer.echo(f"baseline_count={pack.get('baseline_count')}")
+    typer.echo(
+        "outperformed_baseline_count="
+        f"{summary.get('outperformed_baseline_count')}"
+    )
+    typer.echo(
+        "underperformed_baseline_count="
+        f"{summary.get('underperformed_baseline_count')}"
+    )
+    typer.echo(
+        "insufficient_metric_baseline_count="
+        f"{summary.get('insufficient_metric_baseline_count')}"
+    )
+    typer.echo(f"worst_baseline_delta={summary.get('worst_baseline_delta')}")
+    typer.echo(f"best_baseline_delta={summary.get('best_baseline_delta')}")
+    typer.echo(f"blocking_reasons={','.join(_texts(pack.get('blocking_reasons')))}")
+    typer.echo(f"warnings={','.join(_texts(pack.get('warnings')))}")
+    typer.echo(f"next_required_action={pack.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('benchmark_baseline_report_path')}")
+    typer.echo("research_only=true")
+    typer.echo("benchmark_control_pack_only=true")
+    typer.echo("execution_model_ready=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_benchmark_baseline_control_app.command("run")
+def dynamic_v3_benchmark_baseline_control_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="benchmark baseline control as-of date YYYY-MM-DD；省略时使用 source as_of。",
+        ),
+    ] = None,
+    candidate_metrics_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--candidate-metrics-path",
+            help="显式 candidate metrics JSON，需含 net_performance_proxy。",
+        ),
+    ] = None,
+    baseline_metrics_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--baseline-metrics-path",
+            help="显式 baseline metrics JSON，需含 baselines[].net_performance_proxy。",
+        ),
+    ] = None,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="paper-shadow weekly review id；缺省 latest。"),
+    ] = None,
+    weekly_review_dir: Annotated[
+        Path,
+        typer.Option("--weekly-review-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    cost_sensitivity_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--cost-sensitivity-review-id",
+            "--review-id",
+            help="cost-sensitivity review artifact id；缺省 latest。",
+        ),
+    ] = None,
+    cost_sensitivity_dir: Annotated[
+        Path,
+        typer.Option("--cost-sensitivity-dir", help="cost-sensitivity review artifact root。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="benchmark baseline control YAML。"),
+    ] = benchmark_baseline_control.DEFAULT_BENCHMARK_BASELINE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="benchmark baseline control artifact root。"),
+    ] = benchmark_baseline_control.DEFAULT_BENCHMARK_BASELINE_CONTROL_DIR,
+) -> None:
+    result = benchmark_baseline_control.run_benchmark_baseline_control_pack(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate_metrics_path=candidate_metrics_path,
+        baseline_metrics_path=baseline_metrics_path,
+        weekly_review_id=weekly_review_id,
+        weekly_review_dir=weekly_review_dir,
+        cost_sensitivity_review_id=cost_sensitivity_review_id,
+        cost_sensitivity_dir=cost_sensitivity_dir,
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+    _echo_benchmark_baseline_control_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        pack=_mapping_obj(result.get("benchmark_baseline_control_pack")),
+        validation=_mapping_obj(result.get("benchmark_baseline_validation")),
+    )
+
+
+@dynamic_v3_benchmark_baseline_control_app.command("report")
+def dynamic_v3_benchmark_baseline_control_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    control_id: Annotated[
+        str | None,
+        typer.Option("--control-id", help="benchmark baseline control artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="benchmark baseline control artifact root。"),
+    ] = benchmark_baseline_control.DEFAULT_BENCHMARK_BASELINE_CONTROL_DIR,
+) -> None:
+    if not latest and not control_id:
+        raise typer.BadParameter("--control-id or --latest is required")
+    payload = benchmark_baseline_control.benchmark_baseline_report_payload(
+        control_id=control_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_benchmark_baseline_control_summary(
+        manifest=_mapping_obj(payload),
+        pack=_mapping_obj(payload.get("benchmark_baseline_control_pack")),
+        validation=_mapping_obj(payload.get("benchmark_baseline_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-benchmark-baseline-control")
+def dynamic_v3_validate_benchmark_baseline_control_command(
+    control_id: Annotated[
+        str | None,
+        typer.Option("--control-id", help="benchmark baseline control artifact id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="benchmark baseline control artifact root。"),
+    ] = benchmark_baseline_control.DEFAULT_BENCHMARK_BASELINE_CONTROL_DIR,
+) -> None:
+    resolved_id = control_id
+    if latest:
+        payload = benchmark_baseline_control.benchmark_baseline_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("control_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--control-id or --latest is required")
+    _echo_validation_payload(
+        benchmark_baseline_control.validate_benchmark_baseline_artifact(
+            control_id=resolved_id,
             output_dir=output_dir,
         )
     )
