@@ -119,6 +119,20 @@ from ai_trading_system.reports.market_panel import (
     write_market_panel_json,
     write_market_panel_report,
 )
+from ai_trading_system.reports.production_boundary_static_scan import (
+    DEFAULT_ALLOWLIST_PATH,
+    build_production_boundary_static_scan_payload,
+    default_production_boundary_static_scan_json_path,
+    default_production_boundary_static_scan_markdown_path,
+    default_production_boundary_static_scan_validation_json_path,
+    default_production_boundary_static_scan_validation_markdown_path,
+    latest_production_boundary_static_scan_json_path,
+    validate_production_boundary_static_scan_payload,
+    write_production_boundary_static_scan_json,
+    write_production_boundary_static_scan_markdown,
+    write_production_boundary_static_scan_validation_json,
+    write_production_boundary_static_scan_validation_markdown,
+)
 from ai_trading_system.reports.reader_brief import (
     build_reader_brief_payload,
     build_reader_brief_quality_payload,
@@ -1915,6 +1929,173 @@ def validate_reader_brief_consistency_command(
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if payload["validation_status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("production-boundary-static-scan")
+def production_boundary_static_scan_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Production boundary static scan 日期，格式为 YYYY-MM-DD。",
+        ),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析默认 scan roots 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    allowlist_path: Annotated[
+        Path,
+        typer.Option(help="Production boundary static scan allowlist YAML。"),
+    ] = DEFAULT_ALLOWLIST_PATH,
+    scan_root: Annotated[
+        list[Path] | None,
+        typer.Option("--scan-root", help="可重复指定扫描根目录；不传时扫描默认 roots。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Production boundary static scan JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Production boundary static scan Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 production boundary static scan；只读扫描 source/config/docs。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = build_production_boundary_static_scan_payload(
+        as_of=report_date,
+        project_root=project_root,
+        scan_roots=scan_root,
+        allowlist_path=allowlist_path,
+    )
+    scan_json = json_output_path or default_production_boundary_static_scan_json_path(
+        reports_dir,
+        report_date,
+    )
+    scan_md = markdown_output_path or default_production_boundary_static_scan_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_production_boundary_static_scan_json(payload, scan_json)
+    md_path = write_production_boundary_static_scan_markdown(payload, scan_md)
+    status = payload["scan_status"]
+    style = "green" if status == "OK" else "yellow"
+    if status == "BLOCKING":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Production boundary static scan：{status}[/{style}]")
+    console.print(f"Production boundary static scan JSON：{json_path}")
+    console.print(f"Production boundary static scan Markdown：{md_path}")
+    console.print(
+        f"files：{summary['scanned_file_count']}；"
+        f"findings：{summary['finding_count']}；"
+        f"blocking：{summary['blocking_finding_count']}；"
+        f"warnings：{summary['warning_finding_count']}；"
+        f"allowed：{summary['allowed_match_count']}；"
+        f"production_effect={payload['production_effect']}；只读 static scan"
+    )
+    if status == "BLOCKING":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-production-boundary-static-scan")
+def validate_production_boundary_static_scan_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 production boundary static scan JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Production boundary static scan validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Production boundary static scan JSON 路径；优先级高于 --latest/--as-of。"
+        ),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Production boundary static scan validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Production boundary static scan validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 production boundary static scan；blocking finding 时 fail closed。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_production_boundary_static_scan_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 production boundary static scan JSON：{reports_dir}")
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_production_boundary_static_scan_json_path(reports_dir, report_date)
+    if not source_path.exists():
+        raise typer.BadParameter(f"Production boundary static scan JSON not found: {source_path}")
+    try:
+        raw_payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"Production boundary static scan JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(
+            f"Production boundary static scan JSON must be an object: {source_path}"
+        )
+    payload = validate_production_boundary_static_scan_payload(raw_payload)
+    source_artifacts = dict(payload.get("input_artifacts", {}))
+    source_artifacts["production_boundary_static_scan"] = str(source_path)
+    payload["input_artifacts"] = source_artifacts
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or default_production_boundary_static_scan_validation_json_path(reports_dir, report_date)
+    )
+    validation_md = (
+        markdown_output_path
+        or default_production_boundary_static_scan_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = write_production_boundary_static_scan_validation_json(payload, validation_json)
+    md_path = write_production_boundary_static_scan_validation_markdown(payload, validation_md)
+    status = payload["validation_status"]
+    style = "green" if status == "OK" else "yellow"
+    if status == "BLOCKING":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Production boundary static scan validation：{status}[/{style}]")
+    console.print(f"Production boundary static scan validation JSON：{json_path}")
+    console.print(f"Production boundary static scan validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"warnings：{summary['warning_check_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "BLOCKING":
         raise typer.Exit(code=1)
 
 

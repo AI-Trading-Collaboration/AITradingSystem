@@ -1,0 +1,59 @@
+policy_id: production_boundary_static_scan_allowlist_v1
+version: 2026-06-16
+status: active
+owner: system
+purpose: >
+  Allow documentation-only and explicit safety-boundary mentions of broker,
+  order, official target, production mutation, account, and API key terms
+  without hiding suspicious source/config integrations.
+rules:
+  - rule_id: docs_documentation_only_mentions
+    path_glob: "docs/**"
+    term_families:
+      - "*"
+    max_severity: WARNING
+    reason: documentation_only_mentions_need_review_not_source_block
+  - rule_id: readme_documentation_only_mentions
+    path_glob: "README.md"
+    term_families:
+      - "*"
+    max_severity: WARNING
+    reason: readme_documentation_only_mentions_need_review_not_source_block
+  - rule_id: project_instruction_documentation_mentions
+    path_glob: "AGENTS.md"
+    term_families:
+      - "*"
+    max_severity: WARNING
+    reason: project_instruction_safety_language
+  - rule_id: existing_paper_broker_and_stub_surface
+    path_glob: "src/ai_trading_system/trading_engine/brokers/**"
+    term_families:
+      - broker
+      - live_order
+      - order_ticket
+      - account_id
+    max_severity: WARNING
+    reason: existing_paper_broker_and_stub_surface_requires_visibility
+  - rule_id: existing_execution_service_boundary
+    path_glob: "src/ai_trading_system/trading_engine/execution/**"
+    term_families:
+      - broker
+      - live_order
+      - order_ticket
+    max_severity: WARNING
+    reason: existing_execution_service_boundary_requires_visibility
+  - rule_id: paper_trading_scripts
+    path_glob: "scripts/run_paper_trading_*.py"
+    term_families:
+      - broker
+      - live_order
+      - order_ticket
+      - account_id
+    max_severity: WARNING
+    reason: paper_trading_script_boundary_requires_visibility
+  - rule_id: local_ibkr_paper_config_account_ids
+    path_glob: "config/ibkr_paper_*.local.yaml"
+    term_families:
+      - account_id
+    max_severity: WARNING
+    reason: local_paper_account_id_must_remain_visible_and_masked

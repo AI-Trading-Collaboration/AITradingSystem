@@ -1604,6 +1604,17 @@ gap 先作为可见 warning，不重写历史 artifact。Reader Brief quality ga
 safety boundary、next action 和 decision state；该链路不运行上游、不刷新数据、不补造
 report、不写 official target weights、不触发 broker/order 或 production mutation。
 
+TRADING-377_PRODUCTION_BOUNDARY_STATIC_SCANNER 新增 production boundary static scan。
+`aits reports production-boundary-static-scan --as-of YYYY-MM-DD` 只读扫描 source、config、
+docs 和 scripts 中的 broker、order ticket、live allocation、official target weight、
+production mutation、auto execute、live order、account id、API key 等 production-facing
+terms，并使用 `config/production_boundary_static_scan_allowlist.yaml` 把 documentation-only
+和既有 paper/stub boundary surfaces 降为可见 warning。输出
+`outputs/reports/production_boundary_static_scan_YYYY-MM-DD.json/md`；`aits reports
+validate-production-boundary-static-scan --latest` 输出
+`production_boundary_static_scan_validation_YYYY-MM-DD.json/md`。高置信 production action
+或非 paper secret-like literal 必须 `BLOCKING` fail closed；warning 不会被静默隐藏。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持

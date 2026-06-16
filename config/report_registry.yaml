@@ -7299,6 +7299,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: production_boundary_static_scan
+    title: Production Boundary Static Scan
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports production-boundary-static-scan --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/production_boundary_static_scan_????-??-??.json
+      - outputs/reports/production_boundary_static_scan_????-??-??.md
+    freshness_sla_days: 1
+    freshness_rationale: Source/config/docs production boundary terms should be scanned before shadow continuation or promotion interpretation.
+    owner_action: fix_static_scan_blockers_before_shadow_or_promotion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: production_boundary_static_scan_validation
+    title: Production Boundary Static Scan Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-production-boundary-static-scan --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/production_boundary_static_scan_validation_*.json
+      - outputs/reports/production_boundary_static_scan_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Static scan validation should fail closed on blocking broker/order/live/secret-like findings.
+    owner_action: run_after_production_boundary_static_scan
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

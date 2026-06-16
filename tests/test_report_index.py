@@ -194,6 +194,63 @@ def test_report_index_latest_available_policy_can_select_after_as_of_artifact(
     assert reports["evidence_dashboard"]["artifact_selection_policy"] == "as_of_or_unknown"
 
 
+def test_report_index_keeps_static_scan_artifact_separate_from_validation(
+    tmp_path: Path,
+) -> None:
+    scan_entry = _registry_entry(
+        "production_boundary_static_scan",
+        "Production Boundary Static Scan",
+        "outputs/reports/production_boundary_static_scan_????-??-??.json",
+        freshness_sla_days=1,
+    )
+    scan_entry["artifact_globs"].append(
+        "outputs/reports/production_boundary_static_scan_????-??-??.md"
+    )
+    validation_entry = _registry_entry(
+        "production_boundary_static_scan_validation",
+        "Production Boundary Static Scan Validation",
+        "outputs/reports/production_boundary_static_scan_validation_*.json",
+        freshness_sla_days=1,
+    )
+    validation_entry["artifact_globs"].append(
+        "outputs/reports/production_boundary_static_scan_validation_*.md"
+    )
+    registry_path = _write_custom_registry(tmp_path, [scan_entry, validation_entry])
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_json(
+        reports_dir / "production_boundary_static_scan_2026-05-04.json",
+        {"report_type": "production_boundary_static_scan", "production_effect": "none"},
+    )
+    _write_json(
+        reports_dir / "production_boundary_static_scan_validation_2026-05-04.json",
+        {
+            "report_type": "production_boundary_static_scan_validation",
+            "production_effect": "none",
+        },
+    )
+    (reports_dir / "production_boundary_static_scan_2026-05-04.md").write_text(
+        "# scan\n",
+        encoding="utf-8",
+    )
+    (reports_dir / "production_boundary_static_scan_validation_2026-05-04.md").write_text(
+        "# validation\n",
+        encoding="utf-8",
+    )
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 4),
+        project_root=tmp_path,
+        registry_path=registry_path,
+        waiver_path=None,
+    )
+    reports = {item["report_id"]: item for item in payload["reports"]}
+
+    assert "validation" not in reports["production_boundary_static_scan"]["latest_artifact_name"]
+    assert "validation" in reports["production_boundary_static_scan_validation"][
+        "latest_artifact_name"
+    ]
+
+
 def test_report_index_can_use_us_equity_trading_day_freshness(tmp_path: Path) -> None:
     registry_path = _write_registry(tmp_path)
     registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))

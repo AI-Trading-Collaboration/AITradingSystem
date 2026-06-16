@@ -165,6 +165,7 @@ def build_reader_brief_payload(
     report_index_summary = _report_index_summary(report_index)
     report_index_waiver_inventory = _report_index_waiver_inventory_summary(report_index)
     reader_brief_consistency = _reader_brief_consistency_summary(report_index)
+    production_boundary_static_scan = _production_boundary_static_scan_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -321,6 +322,7 @@ def build_reader_brief_payload(
         "report_index_summary": report_index_summary,
         "report_index_waiver_inventory": report_index_waiver_inventory,
         "reader_brief_consistency": reader_brief_consistency,
+        "production_boundary_static_scan": production_boundary_static_scan,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -640,6 +642,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     report_index = _mapping(payload.get("report_index_summary"))
     report_index_waiver_inventory = _mapping(payload.get("report_index_waiver_inventory"))
     reader_brief_consistency = _mapping(payload.get("reader_brief_consistency"))
+    production_boundary_static_scan = _mapping(
+        payload.get("production_boundary_static_scan")
+    )
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -900,6 +905,42 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", reader_brief_consistency.get("next_action")),
                     ("detail_report", reader_brief_consistency.get("detail_report")),
                     ("production_effect", reader_brief_consistency.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Production Boundary Static Scan",
+            _definition_table(
+                [
+                    ("availability", production_boundary_static_scan.get("availability")),
+                    ("status", production_boundary_static_scan.get("status")),
+                    (
+                        "scan_status",
+                        production_boundary_static_scan.get("scan_status"),
+                    ),
+                    (
+                        "scanned_files",
+                        production_boundary_static_scan.get("scanned_file_count"),
+                    ),
+                    (
+                        "blocking_findings",
+                        production_boundary_static_scan.get("blocking_finding_count"),
+                    ),
+                    (
+                        "warning_findings",
+                        production_boundary_static_scan.get("warning_finding_count"),
+                    ),
+                    (
+                        "allowed_matches",
+                        production_boundary_static_scan.get("allowed_match_count"),
+                    ),
+                    (
+                        "static_scan_input",
+                        production_boundary_static_scan.get("static_scan_input"),
+                    ),
+                    ("next_action", production_boundary_static_scan.get("next_action")),
+                    ("detail_report", production_boundary_static_scan.get("detail_report")),
+                    ("production_effect", production_boundary_static_scan.get("production_effect")),
                 ]
             ),
         ),
@@ -6504,6 +6545,80 @@ def _missing_reader_brief_consistency_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "reader_brief_consistency_pack artifact missing; run reports "
             "reader-brief-consistency."
+        ),
+        "limitation": reason,
+    }
+
+
+def _production_boundary_static_scan_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_production_boundary_static_scan_summary(
+            "report_index artifact missing; Reader Brief cannot discover static scan."
+        )
+    report_path = _report_index_artifact_path(report_index, "production_boundary_static_scan")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_production_boundary_static_scan_summary(
+            "production_boundary_static_scan artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "production_boundary_static_scan_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("scan_status"), _text(payload.get("status"), "UNKNOWN"))
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "scan_status": status,
+        "validation_status": validation_status,
+        "scanned_file_count": _int(summary.get("scanned_file_count")),
+        "finding_count": _int(summary.get("finding_count")),
+        "blocking_finding_count": _int(summary.get("blocking_finding_count")),
+        "warning_finding_count": _int(summary.get("warning_finding_count")),
+        "allowed_match_count": _int(summary.get("allowed_match_count")),
+        "static_scan_input": _text(summary.get("static_scan_input"), "UNKNOWN"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"production_boundary_static_scan={status}; "
+            f"blocking={_int(summary.get('blocking_finding_count'))}; "
+            f"warnings={_int(summary.get('warning_finding_count'))}; "
+            f"allowed={_int(summary.get('allowed_match_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest static scan artifacts from report index; "
+            "it does not edit source, config, or docs."
+        ),
+    }
+
+
+def _missing_production_boundary_static_scan_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "scan_status": "MISSING",
+        "validation_status": "MISSING",
+        "scanned_file_count": 0,
+        "finding_count": 0,
+        "blocking_finding_count": 0,
+        "warning_finding_count": 0,
+        "allowed_match_count": 0,
+        "static_scan_input": "MISSING",
+        "next_action": "run_aits_reports_production_boundary_static_scan_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "production_boundary_static_scan artifact missing; run reports "
+            "production-boundary-static-scan."
         ),
         "limitation": reason,
     }
@@ -22429,8 +22544,10 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "report_index_waiver_inventory_validation": 212,
         "reader_brief_consistency_pack": 213,
         "reader_brief_consistency_validation": 214,
-        "research_safety_boundary_audit": 215,
-        "research_safety_boundary_validation": 216,
+        "production_boundary_static_scan": 215,
+        "production_boundary_static_scan_validation": 216,
+        "research_safety_boundary_audit": 217,
+        "research_safety_boundary_validation": 218,
         "documentation_contract": 220,
         "task_register_consistency": 223,
         "task_register_consistency_validation": 224,
@@ -22489,6 +22606,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "reader_brief_consistency_validation": (
             "确认 Reader Brief consistency pack 的 core section gate 是否通过。"
+        ),
+        "production_boundary_static_scan": (
+            "检查 source/config/docs 是否出现 production-facing broker/order/secret-like terms。"
+        ),
+        "production_boundary_static_scan_validation": (
+            "确认 production boundary static scan 是否 fail-closed 通过。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -22564,6 +22687,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "daily",
         "daily / governance",
         "Reader Brief consistency pack 生成后立即校验 core section contract。",
+    ),
+    "production_boundary_static_scan": (
+        "daily",
+        "daily / governance",
+        "Governance pack 或 source/config/docs safety-sensitive 变更后运行。",
+    ),
+    "production_boundary_static_scan_validation": (
+        "daily",
+        "daily / governance",
+        "Production boundary static scan 生成后立即校验 blocking findings。",
     ),
     "research_safety_boundary_audit": (
         "daily",
