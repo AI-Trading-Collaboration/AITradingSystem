@@ -7523,6 +7523,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: research_roadmap_dashboard
+    title: Research Roadmap Dashboard
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports research-roadmap-dashboard --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_roadmap_dashboard_????-??-??.json
+      - outputs/reports/research_roadmap_dashboard_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Research roadmap dashboard should be current after task register, report index, monthly governance, promotion board, or extended shadow protocol changes.
+    owner_action: review_roadmap_blockers_stale_artifacts_and_next_tasks
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_roadmap_dashboard_validation
+    title: Research Roadmap Dashboard Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-research-roadmap-dashboard --latest
+    artifact_globs:
+      - outputs/reports/research_roadmap_dashboard_validation_*.json
+      - outputs/reports/research_roadmap_dashboard_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Research roadmap dashboard validation should fail closed on missing required sections, missing Reader Brief fields, unsafe production effect, or state-mutation boundary drift.
+    owner_action: run_after_research_roadmap_dashboard
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

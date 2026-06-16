@@ -172,6 +172,7 @@ def build_reader_brief_payload(
     paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
     candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
     extended_shadow_protocol = _extended_shadow_protocol_summary(report_index)
+    research_roadmap_dashboard = _research_roadmap_dashboard_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -335,6 +336,7 @@ def build_reader_brief_payload(
         "paper_shadow_promotion_board": paper_shadow_promotion_board,
         "candidate_rejection_postmortem": candidate_rejection_postmortem,
         "extended_shadow_protocol": extended_shadow_protocol,
+        "research_roadmap_dashboard": research_roadmap_dashboard,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -663,6 +665,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
     candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
     extended_shadow_protocol = _mapping(payload.get("extended_shadow_protocol"))
+    research_roadmap_dashboard = _mapping(payload.get("research_roadmap_dashboard"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1225,6 +1228,64 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", extended_shadow_protocol.get("next_action")),
                     ("detail_report", extended_shadow_protocol.get("detail_report")),
                     ("production_effect", extended_shadow_protocol.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Research Roadmap Dashboard",
+            _definition_table(
+                [
+                    ("availability", research_roadmap_dashboard.get("availability")),
+                    ("status", research_roadmap_dashboard.get("status")),
+                    (
+                        "dashboard_status",
+                        research_roadmap_dashboard.get("dashboard_status"),
+                    ),
+                    (
+                        "validation_status",
+                        research_roadmap_dashboard.get("validation_status"),
+                    ),
+                    (
+                        "active_tasks",
+                        research_roadmap_dashboard.get("active_task_count"),
+                    ),
+                    (
+                        "completed_tasks",
+                        research_roadmap_dashboard.get("completed_task_count"),
+                    ),
+                    (
+                        "open_blockers",
+                        research_roadmap_dashboard.get("open_blocker_count"),
+                    ),
+                    (
+                        "stale_artifacts",
+                        research_roadmap_dashboard.get("stale_artifact_count"),
+                    ),
+                    (
+                        "missing_artifacts",
+                        research_roadmap_dashboard.get("missing_artifact_count"),
+                    ),
+                    (
+                        "active_candidates",
+                        research_roadmap_dashboard.get("active_candidate_count"),
+                    ),
+                    (
+                        "paper_shadow_status",
+                        research_roadmap_dashboard.get("paper_shadow_status"),
+                    ),
+                    (
+                        "data_governance_status",
+                        research_roadmap_dashboard.get("data_governance_status"),
+                    ),
+                    ("safety_status", research_roadmap_dashboard.get("safety_status")),
+                    ("lineage_status", research_roadmap_dashboard.get("lineage_status")),
+                    ("top_next_task", research_roadmap_dashboard.get("top_next_task")),
+                    ("next_action", research_roadmap_dashboard.get("next_action")),
+                    ("detail_report", research_roadmap_dashboard.get("detail_report")),
+                    (
+                        "production_effect",
+                        research_roadmap_dashboard.get("production_effect"),
+                    ),
                 ]
             ),
         ),
@@ -7406,6 +7467,96 @@ def _missing_extended_shadow_protocol_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "extended_shadow_protocol artifact missing; run reports "
             "extended-shadow-protocol."
+        ),
+        "limitation": reason,
+    }
+
+
+def _research_roadmap_dashboard_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_research_roadmap_dashboard_summary(
+            "report_index artifact missing; Reader Brief cannot discover roadmap dashboard."
+        )
+    report_path = _report_index_artifact_path(report_index, "research_roadmap_dashboard")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_research_roadmap_dashboard_summary(
+            "research_roadmap_dashboard artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "research_roadmap_dashboard_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    dashboard_status = _text(
+        payload.get("dashboard_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": dashboard_status,
+        "dashboard_status": dashboard_status,
+        "validation_status": validation_status,
+        "active_task_count": _int(summary.get("active_task_count")),
+        "completed_task_count": _int(summary.get("completed_task_count")),
+        "open_blocker_count": _int(summary.get("open_blocker_count")),
+        "stale_artifact_count": _int(summary.get("stale_artifact_count")),
+        "missing_artifact_count": _int(summary.get("missing_artifact_count")),
+        "active_candidate_count": _int(summary.get("active_candidate_count")),
+        "paper_shadow_status": _text(summary.get("paper_shadow_status"), "UNKNOWN"),
+        "data_governance_status": _text(
+            summary.get("data_governance_status"),
+            "UNKNOWN",
+        ),
+        "safety_status": _text(summary.get("safety_status"), "UNKNOWN"),
+        "lineage_status": _text(summary.get("lineage_status"), "UNKNOWN"),
+        "top_next_task": _text(summary.get("top_next_task"), "none"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"research_roadmap_dashboard={dashboard_status}; "
+            f"validation={validation_status}; "
+            f"blockers={_int(summary.get('open_blocker_count'))}; "
+            f"stale={_int(summary.get('stale_artifact_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest roadmap dashboard artifacts; it does not "
+            "modify task, candidate, paper-shadow, or production state."
+        ),
+    }
+
+
+def _missing_research_roadmap_dashboard_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "dashboard_status": "MISSING",
+        "validation_status": "MISSING",
+        "active_task_count": 0,
+        "completed_task_count": 0,
+        "open_blocker_count": 0,
+        "stale_artifact_count": 0,
+        "missing_artifact_count": 0,
+        "active_candidate_count": 0,
+        "paper_shadow_status": "MISSING",
+        "data_governance_status": "MISSING",
+        "safety_status": "MISSING",
+        "lineage_status": "MISSING",
+        "top_next_task": "none",
+        "next_action": "run_aits_reports_research_roadmap_dashboard_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "research_roadmap_dashboard artifact missing; run reports "
+            "research-roadmap-dashboard."
         ),
         "limitation": reason,
     }
@@ -23346,6 +23497,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "task_register_consistency_validation": 225,
         "artifact_lineage_graph": 226,
         "artifact_lineage_validation": 227,
+        "research_roadmap_dashboard": 228,
+        "research_roadmap_dashboard_validation": 229,
         "report_quality_gate": 230,
         "reader_brief_quality": 240,
         "artifact_catalog": 250,
@@ -23442,6 +23595,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "extended_shadow_protocol_validation": (
             "确认 extended shadow protocol schema、required evidence 和安全边界是否通过。"
+        ),
+        "research_roadmap_dashboard": (
+            "查看 active/completed tasks、blockers、stale artifacts 和 latest governance states。"
+        ),
+        "research_roadmap_dashboard_validation": (
+            "确认 research roadmap dashboard sections、Reader Brief fields 和只读边界是否通过。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -23590,6 +23749,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "manual extended shadow review",
         "Extended shadow protocol 生成后立即校验 evidence checklist 和安全边界。",
+    ),
+    "research_roadmap_dashboard": (
+        "monthly",
+        "manual roadmap review",
+        "Task register、report index 或 governance report 更新后生成。",
+    ),
+    "research_roadmap_dashboard_validation": (
+        "monthly",
+        "manual roadmap review",
+        "Research roadmap dashboard 生成后立即校验 sections 和只读安全边界。",
     ),
     "research_safety_boundary_audit": (
         "daily",

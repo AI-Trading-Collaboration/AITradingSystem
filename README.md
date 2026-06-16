@@ -1694,6 +1694,20 @@ owner 可继续复核 extended paper-shadow observation plan，不是 live tradi
 allocation approval；不运行上游、不刷新数据、不补造 observation / owner / metrics，不修改
 candidate / paper-shadow / production state，不生成 official target weights、order ticket 或 broker action。
 
+TRADING-382_RESEARCH_ROADMAP_DASHBOARD 新增只读 research roadmap dashboard。
+`aits reports research-roadmap-dashboard --as-of YYYY-MM-DD` 聚合
+`docs/task_register.md`、`docs/task_register_completed.md`、同日 report index 和 latest
+monthly review pack、promotion board、extended shadow protocol、candidate rejection
+postmortem template、safety audit、lineage graph 与 task-register consistency artifact，输出
+`outputs/reports/research_roadmap_dashboard_YYYY-MM-DD.json/md`。
+`aits reports validate-research-roadmap-dashboard --latest` 输出 validation artifact。Dashboard
+状态限定为 `ROADMAP_HEALTHY|ROADMAP_WITH_WARNINGS|ROADMAP_BLOCKED`，披露 active /
+completed tasks、open blockers、stale / missing artifacts、active candidates、latest
+paper-shadow / data governance / safety / lineage status 和 next recommended tasks。该 report
+只做 manual roadmap review 输入，不自动调度任务、不修改 task register、candidate、
+paper-shadow 或 production state，不运行上游、不刷新数据、不补造 artifacts，不生成 official
+target weights、order ticket 或 broker action。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持
