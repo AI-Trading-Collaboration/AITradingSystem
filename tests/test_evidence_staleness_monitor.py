@@ -48,6 +48,7 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
         ),
         encoding="utf-8",
     )
+    cache_catalog_report = _write_cache_catalog_report(tmp_path, status="PASS")
 
     result = readiness.run_evidence_staleness_monitor(
         as_of=date(2024, 4, 22),
@@ -68,6 +69,7 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        cache_catalog_report_path=cache_catalog_report,
         output_dir=tmp_path / "evidence_staleness_monitor",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -101,6 +103,8 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
     assert report["coverage_blocking_artifacts"] == ["paper_shadow_weekly_review"]
     assert report["weekly_review_coverage_classification"] == "RECOVERY_MODE_REVIEW"
     assert report["weekly_review_coverage_safe_for_continuation"] is False
+    assert report["cache_integrity_status"] == "OK"
+    assert report["cache_checksum_mismatch_count"] == 0
     assert (
         report["next_refresh_action"]
         == "complete_full_weekly_review_or_record_manual_coverage_override"
@@ -502,6 +506,56 @@ def _write_fallback_policy_report(
                     "fallback_used_sources": [],
                     "blocking_data_types": blocking_data_types,
                     "next_action": "restore_primary_or_valid_fallback_source",
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path
+
+
+def _write_cache_catalog_report(tmp_path: Path, *, status: str) -> Path:
+    report_path = tmp_path / f"cache_catalog_{status}.json"
+    integrity = "OK" if status == "PASS" else "FAIL"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "cache_catalog",
+                "catalog_id": f"cache-catalog-{status}",
+                "as_of": "2024-04-22",
+                "status": status,
+                "validation_status": status,
+                "cache_integrity_status": integrity,
+                "production_effect": "none",
+                "summary": {
+                    "cache_integrity_status": integrity,
+                    "entry_count": 4,
+                    "required_entry_count": 4,
+                    "missing_required_count": 0 if status == "PASS" else 1,
+                    "missing_optional_count": 0,
+                    "checksum_mismatch_count": 0 if status == "PASS" else 1,
+                    "checksum_changed_without_refresh_count": 0,
+                    "blocking_entry_count": 0 if status == "PASS" else 1,
+                    "blocking_entry_ids": [] if status == "PASS" else ["primary_price_cache"],
+                    "warning_entry_ids": [],
+                    "refresh_audit_id": "data_refresh_audit_test",
+                    "validated_at": "2024-04-22T10:01:00+00:00",
+                    "next_action": (
+                        "repair_cache_lineage_then_rerun_validate_data_and_cache_catalog"
+                    ),
+                },
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "cache_repair_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
                 },
             },
             indent=2,

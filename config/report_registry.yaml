@@ -117,6 +117,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: cache_catalog
+    title: Checksum and Cache Catalog
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits data cache-catalog run --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/data_governance/cache_catalog/*/cache_catalog.json
+      - reports/data_governance/cache_catalog/*/cache_catalog.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 1
+    freshness_rationale: >
+      Paper-shadow data-dependent work must know whether required cache
+      artifacts exist, match expected checksums, expose row/column counts, and
+      link to refresh/validation evidence before cached data is interpreted.
+    owner_action: run_aits_data_cache_catalog_before_paper_shadow_data_use
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: backtest_input_diagnostics
     title: Backtest Input Diagnostics
     group: shadow

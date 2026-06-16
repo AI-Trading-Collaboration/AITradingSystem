@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from ai_trading_system.cache_catalog import DEFAULT_CACHE_CATALOG_DIR
 from ai_trading_system.config import (
     DEFAULT_DATA_SOURCES_CONFIG_PATH,
     PROJECT_ROOT,
@@ -286,6 +287,14 @@ def pit_source_manifest_report(
         Path,
         typer.Option(help="Data source fallback policy artifact 根目录。"),
     ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 cache catalog JSON 路径；缺省读取 latest。"),
+    ] = None,
+    cache_catalog_output_dir: Annotated[
+        Path,
+        typer.Option(help="Cache catalog artifact 根目录。"),
+    ] = DEFAULT_CACHE_CATALOG_DIR,
     latest: Annotated[
         bool,
         typer.Option("--latest", help="只读取 latest artifact，不生成新 manifest。"),
@@ -305,9 +314,12 @@ def pit_source_manifest_report(
             output_dir=output_dir,
             fallback_policy_report_path=fallback_policy_report_path,
             fallback_policy_output_dir=fallback_policy_output_dir,
+            cache_catalog_report_path=cache_catalog_report_path,
+            cache_catalog_output_dir=cache_catalog_output_dir,
         )
 
     summary = payload.get("summary", {})
+    cache_catalog = payload.get("cache_catalog_summary", {})
     status = str(payload.get("status", "UNKNOWN"))
     status_style = "green" if status == "PASS" else "yellow" if status != "FAIL" else "red"
     console.print(f"[{status_style}]PIT source manifest status={status}[/{status_style}]")
@@ -321,6 +333,13 @@ def pit_source_manifest_report(
         f"UNKNOWN:{summary.get('unknown_count')}"
     )
     console.print(f"non_strong_source_count={summary.get('non_strong_source_count')}")
+    if isinstance(cache_catalog, dict):
+        console.print(
+            "cache_catalog="
+            f"integrity={cache_catalog.get('cache_integrity_status', 'MISSING')}; "
+            f"missing_required={cache_catalog.get('missing_required_count', 0)}; "
+            f"checksum_mismatch={cache_catalog.get('checksum_mismatch_count', 0)}"
+        )
     console.print(f"validation_status={payload.get('validation_status')}")
     console.print(f"report={paths.get('manifest_json')}")
     console.print(

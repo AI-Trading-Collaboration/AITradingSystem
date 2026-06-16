@@ -8,6 +8,21 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.cache_catalog import (
+    DEFAULT_CACHE_CATALOG_DIR,
+    DEFAULT_CACHE_CATALOG_POLICY_PATH,
+    build_and_write_cache_catalog,
+    load_cache_catalog_payload,
+    load_cache_catalog_policy,
+    resolve_cache_catalog_path,
+    validate_cache_catalog_artifact,
+)
+from ai_trading_system.cache_catalog import (
+    DEFAULT_DATA_REFRESH_AUDIT_DIR as CACHE_CATALOG_REFRESH_AUDIT_DIR,
+)
+from ai_trading_system.cache_catalog import (
+    DEFAULT_VALIDATE_DATA_AUDIT_DIR as CACHE_CATALOG_VALIDATE_DATA_AUDIT_DIR,
+)
 from ai_trading_system.cli_commands.data_artifacts import (
     _parse_date,
     _resolve_market_data_freshness_path,
@@ -69,8 +84,10 @@ console = Console()
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
 refresh_audit_app = typer.Typer(help="Data refresh audit trail 治理报告。")
 fallback_policy_app = typer.Typer(help="Data source fallback policy 治理报告。")
+cache_catalog_app = typer.Typer(help="Checksum and cache catalog 治理报告。")
 data_app.add_typer(refresh_audit_app, name="refresh-audit")
 data_app.add_typer(fallback_policy_app, name="fallback-policy")
+data_app.add_typer(cache_catalog_app, name="cache-catalog")
 
 
 @data_app.command("diagnose-backtest-inputs")
@@ -734,6 +751,133 @@ def data_source_fallback_policy_validate_command(
         raise typer.Exit(code=1)
 
 
+@cache_catalog_app.command("run")
+def cache_catalog_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="cache catalog 评估日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option(help="data_sources.yaml 路径。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="cache catalog YAML 路径。"),
+    ] = DEFAULT_CACHE_CATALOG_POLICY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Cache catalog artifact 根目录。"),
+    ] = DEFAULT_CACHE_CATALOG_DIR,
+    expected_checksum: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--expected-checksum",
+            help="显式 checksum 断言，格式为 entry_id=sha256；可重复。",
+        ),
+    ] = None,
+    previous_catalog_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 previous cache catalog JSON；缺省读取 latest。"),
+    ] = None,
+    refresh_audit_report_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 data refresh audit JSON；缺省读取 latest。"),
+    ] = None,
+    refresh_audit_output_dir: Annotated[
+        Path,
+        typer.Option(help="Data refresh audit artifact 根目录。"),
+    ] = CACHE_CATALOG_REFRESH_AUDIT_DIR,
+    validation_audit_dir: Annotated[
+        Path,
+        typer.Option(help="validate-data audit sidecar 根目录。"),
+    ] = CACHE_CATALOG_VALIDATE_DATA_AUDIT_DIR,
+) -> None:
+    """生成 read-only checksum/cache catalog。"""
+    evaluation_date = _parse_date(as_of) if as_of else date.today()
+    payload, paths = build_and_write_cache_catalog(
+        config=load_data_sources(config_path),
+        policy=load_cache_catalog_policy(policy_path),
+        as_of=evaluation_date,
+        output_dir=output_dir,
+        expected_checksums=_parse_key_value_options(
+            expected_checksum or [],
+            option_name="--expected-checksum",
+        ),
+        previous_catalog_path=previous_catalog_path,
+        refresh_audit_report_path=refresh_audit_report_path,
+        refresh_audit_output_dir=refresh_audit_output_dir,
+        validation_audit_dir=validation_audit_dir,
+    )
+    _print_cache_catalog_summary(payload, paths.get("catalog_json"))
+    if payload.get("status") == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@cache_catalog_app.command("report")
+def cache_catalog_report_command(
+    catalog_id: Annotated[
+        str | None,
+        typer.Option(help="要读取的 cache catalog id；不传时可用 --latest。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取 latest cache catalog artifact。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Cache catalog artifact 根目录。"),
+    ] = DEFAULT_CACHE_CATALOG_DIR,
+) -> None:
+    """读取 checksum/cache catalog report。"""
+    catalog_path = resolve_cache_catalog_path(
+        catalog_id=catalog_id,
+        latest=latest or catalog_id is None,
+        output_dir=output_dir,
+    )
+    payload = load_cache_catalog_payload(catalog_path)
+    _print_cache_catalog_summary(payload, catalog_path)
+    if payload.get("status") == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@cache_catalog_app.command("validate")
+def cache_catalog_validate_command(
+    catalog_id: Annotated[
+        str | None,
+        typer.Option(help="要校验的 cache catalog id；不传时可用 --latest。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="校验 latest cache catalog artifact。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Cache catalog artifact 根目录。"),
+    ] = DEFAULT_CACHE_CATALOG_DIR,
+) -> None:
+    """校验 cache catalog schema、checksum、missing entry 和安全边界。"""
+    validation, catalog_path = validate_cache_catalog_artifact(
+        catalog_id=catalog_id,
+        latest=latest or catalog_id is None,
+        output_dir=output_dir,
+    )
+    status_style = (
+        "green" if validation.status == "PASS" else "yellow" if validation.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]Cache catalog validation status={validation.status}"
+        f"[/{status_style}]"
+    )
+    console.print(f"catalog_id={validation.catalog_id}")
+    console.print(f"catalog={catalog_path}")
+    console.print(f"entry_count={validation.entry_count}")
+    console.print(f"error_count={validation.error_count}; warning_count={validation.warning_count}")
+    console.print("production_effect=none；校验只读 existing artifact。")
+    if not validation.passed:
+        raise typer.Exit(code=1)
+
+
 @refresh_audit_app.command("report")
 def data_refresh_audit_report_command(
     as_of: Annotated[
@@ -769,6 +913,14 @@ def data_refresh_audit_report_command(
         Path,
         typer.Option(help="Data source fallback policy artifact 根目录。"),
     ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 cache catalog JSON 路径；缺省读取 latest。"),
+    ] = None,
+    cache_catalog_output_dir: Annotated[
+        Path,
+        typer.Option(help="Cache catalog artifact 根目录。"),
+    ] = DEFAULT_CACHE_CATALOG_DIR,
     latest: Annotated[
         bool,
         typer.Option("--latest", help="只读取 latest artifact，不生成新 audit。"),
@@ -791,6 +943,8 @@ def data_refresh_audit_report_command(
             price_cache_path=price_cache_path,
             fallback_policy_report_path=fallback_policy_report_path,
             fallback_policy_output_dir=fallback_policy_output_dir,
+            cache_catalog_report_path=cache_catalog_report_path,
+            cache_catalog_output_dir=cache_catalog_output_dir,
         )
 
     summary = payload.get("summary", {})
@@ -808,6 +962,14 @@ def data_refresh_audit_report_command(
             f"errors:{summary.get('error_count')}"
         )
         console.print(f"next_action={summary.get('next_action')}")
+    cache_catalog = payload.get("cache_catalog_summary", {})
+    if isinstance(cache_catalog, dict):
+        console.print(
+            "cache_catalog="
+            f"integrity={cache_catalog.get('cache_integrity_status', 'MISSING')}; "
+            f"missing_required={cache_catalog.get('missing_required_count', 0)}; "
+            f"checksum_mismatch={cache_catalog.get('checksum_mismatch_count', 0)}"
+        )
     console.print(f"report={paths.get('audit_json')}")
     console.print(
         "production_effect=none；只读治理报告，不刷新数据、不补造 cache、不触发 broker。"
@@ -855,15 +1017,19 @@ def validate_data_refresh_audit_command(
         raise typer.Exit(code=1)
 
 
-def _parse_key_value_options(values: list[str]) -> dict[str, str]:
+def _parse_key_value_options(
+    values: list[str],
+    *,
+    option_name: str = "--fallback-reason",
+) -> dict[str, str]:
     parsed: dict[str, str] = {}
     for value in values:
         if "=" not in value:
-            raise typer.BadParameter("--fallback-reason must use key=value format")
+            raise typer.BadParameter(f"{option_name} must use key=value format")
         key, reason = value.split("=", 1)
         key = key.strip()
         if not key:
-            raise typer.BadParameter("--fallback-reason key cannot be empty")
+            raise typer.BadParameter(f"{option_name} key cannot be empty")
         parsed[key] = reason.strip()
     return parsed
 
@@ -887,6 +1053,33 @@ def _print_fallback_policy_summary(
     console.print(f"report={report_path}")
     console.print(
         "production_effect=none；只读 fallback policy，不刷新数据、不补造 cache、不触发 broker。"
+    )
+
+
+def _print_cache_catalog_summary(
+    payload: dict[str, object],
+    report_path: Path | None,
+) -> None:
+    summary = payload.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    status = str(payload.get("status", "UNKNOWN"))
+    style = "green" if status == "PASS" else "yellow" if status != "FAIL" else "red"
+    console.print(f"[{style}]Cache catalog status={status}[/{style}]")
+    console.print(f"catalog_id={payload.get('catalog_id')}")
+    console.print(f"cache_integrity_status={payload.get('cache_integrity_status')}")
+    console.print(f"entry_count={summary.get('entry_count')}")
+    console.print(f"missing_required_count={summary.get('missing_required_count')}")
+    console.print(f"checksum_mismatch_count={summary.get('checksum_mismatch_count')}")
+    console.print(
+        "checksum_changed_without_refresh_count="
+        f"{summary.get('checksum_changed_without_refresh_count')}"
+    )
+    console.print(f"blocking_entry_ids={summary.get('blocking_entry_ids')}")
+    console.print(f"next_action={summary.get('next_action')}")
+    console.print(f"report={report_path}")
+    console.print(
+        "production_effect=none；只读 cache catalog，不刷新数据、不修复 cache、不触发 broker。"
     )
 
 

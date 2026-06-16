@@ -11,6 +11,10 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.cache_catalog import (
+    DEFAULT_CACHE_CATALOG_DIR,
+    latest_cache_catalog_summary,
+)
 from ai_trading_system.data_source_fallback_policy import (
     DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
@@ -2300,6 +2304,8 @@ def run_evidence_staleness_monitor(
     paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Path | None = None,
+    cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
     output_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -2334,6 +2340,14 @@ def run_evidence_staleness_monitor(
         output_dir=fallback_policy_output_dir,
     )
     fallback_status = _text(fallback_summary.get("fallback_status"), "MISSING")
+    cache_catalog_summary = latest_cache_catalog_summary(
+        report_path=cache_catalog_report_path,
+        output_dir=cache_catalog_output_dir,
+    )
+    cache_integrity_status = _text(
+        cache_catalog_summary.get("cache_integrity_status"),
+        "MISSING",
+    )
     stale_artifacts = [
         row.get("source_id") for row in findings if row.get("severity") == "STALE"
     ]
@@ -2345,6 +2359,12 @@ def run_evidence_staleness_monitor(
         FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
     }:
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "data_source_fallback_policy"])
+        status = "BLOCKING"
+    if (
+        cache_integrity_status == "FAIL"
+        or _text(cache_catalog_summary.get("status")) == "FAIL"
+    ):
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "cache_catalog"])
         status = "BLOCKING"
     missing_artifacts = [
         row.get("source_id") for row in findings if row.get("missing") is True
@@ -2370,6 +2390,14 @@ def run_evidence_staleness_monitor(
         next_refresh_action = _text(
             fallback_summary.get("next_action"),
             "restore_primary_or_valid_fallback_source",
+        )
+    if (
+        cache_integrity_status == "FAIL"
+        or _text(cache_catalog_summary.get("status")) == "FAIL"
+    ):
+        next_refresh_action = _text(
+            cache_catalog_summary.get("next_action"),
+            "repair_cache_lineage_then_rerun_validate_data_and_cache_catalog",
         )
     policy_version = _text(policy.get("version"))
     monitor_id = _stable_id(
@@ -2409,6 +2437,13 @@ def run_evidence_staleness_monitor(
         "fallback_status": fallback_status,
         "fallback_used_count": fallback_summary.get("fallback_used_count"),
         "fallback_blocking_data_types": fallback_summary.get("blocking_data_types"),
+        "cache_catalog_summary": cache_catalog_summary,
+        "cache_integrity_status": cache_integrity_status,
+        "cache_blocking_entry_count": cache_catalog_summary.get("blocking_entry_count"),
+        "cache_blocking_entry_ids": cache_catalog_summary.get("blocking_entry_ids"),
+        "cache_checksum_mismatch_count": cache_catalog_summary.get(
+            "checksum_mismatch_count"
+        ),
         "coverage_blocking_artifacts": coverage_blocking_artifacts,
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
@@ -2445,6 +2480,8 @@ def run_evidence_staleness_monitor(
         "coverage_status": weekly_coverage.get("coverage_status"),
         "fallback_status": fallback_status,
         "fallback_policy_report_path": fallback_summary.get("report_path"),
+        "cache_integrity_status": cache_integrity_status,
+        "cache_catalog_report_path": cache_catalog_summary.get("report_path"),
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
         ),
@@ -2532,6 +2569,10 @@ def _expected_evidence_staleness_blocking_artifacts(
         FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
     }:
         expected.add("data_source_fallback_policy")
+    if _text(report.get("cache_integrity_status")) == "FAIL" or _text(
+        _mapping(report.get("cache_catalog_summary")).get("status")
+    ) == "FAIL":
+        expected.add("cache_catalog")
     expected.discard("")
     return expected
 
@@ -2659,6 +2700,14 @@ def validate_evidence_staleness_monitor_artifact(
                 "",
             ),
             st._check(
+                "cache_catalog_fields_visible",
+                bool(report.get("cache_integrity_status"))
+                and "cache_catalog_summary" in report
+                and "cache_blocking_entry_count" in report
+                and "cache_checksum_mismatch_count" in report,
+                "",
+            ),
+            st._check(
                 "safe_to_continue_shadow_consistent",
                 report.get("safe_to_continue_shadow")
                 == (
@@ -2709,6 +2758,8 @@ def run_shadow_continuation_readiness_report(
     evidence_staleness_monitor_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Path | None = None,
+    cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
     output_dir: Path = DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -2743,6 +2794,24 @@ def run_shadow_continuation_readiness_report(
                 output_dir=fallback_policy_output_dir,
             )
     fallback_status = _text(fallback_summary.get("fallback_status"), "MISSING")
+    if cache_catalog_report_path is not None:
+        cache_catalog_summary = latest_cache_catalog_summary(
+            report_path=cache_catalog_report_path,
+            output_dir=cache_catalog_output_dir,
+        )
+    else:
+        cache_catalog_summary = _mapping(evidence_report.get("cache_catalog_summary"))
+        if (
+            not cache_catalog_summary
+            or _text(cache_catalog_summary.get("cache_integrity_status")) == "MISSING"
+        ):
+            cache_catalog_summary = latest_cache_catalog_summary(
+                output_dir=cache_catalog_output_dir,
+            )
+    cache_integrity_status = _text(
+        cache_catalog_summary.get("cache_integrity_status"),
+        "MISSING",
+    )
     weekly_detail = _mapping(source_artifacts["paper_shadow_weekly_review"].get("detail"))
     weekly_manifest = _mapping(source_artifacts["paper_shadow_weekly_review"].get("manifest"))
     coverage_status = _text(
@@ -2772,6 +2841,11 @@ def run_shadow_continuation_readiness_report(
         FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
     }:
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "data_source_fallback_policy"])
+    if (
+        cache_integrity_status == "FAIL"
+        or _text(cache_catalog_summary.get("status")) == "FAIL"
+    ):
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "cache_catalog"])
     safety_audit = _shadow_continuation_safety_audit(source_artifacts)
     readiness = _shadow_continuation_readiness_decision(
         missing_artifacts=missing_artifacts,
@@ -2786,6 +2860,14 @@ def run_shadow_continuation_readiness_report(
         readiness = "READY_WITH_WARNINGS"
     safe_to_continue = readiness in {"READY_TO_CONTINUE", "READY_WITH_WARNINGS"}
     next_required_action = _shadow_continuation_next_action(readiness)
+    if (
+        cache_integrity_status == "FAIL"
+        or _text(cache_catalog_summary.get("status")) == "FAIL"
+    ):
+        next_required_action = _text(
+            cache_catalog_summary.get("next_action"),
+            next_required_action,
+        )
     readiness_id = _stable_id(
         "shadow-continuation-readiness",
         candidate,
@@ -2817,6 +2899,13 @@ def run_shadow_continuation_readiness_report(
         "fallback_status": fallback_status,
         "fallback_used_count": fallback_summary.get("fallback_used_count"),
         "fallback_blocking_data_types": fallback_summary.get("blocking_data_types"),
+        "cache_catalog_summary": cache_catalog_summary,
+        "cache_integrity_status": cache_integrity_status,
+        "cache_blocking_entry_count": cache_catalog_summary.get("blocking_entry_count"),
+        "cache_blocking_entry_ids": cache_catalog_summary.get("blocking_entry_ids"),
+        "cache_checksum_mismatch_count": cache_catalog_summary.get(
+            "checksum_mismatch_count"
+        ),
         "manual_review_required": readiness != "READY_TO_CONTINUE",
         "next_required_action": next_required_action,
         "data_validation_result": data_validation,
@@ -2849,6 +2938,8 @@ def run_shadow_continuation_readiness_report(
         "coverage_status": coverage_status,
         "fallback_status": fallback_status,
         "fallback_policy_report_path": fallback_summary.get("report_path"),
+        "cache_integrity_status": cache_integrity_status,
+        "cache_catalog_report_path": cache_catalog_summary.get("report_path"),
         "manual_review_required": readiness != "READY_TO_CONTINUE",
         "next_required_action": next_required_action,
         "shadow_continuation_readiness_manifest_path": str(
@@ -3012,6 +3103,14 @@ def validate_shadow_continuation_readiness_artifact(
                 "",
             ),
             st._check(
+                "cache_catalog_fields_visible",
+                bool(report.get("cache_integrity_status"))
+                and "cache_catalog_summary" in report
+                and "cache_blocking_entry_count" in report
+                and "cache_checksum_mismatch_count" in report,
+                "",
+            ),
+            st._check(
                 "reader_brief_quality_fields",
                 "shadow_continuation_readiness" in reader
                 and "safe_to_continue_shadow" in reader,
@@ -3056,6 +3155,9 @@ def render_shadow_continuation_readiness_reader_brief(report: Mapping[str, Any])
             f"- fallback_status: {report.get('fallback_status')}",
             f"- fallback_used_count: {report.get('fallback_used_count')}",
             f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
+            f"- cache_integrity_status: {report.get('cache_integrity_status')}",
+            f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
+            f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
             f"- manual_review_required: {report.get('manual_review_required')}",
             f"- next_required_action: {report.get('next_required_action')}",
             f"- data_validation_status: {report.get('data_validation_status')}",
@@ -3094,6 +3196,9 @@ def render_shadow_continuation_readiness_report(
             f"- fallback_status: {report.get('fallback_status')}",
             f"- fallback_used_count: {report.get('fallback_used_count')}",
             f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
+            f"- cache_integrity_status: {report.get('cache_integrity_status')}",
+            f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
+            f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
             f"- manual_review_required: {report.get('manual_review_required')}",
             f"- next_required_action: {report.get('next_required_action')}",
             f"- data_validation_status: {report.get('data_validation_status')}",
@@ -3851,6 +3956,9 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- fallback_status: {report.get('fallback_status')}",
             f"- fallback_used_count: {report.get('fallback_used_count')}",
             f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
+            f"- cache_integrity_status: {report.get('cache_integrity_status')}",
+            f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
+            f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- weekly_review_coverage_classification: "
             f"{report.get('weekly_review_coverage_classification')}",
@@ -3905,6 +4013,9 @@ def render_evidence_staleness_report(
             f"- fallback_status: {report.get('fallback_status')}",
             f"- fallback_used_count: {report.get('fallback_used_count')}",
             f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
+            f"- cache_integrity_status: {report.get('cache_integrity_status')}",
+            f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
+            f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- coverage_blocking_artifacts: "
             f"{', '.join(_texts(report.get('coverage_blocking_artifacts'))) or 'none'}",

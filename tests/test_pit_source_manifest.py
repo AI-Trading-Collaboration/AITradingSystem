@@ -21,6 +21,7 @@ from ai_trading_system.reports import reader_brief
 def test_pit_source_manifest_builds_grades_and_required_fields(tmp_path: Path) -> None:
     fixture = _fixture(tmp_path)
     fallback_policy_report = _write_fallback_policy_report(tmp_path)
+    cache_catalog_report = _write_cache_catalog_report(tmp_path)
 
     payload, paths = build_and_write_pit_source_manifest(
         config=fixture["config"],
@@ -29,6 +30,7 @@ def test_pit_source_manifest_builds_grades_and_required_fields(tmp_path: Path) -
         output_dir=tmp_path / "reports",
         project_root=tmp_path,
         fallback_policy_report_path=fallback_policy_report,
+        cache_catalog_report_path=cache_catalog_report,
     )
     records = {record["source_id"]: record for record in payload["records"]}
     validation = validate_pit_source_manifest_payload(
@@ -51,6 +53,8 @@ def test_pit_source_manifest_builds_grades_and_required_fields(tmp_path: Path) -
     assert paths["reader_brief_section"].exists()
     assert payload["fallback_policy_summary"]["fallback_status"] == "FALLBACK_USED"
     assert payload["fallback_policy_summary"]["fallback_used_count"] == 1
+    assert payload["cache_catalog_summary"]["cache_integrity_status"] == "OK"
+    assert payload["cache_catalog_summary"]["entry_count"] == 4
 
     for record in payload["records"]:
         for field_name in (
@@ -94,6 +98,7 @@ def test_pit_source_manifest_validation_fails_invalid_grade(tmp_path: Path) -> N
 def test_pit_source_manifest_cli_report_validate_and_reader_brief(tmp_path: Path) -> None:
     fixture = _fixture(tmp_path)
     fallback_policy_report = _write_fallback_policy_report(tmp_path)
+    cache_catalog_report = _write_cache_catalog_report(tmp_path)
     config_path = tmp_path / "data_sources.yaml"
     config_path.write_text(
         yaml.safe_dump(fixture["config"].model_dump(), sort_keys=False, allow_unicode=True),
@@ -117,6 +122,8 @@ def test_pit_source_manifest_cli_report_validate_and_reader_brief(tmp_path: Path
             str(output_dir),
             "--fallback-policy-report-path",
             str(fallback_policy_report),
+            "--cache-catalog-report-path",
+            str(cache_catalog_report),
         ],
     )
     validation = CliRunner().invoke(
@@ -135,6 +142,7 @@ def test_pit_source_manifest_cli_report_validate_and_reader_brief(tmp_path: Path
     assert validation.exit_code == 0, validation.output
     assert "PIT source manifest status=PASS_WITH_WARNINGS" in report.output
     assert "PIT source manifest validation status=PASS_WITH_WARNINGS" in validation.output
+    assert "cache_catalog=integrity=OK" in report.output
 
     latest_pointer = json.loads(
         (output_dir / "latest_pit_source_manifest.json").read_text(encoding="utf-8")
@@ -347,6 +355,51 @@ def _write_fallback_policy_report(tmp_path: Path) -> Path:
             },
             indent=2,
             sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path
+
+
+def _write_cache_catalog_report(tmp_path: Path) -> Path:
+    report_path = tmp_path / "cache_catalog.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "cache_catalog",
+                "catalog_id": "cache-catalog-test",
+                "as_of": "2026-06-16",
+                "status": "PASS",
+                "validation_status": "PASS",
+                "cache_integrity_status": "OK",
+                "production_effect": "none",
+                "summary": {
+                    "cache_integrity_status": "OK",
+                    "entry_count": 4,
+                    "required_entry_count": 4,
+                    "missing_required_count": 0,
+                    "missing_optional_count": 0,
+                    "checksum_mismatch_count": 0,
+                    "checksum_changed_without_refresh_count": 0,
+                    "blocking_entry_count": 0,
+                    "blocking_entry_ids": [],
+                    "warning_entry_ids": [],
+                    "refresh_audit_id": "data_refresh_audit_test",
+                    "validated_at": "2026-06-16T10:01:00+00:00",
+                    "next_action": "cache_catalog_clear_for_manual_review",
+                },
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "cache_repair_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
+                },
+            }
         ),
         encoding="utf-8",
     )

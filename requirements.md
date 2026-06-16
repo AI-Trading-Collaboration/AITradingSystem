@@ -14,6 +14,16 @@
 - 主要输入：`config/data_source_fallback_policy.yaml`、`config/data_sources.yaml`、已配置 cache paths 和显式 fallback used metadata。
 - 主要输出：`reports/data_governance/data_source_fallback_policy/<report_id>/data_source_fallback_policy.json`、`.md`、validation JSON/Markdown、Reader Brief section，以及 downstream data refresh audit、PIT manifest、evidence staleness monitor、shadow continuation readiness 和 Reader Brief summary。
 
+## TRADING-369
+
+- 需求文档：`docs/requirements/TRADING-369_Checksum_and_Cache_Catalog.md`
+- 任务：Checksum and Cache Catalog
+- 状态：`DONE`
+- 需求：The system shall maintain a read-only cache catalog for price, market panel, and macro data caches, including checksums, dimensions, freshness metadata, source lineage, and refresh audit linkage before cached-data-dependent interpretation.
+- 安全边界：只读 cache governance；不刷新数据、不修复 cache、不补造缺失缓存、不绕过 `aits validate-data`、不写 official target weights、不修改 shadow/paper/production state、不触发 broker/order。
+- 主要输入：`config/data_sources.yaml`、`config/cache_catalog.yaml`、现有 price / market panel / macro cache、latest data refresh audit、latest validate-data audit sidecar。
+- 主要输出：`reports/data_governance/cache_catalog/<catalog_id>/cache_catalog.json`、`.md`、validation JSON/Markdown、Reader Brief section，以及 downstream data refresh audit、PIT manifest、evidence staleness monitor、shadow continuation readiness 和 Reader Brief summary。
+
 ## TRADING-039
 
 - 需求文档：`docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md`

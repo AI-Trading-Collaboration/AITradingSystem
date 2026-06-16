@@ -10,6 +10,10 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.cache_catalog import (
+    DEFAULT_CACHE_CATALOG_DIR,
+    latest_cache_catalog_summary,
+)
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.data_source_fallback_policy import (
@@ -277,6 +281,8 @@ def build_data_refresh_audit_payload(
     price_cache_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Path | None = None,
+    cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(tz=UTC)
@@ -318,6 +324,10 @@ def build_data_refresh_audit_payload(
         report_path=fallback_policy_report_path,
         output_dir=fallback_policy_output_dir,
     )
+    cache_catalog_summary = latest_cache_catalog_summary(
+        report_path=cache_catalog_report_path,
+        output_dir=cache_catalog_output_dir,
+    )
     audit_id = _audit_id(as_of=as_of, generated_at=generated, records=records)
     payload: dict[str, Any] = {
         "schema_version": DATA_REFRESH_AUDIT_SCHEMA_VERSION,
@@ -332,6 +342,7 @@ def build_data_refresh_audit_payload(
         "safety_boundary": DATA_REFRESH_AUDIT_SAFETY,
         "summary": summary,
         "fallback_policy_summary": fallback_summary,
+        "cache_catalog_summary": cache_catalog_summary,
         "records": records,
         "build_issues": [_issue_dict(issue) for issue in build_issues],
         "methodology": {
@@ -403,6 +414,8 @@ def build_and_write_data_refresh_audit(
     price_cache_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Path | None = None,
+    cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
 ) -> tuple[dict[str, Any], dict[str, Path]]:
     payload = build_data_refresh_audit_payload(
         as_of=as_of,
@@ -411,6 +424,8 @@ def build_and_write_data_refresh_audit(
         price_cache_path=price_cache_path,
         fallback_policy_report_path=fallback_policy_report_path,
         fallback_policy_output_dir=fallback_policy_output_dir,
+        cache_catalog_report_path=cache_catalog_report_path,
+        cache_catalog_output_dir=cache_catalog_output_dir,
     )
     paths = write_data_refresh_audit_artifact(payload, output_dir=output_dir)
     return load_data_refresh_audit_payload(paths["audit_json"]), paths
@@ -540,8 +555,15 @@ def validation_report_to_payload(report: DataRefreshAuditValidationReport) -> di
 def render_data_refresh_audit_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     fallback = _mapping(payload.get("fallback_policy_summary"))
+    cache_catalog = _mapping(payload.get("cache_catalog_summary"))
     paths = _mapping(payload.get("artifact_paths"))
     records = _records(payload.get("records"))
+    cache_integrity_status = _text(cache_catalog.get("cache_integrity_status"), "MISSING")
+    cache_missing_required_count = _text(cache_catalog.get("missing_required_count"), "0")
+    cache_checksum_mismatch_count = _text(
+        cache_catalog.get("checksum_mismatch_count"),
+        "0",
+    )
     lines = [
         "# Data Refresh Audit",
         "",
@@ -557,6 +579,9 @@ def render_data_refresh_audit_markdown(payload: Mapping[str, Any]) -> str:
         f"- Fallback policy status：{_text(fallback.get('fallback_status'), 'MISSING')}",
         f"- Fallback used count：{_text(fallback.get('fallback_used_count'), '0')}",
         f"- Fallback blocking data types：{_text(fallback.get('blocking_data_types'), 'none')}",
+        f"- Cache catalog status：{cache_integrity_status}",
+        f"- Cache catalog missing required count：{cache_missing_required_count}",
+        f"- Cache catalog checksum mismatch count：{cache_checksum_mismatch_count}",
         f"- Next action：{_text(summary.get('next_action'), 'UNKNOWN')}",
         f"- Production effect：{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
         f"- Validation report：`{_text(paths.get('validation_markdown'), 'UNKNOWN')}`",
@@ -639,6 +664,13 @@ def render_data_refresh_audit_validation_markdown(
 def render_data_refresh_audit_reader_brief(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     fallback = _mapping(payload.get("fallback_policy_summary"))
+    cache_catalog = _mapping(payload.get("cache_catalog_summary"))
+    cache_integrity_status = _text(cache_catalog.get("cache_integrity_status"), "MISSING")
+    cache_missing_required_count = _text(cache_catalog.get("missing_required_count"), "0")
+    cache_checksum_mismatch_count = _text(
+        cache_catalog.get("checksum_mismatch_count"),
+        "0",
+    )
     return "\n".join(
         [
             "## Data Refresh Audit",
@@ -655,6 +687,9 @@ def render_data_refresh_audit_reader_brief(payload: Mapping[str, Any]) -> str:
             f"- fallback_status: {_text(fallback.get('fallback_status'), 'MISSING')}",
             f"- fallback_used_count: {_text(fallback.get('fallback_used_count'), '0')}",
             f"- fallback_blocking_data_types: {_text(fallback.get('blocking_data_types'), 'none')}",
+            f"- cache_integrity_status: {cache_integrity_status}",
+            f"- cache_missing_required_count: {cache_missing_required_count}",
+            f"- cache_checksum_mismatch_count: {cache_checksum_mismatch_count}",
             f"- next_action: {_text(summary.get('next_action'), 'UNKNOWN')}",
             f"- production_effect: {_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
             "",

@@ -20477,6 +20477,14 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         Path,
         typer.Option("--fallback-policy-output-dir", help="fallback policy artifact root。"),
     ] = filtered_readiness.DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Annotated[
+        Path | None,
+        typer.Option("--cache-catalog-report-path", help="显式 cache catalog report JSON。"),
+    ] = None,
+    cache_catalog_output_dir: Annotated[
+        Path,
+        typer.Option("--cache-catalog-output-dir", help="cache catalog artifact root。"),
+    ] = filtered_readiness.DEFAULT_CACHE_CATALOG_DIR,
     paper_shadow_daily_dir: Annotated[
         Path,
         typer.Option("--paper-shadow-daily-dir", help="paper-shadow daily artifact root。"),
@@ -20515,6 +20523,8 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         market_panel_dir=market_panel_dir,
         fallback_policy_report_path=fallback_policy_report_path,
         fallback_policy_output_dir=fallback_policy_output_dir,
+        cache_catalog_report_path=cache_catalog_report_path,
+        cache_catalog_output_dir=cache_catalog_output_dir,
         paper_shadow_daily_dir=paper_shadow_daily_dir,
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
@@ -20534,6 +20544,9 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
     typer.echo(f"fallback_status={report.get('fallback_status')}")
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
+    typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
+    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"coverage_status={report.get('coverage_status')}")
     typer.echo(
         "weekly_review_coverage_classification="
@@ -20584,6 +20597,9 @@ def dynamic_v3_evidence_staleness_monitor_report_command(
     typer.echo(f"fallback_status={report.get('fallback_status')}")
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
+    typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
+    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"coverage_status={report.get('coverage_status')}")
     typer.echo(
         "weekly_review_coverage_classification="
@@ -20683,6 +20699,14 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
         Path,
         typer.Option("--fallback-policy-output-dir", help="fallback policy artifact root。"),
     ] = filtered_readiness.DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Annotated[
+        Path | None,
+        typer.Option("--cache-catalog-report-path", help="显式 cache catalog report JSON。"),
+    ] = None,
+    cache_catalog_output_dir: Annotated[
+        Path,
+        typer.Option("--cache-catalog-output-dir", help="cache catalog artifact root。"),
+    ] = filtered_readiness.DEFAULT_CACHE_CATALOG_DIR,
     paper_shadow_daily_dir: Annotated[
         Path,
         typer.Option("--paper-shadow-daily-dir", help="paper-shadow daily artifact root。"),
@@ -20724,6 +20748,8 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
         data_quality_report_dir=data_quality_report_dir,
         fallback_policy_report_path=fallback_policy_report_path,
         fallback_policy_output_dir=fallback_policy_output_dir,
+        cache_catalog_report_path=cache_catalog_report_path,
+        cache_catalog_output_dir=cache_catalog_output_dir,
         paper_shadow_daily_dir=paper_shadow_daily_dir,
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
@@ -20742,6 +20768,9 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
     typer.echo(f"fallback_status={report.get('fallback_status')}")
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
+    typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
+    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"manual_review_required={report.get('manual_review_required')}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"data_validation_status={report.get('data_validation_status')}")
@@ -20785,6 +20814,9 @@ def dynamic_v3_shadow_continuation_readiness_report_command(
     typer.echo(f"fallback_status={report.get('fallback_status')}")
     typer.echo(f"fallback_used_count={report.get('fallback_used_count')}")
     typer.echo(f"fallback_blocking_data_types={report.get('fallback_blocking_data_types')}")
+    typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
+    typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
+    typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
     typer.echo(f"manual_review_required={report.get('manual_review_required')}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"data_validation_status={report.get('data_validation_status')}")

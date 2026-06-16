@@ -166,6 +166,7 @@ def build_reader_brief_payload(
     pit_source_manifest = _pit_source_manifest_summary(report_index)
     data_refresh_audit = _data_refresh_audit_summary(report_index)
     data_source_fallback_policy = _data_source_fallback_policy_summary(report_index)
+    cache_catalog = _cache_catalog_summary(report_index)
     governance_summary = _backtest_shadow_governance(
         daily_decision_summary=daily_decision_summary,
         daily_task_dashboard=daily_task_dashboard,
@@ -324,6 +325,7 @@ def build_reader_brief_payload(
         "pit_source_manifest": pit_source_manifest,
         "data_refresh_audit": data_refresh_audit,
         "data_source_fallback_policy": data_source_fallback_policy,
+        "cache_catalog": cache_catalog,
         "backtest_shadow_governance": governance_summary,
         "parameter_shadow_review": parameter_shadow_review,
         "etf_backtest_summary": etf_backtest_summary,
@@ -606,6 +608,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     pit_source_manifest = _mapping(payload.get("pit_source_manifest"))
     data_refresh_audit = _mapping(payload.get("data_refresh_audit"))
     data_source_fallback_policy = _mapping(payload.get("data_source_fallback_policy"))
+    cache_catalog = _mapping(payload.get("cache_catalog"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
@@ -4568,6 +4571,43 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
+            "Cache Catalog",
+            _definition_table(
+                [
+                    ("availability", cache_catalog.get("availability")),
+                    ("status", cache_catalog.get("status")),
+                    ("validation_status", cache_catalog.get("validation_status")),
+                    (
+                        "cache_integrity_status",
+                        cache_catalog.get("cache_integrity_status"),
+                    ),
+                    ("entry_count", cache_catalog.get("entry_count")),
+                    (
+                        "required_entry_count",
+                        cache_catalog.get("required_entry_count"),
+                    ),
+                    (
+                        "missing_required_count",
+                        cache_catalog.get("missing_required_count"),
+                    ),
+                    (
+                        "checksum_mismatch_count",
+                        cache_catalog.get("checksum_mismatch_count"),
+                    ),
+                    (
+                        "blocking_entry_ids",
+                        cache_catalog.get("blocking_entry_ids"),
+                    ),
+                    ("refresh_audit_id", cache_catalog.get("refresh_audit_id")),
+                    ("validated_at", cache_catalog.get("validated_at")),
+                    ("next_action", cache_catalog.get("next_action")),
+                    ("report_path", cache_catalog.get("report_path")),
+                    ("production_effect", cache_catalog.get("production_effect")),
+                    ("limitation", cache_catalog.get("limitation")),
+                ]
+            ),
+        ),
+        _section(
             "PIT Source Manifest",
             _definition_table(
                 [
@@ -6226,6 +6266,98 @@ def _missing_data_source_fallback_policy_summary(reason: str) -> dict[str, Any]:
         "fallback_used_sources": "none",
         "blocking_data_types": "none",
         "next_action": "generate_data_source_fallback_policy_report",
+        "safety_status": "MISSING",
+        "report_path": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "limitation": reason,
+    }
+
+
+def _cache_catalog_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_cache_catalog_summary(
+            "report_index_missing; Reader Brief 不补造 cache catalog 结论。"
+        )
+    report_path = _report_index_artifact_path(report_index, "cache_catalog")
+    if report_path is None:
+        return _missing_cache_catalog_summary(
+            "cache_catalog artifact missing from report_index."
+        )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_cache_catalog_summary(
+            f"cache_catalog JSON unreadable: {report_path}"
+        )
+    summary = _mapping(payload.get("summary"))
+    safety = _mapping(payload.get("safety_boundary"))
+    blocking_ids = _texts(summary.get("blocking_entry_ids"))
+    safety_status = (
+        "PASS"
+        if _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and safety.get("read_only") is True
+        and safety.get("data_refresh_allowed") is False
+        and safety.get("cache_mutation_allowed") is False
+        and safety.get("cache_repair_allowed") is False
+        and safety.get("broker_action_allowed") is False
+        and safety.get("order_ticket_allowed") is False
+        else "REVIEW_REQUIRED"
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "validation_status": _text(
+            payload.get("validation_status"),
+            _text(payload.get("status"), "UNKNOWN"),
+        ),
+        "cache_integrity_status": _text(
+            payload.get("cache_integrity_status"),
+            _text(summary.get("cache_integrity_status"), "UNKNOWN"),
+        ),
+        "catalog_id": _text(payload.get("catalog_id"), "UNKNOWN"),
+        "as_of": _text(payload.get("as_of"), "UNKNOWN"),
+        "entry_count": summary.get("entry_count", 0),
+        "required_entry_count": summary.get("required_entry_count", 0),
+        "missing_required_count": summary.get("missing_required_count", 0),
+        "missing_optional_count": summary.get("missing_optional_count", 0),
+        "checksum_mismatch_count": summary.get("checksum_mismatch_count", 0),
+        "checksum_changed_without_refresh_count": summary.get(
+            "checksum_changed_without_refresh_count",
+            0,
+        ),
+        "blocking_entry_count": summary.get("blocking_entry_count", 0),
+        "blocking_entry_ids": ", ".join(blocking_ids) if blocking_ids else "none",
+        "refresh_audit_id": _text(summary.get("refresh_audit_id"), "UNKNOWN"),
+        "validated_at": _text(summary.get("validated_at"), "UNKNOWN"),
+        "next_action": _text(summary.get("next_action"), "UNKNOWN"),
+        "safety_status": safety_status,
+        "report_path": str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "limitation": (
+            "Cache catalog is governance-only; it records observed cache metadata "
+            "and does not refresh, repair or approve production use."
+        ),
+    }
+
+
+def _missing_cache_catalog_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "validation_status": "MISSING",
+        "cache_integrity_status": "MISSING",
+        "catalog_id": "MISSING",
+        "as_of": "UNKNOWN",
+        "entry_count": 0,
+        "required_entry_count": 0,
+        "missing_required_count": 0,
+        "missing_optional_count": 0,
+        "checksum_mismatch_count": 0,
+        "checksum_changed_without_refresh_count": 0,
+        "blocking_entry_count": 0,
+        "blocking_entry_ids": "none",
+        "refresh_audit_id": "MISSING",
+        "validated_at": "MISSING",
+        "next_action": "generate_cache_catalog",
         "safety_status": "MISSING",
         "report_path": "MISSING",
         "production_effect": PRODUCTION_EFFECT,

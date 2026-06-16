@@ -14,6 +14,10 @@ from typing import Any
 
 import pandas as pd
 
+from ai_trading_system.cache_catalog import (
+    DEFAULT_CACHE_CATALOG_DIR,
+    latest_cache_catalog_summary,
+)
 from ai_trading_system.config import PROJECT_ROOT, DataSourceConfig, DataSourcesConfig
 from ai_trading_system.data_source_fallback_policy import (
     DEFAULT_DATA_SOURCE_FALLBACK_DIR,
@@ -221,6 +225,8 @@ def build_pit_source_manifest_payload(
     download_manifest_path: Path,
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Path | None = None,
+    cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
     project_root: Path = PROJECT_ROOT,
 ) -> dict[str, Any]:
     generated_at = datetime.now(tz=UTC)
@@ -238,6 +244,10 @@ def build_pit_source_manifest_payload(
     fallback_summary = latest_data_source_fallback_policy_summary(
         report_path=fallback_policy_report_path,
         output_dir=fallback_policy_output_dir,
+    )
+    cache_catalog_summary = latest_cache_catalog_summary(
+        report_path=cache_catalog_report_path,
+        output_dir=cache_catalog_output_dir,
     )
     non_strong_source_ids = tuple(
         record["source_id"]
@@ -275,6 +285,7 @@ def build_pit_source_manifest_payload(
             "unknown_source_ids": list(unknown_source_ids),
         },
         "fallback_policy_summary": fallback_summary,
+        "cache_catalog_summary": cache_catalog_summary,
         "grade_counts": grade_counts,
         "records": records,
         "build_issues": [_issue_dict(issue) for issue in download_manifest_issues],
@@ -367,6 +378,8 @@ def build_and_write_pit_source_manifest(
     output_dir: Path = DEFAULT_PIT_SOURCE_MANIFEST_DIR,
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_report_path: Path | None = None,
+    cache_catalog_output_dir: Path = DEFAULT_CACHE_CATALOG_DIR,
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[dict[str, Any], dict[str, Path]]:
     payload = build_pit_source_manifest_payload(
@@ -375,6 +388,8 @@ def build_and_write_pit_source_manifest(
         download_manifest_path=download_manifest_path,
         fallback_policy_report_path=fallback_policy_report_path,
         fallback_policy_output_dir=fallback_policy_output_dir,
+        cache_catalog_report_path=cache_catalog_report_path,
+        cache_catalog_output_dir=cache_catalog_output_dir,
         project_root=project_root,
     )
     paths = write_pit_source_manifest_artifact(payload, output_dir=output_dir)
@@ -486,10 +501,17 @@ def validation_report_to_payload(report: PitSourceManifestValidationReport) -> d
 def render_pit_source_manifest_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     fallback = _mapping(payload.get("fallback_policy_summary"))
+    cache_catalog = _mapping(payload.get("cache_catalog_summary"))
     paths = _mapping(payload.get("artifact_paths"))
     records = sorted(
         _records(payload.get("records")),
         key=lambda item: _text(item.get("source_id")),
+    )
+    cache_integrity_status = _text(cache_catalog.get("cache_integrity_status"), "MISSING")
+    cache_missing_required_count = _text(cache_catalog.get("missing_required_count"), "0")
+    cache_checksum_mismatch_count = _text(
+        cache_catalog.get("checksum_mismatch_count"),
+        "0",
     )
     lines = [
         "# Point-in-Time Source Manifest",
@@ -507,6 +529,9 @@ def render_pit_source_manifest_markdown(payload: Mapping[str, Any]) -> str:
         f"- Fallback policy status：{_text(fallback.get('fallback_status'), 'MISSING')}",
         f"- Fallback used count：{_text(fallback.get('fallback_used_count'), '0')}",
         f"- Fallback blocking data types：{_text(fallback.get('blocking_data_types'), 'none')}",
+        f"- Cache catalog status：{cache_integrity_status}",
+        f"- Cache catalog missing required count：{cache_missing_required_count}",
+        f"- Cache catalog checksum mismatch count：{cache_checksum_mismatch_count}",
         f"- Production effect：{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
         f"- Validation report：`{_text(paths.get('validation_markdown'), 'UNKNOWN')}`",
         "",
@@ -621,7 +646,14 @@ def render_pit_source_manifest_validation_markdown(
 def render_pit_source_manifest_reader_brief(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     fallback = _mapping(payload.get("fallback_policy_summary"))
+    cache_catalog = _mapping(payload.get("cache_catalog_summary"))
     non_strong = _texts(summary.get("non_strong_source_ids"))
+    cache_integrity_status = _text(cache_catalog.get("cache_integrity_status"), "MISSING")
+    cache_missing_required_count = _text(cache_catalog.get("missing_required_count"), "0")
+    cache_checksum_mismatch_count = _text(
+        cache_catalog.get("checksum_mismatch_count"),
+        "0",
+    )
     return (
         "## PIT Source Manifest\n\n"
         f"- status: `{_text(payload.get('status'), 'UNKNOWN')}`\n"
@@ -634,6 +666,9 @@ def render_pit_source_manifest_reader_brief(payload: Mapping[str, Any]) -> str:
         f"- fallback_status: `{_text(fallback.get('fallback_status'), 'MISSING')}`\n"
         f"- fallback_used_count: `{_text(fallback.get('fallback_used_count'), '0')}`\n"
         f"- fallback_blocking_data_types: `{_text(fallback.get('blocking_data_types'), 'none')}`\n"
+        f"- cache_integrity_status: `{cache_integrity_status}`\n"
+        f"- cache_missing_required_count: `{cache_missing_required_count}`\n"
+        f"- cache_checksum_mismatch_count: `{cache_checksum_mismatch_count}`\n"
         f"- production_effect: `{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}`\n"
     )
 

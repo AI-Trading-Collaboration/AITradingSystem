@@ -1,0 +1,89 @@
+schema_version: 1
+policy_version: cache_catalog_policy_v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Make checksum, dimension, freshness metadata, source lineage, and refresh
+    audit linkage visible for cache artifacts before paper-shadow research
+    interprets cached inputs.
+  intended_effect: >
+    Detect missing required cache entries and checksum mismatches without
+    refreshing, repairing, or fabricating data.
+  validation_evidence: >
+    Focused tests cover catalog generation, missing required entries, checksum
+    mismatch detection, CLI output, downstream governance summaries, and
+    Reader Brief visibility.
+  review_condition: >
+    Review before cache catalog status is used as a hard promotion gate or
+    before additional cache families become required.
+safety_boundary:
+  read_only: true
+  data_refresh_allowed: false
+  cache_mutation_allowed: false
+  cache_repair_allowed: false
+  score_or_backtest_allowed: false
+  broker_action_allowed: false
+  order_ticket_allowed: false
+  production_state_mutation_allowed: false
+  production_effect: none
+required_metadata_fields:
+  - entry_id
+  - data_type
+  - cache_path
+  - artifact_id
+  - as_of
+  - checksum
+  - row_count
+  - column_count
+  - created_at
+  - validated_at
+  - source_name
+  - refresh_audit_id
+entries:
+  - entry_id: primary_price_cache
+    title: Primary price cache
+    data_type: price_data
+    required: true
+    path: data/raw/prices_daily.csv
+    format: csv
+    date_column: date
+    source_ids:
+      - fmp_eod_daily_prices
+      - cboe_vix_daily_prices
+    row_count_basis: csv_rows
+    column_count_basis: csv_columns
+  - entry_id: secondary_price_cache
+    title: Marketstack secondary price cache
+    data_type: secondary_price_data
+    required: true
+    path: data/raw/prices_marketstack_daily.csv
+    format: csv
+    date_column: date
+    source_ids:
+      - marketstack_eod_daily_prices
+    row_count_basis: csv_rows
+    column_count_basis: csv_columns
+  - entry_id: macro_rate_cache
+    title: Macro rate cache
+    data_type: macro_rate_data
+    required: true
+    path: data/raw/rates_daily.csv
+    format: csv
+    date_column: date
+    source_ids:
+      - fred_daily_rates
+    row_count_basis: csv_rows
+    column_count_basis: csv_columns
+  - entry_id: market_panel_latest
+    title: Latest market panel report
+    data_type: market_panel_data
+    required: true
+    path_glob: outputs/reports/market_panel_*.json
+    format: json
+    as_of_json_path: as_of
+    row_count_json_path: proxies
+    source_name: aits reports market-panel
+    source_ids: []
+    row_count_basis: json_array_length
+    column_count_basis: json_object_key_union

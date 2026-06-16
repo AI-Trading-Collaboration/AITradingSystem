@@ -48,6 +48,7 @@ def test_data_refresh_audit_cli_report_validate_and_reader_brief(tmp_path: Path)
     output_dir = tmp_path / "data_refresh_audit"
     market_refresh_root = tmp_path / "empty_market_refresh"
     fallback_policy_report = _write_fallback_policy_report(tmp_path)
+    cache_catalog_report = _write_cache_catalog_report(tmp_path)
     market_refresh_root.mkdir()
     write_validate_data_audit_sidecar(
         report=fixture["report"],
@@ -75,6 +76,8 @@ def test_data_refresh_audit_cli_report_validate_and_reader_brief(tmp_path: Path)
             str(fixture["price_path"]),
             "--fallback-policy-report-path",
             str(fallback_policy_report),
+            "--cache-catalog-report-path",
+            str(cache_catalog_report),
         ],
     )
     validation = CliRunner().invoke(
@@ -113,6 +116,9 @@ def test_data_refresh_audit_cli_report_validate_and_reader_brief(tmp_path: Path)
     assert audit_payload["summary"]["skipped_market_closed_count"] == 1
     assert audit_payload["fallback_policy_summary"]["fallback_status"] == "FALLBACK_USED"
     assert audit_payload["fallback_policy_summary"]["fallback_used_count"] == 1
+    assert audit_payload["cache_catalog_summary"]["cache_integrity_status"] == "OK"
+    assert audit_payload["cache_catalog_summary"]["entry_count"] == 4
+    assert "cache_catalog=integrity=OK" in report.output
     assert summary["availability"] == "AVAILABLE"
     assert summary["status"] == "PASS"
     assert summary["audit_record_count"] == 2
@@ -228,6 +234,51 @@ def _write_fallback_policy_report(tmp_path: Path) -> Path:
             },
             indent=2,
             sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path
+
+
+def _write_cache_catalog_report(tmp_path: Path) -> Path:
+    report_path = tmp_path / "cache_catalog.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "cache_catalog",
+                "catalog_id": "cache-catalog-test",
+                "as_of": "2026-06-13",
+                "status": "PASS",
+                "validation_status": "PASS",
+                "cache_integrity_status": "OK",
+                "production_effect": "none",
+                "summary": {
+                    "cache_integrity_status": "OK",
+                    "entry_count": 4,
+                    "required_entry_count": 4,
+                    "missing_required_count": 0,
+                    "missing_optional_count": 0,
+                    "checksum_mismatch_count": 0,
+                    "checksum_changed_without_refresh_count": 0,
+                    "blocking_entry_count": 0,
+                    "blocking_entry_ids": [],
+                    "warning_entry_ids": [],
+                    "refresh_audit_id": "data_refresh_audit_test",
+                    "validated_at": "2026-06-13T10:01:00+00:00",
+                    "next_action": "cache_catalog_clear_for_manual_review",
+                },
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "cache_repair_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
+                },
+            }
         ),
         encoding="utf-8",
     )
