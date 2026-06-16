@@ -2434,6 +2434,60 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "cost_sensitivity_review",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_review_id"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_status"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_policy",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_policy"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_turnover",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_turnover"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_gross_improvement_proxy",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_gross_improvement_proxy"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_worst_net_improvement_proxy",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_worst_net_improvement_proxy"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_high_cost_meaningful",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_high_cost_meaningful"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_next_required_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_next_required_action"
+                        ),
+                    ),
+                    (
+                        "cost_sensitivity_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_validation_status"
+                        ),
+                    ),
+                    (
                         "stress_scenario_library",
                         etf_dynamic_v3_parameter_research.get(
                             "stress_scenario_library_run_id"
@@ -13337,6 +13391,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_health_manifest.json",
     )
+    cost_sensitivity_review_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_cost_sensitivity_review",
+        ),
+        "cost_sensitivity_manifest.json",
+    )
     stress_scenario_library_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -13868,6 +13929,17 @@ def _etf_dynamic_v3_parameter_research_summary(
     paper_shadow_health_validation = _read_optional_json(
         paper_shadow_health_path.parent / "paper_shadow_health_validation.json"
         if paper_shadow_health_path is not None
+        else None
+    )
+    cost_sensitivity_manifest = _read_optional_json(cost_sensitivity_review_path)
+    cost_sensitivity_review = _read_optional_json(
+        cost_sensitivity_review_path.parent / "cost_sensitivity_review.json"
+        if cost_sensitivity_review_path is not None
+        else None
+    )
+    cost_sensitivity_validation = _read_optional_json(
+        cost_sensitivity_review_path.parent / "cost_sensitivity_validation.json"
+        if cost_sensitivity_review_path is not None
         else None
     )
     stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
@@ -15591,6 +15663,44 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_health_validation.get("status"),
             "MISSING",
         ),
+        "cost_sensitivity_review_id": _text(
+            cost_sensitivity_manifest.get("review_id"),
+            "MISSING",
+        ),
+        "cost_sensitivity_status": _text(
+            cost_sensitivity_review.get("cost_sensitivity_status"),
+            "MISSING",
+        ),
+        "cost_sensitivity_policy": (
+            f"{cost_sensitivity_review.get('policy_id')} / "
+            f"{cost_sensitivity_review.get('policy_version')}"
+            if cost_sensitivity_review.get("policy_id")
+            else "MISSING"
+        ),
+        "cost_sensitivity_turnover": cost_sensitivity_review.get(
+            "turnover",
+            "MISSING",
+        ),
+        "cost_sensitivity_gross_improvement_proxy": cost_sensitivity_review.get(
+            "gross_improvement_proxy",
+            "MISSING",
+        ),
+        "cost_sensitivity_worst_net_improvement_proxy": cost_sensitivity_review.get(
+            "worst_net_improvement_proxy",
+            "MISSING",
+        ),
+        "cost_sensitivity_high_cost_meaningful": cost_sensitivity_review.get(
+            "high_cost_improvement_meaningful",
+            "MISSING",
+        ),
+        "cost_sensitivity_next_required_action": _text(
+            cost_sensitivity_review.get("next_required_action"),
+            "MISSING",
+        ),
+        "cost_sensitivity_validation_status": _text(
+            cost_sensitivity_validation.get("status"),
+            "MISSING",
+        ),
         "stress_scenario_library_run_id": _text(
             stress_scenario_manifest.get("library_run_id"),
             "MISSING",
@@ -15893,6 +16003,11 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_health": (
             "" if paper_shadow_health_path is None else str(paper_shadow_health_path)
+        ),
+        "cost_sensitivity_review": (
+            ""
+            if cost_sensitivity_review_path is None
+            else str(cost_sensitivity_review_path)
         ),
         "stress_scenario_library": (
             ""
@@ -16871,6 +16986,15 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_health_warnings": "MISSING",
         "paper_shadow_health_next_required_action": "MISSING",
         "paper_shadow_health_validation_status": "MISSING",
+        "cost_sensitivity_review_id": "MISSING",
+        "cost_sensitivity_status": "MISSING",
+        "cost_sensitivity_policy": "MISSING",
+        "cost_sensitivity_turnover": "MISSING",
+        "cost_sensitivity_gross_improvement_proxy": "MISSING",
+        "cost_sensitivity_worst_net_improvement_proxy": "MISSING",
+        "cost_sensitivity_high_cost_meaningful": "MISSING",
+        "cost_sensitivity_next_required_action": "MISSING",
+        "cost_sensitivity_validation_status": "MISSING",
         "stress_scenario_library_run_id": "MISSING",
         "stress_scenario_library_id": "MISSING",
         "stress_scenario_count": "MISSING",
@@ -16944,6 +17068,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_staleness_monitor": "",
         "shadow_continuation_readiness_report": "",
         "paper_shadow_health": "",
+        "cost_sensitivity_review": "",
         "stress_scenario_library": "",
         "drawdown_event_casebook": "",
         "flip_rotation_event_casebook": "",

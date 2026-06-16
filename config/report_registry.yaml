@@ -5242,6 +5242,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_cost_sensitivity_review
+    title: ETF Dynamic v3 Cost Sensitivity Review
+    group: governance
+    cadence: weekly
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue cost-sensitivity-review report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/cost_sensitivity_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/cost_sensitivity_review.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/cost_sensitivity_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/cost_sensitivity_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/cost_sensitivity_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-359 evaluates paper-shadow candidate improvement under configured
+      zero/low/medium/high transaction-cost assumptions. It is a research-only
+      owner-review input for weekly review and promotion-board preparation, not
+      a broker execution model or production promotion gate.
+    owner_action: review_candidate_net_improvement_under_cost_assumptions
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_stress_scenario_library
     title: ETF Dynamic v3 Stress Scenario Library
     group: governance

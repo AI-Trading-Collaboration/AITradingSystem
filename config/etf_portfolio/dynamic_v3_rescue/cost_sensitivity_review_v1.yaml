@@ -1,0 +1,77 @@
+policy_id: dynamic_v3_rescue_cost_sensitivity_review_v1
+version: "2026-06-16"
+status: pilot_manual_review_baseline
+owner: system_validation
+production_effect: none
+rationale: >
+  Paper-shadow candidate improvements can be overstated when turnover-driven
+  transaction costs are not disclosed. This pilot policy gives owner review a
+  consistent zero/low/medium/high cost sensitivity lens without treating the
+  result as an executable trading cost model.
+intended_effect: >
+  Keep candidate promotion discussions from relying on gross performance proxy
+  alone when estimated cost drag would make improvement too small to interpret
+  as meaningful.
+validation_evidence: >
+  TRADING-359 focused tests, CLI smoke validation, and ongoing manual review.
+  Thresholds remain pilot baselines until calibrated with real paper-shadow
+  turnover and execution-quality evidence.
+review_condition: >
+  Revisit after enough ai_after_chatgpt paper-shadow samples include credible
+  turnover, spread, slippage, and execution-quality evidence; review before any
+  production promotion or broker-facing workflow uses these assumptions.
+meaningful_improvement:
+  threshold: 0.0025
+  unit: decimal_return_proxy
+  interpretation: >
+    Net improvement proxy must remain at least 25 bps after scenario cost drag
+    before the scenario can count as meaningful. This is a pilot review
+    threshold, not a production acceptance rule.
+scenarios:
+  - scenario_id: zero
+    label: Zero Cost
+    total_cost_bps: 0.0
+    commission_bps: 0.0
+    spread_bps: 0.0
+    slippage_bps: 0.0
+    market_impact_bps: 0.0
+    rationale: Gross proxy reference case only.
+  - scenario_id: low
+    label: Low Cost
+    total_cost_bps: 3.0
+    commission_bps: 0.0
+    spread_bps: 1.0
+    slippage_bps: 2.0
+    market_impact_bps: 0.0
+    rationale: Low-friction liquid ETF pilot assumption.
+  - scenario_id: medium
+    label: Medium Cost
+    total_cost_bps: 10.0
+    commission_bps: 0.0
+    spread_bps: 3.0
+    slippage_bps: 5.0
+    market_impact_bps: 2.0
+    rationale: Conservative liquid ETF review assumption.
+  - scenario_id: high
+    label: High Cost
+    total_cost_bps: 25.0
+    commission_bps: 0.0
+    spread_bps: 5.0
+    slippage_bps: 12.5
+    market_impact_bps: 7.5
+    rationale: Stress assumption for turnover-sensitive candidate review.
+safety_boundaries:
+  manual_review_only: true
+  research_only: true
+  cost_sensitivity_review_only: true
+  execution_model_ready: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  paper_account_state_mutated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  official_target_weights: false
+  not_official_target_weights: true
+  auto_apply: false
+  production_effect: none

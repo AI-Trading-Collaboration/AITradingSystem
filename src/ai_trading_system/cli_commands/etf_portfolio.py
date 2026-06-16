@@ -23,6 +23,7 @@ from ai_trading_system.data.quality import (
 from ai_trading_system.data.quality import (
     write_data_quality_report as write_cache_data_quality_report,
 )
+from ai_trading_system.etf_portfolio import dynamic_v3_cost_sensitivity as cost_sensitivity
 from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as defensive_evidence
 from ai_trading_system.etf_portfolio import dynamic_v3_drawdown_casebook as drawdown_casebook
 from ai_trading_system.etf_portfolio import (
@@ -1854,6 +1855,10 @@ dynamic_v3_paper_shadow_health_app = typer.Typer(
     help="Dynamic v3 rescue canonical paper-shadow health workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_cost_sensitivity_review_app = typer.Typer(
+    help="Dynamic v3 rescue cost-sensitivity review workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
@@ -2658,6 +2663,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_health_app,
     name="paper-shadow-health",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_cost_sensitivity_review_app,
+    name="cost-sensitivity-review",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
@@ -21377,6 +21386,154 @@ def dynamic_v3_validate_paper_shadow_health_command(
     _echo_validation_payload(
         paper_shadow_health.validate_paper_shadow_health_artifact(
             health_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_cost_sensitivity_summary(
+    *,
+    manifest: Mapping[str, Any],
+    review: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    typer.echo(f"review_id={review.get('review_id') or manifest.get('review_id')}")
+    typer.echo(f"candidate={review.get('candidate') or manifest.get('candidate')}")
+    typer.echo(f"cost_sensitivity_status={review.get('cost_sensitivity_status')}")
+    typer.echo(f"policy_id={review.get('policy_id')}")
+    typer.echo(f"policy_version={review.get('policy_version')}")
+    typer.echo(f"turnover={review.get('turnover')}")
+    typer.echo(f"gross_performance_proxy={review.get('gross_performance_proxy')}")
+    typer.echo(f"gross_improvement_proxy={review.get('gross_improvement_proxy')}")
+    typer.echo(f"worst_net_improvement_proxy={review.get('worst_net_improvement_proxy')}")
+    typer.echo(
+        "high_cost_improvement_meaningful="
+        f"{review.get('high_cost_improvement_meaningful')}"
+    )
+    typer.echo(f"blocking_reasons={','.join(_texts(review.get('blocking_reasons')))}")
+    typer.echo(f"warnings={','.join(_texts(review.get('warnings')))}")
+    typer.echo(f"next_required_action={review.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('cost_sensitivity_report_path')}")
+    typer.echo("research_only=true")
+    typer.echo("cost_sensitivity_review_only=true")
+    typer.echo("execution_model_ready=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_cost_sensitivity_review_app.command("run")
+def dynamic_v3_cost_sensitivity_review_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="cost-sensitivity review as-of date YYYY-MM-DD；省略时使用 source as_of。",
+        ),
+    ] = None,
+    candidate_metrics_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--candidate-metrics-path",
+            help="显式 candidate metrics JSON，需含 turnover / gross proxy。",
+        ),
+    ] = None,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="paper-shadow weekly review id；缺省 latest。"),
+    ] = None,
+    weekly_review_dir: Annotated[
+        Path,
+        typer.Option("--weekly-review-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    paper_shadow_health_id: Annotated[
+        str | None,
+        typer.Option("--paper-shadow-health-id", "--health-id", help="paper-shadow health id。"),
+    ] = None,
+    paper_shadow_health_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-health-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="cost sensitivity policy YAML。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cost-sensitivity review artifact root。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
+) -> None:
+    result = cost_sensitivity.run_cost_sensitivity_review(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate_metrics_path=candidate_metrics_path,
+        weekly_review_id=weekly_review_id,
+        weekly_review_dir=weekly_review_dir,
+        paper_shadow_health_id=paper_shadow_health_id,
+        paper_shadow_health_dir=paper_shadow_health_dir,
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+    _echo_cost_sensitivity_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        review=_mapping_obj(result.get("cost_sensitivity_review")),
+        validation=_mapping_obj(result.get("cost_sensitivity_validation")),
+    )
+
+
+@dynamic_v3_cost_sensitivity_review_app.command("report")
+def dynamic_v3_cost_sensitivity_review_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    review_id: Annotated[
+        str | None,
+        typer.Option("--review-id", help="cost-sensitivity review artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cost-sensitivity review artifact root。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
+) -> None:
+    if not latest and not review_id:
+        raise typer.BadParameter("--review-id or --latest is required")
+    payload = cost_sensitivity.cost_sensitivity_report_payload(
+        review_id=review_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_cost_sensitivity_summary(
+        manifest=_mapping_obj(payload),
+        review=_mapping_obj(payload.get("cost_sensitivity_review")),
+        validation=_mapping_obj(payload.get("cost_sensitivity_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-cost-sensitivity-review")
+def dynamic_v3_validate_cost_sensitivity_review_command(
+    review_id: Annotated[
+        str | None,
+        typer.Option("--review-id", help="cost-sensitivity review artifact id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cost-sensitivity review artifact root。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
+) -> None:
+    resolved_id = review_id
+    if latest:
+        payload = cost_sensitivity.cost_sensitivity_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("review_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--review-id or --latest is required")
+    _echo_validation_payload(
+        cost_sensitivity.validate_cost_sensitivity_artifact(
+            review_id=resolved_id,
             output_dir=output_dir,
         )
     )

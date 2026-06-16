@@ -4,6 +4,16 @@
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
 
+## TRADING-359
+
+- 需求文档：`docs/requirements/TRADING-359_Cost_Sensitivity_Review.md`
+- 任务：Cost Sensitivity Review
+- 状态：`DONE`
+- 需求：The system shall evaluate paper-shadow candidate improvement under configurable zero/low/medium/high transaction-cost assumptions and disclose whether improvement remains meaningful after estimated cost drag.
+- 安全边界：research-only cost sensitivity；不接 broker、不生成真实执行假设、不刷新数据、不补造 upstream artifact、不写 official target weights、不修改 shadow/paper/production state、不触发 order。
+- 主要输入：cost sensitivity policy config、candidate metrics JSON 或 latest paper-shadow weekly review、latest paper-shadow health summary。
+- 主要输出：`reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/<review_id>/cost_sensitivity_review.json`、`.md`、validation JSON/Markdown、Reader Brief section、weekly review source summary 和 promotion-board input summary。
+
 ## TRADING-383
 
 - 需求文档：`docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md`

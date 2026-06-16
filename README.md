@@ -1661,6 +1661,25 @@ paper account 或 production state，所有输出固定 `paper_shadow_health_che
 `pipelines_executed_by_health_check=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-359_COST_SENSITIVITY_REVIEW 在 paper-shadow weekly/health 后新增 research-only
+transaction-cost sensitivity review。Policy config 为
+`config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`，披露
+zero/low/medium/high cost assumptions、meaningful improvement threshold、owner/version、
+rationale 和 review condition。CLI 入口为
+`aits etf dynamic-v3-rescue cost-sensitivity-review run --candidate-metrics-path <metrics.json>`、
+`aits etf dynamic-v3-rescue cost-sensitivity-review report --latest` 和
+`aits etf dynamic-v3-rescue validate-cost-sensitivity-review --latest`。该 report 只读
+candidate metrics、paper-shadow weekly review 和 paper-shadow health context，输出 turnover、
+cost drag、gross performance proxy、net performance proxy、每个 scenario 是否仍 meaningful、
+aggregate `cost_sensitivity_status`、promotion-board input summary、Reader Brief section 和
+validation artifact。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/`。该 review 不接 broker、
+不生成真实 execution model、不刷新数据、不补造 upstream artifact、不写 official target weights、
+不修改 paper account 或 production state，所有输出固定 `research_only=true`、
+`cost_sensitivity_review_only=true`、`execution_model_ready=false`、
+`broker_action_allowed=false`、`order_ticket_generated=false`、`not_official_target_weights=true`、
+`production_effect=none`。
+
 TRADING-356_STRESS_SCENARIO_LIBRARY 在 evidence freshness guard 后新增 Dynamic v3 rescue
 专用 stress scenario library。CLI 入口为
 `aits etf dynamic-v3-rescue stress-scenario-library report`、`... report --latest` 和
