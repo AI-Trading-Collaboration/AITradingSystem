@@ -164,6 +164,7 @@ def build_reader_brief_payload(
     )
     report_index_summary = _report_index_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
+    task_register_consistency = _task_register_consistency_summary(report_index)
     report_quality_gate = _report_quality_gate_summary(report_index)
     pit_source_manifest = _pit_source_manifest_summary(report_index)
     data_refresh_audit = _data_refresh_audit_summary(report_index)
@@ -316,6 +317,7 @@ def build_reader_brief_payload(
         "score_change_narrative": score_change_narrative,
         "report_index_summary": report_index_summary,
         "artifact_lineage_graph": artifact_lineage_graph,
+        "task_register_consistency": task_register_consistency,
         "report_quality_gate": report_quality_gate,
         "missing_limited_artifact_impact": missing_artifact_impact,
         "task_cadence_calendar": task_cadence_calendar,
@@ -603,6 +605,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     score_change_narrative = _mapping(payload.get("score_change_narrative"))
     report_index = _mapping(payload.get("report_index_summary"))
     artifact_lineage_graph = _mapping(payload.get("artifact_lineage_graph"))
+    task_register_consistency = _mapping(payload.get("task_register_consistency"))
     report_quality_gate = _mapping(payload.get("report_quality_gate"))
     missing_impact = _mapping(payload.get("missing_limited_artifact_impact"))
     cadence_calendar = _mapping(payload.get("task_cadence_calendar"))
@@ -824,6 +827,48 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", artifact_lineage_graph.get("next_action")),
                     ("detail_report", artifact_lineage_graph.get("detail_report")),
                     ("production_effect", artifact_lineage_graph.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Task Register Consistency",
+            _definition_table(
+                [
+                    ("availability", task_register_consistency.get("availability")),
+                    ("status", task_register_consistency.get("status")),
+                    (
+                        "consistency_status",
+                        task_register_consistency.get("consistency_status"),
+                    ),
+                    (
+                        "validation_status",
+                        task_register_consistency.get("validation_status"),
+                    ),
+                    ("active_tasks", task_register_consistency.get("active_task_count")),
+                    (
+                        "completed_tasks",
+                        task_register_consistency.get("completed_task_count"),
+                    ),
+                    ("checks", task_register_consistency.get("check_count")),
+                    ("failed_checks", task_register_consistency.get("failed_check_count")),
+                    (
+                        "blocking_issues",
+                        task_register_consistency.get("blocking_issue_count"),
+                    ),
+                    (
+                        "warning_issues",
+                        task_register_consistency.get("warning_issue_count"),
+                    ),
+                    ("next_action", task_register_consistency.get("next_action")),
+                    ("detail_report", task_register_consistency.get("detail_report")),
+                    (
+                        "validation_report",
+                        task_register_consistency.get("validation_detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        task_register_consistency.get("production_effect"),
+                    ),
                 ]
             ),
         ),
@@ -6259,6 +6304,83 @@ def _missing_artifact_lineage_graph_summary(reason: str) -> dict[str, Any]:
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             "artifact_lineage_graph artifact missing; run reports artifact-lineage."
+        ),
+        "limitation": reason,
+    }
+
+
+def _task_register_consistency_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_task_register_consistency_summary(
+            "report_index artifact missing; Reader Brief cannot discover task_register_consistency."
+        )
+    report_path = _report_index_artifact_path(report_index, "task_register_consistency")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_task_register_consistency_summary(
+            "task_register_consistency artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "task_register_consistency_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("consistency_status"), _text(payload.get("status"), "UNKNOWN"))
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "consistency_status": status,
+        "validation_status": validation_status,
+        "active_task_count": _int(summary.get("active_task_count")),
+        "completed_task_count": _int(summary.get("completed_task_count")),
+        "check_count": _int(summary.get("check_count")),
+        "failed_check_count": _int(summary.get("failed_check_count")),
+        "blocking_issue_count": _int(summary.get("blocking_issue_count")),
+        "warning_issue_count": _int(summary.get("warning_issue_count")),
+        "explicit_docs_link_count": _int(summary.get("explicit_docs_link_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"task_register_consistency={status}; "
+            f"active={_int(summary.get('active_task_count'))}; "
+            f"completed={_int(summary.get('completed_task_count'))}; "
+            f"blocking={_int(summary.get('blocking_issue_count'))}; "
+            f"warnings={_int(summary.get('warning_issue_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest task_register_consistency artifact from "
+            "report index; it does not run checks or edit task registers."
+        ),
+    }
+
+
+def _missing_task_register_consistency_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "consistency_status": "MISSING",
+        "validation_status": "MISSING",
+        "active_task_count": 0,
+        "completed_task_count": 0,
+        "check_count": 0,
+        "failed_check_count": 0,
+        "blocking_issue_count": 0,
+        "warning_issue_count": 0,
+        "explicit_docs_link_count": 0,
+        "next_action": "run_aits_reports_task_register_consistency_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "task_register_consistency artifact missing; run reports "
+            "task-register-consistency."
         ),
         "limitation": reason,
     }
@@ -21949,6 +22071,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "research_governance_summary": 200,
         "report_index": 210,
         "documentation_contract": 220,
+        "task_register_consistency": 223,
+        "task_register_consistency_validation": 224,
         "artifact_lineage_graph": 225,
         "artifact_lineage_validation": 226,
         "report_quality_gate": 230,
@@ -21995,6 +22119,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "market_panel": "查看 benchmark、AI sector、risk 和 liquidity 代理实际涨跌。",
         "research_governance_summary": "确认 backtest/shadow/SEC PIT/weight 是否仍 observe-only。",
         "report_index": "检查报告 freshness、missing/stale 和 owner action。",
+        "task_register_consistency": (
+            "检查 active/completed task register、docs link 和 registry 一致性。"
+        ),
+        "task_register_consistency_validation": (
+            "确认 task register consistency report 是否 fail-closed 通过。"
+        ),
         "artifact_lineage_graph": "检查 candidate research / paper-shadow artifact 依赖链。",
         "artifact_lineage_validation": (
             "确认 artifact lineage required families 和 edges 是否通过。"
@@ -22009,6 +22139,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
     "daily_score": ("daily", "daily", "下一个完整 U.S. equity trading day。"),
     "daily_decision_summary": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "reader_brief": ("daily", "daily", "随 daily-run 每个交易日生成。"),
+    "task_register_consistency": (
+        "daily",
+        "daily / manual governance",
+        "Governance pack 或 task register 变更后运行。",
+    ),
+    "task_register_consistency_validation": (
+        "daily",
+        "daily / manual governance",
+        "Task register consistency report 生成后立即校验。",
+    ),
     "artifact_lineage_graph": (
         "daily",
         "daily",

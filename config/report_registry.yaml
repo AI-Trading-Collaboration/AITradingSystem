@@ -7139,6 +7139,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: task_register_consistency
+    title: Task Register Consistency
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports task-register-consistency run --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/task_register_consistency_*.json
+      - outputs/reports/task_register_consistency_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Task register, completed register, docs links, report registry entries, artifact catalog visibility, and Reader Brief entry should be checked before continuing governance task chains.
+    owner_action: fix_blocking_task_register_consistency_issues_before_governance_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: task_register_consistency_validation
+    title: Task Register Consistency Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports task-register-consistency validate --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/task_register_consistency_validation_*.json
+      - outputs/reports/task_register_consistency_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Validation should fail closed when task register consistency has blocking issues before downstream governance pack reporting.
+    owner_action: run_after_task_register_consistency_report
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: reader_brief
     title: Reader Brief
     group: daily

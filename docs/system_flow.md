@@ -1178,6 +1178,8 @@ flowchart TD
         MPANELR["outputs/reports/market_panel_YYYY-MM-DD.md/json<br/>SPY/QQQ、SMH/SOXX、VIX、DGS10 proxy price panel；production_effect=none"]
         RGS["aits reports research-governance-summary --date/--latest<br/>统一只读汇总 backtest、weight、shadow observe、SEC PIT、documentation / registry 和 owner action artifacts"]
         RGSR["outputs/reports/research_governance_summary_YYYY-MM-DD.md/json<br/>governance_status、research_readiness、promotion_status、manual_review_queue、limitations、source_artifacts；production_effect=none"]
+        TREGC["aits reports task-register-consistency run/report/validate<br/>TRADING-362 task register / completed register / registry / docs link consistency gate"]
+        TREGCR["outputs/reports/task_register_consistency_YYYY-MM-DD.json/md + task_register_consistency_validation_YYYY-MM-DD.json/md<br/>task ids、status、active/completed archive discipline、docs links、report registry entry、Reader Brief entry；production_effect=none"]
         RIDX["aits reports index --date/--as-of/--latest<br/>按 report_registry 只读扫描 latest report artifacts、freshness、missing/stale 和 owner action"]
         RIDXR["outputs/reports/report_index_YYYY-MM-DD.html/json<br/>report freshness、cadence、missing/stale、required_missing、owner action 和 production_effect 边界"]
         ALINE["aits reports artifact-lineage --date/--latest<br/>只读构建 candidate research / paper-shadow artifact family dependency graph"]
@@ -1911,6 +1913,10 @@ flowchart TD
     TEWPGR -. "weight promotion gate summary" .-> RGS
     TEWDAR -. "daily weight adjustment summary" .-> RGS
     RGS --> RGSR
+    TREG["docs/task_register.md"] --> TREGC
+    TREGDONE["docs/task_register_completed.md"] --> TREGC
+    ACAT["docs/artifact_catalog.md"] --> TREGC
+    TREGC --> TREGCR
     RREG --> ALINE
     ALINE --> ALINEV
     ALINE --> ALINER
@@ -1925,6 +1931,7 @@ flowchart TD
     SCAR -. "score change attribution freshness" .-> RIDX
     MPANELR -. "market panel freshness" .-> RIDX
     RGSR -. "research governance summary freshness" .-> RIDX
+    TREGCR -. "task register consistency / validation freshness" .-> RIDX
     ALINER -. "artifact lineage graph / validation freshness" .-> RIDX
     RBRIEFR -. "reader brief freshness" .-> RIDX
     RBRIEFQR -. "reader brief quality freshness" .-> RIDX
@@ -2313,6 +2320,7 @@ flowchart TD
     SCAR --> RBRIEF
     MPANELR --> RBRIEF
     RGSR --> RBRIEF
+    TREGCR --> RBRIEF
     ALINER --> RBRIEF
     RIDXR --> RBRIEF
     DCONR --> RBRIEF
@@ -3035,6 +3043,7 @@ flowchart TD
 |Market Price Panel|`aits reports market-panel` / `outputs/reports/market_panel_YYYY-MM-DD.md` / `.json`|先运行 `validate_data_cache` 质量门禁并披露 data quality report；门禁通过后只读读取 `data/raw/prices_daily.csv` 与 `data/raw/rates_daily.csv`，输出 SPY/QQQ benchmark、SMH/SOXX AI sector、`^VIX` risk、DGS10 liquidity proxy 的 last price、1D/5D/20D、trend label、risk interpretation、data status 和 source artifact；门禁失败时写出 `MISSING_MARKET_PRICE_DATA` 降级 artifact 且不读取/展示未验证涨跌；固定 `production_effect=none`，不下载数据、不生成交易指令|REPORT-055 新增|
 |Research Governance Summary|`aits reports research-governance-summary --date YYYY-MM-DD` / `--latest` / `outputs/reports/research_governance_summary_YYYY-MM-DD.md` / `.json`|只读读取 latest backtest / robustness / gate attribution、parameter governance、SEC PIT backfill / evaluation / baseline comparison / diagnostics / candidate review / baseline coverage / shadow observe / shadow monitor、shadow impact、weight adjustment candidates / candidate evaluation / promotion gate / daily summary artifacts、report index 和 documentation contract；输出 `governance_status`、`research_readiness`、`promotion_status`、`manual_review_required`、Backtest Status、Weight Iteration Status、Shadow Observe Status、SEC PIT Research Status、Documentation / Registry Status、manual_review_queue、limitations、source_artifacts，并保留 cards/groups；缺失 artifact 只标记 `MISSING` / `LIMITED`，不运行任何上游任务；默认不允许 promotion，缺 `weight_promotion_gate` 时 `promotion_status=BLOCKED_BY_MISSING_ARTIFACTS`；固定 `production_effect=none`，不修改 production scoring、weights、position gates 或 trading 行为|REPORT-056 聚合增强|
 |Report Registry / Cadence Index|`config/report_registry.yaml` + `aits reports index` / `outputs/reports/report_index_YYYY-MM-DD.html` / `.json`|registry 登记 report_id、title、group、cadence、audience、owner、command、artifact_globs、freshness_sla_days、freshness_rationale、owner_action、Reader Brief / daily task dashboard 可见性和 required_for_daily_reading；命令只读扫描 latest artifact，输出 freshness_status、age_days、missing/stale/required_missing、artifact_status、artifact production_effect risk 和 owner action；缺失或过期只进入 warning，不运行上游报告、不修改 production、不替代 `docs/artifact_catalog.md`|已实现基础版|
+|Task Register Consistency|`aits reports task-register-consistency run --as-of YYYY-MM-DD` / `report --latest` / `validate --latest` + `outputs/reports/task_register_consistency_YYYY-MM-DD.json/md` / `task_register_consistency_validation_YYYY-MM-DD.json/md`|只读读取 `docs/task_register.md`、`docs/task_register_completed.md`、`config/report_registry.yaml` 和 `docs/artifact_catalog.md`；校验 task id、status、active/completed 去重、terminal status 归档、显式 docs link、artifact family / catalog entry、report registry entry 和 Reader Brief entry；validation 对 blocking issue fail closed；固定 `production_effect=none`，不修改 task register、不运行上游、不刷新数据、不触发 broker/order 或 production mutation|TRADING-362|
 |Artifact Lineage Graph|`aits reports artifact-lineage --date YYYY-MM-DD` / `--latest` + `outputs/reports/artifact_lineage_graph_YYYY-MM-DD.json` / `.md`；`aits reports validate-artifact-lineage --date YYYY-MM-DD` / `--latest` + `outputs/reports/artifact_lineage_validation_YYYY-MM-DD.json` / `.md`|只读读取 report registry、report index payload、既有 data cache paths 和 latest report artifacts，输出 candidate research / paper-shadow required family graph：data artifacts、cache catalog、refresh audit、PIT manifest、signal artifacts、daily paper-shadow、drift monitor、weekly review、staleness monitor、readiness reports、owner reviews；validation 校验 required family / edge 覆盖和 production safety，缺 required family / edge 或 unsafe `production_effect` fail closed，stale artifact warning；固定 `production_effect=none`，不运行上游、不刷新数据、不补造 artifact、不修改 paper-shadow decision、owner review、production state、order ticket 或 broker|TRADING-361|
 |Documentation Contract|`aits docs report-contract` / `outputs/reports/documentation_contract_YYYY-MM-DD.md` / `.json`|只读读取 `config/report_registry.yaml` 与 `docs/artifact_catalog.md`，按 registry report 生成 documentation contract / generated catalog 摘要；每项 report 显示 matched source artifact、command_documented、schema/status terms、catalog production_effect、common misread 和 documentation_issues；缺 artifact catalog 覆盖、production_effect 或 common misread 时 `FAIL`，命令或 schema/status 缺口可作为 warning；固定 `production_effect=none`，不运行上游报告、不自动改写 artifact catalog、不拆分 task register 或 system flow|已实现基础版|
 |Heuristic Governance Audit|`config/heuristic_governance.yaml` + `aits docs heuristic-audit` / `outputs/reports/heuristic_governance_audit_YYYY-MM-DD.md` / `.json`|只读扫描 `config/heuristic_governance.yaml` 登记的投资解释源码路径，发现未登记 numeric literal 比较或函数默认参数时 `FAIL`；已登记 baseline 必须包含 category、rationale 和 validation；同时校验 `config/feedback_sample_policy.yaml`、`config/scoring_rules.yaml` 和 `config/backtest_validation_policy.yaml` 的 owner/status/rationale/validation/review metadata，以及 `threshold_rationale_map` 对 `position_bands`、`daily_conclusion`、`confidence_policy`、source-type confidence、data credibility、execution costs、PIT coverage、gate attribution、robustness、promotion 和 feedback sample floor 的 coverage、missing rationale / validation 与 stale target path；固定 `production_effect=none`，不运行评分、回测、数据下载或报告上游，不修改 policy 数值|GOV-004 新增；GOV-005 增强 rationale map 校验|

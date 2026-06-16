@@ -161,6 +161,19 @@ from ai_trading_system.reports.score_change_attribution import (
     write_score_change_attribution_json,
     write_score_change_attribution_report,
 )
+from ai_trading_system.reports.task_register_consistency import (
+    build_task_register_consistency_payload,
+    default_task_register_consistency_json_path,
+    default_task_register_consistency_markdown_path,
+    default_task_register_consistency_validation_json_path,
+    default_task_register_consistency_validation_markdown_path,
+    latest_task_register_consistency_json_path,
+    validate_task_register_consistency_payload,
+    write_task_register_consistency_json,
+    write_task_register_consistency_markdown,
+    write_task_register_consistency_validation_json,
+    write_task_register_consistency_validation_markdown,
+)
 from ai_trading_system.rule_experiments import (
     DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
 )
@@ -278,6 +291,11 @@ from ai_trading_system.trading_engine.signal_snapshots import (
 )
 
 reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
+task_register_consistency_app = typer.Typer(
+    help="Task register consistency governance reports.",
+    no_args_is_help=True,
+)
+reports_app.add_typer(task_register_consistency_app, name="task-register-consistency")
 console = Console()
 
 
@@ -1875,6 +1893,241 @@ def validate_artifact_lineage_command(
         f"failed：{summary['failed_check_count']}；"
         f"blocking：{summary['blocking_issue_count']}；"
         f"warnings：{summary['warning_issue_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if payload["validation_status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@task_register_consistency_app.command("run")
+def task_register_consistency_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Task register consistency 日期，格式为 YYYY-MM-DD。",
+        ),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析 task register、docs link 和 artifact catalog 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    task_register_path: Annotated[
+        Path | None,
+        typer.Option(help="docs/task_register.md 路径；不传时使用项目默认路径。"),
+    ] = None,
+    completed_register_path: Annotated[
+        Path | None,
+        typer.Option(help="docs/task_register_completed.md 路径；不传时使用项目默认路径。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="report_registry.yaml 路径。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    artifact_catalog_path: Annotated[
+        Path | None,
+        typer.Option(help="docs/artifact_catalog.md 路径；不传时使用项目默认路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 task register consistency report；只读扫描治理文档。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = build_task_register_consistency_payload(
+        as_of=report_date,
+        project_root=project_root,
+        task_register_path=task_register_path,
+        completed_register_path=completed_register_path,
+        report_registry_path=registry_path,
+        artifact_catalog_path=artifact_catalog_path,
+    )
+    json_output = json_output_path or default_task_register_consistency_json_path(
+        reports_dir,
+        report_date,
+    )
+    markdown_output = markdown_output_path or default_task_register_consistency_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_task_register_consistency_json(payload, json_output)
+    markdown_path = write_task_register_consistency_markdown(payload, markdown_output)
+    style = "green" if payload["consistency_status"] == "PASS" else "yellow"
+    if payload["consistency_status"] == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(
+        f"[{style}]Task register consistency：{payload['consistency_status']}[/{style}]"
+    )
+    console.print(f"Task register consistency JSON：{json_path}")
+    console.print(f"Task register consistency Markdown：{markdown_path}")
+    console.print(
+        f"active：{summary['active_task_count']}；"
+        f"completed：{summary['completed_task_count']}；"
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}；只读治理检查"
+    )
+
+
+@task_register_consistency_app.command("report")
+def task_register_consistency_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取 reports_dir 中最新 task_register_consistency JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Task register consistency 日期，格式为 YYYY-MM-DD。",
+        ),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency JSON 路径；优先级高于 --latest/--as-of。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """从现有 JSON 重渲染 task register consistency Markdown。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_task_register_consistency_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 task_register_consistency JSON：{reports_dir}")
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_task_register_consistency_json_path(reports_dir, report_date)
+    if not source_path.exists():
+        raise typer.BadParameter(f"task register consistency JSON not found: {source_path}")
+    try:
+        payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"task register consistency JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise typer.BadParameter(f"task register consistency JSON must be an object: {source_path}")
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    markdown_output = markdown_output_path or default_task_register_consistency_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    markdown_path = write_task_register_consistency_markdown(payload, markdown_output)
+    status = payload.get("consistency_status", "UNKNOWN")
+    console.print(f"[green]Task register consistency report：{status}[/green]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Markdown：{markdown_path}")
+
+
+@task_register_consistency_app.command("validate")
+def task_register_consistency_validate_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 task_register_consistency JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Task register consistency validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency JSON 路径；优先级高于 --latest/--as-of。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Task register consistency validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 task register consistency report，并在 blocker 存在时 fail closed。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_task_register_consistency_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 task_register_consistency JSON：{reports_dir}")
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_task_register_consistency_json_path(reports_dir, report_date)
+    if not source_path.exists():
+        raise typer.BadParameter(f"task register consistency JSON not found: {source_path}")
+    try:
+        raw_payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"task register consistency JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(f"task register consistency JSON must be an object: {source_path}")
+    payload = validate_task_register_consistency_payload(raw_payload)
+    source_artifacts = dict(payload.get("source_artifacts", {}))
+    source_artifacts["task_register_consistency"] = str(source_path)
+    payload["source_artifacts"] = source_artifacts
+    payload["input_artifacts"] = source_artifacts
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = json_output_path or default_task_register_consistency_validation_json_path(
+        reports_dir,
+        report_date,
+    )
+    validation_md = (
+        markdown_output_path
+        or default_task_register_consistency_validation_markdown_path(reports_dir, report_date)
+    )
+    json_path = write_task_register_consistency_validation_json(payload, validation_json)
+    markdown_path = write_task_register_consistency_validation_markdown(payload, validation_md)
+    style = "green" if payload["validation_status"] == "PASS" else "yellow"
+    if payload["validation_status"] == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(
+        f"[{style}]Task register consistency validation："
+        f"{payload['validation_status']}[/{style}]"
+    )
+    console.print(f"Task register consistency validation JSON：{json_path}")
+    console.print(f"Task register consistency validation Markdown：{markdown_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"warnings：{summary['warning_check_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if payload["validation_status"] == "FAIL":
