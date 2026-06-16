@@ -165,6 +165,7 @@ def build_reader_brief_payload(
     report_index_summary = _report_index_summary(report_index)
     report_index_waiver_inventory = _report_index_waiver_inventory_summary(report_index)
     reader_brief_consistency = _reader_brief_consistency_summary(report_index)
+    research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
     report_quality_gate = _report_quality_gate_summary(report_index)
@@ -320,6 +321,7 @@ def build_reader_brief_payload(
         "report_index_summary": report_index_summary,
         "report_index_waiver_inventory": report_index_waiver_inventory,
         "reader_brief_consistency": reader_brief_consistency,
+        "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
         "report_quality_gate": report_quality_gate,
@@ -638,6 +640,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     report_index = _mapping(payload.get("report_index_summary"))
     report_index_waiver_inventory = _mapping(payload.get("report_index_waiver_inventory"))
     reader_brief_consistency = _mapping(payload.get("reader_brief_consistency"))
+    research_safety_boundary_audit = _mapping(
+        payload.get("research_safety_boundary_audit")
+    )
     artifact_lineage_graph = _mapping(payload.get("artifact_lineage_graph"))
     task_register_consistency = _mapping(payload.get("task_register_consistency"))
     report_quality_gate = _mapping(payload.get("report_quality_gate"))
@@ -895,6 +900,48 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", reader_brief_consistency.get("next_action")),
                     ("detail_report", reader_brief_consistency.get("detail_report")),
                     ("production_effect", reader_brief_consistency.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Research Safety Boundary Audit",
+            _definition_table(
+                [
+                    ("availability", research_safety_boundary_audit.get("availability")),
+                    ("status", research_safety_boundary_audit.get("status")),
+                    (
+                        "safety_status",
+                        research_safety_boundary_audit.get("safety_status"),
+                    ),
+                    (
+                        "task_checks",
+                        research_safety_boundary_audit.get("task_check_count"),
+                    ),
+                    (
+                        "artifact_checks",
+                        research_safety_boundary_audit.get("artifact_check_count"),
+                    ),
+                    (
+                        "unsafe_signals",
+                        research_safety_boundary_audit.get("unsafe_signal_count"),
+                    ),
+                    (
+                        "missing_metadata",
+                        research_safety_boundary_audit.get("missing_metadata_count"),
+                    ),
+                    (
+                        "shadow_readiness_input",
+                        research_safety_boundary_audit.get(
+                            "shadow_continuation_readiness_input"
+                        ),
+                    ),
+                    (
+                        "promotion_board_input",
+                        research_safety_boundary_audit.get("future_promotion_board_input"),
+                    ),
+                    ("next_action", research_safety_boundary_audit.get("next_action")),
+                    ("detail_report", research_safety_boundary_audit.get("detail_report")),
+                    ("production_effect", research_safety_boundary_audit.get("production_effect")),
                 ]
             ),
         ),
@@ -6457,6 +6504,92 @@ def _missing_reader_brief_consistency_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "reader_brief_consistency_pack artifact missing; run reports "
             "reader-brief-consistency."
+        ),
+        "limitation": reason,
+    }
+
+
+def _research_safety_boundary_audit_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_research_safety_boundary_audit_summary(
+            "report_index artifact missing; Reader Brief cannot discover safety boundary audit."
+        )
+    report_path = _report_index_artifact_path(report_index, "research_safety_boundary_audit")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_research_safety_boundary_audit_summary(
+            "research_safety_boundary_audit artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "research_safety_boundary_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("safety_status"), _text(payload.get("status"), "UNKNOWN"))
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "safety_status": status,
+        "validation_status": validation_status,
+        "task_check_count": _int(summary.get("task_check_count")),
+        "artifact_check_count": _int(summary.get("artifact_check_count")),
+        "checked_artifact_count": _int(summary.get("checked_artifact_count")),
+        "missing_metadata_count": _int(summary.get("missing_metadata_count")),
+        "unsafe_signal_count": _int(summary.get("unsafe_signal_count")),
+        "blocking_issue_count": _int(summary.get("blocking_issue_count")),
+        "warning_issue_count": _int(summary.get("warning_issue_count")),
+        "shadow_continuation_readiness_input": _text(
+            summary.get("shadow_continuation_readiness_input"),
+            "UNKNOWN",
+        ),
+        "future_promotion_board_input": _text(
+            summary.get("future_promotion_board_input"),
+            "UNKNOWN",
+        ),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"research_safety_boundary={status}; "
+            f"unsafe_signals={_int(summary.get('unsafe_signal_count'))}; "
+            f"missing_metadata={_int(summary.get('missing_metadata_count'))}; "
+            f"shadow_input={_text(summary.get('shadow_continuation_readiness_input'), 'UNKNOWN')}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest safety boundary audit artifacts from "
+            "report index; it does not run validation or approve promotion."
+        ),
+    }
+
+
+def _missing_research_safety_boundary_audit_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "safety_status": "MISSING",
+        "validation_status": "MISSING",
+        "task_check_count": 0,
+        "artifact_check_count": 0,
+        "checked_artifact_count": 0,
+        "missing_metadata_count": 0,
+        "unsafe_signal_count": 0,
+        "blocking_issue_count": 0,
+        "warning_issue_count": 0,
+        "shadow_continuation_readiness_input": "MISSING",
+        "future_promotion_board_input": "MISSING",
+        "next_action": "run_aits_reports_research_safety_boundary_audit_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "research_safety_boundary_audit artifact missing; run reports "
+            "research-safety-boundary-audit."
         ),
         "limitation": reason,
     }
@@ -22296,6 +22429,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "report_index_waiver_inventory_validation": 212,
         "reader_brief_consistency_pack": 213,
         "reader_brief_consistency_validation": 214,
+        "research_safety_boundary_audit": 215,
+        "research_safety_boundary_validation": 216,
         "documentation_contract": 220,
         "task_register_consistency": 223,
         "task_register_consistency_validation": 224,
@@ -22354,6 +22489,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "reader_brief_consistency_validation": (
             "确认 Reader Brief consistency pack 的 core section gate 是否通过。"
+        ),
+        "research_safety_boundary_audit": (
+            "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
+        ),
+        "research_safety_boundary_validation": (
+            "确认 research safety boundary audit 是否 fail-closed 通过。"
         ),
         "task_register_consistency": (
             "检查 active/completed task register、docs link 和 registry 一致性。"
@@ -22423,6 +22564,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "daily",
         "daily / governance",
         "Reader Brief consistency pack 生成后立即校验 core section contract。",
+    ),
+    "research_safety_boundary_audit": (
+        "daily",
+        "daily / governance",
+        "Report index 刷新后检查 research safety boundary 和 future promotion 输入。",
+    ),
+    "research_safety_boundary_validation": (
+        "daily",
+        "daily / governance",
+        "Research safety boundary audit 生成后立即校验 unsafe positive signals。",
     ),
     "research_governance_summary": (
         "daily",

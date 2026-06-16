@@ -1604,6 +1604,17 @@ gap 先作为可见 warning，不重写历史 artifact。Reader Brief quality ga
 safety boundary、next action 和 decision state；该链路不运行上游、不刷新数据、不补造
 report、不写 official target weights、不触发 broker/order 或 production mutation。
 
+TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
+`aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
+task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持
+no official target weights、no broker/order、no production mutation、manual-review-only。
+输出 `outputs/reports/research_safety_boundary_audit_YYYY-MM-DD.json/md`；`aits reports
+validate-research-safety-boundary --latest` 输出
+`research_safety_boundary_validation_YYYY-MM-DD.json/md`。Unsafe positive signal 必须
+`SAFETY_BLOCKED` fail closed；legacy artifact missing safety metadata 只作为可见 warning，
+不重写历史 artifact、不运行上游、不刷新数据、不补造 report。Reader Brief 只读展示 latest
+safety status、shadow continuation readiness input 和 future promotion board input。
+
 TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW 在 daily observation 与 drift monitor 之后新增
 manual weekly review layer。CLI 入口为
 `aits etf dynamic-v3-rescue paper-shadow-weekly-review build`、

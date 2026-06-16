@@ -7299,6 +7299,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: research_safety_boundary_audit
+    title: Research Safety Boundary Audit
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports research-safety-boundary-audit --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_safety_boundary_audit_*.json
+      - outputs/reports/research_safety_boundary_audit_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Research safety boundary should be checked before shadow continuation or promotion interpretation.
+    owner_action: fix_safety_boundary_blockers_before_shadow_or_promotion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_safety_boundary_validation
+    title: Research Safety Boundary Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-research-safety-boundary --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_safety_boundary_validation_*.json
+      - outputs/reports/research_safety_boundary_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Research safety boundary validation should fail closed on unsafe broker/order/target-weight/production signals.
+    owner_action: run_after_research_safety_boundary_audit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: report_quality_gate
     title: Report Quality Gate
     group: governance

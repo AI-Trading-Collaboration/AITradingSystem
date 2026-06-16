@@ -167,6 +167,19 @@ from ai_trading_system.reports.research_governance_summary import (
     write_research_governance_summary_json,
     write_research_governance_summary_report,
 )
+from ai_trading_system.reports.research_safety_boundary import (
+    build_research_safety_boundary_payload,
+    default_research_safety_boundary_json_path,
+    default_research_safety_boundary_markdown_path,
+    default_research_safety_boundary_validation_json_path,
+    default_research_safety_boundary_validation_markdown_path,
+    latest_research_safety_boundary_json_path,
+    validate_research_safety_boundary_payload,
+    write_research_safety_boundary_json,
+    write_research_safety_boundary_markdown,
+    write_research_safety_boundary_validation_json,
+    write_research_safety_boundary_validation_markdown,
+)
 from ai_trading_system.reports.score_change_attribution import (
     build_score_change_attribution_payload,
     default_score_change_attribution_json_path,
@@ -1902,6 +1915,195 @@ def validate_reader_brief_consistency_command(
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if payload["validation_status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("research-safety-boundary-audit")
+def research_safety_boundary_audit_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Research safety boundary audit 日期，格式为 YYYY-MM-DD。",
+        ),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    task_register_path: Annotated[
+        Path | None,
+        typer.Option(help="active task register 路径。"),
+    ] = None,
+    completed_task_register_path: Annotated[
+        Path | None,
+        typer.Option(help="completed task register 路径。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research safety boundary audit JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research safety boundary audit Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 research safety boundary audit；只读扫描 task registers 和 report artifacts。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        report_date = _decision_snapshot_date(
+            _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+    source_index = report_index_path or default_report_index_json_path(reports_dir, report_date)
+    try:
+        raw_index = json.loads(source_index.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"report index JSON not found: {source_index}") from exc
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"report index JSON cannot be parsed: {source_index}") from exc
+    if not isinstance(raw_index, dict):
+        raise typer.BadParameter(f"report index JSON must be an object: {source_index}")
+    payload = build_research_safety_boundary_payload(
+        as_of=report_date,
+        report_index_payload=raw_index,
+        report_index_path=source_index,
+        task_register_path=task_register_path,
+        completed_task_register_path=completed_task_register_path,
+        project_root=project_root,
+    )
+    audit_json = json_output_path or default_research_safety_boundary_json_path(
+        reports_dir,
+        report_date,
+    )
+    audit_md = markdown_output_path or default_research_safety_boundary_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_research_safety_boundary_json(payload, audit_json)
+    md_path = write_research_safety_boundary_markdown(payload, audit_md)
+    status = payload["safety_status"]
+    style = "green" if status == "SAFETY_PASS" else "yellow"
+    if status == "SAFETY_BLOCKED":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Research safety boundary audit：{status}[/{style}]")
+    console.print(f"Research safety boundary audit JSON：{json_path}")
+    console.print(f"Research safety boundary audit Markdown：{md_path}")
+    console.print(
+        f"tasks：{summary['task_check_count']}；"
+        f"artifacts：{summary['artifact_check_count']}；"
+        f"unsafe_signals：{summary['unsafe_signal_count']}；"
+        f"missing_metadata：{summary['missing_metadata_count']}；"
+        f"production_effect={payload['production_effect']}；只读 safety audit"
+    )
+    if status == "SAFETY_BLOCKED":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-research-safety-boundary")
+def validate_research_safety_boundary_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 research safety boundary audit JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Research safety boundary validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Research safety boundary audit JSON 路径；优先级高于 --latest/--as-of。"
+        ),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research safety boundary validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research safety boundary validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 research safety boundary audit；unsafe positive signal 时 fail closed。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_research_safety_boundary_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 research safety boundary audit JSON：{reports_dir}")
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_research_safety_boundary_json_path(reports_dir, report_date)
+    if not source_path.exists():
+        raise typer.BadParameter(f"Research safety boundary audit JSON not found: {source_path}")
+    try:
+        raw_payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"Research safety boundary audit JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(
+            f"Research safety boundary audit JSON must be an object: {source_path}"
+        )
+    payload = validate_research_safety_boundary_payload(raw_payload)
+    source_artifacts = dict(payload.get("input_artifacts", {}))
+    source_artifacts["research_safety_boundary_audit"] = str(source_path)
+    payload["input_artifacts"] = source_artifacts
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = json_output_path or default_research_safety_boundary_validation_json_path(
+        reports_dir,
+        report_date,
+    )
+    validation_md = (
+        markdown_output_path
+        or default_research_safety_boundary_validation_markdown_path(reports_dir, report_date)
+    )
+    json_path = write_research_safety_boundary_validation_json(payload, validation_json)
+    md_path = write_research_safety_boundary_validation_markdown(payload, validation_md)
+    status = payload["validation_status"]
+    style = "green" if status == "SAFETY_PASS" else "yellow"
+    if status == "SAFETY_BLOCKED":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Research safety boundary validation：{status}[/{style}]")
+    console.print(f"Research safety boundary validation JSON：{json_path}")
+    console.print(f"Research safety boundary validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"warnings：{summary['warning_check_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "SAFETY_BLOCKED":
         raise typer.Exit(code=1)
 
 
