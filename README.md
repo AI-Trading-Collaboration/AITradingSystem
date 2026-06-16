@@ -1615,6 +1615,18 @@ validate-production-boundary-static-scan --latest` 输出
 `production_boundary_static_scan_validation_YYYY-MM-DD.json/md`。高置信 production action
 或非 paper secret-like literal 必须 `BLOCKING` fail closed；warning 不会被静默隐藏。
 
+TRADING-364_OWNER_REVIEW_TEMPLATE_V2 新增 governance-wide owner review template。
+`aits reports owner-review-template-v2 --as-of YYYY-MM-DD` 输出
+`outputs/reports/owner_review_template_v2_YYYY-MM-DD.json/md`，固化 required fields：
+candidate id、evidence interpretation、main reason to continue/reject、uncertainty、
+required follow-up、final owner action、linked input artifacts 和 safety status；owner action enum
+固定为 `continue_shadow|enter_extended_shadow|needs_more_evidence|return_to_research|reject_candidate|hold`。
+`aits reports validate-owner-review-template-v2 --latest` 输出 validation artifact，并可用
+`--review-json-path <filled_review.json>` 只读校验已填写 review。缺 required field、非法 owner action、
+缺 linked input artifact、缺 safety status 或 `SAFETY_BLOCKED` 搭配 continuation action 必须 fail closed。
+该 template 不记录 owner decision、不 append audit log、不运行 evidence collection、不刷新数据、不改变
+candidate / paper-shadow / production state；Reader Brief 只读展示 latest template readiness。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持

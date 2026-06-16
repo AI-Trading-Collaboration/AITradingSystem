@@ -7331,6 +7331,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: owner_review_template_v2
+    title: Owner Review Template V2
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports owner-review-template-v2 --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/owner_review_template_v2_????-??-??.json
+      - outputs/reports/owner_review_template_v2_????-??-??.md
+    freshness_sla_days: 1
+    freshness_rationale: Owner review template v2 should be current before manual candidate review, monthly review, promotion board, or extended shadow interpretation.
+    owner_action: use_for_next_manual_owner_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: owner_review_template_v2_validation
+    title: Owner Review Template V2 Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-owner-review-template-v2 --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/owner_review_template_v2_validation_*.json
+      - outputs/reports/owner_review_template_v2_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Owner review template v2 validation should fail closed when required fields, owner actions, safety status, or manual-review safety boundary drift.
+    owner_action: run_after_owner_review_template_v2
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

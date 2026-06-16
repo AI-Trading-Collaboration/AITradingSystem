@@ -166,6 +166,7 @@ def build_reader_brief_payload(
     report_index_waiver_inventory = _report_index_waiver_inventory_summary(report_index)
     reader_brief_consistency = _reader_brief_consistency_summary(report_index)
     production_boundary_static_scan = _production_boundary_static_scan_summary(report_index)
+    owner_review_template_v2 = _owner_review_template_v2_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -323,6 +324,7 @@ def build_reader_brief_payload(
         "report_index_waiver_inventory": report_index_waiver_inventory,
         "reader_brief_consistency": reader_brief_consistency,
         "production_boundary_static_scan": production_boundary_static_scan,
+        "owner_review_template_v2": owner_review_template_v2,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -645,6 +647,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     production_boundary_static_scan = _mapping(
         payload.get("production_boundary_static_scan")
     )
+    owner_review_template_v2 = _mapping(payload.get("owner_review_template_v2"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -941,6 +944,38 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", production_boundary_static_scan.get("next_action")),
                     ("detail_report", production_boundary_static_scan.get("detail_report")),
                     ("production_effect", production_boundary_static_scan.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Owner Review Template V2",
+            _definition_table(
+                [
+                    ("availability", owner_review_template_v2.get("availability")),
+                    ("status", owner_review_template_v2.get("status")),
+                    (
+                        "template_status",
+                        owner_review_template_v2.get("template_status"),
+                    ),
+                    (
+                        "validation_status",
+                        owner_review_template_v2.get("validation_status"),
+                    ),
+                    (
+                        "required_fields",
+                        owner_review_template_v2.get("required_field_count"),
+                    ),
+                    (
+                        "owner_actions",
+                        owner_review_template_v2.get("owner_action_count"),
+                    ),
+                    (
+                        "review_record_supported",
+                        owner_review_template_v2.get("optional_record_validation_supported"),
+                    ),
+                    ("next_action", owner_review_template_v2.get("next_action")),
+                    ("detail_report", owner_review_template_v2.get("detail_report")),
+                    ("production_effect", owner_review_template_v2.get("production_effect")),
                 ]
             ),
         ),
@@ -6619,6 +6654,77 @@ def _missing_production_boundary_static_scan_summary(reason: str) -> dict[str, A
         "summary_sentence": (
             "production_boundary_static_scan artifact missing; run reports "
             "production-boundary-static-scan."
+        ),
+        "limitation": reason,
+    }
+
+
+def _owner_review_template_v2_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_owner_review_template_v2_summary(
+            "report_index artifact missing; Reader Brief cannot discover owner review template."
+        )
+    report_path = _report_index_artifact_path(report_index, "owner_review_template_v2")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_owner_review_template_v2_summary(
+            "owner_review_template_v2 artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "owner_review_template_v2_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    template_status = _text(payload.get("template_status"), _text(payload.get("status"), "UNKNOWN"))
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": template_status,
+        "template_status": template_status,
+        "validation_status": validation_status,
+        "required_field_count": _int(summary.get("required_field_count")),
+        "owner_action_count": _int(summary.get("owner_action_count")),
+        "optional_record_validation_supported": (
+            summary.get("optional_record_validation_supported") is True
+        ),
+        "owner_decision_logged": summary.get("owner_decision_logged") is True,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"owner_review_template_v2={template_status}; "
+            f"validation={validation_status}; "
+            f"fields={_int(summary.get('required_field_count'))}; "
+            f"owner_actions={_int(summary.get('owner_action_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest owner review template artifacts from report index; "
+            "it does not create or append owner decisions."
+        ),
+    }
+
+
+def _missing_owner_review_template_v2_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "template_status": "MISSING",
+        "validation_status": "MISSING",
+        "required_field_count": 0,
+        "owner_action_count": 0,
+        "optional_record_validation_supported": False,
+        "owner_decision_logged": False,
+        "next_action": "run_aits_reports_owner_review_template_v2_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "owner_review_template_v2 artifact missing; run reports owner-review-template-v2."
         ),
         "limitation": reason,
     }
@@ -22546,9 +22652,11 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "reader_brief_consistency_validation": 214,
         "production_boundary_static_scan": 215,
         "production_boundary_static_scan_validation": 216,
-        "research_safety_boundary_audit": 217,
-        "research_safety_boundary_validation": 218,
-        "documentation_contract": 220,
+        "owner_review_template_v2": 217,
+        "owner_review_template_v2_validation": 218,
+        "research_safety_boundary_audit": 219,
+        "research_safety_boundary_validation": 220,
+        "documentation_contract": 221,
         "task_register_consistency": 223,
         "task_register_consistency_validation": 224,
         "artifact_lineage_graph": 225,
@@ -22612,6 +22720,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "production_boundary_static_scan_validation": (
             "确认 production boundary static scan 是否 fail-closed 通过。"
+        ),
+        "owner_review_template_v2": (
+            "查看 owner review v2 required fields、action enum 和 safety boundary。"
+        ),
+        "owner_review_template_v2_validation": (
+            "确认 owner review template v2 contract 和可选 filled review 校验是否通过。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -22697,6 +22811,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "daily",
         "daily / governance",
         "Production boundary static scan 生成后立即校验 blocking findings。",
+    ),
+    "owner_review_template_v2": (
+        "daily",
+        "daily / manual governance",
+        "Owner review template 或 manual review policy 变更后运行。",
+    ),
+    "owner_review_template_v2_validation": (
+        "daily",
+        "daily / manual governance",
+        "Owner review template v2 生成后立即校验 contract。",
     ),
     "research_safety_boundary_audit": (
         "daily",
