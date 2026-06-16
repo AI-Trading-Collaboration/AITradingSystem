@@ -1641,6 +1641,26 @@ official target weights、不触发 broker/order、不修改 paper account 或 p
 `data_downloaded_by_readiness=false`、`pipelines_executed_by_readiness=false`、
 `not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-383_CANONICAL_PAPER_SHADOW_HEALTH_RERUN 在 fallback/cache/signal/staleness/readiness
+链路后新增 canonical paper-shadow health 聚合。CLI 入口为
+`aits etf dynamic-v3-rescue paper-shadow-health run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue paper-shadow-health report --latest` 和
+`aits etf dynamic-v3-rescue validate-paper-shadow-health --latest`。该 report 只读 latest
+data source fallback policy、cache catalog、signal input completeness、paper-shadow daily
+observation、drift monitor、weekly review、evidence staleness monitor、shadow continuation
+readiness、data refresh audit、price cache 和 market panel artifacts，输出
+`HEALTHY`、`HEALTHY_WITH_WARNINGS`、`MANUAL_REVIEW_REQUIRED`、`BLOCKED_DATA`、
+`BLOCKED_SIGNAL_INPUTS`、`BLOCKED_DRIFT` 或 `BLOCKED_SAFETY`，并披露
+`safe_to_continue_shadow`、data/signal/fallback/cache/weekly/drift/readiness/data-refresh
+statuses、blocking reasons、warnings、next required action、Reader Brief section 和 validation
+artifact。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_health/`。该 health rerun 不刷新数据、
+不补造 source artifact、不重跑上游、不写 official target weights、不触发 broker/order、不修改
+paper account 或 production state，所有输出固定 `paper_shadow_health_check_only=true`、
+`read_only_health_aggregation=true`、`data_downloaded_by_health_check=false`、
+`pipelines_executed_by_health_check=false`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 TRADING-356_STRESS_SCENARIO_LIBRARY 在 evidence freshness guard 后新增 Dynamic v3 rescue
 专用 stress scenario library。CLI 入口为
 `aits etf dynamic-v3-rescue stress-scenario-library report`、`... report --latest` 和

@@ -31,6 +31,7 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as paper_shadow_drift
+from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_health as paper_shadow_health
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as paper_shadow_weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import (
@@ -1849,6 +1850,10 @@ dynamic_v3_paper_shadow_weekly_review_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow weekly review workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_shadow_health_app = typer.Typer(
+    help="Dynamic v3 rescue canonical paper-shadow health workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_decision_ledger_app = typer.Typer(
     help="Dynamic v3 rescue candidate decision ledger workflow。",
     no_args_is_help=True,
@@ -2649,6 +2654,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_weekly_review_app,
     name="paper-shadow-weekly-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_health_app,
+    name="paper-shadow-health",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_decision_ledger_app,
@@ -21108,6 +21117,266 @@ def dynamic_v3_validate_shadow_continuation_readiness_command(
     _echo_validation_payload(
         filtered_readiness.validate_shadow_continuation_readiness_artifact(
             readiness_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_paper_shadow_health_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    typer.echo(f"health_id={report.get('health_id') or manifest.get('health_id')}")
+    typer.echo(f"paper_shadow_health_status={report.get('paper_shadow_health_status')}")
+    typer.echo(f"safe_to_continue_shadow={report.get('safe_to_continue_shadow')}")
+    typer.echo(f"data_freshness_status={report.get('data_freshness_status')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"fallback_status={report.get('fallback_status')}")
+    typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
+    typer.echo(f"weekly_review_coverage_status={report.get('weekly_review_coverage_status')}")
+    typer.echo(f"drift_status={report.get('drift_status')}")
+    typer.echo(f"readiness_status={report.get('readiness_status')}")
+    typer.echo(f"data_refresh_audit_status={report.get('data_refresh_audit_status')}")
+    typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
+    typer.echo(f"warnings={','.join(_texts(report.get('warnings')))}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('paper_shadow_health_markdown_path')}")
+    typer.echo("paper_shadow_health_check_only=true")
+    typer.echo("read_only_health_aggregation=true")
+    typer.echo("data_downloaded_by_health_check=false")
+    typer.echo("pipelines_executed_by_health_check=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_paper_shadow_health_app.command("run")
+def dynamic_v3_paper_shadow_health_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="paper-shadow health as-of date YYYY-MM-DD；省略时使用当前 UTC 日期。",
+        ),
+    ] = None,
+    price_cache_path: Annotated[
+        Path,
+        typer.Option("--price-cache-path", help="standardized price cache CSV。"),
+    ] = system_target.DEFAULT_PRICE_CACHE_PATH,
+    market_panel_dir: Annotated[
+        Path,
+        typer.Option("--market-panel-dir", help="market panel report directory。"),
+    ] = paper_shadow_health.DEFAULT_MARKET_PANEL_REPORT_DIR,
+    signal_input_completeness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--signal-input-completeness-id",
+            "--signal-input-monitor-id",
+            help="signal input completeness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    signal_input_completeness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--signal-input-completeness-report-path",
+            help="显式 signal input completeness report JSON。",
+        ),
+    ] = None,
+    paper_shadow_daily_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-daily-id",
+            "--daily-observation-id",
+            help="paper-shadow daily observation id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_drift_monitor_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-drift-monitor-id",
+            "--drift-monitor-id",
+            help="paper-shadow drift monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_weekly_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-weekly-review-id",
+            "--weekly-review-id",
+            help="paper-shadow weekly review id；缺省读取 latest。",
+        ),
+    ] = None,
+    evidence_staleness_monitor_id: Annotated[
+        str | None,
+        typer.Option(
+            "--evidence-staleness-monitor-id",
+            "--staleness-monitor-id",
+            help="evidence staleness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    shadow_continuation_readiness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--shadow-continuation-readiness-id",
+            "--readiness-id",
+            help="shadow continuation readiness id；缺省读取 latest。",
+        ),
+    ] = None,
+    fallback_policy_report_path: Annotated[
+        Path | None,
+        typer.Option("--fallback-policy-report-path", help="显式 fallback policy report JSON。"),
+    ] = None,
+    cache_catalog_report_path: Annotated[
+        Path | None,
+        typer.Option("--cache-catalog-report-path", help="显式 cache catalog report JSON。"),
+    ] = None,
+    data_refresh_audit_id: Annotated[
+        str | None,
+        typer.Option("--data-refresh-audit-id", help="data refresh audit id；缺省读取 latest。"),
+    ] = None,
+    signal_input_completeness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--signal-input-completeness-dir",
+            help="signal input completeness artifact root。",
+        ),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
+    paper_shadow_daily_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-daily-dir", help="paper-shadow daily artifact root。"),
+    ] = paper_shadow_daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
+    paper_shadow_drift_monitor_dir: Annotated[
+        Path,
+        typer.Option(
+            "--paper-shadow-drift-monitor-dir",
+            help="paper-shadow drift monitor artifact root。",
+        ),
+    ] = paper_shadow_drift.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
+    paper_shadow_weekly_review_dir: Annotated[
+        Path,
+        typer.Option(
+            "--paper-shadow-weekly-review-dir",
+            help="paper-shadow weekly review artifact root。",
+        ),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    evidence_staleness_monitor_dir: Annotated[
+        Path,
+        typer.Option(
+            "--evidence-staleness-monitor-dir",
+            help="evidence staleness monitor artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    shadow_continuation_readiness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--shadow-continuation-readiness-dir",
+            help="shadow continuation readiness artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+    fallback_policy_output_dir: Annotated[
+        Path,
+        typer.Option("--fallback-policy-output-dir", help="fallback policy artifact root。"),
+    ] = paper_shadow_health.DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    cache_catalog_output_dir: Annotated[
+        Path,
+        typer.Option("--cache-catalog-output-dir", help="cache catalog artifact root。"),
+    ] = paper_shadow_health.DEFAULT_CACHE_CATALOG_DIR,
+    data_refresh_audit_dir: Annotated[
+        Path,
+        typer.Option("--data-refresh-audit-dir", help="data refresh audit artifact root。"),
+    ] = paper_shadow_health.DEFAULT_DATA_REFRESH_AUDIT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+) -> None:
+    result = paper_shadow_health.run_paper_shadow_health_report(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        price_cache_path=price_cache_path,
+        market_panel_dir=market_panel_dir,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
+        paper_shadow_daily_id=paper_shadow_daily_id,
+        paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
+        paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
+        evidence_staleness_monitor_id=evidence_staleness_monitor_id,
+        shadow_continuation_readiness_id=shadow_continuation_readiness_id,
+        fallback_policy_report_path=fallback_policy_report_path,
+        cache_catalog_report_path=cache_catalog_report_path,
+        data_refresh_audit_id=data_refresh_audit_id,
+        signal_input_completeness_dir=signal_input_completeness_dir,
+        paper_shadow_daily_dir=paper_shadow_daily_dir,
+        paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
+        paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
+        evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+        shadow_continuation_readiness_dir=shadow_continuation_readiness_dir,
+        fallback_policy_output_dir=fallback_policy_output_dir,
+        cache_catalog_output_dir=cache_catalog_output_dir,
+        data_refresh_audit_dir=data_refresh_audit_dir,
+        output_dir=output_dir,
+    )
+    _echo_paper_shadow_health_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("paper_shadow_health_report")),
+        validation=_mapping_obj(result.get("paper_shadow_health_validation")),
+    )
+
+
+@dynamic_v3_paper_shadow_health_app.command("report")
+def dynamic_v3_paper_shadow_health_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    health_id: Annotated[
+        str | None,
+        typer.Option("--health-id", help="paper-shadow health artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+) -> None:
+    if not latest and not health_id:
+        raise typer.BadParameter("--health-id or --latest is required")
+    payload = paper_shadow_health.paper_shadow_health_report_payload(
+        health_id=health_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_paper_shadow_health_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("paper_shadow_health_report")),
+        validation=_mapping_obj(payload.get("paper_shadow_health_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-health")
+def dynamic_v3_validate_paper_shadow_health_command(
+    health_id: Annotated[
+        str | None,
+        typer.Option("--health-id", help="paper-shadow health artifact id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+) -> None:
+    resolved_id = health_id
+    if latest:
+        payload = paper_shadow_health.paper_shadow_health_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("health_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--health-id or --latest is required")
+    _echo_validation_payload(
+        paper_shadow_health.validate_paper_shadow_health_artifact(
+            health_id=resolved_id,
             output_dir=output_dir,
         )
     )

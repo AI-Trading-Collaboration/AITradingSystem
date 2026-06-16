@@ -4,6 +4,16 @@
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
 
+## TRADING-383
+
+- 需求文档：`docs/requirements/TRADING-383_Canonical_Paper_Shadow_Health_Rerun.md`
+- 任务：Canonical Paper Shadow Health Rerun
+- 状态：`DONE`
+- 需求：The system shall aggregate latest paper-shadow data, signal, fallback, cache, daily, drift, weekly, evidence staleness, readiness, and refresh-audit inputs into a single read-only canonical health report.
+- 安全边界：只读 paper-shadow health aggregation；不刷新数据、不补造 artifact、不运行上游、不写 official target weights、不修改 shadow/paper/production state、不触发 broker/order。
+- 主要输入：latest price data、market panel data、signal input completeness report、daily paper-shadow artifact、drift monitor artifact、weekly review artifact、evidence staleness monitor artifact、shadow continuation readiness report、fallback policy report、cache catalog report、data refresh audit report。
+- 主要输出：`reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_health/<health_id>/paper_shadow_health_report.json`、`.md`、validation JSON/Markdown、Reader Brief section，以及 downstream canonical health summary。
+
 ## TRADING-371
 
 - 需求文档：`docs/requirements/TRADING-371_Signal_Input_Completeness_Monitor.md`

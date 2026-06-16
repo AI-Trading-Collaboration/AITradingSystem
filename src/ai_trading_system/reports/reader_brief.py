@@ -2356,6 +2356,84 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "paper_shadow_health_id",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_id"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_safe_to_continue_shadow",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_safe_to_continue_shadow"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_data_freshness_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_data_freshness_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_signal_input_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_signal_input_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_fallback_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_fallback_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_cache_integrity_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_cache_integrity_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_weekly_review_coverage_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_weekly_review_coverage_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_drift_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_drift_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_blocking_reasons",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_blocking_reasons"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_warnings",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_warnings"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_next_required_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_next_required_action"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_health_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_validation_status"
+                        ),
+                    ),
+                    (
                         "stress_scenario_library",
                         etf_dynamic_v3_parameter_research.get(
                             "stress_scenario_library_run_id"
@@ -13252,6 +13330,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "shadow_continuation_readiness_manifest.json",
     )
+    paper_shadow_health_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_shadow_health",
+        ),
+        "paper_shadow_health_manifest.json",
+    )
     stress_scenario_library_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -13772,6 +13857,17 @@ def _etf_dynamic_v3_parameter_research_summary(
         shadow_continuation_readiness_path.parent
         / "shadow_continuation_readiness_validation.json"
         if shadow_continuation_readiness_path is not None
+        else None
+    )
+    paper_shadow_health_manifest = _read_optional_json(paper_shadow_health_path)
+    paper_shadow_health_report = _read_optional_json(
+        paper_shadow_health_path.parent / "paper_shadow_health_report.json"
+        if paper_shadow_health_path is not None
+        else None
+    )
+    paper_shadow_health_validation = _read_optional_json(
+        paper_shadow_health_path.parent / "paper_shadow_health_validation.json"
+        if paper_shadow_health_path is not None
         else None
     )
     stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
@@ -15444,6 +15540,57 @@ def _etf_dynamic_v3_parameter_research_summary(
             shadow_continuation_validation.get("status"),
             "MISSING",
         ),
+        "paper_shadow_health_id": _text(
+            paper_shadow_health_manifest.get("health_id"),
+            "MISSING",
+        ),
+        "paper_shadow_health_status": _text(
+            paper_shadow_health_report.get("paper_shadow_health_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_safe_to_continue_shadow": paper_shadow_health_report.get(
+            "safe_to_continue_shadow",
+            "MISSING",
+        ),
+        "paper_shadow_health_data_freshness_status": _text(
+            paper_shadow_health_report.get("data_freshness_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_signal_input_status": _text(
+            paper_shadow_health_report.get("signal_input_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_fallback_status": _text(
+            paper_shadow_health_report.get("fallback_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_cache_integrity_status": _text(
+            paper_shadow_health_report.get("cache_integrity_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_weekly_review_coverage_status": _text(
+            paper_shadow_health_report.get("weekly_review_coverage_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_drift_status": _text(
+            paper_shadow_health_report.get("drift_status"),
+            "MISSING",
+        ),
+        "paper_shadow_health_blocking_reasons": (
+            ", ".join(_texts(paper_shadow_health_report.get("blocking_reasons")))
+            or "none"
+        ),
+        "paper_shadow_health_warnings": (
+            ", ".join(_texts(paper_shadow_health_report.get("warnings"))) or "none"
+        ),
+        "paper_shadow_health_next_required_action": _text(
+            paper_shadow_health_report.get("next_required_action"),
+            "MISSING",
+        ),
+        "paper_shadow_health_validation_status": _text(
+            paper_shadow_health_validation.get("status"),
+            "MISSING",
+        ),
         "stress_scenario_library_run_id": _text(
             stress_scenario_manifest.get("library_run_id"),
             "MISSING",
@@ -15743,6 +15890,9 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if shadow_continuation_readiness_path is None
             else str(shadow_continuation_readiness_path)
+        ),
+        "paper_shadow_health": (
+            "" if paper_shadow_health_path is None else str(paper_shadow_health_path)
         ),
         "stress_scenario_library": (
             ""
@@ -16708,6 +16858,19 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "shadow_continuation_data_validation_status": "MISSING",
         "shadow_continuation_safety_boundary_status": "MISSING",
         "shadow_continuation_validation_status": "MISSING",
+        "paper_shadow_health_id": "MISSING",
+        "paper_shadow_health_status": "MISSING",
+        "paper_shadow_health_safe_to_continue_shadow": "MISSING",
+        "paper_shadow_health_data_freshness_status": "MISSING",
+        "paper_shadow_health_signal_input_status": "MISSING",
+        "paper_shadow_health_fallback_status": "MISSING",
+        "paper_shadow_health_cache_integrity_status": "MISSING",
+        "paper_shadow_health_weekly_review_coverage_status": "MISSING",
+        "paper_shadow_health_drift_status": "MISSING",
+        "paper_shadow_health_blocking_reasons": "MISSING",
+        "paper_shadow_health_warnings": "MISSING",
+        "paper_shadow_health_next_required_action": "MISSING",
+        "paper_shadow_health_validation_status": "MISSING",
         "stress_scenario_library_run_id": "MISSING",
         "stress_scenario_library_id": "MISSING",
         "stress_scenario_count": "MISSING",
@@ -16780,6 +16943,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
         "shadow_continuation_readiness_report": "",
+        "paper_shadow_health": "",
         "stress_scenario_library": "",
         "drawdown_event_casebook": "",
         "flip_rotation_event_casebook": "",
