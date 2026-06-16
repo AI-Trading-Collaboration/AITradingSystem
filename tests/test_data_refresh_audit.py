@@ -47,6 +47,7 @@ def test_data_refresh_audit_cli_report_validate_and_reader_brief(tmp_path: Path)
     validation_dir = tmp_path / "validation_audit"
     output_dir = tmp_path / "data_refresh_audit"
     market_refresh_root = tmp_path / "empty_market_refresh"
+    fallback_policy_report = _write_fallback_policy_report(tmp_path)
     market_refresh_root.mkdir()
     write_validate_data_audit_sidecar(
         report=fixture["report"],
@@ -72,6 +73,8 @@ def test_data_refresh_audit_cli_report_validate_and_reader_brief(tmp_path: Path)
             str(market_refresh_root),
             "--price-cache-path",
             str(fixture["price_path"]),
+            "--fallback-policy-report-path",
+            str(fallback_policy_report),
         ],
     )
     validation = CliRunner().invoke(
@@ -108,6 +111,8 @@ def test_data_refresh_audit_cli_report_validate_and_reader_brief(tmp_path: Path)
     )
 
     assert audit_payload["summary"]["skipped_market_closed_count"] == 1
+    assert audit_payload["fallback_policy_summary"]["fallback_status"] == "FALLBACK_USED"
+    assert audit_payload["fallback_policy_summary"]["fallback_used_count"] == 1
     assert summary["availability"] == "AVAILABLE"
     assert summary["status"] == "PASS"
     assert summary["audit_record_count"] == 2
@@ -185,3 +190,45 @@ def _fixture(tmp_path: Path, *, as_of: date) -> dict[str, object]:
 
 def _sha256(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
+
+
+def _write_fallback_policy_report(tmp_path: Path) -> Path:
+    report_path = tmp_path / "data_source_fallback_policy.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "data_source_fallback_policy",
+                "report_id": "fallback-policy-test",
+                "as_of": "2026-06-13",
+                "status": "PASS_WITH_WARNINGS",
+                "validation_status": "PASS_WITH_WARNINGS",
+                "production_effect": "none",
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
+                },
+                "summary": {
+                    "fallback_status": "FALLBACK_USED",
+                    "source_group_count": 2,
+                    "primary_ok_count": 1,
+                    "fallback_used_count": 1,
+                    "fallback_unavailable_count": 0,
+                    "blocked_no_valid_source_count": 0,
+                    "blocking_source_count": 0,
+                    "fallback_used_sources": ["marketstack_eod_daily_prices"],
+                    "blocking_data_types": [],
+                    "next_action": "manual_review_fallback_metadata_before_interpretation",
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path

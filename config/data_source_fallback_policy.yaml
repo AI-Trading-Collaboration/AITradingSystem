@@ -1,0 +1,85 @@
+schema_version: 1
+policy_version: data_source_fallback_policy_v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Make paper-shadow research data source fallback behavior explicit and
+    auditable before primary-source outages are interpreted downstream.
+  intended_effect: >
+    Prevent fallback data from silently replacing primary data by requiring
+    state, source priority, source eligibility and artifact metadata in JSON
+    reports and Reader Brief summaries.
+  validation_evidence: >
+    Focused tests cover PRIMARY_OK, FALLBACK_USED, unavailable/blocking states,
+    CLI run/report/validate, Reader Brief summary and downstream governance
+    integrations.
+  review_condition: >
+    Review before adding a new fallback provider, allowing a public convenience
+    source, or using fallback state as anything stronger than manual
+    paper-shadow research evidence.
+safety_boundary:
+  read_only: true
+  paper_shadow_research_only: true
+  data_refresh_allowed: false
+  cache_mutation_allowed: false
+  score_or_backtest_allowed: false
+  broker_action_allowed: false
+  order_ticket_allowed: false
+  production_state_mutation_allowed: false
+  production_effect: none
+states:
+  - PRIMARY_OK
+  - FALLBACK_USED
+  - FALLBACK_UNAVAILABLE
+  - BLOCKED_NO_VALID_SOURCE
+metadata_requirements:
+  fallback_used_required_fields:
+    - fallback_state
+    - primary_source_id
+    - fallback_source_id
+    - fallback_reason
+    - provider
+    - endpoint
+    - request_parameters
+    - downloaded_at
+    - row_count
+    - checksum
+    - source_priority_rank
+    - source_eligibility_status
+    - source_artifact_path
+    - production_effect
+eligibility_policy:
+  allowed_source_types:
+    - primary_source
+    - paid_vendor
+  required_status: active
+  disallowed_source_types:
+    - public_convenience
+    - manual_input
+  disallowed_default_reason: >
+    Public convenience and manual sources may support diagnostics only; they
+    cannot silently replace primary paper-shadow research data without a
+    reviewed policy change.
+source_groups:
+  - data_type: price_data
+    domain: market_prices
+    primary_sources:
+      - fmp_eod_daily_prices
+      - cboe_vix_daily_prices
+    fallback_sources:
+      - marketstack_eod_daily_prices
+    ineligible_sources:
+      - yahoo_finance_daily_prices
+    artifact_metadata_required: true
+    fail_closed_when_unavailable: true
+    owner_action: restore_primary_price_source_or_record_explicit_fallback_metadata
+  - data_type: macro_rate_data
+    domain: macro_rates
+    primary_sources:
+      - fred_daily_rates
+    fallback_sources: []
+    ineligible_sources: []
+    artifact_metadata_required: true
+    fail_closed_when_unavailable: true
+    owner_action: restore_fred_macro_source_before_interpreting_macro_inputs

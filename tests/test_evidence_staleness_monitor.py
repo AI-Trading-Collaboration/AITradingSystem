@@ -309,6 +309,72 @@ def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Pa
     )
 
 
+def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path) -> None:
+    fixture = _paper_shadow_freshness_fixture(tmp_path)
+    fallback_policy_report = _write_fallback_policy_report(
+        tmp_path,
+        fallback_status="BLOCKED_NO_VALID_SOURCE",
+        status="FAIL",
+        blocking_data_types=["price_data"],
+        fallback_used_count=0,
+    )
+    evidence_manifest_path = Path(
+        fixture["filtered_candidate_evidence"]["manifest"][
+            "filtered_candidate_evidence_manifest_path"
+        ]
+    )
+    evidence_manifest = json.loads(evidence_manifest_path.read_text(encoding="utf-8"))
+    evidence_manifest["date_end"] = "2024-04-19"
+    evidence_manifest_path.write_text(
+        json.dumps(evidence_manifest, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    price_cache_path = tmp_path / "prices_daily.csv"
+    price_cache_path.write_text(
+        "date,ticker,close\n2024-04-19,QQQ,431\n",
+        encoding="utf-8",
+    )
+    market_panel_dir = tmp_path / "market_panel"
+    market_panel_dir.mkdir()
+    (market_panel_dir / "market_panel_2024-04-19.json").write_text(
+        json.dumps({"status": "PASS", "as_of": "2024-04-19"}),
+        encoding="utf-8",
+    )
+
+    result = readiness.run_evidence_staleness_monitor(
+        as_of=date(2024, 4, 22),
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        price_cache_path=price_cache_path,
+        market_panel_dir=market_panel_dir,
+        evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
+        stress_backfill_id=fixture["filtered_candidate_stress_backfill"]["stress_backfill_id"],
+        ab_review_id=fixture["filtered_candidate_ab_review"]["ab_review_id"],
+        owner_review_id=fixture["owner_filtered_candidate_review"]["owner_review_id"],
+        paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
+        paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
+        paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
+        evidence_dir=tmp_path / "filtered_candidate_evidence",
+        stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
+        ab_review_dir=tmp_path / "filtered_candidate_ab_review",
+        owner_review_dir=tmp_path / "owner_filtered_candidate_review",
+        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        fallback_policy_report_path=fallback_policy_report,
+        output_dir=tmp_path / "evidence_staleness_monitor_fallback_blocked",
+        generated_at=datetime(2024, 4, 22, tzinfo=UTC),
+    )
+    report = result["evidence_staleness_report"]
+
+    assert report["evidence_freshness_status"] == "BLOCKING"
+    assert report["safe_to_continue_shadow"] is False
+    assert "data_source_fallback_policy" in report["blocking_artifacts"]
+    assert report["fallback_status"] == "BLOCKED_NO_VALID_SOURCE"
+    assert report["fallback_blocking_data_types"] == "price_data"
+    assert report["next_refresh_action"] == "restore_primary_or_valid_fallback_source"
+    assert result["evidence_staleness_validation"]["status"] == "PASS"
+
+
 def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path)
     ledger = readiness.record_candidate_decision_ledger(
@@ -393,3 +459,54 @@ def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
         "paper_shadow_drift": drift_monitor,
         "paper_shadow_weekly": weekly_review,
     }
+
+
+def _write_fallback_policy_report(
+    tmp_path: Path,
+    *,
+    fallback_status: str,
+    status: str,
+    blocking_data_types: list[str],
+    fallback_used_count: int,
+) -> Path:
+    report_path = tmp_path / f"fallback_policy_{fallback_status}.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "data_source_fallback_policy",
+                "report_id": f"fallback-policy-{fallback_status}",
+                "as_of": "2024-04-22",
+                "status": status,
+                "validation_status": status,
+                "production_effect": "none",
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
+                },
+                "summary": {
+                    "fallback_status": fallback_status,
+                    "source_group_count": 1,
+                    "primary_ok_count": 0,
+                    "fallback_used_count": fallback_used_count,
+                    "fallback_unavailable_count": 0,
+                    "blocked_no_valid_source_count": 1
+                    if fallback_status == "BLOCKED_NO_VALID_SOURCE"
+                    else 0,
+                    "blocking_source_count": len(blocking_data_types),
+                    "fallback_used_sources": [],
+                    "blocking_data_types": blocking_data_types,
+                    "next_action": "restore_primary_or_valid_fallback_source",
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path

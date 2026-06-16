@@ -97,6 +97,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: data_source_fallback_policy
+    title: Data Source Fallback Policy
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits data fallback-policy run --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/data_governance/data_source_fallback_policy/*/data_source_fallback_policy.json
+      - reports/data_governance/data_source_fallback_policy/*/data_source_fallback_policy.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 1
+    freshness_rationale: >
+      Paper-shadow data-dependent work must know whether primary data was used,
+      eligible fallback data was explicitly declared, or no valid source is
+      available before freshness/readiness conclusions are interpreted.
+    owner_action: run_aits_data_fallback_policy_before_paper_shadow_data_use
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: backtest_input_diagnostics
     title: Backtest Input Diagnostics
     group: shadow

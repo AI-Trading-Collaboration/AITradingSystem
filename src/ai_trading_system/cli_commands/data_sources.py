@@ -19,6 +19,7 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.market_data import YFinancePriceProvider
 from ai_trading_system.data.quality import validate_data_cache
+from ai_trading_system.data_source_fallback_policy import DEFAULT_DATA_SOURCE_FALLBACK_DIR
 from ai_trading_system.data_sources import (
     build_data_source_health_report,
     default_data_source_health_report_path,
@@ -277,6 +278,14 @@ def pit_source_manifest_report(
         Path,
         typer.Option(help="PIT source manifest artifact 根目录。"),
     ] = DEFAULT_PIT_SOURCE_MANIFEST_DIR,
+    fallback_policy_report_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 fallback policy report JSON 路径；缺省读取 latest。"),
+    ] = None,
+    fallback_policy_output_dir: Annotated[
+        Path,
+        typer.Option(help="Data source fallback policy artifact 根目录。"),
+    ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     latest: Annotated[
         bool,
         typer.Option("--latest", help="只读取 latest artifact，不生成新 manifest。"),
@@ -294,6 +303,8 @@ def pit_source_manifest_report(
             as_of=evaluation_date,
             download_manifest_path=download_manifest_path,
             output_dir=output_dir,
+            fallback_policy_report_path=fallback_policy_report_path,
+            fallback_policy_output_dir=fallback_policy_output_dir,
         )
 
     summary = payload.get("summary", {})

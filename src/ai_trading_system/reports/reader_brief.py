@@ -165,6 +165,7 @@ def build_reader_brief_payload(
     report_index_summary = _report_index_summary(report_index)
     pit_source_manifest = _pit_source_manifest_summary(report_index)
     data_refresh_audit = _data_refresh_audit_summary(report_index)
+    data_source_fallback_policy = _data_source_fallback_policy_summary(report_index)
     governance_summary = _backtest_shadow_governance(
         daily_decision_summary=daily_decision_summary,
         daily_task_dashboard=daily_task_dashboard,
@@ -322,6 +323,7 @@ def build_reader_brief_payload(
         "data_quality_pit_safety": data_quality_pit_safety,
         "pit_source_manifest": pit_source_manifest,
         "data_refresh_audit": data_refresh_audit,
+        "data_source_fallback_policy": data_source_fallback_policy,
         "backtest_shadow_governance": governance_summary,
         "parameter_shadow_review": parameter_shadow_review,
         "etf_backtest_summary": etf_backtest_summary,
@@ -603,6 +605,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     quality = _mapping(payload.get("data_quality_pit_safety"))
     pit_source_manifest = _mapping(payload.get("pit_source_manifest"))
     data_refresh_audit = _mapping(payload.get("data_refresh_audit"))
+    data_source_fallback_policy = _mapping(payload.get("data_source_fallback_policy"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
@@ -4531,6 +4534,40 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
+            "Data Source Fallback Policy",
+            _definition_table(
+                [
+                    ("availability", data_source_fallback_policy.get("availability")),
+                    ("status", data_source_fallback_policy.get("status")),
+                    (
+                        "validation_status",
+                        data_source_fallback_policy.get("validation_status"),
+                    ),
+                    ("fallback_status", data_source_fallback_policy.get("fallback_status")),
+                    (
+                        "fallback_used_count",
+                        data_source_fallback_policy.get("fallback_used_count"),
+                    ),
+                    (
+                        "fallback_used_sources",
+                        data_source_fallback_policy.get("fallback_used_sources"),
+                    ),
+                    (
+                        "blocking_data_types",
+                        data_source_fallback_policy.get("blocking_data_types"),
+                    ),
+                    ("next_action", data_source_fallback_policy.get("next_action")),
+                    ("safety_status", data_source_fallback_policy.get("safety_status")),
+                    ("report_path", data_source_fallback_policy.get("report_path")),
+                    (
+                        "production_effect",
+                        data_source_fallback_policy.get("production_effect"),
+                    ),
+                    ("limitation", data_source_fallback_policy.get("limitation")),
+                ]
+            ),
+        ),
+        _section(
             "PIT Source Manifest",
             _definition_table(
                 [
@@ -6109,6 +6146,86 @@ def _missing_data_refresh_audit_summary(reason: str) -> dict[str, Any]:
         "warning_count": 0,
         "error_count": 0,
         "next_action": "generate_data_refresh_audit",
+        "safety_status": "MISSING",
+        "report_path": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "limitation": reason,
+    }
+
+
+def _data_source_fallback_policy_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_data_source_fallback_policy_summary(
+            "report_index_missing; Reader Brief 不补造 fallback policy 结论。"
+        )
+    report_path = _report_index_artifact_path(report_index, "data_source_fallback_policy")
+    if report_path is None:
+        return _missing_data_source_fallback_policy_summary(
+            "data_source_fallback_policy artifact missing from report_index."
+        )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_data_source_fallback_policy_summary(
+            f"data_source_fallback_policy JSON unreadable: {report_path}"
+        )
+    summary = _mapping(payload.get("summary"))
+    safety = _mapping(payload.get("safety_boundary"))
+    safety_status = (
+        "PASS"
+        if _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and safety.get("read_only") is True
+        and safety.get("data_refresh_allowed") is False
+        and safety.get("cache_mutation_allowed") is False
+        and safety.get("broker_action_allowed") is False
+        and safety.get("order_ticket_allowed") is False
+        else "REVIEW_REQUIRED"
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "validation_status": _text(
+            payload.get("validation_status"),
+            _text(payload.get("status"), "UNKNOWN"),
+        ),
+        "report_id": _text(payload.get("report_id"), "UNKNOWN"),
+        "as_of": _text(payload.get("as_of"), "UNKNOWN"),
+        "fallback_status": _text(summary.get("fallback_status"), "UNKNOWN"),
+        "source_group_count": summary.get("source_group_count", 0),
+        "fallback_used_count": summary.get("fallback_used_count", 0),
+        "fallback_unavailable_count": summary.get("fallback_unavailable_count", 0),
+        "blocked_no_valid_source_count": summary.get("blocked_no_valid_source_count", 0),
+        "blocking_source_count": summary.get("blocking_source_count", 0),
+        "fallback_used_sources": ", ".join(_texts(summary.get("fallback_used_sources")))
+        or "none",
+        "blocking_data_types": ", ".join(_texts(summary.get("blocking_data_types")))
+        or "none",
+        "next_action": _text(summary.get("next_action"), "UNKNOWN"),
+        "safety_status": safety_status,
+        "report_path": str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "limitation": (
+            "Fallback policy is governance-only; fallback data cannot silently "
+            "replace primary data or approve production use."
+        ),
+    }
+
+
+def _missing_data_source_fallback_policy_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "validation_status": "MISSING",
+        "report_id": "MISSING",
+        "as_of": "UNKNOWN",
+        "fallback_status": "MISSING",
+        "source_group_count": 0,
+        "fallback_used_count": 0,
+        "fallback_unavailable_count": 0,
+        "blocked_no_valid_source_count": 0,
+        "blocking_source_count": 0,
+        "fallback_used_sources": "none",
+        "blocking_data_types": "none",
+        "next_action": "generate_data_source_fallback_policy_report",
         "safety_status": "MISSING",
         "report_path": "MISSING",
         "production_effect": PRODUCTION_EFFECT,

@@ -13,7 +13,11 @@ from ai_trading_system.cli_commands.data_artifacts import (
     _resolve_market_data_freshness_path,
     _resolve_market_data_refresh_path,
 )
-from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.config import (
+    DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    PROJECT_ROOT,
+    load_data_sources,
+)
 from ai_trading_system.data_refresh_audit import (
     DEFAULT_DATA_REFRESH_AUDIT_DIR,
     DEFAULT_VALIDATION_AUDIT_DIR,
@@ -21,6 +25,16 @@ from ai_trading_system.data_refresh_audit import (
     load_data_refresh_audit_payload,
     resolve_data_refresh_audit_path,
     validate_data_refresh_audit_artifact,
+)
+from ai_trading_system.data_source_fallback_policy import (
+    DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    DEFAULT_DATA_SOURCE_FALLBACK_POLICY_PATH,
+    build_and_write_data_source_fallback_policy,
+    latest_data_source_fallback_policy_summary,
+    load_data_source_fallback_policy,
+    load_data_source_fallback_policy_payload,
+    resolve_data_source_fallback_policy_path,
+    validate_data_source_fallback_policy_artifact,
 )
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     run_backtest_input_diagnostics,
@@ -54,7 +68,9 @@ from ai_trading_system.trading_engine.price_cache_reconcile import (
 console = Console()
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
 refresh_audit_app = typer.Typer(help="Data refresh audit trail 治理报告。")
+fallback_policy_app = typer.Typer(help="Data source fallback policy 治理报告。")
 data_app.add_typer(refresh_audit_app, name="refresh-audit")
+data_app.add_typer(fallback_policy_app, name="fallback-policy")
 
 
 @data_app.command("diagnose-backtest-inputs")
@@ -598,6 +614,126 @@ def data_validate_refresh_command(
         raise typer.Exit(code=1)
 
 
+@fallback_policy_app.command("run")
+def data_source_fallback_policy_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="fallback policy 评估日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option(help="data_sources.yaml 路径。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="data source fallback policy YAML 路径。"),
+    ] = DEFAULT_DATA_SOURCE_FALLBACK_POLICY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Data source fallback policy artifact 根目录。"),
+    ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    unavailable_source_id: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--unavailable-source-id",
+            help="显式标记不可用的 source_id；可重复。",
+        ),
+    ] = None,
+    fallback_used_source_id: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--fallback-used-source-id",
+            help="显式标记已使用且已披露 metadata 的 fallback source_id；可重复。",
+        ),
+    ] = None,
+    fallback_reason: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--fallback-reason",
+            help="fallback reason，格式为 source_id=reason 或 data_type=reason；可重复。",
+        ),
+    ] = None,
+) -> None:
+    """生成 paper-shadow research data source fallback policy report。"""
+    evaluation_date = _parse_date(as_of) if as_of else date.today()
+    payload, paths = build_and_write_data_source_fallback_policy(
+        config=load_data_sources(config_path),
+        policy=load_data_source_fallback_policy(policy_path),
+        as_of=evaluation_date,
+        output_dir=output_dir,
+        unavailable_source_ids=unavailable_source_id or [],
+        fallback_used_source_ids=fallback_used_source_id or [],
+        fallback_reasons=_parse_key_value_options(fallback_reason or []),
+    )
+    _print_fallback_policy_summary(payload, paths.get("report_json"))
+    if payload.get("status") == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@fallback_policy_app.command("report")
+def data_source_fallback_policy_report_command(
+    report_id: Annotated[
+        str | None,
+        typer.Option(help="要读取的 fallback policy report_id；不传时可用 --latest。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取 latest fallback policy artifact。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Data source fallback policy artifact 根目录。"),
+    ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+) -> None:
+    """读取 paper-shadow research data source fallback policy report。"""
+    report_path = resolve_data_source_fallback_policy_path(
+        report_id=report_id,
+        latest=latest or report_id is None,
+        output_dir=output_dir,
+    )
+    payload = load_data_source_fallback_policy_payload(report_path)
+    _print_fallback_policy_summary(payload, report_path)
+    if payload.get("status") == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@fallback_policy_app.command("validate")
+def data_source_fallback_policy_validate_command(
+    report_id: Annotated[
+        str | None,
+        typer.Option(help="要校验的 fallback policy report_id；不传时可用 --latest。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="校验 latest fallback policy artifact。"),
+    ] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="Data source fallback policy artifact 根目录。"),
+    ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+) -> None:
+    """校验 fallback policy states、eligibility、metadata 和安全边界。"""
+    validation, report_path = validate_data_source_fallback_policy_artifact(
+        report_id=report_id,
+        latest=latest or report_id is None,
+        output_dir=output_dir,
+    )
+    status_style = (
+        "green" if validation.status == "PASS" else "yellow" if validation.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]Data source fallback policy validation status="
+        f"{validation.status}[/{status_style}]"
+    )
+    console.print(f"report_id={validation.report_id}")
+    console.print(f"report={report_path}")
+    console.print(f"source_group_count={validation.source_group_count}")
+    console.print(f"error_count={validation.error_count}; warning_count={validation.warning_count}")
+    console.print("production_effect=none；校验只读 existing artifact。")
+    if not validation.passed:
+        raise typer.Exit(code=1)
+
+
 @refresh_audit_app.command("report")
 def data_refresh_audit_report_command(
     as_of: Annotated[
@@ -625,6 +761,14 @@ def data_refresh_audit_report_command(
     / "data"
     / "raw"
     / "prices_daily.csv",
+    fallback_policy_report_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 fallback policy report JSON 路径；缺省读取 latest。"),
+    ] = None,
+    fallback_policy_output_dir: Annotated[
+        Path,
+        typer.Option(help="Data source fallback policy artifact 根目录。"),
+    ] = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     latest: Annotated[
         bool,
         typer.Option("--latest", help="只读取 latest artifact，不生成新 audit。"),
@@ -645,6 +789,8 @@ def data_refresh_audit_report_command(
             validation_audit_dir=validation_audit_dir,
             market_refresh_root=market_refresh_root,
             price_cache_path=price_cache_path,
+            fallback_policy_report_path=fallback_policy_report_path,
+            fallback_policy_output_dir=fallback_policy_output_dir,
         )
 
     summary = payload.get("summary", {})
@@ -707,6 +853,41 @@ def validate_data_refresh_audit_command(
 
     if not validation.passed:
         raise typer.Exit(code=1)
+
+
+def _parse_key_value_options(values: list[str]) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    for value in values:
+        if "=" not in value:
+            raise typer.BadParameter("--fallback-reason must use key=value format")
+        key, reason = value.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise typer.BadParameter("--fallback-reason key cannot be empty")
+        parsed[key] = reason.strip()
+    return parsed
+
+
+def _print_fallback_policy_summary(
+    payload: dict[str, object],
+    report_path: Path | None,
+) -> None:
+    summary = latest_data_source_fallback_policy_summary(report_path=report_path)
+    status = str(payload.get("status", "UNKNOWN"))
+    style = "green" if status == "PASS" else "yellow" if status != "FAIL" else "red"
+    console.print(f"[{style}]Data source fallback policy status={status}[/{style}]")
+    console.print(f"report_id={payload.get('report_id')}")
+    console.print(f"fallback_status={summary.get('fallback_status')}")
+    console.print(f"source_group_count={summary.get('source_group_count')}")
+    console.print(f"fallback_used_count={summary.get('fallback_used_count')}")
+    console.print(f"blocking_source_count={summary.get('blocking_source_count')}")
+    console.print(f"fallback_used_sources={summary.get('fallback_used_sources')}")
+    console.print(f"blocking_data_types={summary.get('blocking_data_types')}")
+    console.print(f"next_action={summary.get('next_action')}")
+    console.print(f"report={report_path}")
+    console.print(
+        "production_effect=none；只读 fallback policy，不刷新数据、不补造 cache、不触发 broker。"
+    )
 
 
 @data_app.command("recover-freshness")

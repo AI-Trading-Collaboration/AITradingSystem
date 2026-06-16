@@ -11,6 +11,13 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.data_source_fallback_policy import (
+    DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
+    FALLBACK_STATE_FALLBACK_UNAVAILABLE,
+    FALLBACK_STATE_FALLBACK_USED,
+    latest_data_source_fallback_policy_summary,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
 from ai_trading_system.market_calendar_freshness import resolve_us_equity_market_freshness
@@ -2291,6 +2298,8 @@ def run_evidence_staleness_monitor(
     paper_shadow_daily_dir: Path = DEFAULT_PAPER_SHADOW_DAILY_DIR,
     paper_shadow_drift_monitor_dir: Path = DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
     paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    fallback_policy_report_path: Path | None = None,
+    fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     output_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -2320,12 +2329,23 @@ def run_evidence_staleness_monitor(
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
     )
     status = _overall_evidence_freshness_status(policy, findings)
+    fallback_summary = latest_data_source_fallback_policy_summary(
+        report_path=fallback_policy_report_path,
+        output_dir=fallback_policy_output_dir,
+    )
+    fallback_status = _text(fallback_summary.get("fallback_status"), "MISSING")
     stale_artifacts = [
         row.get("source_id") for row in findings if row.get("severity") == "STALE"
     ]
     blocking_artifacts = [
         row.get("source_id") for row in findings if row.get("severity") == "BLOCKING"
     ]
+    if fallback_status in {
+        FALLBACK_STATE_FALLBACK_UNAVAILABLE,
+        FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
+    }:
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "data_source_fallback_policy"])
+        status = "BLOCKING"
     missing_artifacts = [
         row.get("source_id") for row in findings if row.get("missing") is True
     ]
@@ -2343,6 +2363,14 @@ def run_evidence_staleness_monitor(
     )
     if coverage_blocking_artifacts:
         next_refresh_action = "complete_full_weekly_review_or_record_manual_coverage_override"
+    if fallback_status in {
+        FALLBACK_STATE_FALLBACK_UNAVAILABLE,
+        FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
+    }:
+        next_refresh_action = _text(
+            fallback_summary.get("next_action"),
+            "restore_primary_or_valid_fallback_source",
+        )
     policy_version = _text(policy.get("version"))
     monitor_id = _stable_id(
         "evidence-staleness-monitor",
@@ -2377,6 +2405,10 @@ def run_evidence_staleness_monitor(
         "blocking_artifacts": _texts(blocking_artifacts),
         "missing_artifacts": _texts(missing_artifacts),
         "coverage_status": weekly_coverage.get("coverage_status"),
+        "fallback_policy_summary": fallback_summary,
+        "fallback_status": fallback_status,
+        "fallback_used_count": fallback_summary.get("fallback_used_count"),
+        "fallback_blocking_data_types": fallback_summary.get("blocking_data_types"),
         "coverage_blocking_artifacts": coverage_blocking_artifacts,
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
@@ -2411,6 +2443,8 @@ def run_evidence_staleness_monitor(
         "calendar_adjustment_reason": market_calendar.get("calendar_adjustment_reason"),
         "calendar_adjusted_staleness": market_calendar.get("calendar_adjusted_staleness"),
         "coverage_status": weekly_coverage.get("coverage_status"),
+        "fallback_status": fallback_status,
+        "fallback_policy_report_path": fallback_summary.get("report_path"),
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
         ),
@@ -2481,6 +2515,25 @@ def evidence_staleness_monitor_report_payload(
     if validation:
         payload["evidence_staleness_validation"] = validation
     return payload
+
+
+def _expected_evidence_staleness_blocking_artifacts(
+    report: Mapping[str, Any],
+    findings: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    expected = {
+        _text(row.get("source_id"))
+        for row in findings
+        if row.get("severity") == "BLOCKING"
+    }
+    fallback_status = _text(report.get("fallback_status"))
+    if fallback_status in {
+        FALLBACK_STATE_FALLBACK_UNAVAILABLE,
+        FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
+    }:
+        expected.add("data_source_fallback_policy")
+    expected.discard("")
+    return expected
 
 
 def validate_evidence_staleness_monitor_artifact(
@@ -2567,7 +2620,7 @@ def validate_evidence_staleness_monitor_artifact(
             st._check(
                 "blocking_artifacts_consistent",
                 set(_texts(report.get("blocking_artifacts")))
-                == {row.get("source_id") for row in findings if row.get("severity") == "BLOCKING"},
+                == _expected_evidence_staleness_blocking_artifacts(report, findings),
                 "",
             ),
             st._check(
@@ -2596,6 +2649,13 @@ def validate_evidence_staleness_monitor_artifact(
             st._check(
                 "safe_to_continue_shadow_visible",
                 report.get("safe_to_continue_shadow") in (True, False),
+                "",
+            ),
+            st._check(
+                "fallback_policy_fields_visible",
+                bool(report.get("fallback_status"))
+                and "fallback_policy_summary" in report
+                and "fallback_used_count" in report,
                 "",
             ),
             st._check(
@@ -2647,6 +2707,8 @@ def run_shadow_continuation_readiness_report(
     paper_shadow_drift_monitor_dir: Path = DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
     paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     evidence_staleness_monitor_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    fallback_policy_report_path: Path | None = None,
+    fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     output_dir: Path = DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -2669,6 +2731,18 @@ def run_shadow_continuation_readiness_report(
     )
     source_artifacts["data_validation_result"] = data_validation
     evidence_report = _mapping(source_artifacts["evidence_staleness_monitor"].get("detail"))
+    if fallback_policy_report_path is not None:
+        fallback_summary = latest_data_source_fallback_policy_summary(
+            report_path=fallback_policy_report_path,
+            output_dir=fallback_policy_output_dir,
+        )
+    else:
+        fallback_summary = _mapping(evidence_report.get("fallback_policy_summary"))
+        if not fallback_summary or _text(fallback_summary.get("fallback_status")) == "MISSING":
+            fallback_summary = latest_data_source_fallback_policy_summary(
+                output_dir=fallback_policy_output_dir,
+            )
+    fallback_status = _text(fallback_summary.get("fallback_status"), "MISSING")
     weekly_detail = _mapping(source_artifacts["paper_shadow_weekly_review"].get("detail"))
     weekly_manifest = _mapping(source_artifacts["paper_shadow_weekly_review"].get("manifest"))
     coverage_status = _text(
@@ -2693,6 +2767,11 @@ def run_shadow_continuation_readiness_report(
         "PASS_WITH_WARNINGS",
     }:
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "data_validation_result"])
+    if fallback_status in {
+        FALLBACK_STATE_FALLBACK_UNAVAILABLE,
+        FALLBACK_STATE_BLOCKED_NO_VALID_SOURCE,
+    }:
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "data_source_fallback_policy"])
     safety_audit = _shadow_continuation_safety_audit(source_artifacts)
     readiness = _shadow_continuation_readiness_decision(
         missing_artifacts=missing_artifacts,
@@ -2703,6 +2782,8 @@ def run_shadow_continuation_readiness_report(
         data_validation=data_validation,
         safety_audit=safety_audit,
     )
+    if readiness == "READY_TO_CONTINUE" and fallback_status == FALLBACK_STATE_FALLBACK_USED:
+        readiness = "READY_WITH_WARNINGS"
     safe_to_continue = readiness in {"READY_TO_CONTINUE", "READY_WITH_WARNINGS"}
     next_required_action = _shadow_continuation_next_action(readiness)
     readiness_id = _stable_id(
@@ -2732,6 +2813,10 @@ def run_shadow_continuation_readiness_report(
         "blocking_artifacts": blocking_artifacts,
         "stale_artifacts": stale_artifacts,
         "coverage_status": coverage_status,
+        "fallback_policy_summary": fallback_summary,
+        "fallback_status": fallback_status,
+        "fallback_used_count": fallback_summary.get("fallback_used_count"),
+        "fallback_blocking_data_types": fallback_summary.get("blocking_data_types"),
         "manual_review_required": readiness != "READY_TO_CONTINUE",
         "next_required_action": next_required_action,
         "data_validation_result": data_validation,
@@ -2762,6 +2847,8 @@ def run_shadow_continuation_readiness_report(
         "shadow_continuation_readiness": readiness,
         "safe_to_continue_shadow": safe_to_continue,
         "coverage_status": coverage_status,
+        "fallback_status": fallback_status,
+        "fallback_policy_report_path": fallback_summary.get("report_path"),
         "manual_review_required": readiness != "READY_TO_CONTINUE",
         "next_required_action": next_required_action,
         "shadow_continuation_readiness_manifest_path": str(
@@ -2918,6 +3005,13 @@ def validate_shadow_continuation_readiness_artifact(
                 "",
             ),
             st._check(
+                "fallback_policy_fields_visible",
+                bool(report.get("fallback_status"))
+                and "fallback_policy_summary" in report
+                and "fallback_used_count" in report,
+                "",
+            ),
+            st._check(
                 "reader_brief_quality_fields",
                 "shadow_continuation_readiness" in reader
                 and "safe_to_continue_shadow" in reader,
@@ -2959,6 +3053,9 @@ def render_shadow_continuation_readiness_reader_brief(report: Mapping[str, Any])
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- coverage_status: {report.get('coverage_status')}",
+            f"- fallback_status: {report.get('fallback_status')}",
+            f"- fallback_used_count: {report.get('fallback_used_count')}",
+            f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
             f"- manual_review_required: {report.get('manual_review_required')}",
             f"- next_required_action: {report.get('next_required_action')}",
             f"- data_validation_status: {report.get('data_validation_status')}",
@@ -2994,6 +3091,9 @@ def render_shadow_continuation_readiness_report(
             f"- blocking_artifacts: {', '.join(_texts(report.get('blocking_artifacts'))) or 'none'}",
             f"- stale_artifacts: {', '.join(_texts(report.get('stale_artifacts'))) or 'none'}",
             f"- coverage_status: {report.get('coverage_status')}",
+            f"- fallback_status: {report.get('fallback_status')}",
+            f"- fallback_used_count: {report.get('fallback_used_count')}",
+            f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
             f"- manual_review_required: {report.get('manual_review_required')}",
             f"- next_required_action: {report.get('next_required_action')}",
             f"- data_validation_status: {report.get('data_validation_status')}",
@@ -3748,6 +3848,9 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- market_session_kind: {report.get('market_session_kind')}",
             f"- calendar_adjustment_reason: {report.get('calendar_adjustment_reason')}",
             f"- calendar_adjusted_staleness: {report.get('calendar_adjusted_staleness')}",
+            f"- fallback_status: {report.get('fallback_status')}",
+            f"- fallback_used_count: {report.get('fallback_used_count')}",
+            f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- weekly_review_coverage_classification: "
             f"{report.get('weekly_review_coverage_classification')}",
@@ -3799,6 +3902,9 @@ def render_evidence_staleness_report(
             f"- market_close_time: {report.get('market_close_time')}",
             f"- data_ready_time: {report.get('data_ready_time')}",
             f"- evidence_freshness_status: {report.get('evidence_freshness_status')}",
+            f"- fallback_status: {report.get('fallback_status')}",
+            f"- fallback_used_count: {report.get('fallback_used_count')}",
+            f"- fallback_blocking_data_types: {report.get('fallback_blocking_data_types')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- coverage_blocking_artifacts: "
             f"{', '.join(_texts(report.get('coverage_blocking_artifacts'))) or 'none'}",

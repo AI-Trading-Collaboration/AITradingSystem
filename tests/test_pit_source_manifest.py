@@ -20,6 +20,7 @@ from ai_trading_system.reports import reader_brief
 
 def test_pit_source_manifest_builds_grades_and_required_fields(tmp_path: Path) -> None:
     fixture = _fixture(tmp_path)
+    fallback_policy_report = _write_fallback_policy_report(tmp_path)
 
     payload, paths = build_and_write_pit_source_manifest(
         config=fixture["config"],
@@ -27,6 +28,7 @@ def test_pit_source_manifest_builds_grades_and_required_fields(tmp_path: Path) -
         download_manifest_path=fixture["download_manifest"],
         output_dir=tmp_path / "reports",
         project_root=tmp_path,
+        fallback_policy_report_path=fallback_policy_report,
     )
     records = {record["source_id"]: record for record in payload["records"]}
     validation = validate_pit_source_manifest_payload(
@@ -47,6 +49,8 @@ def test_pit_source_manifest_builds_grades_and_required_fields(tmp_path: Path) -
     assert paths["manifest_markdown"].exists()
     assert paths["validation_json"].exists()
     assert paths["reader_brief_section"].exists()
+    assert payload["fallback_policy_summary"]["fallback_status"] == "FALLBACK_USED"
+    assert payload["fallback_policy_summary"]["fallback_used_count"] == 1
 
     for record in payload["records"]:
         for field_name in (
@@ -89,6 +93,7 @@ def test_pit_source_manifest_validation_fails_invalid_grade(tmp_path: Path) -> N
 
 def test_pit_source_manifest_cli_report_validate_and_reader_brief(tmp_path: Path) -> None:
     fixture = _fixture(tmp_path)
+    fallback_policy_report = _write_fallback_policy_report(tmp_path)
     config_path = tmp_path / "data_sources.yaml"
     config_path.write_text(
         yaml.safe_dump(fixture["config"].model_dump(), sort_keys=False, allow_unicode=True),
@@ -110,6 +115,8 @@ def test_pit_source_manifest_cli_report_validate_and_reader_brief(tmp_path: Path
             "2026-06-16",
             "--output-dir",
             str(output_dir),
+            "--fallback-policy-report-path",
+            str(fallback_policy_report),
         ],
     )
     validation = CliRunner().invoke(
@@ -302,3 +309,45 @@ def _write_cache(path: Path) -> Path:
 
 def _sha256(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
+
+
+def _write_fallback_policy_report(tmp_path: Path) -> Path:
+    report_path = tmp_path / "data_source_fallback_policy.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "data_source_fallback_policy",
+                "report_id": "fallback-policy-test",
+                "as_of": "2026-06-16",
+                "status": "PASS_WITH_WARNINGS",
+                "validation_status": "PASS_WITH_WARNINGS",
+                "production_effect": "none",
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
+                },
+                "summary": {
+                    "fallback_status": "FALLBACK_USED",
+                    "source_group_count": 2,
+                    "primary_ok_count": 1,
+                    "fallback_used_count": 1,
+                    "fallback_unavailable_count": 0,
+                    "blocked_no_valid_source_count": 0,
+                    "blocking_source_count": 0,
+                    "fallback_used_sources": ["marketstack_eod_daily_prices"],
+                    "blocking_data_types": [],
+                    "next_action": "manual_review_fallback_metadata_before_interpretation",
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path

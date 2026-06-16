@@ -1898,6 +1898,25 @@ aits data-sources pit-manifest validate --latest
 
 该 manifest 写入 `reports/data_governance/pit_source_manifest/<manifest_id>/`，每个 source 记录 source name、retrieval time、effective date、revision risk、`STRONG_PIT|APPROX_PIT|NON_PIT|UNKNOWN`、cache path、checksum、refresh policy 和 validation policy。它只建立未来研究数据治理 contract，不修复全部 PIT 数据问题；`APPROX_PIT`、`NON_PIT` 或 `UNKNOWN` 不能自动支持 backtest、scoring、paper shadow 或 production 结论。Reader Brief 只读 report index latest artifact 展示 grade counts 和 non-strong source ids；所有输出固定 `production_effect=none`，不刷新数据、不运行下游管线、不触发 broker。
 
+定义并校验 paper-shadow research data source fallback policy：
+
+```powershell
+aits data fallback-policy run --as-of 2026-05-02
+aits data fallback-policy report --latest
+aits data fallback-policy validate --latest
+```
+
+TRADING-368 新增 `config/data_source_fallback_policy.yaml` 和
+`reports/data_governance/data_source_fallback_policy/<report_id>/`。Fallback 状态只允许
+`PRIMARY_OK`、`FALLBACK_USED`、`FALLBACK_UNAVAILABLE` 和 `BLOCKED_NO_VALID_SOURCE`。
+`FALLBACK_USED` 必须在 JSON report、Markdown、Reader Brief 和 downstream summary 中明确显示
+primary source、fallback source、reason、provider、endpoint、request parameters、download
+timestamp、row count、checksum、metadata status 和 safety boundary；不得把 fallback 数据静默写成
+primary。`FALLBACK_UNAVAILABLE` / `BLOCKED_NO_VALID_SOURCE` 会进入 evidence
+staleness / shadow continuation readiness 的 blocking data path。该报告不下载数据、不写 cache、
+不运行评分/回测、不写 official target weights、不触发 broker/order，固定
+`production_effect=none`。
+
 为 paper-shadow 依赖的数据刷新和数据质量门禁建立统一 audit trail：
 
 ```powershell

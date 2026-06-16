@@ -1,8 +1,18 @@
 # Requirements Index
 
-最后更新：2026-05-26
+最后更新：2026-06-16
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
+
+## TRADING-368
+
+- 需求文档：`docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md`
+- 任务：Data Source Fallback Policy
+- 状态：`DONE`
+- 需求：The system shall make primary/fallback source status explicit through a governed policy artifact, and fail closed when no valid source is available for cached-data-dependent interpretation.
+- 安全边界：只读 fallback governance；不刷新数据、不补造 cache、不自动切换 provider、不绕过 `aits validate-data`、不写 official target weights、不修改 shadow/paper/production state、不触发 broker/order。
+- 主要输入：`config/data_source_fallback_policy.yaml`、`config/data_sources.yaml`、已配置 cache paths 和显式 fallback used metadata。
+- 主要输出：`reports/data_governance/data_source_fallback_policy/<report_id>/data_source_fallback_policy.json`、`.md`、validation JSON/Markdown、Reader Brief section，以及 downstream data refresh audit、PIT manifest、evidence staleness monitor、shadow continuation readiness 和 Reader Brief summary。
 
 ## TRADING-039
 

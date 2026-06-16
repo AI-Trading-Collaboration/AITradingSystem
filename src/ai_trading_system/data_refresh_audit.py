@@ -12,6 +12,10 @@ from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
+from ai_trading_system.data_source_fallback_policy import (
+    DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    latest_data_source_fallback_policy_summary,
+)
 from ai_trading_system.trading_calendar import us_equity_market_session
 from ai_trading_system.trading_engine.market_data_refresh import (
     REFRESH_BLOCKED,
@@ -271,6 +275,8 @@ def build_data_refresh_audit_payload(
     validation_audit_dir: Path = DEFAULT_VALIDATION_AUDIT_DIR,
     market_refresh_root: Path | None = None,
     price_cache_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    fallback_policy_report_path: Path | None = None,
+    fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(tz=UTC)
@@ -308,6 +314,10 @@ def build_data_refresh_audit_payload(
         build_issues.append(market_issue)
 
     summary = _summary(records=records, build_issues=build_issues)
+    fallback_summary = latest_data_source_fallback_policy_summary(
+        report_path=fallback_policy_report_path,
+        output_dir=fallback_policy_output_dir,
+    )
     audit_id = _audit_id(as_of=as_of, generated_at=generated, records=records)
     payload: dict[str, Any] = {
         "schema_version": DATA_REFRESH_AUDIT_SCHEMA_VERSION,
@@ -321,6 +331,7 @@ def build_data_refresh_audit_payload(
         "policy": DATA_REFRESH_AUDIT_POLICY,
         "safety_boundary": DATA_REFRESH_AUDIT_SAFETY,
         "summary": summary,
+        "fallback_policy_summary": fallback_summary,
         "records": records,
         "build_issues": [_issue_dict(issue) for issue in build_issues],
         "methodology": {
@@ -390,12 +401,16 @@ def build_and_write_data_refresh_audit(
     validation_audit_dir: Path = DEFAULT_VALIDATION_AUDIT_DIR,
     market_refresh_root: Path | None = None,
     price_cache_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    fallback_policy_report_path: Path | None = None,
+    fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
 ) -> tuple[dict[str, Any], dict[str, Path]]:
     payload = build_data_refresh_audit_payload(
         as_of=as_of,
         validation_audit_dir=validation_audit_dir,
         market_refresh_root=market_refresh_root,
         price_cache_path=price_cache_path,
+        fallback_policy_report_path=fallback_policy_report_path,
+        fallback_policy_output_dir=fallback_policy_output_dir,
     )
     paths = write_data_refresh_audit_artifact(payload, output_dir=output_dir)
     return load_data_refresh_audit_payload(paths["audit_json"]), paths
@@ -524,6 +539,7 @@ def validation_report_to_payload(report: DataRefreshAuditValidationReport) -> di
 
 def render_data_refresh_audit_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
+    fallback = _mapping(payload.get("fallback_policy_summary"))
     paths = _mapping(payload.get("artifact_paths"))
     records = _records(payload.get("records"))
     lines = [
@@ -538,6 +554,9 @@ def render_data_refresh_audit_markdown(payload: Mapping[str, Any]) -> str:
         f"- Skipped record count：{_text(summary.get('skipped_record_count'), '0')}",
         f"- Warning count：{_text(summary.get('warning_count'), '0')}",
         f"- Error count：{_text(summary.get('error_count'), '0')}",
+        f"- Fallback policy status：{_text(fallback.get('fallback_status'), 'MISSING')}",
+        f"- Fallback used count：{_text(fallback.get('fallback_used_count'), '0')}",
+        f"- Fallback blocking data types：{_text(fallback.get('blocking_data_types'), 'none')}",
         f"- Next action：{_text(summary.get('next_action'), 'UNKNOWN')}",
         f"- Production effect：{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
         f"- Validation report：`{_text(paths.get('validation_markdown'), 'UNKNOWN')}`",
@@ -619,6 +638,7 @@ def render_data_refresh_audit_validation_markdown(
 
 def render_data_refresh_audit_reader_brief(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
+    fallback = _mapping(payload.get("fallback_policy_summary"))
     return "\n".join(
         [
             "## Data Refresh Audit",
@@ -632,6 +652,9 @@ def render_data_refresh_audit_reader_brief(payload: Mapping[str, Any]) -> str:
             f"- skipped_record_count: {_text(summary.get('skipped_record_count'), '0')}",
             f"- warning_count: {_text(summary.get('warning_count'), '0')}",
             f"- error_count: {_text(summary.get('error_count'), '0')}",
+            f"- fallback_status: {_text(fallback.get('fallback_status'), 'MISSING')}",
+            f"- fallback_used_count: {_text(fallback.get('fallback_used_count'), '0')}",
+            f"- fallback_blocking_data_types: {_text(fallback.get('blocking_data_types'), 'none')}",
             f"- next_action: {_text(summary.get('next_action'), 'UNKNOWN')}",
             f"- production_effect: {_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
             "",

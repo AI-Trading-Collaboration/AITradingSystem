@@ -103,6 +103,44 @@ def test_shadow_continuation_readiness_blocks_missing_weekly_review(
     assert result["shadow_continuation_readiness_validation"]["status"] == "PASS"
 
 
+def test_shadow_continuation_readiness_blocks_fallback_unavailable(
+    tmp_path: Path,
+) -> None:
+    fixture = _shadow_continuation_fixture(tmp_path)
+    data_quality_report = _write_data_quality_report(tmp_path, status="PASS")
+    fallback_policy_report = _write_fallback_policy_report(
+        tmp_path,
+        fallback_status="FALLBACK_UNAVAILABLE",
+        status="FAIL",
+        blocking_data_types=["price_data"],
+    )
+
+    result = readiness.run_shadow_continuation_readiness_report(
+        as_of=date(2024, 4, 22),
+        candidate=readiness.TOP_FILTERED_CANDIDATE,
+        paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
+        paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
+        paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
+        evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
+        data_quality_report_path=data_quality_report,
+        paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
+        paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
+        paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
+        fallback_policy_report_path=fallback_policy_report,
+        output_dir=tmp_path / "shadow_continuation_readiness_fallback_blocked",
+        generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
+    )
+    report = result["shadow_continuation_readiness_report"]
+
+    assert report["shadow_continuation_readiness"] == "BLOCKED_STALE_DATA"
+    assert report["safe_to_continue_shadow"] is False
+    assert "data_source_fallback_policy" in report["blocking_artifacts"]
+    assert report["fallback_status"] == "FALLBACK_UNAVAILABLE"
+    assert report["fallback_blocking_data_types"] == "price_data"
+    assert result["shadow_continuation_readiness_validation"]["status"] == "PASS"
+
+
 def test_shadow_continuation_readiness_cli_run_report_and_validate(
     tmp_path: Path,
 ) -> None:
@@ -353,3 +391,53 @@ def _write_data_quality_report(tmp_path: Path, *, status: str = "PASS_WITH_WARNI
         encoding="utf-8",
     )
     return path
+
+
+def _write_fallback_policy_report(
+    tmp_path: Path,
+    *,
+    fallback_status: str,
+    status: str,
+    blocking_data_types: list[str],
+) -> Path:
+    report_path = tmp_path / f"fallback_policy_{fallback_status}.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "data_source_fallback_policy",
+                "report_id": f"fallback-policy-{fallback_status}",
+                "as_of": "2024-04-22",
+                "status": status,
+                "validation_status": status,
+                "production_effect": "none",
+                "safety_boundary": {
+                    "read_only": True,
+                    "data_refresh_allowed": False,
+                    "cache_mutation_allowed": False,
+                    "score_or_backtest_allowed": False,
+                    "broker_action_allowed": False,
+                    "order_ticket_allowed": False,
+                    "production_state_mutation_allowed": False,
+                },
+                "summary": {
+                    "fallback_status": fallback_status,
+                    "source_group_count": 1,
+                    "primary_ok_count": 0,
+                    "fallback_used_count": 0,
+                    "fallback_unavailable_count": 1
+                    if fallback_status == "FALLBACK_UNAVAILABLE"
+                    else 0,
+                    "blocked_no_valid_source_count": 0,
+                    "blocking_source_count": len(blocking_data_types),
+                    "fallback_used_sources": [],
+                    "blocking_data_types": blocking_data_types,
+                    "next_action": "restore_primary_or_valid_fallback_source",
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return report_path

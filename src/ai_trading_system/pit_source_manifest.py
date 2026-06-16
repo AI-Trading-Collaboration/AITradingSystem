@@ -15,6 +15,10 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT, DataSourceConfig, DataSourcesConfig
+from ai_trading_system.data_source_fallback_policy import (
+    DEFAULT_DATA_SOURCE_FALLBACK_DIR,
+    latest_data_source_fallback_policy_summary,
+)
 
 PIT_SOURCE_MANIFEST_SCHEMA_VERSION = 1
 PIT_SOURCE_MANIFEST_REPORT_TYPE = "pit_source_manifest"
@@ -215,6 +219,8 @@ def build_pit_source_manifest_payload(
     config: DataSourcesConfig,
     as_of: date,
     download_manifest_path: Path,
+    fallback_policy_report_path: Path | None = None,
+    fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     project_root: Path = PROJECT_ROOT,
 ) -> dict[str, Any]:
     generated_at = datetime.now(tz=UTC)
@@ -229,6 +235,10 @@ def build_pit_source_manifest_payload(
         for source in config.sources
     ]
     grade_counts = _grade_counts(records)
+    fallback_summary = latest_data_source_fallback_policy_summary(
+        report_path=fallback_policy_report_path,
+        output_dir=fallback_policy_output_dir,
+    )
     non_strong_source_ids = tuple(
         record["source_id"]
         for record in records
@@ -264,6 +274,7 @@ def build_pit_source_manifest_payload(
             "non_strong_source_ids": list(non_strong_source_ids),
             "unknown_source_ids": list(unknown_source_ids),
         },
+        "fallback_policy_summary": fallback_summary,
         "grade_counts": grade_counts,
         "records": records,
         "build_issues": [_issue_dict(issue) for issue in download_manifest_issues],
@@ -354,12 +365,16 @@ def build_and_write_pit_source_manifest(
     as_of: date,
     download_manifest_path: Path,
     output_dir: Path = DEFAULT_PIT_SOURCE_MANIFEST_DIR,
+    fallback_policy_report_path: Path | None = None,
+    fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[dict[str, Any], dict[str, Path]]:
     payload = build_pit_source_manifest_payload(
         config=config,
         as_of=as_of,
         download_manifest_path=download_manifest_path,
+        fallback_policy_report_path=fallback_policy_report_path,
+        fallback_policy_output_dir=fallback_policy_output_dir,
         project_root=project_root,
     )
     paths = write_pit_source_manifest_artifact(payload, output_dir=output_dir)
@@ -470,6 +485,7 @@ def validation_report_to_payload(report: PitSourceManifestValidationReport) -> d
 
 def render_pit_source_manifest_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
+    fallback = _mapping(payload.get("fallback_policy_summary"))
     paths = _mapping(payload.get("artifact_paths"))
     records = sorted(
         _records(payload.get("records")),
@@ -488,6 +504,9 @@ def render_pit_source_manifest_markdown(payload: Mapping[str, Any]) -> str:
         f"- NON_PIT：{_text(summary.get('non_pit_count'), '0')}",
         f"- UNKNOWN：{_text(summary.get('unknown_count'), '0')}",
         f"- Non-strong source count：{_text(summary.get('non_strong_source_count'), '0')}",
+        f"- Fallback policy status：{_text(fallback.get('fallback_status'), 'MISSING')}",
+        f"- Fallback used count：{_text(fallback.get('fallback_used_count'), '0')}",
+        f"- Fallback blocking data types：{_text(fallback.get('blocking_data_types'), 'none')}",
         f"- Production effect：{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
         f"- Validation report：`{_text(paths.get('validation_markdown'), 'UNKNOWN')}`",
         "",
@@ -601,6 +620,7 @@ def render_pit_source_manifest_validation_markdown(
 
 def render_pit_source_manifest_reader_brief(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
+    fallback = _mapping(payload.get("fallback_policy_summary"))
     non_strong = _texts(summary.get("non_strong_source_ids"))
     return (
         "## PIT Source Manifest\n\n"
@@ -611,6 +631,9 @@ def render_pit_source_manifest_reader_brief(payload: Mapping[str, Any]) -> str:
         f"- NON_PIT: `{_text(summary.get('non_pit_count'), '0')}`\n"
         f"- UNKNOWN: `{_text(summary.get('unknown_count'), '0')}`\n"
         f"- non_strong_source_ids: `{', '.join(non_strong) or 'none'}`\n"
+        f"- fallback_status: `{_text(fallback.get('fallback_status'), 'MISSING')}`\n"
+        f"- fallback_used_count: `{_text(fallback.get('fallback_used_count'), '0')}`\n"
+        f"- fallback_blocking_data_types: `{_text(fallback.get('blocking_data_types'), 'none')}`\n"
         f"- production_effect: `{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}`\n"
     )
 
