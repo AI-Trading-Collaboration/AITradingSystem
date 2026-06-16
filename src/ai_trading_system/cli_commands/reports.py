@@ -242,6 +242,19 @@ from ai_trading_system.reports.report_quality_gate import (
     write_report_quality_gate_json,
     write_report_quality_gate_markdown,
 )
+from ai_trading_system.reports.research_governance_end_to_end_pack import (
+    build_research_governance_end_to_end_pack_payload,
+    default_research_governance_end_to_end_pack_json_path,
+    default_research_governance_end_to_end_pack_markdown_path,
+    default_research_governance_end_to_end_pack_validation_json_path,
+    default_research_governance_end_to_end_pack_validation_markdown_path,
+    latest_research_governance_end_to_end_pack_json_path,
+    validate_research_governance_end_to_end_pack_payload,
+    write_research_governance_end_to_end_pack_json,
+    write_research_governance_end_to_end_pack_markdown,
+    write_research_governance_end_to_end_pack_validation_json,
+    write_research_governance_end_to_end_pack_validation_markdown,
+)
 from ai_trading_system.reports.research_governance_summary import (
     build_research_governance_summary_payload,
     default_research_governance_summary_json_path,
@@ -3520,6 +3533,206 @@ def validate_research_roadmap_dashboard_command(
         f"failed：{summary['failed_check_count']}；"
         f"dashboard_blockers：{summary['source_blocker_count']}；"
         f"dashboard_warnings：{summary['source_warning_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("research-governance-end-to-end-pack")
+def research_governance_end_to_end_pack_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Research governance end-to-end pack 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 report_index JSON。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance end-to-end pack JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance end-to-end pack Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成只读 research governance end-to-end pack；不运行上游或修改状态。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest and report_index_path is None:
+        latest_index = max(
+            reports_dir.glob("report_index_????-??-??.json"),
+            default=None,
+            key=lambda path: path.name,
+        )
+        if latest_index is None:
+            raise typer.BadParameter(f"未找到 report index JSON：{reports_dir}")
+        source_index = latest_index
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_index = report_index_path or default_report_index_json_path(
+            reports_dir,
+            report_date,
+        )
+    try:
+        raw_index = json.loads(source_index.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"report index JSON not found: {source_index}") from exc
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"report index JSON cannot be parsed: {source_index}") from exc
+    if not isinstance(raw_index, dict):
+        raise typer.BadParameter(f"report index JSON must be an object: {source_index}")
+    report_date = _parse_date(
+        as_of or str(raw_index.get("as_of") or date.today().isoformat())
+    )
+    payload = build_research_governance_end_to_end_pack_payload(
+        as_of=report_date,
+        report_index_payload=raw_index,
+        report_index_path=source_index,
+        project_root=project_root,
+    )
+    report_json = json_output_path or default_research_governance_end_to_end_pack_json_path(
+        reports_dir,
+        report_date,
+    )
+    report_md = markdown_output_path or default_research_governance_end_to_end_pack_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_research_governance_end_to_end_pack_json(payload, report_json)
+    md_path = write_research_governance_end_to_end_pack_markdown(payload, report_md)
+    status = payload["overall_governance_status"]
+    style = "green" if status == "GOVERNANCE_HEALTHY" else "yellow"
+    if status == "GOVERNANCE_BLOCKED":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Research governance end-to-end pack：{status}[/{style}]")
+    console.print(f"Research governance end-to-end pack JSON：{json_path}")
+    console.print(f"Research governance end-to-end pack Markdown：{md_path}")
+    console.print(
+        f"sources：{summary['source_report_count']}；"
+        f"available：{summary['available_source_count']}；"
+        f"blockers：{summary['blocking_item_count']}；"
+        f"warnings：{summary['warning_item_count']}；"
+        f"manual_review：{summary['manual_review_item_count']}；"
+        f"top_blocker：{summary['top_blocker']}；"
+        f"production_effect={payload['production_effect']}；只读 end-to-end pack"
+    )
+
+
+@reports_app.command("validate-research-governance-end-to-end-pack")
+def validate_research_governance_end_to_end_pack_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 research governance pack JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Research governance pack validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance pack JSON 路径；优先于 --latest/--as-of。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance pack validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance pack validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 research governance end-to-end pack；缺 source 或安全漂移时 fail closed。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_research_governance_end_to_end_pack_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 research governance pack JSON：{reports_dir}")
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_research_governance_end_to_end_pack_json_path(
+            reports_dir,
+            report_date,
+        )
+    if not source_path.exists():
+        raise typer.BadParameter(f"Research governance pack JSON not found: {source_path}")
+    try:
+        raw_payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"Research governance pack JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(
+            f"Research governance pack JSON must be an object: {source_path}"
+        )
+    payload = validate_research_governance_end_to_end_pack_payload(raw_payload)
+    source_artifacts = dict(payload.get("input_artifacts", {}))
+    source_artifacts["research_governance_end_to_end_pack"] = str(source_path)
+    payload["input_artifacts"] = source_artifacts
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or default_research_governance_end_to_end_pack_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or default_research_governance_end_to_end_pack_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = write_research_governance_end_to_end_pack_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = write_research_governance_end_to_end_pack_validation_markdown(
+        payload,
+        validation_md,
+    )
+    status = payload["validation_status"]
+    style = "green" if status == "PASS" else "yellow"
+    if status == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Research governance pack validation：{status}[/{style}]")
+    console.print(f"Research governance pack validation JSON：{json_path}")
+    console.print(f"Research governance pack validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"source_blockers：{summary['source_blocker_count']}；"
+        f"source_warnings：{summary['source_warning_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if status == "FAIL":

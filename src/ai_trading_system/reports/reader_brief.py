@@ -173,6 +173,9 @@ def build_reader_brief_payload(
     candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
     extended_shadow_protocol = _extended_shadow_protocol_summary(report_index)
     research_roadmap_dashboard = _research_roadmap_dashboard_summary(report_index)
+    research_governance_end_to_end_pack = _research_governance_end_to_end_pack_summary(
+        report_index
+    )
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -337,6 +340,7 @@ def build_reader_brief_payload(
         "candidate_rejection_postmortem": candidate_rejection_postmortem,
         "extended_shadow_protocol": extended_shadow_protocol,
         "research_roadmap_dashboard": research_roadmap_dashboard,
+        "research_governance_end_to_end_pack": research_governance_end_to_end_pack,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -666,6 +670,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
     extended_shadow_protocol = _mapping(payload.get("extended_shadow_protocol"))
     research_roadmap_dashboard = _mapping(payload.get("research_roadmap_dashboard"))
+    research_governance_end_to_end_pack = _mapping(
+        payload.get("research_governance_end_to_end_pack")
+    )
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1285,6 +1292,65 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         research_roadmap_dashboard.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Research Governance End-to-End Pack",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        research_governance_end_to_end_pack.get("availability"),
+                    ),
+                    ("status", research_governance_end_to_end_pack.get("status")),
+                    (
+                        "overall_governance_status",
+                        research_governance_end_to_end_pack.get(
+                            "overall_governance_status"
+                        ),
+                    ),
+                    (
+                        "validation_status",
+                        research_governance_end_to_end_pack.get("validation_status"),
+                    ),
+                    (
+                        "source_reports",
+                        research_governance_end_to_end_pack.get("source_report_count"),
+                    ),
+                    (
+                        "available_sources",
+                        research_governance_end_to_end_pack.get(
+                            "available_source_count"
+                        ),
+                    ),
+                    (
+                        "blockers",
+                        research_governance_end_to_end_pack.get("blocking_item_count"),
+                    ),
+                    (
+                        "warnings",
+                        research_governance_end_to_end_pack.get("warning_item_count"),
+                    ),
+                    (
+                        "manual_review_items",
+                        research_governance_end_to_end_pack.get(
+                            "manual_review_item_count"
+                        ),
+                    ),
+                    (
+                        "top_blocker",
+                        research_governance_end_to_end_pack.get("top_blocker"),
+                    ),
+                    ("next_action", research_governance_end_to_end_pack.get("next_action")),
+                    (
+                        "detail_report",
+                        research_governance_end_to_end_pack.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        research_governance_end_to_end_pack.get("production_effect"),
                     ),
                 ]
             ),
@@ -7557,6 +7623,95 @@ def _missing_research_roadmap_dashboard_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "research_roadmap_dashboard artifact missing; run reports "
             "research-roadmap-dashboard."
+        ),
+        "limitation": reason,
+    }
+
+
+def _research_governance_end_to_end_pack_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_research_governance_end_to_end_pack_summary(
+            "report_index artifact missing; Reader Brief cannot discover governance pack."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "research_governance_end_to_end_pack",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_research_governance_end_to_end_pack_summary(
+            "research_governance_end_to_end_pack artifact missing from report index "
+            "latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "research_governance_end_to_end_pack_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    governance_status = _text(
+        payload.get("overall_governance_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": governance_status,
+        "overall_governance_status": governance_status,
+        "validation_status": validation_status,
+        "source_report_count": _int(summary.get("source_report_count")),
+        "available_source_count": _int(summary.get("available_source_count")),
+        "validation_pass_count": _int(summary.get("validation_pass_count")),
+        "validation_warning_count": _int(summary.get("validation_warning_count")),
+        "validation_fail_count": _int(summary.get("validation_fail_count")),
+        "blocking_item_count": _int(summary.get("blocking_item_count")),
+        "warning_item_count": _int(summary.get("warning_item_count")),
+        "manual_review_item_count": _int(summary.get("manual_review_item_count")),
+        "top_blocker": _text(summary.get("top_blocker"), "none"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"research_governance_end_to_end_pack={governance_status}; "
+            f"validation={validation_status}; "
+            f"blockers={_int(summary.get('blocking_item_count'))}; "
+            f"warnings={_int(summary.get('warning_item_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest governance end-to-end pack artifacts; "
+            "it does not run upstream reports or mutate state."
+        ),
+    }
+
+
+def _missing_research_governance_end_to_end_pack_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "overall_governance_status": "MISSING",
+        "validation_status": "MISSING",
+        "source_report_count": 0,
+        "available_source_count": 0,
+        "validation_pass_count": 0,
+        "validation_warning_count": 0,
+        "validation_fail_count": 0,
+        "blocking_item_count": 0,
+        "warning_item_count": 0,
+        "manual_review_item_count": 0,
+        "top_blocker": "none",
+        "next_action": "run_aits_reports_research_governance_end_to_end_pack_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "research_governance_end_to_end_pack artifact missing; run reports "
+            "research-governance-end-to-end-pack."
         ),
         "limitation": reason,
     }
@@ -23499,7 +23654,9 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "artifact_lineage_validation": 227,
         "research_roadmap_dashboard": 228,
         "research_roadmap_dashboard_validation": 229,
-        "report_quality_gate": 230,
+        "research_governance_end_to_end_pack": 230,
+        "research_governance_end_to_end_pack_validation": 231,
+        "report_quality_gate": 232,
         "reader_brief_quality": 240,
         "artifact_catalog": 250,
     }
@@ -23601,6 +23758,13 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "research_roadmap_dashboard_validation": (
             "确认 research roadmap dashboard sections、Reader Brief fields 和只读边界是否通过。"
+        ),
+        "research_governance_end_to_end_pack": (
+            "查看 task/register、waiver、Reader Brief、safety、owner、paper-shadow、roadmap "
+            "和 lineage 的 end-to-end governance status。"
+        ),
+        "research_governance_end_to_end_pack_validation": (
+            "确认 end-to-end governance pack source coverage、Reader Brief fields 和只读边界。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -23759,6 +23923,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "manual roadmap review",
         "Research roadmap dashboard 生成后立即校验 sections 和只读安全边界。",
+    ),
+    "research_governance_end_to_end_pack": (
+        "monthly",
+        "manual governance pack",
+        "TRADING-362 到 TRADING-382 governance artifacts 更新后生成。",
+    ),
+    "research_governance_end_to_end_pack_validation": (
+        "monthly",
+        "manual governance pack",
+        "Research governance end-to-end pack 生成后立即校验 source coverage 和安全边界。",
     ),
     "research_safety_boundary_audit": (
         "daily",

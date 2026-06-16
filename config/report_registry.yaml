@@ -7555,6 +7555,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: research_governance_end_to_end_pack
+    title: Research Governance End-to-End Pack
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports research-governance-end-to-end-pack --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_governance_end_to_end_pack_????-??-??.json
+      - outputs/reports/research_governance_end_to_end_pack_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Research governance end-to-end pack should be current after TRADING-362 through TRADING-382 governance artifacts or report index change.
+    owner_action: review_governance_end_to_end_blockers_and_next_actions
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_governance_end_to_end_pack_validation
+    title: Research Governance End-to-End Pack Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-research-governance-end-to-end-pack --latest
+    artifact_globs:
+      - outputs/reports/research_governance_end_to_end_pack_validation_*.json
+      - outputs/reports/research_governance_end_to_end_pack_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Research governance end-to-end pack validation should fail closed on missing required source reports, unsafe production effect, missing Reader Brief fields, or state-mutation boundary drift.
+    owner_action: run_after_research_governance_end_to_end_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

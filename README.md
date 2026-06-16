@@ -1708,6 +1708,21 @@ paper-shadow / data governance / safety / lineage status 和 next recommended ta
 paper-shadow 或 production state，不运行上游、不刷新数据、不补造 artifacts，不生成 official
 target weights、order ticket 或 broker action。
 
+TRADING-384_RESEARCH_GOVERNANCE_END_TO_END_PACK 新增只读 research governance
+end-to-end pack。`aits reports research-governance-end-to-end-pack --as-of YYYY-MM-DD`
+聚合同日 report index 和 latest task-register consistency、waiver inventory、Reader Brief
+consistency、safety audit、production boundary scan、owner review template、owner decision
+audit log、monthly review pack、promotion board、extended shadow protocol、roadmap dashboard
+和 artifact lineage graph，输出
+`outputs/reports/research_governance_end_to_end_pack_YYYY-MM-DD.json/md`。
+`aits reports validate-research-governance-end-to-end-pack --latest` 输出 validation
+artifact。Overall status 限定为
+`GOVERNANCE_HEALTHY|GOVERNANCE_HEALTHY_WITH_WARNINGS|GOVERNANCE_MANUAL_REVIEW_REQUIRED|GOVERNANCE_BLOCKED`，
+并披露 source coverage、validation pass/warning/fail counts、top blockers 和 next actions。
+该 pack 只做 manual governance review 输入，不运行上游、不刷新数据、不补造 owner
+decision / evidence / metrics，不修改 task / strategy / candidate / paper-shadow /
+production state，不生成 official target weights、order ticket 或 broker action。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持
