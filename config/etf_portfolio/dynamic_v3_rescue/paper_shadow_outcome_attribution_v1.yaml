@@ -1,0 +1,92 @@
+policy_id: dynamic_v3_rescue_paper_shadow_outcome_attribution_v1
+version: "2026-06-16"
+status: pilot_manual_review_baseline
+owner: system_validation
+rationale: >
+  Make paper-shadow weekly review outcomes explainable by separating data, signal,
+  regime, drift, coverage, fallback, market, and manual governance drivers.
+intended_effect: >
+  Provide owner-readable attribution for weekly paper-shadow outcomes without changing
+  the weekly decision or recalculating strategy behavior.
+validation_evidence: >
+  TRADING-373 focused tests cover driver classification, missing weekly fail-closed
+  behavior, CLI run/report/validate, and Reader Brief summary.
+review_condition: >
+  Revisit driver priority or confidence policy after owner review of several real weekly
+  attribution reports or if weekly review schema changes.
+confidence_levels:
+  - HIGH
+  - MEDIUM
+  - LOW
+  - UNKNOWN
+driver_statuses:
+  - ACTIVE
+  - INACTIVE
+  - UNKNOWN
+drivers:
+  - driver_id: signal_input_incompleteness
+    category: signal_input_incompleteness
+    priority: 10
+    confidence_when_source_present: HIGH
+    rationale: Required signal input blockers directly affect paper-shadow validity.
+  - driver_id: data_stale_warning
+    category: data_stale_warning
+    priority: 20
+    confidence_when_source_present: HIGH
+    rationale: Data freshness blockers can dominate weekly interpretation.
+  - driver_id: weekly_coverage_warning
+    category: weekly_coverage_warning
+    priority: 30
+    confidence_when_source_present: HIGH
+    rationale: Partial or recovery weekly coverage limits continuation conclusions.
+  - driver_id: drift_warning
+    category: drift_warning
+    priority: 40
+    confidence_when_source_present: HIGH
+    rationale: Drift monitor WATCH/WARNING/BLOCKING findings explain outcome quality.
+  - driver_id: fallback_source_used
+    category: fallback_source_used
+    priority: 50
+    confidence_when_source_present: MEDIUM
+    rationale: Fallback source use affects source trust but may require owner source review.
+  - driver_id: manual_owner_decision
+    category: manual_owner_decision
+    priority: 60
+    confidence_when_source_present: MEDIUM
+    rationale: Owner or ledger decisions can explain why weekly action differs from metrics.
+  - driver_id: signal_change
+    category: signal_change
+    priority: 70
+    confidence_when_source_present: MEDIUM
+    rationale: Signal instability or output change can explain paper-shadow outcome changes.
+  - driver_id: regime_transition
+    category: regime_transition
+    priority: 80
+    confidence_when_source_present: LOW
+    rationale: Risk-on/risk-off state changes are explanatory but not standalone proof.
+  - driver_id: market_move
+    category: market_move
+    priority: 90
+    confidence_when_source_present: LOW
+    rationale: Market move context helps interpret outcomes but is not a causal proof here.
+safety_boundaries:
+  manual_review_only: true
+  research_only: true
+  outcome_attribution_only: true
+  read_only_attribution: true
+  weekly_decision_mutated: false
+  data_downloaded_by_attribution: false
+  pipelines_executed_by_attribution: false
+  official_target_weights: false
+  official_target_weights_mutated: false
+  not_official_target_weights: true
+  broker_effect: none
+  order_effect: none
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  paper_account_state_mutated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  auto_apply: false
+  production_effect: none

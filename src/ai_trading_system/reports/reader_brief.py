@@ -2434,6 +2434,54 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "paper_shadow_outcome_attribution",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_attribution_id"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_attribution_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_attribution_status"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_dominant_driver",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_dominant_driver"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_dominant_confidence",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_dominant_confidence"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_active_driver_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_active_driver_count"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_unknown_driver_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_unknown_driver_count"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_next_required_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_next_required_action"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_outcome_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_outcome_validation_status"
+                        ),
+                    ),
+                    (
                         "cost_sensitivity_review",
                         etf_dynamic_v3_parameter_research.get(
                             "cost_sensitivity_review_id"
@@ -13505,6 +13553,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_health_manifest.json",
     )
+    paper_shadow_outcome_attribution_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_paper_shadow_outcome_attribution",
+        ),
+        "paper_shadow_outcome_attribution_manifest.json",
+    )
     cost_sensitivity_review_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -14057,6 +14112,21 @@ def _etf_dynamic_v3_parameter_research_summary(
     paper_shadow_health_validation = _read_optional_json(
         paper_shadow_health_path.parent / "paper_shadow_health_validation.json"
         if paper_shadow_health_path is not None
+        else None
+    )
+    paper_shadow_outcome_manifest = _read_optional_json(
+        paper_shadow_outcome_attribution_path
+    )
+    paper_shadow_outcome_report = _read_optional_json(
+        paper_shadow_outcome_attribution_path.parent
+        / "paper_shadow_outcome_attribution_report.json"
+        if paper_shadow_outcome_attribution_path is not None
+        else None
+    )
+    paper_shadow_outcome_validation = _read_optional_json(
+        paper_shadow_outcome_attribution_path.parent
+        / "paper_shadow_outcome_attribution_validation.json"
+        if paper_shadow_outcome_attribution_path is not None
         else None
     )
     cost_sensitivity_manifest = _read_optional_json(cost_sensitivity_review_path)
@@ -15821,6 +15891,38 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_health_validation.get("status"),
             "MISSING",
         ),
+        "paper_shadow_outcome_attribution_id": _text(
+            paper_shadow_outcome_manifest.get("attribution_id"),
+            "MISSING",
+        ),
+        "paper_shadow_outcome_attribution_status": _text(
+            paper_shadow_outcome_report.get("paper_shadow_outcome_attribution_status"),
+            "MISSING",
+        ),
+        "paper_shadow_outcome_dominant_driver": _text(
+            paper_shadow_outcome_report.get("dominant_driver"),
+            "MISSING",
+        ),
+        "paper_shadow_outcome_dominant_confidence": _text(
+            paper_shadow_outcome_report.get("dominant_confidence"),
+            "MISSING",
+        ),
+        "paper_shadow_outcome_active_driver_count": paper_shadow_outcome_report.get(
+            "active_driver_count",
+            "MISSING",
+        ),
+        "paper_shadow_outcome_unknown_driver_count": paper_shadow_outcome_report.get(
+            "unknown_driver_count",
+            "MISSING",
+        ),
+        "paper_shadow_outcome_next_required_action": _text(
+            paper_shadow_outcome_report.get("next_required_action"),
+            "MISSING",
+        ),
+        "paper_shadow_outcome_validation_status": _text(
+            paper_shadow_outcome_validation.get("status"),
+            "MISSING",
+        ),
         "cost_sensitivity_review_id": _text(
             cost_sensitivity_manifest.get("review_id"),
             "MISSING",
@@ -16238,6 +16340,11 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_health": (
             "" if paper_shadow_health_path is None else str(paper_shadow_health_path)
+        ),
+        "paper_shadow_outcome_attribution": (
+            ""
+            if paper_shadow_outcome_attribution_path is None
+            else str(paper_shadow_outcome_attribution_path)
         ),
         "cost_sensitivity_review": (
             ""
@@ -17231,6 +17338,14 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_health_warnings": "MISSING",
         "paper_shadow_health_next_required_action": "MISSING",
         "paper_shadow_health_validation_status": "MISSING",
+        "paper_shadow_outcome_attribution_id": "MISSING",
+        "paper_shadow_outcome_attribution_status": "MISSING",
+        "paper_shadow_outcome_dominant_driver": "MISSING",
+        "paper_shadow_outcome_dominant_confidence": "MISSING",
+        "paper_shadow_outcome_active_driver_count": "MISSING",
+        "paper_shadow_outcome_unknown_driver_count": "MISSING",
+        "paper_shadow_outcome_next_required_action": "MISSING",
+        "paper_shadow_outcome_validation_status": "MISSING",
         "cost_sensitivity_review_id": "MISSING",
         "cost_sensitivity_status": "MISSING",
         "cost_sensitivity_policy": "MISSING",
@@ -17332,6 +17447,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "evidence_staleness_monitor": "",
         "shadow_continuation_readiness_report": "",
         "paper_shadow_health": "",
+        "paper_shadow_outcome_attribution": "",
         "cost_sensitivity_review": "",
         "benchmark_baseline_control": "",
         "candidate_regression_replay": "",

@@ -39,6 +39,9 @@ from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as paper_shadow_drift
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_health as paper_shadow_health
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_paper_shadow_outcome_attribution as paper_shadow_outcome_attribution,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as paper_shadow_weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import (
@@ -1861,6 +1864,10 @@ dynamic_v3_paper_shadow_health_app = typer.Typer(
     help="Dynamic v3 rescue canonical paper-shadow health workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_paper_shadow_outcome_attribution_app = typer.Typer(
+    help="Dynamic v3 rescue paper-shadow outcome attribution workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_cost_sensitivity_review_app = typer.Typer(
     help="Dynamic v3 rescue cost-sensitivity review workflow。",
     no_args_is_help=True,
@@ -2677,6 +2684,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_health_app,
     name="paper-shadow-health",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_paper_shadow_outcome_attribution_app,
+    name="paper-shadow-outcome-attribution",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_cost_sensitivity_review_app,
@@ -21408,6 +21419,170 @@ def dynamic_v3_validate_paper_shadow_health_command(
     _echo_validation_payload(
         paper_shadow_health.validate_paper_shadow_health_artifact(
             health_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_paper_shadow_outcome_attribution_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    typer.echo(f"attribution_id={report.get('attribution_id') or manifest.get('attribution_id')}")
+    typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
+    typer.echo(
+        "paper_shadow_outcome_attribution_status="
+        f"{report.get('paper_shadow_outcome_attribution_status')}"
+    )
+    typer.echo(f"weekly_review_id={report.get('weekly_review_id')}")
+    typer.echo(f"weekly_decision={report.get('weekly_decision')}")
+    typer.echo(f"dominant_driver={report.get('dominant_driver')}")
+    typer.echo(f"dominant_confidence={report.get('dominant_confidence')}")
+    typer.echo(f"active_driver_count={report.get('active_driver_count')}")
+    typer.echo(f"unknown_driver_count={report.get('unknown_driver_count')}")
+    typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
+    typer.echo(f"warnings={','.join(_texts(report.get('warnings')))}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(
+        "report_path="
+        f"{manifest.get('paper_shadow_outcome_attribution_markdown_path')}"
+    )
+    typer.echo("paper_shadow_outcome_attribution_only=true")
+    typer.echo("read_only_attribution=true")
+    typer.echo("weekly_decision_mutated=false")
+    typer.echo("data_downloaded_by_attribution=false")
+    typer.echo("pipelines_executed_by_attribution=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_paper_shadow_outcome_attribution_app.command("run")
+def dynamic_v3_paper_shadow_outcome_attribution_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help=(
+                "paper-shadow outcome attribution as-of date YYYY-MM-DD；"
+                "省略时使用 weekly end 或当前 UTC 日期。"
+            ),
+        ),
+    ] = None,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--weekly-review-id",
+            "--paper-shadow-weekly-review-id",
+            help="paper-shadow weekly review id；缺省读取 latest。",
+        ),
+    ] = None,
+    weekly_review_dir: Annotated[
+        Path,
+        typer.Option("--weekly-review-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    paper_shadow_health_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-health-id",
+            "--health-id",
+            help="paper-shadow health id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_health_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--paper-shadow-health-report-path",
+            help="显式 paper-shadow health report JSON。",
+        ),
+    ] = None,
+    paper_shadow_health_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-health-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="outcome attribution policy YAML。"),
+    ] = paper_shadow_outcome_attribution.DEFAULT_OUTCOME_ATTRIBUTION_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow outcome attribution artifact root。"),
+    ] = paper_shadow_outcome_attribution.DEFAULT_OUTCOME_ATTRIBUTION_DIR,
+) -> None:
+    result = paper_shadow_outcome_attribution.run_paper_shadow_outcome_attribution(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        weekly_review_id=weekly_review_id,
+        weekly_review_dir=weekly_review_dir,
+        paper_shadow_health_id=paper_shadow_health_id,
+        paper_shadow_health_report_path=paper_shadow_health_report_path,
+        paper_shadow_health_dir=paper_shadow_health_dir,
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+    _echo_paper_shadow_outcome_attribution_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("paper_shadow_outcome_attribution_report")),
+        validation=_mapping_obj(result.get("paper_shadow_outcome_attribution_validation")),
+    )
+
+
+@dynamic_v3_paper_shadow_outcome_attribution_app.command("report")
+def dynamic_v3_paper_shadow_outcome_attribution_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    attribution_id: Annotated[
+        str | None,
+        typer.Option("--attribution-id", help="paper-shadow outcome attribution artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow outcome attribution artifact root。"),
+    ] = paper_shadow_outcome_attribution.DEFAULT_OUTCOME_ATTRIBUTION_DIR,
+) -> None:
+    if not latest and not attribution_id:
+        raise typer.BadParameter("--attribution-id or --latest is required")
+    payload = paper_shadow_outcome_attribution.paper_shadow_outcome_attribution_report_payload(
+        attribution_id=attribution_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_paper_shadow_outcome_attribution_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("paper_shadow_outcome_attribution_report")),
+        validation=_mapping_obj(
+            payload.get("paper_shadow_outcome_attribution_validation")
+        ),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-paper-shadow-outcome-attribution")
+def dynamic_v3_validate_paper_shadow_outcome_attribution_command(
+    attribution_id: Annotated[
+        str | None,
+        typer.Option("--attribution-id", help="paper-shadow outcome attribution artifact id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="paper-shadow outcome attribution artifact root。"),
+    ] = paper_shadow_outcome_attribution.DEFAULT_OUTCOME_ATTRIBUTION_DIR,
+) -> None:
+    resolved_id = attribution_id
+    if latest:
+        payload = paper_shadow_outcome_attribution.paper_shadow_outcome_attribution_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("attribution_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--attribution-id or --latest is required")
+    _echo_validation_payload(
+        paper_shadow_outcome_attribution.validate_paper_shadow_outcome_attribution_artifact(
+            attribution_id=resolved_id,
             output_dir=output_dir,
         )
     )

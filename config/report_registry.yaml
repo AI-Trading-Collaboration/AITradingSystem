@@ -5242,6 +5242,34 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_paper_shadow_outcome_attribution
+    title: ETF Dynamic v3 Paper Shadow Outcome Attribution
+    group: governance
+    cadence: weekly
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue paper-shadow-outcome-attribution report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/*/paper_shadow_outcome_attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/*/paper_shadow_outcome_attribution_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/*/paper_shadow_outcome_attribution_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/*/paper_shadow_outcome_attribution_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/*/paper_shadow_outcome_attribution_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-373 attributes weekly paper-shadow outcomes to market move,
+      signal change, regime transition, data stale warning, fallback source
+      used, signal input incompleteness, drift warning, weekly coverage
+      warning, and manual owner decision drivers with HIGH/MEDIUM/LOW/UNKNOWN
+      confidence. It reads existing weekly review and canonical health
+      artifacts only, does not recalculate decisions, and cannot refresh data,
+      mutate paper-shadow state, create official target weights, or trigger
+      broker/order/production actions.
+    owner_action: review_outcome_attribution_with_weekly_paper_shadow_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cost_sensitivity_review
     title: ETF Dynamic v3 Cost Sensitivity Review
     group: governance

@@ -1661,6 +1661,29 @@ paper account 或 production state，所有输出固定 `paper_shadow_health_che
 `pipelines_executed_by_health_check=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-373_PAPER_SHADOW_OUTCOME_ATTRIBUTION 在 paper-shadow weekly review 和 canonical
+health 后新增 research-only outcome attribution layer。Policy config 为
+`config/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution_v1.yaml`，
+披露 driver taxonomy、HIGH/MEDIUM/LOW/UNKNOWN confidence policy、owner/version、rationale
+和 review condition。CLI 入口为
+`aits etf dynamic-v3-rescue paper-shadow-outcome-attribution run`、
+`aits etf dynamic-v3-rescue paper-shadow-outcome-attribution report --latest` 和
+`aits etf dynamic-v3-rescue validate-paper-shadow-outcome-attribution --latest`。该 report
+只读 paper-shadow weekly review 和 optional paper-shadow health context，把 weekly outcome
+归因到 market move、signal change、regime transition、data stale warning、fallback source
+used、signal input incompleteness、drift warning、weekly coverage warning 和 manual owner
+decision，输出 dominant driver、confidence、active/unknown driver counts、Reader Brief
+section 和 validation artifact；缺 weekly review 时 fail closed 为
+`BLOCKED_MISSING_WEEKLY_REVIEW`。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution/`。该 attribution
+layer 不重算 weekly decision、signal、regime、performance 或 health，不刷新数据、不补造
+upstream artifact、不写 official target weights、不触发 broker/order、不修改 paper account 或
+production state，所有输出固定 `research_only=true`、`outcome_attribution_only=true`、
+`read_only_attribution=true`、`weekly_decision_mutated=false`、
+`data_downloaded_by_attribution=false`、`pipelines_executed_by_attribution=false`、
+`not_official_target_weights=true`、`broker_action_allowed=false`、
+`production_effect=none`。
+
 TRADING-359_COST_SENSITIVITY_REVIEW 在 paper-shadow weekly/health 后新增 research-only
 transaction-cost sensitivity review。Policy config 为
 `config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml`，披露
