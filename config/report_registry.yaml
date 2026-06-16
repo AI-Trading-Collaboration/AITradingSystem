@@ -7395,6 +7395,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: research_monthly_review_pack
+    title: Research Monthly Review Pack
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports research-monthly-review-pack --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_monthly_review_pack_????-??-??.json
+      - outputs/reports/research_monthly_review_pack_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Research monthly review pack should be current before monthly owner review, promotion board preparation, or extended shadow interpretation.
+    owner_action: run_after_owner_decision_audit_log_and_research_safety_boundary
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_monthly_review_pack_validation
+    title: Research Monthly Review Pack Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-research-monthly-review-pack --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_monthly_review_pack_validation_*.json
+      - outputs/reports/research_monthly_review_pack_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Research monthly review pack validation should fail closed on missing required source families, unsafe production effect, missing monthly Reader Brief sections, or safety-boundary drift.
+    owner_action: run_after_research_monthly_review_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

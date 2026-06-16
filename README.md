@@ -1640,6 +1640,19 @@ duplicate decision id、缺 required field、非法 owner action / safety status
 governance-only，不改变 strategy outputs、candidate / paper-shadow / production state，不生成
 official target weights、order ticket 或 broker action；Reader Brief 只读展示 latest audit log status。
 
+TRADING-365_RESEARCH_MONTHLY_REVIEW_PACK 新增 monthly research governance review pack。
+`aits reports research-monthly-review-pack --as-of YYYY-MM-DD` 只读读取同日 report index
+和既有 candidate ledger、paper-shadow weekly review、staleness monitor、readiness、safety audit、
+owner decisions、cost sensitivity、benchmark baseline control、artifact lineage graph 与 data governance
+artifacts，输出 `outputs/reports/research_monthly_review_pack_YYYY-MM-DD.json/md`。
+`aits reports validate-research-monthly-review-pack --latest` 输出
+`research_monthly_review_pack_validation_YYYY-MM-DD.json/md`。报告披露 active / rejected /
+paper-shadow / needs-evidence candidates、major blockers、major warnings、safety audit status、
+data governance status、owner decision status 和 monthly Reader Brief。该 pack 不运行上游、
+不刷新数据、不补造缺失 artifact、不修改 strategy / candidate / paper-shadow / production state、
+不生成 official target weights、order ticket 或 broker action；candidate blockers 只是 manual owner
+review 结论输入，不自动 reject 或 promote。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持

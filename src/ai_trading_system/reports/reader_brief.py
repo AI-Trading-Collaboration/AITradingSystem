@@ -168,6 +168,7 @@ def build_reader_brief_payload(
     production_boundary_static_scan = _production_boundary_static_scan_summary(report_index)
     owner_review_template_v2 = _owner_review_template_v2_summary(report_index)
     owner_decision_audit_log = _owner_decision_audit_log_summary(report_index)
+    research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -327,6 +328,7 @@ def build_reader_brief_payload(
         "production_boundary_static_scan": production_boundary_static_scan,
         "owner_review_template_v2": owner_review_template_v2,
         "owner_decision_audit_log": owner_decision_audit_log,
+        "research_monthly_review_pack": research_monthly_review_pack,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -651,6 +653,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     owner_review_template_v2 = _mapping(payload.get("owner_review_template_v2"))
     owner_decision_audit_log = _mapping(payload.get("owner_decision_audit_log"))
+    research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1020,6 +1023,61 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", owner_decision_audit_log.get("next_action")),
                     ("detail_report", owner_decision_audit_log.get("detail_report")),
                     ("production_effect", owner_decision_audit_log.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Research Monthly Review Pack",
+            _definition_table(
+                [
+                    ("availability", research_monthly_review_pack.get("availability")),
+                    ("status", research_monthly_review_pack.get("status")),
+                    (
+                        "monthly_review_status",
+                        research_monthly_review_pack.get("monthly_review_status"),
+                    ),
+                    (
+                        "validation_status",
+                        research_monthly_review_pack.get("validation_status"),
+                    ),
+                    (
+                        "active_candidates",
+                        research_monthly_review_pack.get("active_candidate_count"),
+                    ),
+                    (
+                        "paper_shadow_candidates",
+                        research_monthly_review_pack.get("paper_shadow_candidate_count"),
+                    ),
+                    (
+                        "needs_evidence_candidates",
+                        research_monthly_review_pack.get("needs_evidence_candidate_count"),
+                    ),
+                    (
+                        "major_blockers",
+                        research_monthly_review_pack.get("major_blocker_count"),
+                    ),
+                    (
+                        "major_warnings",
+                        research_monthly_review_pack.get("major_warning_count"),
+                    ),
+                    (
+                        "safety_audit_status",
+                        research_monthly_review_pack.get("safety_audit_status"),
+                    ),
+                    (
+                        "data_governance_status",
+                        research_monthly_review_pack.get("data_governance_status"),
+                    ),
+                    (
+                        "owner_decision_status",
+                        research_monthly_review_pack.get("owner_decision_status"),
+                    ),
+                    ("next_action", research_monthly_review_pack.get("next_action")),
+                    ("detail_report", research_monthly_review_pack.get("detail_report")),
+                    (
+                        "production_effect",
+                        research_monthly_review_pack.get("production_effect"),
+                    ),
                 ]
             ),
         ),
@@ -6854,6 +6912,97 @@ def _missing_owner_decision_audit_log_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "owner_decision_audit_log artifact missing; run reports "
             "owner-decision-audit-log report."
+        ),
+        "limitation": reason,
+    }
+
+
+def _research_monthly_review_pack_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_research_monthly_review_pack_summary(
+            "report_index artifact missing; Reader Brief cannot discover monthly review pack."
+        )
+    report_path = _report_index_artifact_path(report_index, "research_monthly_review_pack")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_research_monthly_review_pack_summary(
+            "research_monthly_review_pack artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "research_monthly_review_pack_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(
+        payload.get("monthly_review_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "monthly_review_status": status,
+        "validation_status": validation_status,
+        "source_family_count": _int(summary.get("source_family_count")),
+        "active_candidate_count": _int(summary.get("active_candidate_count")),
+        "rejected_candidate_count": _int(summary.get("rejected_candidate_count")),
+        "paper_shadow_candidate_count": _int(summary.get("paper_shadow_candidate_count")),
+        "needs_evidence_candidate_count": _int(
+            summary.get("needs_evidence_candidate_count")
+        ),
+        "major_blocker_count": _int(summary.get("major_blocker_count")),
+        "major_warning_count": _int(summary.get("major_warning_count")),
+        "safety_audit_status": _text(summary.get("safety_audit_status"), "UNKNOWN"),
+        "data_governance_status": _text(
+            summary.get("data_governance_status"),
+            "UNKNOWN",
+        ),
+        "owner_decision_status": _text(summary.get("owner_decision_status"), "UNKNOWN"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"research_monthly_review_pack={status}; "
+            f"validation={validation_status}; "
+            f"active={_int(summary.get('active_candidate_count'))}; "
+            f"needs_evidence={_int(summary.get('needs_evidence_candidate_count'))}; "
+            f"blockers={_int(summary.get('major_blocker_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest monthly review pack artifacts from "
+            "report index; it does not run upstream source reports or approve promotion."
+        ),
+    }
+
+
+def _missing_research_monthly_review_pack_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "monthly_review_status": "MISSING",
+        "validation_status": "MISSING",
+        "source_family_count": 0,
+        "active_candidate_count": 0,
+        "rejected_candidate_count": 0,
+        "paper_shadow_candidate_count": 0,
+        "needs_evidence_candidate_count": 0,
+        "major_blocker_count": 0,
+        "major_warning_count": 0,
+        "safety_audit_status": "MISSING",
+        "data_governance_status": "MISSING",
+        "owner_decision_status": "MISSING",
+        "next_action": "run_aits_reports_research_monthly_review_pack_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "research_monthly_review_pack artifact missing; run reports "
+            "research-monthly-review-pack."
         ),
         "limitation": reason,
     }
@@ -22785,6 +22934,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "owner_review_template_v2_validation": 218,
         "owner_decision_audit_log": 219,
         "owner_decision_audit_log_validation": 220,
+        "research_monthly_review_pack": 221,
+        "research_monthly_review_pack_validation": 222,
         "research_safety_boundary_audit": 221,
         "research_safety_boundary_validation": 222,
         "documentation_contract": 223,
@@ -22863,6 +23014,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "owner_decision_audit_log_validation": (
             "确认 owner decision audit log schema、唯一 decision id 和安全边界是否通过。"
+        ),
+        "research_monthly_review_pack": (
+            "查看月度 candidate research、paper-shadow、data governance 和 owner decision 汇总。"
+        ),
+        "research_monthly_review_pack_validation": (
+            "确认月度 review pack 的 source coverage、Reader Brief section 和安全边界是否通过。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -22968,6 +23125,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "daily",
         "manual / monthly governance",
         "Owner decision audit log report 生成后立即校验 append-only boundary。",
+    ),
+    "research_monthly_review_pack": (
+        "monthly",
+        "monthly / manual governance",
+        "Owner 月度 research review、promotion board 准备或重要 source artifact 更新后生成。",
+    ),
+    "research_monthly_review_pack_validation": (
+        "monthly",
+        "monthly / manual governance",
+        "Monthly review pack 生成后立即校验 source coverage 和 safety boundary。",
     ),
     "research_safety_boundary_audit": (
         "daily",
