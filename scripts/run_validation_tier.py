@@ -48,6 +48,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_validation_tier_script.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
+            "tests/test_artifact_lineage.py",
             "tests/test_report_quality_gate.py",
             "tests/test_cli_direct.py",
             "tests/test_etf_cli_aliases.py",
@@ -65,6 +66,7 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_validation_tier_script.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
+            "tests/test_artifact_lineage.py",
             "tests/test_report_quality_gate.py",
             "tests/test_formal_research_method_contract.py",
             "tests/test_promotion_gate_threshold_calibration.py",
@@ -85,6 +87,7 @@ TIER_SPECS: dict[str, TierSpec] = {
         slow_suite_allowed=False,
         paths=(
             "tests/test_report_index.py",
+            "tests/test_artifact_lineage.py",
             "tests/test_report_quality_gate.py",
             "tests/test_reader_brief.py",
             "tests/test_reader_brief_dynamic_v3_defensive_evidence.py",

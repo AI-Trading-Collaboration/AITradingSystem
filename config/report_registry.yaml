@@ -7155,6 +7155,38 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: artifact_lineage_graph
+    title: Artifact Lineage Graph
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports artifact-lineage --date YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/artifact_lineage_graph_*.json
+      - outputs/reports/artifact_lineage_graph_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Candidate research and paper-shadow decision audit should use the current daily artifact dependency chain.
+    owner_action: review_lineage_blockers_before_paper_shadow_decision_audit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: artifact_lineage_validation
+    title: Artifact Lineage Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-artifact-lineage --date YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/artifact_lineage_validation_*.json
+      - outputs/reports/artifact_lineage_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Artifact lineage validation should confirm required families, required edges, and safety boundary before report indexing.
+    owner_action: run_validate_artifact_lineage_after_artifact_lineage_generation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: reader_brief_quality
     title: Reader Brief Quality
     group: governance

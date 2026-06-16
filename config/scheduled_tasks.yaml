@@ -314,6 +314,32 @@ cadences:
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false
+      - task_id: daily_artifact_lineage
+        daily_plan_step_id: artifact_lineage
+        title: Build artifact lineage graph
+        command: aits reports artifact-lineage --latest
+        command_contains:
+          - reports
+          - artifact-lineage
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_validate_artifact_lineage
+        daily_plan_step_id: validate_artifact_lineage
+        title: Validate artifact lineage graph
+        command: aits reports validate-artifact-lineage --latest
+        command_contains:
+          - reports
+          - validate-artifact-lineage
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_report_index
         daily_plan_step_id: report_index
         title: Build report index

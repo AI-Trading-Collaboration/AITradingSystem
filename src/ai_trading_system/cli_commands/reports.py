@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 from typing import Annotated
@@ -92,6 +93,18 @@ from ai_trading_system.prediction_ledger import (
 )
 from ai_trading_system.report_traceability import (
     default_report_trace_bundle_path,
+)
+from ai_trading_system.reports.artifact_lineage import (
+    build_artifact_lineage_payload,
+    default_artifact_lineage_json_path,
+    default_artifact_lineage_markdown_path,
+    default_artifact_lineage_validation_json_path,
+    default_artifact_lineage_validation_markdown_path,
+    validate_artifact_lineage_payload,
+    write_artifact_lineage_json,
+    write_artifact_lineage_markdown,
+    write_artifact_lineage_validation_json,
+    write_artifact_lineage_validation_markdown,
 )
 from ai_trading_system.reports.calculation_explainers import (
     DEFAULT_METRIC_EXPLAINERS_CONFIG_PATH,
@@ -1672,6 +1685,200 @@ def validate_reader_brief_command(
         f"failed：{payload['summary']['failed_check_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
+
+
+@reports_app.command("artifact-lineage")
+def artifact_lineage_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Artifact lineage 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析 artifact 相对路径的项目根目录。"),
+    ] = PROJECT_ROOT,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="可选 report_index JSON 路径；不传时只读扫描 report registry。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="report_registry.yaml 路径。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    waiver_path: Annotated[
+        Path,
+        typer.Option(help="report index visibility waiver YAML 路径。"),
+    ] = DEFAULT_REPORT_INDEX_WAIVER_PATH,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Artifact lineage JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Artifact lineage Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 candidate research chain artifact lineage graph；只读扫描既有 artifact。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        snapshot_path = _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        report_date = _decision_snapshot_date(snapshot_path)
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+    report_index_payload: dict[str, object] | None = None
+    if report_index_path is not None:
+        if not report_index_path.exists():
+            raise typer.BadParameter(f"report_index JSON not found: {report_index_path}")
+        try:
+            raw_index = json.loads(report_index_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise typer.BadParameter(
+                f"report_index JSON cannot be parsed: {report_index_path}"
+            ) from exc
+        if not isinstance(raw_index, dict):
+            raise typer.BadParameter(f"report_index JSON must be an object: {report_index_path}")
+        report_index_payload = raw_index
+    try:
+        payload = build_artifact_lineage_payload(
+            as_of=report_date,
+            project_root=project_root,
+            report_index_payload=report_index_payload,
+            report_index_path=report_index_path,
+            registry_path=registry_path,
+            waiver_path=waiver_path,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    lineage_json = json_output_path or default_artifact_lineage_json_path(
+        reports_dir,
+        report_date,
+    )
+    lineage_md = markdown_output_path or default_artifact_lineage_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_artifact_lineage_json(payload, lineage_json)
+    md_path = write_artifact_lineage_markdown(payload, lineage_md)
+    style = "green" if payload["lineage_status"] == "PASS" else "yellow"
+    if payload["lineage_status"] == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Artifact lineage：{payload['lineage_status']}[/{style}]")
+    console.print(f"Artifact lineage JSON：{json_path}")
+    console.print(f"Artifact lineage Markdown：{md_path}")
+    console.print(
+        f"families：{summary['available_required_family_count']}/"
+        f"{summary['required_family_count']}；"
+        f"edges：{summary['passing_required_edge_count']}/"
+        f"{summary['required_edge_count']}；"
+        f"blocking：{summary['blocking_issue_count']}；"
+        f"warnings：{summary['warning_issue_count']}；"
+        f"production_effect={payload['production_effect']}；只读 lineage"
+    )
+
+
+@reports_app.command("validate-artifact-lineage")
+def validate_artifact_lineage_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Artifact lineage validation 日期，格式为 YYYY-MM-DD。",
+        ),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    artifact_lineage_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Artifact lineage JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Artifact lineage validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Artifact lineage validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 artifact lineage graph 的 family / edge / production safety 覆盖。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        snapshot_path = _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        report_date = _decision_snapshot_date(snapshot_path)
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+    lineage_path = artifact_lineage_json_path or default_artifact_lineage_json_path(
+        reports_dir,
+        report_date,
+    )
+    if not lineage_path.exists():
+        raise typer.BadParameter(f"artifact lineage JSON not found: {lineage_path}")
+    try:
+        raw_payload = json.loads(lineage_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"artifact lineage JSON cannot be parsed: {lineage_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(f"artifact lineage JSON must be an object: {lineage_path}")
+    payload = validate_artifact_lineage_payload(raw_payload)
+    raw_source_artifacts = payload.get("source_artifacts")
+    source_artifacts = (
+        dict(raw_source_artifacts) if isinstance(raw_source_artifacts, Mapping) else {}
+    )
+    source_artifacts["artifact_lineage_graph"] = str(lineage_path)
+    payload["source_artifacts"] = source_artifacts
+    payload["input_artifacts"] = source_artifacts
+    validation_json = json_output_path or default_artifact_lineage_validation_json_path(
+        reports_dir,
+        report_date,
+    )
+    validation_md = markdown_output_path or default_artifact_lineage_validation_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_artifact_lineage_validation_json(payload, validation_json)
+    md_path = write_artifact_lineage_validation_markdown(payload, validation_md)
+    style = "green" if payload["validation_status"] == "PASS" else "yellow"
+    if payload["validation_status"] == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Artifact lineage validation：{payload['validation_status']}[/{style}]")
+    console.print(f"Artifact lineage validation JSON：{json_path}")
+    console.print(f"Artifact lineage validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"blocking：{summary['blocking_issue_count']}；"
+        f"warnings：{summary['warning_issue_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if payload["validation_status"] == "FAIL":
+        raise typer.Exit(code=1)
 
 
 @reports_app.command("quality-gate")

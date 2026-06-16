@@ -668,6 +668,18 @@ def _dispatch(args: list[str]) -> None:
             latest=_flag(args, "--latest"),
         )
         return
+    if args[:2] == ["reports", "artifact-lineage"]:
+        reports_cli.artifact_lineage_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
+        return
+    if args[:2] == ["reports", "validate-artifact-lineage"]:
+        reports_cli.validate_artifact_lineage_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
+        return
     if args[:2] == ["reports", "score-change-attribution"]:
         reports_cli.score_change_attribution_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),

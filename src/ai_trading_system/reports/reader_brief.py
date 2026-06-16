@@ -163,6 +163,7 @@ def build_reader_brief_payload(
         market_panel=market_panel,
     )
     report_index_summary = _report_index_summary(report_index)
+    artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     report_quality_gate = _report_quality_gate_summary(report_index)
     pit_source_manifest = _pit_source_manifest_summary(report_index)
     data_refresh_audit = _data_refresh_audit_summary(report_index)
@@ -314,6 +315,7 @@ def build_reader_brief_payload(
         "score_change_attribution_summary": score_change_summary,
         "score_change_narrative": score_change_narrative,
         "report_index_summary": report_index_summary,
+        "artifact_lineage_graph": artifact_lineage_graph,
         "report_quality_gate": report_quality_gate,
         "missing_limited_artifact_impact": missing_artifact_impact,
         "task_cadence_calendar": task_cadence_calendar,
@@ -600,6 +602,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     score_changes = _mapping(payload.get("score_change_attribution_summary"))
     score_change_narrative = _mapping(payload.get("score_change_narrative"))
     report_index = _mapping(payload.get("report_index_summary"))
+    artifact_lineage_graph = _mapping(payload.get("artifact_lineage_graph"))
     report_quality_gate = _mapping(payload.get("report_quality_gate"))
     missing_impact = _mapping(payload.get("missing_limited_artifact_impact"))
     cadence_calendar = _mapping(payload.get("task_cadence_calendar"))
@@ -795,6 +798,34 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             )
             + _records_table(_records(report_index.get("problem_reports"))),
+        ),
+        _section(
+            "Artifact Lineage Graph",
+            _definition_table(
+                [
+                    ("availability", artifact_lineage_graph.get("availability")),
+                    ("status", artifact_lineage_graph.get("status")),
+                    ("lineage_status", artifact_lineage_graph.get("lineage_status")),
+                    (
+                        "available_required_families",
+                        artifact_lineage_graph.get("available_required_family_count"),
+                    ),
+                    (
+                        "required_families",
+                        artifact_lineage_graph.get("required_family_count"),
+                    ),
+                    (
+                        "passing_required_edges",
+                        artifact_lineage_graph.get("passing_required_edge_count"),
+                    ),
+                    ("required_edges", artifact_lineage_graph.get("required_edge_count")),
+                    ("blocking_issues", artifact_lineage_graph.get("blocking_issue_count")),
+                    ("warning_issues", artifact_lineage_graph.get("warning_issue_count")),
+                    ("next_action", artifact_lineage_graph.get("next_action")),
+                    ("detail_report", artifact_lineage_graph.get("detail_report")),
+                    ("production_effect", artifact_lineage_graph.get("production_effect")),
+                ]
+            ),
         ),
         _section(
             "Report Quality Gate",
@@ -6161,6 +6192,75 @@ def _report_index_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
         "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
         "problem_reports": problem_reports[:8],
         "limitation": "Reader Brief 只展示 report_index 的 freshness 摘要和 stale/missing 报告。",
+    }
+
+
+def _artifact_lineage_graph_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_artifact_lineage_graph_summary(
+            "report_index artifact missing; Reader Brief cannot discover artifact_lineage_graph."
+        )
+    report_path = _report_index_artifact_path(report_index, "artifact_lineage_graph")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_artifact_lineage_graph_summary(
+            "artifact_lineage_graph artifact missing from report index latest pointer."
+        )
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("lineage_status"), _text(payload.get("status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "lineage_status": status,
+        "node_count": _int(summary.get("node_count")),
+        "available_node_count": _int(summary.get("available_node_count")),
+        "required_family_count": _int(summary.get("required_family_count")),
+        "available_required_family_count": _int(
+            summary.get("available_required_family_count")
+        ),
+        "required_edge_count": _int(summary.get("required_edge_count")),
+        "passing_required_edge_count": _int(summary.get("passing_required_edge_count")),
+        "blocking_issue_count": _int(summary.get("blocking_issue_count")),
+        "warning_issue_count": _int(summary.get("warning_issue_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"artifact_lineage_status={status}; "
+            f"families={_int(summary.get('available_required_family_count'))}/"
+            f"{_int(summary.get('required_family_count'))}; "
+            f"edges={_int(summary.get('passing_required_edge_count'))}/"
+            f"{_int(summary.get('required_edge_count'))}; "
+            f"blocking={_int(summary.get('blocking_issue_count'))}; "
+            f"warnings={_int(summary.get('warning_issue_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest artifact_lineage_graph artifact from "
+            "report index; it does not run lineage generation or validation."
+        ),
+    }
+
+
+def _missing_artifact_lineage_graph_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "lineage_status": "MISSING",
+        "node_count": 0,
+        "available_node_count": 0,
+        "required_family_count": 0,
+        "available_required_family_count": 0,
+        "required_edge_count": 0,
+        "passing_required_edge_count": 0,
+        "blocking_issue_count": 0,
+        "warning_issue_count": 0,
+        "next_action": "run_aits_reports_artifact_lineage_then_validate_artifact_lineage",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "artifact_lineage_graph artifact missing; run reports artifact-lineage."
+        ),
+        "limitation": reason,
     }
 
 
@@ -21849,6 +21949,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "research_governance_summary": 200,
         "report_index": 210,
         "documentation_contract": 220,
+        "artifact_lineage_graph": 225,
+        "artifact_lineage_validation": 226,
         "report_quality_gate": 230,
         "reader_brief_quality": 240,
         "artifact_catalog": 250,
@@ -21893,6 +21995,10 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "market_panel": "查看 benchmark、AI sector、risk 和 liquidity 代理实际涨跌。",
         "research_governance_summary": "确认 backtest/shadow/SEC PIT/weight 是否仍 observe-only。",
         "report_index": "检查报告 freshness、missing/stale 和 owner action。",
+        "artifact_lineage_graph": "检查 candidate research / paper-shadow artifact 依赖链。",
+        "artifact_lineage_validation": (
+            "确认 artifact lineage required families 和 edges 是否通过。"
+        ),
         "report_quality_gate": "检查报告和 Reader Brief 是否披露基础可读 section。",
         "documentation_contract": "检查 registry 与 artifact catalog 契约覆盖。",
     }
@@ -21903,7 +22009,21 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
     "daily_score": ("daily", "daily", "下一个完整 U.S. equity trading day。"),
     "daily_decision_summary": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "reader_brief": ("daily", "daily", "随 daily-run 每个交易日生成。"),
-    "report_quality_gate": ("daily", "daily", "Reader Brief 生成后校验 report / Reader Brief section。"),
+    "artifact_lineage_graph": (
+        "daily",
+        "daily",
+        "Report index 前生成 candidate research artifact dependency chain。",
+    ),
+    "artifact_lineage_validation": (
+        "daily",
+        "daily",
+        "Report index 前 fail-closed 校验 lineage required families / edges。",
+    ),
+    "report_quality_gate": (
+        "daily",
+        "daily",
+        "Reader Brief 生成后校验 report / Reader Brief section。",
+    ),
     "reader_brief_quality": ("daily", "daily", "Reader Brief 生成后立即校验。"),
     "market_panel": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "score_change_attribution": ("daily", "daily", "随 daily-run 每个交易日对比上一信号日。"),

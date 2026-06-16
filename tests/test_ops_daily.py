@@ -417,10 +417,13 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "etf_forward_update",
         "etf_forward_dashboard",
         "etf_forward_watchlist",
+        "artifact_lineage",
+        "validate_artifact_lineage",
         "report_index",
         "documentation_contract",
         "research_governance_summary",
         "reader_brief",
+        "report_quality_gate",
         "validate_reader_brief",
         "dynamic_v3_rescue_schedule_observe",
         "pipeline_health",
@@ -474,6 +477,20 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "etf",
         "forward",
         "update",
+        "--latest",
+    )
+    assert next(step for step in plan.steps if step.step_id == "artifact_lineage").command == (
+        "aits",
+        "reports",
+        "artifact-lineage",
+        "--latest",
+    )
+    assert next(
+        step for step in plan.steps if step.step_id == "validate_artifact_lineage"
+    ).command == (
+        "aits",
+        "reports",
+        "validate-artifact-lineage",
         "--latest",
     )
     assert next(step for step in plan.steps if step.step_id == "report_index").command == (
@@ -935,10 +952,13 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert step_by_id["portfolio_candidate_tracking"].enabled is False
     assert step_by_id["portfolio_tracking_review"].enabled is False
     assert step_by_id["portfolio_tracking_review_report"].enabled is False
+    assert step_by_id["artifact_lineage"].enabled is False
+    assert step_by_id["validate_artifact_lineage"].enabled is False
     assert step_by_id["report_index"].enabled is False
     assert step_by_id["documentation_contract"].enabled is False
     assert step_by_id["research_governance_summary"].enabled is False
     assert step_by_id["reader_brief"].enabled is False
+    assert step_by_id["report_quality_gate"].enabled is False
     assert step_by_id["validate_reader_brief"].enabled is False
     assert step_by_id["dynamic_v3_rescue_schedule_observe"].enabled is True
     assert step_by_id["dynamic_v3_rescue_schedule_observe"].command == (

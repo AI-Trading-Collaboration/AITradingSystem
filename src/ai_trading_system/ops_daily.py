@@ -54,6 +54,12 @@ from ai_trading_system.official_policy_sources import (
 )
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
+from ai_trading_system.reports.artifact_lineage import (
+    default_artifact_lineage_json_path,
+    default_artifact_lineage_markdown_path,
+    default_artifact_lineage_validation_json_path,
+    default_artifact_lineage_validation_markdown_path,
+)
 from ai_trading_system.reports.market_panel import (
     default_market_panel_json_path,
     default_market_panel_report_path,
@@ -546,6 +552,16 @@ def build_daily_ops_plan(
         etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.json"
     )
     etf_forward_watchlist_md = etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.md"
+    artifact_lineage_json = default_artifact_lineage_json_path(reports_dir, as_of)
+    artifact_lineage_report = default_artifact_lineage_markdown_path(reports_dir, as_of)
+    artifact_lineage_validation_json = default_artifact_lineage_validation_json_path(
+        reports_dir,
+        as_of,
+    )
+    artifact_lineage_validation_report = default_artifact_lineage_validation_markdown_path(
+        reports_dir,
+        as_of,
+    )
     report_index_html = default_report_index_html_path(reports_dir, as_of)
     report_index_json = default_report_index_json_path(reports_dir, as_of)
     documentation_contract_report = default_documentation_contract_report_path(reports_dir, as_of)
@@ -1208,6 +1224,47 @@ def build_daily_ops_plan(
                 quality_gate=(
                     "只读 dashboard 生成本地 attention summary；allowed actions "
                     "限定为 manual review / observation，不发送外部 alert。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="artifact_lineage",
+                title="生成 artifact lineage graph",
+                command=(
+                    ("aits", "reports", "artifact-lineage", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(artifact_lineage_json, artifact_lineage_report),
+                quality_gate=(
+                    "只读扫描 report registry、latest artifacts 和 candidate research chain "
+                    "dependencies；不运行上游、不刷新数据，production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="validate_artifact_lineage",
+                title="校验 artifact lineage graph",
+                command=(
+                    ("aits", "reports", "validate-artifact-lineage", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    artifact_lineage_validation_json,
+                    artifact_lineage_validation_report,
+                ),
+                quality_gate=(
+                    "fail-closed 校验 artifact lineage required families、required edges "
+                    "和 production safety；不运行上游、不补造 artifact，production_effect=none。"
                 ),
                 blocks_downstream=True,
                 enabled=dashboard_enabled,

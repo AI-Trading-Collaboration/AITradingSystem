@@ -97,6 +97,8 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "portfolio track-candidate --latest",
         "portfolio review-tracking --latest --show-window-progress",
         "reports portfolio-tracking-review --latest",
+        "reports artifact-lineage --latest",
+        "reports validate-artifact-lineage --latest",
         "reports index --latest",
         "docs report-contract --latest",
         "reports research-governance-summary --latest",
@@ -179,10 +181,13 @@ def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
         "portfolio_candidate_tracking",
         "portfolio_tracking_review",
         "portfolio_tracking_review_report",
+        "artifact_lineage",
+        "validate_artifact_lineage",
         "report_index",
         "documentation_contract",
         "research_governance_summary",
         "reader_brief",
+        "report_quality_gate",
         "validate_reader_brief",
     ):
         assert step_by_id[step_id].enabled is False
@@ -246,7 +251,7 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
             "--skip-risk-event-openai-precheck",
         )
     )
-    assert calls[score_index + 1 : score_index + 21] == [
+    assert calls[score_index + 1 : score_index + 23] == [
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
         ("sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-06"),
@@ -260,6 +265,8 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
         ("etf", "forward", "update", "--latest"),
         ("etf", "forward", "dashboard", "--latest"),
         ("etf", "forward", "watchlist", "--latest"),
+        ("reports", "artifact-lineage", "--latest"),
+        ("reports", "validate-artifact-lineage", "--latest"),
         ("reports", "index", "--latest"),
         ("docs", "report-contract", "--latest"),
         ("reports", "research-governance-summary", "--latest"),

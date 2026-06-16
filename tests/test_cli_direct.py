@@ -771,6 +771,44 @@ def test_cli_direct_dispatches_report_quality_gate(monkeypatch) -> None:
     ]
 
 
+def test_cli_direct_dispatches_artifact_lineage(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_artifact_lineage(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr(cli_direct.reports_cli, "artifact_lineage_command", fake_artifact_lineage)
+
+    assert cli_direct.main(["reports", "artifact-lineage", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "artifact-lineage", "--latest"]) == 0
+
+    assert calls == [
+        {"as_of": "2026-05-13", "latest": False},
+        {"as_of": None, "latest": True},
+    ]
+
+
+def test_cli_direct_dispatches_validate_artifact_lineage(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_validate_artifact_lineage(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr(
+        cli_direct.reports_cli,
+        "validate_artifact_lineage_command",
+        fake_validate_artifact_lineage,
+    )
+
+    assert cli_direct.main(["reports", "validate-artifact-lineage", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "validate-artifact-lineage", "--latest"]) == 0
+
+    assert calls == [
+        {"as_of": "2026-05-13", "latest": False},
+        {"as_of": None, "latest": True},
+    ]
+
+
 def test_cli_direct_dispatches_score_change_and_market_panel_latest(monkeypatch) -> None:
     calls: list[tuple[str, dict[str, object]]] = []
 
@@ -931,6 +969,16 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         cli_direct.etf_cli,
         "forward_watchlist_command",
         recorder("etf_forward_watchlist"),
+    )
+    monkeypatch.setattr(
+        cli_direct.reports_cli,
+        "artifact_lineage_command",
+        recorder("artifact_lineage"),
+    )
+    monkeypatch.setattr(
+        cli_direct.reports_cli,
+        "validate_artifact_lineage_command",
+        recorder("validate_artifact_lineage"),
     )
     monkeypatch.setattr(cli_direct.reports_cli, "report_index_command", recorder("report_index"))
     monkeypatch.setattr(
