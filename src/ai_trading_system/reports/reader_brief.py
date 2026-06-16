@@ -163,6 +163,7 @@ def build_reader_brief_payload(
         market_panel=market_panel,
     )
     report_index_summary = _report_index_summary(report_index)
+    report_index_waiver_inventory = _report_index_waiver_inventory_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
     report_quality_gate = _report_quality_gate_summary(report_index)
@@ -316,6 +317,7 @@ def build_reader_brief_payload(
         "score_change_attribution_summary": score_change_summary,
         "score_change_narrative": score_change_narrative,
         "report_index_summary": report_index_summary,
+        "report_index_waiver_inventory": report_index_waiver_inventory,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
         "report_quality_gate": report_quality_gate,
@@ -604,6 +606,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     score_changes = _mapping(payload.get("score_change_attribution_summary"))
     score_change_narrative = _mapping(payload.get("score_change_narrative"))
     report_index = _mapping(payload.get("report_index_summary"))
+    report_index_waiver_inventory = _mapping(payload.get("report_index_waiver_inventory"))
     artifact_lineage_graph = _mapping(payload.get("artifact_lineage_graph"))
     task_register_consistency = _mapping(payload.get("task_register_consistency"))
     report_quality_gate = _mapping(payload.get("report_quality_gate"))
@@ -801,6 +804,39 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             )
             + _records_table(_records(report_index.get("problem_reports"))),
+        ),
+        _section(
+            "Report Index Waiver Inventory",
+            _definition_table(
+                [
+                    ("availability", report_index_waiver_inventory.get("availability")),
+                    ("status", report_index_waiver_inventory.get("status")),
+                    (
+                        "inventory_status",
+                        report_index_waiver_inventory.get("inventory_status"),
+                    ),
+                    (
+                        "configured_waivers",
+                        report_index_waiver_inventory.get("configured_waiver_count"),
+                    ),
+                    ("active_waivers", report_index_waiver_inventory.get("active_waiver_count")),
+                    (
+                        "expired_waivers",
+                        report_index_waiver_inventory.get("expired_waiver_count"),
+                    ),
+                    (
+                        "expiring_soon",
+                        report_index_waiver_inventory.get("expiring_soon_waiver_count"),
+                    ),
+                    (
+                        "missing_registry_entries",
+                        report_index_waiver_inventory.get("missing_registry_entry_count"),
+                    ),
+                    ("next_action", report_index_waiver_inventory.get("next_action")),
+                    ("detail_report", report_index_waiver_inventory.get("detail_report")),
+                    ("production_effect", report_index_waiver_inventory.get("production_effect")),
+                ]
+            ),
         ),
         _section(
             "Artifact Lineage Graph",
@@ -6237,6 +6273,70 @@ def _report_index_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
         "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
         "problem_reports": problem_reports[:8],
         "limitation": "Reader Brief 只展示 report_index 的 freshness 摘要和 stale/missing 报告。",
+    }
+
+
+def _report_index_waiver_inventory_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_report_index_waiver_inventory_summary(
+            "report_index artifact missing; Reader Brief cannot discover waiver inventory."
+        )
+    report_path = _report_index_artifact_path(report_index, "report_index_waiver_inventory")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_report_index_waiver_inventory_summary(
+            "report_index_waiver_inventory artifact missing from report index latest pointer."
+        )
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("inventory_status"), _text(payload.get("status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "inventory_status": status,
+        "configured_waiver_count": _int(summary.get("configured_waiver_count")),
+        "expanded_waiver_count": _int(summary.get("expanded_waiver_count")),
+        "active_waiver_count": _int(summary.get("active_waiver_count")),
+        "expired_waiver_count": _int(summary.get("expired_waiver_count")),
+        "expiring_soon_waiver_count": _int(summary.get("expiring_soon_waiver_count")),
+        "missing_registry_entry_count": _int(summary.get("missing_registry_entry_count")),
+        "blocking_issue_count": _int(summary.get("blocking_issue_count")),
+        "warning_issue_count": _int(summary.get("warning_issue_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"waiver_inventory={status}; "
+            f"active={_int(summary.get('active_waiver_count'))}; "
+            f"expired={_int(summary.get('expired_waiver_count'))}; "
+            f"expiring_soon={_int(summary.get('expiring_soon_waiver_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest waiver inventory artifact from report index; "
+            "it does not renew, remove, or apply waivers."
+        ),
+    }
+
+
+def _missing_report_index_waiver_inventory_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "inventory_status": "MISSING",
+        "configured_waiver_count": 0,
+        "expanded_waiver_count": 0,
+        "active_waiver_count": 0,
+        "expired_waiver_count": 0,
+        "expiring_soon_waiver_count": 0,
+        "missing_registry_entry_count": 0,
+        "blocking_issue_count": 0,
+        "warning_issue_count": 0,
+        "next_action": "run_aits_reports_waiver_inventory_then_validate",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "report_index_waiver_inventory artifact missing; run reports waiver-inventory."
+        ),
+        "limitation": reason,
     }
 
 
@@ -22070,6 +22170,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "trace_bundle": 150,
         "research_governance_summary": 200,
         "report_index": 210,
+        "report_index_waiver_inventory": 211,
+        "report_index_waiver_inventory_validation": 212,
         "documentation_contract": 220,
         "task_register_consistency": 223,
         "task_register_consistency_validation": 224,
@@ -22119,6 +22221,10 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "market_panel": "查看 benchmark、AI sector、risk 和 liquidity 代理实际涨跌。",
         "research_governance_summary": "确认 backtest/shadow/SEC PIT/weight 是否仍 observe-only。",
         "report_index": "检查报告 freshness、missing/stale 和 owner action。",
+        "report_index_waiver_inventory": "检查 report index waivers 是否有人负责且未过期。",
+        "report_index_waiver_inventory_validation": (
+            "确认 expired waiver 和 missing registry reference 是否 fail-closed。"
+        ),
         "task_register_consistency": (
             "检查 active/completed task register、docs link 和 registry 一致性。"
         ),
@@ -22168,6 +22274,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
     "market_panel": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "score_change_attribution": ("daily", "daily", "随 daily-run 每个交易日对比上一信号日。"),
     "report_index": ("daily", "daily", "随 daily-run 每个交易日扫描 latest artifacts。"),
+    "report_index_waiver_inventory": (
+        "daily",
+        "daily / governance",
+        "Report index 前或 governance pack 前确认 waiver 未过期。",
+    ),
+    "report_index_waiver_inventory_validation": (
+        "daily",
+        "daily / governance",
+        "Waiver inventory 生成后立即校验 expired waiver。",
+    ),
     "research_governance_summary": (
         "daily",
         "daily / weekly review",

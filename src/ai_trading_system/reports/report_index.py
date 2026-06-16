@@ -33,6 +33,14 @@ FRESHNESS_BASIS_VALUES = frozenset(
     }
 )
 WAIVABLE_VISIBILITY_ISSUES = frozenset({"MISSING", "STALE"})
+ACTIVE_WAIVER_REVIEW_STATUS = "approved_active"
+WAIVER_REVIEW_STATUSES = frozenset(
+    {
+        ACTIVE_WAIVER_REVIEW_STATUS,
+        "under_review",
+        "retired",
+    }
+)
 
 STATUS_KEYS: tuple[str, ...] = (
     "status",
@@ -176,6 +184,10 @@ def load_report_index_visibility_waivers(
         for field in (
             "owner",
             "reason",
+            "created_at",
+            "expires_at",
+            "review_status",
+            "linked_task_id",
             "accepted_impact",
             "validation_coverage",
             "exit_condition",
@@ -184,6 +196,18 @@ def load_report_index_visibility_waivers(
                 raise ValueError(
                     f"report index visibility waiver {waiver_id} missing required field: {field}"
                 )
+        created_at = _parse_waiver_date(waiver.get("created_at"), waiver_id, "created_at")
+        expires_at = _parse_waiver_date(waiver.get("expires_at"), waiver_id, "expires_at")
+        if expires_at <= created_at:
+            raise ValueError(
+                f"report index visibility waiver {waiver_id} expires_at must be after created_at"
+            )
+        review_status = _string(waiver.get("review_status"))
+        if review_status not in WAIVER_REVIEW_STATUSES:
+            raise ValueError(
+                f"report index visibility waiver {waiver_id} review_status must be one of "
+                f"{sorted(WAIVER_REVIEW_STATUSES)}"
+            )
         for report_id in report_ids:
             key = (report_id, issue_status)
             if key in seen:
@@ -220,7 +244,17 @@ def build_report_index_payload(
     reports, explicit_waivers, unwaived_issues = _apply_visibility_waivers(
         reports=reports,
         waiver_policy=waiver_policy,
+        as_of=as_of,
     )
+    expanded_waivers = _expanded_waivers(waiver_policy)
+    expired_waivers = [
+        waiver for waiver in expanded_waivers if _waiver_expired(waiver, as_of=as_of)
+    ]
+    inactive_waivers = [
+        waiver
+        for waiver in expanded_waivers
+        if _string(waiver.get("review_status")) != ACTIVE_WAIVER_REVIEW_STATUS
+    ]
     missing = [item for item in reports if item["freshness_status"] == "MISSING"]
     stale = [item for item in reports if item["freshness_status"] == "STALE"]
     required_missing = [item for item in missing if item.get("required_for_daily_reading") is True]
@@ -254,6 +288,8 @@ def build_report_index_payload(
             "required_missing_count": len(required_missing),
             "production_effect_risk_count": len(production_effect_risks),
             "explicit_waiver_count": len(explicit_waivers),
+            "expired_waiver_count": len(expired_waivers),
+            "inactive_waiver_count": len(inactive_waivers),
             "unwaived_warning_count": len(warnings),
             "reader_brief_count": len(
                 [item for item in reports if item["include_in_reader_brief"] is True]
@@ -270,8 +306,10 @@ def build_report_index_payload(
             "path": "" if waiver_path is None else str(waiver_path),
             "policy_id": _string(waiver_policy.get("policy_id")),
             "policy_metadata": _mapping(waiver_policy.get("policy_metadata")),
-            "configured_waiver_count": len(_expanded_waivers(waiver_policy)),
+            "configured_waiver_count": len(expanded_waivers),
             "active_waiver_count": len(explicit_waivers),
+            "expired_waiver_count": len(expired_waivers),
+            "inactive_waiver_count": len(inactive_waivers),
         },
         "visibility_audit": {
             "audit_status": "PASS" if not warnings else "WARN",
@@ -281,6 +319,8 @@ def build_report_index_payload(
             "missing_report_ids": [item["report_id"] for item in missing],
             "stale_report_ids": [item["report_id"] for item in stale],
             "waived_report_ids": [item["report_id"] for item in explicit_waivers],
+            "expired_waiver_ids": [item["waiver_id"] for item in expired_waivers],
+            "inactive_waiver_ids": [item["waiver_id"] for item in inactive_waivers],
             "unwaived_issue_ids": [item["issue_id"] for item in unwaived_issues],
             "required_missing_report_ids": [item["report_id"] for item in required_missing],
             "production_effect_risk_report_ids": [
@@ -342,6 +382,8 @@ def render_report_index_html(payload: Mapping[str, Any]) -> str:
             _summary_item("stale", summary.get("stale_count")),
             _summary_item("required missing", summary.get("required_missing_count")),
             _summary_item("explicit waivers", summary.get("explicit_waiver_count")),
+            _summary_item("expired waivers", summary.get("expired_waiver_count")),
+            _summary_item("inactive waivers", summary.get("inactive_waiver_count")),
             _summary_item("unwaived warnings", summary.get("unwaived_warning_count")),
             _summary_item("production effect risk", summary.get("production_effect_risk_count")),
             "</section>",
@@ -642,6 +684,7 @@ def _apply_visibility_waivers(
     *,
     reports: Sequence[Mapping[str, Any]],
     waiver_policy: Mapping[str, Any],
+    as_of: date,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     waivers_by_key = {
         (_string(waiver.get("report_id")), _string(waiver.get("issue_status"))): waiver
@@ -660,7 +703,10 @@ def _apply_visibility_waivers(
             updated.append(report)
             continue
         waiver = waivers_by_key.get((issue["report_id"], issue["issue_status"]))
-        if waiver is not None and _waiver_can_apply(issue):
+        if waiver is not None and _waiver_can_apply(issue) and _waiver_current(
+            waiver,
+            as_of=as_of,
+        ):
             applied = _applied_waiver(issue=issue, waiver=waiver)
             report["visibility_status"] = "WAIVED"
             report["visibility_issue"] = issue
@@ -734,17 +780,39 @@ def _waiver_can_apply(issue: Mapping[str, Any]) -> bool:
     return True
 
 
+def _waiver_current(waiver: Mapping[str, Any], *, as_of: date) -> bool:
+    if _string(waiver.get("review_status")) != ACTIVE_WAIVER_REVIEW_STATUS:
+        return False
+    return not _waiver_expired(waiver, as_of=as_of)
+
+
+def _waiver_expired(waiver: Mapping[str, Any], *, as_of: date) -> bool:
+    expires_at = _parse_waiver_date(
+        waiver.get("expires_at"),
+        _string(waiver.get("waiver_id"), "unknown"),
+        "expires_at",
+    )
+    return expires_at < as_of
+
+
 def _applied_waiver(
     *,
     issue: Mapping[str, Any],
     waiver: Mapping[str, Any],
 ) -> dict[str, Any]:
+    report_id = _string(issue.get("report_id"))
     return {
         "waiver_id": _string(waiver.get("waiver_id")),
-        "report_id": _string(issue.get("report_id")),
+        "report_id": report_id,
+        "affected_report_registry_entry": report_id,
+        "affected_artifact_family": report_id,
         "issue_status": _string(issue.get("issue_status")),
         "reason": _string(waiver.get("reason")),
         "owner": _string(waiver.get("owner")),
+        "created_at": _string(waiver.get("created_at")),
+        "expires_at": _string(waiver.get("expires_at")),
+        "review_status": _string(waiver.get("review_status")),
+        "linked_task_id": _string(waiver.get("linked_task_id")),
         "accepted_impact": _string(waiver.get("accepted_impact")),
         "validation_coverage": _string(waiver.get("validation_coverage")),
         "exit_condition": _string(waiver.get("exit_condition")),
@@ -769,6 +837,16 @@ def _waiver_report_ids(waiver: Mapping[str, Any]) -> list[str]:
     if report_id:
         return [report_id]
     return _strings(waiver.get("report_ids"))
+
+
+def _parse_waiver_date(value: Any, waiver_id: str, field_name: str) -> date:
+    raw = _string(value)
+    try:
+        return date.fromisoformat(raw)
+    except ValueError as exc:
+        raise ValueError(
+            f"report index visibility waiver {waiver_id} {field_name} must be YYYY-MM-DD"
+        ) from exc
 
 
 def _warning_text(issue: Mapping[str, Any]) -> str:

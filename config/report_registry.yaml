@@ -7171,6 +7171,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: report_index_waiver_inventory
+    title: Report Index Waiver Inventory
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports waiver-inventory --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/report_index_waiver_inventory_*.json
+      - outputs/reports/report_index_waiver_inventory_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Report index waivers must stay explicit, owned, current, and non-permanent before PASS_WITH_EXPLICIT_WAIVERS is used in governance interpretation.
+    owner_action: renew_or_remove_expired_report_index_waivers_before_governance_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: report_index_waiver_inventory_validation
+    title: Report Index Waiver Inventory Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-waiver-inventory --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/report_index_waiver_inventory_validation_*.json
+      - outputs/reports/report_index_waiver_inventory_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Validation fails closed when a waiver is expired or references a missing report registry entry.
+    owner_action: run_after_report_index_waiver_inventory
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: reader_brief
     title: Reader Brief
     group: daily

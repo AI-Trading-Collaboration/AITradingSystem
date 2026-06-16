@@ -1578,6 +1578,20 @@ Reader Brief entry；`report --latest` 从既有 JSON 重渲染 Markdown；`vali
 不运行上游、不刷新数据、不写 official target weights、不触发 broker/order 或 production
 mutation。
 
+TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY 强化 report index visibility waiver 治理。
+`config/report_index_visibility_waivers.yaml` 中每条 waiver 现在必须记录 `waiver_id`、
+affected report registry entry / artifact family、reason、owner、`created_at`、`expires_at`、
+`review_status` 和 `linked_task_id`。`aits reports index` 只会应用 `approved_active`
+且未过期的 waiver，并在 payload 中披露 expired / inactive waiver counts；过期或未获
+active review 的 waiver 不再能把 missing/stale issue 清成 explicit waiver。新增
+`aits reports waiver-inventory --as-of YYYY-MM-DD` 和
+`aits reports validate-waiver-inventory --latest`，输出
+`outputs/reports/report_index_waiver_inventory_YYYY-MM-DD.json/md` 和
+`report_index_waiver_inventory_validation_YYYY-MM-DD.json/md`；expired waiver 或缺失
+registry entry 必须 fail closed，接近过期或 inactive review status 作为人工复核 warning。
+Reader Brief 只读展示 latest waiver inventory，不刷新 artifact、不补造 report、不降低
+missing/stale/production-effect risk。
+
 TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW 在 daily observation 与 drift monitor 之后新增
 manual weekly review layer。CLI 入口为
 `aits etf dynamic-v3-rescue paper-shadow-weekly-review build`、

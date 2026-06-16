@@ -86,6 +86,10 @@ def test_default_report_index_visibility_waivers_load() -> None:
 
     assert policy["schema_version"] == 1
     assert policy["policy_id"] == "report_index_visibility_waivers_v1"
+    assert all(item.get("created_at") for item in policy["waivers"])
+    assert all(item.get("expires_at") for item in policy["waivers"])
+    assert all(item.get("review_status") == "approved_active" for item in policy["waivers"])
+    assert all(item.get("linked_task_id") for item in policy["waivers"])
     assert any(
         "etf_dynamic_shadow_weekly_review" in item.get("report_ids", [])
         for item in policy["waivers"]
@@ -306,6 +310,46 @@ def test_report_index_does_not_waive_required_missing_artifacts(tmp_path: Path) 
     assert payload["warnings"] == ["required_missing_required_missing"]
 
 
+def test_report_index_expired_waiver_does_not_clear_visibility_warning(
+    tmp_path: Path,
+) -> None:
+    registry_path = _write_custom_registry(
+        tmp_path,
+        [
+            _registry_entry(
+                "optional_missing",
+                "Optional Missing",
+                "outputs/reports/optional_missing_*.json",
+                freshness_sla_days=1,
+            ),
+        ],
+    )
+    waiver_path = _write_waivers(
+        tmp_path,
+        [
+            {
+                "waiver_id": "expired_missing_waiver",
+                "issue_status": "MISSING",
+                "report_id": "optional_missing",
+                "expires_at": "2026-05-03",
+            },
+        ],
+    )
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 4),
+        project_root=tmp_path,
+        registry_path=registry_path,
+        waiver_path=waiver_path,
+    )
+
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["summary"]["explicit_waiver_count"] == 0
+    assert payload["summary"]["expired_waiver_count"] == 1
+    assert payload["visibility_audit"]["expired_waiver_ids"] == ["expired_missing_waiver"]
+    assert payload["warnings"] == ["optional_missing_missing:"]
+
+
 def test_reports_index_cli_writes_html_and_json(tmp_path: Path) -> None:
     registry_path = _write_registry(tmp_path)
     (tmp_path / "outputs" / "reports").mkdir(parents=True)
@@ -476,16 +520,19 @@ def _registry_entry(
 def _write_waivers(tmp_path: Path, waivers: list[dict[str, str]]) -> Path:
     normalized = []
     for waiver in waivers:
-        normalized.append(
-            {
-                **waiver,
-                "owner": "test",
-                "reason": "test reason",
-                "accepted_impact": "test impact",
-                "validation_coverage": "test validation",
-                "exit_condition": "test exit",
-            }
-        )
+        item = {
+            "owner": "test",
+            "created_at": "2026-05-01",
+            "expires_at": "2026-12-31",
+            "review_status": "approved_active",
+            "linked_task_id": "TRADING-TEST",
+            "reason": "test reason",
+            "accepted_impact": "test impact",
+            "validation_coverage": "test validation",
+            "exit_condition": "test exit",
+        }
+        item.update(waiver)
+        normalized.append(item)
     path = tmp_path / "report_index_visibility_waivers.yaml"
     path.write_text(
         yaml.safe_dump(
