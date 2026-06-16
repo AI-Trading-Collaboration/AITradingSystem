@@ -366,6 +366,19 @@ cadences:
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false
+      - task_id: daily_report_quality_gate
+        daily_plan_step_id: report_quality_gate
+        title: Build report quality gate
+        command: aits reports quality-gate --latest
+        command_contains:
+          - reports
+          - quality-gate
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_validate_reader_brief
         daily_plan_step_id: validate_reader_brief
         title: Validate Reader Brief

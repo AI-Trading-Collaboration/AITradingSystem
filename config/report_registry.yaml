@@ -7171,6 +7171,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: report_quality_gate
+    title: Report Quality Gate
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports quality-gate --date YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/report_quality_gate_*.json
+      - outputs/reports/report_quality_gate_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Report quality gate should validate generated reports and Reader Brief structural completeness after daily Reader Brief generation.
+    owner_action: run_reports_quality_gate_after_reader_brief_generation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: documentation_contract
     title: Documentation Contract
     group: docs

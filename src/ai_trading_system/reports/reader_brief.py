@@ -163,6 +163,7 @@ def build_reader_brief_payload(
         market_panel=market_panel,
     )
     report_index_summary = _report_index_summary(report_index)
+    report_quality_gate = _report_quality_gate_summary(report_index)
     pit_source_manifest = _pit_source_manifest_summary(report_index)
     data_refresh_audit = _data_refresh_audit_summary(report_index)
     data_source_fallback_policy = _data_source_fallback_policy_summary(report_index)
@@ -313,6 +314,7 @@ def build_reader_brief_payload(
         "score_change_attribution_summary": score_change_summary,
         "score_change_narrative": score_change_narrative,
         "report_index_summary": report_index_summary,
+        "report_quality_gate": report_quality_gate,
         "missing_limited_artifact_impact": missing_artifact_impact,
         "task_cadence_calendar": task_cadence_calendar,
         "documentation_contract_summary": _documentation_contract_summary(
@@ -598,6 +600,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     score_changes = _mapping(payload.get("score_change_attribution_summary"))
     score_change_narrative = _mapping(payload.get("score_change_narrative"))
     report_index = _mapping(payload.get("report_index_summary"))
+    report_quality_gate = _mapping(payload.get("report_quality_gate"))
     missing_impact = _mapping(payload.get("missing_limited_artifact_impact"))
     cadence_calendar = _mapping(payload.get("task_cadence_calendar"))
     documentation_contract = _mapping(payload.get("documentation_contract_summary"))
@@ -792,6 +795,23 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             )
             + _records_table(_records(report_index.get("problem_reports"))),
+        ),
+        _section(
+            "Report Quality Gate",
+            _definition_table(
+                [
+                    ("availability", report_quality_gate.get("availability")),
+                    ("status", report_quality_gate.get("status")),
+                    ("report_quality_status", report_quality_gate.get("report_quality_status")),
+                    ("checked_report_count", report_quality_gate.get("checked_report_count")),
+                    ("missing_sections", report_quality_gate.get("missing_section_count")),
+                    ("blocking_issues", report_quality_gate.get("blocking_quality_issue_count")),
+                    ("warning_issues", report_quality_gate.get("warning_quality_issue_count")),
+                    ("next_action", report_quality_gate.get("next_action")),
+                    ("detail_report", report_quality_gate.get("detail_report")),
+                    ("production_effect", report_quality_gate.get("production_effect")),
+                ]
+            ),
         ),
         _section(
             "Missing / Limited Artifact Impact",
@@ -6141,6 +6161,62 @@ def _report_index_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
         "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
         "problem_reports": problem_reports[:8],
         "limitation": "Reader Brief 只展示 report_index 的 freshness 摘要和 stale/missing 报告。",
+    }
+
+
+def _report_quality_gate_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_report_quality_gate_summary(
+            "report_index artifact missing; Reader Brief cannot discover report_quality_gate."
+        )
+    report_path = _report_index_artifact_path(report_index, "report_quality_gate")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_report_quality_gate_summary(
+            "report_quality_gate artifact missing from report index latest pointer."
+        )
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("report_quality_status"), _text(payload.get("status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "report_quality_status": status,
+        "checked_report_count": _int(summary.get("checked_report_count")),
+        "checked_reader_brief_count": _int(summary.get("checked_reader_brief_count")),
+        "missing_section_count": _int(summary.get("missing_section_count")),
+        "blocking_quality_issue_count": _int(summary.get("blocking_quality_issue_count")),
+        "warning_quality_issue_count": _int(summary.get("warning_quality_issue_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"report_quality_status={status}; "
+            f"missing_sections={_int(summary.get('missing_section_count'))}; "
+            f"blocking={_int(summary.get('blocking_quality_issue_count'))}; "
+            f"warnings={_int(summary.get('warning_quality_issue_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest report_quality_gate artifact from report index; "
+            "it does not run the quality gate."
+        ),
+    }
+
+
+def _missing_report_quality_gate_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "report_quality_status": "MISSING",
+        "checked_report_count": 0,
+        "checked_reader_brief_count": 0,
+        "missing_section_count": 0,
+        "blocking_quality_issue_count": 0,
+        "warning_quality_issue_count": 0,
+        "next_action": "run_aits_reports_quality_gate_after_reader_brief_generation",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": "report_quality_gate artifact missing; run reports quality-gate.",
+        "limitation": reason,
     }
 
 
@@ -21773,8 +21849,9 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "research_governance_summary": 200,
         "report_index": 210,
         "documentation_contract": 220,
-        "reader_brief_quality": 230,
-        "artifact_catalog": 240,
+        "report_quality_gate": 230,
+        "reader_brief_quality": 240,
+        "artifact_catalog": 250,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -21816,6 +21893,7 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "market_panel": "查看 benchmark、AI sector、risk 和 liquidity 代理实际涨跌。",
         "research_governance_summary": "确认 backtest/shadow/SEC PIT/weight 是否仍 observe-only。",
         "report_index": "检查报告 freshness、missing/stale 和 owner action。",
+        "report_quality_gate": "检查报告和 Reader Brief 是否披露基础可读 section。",
         "documentation_contract": "检查 registry 与 artifact catalog 契约覆盖。",
     }
     return reasons.get(artifact_id, "打开该 artifact 获取详细证据或治理上下文。")
@@ -21825,6 +21903,7 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
     "daily_score": ("daily", "daily", "下一个完整 U.S. equity trading day。"),
     "daily_decision_summary": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "reader_brief": ("daily", "daily", "随 daily-run 每个交易日生成。"),
+    "report_quality_gate": ("daily", "daily", "Reader Brief 生成后校验 report / Reader Brief section。"),
     "reader_brief_quality": ("daily", "daily", "Reader Brief 生成后立即校验。"),
     "market_panel": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "score_change_attribution": ("daily", "daily", "随 daily-run 每个交易日对比上一信号日。"),

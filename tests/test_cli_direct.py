@@ -752,6 +752,25 @@ def test_cli_direct_dispatches_validate_reader_brief(monkeypatch) -> None:
     ]
 
 
+def test_cli_direct_dispatches_report_quality_gate(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_report_quality_gate(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr(
+        cli_direct.reports_cli, "report_quality_gate_command", fake_report_quality_gate
+    )
+
+    assert cli_direct.main(["reports", "quality-gate", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "quality-gate", "--latest"]) == 0
+
+    assert calls == [
+        {"as_of": "2026-05-13", "latest": False},
+        {"as_of": None, "latest": True},
+    ]
+
+
 def test_cli_direct_dispatches_score_change_and_market_panel_latest(monkeypatch) -> None:
     calls: list[tuple[str, dict[str, object]]] = []
 
@@ -925,6 +944,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("research_governance_summary"),
     )
     monkeypatch.setattr(cli_direct.reports_cli, "reader_brief_command", recorder("reader_brief"))
+    monkeypatch.setattr(
+        cli_direct.reports_cli,
+        "report_quality_gate_command",
+        recorder("report_quality_gate"),
+    )
     monkeypatch.setattr(
         cli_direct.reports_cli,
         "validate_reader_brief_command",

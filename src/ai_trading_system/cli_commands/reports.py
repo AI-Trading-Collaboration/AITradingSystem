@@ -127,6 +127,13 @@ from ai_trading_system.reports.report_index import (
     write_report_index_html,
     write_report_index_json,
 )
+from ai_trading_system.reports.report_quality_gate import (
+    build_report_quality_gate_payload,
+    default_report_quality_gate_json_path,
+    default_report_quality_gate_markdown_path,
+    write_report_quality_gate_json,
+    write_report_quality_gate_markdown,
+)
 from ai_trading_system.reports.research_governance_summary import (
     build_research_governance_summary_payload,
     default_research_governance_summary_json_path,
@@ -1663,6 +1670,122 @@ def validate_reader_brief_command(
     console.print(
         f"checks：{payload['summary']['check_count']}；"
         f"failed：{payload['summary']['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+
+
+@reports_app.command("quality-gate")
+def report_quality_gate_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Report quality gate 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(
+            help="使用默认 decision snapshot 目录中的最新 signal-date，并校验对应报告集合。"
+        ),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析 report index 中相对 artifact 路径的项目根目录。"),
+    ] = PROJECT_ROOT,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="report_index JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    reader_brief_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report quality gate JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report quality gate Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 report / Reader Brief 的基础可读性 section，并生成只读 quality gate report。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        snapshot_path = _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        report_date = _decision_snapshot_date(snapshot_path)
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+    index_path = report_index_path or default_report_index_json_path(reports_dir, report_date)
+    brief_json_path = reader_brief_json_path or default_reader_brief_json_path(
+        reports_dir,
+        report_date,
+    )
+    report_index_payload: dict[str, object]
+    if index_path.exists():
+        try:
+            raw_index = json.loads(index_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise typer.BadParameter(f"report_index JSON cannot be parsed: {index_path}") from exc
+        if not isinstance(raw_index, dict):
+            raise typer.BadParameter(f"report_index JSON must be an object: {index_path}")
+        report_index_payload = raw_index
+    else:
+        report_index_payload = {
+            "schema_version": 1,
+            "report_type": "report_index",
+            "as_of": report_date.isoformat(),
+            "status": "MISSING",
+            "production_effect": "none",
+            "reports": [],
+            "summary": {"report_count": 0},
+        }
+    reader_brief_payload: dict[str, object] | None = None
+    if brief_json_path.exists():
+        try:
+            raw_brief = json.loads(brief_json_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise typer.BadParameter(
+                f"Reader Brief JSON cannot be parsed: {brief_json_path}"
+            ) from exc
+        if not isinstance(raw_brief, dict):
+            raise typer.BadParameter(f"Reader Brief JSON must be an object: {brief_json_path}")
+        reader_brief_payload = raw_brief
+    payload = build_report_quality_gate_payload(
+        as_of=report_date,
+        report_index_payload=report_index_payload,
+        report_index_path=index_path,
+        reader_brief_payload=reader_brief_payload,
+        reader_brief_json_path=brief_json_path,
+        project_root=project_root,
+    )
+    quality_json = json_output_path or default_report_quality_gate_json_path(
+        reports_dir,
+        report_date,
+    )
+    quality_md = markdown_output_path or default_report_quality_gate_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_report_quality_gate_json(payload, quality_json)
+    md_path = write_report_quality_gate_markdown(payload, quality_md)
+    style = "green" if payload["report_quality_status"] == "PASS" else "yellow"
+    if payload["report_quality_status"] == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Report quality gate：{payload['report_quality_status']}[/{style}]")
+    console.print(f"Report quality gate JSON：{json_path}")
+    console.print(f"Report quality gate Markdown：{md_path}")
+    console.print(
+        f"checked_reports：{summary['checked_report_count']}；"
+        f"missing_sections：{summary['missing_section_count']}；"
+        f"blocking：{summary['blocking_quality_issue_count']}；"
+        f"warnings：{summary['warning_quality_issue_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
 

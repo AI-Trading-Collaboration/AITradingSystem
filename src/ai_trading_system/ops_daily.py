@@ -68,6 +68,10 @@ from ai_trading_system.reports.report_index import (
     default_report_index_html_path,
     default_report_index_json_path,
 )
+from ai_trading_system.reports.report_quality_gate import (
+    default_report_quality_gate_json_path,
+    default_report_quality_gate_markdown_path,
+)
 from ai_trading_system.reports.research_governance_summary import (
     default_research_governance_summary_json_path,
     default_research_governance_summary_report_path,
@@ -561,6 +565,8 @@ def build_daily_ops_plan(
         reports_dir,
         as_of,
     )
+    report_quality_gate_json = default_report_quality_gate_json_path(reports_dir, as_of)
+    report_quality_gate_report = default_report_quality_gate_markdown_path(reports_dir, as_of)
     dynamic_v3_schedule_observe_root = (
         project_root / "reports" / "etf_portfolio" / "dynamic_v3_rescue" / "schedule_observe"
     )
@@ -1270,6 +1276,23 @@ def build_daily_ops_plan(
                     "只读消费 daily decision summary、dashboard、score change、market panel、"
                     "research governance、report index 和 documentation contract；"
                     "production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="report_quality_gate",
+                title="校验 report quality gate",
+                command=(
+                    ("aits", "reports", "quality-gate", "--latest") if dashboard_enabled else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(report_quality_gate_json, report_quality_gate_report),
+                quality_gate=(
+                    "只读校验 report index 指向的既有报告和 Reader Brief 基础可读 section；"
+                    "不运行上游报告、不修改 source artifacts，production_effect=none。"
                 ),
                 blocks_downstream=True,
                 enabled=dashboard_enabled,

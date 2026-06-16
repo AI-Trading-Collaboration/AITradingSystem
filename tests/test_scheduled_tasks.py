@@ -101,6 +101,7 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "docs report-contract --latest",
         "reports research-governance-summary --latest",
         "reports reader-brief --latest",
+        "reports quality-gate --latest",
         "reports validate-reader-brief --latest",
         "etf dynamic-v3-rescue schedule observe",
         "ops health",
@@ -245,7 +246,7 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
             "--skip-risk-event-openai-precheck",
         )
     )
-    assert calls[score_index + 1 : score_index + 20] == [
+    assert calls[score_index + 1 : score_index + 21] == [
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
         ("sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-06"),
@@ -263,6 +264,7 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
         ("docs", "report-contract", "--latest"),
         ("reports", "research-governance-summary", "--latest"),
         ("reports", "reader-brief", "--latest"),
+        ("reports", "quality-gate", "--latest"),
         ("reports", "validate-reader-brief", "--latest"),
         ("etf", "dynamic-v3-rescue", "schedule", "observe", "--as-of", "2026-05-06"),
     ]
