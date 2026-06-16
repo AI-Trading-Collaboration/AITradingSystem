@@ -5021,6 +5021,31 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_input_completeness
+    title: ETF Dynamic v3 Signal Input Completeness
+    group: governance
+    cadence: daily
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-input-completeness report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/signal_input_completeness_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/signal_input_completeness_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/signal_input_completeness_findings.jsonl
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/signal_input_completeness_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/signal_input_completeness_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/signal_input_completeness_validation.md
+    freshness_sla_days: 2
+    freshness_rationale: >
+      TRADING-371 checks required signal inputs before paper-shadow daily,
+      weekly review, evidence staleness interpretation, and shadow continuation
+      readiness. Missing, stale, schema-incompatible, empty, partially covered,
+      or column-incomplete required signal inputs fail closed.
+    owner_action: restore_or_regenerate_signal_inputs_before_paper_shadow
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_daily
     title: ETF Dynamic v3 Paper Shadow Daily Observation
     group: governance

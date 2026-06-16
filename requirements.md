@@ -4,6 +4,16 @@
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
 
+## TRADING-371
+
+- 需求文档：`docs/requirements/TRADING-371_Signal_Input_Completeness_Monitor.md`
+- 任务：Signal Input Completeness Monitor
+- 状态：`DONE`
+- 需求：The system shall check required signal inputs for missing files, staleness, schema/version compatibility, empty series, market coverage, and required feature columns before paper-shadow daily observation, weekly review, evidence staleness interpretation, and shadow continuation readiness.
+- 安全边界：只读 signal input completeness guard；不刷新数据、不补造 signal 或 feature artifact、不运行上游、不写 official target weights、不修改 shadow/paper/production state、不触发 broker/order。
+- 主要输入：`config/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_v1.yaml`、`data/etf_portfolio/signals.csv`、`data/etf_portfolio/features.csv`、`data/processed/features_daily.csv`、latest signal snapshot artifact。
+- 主要输出：`reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/<monitor_id>/signal_input_completeness_report.json`、`.md`、findings JSONL、validation JSON/Markdown、Reader Brief section，以及 downstream paper-shadow/staleness/readiness summary。
+
 ## TRADING-368
 
 - 需求文档：`docs/requirements/TRADING-368_Data_Source_Fallback_Policy.md`

@@ -7,6 +7,7 @@ from pathlib import Path
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_formal_research_method_contract_fixture,
+    run_signal_input_completeness_fixture,
 )
 from typer.testing import CliRunner
 
@@ -141,6 +142,7 @@ def _paper_shadow_daily_fixture(
         output_dir=tmp_path / "paper_shadow_protocol",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
+    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
     market_panel = tmp_path / "market_panel_2026-06-12.json"
     if not missing_market_panel:
         market_panel.write_text(
@@ -173,8 +175,10 @@ def _paper_shadow_daily_fixture(
         manual_reviewer_notes="synthetic drift monitor fixture",
         contract_id=contract_id,
         protocol_id=protocol_result["protocol_id"],
+        signal_input_completeness_id=signal_input["monitor_id"],
         contract_dir=tmp_path / "formal_research_method_contract",
         protocol_dir=tmp_path / "paper_shadow_protocol",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )

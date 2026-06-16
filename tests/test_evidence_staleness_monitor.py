@@ -7,6 +7,7 @@ from pathlib import Path
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_paper_shadow_protocol_fixture,
+    run_signal_input_completeness_fixture,
 )
 
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
@@ -62,6 +63,7 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
         paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         evidence_dir=tmp_path / "filtered_candidate_evidence",
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
         ab_review_dir=tmp_path / "filtered_candidate_ab_review",
@@ -69,6 +71,7 @@ def test_evidence_staleness_monitor_builds_and_validates(tmp_path: Path) -> None
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         cache_catalog_report_path=cache_catalog_report,
         output_dir=tmp_path / "evidence_staleness_monitor",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
@@ -231,6 +234,7 @@ def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path) -> None
         paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id="missing-weekly-review",
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         evidence_dir=tmp_path / "filtered_candidate_evidence",
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
         ab_review_dir=tmp_path / "filtered_candidate_ab_review",
@@ -238,6 +242,7 @@ def test_evidence_staleness_missing_weekly_review_blocks(tmp_path: Path) -> None
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "evidence_staleness_monitor_missing",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -287,6 +292,7 @@ def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Pa
         owner_review_id=fixture["owner_filtered_candidate_review"]["owner_review_id"],
         paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         evidence_dir=tmp_path / "filtered_candidate_evidence",
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
         ab_review_dir=tmp_path / "filtered_candidate_ab_review",
@@ -294,6 +300,7 @@ def test_evidence_staleness_discovers_latest_weekly_review_artifact(tmp_path: Pa
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "evidence_staleness_monitor_latest_weekly",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -357,6 +364,7 @@ def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path) ->
         paper_shadow_daily_id=fixture["paper_shadow_daily"]["observation_id"],
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         evidence_dir=tmp_path / "filtered_candidate_evidence",
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
         ab_review_dir=tmp_path / "filtered_candidate_ab_review",
@@ -364,6 +372,7 @@ def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path) ->
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         fallback_policy_report_path=fallback_policy_report,
         output_dir=tmp_path / "evidence_staleness_monitor_fallback_blocked",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
@@ -381,6 +390,7 @@ def test_evidence_staleness_blocks_on_fallback_policy_blocker(tmp_path: Path) ->
 
 def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path)
+    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
     ledger = readiness.record_candidate_decision_ledger(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
         evidence_id=fixture["filtered_candidate_evidence"]["evidence_id"],
@@ -428,8 +438,10 @@ def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
         manual_reviewer_notes="synthetic staleness monitor fixture",
         contract_id=fixture["formal_research_method_contract"]["contract_id"],
         protocol_id=fixture["paper_shadow_protocol"]["protocol_id"],
+        signal_input_completeness_id=signal_input["monitor_id"],
         contract_dir=tmp_path / "formal_research_method_contract",
         protocol_dir=tmp_path / "paper_shadow_protocol",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -449,10 +461,12 @@ def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
         drift_monitor_ids=[drift_monitor["monitor_id"]],
         contract_id=fixture["formal_research_method_contract"]["contract_id"],
         ledger_run_id=ledger["ledger_run_id"],
+        signal_input_completeness_id=signal_input["monitor_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
         drift_dir=tmp_path / "paper_shadow_drift_monitor",
         contract_dir=tmp_path / "formal_research_method_contract",
         ledger_dir=tmp_path / "candidate_decision_ledger",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -462,6 +476,7 @@ def _paper_shadow_freshness_fixture(tmp_path: Path) -> dict[str, object]:
         "paper_shadow_daily": observation,
         "paper_shadow_drift": drift_monitor,
         "paper_shadow_weekly": weekly_review,
+        "signal_input_completeness": signal_input,
     }
 
 

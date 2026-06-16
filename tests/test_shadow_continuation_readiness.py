@@ -7,6 +7,7 @@ from pathlib import Path
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_paper_shadow_protocol_fixture,
+    run_signal_input_completeness_fixture,
 )
 from typer.testing import CliRunner
 
@@ -30,11 +31,13 @@ def test_shadow_continuation_readiness_requires_manual_review_for_recovery_week(
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
         evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "shadow_continuation_readiness",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
     )
@@ -86,11 +89,13 @@ def test_shadow_continuation_readiness_blocks_missing_weekly_review(
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id="missing-weekly-review",
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
         evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "shadow_continuation_readiness_missing",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
     )
@@ -122,11 +127,13 @@ def test_shadow_continuation_readiness_blocks_fallback_unavailable(
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
         evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         fallback_policy_report_path=fallback_policy_report,
         output_dir=tmp_path / "shadow_continuation_readiness_fallback_blocked",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
@@ -155,11 +162,13 @@ def test_shadow_continuation_readiness_blocks_cache_catalog_failure(
         paper_shadow_drift_monitor_id=fixture["paper_shadow_drift"]["monitor_id"],
         paper_shadow_weekly_review_id=fixture["paper_shadow_weekly"]["weekly_review_id"],
         evidence_staleness_monitor_id=fixture["evidence_staleness"]["monitor_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness"]["monitor_id"],
         data_quality_report_path=data_quality_report,
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
         evidence_staleness_monitor_dir=tmp_path / "evidence_staleness_monitor",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         cache_catalog_report_path=cache_catalog_report,
         output_dir=tmp_path / "shadow_continuation_readiness_cache_blocked",
         generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
@@ -200,6 +209,8 @@ def test_shadow_continuation_readiness_cli_run_report_and_validate(
             fixture["paper_shadow_weekly"]["weekly_review_id"],
             "--evidence-staleness-monitor-id",
             fixture["evidence_staleness"]["monitor_id"],
+            "--signal-input-completeness-id",
+            fixture["signal_input_completeness"]["monitor_id"],
             "--data-quality-report-path",
             str(data_quality_report),
             "--paper-shadow-daily-dir",
@@ -210,6 +221,8 @@ def test_shadow_continuation_readiness_cli_run_report_and_validate(
             str(tmp_path / "paper_shadow_weekly_review"),
             "--evidence-staleness-monitor-dir",
             str(tmp_path / "evidence_staleness_monitor"),
+            "--signal-input-completeness-dir",
+            str(tmp_path / "signal_input_completeness"),
             "--output-dir",
             str(output_dir),
         ],
@@ -259,6 +272,7 @@ def test_shadow_continuation_readiness_cli_run_report_and_validate(
 
 def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path)
+    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2024-04-22")
     _set_filtered_evidence_date_end(fixture, "2024-04-19")
     ledger = readiness.record_candidate_decision_ledger(
         candidate=readiness.TOP_FILTERED_CANDIDATE,
@@ -307,8 +321,10 @@ def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
         manual_reviewer_notes="synthetic shadow continuation fixture",
         contract_id=fixture["formal_research_method_contract"]["contract_id"],
         protocol_id=fixture["paper_shadow_protocol"]["protocol_id"],
+        signal_input_completeness_id=signal_input["monitor_id"],
         contract_dir=tmp_path / "formal_research_method_contract",
         protocol_dir=tmp_path / "paper_shadow_protocol",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -328,10 +344,12 @@ def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
         drift_monitor_ids=[drift_monitor["monitor_id"]],
         contract_id=fixture["formal_research_method_contract"]["contract_id"],
         ledger_run_id=ledger["ledger_run_id"],
+        signal_input_completeness_id=signal_input["monitor_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
         drift_dir=tmp_path / "paper_shadow_drift_monitor",
         contract_dir=tmp_path / "formal_research_method_contract",
         ledger_dir=tmp_path / "candidate_decision_ledger",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -367,6 +385,7 @@ def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
         paper_shadow_daily_id=observation["observation_id"],
         paper_shadow_drift_monitor_id=drift_monitor["monitor_id"],
         paper_shadow_weekly_review_id=weekly_review["weekly_review_id"],
+        signal_input_completeness_id=signal_input["monitor_id"],
         evidence_dir=tmp_path / "filtered_candidate_evidence",
         stress_backfill_dir=tmp_path / "filtered_candidate_stress_backfill",
         ab_review_dir=tmp_path / "filtered_candidate_ab_review",
@@ -374,6 +393,7 @@ def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
         paper_shadow_daily_dir=tmp_path / "paper_shadow_daily",
         paper_shadow_drift_monitor_dir=tmp_path / "paper_shadow_drift_monitor",
         paper_shadow_weekly_review_dir=tmp_path / "paper_shadow_weekly_review",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "evidence_staleness_monitor",
         generated_at=datetime(2024, 4, 22, tzinfo=UTC),
     )
@@ -384,6 +404,7 @@ def _shadow_continuation_fixture(tmp_path: Path) -> dict[str, object]:
         "paper_shadow_drift": drift_monitor,
         "paper_shadow_weekly": weekly_review,
         "evidence_staleness": staleness,
+        "signal_input_completeness": signal_input,
     }
 
 

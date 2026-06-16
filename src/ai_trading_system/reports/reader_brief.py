@@ -2118,6 +2118,48 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "signal_input_completeness",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_completeness_id"
+                        ),
+                    ),
+                    (
+                        "signal_input_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_status"
+                        ),
+                    ),
+                    (
+                        "signal_input_blocking_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_blocking_count"
+                        ),
+                    ),
+                    (
+                        "signal_input_warning_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_warning_count"
+                        ),
+                    ),
+                    (
+                        "signal_input_stale_files",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_stale_files"
+                        ),
+                    ),
+                    (
+                        "signal_input_next_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_next_action"
+                        ),
+                    ),
+                    (
+                        "signal_input_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_validation_status"
+                        ),
+                    ),
+                    (
                         "candidate_decision_ledger",
                         etf_dynamic_v3_parameter_research.get(
                             "candidate_decision_ledger_id"
@@ -13182,6 +13224,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "paper_shadow_weekly_manifest.json",
     )
+    signal_input_completeness_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_signal_input_completeness",
+        ),
+        "signal_input_completeness_manifest.json",
+    )
     candidate_decision_ledger_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -13678,6 +13727,18 @@ def _etf_dynamic_v3_parameter_research_summary(
         if paper_shadow_weekly_review_path is not None
         else None
     )
+    signal_input_completeness_manifest = _read_optional_json(signal_input_completeness_path)
+    signal_input_completeness_report = _read_optional_json(
+        signal_input_completeness_path.parent / "signal_input_completeness_report.json"
+        if signal_input_completeness_path is not None
+        else None
+    )
+    signal_input_completeness_validation = _read_optional_json(
+        signal_input_completeness_path.parent
+        / "signal_input_completeness_validation.json"
+        if signal_input_completeness_path is not None
+        else None
+    )
     candidate_decision_ledger_manifest = _read_optional_json(candidate_decision_ledger_path)
     candidate_decision_record = _read_optional_json(
         candidate_decision_ledger_path.parent / "candidate_decision_record.json"
@@ -13787,6 +13848,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         paper_shadow_weekly_manifest,
         paper_shadow_weekly_review,
         paper_shadow_weekly_validation,
+        signal_input_completeness_manifest,
+        signal_input_completeness_report,
+        signal_input_completeness_validation,
         candidate_decision_ledger_manifest,
         candidate_decision_record,
         candidate_decision_ledger_validation,
@@ -15157,6 +15221,62 @@ def _etf_dynamic_v3_parameter_research_summary(
             paper_shadow_weekly_validation.get("status"),
             "MISSING",
         ),
+        "signal_input_completeness_id": _text(
+            signal_input_completeness_manifest.get("monitor_id"),
+            "MISSING",
+        ),
+        "signal_input_status": _text(
+            signal_input_completeness_report.get("signal_input_status"),
+            "MISSING",
+        ),
+        "signal_input_blocking_count": signal_input_completeness_report.get(
+            "blocking_count",
+            "MISSING",
+        ),
+        "signal_input_warning_count": signal_input_completeness_report.get(
+            "warning_count",
+            "MISSING",
+        ),
+        "signal_input_missing_files": (
+            ", ".join(_texts(signal_input_completeness_report.get("missing_signal_files")))
+            or "none"
+        ),
+        "signal_input_stale_files": (
+            ", ".join(_texts(signal_input_completeness_report.get("stale_signal_files")))
+            or "none"
+        ),
+        "signal_input_schema_issues": (
+            ", ".join(
+                _texts(signal_input_completeness_report.get("incompatible_schema_inputs"))
+            )
+            or "none"
+        ),
+        "signal_input_partial_coverage": (
+            ", ".join(
+                _texts(
+                    signal_input_completeness_report.get("partial_market_coverage_inputs")
+                )
+            )
+            or "none"
+        ),
+        "signal_input_missing_required_columns": (
+            ", ".join(
+                _texts(
+                    signal_input_completeness_report.get(
+                        "missing_required_feature_columns"
+                    )
+                )
+            )
+            or "none"
+        ),
+        "signal_input_next_action": _text(
+            signal_input_completeness_report.get("next_required_action"),
+            "MISSING",
+        ),
+        "signal_input_validation_status": _text(
+            signal_input_completeness_validation.get("status"),
+            "MISSING",
+        ),
         "candidate_decision_ledger_id": _text(
             candidate_decision_ledger_manifest.get("ledger_run_id"),
             "MISSING",
@@ -15603,6 +15723,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if paper_shadow_weekly_review_path is None
             else str(paper_shadow_weekly_review_path)
+        ),
+        "signal_input_completeness": (
+            ""
+            if signal_input_completeness_path is None
+            else str(signal_input_completeness_path)
         ),
         "candidate_decision_ledger": (
             ""
@@ -16531,6 +16656,17 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_weekly_missing_inputs": "MISSING",
         "paper_shadow_weekly_drift_trend": "MISSING",
         "paper_shadow_weekly_validation_status": "MISSING",
+        "signal_input_completeness_id": "MISSING",
+        "signal_input_status": "MISSING",
+        "signal_input_blocking_count": "MISSING",
+        "signal_input_warning_count": "MISSING",
+        "signal_input_missing_files": "MISSING",
+        "signal_input_stale_files": "MISSING",
+        "signal_input_schema_issues": "MISSING",
+        "signal_input_partial_coverage": "MISSING",
+        "signal_input_missing_required_columns": "MISSING",
+        "signal_input_next_action": "MISSING",
+        "signal_input_validation_status": "MISSING",
         "candidate_decision_ledger_id": "MISSING",
         "candidate_decision_record_id": "MISSING",
         "candidate_decision_candidate": "MISSING",
@@ -16640,6 +16776,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_daily": "",
         "paper_shadow_drift_monitor": "",
         "paper_shadow_weekly_review": "",
+        "signal_input_completeness": "",
         "candidate_decision_ledger": "",
         "evidence_staleness_monitor": "",
         "shadow_continuation_readiness_report": "",

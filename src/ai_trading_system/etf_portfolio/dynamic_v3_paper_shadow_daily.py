@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_signal_input_completeness as signal_inputs,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 
 DEFAULT_PAPER_SHADOW_DAILY_DIR = st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "paper_shadow_daily"
@@ -56,8 +59,11 @@ def run_paper_shadow_daily_observation(
     manual_reviewer_notes: str,
     contract_id: str | None = None,
     protocol_id: str | None = None,
+    signal_input_completeness_id: str | None = None,
+    signal_input_completeness_report_path: Path | None = None,
     contract_dir: Path = readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
     protocol_dir: Path = readiness.DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+    signal_input_completeness_dir: Path = signal_inputs.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     output_dir: Path = DEFAULT_PAPER_SHADOW_DAILY_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -77,6 +83,11 @@ def run_paper_shadow_daily_observation(
     protocol = _mapping(protocol_payload.get("paper_shadow_protocol"))
     source_contract_id = _text(contract_payload.get("contract_id"))
     source_protocol_id = _text(protocol_payload.get("protocol_id"))
+    signal_input_summary = signal_inputs.latest_signal_input_completeness_summary(
+        monitor_id=signal_input_completeness_id,
+        report_path=signal_input_completeness_report_path,
+        output_dir=signal_input_completeness_dir,
+    )
     input_artifacts = [
         _input_artifact("market_panel_artifact", market_panel_artifact),
         _input_artifact("signal_artifact", signal_artifact),
@@ -87,6 +98,7 @@ def run_paper_shadow_daily_observation(
         contract=contract,
         contract_decision=contract_decision,
         protocol=protocol,
+        signal_input_summary=signal_input_summary,
         daily_fields={
             "signal_output": signal_output,
             "hypothetical_weight_recommendation": hypothetical_weight_recommendation,
@@ -123,6 +135,10 @@ def run_paper_shadow_daily_observation(
         "source_contract_promotion_state": contract_decision.get("promotion_state"),
         "source_protocol_id": source_protocol_id,
         "source_protocol_status": protocol.get("protocol_status"),
+        "signal_input_completeness_summary": signal_input_summary,
+        "signal_input_status": signal_input_summary.get("signal_input_status"),
+        "signal_input_blocking_count": signal_input_summary.get("blocking_count"),
+        "signal_input_warning_count": signal_input_summary.get("warning_count"),
         "input_artifacts": input_artifacts,
         "daily_review": {
             "signal_output": signal_output,
@@ -156,6 +172,8 @@ def run_paper_shadow_daily_observation(
         "observation_status": observation_status,
         "source_contract_id": source_contract_id,
         "source_protocol_id": source_protocol_id,
+        "signal_input_completeness_id": signal_input_summary.get("monitor_id"),
+        "signal_input_status": signal_input_summary.get("signal_input_status"),
         "paper_shadow_daily_manifest_path": str(root / "paper_shadow_daily_manifest.json"),
         "paper_shadow_daily_observation_path": str(
             root / "paper_shadow_daily_observation.json"
@@ -239,6 +257,7 @@ def validate_paper_shadow_daily_artifact(
     daily_review = _mapping(observation.get("daily_review"))
     hypothetical = _mapping(daily_review.get("hypothetical_weight_recommendation"))
     input_artifacts = _records(observation.get("input_artifacts"))
+    signal_input_summary = _mapping(observation.get("signal_input_completeness_summary"))
     checks = st._required_file_checks(
         root,
         (
@@ -278,6 +297,21 @@ def validate_paper_shadow_daily_artifact(
                 "",
             ),
             st._check(
+                "signal_input_completeness_visible",
+                bool(_text(signal_input_summary.get("signal_input_status"))),
+                "",
+            ),
+            st._check(
+                "signal_input_fail_closed",
+                (
+                    signal_input_summary.get("signal_input_status") in {"OK", "WARNING"}
+                    or "signal_input_completeness_blocking" in _texts(
+                        observation.get("blocking_reasons")
+                    )
+                ),
+                "",
+            ),
+            st._check(
                 "daily_review_fields_complete",
                 all(
                     _daily_field_present(daily_review, field)
@@ -293,7 +327,8 @@ def validate_paper_shadow_daily_artifact(
             ),
             st._check(
                 "reader_brief_fields",
-                "paper_shadow_daily_observation_id" in reader,
+                "paper_shadow_daily_observation_id" in reader
+                and "signal_input_status" in reader,
                 "",
             ),
             st._check("broker_forbidden", st._payload_safe(manifest, observation), ""),
@@ -321,6 +356,7 @@ def validate_paper_shadow_daily_artifact(
 
 def render_paper_shadow_daily_reader_brief(observation: Mapping[str, Any]) -> str:
     daily = _mapping(observation.get("daily_review"))
+    signal_summary = _mapping(observation.get("signal_input_completeness_summary"))
     return "\n".join(
         [
             "## Paper Shadow Daily Observation",
@@ -329,6 +365,8 @@ def render_paper_shadow_daily_reader_brief(observation: Mapping[str, Any]) -> st
             f"- paper_shadow_daily_candidate: {observation.get('candidate')}",
             f"- paper_shadow_daily_date: {observation.get('observation_date')}",
             f"- paper_shadow_daily_status: {observation.get('observation_status')}",
+            f"- signal_input_completeness_id: {signal_summary.get('monitor_id')}",
+            f"- signal_input_status: {observation.get('signal_input_status')}",
             f"- paper_shadow_daily_signal_output: {daily.get('signal_output')}",
             f"- paper_shadow_daily_risk_state: {daily.get('risk_off_risk_on_state')}",
             f"- paper_shadow_daily_next_action: {observation.get('next_required_action')}",
@@ -349,6 +387,10 @@ def render_paper_shadow_daily_report(
         f"- {row.get('source_id')}: path={row.get('path')} checksum={row.get('checksum_sha256')}"
         for row in _records(observation.get("input_artifacts"))
     ]
+    signal_summary = _mapping(observation.get("signal_input_completeness_summary"))
+    blocking_inputs = ", ".join(
+        _texts(signal_summary.get("blocking_input_ids"))
+    ) or "none"
     return "\n".join(
         [
             f"# Paper Shadow Daily Observation {manifest.get('observation_id')}",
@@ -360,6 +402,9 @@ def render_paper_shadow_daily_report(
             *input_lines,
             f"- source_contract_id: {observation.get('source_contract_id')}",
             f"- source_protocol_id: {observation.get('source_protocol_id')}",
+            f"- signal_input_completeness_id: {signal_summary.get('monitor_id')}",
+            f"- signal_input_status: {signal_summary.get('signal_input_status')}",
+            f"- signal_input_blocking_inputs: {blocking_inputs}",
             "",
             "## Output Decision",
             f"- observation_status: {observation.get('observation_status')}",
@@ -414,6 +459,7 @@ def _blocking_reasons(
     contract: Mapping[str, Any],
     contract_decision: Mapping[str, Any],
     protocol: Mapping[str, Any],
+    signal_input_summary: Mapping[str, Any],
     daily_fields: Mapping[str, Any],
 ) -> list[str]:
     reasons: list[str] = []
@@ -425,6 +471,8 @@ def _blocking_reasons(
         reasons.append("formal_contract_not_ready")
     if protocol.get("protocol_status") != "PROTOCOL_READY":
         reasons.append("paper_shadow_protocol_not_ready")
+    if signal_input_summary.get("signal_input_status") not in {"OK", "WARNING"}:
+        reasons.append("signal_input_completeness_blocking")
     missing_fields = [
         field
         for field in PAPER_SHADOW_DAILY_REVIEW_FIELDS
@@ -467,3 +515,4 @@ def _daily_field_present(payload: Mapping[str, Any], field: str) -> bool:
 _mapping = st._mapping
 _records = st._records
 _text = st._text
+_texts = st._texts

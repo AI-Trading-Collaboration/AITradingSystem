@@ -8,6 +8,9 @@ from typing import Any
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as drift
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_signal_input_completeness as signal_inputs,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
@@ -129,10 +132,13 @@ def build_paper_shadow_weekly_review(
     drift_monitor_ids: Sequence[str] | None = None,
     contract_id: str | None = None,
     ledger_run_id: str | None = None,
+    signal_input_completeness_id: str | None = None,
+    signal_input_completeness_report_path: Path | None = None,
     observation_dir: Path = daily.DEFAULT_PAPER_SHADOW_DAILY_DIR,
     drift_dir: Path = drift.DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
     contract_dir: Path = readiness.DEFAULT_FORMAL_RESEARCH_METHOD_CONTRACT_DIR,
     ledger_dir: Path = readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+    signal_input_completeness_dir: Path = signal_inputs.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     output_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     generated_at: datetime | None = None,
     manual_coverage_override: bool = False,
@@ -173,6 +179,11 @@ def build_paper_shadow_weekly_review(
         latest=ledger_run_id is None,
         output_dir=ledger_dir,
     )
+    signal_input_summary = signal_inputs.latest_signal_input_completeness_summary(
+        monitor_id=signal_input_completeness_id,
+        report_path=signal_input_completeness_report_path,
+        output_dir=signal_input_completeness_dir,
+    )
 
     daily_records = [
         _daily_record(payload, week_start=start_date, week_end=end_date)
@@ -198,6 +209,7 @@ def build_paper_shadow_weekly_review(
         drift_records=drift_records,
         contract_payload=contract_payload,
         ledger_payload=ledger_payload,
+        signal_input_summary=signal_input_summary,
     )
     stability = _weekly_stability(daily_records=daily_records, drift_records=drift_records)
     decision, decision_reasons = _weekly_decision(
@@ -212,6 +224,7 @@ def build_paper_shadow_weekly_review(
         drift_payloads=drift_payloads,
         contract_payload=contract_payload,
         ledger_payload=ledger_payload,
+        signal_input_summary=signal_input_summary,
     )
     weekly_review_id = st._stable_id(
         "paper-shadow-weekly-review",
@@ -244,6 +257,10 @@ def build_paper_shadow_weekly_review(
         "source_ledger_run_id": ledger_payload.get("ledger_run_id"),
         "source_ledger_record_id": ledger_record.get("record_id"),
         "source_ledger_final_decision": ledger_record.get("final_decision"),
+        "signal_input_completeness_summary": signal_input_summary,
+        "signal_input_status": signal_input_summary.get("signal_input_status"),
+        "signal_input_blocking_count": signal_input_summary.get("blocking_count"),
+        "signal_input_warning_count": signal_input_summary.get("warning_count"),
         "source_artifacts": source_artifacts,
         "daily_observations": daily_records,
         "drift_monitors": drift_records,
@@ -287,6 +304,8 @@ def build_paper_shadow_weekly_review(
         "coverage_policy_version": WEEKLY_COVERAGE_POLICY["policy_version"],
         "source_contract_id": contract_payload.get("contract_id"),
         "source_ledger_run_id": ledger_payload.get("ledger_run_id"),
+        "signal_input_completeness_id": signal_input_summary.get("monitor_id"),
+        "signal_input_status": signal_input_summary.get("signal_input_status"),
         "paper_shadow_weekly_manifest_path": str(
             root / "paper_shadow_weekly_manifest.json"
         ),
@@ -417,12 +436,20 @@ def validate_paper_shadow_weekly_review_artifact(
                     "paper_shadow_drift_monitor",
                     "formal_research_method_contract",
                     "candidate_decision_ledger",
+                    "signal_input_completeness",
                 }.issubset(source_ids),
                 ",".join(sorted(source_ids)),
             ),
             st._check(
                 "source_artifacts_exist",
-                all(row.get("exists") is True for row in source_artifacts),
+                all(
+                    row.get("exists") is True
+                    or (
+                        row.get("source_id") == "signal_input_completeness"
+                        and review.get("signal_input_status") not in {"OK", "WARNING"}
+                    )
+                    for row in source_artifacts
+                ),
                 "",
             ),
             st._check(
@@ -511,11 +538,18 @@ def validate_paper_shadow_weekly_review_artifact(
                 "",
             ),
             st._check(
+                "signal_input_completeness_visible",
+                bool(_text(review.get("signal_input_status")))
+                and "signal_input_completeness_summary" in review,
+                "",
+            ),
+            st._check(
                 "reader_brief_fields",
                 "paper_shadow_weekly_review_id" in reader
                 and "paper_shadow_weekly_decision" in reader
                 and "paper_shadow_weekly_drift_trend" in reader
-                and "paper_shadow_weekly_coverage_classification" in reader,
+                and "paper_shadow_weekly_coverage_classification" in reader
+                and "signal_input_status" in reader,
                 "",
             ),
             st._check(
@@ -565,6 +599,9 @@ def render_paper_shadow_weekly_reader_brief(review: Mapping[str, Any]) -> str:
             f"- paper_shadow_weekly_candidate: {review.get('candidate')}",
             f"- paper_shadow_weekly_window: {review.get('week_start')}..{review.get('week_end')}",
             f"- paper_shadow_weekly_decision: {review.get('weekly_decision')}",
+            "- signal_input_completeness_id: "
+            f"{_mapping(review.get('signal_input_completeness_summary')).get('monitor_id')}",
+            f"- signal_input_status: {review.get('signal_input_status')}",
             "- paper_shadow_weekly_coverage_classification: "
             f"{review.get('coverage_classification')}",
             "- paper_shadow_weekly_coverage_ratio: "
@@ -649,6 +686,8 @@ def render_paper_shadow_weekly_report(
             f"- benchmark_comparison_proxy: {summary.get('benchmark_comparison_proxy')}",
             "- missing_input_artifacts: "
             f"{_join_or_none(summary.get('missing_input_artifacts'))}",
+            "- signal_input_blocking_inputs: "
+            f"{_join_or_none(_mapping(review.get('signal_input_completeness_summary')).get('blocking_input_ids'))}",
             f"- reviewer_notes_placeholder: {summary.get('reviewer_notes_placeholder')}",
             "",
             "## Daily Observations",
@@ -986,6 +1025,7 @@ def _missing_input_artifacts(
     drift_records: Sequence[Mapping[str, Any]],
     contract_payload: Mapping[str, Any],
     ledger_payload: Mapping[str, Any],
+    signal_input_summary: Mapping[str, Any],
 ) -> list[str]:
     missing: list[str] = []
     daily_ids = {_text(row.get("observation_id")) for row in daily_records}
@@ -1014,6 +1054,11 @@ def _missing_input_artifacts(
         missing.append("formal_research_method_contract:missing_contract_id")
     if not _text(ledger_payload.get("ledger_run_id")):
         missing.append("candidate_decision_ledger:missing_ledger_run_id")
+    if signal_input_summary.get("signal_input_status") not in {"OK", "WARNING"}:
+        missing.append(
+            "signal_input_completeness:"
+            f"status={signal_input_summary.get('signal_input_status')}"
+        )
     if not daily_records:
         missing.append("paper_shadow_daily_observation:none_loaded")
     if not drift_records:
@@ -1029,6 +1074,7 @@ def _source_artifacts(
     drift_payloads: Sequence[Mapping[str, Any]],
     contract_payload: Mapping[str, Any],
     ledger_payload: Mapping[str, Any],
+    signal_input_summary: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     rows.extend(
@@ -1063,6 +1109,14 @@ def _source_artifacts(
             artifact_id=ledger_payload.get("ledger_run_id"),
             path=ledger_payload.get("candidate_decision_ledger_manifest_path"),
             status=ledger_payload.get("status"),
+        )
+    )
+    rows.append(
+        _source_row(
+            source_id="signal_input_completeness",
+            artifact_id=signal_input_summary.get("monitor_id"),
+            path=signal_input_summary.get("report_path"),
+            status=signal_input_summary.get("signal_input_status"),
         )
     )
     return rows

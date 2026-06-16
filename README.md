@@ -1481,13 +1481,31 @@ official target weights、不触发 broker 或 order ticket，所有输出固定
 `paper_shadow_protocol_only=true`、`observation_only=true`、`manual_review_only=true`、
 `not_official_target_weights=true`、`broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-371_SIGNAL_INPUT_COMPLETENESS_MONITOR 在 paper-shadow daily / weekly 使用 signal
+inputs 前新增只读 completeness guard。CLI 入口为
+`aits etf dynamic-v3-rescue signal-input-completeness run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue signal-input-completeness report --latest` 和
+`aits etf dynamic-v3-rescue validate-signal-input-completeness --latest`。Policy 位于
+`config/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_v1.yaml`，显式定义
+required signal files、schema / feature version、required columns、coverage universe 和 stale
+thresholds。Monitor 检查 missing signal files、stale signal files、incompatible schema version、
+empty signal series、partial market coverage 和 missing required feature columns，输出
+`signal_input_status=OK|WARNING|BLOCKING`。`BLOCKING` 或缺少 monitor 会让
+`paper-shadow-daily run` fail closed，并传播到 weekly review、evidence staleness monitor、
+shadow continuation readiness 和 Reader Brief。该 guard 不刷新数据、不补造 signal / feature
+artifact、不运行上游、不写 official target weights、不触发 broker/order、不修改 paper account
+或 production state；所有输出固定 `signal_input_completeness_monitor_only=true`、
+`read_only_signal_input_check=true`、`data_downloaded_by_monitor=false`、
+`pipelines_executed_by_monitor=false`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 TRADING-351_PAPER_SHADOW_DAILY_RUNNER 在 formal contract 和 paper-shadow protocol
 之后新增 observation-only daily runner。CLI 入口为
 `aits etf dynamic-v3-rescue paper-shadow-daily run`、
 `aits etf dynamic-v3-rescue paper-shadow-daily report --latest` 和
 `aits etf dynamic-v3-rescue validate-paper-shadow-daily --latest`。Run 输入必须显式给出
 candidate id、observation date、market panel artifact、latest signal artifact、formal
-research method contract 和 paper-shadow protocol；输出写入
+research method contract、paper-shadow protocol 和 signal input completeness monitor；输出写入
 `reports/etf_portfolio/dynamic_v3_rescue/paper_shadow_daily/`，包含 daily manifest、
 observation JSON、Markdown report、Reader Brief section 和 validation JSON/Markdown，并登记
 report registry / latest pointer / Reader Brief 摘要。`hypothetical_weight_recommendation`
@@ -1535,7 +1553,7 @@ Runtime artifacts 写入
 manifest、review JSON、Markdown report、Reader Brief section 和 validation JSON/Markdown，
 并登记 report registry / latest pointer / Reader Brief 摘要。Weekly review 只读取既有
 paper-shadow daily observations、drift monitors、formal research method contract 和 candidate
-decision ledger，输出 signal / recommendation / turnover / drawdown / flip-rotation /
+decision ledger，并读取 latest signal input completeness summary，输出 signal / recommendation / turnover / drawdown / flip-rotation /
 benchmark stability、missing inputs、`weekly_decision=CONTINUE|WATCH|RETURN_TO_RESEARCH|REJECT`
 和 machine-readable decision policy。TRADING-353A 进一步输出 coverage sufficiency：
 `selected_window_start/end`、`expected_market_days`、`covered_market_days`、

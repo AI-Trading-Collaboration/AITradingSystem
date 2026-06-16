@@ -1,11 +1,235 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import json
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
 from ai_trading_system.etf_portfolio import dynamic_v3_filtered_candidate_readiness as readiness
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_signal_input_completeness as signal_inputs,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
+
+
+def run_signal_input_completeness_fixture(
+    tmp_path: Path,
+    *,
+    as_of: str = "2024-04-22",
+) -> dict[str, Any]:
+    as_of_date = date.fromisoformat(as_of)
+    signal_dir = tmp_path / "signal_inputs"
+    signal_dir.mkdir(exist_ok=True)
+    signals = signal_dir / "signals.csv"
+    signals.write_text(
+        "\n".join(
+            [
+                "date,symbol,trend_score,momentum_score,relative_strength_score,risk_score,composite_score,direction,confidence,reason_codes,model_version,feature_version,created_at",
+                f"{as_of},QQQ,1,1,1,1,1,bullish,high,[],0.1.0,etf_features_v0_1,{as_of}T00:00:00+00:00",
+                f"{as_of},SMH,1,1,1,1,1,bullish,high,[],0.1.0,etf_features_v0_1,{as_of}T00:00:00+00:00",
+                f"{as_of},SOXX,1,1,1,1,1,bullish,high,[],0.1.0,etf_features_v0_1,{as_of}T00:00:00+00:00",
+                f"{as_of},SPY,1,1,1,1,1,bullish,high,[],0.1.0,etf_features_v0_1,{as_of}T00:00:00+00:00",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    features = signal_dir / "features.csv"
+    feature_header = (
+        "date,symbol,close,adj_close,volume,ret_20d,ret_60d,ret_120d,ma_20,ma_50,"
+        "ma_100,ma_200,realized_vol_20d,drawdown_63d,rs_vs_spy_60d,rs_vs_qqq_60d,"
+        "rs_vs_smh_60d,feature_version,created_at"
+    )
+    feature_rows = [
+        f"{as_of},{symbol},1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,etf_features_v0_1,{as_of}T00:00:00+00:00"
+        for symbol in ("CASH", "QQQ", "SMH", "SOXX", "SPY")
+    ]
+    features.write_text("\n".join([feature_header, *feature_rows, ""]), encoding="utf-8")
+    daily_features = signal_dir / "features_daily.csv"
+    daily_features.write_text(
+        "\n".join(
+            [
+                "as_of,source_date,category,subject,feature,value,unit,lookback,source,notes",
+                f"{as_of},{as_of},macro_liquidity,DGS10,rate_current,4,percent,,fixture,",
+                f"{as_of},{as_of},price,QQQ,adj_close,1,price,,fixture,",
+                f"{as_of},{as_of},relative_strength,QQQ,rs_vs_spy_60d,0,ratio,60,fixture,",
+                f"{as_of},{as_of},risk_sentiment,^VIX,close,15,price,,fixture,",
+                f"{as_of},{as_of},trend,QQQ,return_20d,0,ratio,20,fixture,",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    snapshot = signal_dir / f"signal_snapshot_{as_of}.json"
+    snapshot.write_text(
+        json.dumps(
+            {
+                "schema_version": st.SCHEMA_VERSION,
+                "report_type": "signal_snapshot_report",
+                "metadata": {
+                    "snapshot_id": f"signal-snapshot-{as_of}",
+                    "as_of": as_of,
+                    "generated_at": f"{as_of}T00:00:00+00:00",
+                    "status": "OK",
+                    "production_effect": "none",
+                    "required_signals": [
+                        "macro_liquidity",
+                        "trend_momentum",
+                        "sector_strength",
+                        "earnings_quality",
+                        "valuation_risk",
+                        "event_risk",
+                    ],
+                },
+                "signals": {
+                    "macro_liquidity": {"status": "OK"},
+                    "trend_momentum": {"status": "OK"},
+                    "sector_strength": {"status": "OK"},
+                    "earnings_quality": {"status": "OK"},
+                    "valuation_risk": {"status": "OK"},
+                    "event_risk": {"status": "OK"},
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    policy = signal_dir / "signal_input_policy.yaml"
+    policy.write_text(
+        f"""
+schema_version: 1
+policy_id: test_signal_input_completeness
+version: "2024-04-22"
+status: test_fixture
+owner: test
+rationale: test fixture
+intended_effect: test fixture
+validation_evidence: focused tests
+review_condition: test fixture
+severity_order: [OK, WARNING, BLOCKING]
+default_next_actions:
+  OK: continue_paper_shadow_with_signal_inputs
+  WARNING: review_signal_input_warnings_before_continuing_shadow
+  BLOCKING: stop_paper_shadow_until_signal_inputs_are_restored
+required_inputs:
+  etf_signal_series:
+    label: ETF signal series
+    required: true
+    input_type: csv_timeseries
+    path: {signals.as_posix()}
+    date_column: date
+    coverage_column: symbol
+    stale_warning_days: 3
+    stale_blocking_days: 7
+    required_columns:
+      - date
+      - symbol
+      - trend_score
+      - momentum_score
+      - relative_strength_score
+      - risk_score
+      - composite_score
+      - direction
+      - confidence
+      - reason_codes
+      - model_version
+      - feature_version
+      - created_at
+    required_coverage_values: [QQQ, SMH, SOXX, SPY]
+    schema_version_column: model_version
+    allowed_schema_versions: ["0.1.0"]
+    feature_version_column: feature_version
+    allowed_feature_versions: [etf_features_v0_1]
+  etf_feature_matrix:
+    label: ETF feature matrix
+    required: true
+    input_type: csv_timeseries
+    path: {features.as_posix()}
+    date_column: date
+    coverage_column: symbol
+    stale_warning_days: 3
+    stale_blocking_days: 7
+    required_columns:
+      - date
+      - symbol
+      - close
+      - adj_close
+      - volume
+      - ret_20d
+      - ret_60d
+      - ret_120d
+      - ma_20
+      - ma_50
+      - ma_100
+      - ma_200
+      - realized_vol_20d
+      - drawdown_63d
+      - rs_vs_spy_60d
+      - rs_vs_qqq_60d
+      - rs_vs_smh_60d
+      - feature_version
+      - created_at
+    required_coverage_values: [CASH, QQQ, SMH, SOXX, SPY]
+    feature_version_column: feature_version
+    allowed_feature_versions: [etf_features_v0_1]
+  daily_feature_records:
+    label: Daily feature records
+    required: true
+    input_type: csv_timeseries
+    path: {daily_features.as_posix()}
+    date_column: as_of
+    coverage_column: category
+    stale_warning_days: 2
+    stale_blocking_days: 5
+    required_columns:
+      - as_of
+      - source_date
+      - category
+      - subject
+      - feature
+      - value
+      - unit
+      - lookback
+      - source
+      - notes
+    required_coverage_values: [macro_liquidity, price, relative_strength, risk_sentiment, trend]
+  latest_signal_snapshot:
+    label: Latest signal snapshot report
+    required: true
+    input_type: json_report
+    path: {snapshot.as_posix()}
+    date_json_path: metadata.as_of
+    report_type: signal_snapshot_report
+    stale_warning_days: 3
+    stale_blocking_days: 7
+    status_json_path: metadata.status
+    warning_statuses: [LIMITED]
+    blocking_statuses: [FAIL, FAILED, BLOCKED]
+    required_json_paths: [metadata.required_signals, signals]
+    required_signal_keys:
+      - macro_liquidity
+      - trend_momentum
+      - sector_strength
+      - earnings_quality
+      - valuation_risk
+      - event_risk
+""".lstrip(),
+        encoding="utf-8",
+    )
+    result = signal_inputs.run_signal_input_completeness_monitor(
+        as_of=as_of_date,
+        policy_path=policy,
+        output_dir=tmp_path / "signal_input_completeness",
+        generated_at=datetime.combine(as_of_date, datetime.min.time(), tzinfo=UTC),
+    )
+    return {
+        **result,
+        "policy_path": policy,
+        "output_dir": tmp_path / "signal_input_completeness",
+    }
 
 
 def run_filtered_candidate_evidence_fixture(tmp_path: Path) -> dict[str, Any]:

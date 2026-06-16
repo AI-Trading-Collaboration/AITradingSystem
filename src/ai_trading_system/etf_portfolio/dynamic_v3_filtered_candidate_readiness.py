@@ -22,6 +22,9 @@ from ai_trading_system.data_source_fallback_policy import (
     FALLBACK_STATE_FALLBACK_USED,
     latest_data_source_fallback_policy_summary,
 )
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_signal_input_completeness as signal_inputs,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as st
 from ai_trading_system.etf_portfolio import dynamic_v3_weight_batch_search as weight_search
 from ai_trading_system.market_calendar_freshness import resolve_us_equity_market_freshness
@@ -74,6 +77,7 @@ DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR = (
 DEFAULT_SHADOW_CONTINUATION_READINESS_DIR = (
     st.DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_continuation_readiness"
 )
+DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR = signal_inputs.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR
 DEFAULT_EVIDENCE_STALENESS_POLICY_PATH = (
     st.PROJECT_ROOT
     / "config"
@@ -170,6 +174,7 @@ SHADOW_CONTINUATION_READINESS_STATES = (
     "BLOCKED_SAFETY_BOUNDARY",
 )
 SHADOW_CONTINUATION_REQUIRED_SOURCES = (
+    "signal_input_completeness",
     "paper_shadow_daily_observation",
     "paper_shadow_drift_monitor",
     "paper_shadow_weekly_review",
@@ -2295,6 +2300,8 @@ def run_evidence_staleness_monitor(
     paper_shadow_daily_id: str | None = None,
     paper_shadow_drift_monitor_id: str | None = None,
     paper_shadow_weekly_review_id: str | None = None,
+    signal_input_completeness_id: str | None = None,
+    signal_input_completeness_report_path: Path | None = None,
     evidence_dir: Path = DEFAULT_FILTERED_CANDIDATE_EVIDENCE_DIR,
     stress_backfill_dir: Path = DEFAULT_FILTERED_CANDIDATE_STRESS_BACKFILL_DIR,
     ab_review_dir: Path = DEFAULT_FILTERED_CANDIDATE_AB_REVIEW_DIR,
@@ -2302,6 +2309,7 @@ def run_evidence_staleness_monitor(
     paper_shadow_daily_dir: Path = DEFAULT_PAPER_SHADOW_DAILY_DIR,
     paper_shadow_drift_monitor_dir: Path = DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
     paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    signal_input_completeness_dir: Path = DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     cache_catalog_report_path: Path | None = None,
@@ -2348,6 +2356,15 @@ def run_evidence_staleness_monitor(
         cache_catalog_summary.get("cache_integrity_status"),
         "MISSING",
     )
+    signal_input_summary = signal_inputs.latest_signal_input_completeness_summary(
+        monitor_id=signal_input_completeness_id,
+        report_path=signal_input_completeness_report_path,
+        output_dir=signal_input_completeness_dir,
+    )
+    signal_input_status = _text(
+        signal_input_summary.get("signal_input_status"),
+        "MISSING",
+    )
     stale_artifacts = [
         row.get("source_id") for row in findings if row.get("severity") == "STALE"
     ]
@@ -2366,9 +2383,14 @@ def run_evidence_staleness_monitor(
     ):
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "cache_catalog"])
         status = "BLOCKING"
+    if signal_input_status not in {"OK", "WARNING"}:
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "signal_input_completeness"])
+        status = "BLOCKING"
     missing_artifacts = [
         row.get("source_id") for row in findings if row.get("missing") is True
     ]
+    if signal_input_summary.get("exists") is not True:
+        missing_artifacts = _dedupe_texts([*missing_artifacts, "signal_input_completeness"])
     weekly_coverage = _evidence_weekly_coverage_status(findings)
     coverage_blocking_artifacts = _texts(weekly_coverage.get("coverage_blocking_artifacts"))
     safe_to_continue_shadow = (
@@ -2398,6 +2420,11 @@ def run_evidence_staleness_monitor(
         next_refresh_action = _text(
             cache_catalog_summary.get("next_action"),
             "repair_cache_lineage_then_rerun_validate_data_and_cache_catalog",
+        )
+    if signal_input_status not in {"OK", "WARNING"}:
+        next_refresh_action = _text(
+            signal_input_summary.get("next_required_action"),
+            "run_signal_input_completeness_monitor_before_paper_shadow",
         )
     policy_version = _text(policy.get("version"))
     monitor_id = _stable_id(
@@ -2444,6 +2471,13 @@ def run_evidence_staleness_monitor(
         "cache_checksum_mismatch_count": cache_catalog_summary.get(
             "checksum_mismatch_count"
         ),
+        "signal_input_completeness_summary": signal_input_summary,
+        "signal_input_status": signal_input_status,
+        "signal_input_blocking_count": signal_input_summary.get("blocking_count"),
+        "signal_input_warning_count": signal_input_summary.get("warning_count"),
+        "signal_input_blocking_input_ids": signal_input_summary.get("blocking_input_ids"),
+        "signal_input_warning_input_ids": signal_input_summary.get("warning_input_ids"),
+        "signal_input_report_path": signal_input_summary.get("report_path"),
         "coverage_blocking_artifacts": coverage_blocking_artifacts,
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
@@ -2482,6 +2516,9 @@ def run_evidence_staleness_monitor(
         "fallback_policy_report_path": fallback_summary.get("report_path"),
         "cache_integrity_status": cache_integrity_status,
         "cache_catalog_report_path": cache_catalog_summary.get("report_path"),
+        "signal_input_status": signal_input_status,
+        "signal_input_completeness_id": signal_input_summary.get("monitor_id"),
+        "signal_input_report_path": signal_input_summary.get("report_path"),
         "weekly_review_coverage_classification": weekly_coverage.get(
             "coverage_classification"
         ),
@@ -2573,6 +2610,8 @@ def _expected_evidence_staleness_blocking_artifacts(
         _mapping(report.get("cache_catalog_summary")).get("status")
     ) == "FAIL":
         expected.add("cache_catalog")
+    if _text(report.get("signal_input_status"), "MISSING") not in {"OK", "WARNING"}:
+        expected.add("signal_input_completeness")
     expected.discard("")
     return expected
 
@@ -2708,6 +2747,13 @@ def validate_evidence_staleness_monitor_artifact(
                 "",
             ),
             st._check(
+                "signal_input_completeness_fields_visible",
+                bool(report.get("signal_input_status"))
+                and "signal_input_completeness_summary" in report
+                and "signal_input_blocking_count" in report,
+                "",
+            ),
+            st._check(
                 "safe_to_continue_shadow_consistent",
                 report.get("safe_to_continue_shadow")
                 == (
@@ -2750,12 +2796,15 @@ def run_shadow_continuation_readiness_report(
     paper_shadow_drift_monitor_id: str | None = None,
     paper_shadow_weekly_review_id: str | None = None,
     evidence_staleness_monitor_id: str | None = None,
+    signal_input_completeness_id: str | None = None,
+    signal_input_completeness_report_path: Path | None = None,
     data_quality_report_path: Path | None = None,
     data_quality_report_dir: Path = DEFAULT_MARKET_PANEL_REPORT_DIR,
     paper_shadow_daily_dir: Path = DEFAULT_PAPER_SHADOW_DAILY_DIR,
     paper_shadow_drift_monitor_dir: Path = DEFAULT_PAPER_SHADOW_DRIFT_MONITOR_DIR,
     paper_shadow_weekly_review_dir: Path = DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
     evidence_staleness_monitor_dir: Path = DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    signal_input_completeness_dir: Path = DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     cache_catalog_report_path: Path | None = None,
@@ -2770,10 +2819,13 @@ def run_shadow_continuation_readiness_report(
         paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
         paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
         evidence_staleness_monitor_id=evidence_staleness_monitor_id,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
         paper_shadow_daily_dir=paper_shadow_daily_dir,
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
         evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+        signal_input_completeness_dir=signal_input_completeness_dir,
     )
     data_validation = _data_quality_report_summary(
         data_quality_report_path=data_quality_report_path,
@@ -2812,6 +2864,13 @@ def run_shadow_continuation_readiness_report(
         cache_catalog_summary.get("cache_integrity_status"),
         "MISSING",
     )
+    signal_input_summary = _mapping(
+        source_artifacts["signal_input_completeness"].get("summary")
+    )
+    signal_input_status = _text(
+        signal_input_summary.get("signal_input_status"),
+        "MISSING",
+    )
     weekly_detail = _mapping(source_artifacts["paper_shadow_weekly_review"].get("detail"))
     weekly_manifest = _mapping(source_artifacts["paper_shadow_weekly_review"].get("manifest"))
     coverage_status = _text(
@@ -2846,6 +2905,8 @@ def run_shadow_continuation_readiness_report(
         or _text(cache_catalog_summary.get("status")) == "FAIL"
     ):
         blocking_artifacts = _dedupe_texts([*blocking_artifacts, "cache_catalog"])
+    if signal_input_status not in {"OK", "WARNING"}:
+        blocking_artifacts = _dedupe_texts([*blocking_artifacts, "signal_input_completeness"])
     safety_audit = _shadow_continuation_safety_audit(source_artifacts)
     readiness = _shadow_continuation_readiness_decision(
         missing_artifacts=missing_artifacts,
@@ -2866,6 +2927,11 @@ def run_shadow_continuation_readiness_report(
     ):
         next_required_action = _text(
             cache_catalog_summary.get("next_action"),
+            next_required_action,
+        )
+    if signal_input_status not in {"OK", "WARNING"}:
+        next_required_action = _text(
+            signal_input_summary.get("next_required_action"),
             next_required_action,
         )
     readiness_id = _stable_id(
@@ -2906,6 +2972,13 @@ def run_shadow_continuation_readiness_report(
         "cache_checksum_mismatch_count": cache_catalog_summary.get(
             "checksum_mismatch_count"
         ),
+        "signal_input_completeness_summary": signal_input_summary,
+        "signal_input_status": signal_input_status,
+        "signal_input_blocking_count": signal_input_summary.get("blocking_count"),
+        "signal_input_warning_count": signal_input_summary.get("warning_count"),
+        "signal_input_blocking_input_ids": signal_input_summary.get("blocking_input_ids"),
+        "signal_input_warning_input_ids": signal_input_summary.get("warning_input_ids"),
+        "signal_input_report_path": signal_input_summary.get("report_path"),
         "manual_review_required": readiness != "READY_TO_CONTINUE",
         "next_required_action": next_required_action,
         "data_validation_result": data_validation,
@@ -2940,6 +3013,9 @@ def run_shadow_continuation_readiness_report(
         "fallback_policy_report_path": fallback_summary.get("report_path"),
         "cache_integrity_status": cache_integrity_status,
         "cache_catalog_report_path": cache_catalog_summary.get("report_path"),
+        "signal_input_status": signal_input_status,
+        "signal_input_completeness_id": signal_input_summary.get("monitor_id"),
+        "signal_input_report_path": signal_input_summary.get("report_path"),
         "manual_review_required": readiness != "READY_TO_CONTINUE",
         "next_required_action": next_required_action,
         "shadow_continuation_readiness_manifest_path": str(
@@ -3111,9 +3187,17 @@ def validate_shadow_continuation_readiness_artifact(
                 "",
             ),
             st._check(
+                "signal_input_completeness_fields_visible",
+                bool(report.get("signal_input_status"))
+                and "signal_input_completeness_summary" in report
+                and "signal_input_blocking_count" in report,
+                "",
+            ),
+            st._check(
                 "reader_brief_quality_fields",
                 "shadow_continuation_readiness" in reader
-                and "safe_to_continue_shadow" in reader,
+                and "safe_to_continue_shadow" in reader
+                and "signal_input_status" in reader,
                 "",
             ),
             st._check(
@@ -3158,6 +3242,9 @@ def render_shadow_continuation_readiness_reader_brief(report: Mapping[str, Any])
             f"- cache_integrity_status: {report.get('cache_integrity_status')}",
             f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
             f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
+            f"- signal_input_status: {report.get('signal_input_status')}",
+            f"- signal_input_blocking_count: {report.get('signal_input_blocking_count')}",
+            f"- signal_input_warning_count: {report.get('signal_input_warning_count')}",
             f"- manual_review_required: {report.get('manual_review_required')}",
             f"- next_required_action: {report.get('next_required_action')}",
             f"- data_validation_status: {report.get('data_validation_status')}",
@@ -3199,6 +3286,10 @@ def render_shadow_continuation_readiness_report(
             f"- cache_integrity_status: {report.get('cache_integrity_status')}",
             f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
             f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
+            f"- signal_input_status: {report.get('signal_input_status')}",
+            f"- signal_input_blocking_count: {report.get('signal_input_blocking_count')}",
+            f"- signal_input_warning_count: {report.get('signal_input_warning_count')}",
+            f"- signal_input_blocking_input_ids: {', '.join(_texts(report.get('signal_input_blocking_input_ids'))) or 'none'}",
             f"- manual_review_required: {report.get('manual_review_required')}",
             f"- next_required_action: {report.get('next_required_action')}",
             f"- data_validation_status: {report.get('data_validation_status')}",
@@ -3959,6 +4050,9 @@ def render_evidence_staleness_reader_brief(report: Mapping[str, Any]) -> str:
             f"- cache_integrity_status: {report.get('cache_integrity_status')}",
             f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
             f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
+            f"- signal_input_status: {report.get('signal_input_status')}",
+            f"- signal_input_blocking_count: {report.get('signal_input_blocking_count')}",
+            f"- signal_input_warning_count: {report.get('signal_input_warning_count')}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- weekly_review_coverage_classification: "
             f"{report.get('weekly_review_coverage_classification')}",
@@ -4016,6 +4110,10 @@ def render_evidence_staleness_report(
             f"- cache_integrity_status: {report.get('cache_integrity_status')}",
             f"- cache_blocking_entry_ids: {', '.join(_texts(report.get('cache_blocking_entry_ids'))) or 'none'}",
             f"- cache_checksum_mismatch_count: {report.get('cache_checksum_mismatch_count')}",
+            f"- signal_input_status: {report.get('signal_input_status')}",
+            f"- signal_input_blocking_count: {report.get('signal_input_blocking_count')}",
+            f"- signal_input_warning_count: {report.get('signal_input_warning_count')}",
+            f"- signal_input_blocking_input_ids: {', '.join(_texts(report.get('signal_input_blocking_input_ids'))) or 'none'}",
             f"- coverage_status: {report.get('coverage_status')}",
             "- coverage_blocking_artifacts: "
             f"{', '.join(_texts(report.get('coverage_blocking_artifacts'))) or 'none'}",
@@ -5519,12 +5617,23 @@ def _shadow_continuation_source_artifacts(
     paper_shadow_drift_monitor_id: str | None,
     paper_shadow_weekly_review_id: str | None,
     evidence_staleness_monitor_id: str | None,
+    signal_input_completeness_id: str | None,
+    signal_input_completeness_report_path: Path | None,
     paper_shadow_daily_dir: Path,
     paper_shadow_drift_monitor_dir: Path,
     paper_shadow_weekly_review_dir: Path,
     evidence_staleness_monitor_dir: Path,
+    signal_input_completeness_dir: Path,
 ) -> dict[str, dict[str, Any]]:
+    signal_input_summary = signal_inputs.latest_signal_input_completeness_summary(
+        monitor_id=signal_input_completeness_id,
+        report_path=signal_input_completeness_report_path,
+        output_dir=signal_input_completeness_dir,
+    )
     return {
+        "signal_input_completeness": _shadow_continuation_signal_input_source_artifact(
+            signal_input_summary
+        ),
         "paper_shadow_daily_observation": _shadow_continuation_source_artifact(
             source_id="paper_shadow_daily_observation",
             source_label="Paper-shadow daily observation",
@@ -5573,6 +5682,39 @@ def _shadow_continuation_source_artifacts(
             id_fields=("monitor_id",),
             status_fields=("evidence_freshness_status", "status"),
         ),
+    }
+
+
+def _shadow_continuation_signal_input_source_artifact(
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_path = Path(_text(summary.get("report_path"))) if _text(summary.get("report_path")) else None
+    validation_path = (
+        report_path.with_name("signal_input_completeness_validation.json")
+        if report_path is not None
+        else None
+    )
+    validation = st._read_optional_json(validation_path) if validation_path is not None else {}
+    detail = {
+        "schema_version": st.SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_signal_input_completeness_summary",
+        **dict(summary),
+        **signal_inputs.SIGNAL_INPUT_COMPLETENESS_SAFETY,
+    }
+    return {
+        "source_id": "signal_input_completeness",
+        "source_label": "Signal input completeness",
+        "exists": summary.get("exists") is True,
+        "artifact_id": _text(summary.get("monitor_id")),
+        "source_path": "" if report_path is None else str(report_path),
+        "root": "" if report_path is None else str(report_path.parent),
+        "manifest": {},
+        "detail": detail,
+        "validation": validation or {},
+        "summary": dict(summary),
+        "status": _text(summary.get("signal_input_status"), "MISSING"),
+        "validation_status": _text(_mapping(validation).get("status"), "NOT_RUN"),
+        "generated_at": _text(summary.get("generated_at")),
     }
 
 

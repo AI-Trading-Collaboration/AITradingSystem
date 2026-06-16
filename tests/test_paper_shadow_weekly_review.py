@@ -8,6 +8,7 @@ from typing import Any
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_paper_shadow_protocol_fixture,
+    run_signal_input_completeness_fixture,
 )
 from typer.testing import CliRunner
 
@@ -28,10 +29,12 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None
         drift_monitor_ids=fixture["drift_ids"],
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
         drift_dir=tmp_path / "paper_shadow_drift_monitor",
         contract_dir=tmp_path / "formal_research_method_contract",
         ledger_dir=tmp_path / "candidate_decision_ledger",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -43,6 +46,7 @@ def test_paper_shadow_weekly_review_builds_and_validates(tmp_path: Path) -> None
     )
 
     assert review["weekly_decision"] == "CONTINUE"
+    assert review["signal_input_status"] == "OK"
     assert review["coverage_classification"] == "FULL_WEEK_REVIEW"
     assert review["coverage_safe_for_continuation"] is True
     assert review["expected_market_days"] == [
@@ -77,10 +81,12 @@ def test_paper_shadow_weekly_review_discloses_missing_daily_input(
         drift_monitor_ids=fixture["drift_ids"],
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
         drift_dir=tmp_path / "paper_shadow_drift_monitor",
         contract_dir=tmp_path / "formal_research_method_contract",
         ledger_dir=tmp_path / "candidate_decision_ledger",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -120,6 +126,8 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
             fixture["contract_id"],
             "--ledger-run-id",
             fixture["ledger_run_id"],
+            "--signal-input-completeness-id",
+            fixture["signal_input_completeness_id"],
             "--observation-dir",
             str(tmp_path / "paper_shadow_daily"),
             "--drift-dir",
@@ -128,12 +136,15 @@ def test_paper_shadow_weekly_cli_build_report_and_validate(tmp_path: Path) -> No
             str(tmp_path / "formal_research_method_contract"),
             "--ledger-dir",
             str(tmp_path / "candidate_decision_ledger"),
+            "--signal-input-completeness-dir",
+            str(tmp_path / "signal_input_completeness"),
             "--output-dir",
             str(output_dir),
         ],
     )
     assert result.exit_code == 0
     assert "weekly_decision=CONTINUE" in result.output
+    assert "signal_input_status=OK" in result.output
     assert "coverage_classification=FULL_WEEK_REVIEW" in result.output
     assert "coverage_safe_for_continuation=True" in result.output
     weekly_review_id = next(
@@ -187,10 +198,12 @@ def test_paper_shadow_weekly_validation_rejects_illegal_decision(
         drift_monitor_ids=fixture["drift_ids"],
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
         drift_dir=tmp_path / "paper_shadow_drift_monitor",
         contract_dir=tmp_path / "formal_research_method_contract",
         ledger_dir=tmp_path / "candidate_decision_ledger",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -229,10 +242,12 @@ def test_paper_shadow_weekly_recovery_window_is_not_full_week(
         drift_monitor_ids=fixture["drift_ids"],
         contract_id=fixture["contract_id"],
         ledger_run_id=fixture["ledger_run_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness_id"],
         observation_dir=tmp_path / "paper_shadow_daily",
         drift_dir=tmp_path / "paper_shadow_drift_monitor",
         contract_dir=tmp_path / "formal_research_method_contract",
         ledger_dir=tmp_path / "candidate_decision_ledger",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_weekly_review",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -269,6 +284,7 @@ def _weekly_fixture(
     ),
 ) -> dict[str, Any]:
     fixture = run_paper_shadow_protocol_fixture(tmp_path)
+    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
     ledger = _candidate_decision_ledger_fixture(tmp_path, fixture)
     daily_ids: list[str] = []
     drift_ids: list[str] = []
@@ -305,8 +321,10 @@ def _weekly_fixture(
             manual_reviewer_notes="synthetic weekly review fixture",
             contract_id=fixture["formal_research_method_contract"]["contract_id"],
             protocol_id=fixture["paper_shadow_protocol"]["protocol_id"],
+            signal_input_completeness_id=signal_input["monitor_id"],
             contract_dir=tmp_path / "formal_research_method_contract",
             protocol_dir=tmp_path / "paper_shadow_protocol",
+            signal_input_completeness_dir=tmp_path / "signal_input_completeness",
             output_dir=tmp_path / "paper_shadow_daily",
             generated_at=datetime(2026, 6, 15, tzinfo=UTC),
         )
@@ -323,6 +341,7 @@ def _weekly_fixture(
     return {
         "contract_id": fixture["formal_research_method_contract"]["contract_id"],
         "ledger_run_id": ledger["ledger_run_id"],
+        "signal_input_completeness_id": signal_input["monitor_id"],
         "daily_ids": daily_ids,
         "drift_ids": drift_ids,
     }

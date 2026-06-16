@@ -7,6 +7,7 @@ from pathlib import Path
 from dynamic_v3_filtered_candidate_readiness_helpers import (
     assert_research_safe,
     run_formal_research_method_contract_fixture,
+    run_signal_input_completeness_fixture,
 )
 from typer.testing import CliRunner
 
@@ -32,8 +33,10 @@ def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path) -> 
         manual_reviewer_notes="synthetic daily observation fixture",
         contract_id=fixture["contract_id"],
         protocol_id=fixture["protocol_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness_id"],
         contract_dir=tmp_path / "formal_research_method_contract",
         protocol_dir=tmp_path / "paper_shadow_protocol",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -45,6 +48,7 @@ def test_paper_shadow_daily_observation_builds_and_validates(tmp_path: Path) -> 
     )
 
     assert observation["observation_status"] == "RECORDED"
+    assert observation["signal_input_status"] == "OK"
     assert observation["candidate"] == "median_plus_regime_mismatch_filter"
     assert observation["daily_review"]["signal_output"] == "OBSERVE_RISK_ON"
     assert (
@@ -77,8 +81,10 @@ def test_paper_shadow_daily_validation_fails_missing_input(tmp_path: Path) -> No
         manual_reviewer_notes="synthetic daily observation fixture",
         contract_id=fixture["contract_id"],
         protocol_id=fixture["protocol_id"],
+        signal_input_completeness_id=fixture["signal_input_completeness_id"],
         contract_dir=tmp_path / "formal_research_method_contract",
         protocol_dir=tmp_path / "paper_shadow_protocol",
+        signal_input_completeness_dir=tmp_path / "signal_input_completeness",
         output_dir=tmp_path / "paper_shadow_daily",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
@@ -128,16 +134,21 @@ def test_paper_shadow_daily_cli_run_report_and_validate(tmp_path: Path) -> None:
             fixture["contract_id"],
             "--protocol-id",
             fixture["protocol_id"],
+            "--signal-input-completeness-id",
+            fixture["signal_input_completeness_id"],
             "--contract-dir",
             str(tmp_path / "formal_research_method_contract"),
             "--protocol-dir",
             str(tmp_path / "paper_shadow_protocol"),
+            "--signal-input-completeness-dir",
+            str(tmp_path / "signal_input_completeness"),
             "--output-dir",
             str(output_dir),
         ],
     )
     assert result.exit_code == 0
     assert "observation_status=RECORDED" in result.output
+    assert "signal_input_status=OK" in result.output
     observation_id = next(
         line.split("=", 1)[1]
         for line in result.output.splitlines()
@@ -185,6 +196,7 @@ def _paper_shadow_fixture(tmp_path: Path) -> dict[str, Path | str]:
         output_dir=tmp_path / "paper_shadow_protocol",
         generated_at=datetime(2026, 6, 15, tzinfo=UTC),
     )
+    signal_input = run_signal_input_completeness_fixture(tmp_path, as_of="2026-06-12")
     market_panel = tmp_path / "market_panel_2026-06-12.json"
     market_panel.write_text(
         json.dumps({"as_of": "2026-06-12", "report_type": "market_panel"}),
@@ -204,6 +216,7 @@ def _paper_shadow_fixture(tmp_path: Path) -> dict[str, Path | str]:
     return {
         "contract_id": contract_id,
         "protocol_id": protocol_result["protocol_id"],
+        "signal_input_completeness_id": signal_input["monitor_id"],
         "market_panel": market_panel,
         "signal_artifact": signal_artifact,
     }

@@ -1,0 +1,171 @@
+schema_version: 1
+policy_id: dynamic_v3_rescue_signal_input_completeness_v1
+version: 2026-06-16
+status: pilot_baseline
+owner: system_validation
+rationale: >
+  TRADING-371 adds a read-only signal input completeness monitor before daily
+  paper-shadow observation, weekly paper-shadow review, evidence staleness
+  interpretation, and shadow continuation readiness. Calendar-day windows are
+  pilot governance bands for research-only paper-shadow inputs, not production
+  trading thresholds.
+intended_effect: >
+  Detect missing, stale, incompatible, empty, partially covered, or incomplete
+  signal inputs before downstream paper-shadow conclusions are reused.
+validation_evidence: >
+  Focused signal input completeness tests, real CLI run/report/validation,
+  documentation contract, report index, Reader Brief quality checks, Ruff, and
+  compileall.
+review_condition: >
+  Recalibrate after the first month of paper-shadow protocol operation or after
+  the project owner changes signal generation cadence, signal schema, or the
+  covered paper-shadow universe.
+
+severity_order:
+  - OK
+  - WARNING
+  - BLOCKING
+
+default_next_actions:
+  OK: continue_paper_shadow_with_signal_inputs
+  WARNING: review_signal_input_warnings_before_continuing_shadow
+  BLOCKING: stop_paper_shadow_until_signal_inputs_are_restored
+
+required_inputs:
+  etf_signal_series:
+    label: ETF signal series
+    required: true
+    input_type: csv_timeseries
+    path: data/etf_portfolio/signals.csv
+    date_column: date
+    coverage_column: symbol
+    stale_warning_days: 3
+    stale_blocking_days: 7
+    required_columns:
+      - date
+      - symbol
+      - trend_score
+      - momentum_score
+      - relative_strength_score
+      - risk_score
+      - composite_score
+      - direction
+      - confidence
+      - reason_codes
+      - model_version
+      - feature_version
+      - created_at
+    required_coverage_values:
+      - QQQ
+      - SMH
+      - SOXX
+      - SPY
+    schema_version_column: model_version
+    allowed_schema_versions:
+      - 0.1.0
+    feature_version_column: feature_version
+    allowed_feature_versions:
+      - etf_features_v0_1
+    rationale: >
+      Daily paper-shadow should not rely on stale or schema-incompatible ETF
+      signal rows for the active paper-shadow universe.
+  etf_feature_matrix:
+    label: ETF feature matrix
+    required: true
+    input_type: csv_timeseries
+    path: data/etf_portfolio/features.csv
+    date_column: date
+    coverage_column: symbol
+    stale_warning_days: 3
+    stale_blocking_days: 7
+    required_columns:
+      - date
+      - symbol
+      - close
+      - adj_close
+      - volume
+      - ret_20d
+      - ret_60d
+      - ret_120d
+      - ma_20
+      - ma_50
+      - ma_100
+      - ma_200
+      - realized_vol_20d
+      - drawdown_63d
+      - rs_vs_spy_60d
+      - rs_vs_qqq_60d
+      - rs_vs_smh_60d
+      - feature_version
+      - created_at
+    required_coverage_values:
+      - CASH
+      - QQQ
+      - SMH
+      - SOXX
+      - SPY
+    feature_version_column: feature_version
+    allowed_feature_versions:
+      - etf_features_v0_1
+    rationale: >
+      Signal interpretation depends on the feature matrix being fresh,
+      schema-complete, and covering both risk assets and the cash sleeve.
+  daily_feature_records:
+    label: Daily feature records
+    required: true
+    input_type: csv_timeseries
+    path: data/processed/features_daily.csv
+    date_column: as_of
+    coverage_column: category
+    stale_warning_days: 2
+    stale_blocking_days: 5
+    required_columns:
+      - as_of
+      - source_date
+      - category
+      - subject
+      - feature
+      - value
+      - unit
+      - lookback
+      - source
+      - notes
+    required_coverage_values:
+      - macro_liquidity
+      - price
+      - relative_strength
+      - risk_sentiment
+      - trend
+    rationale: >
+      The daily feature table is the broad signal input ledger used by reports;
+      the latest as-of must include the expected feature categories.
+  latest_signal_snapshot:
+    label: Latest signal snapshot report
+    required: true
+    input_type: json_report
+    path_glob: outputs/reports/signal_snapshot_*.json
+    date_json_path: metadata.as_of
+    report_type: signal_snapshot_report
+    stale_warning_days: 3
+    stale_blocking_days: 7
+    status_json_path: metadata.status
+    warning_statuses:
+      - LIMITED
+    blocking_statuses:
+      - FAIL
+      - FAILED
+      - BLOCKED
+    required_json_paths:
+      - metadata.required_signals
+      - signals
+    required_signal_keys:
+      - macro_liquidity
+      - trend_momentum
+      - sector_strength
+      - earnings_quality
+      - valuation_risk
+      - event_risk
+    rationale: >
+      The owner-facing signal snapshot must expose all required signal groups;
+      LIMITED is visible as warning, while missing groups or stale snapshots
+      block downstream paper-shadow interpretation.

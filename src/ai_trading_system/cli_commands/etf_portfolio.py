@@ -33,6 +33,9 @@ from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as pap
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as paper_shadow_drift
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as paper_shadow_weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_signal_input_completeness as signal_input_completeness,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio import (
@@ -1830,6 +1833,10 @@ dynamic_v3_paper_shadow_protocol_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow protocol workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_signal_input_completeness_app = typer.Typer(
+    help="Dynamic v3 rescue signal input completeness workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_paper_shadow_daily_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow daily observation workflow。",
     no_args_is_help=True,
@@ -2626,6 +2633,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_protocol_app,
     name="paper-shadow-protocol",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_input_completeness_app,
+    name="signal-input-completeness",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_daily_app,
@@ -19851,6 +19862,138 @@ def dynamic_v3_validate_paper_shadow_protocol_command(
     )
 
 
+@dynamic_v3_signal_input_completeness_app.command("run")
+def dynamic_v3_signal_input_completeness_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="signal input completeness as-of date YYYY-MM-DD；省略时使用当前 UTC 日期。",
+        ),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy-path", help="signal input completeness policy YAML。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_POLICY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal input completeness artifact root。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
+) -> None:
+    result = signal_input_completeness.run_signal_input_completeness_monitor(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        policy_path=policy_path,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(result.get("signal_input_completeness_report"))
+    validation = _mapping_obj(result.get("signal_input_completeness_validation"))
+    typer.echo(f"monitor_id={result['monitor_id']}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"blocking_count={report.get('blocking_count')}")
+    typer.echo(f"warning_count={report.get('warning_count')}")
+    typer.echo(f"missing_signal_files={','.join(_texts(report.get('missing_signal_files')))}")
+    typer.echo(f"stale_signal_files={','.join(_texts(report.get('stale_signal_files')))}")
+    typer.echo(
+        "incompatible_schema_inputs="
+        f"{','.join(_texts(report.get('incompatible_schema_inputs')))}"
+    )
+    typer.echo(
+        "partial_market_coverage_inputs="
+        f"{','.join(_texts(report.get('partial_market_coverage_inputs')))}"
+    )
+    typer.echo(
+        "missing_required_feature_columns="
+        f"{','.join(_texts(report.get('missing_required_feature_columns')))}"
+    )
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("signal_input_completeness_monitor_only=true")
+    typer.echo("data_downloaded_by_monitor=false")
+    typer.echo("pipelines_executed_by_monitor=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_signal_input_completeness_app.command("report")
+def dynamic_v3_signal_input_completeness_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    monitor_id: Annotated[
+        str | None,
+        typer.Option("--monitor-id", help="signal input completeness monitor id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal input completeness artifact root。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
+) -> None:
+    if not latest and not monitor_id:
+        raise typer.BadParameter("--monitor-id or --latest is required")
+    payload = signal_input_completeness.signal_input_completeness_report_payload(
+        monitor_id=monitor_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(payload.get("signal_input_completeness_report"))
+    validation = _mapping_obj(payload.get("signal_input_completeness_validation"))
+    typer.echo(f"monitor_id={payload['monitor_id']}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"blocking_count={report.get('blocking_count')}")
+    typer.echo(f"warning_count={report.get('warning_count')}")
+    typer.echo(f"missing_signal_files={','.join(_texts(report.get('missing_signal_files')))}")
+    typer.echo(f"stale_signal_files={','.join(_texts(report.get('stale_signal_files')))}")
+    typer.echo(
+        "incompatible_schema_inputs="
+        f"{','.join(_texts(report.get('incompatible_schema_inputs')))}"
+    )
+    typer.echo(
+        "partial_market_coverage_inputs="
+        f"{','.join(_texts(report.get('partial_market_coverage_inputs')))}"
+    )
+    typer.echo(
+        "missing_required_feature_columns="
+        f"{','.join(_texts(report.get('missing_required_feature_columns')))}"
+    )
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={payload['signal_input_completeness_markdown_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-input-completeness")
+def dynamic_v3_validate_signal_input_completeness_command(
+    monitor_id: Annotated[
+        str | None,
+        typer.Option("--monitor-id", help="signal input completeness monitor id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy-path", help="signal input completeness policy YAML。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_POLICY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal input completeness artifact root。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
+) -> None:
+    resolved_id = monitor_id
+    if latest:
+        payload = signal_input_completeness.signal_input_completeness_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("monitor_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--monitor-id or --latest is required")
+    _echo_validation_payload(
+        signal_input_completeness.validate_signal_input_completeness_artifact(
+            monitor_id=resolved_id,
+            output_dir=output_dir,
+            policy_path=policy_path,
+        )
+    )
+
+
 @dynamic_v3_paper_shadow_daily_app.command("run")
 def dynamic_v3_paper_shadow_daily_run_command(
     candidate: Annotated[str, typer.Option("--candidate", help="candidate id。")],
@@ -19891,6 +20034,21 @@ def dynamic_v3_paper_shadow_daily_run_command(
         str | None,
         typer.Option("--protocol-id", help="paper-shadow protocol id；缺省 latest。"),
     ] = None,
+    signal_input_completeness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--signal-input-completeness-id",
+            "--signal-input-monitor-id",
+            help="signal input completeness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    signal_input_completeness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--signal-input-completeness-report-path",
+            help="显式 signal input completeness report JSON。",
+        ),
+    ] = None,
     contract_dir: Annotated[
         Path,
         typer.Option("--contract-dir", help="formal research method contract artifact root。"),
@@ -19899,6 +20057,13 @@ def dynamic_v3_paper_shadow_daily_run_command(
         Path,
         typer.Option("--protocol-dir", help="paper-shadow protocol artifact root。"),
     ] = filtered_readiness.DEFAULT_PAPER_SHADOW_PROTOCOL_DIR,
+    signal_input_completeness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--signal-input-completeness-dir",
+            help="signal input completeness artifact root。",
+        ),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="paper-shadow daily artifact root。"),
@@ -19919,8 +20084,11 @@ def dynamic_v3_paper_shadow_daily_run_command(
         manual_reviewer_notes=manual_reviewer_notes,
         contract_id=contract_id,
         protocol_id=protocol_id,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
         contract_dir=contract_dir,
         protocol_dir=protocol_dir,
+        signal_input_completeness_dir=signal_input_completeness_dir,
         output_dir=output_dir,
     )
     manifest = _mapping_obj(result.get("manifest"))
@@ -19930,6 +20098,7 @@ def dynamic_v3_paper_shadow_daily_run_command(
     typer.echo(f"candidate={observation.get('candidate')}")
     typer.echo(f"observation_date={observation.get('observation_date')}")
     typer.echo(f"observation_status={observation.get('observation_status')}")
+    typer.echo(f"signal_input_status={observation.get('signal_input_status')}")
     daily_review = _mapping_obj(observation.get("daily_review"))
     typer.echo(f"signal_output={daily_review.get('signal_output')}")
     typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
@@ -20134,6 +20303,21 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
         str | None,
         typer.Option("--ledger-run-id", help="candidate decision ledger run id；缺省 latest。"),
     ] = None,
+    signal_input_completeness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--signal-input-completeness-id",
+            "--signal-input-monitor-id",
+            help="signal input completeness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    signal_input_completeness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--signal-input-completeness-report-path",
+            help="显式 signal input completeness report JSON。",
+        ),
+    ] = None,
     observation_dir: Annotated[
         Path,
         typer.Option("--observation-dir", help="paper-shadow daily artifact root。"),
@@ -20150,6 +20334,13 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
         Path,
         typer.Option("--ledger-dir", help="candidate decision ledger artifact root。"),
     ] = filtered_readiness.DEFAULT_CANDIDATE_DECISION_LEDGER_DIR,
+    signal_input_completeness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--signal-input-completeness-dir",
+            help="signal input completeness artifact root。",
+        ),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="paper-shadow weekly review artifact root。"),
@@ -20177,10 +20368,13 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
         drift_monitor_ids=drift_monitor_id,
         contract_id=contract_id,
         ledger_run_id=ledger_run_id,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
         observation_dir=observation_dir,
         drift_dir=drift_dir,
         contract_dir=contract_dir,
         ledger_dir=ledger_dir,
+        signal_input_completeness_dir=signal_input_completeness_dir,
         output_dir=output_dir,
         manual_coverage_override=manual_coverage_override,
         manual_coverage_override_reason=manual_coverage_override_reason,
@@ -20193,6 +20387,7 @@ def dynamic_v3_paper_shadow_weekly_review_build_command(
     typer.echo(f"week_start={review.get('week_start')}")
     typer.echo(f"week_end={review.get('week_end')}")
     typer.echo(f"weekly_decision={review.get('weekly_decision')}")
+    typer.echo(f"signal_input_status={review.get('signal_input_status')}")
     typer.echo(f"coverage_classification={review.get('coverage_classification')}")
     typer.echo(f"coverage_safe_for_continuation={review.get('coverage_safe_for_continuation')}")
     typer.echo(f"coverage_status={review.get('coverage_status')}")
@@ -20235,6 +20430,7 @@ def dynamic_v3_paper_shadow_weekly_review_report_command(
     typer.echo(f"week_start={review.get('week_start')}")
     typer.echo(f"week_end={review.get('week_end')}")
     typer.echo(f"weekly_decision={review.get('weekly_decision')}")
+    typer.echo(f"signal_input_status={review.get('signal_input_status')}")
     typer.echo(f"coverage_classification={review.get('coverage_classification')}")
     typer.echo(f"coverage_safe_for_continuation={review.get('coverage_safe_for_continuation')}")
     typer.echo(f"coverage_status={review.get('coverage_status')}")
@@ -20457,6 +20653,21 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
             help="paper-shadow weekly review id；缺省读取 latest。",
         ),
     ] = None,
+    signal_input_completeness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--signal-input-completeness-id",
+            "--signal-input-monitor-id",
+            help="signal input completeness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    signal_input_completeness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--signal-input-completeness-report-path",
+            help="显式 signal input completeness report JSON。",
+        ),
+    ] = None,
     policy_path: Annotated[
         Path,
         typer.Option("--policy-path", help="evidence staleness policy YAML。"),
@@ -20503,6 +20714,13 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
             help="paper-shadow weekly review artifact root。",
         ),
     ] = filtered_readiness.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    signal_input_completeness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--signal-input-completeness-dir",
+            help="signal input completeness artifact root。",
+        ),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence staleness monitor artifact root。"),
@@ -20518,6 +20736,8 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         paper_shadow_daily_id=paper_shadow_daily_id,
         paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
         paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
         policy_path=policy_path,
         price_cache_path=price_cache_path,
         market_panel_dir=market_panel_dir,
@@ -20528,6 +20748,7 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
         paper_shadow_daily_dir=paper_shadow_daily_dir,
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
+        signal_input_completeness_dir=signal_input_completeness_dir,
         output_dir=output_dir,
     )
     report = _mapping_obj(result.get("evidence_staleness_report"))
@@ -20547,6 +20768,9 @@ def dynamic_v3_evidence_staleness_monitor_run_command(
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
     typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
+    typer.echo(f"signal_input_warning_count={report.get('signal_input_warning_count')}")
     typer.echo(f"coverage_status={report.get('coverage_status')}")
     typer.echo(
         "weekly_review_coverage_classification="
@@ -20600,6 +20824,9 @@ def dynamic_v3_evidence_staleness_monitor_report_command(
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
     typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
+    typer.echo(f"signal_input_warning_count={report.get('signal_input_warning_count')}")
     typer.echo(f"coverage_status={report.get('coverage_status')}")
     typer.echo(
         "weekly_review_coverage_classification="
@@ -20683,6 +20910,21 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
             help="evidence staleness monitor id；缺省读取 latest。",
         ),
     ] = None,
+    signal_input_completeness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--signal-input-completeness-id",
+            "--signal-input-monitor-id",
+            help="signal input completeness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    signal_input_completeness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--signal-input-completeness-report-path",
+            help="显式 signal input completeness report JSON。",
+        ),
+    ] = None,
     data_quality_report_path: Annotated[
         Path | None,
         typer.Option("--data-quality-report-path", help="data quality report path。"),
@@ -20732,6 +20974,13 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
             help="evidence staleness monitor artifact root。",
         ),
     ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    signal_input_completeness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--signal-input-completeness-dir",
+            help="signal input completeness artifact root。",
+        ),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="shadow continuation readiness artifact root。"),
@@ -20744,6 +20993,8 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
         paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
         paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
         evidence_staleness_monitor_id=evidence_staleness_monitor_id,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
         data_quality_report_path=data_quality_report_path,
         data_quality_report_dir=data_quality_report_dir,
         fallback_policy_report_path=fallback_policy_report_path,
@@ -20754,6 +21005,7 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
         paper_shadow_drift_monitor_dir=paper_shadow_drift_monitor_dir,
         paper_shadow_weekly_review_dir=paper_shadow_weekly_review_dir,
         evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+        signal_input_completeness_dir=signal_input_completeness_dir,
         output_dir=output_dir,
     )
     report = _mapping_obj(result.get("shadow_continuation_readiness_report"))
@@ -20771,6 +21023,9 @@ def dynamic_v3_shadow_continuation_readiness_run_command(
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
     typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
+    typer.echo(f"signal_input_warning_count={report.get('signal_input_warning_count')}")
     typer.echo(f"manual_review_required={report.get('manual_review_required')}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"data_validation_status={report.get('data_validation_status')}")
@@ -20817,6 +21072,9 @@ def dynamic_v3_shadow_continuation_readiness_report_command(
     typer.echo(f"cache_integrity_status={report.get('cache_integrity_status')}")
     typer.echo(f"cache_blocking_entry_ids={','.join(_texts(report.get('cache_blocking_entry_ids')))}")
     typer.echo(f"cache_checksum_mismatch_count={report.get('cache_checksum_mismatch_count')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"signal_input_blocking_count={report.get('signal_input_blocking_count')}")
+    typer.echo(f"signal_input_warning_count={report.get('signal_input_warning_count')}")
     typer.echo(f"manual_review_required={report.get('manual_review_required')}")
     typer.echo(f"next_required_action={report.get('next_required_action')}")
     typer.echo(f"data_validation_status={report.get('data_validation_status')}")
