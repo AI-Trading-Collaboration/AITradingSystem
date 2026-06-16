@@ -171,6 +171,7 @@ def build_reader_brief_payload(
     research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
     paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
     candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
+    extended_shadow_protocol = _extended_shadow_protocol_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -333,6 +334,7 @@ def build_reader_brief_payload(
         "research_monthly_review_pack": research_monthly_review_pack,
         "paper_shadow_promotion_board": paper_shadow_promotion_board,
         "candidate_rejection_postmortem": candidate_rejection_postmortem,
+        "extended_shadow_protocol": extended_shadow_protocol,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -660,6 +662,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
     paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
     candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
+    extended_shadow_protocol = _mapping(payload.get("extended_shadow_protocol"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1183,6 +1186,45 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "production_effect",
                         candidate_rejection_postmortem.get("production_effect"),
                     ),
+                ]
+            ),
+        ),
+        _section(
+            "Extended Shadow Protocol",
+            _definition_table(
+                [
+                    ("availability", extended_shadow_protocol.get("availability")),
+                    ("status", extended_shadow_protocol.get("status")),
+                    (
+                        "eligibility_status",
+                        extended_shadow_protocol.get("eligibility_status"),
+                    ),
+                    (
+                        "validation_status",
+                        extended_shadow_protocol.get("validation_status"),
+                    ),
+                    ("candidate_id", extended_shadow_protocol.get("candidate_id")),
+                    (
+                        "observed_trading_days",
+                        extended_shadow_protocol.get("observed_trading_days"),
+                    ),
+                    (
+                        "minimum_observation_trading_days",
+                        extended_shadow_protocol.get("minimum_observation_trading_days"),
+                    ),
+                    ("checks", extended_shadow_protocol.get("check_count")),
+                    ("blocked_checks", extended_shadow_protocol.get("blocked_check_count")),
+                    ("warning_checks", extended_shadow_protocol.get("warning_check_count")),
+                    ("safety_status", extended_shadow_protocol.get("safety_status")),
+                    ("readiness_status", extended_shadow_protocol.get("readiness_status")),
+                    (
+                        "owner_decision_status",
+                        extended_shadow_protocol.get("owner_decision_status"),
+                    ),
+                    ("lineage_status", extended_shadow_protocol.get("lineage_status")),
+                    ("next_action", extended_shadow_protocol.get("next_action")),
+                    ("detail_report", extended_shadow_protocol.get("detail_report")),
+                    ("production_effect", extended_shadow_protocol.get("production_effect")),
                 ]
             ),
         ),
@@ -7275,6 +7317,95 @@ def _missing_candidate_rejection_postmortem_summary(reason: str) -> dict[str, An
         "summary_sentence": (
             "candidate_rejection_postmortem_template artifact missing; run reports "
             "candidate-rejection-postmortem-template."
+        ),
+        "limitation": reason,
+    }
+
+
+def _extended_shadow_protocol_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_extended_shadow_protocol_summary(
+            "report_index artifact missing; Reader Brief cannot discover extended shadow protocol."
+        )
+    report_path = _report_index_artifact_path(report_index, "extended_shadow_protocol")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_extended_shadow_protocol_summary(
+            "extended_shadow_protocol artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "extended_shadow_protocol_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    eligibility_status = _text(
+        payload.get("eligibility_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": eligibility_status,
+        "eligibility_status": eligibility_status,
+        "validation_status": validation_status,
+        "candidate_id": _text(summary.get("candidate_id"), _text(payload.get("candidate_id"))),
+        "observed_trading_days": _int(summary.get("observed_trading_days")),
+        "minimum_observation_trading_days": _int(
+            summary.get("minimum_observation_trading_days")
+        ),
+        "check_count": _int(summary.get("check_count")),
+        "passed_check_count": _int(summary.get("passed_check_count")),
+        "blocked_check_count": _int(summary.get("blocked_check_count")),
+        "warning_check_count": _int(summary.get("warning_check_count")),
+        "safety_status": _text(summary.get("safety_status"), "UNKNOWN"),
+        "readiness_status": _text(summary.get("readiness_status"), "UNKNOWN"),
+        "owner_decision_status": _text(summary.get("owner_decision_status"), "UNKNOWN"),
+        "lineage_status": _text(summary.get("lineage_status"), "UNKNOWN"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"extended_shadow_protocol={eligibility_status}; "
+            f"validation={validation_status}; "
+            f"blocked={_int(summary.get('blocked_check_count'))}; "
+            f"warnings={_int(summary.get('warning_check_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest extended shadow protocol artifacts; "
+            "it does not extend shadow or mutate candidate state."
+        ),
+    }
+
+
+def _missing_extended_shadow_protocol_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "eligibility_status": "MISSING",
+        "validation_status": "MISSING",
+        "candidate_id": "",
+        "observed_trading_days": 0,
+        "minimum_observation_trading_days": 0,
+        "check_count": 0,
+        "passed_check_count": 0,
+        "blocked_check_count": 0,
+        "warning_check_count": 0,
+        "safety_status": "MISSING",
+        "readiness_status": "MISSING",
+        "owner_decision_status": "MISSING",
+        "lineage_status": "MISSING",
+        "next_action": "run_aits_reports_extended_shadow_protocol_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "extended_shadow_protocol artifact missing; run reports "
+            "extended-shadow-protocol."
         ),
         "limitation": reason,
     }
@@ -23306,6 +23437,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "candidate_rejection_postmortem_template_validation": (
             "确认 rejection postmortem required sections、filled record 和安全边界是否通过。"
         ),
+        "extended_shadow_protocol": (
+            "查看 extended shadow eligibility、minimum observation period 和 blocker。"
+        ),
+        "extended_shadow_protocol_validation": (
+            "确认 extended shadow protocol schema、required evidence 和安全边界是否通过。"
+        ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
         ),
@@ -23443,6 +23580,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "manual rejection review",
         "Candidate rejection postmortem template 或 filled record 生成后立即校验。",
+    ),
+    "extended_shadow_protocol": (
+        "monthly",
+        "manual extended shadow review",
+        "Promotion board、owner decision、safety audit 和 lineage 更新后生成。",
+    ),
+    "extended_shadow_protocol_validation": (
+        "monthly",
+        "manual extended shadow review",
+        "Extended shadow protocol 生成后立即校验 evidence checklist 和安全边界。",
     ),
     "research_safety_boundary_audit": (
         "daily",

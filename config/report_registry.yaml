@@ -7491,6 +7491,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: extended_shadow_protocol
+    title: Extended Shadow Protocol
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports extended-shadow-protocol --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/extended_shadow_protocol_????-??-??.json
+      - outputs/reports/extended_shadow_protocol_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Extended shadow protocol should be current before any extended paper-shadow owner review.
+    owner_action: run_after_promotion_board_owner_decision_safety_and_lineage
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: extended_shadow_protocol_validation
+    title: Extended Shadow Protocol Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-extended-shadow-protocol --latest
+    artifact_globs:
+      - outputs/reports/extended_shadow_protocol_validation_*.json
+      - outputs/reports/extended_shadow_protocol_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Extended shadow protocol validation should fail closed on missing required sources, unsafe production effect, missing Reader Brief section, or safety-boundary drift.
+    owner_action: run_after_extended_shadow_protocol
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

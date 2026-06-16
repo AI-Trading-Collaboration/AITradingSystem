@@ -1680,6 +1680,20 @@ production state，不生成 official target weights、order ticket 或 broker a
 缺 required section、revisit decision、lessons learned 或带 state/broker/order mutation flag 时
 fail closed。
 
+TRADING-381_EXTENDED_SHADOW_PROTOCOL 新增 extended shadow protocol eligibility report。
+`aits reports extended-shadow-protocol --as-of YYYY-MM-DD` 只读读取同日 report index 和
+既有 promotion board、evidence staleness monitor、weekly review、readiness、safety audit、
+cost sensitivity、benchmark baseline、owner decision audit log 与 lineage graph，输出
+`outputs/reports/extended_shadow_protocol_YYYY-MM-DD.json/md`。`aits reports
+validate-extended-shadow-protocol --latest` 输出 validation artifact。Protocol 严格要求 no
+blocking stale data、no unresolved safety warnings、stable weekly review coverage、acceptable
+cost sensitivity、benchmark comparison available、owner review complete、lineage graph
+available，并满足 TRADING-350 pilot baseline minimum observation period `20` trading days。
+该 report 只能输出 `EXTENDED_SHADOW_ELIGIBLE|EXTENDED_SHADOW_BLOCKED`；即使 eligible 也只表示
+owner 可继续复核 extended paper-shadow observation plan，不是 live trading 或 official
+allocation approval；不运行上游、不刷新数据、不补造 observation / owner / metrics，不修改
+candidate / paper-shadow / production state，不生成 official target weights、order ticket 或 broker action。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持
