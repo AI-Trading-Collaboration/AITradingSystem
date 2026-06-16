@@ -7427,6 +7427,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: paper_shadow_promotion_board
+    title: Paper Shadow Promotion Board
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports paper-shadow-promotion-board --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/paper_shadow_promotion_board_????-??-??.json
+      - outputs/reports/paper_shadow_promotion_board_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Paper-shadow promotion board should be current before any extended shadow interpretation or return-to-research owner review.
+    owner_action: run_after_monthly_pack_owner_decision_safety_and_lineage
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: paper_shadow_promotion_board_validation
+    title: Paper Shadow Promotion Board Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-paper-shadow-promotion-board --latest
+    artifact_globs:
+      - outputs/reports/paper_shadow_promotion_board_validation_*.json
+      - outputs/reports/paper_shadow_promotion_board_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Paper-shadow promotion board validation should fail closed on missing required evidence, invalid decision enums, unsafe production effect, or safety-boundary drift.
+    owner_action: run_after_paper_shadow_promotion_board
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

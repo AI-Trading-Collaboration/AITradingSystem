@@ -169,6 +169,7 @@ def build_reader_brief_payload(
     owner_review_template_v2 = _owner_review_template_v2_summary(report_index)
     owner_decision_audit_log = _owner_decision_audit_log_summary(report_index)
     research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
+    paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -329,6 +330,7 @@ def build_reader_brief_payload(
         "owner_review_template_v2": owner_review_template_v2,
         "owner_decision_audit_log": owner_decision_audit_log,
         "research_monthly_review_pack": research_monthly_review_pack,
+        "paper_shadow_promotion_board": paper_shadow_promotion_board,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -654,6 +656,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     owner_review_template_v2 = _mapping(payload.get("owner_review_template_v2"))
     owner_decision_audit_log = _mapping(payload.get("owner_decision_audit_log"))
     research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
+    paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1077,6 +1080,52 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         research_monthly_review_pack.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Paper Shadow Promotion Board",
+            _definition_table(
+                [
+                    ("availability", paper_shadow_promotion_board.get("availability")),
+                    ("status", paper_shadow_promotion_board.get("status")),
+                    ("board_decision", paper_shadow_promotion_board.get("board_decision")),
+                    (
+                        "validation_status",
+                        paper_shadow_promotion_board.get("validation_status"),
+                    ),
+                    ("candidate_id", paper_shadow_promotion_board.get("candidate_id")),
+                    (
+                        "evidence_checks",
+                        paper_shadow_promotion_board.get("evidence_check_count"),
+                    ),
+                    (
+                        "passed_evidence",
+                        paper_shadow_promotion_board.get("passed_evidence_count"),
+                    ),
+                    (
+                        "blocked_evidence",
+                        paper_shadow_promotion_board.get("blocked_evidence_count"),
+                    ),
+                    (
+                        "warning_evidence",
+                        paper_shadow_promotion_board.get("warning_evidence_count"),
+                    ),
+                    ("safety_status", paper_shadow_promotion_board.get("safety_status")),
+                    (
+                        "readiness_status",
+                        paper_shadow_promotion_board.get("readiness_status"),
+                    ),
+                    (
+                        "owner_decision_status",
+                        paper_shadow_promotion_board.get("owner_decision_status"),
+                    ),
+                    ("next_action", paper_shadow_promotion_board.get("next_action")),
+                    ("detail_report", paper_shadow_promotion_board.get("detail_report")),
+                    (
+                        "production_effect",
+                        paper_shadow_promotion_board.get("production_effect"),
                     ),
                 ]
             ),
@@ -7003,6 +7052,84 @@ def _missing_research_monthly_review_pack_summary(reason: str) -> dict[str, Any]
         "summary_sentence": (
             "research_monthly_review_pack artifact missing; run reports "
             "research-monthly-review-pack."
+        ),
+        "limitation": reason,
+    }
+
+
+def _paper_shadow_promotion_board_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_paper_shadow_promotion_board_summary(
+            "report_index artifact missing; Reader Brief cannot discover promotion board."
+        )
+    report_path = _report_index_artifact_path(report_index, "paper_shadow_promotion_board")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_paper_shadow_promotion_board_summary(
+            "paper_shadow_promotion_board artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "paper_shadow_promotion_board_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    decision = _text(payload.get("board_decision"), _text(payload.get("status"), "UNKNOWN"))
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": decision,
+        "board_decision": decision,
+        "validation_status": validation_status,
+        "candidate_id": _text(summary.get("candidate_id"), _text(payload.get("candidate_id"))),
+        "evidence_check_count": _int(summary.get("evidence_check_count")),
+        "passed_evidence_count": _int(summary.get("passed_evidence_count")),
+        "blocked_evidence_count": _int(summary.get("blocked_evidence_count")),
+        "warning_evidence_count": _int(summary.get("warning_evidence_count")),
+        "safety_status": _text(summary.get("safety_status"), "UNKNOWN"),
+        "readiness_status": _text(summary.get("readiness_status"), "UNKNOWN"),
+        "owner_decision_status": _text(summary.get("owner_decision_status"), "UNKNOWN"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"paper_shadow_promotion_board={decision}; "
+            f"validation={validation_status}; "
+            f"blocked={_int(summary.get('blocked_evidence_count'))}; "
+            f"warnings={_int(summary.get('warning_evidence_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest paper-shadow promotion board artifacts "
+            "from report index; it does not promote candidates or mutate shadow state."
+        ),
+    }
+
+
+def _missing_paper_shadow_promotion_board_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "board_decision": "MISSING",
+        "validation_status": "MISSING",
+        "candidate_id": "",
+        "evidence_check_count": 0,
+        "passed_evidence_count": 0,
+        "blocked_evidence_count": 0,
+        "warning_evidence_count": 0,
+        "safety_status": "MISSING",
+        "readiness_status": "MISSING",
+        "owner_decision_status": "MISSING",
+        "next_action": "run_aits_reports_paper_shadow_promotion_board_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "paper_shadow_promotion_board artifact missing; run reports "
+            "paper-shadow-promotion-board."
         ),
         "limitation": reason,
     }
@@ -23021,6 +23148,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "research_monthly_review_pack_validation": (
             "确认月度 review pack 的 source coverage、Reader Brief section 和安全边界是否通过。"
         ),
+        "paper_shadow_promotion_board": (
+            "查看 paper-shadow promotion board decision、required evidence checklist 和 blocker。"
+        ),
+        "paper_shadow_promotion_board_validation": (
+            "确认 promotion board schema、required evidence、Reader Brief section 和安全边界是否通过。"
+        ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
         ),
@@ -23135,6 +23268,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "monthly / manual governance",
         "Monthly review pack 生成后立即校验 source coverage 和 safety boundary。",
+    ),
+    "paper_shadow_promotion_board": (
+        "monthly",
+        "manual promotion board",
+        "Monthly review pack、owner decision audit log、safety audit 和 lineage 更新后生成。",
+    ),
+    "paper_shadow_promotion_board_validation": (
+        "monthly",
+        "manual promotion board",
+        "Paper-shadow promotion board 生成后立即校验 evidence checklist 和安全边界。",
     ),
     "research_safety_boundary_audit": (
         "daily",
