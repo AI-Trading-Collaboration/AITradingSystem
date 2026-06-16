@@ -7459,6 +7459,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_rejection_postmortem_template
+    title: Candidate Rejection Postmortem Template
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_rejection_postmortem_template_????-??-??.json
+      - outputs/reports/candidate_rejection_postmortem_template_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Candidate rejection postmortem template should be current before owner archives any paper-shadow rejection or return-to-research decision.
+    owner_action: use_when_promotion_board_or_owner_review_rejects_candidate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_rejection_postmortem_template_validation
+    title: Candidate Rejection Postmortem Template Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-rejection-postmortem-template --latest
+    artifact_globs:
+      - outputs/reports/candidate_rejection_postmortem_template_validation_*.json
+      - outputs/reports/candidate_rejection_postmortem_template_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Candidate rejection postmortem validation should fail closed when required sections, filled record fields, revisit decision, lessons learned, or safety boundary drift.
+    owner_action: run_after_candidate_rejection_postmortem_template_or_filled_record
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

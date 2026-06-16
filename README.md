@@ -1667,6 +1667,19 @@ strategy / candidate / paper-shadow / production state，不生成 official targ
 或 broker action；即使 `EXTEND_SHADOW` 也只表示 owner 可继续复核 extended shadow protocol，
 不是 live trading 或 official allocation approval。
 
+TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
+template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
+只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
+review pack 和 safety audit，并可选 `--postmortem-json-path <filled.json>` 校验 owner 已填写
+postmortem；默认无 filled record 时只输出空模板，不补造 rejection。输出
+`outputs/reports/candidate_rejection_postmortem_template_YYYY-MM-DD.json/md` 和 validation
+artifact。必需 sections 包括 candidate summary、reason for rejection、failed evidence gates、
+failed stress scenarios、data quality issues、safety boundary issues、whether idea can be
+revisited 和 lessons learned。该 template 不拒绝候选、不修改 candidate / paper-shadow /
+production state，不生成 official target weights、order ticket 或 broker action；filled record
+缺 required section、revisit decision、lessons learned 或带 state/broker/order mutation flag 时
+fail closed。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持

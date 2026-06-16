@@ -170,6 +170,7 @@ def build_reader_brief_payload(
     owner_decision_audit_log = _owner_decision_audit_log_summary(report_index)
     research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
     paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
+    candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -331,6 +332,7 @@ def build_reader_brief_payload(
         "owner_decision_audit_log": owner_decision_audit_log,
         "research_monthly_review_pack": research_monthly_review_pack,
         "paper_shadow_promotion_board": paper_shadow_promotion_board,
+        "candidate_rejection_postmortem": candidate_rejection_postmortem,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -657,6 +659,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     owner_decision_audit_log = _mapping(payload.get("owner_decision_audit_log"))
     research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
     paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
+    candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1126,6 +1129,59 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         paper_shadow_promotion_board.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Candidate Rejection Postmortem Template",
+            _definition_table(
+                [
+                    ("availability", candidate_rejection_postmortem.get("availability")),
+                    ("status", candidate_rejection_postmortem.get("status")),
+                    (
+                        "template_status",
+                        candidate_rejection_postmortem.get("template_status"),
+                    ),
+                    (
+                        "validation_status",
+                        candidate_rejection_postmortem.get("validation_status"),
+                    ),
+                    (
+                        "postmortem_record_provided",
+                        candidate_rejection_postmortem.get("postmortem_record_provided"),
+                    ),
+                    (
+                        "filled_postmortem_status",
+                        candidate_rejection_postmortem.get("filled_postmortem_status"),
+                    ),
+                    ("candidate_id", candidate_rejection_postmortem.get("candidate_id")),
+                    (
+                        "required_sections",
+                        candidate_rejection_postmortem.get("required_section_count"),
+                    ),
+                    (
+                        "failed_evidence_gates",
+                        candidate_rejection_postmortem.get("failed_evidence_gate_count"),
+                    ),
+                    (
+                        "failed_stress_scenarios",
+                        candidate_rejection_postmortem.get("failed_stress_scenario_count"),
+                    ),
+                    (
+                        "data_quality_issues",
+                        candidate_rejection_postmortem.get("data_quality_issue_count"),
+                    ),
+                    (
+                        "safety_boundary_issues",
+                        candidate_rejection_postmortem.get("safety_boundary_issue_count"),
+                    ),
+                    ("can_revisit", candidate_rejection_postmortem.get("can_revisit")),
+                    ("next_action", candidate_rejection_postmortem.get("next_action")),
+                    ("detail_report", candidate_rejection_postmortem.get("detail_report")),
+                    (
+                        "production_effect",
+                        candidate_rejection_postmortem.get("production_effect"),
                     ),
                 ]
             ),
@@ -7130,6 +7186,95 @@ def _missing_paper_shadow_promotion_board_summary(reason: str) -> dict[str, Any]
         "summary_sentence": (
             "paper_shadow_promotion_board artifact missing; run reports "
             "paper-shadow-promotion-board."
+        ),
+        "limitation": reason,
+    }
+
+
+def _candidate_rejection_postmortem_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_candidate_rejection_postmortem_summary(
+            "report_index artifact missing; Reader Brief cannot discover postmortem template."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "candidate_rejection_postmortem_template",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_candidate_rejection_postmortem_summary(
+            "candidate_rejection_postmortem_template artifact missing from report "
+            "index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "candidate_rejection_postmortem_template_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    template_status = _text(
+        payload.get("template_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": template_status,
+        "template_status": template_status,
+        "validation_status": validation_status,
+        "postmortem_record_provided": summary.get("postmortem_record_provided") is True,
+        "filled_postmortem_status": _text(summary.get("filled_postmortem_status"), "UNKNOWN"),
+        "candidate_id": _text(summary.get("candidate_id")),
+        "required_section_count": _int(summary.get("required_section_count")),
+        "failed_evidence_gate_count": _int(summary.get("failed_evidence_gate_count")),
+        "failed_stress_scenario_count": _int(summary.get("failed_stress_scenario_count")),
+        "data_quality_issue_count": _int(summary.get("data_quality_issue_count")),
+        "safety_boundary_issue_count": _int(summary.get("safety_boundary_issue_count")),
+        "lessons_learned_count": _int(summary.get("lessons_learned_count")),
+        "can_revisit": _text(summary.get("can_revisit"), "UNSPECIFIED"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"candidate_rejection_postmortem_template={template_status}; "
+            f"validation={validation_status}; "
+            f"filled={summary.get('postmortem_record_provided') is True}; "
+            f"sections={_int(summary.get('required_section_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest postmortem template artifacts; it does not "
+            "reject candidates or mutate candidate state."
+        ),
+    }
+
+
+def _missing_candidate_rejection_postmortem_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "template_status": "MISSING",
+        "validation_status": "MISSING",
+        "postmortem_record_provided": False,
+        "filled_postmortem_status": "MISSING",
+        "candidate_id": "",
+        "required_section_count": 0,
+        "failed_evidence_gate_count": 0,
+        "failed_stress_scenario_count": 0,
+        "data_quality_issue_count": 0,
+        "safety_boundary_issue_count": 0,
+        "lessons_learned_count": 0,
+        "can_revisit": "UNSPECIFIED",
+        "next_action": "run_aits_reports_candidate_rejection_postmortem_template_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "candidate_rejection_postmortem_template artifact missing; run reports "
+            "candidate-rejection-postmortem-template."
         ),
         "limitation": reason,
     }
@@ -23152,7 +23297,14 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "查看 paper-shadow promotion board decision、required evidence checklist 和 blocker。"
         ),
         "paper_shadow_promotion_board_validation": (
-            "确认 promotion board schema、required evidence、Reader Brief section 和安全边界是否通过。"
+            "确认 promotion board schema、required evidence、Reader Brief section "
+            "和安全边界是否通过。"
+        ),
+        "candidate_rejection_postmortem_template": (
+            "查看 candidate rejection postmortem template 和 optional filled record 校验摘要。"
+        ),
+        "candidate_rejection_postmortem_template_validation": (
+            "确认 rejection postmortem required sections、filled record 和安全边界是否通过。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -23278,6 +23430,19 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "manual promotion board",
         "Paper-shadow promotion board 生成后立即校验 evidence checklist 和安全边界。",
+    ),
+    "candidate_rejection_postmortem_template": (
+        "monthly",
+        "manual rejection review",
+        (
+            "Promotion board 或 owner decision 输出 reject / return 后，或 template "
+            "contract 变更后生成。"
+        ),
+    ),
+    "candidate_rejection_postmortem_template_validation": (
+        "monthly",
+        "manual rejection review",
+        "Candidate rejection postmortem template 或 filled record 生成后立即校验。",
     ),
     "research_safety_boundary_audit": (
         "daily",
