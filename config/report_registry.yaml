@@ -5291,6 +5291,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_regression_replay
+    title: ETF Dynamic v3 Candidate Regression Replay
+    group: governance
+    cadence: weekly
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate-regression-replay report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/*/candidate_regression_replay_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/*/candidate_regression_replay_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/*/candidate_regression_replay_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/*/candidate_regression_replay_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/*/candidate_regression_replay_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-372 replays the paper-shadow candidate behavior contract over a
+      fixed small window and compares current outputs, decisions, safety
+      metadata, artifact schema, and Reader Brief fields with stored expected
+      behavior. Breaking changes fail closed before candidate interpretation.
+    owner_action: review_candidate_regression_replay_before_interpreting_new_governance_changes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_stress_scenario_library
     title: ETF Dynamic v3 Stress Scenario Library
     group: governance

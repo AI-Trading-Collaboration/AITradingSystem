@@ -1,0 +1,148 @@
+policy_id: dynamic_v3_rescue_candidate_regression_replay_v1
+version: "2026-06-16"
+status: pilot_manual_review_baseline
+owner: system_validation
+rationale: >
+  Guard the paper-shadow candidate governance chain against silent behavior changes after
+  adding data, health, cost and benchmark controls.
+intended_effect: >
+  Compare the current candidate behavior artifact with stored expected behavior over a
+  fixed small regression window before interpreting new governance outputs.
+validation_evidence: >
+  TRADING-372 focused tests cover pass, breaking-change fail-closed behavior, CLI
+  run/report/validate, and Reader Brief summary.
+review_condition: >
+  Revisit expected fields when the owner explicitly accepts a changed candidate behavior,
+  schema, safety boundary, or Reader Brief contract.
+replay_window:
+  regime: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: "2022-11-30"
+  start_date: "2026-06-12"
+  end_date: "2026-06-16"
+  rationale: >
+    Small fixed recent paper-shadow governance replay window; it is a regression guard,
+    not a performance optimization or statistical backtest.
+current_behavior_source:
+  report_id: etf_dynamic_v3_benchmark_baseline_control
+  artifact_file: benchmark_baseline_control_pack.json
+  default_resolution: latest_benchmark_baseline_control
+expected_behavior:
+  behavior_id: dynamic_v3_rescue_candidate_regression_expected_benchmark_baseline_v1
+  candidate: median_plus_regime_mismatch_filter
+  expected_fields:
+    - category: candidate_outputs
+      field_path: candidate
+      expected: median_plus_regime_mismatch_filter
+      classification_if_changed: BREAKING_CHANGE
+      reason: Candidate identity must not drift silently.
+    - category: candidate_outputs
+      field_path: benchmark_baseline_status
+      expected: INSUFFICIENT_BASELINE_METRICS
+      classification_if_changed: BREAKING_CHANGE
+      reason: Source chain still lacks explicit numeric candidate/baseline metrics.
+    - category: candidate_outputs
+      field_path: baseline_count
+      expected: 5
+      classification_if_changed: BREAKING_CHANGE
+      reason: Required benchmark baseline set must remain complete.
+    - category: candidate_outputs
+      field_path: comparison_summary.outperformed_baseline_count
+      expected: 0
+      classification_if_changed: BREAKING_CHANGE
+      reason: Missing metrics must not become outperformance without explicit inputs.
+    - category: candidate_outputs
+      field_path: comparison_summary.underperformed_baseline_count
+      expected: 0
+      classification_if_changed: BREAKING_CHANGE
+      reason: Missing metrics must remain explicitly insufficient.
+    - category: candidate_outputs
+      field_path: comparison_summary.insufficient_metric_baseline_count
+      expected: 5
+      classification_if_changed: BREAKING_CHANGE
+      reason: All five baselines should remain insufficient until explicit metrics exist.
+    - category: decisions
+      field_path: next_required_action
+      expected: provide_candidate_and_baseline_metrics_before_baseline_control_review
+      classification_if_changed: BREAKING_CHANGE
+      reason: Replay guard must keep the fail-closed next action visible.
+    - category: artifact_schema
+      field_path: report_type
+      expected: etf_dynamic_v3_benchmark_baseline_control_pack
+      classification_if_changed: BREAKING_CHANGE
+      reason: Source artifact family must not change silently.
+    - category: artifact_schema
+      field_path: schema_version
+      expected: 1
+      classification_if_changed: BREAKING_CHANGE
+      reason: Schema changes require explicit owner review.
+  required_schema_fields:
+    - schema_version
+    - report_type
+    - control_id
+    - candidate
+    - as_of
+    - benchmark_baseline_status
+    - comparison_summary
+    - source_artifacts
+    - next_required_action
+  safety_fields:
+    - field_path: research_only
+      expected: true
+    - field_path: manual_review_only
+      expected: true
+    - field_path: benchmark_control_pack_only
+      expected: true
+    - field_path: execution_model_ready
+      expected: false
+    - field_path: broker_action_allowed
+      expected: false
+    - field_path: broker_action_taken
+      expected: false
+    - field_path: order_ticket_generated
+      expected: false
+    - field_path: paper_account_state_mutated
+      expected: false
+    - field_path: production_state_mutated
+      expected: false
+    - field_path: automatic_candidate_promotion
+      expected: false
+    - field_path: not_official_target_weights
+      expected: true
+    - field_path: production_effect
+      expected: none
+  reader_brief_fields:
+    - benchmark_baseline_status
+    - baseline_count
+    - outperformed_baseline_count
+    - underperformed_baseline_count
+    - worst_baseline_delta
+    - best_baseline_delta
+    - next_required_action
+    - safety_boundary
+acceptable_change_policy:
+  allowed_classification: ACCEPTABLE_CHANGE
+  requirement: >
+    Any acceptable change must be declared field-by-field with classification_if_changed
+    and reason in this policy before it can avoid BREAKING_CHANGE_DETECTED.
+safety_boundaries:
+  manual_review_only: true
+  research_only: true
+  regression_guard_only: true
+  strategy_behavior_changed: false
+  data_downloaded_by_replay: false
+  pipelines_executed_by_replay: false
+  execution_model_ready: false
+  official_target_weights: false
+  official_target_weights_mutated: false
+  not_official_target_weights: true
+  broker_effect: none
+  order_effect: none
+  broker_action_allowed: false
+  broker_action_taken: false
+  order_ticket_generated: false
+  paper_account_state_mutated: false
+  production_state_mutated: false
+  automatic_candidate_promotion: false
+  auto_apply: false
+  production_effect: none

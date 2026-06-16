@@ -4,6 +4,16 @@
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
 
+## TRADING-372
+
+- 需求文档：`docs/requirements/TRADING-372_Candidate_Regression_Replay.md`
+- 任务：Candidate Regression Replay
+- 状态：`DONE`
+- 需求：The system shall replay candidate behavior over a fixed historical regression window and compare current outputs, decisions, safety metadata, artifact schema, and Reader Brief fields with stored expected behavior.
+- 安全边界：research-only regression guard；不优化 strategy behavior、不运行 backtest、不刷新数据、不补造 upstream artifact、不接 broker、不写 official target weights、不修改 shadow/paper/production state、不触发 order。
+- 主要输入：candidate regression replay policy config、stored expected behavior、current candidate behavior artifact（默认 latest benchmark baseline control）。
+- 主要输出：`reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/<replay_id>/candidate_regression_replay_report.json`、`.md`、validation JSON/Markdown、Reader Brief section、acceptable/breaking change classification。
+
 ## TRADING-370
 
 - 需求文档：`docs/requirements/TRADING-370_Benchmark_Baseline_Control_Pack.md`

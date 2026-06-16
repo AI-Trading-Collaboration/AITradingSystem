@@ -2554,6 +2554,54 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         ),
                     ),
                     (
+                        "candidate_regression_replay",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_replay_id"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_replay_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_replay_status"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_expected_behavior",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_expected_behavior"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_comparison_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_comparison_count"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_breaking_change_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_breaking_change_count"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_acceptable_change_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_acceptable_change_count"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_next_required_action",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_next_required_action"
+                        ),
+                    ),
+                    (
+                        "candidate_regression_validation_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_validation_status"
+                        ),
+                    ),
+                    (
                         "stress_scenario_library",
                         etf_dynamic_v3_parameter_research.get(
                             "stress_scenario_library_run_id"
@@ -13471,6 +13519,13 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "benchmark_baseline_manifest.json",
     )
+    candidate_regression_replay_path = _dynamic_v3_sibling_artifact_path(
+        _report_index_artifact_path(
+            report_index,
+            "etf_dynamic_v3_candidate_regression_replay",
+        ),
+        "candidate_regression_replay_manifest.json",
+    )
     stress_scenario_library_path = _dynamic_v3_sibling_artifact_path(
         _report_index_artifact_path(
             report_index,
@@ -14028,6 +14083,22 @@ def _etf_dynamic_v3_parameter_research_summary(
     )
     benchmark_baseline_summary = _mapping(
         benchmark_baseline_control.get("comparison_summary")
+    )
+    candidate_regression_manifest = _read_optional_json(candidate_regression_replay_path)
+    candidate_regression_replay = _read_optional_json(
+        candidate_regression_replay_path.parent
+        / "candidate_regression_replay_report.json"
+        if candidate_regression_replay_path is not None
+        else None
+    )
+    candidate_regression_validation = _read_optional_json(
+        candidate_regression_replay_path.parent
+        / "candidate_regression_replay_validation.json"
+        if candidate_regression_replay_path is not None
+        else None
+    )
+    candidate_regression_summary = _mapping(
+        candidate_regression_replay.get("comparison_summary")
     )
     stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
     stress_scenario_library = _read_optional_json(
@@ -15834,6 +15905,37 @@ def _etf_dynamic_v3_parameter_research_summary(
             benchmark_baseline_validation.get("status"),
             "MISSING",
         ),
+        "candidate_regression_replay_id": _text(
+            candidate_regression_manifest.get("replay_id"),
+            "MISSING",
+        ),
+        "candidate_regression_replay_status": _text(
+            candidate_regression_replay.get("candidate_regression_replay_status"),
+            "MISSING",
+        ),
+        "candidate_regression_expected_behavior": _text(
+            candidate_regression_replay.get("expected_behavior_id"),
+            "MISSING",
+        ),
+        "candidate_regression_comparison_count": candidate_regression_summary.get(
+            "comparison_count",
+            "MISSING",
+        ),
+        "candidate_regression_breaking_change_count": candidate_regression_summary.get(
+            "breaking_change_count",
+            "MISSING",
+        ),
+        "candidate_regression_acceptable_change_count": (
+            candidate_regression_summary.get("acceptable_change_count", "MISSING")
+        ),
+        "candidate_regression_next_required_action": _text(
+            candidate_regression_replay.get("next_required_action"),
+            "MISSING",
+        ),
+        "candidate_regression_validation_status": _text(
+            candidate_regression_validation.get("status"),
+            "MISSING",
+        ),
         "stress_scenario_library_run_id": _text(
             stress_scenario_manifest.get("library_run_id"),
             "MISSING",
@@ -16146,6 +16248,11 @@ def _etf_dynamic_v3_parameter_research_summary(
             ""
             if benchmark_baseline_control_path is None
             else str(benchmark_baseline_control_path)
+        ),
+        "candidate_regression_replay": (
+            ""
+            if candidate_regression_replay_path is None
+            else str(candidate_regression_replay_path)
         ),
         "stress_scenario_library": (
             ""
@@ -17144,6 +17251,14 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "benchmark_baseline_best_delta": "MISSING",
         "benchmark_baseline_next_required_action": "MISSING",
         "benchmark_baseline_validation_status": "MISSING",
+        "candidate_regression_replay_id": "MISSING",
+        "candidate_regression_replay_status": "MISSING",
+        "candidate_regression_expected_behavior": "MISSING",
+        "candidate_regression_comparison_count": "MISSING",
+        "candidate_regression_breaking_change_count": "MISSING",
+        "candidate_regression_acceptable_change_count": "MISSING",
+        "candidate_regression_next_required_action": "MISSING",
+        "candidate_regression_validation_status": "MISSING",
         "stress_scenario_library_run_id": "MISSING",
         "stress_scenario_library_id": "MISSING",
         "stress_scenario_count": "MISSING",
@@ -17219,6 +17334,7 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "paper_shadow_health": "",
         "cost_sensitivity_review": "",
         "benchmark_baseline_control": "",
+        "candidate_regression_replay": "",
         "stress_scenario_library": "",
         "drawdown_event_casebook": "",
         "flip_rotation_event_casebook": "",

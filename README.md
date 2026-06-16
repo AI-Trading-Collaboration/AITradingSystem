@@ -1700,6 +1700,27 @@ weights、不修改 paper account 或 production state，所有输出固定 `res
 `broker_action_allowed=false`、`order_ticket_generated=false`、
 `not_official_target_weights=true`、`production_effect=none`。
 
+TRADING-372_CANDIDATE_REGRESSION_REPLAY 在 benchmark baseline control 后新增
+research-only candidate behavior regression guard。Policy config 为
+`config/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay_v1.yaml`，披露
+AI-after-ChatGPT fixed replay window、stored expected behavior、expected output/decision/schema/
+safety/Reader Brief fields、acceptable-change policy、owner/version、rationale 和 review
+condition。CLI 入口为
+`aits etf dynamic-v3-rescue candidate-regression-replay run --current-behavior-path <behavior.json>`、
+`aits etf dynamic-v3-rescue candidate-regression-replay report --latest` 和
+`aits etf dynamic-v3-rescue validate-candidate-regression-replay --latest`；省略
+`--current-behavior-path` 时只读 latest benchmark baseline control artifact。该 report 输出
+changed outputs、changed decisions、changed safety metadata、changed artifact schema、
+changed Reader Brief fields、acceptable/breaking classification、Reader Brief section 和
+validation artifact；breaking change fail closed 为 `BREAKING_CHANGE_DETECTED`。Runtime artifacts
+写入 `reports/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay/`。该 replay guard
+不优化 strategy behavior、不运行 backtest、不刷新数据、不补造 upstream artifact、不写 official
+target weights、不修改 paper account 或 production state，所有输出固定 `research_only=true`、
+`regression_guard_only=true`、`strategy_behavior_changed=false`、
+`data_downloaded_by_replay=false`、`pipelines_executed_by_replay=false`、
+`broker_action_allowed=false`、`order_ticket_generated=false`、
+`not_official_target_weights=true`、`production_effect=none`。
+
 TRADING-356_STRESS_SCENARIO_LIBRARY 在 evidence freshness guard 后新增 Dynamic v3 rescue
 专用 stress scenario library。CLI 入口为
 `aits etf dynamic-v3-rescue stress-scenario-library report`、`... report --latest` 和
