@@ -7363,6 +7363,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: owner_decision_audit_log
+    title: Owner Decision Audit Log
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports owner-decision-audit-log report --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/owner_decision_audit_log_????-??-??.json
+      - outputs/reports/owner_decision_audit_log_????-??-??.md
+    freshness_sla_days: 1
+    freshness_rationale: Owner decision audit log should be current before monthly review, promotion board, extended shadow interpretation, or governance pack.
+    owner_action: append_owner_decision_after_manual_review_then_report
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: owner_decision_audit_log_validation
+    title: Owner Decision Audit Log Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports owner-decision-audit-log validate --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/owner_decision_audit_log_validation_*.json
+      - outputs/reports/owner_decision_audit_log_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Owner decision audit log validation should fail closed on malformed JSONL, duplicate decision ids, schema drift, unsafe safety/action pairing, or production mutation fields.
+    owner_action: run_after_owner_decision_audit_log_report
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

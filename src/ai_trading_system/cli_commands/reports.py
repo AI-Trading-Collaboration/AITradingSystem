@@ -119,6 +119,22 @@ from ai_trading_system.reports.market_panel import (
     write_market_panel_json,
     write_market_panel_report,
 )
+from ai_trading_system.reports.owner_decision_audit_log import (
+    DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+    OwnerDecisionAuditLogError,
+    append_owner_decision_record,
+    build_owner_decision_audit_log_payload,
+    default_owner_decision_audit_log_json_path,
+    default_owner_decision_audit_log_markdown_path,
+    default_owner_decision_audit_log_validation_json_path,
+    default_owner_decision_audit_log_validation_markdown_path,
+    latest_owner_decision_audit_log_json_path,
+    validate_owner_decision_audit_log_payload,
+    write_owner_decision_audit_log_json,
+    write_owner_decision_audit_log_markdown,
+    write_owner_decision_audit_log_validation_json,
+    write_owner_decision_audit_log_validation_markdown,
+)
 from ai_trading_system.reports.owner_review_template_v2 import (
     build_owner_review_template_v2_payload,
     default_owner_review_template_v2_json_path,
@@ -362,6 +378,11 @@ task_register_consistency_app = typer.Typer(
     no_args_is_help=True,
 )
 reports_app.add_typer(task_register_consistency_app, name="task-register-consistency")
+owner_decision_audit_log_app = typer.Typer(
+    help="Append-only owner decision audit log governance reports.",
+    no_args_is_help=True,
+)
+reports_app.add_typer(owner_decision_audit_log_app, name="owner-decision-audit-log")
 console = Console()
 
 
@@ -2267,6 +2288,199 @@ def validate_owner_review_template_v2_command(
         f"checks：{summary['check_count']}；"
         f"failed：{summary['failed_check_count']}；"
         f"review_record_provided：{summary['review_record_provided']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@owner_decision_audit_log_app.command("append")
+def owner_decision_audit_log_append_command(
+    decision_json_path: Annotated[
+        Path,
+        typer.Option(help="已填写 owner decision 或 owner review JSON 路径。"),
+    ],
+    log_path: Annotated[
+        Path,
+        typer.Option(help="Append-only owner decision audit JSONL 路径。"),
+    ] = DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+) -> None:
+    """向 owner decision audit log 追加一条治理记录；不重写既有 JSONL。"""
+    if not decision_json_path.exists():
+        raise typer.BadParameter(f"Owner decision JSON not found: {decision_json_path}")
+    try:
+        raw_record = json.loads(decision_json_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"Owner decision JSON cannot be parsed: {decision_json_path}"
+        ) from exc
+    if not isinstance(raw_record, dict):
+        raise typer.BadParameter(f"Owner decision JSON must be an object: {decision_json_path}")
+    try:
+        record = append_owner_decision_record(
+            raw_record,
+            log_path=log_path,
+            source_record_path=decision_json_path,
+        )
+    except OwnerDecisionAuditLogError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    console.print("[green]Owner decision audit log append：PASS[/green]")
+    console.print(f"Owner decision audit log JSONL：{log_path}")
+    console.print(f"decision_id：{record['decision_id']}")
+    console.print(
+        f"candidate_id：{record['candidate_id']}；"
+        f"owner_action：{record['owner_action']}；"
+        f"safety_status：{record['safety_status']}；"
+        f"production_effect={record['production_effect']}；append-only governance log"
+    )
+
+
+@owner_decision_audit_log_app.command("report")
+def owner_decision_audit_log_report_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Owner decision audit log report 日期，格式为 YYYY-MM-DD。",
+        ),
+    ] = None,
+    log_path: Annotated[
+        Path,
+        typer.Option(help="Append-only owner decision audit JSONL 路径。"),
+    ] = DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision audit log JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision audit log Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 owner decision audit log report；只读读取 append-only JSONL。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = build_owner_decision_audit_log_payload(
+        as_of=report_date,
+        log_path=log_path,
+    )
+    report_json = json_output_path or default_owner_decision_audit_log_json_path(
+        reports_dir,
+        report_date,
+    )
+    report_md = markdown_output_path or default_owner_decision_audit_log_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_owner_decision_audit_log_json(payload, report_json)
+    md_path = write_owner_decision_audit_log_markdown(payload, report_md)
+    status = payload["audit_log_status"]
+    style = "green" if status == "AUDIT_LOG_PASS" else "yellow"
+    if status == "AUDIT_LOG_BLOCKED":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Owner decision audit log：{status}[/{style}]")
+    console.print(f"Owner decision audit log JSON：{json_path}")
+    console.print(f"Owner decision audit log Markdown：{md_path}")
+    console.print(
+        f"records：{summary['included_record_count']}；"
+        f"latest_decision_id：{summary['latest_decision_id']}；"
+        f"monthly_input：{summary['monthly_review_pack_input']}；"
+        f"promotion_input：{summary['promotion_board_input']}；"
+        f"production_effect={payload['production_effect']}；只读 report"
+    )
+
+
+@owner_decision_audit_log_app.command("validate")
+def validate_owner_decision_audit_log_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 owner decision audit log report JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Owner decision audit log validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Owner decision audit log report JSON 路径；优先级高于 --latest/--as-of。",
+        ),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision audit log validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision audit log validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 owner decision audit log report 和 append-only governance boundary。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_owner_decision_audit_log_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 owner decision audit log JSON：{reports_dir}")
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_owner_decision_audit_log_json_path(reports_dir, report_date)
+    if not source_path.exists():
+        raise typer.BadParameter(f"Owner decision audit log JSON not found: {source_path}")
+    try:
+        raw_payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"Owner decision audit log JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(f"Owner decision audit log JSON must be an object: {source_path}")
+
+    payload = validate_owner_decision_audit_log_payload(raw_payload)
+    source_artifacts = dict(payload.get("input_artifacts", {}))
+    source_artifacts["owner_decision_audit_log_report"] = str(source_path)
+    payload["input_artifacts"] = source_artifacts
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or default_owner_decision_audit_log_validation_json_path(reports_dir, report_date)
+    )
+    validation_md = (
+        markdown_output_path
+        or default_owner_decision_audit_log_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = write_owner_decision_audit_log_validation_json(payload, validation_json)
+    md_path = write_owner_decision_audit_log_validation_markdown(payload, validation_md)
+    status = payload["validation_status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Owner decision audit log validation：{status}[/{style}]")
+    console.print(f"Owner decision audit log validation JSON：{json_path}")
+    console.print(f"Owner decision audit log validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"source_records：{summary['source_record_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if status == "FAIL":

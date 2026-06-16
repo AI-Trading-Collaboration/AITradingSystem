@@ -1627,6 +1627,19 @@ required follow-up、final owner action、linked input artifacts 和 safety stat
 该 template 不记录 owner decision、不 append audit log、不运行 evidence collection、不刷新数据、不改变
 candidate / paper-shadow / production state；Reader Brief 只读展示 latest template readiness。
 
+TRADING-378_OWNER_DECISION_AUDIT_LOG 新增 append-only owner decision audit log。
+`aits reports owner-decision-audit-log append --decision-json-path <owner_decision.json>`
+只向默认 `data/governance/owner_decision_audit_log.jsonl` 追加一条 JSONL 记录，不重写既有记录。
+每条记录包含 decision id、timestamp、candidate id、input artifacts、owner action、reason summary、
+safety status 和 next action；`aits reports owner-decision-audit-log report --as-of YYYY-MM-DD`
+输出 `outputs/reports/owner_decision_audit_log_YYYY-MM-DD.json/md`，披露 latest decision、
+owner action counts、monthly review pack input 和 promotion board input；`aits reports
+owner-decision-audit-log validate --latest` 输出 validation artifact。Malformed JSONL、
+duplicate decision id、缺 required field、非法 owner action / safety status、`SAFETY_BLOCKED`
+搭配 continuation action 或 production mutation 字段必须 fail closed。该 audit log 是
+governance-only，不改变 strategy outputs、candidate / paper-shadow / production state，不生成
+official target weights、order ticket 或 broker action；Reader Brief 只读展示 latest audit log status。
+
 TRADING-363_RESEARCH_SAFETY_BOUNDARY_AUDIT 新增 recurring research safety boundary audit。
 `aits reports research-safety-boundary-audit --as-of YYYY-MM-DD` 只读读取同日 report index、
 task registers 和既有 report artifacts，检查 task scope 与 artifact metadata 是否仍保持

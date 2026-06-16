@@ -167,6 +167,7 @@ def build_reader_brief_payload(
     reader_brief_consistency = _reader_brief_consistency_summary(report_index)
     production_boundary_static_scan = _production_boundary_static_scan_summary(report_index)
     owner_review_template_v2 = _owner_review_template_v2_summary(report_index)
+    owner_decision_audit_log = _owner_decision_audit_log_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -325,6 +326,7 @@ def build_reader_brief_payload(
         "reader_brief_consistency": reader_brief_consistency,
         "production_boundary_static_scan": production_boundary_static_scan,
         "owner_review_template_v2": owner_review_template_v2,
+        "owner_decision_audit_log": owner_decision_audit_log,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -648,6 +650,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         payload.get("production_boundary_static_scan")
     )
     owner_review_template_v2 = _mapping(payload.get("owner_review_template_v2"))
+    owner_decision_audit_log = _mapping(payload.get("owner_decision_audit_log"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -976,6 +979,47 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", owner_review_template_v2.get("next_action")),
                     ("detail_report", owner_review_template_v2.get("detail_report")),
                     ("production_effect", owner_review_template_v2.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Owner Decision Audit Log",
+            _definition_table(
+                [
+                    ("availability", owner_decision_audit_log.get("availability")),
+                    ("status", owner_decision_audit_log.get("status")),
+                    (
+                        "audit_log_status",
+                        owner_decision_audit_log.get("audit_log_status"),
+                    ),
+                    (
+                        "validation_status",
+                        owner_decision_audit_log.get("validation_status"),
+                    ),
+                    ("records", owner_decision_audit_log.get("record_count")),
+                    (
+                        "latest_decision_id",
+                        owner_decision_audit_log.get("latest_decision_id"),
+                    ),
+                    (
+                        "latest_owner_action",
+                        owner_decision_audit_log.get("latest_owner_action"),
+                    ),
+                    (
+                        "latest_safety_status",
+                        owner_decision_audit_log.get("latest_safety_status"),
+                    ),
+                    (
+                        "monthly_review_pack_input",
+                        owner_decision_audit_log.get("monthly_review_pack_input"),
+                    ),
+                    (
+                        "promotion_board_input",
+                        owner_decision_audit_log.get("promotion_board_input"),
+                    ),
+                    ("next_action", owner_decision_audit_log.get("next_action")),
+                    ("detail_report", owner_decision_audit_log.get("detail_report")),
+                    ("production_effect", owner_decision_audit_log.get("production_effect")),
                 ]
             ),
         ),
@@ -6725,6 +6769,91 @@ def _missing_owner_review_template_v2_summary(reason: str) -> dict[str, Any]:
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             "owner_review_template_v2 artifact missing; run reports owner-review-template-v2."
+        ),
+        "limitation": reason,
+    }
+
+
+def _owner_decision_audit_log_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_owner_decision_audit_log_summary(
+            "report_index artifact missing; Reader Brief cannot discover owner decision audit log."
+        )
+    report_path = _report_index_artifact_path(report_index, "owner_decision_audit_log")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_owner_decision_audit_log_summary(
+            "owner_decision_audit_log artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "owner_decision_audit_log_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("audit_log_status"), _text(payload.get("status"), "UNKNOWN"))
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "audit_log_status": status,
+        "validation_status": validation_status,
+        "record_count": _int(summary.get("included_record_count")),
+        "raw_record_count": _int(summary.get("record_count")),
+        "blocking_issue_count": _int(summary.get("blocking_issue_count")),
+        "duplicate_decision_id_count": _int(summary.get("duplicate_decision_id_count")),
+        "latest_decision_id": _text(summary.get("latest_decision_id")),
+        "latest_candidate_id": _text(summary.get("latest_candidate_id")),
+        "latest_owner_action": _text(summary.get("latest_owner_action")),
+        "latest_safety_status": _text(summary.get("latest_safety_status")),
+        "monthly_review_pack_input": _text(
+            summary.get("monthly_review_pack_input"),
+            "UNKNOWN",
+        ),
+        "promotion_board_input": _text(summary.get("promotion_board_input"), "UNKNOWN"),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"owner_decision_audit_log={status}; "
+            f"validation={validation_status}; "
+            f"records={_int(summary.get('included_record_count'))}; "
+            f"latest={_text(summary.get('latest_decision_id'), 'none')}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest owner decision audit log artifacts from "
+            "report index; it does not append decisions or mutate strategy outputs."
+        ),
+    }
+
+
+def _missing_owner_decision_audit_log_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "audit_log_status": "MISSING",
+        "validation_status": "MISSING",
+        "record_count": 0,
+        "raw_record_count": 0,
+        "blocking_issue_count": 0,
+        "duplicate_decision_id_count": 0,
+        "latest_decision_id": "",
+        "latest_candidate_id": "",
+        "latest_owner_action": "",
+        "latest_safety_status": "",
+        "monthly_review_pack_input": "MISSING",
+        "promotion_board_input": "MISSING",
+        "next_action": "run_aits_reports_owner_decision_audit_log_report_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "owner_decision_audit_log artifact missing; run reports "
+            "owner-decision-audit-log report."
         ),
         "limitation": reason,
     }
@@ -22654,13 +22783,15 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "production_boundary_static_scan_validation": 216,
         "owner_review_template_v2": 217,
         "owner_review_template_v2_validation": 218,
-        "research_safety_boundary_audit": 219,
-        "research_safety_boundary_validation": 220,
-        "documentation_contract": 221,
-        "task_register_consistency": 223,
-        "task_register_consistency_validation": 224,
-        "artifact_lineage_graph": 225,
-        "artifact_lineage_validation": 226,
+        "owner_decision_audit_log": 219,
+        "owner_decision_audit_log_validation": 220,
+        "research_safety_boundary_audit": 221,
+        "research_safety_boundary_validation": 222,
+        "documentation_contract": 223,
+        "task_register_consistency": 224,
+        "task_register_consistency_validation": 225,
+        "artifact_lineage_graph": 226,
+        "artifact_lineage_validation": 227,
         "report_quality_gate": 230,
         "reader_brief_quality": 240,
         "artifact_catalog": 250,
@@ -22726,6 +22857,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "owner_review_template_v2_validation": (
             "确认 owner review template v2 contract 和可选 filled review 校验是否通过。"
+        ),
+        "owner_decision_audit_log": (
+            "查看 append-only owner decision 记录、latest decision 和下游治理输入状态。"
+        ),
+        "owner_decision_audit_log_validation": (
+            "确认 owner decision audit log schema、唯一 decision id 和安全边界是否通过。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -22821,6 +22958,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "daily",
         "daily / manual governance",
         "Owner review template v2 生成后立即校验 contract。",
+    ),
+    "owner_decision_audit_log": (
+        "daily",
+        "manual / monthly governance",
+        "Owner decision append 后、monthly review 或 promotion board 前生成 report。",
+    ),
+    "owner_decision_audit_log_validation": (
+        "daily",
+        "manual / monthly governance",
+        "Owner decision audit log report 生成后立即校验 append-only boundary。",
     ),
     "research_safety_boundary_audit": (
         "daily",
