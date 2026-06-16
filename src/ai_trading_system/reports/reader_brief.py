@@ -164,6 +164,7 @@ def build_reader_brief_payload(
     )
     report_index_summary = _report_index_summary(report_index)
     report_index_waiver_inventory = _report_index_waiver_inventory_summary(report_index)
+    reader_brief_consistency = _reader_brief_consistency_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
     report_quality_gate = _report_quality_gate_summary(report_index)
@@ -318,6 +319,7 @@ def build_reader_brief_payload(
         "score_change_narrative": score_change_narrative,
         "report_index_summary": report_index_summary,
         "report_index_waiver_inventory": report_index_waiver_inventory,
+        "reader_brief_consistency": reader_brief_consistency,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
         "report_quality_gate": report_quality_gate,
@@ -410,6 +412,7 @@ def build_reader_brief_quality_payload(
     missing_impact = _mapping(reader_brief_payload.get("missing_limited_artifact_impact"))
     manual_queue = _mapping(reader_brief_payload.get("manual_review_queue"))
     status_panel = _mapping(reader_brief_payload.get("status_panel"))
+    executive_decision = _mapping(reader_brief_payload.get("executive_decision"))
     action_checklist = _records(reader_brief_payload.get("action_checklist"))
     checks = [
         _quality_check(
@@ -433,6 +436,33 @@ def build_reader_brief_quality_payload(
             "action_checklist",
             bool(action_checklist),
             "首屏 Action Checklist 存在。",
+        ),
+        _quality_check(
+            "next_action_clear",
+            bool(action_checklist) or bool(_text(executive_decision.get("recommended_action"))),
+            "Reader Brief 披露明确下一步。",
+        ),
+        _quality_check(
+            "safety_boundary",
+            _text(reader_brief_payload.get("production_effect")) == PRODUCTION_EFFECT
+            and executive_decision.get("not_trade_instruction") is True,
+            "Reader Brief 披露 production_effect=none 和非交易指令边界。",
+        ),
+        _quality_check(
+            "decision_state_clear",
+            any(
+                _text(status_panel.get(key))
+                for key in (
+                    "build_status",
+                    "decision_usability",
+                    "research_promotion_status",
+                )
+            )
+            or any(
+                _text(executive_decision.get(key))
+                for key in ("action", "decision", "status")
+            ),
+            "Reader Brief 披露清晰 decision/build/research 状态。",
         ),
         _quality_check(
             "missing_artifact_impact",
@@ -607,6 +637,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     score_change_narrative = _mapping(payload.get("score_change_narrative"))
     report_index = _mapping(payload.get("report_index_summary"))
     report_index_waiver_inventory = _mapping(payload.get("report_index_waiver_inventory"))
+    reader_brief_consistency = _mapping(payload.get("reader_brief_consistency"))
     artifact_lineage_graph = _mapping(payload.get("artifact_lineage_graph"))
     task_register_consistency = _mapping(payload.get("task_register_consistency"))
     report_quality_gate = _mapping(payload.get("report_quality_gate"))
@@ -835,6 +866,35 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", report_index_waiver_inventory.get("next_action")),
                     ("detail_report", report_index_waiver_inventory.get("detail_report")),
                     ("production_effect", report_index_waiver_inventory.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Reader Brief Consistency Pack",
+            _definition_table(
+                [
+                    ("availability", reader_brief_consistency.get("availability")),
+                    ("status", reader_brief_consistency.get("status")),
+                    ("consistency_status", reader_brief_consistency.get("consistency_status")),
+                    (
+                        "checked_reports",
+                        reader_brief_consistency.get("checked_report_count"),
+                    ),
+                    (
+                        "full_coverage_reports",
+                        reader_brief_consistency.get("full_coverage_report_count"),
+                    ),
+                    (
+                        "missing_sections",
+                        reader_brief_consistency.get("missing_section_count"),
+                    ),
+                    (
+                        "unclear_decisions",
+                        reader_brief_consistency.get("unclear_decision_count"),
+                    ),
+                    ("next_action", reader_brief_consistency.get("next_action")),
+                    ("detail_report", reader_brief_consistency.get("detail_report")),
+                    ("production_effect", reader_brief_consistency.get("production_effect")),
                 ]
             ),
         ),
@@ -6335,6 +6395,68 @@ def _missing_report_index_waiver_inventory_summary(reason: str) -> dict[str, Any
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             "report_index_waiver_inventory artifact missing; run reports waiver-inventory."
+        ),
+        "limitation": reason,
+    }
+
+
+def _reader_brief_consistency_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_reader_brief_consistency_summary(
+            "report_index artifact missing; Reader Brief cannot discover consistency pack."
+        )
+    report_path = _report_index_artifact_path(report_index, "reader_brief_consistency_pack")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_reader_brief_consistency_summary(
+            "reader_brief_consistency_pack artifact missing from report index latest pointer."
+        )
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("consistency_status"), _text(payload.get("status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "consistency_status": status,
+        "checked_report_count": _int(summary.get("checked_report_count")),
+        "available_report_count": _int(summary.get("available_report_count")),
+        "full_coverage_report_count": _int(summary.get("full_coverage_report_count")),
+        "missing_section_count": _int(summary.get("missing_section_count")),
+        "unclear_decision_count": _int(summary.get("unclear_decision_count")),
+        "blocking_issue_count": _int(summary.get("blocking_issue_count")),
+        "warning_issue_count": _int(summary.get("warning_issue_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"reader_brief_consistency={status}; "
+            f"missing_sections={_int(summary.get('missing_section_count'))}; "
+            f"unclear_decisions={_int(summary.get('unclear_decision_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the latest consistency pack artifact from report index; "
+            "it does not rewrite report templates or run upstream commands."
+        ),
+    }
+
+
+def _missing_reader_brief_consistency_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "consistency_status": "MISSING",
+        "checked_report_count": 0,
+        "available_report_count": 0,
+        "full_coverage_report_count": 0,
+        "missing_section_count": 0,
+        "unclear_decision_count": 0,
+        "blocking_issue_count": 0,
+        "warning_issue_count": 0,
+        "next_action": "run_aits_reports_reader_brief_consistency_then_validate",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "reader_brief_consistency_pack artifact missing; run reports "
+            "reader-brief-consistency."
         ),
         "limitation": reason,
     }
@@ -22172,6 +22294,8 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "report_index": 210,
         "report_index_waiver_inventory": 211,
         "report_index_waiver_inventory_validation": 212,
+        "reader_brief_consistency_pack": 213,
+        "reader_brief_consistency_validation": 214,
         "documentation_contract": 220,
         "task_register_consistency": 223,
         "task_register_consistency_validation": 224,
@@ -22224,6 +22348,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "report_index_waiver_inventory": "检查 report index waivers 是否有人负责且未过期。",
         "report_index_waiver_inventory_validation": (
             "确认 expired waiver 和 missing registry reference 是否 fail-closed。"
+        ),
+        "reader_brief_consistency_pack": (
+            "检查 Reader Brief-facing reports 是否使用统一 section 和 decision language。"
+        ),
+        "reader_brief_consistency_validation": (
+            "确认 Reader Brief consistency pack 的 core section gate 是否通过。"
         ),
         "task_register_consistency": (
             "检查 active/completed task register、docs link 和 registry 一致性。"
@@ -22283,6 +22413,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "daily",
         "daily / governance",
         "Waiver inventory 生成后立即校验 expired waiver。",
+    ),
+    "reader_brief_consistency_pack": (
+        "daily",
+        "daily / governance",
+        "Reader Brief 生成和 report index 刷新后检查 section consistency。",
+    ),
+    "reader_brief_consistency_validation": (
+        "daily",
+        "daily / governance",
+        "Reader Brief consistency pack 生成后立即校验 core section contract。",
     ),
     "research_governance_summary": (
         "daily",

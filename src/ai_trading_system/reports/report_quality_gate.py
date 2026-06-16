@@ -29,6 +29,7 @@ READER_BRIEF_SECTIONS: tuple[str, ...] = (
     "key_result",
     "blocking_issues",
     "warnings",
+    "safety_boundary",
     "recommended_next_step",
 )
 
@@ -101,7 +102,7 @@ MARKDOWN_SECTION_PATTERNS: dict[str, tuple[str, ...]] = {
 }
 
 CORE_READER_BRIEF_SECTIONS = frozenset(
-    {"human_readable_summary", "key_result", "recommended_next_step"}
+    {"human_readable_summary", "key_result", "safety_boundary", "recommended_next_step"}
 )
 
 
@@ -487,6 +488,7 @@ def _check_reader_brief(
         "key_result": _reader_brief_has_key_result(reader_brief_payload),
         "blocking_issues": _reader_brief_has_blocking_issue_disclosure(reader_brief_payload),
         "warnings": "warnings" in reader_brief_payload,
+        "safety_boundary": _reader_brief_has_safety_boundary(reader_brief_payload),
         "recommended_next_step": _reader_brief_has_next_step(reader_brief_payload),
     }
     missing_sections = [
@@ -590,6 +592,15 @@ def _reader_brief_has_blocking_issue_disclosure(payload: Mapping[str, Any]) -> b
         or _text(impact.get("status")) == "OK"
         or bool(_records(impact.get("items")))
         or bool(_records(queue.get("items")))
+    )
+
+
+def _reader_brief_has_safety_boundary(payload: Mapping[str, Any]) -> bool:
+    decision = _mapping(payload.get("executive_decision"))
+    return _text(payload.get("production_effect")) == PRODUCTION_EFFECT and (
+        decision.get("not_trade_instruction") is True
+        or _text(payload.get("production_effect_statement"))
+        or _text(decision.get("production_effect"))
     )
 
 

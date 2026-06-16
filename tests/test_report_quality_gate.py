@@ -238,6 +238,7 @@ def _complete_reader_brief_payload() -> dict[str, object]:
         "manual_review_queue": {"items": []},
         "warnings": [],
         "action_checklist": [{"recommended_next_action": "review_report_quality_gate"}],
+        "executive_decision": {"not_trade_instruction": True},
     }
 
 

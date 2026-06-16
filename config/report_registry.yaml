@@ -7267,6 +7267,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: reader_brief_consistency_pack
+    title: Reader Brief Consistency Pack
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports reader-brief-consistency --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/reader_brief_consistency_pack_*.json
+      - outputs/reports/reader_brief_consistency_pack_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Reader Brief-facing report section consistency should be checked after Reader Brief and report index refresh.
+    owner_action: update_new_report_templates_to_emit_standard_reader_brief_sections
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: reader_brief_consistency_validation
+    title: Reader Brief Consistency Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-reader-brief-consistency --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/reader_brief_consistency_validation_*.json
+      - outputs/reports/reader_brief_consistency_validation_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Reader Brief consistency validation should fail closed when the daily Reader Brief core section contract is missing.
+    owner_action: run_after_reader_brief_consistency_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: report_quality_gate
     title: Report Quality Gate
     group: governance
