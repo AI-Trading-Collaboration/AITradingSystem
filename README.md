@@ -1499,6 +1499,22 @@ artifact、不运行上游、不写 official target weights、不触发 broker/o
 `pipelines_executed_by_monitor=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE 在 signal input completeness 阻断后新增
+root-cause / recovery audit。Operator 必须先通过 canonical path 恢复输入：
+`aits validate-data --as-of YYYY-MM-DD`、`aits etf data validate`、
+`aits etf features build --end latest`、`aits signals build-snapshot --latest`、
+`aits etf signals generate --date latest` 和 `aits reports signal-snapshot --latest`，随后运行
+`aits etf dynamic-v3-rescue signal-input-completeness run --as-of YYYY-MM-DD`。Recovery CLI
+为 `aits etf dynamic-v3-rescue signal-input-recovery run --as-of YYYY-MM-DD
+--restored-monitor-id <monitor_id> --previous-monitor-id <blocking_monitor_id>`、
+`report --latest` 和 `validate-signal-input-recovery --latest`。输出记录
+`SIGNAL_INPUTS_RESTORED|SIGNAL_INPUTS_RESTORED_WITH_WARNINGS|SIGNAL_INPUTS_STILL_BLOCKED`、
+canonical generation path、root cause、restored feature/signal artifact ids 和 hard-stop
+next action。该 audit 不运行上游、不刷新数据、不补造 signal / feature / snapshot artifact、
+不放宽 completeness policy、不写 official target weights、不触发 broker/order、不修改 paper account
+或 production state；`SIGNAL_INPUTS_STILL_BLOCKED` 必须停止后续 promotion / extended-shadow
+recovery chain。
+
 TRADING-351_PAPER_SHADOW_DAILY_RUNNER 在 formal contract 和 paper-shadow protocol
 之后新增 observation-only daily runner。CLI 入口为
 `aits etf dynamic-v3-rescue paper-shadow-daily run`、

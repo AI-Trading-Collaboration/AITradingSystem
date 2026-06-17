@@ -50,6 +50,9 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_signal_input_completeness as signal_input_completeness,
 )
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_signal_input_recovery as signal_input_recovery,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_stress_scenarios as stress_scenarios
 from ai_trading_system.etf_portfolio import dynamic_v3_system_target as system_target
 from ai_trading_system.etf_portfolio import (
@@ -1851,6 +1854,10 @@ dynamic_v3_signal_input_completeness_app = typer.Typer(
     help="Dynamic v3 rescue signal input completeness workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_signal_input_recovery_app = typer.Typer(
+    help="Dynamic v3 rescue signal input recovery root-cause workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_paper_shadow_daily_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow daily observation workflow。",
     no_args_is_help=True,
@@ -2675,6 +2682,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_signal_input_completeness_app,
     name="signal-input-completeness",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_signal_input_recovery_app,
+    name="signal-input-recovery",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_daily_app,
@@ -20052,6 +20063,129 @@ def dynamic_v3_validate_signal_input_completeness_command(
             monitor_id=resolved_id,
             output_dir=output_dir,
             policy_path=policy_path,
+        )
+    )
+
+
+@dynamic_v3_signal_input_recovery_app.command("run")
+def dynamic_v3_signal_input_recovery_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="signal input recovery as-of date YYYY-MM-DD；省略时读取 monitor as_of。",
+        ),
+    ] = None,
+    restored_monitor_id: Annotated[
+        str | None,
+        typer.Option("--restored-monitor-id", help="恢复后 signal input completeness monitor id。"),
+    ] = None,
+    previous_monitor_id: Annotated[
+        str | None,
+        typer.Option("--previous-monitor-id", help="恢复前 blocking monitor id。"),
+    ] = None,
+    signal_input_dir: Annotated[
+        Path,
+        typer.Option("--signal-input-dir", help="signal input completeness artifact root。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_DIR,
+    policy_path: Annotated[
+        Path,
+        typer.Option("--policy-path", help="signal input completeness policy YAML。"),
+    ] = signal_input_completeness.DEFAULT_SIGNAL_INPUT_COMPLETENESS_POLICY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal input recovery artifact root。"),
+    ] = signal_input_recovery.DEFAULT_SIGNAL_INPUT_RECOVERY_DIR,
+) -> None:
+    result = signal_input_recovery.run_signal_input_root_cause_recovery(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        restored_monitor_id=restored_monitor_id,
+        previous_monitor_id=previous_monitor_id,
+        signal_input_dir=signal_input_dir,
+        policy_path=policy_path,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(result.get("signal_input_recovery_report"))
+    validation = _mapping_obj(result.get("signal_input_recovery_validation"))
+    typer.echo(f"recovery_id={result['recovery_id']}")
+    typer.echo(f"restoration_status={report.get('restoration_status')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"source_monitor_id={report.get('source_monitor_id')}")
+    typer.echo(f"previous_monitor_id={report.get('previous_monitor_id')}")
+    typer.echo(
+        "restored_etf_feature_matrix_artifact_id="
+        f"{report.get('restored_etf_feature_matrix_artifact_id')}"
+    )
+    typer.echo(
+        "restored_etf_signal_series_artifact_id="
+        f"{report.get('restored_etf_signal_series_artifact_id')}"
+    )
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status')}")
+    typer.echo("signal_input_recovery_report_only=true")
+    typer.echo("artifacts_fabricated=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_signal_input_recovery_app.command("report")
+def dynamic_v3_signal_input_recovery_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    recovery_id: Annotated[
+        str | None,
+        typer.Option("--recovery-id", help="signal input recovery id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal input recovery artifact root。"),
+    ] = signal_input_recovery.DEFAULT_SIGNAL_INPUT_RECOVERY_DIR,
+) -> None:
+    if not latest and not recovery_id:
+        raise typer.BadParameter("--recovery-id or --latest is required")
+    payload = signal_input_recovery.signal_input_recovery_report_payload(
+        recovery_id=recovery_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    report = _mapping_obj(payload.get("signal_input_recovery_report"))
+    validation = _mapping_obj(payload.get("signal_input_recovery_validation"))
+    typer.echo(f"recovery_id={payload['recovery_id']}")
+    typer.echo(f"restoration_status={report.get('restoration_status')}")
+    typer.echo(f"signal_input_status={report.get('signal_input_status')}")
+    typer.echo(f"source_monitor_id={report.get('source_monitor_id')}")
+    typer.echo(f"previous_monitor_id={report.get('previous_monitor_id')}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={payload['signal_input_recovery_markdown_path']}")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_rescue_app.command("validate-signal-input-recovery")
+def dynamic_v3_validate_signal_input_recovery_command(
+    recovery_id: Annotated[
+        str | None,
+        typer.Option("--recovery-id", help="signal input recovery id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="signal input recovery artifact root。"),
+    ] = signal_input_recovery.DEFAULT_SIGNAL_INPUT_RECOVERY_DIR,
+) -> None:
+    resolved_id = recovery_id
+    if latest:
+        payload = signal_input_recovery.signal_input_recovery_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("recovery_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--recovery-id or --latest is required")
+    _echo_validation_payload(
+        signal_input_recovery.validate_signal_input_recovery_artifact(
+            recovery_id=resolved_id,
+            output_dir=output_dir,
         )
     )
 

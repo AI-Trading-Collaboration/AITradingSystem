@@ -5046,6 +5046,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_input_recovery
+    title: ETF Dynamic v3 Signal Input Recovery Root Cause
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-input-recovery report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_recovery/*/signal_input_recovery_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_recovery/*/signal_input_recovery_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_recovery/*/signal_input_recovery_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_recovery/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_recovery/*/signal_input_recovery_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_recovery/*/signal_input_recovery_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-385 records the root cause and restoration status for stale,
+      missing, schema-incompatible, or otherwise invalid signal inputs after
+      the intended feature/signal/snapshot generation path has been rerun.
+      It is a manual recovery evidence artifact, not a waiver or approval gate.
+    owner_action: review_signal_recovery_before_rerunning_readiness_or_paper_shadow_health
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_daily
     title: ETF Dynamic v3 Paper Shadow Daily Observation
     group: governance
