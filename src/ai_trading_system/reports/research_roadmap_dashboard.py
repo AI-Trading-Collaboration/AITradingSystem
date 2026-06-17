@@ -26,9 +26,15 @@ REPORT_TYPE = "research_roadmap_dashboard"
 VALIDATION_REPORT_TYPE = "research_roadmap_dashboard_validation"
 
 ROADMAP_HEALTHY = "ROADMAP_HEALTHY"
+ROADMAP_WARNINGS = "ROADMAP_WARNINGS"
 ROADMAP_WITH_WARNINGS = "ROADMAP_WITH_WARNINGS"
 ROADMAP_BLOCKED = "ROADMAP_BLOCKED"
-ROADMAP_STATUSES = (ROADMAP_HEALTHY, ROADMAP_WITH_WARNINGS, ROADMAP_BLOCKED)
+ROADMAP_STATUSES = (
+    ROADMAP_HEALTHY,
+    ROADMAP_WARNINGS,
+    ROADMAP_WITH_WARNINGS,
+    ROADMAP_BLOCKED,
+)
 
 PASS_STATUS = "PASS"
 PASS_WITH_WARNINGS_STATUS = "PASS_WITH_WARNINGS"
@@ -122,7 +128,13 @@ def build_research_roadmap_dashboard_payload(
         lineage=lineage,
     )
     next_tasks = _next_recommended_tasks(open_blockers, active_tasks)
-    dashboard_status = _dashboard_status(open_blockers, stale_artifacts, safety)
+    dashboard_status = _dashboard_status(
+        open_blockers,
+        stale_artifacts,
+        paper_shadow_status,
+        safety,
+        lineage,
+    )
     summary = {
         "dashboard_status": dashboard_status,
         "active_task_count": active_task_summary["active_task_count"],
@@ -718,13 +730,19 @@ def _open_blockers(
                 "repair_or_explicitly_waive_report_index_findings",
             )
         )
-    if _text(paper_shadow_status.get("extended_shadow_status")) == "EXTENDED_SHADOW_BLOCKED":
+    extended_shadow_status = _text(paper_shadow_status.get("extended_shadow_status"))
+    if extended_shadow_status in {"EXTENDED_SHADOW_BLOCKED", "EXTENDED_SHADOW_NOT_READY"}:
+        blocker_id = (
+            "extended_shadow_not_ready"
+            if extended_shadow_status == "EXTENDED_SHADOW_NOT_READY"
+            else "extended_shadow_blocked"
+        )
         blockers.append(
             _blocker(
-                "extended_shadow_blocked",
+                blocker_id,
                 "extended_shadow_protocol",
                 "BLOCKING",
-                "Extended shadow protocol is blocked by required evidence.",
+                f"Extended shadow protocol is {extended_shadow_status}.",
                 "resolve_extended_shadow_protocol_blockers",
             )
         )
@@ -810,14 +828,22 @@ def _next_recommended_tasks(
 def _dashboard_status(
     blockers: list[Mapping[str, Any]],
     stale_artifacts: Mapping[str, Any],
+    paper_shadow_status: Mapping[str, Any],
     safety: Mapping[str, Any],
+    lineage: Mapping[str, Any],
 ) -> str:
     if blockers or "SAFETY_BLOCKED" in _text(safety.get("status")).upper():
         return ROADMAP_BLOCKED
     missing_count = _int(stale_artifacts.get("missing_count"))
     stale_count = _int(stale_artifacts.get("stale_count"))
-    if missing_count > 0 or stale_count > 0:
-        return ROADMAP_WITH_WARNINGS
+    if (
+        missing_count > 0
+        or stale_count > 0
+        or _int(paper_shadow_status.get("warning_count")) > 0
+        or _int(lineage.get("warning_issue_count")) > 0
+        or "WARNING" in _text(safety.get("status")).upper()
+    ):
+        return ROADMAP_WARNINGS
     return ROADMAP_HEALTHY
 
 
@@ -825,7 +851,7 @@ def _reader_brief(
     summary: Mapping[str, Any],
     blockers: list[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    status = _text(summary.get("dashboard_status"), ROADMAP_WITH_WARNINGS)
+    status = _text(summary.get("dashboard_status"), ROADMAP_WARNINGS)
     return {
         "summary": (
             f"Research roadmap dashboard is {status}; active tasks="

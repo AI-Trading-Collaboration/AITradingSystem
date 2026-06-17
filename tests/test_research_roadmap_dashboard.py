@@ -13,6 +13,7 @@ from ai_trading_system.reports.research_roadmap_dashboard import (
     PASS_WITH_WARNINGS_STATUS,
     ROADMAP_BLOCKED,
     ROADMAP_HEALTHY,
+    ROADMAP_WARNINGS,
     build_research_roadmap_dashboard_payload,
     validate_research_roadmap_dashboard_payload,
 )
@@ -40,6 +41,68 @@ def test_research_roadmap_dashboard_healthy_with_complete_sources(
     assert payload["summary"]["open_blocker_count"] == 0
     assert payload["summary"]["paper_shadow_status"] == "CONTINUE_NORMAL_SHADOW"
     assert validation["validation_status"] == PASS_STATUS
+
+
+def test_research_roadmap_dashboard_warns_for_visible_artifact_aging(
+    tmp_path: Path,
+) -> None:
+    task_register, completed_register = _task_registers(tmp_path)
+    payload = build_research_roadmap_dashboard_payload(
+        as_of=RUN_DATE,
+        report_index_payload=_report_index_payload(
+            tmp_path,
+            summary_overrides={"stale_count": 1},
+            report_overrides={"artifact_lineage_graph": {"freshness_status": "STALE"}},
+        ),
+        task_register_path=task_register,
+        completed_register_path=completed_register,
+        project_root=tmp_path,
+    )
+    validation = validate_research_roadmap_dashboard_payload(payload)
+
+    assert payload["dashboard_status"] == ROADMAP_WARNINGS
+    assert payload["summary"]["open_blocker_count"] == 0
+    assert payload["summary"]["stale_artifact_count"] == 1
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+    payload["dashboard_status"] = "ROADMAP_WITH_WARNINGS"
+    legacy_validation = validate_research_roadmap_dashboard_payload(payload)
+    assert legacy_validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_research_roadmap_dashboard_blocks_extended_shadow_not_ready(
+    tmp_path: Path,
+) -> None:
+    task_register, completed_register = _task_registers(tmp_path)
+    report_index = _report_index_payload(
+        tmp_path,
+        payload_overrides={
+            "extended_shadow_protocol": {
+                "status": "EXTENDED_SHADOW_NOT_READY",
+                "summary": {
+                    "eligibility_status": "EXTENDED_SHADOW_NOT_READY",
+                    "blocked_check_count": 1,
+                    "warning_check_count": 0,
+                },
+            },
+        },
+    )
+
+    payload = build_research_roadmap_dashboard_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        task_register_path=task_register,
+        completed_register_path=completed_register,
+        project_root=tmp_path,
+    )
+    validation = validate_research_roadmap_dashboard_payload(payload)
+
+    assert payload["dashboard_status"] == ROADMAP_BLOCKED
+    assert any(
+        blocker["blocker_id"] == "extended_shadow_not_ready"
+        for blocker in payload["open_blockers"]
+    )
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
 
 
 def test_research_roadmap_dashboard_blocks_visible_roadmap_risks(

@@ -1760,7 +1760,7 @@ monthly review pack、promotion board、extended shadow protocol、candidate rej
 postmortem template、safety audit、lineage graph 与 task-register consistency artifact，输出
 `outputs/reports/research_roadmap_dashboard_YYYY-MM-DD.json/md`。
 `aits reports validate-research-roadmap-dashboard --latest` 输出 validation artifact。Dashboard
-状态限定为 `ROADMAP_HEALTHY|ROADMAP_WITH_WARNINGS|ROADMAP_BLOCKED`，披露 active /
+状态限定为 `ROADMAP_HEALTHY|ROADMAP_WARNINGS|ROADMAP_BLOCKED`，披露 active /
 completed tasks、open blockers、stale / missing artifacts、active candidates、latest
 paper-shadow / data governance / safety / lineage status 和 next recommended tasks。该 report
 只做 manual roadmap review 输入，不自动调度任务、不修改 task register、candidate、
