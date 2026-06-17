@@ -5418,6 +5418,31 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_cost_metrics_materialization
+    title: ETF Dynamic v3 Cost Metrics Materialization
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue cost-sensitivity-metrics-materialization report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/cost_metrics_materialization_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/cost_metrics_materialization_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/cost_metrics_materialization_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/candidate_cost_metrics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/cost_metrics_materialization_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/cost_metrics_materialization/*/cost_metrics_materialization_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-389 materializes numeric turnover/performance/drawdown/rotation
+      inputs from existing research artifacts and reruns cost-sensitivity
+      review. The source is explicitly marked BACKTEST_SIMULATION research
+      evidence, not PIT/live execution evidence or promotion approval.
+    owner_action: review_materialized_cost_metrics_and_cost_sensitivity_result
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_benchmark_baseline_control
     title: ETF Dynamic v3 Benchmark Baseline Control Pack
     group: governance

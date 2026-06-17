@@ -29,6 +29,9 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_candidate_regression_replay as candidate_regression_replay,
 )
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_cost_metrics_materialization as cost_metrics_materialization,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_cost_sensitivity as cost_sensitivity
 from ai_trading_system.etf_portfolio import dynamic_v3_defensive_evidence as defensive_evidence
 from ai_trading_system.etf_portfolio import dynamic_v3_drawdown_casebook as drawdown_casebook
@@ -1907,6 +1910,10 @@ dynamic_v3_cost_sensitivity_review_app = typer.Typer(
     help="Dynamic v3 rescue cost-sensitivity review workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_cost_sensitivity_metrics_materialization_app = typer.Typer(
+    help="Dynamic v3 rescue cost-sensitivity metrics materialization workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_benchmark_baseline_control_app = typer.Typer(
     help="Dynamic v3 rescue benchmark baseline control workflow。",
     no_args_is_help=True,
@@ -2747,6 +2754,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_cost_sensitivity_review_app,
     name="cost-sensitivity-review",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_cost_sensitivity_metrics_materialization_app,
+    name="cost-sensitivity-metrics-materialization",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_benchmark_baseline_control_app,
@@ -22613,6 +22624,171 @@ def dynamic_v3_validate_cost_sensitivity_review_command(
     _echo_validation_payload(
         cost_sensitivity.validate_cost_sensitivity_artifact(
             review_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_cost_metrics_materialization_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    metrics = _mapping_obj(report.get("materialized_metrics"))
+    typer.echo(
+        "materialization_id="
+        f"{report.get('materialization_id') or manifest.get('materialization_id')}"
+    )
+    typer.echo(
+        "cost_metrics_materialization_status="
+        f"{report.get('cost_metrics_materialization_status')}"
+    )
+    typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
+    typer.echo(f"source_variant={report.get('source_variant') or manifest.get('source_variant')}")
+    typer.echo(f"turnover={metrics.get('turnover')}")
+    typer.echo(f"gross_performance_proxy={metrics.get('gross_performance_proxy')}")
+    typer.echo(f"gross_improvement_proxy={metrics.get('gross_improvement_proxy')}")
+    typer.echo(f"drawdown_proxy={metrics.get('drawdown_proxy')}")
+    typer.echo(f"trade_rotation_count={metrics.get('trade_rotation_count')}")
+    typer.echo(f"candidate_metrics_path={report.get('candidate_metrics_path')}")
+    typer.echo(f"cost_sensitivity_review_id={report.get('cost_sensitivity_review_id')}")
+    typer.echo(f"cost_sensitivity_status={report.get('cost_sensitivity_status')}")
+    typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
+    typer.echo(f"warnings={','.join(_texts(report.get('warnings')))}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('cost_metrics_materialization_markdown_path')}")
+    typer.echo("research_only=true")
+    typer.echo("cost_metrics_materialization_only=true")
+    typer.echo("execution_model_ready=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_cost_sensitivity_metrics_materialization_app.command("run")
+def dynamic_v3_cost_sensitivity_metrics_materialization_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="cost metrics materialization as-of date YYYY-MM-DD；省略时使用当前 UTC 日期。",
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="governance candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    source_variant: Annotated[
+        str,
+        typer.Option("--source-variant", help="source simulation variant with numeric metrics。"),
+    ] = "limited_adjustment",
+    sim_outcome_id: Annotated[
+        str | None,
+        typer.Option("--sim-outcome-id", help="backtest sim outcome id；缺省 latest。"),
+    ] = None,
+    sim_outcome_dir: Annotated[
+        Path,
+        typer.Option("--sim-outcome-dir", help="backtest sim outcome artifact root。"),
+    ] = cost_metrics_materialization.sim.DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="paper-shadow weekly review id；缺省 latest。"),
+    ] = None,
+    weekly_review_dir: Annotated[
+        Path,
+        typer.Option("--weekly-review-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    paper_shadow_health_id: Annotated[
+        str | None,
+        typer.Option("--paper-shadow-health-id", "--health-id", help="paper-shadow health id。"),
+    ] = None,
+    paper_shadow_health_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-health-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+    cost_sensitivity_output_dir: Annotated[
+        Path,
+        typer.Option("--cost-sensitivity-output-dir", help="rerun cost review artifact root。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cost metrics materialization artifact root。"),
+    ] = cost_metrics_materialization.DEFAULT_COST_METRICS_MATERIALIZATION_DIR,
+) -> None:
+    result = cost_metrics_materialization.run_cost_metrics_materialization(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        source_variant=source_variant,
+        sim_outcome_id=sim_outcome_id,
+        sim_outcome_dir=sim_outcome_dir,
+        weekly_review_id=weekly_review_id,
+        weekly_review_dir=weekly_review_dir,
+        paper_shadow_health_id=paper_shadow_health_id,
+        paper_shadow_health_dir=paper_shadow_health_dir,
+        cost_sensitivity_output_dir=cost_sensitivity_output_dir,
+        output_dir=output_dir,
+    )
+    _echo_cost_metrics_materialization_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("cost_metrics_materialization_report")),
+        validation=_mapping_obj(result.get("cost_metrics_materialization_validation")),
+    )
+
+
+@dynamic_v3_cost_sensitivity_metrics_materialization_app.command("report")
+def dynamic_v3_cost_sensitivity_metrics_materialization_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    materialization_id: Annotated[
+        str | None,
+        typer.Option("--materialization-id", help="cost metrics materialization id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cost metrics materialization artifact root。"),
+    ] = cost_metrics_materialization.DEFAULT_COST_METRICS_MATERIALIZATION_DIR,
+) -> None:
+    if not latest and not materialization_id:
+        raise typer.BadParameter("--materialization-id or --latest is required")
+    payload = cost_metrics_materialization.cost_metrics_materialization_report_payload(
+        materialization_id=materialization_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_cost_metrics_materialization_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("cost_metrics_materialization_report")),
+        validation=_mapping_obj(payload.get("cost_metrics_materialization_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-cost-sensitivity-metrics-materialization")
+def dynamic_v3_validate_cost_sensitivity_metrics_materialization_command(
+    materialization_id: Annotated[
+        str | None,
+        typer.Option("--materialization-id", help="cost metrics materialization id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="cost metrics materialization artifact root。"),
+    ] = cost_metrics_materialization.DEFAULT_COST_METRICS_MATERIALIZATION_DIR,
+) -> None:
+    resolved_id = materialization_id
+    if latest:
+        payload = cost_metrics_materialization.cost_metrics_materialization_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("materialization_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--materialization-id or --latest is required")
+    _echo_validation_payload(
+        cost_metrics_materialization.validate_cost_metrics_materialization_artifact(
+            materialization_id=resolved_id,
             output_dir=output_dir,
         )
     )

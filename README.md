@@ -1979,6 +1979,23 @@ validation artifact。Runtime artifacts 写入
 `broker_action_allowed=false`、`order_ticket_generated=false`、`not_official_target_weights=true`、
 `production_effect=none`。
 
+TRADING-389_COST_SENSITIVITY_METRICS_MATERIALIZATION 在 cost sensitivity review 前新增
+numeric input materialization。CLI 入口为
+`aits etf dynamic-v3-rescue cost-sensitivity-metrics-materialization run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue cost-sensitivity-metrics-materialization report --latest` 和
+`aits etf dynamic-v3-rescue validate-cost-sensitivity-metrics-materialization --latest`。该
+artifact 默认读取 latest `backtest_sim_outcome` 的 `simulated_variant_summary.json`，把
+`turnover`、`gross_performance_proxy`、`baseline_performance_proxy`、
+`gross_improvement_proxy`、`drawdown_proxy` 和 `trade_rotation_count` 写入
+`candidate_cost_metrics.json`，然后把该 JSON 交给既有 cost-sensitivity review 重新运行。
+当前 governance candidate `median_plus_regime_mismatch_filter` 与 source numeric row
+`limited_adjustment` 的映射必须显式披露；status 限定为
+`COST_INPUTS_AVAILABLE|COST_INPUTS_PARTIAL|INSUFFICIENT_COST_INPUTS`。该 materialization
+只使用既有 research artifacts，不发明 metrics、不运行新 optimization/backtest、不生成
+execution model、不写 official target weights、不触发 broker/order、不修改 paper account 或
+production state；`BACKTEST_SIMULATION` metrics 只能作为 research cost review input，不是
+PIT/live performance 或 promotion approval。
+
 TRADING-370_BENCHMARK_BASELINE_CONTROL_PACK 在 paper-shadow weekly 和 cost-sensitivity
 后新增 research-only benchmark baseline controls。Policy config 为
 `config/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control_v1.yaml`，披露
