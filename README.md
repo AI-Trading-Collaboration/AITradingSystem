@@ -1724,6 +1724,21 @@ production state，不生成 official target weights、order ticket 或 broker a
 缺 required section、revisit decision、lessons learned 或带 state/broker/order mutation flag 时
 fail closed。
 
+TRADING-399_DECISION_SNAPSHOT_LIFECYCLE_POLICY 新增 decision snapshot lifecycle policy。
+`aits reports decision-snapshot-lifecycle-policy --as-of YYYY-MM-DD` 只读检查 canonical
+`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`、同日 report index
+和 latest available decision snapshot，输出
+`outputs/reports/decision_snapshot_lifecycle_policy_YYYY-MM-DD.json/md`；
+`aits reports validate-decision-snapshot-lifecycle-policy --latest` 输出 validation artifact。
+Status 限定为
+`SNAPSHOT_AVAILABLE|SNAPSHOT_NOT_DUE|SNAPSHOT_MISSING_BLOCKING|SNAPSHOT_MISSING_NON_BLOCKING`：
+canonical snapshot 存在且日期一致时 available；未来日期或 NYSE 休市日缺失为 not due；
+交易日到期且缺当日 snapshot 为 blocking；只有显式 `--allow-latest-context` 才可把 latest
+available snapshot 披露为受限 reader context，且不能冒充当日 snapshot。该 policy 不运行
+`score-daily`、不刷新数据、不创建/复制/回填缺失 snapshot、不修改 production state，
+不批准 paper-shadow、extended shadow、official target weights、order ticket、broker action
+或 live trading。
+
 TRADING-396_EXTENDED_SHADOW_OBSERVATION_CLOCK 新增 extended-shadow minimum observation
 period clock。`aits reports extended-shadow-observation-clock --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 paper-shadow weekly review 和 promotion board evidence，

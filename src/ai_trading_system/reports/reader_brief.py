@@ -171,6 +171,9 @@ def build_reader_brief_payload(
     research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
     paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
     candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
+    decision_snapshot_lifecycle_policy = _decision_snapshot_lifecycle_policy_summary(
+        report_index
+    )
     extended_shadow_observation_clock = _extended_shadow_observation_clock_summary(report_index)
     extended_shadow_protocol = _extended_shadow_protocol_summary(report_index)
     research_roadmap_dashboard = _research_roadmap_dashboard_summary(report_index)
@@ -339,6 +342,7 @@ def build_reader_brief_payload(
         "research_monthly_review_pack": research_monthly_review_pack,
         "paper_shadow_promotion_board": paper_shadow_promotion_board,
         "candidate_rejection_postmortem": candidate_rejection_postmortem,
+        "decision_snapshot_lifecycle_policy": decision_snapshot_lifecycle_policy,
         "extended_shadow_observation_clock": extended_shadow_observation_clock,
         "extended_shadow_protocol": extended_shadow_protocol,
         "research_roadmap_dashboard": research_roadmap_dashboard,
@@ -670,6 +674,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
     paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
     candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
+    decision_snapshot_lifecycle_policy = _mapping(
+        payload.get("decision_snapshot_lifecycle_policy")
+    )
     extended_shadow_observation_clock = _mapping(
         payload.get("extended_shadow_observation_clock")
     )
@@ -1200,6 +1207,66 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         candidate_rejection_postmortem.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Decision Snapshot Lifecycle Policy",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        decision_snapshot_lifecycle_policy.get("availability"),
+                    ),
+                    ("status", decision_snapshot_lifecycle_policy.get("status")),
+                    (
+                        "snapshot_lifecycle_status",
+                        decision_snapshot_lifecycle_policy.get(
+                            "snapshot_lifecycle_status"
+                        ),
+                    ),
+                    (
+                        "validation_status",
+                        decision_snapshot_lifecycle_policy.get("validation_status"),
+                    ),
+                    (
+                        "target_as_of",
+                        decision_snapshot_lifecycle_policy.get("target_as_of"),
+                    ),
+                    (
+                        "context_mode",
+                        decision_snapshot_lifecycle_policy.get("context_mode"),
+                    ),
+                    (
+                        "snapshot_exists",
+                        decision_snapshot_lifecycle_policy.get("snapshot_exists"),
+                    ),
+                    (
+                        "snapshot_signal_date",
+                        decision_snapshot_lifecycle_policy.get("snapshot_signal_date"),
+                    ),
+                    (
+                        "latest_available_snapshot_date",
+                        decision_snapshot_lifecycle_policy.get(
+                            "latest_available_snapshot_date"
+                        ),
+                    ),
+                    (
+                        "blocking_impact",
+                        decision_snapshot_lifecycle_policy.get("blocking_impact"),
+                    ),
+                    (
+                        "next_action",
+                        decision_snapshot_lifecycle_policy.get("next_action"),
+                    ),
+                    (
+                        "detail_report",
+                        decision_snapshot_lifecycle_policy.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        decision_snapshot_lifecycle_policy.get("production_effect"),
                     ),
                 ]
             ),
@@ -7487,6 +7554,91 @@ def _missing_candidate_rejection_postmortem_summary(reason: str) -> dict[str, An
         "summary_sentence": (
             "candidate_rejection_postmortem_template artifact missing; run reports "
             "candidate-rejection-postmortem-template."
+        ),
+        "limitation": reason,
+    }
+
+
+def _decision_snapshot_lifecycle_policy_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_decision_snapshot_lifecycle_policy_summary(
+            "report_index artifact missing; Reader Brief cannot discover lifecycle policy."
+        )
+    report_path = _report_index_artifact_path(report_index, "decision_snapshot_lifecycle_policy")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_decision_snapshot_lifecycle_policy_summary(
+            "decision_snapshot_lifecycle_policy artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "decision_snapshot_lifecycle_policy_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(
+        payload.get("snapshot_lifecycle_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "snapshot_lifecycle_status": status,
+        "validation_status": validation_status,
+        "target_as_of": _text(summary.get("target_as_of"), _text(payload.get("as_of"))),
+        "context_mode": _text(summary.get("context_mode"), "UNKNOWN"),
+        "snapshot_path": _text(summary.get("snapshot_path")),
+        "snapshot_exists": bool(summary.get("snapshot_exists")),
+        "snapshot_signal_date": _text(summary.get("snapshot_signal_date")),
+        "latest_available_snapshot_date": _text(
+            summary.get("latest_available_snapshot_date")
+        ),
+        "market_session_status": _text(summary.get("market_session_status"), "UNKNOWN"),
+        "blocking_impact": _text(summary.get("blocking_impact"), "UNKNOWN"),
+        "invalid_reason_count": _int(summary.get("invalid_reason_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"decision_snapshot_lifecycle_policy={status}; "
+            f"validation={validation_status}; "
+            f"snapshot_exists={bool(summary.get('snapshot_exists'))}; "
+            f"latest={_text(summary.get('latest_available_snapshot_date'), 'none')}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest lifecycle policy artifacts; it does not "
+            "run score-daily or fabricate missing decision snapshots."
+        ),
+    }
+
+
+def _missing_decision_snapshot_lifecycle_policy_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "snapshot_lifecycle_status": "MISSING",
+        "validation_status": "MISSING",
+        "target_as_of": "",
+        "context_mode": "MISSING",
+        "snapshot_path": "",
+        "snapshot_exists": False,
+        "snapshot_signal_date": "",
+        "latest_available_snapshot_date": "",
+        "market_session_status": "MISSING",
+        "blocking_impact": "UNKNOWN",
+        "invalid_reason_count": 0,
+        "next_action": "run_aits_reports_decision_snapshot_lifecycle_policy_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "decision_snapshot_lifecycle_policy artifact missing; run reports "
+            "decision-snapshot-lifecycle-policy."
         ),
         "limitation": reason,
     }
@@ -23768,16 +23920,18 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "research_monthly_review_pack_validation": 222,
         "research_safety_boundary_audit": 221,
         "research_safety_boundary_validation": 222,
-        "documentation_contract": 223,
-        "task_register_consistency": 224,
-        "task_register_consistency_validation": 225,
-        "artifact_lineage_graph": 226,
-        "artifact_lineage_validation": 227,
-        "research_roadmap_dashboard": 228,
-        "research_roadmap_dashboard_validation": 229,
-        "research_governance_end_to_end_pack": 230,
-        "research_governance_end_to_end_pack_validation": 231,
-        "report_quality_gate": 232,
+        "decision_snapshot_lifecycle_policy": 223,
+        "decision_snapshot_lifecycle_policy_validation": 224,
+        "documentation_contract": 225,
+        "task_register_consistency": 226,
+        "task_register_consistency_validation": 227,
+        "artifact_lineage_graph": 228,
+        "artifact_lineage_validation": 229,
+        "research_roadmap_dashboard": 230,
+        "research_roadmap_dashboard_validation": 231,
+        "research_governance_end_to_end_pack": 232,
+        "research_governance_end_to_end_pack_validation": 233,
+        "report_quality_gate": 234,
         "reader_brief_quality": 240,
         "artifact_catalog": 250,
     }
@@ -23868,8 +24022,15 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "candidate_rejection_postmortem_template_validation": (
             "确认 rejection postmortem required sections、filled record 和安全边界是否通过。"
         ),
+        "decision_snapshot_lifecycle_policy": (
+            "查看 decision snapshot 是否按 as-of 到期、存在、缺失阻断或 latest-context 受限。"
+        ),
+        "decision_snapshot_lifecycle_policy_validation": (
+            "确认 lifecycle policy 状态枚举、snapshot/date alignment 和不补造边界是否通过。"
+        ),
         "extended_shadow_observation_clock": (
-            "查看 extended-shadow observation clock 的 current/required count 和 missing/invalid days。"
+            "查看 extended-shadow observation clock 的 current/required count "
+            "和 missing/invalid days。"
         ),
         "extended_shadow_observation_clock_validation": (
             "确认 observation clock count policy、Reader Brief section 和安全边界是否通过。"
@@ -24030,6 +24191,17 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "manual rejection review",
         "Candidate rejection postmortem template 或 filled record 生成后立即校验。",
+    ),
+    "decision_snapshot_lifecycle_policy": (
+        "daily",
+        "daily reader context / governance",
+        "Daily scoring window、Reader Brief 或 recovery governance pack "
+        "需要判断 snapshot 缺失行为时生成。",
+    ),
+    "decision_snapshot_lifecycle_policy_validation": (
+        "daily",
+        "daily reader context / governance",
+        "Decision snapshot lifecycle policy 生成后立即校验状态、日期和不补造边界。",
     ),
     "extended_shadow_observation_clock": (
         "monthly",

@@ -7679,6 +7679,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: decision_snapshot_lifecycle_policy
+    title: Decision Snapshot Lifecycle Policy
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports decision-snapshot-lifecycle-policy --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/decision_snapshot_lifecycle_policy_????-??-??.json
+      - outputs/reports/decision_snapshot_lifecycle_policy_????-??-??.md
+    freshness_sla_days: 2
+    freshness_rationale: Decision snapshot lifecycle status should match the latest Reader Brief and governance recovery context.
+    owner_action: review_missing_snapshot_behavior_without_fabrication
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: decision_snapshot_lifecycle_policy_validation
+    title: Decision Snapshot Lifecycle Policy Validation
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-decision-snapshot-lifecycle-policy --latest
+    artifact_globs:
+      - outputs/reports/decision_snapshot_lifecycle_policy_validation_*.json
+      - outputs/reports/decision_snapshot_lifecycle_policy_validation_*.md
+    freshness_sla_days: 2
+    freshness_rationale: Lifecycle validation should fail closed on unsupported status, date mismatch, missing Reader Brief fields, or snapshot fabrication boundary drift.
+    owner_action: run_after_decision_snapshot_lifecycle_policy
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: extended_shadow_observation_clock
     title: Extended Shadow Observation Clock
     group: governance

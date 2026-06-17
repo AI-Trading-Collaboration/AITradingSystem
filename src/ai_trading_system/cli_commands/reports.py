@@ -125,6 +125,20 @@ from ai_trading_system.reports.candidate_rejection_postmortem import (
     write_candidate_rejection_postmortem_validation_json,
     write_candidate_rejection_postmortem_validation_markdown,
 )
+from ai_trading_system.reports.decision_snapshot_lifecycle_policy import (
+    SNAPSHOT_AVAILABLE,
+    build_decision_snapshot_lifecycle_policy_payload,
+    default_decision_snapshot_lifecycle_policy_json_path,
+    default_decision_snapshot_lifecycle_policy_markdown_path,
+    default_decision_snapshot_lifecycle_policy_validation_json_path,
+    default_decision_snapshot_lifecycle_policy_validation_markdown_path,
+    latest_decision_snapshot_lifecycle_policy_json_path,
+    validate_decision_snapshot_lifecycle_policy_payload,
+    write_decision_snapshot_lifecycle_policy_json,
+    write_decision_snapshot_lifecycle_policy_markdown,
+    write_decision_snapshot_lifecycle_policy_validation_json,
+    write_decision_snapshot_lifecycle_policy_validation_markdown,
+)
 from ai_trading_system.reports.extended_shadow_observation_clock import (
     build_extended_shadow_observation_clock_payload,
     default_extended_shadow_observation_clock_json_path,
@@ -618,6 +632,16 @@ def _decision_snapshot_date(path: Path) -> date:
         if signal_date:
             return _parse_date(str(signal_date))
     raise typer.BadParameter(f"decision_snapshot 文件名或内容缺少 YYYY-MM-DD 日期：{path}")
+
+
+def _read_optional_json_object(path: Path | None) -> dict[str, object]:
+    if path is None or not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def _download_manifest_path(prices_path: Path) -> Path:
@@ -3164,6 +3188,225 @@ def validate_candidate_rejection_postmortem_template_command(
         f"checks：{summary['check_count']}；"
         f"failed：{summary['failed_check_count']}；"
         f"filled_status：{summary['filled_postmortem_status']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("decision-snapshot-lifecycle-policy")
+def decision_snapshot_lifecycle_policy_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Decision snapshot lifecycle policy 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 report_index JSON 的 as_of。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    snapshot_dir: Annotated[
+        Path,
+        typer.Option(help="canonical decision snapshot 目录。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_DIR,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 decision snapshot JSON 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Report index JSON 路径；不传时按日期使用默认路径，缺失时只记录 MISSING。"
+        ),
+    ] = None,
+    allow_latest_context: Annotated[
+        bool,
+        typer.Option(help="缺失当日 snapshot 时，允许显式标记为 latest-context non-blocking。"),
+    ] = False,
+    today: Annotated[
+        str | None,
+        typer.Option(help="测试/审计用 today override，格式 YYYY-MM-DD。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Decision snapshot lifecycle policy JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Decision snapshot lifecycle policy Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 decision snapshot lifecycle policy；不补造缺失 snapshot。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    source_index: Path | None = report_index_path
+    if latest and source_index is None:
+        source_index = max(
+            reports_dir.glob("report_index_????-??-??.json"),
+            default=None,
+            key=lambda path: path.name,
+        )
+        if source_index is None:
+            raise typer.BadParameter(f"未找到 report index JSON：{reports_dir}")
+    if latest and source_index is not None:
+        raw_index = _read_optional_json_object(source_index)
+        report_date = _parse_date(str(raw_index.get("as_of") or date.today().isoformat()))
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_index = report_index_path or default_report_index_json_path(
+            reports_dir,
+            report_date,
+        )
+        raw_index = _read_optional_json_object(source_index)
+    payload = build_decision_snapshot_lifecycle_policy_payload(
+        as_of=report_date,
+        decision_snapshot_path=decision_snapshot_path,
+        snapshot_dir=snapshot_dir,
+        report_index_payload=raw_index,
+        report_index_path=source_index if source_index and source_index.exists() else None,
+        allow_latest_context=allow_latest_context,
+        today=_parse_date(today) if today else None,
+        project_root=project_root,
+    )
+    report_json = json_output_path or default_decision_snapshot_lifecycle_policy_json_path(
+        reports_dir,
+        report_date,
+    )
+    report_md = markdown_output_path or default_decision_snapshot_lifecycle_policy_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_decision_snapshot_lifecycle_policy_json(payload, report_json)
+    md_path = write_decision_snapshot_lifecycle_policy_markdown(payload, report_md)
+    status = payload["snapshot_lifecycle_status"]
+    style = "green" if status == SNAPSHOT_AVAILABLE else "yellow"
+    if status == "SNAPSHOT_MISSING_BLOCKING":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Decision snapshot lifecycle policy：{status}[/{style}]")
+    console.print(f"Decision snapshot lifecycle policy JSON：{json_path}")
+    console.print(f"Decision snapshot lifecycle policy Markdown：{md_path}")
+    console.print(
+        f"target：{summary['target_as_of']}；"
+        f"snapshot_exists：{summary['snapshot_exists']}；"
+        f"latest：{summary['latest_available_snapshot_date']}；"
+        f"blocking_impact：{summary['blocking_impact']}；"
+        f"production_effect={payload['production_effect']}；read-only/no fabrication"
+    )
+
+
+@reports_app.command("validate-decision-snapshot-lifecycle-policy")
+def validate_decision_snapshot_lifecycle_policy_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 decision snapshot lifecycle policy JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Decision snapshot lifecycle validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="Decision snapshot lifecycle policy JSON 路径；优先于 --latest/--as-of。"
+        ),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Decision snapshot lifecycle validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Decision snapshot lifecycle validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 decision snapshot lifecycle policy；不补造缺失 snapshot。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        latest_path = latest_decision_snapshot_lifecycle_policy_json_path(reports_dir)
+        if latest_path is None:
+            raise typer.BadParameter(
+                f"未找到 decision snapshot lifecycle policy JSON：{reports_dir}"
+            )
+        source_path = latest_path
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_decision_snapshot_lifecycle_policy_json_path(
+            reports_dir,
+            report_date,
+        )
+    if not source_path.exists():
+        raise typer.BadParameter(
+            f"Decision snapshot lifecycle policy JSON not found: {source_path}"
+        )
+    try:
+        raw_payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(
+            f"Decision snapshot lifecycle policy JSON cannot be parsed: {source_path}"
+        ) from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(
+            f"Decision snapshot lifecycle policy JSON must be an object: {source_path}"
+        )
+    payload = validate_decision_snapshot_lifecycle_policy_payload(raw_payload)
+    source_artifacts = dict(payload.get("input_artifacts", {}))
+    source_artifacts["decision_snapshot_lifecycle_policy"] = str(source_path)
+    payload["input_artifacts"] = source_artifacts
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or default_decision_snapshot_lifecycle_policy_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or default_decision_snapshot_lifecycle_policy_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = write_decision_snapshot_lifecycle_policy_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = write_decision_snapshot_lifecycle_policy_validation_markdown(
+        payload,
+        validation_md,
+    )
+    status = payload["validation_status"]
+    style = "green" if status == "PASS" else "yellow"
+    if status == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Decision snapshot lifecycle policy validation：{status}[/{style}]")
+    console.print(f"Decision snapshot lifecycle policy validation JSON：{json_path}")
+    console.print(f"Decision snapshot lifecycle policy validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"source_status：{summary['source_snapshot_lifecycle_status']}；"
+        f"snapshot_exists：{summary['snapshot_exists']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if status == "FAIL":
