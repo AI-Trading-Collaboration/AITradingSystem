@@ -27,6 +27,9 @@ from ai_trading_system.etf_portfolio import (
     dynamic_v3_benchmark_baseline_control as benchmark_baseline_control,
 )
 from ai_trading_system.etf_portfolio import (
+    dynamic_v3_benchmark_baseline_metrics_materialization as baseline_metrics_materialization,
+)
+from ai_trading_system.etf_portfolio import (
     dynamic_v3_candidate_regression_replay as candidate_regression_replay,
 )
 from ai_trading_system.etf_portfolio import (
@@ -1918,6 +1921,10 @@ dynamic_v3_benchmark_baseline_control_app = typer.Typer(
     help="Dynamic v3 rescue benchmark baseline control workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_benchmark_baseline_metrics_materialization_app = typer.Typer(
+    help="Dynamic v3 rescue benchmark baseline metrics materialization workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_regression_replay_app = typer.Typer(
     help="Dynamic v3 rescue candidate regression replay workflow。",
     no_args_is_help=True,
@@ -2762,6 +2769,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_benchmark_baseline_control_app,
     name="benchmark-baseline-control",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_benchmark_baseline_metrics_materialization_app,
+    name="benchmark-baseline-metrics-materialization",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_candidate_regression_replay_app,
@@ -22957,6 +22968,255 @@ def dynamic_v3_validate_benchmark_baseline_control_command(
     _echo_validation_payload(
         benchmark_baseline_control.validate_benchmark_baseline_artifact(
             control_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_benchmark_baseline_metrics_materialization_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    metric_statuses = _mapping_obj(report.get("required_metric_statuses"))
+    summary = _mapping_obj(report.get("comparison_summary"))
+    typer.echo(
+        "materialization_id="
+        f"{report.get('materialization_id') or manifest.get('materialization_id')}"
+    )
+    typer.echo(
+        "benchmark_baseline_metrics_status="
+        f"{report.get('benchmark_baseline_metrics_status')}"
+    )
+    typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
+    typer.echo(f"source_variant={report.get('source_variant') or manifest.get('source_variant')}")
+    typer.echo(f"candidate_metric_status={metric_statuses.get('candidate')}")
+    typer.echo(f"available_baseline_count={metric_statuses.get('available_baseline_count')}")
+    typer.echo(f"missing_baseline_count={metric_statuses.get('missing_baseline_count')}")
+    typer.echo(f"candidate_metrics_path={report.get('candidate_metrics_path')}")
+    typer.echo(f"baseline_metrics_path={report.get('baseline_metrics_path')}")
+    typer.echo(f"benchmark_baseline_control_id={report.get('benchmark_baseline_control_id')}")
+    typer.echo(f"benchmark_baseline_status={report.get('benchmark_baseline_status')}")
+    typer.echo(
+        "outperformed_baseline_count="
+        f"{summary.get('outperformed_baseline_count')}"
+    )
+    typer.echo(
+        "underperformed_baseline_count="
+        f"{summary.get('underperformed_baseline_count')}"
+    )
+    typer.echo(
+        "insufficient_metric_baseline_count="
+        f"{summary.get('insufficient_metric_baseline_count')}"
+    )
+    typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
+    typer.echo(f"warnings={','.join(_texts(report.get('warnings')))}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(
+        "report_path="
+        f"{manifest.get('benchmark_baseline_metrics_materialization_markdown_path')}"
+    )
+    typer.echo("research_only=true")
+    typer.echo("benchmark_baseline_metrics_materialization_only=true")
+    typer.echo("benchmark_comparison_live_signal=false")
+    typer.echo("execution_model_ready=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_benchmark_baseline_metrics_materialization_app.command("run")
+def dynamic_v3_benchmark_baseline_metrics_materialization_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="benchmark baseline metrics materialization as-of date YYYY-MM-DD。",
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="governance candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    source_variant: Annotated[
+        str,
+        typer.Option("--source-variant", help="source simulation variant for candidate metrics。"),
+    ] = "limited_adjustment",
+    sim_outcome_id: Annotated[
+        str | None,
+        typer.Option("--sim-outcome-id", help="backtest sim outcome id；缺省 latest。"),
+    ] = None,
+    sim_outcome_dir: Annotated[
+        Path,
+        typer.Option("--sim-outcome-dir", help="backtest sim outcome artifact root。"),
+    ] = baseline_metrics_materialization.sim.DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    candidate_metrics_path: Annotated[
+        Path | None,
+        typer.Option("--candidate-metrics-path", help="显式 candidate cost metrics JSON。"),
+    ] = None,
+    candidate_cost_materialization_id: Annotated[
+        str | None,
+        typer.Option(
+            "--candidate-cost-materialization-id",
+            "--cost-materialization-id",
+            help="TRADING-389 cost metrics materialization id；缺省 latest。",
+        ),
+    ] = None,
+    candidate_cost_materialization_dir: Annotated[
+        Path,
+        typer.Option(
+            "--candidate-cost-materialization-dir",
+            "--cost-materialization-dir",
+            help="cost metrics materialization artifact root。",
+        ),
+    ] = cost_metrics_materialization.DEFAULT_COST_METRICS_MATERIALIZATION_DIR,
+    weekly_review_id: Annotated[
+        str | None,
+        typer.Option("--weekly-review-id", help="paper-shadow weekly review id；缺省 latest。"),
+    ] = None,
+    weekly_review_dir: Annotated[
+        Path,
+        typer.Option("--weekly-review-dir", help="paper-shadow weekly review artifact root。"),
+    ] = paper_shadow_weekly.DEFAULT_PAPER_SHADOW_WEEKLY_REVIEW_DIR,
+    cost_sensitivity_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--cost-sensitivity-review-id",
+            "--review-id",
+            help="cost-sensitivity review id；缺省 latest。",
+        ),
+    ] = None,
+    cost_sensitivity_dir: Annotated[
+        Path,
+        typer.Option("--cost-sensitivity-dir", help="cost-sensitivity review artifact root。"),
+    ] = cost_sensitivity.DEFAULT_COST_SENSITIVITY_REVIEW_DIR,
+    benchmark_baseline_output_dir: Annotated[
+        Path,
+        typer.Option("--benchmark-baseline-output-dir", help="rerun baseline control root。"),
+    ] = benchmark_baseline_control.DEFAULT_BENCHMARK_BASELINE_CONTROL_DIR,
+    price_cache_path: Annotated[
+        Path,
+        typer.Option("--price-cache-path", help="cached ETF price path；会先跑 data gate。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_cache_path: Annotated[
+        Path,
+        typer.Option("--rates-cache-path", help="cached rates path；会先跑 data gate。"),
+    ] = system_target.DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="baseline metrics materialization artifact root。"),
+    ] = (
+        baseline_metrics_materialization
+        .DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR
+    ),
+) -> None:
+    result = baseline_metrics_materialization.run_benchmark_baseline_metrics_materialization(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        source_variant=source_variant,
+        sim_outcome_id=sim_outcome_id,
+        sim_outcome_dir=sim_outcome_dir,
+        candidate_metrics_path=candidate_metrics_path,
+        candidate_cost_materialization_id=candidate_cost_materialization_id,
+        candidate_cost_materialization_dir=candidate_cost_materialization_dir,
+        weekly_review_id=weekly_review_id,
+        weekly_review_dir=weekly_review_dir,
+        cost_sensitivity_review_id=cost_sensitivity_review_id,
+        cost_sensitivity_dir=cost_sensitivity_dir,
+        benchmark_baseline_output_dir=benchmark_baseline_output_dir,
+        price_cache_path=price_cache_path,
+        rates_cache_path=rates_cache_path,
+        output_dir=output_dir,
+    )
+    _echo_benchmark_baseline_metrics_materialization_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(
+            result.get("benchmark_baseline_metrics_materialization_report")
+        ),
+        validation=_mapping_obj(
+            result.get("benchmark_baseline_metrics_materialization_validation")
+        ),
+    )
+
+
+@dynamic_v3_benchmark_baseline_metrics_materialization_app.command("report")
+def dynamic_v3_benchmark_baseline_metrics_materialization_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    materialization_id: Annotated[
+        str | None,
+        typer.Option(
+            "--materialization-id",
+            help="benchmark baseline metrics materialization id。",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="baseline metrics materialization artifact root。"),
+    ] = (
+        baseline_metrics_materialization
+        .DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR
+    ),
+) -> None:
+    if not latest and not materialization_id:
+        raise typer.BadParameter("--materialization-id or --latest is required")
+    payload = (
+        baseline_metrics_materialization
+        .benchmark_baseline_metrics_materialization_report_payload(
+            materialization_id=materialization_id,
+            latest=latest,
+            output_dir=output_dir,
+        )
+    )
+    _echo_benchmark_baseline_metrics_materialization_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(
+            payload.get("benchmark_baseline_metrics_materialization_report")
+        ),
+        validation=_mapping_obj(
+            payload.get("benchmark_baseline_metrics_materialization_validation")
+        ),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-benchmark-baseline-metrics-materialization")
+def dynamic_v3_validate_benchmark_baseline_metrics_materialization_command(
+    materialization_id: Annotated[
+        str | None,
+        typer.Option(
+            "--materialization-id",
+            help="benchmark baseline metrics materialization id。",
+        ),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="baseline metrics materialization artifact root。"),
+    ] = (
+        baseline_metrics_materialization
+        .DEFAULT_BENCHMARK_BASELINE_METRICS_MATERIALIZATION_DIR
+    ),
+) -> None:
+    resolved_id = materialization_id
+    if latest:
+        payload = (
+            baseline_metrics_materialization
+            .benchmark_baseline_metrics_materialization_report_payload(
+                latest=True,
+                output_dir=output_dir,
+            )
+        )
+        resolved_id = str(payload.get("materialization_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--materialization-id or --latest is required")
+    _echo_validation_payload(
+        baseline_metrics_materialization
+        .validate_benchmark_baseline_metrics_materialization_artifact(
+            materialization_id=resolved_id,
             output_dir=output_dir,
         )
     )
