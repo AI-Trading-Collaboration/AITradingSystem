@@ -5313,6 +5313,31 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_normal_paper_shadow_resumption_gate
+    title: ETF Dynamic v3 Normal Paper Shadow Resumption Gate
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue normal-paper-shadow-resumption-gate report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/*/normal_paper_shadow_resumption_gate_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/*/normal_paper_shadow_resumption_gate_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/*/normal_paper_shadow_resumption_gate_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/*/normal_paper_shadow_resumption_gate_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/*/normal_paper_shadow_resumption_gate_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-388 reads readiness/health recovery and owner decision evidence,
+      then explicitly gates whether normal paper-shadow observation may resume.
+      Hold remains a safe non-promotion owner action but does not authorize
+      resumption; continue_normal_shadow plus completed manual owner review is
+      required before any non-blocked resumption status.
+    owner_action: record_hold_or_continue_normal_shadow_after_manual_owner_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_outcome_attribution
     title: ETF Dynamic v3 Paper Shadow Outcome Attribution
     group: governance

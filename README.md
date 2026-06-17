@@ -1898,6 +1898,26 @@ state；所有输出固定 `readiness_health_recovery_chain_only=true`、
 `extended_shadow_allowed=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-388_NORMAL_PAPER_SHADOW_RESUMPTION_GATE 在 readiness/health recovery 后新增显式
+normal paper-shadow resumption gate。CLI 入口为
+`aits etf dynamic-v3-rescue normal-paper-shadow-resumption-gate run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue normal-paper-shadow-resumption-gate report --latest` 和
+`aits etf dynamic-v3-rescue validate-normal-paper-shadow-resumption-gate --latest`。该 gate
+只读取 latest 或指定的 readiness/health recovery artifact 与 owner decision evidence，输出
+`RESUME_NORMAL_SHADOW_ALLOWED`、`RESUME_NORMAL_SHADOW_WITH_WARNINGS` 或
+`RESUME_NORMAL_SHADOW_BLOCKED`，并披露 resumption requirements、owner action、manual owner
+review completion、blocking/warning reasons、Reader Brief section 和 validation artifact。
+`hold` 是允许的 safe non-promotion owner action，但不授权恢复；只有
+`continue_normal_shadow` 且人工 owner review completed 才可能让 normal paper-shadow
+observation 恢复。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/`。该 gate 只允许
+normal observation，不运行 promotion board、不执行 extended-shadow protocol、不批准 live
+trading、不写 official target weights、不触发 broker/order、不修改 paper account 或 production
+state；所有输出固定 `normal_paper_shadow_resumption_gate_only=true`、
+`normal_paper_shadow_observation_only=true`、`promotion_board_allowed=false`、
+`extended_shadow_allowed=false`、`live_trading_allowed=false`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 TRADING-373_PAPER_SHADOW_OUTCOME_ATTRIBUTION 在 paper-shadow weekly review 和 canonical
 health 后新增 research-only outcome attribution layer。Policy config 为
 `config/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution_v1.yaml`，

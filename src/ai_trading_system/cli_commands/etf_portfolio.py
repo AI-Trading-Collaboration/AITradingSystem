@@ -36,6 +36,9 @@ from ai_trading_system.etf_portfolio import (
     dynamic_v3_filtered_candidate_readiness as filtered_readiness,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
+from ai_trading_system.etf_portfolio import (
+    dynamic_v3_normal_paper_shadow_resumption_gate as normal_shadow_resumption_gate,
+)
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_daily as paper_shadow_daily
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_drift as paper_shadow_drift
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_health as paper_shadow_health
@@ -1888,6 +1891,10 @@ dynamic_v3_readiness_health_recovery_app = typer.Typer(
     help="Dynamic v3 rescue readiness/health recovery chain workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_normal_paper_shadow_resumption_gate_app = typer.Typer(
+    help="Dynamic v3 rescue normal paper-shadow resumption gate workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_paper_shadow_outcome_attribution_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow outcome attribution workflow。",
     no_args_is_help=True,
@@ -2724,6 +2731,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_readiness_health_recovery_app,
     name="readiness-health-recovery",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_normal_paper_shadow_resumption_gate_app,
+    name="normal-paper-shadow-resumption-gate",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_outcome_attribution_app,
@@ -21935,6 +21946,191 @@ def dynamic_v3_validate_readiness_health_recovery_command(
     _echo_validation_payload(
         readiness_health_recovery.validate_readiness_health_recovery_artifact(
             recovery_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_normal_paper_shadow_resumption_gate_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    typer.echo(f"gate_id={report.get('gate_id') or manifest.get('gate_id')}")
+    typer.echo(
+        "normal_paper_shadow_resumption_gate_status="
+        f"{report.get('normal_paper_shadow_resumption_gate_status')}"
+    )
+    typer.echo(f"normal_paper_shadow_may_resume={report.get('normal_paper_shadow_may_resume')}")
+    typer.echo(f"owner_action={report.get('owner_action')}")
+    typer.echo(
+        "manual_owner_review_completed="
+        f"{report.get('manual_owner_review_completed')}"
+    )
+    typer.echo(
+        "readiness_health_recovery_id="
+        f"{report.get('readiness_health_recovery_id')}"
+    )
+    typer.echo(
+        "readiness_health_recovery_status="
+        f"{report.get('readiness_health_recovery_status')}"
+    )
+    typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
+    typer.echo(f"warning_reasons={','.join(_texts(report.get('warning_reasons')))}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(
+        "report_path="
+        f"{manifest.get('normal_paper_shadow_resumption_gate_markdown_path')}"
+    )
+    typer.echo("normal_paper_shadow_resumption_gate_only=true")
+    typer.echo("normal_paper_shadow_observation_only=true")
+    typer.echo("promotion_board_allowed=false")
+    typer.echo("extended_shadow_allowed=false")
+    typer.echo("live_trading_allowed=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_normal_paper_shadow_resumption_gate_app.command("run")
+def dynamic_v3_normal_paper_shadow_resumption_gate_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help=(
+                "normal paper-shadow resumption gate as-of date YYYY-MM-DD；"
+                "省略时使用当前 UTC 日期。"
+            ),
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    readiness_health_recovery_id: Annotated[
+        str | None,
+        typer.Option(
+            "--readiness-health-recovery-id",
+            "--recovery-id",
+            help="readiness/health recovery id；缺省读取 latest。",
+        ),
+    ] = None,
+    owner_action: Annotated[
+        str | None,
+        typer.Option(
+            "--owner-action",
+            help=(
+                "显式 owner action；只接受 hold 或 continue_normal_shadow 作为 "
+                "safe non-promotion action。"
+            ),
+        ),
+    ] = None,
+    manual_owner_review_completed: Annotated[
+        bool,
+        typer.Option(
+            "--manual-owner-review-completed/--manual-owner-review-not-completed",
+            help="显式 owner action 是否来自已完成人工复核；恢复 normal shadow 必须为 true。",
+        ),
+    ] = False,
+    owner_decision_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--owner-decision-report-path",
+            help="显式 owner decision audit report JSON。",
+        ),
+    ] = None,
+    owner_decision_reports_dir: Annotated[
+        Path,
+        typer.Option("--owner-decision-reports-dir", help="owner decision audit reports dir。"),
+    ] = normal_shadow_resumption_gate.DEFAULT_OWNER_DECISION_REPORTS_DIR,
+    owner_decision_log_path: Annotated[
+        Path,
+        typer.Option("--owner-decision-log-path", help="append-only owner decision JSONL。"),
+    ] = normal_shadow_resumption_gate.owner_log.DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+    readiness_health_recovery_dir: Annotated[
+        Path,
+        typer.Option("--readiness-health-recovery-dir", help="readiness/health recovery root。"),
+    ] = readiness_health_recovery.DEFAULT_READINESS_HEALTH_RECOVERY_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="normal paper-shadow resumption gate root。"),
+    ] = normal_shadow_resumption_gate.DEFAULT_NORMAL_PAPER_SHADOW_RESUMPTION_GATE_DIR,
+) -> None:
+    result = normal_shadow_resumption_gate.run_normal_paper_shadow_resumption_gate(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        readiness_health_recovery_id=readiness_health_recovery_id,
+        readiness_health_recovery_dir=readiness_health_recovery_dir,
+        owner_action=owner_action,
+        manual_owner_review_completed=manual_owner_review_completed,
+        owner_decision_report_path=owner_decision_report_path,
+        owner_decision_reports_dir=owner_decision_reports_dir,
+        owner_decision_log_path=owner_decision_log_path,
+        output_dir=output_dir,
+    )
+    _echo_normal_paper_shadow_resumption_gate_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("normal_paper_shadow_resumption_gate_report")),
+        validation=_mapping_obj(result.get("normal_paper_shadow_resumption_gate_validation")),
+    )
+
+
+@dynamic_v3_normal_paper_shadow_resumption_gate_app.command("report")
+def dynamic_v3_normal_paper_shadow_resumption_gate_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    gate_id: Annotated[
+        str | None,
+        typer.Option("--gate-id", help="normal paper-shadow resumption gate id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="normal paper-shadow resumption gate root。"),
+    ] = normal_shadow_resumption_gate.DEFAULT_NORMAL_PAPER_SHADOW_RESUMPTION_GATE_DIR,
+) -> None:
+    if not latest and not gate_id:
+        raise typer.BadParameter("--gate-id or --latest is required")
+    payload = normal_shadow_resumption_gate.normal_paper_shadow_resumption_gate_report_payload(
+        gate_id=gate_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_normal_paper_shadow_resumption_gate_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("normal_paper_shadow_resumption_gate_report")),
+        validation=_mapping_obj(
+            payload.get("normal_paper_shadow_resumption_gate_validation")
+        ),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-normal-paper-shadow-resumption-gate")
+def dynamic_v3_validate_normal_paper_shadow_resumption_gate_command(
+    gate_id: Annotated[
+        str | None,
+        typer.Option("--gate-id", help="normal paper-shadow resumption gate id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="normal paper-shadow resumption gate root。"),
+    ] = normal_shadow_resumption_gate.DEFAULT_NORMAL_PAPER_SHADOW_RESUMPTION_GATE_DIR,
+) -> None:
+    resolved_id = gate_id
+    if latest:
+        payload = normal_shadow_resumption_gate.normal_paper_shadow_resumption_gate_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("gate_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--gate-id or --latest is required")
+    _echo_validation_payload(
+        normal_shadow_resumption_gate.validate_normal_paper_shadow_resumption_gate_artifact(
+            gate_id=resolved_id,
             output_dir=output_dir,
         )
     )
