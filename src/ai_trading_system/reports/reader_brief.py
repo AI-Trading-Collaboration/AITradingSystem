@@ -186,6 +186,9 @@ def build_reader_brief_payload(
     decision_stage_governance_snapshot = _decision_stage_governance_snapshot_summary(
         report_index
     )
+    return_to_research_governance_snapshot = (
+        _return_to_research_governance_snapshot_summary(report_index)
+    )
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -355,6 +358,7 @@ def build_reader_brief_payload(
         "research_governance_end_to_end_pack": research_governance_end_to_end_pack,
         "research_governance_recovery_pack": research_governance_recovery_pack,
         "decision_stage_governance_snapshot": decision_stage_governance_snapshot,
+        "return_to_research_governance_snapshot": return_to_research_governance_snapshot,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -698,6 +702,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     decision_stage_governance_snapshot = _mapping(
         payload.get("decision_stage_governance_snapshot")
+    )
+    return_to_research_governance_snapshot = _mapping(
+        payload.get("return_to_research_governance_snapshot")
     )
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
@@ -1622,6 +1629,84 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         decision_stage_governance_snapshot.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Return-To-Research Governance Snapshot",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        return_to_research_governance_snapshot.get("availability"),
+                    ),
+                    ("status", return_to_research_governance_snapshot.get("status")),
+                    (
+                        "return_to_research_status",
+                        return_to_research_governance_snapshot.get(
+                            "return_to_research_status"
+                        ),
+                    ),
+                    (
+                        "candidate_status",
+                        return_to_research_governance_snapshot.get("candidate_status"),
+                    ),
+                    (
+                        "owner_decision_id",
+                        return_to_research_governance_snapshot.get("owner_decision_id"),
+                    ),
+                    (
+                        "normal_paper_shadow_active",
+                        return_to_research_governance_snapshot.get(
+                            "normal_paper_shadow_active"
+                        ),
+                    ),
+                    (
+                        "extended_shadow_allowed",
+                        return_to_research_governance_snapshot.get(
+                            "extended_shadow_allowed"
+                        ),
+                    ),
+                    (
+                        "live_trading_allowed",
+                        return_to_research_governance_snapshot.get(
+                            "live_trading_allowed"
+                        ),
+                    ),
+                    (
+                        "candidate_rejected",
+                        return_to_research_governance_snapshot.get(
+                            "candidate_rejected"
+                        ),
+                    ),
+                    (
+                        "hypothesis_count",
+                        return_to_research_governance_snapshot.get("hypothesis_count"),
+                    ),
+                    (
+                        "next_candidate_id",
+                        return_to_research_governance_snapshot.get(
+                            "next_candidate_id"
+                        ),
+                    ),
+                    (
+                        "validation_status",
+                        return_to_research_governance_snapshot.get("validation_status"),
+                    ),
+                    (
+                        "next_action",
+                        return_to_research_governance_snapshot.get("next_action"),
+                    ),
+                    (
+                        "detail_report",
+                        return_to_research_governance_snapshot.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        return_to_research_governance_snapshot.get(
+                            "production_effect"
+                        ),
                     ),
                 ]
             ),
@@ -8327,6 +8412,93 @@ def _missing_decision_stage_governance_snapshot_summary(reason: str) -> dict[str
         "summary_sentence": (
             "governance_status_snapshot_after_decision_review artifact missing; "
             "run reports decision-stage-review."
+        ),
+        "limitation": reason,
+    }
+
+
+def _return_to_research_governance_snapshot_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_return_to_research_governance_snapshot_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "return-to-research snapshot."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "return_to_research_governance_snapshot",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_return_to_research_governance_snapshot_summary(
+            "return_to_research_governance_snapshot artifact missing from report "
+            "index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "return_to_research_governance_snapshot_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    validation_status = _text(validation_payload.get("status"), "MISSING")
+    status = _text(payload.get("status"), _text(summary.get("return_to_research_status")))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "return_to_research_status": _text(
+            summary.get("return_to_research_status"),
+            status,
+        ),
+        "candidate_status": _text(summary.get("candidate_status"), "MISSING"),
+        "owner_decision_id": _text(summary.get("owner_decision_id"), "MISSING"),
+        "owner_action": _text(summary.get("owner_action"), "MISSING"),
+        "normal_paper_shadow_active": bool(summary.get("normal_paper_shadow_active")),
+        "extended_shadow_allowed": bool(summary.get("extended_shadow_allowed")),
+        "live_trading_allowed": bool(summary.get("live_trading_allowed")),
+        "candidate_rejected": bool(summary.get("candidate_rejected")),
+        "hypothesis_count": _int(summary.get("hypothesis_count")),
+        "next_candidate_id": _text(summary.get("next_candidate_id"), "MISSING"),
+        "validation_status": validation_status,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"return_to_research={status}; "
+            f"candidate_status={_text(summary.get('candidate_status'))}; "
+            f"normal_active={bool(summary.get('normal_paper_shadow_active'))}; "
+            f"live_allowed={bool(summary.get('live_trading_allowed'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the generated return-to-research snapshot; "
+            "it does not append owner decisions, activate paper-shadow, or create orders."
+        ),
+    }
+
+
+def _missing_return_to_research_governance_snapshot_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "return_to_research_status": "MISSING",
+        "candidate_status": "MISSING",
+        "owner_decision_id": "MISSING",
+        "owner_action": "MISSING",
+        "normal_paper_shadow_active": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "candidate_rejected": False,
+        "hypothesis_count": 0,
+        "next_candidate_id": "MISSING",
+        "validation_status": "MISSING",
+        "next_action": "run_aits_reports_return_to_research_reset",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "return_to_research_governance_snapshot artifact missing; "
+            "run reports return-to-research-reset."
         ),
         "limitation": reason,
     }
@@ -24286,9 +24458,20 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "post_decision_rerun_plan": 244,
         "report_quality_warning_drilldown": 245,
         "governance_status_snapshot_after_decision_review": 246,
-        "report_quality_gate": 247,
-        "reader_brief_quality": 248,
-        "artifact_catalog": 250,
+        "owner_return_to_research_decision_record": 247,
+        "candidate_return_to_research_transition_pack": 248,
+        "candidate_failure_mode_attribution": 249,
+        "reusable_evidence_extraction": 250,
+        "return_to_research_hypothesis_backlog": 251,
+        "next_candidate_spec_draft": 252,
+        "research_backfill_plan_for_next_candidate": 253,
+        "archived_candidate_status_update": 254,
+        "research_cycle_reset_pack": 255,
+        "return_to_research_governance_snapshot": 256,
+        "return_to_research_governance_snapshot_validation": 257,
+        "report_quality_gate": 270,
+        "reader_brief_quality": 271,
+        "artifact_catalog": 280,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -24449,6 +24632,39 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "governance_status_snapshot_after_decision_review": (
             "查看 TRADING-429~438 之后的 blocked/hold 边界和 recommended owner action。"
+        ),
+        "owner_return_to_research_decision_record": (
+            "查看 TRADING-439 append-only owner return_to_research decision 和 audit validation。"
+        ),
+        "candidate_return_to_research_transition_pack": (
+            "查看 candidate 如何从 normal paper-shadow resumption path 返回 research backlog。"
+        ),
+        "candidate_failure_mode_attribution": (
+            "查看 cost、benchmark、readiness、owner 和 observation failure mode 排名。"
+        ),
+        "reusable_evidence_extraction": (
+            "查看哪些 failed-candidate evidence 可复用、哪些已 invalidated 或 stale。"
+        ),
+        "return_to_research_hypothesis_backlog": (
+            "查看 return-to-research 后的 P0/P1/P2 research hypotheses。"
+        ),
+        "next_candidate_spec_draft": (
+            "查看下一轮 research-only candidate spec；该 spec 不激活 paper-shadow。"
+        ),
+        "research_backfill_plan_for_next_candidate": (
+            "查看下一候选 backfill windows、metrics 和 pass/fail/needs-more-evidence 规则。"
+        ),
+        "archived_candidate_status_update": (
+            "确认当前 candidate 是 RETURNED_TO_RESEARCH，而不是 rejected 或 live eligible。"
+        ),
+        "research_cycle_reset_pack": (
+            "查看 failed recovery cycle 的关闭和下一 research cycle handoff。"
+        ),
+        "return_to_research_governance_snapshot": (
+            "查看最终 return-to-research 状态、owner decision、candidate status 和安全边界。"
+        ),
+        "return_to_research_governance_snapshot_validation": (
+            "确认 final return-to-research snapshot 的 no shadow/live/weights/broker 边界。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"

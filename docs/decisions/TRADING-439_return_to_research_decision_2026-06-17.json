@@ -1,0 +1,51 @@
+{
+  "decision_id": "TRADING-439_return_to_research_2026-06-17",
+  "timestamp": "2026-06-17T05:00:00+09:00",
+  "candidate_id": "median_plus_regime_mismatch_filter",
+  "input_artifacts": [
+    {
+      "artifact_id": "eight_blocker_decision_review",
+      "artifact_path": "outputs/reports/eight_blocker_decision_review_2026-06-17.json",
+      "artifact_type": "decision_stage_report"
+    },
+    {
+      "artifact_id": "normal_shadow_gate_gap_analysis",
+      "artifact_path": "outputs/reports/normal_shadow_gate_gap_analysis_2026-06-17.json",
+      "artifact_type": "decision_stage_report"
+    },
+    {
+      "artifact_id": "promotion_blocker_after_metrics_review",
+      "artifact_path": "outputs/reports/promotion_blocker_after_metrics_review_2026-06-17.json",
+      "artifact_type": "decision_stage_report"
+    },
+    {
+      "artifact_id": "candidate_research_return_assessment",
+      "artifact_path": "outputs/reports/candidate_research_return_assessment_2026-06-17.json",
+      "artifact_type": "decision_stage_report"
+    },
+    {
+      "artifact_id": "owner_decision_options_packet",
+      "artifact_path": "outputs/reports/owner_decision_options_packet_2026-06-17.json",
+      "artifact_type": "decision_stage_report"
+    },
+    {
+      "artifact_id": "governance_status_snapshot_after_decision_review",
+      "artifact_path": "outputs/reports/governance_status_snapshot_after_decision_review_2026-06-17.json",
+      "artifact_type": "decision_stage_report"
+    }
+  ],
+  "owner_action": "return_to_research",
+  "reason_summary": "Decision-stage governance review recommends return_to_research because normal shadow remains blocked, owner action remains hold, observation clock has not started, and current candidate evidence does not justify resumption or escalation.",
+  "safety_status": "SAFETY_PASS_WITH_WARNINGS",
+  "next_action": "create_return_to_research_transition_pack",
+  "source_review_template_version": "owner_review_template_v2",
+  "production_effect": "none",
+  "manual_review_only": true,
+  "governance_only": true,
+  "strategy_outputs_mutated": false,
+  "candidate_state_mutated": false,
+  "paper_shadow_state_mutated": false,
+  "broker_action_taken": false,
+  "order_ticket_generated": false,
+  "official_target_weights_generated": false
+}

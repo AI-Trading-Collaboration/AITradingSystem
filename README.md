@@ -1794,6 +1794,22 @@ normal-shadow signoff、不启动 observation clock、不恢复 normal shadow、
 shadow/live trading、不写 official target weights、不修改 candidate / paper-shadow /
 production state、不触发 broker/order，`production_effect=none`。
 
+TRADING-439～448_RETURN_TO_RESEARCH_RESET_BATCH 在 decision-stage review 后记录 owner
+`return_to_research` 决策并生成 research reset artifacts。`aits reports
+return-to-research-reset --as-of YYYY-MM-DD` 默认写入
+`docs/decisions/TRADING-439_return_to_research_decision_YYYY-MM-DD.json`，并通过
+append-only `data/governance/owner_decision_audit_log.jsonl` 追加
+`owner_action=return_to_research`；如果同一 `decision_id` 已存在则复用既有记录，不重复
+append。命令同时生成 transition pack、failure mode attribution、reusable evidence
+extraction、hypothesis backlog、next candidate spec draft、research backfill plan、
+archived candidate status update、research-cycle reset pack、final governance snapshot 和
+validation artifact。`aits reports validate-return-to-research-governance-snapshot --latest`
+校验 owner decision、candidate `RETURNED_TO_RESEARCH`、normal paper-shadow disabled、
+extended/live forbidden、next backlog/spec 存在和 no broker/order/official target boundary。
+该批次不会 reject candidate、恢复 normal shadow、批准 extended shadow/live trading、创建
+official target weights、修改 candidate/paper-shadow/production state 或触发 broker/order；
+`next_candidate_spec_draft` 只是 research-only spec。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

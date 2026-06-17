@@ -8445,6 +8445,207 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: owner_return_to_research_decision_record
+    title: Owner Return-To-Research Decision Record
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/owner_return_to_research_decision_record_*.json
+      - outputs/reports/owner_return_to_research_decision_record_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-439 records the explicit append-only owner return_to_research
+      decision and audit validation while keeping production_effect=none.
+    owner_action: verify_owner_decision_audit_validation_pass
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_return_to_research_transition_pack
+    title: Candidate Return-To-Research Transition Pack
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_return_to_research_transition_pack_*.json
+      - outputs/reports/candidate_return_to_research_transition_pack_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-440 confirms the candidate leaves the normal paper-shadow
+      resumption path and returns to research without rejection or trading
+      approval.
+    owner_action: review_transition_before_next_research_cycle
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_failure_mode_attribution
+    title: Candidate Failure Mode Attribution
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_failure_mode_attribution_*.json
+      - outputs/reports/candidate_failure_mode_attribution_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-441 ranks why the failed candidate could not continue into normal
+      paper-shadow and provides diagnostic-only redesign input.
+    owner_action: use_failure_modes_for_research_redesign
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: reusable_evidence_extraction
+    title: Reusable Evidence Extraction
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/reusable_evidence_extraction_*.json
+      - outputs/reports/reusable_evidence_extraction_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-442 separates reusable diagnostics from invalidated, stale, or
+      non-comparable failed-candidate evidence.
+    owner_action: reuse_only_diagnostic_evidence_in_next_research_cycle
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: return_to_research_hypothesis_backlog
+    title: Return-To-Research Hypothesis Backlog
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/return_to_research_hypothesis_backlog_*.json
+      - outputs/reports/return_to_research_hypothesis_backlog_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-443 creates P0/P1/P2 research hypotheses after the candidate is
+      returned to research; it must not promote any candidate.
+    owner_action: select_research_backlog_items_for_future_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_spec_draft
+    title: Next Candidate Spec Draft
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_spec_draft_*.json
+      - outputs/reports/next_candidate_spec_draft_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-444 drafts a research-only candidate spec from P0 hypotheses; it
+      does not create official weights or activate paper-shadow.
+    owner_action: review_spec_before_any_backfill_execution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_backfill_plan_for_next_candidate
+    title: Research Backfill Plan For Next Candidate
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_backfill_plan_for_next_candidate_*.json
+      - outputs/reports/research_backfill_plan_for_next_candidate_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-445 defines research backfill windows, metrics, and pass/fail
+      rules without producing paper-shadow outputs.
+    owner_action: execute_only_future_safe_backfill_plan_after_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: archived_candidate_status_update
+    title: Archived Candidate Status Update
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/archived_candidate_status_update_*.json
+      - outputs/reports/archived_candidate_status_update_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-446 marks the current candidate as RETURNED_TO_RESEARCH, not
+      active normal shadow, extended-shadow eligible, live eligible, or rejected.
+    owner_action: use_archived_status_as_current_candidate_governance_state
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_cycle_reset_pack
+    title: Research Cycle Reset Pack
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_cycle_reset_pack_*.json
+      - outputs/reports/research_cycle_reset_pack_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-447 closes the failed recovery cycle and hands off to a new
+      research cycle while preserving no-trading boundaries.
+    owner_action: continue_with_research_redesign_only
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: return_to_research_governance_snapshot
+    title: Return-To-Research Governance Snapshot
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports return-to-research-reset --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/return_to_research_governance_snapshot_20*.json
+      - outputs/reports/return_to_research_governance_snapshot_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-448 final snapshot confirms owner decision recorded, candidate no
+      longer active in the resumption path, normal shadow disabled, extended/live
+      forbidden, and next research backlog/spec exist.
+    owner_action: treat_as_current_research_governance_state
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: return_to_research_governance_snapshot_validation
+    title: Return-To-Research Governance Snapshot Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-return-to-research-governance-snapshot --latest
+    artifact_globs:
+      - outputs/reports/return_to_research_governance_snapshot_validation_*.json
+      - outputs/reports/return_to_research_governance_snapshot_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Validation fails closed if the final snapshot enables normal shadow,
+      extended shadow, live trading, official weights, broker/order artifacts,
+      rejection, or production mutation.
+    owner_action: run_after_return_to_research_governance_snapshot
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

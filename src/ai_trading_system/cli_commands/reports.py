@@ -107,6 +107,7 @@ from ai_trading_system.reports import (
     remaining_blocker_resolution_ledger as blocker_ledger_reports,
 )
 from ai_trading_system.reports import report_index_warning_cleanup as warning_cleanup_reports
+from ai_trading_system.reports import return_to_research_reset as return_research_reports
 from ai_trading_system.reports.artifact_lineage import (
     build_artifact_lineage_payload,
     default_artifact_lineage_json_path,
@@ -6554,6 +6555,233 @@ def owner_decision_dry_run_command(
         f"production_effect={payload['production_effect']}；只读 dry-run"
     )
     if summary["dry_run_status"] == "OWNER_DECISION_DRY_RUN_BLOCKED":
+        raise typer.Exit(code=1)
+
+
+def _return_to_research_source_path(
+    *,
+    reports_dir: Path,
+    report_date: date,
+    report_type: str,
+    latest: bool,
+    source_json_path: Path | None,
+    label: str,
+) -> Path:
+    if source_json_path is not None:
+        return source_json_path
+    if latest:
+        source_path = return_research_reports.latest_return_to_research_json_path(
+            report_type,
+            reports_dir,
+        )
+        if source_path is None:
+            raise typer.BadParameter(f"未找到 {label} JSON：{reports_dir}")
+        return source_path
+    return return_research_reports.default_return_to_research_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+
+
+def _write_return_to_research_report(
+    payload: Mapping[str, object],
+    *,
+    reports_dir: Path,
+    report_date: date,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[Path, Path]:
+    report_type = str(payload.get("report_type"))
+    json_path = json_output_path or return_research_reports.default_return_to_research_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+    md_path = (
+        markdown_output_path
+        or return_research_reports.default_return_to_research_markdown_path(
+            report_type,
+            reports_dir,
+            report_date,
+        )
+    )
+    return (
+        return_research_reports.write_return_to_research_json(payload, json_path),
+        return_research_reports.write_return_to_research_markdown(payload, md_path),
+    )
+
+
+@reports_app.command("return-to-research-reset")
+def return_to_research_reset_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Return-to-research reset 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    decision_source_dir: Annotated[
+        Path,
+        typer.Option(help="Owner decision source JSON 目录。"),
+    ] = PROJECT_ROOT
+    / "docs"
+    / "decisions",
+    owner_decision_log_path: Annotated[
+        Path,
+        typer.Option(help="Owner decision audit JSONL 路径。"),
+    ] = DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+    append_owner_decision: Annotated[
+        bool,
+        typer.Option(
+            help=(
+                "追加 TRADING-439 return_to_research owner decision；若同 decision_id "
+                "已存在则复用。"
+            ),
+        ),
+    ] = True,
+) -> None:
+    """TRADING-439~448：记录 return_to_research 决策并生成研究重置包。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payloads = return_research_reports.build_return_to_research_reset_payloads(
+            as_of=report_date,
+            reports_dir=reports_dir,
+            decision_source_dir=decision_source_dir,
+            owner_decision_log_path=owner_decision_log_path,
+            append_owner_decision=append_owner_decision,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    written: list[tuple[str, Path, Path]] = []
+    for report_type in return_research_reports.RESET_REPORT_TYPES:
+        payload = payloads[report_type]
+        json_path, md_path = _write_return_to_research_report(
+            payload,
+            reports_dir=reports_dir,
+            report_date=report_date,
+        )
+        written.append((report_type, json_path, md_path))
+
+    snapshot = payloads[return_research_reports.GOVERNANCE_SNAPSHOT_REPORT_TYPE]
+    snapshot_json = next(
+        path
+        for report_type, path, _ in written
+        if report_type == return_research_reports.GOVERNANCE_SNAPSHOT_REPORT_TYPE
+    )
+    validation = return_research_reports.validate_return_to_research_governance_snapshot_payload(
+        snapshot
+    )
+    validation["input_artifacts"] = {
+        **dict(validation.get("input_artifacts", {})),
+        "return_to_research_governance_snapshot": str(snapshot_json),
+    }
+    validation_json, validation_md = _write_return_to_research_report(
+        validation,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    summary = snapshot["summary"]
+    style = "green" if snapshot["status"] == "RETURN_TO_RESEARCH_COMPLETE" else "yellow"
+    if validation["status"] == "FAIL":
+        style = "red"
+    console.print(f"[{style}]Return-to-research reset：{snapshot['status']}[/{style}]")
+    for report_type, json_path, md_path in written:
+        console.print(f"{report_type} JSON：{json_path}")
+        console.print(f"{report_type} Markdown：{md_path}")
+    console.print(f"return_to_research_governance_snapshot_validation JSON：{validation_json}")
+    console.print(f"return_to_research_governance_snapshot_validation Markdown：{validation_md}")
+    console.print(
+        f"owner_decision：{summary['owner_decision_id']}；"
+        f"candidate_status：{summary['candidate_status']}；"
+        f"normal_shadow_active：{summary['normal_paper_shadow_active']}；"
+        f"extended_allowed：{summary['extended_shadow_allowed']}；"
+        f"live_allowed：{summary['live_trading_allowed']}；"
+        f"candidate_rejected：{summary['candidate_rejected']}；"
+        f"validation：{validation['status']}；"
+        f"production_effect={snapshot['production_effect']}"
+    )
+    if validation["status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-return-to-research-governance-snapshot")
+def validate_return_to_research_governance_snapshot_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 return-to-research governance snapshot。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Return-to-research validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Return-to-research governance snapshot JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 return-to-research final governance snapshot。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path = _return_to_research_source_path(
+        reports_dir=reports_dir,
+        report_date=report_date,
+        report_type=return_research_reports.GOVERNANCE_SNAPSHOT_REPORT_TYPE,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="return-to-research governance snapshot",
+    )
+    source_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Return-to-research governance snapshot",
+    )
+    payload = return_research_reports.validate_return_to_research_governance_snapshot_payload(
+        source_payload
+    )
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "return_to_research_governance_snapshot": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or report_date.isoformat()))
+    json_path, md_path = _write_return_to_research_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Return-to-research snapshot validation：{status}[/{style}]")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"candidate_status：{summary['candidate_status']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "FAIL":
         raise typer.Exit(code=1)
 
 
