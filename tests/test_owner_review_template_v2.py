@@ -7,6 +7,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.reports import reader_brief
 from ai_trading_system.reports.owner_review_template_v2 import (
     OWNER_ACTIONS,
@@ -45,6 +46,33 @@ def test_filled_owner_review_record_validation_passes() -> None:
         review_record=_filled_review_record(),
     )
 
+    assert validation["validation_status"] == PASS_STATUS
+    assert validation["summary"]["review_record_provided"] is True
+    assert validation["review_record_validation"]["failed_check_count"] == 0
+
+
+def test_trading_393_owner_review_fixture_validates_as_hold() -> None:
+    review_path = (
+        PROJECT_ROOT
+        / "docs"
+        / "owner_reviews"
+        / "TRADING-393_owner_review_template_v2_2026-06-17.json"
+    )
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    payload = build_owner_review_template_v2_payload(as_of=date(2026, 6, 17))
+
+    validation = validate_owner_review_template_v2_payload(
+        payload,
+        review_record=review,
+        review_record_path=review_path,
+    )
+
+    assert review["final_owner_action"] == "hold"
+    assert review["safety_status"] == "SAFETY_PASS_WITH_WARNINGS"
+    assert review["official_target_weights_generated"] is False
+    assert review["broker_action_taken"] is False
+    assert review["order_ticket_generated"] is False
+    assert review["live_trading_allowed"] is False
     assert validation["validation_status"] == PASS_STATUS
     assert validation["summary"]["review_record_provided"] is True
     assert validation["review_record_validation"]["failed_check_count"] == 0
