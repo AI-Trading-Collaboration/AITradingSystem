@@ -1515,6 +1515,18 @@ next action。该 audit 不运行上游、不刷新数据、不补造 signal / f
 或 production state；`SIGNAL_INPUTS_STILL_BLOCKED` 必须停止后续 promotion / extended-shadow
 recovery chain。
 
+TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN 在 385 之后新增明确恢复状态
+artifact。CLI 入口为 `aits etf dynamic-v3-rescue signal-input-completeness-recovery run
+--as-of YYYY-MM-DD`、`report --latest` 和 `validate-signal-input-completeness-recovery
+--latest`。该 workflow 重新运行或读取 TRADING-371 completeness monitor，检查 required
+files、schema version、non-empty signal series、required feature columns、market coverage
+和 as-of consistency，并输出
+`SIGNAL_INPUTS_RESTORED|SIGNAL_INPUTS_RESTORED_WITH_WARNINGS|SIGNAL_INPUTS_STILL_BLOCKED`、
+blocker list、warning list、hard-stop flag 和 next action。它只运行 completeness monitor，
+不运行 feature / signal / snapshot builders、不刷新数据、不补造 signal artifact、不放宽
+policy、不写 official target weights、不触发 broker/order、不修改 paper account 或
+production state。
+
 TRADING-351_PAPER_SHADOW_DAILY_RUNNER 在 formal contract 和 paper-shadow protocol
 之后新增 observation-only daily runner。CLI 入口为
 `aits etf dynamic-v3-rescue paper-shadow-daily run`、

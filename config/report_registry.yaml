@@ -5070,6 +5070,29 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_signal_input_completeness_recovery
+    title: ETF Dynamic v3 Signal Input Completeness Recovery
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue signal-input-completeness-recovery report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_recovery/*/signal_input_completeness_recovery_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_recovery/*/signal_input_completeness_recovery_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_recovery/*/signal_input_completeness_recovery_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_recovery/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_recovery/*/signal_input_completeness_recovery_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness_recovery/*/signal_input_completeness_recovery_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-386 reruns or inspects signal input completeness after restoration
+      and makes the recovery status, blockers, warnings, and hard-stop action
+      visible before readiness or paper-shadow health is reconsidered.
+    owner_action: review_signal_completeness_recovery_before_readiness_health_chain
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_daily
     title: ETF Dynamic v3 Paper Shadow Daily Observation
     group: governance
