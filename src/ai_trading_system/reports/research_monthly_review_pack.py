@@ -250,6 +250,12 @@ DATA_GOVERNANCE_SOURCE_IDS = {
     "signal_input_completeness",
     "paper_shadow_health",
 }
+SOURCE_SPECIFIC_BLOCKING_STATUS_MARKERS = {
+    # Upstream governance status enums that mean evidence is present but still
+    # blocks monthly governance clearance. These are not tunable thresholds.
+    "cost_sensitivity_reports": ("NOT_MEANINGFUL",),
+    "benchmark_comparison_reports": ("UNDERPERFORMS",),
+}
 
 
 def default_research_monthly_review_pack_json_path(output_dir: Path, as_of: date) -> Path:
@@ -905,6 +911,12 @@ def _source_blocking(
     if availability != "AVAILABLE":
         return spec.get("blocking_if_missing") is True
     status = source_status.upper()
+    source_id = _text(spec.get("source_id"))
+    if any(
+        marker in status
+        for marker in SOURCE_SPECIFIC_BLOCKING_STATUS_MARKERS.get(source_id, ())
+    ):
+        return True
     if status in {"FAIL", "FAILED", "ERROR", "BLOCKING", "SAFETY_BLOCKED"}:
         return True
     if status.startswith("BLOCKED") or status.startswith("INSUFFICIENT"):

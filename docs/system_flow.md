@@ -2,6 +2,8 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+TRADING-394 后，research monthly review pack 必须把可读但仍不合格的 cost / benchmark evidence 作为 monthly blocker：cost sensitivity `NOT_MEANINGFUL_*` 和 benchmark baseline `*UNDERPERFORMS*` source statuses 不能被视为 clearance。它们只进入 manual owner review，不自动 reject / promote，也不批准 normal shadow、extended shadow、official target、broker/order 或 live trading。
+
 第一次理解系统时，优先阅读 `docs/learning_path.md`；如果需要从零理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；看到具体 CSV、JSON、Markdown 或 HTML 产物时，优先查 `docs/artifact_catalog.md`。本文继续保留全链路事实和维护边界。
 
 结构化重构的模块边界见 `docs/architecture/module_boundaries.md`，workflow / artifact / `production_effect` 运行契约见 `docs/architecture/workflow_contract.md`。这些契约先服务于 daily-run manifest 和后续 workflow 分层，不改变本图描述的业务流向。

@@ -58,6 +58,39 @@ def test_research_monthly_review_pack_aggregates_candidate_blockers(
     assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
 
 
+def test_research_monthly_review_pack_blocks_adverse_cost_and_benchmark_statuses(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "etf_dynamic_v3_cost_sensitivity_review": {
+                "cost_sensitivity_status": "NOT_MEANINGFUL_UNDER_COSTS",
+                "next_required_action": (
+                    "return_candidate_to_research_until_net_improvement_survives_costs"
+                ),
+            },
+            "etf_dynamic_v3_benchmark_baseline_control": {
+                "benchmark_baseline_status": "CANDIDATE_UNDERPERFORMS_BASELINES",
+                "next_required_action": (
+                    "return_candidate_to_research_until_it_outperforms_baseline_controls"
+                ),
+            },
+        },
+    )
+
+    payload = build_research_monthly_review_pack_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+
+    assert payload["monthly_review_status"] == BLOCKED_STATUS
+    assert {
+        issue["source_id"] for issue in payload["major_blockers"]
+    } >= {"cost_sensitivity_reports", "benchmark_comparison_reports"}
+
+
 def test_research_monthly_review_pack_validation_fails_missing_required_source(
     tmp_path: Path,
 ) -> None:
