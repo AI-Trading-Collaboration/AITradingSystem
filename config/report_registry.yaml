@@ -5418,6 +5418,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_metric_source_map
+    title: ETF Dynamic v3 Metric Source Map
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue metric-source-map report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/*/metric_source_map_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/*/metric_source_map_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/*/metric_source_map_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/*/metric_source_map_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/*/metric_source_map_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-425 maps each cost and benchmark metric to existing
+      backtest-simulation, policy, and cached-price sources before any numeric
+      materialization is allowed. It proves derivable-now vs missing fields but
+      does not fabricate or materialize metrics.
+    owner_action: review_metric_source_map_before_cost_and_benchmark_materialization
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cost_metrics_materialization
     title: ETF Dynamic v3 Cost Metrics Materialization
     group: governance
@@ -8014,6 +8038,45 @@ reports:
     freshness_sla_days: 7
     freshness_rationale: Owner action map validation should keep next owner/code/data actions visible and live trading forbidden.
     owner_action: run_after_recovery_owner_action_map
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: exact_blocker_warning_inventory
+    title: Exact Blocker and Warning Inventory
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports exact-blocker-warning-inventory --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/exact_blocker_warning_inventory_*.json
+      - outputs/reports/exact_blocker_warning_inventory_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-421 expands the post-recovery state into a non-aggregated
+      inventory of every remaining blocker, recovery warning, and report-index
+      warning with source artifacts, upstream dependencies, repair type, and
+      normal/extended/live trading boundaries.
+    owner_action: review_exact_inventory_before_signal_snapshot_or_report_index_repairs
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: exact_blocker_warning_inventory_validation
+    title: Exact Blocker and Warning Inventory Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-exact-blocker-warning-inventory --latest
+    artifact_globs:
+      - outputs/reports/exact_blocker_warning_inventory_validation_*.json
+      - outputs/reports/exact_blocker_warning_inventory_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Exact inventory validation should fail closed on count drift, missing
+      source/dependency/action fields, Reader Brief gaps, or safety-boundary
+      drift while keeping open blockers and warnings visible.
+    owner_action: run_after_exact_blocker_warning_inventory
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

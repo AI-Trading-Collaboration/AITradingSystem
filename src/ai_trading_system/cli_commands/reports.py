@@ -95,6 +95,9 @@ from ai_trading_system.report_traceability import (
     default_report_trace_bundle_path,
 )
 from ai_trading_system.reports import (
+    exact_blocker_warning_inventory as exact_inventory_reports,
+)
+from ai_trading_system.reports import (
     normal_paper_shadow_observation_clock as normal_observation_clock_reports,
 )
 from ai_trading_system.reports import post_recovery_governance_pack as post_recovery_reports
@@ -5211,6 +5214,210 @@ def validate_recovery_owner_action_map_command(
     )
     _print_recovery_triage_validation_result(
         "Recovery owner action map",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("exact-blocker-warning-inventory")
+def exact_blocker_warning_inventory_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Exact blocker/warning inventory 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    blocker_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage JSON 路径。"),
+    ] = None,
+    post_recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Post-recovery governance pack JSON 路径。"),
+    ] = None,
+    source_depth_audit_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery pack source depth audit JSON 路径。"),
+    ] = None,
+    report_index_warning_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 路径。"),
+    ] = None,
+    normal_observation_clock_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal paper-shadow observation clock JSON 路径。"),
+    ] = None,
+    owner_action_map_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Exact blocker/warning inventory JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Exact blocker/warning inventory Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-421：生成逐条 blocker / warning inventory。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = exact_inventory_reports.build_exact_blocker_warning_inventory_payload(
+        as_of=report_date,
+        blocker_triage_path=blocker_triage_path
+        or recovery_triage_reports.default_recovery_blocker_triage_json_path(
+            reports_dir,
+            report_date,
+        ),
+        post_recovery_pack_path=post_recovery_pack_path
+        or post_recovery_reports.default_post_recovery_governance_pack_json_path(
+            reports_dir,
+            report_date,
+        ),
+        source_depth_audit_path=source_depth_audit_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_json_path(
+            reports_dir,
+            report_date,
+        ),
+        report_index_warning_triage_path=report_index_warning_triage_path
+        or recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        ),
+        normal_observation_clock_path=normal_observation_clock_path
+        or normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_json_path(
+            reports_dir,
+            report_date,
+        ),
+        owner_action_map_path=owner_action_map_path
+        or recovery_triage_reports.default_recovery_owner_action_map_json_path(
+            reports_dir,
+            report_date,
+        ),
+        reports_dir=reports_dir,
+    )
+    report_date = _parse_date(str(payload.get("as_of") or report_date.isoformat()))
+    report_json = (
+        json_output_path
+        or exact_inventory_reports.default_exact_blocker_warning_inventory_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or exact_inventory_reports.default_exact_blocker_warning_inventory_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = exact_inventory_reports.write_exact_blocker_warning_inventory_json(
+        payload,
+        report_json,
+    )
+    md_path = exact_inventory_reports.write_exact_blocker_warning_inventory_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    console.print(f"[yellow]Exact blocker/warning inventory：{payload['status']}[/yellow]")
+    console.print(f"Exact blocker/warning inventory JSON：{json_path}")
+    console.print(f"Exact blocker/warning inventory Markdown：{md_path}")
+    console.print(
+        f"blockers：{summary['blocker_count']}；"
+        f"warnings：{summary['warning_count']}；"
+        f"report_index_warnings：{summary['report_index_warning_count']}；"
+        f"normal_shadow：{summary['normal_paper_shadow_may_resume']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"production_effect={payload['production_effect']}；只读 inventory"
+    )
+
+
+@reports_app.command("validate-exact-blocker-warning-inventory")
+def validate_exact_blocker_warning_inventory_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 exact blocker/warning inventory JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Exact blocker/warning inventory validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Exact blocker/warning inventory JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Exact blocker/warning inventory validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Exact blocker/warning inventory validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-421 exact blocker/warning inventory。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            exact_inventory_reports.latest_exact_blocker_warning_inventory_json_path,
+            "exact blocker/warning inventory",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = exact_inventory_reports.default_exact_blocker_warning_inventory_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(source_path, "Exact blocker/warning inventory")
+    payload = exact_inventory_reports.validate_exact_blocker_warning_inventory_payload(
+        raw_payload,
+    )
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "exact_blocker_warning_inventory": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or exact_inventory_reports.default_exact_blocker_warning_inventory_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or exact_inventory_reports.default_exact_blocker_warning_inventory_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = exact_inventory_reports.write_exact_blocker_warning_inventory_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = exact_inventory_reports.write_exact_blocker_warning_inventory_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result(
+        "Exact blocker/warning inventory",
         payload,
         json_path,
         md_path,

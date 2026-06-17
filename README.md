@@ -1740,6 +1740,28 @@ YYYY-MM-DD` 只读重跑 canonical recovery governance pack，并把 triage cont
 当前 2026-06-17 rerun 仍为 `RECOVERY_GOVERNANCE_BLOCKED`，normal paper-shadow
 `false`，extended shadow / live trading 继续 forbidden，`production_effect=none`。
 
+TRADING-421_EXACT_BLOCKER_AND_WARNING_INVENTORY 新增逐条 blocker / warning 清单。
+`aits reports exact-blocker-warning-inventory --as-of YYYY-MM-DD` 只读读取 latest recovery
+blocker triage、post-recovery governance pack、source depth audit、report-index warning
+triage、normal paper-shadow observation clock 和 owner action map，输出
+`outputs/reports/exact_blocker_warning_inventory_YYYY-MM-DD.json/md`；对应
+`aits reports validate-exact-blocker-warning-inventory --latest` 生成 validation artifact。
+该 report 不只给 counts，而是逐条列出 9 个 blocker、10 个 recovery warning 和 report-index
+warning 的 source artifact、upstream dependency、repair type、waiver eligibility、next action
+以及 normal/extended/live boundary。它不运行上游、不刷新数据、不补造 signal/snapshot/metrics、
+不创建 waiver、不写 owner decision、不触发 broker/order，`production_effect=none`。
+
+TRADING-425_METRIC_SOURCE_MAP 新增 cost/benchmark metric 来源证明层。
+`aits etf dynamic-v3-rescue metric-source-map run --as-of YYYY-MM-DD` 只读读取 latest 或
+指定 `backtest_sim_outcome`、cost policy 和 cached price symbols，输出
+`reports/etf_portfolio/dynamic_v3_rescue/metric_source_map/<source_map_id>/` 下的
+manifest、JSON/Markdown report、Reader Brief section 和 validation。报告逐项列出 candidate
+cost metrics 与 static/no-trade/QQQ/SPY/equal-weight ETF baseline metrics 的 source artifact、
+required fields、missing fields 和 `derivable_now`；只有 `METRIC_SOURCE_MAP_READY` 且相关
+row 可派生时，后续恢复任务才允许 materialize 对应 research metric。该层不 materialize
+cost/benchmark metrics、不运行 optimization/backtest、不刷新数据、不补造 metric、不写 official
+target weights、不触发 broker/order，`production_effect=none`。
+
 TRADING-408～419_RECOVERY_BLOCKER_RESOLUTION_BATCH 继续处理 recovery blockers。
 `aits reports remaining-blocker-resolution-ledger --as-of YYYY-MM-DD` 把 remaining
 blockers / warnings 映射到 source、artifact、dependency、root cause、owner/code/data

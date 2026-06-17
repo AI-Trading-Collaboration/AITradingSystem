@@ -42,6 +42,7 @@ from ai_trading_system.etf_portfolio import (
     dynamic_v3_filtered_candidate_readiness as filtered_readiness,
 )
 from ai_trading_system.etf_portfolio import dynamic_v3_flip_rotation_casebook as flip_casebook
+from ai_trading_system.etf_portfolio import dynamic_v3_metric_source_map as metric_source_map
 from ai_trading_system.etf_portfolio import (
     dynamic_v3_normal_paper_shadow_resumption_gate as normal_shadow_resumption_gate,
 )
@@ -1917,6 +1918,10 @@ dynamic_v3_cost_sensitivity_metrics_materialization_app = typer.Typer(
     help="Dynamic v3 rescue cost-sensitivity metrics materialization workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_metric_source_map_app = typer.Typer(
+    help="Dynamic v3 rescue cost/benchmark metric source map workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_benchmark_baseline_control_app = typer.Typer(
     help="Dynamic v3 rescue benchmark baseline control workflow。",
     no_args_is_help=True,
@@ -2765,6 +2770,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_cost_sensitivity_metrics_materialization_app,
     name="cost-sensitivity-metrics-materialization",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_metric_source_map_app,
+    name="metric-source-map",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_benchmark_baseline_control_app,
@@ -22800,6 +22809,142 @@ def dynamic_v3_validate_cost_sensitivity_metrics_materialization_command(
     _echo_validation_payload(
         cost_metrics_materialization.validate_cost_metrics_materialization_artifact(
             materialization_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_metric_source_map_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    summary = _mapping_obj(report.get("source_summary"))
+    typer.echo(f"source_map_id={report.get('source_map_id') or manifest.get('source_map_id')}")
+    typer.echo(f"metric_source_map_status={report.get('metric_source_map_status')}")
+    typer.echo(f"candidate={report.get('candidate') or manifest.get('candidate')}")
+    typer.echo(f"source_variant={report.get('source_variant') or manifest.get('source_variant')}")
+    typer.echo(f"candidate_metric_count={summary.get('candidate_metric_count')}")
+    typer.echo(f"baseline_metric_count={summary.get('baseline_metric_count')}")
+    typer.echo(f"derivable_now_count={summary.get('derivable_now_count')}")
+    typer.echo(f"missing_metric_count={summary.get('missing_metric_count')}")
+    typer.echo("missing_metric_names=" + ",".join(_texts(summary.get("missing_metric_names"))))
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('metric_source_map_markdown_path')}")
+    typer.echo("research_only=true")
+    typer.echo("metric_source_map_only=true")
+    typer.echo("cost_metrics_materialized=false")
+    typer.echo("benchmark_metrics_materialized=false")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("order_ticket_generated=false")
+    typer.echo("paper_account_state_mutated=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_metric_source_map_app.command("run")
+def dynamic_v3_metric_source_map_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="metric source map as-of date YYYY-MM-DD。",
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="governance candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    source_variant: Annotated[
+        str,
+        typer.Option("--source-variant", help="source simulation variant for candidate metrics。"),
+    ] = "limited_adjustment",
+    sim_outcome_id: Annotated[
+        str | None,
+        typer.Option("--sim-outcome-id", help="backtest sim outcome id；缺省 latest。"),
+    ] = None,
+    sim_outcome_dir: Annotated[
+        Path,
+        typer.Option("--sim-outcome-dir", help="backtest sim outcome artifact root。"),
+    ] = metric_source_map.sim.DEFAULT_BACKTEST_SIM_OUTCOME_DIR,
+    price_cache_path: Annotated[
+        Path,
+        typer.Option("--price-cache-path", help="cached ETF price path；source map 只读检查。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="metric source map artifact root。"),
+    ] = metric_source_map.DEFAULT_METRIC_SOURCE_MAP_DIR,
+) -> None:
+    result = metric_source_map.run_metric_source_map(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        source_variant=source_variant,
+        sim_outcome_id=sim_outcome_id,
+        sim_outcome_dir=sim_outcome_dir,
+        price_cache_path=price_cache_path,
+        output_dir=output_dir,
+    )
+    _echo_metric_source_map_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("metric_source_map_report")),
+        validation=_mapping_obj(result.get("metric_source_map_validation")),
+    )
+
+
+@dynamic_v3_metric_source_map_app.command("report")
+def dynamic_v3_metric_source_map_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    source_map_id: Annotated[
+        str | None,
+        typer.Option("--source-map-id", help="metric source map artifact id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="metric source map artifact root。"),
+    ] = metric_source_map.DEFAULT_METRIC_SOURCE_MAP_DIR,
+) -> None:
+    if not latest and not source_map_id:
+        raise typer.BadParameter("--source-map-id or --latest is required")
+    payload = metric_source_map.metric_source_map_report_payload(
+        source_map_id=source_map_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_metric_source_map_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("metric_source_map_report")),
+        validation=_mapping_obj(payload.get("metric_source_map_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-metric-source-map")
+def dynamic_v3_validate_metric_source_map_command(
+    source_map_id: Annotated[
+        str | None,
+        typer.Option("--source-map-id", help="metric source map artifact id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="metric source map artifact root。"),
+    ] = metric_source_map.DEFAULT_METRIC_SOURCE_MAP_DIR,
+) -> None:
+    resolved_id = source_map_id
+    if latest:
+        payload = metric_source_map.metric_source_map_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("source_map_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--source-map-id or --latest is required")
+    _echo_validation_payload(
+        metric_source_map.validate_metric_source_map_artifact(
+            source_map_id=resolved_id,
             output_dir=output_dir,
         )
     )
