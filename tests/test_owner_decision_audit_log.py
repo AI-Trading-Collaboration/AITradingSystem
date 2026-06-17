@@ -104,6 +104,23 @@ def test_owner_decision_audit_log_blocks_invalid_safety_pairing(tmp_path: Path) 
         append_owner_decision_record(record, log_path=log_path)
 
 
+def test_owner_decision_audit_log_accepts_decision_stage_actions(
+    tmp_path: Path,
+) -> None:
+    log_path = tmp_path / "owner_decision_audit_log.jsonl"
+    record = _owner_decision_record()
+    record["owner_action"] = "keep_hold"
+    append_owner_decision_record(record, log_path=log_path)
+
+    blocked_record = _owner_decision_record()
+    blocked_record["decision_id"] = "owner-decision-approve"
+    blocked_record["owner_action"] = "approve_resume_normal_shadow"
+    blocked_record["safety_status"] = "SAFETY_BLOCKED"
+
+    with pytest.raises(OwnerDecisionAuditLogError, match="safety_blocked_cannot_continue_shadow"):
+        append_owner_decision_record(blocked_record, log_path=log_path)
+
+
 def test_owner_decision_audit_log_validation_blocks_duplicate_jsonl(tmp_path: Path) -> None:
     log_path = tmp_path / "owner_decision_audit_log.jsonl"
     normalized = append_owner_decision_record(_owner_decision_record(), log_path=log_path)

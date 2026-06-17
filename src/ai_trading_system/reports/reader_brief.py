@@ -183,6 +183,9 @@ def build_reader_brief_payload(
     research_governance_recovery_pack = _research_governance_recovery_pack_summary(
         report_index
     )
+    decision_stage_governance_snapshot = _decision_stage_governance_snapshot_summary(
+        report_index
+    )
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -351,6 +354,7 @@ def build_reader_brief_payload(
         "research_roadmap_dashboard": research_roadmap_dashboard,
         "research_governance_end_to_end_pack": research_governance_end_to_end_pack,
         "research_governance_recovery_pack": research_governance_recovery_pack,
+        "decision_stage_governance_snapshot": decision_stage_governance_snapshot,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -691,6 +695,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     research_governance_recovery_pack = _mapping(
         payload.get("research_governance_recovery_pack")
+    )
+    decision_stage_governance_snapshot = _mapping(
+        payload.get("decision_stage_governance_snapshot")
     )
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
@@ -1545,6 +1552,76 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         research_governance_recovery_pack.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Decision-Stage Governance Snapshot",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        decision_stage_governance_snapshot.get("availability"),
+                    ),
+                    ("status", decision_stage_governance_snapshot.get("status")),
+                    (
+                        "snapshot_status",
+                        decision_stage_governance_snapshot.get("snapshot_status"),
+                    ),
+                    (
+                        "blockers",
+                        decision_stage_governance_snapshot.get("blocker_count"),
+                    ),
+                    (
+                        "warnings",
+                        decision_stage_governance_snapshot.get("warning_count"),
+                    ),
+                    (
+                        "recommended_owner_action",
+                        decision_stage_governance_snapshot.get(
+                            "recommended_owner_action"
+                        ),
+                    ),
+                    (
+                        "normal_shadow_may_resume",
+                        decision_stage_governance_snapshot.get(
+                            "normal_shadow_may_resume"
+                        ),
+                    ),
+                    (
+                        "extended_shadow_remains_forbidden",
+                        decision_stage_governance_snapshot.get(
+                            "extended_shadow_remains_forbidden"
+                        ),
+                    ),
+                    (
+                        "live_trading_remains_forbidden",
+                        decision_stage_governance_snapshot.get(
+                            "live_trading_remains_forbidden"
+                        ),
+                    ),
+                    (
+                        "owner_decision_append_allowed",
+                        decision_stage_governance_snapshot.get(
+                            "owner_decision_append_allowed"
+                        ),
+                    ),
+                    (
+                        "dry_run_written",
+                        decision_stage_governance_snapshot.get("dry_run_written"),
+                    ),
+                    (
+                        "next_action",
+                        decision_stage_governance_snapshot.get("next_action"),
+                    ),
+                    (
+                        "detail_report",
+                        decision_stage_governance_snapshot.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        decision_stage_governance_snapshot.get("production_effect"),
                     ),
                 ]
             ),
@@ -8169,6 +8246,87 @@ def _missing_research_governance_recovery_pack_summary(reason: str) -> dict[str,
         "summary_sentence": (
             "research_governance_recovery_pack artifact missing; run reports "
             "research-governance-recovery-pack."
+        ),
+        "limitation": reason,
+    }
+
+
+def _decision_stage_governance_snapshot_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_decision_stage_governance_snapshot_summary(
+            "report_index artifact missing; Reader Brief cannot discover decision-stage snapshot."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "governance_status_snapshot_after_decision_review",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_decision_stage_governance_snapshot_summary(
+            "governance_status_snapshot_after_decision_review artifact missing "
+            "from report index latest pointer."
+        )
+    summary = _mapping(payload.get("summary"))
+    snapshot_status = _text(payload.get("status"), _text(summary.get("snapshot_status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": snapshot_status,
+        "snapshot_status": snapshot_status,
+        "blocker_count": _int(summary.get("blocker_count")),
+        "warning_count": _int(summary.get("warning_count")),
+        "recommended_owner_action": _text(
+            summary.get("recommended_owner_action"),
+            "MISSING",
+        ),
+        "normal_shadow_may_resume": bool(summary.get("normal_shadow_may_resume")),
+        "extended_shadow_remains_forbidden": bool(
+            summary.get("extended_shadow_remains_forbidden")
+        ),
+        "live_trading_remains_forbidden": bool(
+            summary.get("live_trading_remains_forbidden")
+        ),
+        "owner_decision_append_allowed": bool(
+            summary.get("owner_decision_append_allowed")
+        ),
+        "dry_run_written": bool(summary.get("dry_run_written")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"decision_stage_snapshot={snapshot_status}; "
+            f"blockers={_int(summary.get('blocker_count'))}; "
+            f"recommended_owner_action={_text(summary.get('recommended_owner_action'))}; "
+            f"normal_shadow={bool(summary.get('normal_shadow_may_resume'))}; "
+            f"live_forbidden={bool(summary.get('live_trading_remains_forbidden'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the generated decision-stage snapshot; "
+            "it does not append owner decisions or start observation clocks."
+        ),
+    }
+
+
+def _missing_decision_stage_governance_snapshot_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "snapshot_status": "MISSING",
+        "blocker_count": 0,
+        "warning_count": 0,
+        "recommended_owner_action": "MISSING",
+        "normal_shadow_may_resume": False,
+        "extended_shadow_remains_forbidden": True,
+        "live_trading_remains_forbidden": True,
+        "owner_decision_append_allowed": False,
+        "dry_run_written": False,
+        "next_action": "run_aits_reports_decision_stage_review_after_recovery_pack",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "governance_status_snapshot_after_decision_review artifact missing; "
+            "run reports decision-stage-review."
         ),
         "limitation": reason,
     }
@@ -24117,8 +24275,19 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "research_governance_end_to_end_pack_validation": 233,
         "research_governance_recovery_pack": 234,
         "research_governance_recovery_pack_validation": 235,
-        "report_quality_gate": 236,
-        "reader_brief_quality": 240,
+        "eight_blocker_decision_review": 236,
+        "eight_blocker_decision_review_validation": 237,
+        "normal_shadow_gate_gap_analysis": 238,
+        "promotion_blocker_after_metrics_review": 239,
+        "candidate_research_return_assessment": 240,
+        "owner_decision_options_packet": 241,
+        "owner_decision_dry_run": 242,
+        "observation_clock_readiness_plan": 243,
+        "post_decision_rerun_plan": 244,
+        "report_quality_warning_drilldown": 245,
+        "governance_status_snapshot_after_decision_review": 246,
+        "report_quality_gate": 247,
+        "reader_brief_quality": 248,
         "artifact_catalog": 250,
     }
     artifact_id = _text(item.get("artifact_id"))
@@ -24247,6 +24416,39 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "research_governance_recovery_pack_validation": (
             "确认 recovery governance pack source coverage、Reader Brief fields "
             "和 live trading forbidden 边界。"
+        ),
+        "eight_blocker_decision_review": (
+            "查看 exact-eight remaining blockers、source fields 和 owner/code/data 分类。"
+        ),
+        "eight_blocker_decision_review_validation": (
+            "确认 eight-blocker review 是否正好列出 8 个 blocker 且保持只读边界。"
+        ),
+        "normal_shadow_gate_gap_analysis": (
+            "检查 normal paper-shadow resumption gate 仍被哪些 source/safety/owner 条件阻塞。"
+        ),
+        "promotion_blocker_after_metrics_review": (
+            "查看成本、基准、owner、readiness 和 safety blockers 是否仍阻止 promotion。"
+        ),
+        "candidate_research_return_assessment": (
+            "查看候选是否应继续 hold、return_to_research、reject 或等待 normal-shadow review。"
+        ),
+        "owner_decision_options_packet": (
+            "查看 owner decision options；该 packet 不会 append owner audit log。"
+        ),
+        "owner_decision_dry_run": (
+            "检查 proposed owner decision record 是否可验证且 real_entry_written=false。"
+        ),
+        "observation_clock_readiness_plan": (
+            "确认 normal observation clock 何时才能开始；当前不会启动或递增 clock。"
+        ),
+        "post_decision_rerun_plan": (
+            "查看 explicit owner decision 后应重跑哪些 governance reports。"
+        ),
+        "report_quality_warning_drilldown": (
+            "下钻 report quality warnings 和 template alias 修复边界。"
+        ),
+        "governance_status_snapshot_after_decision_review": (
+            "查看 TRADING-429~438 之后的 blocked/hold 边界和 recommended owner action。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -24446,6 +24648,61 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual recovery governance pack",
         "Research governance recovery pack 生成后立即校验 source coverage 和 live boundary。",
+    ),
+    "eight_blocker_decision_review": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 前置或同步生成。",
+    ),
+    "eight_blocker_decision_review_validation": (
+        "manual",
+        "manual decision-stage governance",
+        "Eight-blocker decision review 生成后立即校验 exact-eight 和安全边界。",
+    ),
+    "normal_shadow_gate_gap_analysis": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 生成时同步生成。",
+    ),
+    "promotion_blocker_after_metrics_review": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 生成时同步生成。",
+    ),
+    "candidate_research_return_assessment": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 生成时同步生成。",
+    ),
+    "owner_decision_options_packet": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 生成时同步生成；不 append owner log。",
+    ),
+    "owner_decision_dry_run": (
+        "manual",
+        "manual decision-stage governance",
+        "Owner decision option review 时 dry-run；real_entry_written 必须为 false。",
+    ),
+    "observation_clock_readiness_plan": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 生成时同步生成；不启动 observation clock。",
+    ),
+    "post_decision_rerun_plan": (
+        "manual",
+        "manual decision-stage governance",
+        "Explicit owner decision 后按匹配分支执行；本报告只列计划。",
+    ),
+    "report_quality_warning_drilldown": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 生成时同步生成 warning drilldown。",
+    ),
+    "governance_status_snapshot_after_decision_review": (
+        "manual",
+        "manual decision-stage governance",
+        "TRADING-429~438 decision-stage review 结束后生成最终 blocked/hold snapshot。",
     ),
     "research_safety_boundary_audit": (
         "daily",

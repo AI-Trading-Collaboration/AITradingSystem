@@ -21,6 +21,8 @@ OWNER_ACTIONS: tuple[str, ...] = (
     "continue_shadow",
     "enter_extended_shadow",
     "needs_more_evidence",
+    "keep_hold",
+    "approve_resume_normal_shadow",
     "return_to_research",
     "reject_candidate",
     "hold",
@@ -382,9 +384,17 @@ def validate_filled_owner_review_record(
         check_id="safety_blocked_cannot_continue_shadow",
         passed=not (
             safety_status == "SAFETY_BLOCKED"
-            and owner_action in {"continue_shadow", "enter_extended_shadow"}
+            and owner_action
+            in {
+                "continue_shadow",
+                "enter_extended_shadow",
+                "approve_resume_normal_shadow",
+            }
         ),
-        message="SAFETY_BLOCKED cannot pair with continue_shadow or enter_extended_shadow.",
+        message=(
+            "SAFETY_BLOCKED cannot pair with continue_shadow, "
+            "enter_extended_shadow, or approve_resume_normal_shadow."
+        ),
         recommended_action="resolve_safety_blocker_or_choose_hold_return_research_reject",
     )
 
@@ -547,6 +557,10 @@ def _owner_action_options() -> list[dict[str, str]]:
             "Move to extended paper-shadow observation after governance checks."
         ),
         "needs_more_evidence": "Hold decision until specific missing evidence is collected.",
+        "keep_hold": "Keep the candidate on hold without changing observation state.",
+        "approve_resume_normal_shadow": (
+            "Approve normal paper-shadow observation after the resumption gate is clear."
+        ),
         "return_to_research": "Return candidate to research for redesign or more analysis.",
         "reject_candidate": "Reject candidate unless materially new evidence appears.",
         "hold": "Hold current state without continuation, extension, rejection, or redesign.",

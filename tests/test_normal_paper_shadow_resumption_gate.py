@@ -46,6 +46,36 @@ def test_normal_paper_shadow_resumption_gate_allows_clean_manual_review(
     assert_research_safe(result["manifest"])
 
 
+def test_normal_paper_shadow_resumption_gate_allows_decision_stage_approval_action(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    _patch_recovery(
+        monkeypatch,
+        signal_status="OK",
+        evidence_status="FRESH",
+        readiness_status="READY_TO_CONTINUE",
+        health_status="HEALTHY",
+    )
+
+    result = gate.run_normal_paper_shadow_resumption_gate(
+        as_of=date(2024, 4, 22),
+        owner_action="approve_resume_normal_shadow",
+        manual_owner_review_completed=True,
+        output_dir=tmp_path / "gate",
+        generated_at=datetime(2024, 4, 22, 1, tzinfo=UTC),
+    )
+    report = result["normal_paper_shadow_resumption_gate_report"]
+
+    assert report["normal_paper_shadow_resumption_gate_status"] == (
+        "RESUME_NORMAL_SHADOW_ALLOWED"
+    )
+    assert report["normal_paper_shadow_may_resume"] is True
+    assert report["owner_action"] == "approve_resume_normal_shadow"
+    assert report["owner_action_authorizes_normal_resumption"] is True
+    assert result["normal_paper_shadow_resumption_gate_validation"]["status"] == "PASS"
+
+
 def test_normal_paper_shadow_resumption_gate_preserves_warnings(
     monkeypatch,
     tmp_path: Path,

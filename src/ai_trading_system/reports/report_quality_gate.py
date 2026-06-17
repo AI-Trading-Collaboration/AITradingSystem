@@ -98,7 +98,14 @@ MARKDOWN_SECTION_PATTERNS: dict[str, tuple[str, ...]] = {
     "output_decision": ("decision", "status", "结论", "输出", "状态", "decision_status"),
     "safety_boundary": ("production_effect", "safety", "broker", "安全", "只读", "实盘"),
     "limitations": ("limitation", "limitations", "warning", "风险", "限制", "局限"),
-    "next_action": ("next action", "next_required_action", "owner action", "下一步", "建议"),
+    "next_action": (
+        "next_action",
+        "next action",
+        "next_required_action",
+        "owner action",
+        "下一步",
+        "建议",
+    ),
 }
 
 CORE_READER_BRIEF_SECTIONS = frozenset(

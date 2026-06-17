@@ -1775,6 +1775,25 @@ pack、ledger、warning cleanup、clock 和 owner decision audit log。各命令
 `owner_action=hold` 解读为 normal observation authorization、不批准 extended shadow 或
 live trading、不写 official target weights、不触发 broker/order，`production_effect=none`。
 
+TRADING-429～438_DECISION_STAGE_REVIEW 新增 recovery blocked 之后的 owner-decision
+前置治理审查层。`aits reports decision-stage-review --as-of YYYY-MM-DD` 会一次生成
+exact eight-blocker decision review、normal shadow gate gap analysis、promotion blocker
+after metrics review、candidate research return assessment、owner decision options packet、
+owner decision dry-run、observation clock readiness plan、post-decision rerun plan、
+report quality warning drilldown 和 governance status snapshot。也可用
+`aits reports eight-blocker-decision-review --as-of YYYY-MM-DD` 只生成 exact blocker
+review，`aits reports validate-eight-blocker-decision-review --latest` 校验必须正好列出
+8 个 blocker；`aits reports owner-decision-dry-run --as-of YYYY-MM-DD --decision-option
+keep_hold` 只验证 proposed owner decision record 形状和 append-only 约束。输出写入
+`outputs/reports/*_YYYY-MM-DD.json/md` 并登记 report registry / Reader Brief
+`Decision-Stage Governance Snapshot`。该 layer 只提供 owner review evidence 和 dry-run
+validation：`owner_decision_dry_run` 固定 `would_append=false` / `real_entry_written=false`；
+owner options 只列 `keep_hold`、`approve_resume_normal_shadow`、`return_to_research`
+和 `reject_candidate`，并说明当前 gate 是否允许。它不 append owner decision、不生成
+normal-shadow signoff、不启动 observation clock、不恢复 normal shadow、不批准 extended
+shadow/live trading、不写 official target weights、不修改 candidate / paper-shadow /
+production state、不触发 broker/order，`production_effect=none`。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
@@ -2017,9 +2036,9 @@ normal paper-shadow resumption gate。CLI 入口为
 `RESUME_NORMAL_SHADOW_ALLOWED`、`RESUME_NORMAL_SHADOW_WITH_WARNINGS` 或
 `RESUME_NORMAL_SHADOW_BLOCKED`，并披露 resumption requirements、owner action、manual owner
 review completion、blocking/warning reasons、Reader Brief section 和 validation artifact。
-`hold` 是允许的 safe non-promotion owner action，但不授权恢复；只有
-`continue_normal_shadow` 且人工 owner review completed 才可能让 normal paper-shadow
-observation 恢复。Runtime artifacts 写入
+`hold` / `keep_hold` 是允许的 safe non-promotion owner action，但不授权恢复；只有
+`continue_normal_shadow` 或 `approve_resume_normal_shadow` 且人工 owner review completed
+才可能让 normal paper-shadow observation 恢复。Runtime artifacts 写入
 `reports/etf_portfolio/dynamic_v3_rescue/normal_paper_shadow_resumption_gate/`。该 gate 只允许
 normal observation，不运行 promotion board、不执行 extended-shadow protocol、不批准 live
 trading、不写 official target weights、不触发 broker/order、不修改 paper account 或 production

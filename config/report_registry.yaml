@@ -8235,6 +8235,216 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: eight_blocker_decision_review
+    title: Eight Blocker Decision Review
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports eight-blocker-decision-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/eight_blocker_decision_review_*.json
+      - outputs/reports/eight_blocker_decision_review_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-429 lists the exact eight remaining recovery blockers and their
+      source fields for owner decision review only; production_effect=none and
+      no blocker logic, owner decision log, shadow state, live trading, target
+      weights, broker action, or orders may be changed.
+    owner_action: review_exact_eight_blockers_before_any_decision_append
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: eight_blocker_decision_review_validation
+    title: Eight Blocker Decision Review Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-eight-blocker-decision-review --latest
+    artifact_globs:
+      - outputs/reports/eight_blocker_decision_review_validation_*.json
+      - outputs/reports/eight_blocker_decision_review_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Exact-eight validation fails closed if the decision review does not list
+      exactly eight blockers, omits required blocker fields, or drifts outside
+      the no-mutation safety boundary.
+    owner_action: run_after_eight_blocker_decision_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: normal_shadow_gate_gap_analysis
+    title: Normal Shadow Gate Gap Analysis
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/normal_shadow_gate_gap_analysis_*.json
+      - outputs/reports/normal_shadow_gate_gap_analysis_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-430 decomposes the normal paper-shadow resumption gate into
+      source, safety, and owner-action conditions without allowing normal
+      shadow resumption while the gate remains blocked.
+    owner_action: resolve_gate_gaps_before_normal_shadow_resumption
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: promotion_blocker_after_metrics_review
+    title: Promotion Blocker After Metrics Review
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/promotion_blocker_after_metrics_review_*.json
+      - outputs/reports/promotion_blocker_after_metrics_review_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-431 reviews cost, benchmark, owner, observation, readiness, and
+      safety blockers after recovered metrics; it cannot promote a candidate or
+      override cost/benchmark failures.
+    owner_action: return_candidate_to_research_when_cost_or_benchmark_block
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_research_return_assessment
+    title: Candidate Research Return Assessment
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_research_return_assessment_*.json
+      - outputs/reports/candidate_research_return_assessment_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-432 weighs recovered candidate evidence against cost and
+      benchmark blockers to recommend hold, return to research, rejection, or
+      normal-shadow review without authorizing any state transition.
+    owner_action: review_candidate_return_assessment_before_owner_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: owner_decision_options_packet
+    title: Owner Decision Options Packet
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/owner_decision_options_packet_*.json
+      - outputs/reports/owner_decision_options_packet_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-433 presents owner options such as keep_hold,
+      approve_resume_normal_shadow, return_to_research, and reject_candidate as
+      a review packet only; it must not append the owner decision audit log.
+    owner_action: select_option_only_if_explicit_owner_instruction_is_provided
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: owner_decision_dry_run
+    title: Owner Decision Dry-Run
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports owner-decision-dry-run --as-of YYYY-MM-DD --decision-option keep_hold
+    artifact_globs:
+      - outputs/reports/owner_decision_dry_run_*.json
+      - outputs/reports/owner_decision_dry_run_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-434 validates a proposed owner decision record shape without
+      writing to the append-only owner decision audit log; would_append and
+      real_entry_written must remain false.
+    owner_action: append_owner_decision_only_after_separate_explicit_instruction
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: observation_clock_readiness_plan
+    title: Observation Clock Readiness Plan
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/observation_clock_readiness_plan_*.json
+      - outputs/reports/observation_clock_readiness_plan_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-435 explains when the normal observation clock could start after
+      a non-blocking gate and explicit owner approval; it must not start or
+      increment the clock.
+    owner_action: keep_observation_clock_unstarted_until_gate_and_owner_approval_clear
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: post_decision_rerun_plan
+    title: Post-Decision Rerun Plan
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/post_decision_rerun_plan_*.json
+      - outputs/reports/post_decision_rerun_plan_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-436 lists which governance reports to rerun after each possible
+      owner decision option, while keeping extended shadow, live trading,
+      target weights, broker actions, and orders forbidden.
+    owner_action: execute_only_the_branch_matching_an_explicit_owner_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: report_quality_warning_drilldown
+    title: Report Quality Warning Drilldown
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/report_quality_warning_drilldown_*.json
+      - outputs/reports/report_quality_warning_drilldown_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-437 classifies report quality warnings and template alias fixes
+      without converting warning-only quality issues into silent waivers.
+    owner_action: review_report_quality_warning_classes_and_template_aliases
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: governance_status_snapshot_after_decision_review
+    title: Governance Status Snapshot After Decision Review
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports decision-stage-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/governance_status_snapshot_after_decision_review_*.json
+      - outputs/reports/governance_status_snapshot_after_decision_review_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-438 summarizes the decision-stage review state after TRADING-429
+      through TRADING-437, preserving the blocked normal-shadow status and the
+      forbidden extended/live/weights/broker/order boundaries until explicit
+      owner action and gates allow otherwise.
+    owner_action: keep_hold_or_return_to_research_until_blockers_are_resolved
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

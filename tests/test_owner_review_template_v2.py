@@ -225,7 +225,7 @@ def test_reader_brief_owner_review_template_v2_summary_reads_report_index(tmp_pa
     assert summary["template_status"] == "TEMPLATE_READY"
     assert summary["validation_status"] == PASS_STATUS
     assert summary["required_field_count"] == 9
-    assert summary["owner_action_count"] == 6
+    assert summary["owner_action_count"] == 8
 
 
 def _filled_review_record() -> dict[str, object]:

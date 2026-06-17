@@ -94,6 +94,7 @@ from ai_trading_system.prediction_ledger import (
 from ai_trading_system.report_traceability import (
     default_report_trace_bundle_path,
 )
+from ai_trading_system.reports import decision_stage_review as decision_stage_reports
 from ai_trading_system.reports import (
     exact_blocker_warning_inventory as exact_inventory_reports,
 )
@@ -6170,6 +6171,390 @@ def validate_post_recovery_governance_pack_command(
         json_path,
         md_path,
     )
+
+
+def _write_decision_stage_report(
+    payload: Mapping[str, object],
+    *,
+    reports_dir: Path,
+    report_date: date,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[Path, Path]:
+    report_type = str(payload.get("report_type") or "")
+    report_json = json_output_path or decision_stage_reports.default_decision_stage_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+    report_md = (
+        markdown_output_path
+        or decision_stage_reports.default_decision_stage_markdown_path(
+            report_type,
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = decision_stage_reports.write_decision_stage_json(payload, report_json)
+    md_path = decision_stage_reports.write_decision_stage_markdown(payload, report_md)
+    return json_path, md_path
+
+
+def _decision_stage_source_path(
+    *,
+    reports_dir: Path,
+    report_date: date,
+    report_type: str,
+    latest: bool,
+    source_json_path: Path | None,
+    label: str,
+) -> Path:
+    if source_json_path is not None:
+        return source_json_path
+    if latest:
+        source_path = decision_stage_reports.latest_decision_stage_json_path(
+            report_type,
+            reports_dir,
+        )
+        if source_path is None:
+            raise typer.BadParameter(f"未找到 {label} JSON：{reports_dir}")
+        return source_path
+    return decision_stage_reports.default_decision_stage_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+
+
+@reports_app.command("decision-stage-review")
+def decision_stage_review_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Decision-stage governance review 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    report_quality_gate_path: Annotated[
+        Path | None,
+        typer.Option(help="Report quality gate JSON 路径。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    owner_decision_log_path: Annotated[
+        Path,
+        typer.Option(help="Owner decision audit JSONL 路径；dry-run 只读。"),
+    ] = DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+    dry_run_decision_option: Annotated[
+        str,
+        typer.Option(help="Owner decision dry-run 选项；不会 append。"),
+    ] = "keep_hold",
+) -> None:
+    """TRADING-429~438：生成 decision-stage 只读治理审查包。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payloads = decision_stage_reports.build_decision_stage_review_payloads(
+        as_of=report_date,
+        reports_dir=reports_dir,
+        report_index_path=report_index_path,
+        recovery_pack_path=recovery_pack_path,
+        report_quality_gate_path=report_quality_gate_path,
+        project_root=project_root,
+        owner_decision_log_path=owner_decision_log_path,
+        dry_run_decision_option=dry_run_decision_option,
+    )
+    written: list[tuple[str, Path, Path]] = []
+    for report_type, payload in payloads.items():
+        json_path, md_path = _write_decision_stage_report(
+            payload,
+            reports_dir=reports_dir,
+            report_date=report_date,
+        )
+        written.append((report_type, json_path, md_path))
+    snapshot = payloads[decision_stage_reports.GOVERNANCE_SNAPSHOT_REPORT_TYPE]
+    summary = snapshot["summary"]
+    console.print(f"[red]Decision-stage governance：{snapshot['status']}[/red]")
+    for report_type, json_path, md_path in written:
+        console.print(f"{report_type} JSON：{json_path}")
+        console.print(f"{report_type} Markdown：{md_path}")
+    console.print(
+        f"blockers：{summary['blocker_count']}；"
+        f"warnings：{summary['warning_count']}；"
+        f"recommended_owner_action：{summary['recommended_owner_action']}；"
+        f"normal_shadow：{summary['normal_shadow_may_resume']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"dry_run_written：False；production_effect={snapshot['production_effect']}"
+    )
+
+
+@reports_app.command("eight-blocker-decision-review")
+def eight_blocker_decision_review_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Eight-blocker review 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 research governance recovery pack JSON。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Eight-blocker review JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Eight-blocker review Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 exact-eight blocker decision review；不修改 blocker 逻辑。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    if recovery_pack_path is None and latest:
+        recovery_pack_path = _latest_report_json_path(
+            reports_dir,
+            latest_research_governance_recovery_pack_json_path,
+            "research governance recovery pack",
+        )
+    recovery_pack_path = recovery_pack_path or default_research_governance_recovery_pack_json_path(
+        reports_dir,
+        report_date,
+    )
+    recovery_pack_payload = _read_json_mapping_for_report_cli(
+        recovery_pack_path,
+        "Research governance recovery pack",
+    )
+    payload = decision_stage_reports.build_eight_blocker_decision_review_payload(
+        as_of=report_date,
+        recovery_pack_payload=recovery_pack_payload,
+        recovery_pack_path=recovery_pack_path,
+    )
+    json_path, md_path = _write_decision_stage_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(f"[red]Eight-blocker decision review：{payload['status']}[/red]")
+    console.print(f"Eight-blocker review JSON：{json_path}")
+    console.print(f"Eight-blocker review Markdown：{md_path}")
+    console.print(
+        f"exact_blockers：{summary['remaining_blocker_count']}；"
+        f"candidate_return_blockers：{summary['candidate_return_blocker_count']}；"
+        f"owner_judgment_blockers：{summary['owner_judgment_blocker_count']}；"
+        f"production_effect={payload['production_effect']}；只读 review"
+    )
+
+
+@reports_app.command("validate-eight-blocker-decision-review")
+def validate_eight_blocker_decision_review_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 eight-blocker decision review JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Eight-blocker validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Eight-blocker decision review JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Eight-blocker validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Eight-blocker validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 exact-eight blocker decision review。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path = _decision_stage_source_path(
+        reports_dir=reports_dir,
+        report_date=report_date,
+        report_type=decision_stage_reports.EIGHT_BLOCKER_REPORT_TYPE,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="eight-blocker decision review",
+    )
+    source_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Eight-blocker decision review",
+    )
+    payload = decision_stage_reports.validate_eight_blocker_decision_review_payload(
+        source_payload
+    )
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "eight_blocker_decision_review": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or report_date.isoformat()))
+    json_path, md_path = _write_decision_stage_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["validation_status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Eight-blocker validation：{status}[/{style}]")
+    console.print(f"Eight-blocker validation JSON：{json_path}")
+    console.print(f"Eight-blocker validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"exact_blockers：{summary['exact_blocker_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("owner-decision-dry-run")
+def owner_decision_dry_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Owner decision dry-run 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    decision_option: Annotated[
+        str,
+        typer.Option(help="Dry-run owner decision option；不会 append。"),
+    ] = "keep_hold",
+    owner_options_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision options packet JSON 路径。"),
+    ] = None,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="缺少 owner options packet 时用于临时构建的 report_index JSON。"),
+    ] = None,
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="缺少 owner options packet 时用于临时构建的 recovery pack JSON。"),
+    ] = None,
+    report_quality_gate_path: Annotated[
+        Path | None,
+        typer.Option(help="缺少 owner options packet 时用于临时构建的 quality gate JSON。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    owner_decision_log_path: Annotated[
+        Path,
+        typer.Option(help="Owner decision audit JSONL 路径；dry-run 只读。"),
+    ] = DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision dry-run JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision dry-run Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """Dry-run owner decision audit record；不 append 审计日志。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    if owner_options_path is not None and owner_options_path.exists():
+        owner_options_payload = _read_json_mapping_for_report_cli(
+            owner_options_path,
+            "Owner decision options packet",
+        )
+    else:
+        default_options_path = decision_stage_reports.default_decision_stage_json_path(
+            decision_stage_reports.OWNER_OPTIONS_REPORT_TYPE,
+            reports_dir,
+            report_date,
+        )
+        if default_options_path.exists():
+            owner_options_payload = _read_json_mapping_for_report_cli(
+                default_options_path,
+                "Owner decision options packet",
+            )
+        else:
+            payloads = decision_stage_reports.build_decision_stage_review_payloads(
+                as_of=report_date,
+                reports_dir=reports_dir,
+                report_index_path=report_index_path,
+                recovery_pack_path=recovery_pack_path,
+                report_quality_gate_path=report_quality_gate_path,
+                project_root=project_root,
+                owner_decision_log_path=owner_decision_log_path,
+                dry_run_decision_option=decision_option,
+            )
+            owner_options_payload = payloads[decision_stage_reports.OWNER_OPTIONS_REPORT_TYPE]
+    payload = decision_stage_reports.build_owner_decision_dry_run_payload(
+        as_of=report_date,
+        decision_option=decision_option,
+        owner_options_payload=owner_options_payload,
+        log_path=owner_decision_log_path,
+    )
+    json_path, md_path = _write_decision_stage_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    style = "green" if summary["dry_run_status"] == "OWNER_DECISION_DRY_RUN_VALID" else "yellow"
+    if summary["dry_run_status"] == "OWNER_DECISION_DRY_RUN_BLOCKED":
+        style = "red"
+    console.print(f"[{style}]Owner decision dry-run：{summary['dry_run_status']}[/{style}]")
+    console.print(f"Owner decision dry-run JSON：{json_path}")
+    console.print(f"Owner decision dry-run Markdown：{md_path}")
+    console.print(
+        f"decision_option：{summary['decision_option']}；"
+        f"record_validation：{summary['record_validation_status']}；"
+        f"would_append：{summary['would_append']}；"
+        f"real_entry_written：{summary['real_entry_written']}；"
+        f"production_effect={payload['production_effect']}；只读 dry-run"
+    )
+    if summary["dry_run_status"] == "OWNER_DECISION_DRY_RUN_BLOCKED":
+        raise typer.Exit(code=1)
 
 
 @reports_app.command("recovery-governance-rerun-after-triage")

@@ -30,6 +30,8 @@ OWNER_ACTIONS: tuple[str, ...] = (
     "continue_shadow",
     "enter_extended_shadow",
     "needs_more_evidence",
+    "keep_hold",
+    "approve_resume_normal_shadow",
     "return_to_research",
     "reject_candidate",
     "hold",
@@ -205,9 +207,17 @@ def validate_owner_decision_record(
         check_id="safety_blocked_cannot_continue_shadow",
         passed=not (
             safety_status == "SAFETY_BLOCKED"
-            and owner_action in {"continue_shadow", "enter_extended_shadow"}
+            and owner_action
+            in {
+                "continue_shadow",
+                "enter_extended_shadow",
+                "approve_resume_normal_shadow",
+            }
         ),
-        message="SAFETY_BLOCKED cannot pair with continue_shadow or enter_extended_shadow.",
+        message=(
+            "SAFETY_BLOCKED cannot pair with continue_shadow, "
+            "enter_extended_shadow, or approve_resume_normal_shadow."
+        ),
         recommended_action="resolve_safety_blocker_or_choose_hold_return_research_reject",
         line_number=line_number,
     )

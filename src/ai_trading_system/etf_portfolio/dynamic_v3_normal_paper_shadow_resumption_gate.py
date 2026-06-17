@@ -23,8 +23,15 @@ NORMAL_PAPER_SHADOW_RESUMPTION_STATUSES = (
     "RESUME_NORMAL_SHADOW_WITH_WARNINGS",
     "RESUME_NORMAL_SHADOW_BLOCKED",
 )
-SAFE_OWNER_ACTIONS = ("hold", "continue_normal_shadow")
-RESUMPTION_OWNER_ACTION = "continue_normal_shadow"
+SAFE_OWNER_ACTIONS = (
+    "hold",
+    "keep_hold",
+    "continue_normal_shadow",
+    "approve_resume_normal_shadow",
+    "return_to_research",
+    "reject_candidate",
+)
+RESUMPTION_OWNER_ACTIONS = ("continue_normal_shadow", "approve_resume_normal_shadow")
 
 NORMAL_PAPER_SHADOW_RESUMPTION_SAFETY = {
     **st.SYSTEM_TARGET_SAFETY,
@@ -164,7 +171,10 @@ def run_normal_paper_shadow_resumption_gate(
         "limitations": [
             "This gate can only permit normal paper-shadow observation after manual owner review.",
             "Owner action hold is safe and non-promotional, but it does not authorize resumption.",
-            "continue_normal_shadow authorizes only normal observation, not extended shadow.",
+            (
+                "continue_normal_shadow or approve_resume_normal_shadow authorizes "
+                "only normal observation, not extended shadow."
+            ),
             (
                 "The gate reads recovery and owner decision evidence; it does not "
                 "rerun upstream data pipelines."
@@ -338,9 +348,9 @@ def validate_normal_paper_shadow_resumption_gate_artifact(
                 status,
             ),
             st._check(
-                "owner_action_continue_normal_before_non_blocked_status",
+                "owner_action_authorizes_normal_before_non_blocked_status",
                 status == "RESUME_NORMAL_SHADOW_BLOCKED"
-                or report.get("owner_action") == RESUMPTION_OWNER_ACTION,
+                or report.get("owner_action") in RESUMPTION_OWNER_ACTIONS,
                 _text(report.get("owner_action")),
             ),
             st._check(
@@ -565,7 +575,7 @@ def _owner_context_from_action(
         "manual_owner_review_completed": manual_review_completed,
         "owner_action_is_safe_non_promotion": owner_action in SAFE_OWNER_ACTIONS,
         "owner_action_authorizes_normal_resumption": owner_action
-        == RESUMPTION_OWNER_ACTION,
+        in RESUMPTION_OWNER_ACTIONS,
         "promotion_action_detected": bool(owner_action)
         and owner_action not in SAFE_OWNER_ACTIONS,
     }
@@ -642,8 +652,9 @@ def _resumption_requirements(
             owner_context.get("owner_action_authorizes_normal_resumption") is True,
             "PASS",
             (
-                "continue_normal_shadow is required to resume; hold is safe but "
-                "keeps observation paused"
+                "continue_normal_shadow or approve_resume_normal_shadow is required "
+                "to resume; hold/keep_hold and research/reject actions are safe but "
+                "keep observation paused"
             ),
         ),
     ]
@@ -693,7 +704,7 @@ def _blocking_reasons(
     owner_action = _text(owner_context.get("owner_action"))
     if not owner_action:
         reasons.append("owner_action:missing_manual_owner_review")
-    elif owner_action == "hold":
+    elif owner_action in {"hold", "keep_hold"}:
         reasons.append("owner_action:hold")
     elif owner_action not in SAFE_OWNER_ACTIONS:
         reasons.append("owner_action:not_allowed_for_normal_resumption")
@@ -724,10 +735,18 @@ def _next_action(status: str, owner_context: Mapping[str, Any]) -> str:
         return "resume_normal_paper_shadow_observation_only_with_warning_monitoring"
     if not owner_action:
         return "record_manual_owner_review_before_normal_shadow_resumption"
-    if owner_action == "hold":
-        return "keep_normal_paper_shadow_on_hold_until_owner_records_continue_normal_shadow"
+    if owner_action in {"hold", "keep_hold"}:
+        return (
+            "keep_normal_paper_shadow_on_hold_until_owner_records_"
+            "approve_resume_normal_shadow"
+        )
+    if owner_action in {"return_to_research", "reject_candidate"}:
+        return "owner_decision_moves_candidate_out_of_normal_resumption_path"
     if owner_action not in SAFE_OWNER_ACTIONS:
-        return "replace_promotion_or_extended_shadow_action_with_hold_or_continue_normal_shadow"
+        return (
+            "replace_promotion_or_extended_shadow_action_with_hold_or_"
+            "approve_resume_normal_shadow"
+        )
     return "clear_blocking_resumption_requirements_before_normal_shadow_resumption"
 
 
