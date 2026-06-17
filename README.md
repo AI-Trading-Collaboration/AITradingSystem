@@ -1711,6 +1711,23 @@ blocker 仍必须作为 remaining recovery blockers 披露。该 pack advisory-o
 production state，不生成 official target weights、order ticket 或 broker action，也不批准 promotion、
 extended shadow 或 live trading。
 
+TRADING-400_RESEARCH_GOVERNANCE_RECOVERY_PACK 新增最终 recovery governance pack。
+`aits reports research-governance-recovery-pack --as-of YYYY-MM-DD` 只读汇总同日
+report index 和 latest signal input restoration、signal completeness recovery、readiness /
+health recovery、normal paper-shadow resumption gate、cost / benchmark evidence、
+recovery evidence pack、owner hold decision、monthly review、promotion board、observation
+clock、extended shadow protocol、roadmap dashboard 和 decision snapshot lifecycle，输出
+`outputs/reports/research_governance_recovery_pack_YYYY-MM-DD.json/md`。
+`aits reports validate-research-governance-recovery-pack --latest` 输出
+`research_governance_recovery_pack_validation_YYYY-MM-DD.json/md`。Status 限定为
+`RECOVERY_GOVERNANCE_HEALTHY|RECOVERY_GOVERNANCE_HEALTHY_WITH_WARNINGS|RECOVERY_GOVERNANCE_MANUAL_REVIEW_REQUIRED|RECOVERY_GOVERNANCE_BLOCKED`，
+并披露 remaining blockers、remaining warnings、next owner action、normal paper-shadow
+是否可恢复、extended shadow 是否仍 forbidden、live trading 是否仍 forbidden。该 pack 只做
+owner recovery review 输入，不运行上游、不刷新数据、不补造 missing artifacts、不写 owner
+decision、不修改 strategy / candidate / paper-shadow / production state；即使 healthy，也最多
+支持 owner 人工复核恢复 normal paper-shadow observation，永不批准 live trading、official target
+weights、broker action 或 order ticket。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

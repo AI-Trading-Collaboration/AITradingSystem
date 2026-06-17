@@ -180,6 +180,9 @@ def build_reader_brief_payload(
     research_governance_end_to_end_pack = _research_governance_end_to_end_pack_summary(
         report_index
     )
+    research_governance_recovery_pack = _research_governance_recovery_pack_summary(
+        report_index
+    )
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -347,6 +350,7 @@ def build_reader_brief_payload(
         "extended_shadow_protocol": extended_shadow_protocol,
         "research_roadmap_dashboard": research_roadmap_dashboard,
         "research_governance_end_to_end_pack": research_governance_end_to_end_pack,
+        "research_governance_recovery_pack": research_governance_recovery_pack,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -684,6 +688,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     research_roadmap_dashboard = _mapping(payload.get("research_roadmap_dashboard"))
     research_governance_end_to_end_pack = _mapping(
         payload.get("research_governance_end_to_end_pack")
+    )
+    research_governance_recovery_pack = _mapping(
+        payload.get("research_governance_recovery_pack")
     )
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
@@ -1461,6 +1468,83 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         research_governance_end_to_end_pack.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Research Governance Recovery Pack",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        research_governance_recovery_pack.get("availability"),
+                    ),
+                    ("status", research_governance_recovery_pack.get("status")),
+                    (
+                        "recovery_governance_status",
+                        research_governance_recovery_pack.get(
+                            "recovery_governance_status"
+                        ),
+                    ),
+                    (
+                        "validation_status",
+                        research_governance_recovery_pack.get("validation_status"),
+                    ),
+                    (
+                        "source_reports",
+                        research_governance_recovery_pack.get("source_report_count"),
+                    ),
+                    (
+                        "available_sources",
+                        research_governance_recovery_pack.get(
+                            "available_source_count"
+                        ),
+                    ),
+                    (
+                        "remaining_blockers",
+                        research_governance_recovery_pack.get("remaining_blocker_count"),
+                    ),
+                    (
+                        "remaining_warnings",
+                        research_governance_recovery_pack.get("remaining_warning_count"),
+                    ),
+                    (
+                        "manual_review_items",
+                        research_governance_recovery_pack.get(
+                            "manual_review_item_count"
+                        ),
+                    ),
+                    (
+                        "normal_paper_shadow_may_resume",
+                        research_governance_recovery_pack.get(
+                            "normal_paper_shadow_may_resume"
+                        ),
+                    ),
+                    (
+                        "extended_shadow_remains_forbidden",
+                        research_governance_recovery_pack.get(
+                            "extended_shadow_remains_forbidden"
+                        ),
+                    ),
+                    (
+                        "live_trading_remains_forbidden",
+                        research_governance_recovery_pack.get(
+                            "live_trading_remains_forbidden"
+                        ),
+                    ),
+                    (
+                        "top_blocker",
+                        research_governance_recovery_pack.get("top_remaining_blocker"),
+                    ),
+                    ("next_action", research_governance_recovery_pack.get("next_action")),
+                    (
+                        "detail_report",
+                        research_governance_recovery_pack.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        research_governance_recovery_pack.get("production_effect"),
                     ),
                 ]
             ),
@@ -7985,6 +8069,106 @@ def _missing_research_governance_end_to_end_pack_summary(reason: str) -> dict[st
         "summary_sentence": (
             "research_governance_end_to_end_pack artifact missing; run reports "
             "research-governance-end-to-end-pack."
+        ),
+        "limitation": reason,
+    }
+
+
+def _research_governance_recovery_pack_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_research_governance_recovery_pack_summary(
+            "report_index artifact missing; Reader Brief cannot discover recovery pack."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "research_governance_recovery_pack",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_research_governance_recovery_pack_summary(
+            "research_governance_recovery_pack artifact missing from report index "
+            "latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "research_governance_recovery_pack_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    recovery_status = _text(
+        payload.get("recovery_governance_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": recovery_status,
+        "recovery_governance_status": recovery_status,
+        "validation_status": validation_status,
+        "source_report_count": _int(summary.get("source_report_count")),
+        "available_source_count": _int(summary.get("available_source_count")),
+        "validation_pass_count": _int(summary.get("validation_pass_count")),
+        "validation_warning_count": _int(summary.get("validation_warning_count")),
+        "remaining_blocker_count": _int(summary.get("remaining_blocker_count")),
+        "remaining_warning_count": _int(summary.get("remaining_warning_count")),
+        "manual_review_item_count": _int(summary.get("manual_review_item_count")),
+        "top_remaining_blocker": _text(summary.get("top_remaining_blocker"), "none"),
+        "normal_paper_shadow_may_resume": bool(
+            summary.get("normal_paper_shadow_may_resume")
+        ),
+        "extended_shadow_remains_forbidden": bool(
+            summary.get("extended_shadow_remains_forbidden")
+        ),
+        "live_trading_remains_forbidden": bool(
+            summary.get("live_trading_remains_forbidden")
+        ),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"research_governance_recovery_pack={recovery_status}; "
+            f"validation={validation_status}; "
+            f"blockers={_int(summary.get('remaining_blocker_count'))}; "
+            f"normal_shadow={bool(summary.get('normal_paper_shadow_may_resume'))}; "
+            f"live_forbidden={bool(summary.get('live_trading_remains_forbidden'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest recovery governance pack artifacts; "
+            "it does not run recovery commands or approve live trading."
+        ),
+    }
+
+
+def _missing_research_governance_recovery_pack_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "recovery_governance_status": "MISSING",
+        "validation_status": "MISSING",
+        "source_report_count": 0,
+        "available_source_count": 0,
+        "validation_pass_count": 0,
+        "validation_warning_count": 0,
+        "remaining_blocker_count": 0,
+        "remaining_warning_count": 0,
+        "manual_review_item_count": 0,
+        "top_remaining_blocker": "none",
+        "normal_paper_shadow_may_resume": False,
+        "extended_shadow_remains_forbidden": True,
+        "live_trading_remains_forbidden": True,
+        "next_action": "run_aits_reports_research_governance_recovery_pack_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "research_governance_recovery_pack artifact missing; run reports "
+            "research-governance-recovery-pack."
         ),
         "limitation": reason,
     }
@@ -23931,7 +24115,9 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "research_roadmap_dashboard_validation": 231,
         "research_governance_end_to_end_pack": 232,
         "research_governance_end_to_end_pack_validation": 233,
-        "report_quality_gate": 234,
+        "research_governance_recovery_pack": 234,
+        "research_governance_recovery_pack_validation": 235,
+        "report_quality_gate": 236,
         "reader_brief_quality": 240,
         "artifact_catalog": 250,
     }
@@ -24053,6 +24239,14 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         ),
         "research_governance_end_to_end_pack_validation": (
             "确认 end-to-end governance pack source coverage、Reader Brief fields 和只读边界。"
+        ),
+        "research_governance_recovery_pack": (
+            "查看 recovery governance status、remaining blockers/warnings、owner action "
+            "和 normal/extended/live trading 边界。"
+        ),
+        "research_governance_recovery_pack_validation": (
+            "确认 recovery governance pack source coverage、Reader Brief fields "
+            "和 live trading forbidden 边界。"
         ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
@@ -24242,6 +24436,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "monthly",
         "manual governance pack",
         "Research governance end-to-end pack 生成后立即校验 source coverage 和安全边界。",
+    ),
+    "research_governance_recovery_pack": (
+        "manual",
+        "manual recovery governance pack",
+        "TRADING-385 到 TRADING-399 recovery artifacts 更新后生成。",
+    ),
+    "research_governance_recovery_pack_validation": (
+        "manual",
+        "manual recovery governance pack",
+        "Research governance recovery pack 生成后立即校验 source coverage 和 live boundary。",
     ),
     "research_safety_boundary_audit": (
         "daily",

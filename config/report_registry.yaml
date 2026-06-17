@@ -7839,6 +7839,46 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: research_governance_recovery_pack
+    title: Research Governance Recovery Pack
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports research-governance-recovery-pack --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/research_governance_recovery_pack_????-??-??.json
+      - outputs/reports/research_governance_recovery_pack_????-??-??.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-400 consolidates post-recovery signal, readiness/health, cost,
+      benchmark, owner, monthly, promotion, observation, extended-shadow,
+      roadmap, and decision snapshot lifecycle artifacts before owner recovery
+      review. It must not approve live trading, official target weights,
+      broker action, orders, or production mutation.
+    owner_action: review_recovery_governance_blockers_before_normal_shadow_resumption
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_governance_recovery_pack_validation
+    title: Research Governance Recovery Pack Validation
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports validate-research-governance-recovery-pack --latest
+    artifact_globs:
+      - outputs/reports/research_governance_recovery_pack_validation_*.json
+      - outputs/reports/research_governance_recovery_pack_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Recovery governance pack validation should fail closed on missing required
+      source artifacts, failed source validations, missing Reader Brief fields,
+      live-trading boundary drift, or safety-boundary drift.
+    owner_action: run_after_research_governance_recovery_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance
