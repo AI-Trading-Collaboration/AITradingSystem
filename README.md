@@ -1880,6 +1880,24 @@ paper account 或 production state，所有输出固定 `paper_shadow_health_che
 `pipelines_executed_by_health_check=false`、`not_official_target_weights=true`、
 `broker_action_allowed=false`、`production_effect=none`。
 
+TRADING-387_READINESS_AND_HEALTH_RECOVERY_CHAIN 在 signal input recovery 后新增最小
+readiness/health 恢复链。CLI 入口为
+`aits etf dynamic-v3-rescue readiness-health-recovery run --as-of YYYY-MM-DD`、
+`aits etf dynamic-v3-rescue readiness-health-recovery report --latest` 和
+`aits etf dynamic-v3-rescue validate-readiness-health-recovery --latest`。该 chain 只重跑
+evidence staleness monitor、shadow continuation readiness 和 canonical paper-shadow health，
+输出 `PAPER_SHADOW_CAN_RESUME_NORMAL_OBSERVATION`、
+`PAPER_SHADOW_STILL_BLOCKED` 或 `MANUAL_REVIEW_REQUIRED`，并披露 source artifact ids、
+source statuses、validation statuses、blocking reasons、warning reasons、Reader Brief section
+和 validation artifact。Runtime artifacts 写入
+`reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/`。该恢复链只判断
+normal paper-shadow observation 是否可恢复，不运行 promotion board、不执行 extended-shadow
+protocol、不写 official target weights、不触发 broker/order、不修改 paper account 或 production
+state；所有输出固定 `readiness_health_recovery_chain_only=true`、
+`normal_paper_shadow_observation_gate_only=true`、`promotion_board_allowed=false`、
+`extended_shadow_allowed=false`、`not_official_target_weights=true`、
+`broker_action_allowed=false`、`production_effect=none`。
+
 TRADING-373_PAPER_SHADOW_OUTCOME_ATTRIBUTION 在 paper-shadow weekly review 和 canonical
 health 后新增 research-only outcome attribution layer。Policy config 为
 `config/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution_v1.yaml`，

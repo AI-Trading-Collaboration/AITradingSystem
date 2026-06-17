@@ -5289,6 +5289,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_readiness_health_recovery
+    title: ETF Dynamic v3 Readiness and Health Recovery
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits etf dynamic-v3-rescue readiness-health-recovery report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/*/readiness_health_recovery_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/*/readiness_health_recovery_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/*/readiness_health_recovery_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/*/reader_brief_section.md
+      - reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/*/readiness_health_recovery_validation.json
+      - reports/etf_portfolio/dynamic_v3_rescue/readiness_health_recovery/*/readiness_health_recovery_validation.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-387 reruns the minimum evidence staleness, shadow continuation
+      readiness, and canonical paper-shadow health chain after signal input
+      recovery, then records whether normal paper-shadow observation may resume,
+      remains blocked, or requires manual review.
+    owner_action: review_readiness_health_recovery_before_normal_shadow_resumption
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_outcome_attribution
     title: ETF Dynamic v3 Paper Shadow Outcome Attribution
     group: governance

@@ -45,6 +45,9 @@ from ai_trading_system.etf_portfolio import (
 from ai_trading_system.etf_portfolio import dynamic_v3_paper_shadow_weekly as paper_shadow_weekly
 from ai_trading_system.etf_portfolio import dynamic_v3_promotion_thresholds as promotion_thresholds
 from ai_trading_system.etf_portfolio import (
+    dynamic_v3_readiness_health_recovery as readiness_health_recovery,
+)
+from ai_trading_system.etf_portfolio import (
     dynamic_v3_shadow_decision_comparison as shadow_decision_comparison,
 )
 from ai_trading_system.etf_portfolio import (
@@ -1881,6 +1884,10 @@ dynamic_v3_paper_shadow_health_app = typer.Typer(
     help="Dynamic v3 rescue canonical paper-shadow health workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_readiness_health_recovery_app = typer.Typer(
+    help="Dynamic v3 rescue readiness/health recovery chain workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_paper_shadow_outcome_attribution_app = typer.Typer(
     help="Dynamic v3 rescue paper-shadow outcome attribution workflow。",
     no_args_is_help=True,
@@ -2713,6 +2720,10 @@ dynamic_v3_rescue_app.add_typer(
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_health_app,
     name="paper-shadow-health",
+)
+dynamic_v3_rescue_app.add_typer(
+    dynamic_v3_readiness_health_recovery_app,
+    name="readiness-health-recovery",
 )
 dynamic_v3_rescue_app.add_typer(
     dynamic_v3_paper_shadow_outcome_attribution_app,
@@ -21701,6 +21712,229 @@ def dynamic_v3_validate_paper_shadow_health_command(
     _echo_validation_payload(
         paper_shadow_health.validate_paper_shadow_health_artifact(
             health_id=resolved_id,
+            output_dir=output_dir,
+        )
+    )
+
+
+def _echo_readiness_health_recovery_summary(
+    *,
+    manifest: Mapping[str, Any],
+    report: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> None:
+    statuses = _mapping_obj(report.get("source_statuses"))
+    typer.echo(f"recovery_id={report.get('recovery_id') or manifest.get('recovery_id')}")
+    typer.echo(
+        "readiness_health_recovery_status="
+        f"{report.get('readiness_health_recovery_status')}"
+    )
+    typer.echo(f"normal_paper_shadow_may_resume={report.get('normal_paper_shadow_may_resume')}")
+    typer.echo(f"hard_stop_triggered={report.get('hard_stop_triggered')}")
+    typer.echo(f"manual_review_required={report.get('manual_review_required')}")
+    typer.echo(f"signal_input_status={statuses.get('signal_input_status')}")
+    typer.echo(f"evidence_freshness_status={statuses.get('evidence_freshness_status')}")
+    typer.echo(
+        "shadow_continuation_readiness="
+        f"{statuses.get('shadow_continuation_readiness')}"
+    )
+    typer.echo(f"paper_shadow_health_status={statuses.get('paper_shadow_health_status')}")
+    typer.echo(f"evidence_staleness_monitor_id={report.get('evidence_staleness_monitor_id')}")
+    typer.echo(
+        "shadow_continuation_readiness_id="
+        f"{report.get('shadow_continuation_readiness_id')}"
+    )
+    typer.echo(f"paper_shadow_health_id={report.get('paper_shadow_health_id')}")
+    typer.echo(f"blocking_reasons={','.join(_texts(report.get('blocking_reasons')))}")
+    typer.echo(f"warning_reasons={','.join(_texts(report.get('warning_reasons')))}")
+    typer.echo(f"next_required_action={report.get('next_required_action')}")
+    typer.echo(f"validation_status={validation.get('status', 'NOT_RUN')}")
+    typer.echo(f"report_path={manifest.get('readiness_health_recovery_markdown_path')}")
+    typer.echo("readiness_health_recovery_chain_only=true")
+    typer.echo("normal_paper_shadow_observation_gate_only=true")
+    typer.echo("promotion_board_allowed=false")
+    typer.echo("extended_shadow_allowed=false")
+    typer.echo("not_official_target_weights=true")
+    typer.echo("broker_action_allowed=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_readiness_health_recovery_app.command("run")
+def dynamic_v3_readiness_health_recovery_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="readiness/health recovery as-of date YYYY-MM-DD；省略时使用当前 UTC 日期。",
+        ),
+    ] = None,
+    candidate: Annotated[
+        str,
+        typer.Option("--candidate", help="filtered candidate id。"),
+    ] = filtered_readiness.TOP_FILTERED_CANDIDATE,
+    signal_input_completeness_id: Annotated[
+        str | None,
+        typer.Option(
+            "--signal-input-completeness-id",
+            "--signal-input-monitor-id",
+            help="restored signal input completeness monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    signal_input_completeness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--signal-input-completeness-report-path",
+            help="显式 signal input completeness report JSON。",
+        ),
+    ] = None,
+    paper_shadow_daily_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-daily-id",
+            "--daily-observation-id",
+            help="paper-shadow daily observation id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_drift_monitor_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-drift-monitor-id",
+            "--drift-monitor-id",
+            help="paper-shadow drift monitor id；缺省读取 latest。",
+        ),
+    ] = None,
+    paper_shadow_weekly_review_id: Annotated[
+        str | None,
+        typer.Option(
+            "--paper-shadow-weekly-review-id",
+            "--weekly-review-id",
+            help="paper-shadow weekly review id；缺省读取 latest。",
+        ),
+    ] = None,
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option("--data-quality-report-path", help="data quality report path。"),
+    ] = None,
+    fallback_policy_report_path: Annotated[
+        Path | None,
+        typer.Option("--fallback-policy-report-path", help="显式 fallback policy report JSON。"),
+    ] = None,
+    cache_catalog_report_path: Annotated[
+        Path | None,
+        typer.Option("--cache-catalog-report-path", help="显式 cache catalog report JSON。"),
+    ] = None,
+    data_refresh_audit_id: Annotated[
+        str | None,
+        typer.Option("--data-refresh-audit-id", help="data refresh audit id；缺省读取 latest。"),
+    ] = None,
+    price_cache_path: Annotated[
+        Path,
+        typer.Option("--price-cache-path", help="standardized price cache CSV。"),
+    ] = system_target.DEFAULT_PRICE_CACHE_PATH,
+    market_panel_dir: Annotated[
+        Path,
+        typer.Option("--market-panel-dir", help="market panel report directory。"),
+    ] = filtered_readiness.DEFAULT_MARKET_PANEL_REPORT_DIR,
+    evidence_staleness_monitor_dir: Annotated[
+        Path,
+        typer.Option(
+            "--evidence-staleness-monitor-dir",
+            help="evidence staleness monitor artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_EVIDENCE_STALENESS_MONITOR_DIR,
+    shadow_continuation_readiness_dir: Annotated[
+        Path,
+        typer.Option(
+            "--shadow-continuation-readiness-dir",
+            help="shadow continuation readiness artifact root。",
+        ),
+    ] = filtered_readiness.DEFAULT_SHADOW_CONTINUATION_READINESS_DIR,
+    paper_shadow_health_dir: Annotated[
+        Path,
+        typer.Option("--paper-shadow-health-dir", help="paper-shadow health artifact root。"),
+    ] = paper_shadow_health.DEFAULT_PAPER_SHADOW_HEALTH_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="readiness/health recovery artifact root。"),
+    ] = readiness_health_recovery.DEFAULT_READINESS_HEALTH_RECOVERY_DIR,
+) -> None:
+    result = readiness_health_recovery.run_readiness_health_recovery_chain(
+        as_of=None if as_of is None else _parse_dynamic_v3_outcome_date(as_of, "--as-of"),
+        candidate=candidate,
+        signal_input_completeness_id=signal_input_completeness_id,
+        signal_input_completeness_report_path=signal_input_completeness_report_path,
+        paper_shadow_daily_id=paper_shadow_daily_id,
+        paper_shadow_drift_monitor_id=paper_shadow_drift_monitor_id,
+        paper_shadow_weekly_review_id=paper_shadow_weekly_review_id,
+        data_quality_report_path=data_quality_report_path,
+        fallback_policy_report_path=fallback_policy_report_path,
+        cache_catalog_report_path=cache_catalog_report_path,
+        data_refresh_audit_id=data_refresh_audit_id,
+        price_cache_path=price_cache_path,
+        market_panel_dir=market_panel_dir,
+        evidence_staleness_monitor_dir=evidence_staleness_monitor_dir,
+        shadow_continuation_readiness_dir=shadow_continuation_readiness_dir,
+        paper_shadow_health_dir=paper_shadow_health_dir,
+        output_dir=output_dir,
+    )
+    _echo_readiness_health_recovery_summary(
+        manifest=_mapping_obj(result.get("manifest")),
+        report=_mapping_obj(result.get("readiness_health_recovery_report")),
+        validation=_mapping_obj(result.get("readiness_health_recovery_validation")),
+    )
+
+
+@dynamic_v3_readiness_health_recovery_app.command("report")
+def dynamic_v3_readiness_health_recovery_report_command(
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    recovery_id: Annotated[
+        str | None,
+        typer.Option("--recovery-id", help="readiness/health recovery id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="readiness/health recovery artifact root。"),
+    ] = readiness_health_recovery.DEFAULT_READINESS_HEALTH_RECOVERY_DIR,
+) -> None:
+    if not latest and not recovery_id:
+        raise typer.BadParameter("--recovery-id or --latest is required")
+    payload = readiness_health_recovery.readiness_health_recovery_report_payload(
+        recovery_id=recovery_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    _echo_readiness_health_recovery_summary(
+        manifest=_mapping_obj(payload),
+        report=_mapping_obj(payload.get("readiness_health_recovery_report")),
+        validation=_mapping_obj(payload.get("readiness_health_recovery_validation")),
+    )
+
+
+@dynamic_v3_rescue_app.command("validate-readiness-health-recovery")
+def dynamic_v3_validate_readiness_health_recovery_command(
+    recovery_id: Annotated[
+        str | None,
+        typer.Option("--recovery-id", help="readiness/health recovery id。"),
+    ] = None,
+    latest: Annotated[bool, typer.Option("--latest/--no-latest", help="读取 latest。")] = False,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="readiness/health recovery artifact root。"),
+    ] = readiness_health_recovery.DEFAULT_READINESS_HEALTH_RECOVERY_DIR,
+) -> None:
+    resolved_id = recovery_id
+    if latest:
+        payload = readiness_health_recovery.readiness_health_recovery_report_payload(
+            latest=True,
+            output_dir=output_dir,
+        )
+        resolved_id = str(payload.get("recovery_id") or "")
+    if not resolved_id:
+        raise typer.BadParameter("--recovery-id or --latest is required")
+    _echo_validation_payload(
+        readiness_health_recovery.validate_readiness_health_recovery_artifact(
+            recovery_id=resolved_id,
             output_dir=output_dir,
         )
     )
