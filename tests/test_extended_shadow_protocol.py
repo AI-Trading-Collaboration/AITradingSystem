@@ -12,6 +12,8 @@ from ai_trading_system.reports.extended_shadow_protocol import (
     CHECK_SPECS,
     EXTENDED_SHADOW_BLOCKED,
     EXTENDED_SHADOW_ELIGIBLE,
+    EXTENDED_SHADOW_NOT_READY,
+    EXTENDED_SHADOW_REVIEW_REQUIRED,
     MINIMUM_OBSERVATION_TRADING_DAYS,
     PASS_STATUS,
     PASS_WITH_WARNINGS_STATUS,
@@ -34,6 +36,94 @@ def test_extended_shadow_protocol_eligible_with_strict_evidence(tmp_path: Path) 
     assert payload["summary"]["observed_trading_days"] == MINIMUM_OBSERVATION_TRADING_DAYS
     assert payload["summary"]["blocked_check_count"] == 0
     assert validation["validation_status"] == PASS_STATUS
+
+
+def test_extended_shadow_protocol_not_ready_for_observation_only_gap(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "extended_shadow_observation_clock": {
+                "observation_clock_status": "OBSERVATION_PERIOD_UNMET",
+                "summary": {
+                    "current_count": 0,
+                    "required_count": MINIMUM_OBSERVATION_TRADING_DAYS,
+                },
+            },
+        },
+    )
+
+    payload = build_extended_shadow_protocol_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_extended_shadow_protocol_payload(payload)
+
+    assert payload["eligibility_status"] == EXTENDED_SHADOW_NOT_READY
+    assert payload["summary"]["observed_trading_days"] == 0
+    assert payload["reader_brief"]["next_action"] == "continue_collecting_valid_observation_days"
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_extended_shadow_protocol_review_required_for_warning_only_evidence(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "etf_dynamic_v3_paper_shadow_weekly_review": {
+                "coverage_status": "MANUAL_REVIEW_REQUIRED",
+                "summary": {
+                    "observation_trading_days": MINIMUM_OBSERVATION_TRADING_DAYS,
+                },
+            },
+        },
+    )
+
+    payload = build_extended_shadow_protocol_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_extended_shadow_protocol_payload(payload)
+
+    assert payload["eligibility_status"] == EXTENDED_SHADOW_REVIEW_REQUIRED
+    assert payload["summary"]["blocked_check_count"] == 0
+    assert payload["summary"]["warning_check_count"] == 1
+    assert (
+        payload["reader_brief"]["next_action"]
+        == "complete_manual_review_before_extended_shadow"
+    )
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_extended_shadow_protocol_blocks_benchmark_underperformance(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "etf_dynamic_v3_benchmark_baseline_control": {
+                "benchmark_baseline_status": "CANDIDATE_UNDERPERFORMS_BASELINES",
+            },
+        },
+    )
+
+    payload = build_extended_shadow_protocol_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_extended_shadow_protocol_payload(payload)
+
+    assert payload["eligibility_status"] == EXTENDED_SHADOW_BLOCKED
+    assert any(
+        reason["source_id"] == "benchmark_comparison"
+        for reason in payload["blocking_reasons"]
+    )
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
 
 
 def test_extended_shadow_protocol_blocks_unresolved_warnings_and_observation_gap(

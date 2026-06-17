@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -28,7 +28,14 @@ VALIDATION_REPORT_TYPE = "extended_shadow_protocol_validation"
 
 EXTENDED_SHADOW_ELIGIBLE = "EXTENDED_SHADOW_ELIGIBLE"
 EXTENDED_SHADOW_BLOCKED = "EXTENDED_SHADOW_BLOCKED"
-ELIGIBILITY_STATUSES = (EXTENDED_SHADOW_ELIGIBLE, EXTENDED_SHADOW_BLOCKED)
+EXTENDED_SHADOW_NOT_READY = "EXTENDED_SHADOW_NOT_READY"
+EXTENDED_SHADOW_REVIEW_REQUIRED = "EXTENDED_SHADOW_REVIEW_REQUIRED"
+ELIGIBILITY_STATUSES = (
+    EXTENDED_SHADOW_ELIGIBLE,
+    EXTENDED_SHADOW_BLOCKED,
+    EXTENDED_SHADOW_NOT_READY,
+    EXTENDED_SHADOW_REVIEW_REQUIRED,
+)
 
 PASS_STATUS = "PASS"
 PASS_WITH_WARNINGS_STATUS = "PASS_WITH_WARNINGS"
@@ -140,7 +147,7 @@ CHECK_SPECS: tuple[dict[str, Any], ...] = (
             "PASS",
         ),
         "warning_markers": ("MIXED", "WARNING"),
-        "block_markers": ("INSUFFICIENT", "BLOCK", "MISSING"),
+        "block_markers": ("INSUFFICIENT", "UNDERPERFORMS", "BLOCK", "MISSING"),
     },
     {
         "check_id": "owner_review_complete",
@@ -235,9 +242,7 @@ def build_extended_shadow_protocol_payload(
         for check in checklist
         if check.get("check_status") == "WARNING"
     ]
-    eligibility_status = (
-        EXTENDED_SHADOW_BLOCKED if blocking_reasons or warning_reasons else EXTENDED_SHADOW_ELIGIBLE
-    )
+    eligibility_status = _eligibility_status(blocking_reasons, warning_reasons)
     candidate_id = _candidate_id(checklist)
     summary = {
         "candidate_id": candidate_id,
@@ -407,7 +412,10 @@ def validate_extended_shadow_protocol_payload(payload: Mapping[str, Any]) -> dic
             {
                 "issue_id": "extended_shadow_protocol_contains_evidence_limitations",
                 "eligibility_status": _text(payload.get("eligibility_status")),
-                "message": "Protocol is structurally valid but extended shadow remains blocked.",
+                "message": (
+                    "Protocol is structurally valid but extended shadow remains blocked, "
+                    "not ready, or manual-review-only."
+                ),
                 "recommended_action": _text(payload.get("next_action")),
             }
         )
@@ -775,6 +783,32 @@ def _blocking_reason(check: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _eligibility_status(
+    blocking_reasons: Sequence[Mapping[str, Any]],
+    warning_reasons: Sequence[Mapping[str, Any]],
+) -> str:
+    if not blocking_reasons and not warning_reasons:
+        return EXTENDED_SHADOW_ELIGIBLE
+    if blocking_reasons and all(
+        _is_observation_period_reason(reason) for reason in blocking_reasons
+    ):
+        if all(_is_observation_period_reason(reason) for reason in warning_reasons):
+            return EXTENDED_SHADOW_NOT_READY
+    if not blocking_reasons and warning_reasons:
+        return EXTENDED_SHADOW_REVIEW_REQUIRED
+    return EXTENDED_SHADOW_BLOCKED
+
+
+def _is_observation_period_reason(reason: Mapping[str, Any]) -> bool:
+    source_id = _text(reason.get("source_id"))
+    status = _text(reason.get("status")).upper()
+    if source_id == "minimum_observation_period":
+        return True
+    if source_id != "observation_clock":
+        return False
+    return status in {"OBSERVATION_PERIOD_UNMET", "OBSERVATION_PERIOD_PARTIAL"}
+
+
 def _reader_brief(
     summary: Mapping[str, Any],
     blocking_reasons: list[Mapping[str, Any]],
@@ -811,7 +845,15 @@ def _reader_brief(
         "next_action": (
             "resolve_extended_shadow_blockers_before_owner_review"
             if status == EXTENDED_SHADOW_BLOCKED
-            else "owner_may_review_extended_shadow_observation_plan"
+            else (
+                "continue_collecting_valid_observation_days"
+                if status == EXTENDED_SHADOW_NOT_READY
+                else (
+                    "complete_manual_review_before_extended_shadow"
+                    if status == EXTENDED_SHADOW_REVIEW_REQUIRED
+                    else "owner_may_review_extended_shadow_observation_plan"
+                )
+            )
         ),
         "production_effect": PRODUCTION_EFFECT,
     }

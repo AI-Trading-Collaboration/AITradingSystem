@@ -19,7 +19,7 @@ from ai_trading_system.reports.extended_shadow_observation_clock import (
     validate_extended_shadow_observation_clock_payload,
 )
 from ai_trading_system.reports.extended_shadow_protocol import (
-    EXTENDED_SHADOW_BLOCKED,
+    EXTENDED_SHADOW_NOT_READY,
     MINIMUM_OBSERVATION_TRADING_DAYS,
     build_extended_shadow_protocol_payload,
 )
@@ -203,7 +203,7 @@ def test_extended_shadow_protocol_uses_observation_clock_when_available(
         project_root=tmp_path,
     )
 
-    assert protocol["eligibility_status"] == EXTENDED_SHADOW_BLOCKED
+    assert protocol["eligibility_status"] == EXTENDED_SHADOW_NOT_READY
     assert protocol["summary"]["observed_trading_days"] == 5
     assert any(
         check["source_id"] == "observation_clock" and check["check_status"] == "WARNING"
