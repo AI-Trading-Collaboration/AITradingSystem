@@ -1,5 +1,7 @@
 # TRADING-399 Decision Snapshot Lifecycle Policy
 
+最后更新：2026-06-17
+
 ## 背景
 
 Owner review 明确指出：缺失的 `decision_snapshot_YYYY-MM-DD.json` 不得被补造。

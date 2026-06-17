@@ -1,5 +1,7 @@
 # TRADING-394 Monthly Review Recovery Rerun
 
+最后更新：2026-06-17
+
 ## 背景
 
 TRADING-365 建立了 research monthly review pack。TRADING-385~393 已恢复 signal

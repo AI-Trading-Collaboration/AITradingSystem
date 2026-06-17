@@ -1,6 +1,6 @@
 # TRADING-271 to 275 Smoothed Forward Sample Bootstrap and Daily Evidence Collection
 
-最后更新：2026-06-13
+最后更新：2026-06-17
 
 ## 状态
 

@@ -1740,6 +1740,19 @@ YYYY-MM-DD` 只读重跑 canonical recovery governance pack，并把 triage cont
 当前 2026-06-17 rerun 仍为 `RECOVERY_GOVERNANCE_BLOCKED`，normal paper-shadow
 `false`，extended shadow / live trading 继续 forbidden，`production_effect=none`。
 
+TRADING-408～419_RECOVERY_BLOCKER_RESOLUTION_BATCH 继续处理 recovery blockers。
+`aits reports remaining-blocker-resolution-ledger --as-of YYYY-MM-DD` 把 remaining
+blockers / warnings 映射到 source、artifact、dependency、root cause、owner/code/data
+action 和 normal/extended/live boundary；`aits reports report-index-warning-cleanup
+--as-of YYYY-MM-DD` 对照当前 report index 区分 true blocker、stale artifact、metadata
+repair 和 owner review needs，且不 silent waive；`aits reports normal-paper-shadow-observation-clock
+--as-of YYYY-MM-DD` 只有在 normal resumption gate non-blocked 后才开始 normal observation
+计数；`aits reports post-recovery-governance-pack --as-of YYYY-MM-DD` 汇总 latest recovery
+pack、ledger、warning cleanup、clock 和 owner decision audit log。各命令都有对应
+`validate-*` CLI。该 batch 不补造 signal/cost/benchmark/observation artifact、不把
+`owner_action=hold` 解读为 normal observation authorization、不批准 extended shadow 或
+live trading、不写 official target weights、不触发 broker/order，`production_effect=none`。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

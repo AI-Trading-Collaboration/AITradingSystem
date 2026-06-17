@@ -1,6 +1,6 @@
 # TRADING-174 Full Pytest Runtime and Validation Tier Optimization
 
-最后更新：2026-06-10
+最后更新：2026-06-17
 
 ## 1. 背景
 

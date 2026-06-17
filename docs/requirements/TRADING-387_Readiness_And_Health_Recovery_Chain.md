@@ -1,5 +1,7 @@
 # TRADING-387 Readiness And Health Recovery Chain
 
+最后更新：2026-06-17
+
 ## Status
 
 DONE on 2026-06-17.

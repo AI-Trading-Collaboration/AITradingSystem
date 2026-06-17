@@ -1,6 +1,6 @@
 # TRADING-381 Extended Shadow Protocol
 
-最后更新：2026-06-16
+最后更新：2026-06-17
 
 状态：DONE
 

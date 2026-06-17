@@ -94,7 +94,15 @@ from ai_trading_system.prediction_ledger import (
 from ai_trading_system.report_traceability import (
     default_report_trace_bundle_path,
 )
+from ai_trading_system.reports import (
+    normal_paper_shadow_observation_clock as normal_observation_clock_reports,
+)
+from ai_trading_system.reports import post_recovery_governance_pack as post_recovery_reports
 from ai_trading_system.reports import recovery_triage as recovery_triage_reports
+from ai_trading_system.reports import (
+    remaining_blocker_resolution_ledger as blocker_ledger_reports,
+)
+from ai_trading_system.reports import report_index_warning_cleanup as warning_cleanup_reports
 from ai_trading_system.reports.artifact_lineage import (
     build_artifact_lineage_payload,
     default_artifact_lineage_json_path,
@@ -5203,6 +5211,754 @@ def validate_recovery_owner_action_map_command(
     )
     _print_recovery_triage_validation_result(
         "Recovery owner action map",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("remaining-blocker-resolution-ledger")
+def remaining_blocker_resolution_ledger_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Remaining blocker resolution ledger 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    blocker_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage JSON 路径。"),
+    ] = None,
+    warning_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 路径。"),
+    ] = None,
+    source_depth_audit_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth audit JSON 路径。"),
+    ] = None,
+    owner_action_map_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Remaining blocker resolution ledger JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Remaining blocker resolution ledger Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-408：生成只读 remaining blocker/warning resolution ledger。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = blocker_ledger_reports.build_remaining_blocker_resolution_ledger_payload(
+        as_of=report_date,
+        recovery_pack_path=recovery_pack_path
+        or default_research_governance_recovery_pack_json_path(reports_dir, report_date),
+        blocker_triage_path=blocker_triage_path
+        or recovery_triage_reports.default_recovery_blocker_triage_json_path(
+            reports_dir,
+            report_date,
+        ),
+        warning_triage_path=warning_triage_path
+        or recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        ),
+        source_depth_audit_path=source_depth_audit_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_json_path(
+            reports_dir,
+            report_date,
+        ),
+        owner_action_map_path=owner_action_map_path
+        or recovery_triage_reports.default_recovery_owner_action_map_json_path(
+            reports_dir,
+            report_date,
+        ),
+        reports_dir=reports_dir,
+    )
+    report_date = _parse_date(str(payload.get("as_of") or report_date.isoformat()))
+    report_json = (
+        json_output_path
+        or blocker_ledger_reports.default_remaining_blocker_resolution_ledger_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or blocker_ledger_reports.default_remaining_blocker_resolution_ledger_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = blocker_ledger_reports.write_remaining_blocker_resolution_ledger_json(
+        payload,
+        report_json,
+    )
+    md_path = blocker_ledger_reports.write_remaining_blocker_resolution_ledger_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    ledger_status = payload["ledger_status"]
+    console.print(f"[yellow]Remaining blocker resolution ledger：{ledger_status}[/yellow]")
+    console.print(f"Remaining blocker resolution ledger JSON：{json_path}")
+    console.print(f"Remaining blocker resolution ledger Markdown：{md_path}")
+    console.print(
+        f"blockers：{summary['blocker_count']}；"
+        f"warnings：{summary['warning_count']}；"
+        f"normal_shadow：{summary['normal_paper_shadow_may_resume']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"production_effect={payload['production_effect']}；只读 ledger"
+    )
+
+
+@reports_app.command("validate-remaining-blocker-resolution-ledger")
+def validate_remaining_blocker_resolution_ledger_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 remaining blocker resolution ledger JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Remaining blocker resolution ledger validation 日期。",
+        ),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Remaining blocker resolution ledger JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Remaining blocker resolution ledger validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Remaining blocker resolution ledger validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-408 remaining blocker resolution ledger。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            blocker_ledger_reports.latest_remaining_blocker_resolution_ledger_json_path,
+            "remaining blocker resolution ledger",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = (
+            blocker_ledger_reports.default_remaining_blocker_resolution_ledger_json_path(
+                reports_dir,
+                report_date,
+            )
+        )
+    raw_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Remaining blocker resolution ledger",
+    )
+    payload = blocker_ledger_reports.validate_remaining_blocker_resolution_ledger_payload(
+        raw_payload
+    )
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "remaining_blocker_resolution_ledger": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or blocker_ledger_reports.default_remaining_blocker_resolution_ledger_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    default_ledger_validation_md = (
+        blocker_ledger_reports.default_remaining_blocker_resolution_ledger_validation_markdown_path
+    )
+    validation_md = markdown_output_path or default_ledger_validation_md(
+        reports_dir,
+        report_date,
+    )
+    json_path = blocker_ledger_reports.write_remaining_blocker_resolution_ledger_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = (
+        blocker_ledger_reports.write_remaining_blocker_resolution_ledger_validation_markdown(
+            payload,
+            validation_md,
+        )
+    )
+    _print_recovery_triage_validation_result(
+        "Remaining blocker resolution ledger",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("report-index-warning-cleanup")
+def report_index_warning_cleanup_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Report index warning cleanup 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    warning_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 路径。"),
+    ] = None,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning cleanup JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning cleanup Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-414：只读清理 report-index warnings，不应用 silent waiver。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = warning_cleanup_reports.build_report_index_warning_cleanup_payload(
+        as_of=report_date,
+        report_index_warning_triage_path=warning_triage_path
+        or recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        ),
+        report_index_path=report_index_path or default_report_index_json_path(
+            reports_dir,
+            report_date,
+        ),
+        reports_dir=reports_dir,
+    )
+    report_date = _parse_date(str(payload.get("as_of") or report_date.isoformat()))
+    report_json = (
+        json_output_path
+        or warning_cleanup_reports.default_report_index_warning_cleanup_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or warning_cleanup_reports.default_report_index_warning_cleanup_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = warning_cleanup_reports.write_report_index_warning_cleanup_json(
+        payload,
+        report_json,
+    )
+    md_path = warning_cleanup_reports.write_report_index_warning_cleanup_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    style = "green" if payload["cleanup_status"] == "REPORT_INDEX_WARNINGS_CLEARED" else "yellow"
+    console.print(f"[{style}]Report index warning cleanup：{payload['cleanup_status']}[/{style}]")
+    console.print(f"Report index warning cleanup JSON：{json_path}")
+    console.print(f"Report index warning cleanup Markdown：{md_path}")
+    console.print(
+        f"remaining_unwaived：{summary['remaining_unwaived_count']}；"
+        f"fixed：{summary['fixed_warning_count']}；"
+        f"silent_waivers：{summary['silent_waiver_count']}；"
+        f"production_effect={payload['production_effect']}；只读 cleanup"
+    )
+
+
+@reports_app.command("validate-report-index-warning-cleanup")
+def validate_report_index_warning_cleanup_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 report index warning cleanup JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Report index warning cleanup validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning cleanup JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning cleanup validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning cleanup validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-414 report-index warning cleanup。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            warning_cleanup_reports.latest_report_index_warning_cleanup_json_path,
+            "report index warning cleanup",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = warning_cleanup_reports.default_report_index_warning_cleanup_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(source_path, "Report index warning cleanup")
+    payload = warning_cleanup_reports.validate_report_index_warning_cleanup_payload(raw_payload)
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "report_index_warning_cleanup": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or warning_cleanup_reports.default_report_index_warning_cleanup_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or warning_cleanup_reports.default_report_index_warning_cleanup_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = warning_cleanup_reports.write_report_index_warning_cleanup_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = warning_cleanup_reports.write_report_index_warning_cleanup_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result(
+        "Report index warning cleanup",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("normal-paper-shadow-observation-clock")
+def normal_paper_shadow_observation_clock_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Normal paper-shadow observation clock 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 report_index JSON。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal paper-shadow observation clock JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal paper-shadow observation clock Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-418：生成 normal paper-shadow observation clock bootstrap。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest and report_index_path is None:
+        source_index = max(
+            reports_dir.glob("report_index_????-??-??.json"),
+            default=None,
+            key=lambda path: path.name,
+        )
+        if source_index is None:
+            raise typer.BadParameter(f"未找到 report index JSON：{reports_dir}")
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_index = report_index_path or default_report_index_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_index = _read_json_mapping_for_report_cli(source_index, "Report index")
+    report_date = _parse_date(str(raw_index.get("as_of") or date.today().isoformat()))
+    payload = normal_observation_clock_reports.build_normal_paper_shadow_observation_clock_payload(
+        as_of=report_date,
+        report_index_payload=raw_index,
+        report_index_path=source_index,
+        project_root=project_root,
+    )
+    report_json = (
+        json_output_path
+        or normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    default_normal_clock_md = (
+        normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_markdown_path
+    )
+    report_md = markdown_output_path or default_normal_clock_md(
+        reports_dir,
+        report_date,
+    )
+    json_path = normal_observation_clock_reports.write_normal_paper_shadow_observation_clock_json(
+        payload,
+        report_json,
+    )
+    md_path = normal_observation_clock_reports.write_normal_paper_shadow_observation_clock_markdown(
+        payload,
+        report_md,
+    )
+    status = payload["normal_observation_clock_status"]
+    style = "green" if status == "OBSERVATION_PERIOD_MET" else "yellow"
+    summary = payload["summary"]
+    console.print(f"[{style}]Normal paper-shadow observation clock：{status}[/{style}]")
+    console.print(f"Normal paper-shadow observation clock JSON：{json_path}")
+    console.print(f"Normal paper-shadow observation clock Markdown：{md_path}")
+    console.print(
+        f"normal_shadow：{summary['normal_paper_shadow_may_resume']}；"
+        f"current：{summary['current_count']}；"
+        f"required：{summary['required_count']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"production_effect={payload['production_effect']}；只读 clock"
+    )
+
+
+@reports_app.command("validate-normal-paper-shadow-observation-clock")
+def validate_normal_paper_shadow_observation_clock_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 normal paper-shadow observation clock JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Normal observation clock validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal paper-shadow observation clock JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal observation clock validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal observation clock validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-418 normal paper-shadow observation clock。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            normal_observation_clock_reports.latest_normal_paper_shadow_observation_clock_json_path,
+            "normal paper-shadow observation clock",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = (
+            normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_json_path(
+                reports_dir,
+                report_date,
+            )
+        )
+    raw_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Normal paper-shadow observation clock",
+    )
+    payload = (
+        normal_observation_clock_reports.validate_normal_paper_shadow_observation_clock_payload(
+            raw_payload
+        )
+    )
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "normal_paper_shadow_observation_clock": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    default_normal_clock_validation_json = (
+        normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_validation_json_path
+    )
+    validation_json = json_output_path or default_normal_clock_validation_json(
+        reports_dir,
+        report_date,
+    )
+    default_normal_clock_validation_md = (
+        normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_validation_markdown_path
+    )
+    validation_md = markdown_output_path or default_normal_clock_validation_md(
+        reports_dir,
+        report_date,
+    )
+    json_path = (
+        normal_observation_clock_reports.write_normal_paper_shadow_observation_clock_validation_json(
+            payload,
+            validation_json,
+        )
+    )
+    md_path = (
+        normal_observation_clock_reports.write_normal_paper_shadow_observation_clock_validation_markdown(
+            payload,
+            validation_md,
+        )
+    )
+    _print_recovery_triage_validation_result(
+        "Normal paper-shadow observation clock",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("post-recovery-governance-pack")
+def post_recovery_governance_pack_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Post-recovery governance pack 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    blocker_ledger_path: Annotated[
+        Path | None,
+        typer.Option(help="Remaining blocker resolution ledger JSON 路径。"),
+    ] = None,
+    warning_cleanup_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning cleanup JSON 路径。"),
+    ] = None,
+    normal_observation_clock_path: Annotated[
+        Path | None,
+        typer.Option(help="Normal paper-shadow observation clock JSON 路径。"),
+    ] = None,
+    owner_decision_audit_log_path: Annotated[
+        Path | None,
+        typer.Option(help="Owner decision audit log report JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Post-recovery governance pack JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Post-recovery governance pack Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-419：生成 final post-recovery governance pack。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payload = post_recovery_reports.build_post_recovery_governance_pack_payload(
+        as_of=report_date,
+        recovery_pack_path=recovery_pack_path
+        or default_research_governance_recovery_pack_json_path(reports_dir, report_date),
+        blocker_ledger_path=blocker_ledger_path
+        or blocker_ledger_reports.default_remaining_blocker_resolution_ledger_json_path(
+            reports_dir,
+            report_date,
+        ),
+        warning_cleanup_path=warning_cleanup_path
+        or warning_cleanup_reports.default_report_index_warning_cleanup_json_path(
+            reports_dir,
+            report_date,
+        ),
+        normal_observation_clock_path=normal_observation_clock_path
+        or normal_observation_clock_reports.default_normal_paper_shadow_observation_clock_json_path(
+            reports_dir,
+            report_date,
+        ),
+        owner_decision_audit_log_path=owner_decision_audit_log_path,
+        reports_dir=reports_dir,
+    )
+    report_date = _parse_date(str(payload.get("as_of") or report_date.isoformat()))
+    report_json = (
+        json_output_path
+        or post_recovery_reports.default_post_recovery_governance_pack_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or post_recovery_reports.default_post_recovery_governance_pack_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = post_recovery_reports.write_post_recovery_governance_pack_json(
+        payload,
+        report_json,
+    )
+    md_path = post_recovery_reports.write_post_recovery_governance_pack_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    style = "red" if payload["post_recovery_status"] == "POST_RECOVERY_BLOCKED" else "yellow"
+    if payload["post_recovery_status"] == "POST_RECOVERY_HEALTHY":
+        style = "green"
+    post_status = payload["post_recovery_status"]
+    console.print(f"[{style}]Post-recovery governance pack：{post_status}[/{style}]")
+    console.print(f"Post-recovery governance pack JSON：{json_path}")
+    console.print(f"Post-recovery governance pack Markdown：{md_path}")
+    console.print(
+        f"blockers：{summary['remaining_blocker_count']}；"
+        f"warnings：{summary['remaining_warning_count']}；"
+        f"normal_shadow：{summary['normal_paper_shadow_may_resume']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"next_owner_action：{summary['next_owner_action']}；"
+        f"production_effect={payload['production_effect']}；只读 governance"
+    )
+
+
+@reports_app.command("validate-post-recovery-governance-pack")
+def validate_post_recovery_governance_pack_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 post-recovery governance pack JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Post-recovery governance validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Post-recovery governance pack JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Post-recovery governance validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Post-recovery governance validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-419 post-recovery governance pack。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            post_recovery_reports.latest_post_recovery_governance_pack_json_path,
+            "post-recovery governance pack",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = post_recovery_reports.default_post_recovery_governance_pack_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(source_path, "Post-recovery governance pack")
+    payload = post_recovery_reports.validate_post_recovery_governance_pack_payload(raw_payload)
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "post_recovery_governance_pack": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or post_recovery_reports.default_post_recovery_governance_pack_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or post_recovery_reports.default_post_recovery_governance_pack_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = post_recovery_reports.write_post_recovery_governance_pack_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = post_recovery_reports.write_post_recovery_governance_pack_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result(
+        "Post-recovery governance pack",
         payload,
         json_path,
         md_path,

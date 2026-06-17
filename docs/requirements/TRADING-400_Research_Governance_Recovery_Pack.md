@@ -1,5 +1,7 @@
 # TRADING-400 Research Governance Recovery Pack
 
+最后更新：2026-06-17
+
 ## 背景
 
 TRADING-385 到 TRADING-399 已逐项恢复或重跑 signal inputs、readiness/health、

@@ -1,5 +1,7 @@
 # TRADING-393 Owner Review Template V2 Instantiation
 
+最后更新：2026-06-17
+
 ## 背景
 
 TRADING-364 建立了 reusable owner review template v2 和 filled review validation

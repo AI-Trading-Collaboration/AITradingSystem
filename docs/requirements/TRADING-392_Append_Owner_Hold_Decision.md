@@ -1,5 +1,7 @@
 # TRADING-392 Append Owner Hold Decision
 
+最后更新：2026-06-17
+
 ## 背景
 
 `outputs/reports/TRADING-384_owner_review_2026-06-17.md` 记录了 owner review

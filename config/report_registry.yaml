@@ -8017,6 +8017,161 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: remaining_blocker_resolution_ledger
+    title: Remaining Blocker Resolution Ledger
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports remaining-blocker-resolution-ledger --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/remaining_blocker_resolution_ledger_*.json
+      - outputs/reports/remaining_blocker_resolution_ledger_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-408 maps every remaining recovery blocker and warning to its
+      source artifact, dependency, root cause, owner/code/data action, and
+      normal/extended/live boundary without resolving blockers or changing
+      trading state.
+    owner_action: review_remaining_blocker_resolution_order_before_recovery_rerun
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: remaining_blocker_resolution_ledger_validation
+    title: Remaining Blocker Resolution Ledger Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-remaining-blocker-resolution-ledger --latest
+    artifact_globs:
+      - outputs/reports/remaining_blocker_resolution_ledger_validation_*.json
+      - outputs/reports/remaining_blocker_resolution_ledger_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Remaining blocker ledger validation should fail closed on missing ledger
+      fields, count drift, Reader Brief gaps, or safety-boundary drift while
+      keeping unresolved blockers and warnings visible.
+    owner_action: run_after_remaining_blocker_resolution_ledger
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: report_index_warning_cleanup
+    title: Report Index Warning Cleanup
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports report-index-warning-cleanup --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/report_index_warning_cleanup_*.json
+      - outputs/reports/report_index_warning_cleanup_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-414 reconciles report-index warning triage with the current report
+      index, distinguishes true blockers, stale artifacts, owner-review needs,
+      and metadata repairs, and does not create silent waivers.
+    owner_action: regenerate_real_artifacts_or_keep_report_index_warnings_visible
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: report_index_warning_cleanup_validation
+    title: Report Index Warning Cleanup Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-report-index-warning-cleanup --latest
+    artifact_globs:
+      - outputs/reports/report_index_warning_cleanup_validation_*.json
+      - outputs/reports/report_index_warning_cleanup_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Report-index warning cleanup validation should fail closed on count drift,
+      missing actions, Reader Brief gaps, safety-boundary drift, or any silent
+      waiver application.
+    owner_action: run_after_report_index_warning_cleanup
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: normal_paper_shadow_observation_clock
+    title: Normal Paper Shadow Observation Clock
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports normal-paper-shadow-observation-clock --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/normal_paper_shadow_observation_clock_*.json
+      - outputs/reports/normal_paper_shadow_observation_clock_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-418 bootstraps the normal paper-shadow observation clock from the
+      normal resumption gate and weekly review evidence. It only starts counting
+      after normal paper-shadow resumption is allowed and never approves
+      extended shadow or live trading.
+    owner_action: record_continue_normal_shadow_before_normal_observation_can_start
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: normal_paper_shadow_observation_clock_validation
+    title: Normal Paper Shadow Observation Clock Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-normal-paper-shadow-observation-clock --latest
+    artifact_globs:
+      - outputs/reports/normal_paper_shadow_observation_clock_validation_*.json
+      - outputs/reports/normal_paper_shadow_observation_clock_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Normal observation clock validation should fail closed on enum drift,
+      observation-count inconsistency, Reader Brief gaps, or live-trading
+      boundary drift while allowing PASS_WITH_WARNINGS for unmet observation.
+    owner_action: run_after_normal_paper_shadow_observation_clock
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: post_recovery_governance_pack
+    title: Post-Recovery Governance Pack
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports post-recovery-governance-pack --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/post_recovery_governance_pack_*.json
+      - outputs/reports/post_recovery_governance_pack_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-419 summarizes the latest recovery pack, blocker ledger, report
+      warning cleanup, normal observation clock, and owner decision audit log
+      after blocker-resolution reruns, with explicit normal/extended/live
+      boundaries.
+    owner_action: review_post_recovery_governance_pack_before_any_owner_recovery_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: post_recovery_governance_pack_validation
+    title: Post-Recovery Governance Pack Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-post-recovery-governance-pack --latest
+    artifact_globs:
+      - outputs/reports/post_recovery_governance_pack_validation_*.json
+      - outputs/reports/post_recovery_governance_pack_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Post-recovery governance pack validation should fail closed on missing
+      boundary fields, live-trading boundary drift, Reader Brief gaps, or
+      safety-boundary drift.
+    owner_action: run_after_post_recovery_governance_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance
