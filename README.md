@@ -1724,19 +1724,33 @@ production state，不生成 official target weights、order ticket 或 broker a
 缺 required section、revisit decision、lessons learned 或带 state/broker/order mutation flag 时
 fail closed。
 
+TRADING-396_EXTENDED_SHADOW_OBSERVATION_CLOCK 新增 extended-shadow minimum observation
+period clock。`aits reports extended-shadow-observation-clock --as-of YYYY-MM-DD`
+只读读取同日 report index 中的 paper-shadow weekly review 和 promotion board evidence，
+输出 `outputs/reports/extended_shadow_observation_clock_YYYY-MM-DD.json/md`；`aits reports
+validate-extended-shadow-observation-clock --latest` 输出 validation artifact。Clock status
+限定为 `OBSERVATION_PERIOD_UNMET|OBSERVATION_PERIOD_PARTIAL|OBSERVATION_PERIOD_MET`，
+披露 observation start date、complete / missing / invalid days、invalid reasons 和
+current / required count。缺可审计 observation days 必须保持 unmet，不补造 observation dates，
+也不批准 extended shadow、live trading、official target、order ticket、broker action 或
+production mutation。
+
 TRADING-381_EXTENDED_SHADOW_PROTOCOL 新增 extended shadow protocol eligibility report。
 `aits reports extended-shadow-protocol --as-of YYYY-MM-DD` 只读读取同日 report index 和
 既有 promotion board、evidence staleness monitor、weekly review、readiness、safety audit、
-cost sensitivity、benchmark baseline、owner decision audit log 与 lineage graph，输出
+cost sensitivity、benchmark baseline、owner decision audit log、lineage graph 与
+extended-shadow observation clock，输出
 `outputs/reports/extended_shadow_protocol_YYYY-MM-DD.json/md`。`aits reports
 validate-extended-shadow-protocol --latest` 输出 validation artifact。Protocol 严格要求 no
 blocking stale data、no unresolved safety warnings、stable weekly review coverage、acceptable
 cost sensitivity、benchmark comparison available、owner review complete、lineage graph
-available，并满足 TRADING-350 pilot baseline minimum observation period `20` trading days。
+available，并通过 observation clock 满足 TRADING-350 pilot baseline minimum observation
+period `20` trading days。
 该 report 只能输出 `EXTENDED_SHADOW_ELIGIBLE|EXTENDED_SHADOW_BLOCKED`；即使 eligible 也只表示
 owner 可继续复核 extended paper-shadow observation plan，不是 live trading 或 official
 allocation approval；不运行上游、不刷新数据、不补造 observation / owner / metrics，不修改
-candidate / paper-shadow / production state，不生成 official target weights、order ticket 或 broker action。
+candidate / paper-shadow / production state，不生成 official target weights、order ticket 或
+broker action。
 
 TRADING-382_RESEARCH_ROADMAP_DASHBOARD 新增只读 research roadmap dashboard。
 `aits reports research-roadmap-dashboard --as-of YYYY-MM-DD` 聚合

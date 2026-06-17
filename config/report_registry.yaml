@@ -7679,6 +7679,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: extended_shadow_observation_clock
+    title: Extended Shadow Observation Clock
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports extended-shadow-observation-clock --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/extended_shadow_observation_clock_????-??-??.json
+      - outputs/reports/extended_shadow_observation_clock_????-??-??.md
+    freshness_sla_days: 31
+    freshness_rationale: Extended-shadow observation clock should be current before extended shadow protocol interpretation or owner extended-shadow review.
+    owner_action: run_before_extended_shadow_protocol
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: extended_shadow_observation_clock_validation
+    title: Extended Shadow Observation Clock Validation
+    group: governance
+    cadence: monthly
+    audience: operator
+    owner: system
+    command: aits reports validate-extended-shadow-observation-clock --latest
+    artifact_globs:
+      - outputs/reports/extended_shadow_observation_clock_validation_*.json
+      - outputs/reports/extended_shadow_observation_clock_validation_*.md
+    freshness_sla_days: 31
+    freshness_rationale: Extended-shadow observation clock validation should fail closed on schema drift, count mismatch, unsafe production effect, or safety-boundary drift.
+    owner_action: run_after_extended_shadow_observation_clock
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: extended_shadow_protocol
     title: Extended Shadow Protocol
     group: governance

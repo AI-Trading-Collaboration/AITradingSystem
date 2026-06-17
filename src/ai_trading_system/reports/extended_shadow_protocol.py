@@ -164,6 +164,17 @@ CHECK_SPECS: tuple[dict[str, Any], ...] = (
         "warning_markers": ("WARNING", "STALE"),
         "block_markers": ("FAIL", "BLOCK", "MISSING"),
     },
+    {
+        "check_id": "observation_clock_period_met",
+        "source_id": "observation_clock",
+        "report_id": "extended_shadow_observation_clock",
+        "label": "Extended-shadow observation clock",
+        "preferred_json_names": ("extended_shadow_observation_clock.json",),
+        "status_fields": ("observation_clock_status", "status"),
+        "pass_statuses": ("OBSERVATION_PERIOD_MET",),
+        "warning_markers": ("OBSERVATION_PERIOD_PARTIAL",),
+        "block_markers": ("OBSERVATION_PERIOD_UNMET", "MISSING", "FAIL"),
+    },
 )
 
 
@@ -690,11 +701,24 @@ def _check_status(
 
 def _observation_days(checks: list[dict[str, Any]]) -> int:
     candidate_keys = (
+        "current_count",
         "observation_trading_days",
         "observed_trading_days",
         "paper_shadow_observation_trading_days",
         "observation_day_count",
     )
+    for check in checks:
+        if (
+            _text(check.get("source_id")) == "observation_clock"
+            and check.get("availability") == "AVAILABLE"
+        ):
+            summary = _mapping(check.get("summary"))
+            for key in candidate_keys:
+                if key in summary:
+                    return _int(summary.get(key))
+                if key in check:
+                    return _int(check.get(key))
+            return 0
     values: list[int] = []
     for check in checks:
         summary = _mapping(check.get("summary"))

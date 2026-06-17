@@ -171,6 +171,7 @@ def build_reader_brief_payload(
     research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
     paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
     candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
+    extended_shadow_observation_clock = _extended_shadow_observation_clock_summary(report_index)
     extended_shadow_protocol = _extended_shadow_protocol_summary(report_index)
     research_roadmap_dashboard = _research_roadmap_dashboard_summary(report_index)
     research_governance_end_to_end_pack = _research_governance_end_to_end_pack_summary(
@@ -338,6 +339,7 @@ def build_reader_brief_payload(
         "research_monthly_review_pack": research_monthly_review_pack,
         "paper_shadow_promotion_board": paper_shadow_promotion_board,
         "candidate_rejection_postmortem": candidate_rejection_postmortem,
+        "extended_shadow_observation_clock": extended_shadow_observation_clock,
         "extended_shadow_protocol": extended_shadow_protocol,
         "research_roadmap_dashboard": research_roadmap_dashboard,
         "research_governance_end_to_end_pack": research_governance_end_to_end_pack,
@@ -668,6 +670,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
     paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
     candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
+    extended_shadow_observation_clock = _mapping(
+        payload.get("extended_shadow_observation_clock")
+    )
     extended_shadow_protocol = _mapping(payload.get("extended_shadow_protocol"))
     research_roadmap_dashboard = _mapping(payload.get("research_roadmap_dashboard"))
     research_governance_end_to_end_pack = _mapping(
@@ -1195,6 +1200,44 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         candidate_rejection_postmortem.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Extended Shadow Observation Clock",
+            _definition_table(
+                [
+                    ("availability", extended_shadow_observation_clock.get("availability")),
+                    ("status", extended_shadow_observation_clock.get("status")),
+                    (
+                        "observation_clock_status",
+                        extended_shadow_observation_clock.get("observation_clock_status"),
+                    ),
+                    (
+                        "validation_status",
+                        extended_shadow_observation_clock.get("validation_status"),
+                    ),
+                    ("candidate_id", extended_shadow_observation_clock.get("candidate_id")),
+                    (
+                        "observation_start_date",
+                        extended_shadow_observation_clock.get("observation_start_date"),
+                    ),
+                    ("current_count", extended_shadow_observation_clock.get("current_count")),
+                    ("required_count", extended_shadow_observation_clock.get("required_count")),
+                    (
+                        "missing_day_count",
+                        extended_shadow_observation_clock.get("missing_day_count"),
+                    ),
+                    (
+                        "invalid_day_count",
+                        extended_shadow_observation_clock.get("invalid_day_count"),
+                    ),
+                    ("next_action", extended_shadow_observation_clock.get("next_action")),
+                    ("detail_report", extended_shadow_observation_clock.get("detail_report")),
+                    (
+                        "production_effect",
+                        extended_shadow_observation_clock.get("production_effect"),
                     ),
                 ]
             ),
@@ -7444,6 +7487,84 @@ def _missing_candidate_rejection_postmortem_summary(reason: str) -> dict[str, An
         "summary_sentence": (
             "candidate_rejection_postmortem_template artifact missing; run reports "
             "candidate-rejection-postmortem-template."
+        ),
+        "limitation": reason,
+    }
+
+
+def _extended_shadow_observation_clock_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_extended_shadow_observation_clock_summary(
+            "report_index artifact missing; Reader Brief cannot discover observation clock."
+        )
+    report_path = _report_index_artifact_path(report_index, "extended_shadow_observation_clock")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_extended_shadow_observation_clock_summary(
+            "extended_shadow_observation_clock artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "extended_shadow_observation_clock_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    status = _text(
+        payload.get("observation_clock_status"),
+        _text(payload.get("status"), "UNKNOWN"),
+    )
+    validation_status = _text(
+        _mapping(validation_payload).get("validation_status"),
+        "MISSING",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "observation_clock_status": status,
+        "validation_status": validation_status,
+        "candidate_id": _text(summary.get("candidate_id"), _text(payload.get("candidate_id"))),
+        "observation_start_date": _text(summary.get("observation_start_date")),
+        "current_count": _int(summary.get("current_count")),
+        "required_count": _int(summary.get("required_count")),
+        "missing_day_count": _int(summary.get("missing_day_count")),
+        "invalid_day_count": _int(summary.get("invalid_day_count")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"extended_shadow_observation_clock={status}; "
+            f"validation={validation_status}; "
+            f"current={_int(summary.get('current_count'))}/"
+            f"{_int(summary.get('required_count'))}; "
+            f"invalid={_int(summary.get('invalid_day_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads latest observation clock artifacts; it does not "
+            "run paper-shadow observation or fabricate missing days."
+        ),
+    }
+
+
+def _missing_extended_shadow_observation_clock_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "observation_clock_status": "MISSING",
+        "validation_status": "MISSING",
+        "candidate_id": "",
+        "observation_start_date": "",
+        "current_count": 0,
+        "required_count": 0,
+        "missing_day_count": 0,
+        "invalid_day_count": 0,
+        "next_action": "run_aits_reports_extended_shadow_observation_clock_then_validate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "extended_shadow_observation_clock artifact missing; run reports "
+            "extended-shadow-observation-clock."
         ),
         "limitation": reason,
     }
@@ -23747,6 +23868,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "candidate_rejection_postmortem_template_validation": (
             "确认 rejection postmortem required sections、filled record 和安全边界是否通过。"
         ),
+        "extended_shadow_observation_clock": (
+            "查看 extended-shadow observation clock 的 current/required count 和 missing/invalid days。"
+        ),
+        "extended_shadow_observation_clock_validation": (
+            "确认 observation clock count policy、Reader Brief section 和安全边界是否通过。"
+        ),
         "extended_shadow_protocol": (
             "查看 extended shadow eligibility、minimum observation period 和 blocker。"
         ),
@@ -23904,10 +24031,20 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual rejection review",
         "Candidate rejection postmortem template 或 filled record 生成后立即校验。",
     ),
+    "extended_shadow_observation_clock": (
+        "monthly",
+        "manual extended shadow review",
+        "Paper-shadow weekly review、promotion board 或 extended shadow protocol 准备后生成。",
+    ),
+    "extended_shadow_observation_clock_validation": (
+        "monthly",
+        "manual extended shadow review",
+        "Extended-shadow observation clock 生成后立即校验 count policy 和安全边界。",
+    ),
     "extended_shadow_protocol": (
         "monthly",
         "manual extended shadow review",
-        "Promotion board、owner decision、safety audit 和 lineage 更新后生成。",
+        "Promotion board、observation clock、owner decision、safety audit 和 lineage 更新后生成。",
     ),
     "extended_shadow_protocol_validation": (
         "monthly",

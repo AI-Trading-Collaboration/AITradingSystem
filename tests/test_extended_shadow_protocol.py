@@ -48,6 +48,13 @@ def test_extended_shadow_protocol_blocks_unresolved_warnings_and_observation_gap
             "etf_dynamic_v3_paper_shadow_weekly_review": {
                 "summary": {"observation_trading_days": 5},
             },
+            "extended_shadow_observation_clock": {
+                "observation_clock_status": "OBSERVATION_PERIOD_PARTIAL",
+                "summary": {
+                    "current_count": 5,
+                    "required_count": MINIMUM_OBSERVATION_TRADING_DAYS,
+                },
+            },
         },
     )
 
@@ -252,6 +259,13 @@ def _source_payload(report_id: str) -> dict[str, object]:
             },
             "artifact_lineage_graph": {
                 "lineage_status": "PASS",
+            },
+            "extended_shadow_observation_clock": {
+                "observation_clock_status": "OBSERVATION_PERIOD_MET",
+                "summary": {
+                    "current_count": MINIMUM_OBSERVATION_TRADING_DAYS,
+                    "required_count": MINIMUM_OBSERVATION_TRADING_DAYS,
+                },
             },
         }.get(report_id, {})
     )
