@@ -323,6 +323,7 @@ def build_research_governance_recovery_pack_payload(
         _source_record(spec, report_index_payload, project_root=project_root)
         for spec in SOURCE_REPORT_SPECS
     ]
+    report_index_visibility = _report_index_visibility(report_index_payload)
     structural_blockers = _structural_blockers(source_reports)
     remaining_blockers = _remaining_blockers(source_reports)
     remaining_warnings = _remaining_warnings(source_reports)
@@ -341,6 +342,7 @@ def build_research_governance_recovery_pack_payload(
         remaining_blockers,
         manual_review_items,
         remaining_warnings,
+        report_index_visibility,
     )
     summary = _summary(
         pack_status,
@@ -353,6 +355,7 @@ def build_research_governance_recovery_pack_payload(
         normal_boundary,
         extended_boundary,
         live_boundary,
+        report_index_visibility,
     )
     reader_brief = _reader_brief(
         summary,
@@ -398,6 +401,7 @@ def build_research_governance_recovery_pack_payload(
         "remaining_blockers": remaining_blockers,
         "remaining_warnings": remaining_warnings,
         "manual_review_items": manual_review_items,
+        "report_index_visibility": report_index_visibility,
         "next_owner_action": next_owner_action,
         "normal_paper_shadow_boundary": normal_boundary,
         "extended_shadow_boundary": extended_boundary,
@@ -581,6 +585,14 @@ def validate_research_governance_recovery_pack_payload(
                 ),
             }
         )
+    if _int(summary.get("report_index_unwaived_warning_count")) > 0:
+        warning_issues.append(
+            {
+                "issue_id": "recovery_governance_contains_unwaived_report_index_warnings",
+                "message": "Report index has unwaived warnings that require explicit triage.",
+                "recommended_action": "run_report_index_warning_triage_before_owner_review",
+            }
+        )
 
     validation_status = FAIL_STATUS
     if not blocking_issues:
@@ -603,6 +615,9 @@ def validate_research_governance_recovery_pack_payload(
         ),
         "live_trading_remains_forbidden": bool(
             summary.get("live_trading_remains_forbidden")
+        ),
+        "report_index_unwaived_warning_count": _int(
+            summary.get("report_index_unwaived_warning_count")
         ),
     }
     return {
@@ -752,6 +767,14 @@ def render_research_governance_recovery_pack_markdown(payload: Mapping[str, Any]
             ),
             f"- live_trading_remains_forbidden: {summary.get('live_trading_remains_forbidden')}",
             "",
+            "## Report Index Visibility",
+            "",
+            f"- report_index_status: {summary.get('report_index_status')}",
+            (
+                "- report_index_unwaived_warning_count: "
+                f"{summary.get('report_index_unwaived_warning_count')}"
+            ),
+            "",
             "## Safety Boundary",
             "",
             "- recovery governance pack is advisory only.",
@@ -783,6 +806,10 @@ def render_research_governance_recovery_pack_validation_markdown(
         f"- warnings: {summary.get('warning_check_count')}",
         f"- remaining_blockers: {summary.get('remaining_blocker_count')}",
         f"- remaining_warnings: {summary.get('remaining_warning_count')}",
+        (
+            "- report_index_unwaived_warning_count: "
+            f"{summary.get('report_index_unwaived_warning_count')}"
+        ),
         f"- live_trading_remains_forbidden: {summary.get('live_trading_remains_forbidden')}",
         f"- production_effect: {payload.get('production_effect')}",
         "",
@@ -948,6 +975,29 @@ def _manual_review_items(source_reports: Sequence[Mapping[str, Any]]) -> list[di
     return items
 
 
+def _report_index_visibility(report_index_payload: Mapping[str, Any]) -> dict[str, Any]:
+    summary = _mapping(report_index_payload.get("summary"))
+    visibility_audit = _mapping(report_index_payload.get("visibility_audit"))
+    unwaived_issue_ids = [
+        _text(issue_id)
+        for issue_id in visibility_audit.get("unwaived_issue_ids", [])
+        if _text(issue_id)
+    ]
+    warnings = [_text(warning) for warning in report_index_payload.get("warnings", [])]
+    unwaived_count = _int(summary.get("unwaived_warning_count"), len(unwaived_issue_ids))
+    return {
+        "report_index_status": _text(report_index_payload.get("status")),
+        "report_count": _int(summary.get("report_count")),
+        "unwaived_warning_count": unwaived_count,
+        "unwaived_issue_ids": unwaived_issue_ids,
+        "warnings": warnings,
+        "production_effect": _text(
+            report_index_payload.get("production_effect"),
+            PRODUCTION_EFFECT,
+        ),
+    }
+
+
 def _normal_paper_shadow_boundary(
     source_reports: Sequence[Mapping[str, Any]],
     blockers: Sequence[Mapping[str, Any]],
@@ -1065,12 +1115,13 @@ def _pack_status(
     blockers: Sequence[Mapping[str, Any]],
     manual_review_items: Sequence[Mapping[str, Any]],
     warnings: Sequence[Mapping[str, Any]],
+    report_index_visibility: Mapping[str, Any] | None = None,
 ) -> str:
     if structural_blockers or blockers:
         return RECOVERY_GOVERNANCE_BLOCKED
     if manual_review_items:
         return RECOVERY_GOVERNANCE_MANUAL_REVIEW_REQUIRED
-    if warnings:
+    if warnings or _int(_mapping(report_index_visibility).get("unwaived_warning_count")) > 0:
         return RECOVERY_GOVERNANCE_HEALTHY_WITH_WARNINGS
     return RECOVERY_GOVERNANCE_HEALTHY
 
@@ -1086,6 +1137,7 @@ def _summary(
     normal_boundary: Mapping[str, Any],
     extended_boundary: Mapping[str, Any],
     live_boundary: Mapping[str, Any],
+    report_index_visibility: Mapping[str, Any],
 ) -> dict[str, Any]:
     validation_statuses = [_text(source.get("validation_status")) for source in source_reports]
     return {
@@ -1121,6 +1173,10 @@ def _summary(
         ),
         "live_trading_remains_forbidden": bool(
             live_boundary.get("live_trading_remains_forbidden")
+        ),
+        "report_index_status": _text(report_index_visibility.get("report_index_status")),
+        "report_index_unwaived_warning_count": _int(
+            report_index_visibility.get("unwaived_warning_count")
         ),
         "production_effect": PRODUCTION_EFFECT,
     }

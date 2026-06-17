@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import date
 from pathlib import Path
 from typing import Annotated
@@ -94,6 +94,7 @@ from ai_trading_system.prediction_ledger import (
 from ai_trading_system.report_traceability import (
     default_report_trace_bundle_path,
 )
+from ai_trading_system.reports import recovery_triage as recovery_triage_reports
 from ai_trading_system.reports.artifact_lineage import (
     build_artifact_lineage_payload,
     default_artifact_lineage_json_path,
@@ -4431,6 +4432,954 @@ def validate_research_governance_recovery_pack_command(
         f"remaining_blockers：{summary['remaining_blocker_count']}；"
         f"remaining_warnings：{summary['remaining_warning_count']}；"
         f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+def _read_json_mapping_for_report_cli(path: Path, label: str) -> dict[str, object]:
+    try:
+        raw_payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"{label} JSON not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"{label} JSON cannot be parsed: {path}") from exc
+    if not isinstance(raw_payload, dict):
+        raise typer.BadParameter(f"{label} JSON must be an object: {path}")
+    return raw_payload
+
+
+def _latest_report_json_path(
+    reports_dir: Path,
+    latest_fn: Callable[[Path], Path | None],
+    label: str,
+) -> Path:
+    latest_path = latest_fn(reports_dir)
+    if latest_path is None:
+        raise typer.BadParameter(f"未找到 {label} JSON：{reports_dir}")
+    return latest_path
+
+
+@reports_app.command("recovery-blocker-triage")
+def recovery_blocker_triage_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery blocker triage 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 research governance recovery pack JSON。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 TRADING-401 recovery blocker triage；只读，不解决 blocker。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if recovery_pack_path is not None:
+        source_path = recovery_pack_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            latest_research_governance_recovery_pack_json_path,
+            "research governance recovery pack",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_research_governance_recovery_pack_json_path(
+            reports_dir,
+            report_date,
+        )
+    source_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Research governance recovery pack",
+    )
+    report_date = _parse_date(str(source_payload.get("as_of") or date.today().isoformat()))
+    payload = recovery_triage_reports.build_recovery_blocker_triage_payload(
+        as_of=report_date,
+        recovery_pack_payload=source_payload,
+        recovery_pack_path=source_path,
+    )
+    report_json = (
+        json_output_path
+        or recovery_triage_reports.default_recovery_blocker_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_recovery_blocker_triage_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_recovery_blocker_triage_json(
+        payload,
+        report_json,
+    )
+    md_path = recovery_triage_reports.write_recovery_blocker_triage_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    console.print("[yellow]Recovery blocker triage：RECOVERY_BLOCKERS_PRESENT[/yellow]")
+    console.print(f"Recovery blocker triage JSON：{json_path}")
+    console.print(f"Recovery blocker triage Markdown：{md_path}")
+    console.print(
+        f"blockers：{summary['recovery_blocker_count']}；"
+        f"normal_shadow：{summary['normal_paper_shadow_may_resume']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"production_effect={payload['production_effect']}；只读 triage"
+    )
+
+
+@reports_app.command("validate-recovery-blocker-triage")
+def validate_recovery_blocker_triage_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 recovery blocker triage JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery blocker triage validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage JSON 路径；优先于 --latest/--as-of。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-401 recovery blocker triage。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            recovery_triage_reports.latest_recovery_blocker_triage_json_path,
+            "recovery blocker triage",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = recovery_triage_reports.default_recovery_blocker_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(source_path, "Recovery blocker triage")
+    payload = recovery_triage_reports.validate_recovery_blocker_triage_payload(raw_payload)
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "recovery_blocker_triage": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or recovery_triage_reports.default_recovery_blocker_triage_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_recovery_blocker_triage_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_recovery_blocker_triage_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = recovery_triage_reports.write_recovery_blocker_triage_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result("Recovery blocker triage", payload, json_path, md_path)
+
+
+@reports_app.command("report-index-warning-triage")
+def report_index_warning_triage_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Report index warning triage 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 report index JSON。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 TRADING-402 report-index unwaived warning triage；不应用 waiver。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if report_index_path is not None:
+        source_path = report_index_path
+    elif latest:
+        source_path = max(
+            reports_dir.glob("report_index_????-??-??.json"),
+            default=None,
+            key=lambda path: path.name,
+        )
+        if source_path is None:
+            raise typer.BadParameter(f"未找到 report index JSON：{reports_dir}")
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_report_index_json_path(reports_dir, report_date)
+    raw_index = _read_json_mapping_for_report_cli(source_path, "Report index")
+    report_date = _parse_date(str(raw_index.get("as_of") or date.today().isoformat()))
+    payload = recovery_triage_reports.build_report_index_warning_triage_payload(
+        as_of=report_date,
+        report_index_payload=raw_index,
+        report_index_path=source_path,
+    )
+    report_json = (
+        json_output_path
+        or recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_report_index_warning_triage_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_report_index_warning_triage_json(
+        payload,
+        report_json,
+    )
+    md_path = recovery_triage_reports.write_report_index_warning_triage_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    console.print(f"[yellow]Report index warning triage：{payload['triage_status']}[/yellow]")
+    console.print(f"Report index warning triage JSON：{json_path}")
+    console.print(f"Report index warning triage Markdown：{md_path}")
+    console.print(
+        f"unwaived：{summary['unwaived_warning_count']}；"
+        f"true_blockers：{summary['true_blocker_count']}；"
+        f"silent_waivers：{summary['silent_waiver_count']}；"
+        f"production_effect={payload['production_effect']}；只读 triage"
+    )
+
+
+@reports_app.command("validate-report-index-warning-triage")
+def validate_report_index_warning_triage_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 report index warning triage JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Report index warning triage validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-402 report-index warning triage。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            recovery_triage_reports.latest_report_index_warning_triage_json_path,
+            "report index warning triage",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Report index warning triage",
+    )
+    payload = recovery_triage_reports.validate_report_index_warning_triage_payload(raw_payload)
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "report_index_warning_triage": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or recovery_triage_reports.default_report_index_warning_triage_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_report_index_warning_triage_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_report_index_warning_triage_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = recovery_triage_reports.write_report_index_warning_triage_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result(
+        "Report index warning triage",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("recovery-pack-source-depth-audit")
+def recovery_pack_source_depth_audit_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery source depth audit 日期。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 reports_dir 中最新 research governance recovery pack JSON。"),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径；可覆盖 pack input_artifacts。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth audit JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth audit Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 TRADING-404 recovery pack source depth audit。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if recovery_pack_path is not None:
+        source_path = recovery_pack_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            latest_research_governance_recovery_pack_json_path,
+            "research governance recovery pack",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = default_research_governance_recovery_pack_json_path(
+            reports_dir,
+            report_date,
+        )
+    source_payload = _read_json_mapping_for_report_cli(
+        source_path,
+        "Research governance recovery pack",
+    )
+    report_date = _parse_date(str(source_payload.get("as_of") or date.today().isoformat()))
+    report_index_payload = (
+        _read_json_mapping_for_report_cli(report_index_path, "Report index")
+        if report_index_path is not None
+        else None
+    )
+    payload = recovery_triage_reports.build_recovery_pack_source_depth_audit_payload(
+        as_of=report_date,
+        recovery_pack_payload=source_payload,
+        recovery_pack_path=source_path,
+        report_index_payload=report_index_payload,
+        report_index_path=report_index_path,
+        project_root=project_root,
+    )
+    report_json = (
+        json_output_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_recovery_pack_source_depth_audit_json(
+        payload,
+        report_json,
+    )
+    md_path = recovery_triage_reports.write_recovery_pack_source_depth_audit_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    style = (
+        "red"
+        if payload["source_depth_audit_status"] == "RECOVERY_SOURCE_BLOCKED"
+        else "yellow"
+    )
+    console.print(
+        f"[{style}]Recovery source depth audit："
+        f"{payload['source_depth_audit_status']}[/{style}]"
+    )
+    console.print(f"Recovery source depth audit JSON：{json_path}")
+    console.print(f"Recovery source depth audit Markdown：{md_path}")
+    console.print(
+        f"source_availability：{summary['source_availability']}；"
+        f"unhealthy：{summary['unhealthy_source_count']}；"
+        f"blocked：{summary['blocked_source_count']}；"
+        f"production_effect={payload['production_effect']}；只读 audit"
+    )
+
+
+@reports_app.command("validate-recovery-pack-source-depth-audit")
+def validate_recovery_pack_source_depth_audit_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 recovery source depth audit JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery source depth validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth audit JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-404 recovery source depth audit。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            recovery_triage_reports.latest_recovery_pack_source_depth_audit_json_path,
+            "recovery source depth audit",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = recovery_triage_reports.default_recovery_pack_source_depth_audit_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(source_path, "Recovery source depth audit")
+    payload = recovery_triage_reports.validate_recovery_pack_source_depth_audit_payload(
+        raw_payload
+    )
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "recovery_pack_source_depth_audit": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = markdown_output_path
+    if validation_md is None:
+        rt = recovery_triage_reports
+        default_source_depth_validation_md = (
+            rt.default_recovery_pack_source_depth_audit_validation_markdown_path
+        )
+        validation_md = default_source_depth_validation_md(reports_dir, report_date)
+    json_path = recovery_triage_reports.write_recovery_pack_source_depth_audit_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = recovery_triage_reports.write_recovery_pack_source_depth_audit_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result(
+        "Recovery source depth audit",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("recovery-owner-action-map")
+def recovery_owner_action_map_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery owner action map 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    recovery_pack_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance recovery pack JSON 路径。"),
+    ] = None,
+    blocker_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage JSON 路径。"),
+    ] = None,
+    warning_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 路径。"),
+    ] = None,
+    source_depth_audit_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth audit JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 TRADING-405 recovery owner action map。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    recovery_path = recovery_pack_path or default_research_governance_recovery_pack_json_path(
+        reports_dir,
+        report_date,
+    )
+    blocker_path = (
+        blocker_triage_path
+        or recovery_triage_reports.default_recovery_blocker_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    warning_path = (
+        warning_triage_path
+        or recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    source_audit_path = (
+        source_depth_audit_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    recovery_payload = _read_json_mapping_for_report_cli(
+        recovery_path,
+        "Research governance recovery pack",
+    )
+    blocker_payload = _read_json_mapping_for_report_cli(blocker_path, "Recovery blocker triage")
+    warning_payload = _read_json_mapping_for_report_cli(warning_path, "Report index warning triage")
+    source_audit_payload = _read_json_mapping_for_report_cli(
+        source_audit_path,
+        "Recovery source depth audit",
+    )
+    report_date = _parse_date(str(recovery_payload.get("as_of") or report_date.isoformat()))
+    payload = recovery_triage_reports.build_recovery_owner_action_map_payload(
+        as_of=report_date,
+        recovery_pack_payload=recovery_payload,
+        blocker_triage_payload=blocker_payload,
+        report_index_warning_triage_payload=warning_payload,
+        source_depth_audit_payload=source_audit_payload,
+        input_artifacts={
+            "research_governance_recovery_pack": str(recovery_path),
+            "recovery_blocker_triage": str(blocker_path),
+            "report_index_warning_triage": str(warning_path),
+            "recovery_pack_source_depth_audit": str(source_audit_path),
+        },
+    )
+    report_json = (
+        json_output_path
+        or recovery_triage_reports.default_recovery_owner_action_map_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    report_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_recovery_owner_action_map_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_recovery_owner_action_map_json(
+        payload,
+        report_json,
+    )
+    md_path = recovery_triage_reports.write_recovery_owner_action_map_markdown(
+        payload,
+        report_md,
+    )
+    summary = payload["summary"]
+    console.print(
+        f"[yellow]Recovery owner action map："
+        f"{payload['owner_action_map_status']}[/yellow]"
+    )
+    console.print(f"Recovery owner action map JSON：{json_path}")
+    console.print(f"Recovery owner action map Markdown：{md_path}")
+    console.print(
+        f"open_actions：{summary['open_action_count']}；"
+        f"next_owner_action：{summary['next_owner_action']}；"
+        f"live_forbidden：{summary['live_trading_forbidden']}；"
+        f"production_effect={payload['production_effect']}；只读 checklist"
+    )
+
+
+@reports_app.command("validate-recovery-owner-action-map")
+def validate_recovery_owner_action_map_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 reports_dir 中最新 recovery owner action map JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery owner action map validation 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map JSON 路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-405 recovery owner action map。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if source_json_path is not None:
+        source_path = source_json_path
+    elif latest:
+        source_path = _latest_report_json_path(
+            reports_dir,
+            recovery_triage_reports.latest_recovery_owner_action_map_json_path,
+            "recovery owner action map",
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        source_path = recovery_triage_reports.default_recovery_owner_action_map_json_path(
+            reports_dir,
+            report_date,
+        )
+    raw_payload = _read_json_mapping_for_report_cli(source_path, "Recovery owner action map")
+    payload = recovery_triage_reports.validate_recovery_owner_action_map_payload(raw_payload)
+    payload["input_artifacts"] = {
+        **dict(payload.get("input_artifacts", {})),
+        "recovery_owner_action_map": str(source_path),
+    }
+    report_date = _parse_date(str(payload.get("as_of") or date.today().isoformat()))
+    validation_json = (
+        json_output_path
+        or recovery_triage_reports.default_recovery_owner_action_map_validation_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    validation_md = (
+        markdown_output_path
+        or recovery_triage_reports.default_recovery_owner_action_map_validation_markdown_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    json_path = recovery_triage_reports.write_recovery_owner_action_map_validation_json(
+        payload,
+        validation_json,
+    )
+    md_path = recovery_triage_reports.write_recovery_owner_action_map_validation_markdown(
+        payload,
+        validation_md,
+    )
+    _print_recovery_triage_validation_result(
+        "Recovery owner action map",
+        payload,
+        json_path,
+        md_path,
+    )
+
+
+@reports_app.command("recovery-governance-rerun-after-triage")
+def recovery_governance_rerun_after_triage_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Recovery governance rerun 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 路径。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 artifact path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    blocker_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery blocker triage JSON 路径。"),
+    ] = None,
+    warning_triage_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index warning triage JSON 路径。"),
+    ] = None,
+    source_depth_audit_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery source depth audit JSON 路径。"),
+    ] = None,
+    owner_action_map_path: Annotated[
+        Path | None,
+        typer.Option(help="Recovery owner action map JSON 路径。"),
+    ] = None,
+) -> None:
+    """TRADING-407：triage 后只读 rerun canonical recovery governance pack。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_index = report_index_path or default_report_index_json_path(reports_dir, report_date)
+    raw_index = _read_json_mapping_for_report_cli(source_index, "Report index")
+    report_date = _parse_date(str(raw_index.get("as_of") or report_date.isoformat()))
+    blocker_path = (
+        blocker_triage_path
+        or recovery_triage_reports.default_recovery_blocker_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    warning_path = (
+        warning_triage_path
+        or recovery_triage_reports.default_report_index_warning_triage_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    source_audit_path = (
+        source_depth_audit_path
+        or recovery_triage_reports.default_recovery_pack_source_depth_audit_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    action_map_path = (
+        owner_action_map_path
+        or recovery_triage_reports.default_recovery_owner_action_map_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    blocker_payload = _read_json_mapping_for_report_cli(blocker_path, "Recovery blocker triage")
+    warning_payload = _read_json_mapping_for_report_cli(warning_path, "Report index warning triage")
+    source_audit_payload = _read_json_mapping_for_report_cli(
+        source_audit_path,
+        "Recovery source depth audit",
+    )
+    action_map_payload = _read_json_mapping_for_report_cli(
+        action_map_path,
+        "Recovery owner action map",
+    )
+    recovery_payload = build_research_governance_recovery_pack_payload(
+        as_of=report_date,
+        report_index_payload=raw_index,
+        report_index_path=source_index,
+        project_root=project_root,
+    )
+    triage_context = recovery_triage_reports.build_recovery_governance_rerun_triage_context(
+        blocker_triage_payload=blocker_payload,
+        report_index_warning_triage_payload=warning_payload,
+        source_depth_audit_payload=source_audit_payload,
+        owner_action_map_payload=action_map_payload,
+        input_artifacts={
+            "recovery_blocker_triage": str(blocker_path),
+            "report_index_warning_triage": str(warning_path),
+            "recovery_pack_source_depth_audit": str(source_audit_path),
+            "recovery_owner_action_map": str(action_map_path),
+        },
+    )
+    recovery_payload = recovery_triage_reports.attach_triage_context_to_recovery_pack(
+        recovery_payload,
+        triage_context,
+    )
+    report_json = default_research_governance_recovery_pack_json_path(
+        reports_dir,
+        report_date,
+    )
+    report_md = default_research_governance_recovery_pack_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_research_governance_recovery_pack_json(recovery_payload, report_json)
+    md_path = write_research_governance_recovery_pack_markdown(recovery_payload, report_md)
+    validation_payload = validate_research_governance_recovery_pack_payload(recovery_payload)
+    validation_payload["input_artifacts"] = {
+        **dict(validation_payload.get("input_artifacts", {})),
+        "research_governance_recovery_pack": str(json_path),
+        **triage_context["input_artifacts"],
+    }
+    validation_payload["triage_context"] = triage_context["summary"]
+    validation_json = default_research_governance_recovery_pack_validation_json_path(
+        reports_dir,
+        report_date,
+    )
+    validation_md = default_research_governance_recovery_pack_validation_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    validation_json_path = write_research_governance_recovery_pack_validation_json(
+        validation_payload,
+        validation_json,
+    )
+    validation_md_path = write_research_governance_recovery_pack_validation_markdown(
+        validation_payload,
+        validation_md,
+    )
+    summary = recovery_payload["summary"]
+    status = recovery_payload["recovery_governance_status"]
+    style = "red" if status == "RECOVERY_GOVERNANCE_BLOCKED" else "yellow"
+    console.print(f"[{style}]Recovery governance rerun after triage：{status}[/{style}]")
+    console.print(f"Research governance recovery pack JSON：{json_path}")
+    console.print(f"Research governance recovery pack Markdown：{md_path}")
+    console.print(f"Research governance recovery validation JSON：{validation_json_path}")
+    console.print(f"Research governance recovery validation Markdown：{validation_md_path}")
+    console.print(
+        f"remaining_blockers：{summary['remaining_blocker_count']}；"
+        f"remaining_warnings：{summary['remaining_warning_count']}；"
+        f"normal_shadow：{summary['normal_paper_shadow_may_resume']}；"
+        f"extended_forbidden：{summary['extended_shadow_remains_forbidden']}；"
+        f"live_forbidden：{summary['live_trading_remains_forbidden']}；"
+        f"production_effect={recovery_payload['production_effect']}；只读 rerun"
+    )
+
+
+def _print_recovery_triage_validation_result(
+    label: str,
+    payload: Mapping[str, object],
+    json_path: Path,
+    md_path: Path,
+) -> None:
+    status = str(payload["validation_status"])
+    style = "green" if status == "PASS" else "yellow"
+    if status == "FAIL":
+        style = "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]{label} validation：{status}[/{style}]")
+    console.print(f"{label} validation JSON：{json_path}")
+    console.print(f"{label} validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"warnings：{summary['warning_check_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
     if status == "FAIL":

@@ -13,6 +13,7 @@ from ai_trading_system.reports.research_governance_recovery_pack import (
     PASS_WITH_WARNINGS_STATUS,
     RECOVERY_GOVERNANCE_BLOCKED,
     RECOVERY_GOVERNANCE_HEALTHY,
+    RECOVERY_GOVERNANCE_HEALTHY_WITH_WARNINGS,
     RECOVERY_GOVERNANCE_MANUAL_REVIEW_REQUIRED,
     SOURCE_REPORT_SPECS,
     build_research_governance_recovery_pack_payload,
@@ -121,6 +122,102 @@ def test_research_governance_recovery_pack_blocks_real_recovery_markers(
         }
     )
     assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_research_governance_recovery_pack_healthy_with_source_warnings(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        payload_overrides={
+            "etf_dynamic_v3_signal_input_recovery": {
+                "restoration_status": "SIGNAL_INPUTS_RESTORED_WITH_WARNINGS",
+                "status": "SIGNAL_INPUTS_RESTORED_WITH_WARNINGS",
+                "next_required_action": "review_signal_input_warnings",
+            },
+        },
+    )
+
+    payload = build_research_governance_recovery_pack_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_research_governance_recovery_pack_payload(payload)
+
+    assert payload["recovery_governance_status"] == RECOVERY_GOVERNANCE_HEALTHY_WITH_WARNINGS
+    assert payload["summary"]["remaining_blocker_count"] == 0
+    assert payload["summary"]["remaining_warning_count"] == 1
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_research_governance_recovery_pack_missing_source_fails_closed(
+    tmp_path: Path,
+) -> None:
+    payload = build_research_governance_recovery_pack_payload(
+        as_of=RUN_DATE,
+        report_index_payload=_report_index_payload(
+            tmp_path,
+            omit={"etf_dynamic_v3_cost_sensitivity_review"},
+        ),
+        project_root=tmp_path,
+    )
+    validation = validate_research_governance_recovery_pack_payload(payload)
+
+    assert payload["recovery_governance_status"] == RECOVERY_GOVERNANCE_BLOCKED
+    assert payload["summary"]["structural_blocker_count"] == 1
+    assert validation["validation_status"] == "FAIL"
+
+
+def test_research_governance_recovery_pack_unwaived_report_index_warning_state(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(tmp_path)
+    report_index["status"] = "PASS_WITH_WARNINGS"
+    report_index["summary"] = {
+        **dict(report_index["summary"]),
+        "unwaived_warning_count": 1,
+    }
+    report_index["visibility_audit"] = {"unwaived_issue_ids": ["daily_score_stale"]}
+    report_index["warnings"] = ["daily_score_stale:age_days=2;sla=1"]
+
+    payload = build_research_governance_recovery_pack_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_research_governance_recovery_pack_payload(payload)
+
+    assert payload["recovery_governance_status"] == RECOVERY_GOVERNANCE_HEALTHY_WITH_WARNINGS
+    assert payload["summary"]["remaining_warning_count"] == 0
+    assert payload["summary"]["report_index_unwaived_warning_count"] == 1
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+    assert any(
+        issue["issue_id"] == "recovery_governance_contains_unwaived_report_index_warnings"
+        for issue in validation["warning_issues"]
+    )
+
+
+def test_research_governance_recovery_pack_rejects_live_trading_boundary_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_research_governance_recovery_pack_payload(
+        as_of=RUN_DATE,
+        report_index_payload=_report_index_payload(tmp_path),
+        project_root=tmp_path,
+    )
+    payload["live_trading_boundary"] = {
+        **dict(payload["live_trading_boundary"]),
+        "live_trading_remains_forbidden": False,
+        "live_trading_may_resume": True,
+    }
+    validation = validate_research_governance_recovery_pack_payload(payload)
+
+    assert validation["validation_status"] == "FAIL"
+    assert any(
+        issue["issue_id"] == "live_trading_forbidden"
+        for issue in validation["blocking_issues"]
+    )
 
 
 def test_research_governance_recovery_pack_manual_review_when_owner_holds(

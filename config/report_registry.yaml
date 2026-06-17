@@ -7879,6 +7879,144 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: recovery_blocker_triage
+    title: Recovery Blocker Triage
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports recovery-blocker-triage --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/recovery_blocker_triage_*.json
+      - outputs/reports/recovery_blocker_triage_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-401 expands the recovery governance pack's remaining blockers
+      into a machine-readable owner/code/data triage surface without resolving
+      blockers or changing trading boundaries.
+    owner_action: review_recovery_blocker_triage_before_owner_resumption_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: recovery_blocker_triage_validation
+    title: Recovery Blocker Triage Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-recovery-blocker-triage --latest
+    artifact_globs:
+      - outputs/reports/recovery_blocker_triage_validation_*.json
+      - outputs/reports/recovery_blocker_triage_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Recovery blocker triage validation should preserve blocker count, Reader Brief fields, and normal/extended/live safety boundaries.
+    owner_action: run_after_recovery_blocker_triage
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: report_index_warning_triage
+    title: Report Index Warning Triage
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports report-index-warning-triage --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/report_index_warning_triage_*.json
+      - outputs/reports/report_index_warning_triage_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-402 classifies unwaived report-index warnings and proposes an
+      explicit action for each without silently applying waivers.
+    owner_action: review_unwaived_report_index_warning_triage
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: report_index_warning_triage_validation
+    title: Report Index Warning Triage Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-report-index-warning-triage --latest
+    artifact_globs:
+      - outputs/reports/report_index_warning_triage_validation_*.json
+      - outputs/reports/report_index_warning_triage_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Report index warning triage validation should fail closed on silent waiver application or incomplete explicit-waiver recommendations.
+    owner_action: run_after_report_index_warning_triage
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: recovery_pack_source_depth_audit
+    title: Recovery Pack Source Depth Audit
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports recovery-pack-source-depth-audit --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/recovery_pack_source_depth_audit_*.json
+      - outputs/reports/recovery_pack_source_depth_audit_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-404 verifies that recovery pack source availability means sources
+      are usable, fresh enough, complete, and not blocked merely present.
+    owner_action: review_unhealthy_recovery_pack_sources
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: recovery_pack_source_depth_audit_validation
+    title: Recovery Pack Source Depth Audit Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-recovery-pack-source-depth-audit --latest
+    artifact_globs:
+      - outputs/reports/recovery_pack_source_depth_audit_validation_*.json
+      - outputs/reports/recovery_pack_source_depth_audit_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Source depth audit validation should preserve source availability counts, source health fields, Reader Brief fields, and read-only safety boundary.
+    owner_action: run_after_recovery_pack_source_depth_audit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: recovery_owner_action_map
+    title: Recovery Owner Action Map
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports recovery-owner-action-map --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/recovery_owner_action_map_*.json
+      - outputs/reports/recovery_owner_action_map_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-405 converts recovery blockers, report-index warnings, and source
+      health issues into an ordered owner/code/data action checklist while
+      keeping live trading forbidden.
+    owner_action: execute_owner_review_only_after_blockers_clear
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: recovery_owner_action_map_validation
+    title: Recovery Owner Action Map Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-recovery-owner-action-map --latest
+    artifact_globs:
+      - outputs/reports/recovery_owner_action_map_validation_*.json
+      - outputs/reports/recovery_owner_action_map_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Owner action map validation should keep next owner/code/data actions visible and live trading forbidden.
+    owner_action: run_after_recovery_owner_action_map
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

@@ -457,7 +457,10 @@ def validate_paper_shadow_promotion_board_payload(payload: Mapping[str, Any]) ->
                 "next_action",
             )
         ),
-        "Reader Brief section must expose summary, key result, blockers, warnings, safety, and next action.",
+        (
+            "Reader Brief section must expose summary, key result, blockers, "
+            "warnings, safety, and next action."
+        ),
         "restore_promotion_board_reader_brief_fields",
     )
     extend_prerequisites_satisfied = _extension_prerequisites_satisfied(checklist)
@@ -470,7 +473,10 @@ def validate_paper_shadow_promotion_board_payload(payload: Mapping[str, Any]) ->
             extend_prerequisites_satisfied
             and _extended_shadow_owner_requested(checklist)
         ),
-        "EXTEND_SHADOW requires every required evidence check to pass and an explicit owner extended-shadow request.",
+        (
+            "EXTEND_SHADOW requires every required evidence check to pass and "
+            "an explicit owner extended-shadow request."
+        ),
         "hold_or_return_candidate_until_extended_shadow_prerequisites_are_satisfied",
         details={
             "failed_required_source_ids": _failed_required_source_ids(checklist),
@@ -484,7 +490,10 @@ def validate_paper_shadow_promotion_board_payload(payload: Mapping[str, Any]) ->
             {
                 "issue_id": "promotion_board_contains_evidence_limitations",
                 "board_decision": _text(payload.get("board_decision")),
-                "message": "Board is structurally valid but contains evidence blockers or warnings.",
+                "message": (
+                    "Board is structurally valid but contains evidence blockers "
+                    "or warnings."
+                ),
                 "recommended_action": _text(payload.get("next_action")),
             }
         )
@@ -525,7 +534,11 @@ def validate_paper_shadow_promotion_board_payload(payload: Mapping[str, Any]) ->
         "safety_boundary": _safety_boundary(),
         "limitations": [
             "Validation is read-only and does not run upstream evidence commands.",
-            "PASS_WITH_WARNINGS means the board is usable for manual review but cannot extend shadow without resolving disclosed blockers or warnings.",
+            (
+                "PASS_WITH_WARNINGS means the board is usable for manual review "
+                "but cannot extend shadow without resolving disclosed blockers "
+                "or warnings."
+            ),
         ],
         "next_action": (
             "use_board_for_manual_owner_review"

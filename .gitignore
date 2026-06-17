@@ -47,7 +47,7 @@ outputs/runs/*
 !outputs/runs/.gitkeep
 outputs/shadow_iterations/*
 !outputs/shadow_iterations/.gitkeep
-reports/
+/reports/
 
 # Notebooks
 .ipynb_checkpoints/
