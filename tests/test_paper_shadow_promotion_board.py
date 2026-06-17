@@ -11,6 +11,7 @@ from ai_trading_system.reports import reader_brief
 from ai_trading_system.reports.paper_shadow_promotion_board import (
     CONTINUE_NORMAL_SHADOW,
     EVIDENCE_SPECS,
+    EXTEND_SHADOW,
     HOLD_FOR_MORE_DATA,
     PASS_STATUS,
     PASS_WITH_WARNINGS_STATUS,
@@ -81,6 +82,123 @@ def test_paper_shadow_promotion_board_rejects_owner_reject(
     assert payload["board_decision"] == REJECT
     assert any(reason["source_id"] == "owner_review" for reason in payload["blocking_reasons"])
     assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_paper_shadow_promotion_board_blocks_adverse_cost_and_benchmark_statuses(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "etf_dynamic_v3_cost_sensitivity_review": {
+                "cost_sensitivity_status": "NOT_MEANINGFUL_UNDER_COSTS",
+                "next_action": "return_candidate_to_research_until_net_improvement_survives_costs",
+            },
+            "etf_dynamic_v3_benchmark_baseline_control": {
+                "benchmark_baseline_status": "CANDIDATE_UNDERPERFORMS_BASELINES",
+                "next_action": (
+                    "return_candidate_to_research_until_it_outperforms_baseline_controls"
+                ),
+            },
+        },
+    )
+
+    payload = build_paper_shadow_promotion_board_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_paper_shadow_promotion_board_payload(payload)
+
+    assert payload["board_decision"] == HOLD_FOR_MORE_DATA
+    assert {
+        reason["source_id"] for reason in payload["blocking_reasons"]
+    } >= {"cost_sensitivity", "benchmark_comparison"}
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_paper_shadow_promotion_board_includes_monthly_review_and_health_inputs(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "research_monthly_review_pack": {
+                "monthly_review_status": "MONTHLY_REVIEW_BLOCKED",
+            },
+            "etf_dynamic_v3_paper_shadow_health": {
+                "paper_shadow_health_status": "MANUAL_REVIEW_REQUIRED",
+            },
+        },
+    )
+
+    payload = build_paper_shadow_promotion_board_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+
+    source_statuses = {
+        check["source_id"]: check["check_status"]
+        for check in payload["required_evidence_checklist"]
+    }
+    assert source_statuses["monthly_review"] == "BLOCKED"
+    assert source_statuses["paper_shadow_health"] == "WARNING"
+    assert payload["board_decision"] == HOLD_FOR_MORE_DATA
+
+
+def test_paper_shadow_promotion_board_does_not_extend_with_warning_prerequisites(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "etf_dynamic_v3_shadow_continuation_readiness": {
+                "shadow_continuation_readiness": "READY_WITH_WARNINGS",
+            },
+            "etf_dynamic_v3_owner_review": {
+                "owner_decision": "enter_extended_shadow",
+                "recommended_action": "enter_extended_shadow",
+            },
+        },
+    )
+
+    payload = build_paper_shadow_promotion_board_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_paper_shadow_promotion_board_payload(payload)
+
+    assert payload["board_decision"] == HOLD_FOR_MORE_DATA
+    assert payload["summary"]["warning_evidence_count"] == 1
+    assert validation["validation_status"] == PASS_WITH_WARNINGS_STATUS
+
+
+def test_paper_shadow_promotion_board_extends_only_with_all_required_evidence_pass(
+    tmp_path: Path,
+) -> None:
+    report_index = _report_index_payload(
+        tmp_path,
+        overrides={
+            "etf_dynamic_v3_owner_review": {
+                "owner_decision": "enter_extended_shadow",
+                "recommended_action": "enter_extended_shadow",
+            },
+        },
+    )
+
+    payload = build_paper_shadow_promotion_board_payload(
+        as_of=RUN_DATE,
+        report_index_payload=report_index,
+        project_root=tmp_path,
+    )
+    validation = validate_paper_shadow_promotion_board_payload(payload)
+
+    assert payload["board_decision"] == EXTEND_SHADOW
+    assert payload["summary"]["blocked_evidence_count"] == 0
+    assert payload["summary"]["warning_evidence_count"] == 0
+    assert validation["validation_status"] == PASS_STATUS
 
 
 def test_paper_shadow_promotion_board_validation_fails_missing_required_source(
@@ -244,6 +362,12 @@ def _source_payload(report_id: str) -> dict[str, object]:
             "etf_dynamic_v3_paper_shadow_weekly_review": {
                 "coverage_status": "FULL_WEEK_REVIEW",
                 "weekly_decision": "CONTINUE",
+            },
+            "research_monthly_review_pack": {
+                "monthly_review_status": "MONTHLY_REVIEW_READY",
+            },
+            "etf_dynamic_v3_paper_shadow_health": {
+                "paper_shadow_health_status": "HEALTHY",
             },
             "etf_dynamic_v3_shadow_continuation_readiness": {
                 "shadow_continuation_readiness": "READY_TO_CONTINUE",

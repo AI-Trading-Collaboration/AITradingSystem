@@ -42,8 +42,44 @@ BOARD_DECISIONS = (
 PASS_STATUS = "PASS"
 PASS_WITH_WARNINGS_STATUS = "PASS_WITH_WARNINGS"
 FAIL_STATUS = "FAIL"
+EXTENDED_SHADOW_OWNER_STATUS_MARKERS = (
+    "ENTER_EXTENDED_SHADOW",
+    "EXTEND_SHADOW",
+    "EXTENDED_SHADOW",
+)
 
 EVIDENCE_SPECS: tuple[dict[str, Any], ...] = (
+    {
+        "check_id": "monthly_review_not_blocked",
+        "source_id": "monthly_review",
+        "report_id": "research_monthly_review_pack",
+        "label": "Research monthly review pack",
+        "preferred_json_names": (
+            "research_monthly_review_pack.json",
+            "research_monthly_review_pack_validation.json",
+        ),
+        "status_fields": ("monthly_review_status", "status"),
+        "pass_statuses": ("MONTHLY_REVIEW_READY", "PASS"),
+        "warning_markers": ("WARNING", "MANUAL_REVIEW_REQUIRED"),
+        "block_markers": ("BLOCKED", "BLOCK", "FAIL"),
+        "required_for_extension": True,
+    },
+    {
+        "check_id": "paper_shadow_health_not_blocking",
+        "source_id": "paper_shadow_health",
+        "report_id": "etf_dynamic_v3_paper_shadow_health",
+        "label": "Canonical paper-shadow health",
+        "preferred_json_names": (
+            "paper_shadow_health_report.json",
+            "paper_shadow_health_manifest.json",
+            "paper_shadow_health_validation.json",
+        ),
+        "status_fields": ("paper_shadow_health_status", "status"),
+        "pass_statuses": ("HEALTHY", "PASS"),
+        "warning_markers": ("WARNING", "MANUAL_REVIEW_REQUIRED"),
+        "block_markers": ("BLOCKED", "BLOCK", "FAIL"),
+        "required_for_extension": True,
+    },
     {
         "check_id": "weekly_review_available",
         "source_id": "weekly_reviews",
@@ -153,7 +189,16 @@ EVIDENCE_SPECS: tuple[dict[str, Any], ...] = (
         "label": "Owner review",
         "preferred_json_names": ("latest_owner_review.json", "owner_review_validation.json"),
         "status_fields": ("owner_decision", "recommended_action", "status"),
-        "pass_statuses": ("monitor", "continue", "continue_shadow", "hold", "PASS"),
+        "pass_statuses": (
+            "monitor",
+            "continue",
+            "continue_shadow",
+            "hold",
+            "enter_extended_shadow",
+            "extend_shadow",
+            "extended_shadow",
+            "PASS",
+        ),
         "warning_markers": ("monitor", "hold", "review"),
         "block_markers": ("reject", "return_to_research"),
         "required_for_extension": True,
@@ -414,6 +459,23 @@ def validate_paper_shadow_promotion_board_payload(payload: Mapping[str, Any]) ->
         ),
         "Reader Brief section must expose summary, key result, blockers, warnings, safety, and next action.",
         "restore_promotion_board_reader_brief_fields",
+    )
+    extend_prerequisites_satisfied = _extension_prerequisites_satisfied(checklist)
+    _append_check(
+        checks,
+        blocking_issues,
+        "extend_shadow_requires_all_prerequisites",
+        _text(payload.get("board_decision")) != EXTEND_SHADOW
+        or (
+            extend_prerequisites_satisfied
+            and _extended_shadow_owner_requested(checklist)
+        ),
+        "EXTEND_SHADOW requires every required evidence check to pass and an explicit owner extended-shadow request.",
+        "hold_or_return_candidate_until_extended_shadow_prerequisites_are_satisfied",
+        details={
+            "failed_required_source_ids": _failed_required_source_ids(checklist),
+            "owner_requested_extended_shadow": _extended_shadow_owner_requested(checklist),
+        },
     )
     if _int(summary.get("blocked_evidence_count")) > 0 or _int(
         summary.get("warning_evidence_count")
@@ -743,12 +805,33 @@ def _board_decision(
         return RETURN_TO_RESEARCH
     if blocking_reasons:
         return HOLD_FOR_MORE_DATA
-    owner_status = _status_for_source(checklist, "owner_review").lower()
-    if "enter_extended_shadow" in owner_status or "extend" in owner_status:
+    if _extended_shadow_owner_requested(checklist):
+        if not _extension_prerequisites_satisfied(checklist):
+            return HOLD_FOR_MORE_DATA
         return EXTEND_SHADOW
     if warning_reasons:
         return CONTINUE_NORMAL_SHADOW
     return CONTINUE_NORMAL_SHADOW
+
+
+def _extension_prerequisites_satisfied(checklist: Sequence[Mapping[str, Any]]) -> bool:
+    return all(
+        check.get("required_for_extension") is not True or check.get("check_status") == "PASS"
+        for check in checklist
+    )
+
+
+def _failed_required_source_ids(checklist: Sequence[Mapping[str, Any]]) -> list[str]:
+    return [
+        _text(check.get("source_id"))
+        for check in checklist
+        if check.get("required_for_extension") is True and check.get("check_status") != "PASS"
+    ]
+
+
+def _extended_shadow_owner_requested(checklist: Sequence[Mapping[str, Any]]) -> bool:
+    owner_status = _status_for_source(checklist, "owner_review").upper()
+    return any(marker in owner_status for marker in EXTENDED_SHADOW_OWNER_STATUS_MARKERS)
 
 
 def _blocking_reason(check: Mapping[str, Any]) -> dict[str, Any]:

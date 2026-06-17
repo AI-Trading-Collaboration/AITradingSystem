@@ -1683,17 +1683,18 @@ review 结论输入，不自动 reject 或 promote。
 
 TRADING-379_PAPER_SHADOW_PROMOTION_BOARD 新增 paper-shadow-only promotion board。
 `aits reports paper-shadow-promotion-board --as-of YYYY-MM-DD` 只读读取同日 report index
-和既有 weekly review、readiness、drift、cost sensitivity、benchmark baseline、safety audit、
-owner review / owner decision audit log 与 lineage graph，输出
+和既有 monthly review、canonical health、weekly review、readiness、drift、cost sensitivity、
+benchmark baseline、safety audit、owner review / owner decision audit log 与 lineage graph，输出
 `outputs/reports/paper_shadow_promotion_board_YYYY-MM-DD.json/md`。
 `aits reports validate-paper-shadow-promotion-board --latest` 输出
 `paper_shadow_promotion_board_validation_YYYY-MM-DD.json/md`。Board decision 限定为
 `EXTEND_SHADOW|CONTINUE_NORMAL_SHADOW|RETURN_TO_RESEARCH|REJECT|HOLD_FOR_MORE_DATA`；
-缺 evidence、stale/readiness/cost/benchmark/safety/owner decision blocker 必须进入 required
-checklist / blocking reasons。该 board 不运行上游、不刷新数据、不补造 evidence、不修改
+缺 evidence、stale/readiness/health/cost/benchmark/safety/owner decision blocker 必须进入
+required checklist / blocking reasons；`EXTEND_SHADOW` 还要求所有 extension evidence PASS 且
+owner 明确请求 extended shadow。该 board 不运行上游、不刷新数据、不补造 evidence、不修改
 strategy / candidate / paper-shadow / production state，不生成 official target weights、order ticket
-或 broker action；即使 `EXTEND_SHADOW` 也只表示 owner 可继续复核 extended shadow protocol，
-不是 live trading 或 official allocation approval。
+或 broker action；即使 `EXTEND_SHADOW` 也只表示 owner 可继续复核 extended shadow protocol，不是
+live trading 或 official allocation approval。
 
 TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY 新增 post-recovery evidence pack。
 `aits reports recovery-evidence-pack --as-of YYYY-MM-DD` 只读读取同日 report index 和 latest
