@@ -7608,6 +7608,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: recovery_evidence_pack
+    title: Recovery Evidence Pack
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports recovery-evidence-pack --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/recovery_evidence_pack_????-??-??.json
+      - outputs/reports/recovery_evidence_pack_????-??-??.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-391 consolidates post-recovery signal, readiness, health, cost,
+      benchmark, and safety artifacts for manual owner review. It is advisory
+      evidence only and must not approve promotion, extended shadow, live
+      trading, official target weights, broker action, or production mutation.
+    owner_action: review_post_recovery_evidence_and_remaining_blockers
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: recovery_evidence_pack_validation
+    title: Recovery Evidence Pack Validation
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports validate-recovery-evidence-pack --latest
+    artifact_globs:
+      - outputs/reports/recovery_evidence_pack_validation_*.json
+      - outputs/reports/recovery_evidence_pack_validation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      Recovery evidence pack validation should fail closed on missing required
+      source artifacts, failed source validations, missing Reader Brief core
+      fields, or safety-boundary drift.
+    owner_action: run_after_recovery_evidence_pack
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: candidate_rejection_postmortem_template
     title: Candidate Rejection Postmortem Template
     group: governance

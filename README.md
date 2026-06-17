@@ -1695,6 +1695,21 @@ strategy / candidate / paper-shadow / production state，不生成 official targ
 或 broker action；即使 `EXTEND_SHADOW` 也只表示 owner 可继续复核 extended shadow protocol，
 不是 live trading 或 official allocation approval。
 
+TRADING-391_EVIDENCE_PACK_REBUILD_AFTER_RECOVERY 新增 post-recovery evidence pack。
+`aits reports recovery-evidence-pack --as-of YYYY-MM-DD` 只读读取同日 report index 和 latest
+signal input completeness / recovery、evidence staleness、shadow continuation readiness、
+paper-shadow health、cost metrics materialization、cost-sensitivity review、benchmark baseline
+metrics materialization、benchmark baseline control 和 research safety boundary audit，输出
+`outputs/reports/recovery_evidence_pack_YYYY-MM-DD.json/md`。
+`aits reports validate-recovery-evidence-pack --latest` 输出
+`recovery_evidence_pack_validation_YYYY-MM-DD.json/md`。Pack status 限定为
+`RECOVERY_EVIDENCE_COMPLETE|RECOVERY_EVIDENCE_PARTIAL|RECOVERY_EVIDENCE_BLOCKED`，只表示
+required recovery evidence 是否可用于人工复核；source conclusions 中的 cost/benchmark/health
+blocker 仍必须作为 remaining recovery blockers 披露。该 pack advisory-only，不运行上游、不刷新
+数据、不补造缺失 artifact、不写 owner decision、不修改 strategy / candidate / paper-shadow /
+production state，不生成 official target weights、order ticket 或 broker action，也不批准 promotion、
+extended shadow 或 live trading。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
