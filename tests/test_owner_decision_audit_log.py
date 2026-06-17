@@ -8,6 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.reports import reader_brief
 from ai_trading_system.reports.owner_decision_audit_log import (
     AUDIT_LOG_BLOCKED,
@@ -43,6 +44,46 @@ def test_owner_decision_audit_log_append_and_report(tmp_path: Path) -> None:
     assert payload["promotion_board_inputs"]["input_status"] == "AVAILABLE"
     assert validation["validation_status"] == "PASS"
     assert "Owner Decision Audit Log" in markdown
+
+
+def test_trading_392_owner_hold_decision_fixture_is_governance_only(
+    tmp_path: Path,
+) -> None:
+    decision_path = (
+        PROJECT_ROOT
+        / "docs"
+        / "decisions"
+        / "TRADING-392_owner_hold_decision_2026-06-17.json"
+    )
+    decision = json.loads(decision_path.read_text(encoding="utf-8"))
+    log_path = tmp_path / "owner_decision_audit_log.jsonl"
+
+    record = append_owner_decision_record(
+        decision,
+        log_path=log_path,
+        source_record_path=decision_path,
+        appended_at=datetime(2026, 6, 17, 0, 5, tzinfo=UTC),
+    )
+    payload = build_owner_decision_audit_log_payload(
+        as_of=date(2026, 6, 17),
+        log_path=log_path,
+    )
+    validation = validate_owner_decision_audit_log_payload(payload)
+
+    assert record["decision_id"] == "TRADING-392_owner_hold_2026-06-17"
+    assert record["owner_action"] == "hold"
+    assert record["safety_status"] == "SAFETY_PASS_WITH_WARNINGS"
+    assert record["candidate_state_mutated"] is False
+    assert record["paper_shadow_state_mutated"] is False
+    assert record["official_target_weights_generated"] is False
+    assert record["broker_action_taken"] is False
+    assert record["order_ticket_generated"] is False
+    assert payload["audit_log_status"] == AUDIT_LOG_PASS
+    assert payload["summary"]["latest_owner_action"] == "hold"
+    assert payload["summary"]["latest_decision_id"] == (
+        "TRADING-392_owner_hold_2026-06-17"
+    )
+    assert validation["validation_status"] == "PASS"
 
 
 def test_owner_decision_audit_log_rejects_duplicate_decision_id(tmp_path: Path) -> None:

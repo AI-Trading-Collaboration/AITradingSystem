@@ -1,0 +1,51 @@
+{
+  "decision_id": "TRADING-392_owner_hold_2026-06-17",
+  "timestamp": "2026-06-17T00:00:00+09:00",
+  "candidate_id": "median_plus_regime_mismatch_filter",
+  "input_artifacts": [
+    {
+      "artifact_id": "TRADING-384_owner_review_2026-06-17",
+      "artifact_path": "outputs/reports/TRADING-384_owner_review_2026-06-17.md",
+      "artifact_type": "owner_review"
+    },
+    {
+      "artifact_id": "research_governance_end_to_end_pack_2026-06-16",
+      "artifact_path": "outputs/reports/research_governance_end_to_end_pack_2026-06-16.json",
+      "artifact_type": "governance_report"
+    },
+    {
+      "artifact_id": "recovery_evidence_pack_2026-06-17",
+      "artifact_path": "outputs/reports/recovery_evidence_pack_2026-06-17.json",
+      "artifact_type": "governance_report"
+    },
+    {
+      "artifact_id": "recovery_evidence_pack_validation_2026-06-17",
+      "artifact_path": "outputs/reports/recovery_evidence_pack_validation_2026-06-17.json",
+      "artifact_type": "validation_report"
+    },
+    {
+      "artifact_id": "research_safety_boundary_audit_2026-06-16",
+      "artifact_path": "outputs/reports/research_safety_boundary_audit_2026-06-16.json",
+      "artifact_type": "safety_report"
+    },
+    {
+      "artifact_id": "report_index_2026-06-17",
+      "artifact_path": "outputs/reports/report_index_2026-06-17.json",
+      "artifact_type": "report_index"
+    }
+  ],
+  "owner_action": "hold",
+  "reason_summary": "TRADING-384 governance pack remains GOVERNANCE_BLOCKED due to signal input/readiness blockers, insufficient cost and benchmark metrics, empty owner decision log, blocked extended-shadow protocol, and blocked roadmap/data governance.",
+  "safety_status": "SAFETY_PASS_WITH_WARNINGS",
+  "next_action": "restore_signal_inputs_and_required_metrics_before_reconsidering_paper_shadow_or_extended_shadow",
+  "source_review_template_version": "owner_review_template_v2",
+  "production_effect": "none",
+  "manual_review_only": true,
+  "governance_only": true,
+  "strategy_outputs_mutated": false,
+  "candidate_state_mutated": false,
+  "paper_shadow_state_mutated": false,
+  "broker_action_taken": false,
+  "order_ticket_generated": false,
+  "official_target_weights_generated": false
+}

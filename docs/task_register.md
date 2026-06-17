@@ -2,7 +2,7 @@
 
 本文是未完成任务、后续优化、阻塞项、基础版遗留问题和 owner 配合事项的统一登记表。已完成和基础版完成任务归档在 `docs/task_register_completed.md`；`docs/implementation_backlog.md` 继续负责长期模块路线图。
 
-最后更新：2026-06-16
+最后更新：2026-06-17
 
 ## 使用规则
 
