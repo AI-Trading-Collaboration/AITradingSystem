@@ -25,6 +25,7 @@ BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE = (
 SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE = (
     "signal_robustness_blocker_drilldown"
 )
+WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE = "window_fragility_attribution"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -34,6 +35,9 @@ BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE = (
 )
 SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE = (
     f"{SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
+    f"{WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -56,6 +60,13 @@ SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES: tuple[str, ...] = (
     SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN,
     SIGNAL_ROBUSTNESS_NOT_REPAIRABLE,
 )
+WINDOW_FRAGILITY_ATTRIBUTION_READY = "WINDOW_FRAGILITY_ATTRIBUTION_READY"
+WINDOW_FRAGILITY_JUDGMENTS: tuple[str, ...] = (
+    "OVERFIT_RISK",
+    "UNDER_OBSERVED",
+    "MIXED_OVERFIT_RISK_AND_UNDER_OBSERVED",
+    "ACCEPTABLE_FOR_FURTHER_RESEARCH",
+)
 
 REPORT_PREFIXES: dict[str, str] = {
     EVIDENCE_GAP_LEDGER_REPORT_TYPE: "executable_research_evidence_gap_ledger",
@@ -71,6 +82,10 @@ REPORT_PREFIXES: dict[str, str] = {
     SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: "signal_robustness_blocker_drilldown",
     SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE: (
         "signal_robustness_blocker_drilldown_validation"
+    ),
+    WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE: "window_fragility_attribution",
+    WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE: (
+        "window_fragility_attribution_validation"
     ),
 }
 
@@ -122,6 +137,24 @@ SIGNAL_BLOCKER_CAUSES: tuple[str, ...] = (
     "empty_signal_window",
     "binding_fail_closed_condition",
     "invalid_candidate_assumptions",
+)
+
+WINDOW_FRAGILITY_ATTRIBUTION_CATEGORIES: tuple[str, ...] = (
+    "regime_dependence",
+    "overfit_threshold",
+    "signal_instability",
+    "turnover_concentration",
+    "drawdown_behavior",
+    "benchmark_relative_weakness",
+    "cost_sensitivity",
+)
+
+REQUIRED_WINDOW_SPLITS: tuple[str, ...] = (
+    "early_window",
+    "middle_window",
+    "recent_window",
+    "stress_heavy_window",
+    "calm_market_window",
 )
 
 
@@ -1092,6 +1125,313 @@ def validate_signal_robustness_blocker_drilldown_payload(
             "repair_signal_robustness_blocker_drilldown"
             if status == FAIL_STATUS
             else "use_validated_signal_drilldown_for_trading_474"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not rerun source reports."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_window_fragility_attribution_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    paths = _window_fragility_source_paths(reports_dir=reports_dir, as_of=as_of)
+    window_payload = _read_json_mapping(paths[next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE])
+    signal_drilldown = _read_json_mapping(paths[SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE])
+    repair_plan = _read_json_mapping(paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE])
+    ledger = _read_json_mapping(paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE])
+    source_summary = _mapping(window_payload.get("summary"))
+    split_rows = _window_fragility_rows(
+        window_payload=window_payload,
+        signal_drilldown=signal_drilldown,
+        repair_plan=repair_plan,
+    )
+    failure_modes = _window_failure_modes(split_rows, source_summary)
+    judgment = _window_fragility_judgment(split_rows, source_summary)
+    acceptable = judgment == "ACCEPTABLE_FOR_FURTHER_RESEARCH"
+    requested_date_range = _text(
+        window_payload.get("requested_date_range"),
+        _text(source_summary.get("requested_date_range"), "not_applicable"),
+    )
+    fragile_windows = [
+        row["window_split_id"] for row in split_rows if row["fragility_class"] == "fragile"
+    ]
+    stable_windows = [
+        row["window_split_id"] for row in split_rows if row["fragility_class"] == "stable"
+    ]
+    under_observed_windows = [
+        row["window_split_id"]
+        for row in split_rows
+        if row["fragility_class"] == "under_observed"
+    ]
+    summary = {
+        "window_fragility_attribution_status": WINDOW_FRAGILITY_ATTRIBUTION_READY,
+        "source_window_sensitivity_status": _text(
+            source_summary.get("window_sensitivity_status"),
+            _text(window_payload.get("status"), "MISSING"),
+        ),
+        "source_signal_drilldown_status": _text(signal_drilldown.get("status"), "MISSING"),
+        "source_backfill_repair_status": _text(repair_plan.get("status"), "MISSING"),
+        "candidate_id": _text(
+            _mapping(signal_drilldown.get("summary")).get("candidate_id"),
+            "MISSING",
+        ),
+        "market_regime": _text(window_payload.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_date_range,
+        "split_count": len(split_rows),
+        "fragile_window_count": len(fragile_windows),
+        "stable_window_count": len(stable_windows),
+        "under_observed_window_count": len(under_observed_windows),
+        "overfit_risk": _text(source_summary.get("overfit_risk"), "UNKNOWN"),
+        "performance_dispersion": source_summary.get("performance_dispersion"),
+        "drawdown_behavior_dispersion": source_summary.get(
+            "drawdown_behavior_dispersion"
+        ),
+        "turnover_dispersion": source_summary.get("turnover_dispersion"),
+        "fragility_judgment": judgment,
+        "acceptable_for_further_research": acceptable,
+        "acceptance_condition": (
+            "repair_dynamic_signal_binding_and_redesign_drawdown_or_stress_handling"
+            if not acceptable
+            else "window_fragility_not_blocking"
+        ),
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+        as_of=as_of,
+        status=WINDOW_FRAGILITY_ATTRIBUTION_READY,
+        purpose=(
+            "Attribute why the next candidate is window-fragile and decide "
+            "whether fragility is acceptable for further research."
+        ),
+        input_artifacts={report_type: str(path) for report_type, path in paths.items()},
+        output_decision=judgment,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+                    paths[next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE],
+                    window_payload,
+                ),
+                _source_artifact(
+                    SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+                    paths[SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE],
+                    signal_drilldown,
+                ),
+                _source_artifact(
+                    BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+                    paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE],
+                    repair_plan,
+                ),
+                _source_artifact(
+                    EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+                    paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE],
+                    ledger,
+                ),
+            ],
+            "window_attributions": split_rows,
+            "fragile_windows": fragile_windows,
+            "stable_windows": stable_windows,
+            "under_observed_windows": under_observed_windows,
+            "failure_modes": failure_modes,
+            "classification_policy": {
+                "required_window_splits": list(REQUIRED_WINDOW_SPLITS),
+                "attribution_categories": list(WINDOW_FRAGILITY_ATTRIBUTION_CATEGORIES),
+                "judgment_taxonomy": list(WINDOW_FRAGILITY_JUDGMENTS),
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-474 已生成 window fragility attribution；"
+                "当前 fragility 同时包含 HIGH overfit/drawdown 风险和 "
+                "partial static proxy 的 under-observed evidence。"
+            ),
+            key_result=judgment,
+            blocking_issues=_issue_names(failure_modes, "failure_mode_id"),
+            warnings="not acceptable for further research without repair/redesign",
+            next_action="run_trading_475_stress_weakness_attribution",
+        ),
+        next_action="run_trading_475_stress_weakness_attribution",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Attribution is read-only and does not rerun backfill.",
+            "Partial static proxy windows are not treated as complete stability evidence.",
+            "No thresholds are tuned to hide fragile windows.",
+        ],
+        requested_date_range=requested_date_range,
+    )
+
+
+def validate_window_fragility_attribution_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    rows = _records(payload.get("window_attributions"))
+    source_artifacts = _records(payload.get("source_artifacts"))
+    source_report_types = {_text(row.get("report_type")) for row in source_artifacts}
+    split_ids = {_text(row.get("window_split_id")) for row in rows}
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+        f"report_type must be {WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE}.",
+        "regenerate_window_fragility_attribution",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status",
+        _text(payload.get("status")) == WINDOW_FRAGILITY_ATTRIBUTION_READY,
+        f"status must be {WINDOW_FRAGILITY_ATTRIBUTION_READY}.",
+        "restore_window_fragility_attribution_status",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Window attribution must keep production_effect=none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "market_regime_visible",
+        _text(payload.get("market_regime")) == MARKET_REGIME
+        and _text(summary.get("market_regime")) == MARKET_REGIME,
+        f"Window attribution must disclose market_regime={MARKET_REGIME}.",
+        "restore_ai_after_chatgpt_regime_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "requested_date_range_visible",
+        bool(_text(payload.get("requested_date_range"))),
+        "Window attribution must disclose requested date range.",
+        "restore_requested_date_range_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_sources_present",
+        {
+            next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        }
+        <= source_report_types,
+        "Window attribution must include window review, signal drilldown, repair plan, ledger.",
+        "restore_required_source_loading",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_splits_present",
+        set(REQUIRED_WINDOW_SPLITS) <= split_ids,
+        "Window attribution must include early/middle/recent/stress-heavy/calm splits.",
+        "restore_required_window_splits",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "attribution_rows_complete",
+        all(_window_attribution_row_complete(row) for row in rows),
+        "Each window attribution row must include required category fields.",
+        "restore_window_attribution_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "failure_modes_present",
+        bool(_records(payload.get("failure_modes"))),
+        "Window attribution must include failure modes.",
+        "restore_window_failure_modes",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "judgment_valid",
+        _text(summary.get("fragility_judgment")) in WINDOW_FRAGILITY_JUDGMENTS,
+        "Fragility judgment must use the governed taxonomy.",
+        "restore_window_fragility_judgment",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "window_counts_consistent",
+        _window_counts_consistent(payload),
+        "Fragile/stable/under-observed counts must match attribution rows.",
+        "restore_window_fragility_counts",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Window attribution must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-474 window fragility attribution.",
+        input_artifacts={WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-474 window attribution validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_window_fragility_attribution"
+                if status == FAIL_STATUS
+                else "use_validated_window_attribution_for_trading_475"
+            ),
+        ),
+        next_action=(
+            "repair_window_fragility_attribution"
+            if status == FAIL_STATUS
+            else "use_validated_window_attribution_for_trading_475"
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not rerun source reports."],
@@ -2178,6 +2518,270 @@ def _signal_repair_decision_consistent(payload: Mapping[str, Any]) -> bool:
     )
 
 
+def _window_fragility_source_paths(*, reports_dir: Path, as_of: date) -> dict[str, Path]:
+    return {
+        next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE: (
+            next_cycle.default_next_research_cycle_json_path(
+                next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: default_evidence_repair_json_path(
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: default_evidence_repair_json_path(
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        EVIDENCE_GAP_LEDGER_REPORT_TYPE: default_evidence_repair_json_path(
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+    }
+
+
+def _window_fragility_rows(
+    *,
+    window_payload: Mapping[str, Any],
+    signal_drilldown: Mapping[str, Any],
+    repair_plan: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    source_summary = _mapping(window_payload.get("summary"))
+    signal_repairable = (
+        _text(signal_drilldown.get("status")) == SIGNAL_ROBUSTNESS_REPAIRABLE
+    )
+    repair_summary = _mapping(repair_plan.get("summary"))
+    rows = []
+    splits_by_id = {
+        _text(row.get("window_split_id")): row
+        for row in _records(window_payload.get("window_splits"))
+        if _text(row.get("window_split_id"))
+    }
+    for split_id in REQUIRED_WINDOW_SPLITS:
+        split = splits_by_id.get(split_id, {"window_split_id": split_id, "status": "MISSING"})
+        split_status = _text(split.get("status"), "MISSING")
+        fragility_class = _window_fragility_class(split_status)
+        attribution = _window_attribution_flags(
+            split=split,
+            source_summary=source_summary,
+            signal_repairable=signal_repairable,
+            repair_summary=repair_summary,
+        )
+        rows.append(
+            {
+                "window_split_id": split_id,
+                "source_windows": _list_values(split.get("source_windows")),
+                "source_status": split_status,
+                "fragility_class": fragility_class,
+                "average_return_proxy": split.get("average_return_proxy"),
+                "worst_drawdown_proxy": split.get("worst_drawdown_proxy"),
+                "average_turnover_proxy": split.get("average_turnover_proxy"),
+                "false_flip_proxy": split.get("false_flip_proxy"),
+                "rotation_proxy": split.get("rotation_proxy"),
+                "evaluation": _text(split.get("evaluation")),
+                "recommended_action": _text(split.get("recommended_action")),
+                "regime_dependence": attribution["regime_dependence"],
+                "overfit_threshold": attribution["overfit_threshold"],
+                "signal_instability": attribution["signal_instability"],
+                "turnover_concentration": attribution["turnover_concentration"],
+                "drawdown_behavior": attribution["drawdown_behavior"],
+                "benchmark_relative_weakness": attribution[
+                    "benchmark_relative_weakness"
+                ],
+                "cost_sensitivity": attribution["cost_sensitivity"],
+                "primary_failure_mode": _window_primary_failure_mode(
+                    split_status,
+                    attribution,
+                ),
+                "acceptable_for_current_research": fragility_class == "stable",
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _window_fragility_class(status: str) -> str:
+    if status in {"PASS", "OK", "STABLE", "READY"}:
+        return "stable"
+    if status == "PARTIAL_STATIC_PROXY":
+        return "under_observed"
+    return "fragile"
+
+
+def _window_attribution_flags(
+    *,
+    split: Mapping[str, Any],
+    source_summary: Mapping[str, Any],
+    signal_repairable: bool,
+    repair_summary: Mapping[str, Any],
+) -> dict[str, str]:
+    split_id = _text(split.get("window_split_id"))
+    split_status = _text(split.get("status"))
+    source_windows = set(_list_values(split.get("source_windows")))
+    evaluation = _text(split.get("evaluation")).lower()
+    stress_windows = {
+        "rapid_drawdown",
+        "slow_drawdown",
+        "ai_semiconductor_correction",
+    }
+    return {
+        "regime_dependence": (
+            "attributed"
+            if source_windows & stress_windows
+            or split_id in {"stress_heavy_window", "recent_window"}
+            else "not_primary"
+        ),
+        "overfit_threshold": (
+            "attributed"
+            if _text(source_summary.get("overfit_risk")) == "HIGH"
+            else "not_primary"
+        ),
+        "signal_instability": (
+            "under_observed_dynamic_binding_repairable"
+            if split_status == "PARTIAL_STATIC_PROXY" or signal_repairable
+            else "not_primary"
+        ),
+        "turnover_concentration": (
+            "not_attributed_turnover_dispersion_zero"
+            if _float(source_summary.get("turnover_dispersion")) == 0.0
+            else "attributed"
+        ),
+        "drawdown_behavior": (
+            "attributed"
+            if split_status == "WEAK" or "drawdown" in evaluation
+            else "not_primary"
+        ),
+        "benchmark_relative_weakness": "not_isolated_by_window_sensitivity_source",
+        "cost_sensitivity": (
+            "not_window_specific_turnover_constant"
+            if _float(source_summary.get("turnover_dispersion")) == 0.0
+            else "potential_cost_sensitivity"
+        ),
+        "backfill_repair_context": _text(
+            repair_summary.get("repair_plan_status"),
+            _text(repair_summary.get("source_backfill_status")),
+        ),
+    }
+
+
+def _window_primary_failure_mode(
+    status: str,
+    attribution: Mapping[str, str],
+) -> str:
+    if attribution.get("drawdown_behavior") == "attributed":
+        return "drawdown_behavior_failure"
+    if attribution.get("signal_instability") == "under_observed_dynamic_binding_repairable":
+        return "under_observed_static_proxy"
+    if attribution.get("overfit_threshold") == "attributed":
+        return "overfit_threshold_risk"
+    if status in {"PASS", "OK", "STABLE", "READY"}:
+        return "none"
+    return "window_instability"
+
+
+def _window_failure_modes(
+    rows: Sequence[Mapping[str, Any]],
+    source_summary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    modes: dict[str, set[str]] = {}
+    for row in rows:
+        mode = _text(row.get("primary_failure_mode"))
+        if not mode or mode == "none":
+            continue
+        modes.setdefault(mode, set()).add(_text(row.get("window_split_id")))
+    if _text(source_summary.get("overfit_risk")) == "HIGH":
+        modes.setdefault("high_overfit_risk", set()).update(
+            _text(row.get("window_split_id")) for row in rows
+        )
+    result = []
+    for mode, split_ids in sorted(modes.items()):
+        result.append(
+            {
+                "failure_mode_id": mode,
+                "affected_window_splits": sorted(split_ids),
+                "affected_split_count": len(split_ids),
+                "interpretation": _window_failure_interpretation(mode),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return result
+
+
+def _window_failure_interpretation(mode: str) -> str:
+    mapping = {
+        "drawdown_behavior_failure": (
+            "Weak recent or stress-heavy splits show drawdown behavior that "
+            "cannot be treated as merely under-observed."
+        ),
+        "under_observed_static_proxy": (
+            "Split metrics exist but rely on partial static binding evidence."
+        ),
+        "overfit_threshold_risk": "Window sensitivity source reports high overfit risk.",
+        "high_overfit_risk": (
+            "High overfit risk applies across the current window sensitivity review."
+        ),
+    }
+    return mapping.get(mode, "Window instability requires further attribution.")
+
+
+def _window_fragility_judgment(
+    rows: Sequence[Mapping[str, Any]],
+    source_summary: Mapping[str, Any],
+) -> str:
+    has_fragile = any(_text(row.get("fragility_class")) == "fragile" for row in rows)
+    has_under_observed = any(
+        _text(row.get("fragility_class")) == "under_observed" for row in rows
+    )
+    high_overfit = _text(source_summary.get("overfit_risk")) == "HIGH"
+    if (has_fragile or high_overfit) and has_under_observed:
+        return "MIXED_OVERFIT_RISK_AND_UNDER_OBSERVED"
+    if has_fragile or high_overfit:
+        return "OVERFIT_RISK"
+    if has_under_observed:
+        return "UNDER_OBSERVED"
+    return "ACCEPTABLE_FOR_FURTHER_RESEARCH"
+
+
+def _window_attribution_row_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "window_split_id",
+        "source_status",
+        "fragility_class",
+        "regime_dependence",
+        "overfit_threshold",
+        "signal_instability",
+        "turnover_concentration",
+        "drawdown_behavior",
+        "benchmark_relative_weakness",
+        "cost_sensitivity",
+        "primary_failure_mode",
+    )
+    return (
+        all(bool(_text(row.get(key))) for key in required)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _window_counts_consistent(payload: Mapping[str, Any]) -> bool:
+    rows = _records(payload.get("window_attributions"))
+    summary = _mapping(payload.get("summary"))
+    fragile = len([row for row in rows if row.get("fragility_class") == "fragile"])
+    stable = len([row for row in rows if row.get("fragility_class") == "stable"])
+    under_observed = len(
+        [row for row in rows if row.get("fragility_class") == "under_observed"]
+    )
+    return (
+        _int(summary.get("fragile_window_count")) == fragile
+        and _int(summary.get("stable_window_count")) == stable
+        and _int(summary.get("under_observed_window_count")) == under_observed
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -2304,6 +2908,15 @@ def _int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _float(value: Any, default: float = 0.0) -> float:
+    if isinstance(value, bool):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _date_from_payload(payload: Mapping[str, Any]) -> date:
     try:
         return date.fromisoformat(_text(payload.get("as_of")))
@@ -2387,6 +3000,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Window Attributions", "window_attributions"),
+            ("Failure Modes", "failure_modes"),
+        ]
+    if report_type == WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -2433,6 +3054,7 @@ __all__ = [
     "REPORT_PREFIXES",
     "REPAIRABILITY_TYPES",
     "REQUIRED_BACKFILL_WINDOWS",
+    "REQUIRED_WINDOW_SPLITS",
     "SIGNAL_BLOCKER_CAUSES",
     "SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE",
     "SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE",
@@ -2441,9 +3063,15 @@ __all__ = [
     "SIGNAL_ROBUSTNESS_NOT_REPAIRABLE",
     "SIGNAL_ROBUSTNESS_REPAIRABLE",
     "VALIDATION_SUFFIX",
+    "WINDOW_FRAGILITY_ATTRIBUTION_CATEGORIES",
+    "WINDOW_FRAGILITY_ATTRIBUTION_READY",
+    "WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE",
+    "WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE",
+    "WINDOW_FRAGILITY_JUDGMENTS",
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_executable_research_evidence_gap_ledger_payload",
     "build_signal_robustness_blocker_drilldown_payload",
+    "build_window_fragility_attribution_payload",
     "default_evidence_repair_json_path",
     "default_evidence_repair_markdown_path",
     "latest_evidence_repair_json_path",
@@ -2451,6 +3079,7 @@ __all__ = [
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
     "validate_signal_robustness_blocker_drilldown_payload",
+    "validate_window_fragility_attribution_payload",
     "write_evidence_repair_json",
     "write_evidence_repair_markdown",
 ]

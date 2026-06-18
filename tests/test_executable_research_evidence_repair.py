@@ -289,6 +289,91 @@ def test_signal_robustness_drilldown_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_window_fragility_attribution_separates_overfit_and_under_observed(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+
+    payload = repair.build_window_fragility_attribution_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.WINDOW_FRAGILITY_ATTRIBUTION_READY
+    assert payload["summary"]["fragility_judgment"] == (
+        "MIXED_OVERFIT_RISK_AND_UNDER_OBSERVED"
+    )
+    assert payload["summary"]["fragile_window_count"] == 2
+    assert payload["summary"]["under_observed_window_count"] == 3
+    assert payload["summary"]["acceptable_for_further_research"] is False
+    modes = {row["failure_mode_id"] for row in payload["failure_modes"]}
+    assert "drawdown_behavior_failure" in modes
+    assert "under_observed_static_proxy" in modes
+    assert "high_overfit_risk" in modes
+    assert any(
+        row["window_split_id"] == "recent_window"
+        and row["drawdown_behavior"] == "attributed"
+        for row in payload["window_attributions"]
+    )
+
+    validation = repair.validate_window_fragility_attribution_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_window_fragility_attribution_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "window-fragility-attribution",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    attribution_path = repair.default_evidence_repair_json_path(
+        repair.WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(attribution_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["fragility_judgment"] == (
+        "MIXED_OVERFIT_RISK_AND_UNDER_OBSERVED"
+    )
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-window-fragility-attribution",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -310,6 +395,18 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
         repair_plan,
         repair.default_evidence_repair_json_path(
             repair.BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    signal_drilldown = repair.build_signal_robustness_blocker_drilldown_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        signal_drilldown,
+        repair.default_evidence_repair_json_path(
+            repair.SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
@@ -515,23 +612,25 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
             "report_type": next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
             "as_of": RUN_DATE.isoformat(),
             "status": "WINDOW_FRAGILE",
+            "summary": {
+                "window_sensitivity_status": "WINDOW_FRAGILE",
+                "source_backfill_status": next_cycle.CANDIDATE_BACKFILL_PARTIAL,
+                "split_count": 5,
+                "weak_split_count": 2,
+                "partial_static_proxy_split_count": 3,
+                "performance_dispersion": 0.6,
+                "turnover_dispersion": 0.0,
+                "drawdown_behavior_dispersion": 0.2,
+                "overfit_risk": "HIGH",
+                "production_effect": "none",
+            },
             "blocking_issues": [
                 {
                     "issue_id": "recent_window",
                     "recommended_action": "complete_dynamic_binding_before_window_stability_claim",
                 }
             ],
-            "window_splits": [
-                {
-                    "window_split_id": "recent_window",
-                    "source_windows": ["slow_drawdown"],
-                    "status": "WEAK",
-                    "average_return_proxy": -0.1,
-                    "worst_drawdown_proxy": -0.27,
-                    "evaluation": "Worst drawdown proxy breaches conservative stress blocker.",
-                    "recommended_action": "repair_or_revise_candidate_before_research_gate",
-                }
-            ],
+            "window_splits": _window_splits_fixture(),
             "production_effect": "none",
         },
         next_cycle.RESEARCH_GATE_REPORT_TYPE: {
@@ -602,4 +701,72 @@ def _backfill_windows_fixture() -> list[dict[str, object]]:
             "production_effect": "none",
         }
         for window_id, start, end, return_proxy, drawdown_proxy in windows
+    ]
+
+
+def _window_splits_fixture() -> list[dict[str, object]]:
+    return [
+        {
+            "window_split_id": "early_window",
+            "source_windows": [
+                "normal_market_regime",
+                "high_volatility_sideways_market",
+                "false_risk_off_cluster",
+            ],
+            "status": "PARTIAL_STATIC_PROXY",
+            "average_return_proxy": 0.12,
+            "average_turnover_proxy": 0.85,
+            "worst_drawdown_proxy": -0.13,
+            "evaluation": "Metrics exist but rely on partial static binding evidence.",
+            "recommended_action": "complete_dynamic_binding_before_window_stability_claim",
+            "production_effect": "none",
+        },
+        {
+            "window_split_id": "middle_window",
+            "source_windows": ["rapid_drawdown", "ai_semiconductor_correction"],
+            "status": "PARTIAL_STATIC_PROXY",
+            "average_return_proxy": -0.11,
+            "average_turnover_proxy": 0.85,
+            "worst_drawdown_proxy": -0.19,
+            "evaluation": "Metrics exist but rely on partial static binding evidence.",
+            "recommended_action": "complete_dynamic_binding_before_window_stability_claim",
+            "production_effect": "none",
+        },
+        {
+            "window_split_id": "recent_window",
+            "source_windows": ["slow_drawdown"],
+            "status": "WEAK",
+            "average_return_proxy": -0.1,
+            "average_turnover_proxy": 0.85,
+            "worst_drawdown_proxy": -0.27,
+            "evaluation": "Worst drawdown proxy breaches conservative stress blocker.",
+            "recommended_action": "repair_or_revise_candidate_before_research_gate",
+            "production_effect": "none",
+        },
+        {
+            "window_split_id": "stress_heavy_window",
+            "source_windows": [
+                "rapid_drawdown",
+                "slow_drawdown",
+                "ai_semiconductor_correction",
+            ],
+            "status": "WEAK",
+            "average_return_proxy": -0.12,
+            "average_turnover_proxy": 0.85,
+            "worst_drawdown_proxy": -0.27,
+            "evaluation": "Worst drawdown proxy breaches conservative stress blocker.",
+            "recommended_action": "repair_or_revise_candidate_before_research_gate",
+            "production_effect": "none",
+        },
+        {
+            "window_split_id": "calm_market_window",
+            "source_windows": ["normal_market_regime"],
+            "status": "PARTIAL_STATIC_PROXY",
+            "average_return_proxy": 0.48,
+            "average_turnover_proxy": 0.85,
+            "worst_drawdown_proxy": -0.06,
+            "evaluation": "Metrics exist but rely on partial static binding evidence.",
+            "recommended_action": "complete_dynamic_binding_before_window_stability_claim",
+            "production_effect": "none",
+        },
     ]

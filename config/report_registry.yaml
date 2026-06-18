@@ -9150,6 +9150,46 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: window_fragility_attribution
+    title: Window Fragility Attribution
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports window-fragility-attribution --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/window_fragility_attribution_20*.json
+      - outputs/reports/window_fragility_attribution_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-474 reads the window sensitivity review, TRADING-473 signal
+      drilldown, TRADING-472 repair plan, and TRADING-471 ledger, then attributes
+      fragility across early/middle/recent/stress-heavy/calm splits to overfit
+      risk, under-observed static proxy evidence, drawdown behavior, regime
+      dependence, turnover, benchmark, and cost context.
+    owner_action: use_as_input_to_trading_475_stress_weakness_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: window_fragility_attribution_validation
+    title: Window Fragility Attribution Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-window-fragility-attribution --latest
+    artifact_globs:
+      - outputs/reports/window_fragility_attribution_validation_20*.json
+      - outputs/reports/window_fragility_attribution_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-474 validation checks source coverage, required window splits,
+      attribution category fields, failure modes, fragility judgment, Reader
+      Brief fields, and the no paper-shadow / no production safety boundary.
+    owner_action: run_after_window_fragility_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

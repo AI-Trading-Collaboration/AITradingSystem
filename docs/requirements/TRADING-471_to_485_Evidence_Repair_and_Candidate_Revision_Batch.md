@@ -27,7 +27,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-471|executable-research-evidence-gap-ledger|DONE|TRADING-470 artifacts|生成 `executable_research_evidence_gap_ledger` JSON/Markdown 和 validation artifact；ledger 逐项记录 gap id、source report、current/expected value、root cause category、fix type、blocking、candidate redesign requirement；Reader Brief 披露非聚合原因。|
 |TRADING-472|backfill-partial-root-cause-and-repair-plan|DONE|TRADING-471 + latest backfill|解释每个 incomplete window 的缺失日期/feature/signal/schema/coverage/binding issue，并输出 repairability 状态。|
 |TRADING-473|signal-robustness-blocker-drilldown|DONE|TRADING-471 + signal robustness review|列出每个 blocker 的 input artifact、failed field、expected/actual value 和 repair path，不放松 signal completeness rules。|
-|TRADING-474|window-fragility-attribution|READY|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
+|TRADING-474|window-fragility-attribution|DONE|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
 |TRADING-475|stress-weakness-attribution|READY|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
 |TRADING-476|cost-benchmark-weakness-attribution|READY|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
 |TRADING-477|candidate-redesign-hypothesis-v2|READY|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
@@ -107,3 +107,26 @@ owner decision append、production mutation 或 automatic position control。
   completeness rules、未改变 candidate spec、未 append owner decision、未创建
   paper-shadow、未批准 extended/live、未写 official target weights、未触发 broker/order、
   未修改 production。下一步是 TRADING-474 window fragility attribution。
+- 2026-06-18: TRADING-474 开始实现。范围限定为只读读取
+  `next_candidate_overfit_window_sensitivity`、TRADING-473 signal drilldown、
+  TRADING-472 repair plan 和 TRADING-471 ledger，比较 early / middle / recent /
+  stress-heavy / calm-market splits，归因 regime dependence、overfit threshold、
+  signal instability、turnover concentration、drawdown behavior、benchmark-relative
+  weakness 和 cost sensitivity；不重新运行 backfill、不调参隐藏 fragility、不改变
+  candidate spec、不触发 paper-shadow 或 production。
+- 2026-06-18: TRADING-474 完成 pending commit。真实 2026-06-17 attribution
+  `window_fragility_attribution_2026-06-17` 输出
+  `WINDOW_FRAGILITY_ATTRIBUTION_READY`，source window sensitivity 为
+  `WINDOW_FRAGILE`，source signal drilldown 为 `SIGNAL_ROBUSTNESS_REPAIRABLE`，
+  source backfill repair 为 `BACKFILL_REPAIRABLE`。结论为
+  `MIXED_OVERFIT_RISK_AND_UNDER_OBSERVED`，split_count=5，fragile windows=2
+  （recent_window、stress_heavy_window），under-observed windows=3
+  （early_window、middle_window、calm_market_window），stable windows=0，
+  overfit_risk=HIGH，acceptable_for_further_research=false，acceptance condition 为
+  repair dynamic signal binding and redesign drawdown/stress handling。Failure modes
+  为 drawdown_behavior_failure、under_observed_static_proxy 和 high_overfit_risk。
+  Validation `window_fragility_attribution_validation_2026-06-17` 为 PASS，
+  checks=13、failed=0。未重新运行 backfill、未调参隐藏 fragility、未改变 candidate
+  spec、未 append owner decision、未创建 paper-shadow、未批准 extended/live、未写
+  official target weights、未触发 broker/order、未修改 production。下一步是 TRADING-475
+  stress weakness attribution。
