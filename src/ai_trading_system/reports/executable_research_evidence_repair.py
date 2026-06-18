@@ -26,6 +26,7 @@ SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE = (
     "signal_robustness_blocker_drilldown"
 )
 WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE = "window_fragility_attribution"
+STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE = "stress_weakness_attribution"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -38,6 +39,9 @@ SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE = (
 )
 WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
     f"{WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
+    f"{STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -61,6 +65,13 @@ SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES: tuple[str, ...] = (
     SIGNAL_ROBUSTNESS_NOT_REPAIRABLE,
 )
 WINDOW_FRAGILITY_ATTRIBUTION_READY = "WINDOW_FRAGILITY_ATTRIBUTION_READY"
+STRESS_WEAKNESS_ATTRIBUTION_READY = "STRESS_WEAKNESS_ATTRIBUTION_READY"
+STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
+    "REDESIGN_REQUIRED",
+    "REJECT_CURRENT_CANDIDATE",
+    "REPAIR_EVIDENCE_BEFORE_DECISION",
+    "STRESS_WEAKNESS_ACCEPTABLE",
+)
 WINDOW_FRAGILITY_JUDGMENTS: tuple[str, ...] = (
     "OVERFIT_RISK",
     "UNDER_OBSERVED",
@@ -86,6 +97,10 @@ REPORT_PREFIXES: dict[str, str] = {
     WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE: "window_fragility_attribution",
     WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE: (
         "window_fragility_attribution_validation"
+    ),
+    STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE: "stress_weakness_attribution",
+    STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE: (
+        "stress_weakness_attribution_validation"
     ),
 }
 
@@ -155,6 +170,15 @@ REQUIRED_WINDOW_SPLITS: tuple[str, ...] = (
     "recent_window",
     "stress_heavy_window",
     "calm_market_window",
+)
+
+REQUIRED_STRESS_SCENARIOS: tuple[str, ...] = (
+    "rapid_drawdown",
+    "slow_drawdown",
+    "v_shaped_recovery",
+    "high_volatility_sideways_market",
+    "false_risk_off_cluster",
+    "ai_semiconductor_correction",
 )
 
 
@@ -1432,6 +1456,286 @@ def validate_window_fragility_attribution_payload(
             "repair_window_fragility_attribution"
             if status == FAIL_STATUS
             else "use_validated_window_attribution_for_trading_475"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not rerun source reports."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_stress_weakness_attribution_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    paths = _stress_attribution_source_paths(reports_dir=reports_dir, as_of=as_of)
+    stress_payload = _read_json_mapping(paths[next_cycle.STRESS_REVIEW_REPORT_TYPE])
+    window_attribution = _read_json_mapping(paths[WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE])
+    signal_drilldown = _read_json_mapping(paths[SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE])
+    repair_plan = _read_json_mapping(paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE])
+    ledger = _read_json_mapping(paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE])
+    stress_summary = _mapping(stress_payload.get("summary"))
+    scenario_rows = _stress_scenario_attribution_rows(stress_payload)
+    root_causes = _stress_root_causes(scenario_rows, stress_summary)
+    design_judgment = _stress_design_judgment(scenario_rows, stress_summary)
+    requested_date_range = _text(
+        stress_payload.get("requested_date_range"),
+        _text(stress_summary.get("requested_date_range"), "not_applicable"),
+    )
+    failed_rows = [
+        row for row in scenario_rows if row["scenario_status"] in {"FAIL", "MISSING"}
+    ]
+    warning_rows = [row for row in scenario_rows if row["scenario_status"] == "WARNING"]
+    summary = {
+        "stress_weakness_attribution_status": STRESS_WEAKNESS_ATTRIBUTION_READY,
+        "source_stress_result": _text(
+            stress_summary.get("stress_result"),
+            _text(stress_payload.get("status"), "MISSING"),
+        ),
+        "source_window_fragility_judgment": _text(
+            _mapping(window_attribution.get("summary")).get("fragility_judgment"),
+            _text(window_attribution.get("output_decision"), "MISSING"),
+        ),
+        "source_signal_drilldown_status": _text(signal_drilldown.get("status"), "MISSING"),
+        "source_backfill_repair_status": _text(repair_plan.get("status"), "MISSING"),
+        "candidate_id": _text(stress_summary.get("candidate_id"), "MISSING"),
+        "market_regime": _text(stress_payload.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_date_range,
+        "required_scenario_count": len(REQUIRED_STRESS_SCENARIOS),
+        "source_scenario_count": len(_records(stress_payload.get("scenario_reviews"))),
+        "failed_scenario_count": len(failed_rows),
+        "warning_scenario_count": len(warning_rows),
+        "root_cause_count": len(root_causes),
+        "design_judgment": design_judgment,
+        "redesign_required": design_judgment == "REDESIGN_REQUIRED",
+        "reject_current_candidate": design_judgment == "REJECT_CURRENT_CANDIDATE",
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        as_of=as_of,
+        status=STRESS_WEAKNESS_ATTRIBUTION_READY,
+        purpose=(
+            "Attribute why the next candidate stress review is weak and decide "
+            "whether the candidate should be redesigned or rejected."
+        ),
+        input_artifacts={report_type: str(path) for report_type, path in paths.items()},
+        output_decision=design_judgment,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    next_cycle.STRESS_REVIEW_REPORT_TYPE,
+                    paths[next_cycle.STRESS_REVIEW_REPORT_TYPE],
+                    stress_payload,
+                ),
+                _source_artifact(
+                    WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+                    paths[WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE],
+                    window_attribution,
+                ),
+                _source_artifact(
+                    SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+                    paths[SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE],
+                    signal_drilldown,
+                ),
+                _source_artifact(
+                    BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+                    paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE],
+                    repair_plan,
+                ),
+                _source_artifact(
+                    EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+                    paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE],
+                    ledger,
+                ),
+            ],
+            "stress_scenario_attributions": scenario_rows,
+            "stress_weakness_root_causes": root_causes,
+            "candidate_design_implications": _stress_design_implications(
+                design_judgment,
+                root_causes,
+            ),
+            "classification_policy": {
+                "required_stress_scenarios": list(REQUIRED_STRESS_SCENARIOS),
+                "design_judgment_taxonomy": list(STRESS_DESIGN_JUDGMENTS),
+                "does_not_tune_thresholds": True,
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-475 已生成 stress weakness attribution；"
+                "slow drawdown 是 fail scenario，其他 stress rows 多为 warning 或 coverage gap。"
+            ),
+            key_result=design_judgment,
+            blocking_issues=_issue_names(root_causes, "root_cause_id"),
+            warnings="partial static proxy remains a stress evidence limitation",
+            next_action="run_trading_476_cost_benchmark_weakness_attribution",
+        ),
+        next_action="run_trading_476_cost_benchmark_weakness_attribution",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Attribution is read-only and does not rerun stress or backfill.",
+            "No thresholds are tuned to hide stress failure.",
+            "Benchmark behavior is not fabricated when the stress source does not isolate it.",
+        ],
+        requested_date_range=requested_date_range,
+    )
+
+
+def validate_stress_weakness_attribution_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    rows = _records(payload.get("stress_scenario_attributions"))
+    source_artifacts = _records(payload.get("source_artifacts"))
+    source_report_types = {_text(row.get("report_type")) for row in source_artifacts}
+    scenario_ids = {_text(row.get("scenario_id")) for row in rows}
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        f"report_type must be {STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE}.",
+        "regenerate_stress_weakness_attribution",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status",
+        _text(payload.get("status")) == STRESS_WEAKNESS_ATTRIBUTION_READY,
+        f"status must be {STRESS_WEAKNESS_ATTRIBUTION_READY}.",
+        "restore_stress_weakness_attribution_status",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Stress attribution must keep production_effect=none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_sources_present",
+        {
+            next_cycle.STRESS_REVIEW_REPORT_TYPE,
+            WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        }
+        <= source_report_types,
+        "Stress attribution must include stress/window/signal/repair/ledger sources.",
+        "restore_required_source_loading",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_scenarios_present",
+        set(REQUIRED_STRESS_SCENARIOS) <= scenario_ids,
+        "Stress attribution must include all required stress scenarios.",
+        "restore_required_stress_scenarios",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "scenario_rows_complete",
+        all(_stress_scenario_row_complete(row) for row in rows),
+        (
+            "Each stress scenario row must include behavior, benchmark, drawdown, "
+            "rotation, turnover fields."
+        ),
+        "restore_stress_scenario_attribution_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "root_causes_present",
+        bool(_records(payload.get("stress_weakness_root_causes"))),
+        "Stress attribution must include root causes.",
+        "restore_stress_root_causes",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "design_judgment_valid",
+        _text(summary.get("design_judgment")) in STRESS_DESIGN_JUDGMENTS,
+        "Stress design judgment must use the governed taxonomy.",
+        "restore_stress_design_judgment",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "counts_consistent",
+        _stress_counts_consistent(payload),
+        "Stress scenario counts must match attribution rows.",
+        "restore_stress_counts",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Stress attribution must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-475 stress weakness attribution.",
+        input_artifacts={STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-475 stress attribution validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_stress_weakness_attribution"
+                if status == FAIL_STATUS
+                else "use_validated_stress_attribution_for_trading_476"
+            ),
+        ),
+        next_action=(
+            "repair_stress_weakness_attribution"
+            if status == FAIL_STATUS
+            else "use_validated_stress_attribution_for_trading_476"
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not rerun source reports."],
@@ -2782,6 +3086,232 @@ def _window_counts_consistent(payload: Mapping[str, Any]) -> bool:
     )
 
 
+def _stress_attribution_source_paths(*, reports_dir: Path, as_of: date) -> dict[str, Path]:
+    return {
+        next_cycle.STRESS_REVIEW_REPORT_TYPE: (
+            next_cycle.default_next_research_cycle_json_path(
+                next_cycle.STRESS_REVIEW_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE: default_evidence_repair_json_path(
+            WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: default_evidence_repair_json_path(
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: default_evidence_repair_json_path(
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        EVIDENCE_GAP_LEDGER_REPORT_TYPE: default_evidence_repair_json_path(
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+    }
+
+
+def _stress_scenario_attribution_rows(
+    stress_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    source_by_id = {
+        _text(row.get("scenario_id")): row
+        for row in _records(stress_payload.get("scenario_reviews"))
+        if _text(row.get("scenario_id"))
+    }
+    rows = []
+    for scenario_id in REQUIRED_STRESS_SCENARIOS:
+        source = source_by_id.get(scenario_id)
+        if source is None:
+            rows.append(_missing_stress_scenario_row(scenario_id))
+            continue
+        rows.append(_stress_scenario_row(source))
+    return rows
+
+
+def _missing_stress_scenario_row(scenario_id: str) -> dict[str, Any]:
+    return {
+        "scenario_id": scenario_id,
+        "scenario_status": "MISSING",
+        "candidate_behavior": "not_reported_by_source_stress_review",
+        "expected_behavior": "scenario row present or explicitly marked not applicable",
+        "benchmark_behavior": "not_isolated_by_stress_source",
+        "drawdown_mismatch": "not_measured",
+        "rotation_flip_issue": "not_measured",
+        "turnover_impact": "not_measured",
+        "root_cause_category": "required_stress_scenario_missing",
+        "candidate_design_implication": "complete_required_stress_scenario_coverage",
+        "redesign_required": False,
+        "reject_candidate": False,
+        "recommended_action": "add_missing_required_stress_scenario_before_claiming_coverage",
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _stress_scenario_row(source: Mapping[str, Any]) -> dict[str, Any]:
+    scenario_id = _text(source.get("scenario_id"))
+    status = _text(source.get("scenario_status"), "MISSING")
+    evaluation = _text(source.get("evaluation"))
+    drawdown_mismatch = _stress_drawdown_mismatch(source)
+    root_cause = _stress_root_cause_category(source)
+    return {
+        "scenario_id": scenario_id,
+        "scenario_status": status,
+        "candidate_behavior": (
+            f"return_proxy={source.get('return_proxy')}; "
+            f"drawdown_proxy={source.get('drawdown_proxy')}; "
+            f"evaluation={evaluation}"
+        ),
+        "expected_behavior": (
+            "PASS or non-blocking mixed stress evidence without partial static proxy reliance"
+        ),
+        "benchmark_behavior": "not_isolated_by_stress_source",
+        "drawdown_mismatch": drawdown_mismatch,
+        "rotation_flip_issue": (
+            f"rotation_count={source.get('rotation_count')}; "
+            f"false_risk_off_count={source.get('false_risk_off_count')}"
+        ),
+        "turnover_impact": (
+            f"turnover_proxy={source.get('turnover_proxy')}; "
+            "cost impact evaluated separately in TRADING-476"
+        ),
+        "root_cause_category": root_cause,
+        "candidate_design_implication": _stress_design_implication(status, root_cause),
+        "redesign_required": status == "FAIL",
+        "reject_candidate": False,
+        "recommended_action": _text(source.get("recommended_action")),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _stress_drawdown_mismatch(source: Mapping[str, Any]) -> str:
+    status = _text(source.get("scenario_status"))
+    evaluation = _text(source.get("evaluation")).lower()
+    if status == "FAIL" or "drawdown proxy breaches" in evaluation:
+        return "blocking_drawdown_mismatch"
+    if "drawdown proxy remains weak" in evaluation:
+        return "warning_drawdown_mismatch"
+    return "none_reported"
+
+
+def _stress_root_cause_category(source: Mapping[str, Any]) -> str:
+    status = _text(source.get("scenario_status"))
+    evaluation = _text(source.get("evaluation")).lower()
+    if status == "FAIL" or "drawdown proxy breaches" in evaluation:
+        return "structural_drawdown_failure"
+    if "partial" in evaluation or "binding lacks historical signals" in evaluation:
+        return "partial_static_proxy_evidence_limit"
+    if "return/drawdown proxy remains weak" in evaluation:
+        return "weak_return_drawdown_warning"
+    return "stress_warning"
+
+
+def _stress_design_implication(status: str, root_cause: str) -> str:
+    if status == "FAIL" or root_cause == "structural_drawdown_failure":
+        return "redesign_drawdown_or_stress_handling_before_research_gate"
+    if root_cause == "partial_static_proxy_evidence_limit":
+        return "complete_dynamic_binding_before_final_stress_judgment"
+    if root_cause == "required_stress_scenario_missing":
+        return "complete_required_stress_scenario_coverage"
+    return "retain_as_warning_for_redesign_hypothesis"
+
+
+def _stress_root_causes(
+    rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    by_cause: dict[str, list[str]] = {}
+    for row in rows:
+        cause = _text(row.get("root_cause_category"))
+        if not cause:
+            continue
+        by_cause.setdefault(cause, []).append(_text(row.get("scenario_id")))
+    if _text(summary.get("source_backfill_status")) == next_cycle.CANDIDATE_BACKFILL_PARTIAL:
+        by_cause.setdefault("partial_static_proxy_evidence_limit", [])
+    result = []
+    for cause, scenarios in sorted(by_cause.items()):
+        result.append(
+            {
+                "root_cause_id": cause,
+                "affected_scenarios": sorted(set(scenarios)),
+                "affected_scenario_count": len(set(scenarios)),
+                "design_implication": _stress_design_implication("", cause),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return result
+
+
+def _stress_design_judgment(
+    rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+) -> str:
+    if any(row.get("reject_candidate") is True for row in rows):
+        return "REJECT_CURRENT_CANDIDATE"
+    if any(row.get("redesign_required") is True for row in rows):
+        return "REDESIGN_REQUIRED"
+    if _text(summary.get("source_backfill_status")) == next_cycle.CANDIDATE_BACKFILL_PARTIAL:
+        return "REPAIR_EVIDENCE_BEFORE_DECISION"
+    return "STRESS_WEAKNESS_ACCEPTABLE"
+
+
+def _stress_design_implications(
+    design_judgment: str,
+    root_causes: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "design_judgment": design_judgment,
+            "root_cause_id": _text(row.get("root_cause_id")),
+            "implication": _text(row.get("design_implication")),
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for row in root_causes
+    ]
+
+
+def _stress_scenario_row_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "scenario_id",
+        "scenario_status",
+        "candidate_behavior",
+        "expected_behavior",
+        "benchmark_behavior",
+        "drawdown_mismatch",
+        "rotation_flip_issue",
+        "turnover_impact",
+        "root_cause_category",
+        "candidate_design_implication",
+    )
+    return (
+        all(bool(_text(row.get(key))) for key in required)
+        and isinstance(row.get("redesign_required"), bool)
+        and isinstance(row.get("reject_candidate"), bool)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _stress_counts_consistent(payload: Mapping[str, Any]) -> bool:
+    rows = _records(payload.get("stress_scenario_attributions"))
+    summary = _mapping(payload.get("summary"))
+    failed = len(
+        [row for row in rows if _text(row.get("scenario_status")) in {"FAIL", "MISSING"}]
+    )
+    warnings = len([row for row in rows if _text(row.get("scenario_status")) == "WARNING"])
+    return (
+        _int(summary.get("failed_scenario_count")) == failed
+        and _int(summary.get("warning_scenario_count")) == warnings
+        and _int(summary.get("required_scenario_count")) == len(REQUIRED_STRESS_SCENARIOS)
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -3008,6 +3538,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Stress Scenario Attributions", "stress_scenario_attributions"),
+            ("Stress Weakness Root Causes", "stress_weakness_root_causes"),
+        ]
+    if report_type == STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -3054,6 +3592,7 @@ __all__ = [
     "REPORT_PREFIXES",
     "REPAIRABILITY_TYPES",
     "REQUIRED_BACKFILL_WINDOWS",
+    "REQUIRED_STRESS_SCENARIOS",
     "REQUIRED_WINDOW_SPLITS",
     "SIGNAL_BLOCKER_CAUSES",
     "SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE",
@@ -3062,6 +3601,10 @@ __all__ = [
     "SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN",
     "SIGNAL_ROBUSTNESS_NOT_REPAIRABLE",
     "SIGNAL_ROBUSTNESS_REPAIRABLE",
+    "STRESS_DESIGN_JUDGMENTS",
+    "STRESS_WEAKNESS_ATTRIBUTION_READY",
+    "STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE",
+    "STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE",
     "VALIDATION_SUFFIX",
     "WINDOW_FRAGILITY_ATTRIBUTION_CATEGORIES",
     "WINDOW_FRAGILITY_ATTRIBUTION_READY",
@@ -3071,6 +3614,7 @@ __all__ = [
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_executable_research_evidence_gap_ledger_payload",
     "build_signal_robustness_blocker_drilldown_payload",
+    "build_stress_weakness_attribution_payload",
     "build_window_fragility_attribution_payload",
     "default_evidence_repair_json_path",
     "default_evidence_repair_markdown_path",
@@ -3079,6 +3623,7 @@ __all__ = [
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
     "validate_signal_robustness_blocker_drilldown_payload",
+    "validate_stress_weakness_attribution_payload",
     "validate_window_fragility_attribution_payload",
     "write_evidence_repair_json",
     "write_evidence_repair_markdown",

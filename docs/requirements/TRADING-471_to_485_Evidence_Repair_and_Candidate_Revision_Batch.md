@@ -28,7 +28,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-472|backfill-partial-root-cause-and-repair-plan|DONE|TRADING-471 + latest backfill|解释每个 incomplete window 的缺失日期/feature/signal/schema/coverage/binding issue，并输出 repairability 状态。|
 |TRADING-473|signal-robustness-blocker-drilldown|DONE|TRADING-471 + signal robustness review|列出每个 blocker 的 input artifact、failed field、expected/actual value 和 repair path，不放松 signal completeness rules。|
 |TRADING-474|window-fragility-attribution|DONE|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
-|TRADING-475|stress-weakness-attribution|READY|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
+|TRADING-475|stress-weakness-attribution|DONE|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
 |TRADING-476|cost-benchmark-weakness-attribution|READY|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
 |TRADING-477|candidate-redesign-hypothesis-v2|READY|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
 |TRADING-478|candidate-v2-spec-freeze|READY|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
@@ -130,3 +130,27 @@ owner decision append、production mutation 或 automatic position control。
   spec、未 append owner decision、未创建 paper-shadow、未批准 extended/live、未写
   official target weights、未触发 broker/order、未修改 production。下一步是 TRADING-475
   stress weakness attribution。
+- 2026-06-18: TRADING-475 开始实现。范围限定为只读读取
+  `next_candidate_stress_review`、TRADING-474 window attribution、TRADING-473 signal
+  drilldown、TRADING-472 repair plan 和 TRADING-471 ledger，逐 required stress scenario
+  记录 candidate behavior、expected behavior、benchmark behavior、drawdown mismatch、
+  rotation/flip issue、turnover impact、root cause 和 design implication；不重新运行
+  stress/backfill、不调阈值隐藏 failure、不改变 candidate spec、不触发 paper-shadow 或
+  production。
+- 2026-06-18: TRADING-475 完成 pending commit。真实 2026-06-17 attribution
+  `stress_weakness_attribution_2026-06-17` 输出
+  `STRESS_WEAKNESS_ATTRIBUTION_READY`，source stress result=`WEAK`，
+  source window fragility judgment=`MIXED_OVERFIT_RISK_AND_UNDER_OBSERVED`，
+  source signal drilldown=`SIGNAL_ROBUSTNESS_REPAIRABLE`，source backfill repair
+  `BACKFILL_REPAIRABLE`。Required scenarios=6，source scenarios=6，
+  failed scenarios=2（`slow_drawdown` FAIL 和 `v_shaped_recovery` MISSING），
+  warning scenarios=4（rapid drawdown、high-volatility sideways、false risk-off
+  cluster、AI / semiconductor correction），root causes=4：
+  `structural_drawdown_failure`、`required_stress_scenario_missing`、
+  `weak_return_drawdown_warning`、`partial_static_proxy_evidence_limit`。Design
+  judgment=`REDESIGN_REQUIRED`，reject_current_candidate=false。Validation
+  `stress_weakness_attribution_validation_2026-06-17` 为 PASS，checks=11、
+  failed=0。未重新运行 stress/backfill、未调阈值隐藏 failure、未改变 candidate
+  spec、未 append owner decision、未创建 paper-shadow、未批准 extended/live、未写
+  official target weights、未触发 broker/order、未修改 production。下一步是
+  TRADING-476 cost/benchmark weakness attribution。

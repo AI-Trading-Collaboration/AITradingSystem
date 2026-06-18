@@ -374,6 +374,100 @@ def test_window_fragility_attribution_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_stress_weakness_attribution_marks_redesign_required(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+
+    payload = repair.build_stress_weakness_attribution_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.STRESS_WEAKNESS_ATTRIBUTION_READY
+    assert payload["summary"]["source_stress_result"] == "WEAK"
+    assert payload["summary"]["design_judgment"] == "REDESIGN_REQUIRED"
+    assert payload["summary"]["redesign_required"] is True
+    assert payload["summary"]["reject_current_candidate"] is False
+    assert payload["summary"]["failed_scenario_count"] == 2
+    assert payload["summary"]["warning_scenario_count"] == 4
+    rows = {row["scenario_id"]: row for row in payload["stress_scenario_attributions"]}
+    assert set(repair.REQUIRED_STRESS_SCENARIOS) == set(rows)
+    assert rows["slow_drawdown"]["scenario_status"] == "FAIL"
+    assert rows["slow_drawdown"]["drawdown_mismatch"] == (
+        "blocking_drawdown_mismatch"
+    )
+    assert rows["slow_drawdown"]["redesign_required"] is True
+    assert rows["v_shaped_recovery"]["scenario_status"] == "MISSING"
+    assert rows["v_shaped_recovery"]["root_cause_category"] == (
+        "required_stress_scenario_missing"
+    )
+    assert "turnover_proxy=0.85" in rows["rapid_drawdown"]["turnover_impact"]
+    assert "rotation_count=1" in rows["false_risk_off_cluster"]["rotation_flip_issue"]
+    root_causes = {row["root_cause_id"] for row in payload["stress_weakness_root_causes"]}
+    assert {
+        "structural_drawdown_failure",
+        "required_stress_scenario_missing",
+        "weak_return_drawdown_warning",
+        "partial_static_proxy_evidence_limit",
+    } <= root_causes
+
+    validation = repair.validate_stress_weakness_attribution_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_stress_weakness_attribution_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "stress-weakness-attribution",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    attribution_path = repair.default_evidence_repair_json_path(
+        repair.STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(attribution_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["design_judgment"] == "REDESIGN_REQUIRED"
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-stress-weakness-attribution",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -407,6 +501,18 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
         signal_drilldown,
         repair.default_evidence_repair_json_path(
             repair.SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    window_attribution = repair.build_window_fragility_attribution_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        window_attribution,
+        repair.default_evidence_repair_json_path(
+            repair.WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
@@ -495,18 +601,19 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
             "report_type": next_cycle.STRESS_REVIEW_REPORT_TYPE,
             "as_of": RUN_DATE.isoformat(),
             "status": "WEAK",
-            "scenario_reviews": [
-                {
-                    "scenario_id": "slow_drawdown",
-                    "scenario_status": "FAIL",
-                    "return_proxy": -0.1,
-                    "drawdown_proxy": -0.27,
-                    "turnover_proxy": 0.85,
-                    "rotation_count": 1,
-                    "evaluation": "Drawdown proxy breaches conservative stress blocker.",
-                    "recommended_action": "complete_executable_backfill_before_stress_review",
-                }
-            ],
+            "market_regime": "ai_after_chatgpt",
+            "requested_date_range": "2023-01-03..2025-04-30",
+            "summary": {
+                "stress_result": "WEAK",
+                "candidate_id": "candidate_v1",
+                "requested_date_range": "2023-01-03..2025-04-30",
+                "scenario_count": 6,
+                "blocking_scenario_count": 1,
+                "warning_scenario_count": 5,
+                "source_backfill_status": next_cycle.CANDIDATE_BACKFILL_PARTIAL,
+                "partial_static_proxy": True,
+            },
+            "scenario_reviews": _stress_reviews_fixture(),
             "production_effect": "none",
         },
         next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE: {
@@ -701,6 +808,83 @@ def _backfill_windows_fixture() -> list[dict[str, object]]:
             "production_effect": "none",
         }
         for window_id, start, end, return_proxy, drawdown_proxy in windows
+    ]
+
+
+def _stress_reviews_fixture() -> list[dict[str, object]]:
+    return [
+        {
+            "scenario_id": "normal_market_regime",
+            "scenario_status": "WARNING",
+            "return_proxy": 0.48,
+            "drawdown_proxy": -0.06,
+            "turnover_proxy": 0.85,
+            "rotation_count": 1,
+            "false_risk_off_count": 0,
+            "evaluation": "Metric is real but partial because binding lacks historical signals.",
+            "recommended_action": "complete_executable_backfill_before_stress_review",
+            "production_effect": "none",
+        },
+        {
+            "scenario_id": "rapid_drawdown",
+            "scenario_status": "WARNING",
+            "return_proxy": -0.15,
+            "drawdown_proxy": -0.19,
+            "turnover_proxy": 0.85,
+            "rotation_count": 1,
+            "false_risk_off_count": 0,
+            "evaluation": "Return/drawdown proxy remains weak in this stress window.",
+            "recommended_action": "redesign_candidate_stress_handling",
+            "production_effect": "none",
+        },
+        {
+            "scenario_id": "slow_drawdown",
+            "scenario_status": "FAIL",
+            "return_proxy": -0.1,
+            "drawdown_proxy": -0.27,
+            "turnover_proxy": 0.85,
+            "rotation_count": 1,
+            "false_risk_off_count": 0,
+            "evaluation": "Drawdown proxy breaches conservative stress blocker.",
+            "recommended_action": "complete_executable_backfill_before_stress_review",
+            "production_effect": "none",
+        },
+        {
+            "scenario_id": "high_volatility_sideways_market",
+            "scenario_status": "WARNING",
+            "return_proxy": -0.01,
+            "drawdown_proxy": -0.13,
+            "turnover_proxy": 0.85,
+            "rotation_count": 1,
+            "false_risk_off_count": 1,
+            "evaluation": "Return/drawdown proxy remains weak in this stress window.",
+            "recommended_action": "redesign_candidate_stress_handling",
+            "production_effect": "none",
+        },
+        {
+            "scenario_id": "ai_semiconductor_correction",
+            "scenario_status": "WARNING",
+            "return_proxy": -0.08,
+            "drawdown_proxy": -0.09,
+            "turnover_proxy": 0.85,
+            "rotation_count": 1,
+            "false_risk_off_count": 0,
+            "evaluation": "Return/drawdown proxy remains weak in this stress window.",
+            "recommended_action": "redesign_candidate_stress_handling",
+            "production_effect": "none",
+        },
+        {
+            "scenario_id": "false_risk_off_cluster",
+            "scenario_status": "WARNING",
+            "return_proxy": -0.09,
+            "drawdown_proxy": -0.1,
+            "turnover_proxy": 0.85,
+            "rotation_count": 1,
+            "false_risk_off_count": 2,
+            "evaluation": "Return/drawdown proxy remains weak in this stress window.",
+            "recommended_action": "redesign_candidate_stress_handling",
+            "production_effect": "none",
+        },
     ]
 
 

@@ -9190,6 +9190,47 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: stress_weakness_attribution
+    title: Stress Weakness Attribution
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports stress-weakness-attribution --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/stress_weakness_attribution_20*.json
+      - outputs/reports/stress_weakness_attribution_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-475 reads the stress scenario review, TRADING-474 window
+      attribution, TRADING-473 signal drilldown, TRADING-472 repair plan, and
+      TRADING-471 ledger, then attributes why the stress result is WEAK across
+      rapid drawdown, slow drawdown, V-shaped recovery, high-volatility
+      sideways, false risk-off cluster, and AI/semiconductor correction.
+    owner_action: use_as_input_to_trading_476_cost_benchmark_weakness_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: stress_weakness_attribution_validation
+    title: Stress Weakness Attribution Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-stress-weakness-attribution --latest
+    artifact_globs:
+      - outputs/reports/stress_weakness_attribution_validation_20*.json
+      - outputs/reports/stress_weakness_attribution_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-475 validation checks required source coverage, all required
+      stress scenarios, scenario attribution fields, root causes, design
+      judgment taxonomy, Reader Brief fields, and the no paper-shadow / no
+      production safety boundary.
+    owner_action: run_after_stress_weakness_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

@@ -2032,6 +2032,19 @@ attribution 不重新运行 backfill、不调参隐藏 fragility、不改变 can
 owner decision、不创建 paper-shadow、不批准 extended/live、不写 official target weights、
 不触发 broker/order、不修改 production。
 
+TRADING-475_STRESS_WEAKNESS_ATTRIBUTION 在 window attribution 后解释 stress result 为什么
+为 `WEAK`。运行 `aits reports stress-weakness-attribution --as-of YYYY-MM-DD` 和
+`aits reports validate-stress-weakness-attribution --latest` 会读取 stress review、
+TRADING-474 window attribution、TRADING-473 signal drilldown、TRADING-472 repair plan 和
+TRADING-471 ledger，覆盖 rapid drawdown、slow drawdown、V-shaped recovery、
+high-volatility sideways market、false risk-off cluster 和 AI / semiconductor correction
+六个 required scenarios，逐场景记录 candidate behavior、expected behavior、benchmark
+behavior、drawdown mismatch、rotation/flip issue、turnover impact、root cause 和 design
+implication。source stress review 未提供的 required scenario 必须显式标记 `MISSING`，
+不得补造 behavior。该 attribution 不重新运行 stress/backfill、不调参隐藏 stress failure、
+不改变 candidate spec、不 append owner decision、不创建 paper-shadow、不批准 extended/live、
+不写 official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
