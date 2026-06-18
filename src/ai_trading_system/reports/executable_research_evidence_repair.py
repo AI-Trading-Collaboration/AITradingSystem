@@ -31,6 +31,7 @@ COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE = (
     "cost_benchmark_weakness_attribution"
 )
 CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE = "candidate_redesign_hypothesis_v2"
+CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE = "candidate_v2_spec_freeze"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -52,6 +53,9 @@ COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -80,6 +84,7 @@ COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY = (
     "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY"
 )
 CANDIDATE_REDESIGN_HYPOTHESIS_READY = "CANDIDATE_REDESIGN_HYPOTHESIS_READY"
+CANDIDATE_V2_SPEC_FREEZE_READY = "CANDIDATE_V2_SPEC_FREEZE_READY"
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -132,6 +137,10 @@ REPORT_PREFIXES: dict[str, str] = {
     CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE: "candidate_redesign_hypothesis_v2",
     CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE: (
         "candidate_redesign_hypothesis_v2_validation"
+    ),
+    CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE: "candidate_v2_spec_freeze",
+    CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_spec_freeze_validation"
     ),
 }
 
@@ -2449,6 +2458,227 @@ def validate_candidate_redesign_hypothesis_payload(
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not select a final v2 spec."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_candidate_v2_spec_freeze_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    hypothesis_path = default_evidence_repair_json_path(
+        CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    hypothesis_payload = _read_json_mapping(hypothesis_path)
+    hypotheses = _records(hypothesis_payload.get("candidate_redesign_hypotheses"))
+    selected = _select_candidate_v2_hypothesis(hypotheses)
+    frozen_spec = _candidate_v2_frozen_spec(selected)
+    differences = _candidate_v2_differences_from_trading_470(selected)
+    summary = {
+        "candidate_v2_spec_freeze_status": CANDIDATE_V2_SPEC_FREEZE_READY,
+        "source_hypothesis_status": _text(hypothesis_payload.get("status"), "MISSING"),
+        "selected_hypothesis_id": _text(selected.get("hypothesis_id")),
+        "selected_hypothesis_priority": _text(selected.get("priority")),
+        "selected_hypothesis_target_count": len(_list_values(selected.get("target_areas"))),
+        "candidate_id": _text(frozen_spec.get("candidate_id")),
+        "market_regime": MARKET_REGIME,
+        "requested_date_range": _text(
+            hypothesis_payload.get("requested_date_range"),
+            "not_applicable",
+        ),
+        "difference_count": len(differences),
+        "stop_condition_count": len(_list_values(frozen_spec.get("stop_conditions"))),
+        "paper_shadow_eligible": False,
+        "binding_implemented": False,
+        "backfill_run": False,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        as_of=as_of,
+        status=CANDIDATE_V2_SPEC_FREEZE_READY,
+        purpose="Freeze a research-only v2 candidate spec from the selected P0 hypothesis.",
+        input_artifacts={
+            CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE: str(hypothesis_path)
+        },
+        output_decision="V2_SPEC_FROZEN_FOR_TRADING_479_BINDING_UPDATE",
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+                    hypothesis_path,
+                    hypothesis_payload,
+                )
+            ],
+            "selected_hypothesis": selected,
+            "frozen_candidate_spec": frozen_spec,
+            "differences_from_trading_470_candidate": differences,
+            "freeze_boundary": {
+                "research_only_spec": True,
+                "paper_shadow_eligible": False,
+                "implements_binding": False,
+                "runs_backfill": False,
+                "generates_official_target_weights": False,
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-478 已冻结 research-only v2 spec；"
+                f"selected={_text(selected.get('hypothesis_id'))}。"
+            ),
+            key_result="V2_SPEC_FROZEN_FOR_TRADING_479_BINDING_UPDATE",
+            blocking_issues="none",
+            warnings="frozen spec is not paper-shadow eligible and has no binding yet",
+            next_action="run_trading_479_candidate_v2_executable_binding_update",
+        ),
+        next_action="run_trading_479_candidate_v2_executable_binding_update",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Spec freeze is research-only and does not implement executable binding.",
+            "Spec freeze does not run mini or full backfill.",
+            "Spec freeze is not paper-shadow eligible.",
+        ],
+        requested_date_range=_text(summary.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def validate_candidate_v2_spec_freeze_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    selected = _mapping(payload.get("selected_hypothesis"))
+    frozen_spec = _mapping(payload.get("frozen_candidate_spec"))
+    differences = _records(payload.get("differences_from_trading_470_candidate"))
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE}.",
+        "regenerate_candidate_v2_spec_freeze",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status",
+        _text(payload.get("status")) == CANDIDATE_V2_SPEC_FREEZE_READY,
+        f"status must be {CANDIDATE_V2_SPEC_FREEZE_READY}.",
+        "restore_candidate_v2_spec_freeze_status",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "selected_hypothesis_p0",
+        _text(selected.get("priority")) == "P0",
+        "Frozen spec must select a P0 hypothesis.",
+        "restore_p0_hypothesis_selection",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "frozen_spec_complete",
+        _candidate_v2_spec_complete(frozen_spec),
+        (
+            "Frozen spec must include candidate id, inputs, assumptions, "
+            "expectations, windows, and stops."
+        ),
+        "restore_candidate_v2_spec_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "differences_present",
+        bool(differences) and all(_candidate_v2_difference_complete(row) for row in differences),
+        "Frozen spec must state how v2 differs from the TRADING-470 candidate.",
+        "restore_v2_difference_rows",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "freeze_boundary_locked",
+        _candidate_v2_freeze_boundary_valid(payload.get("freeze_boundary")),
+        "Spec freeze must not implement binding, run backfill, or create shadow eligibility.",
+        "restore_v2_freeze_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "summary_boundary_locked",
+        summary.get("paper_shadow_eligible") is False
+        and summary.get("binding_implemented") is False
+        and summary.get("backfill_run") is False,
+        "Summary must keep paper-shadow, binding, and backfill disabled.",
+        "restore_v2_summary_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Candidate v2 spec freeze must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-478 candidate v2 spec freeze.",
+        input_artifacts={CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-478 candidate v2 spec freeze validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_spec_freeze"
+                if status == FAIL_STATUS
+                else "use_validated_v2_spec_for_trading_479"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_spec_freeze"
+            if status == FAIL_STATUS
+            else "use_validated_v2_spec_for_trading_479"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not implement v2 binding."],
         requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
     )
 
@@ -4852,6 +5082,179 @@ def _candidate_selection_boundary_valid(value: Any) -> bool:
     )
 
 
+def _select_candidate_v2_hypothesis(
+    hypotheses: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    p0 = [dict(row) for row in hypotheses if _text(row.get("priority")) == "P0"]
+    if not p0:
+        raise ValueError("No P0 hypothesis available for v2 spec freeze.")
+    return max(
+        p0,
+        key=lambda row: (
+            len(_list_values(row.get("target_areas"))),
+            -_int(row.get("source_order"), 0),
+            _text(row.get("hypothesis_id")),
+        ),
+    )
+
+
+def _candidate_v2_frozen_spec(selected: Mapping[str, Any]) -> dict[str, Any]:
+    hypothesis_id = _text(selected.get("hypothesis_id"), "selected_p0")
+    return {
+        "candidate_id": f"median_plus_regime_mismatch_filter_{hypothesis_id}",
+        "spec_version": "v2_research_freeze_trading_478",
+        "source_hypothesis_id": hypothesis_id,
+        "source_hypothesis_priority": _text(selected.get("priority")),
+        "signal_inputs": [
+            "historical_candidate_signal_series_by_date",
+            "date_aligned_feature_matrix",
+            "market_coverage_status_by_window",
+            "benchmark_margin_context",
+        ],
+        "feature_inputs": [
+            "ETF price returns",
+            "AI/semiconductor regime indicators",
+            "drawdown persistence metrics",
+            "high-volatility sideways detector inputs",
+            "cost scenario and benchmark baseline context",
+        ],
+        "regime_assumptions": [
+            "market_regime=ai_after_chatgpt",
+            (
+                "rapid_drawdown, slow_drawdown, V-shaped recovery, high-volatility "
+                "sideways, false risk-off cluster, and AI/semiconductor correction "
+                "remain required validation contexts"
+            ),
+            "regime mismatch opportunity must be confirmed against benchmark-relative edge",
+        ],
+        "drawdown_handling": (
+            "Apply persistent drawdown confirmation before maintaining full risk-on "
+            "exposure; fail closed if slow_drawdown remains a stress blocker."
+        ),
+        "rotation_handling": _text(selected.get("changed_rotation_rule")),
+        "turnover_constraints": [
+            "Use turnover-aware hold band before research weight rotation.",
+            "Mini backfill must show turnover proxy improvement versus TRADING-470 candidate.",
+            "Do not add a numeric turnover cap until governed policy is reviewed.",
+        ],
+        "cost_expectations": [
+            "Weak net return proxy must clear source meaningful thresholds before full backfill.",
+            "High-cost scenario must not remain a root cause in TRADING-476 attribution rerun.",
+        ],
+        "benchmark_expectations": [
+            "Equal-weight ETF baseline must no longer be BENCHMARK_UNDERPERFORMS.",
+            (
+                "Static allocation, no-trade, QQQ-only, and SPY-only margins must "
+                "clear source threshold or be explicitly documented as residual warnings."
+            ),
+        ],
+        "validation_windows": [
+            "normal_market_regime",
+            "rapid_drawdown",
+            "slow_drawdown",
+            "v_shaped_recovery",
+            "high_volatility_sideways_market",
+            "false_risk_off_cluster",
+            "ai_semiconductor_correction",
+        ],
+        "stop_conditions": [
+            _text(selected.get("stop_condition")),
+            "Stop if signal robustness remains BLOCKED after v2 binding.",
+            "Stop if mini-backfill is weak or remains partial for required windows.",
+            "Stop if cost/benchmark attribution remains REDESIGN_REQUIRED.",
+            (
+                "Stop if paper-shadow, official weights, broker/order, or production "
+                "mutation is requested before owner review."
+            ),
+        ],
+        "paper_shadow_eligible": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_differences_from_trading_470(
+    selected: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "difference_id": "dynamic_signal_series_required",
+            "trading_470_behavior": "single-point signal binding used as static proxy",
+            "v2_behavior": "historical candidate signal series required by date",
+            "source_hypothesis_id": _text(selected.get("hypothesis_id")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "difference_id": "turnover_aware_rotation_guard",
+            "trading_470_behavior": "rotation allowed without benchmark margin confirmation",
+            "v2_behavior": _text(selected.get("changed_rotation_rule")),
+            "source_hypothesis_id": _text(selected.get("hypothesis_id")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "difference_id": "cost_benchmark_precheck",
+            "trading_470_behavior": "cost/benchmark weakness diagnosed after executable review",
+            "v2_behavior": "cost and benchmark expectations included before binding update",
+            "source_hypothesis_id": _text(selected.get("hypothesis_id")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "difference_id": "explicit_stress_validation_contexts",
+            "trading_470_behavior": "V-shaped recovery scenario was missing from stress source",
+            "v2_behavior": "V-shaped recovery is a required validation window before full backfill",
+            "source_hypothesis_id": _text(selected.get("hypothesis_id")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    ]
+
+
+def _candidate_v2_spec_complete(spec: Mapping[str, Any]) -> bool:
+    required = (
+        "candidate_id",
+        "spec_version",
+        "source_hypothesis_id",
+        "signal_inputs",
+        "feature_inputs",
+        "regime_assumptions",
+        "drawdown_handling",
+        "rotation_handling",
+        "turnover_constraints",
+        "cost_expectations",
+        "benchmark_expectations",
+        "validation_windows",
+        "stop_conditions",
+    )
+    return (
+        all(bool(spec.get(key)) for key in required)
+        and spec.get("paper_shadow_eligible") is False
+        and _text(spec.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _candidate_v2_difference_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "difference_id",
+        "trading_470_behavior",
+        "v2_behavior",
+        "source_hypothesis_id",
+    )
+    return (
+        all(bool(_text(row.get(key))) for key in required)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _candidate_v2_freeze_boundary_valid(value: Any) -> bool:
+    boundary = _mapping(value)
+    return (
+        boundary.get("research_only_spec") is True
+        and boundary.get("paper_shadow_eligible") is False
+        and boundary.get("implements_binding") is False
+        and boundary.get("runs_backfill") is False
+        and boundary.get("generates_official_target_weights") is False
+        and _text(boundary.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -5103,6 +5506,13 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Differences From Trading 470 Candidate", "differences_from_trading_470_candidate"),
+        ]
+    if report_type == CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -5148,6 +5558,9 @@ __all__ = [
     "CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE",
     "CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE",
     "CANDIDATE_REDESIGN_PRIORITIES",
+    "CANDIDATE_V2_SPEC_FREEZE_READY",
+    "CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE",
+    "CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE",
     "COST_BENCHMARK_DESIGN_JUDGMENTS",
     "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY",
     "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE",
@@ -5181,6 +5594,7 @@ __all__ = [
     "WINDOW_FRAGILITY_JUDGMENTS",
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_candidate_redesign_hypothesis_payload",
+    "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
     "build_signal_robustness_blocker_drilldown_payload",
@@ -5192,6 +5606,7 @@ __all__ = [
     "render_evidence_repair_markdown",
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_candidate_redesign_hypothesis_payload",
+    "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
     "validate_signal_robustness_blocker_drilldown_payload",

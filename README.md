@@ -2072,6 +2072,16 @@ failure mode、validation method 和 stop condition。该 report 不选择最终
 binding、不运行 backfill、不 append owner decision、不创建 paper-shadow、不批准 extended/live、
 不写 official target weights、不触发 broker/order、不修改 production。
 
+TRADING-478_CANDIDATE_V2_SPEC_FREEZE 在 TRADING-477 hypotheses 后冻结
+research-only v2 spec。运行 `aits reports candidate-v2-spec-freeze --as-of YYYY-MM-DD`
+和 `aits reports validate-candidate-v2-spec-freeze --latest` 会选择最高覆盖的 P0
+hypothesis，记录 candidate id、signal inputs、feature inputs、regime assumptions、
+drawdown handling、rotation handling、turnover constraints、cost expectations、
+benchmark expectations、validation windows、stop conditions，以及与 TRADING-470
+candidate 的差异。该 spec freeze 不实现 binding、不运行 backfill、不生成 paper-shadow
+eligibility、不 append owner decision、不创建 paper-shadow、不批准 extended/live、不写
+official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

@@ -6925,6 +6925,10 @@ def _write_evidence_repair_validation(
         payload = evidence_repair_reports.validate_candidate_redesign_hypothesis_payload(
             source_payload
         )
+    elif source_report_type == evidence_repair_reports.CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE:
+        payload = evidence_repair_reports.validate_candidate_v2_spec_freeze_payload(
+            source_payload
+        )
     else:
         raise typer.BadParameter(
             f"Unsupported evidence repair report_type: {source_report_type}"
@@ -8110,6 +8114,52 @@ def candidate_redesign_hypothesis_v2_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("candidate-v2-spec-freeze")
+def candidate_v2_spec_freeze_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Candidate v2 spec freeze 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 spec freeze JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 spec freeze Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-478：冻结 research-only v2 candidate spec。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = evidence_repair_reports.build_candidate_v2_spec_freeze_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(f"[yellow]Candidate v2 spec freeze：{payload['status']}[/yellow]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"selected_hypothesis_id：{summary['selected_hypothesis_id']}")
+    console.print(f"stop_condition_count：{summary['stop_condition_count']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -9173,6 +9223,59 @@ def validate_candidate_redesign_hypothesis_v2_command(
     style = "green" if status == "PASS" else "red"
     summary = payload["summary"]
     console.print(f"[{style}]Candidate redesign validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-candidate-v2-spec-freeze")
+def validate_candidate_v2_spec_freeze_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest candidate v2 spec freeze。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=evidence_repair_reports.CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="candidate v2 spec freeze",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Candidate v2 spec freeze validation：{status}[/{style}]")
     console.print(f"Source JSON：{source_path}")
     console.print(f"Validation JSON：{json_path}")
     console.print(f"Validation Markdown：{md_path}")

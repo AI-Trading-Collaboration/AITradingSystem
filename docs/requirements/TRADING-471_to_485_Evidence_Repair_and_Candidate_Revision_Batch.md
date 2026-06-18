@@ -31,7 +31,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-475|stress-weakness-attribution|DONE|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
 |TRADING-476|cost-benchmark-weakness-attribution|DONE|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
 |TRADING-477|candidate-redesign-hypothesis-v2|DONE|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
-|TRADING-478|candidate-v2-spec-freeze|READY|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
+|TRADING-478|candidate-v2-spec-freeze|DONE|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
 |TRADING-479|candidate-v2-executable-binding-update|READY|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
 |TRADING-480|candidate-v2-mini-backfill|READY|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
 |TRADING-481|candidate-v2-mini-gate|READY|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
@@ -199,3 +199,20 @@ owner decision append、production mutation 或 automatic position control。
   append owner decision、未创建 paper-shadow、未批准 extended/live、未写 official target
   weights、未触发 broker/order、未修改 production。下一步是 TRADING-478 candidate v2
   spec freeze。
+- 2026-06-18: TRADING-478 开始实现。范围限定为只读读取 TRADING-477 hypotheses，
+  选择最高优先 P0 hypothesis 冻结 research-only v2 spec，记录 candidate id、signal /
+  feature inputs、regime assumptions、drawdown handling、rotation handling、turnover
+  constraints、cost expectations、benchmark expectations、validation windows、stop
+  conditions 和与 TRADING-470 candidate 的差异；不实现 binding、不运行 backfill、不创建
+  paper-shadow、不批准 extended/live、不写 official target weights、不触发 broker/order、
+  不修改 production。
+- 2026-06-18: TRADING-478 完成 pending commit。真实 2026-06-17 spec freeze
+  `candidate_v2_spec_freeze_2026-06-17` 输出 `CANDIDATE_V2_SPEC_FREEZE_READY`，
+  selected hypothesis=`v2_turnover_cost_benchmark_guard`、priority=P0、target_count=3，
+  candidate id=`median_plus_regime_mismatch_filter_v2_turnover_cost_benchmark_guard`，
+  market_regime=`ai_after_chatgpt`，requested_date_range=`2023-01-03..2025-04-30`，
+  difference_count=4、stop_condition_count=5，paper_shadow_eligible=false。
+  Validation `candidate_v2_spec_freeze_validation_2026-06-17` 为 PASS，checks=9、
+  failed=0。未实现 binding、未运行 backfill、未 append owner decision、未创建
+  paper-shadow、未批准 extended/live、未写 official target weights、未触发 broker/order、
+  未修改 production。下一步是 TRADING-479 candidate v2 executable binding update。

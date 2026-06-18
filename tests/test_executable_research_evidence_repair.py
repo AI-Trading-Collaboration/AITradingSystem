@@ -668,6 +668,100 @@ def test_candidate_redesign_hypothesis_v2_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_spec_freeze_selects_p0_hypothesis(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+
+    payload = repair.build_candidate_v2_spec_freeze_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.CANDIDATE_V2_SPEC_FREEZE_READY
+    assert payload["summary"]["selected_hypothesis_id"] == (
+        "v2_turnover_cost_benchmark_guard"
+    )
+    assert payload["summary"]["selected_hypothesis_priority"] == "P0"
+    assert payload["summary"]["paper_shadow_eligible"] is False
+    spec = payload["frozen_candidate_spec"]
+    assert spec["candidate_id"] == (
+        "median_plus_regime_mismatch_filter_v2_turnover_cost_benchmark_guard"
+    )
+    assert "historical_candidate_signal_series_by_date" in spec["signal_inputs"]
+    assert spec["paper_shadow_eligible"] is False
+    assert any("Equal-weight ETF" in item for item in spec["benchmark_expectations"])
+    assert any("signal robustness" in item for item in spec["stop_conditions"])
+    differences = {
+        row["difference_id"] for row in payload["differences_from_trading_470_candidate"]
+    }
+    assert {
+        "dynamic_signal_series_required",
+        "turnover_aware_rotation_guard",
+        "cost_benchmark_precheck",
+        "explicit_stress_validation_contexts",
+    } <= differences
+    assert payload["freeze_boundary"]["implements_binding"] is False
+    assert payload["freeze_boundary"]["runs_backfill"] is False
+
+    validation = repair.validate_candidate_v2_spec_freeze_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_spec_freeze_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-spec-freeze",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    spec_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(spec_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["candidate_id"].endswith(
+        "v2_turnover_cost_benchmark_guard"
+    )
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-spec-freeze",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -737,6 +831,18 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
         cost_attribution,
         repair.default_evidence_repair_json_path(
             repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    hypotheses = repair.build_candidate_redesign_hypothesis_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        hypotheses,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
