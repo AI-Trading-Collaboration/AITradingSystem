@@ -194,3 +194,25 @@ Latest confirmed statuses:
   paper-shadow was activated, no official target weights, broker/order,
   owner-decision append, or production mutation were produced. Next task is
   TRADING-464 binding-backed research backfill.
+- 2026-06-18: TRADING-464 started. Implementation must load the validated
+  executable signal binding, research-only weight binding, safety audit, frozen
+  candidate spec, validated data gate, and backfill windows. Because the current
+  executable binding artifacts contain one latest signal/weight row rather than
+  a historical dynamic signal path, any computed backfill metrics must be marked
+  partial/static-weight research proxies and must not be presented as a full
+  dynamic strategy backfill. Missing price coverage, failed safety audit, failed
+  data quality, missing binding rows, or invalid research-only metadata must
+  keep the backfill blocked with exact reasons.
+- 2026-06-18: TRADING-464 completed pending commit. Updated
+  `next_candidate_backfill` to consume validated signal binding, research-only
+  weight binding, executable binding safety audit, frozen spec, validate-data
+  status, backfill windows, and price cache. The real 2026-06-17 run produced
+  `CANDIDATE_BACKFILL_PARTIAL` with real static research-weight proxy metrics
+  across all 6 required windows: aggregate return proxy `0.006166`, aggregate
+  drawdown proxy `-0.277213`, turnover proxy `0.85`, rotation count `1`, false
+  risk-off count `0`, constraint hits `0`, and validation PASS. The partial
+  status is required because the current executable binding has one latest
+  signal/weight row and no historical dynamic signal series for the required
+  windows. No paper-shadow, official target weights, broker/order, owner
+  decision append, or production mutation were produced. Next task is
+  TRADING-465 stress/cost/benchmark rerun from the real backfill metrics.

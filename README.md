@@ -1882,6 +1882,19 @@ acceptable warning 才能进入 TRADING-464 backfill；blocked 时必须 hard st
 不运行 backfill、不创建 paper-shadow、不写 official target weights、不触发 broker/order、
 不 append owner decision、不修改 production。
 
+TRADING-464_RERUN_NEXT_CANDIDATE_BACKFILL_WITH_BINDING 在 safety audit pass 或 acceptable
+warning 后重跑 next candidate research-only backfill。运行
+`aits reports next-candidate-backfill --as-of YYYY-MM-DD` 会先调用同一路径的
+`aits validate-data` 门禁，随后读取 validated signal binding、research-only weight binding、
+executable binding safety audit、frozen candidate spec、backfill windows 和本地价格 cache，
+输出 `next_candidate_backfill_YYYY-MM-DD.json/md`；运行
+`aits reports validate-next-candidate-backfill --latest` 生成 validation artifact。状态限定为
+`CANDIDATE_BACKFILL_COMPLETE`、`CANDIDATE_BACKFILL_PARTIAL` 或
+`CANDIDATE_BACKFILL_BLOCKED`。当前 binding 只有单点 signal/weight row，因此真实运行会生成
+static hypothetical research-weight proxy metrics 并标为 `CANDIDATE_BACKFILL_PARTIAL`，不得把
+它解释成完整历史动态策略。该 backfill 只生成 research metrics，不创建 paper-shadow、不写
+official target weights、不触发 broker/order、不 append owner decision、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

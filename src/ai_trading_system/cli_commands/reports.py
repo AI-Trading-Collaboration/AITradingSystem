@@ -7172,6 +7172,7 @@ def next_candidate_backfill_command(
             as_of=report_date,
             reports_dir=reports_dir,
             data_quality_gate=data_quality_gate,
+            prices_path=prices_path,
         )
     except (FileNotFoundError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc

@@ -190,6 +190,7 @@ def build_reader_brief_payload(
         _return_to_research_governance_snapshot_summary(report_index)
     )
     next_research_cycle_snapshot = _next_research_cycle_snapshot_summary(report_index)
+    next_candidate_backfill = _next_candidate_backfill_summary(report_index)
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
     executable_research_weight_binding = _executable_research_weight_binding_summary(
@@ -369,6 +370,7 @@ def build_reader_brief_payload(
         "decision_stage_governance_snapshot": decision_stage_governance_snapshot,
         "return_to_research_governance_snapshot": return_to_research_governance_snapshot,
         "next_research_cycle_snapshot": next_research_cycle_snapshot,
+        "next_candidate_backfill": next_candidate_backfill,
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
@@ -721,6 +723,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         payload.get("return_to_research_governance_snapshot")
     )
     next_research_cycle_snapshot = _mapping(payload.get("next_research_cycle_snapshot"))
+    next_candidate_backfill = _mapping(payload.get("next_candidate_backfill"))
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
     executable_research_weight_binding = _mapping(
@@ -1803,6 +1806,50 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "production_effect",
                         next_research_cycle_snapshot.get("production_effect"),
                     ),
+                ]
+            ),
+        ),
+        _section(
+            "Next Candidate Backfill",
+            _definition_table(
+                [
+                    ("availability", next_candidate_backfill.get("availability")),
+                    ("status", next_candidate_backfill.get("status")),
+                    (
+                        "candidate_backfill_status",
+                        next_candidate_backfill.get("candidate_backfill_status"),
+                    ),
+                    ("candidate_id", next_candidate_backfill.get("candidate_id")),
+                    ("backfill_metric_mode", next_candidate_backfill.get("backfill_metric_mode")),
+                    (
+                        "real_metrics_generated",
+                        next_candidate_backfill.get("real_metrics_generated"),
+                    ),
+                    (
+                        "aggregate_return_proxy",
+                        next_candidate_backfill.get("aggregate_return_proxy"),
+                    ),
+                    (
+                        "aggregate_drawdown_proxy",
+                        next_candidate_backfill.get("aggregate_drawdown_proxy"),
+                    ),
+                    ("turnover_proxy", next_candidate_backfill.get("turnover_proxy")),
+                    ("rotation_count", next_candidate_backfill.get("rotation_count")),
+                    (
+                        "false_risk_off_count",
+                        next_candidate_backfill.get("false_risk_off_count"),
+                    ),
+                    (
+                        "signal_completeness",
+                        next_candidate_backfill.get("signal_completeness"),
+                    ),
+                    ("missing_data_count", next_candidate_backfill.get("missing_data_count")),
+                    ("partial_reason_count", next_candidate_backfill.get("partial_reason_count")),
+                    ("safety_audit_status", next_candidate_backfill.get("safety_audit_status")),
+                    ("validation_status", next_candidate_backfill.get("validation_status")),
+                    ("next_action", next_candidate_backfill.get("next_action")),
+                    ("detail_report", next_candidate_backfill.get("detail_report")),
+                    ("production_effect", next_candidate_backfill.get("production_effect")),
                 ]
             ),
         ),
@@ -9006,6 +9053,96 @@ def _missing_next_research_cycle_snapshot_summary(reason: str) -> dict[str, Any]
         "summary_sentence": (
             "next_candidate_research_cycle_snapshot artifact missing; "
             "run reports next-candidate-research-cycle-snapshot."
+        ),
+        "limitation": reason,
+    }
+
+
+def _next_candidate_backfill_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_next_candidate_backfill_summary(
+            "report_index artifact missing; Reader Brief cannot discover next candidate backfill."
+        )
+    report_path = _report_index_artifact_path(report_index, "next_candidate_backfill")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_next_candidate_backfill_summary(
+            "next_candidate_backfill artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_backfill_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    status = _text(payload.get("status"), _text(summary.get("candidate_backfill_status")))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "candidate_backfill_status": _text(summary.get("candidate_backfill_status"), status),
+        "candidate_id": _text(summary.get("candidate_id"), "MISSING"),
+        "backfill_metric_mode": _text(summary.get("backfill_metric_mode"), "MISSING"),
+        "real_metrics_generated": summary.get("real_metrics_generated") is True,
+        "aggregate_return_proxy": summary.get("aggregate_return_proxy"),
+        "aggregate_drawdown_proxy": summary.get("aggregate_drawdown_proxy"),
+        "turnover_proxy": summary.get("turnover_proxy"),
+        "rotation_count": summary.get("rotation_count"),
+        "false_risk_off_count": summary.get("false_risk_off_count"),
+        "constraint_hit_count": summary.get("constraint_hit_count"),
+        "signal_completeness": _text(summary.get("signal_completeness"), "MISSING"),
+        "signal_completeness_ratio": summary.get("signal_completeness_ratio"),
+        "missing_data_count": _int(summary.get("missing_data_count")),
+        "partial_reason_count": _int(summary.get("partial_reason_count")),
+        "safety_audit_status": _text(summary.get("safety_audit_status"), "MISSING"),
+        "validation_status": validation_status,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"next_candidate_backfill={status}; validation={validation_status}; "
+            f"metric_mode={_text(summary.get('backfill_metric_mode'), 'MISSING')}; "
+            f"missing_data={_int(summary.get('missing_data_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the next candidate backfill artifact; it "
+            "does not create paper-shadow candidates, approve live trading, "
+            "write official weights, or create orders."
+        ),
+    }
+
+
+def _missing_next_candidate_backfill_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "candidate_backfill_status": "MISSING",
+        "candidate_id": "MISSING",
+        "backfill_metric_mode": "MISSING",
+        "real_metrics_generated": False,
+        "aggregate_return_proxy": None,
+        "aggregate_drawdown_proxy": None,
+        "turnover_proxy": None,
+        "rotation_count": None,
+        "false_risk_off_count": None,
+        "constraint_hit_count": None,
+        "signal_completeness": "MISSING",
+        "signal_completeness_ratio": None,
+        "missing_data_count": 0,
+        "partial_reason_count": 0,
+        "safety_audit_status": "MISSING",
+        "validation_status": "MISSING",
+        "next_action": "run_aits_reports_next_candidate_backfill",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_backfill artifact missing; run reports "
+            "next-candidate-backfill."
         ),
         "limitation": reason,
     }
@@ -25399,26 +25536,27 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_research_cycle_intake": 258,
         "next_candidate_spec_frozen": 259,
         "next_candidate_backfill": 260,
-        "next_candidate_stress_review": 261,
-        "next_candidate_cost_benchmark_review": 262,
-        "next_candidate_vs_returned_candidate_comparison": 263,
-        "next_candidate_signal_robustness_review": 264,
-        "next_candidate_overfit_window_sensitivity": 265,
-        "next_candidate_research_gate": 266,
-        "next_candidate_owner_research_review_packet": 267,
-        "next_candidate_research_cycle_snapshot": 268,
-        "next_candidate_research_cycle_snapshot_validation": 269,
-        "next_candidate_executable_binding_contract": 270,
-        "next_candidate_executable_binding_contract_validation": 271,
-        "next_candidate_signal_binding": 272,
-        "next_candidate_signal_binding_validation": 273,
-        "next_candidate_research_weight_binding": 274,
-        "next_candidate_research_weight_binding_validation": 275,
-        "executable_binding_safety_audit": 276,
-        "executable_binding_safety_audit_validation": 277,
-        "report_quality_gate": 278,
-        "reader_brief_quality": 279,
-        "artifact_catalog": 280,
+        "next_candidate_backfill_validation": 261,
+        "next_candidate_stress_review": 262,
+        "next_candidate_cost_benchmark_review": 263,
+        "next_candidate_vs_returned_candidate_comparison": 264,
+        "next_candidate_signal_robustness_review": 265,
+        "next_candidate_overfit_window_sensitivity": 266,
+        "next_candidate_research_gate": 267,
+        "next_candidate_owner_research_review_packet": 268,
+        "next_candidate_research_cycle_snapshot": 269,
+        "next_candidate_research_cycle_snapshot_validation": 270,
+        "next_candidate_executable_binding_contract": 271,
+        "next_candidate_executable_binding_contract_validation": 272,
+        "next_candidate_signal_binding": 273,
+        "next_candidate_signal_binding_validation": 274,
+        "next_candidate_research_weight_binding": 275,
+        "next_candidate_research_weight_binding_validation": 276,
+        "executable_binding_safety_audit": 277,
+        "executable_binding_safety_audit_validation": 278,
+        "report_quality_gate": 279,
+        "reader_brief_quality": 280,
+        "artifact_catalog": 281,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -25620,8 +25758,12 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "查看 frozen next-candidate research spec；该 spec 不激活 paper-shadow。"
         ),
         "next_candidate_backfill": (
-            "查看下一候选 research-only backfill、validate-data gate "
-            "和 missing executable binding。"
+            "查看下一候选 binding-backed research-only backfill、真实 proxy metrics "
+            "和 partial/blocking reasons。"
+        ),
+        "next_candidate_backfill_validation": (
+            "确认 next-candidate backfill taxonomy、metric rows、data quality "
+            "和 no official weights/broker 边界。"
         ),
         "next_candidate_stress_review": (
             "查看 stress/drawdown/flip evidence 对下一候选的 research-only 复核。"
@@ -25747,6 +25889,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Safety audit artifact 生成后立即校验；BLOCKED 不得进入 backfill。",
+    ),
+    "next_candidate_backfill": (
+        "manual",
+        "manual research cycle",
+        "TRADING-464 在 safety audit pass/acceptable warning 后运行 binding-backed backfill。",
+    ),
+    "next_candidate_backfill_validation": (
+        "manual",
+        "manual research cycle",
+        "Backfill artifact 生成后立即校验 metric rows、taxonomy 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

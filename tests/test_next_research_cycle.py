@@ -8,6 +8,7 @@ from test_return_to_research_reset import _write_decision_stage_inputs
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.reports import executable_research_binding as binding_reports
 from ai_trading_system.reports import next_research_cycle as next_cycle
 from ai_trading_system.reports import reader_brief
 from ai_trading_system.reports import return_to_research_reset as return_reset
@@ -40,10 +41,10 @@ def test_next_research_cycle_builds_fail_closed_research_chain(tmp_path: Path) -
     assert frozen["summary"]["market_regime"] == "ai_after_chatgpt"
 
     backfill = payloads[next_cycle.BACKFILL_REPORT_TYPE]
-    assert backfill["status"] == "CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING"
+    assert backfill["status"] == next_cycle.CANDIDATE_BACKFILL_BLOCKED
     assert backfill["summary"]["data_quality_status"] == "PASS"
     assert backfill["summary"]["official_target_weights_generated"] is False
-    assert "executable_candidate_signal_binding" in backfill["missing_data_list"]
+    assert backfill["missing_data_list"]
 
     gate = payloads[next_cycle.RESEARCH_GATE_REPORT_TYPE]
     assert gate["status"] == "NEEDS_MORE_EVIDENCE"
@@ -63,6 +64,56 @@ def test_next_research_cycle_builds_fail_closed_research_chain(tmp_path: Path) -
         assert payload["safety_boundary"]["paper_shadow_candidate_created"] is False
         assert payload["safety_boundary"]["official_target_weights_generated"] is False
         assert payload["production_effect"] == "none"
+
+
+def test_next_candidate_backfill_runs_partial_static_binding_metrics(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_return_to_research_inputs(reports_dir, tmp_path)
+    intake = next_cycle.build_next_research_cycle_intake_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    frozen = next_cycle.build_next_candidate_spec_frozen_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        intake_payload=intake,
+    )
+    _write_minimal_executable_binding_artifacts(reports_dir)
+    prices_path = _write_backfill_price_fixture(tmp_path)
+
+    payload = next_cycle.build_next_candidate_backfill_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        frozen_spec_payload=frozen,
+        data_quality_gate={
+            "status": "PASS",
+            "passed": True,
+            "error_count": 0,
+            "warning_count": 0,
+            "report_path": str(reports_dir / "data_quality_2026-06-17.md"),
+        },
+        prices_path=prices_path,
+    )
+
+    assert payload["status"] == next_cycle.CANDIDATE_BACKFILL_PARTIAL
+    assert payload["summary"]["real_metrics_generated"] is True
+    assert payload["summary"]["return_proxy_available"] is True
+    assert payload["summary"]["drawdown_proxy_available"] is True
+    assert payload["summary"]["official_target_weights_generated"] is False
+    assert payload["summary"]["broker_order_generated"] is False
+    assert payload["summary"]["signal_completeness"] == "PARTIAL_STATIC_BINDING"
+    assert "historical_dynamic_binding_unavailable" in {
+        row["issue_id"] for row in payload["partial_reasons"]
+    }
+    assert all(row["return_proxy"] is not None for row in payload["backfill_windows"])
+
+    validation = next_cycle.validate_next_research_cycle_payload(
+        payload,
+        expected_report_type=next_cycle.BACKFILL_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
 
 
 def test_next_research_cycle_cli_writes_intake_freeze_and_validations(
@@ -215,6 +266,187 @@ def test_reader_brief_summarizes_next_research_cycle_snapshot(tmp_path: Path) ->
     assert summary["live_trading_allowed"] is False
     assert summary["official_target_weights_generated"] is False
     assert summary["broker_order_allowed"] is False
+
+
+def _write_minimal_executable_binding_artifacts(reports_dir: Path) -> None:
+    signal_payload = {
+        "schema_version": 1,
+        "report_type": binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+        "as_of": RUN_DATE.isoformat(),
+        "status": binding_reports.SIGNAL_BINDING_COMPLETE_WITH_WARNINGS,
+        "production_effect": "none",
+        "manual_review_only": True,
+        "research_only": True,
+        "requested_date_range": "2023-01-03..2025-04-30",
+        "candidate_signal_series": [
+            {
+                "signal_date": RUN_DATE.isoformat(),
+                "signal_score": 0.7,
+                "risk_state": "risk_on",
+                "rotation_state": "increase_ai_risk",
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "production_effect": "none",
+            }
+        ],
+        "summary": {
+            "candidate_id": "median_plus_regime_mismatch_filter_research_redesign_v2",
+            "research_only": True,
+            "official_target_weights": False,
+            "production_effect": "none",
+        },
+        "safety_boundary": _test_safety_boundary(),
+    }
+    signal_validation = _validation_payload(
+        binding_reports.SIGNAL_BINDING_VALIDATION_REPORT_TYPE,
+        binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+    )
+    weight_payload = {
+        "schema_version": 1,
+        "report_type": binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+        "as_of": RUN_DATE.isoformat(),
+        "status": binding_reports.WEIGHT_BINDING_COMPLETE_WITH_WARNINGS,
+        "production_effect": "none",
+        "manual_review_only": True,
+        "research_only": True,
+        "requested_date_range": "2023-01-03..2025-04-30",
+        "hypothetical_research_weight": {
+            "weight_type": "hypothetical_research_weight",
+            "weights": {"QQQ": 0.5, "SPY": 0.5, "CASH": 0.0},
+            "research_only": True,
+            "manual_review_only": True,
+            "official_target_weights": False,
+            "not_official_target_weights": True,
+            "production_effect": "none",
+        },
+        "previous_hypothetical_weight": {
+            "weight_type": "hypothetical_research_weight",
+            "weights": {"QQQ": 0.0, "SPY": 1.0, "CASH": 0.0},
+            "research_only": True,
+            "manual_review_only": True,
+            "official_target_weights": False,
+            "not_official_target_weights": True,
+            "production_effect": "none",
+        },
+        "hypothetical_research_weight_series": [
+            {
+                "signal_date": RUN_DATE.isoformat(),
+                "risk_state": "risk_on",
+                "rotation_state": "increase_ai_risk",
+                "constraint_hit": [],
+                "hypothetical_research_weight": {
+                    "weights": {"QQQ": 0.5, "SPY": 0.5, "CASH": 0.0}
+                },
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "not_official_target_weights": True,
+                "production_effect": "none",
+            }
+        ],
+        "summary": {
+            "candidate_id": "median_plus_regime_mismatch_filter_research_redesign_v2",
+            "research_only": True,
+            "official_target_weights": False,
+            "not_official_target_weights": True,
+            "production_effect": "none",
+        },
+        "safety_boundary": _test_safety_boundary(),
+    }
+    weight_validation = _validation_payload(
+        binding_reports.WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+        binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+    )
+    safety_payload = {
+        "schema_version": 1,
+        "report_type": binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+        "as_of": RUN_DATE.isoformat(),
+        "status": binding_reports.SAFETY_WARNING,
+        "production_effect": "none",
+        "manual_review_only": True,
+        "research_only": True,
+        "summary": {
+            "acceptable_warning": True,
+            "failed_artifact_check_count": 0,
+            "blocking_static_finding_count": 0,
+            "production_effect": "none",
+        },
+        "safety_boundary": _test_safety_boundary(),
+    }
+    safety_validation = _validation_payload(
+        binding_reports.SAFETY_AUDIT_VALIDATION_REPORT_TYPE,
+        binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+    )
+    for report_type, payload in {
+        binding_reports.SIGNAL_BINDING_REPORT_TYPE: signal_payload,
+        binding_reports.SIGNAL_BINDING_VALIDATION_REPORT_TYPE: signal_validation,
+        binding_reports.WEIGHT_BINDING_REPORT_TYPE: weight_payload,
+        binding_reports.WEIGHT_BINDING_VALIDATION_REPORT_TYPE: weight_validation,
+        binding_reports.SAFETY_AUDIT_REPORT_TYPE: safety_payload,
+        binding_reports.SAFETY_AUDIT_VALIDATION_REPORT_TYPE: safety_validation,
+    }.items():
+        path = binding_reports.default_executable_binding_json_path(
+            report_type,
+            reports_dir,
+            RUN_DATE,
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _write_backfill_price_fixture(tmp_path: Path) -> Path:
+    windows = [
+        ("2023-01-03", "2023-07-31"),
+        ("2024-07-10", "2024-08-09"),
+        ("2025-01-02", "2025-04-30"),
+        ("2023-08-01", "2023-11-15"),
+        ("2024-03-08", "2024-04-19"),
+        ("2023-09-01", "2023-10-31"),
+    ]
+    rows = ["date,symbol,close,adj_close"]
+    for index, (start, end) in enumerate(windows, start=1):
+        rows.append(f"{start},QQQ,{100 + index},{100 + index}")
+        rows.append(f"{end},QQQ,{104 + index},{104 + index}")
+        rows.append(f"{start},SPY,{90 + index},{90 + index}")
+        rows.append(f"{end},SPY,{92 + index},{92 + index}")
+    path = tmp_path / "prices_daily.csv"
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    return path
+
+
+def _validation_payload(report_type: str, source_report_type: str) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "report_type": report_type,
+        "as_of": RUN_DATE.isoformat(),
+        "status": "PASS",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "research_only": True,
+        "summary": {
+            "validation_status": "PASS",
+            "source_report_type": source_report_type,
+            "production_effect": "none",
+        },
+        "safety_boundary": _test_safety_boundary(),
+    }
+
+
+def _test_safety_boundary() -> dict[str, object]:
+    return {
+        "paper_shadow_candidate_created": False,
+        "paper_shadow_activation_allowed": False,
+        "normal_paper_shadow_resumed": False,
+        "extended_shadow_approved": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        "owner_decision_appended": False,
+        "production_state_mutated": False,
+        "production_effect": "none",
+    }
 
 
 def _write_return_to_research_inputs(reports_dir: Path, project_root: Path) -> None:

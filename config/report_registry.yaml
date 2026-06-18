@@ -8695,10 +8695,30 @@ reports:
       - outputs/reports/next_candidate_backfill_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-451 runs the same validate-data quality gate before interpreting
-      backfill evidence and fails closed when executable next-candidate inputs
-      are missing.
-    owner_action: resolve_missing_backfill_inputs_before_research_gate
+      TRADING-464 runs the same validate-data quality gate, requires executable
+      binding safety audit pass or acceptable warning, and computes real
+      research-only return/drawdown/turnover proxies from binding weights and
+      validated price data. Partial static binding metrics must be visible.
+    owner_action: review_partial_or_complete_backfill_before_stress_cost_benchmark
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_backfill_validation
+    title: Next Candidate Backfill Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-backfill --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_backfill_validation_*.json
+      - outputs/reports/next_candidate_backfill_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-464 validation fails closed if the backfill taxonomy is invalid,
+      metric rows are missing for complete/partial outputs, data quality is not
+      visible, or official weights/broker/order/owner side effects appear.
+    owner_action: run_after_next_candidate_backfill
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

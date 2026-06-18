@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import re
 from collections.abc import Mapping, Sequence
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.reports import executable_research_binding as binding_reports
 from ai_trading_system.reports import return_to_research_reset as reset_reports
 
 SCHEMA_VERSION = 1
@@ -17,6 +19,13 @@ FAIL_STATUS = "FAIL"
 PASS_WITH_WARNINGS_STATUS = "PASS_WITH_WARNINGS"
 MARKET_REGIME = "ai_after_chatgpt"
 AI_REGIME_START = "2022-12-01"
+CANDIDATE_BACKFILL_COMPLETE = "CANDIDATE_BACKFILL_COMPLETE"
+CANDIDATE_BACKFILL_PARTIAL = "CANDIDATE_BACKFILL_PARTIAL"
+CANDIDATE_BACKFILL_BLOCKED = "CANDIDATE_BACKFILL_BLOCKED"
+CANDIDATE_BACKFILL_METRIC_STATUSES = {
+    CANDIDATE_BACKFILL_COMPLETE,
+    CANDIDATE_BACKFILL_PARTIAL,
+}
 
 INTAKE_REPORT_TYPE = "next_research_cycle_intake"
 FROZEN_SPEC_REPORT_TYPE = "next_candidate_spec_frozen"
@@ -459,6 +468,7 @@ def build_next_candidate_backfill_payload(
     reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
     frozen_spec_payload: Mapping[str, Any] | None = None,
     data_quality_gate: Mapping[str, Any] | None = None,
+    prices_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
 ) -> dict[str, Any]:
     if frozen_spec_payload is None:
         frozen_spec_payload = _read_json_mapping(
@@ -472,29 +482,61 @@ def build_next_candidate_backfill_payload(
     windows = _records(frozen_spec.get("validation_windows"))
     data_quality = _normalize_data_quality_gate(data_quality_gate)
     data_quality_passed = data_quality["passed"]
-    executable_binding_status = _text(
-        frozen_spec.get("executable_signal_binding_status"),
-        "MISSING",
+    binding_inputs = _load_executable_backfill_inputs(
+        reports_dir=reports_dir,
+        as_of=as_of,
     )
-    executable_ready = executable_binding_status == "AVAILABLE"
-    if not data_quality_passed:
-        status = "CANDIDATE_BACKFILL_BLOCKED_DATA_QUALITY"
-        blocking_issues = ["data_quality_gate_not_passed"]
-    elif not executable_ready:
-        status = "CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING"
-        blocking_issues = ["executable_candidate_signal_binding_missing"]
-    else:
-        status = "CANDIDATE_BACKFILL_READY"
-        blocking_issues = []
-
-    window_results = [
-        _backfill_window_result(
-            window,
-            data_quality=data_quality,
-            executable_ready=executable_ready,
+    binding_blockers = _binding_backfill_blockers(binding_inputs)
+    current_weight = _mapping(
+        _mapping(binding_inputs.get("weight_payload")).get("hypothetical_research_weight")
+    )
+    previous_weight = _mapping(
+        _mapping(binding_inputs.get("weight_payload")).get("previous_hypothetical_weight")
+    )
+    weight_map = _weight_values(current_weight)
+    previous_weight_map = _weight_values(previous_weight)
+    weight_symbols = sorted(symbol for symbol in weight_map if symbol != "CASH")
+    price_history: dict[str, dict[date, float]] = {}
+    price_blockers: list[str] = []
+    if data_quality_passed and not binding_blockers and weight_symbols:
+        price_history, price_blockers = _read_price_history(
+            prices_path=prices_path,
+            symbols=weight_symbols,
         )
-        for window in windows
-    ]
+    else:
+        price_blockers = []
+    window_results = []
+    for window in windows:
+        if data_quality_passed and not binding_blockers and not price_blockers:
+            window_results.append(
+                _executable_backfill_window_result(
+                    window,
+                    price_history=price_history,
+                    weight_map=weight_map,
+                    previous_weight_map=previous_weight_map,
+                    signal_rows=_records(
+                        _mapping(binding_inputs.get("signal_payload")).get(
+                            "candidate_signal_series"
+                        )
+                    ),
+                    weight_rows=_records(
+                        _mapping(binding_inputs.get("weight_payload")).get(
+                            "hypothetical_research_weight_series"
+                        )
+                    ),
+                )
+            )
+        else:
+            window_results.append(
+                _blocked_backfill_window_result(
+                    window,
+                    data_quality=data_quality,
+                    missing_inputs=[
+                        *binding_blockers,
+                        *price_blockers,
+                    ],
+                )
+            )
     missing_data = sorted(
         {
             item
@@ -502,25 +544,80 @@ def build_next_candidate_backfill_payload(
             for item in _list_values(row.get("missing_data_list"))
         }
     )
+    metric_windows = [
+        row
+        for row in window_results
+        if row.get("return_proxy") is not None and row.get("drawdown_proxy") is not None
+    ]
+    partial_reasons = _backfill_partial_reasons(
+        window_results=window_results,
+        signal_payload=_mapping(binding_inputs.get("signal_payload")),
+        weight_payload=_mapping(binding_inputs.get("weight_payload")),
+    )
+    blocking_issues = []
+    if not data_quality_passed:
+        blocking_issues.append("data_quality_gate_not_passed")
+    blocking_issues.extend(binding_blockers)
+    blocking_issues.extend(price_blockers)
+    if not metric_windows and not blocking_issues:
+        blocking_issues.append("no_backfill_metrics_computed")
+    if blocking_issues:
+        status = CANDIDATE_BACKFILL_BLOCKED
+    elif partial_reasons:
+        status = CANDIDATE_BACKFILL_PARTIAL
+    else:
+        status = CANDIDATE_BACKFILL_COMPLETE
+    aggregate_metrics = _aggregate_backfill_metrics(
+        window_results,
+        turnover_proxy=_weight_turnover(weight_map, previous_weight_map),
+        signal_payload=_mapping(binding_inputs.get("signal_payload")),
+        weight_payload=_mapping(binding_inputs.get("weight_payload")),
+    )
     summary = {
         "candidate_backfill_status": status,
         "candidate_id": _text(frozen_spec.get("candidate_id")),
         "market_regime": MARKET_REGIME,
         "requested_date_range": _date_range_from_windows(windows),
         "window_count": len(window_results),
+        "completed_window_count": len(
+            [row for row in window_results if row.get("backfill_window_status") == "READY"]
+        ),
+        "partial_window_count": len(
+            [row for row in window_results if row.get("backfill_window_status") == "PARTIAL"]
+        ),
         "data_quality_status": data_quality["status"],
         "data_quality_report_path": data_quality["report_path"],
-        "return_proxy_available": False,
-        "drawdown_proxy_available": False,
-        "turnover_available": False,
-        "signal_completeness": (
-            "BLOCKED_MISSING_EXECUTABLE_BINDING"
-            if not executable_ready
-            else "AVAILABLE"
+        "safety_audit_status": _text(
+            _mapping(binding_inputs.get("safety_payload")).get("status"),
+            "MISSING",
         ),
+        "safety_audit_validation_status": _text(
+            _mapping(binding_inputs.get("safety_validation")).get("status"),
+            "MISSING",
+        ),
+        "backfill_metric_mode": (
+            "static_hypothetical_research_weight_proxy"
+            if metric_windows
+            else "blocked_no_metrics"
+        ),
+        "real_metrics_generated": bool(metric_windows),
+        "return_proxy_available": bool(metric_windows),
+        "drawdown_proxy_available": bool(metric_windows),
+        "turnover_available": bool(metric_windows),
+        "aggregate_return_proxy": aggregate_metrics.get("aggregate_return_proxy"),
+        "aggregate_drawdown_proxy": aggregate_metrics.get("aggregate_drawdown_proxy"),
+        "turnover_proxy": aggregate_metrics.get("turnover_proxy"),
+        "rotation_count": aggregate_metrics.get("rotation_count"),
+        "false_risk_off_count": aggregate_metrics.get("false_risk_off_count"),
+        "constraint_hit_count": aggregate_metrics.get("constraint_hit_count"),
+        "signal_completeness": aggregate_metrics.get("signal_completeness"),
+        "signal_completeness_ratio": aggregate_metrics.get("signal_completeness_ratio"),
         "missing_data_count": len(missing_data),
+        "partial_reason_count": len(partial_reasons),
         "paper_shadow_outputs_generated": False,
         "official_target_weights_generated": False,
+        "broker_order_generated": False,
+        "owner_decision_appended": False,
         "production_effect": PRODUCTION_EFFECT,
     }
     return _payload(
@@ -528,19 +625,26 @@ def build_next_candidate_backfill_payload(
         as_of=as_of,
         status=status,
         purpose=(
-            "Run the research-only backfill gate for the frozen candidate spec and "
-            "fail closed when executable candidate inputs are missing."
+            "Run the research-only backfill for the frozen candidate spec using "
+            "validated executable signal and research-weight bindings."
         ),
         input_artifacts={
             "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
             "data_quality_report": data_quality["report_path"],
+            **_binding_input_artifact_paths(binding_inputs),
+            "prices_path": str(prices_path),
         },
         output_decision=status,
         summary=summary,
         body={
             "backfill_windows": window_results,
+            "aggregate_metrics": aggregate_metrics,
             "missing_data_list": missing_data,
-            "cost_proxy_inputs": _cost_proxy_placeholder(executable_ready),
+            "partial_reasons": [
+                {"issue_id": issue, "recommended_action": _backfill_blocker_action(issue)}
+                for issue in partial_reasons
+            ],
+            "cost_proxy_inputs": _cost_proxy_inputs(bool(metric_windows)),
             "blocking_issues": [
                 {"issue_id": issue, "recommended_action": _backfill_blocker_action(issue)}
                 for issue in blocking_issues
@@ -548,30 +652,44 @@ def build_next_candidate_backfill_payload(
         },
         reader_brief=_reader_brief(
             summary=(
-                "Backfill is fail-closed until the frozen candidate has an executable "
-                "research signal/weight binding."
+                f"Backfill status is {status}; metrics are research-only and "
+                "not official allocation outputs."
             ),
             key_result=status,
             blocking_issues="; ".join(blocking_issues) or "none",
-            warnings=f"data_quality_status={data_quality['status']}",
+            warnings=(
+                "; ".join(partial_reasons)
+                if partial_reasons
+                else f"data_quality_status={data_quality['status']}"
+            ),
             next_action=(
-                "bind_executable_research_signal_before_backfill"
+                "repair_backfill_inputs_before_research_rerun"
                 if blocking_issues
-                else "review_backfill_results"
+                else "run_stress_cost_benchmark_review_from_real_metrics"
             ),
         ),
         next_action=(
-            "bind_executable_research_signal_before_backfill"
+            "repair_backfill_inputs_before_research_rerun"
             if blocking_issues
-            else "review_backfill_results"
+            else "run_stress_cost_benchmark_review_from_real_metrics"
         ),
-        safety_boundary=_safety_boundary(),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "research_only_binding_backfill",
+            "hypothetical_research_weights_used": bool(metric_windows),
+            "backfill_metrics_generated": bool(metric_windows),
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+            "paper_shadow_activation_allowed": False,
+        },
         limitations=[
             "Backfill output is research-only and cannot produce official weights.",
             (
-                "Missing executable binding is recorded as missing data; no return, "
-                "drawdown, turnover, rotation, or false-risk-off metric is fabricated."
+                "Current executable binding contains one latest signal/weight row; "
+                "computed metrics are static research-weight proxies, not a full "
+                "historical dynamic strategy path."
             ),
+            "No paper-shadow, broker/order, owner decision, or production state is touched.",
         ],
         requested_date_range=summary["requested_date_range"],
     )
@@ -599,8 +717,8 @@ def build_next_candidate_stress_review_payload(
         )
     sources = _load_project_sources(project_root)
     backfill_summary = _mapping(backfill_payload.get("summary"))
-    executable_backfill = _text(backfill_summary.get("candidate_backfill_status")) == (
-        "CANDIDATE_BACKFILL_READY"
+    executable_backfill = _backfill_metrics_available(
+        _text(backfill_summary.get("candidate_backfill_status"))
     )
     scenario_reviews = [
         _stress_scenario_review(window_id, executable_backfill=executable_backfill)
@@ -671,7 +789,7 @@ def build_next_candidate_cost_benchmark_review_payload(
     backfill_status = _text(
         _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
     )
-    backfill_ready = backfill_status == "CANDIDATE_BACKFILL_READY"
+    backfill_ready = _backfill_metrics_available(backfill_status)
     scenario_rows = _cost_scenario_reviews(cost_payload, backfill_ready=backfill_ready)
     baseline_rows = _benchmark_reviews(benchmark_payload, backfill_ready=backfill_ready)
     status = (
@@ -776,7 +894,7 @@ def build_next_candidate_vs_returned_comparison_payload(
     backfill_status = _text(
         _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
     )
-    backfill_ready = backfill_status == "CANDIDATE_BACKFILL_READY"
+    backfill_ready = _backfill_metrics_available(backfill_status)
     comparison_rows = _comparison_rows(backfill_ready)
     comparison_result = (
         "MIXED_VS_RETURNED_CANDIDATE"
@@ -906,7 +1024,7 @@ def build_next_candidate_window_sensitivity_payload(
     backfill_status = _text(
         _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
     )
-    backfill_ready = backfill_status == "CANDIDATE_BACKFILL_READY"
+    backfill_ready = _backfill_metrics_available(backfill_status)
     frozen_spec = _mapping(frozen_spec_payload.get("frozen_candidate_spec"))
     windows = _records(frozen_spec.get("validation_windows"))
     splits = [
@@ -1292,6 +1410,12 @@ def validate_next_research_cycle_payload(
     )
     if report_type == BACKFILL_REPORT_TYPE:
         summary = _mapping(payload.get("summary"))
+        backfill_status = _text(payload.get("status"))
+        metric_rows = [
+            row
+            for row in _records(payload.get("backfill_windows"))
+            if row.get("return_proxy") is not None and row.get("drawdown_proxy") is not None
+        ]
         _append_check(
             checks,
             blocking_issues,
@@ -1308,6 +1432,45 @@ def validate_next_research_cycle_payload(
             "Backfill must not generate official target weights.",
             "remove_official_weight_output_from_backfill",
         )
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_backfill_status",
+            backfill_status
+            in {
+                CANDIDATE_BACKFILL_COMPLETE,
+                CANDIDATE_BACKFILL_PARTIAL,
+                CANDIDATE_BACKFILL_BLOCKED,
+            },
+            "Backfill status must use TRADING-464 taxonomy.",
+            "restore_backfill_status_taxonomy",
+        )
+        if backfill_status in CANDIDATE_BACKFILL_METRIC_STATUSES:
+            _append_check(
+                checks,
+                blocking_issues,
+                "real_metric_rows_present",
+                bool(metric_rows),
+                "Complete or partial backfill must include computed metric rows.",
+                "restore_backfill_metric_rows",
+            )
+            _append_check(
+                checks,
+                blocking_issues,
+                "safety_audit_visible",
+                bool(_text(summary.get("safety_audit_status"))),
+                "Backfill with metrics must disclose executable binding safety audit status.",
+                "restore_safety_audit_disclosure",
+            )
+            _append_check(
+                checks,
+                blocking_issues,
+                "no_official_or_broker_side_effects",
+                summary.get("broker_order_generated") is False
+                and summary.get("owner_decision_appended") is False,
+                "Backfill must not generate broker/order or owner-decision side effects.",
+                "remove_side_effects_from_backfill",
+            )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
         report_type=validation_report_type,
@@ -1585,48 +1748,133 @@ def _normalize_data_quality_gate(value: Mapping[str, Any] | None) -> dict[str, A
     }
 
 
-def _backfill_window_result(
+def _blocked_backfill_window_result(
     window: Mapping[str, Any],
     *,
     data_quality: Mapping[str, Any],
-    executable_ready: bool,
+    missing_inputs: Sequence[str],
 ) -> dict[str, Any]:
-    missing = []
+    missing = list(missing_inputs)
     if not data_quality.get("passed"):
         missing.append("validated_data_quality_gate")
-    if not executable_ready:
-        missing.extend(
-            [
-                "executable_candidate_signal_binding",
-                "validated_next_candidate_signal_series",
-                "candidate_weight_generation_contract",
-            ]
-        )
-    status = "READY" if not missing else "NEEDS_MORE_EVIDENCE"
     return {
         "window_id": _text(window.get("window_id")),
         "start": _text(window.get("start")),
         "end": _text(window.get("end")),
         "market_regime": _text(window.get("market_regime"), MARKET_REGIME),
-        "backfill_window_status": status,
+        "backfill_window_status": "BLOCKED",
         "return_proxy": None,
         "drawdown_proxy": None,
         "turnover": None,
         "rotation_count": None,
         "false_risk_off_count": None,
-        "signal_completeness": "AVAILABLE" if executable_ready else "MISSING",
+        "constraint_hit_count": None,
+        "signal_completeness": "MISSING",
+        "signal_completeness_ratio": 0.0,
         "missing_data_list": missing,
-        "cost_proxy_inputs": _cost_proxy_placeholder(executable_ready),
+        "cost_proxy_inputs": _cost_proxy_inputs(False),
         "production_effect": PRODUCTION_EFFECT,
     }
 
 
-def _cost_proxy_placeholder(executable_ready: bool) -> dict[str, Any]:
+def _executable_backfill_window_result(
+    window: Mapping[str, Any],
+    *,
+    price_history: Mapping[str, Mapping[date, float]],
+    weight_map: Mapping[str, float],
+    previous_weight_map: Mapping[str, float],
+    signal_rows: Sequence[Mapping[str, Any]],
+    weight_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    start = _parse_date_value(window.get("start"))
+    end = _parse_date_value(window.get("end"))
+    window_id = _text(window.get("window_id"))
+    non_cash_symbols = [
+        symbol for symbol, weight in weight_map.items() if symbol != "CASH" and weight
+    ]
+    common_dates = _common_price_dates(
+        price_history=price_history,
+        symbols=non_cash_symbols,
+        start=start,
+        end=end,
+    )
+    missing = []
+    if len(common_dates) < 2:
+        missing.append(f"insufficient_price_history:{window_id}")
+    signal_dates = {
+        parsed
+        for parsed in (_parse_date_value(row.get("signal_date")) for row in signal_rows)
+        if parsed is not None and start is not None and end is not None and start <= parsed <= end
+    }
+    if not signal_dates:
+        missing.append(f"historical_signal_series:{window_id}")
+    if missing and len(common_dates) < 2:
+        return {
+            "window_id": window_id,
+            "start": _text(window.get("start")),
+            "end": _text(window.get("end")),
+            "market_regime": _text(window.get("market_regime"), MARKET_REGIME),
+            "backfill_window_status": "BLOCKED",
+            "return_proxy": None,
+            "drawdown_proxy": None,
+            "turnover": None,
+            "rotation_count": None,
+            "false_risk_off_count": None,
+            "constraint_hit_count": None,
+            "signal_completeness": "MISSING",
+            "signal_completeness_ratio": 0.0,
+            "missing_data_list": missing,
+            "cost_proxy_inputs": _cost_proxy_inputs(False),
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    daily_returns = _weighted_daily_returns(
+        price_history=price_history,
+        symbols=non_cash_symbols,
+        dates=common_dates,
+        weights=weight_map,
+    )
+    return_proxy, drawdown_proxy = _return_and_drawdown(daily_returns)
+    turnover = _weight_turnover(weight_map, previous_weight_map)
+    signal_completeness_ratio = (
+        min(1.0, len(signal_dates) / len(common_dates)) if common_dates else 0.0
+    )
+    false_risk_off_count = len(
+        [
+            row
+            for row in signal_rows
+            if _signal_row_inside_window(row, start, end)
+            and _text(row.get("risk_state")) in {"risk_off", "blocked"}
+        ]
+    )
+    constraint_hit_count = sum(len(_list_values(row.get("constraint_hit"))) for row in weight_rows)
     return {
-        "turnover_available": executable_ready,
-        "gross_return_proxy_available": executable_ready,
-        "cost_scenario_inputs_available": executable_ready,
-        "missing_reason": "" if executable_ready else "executable_candidate_backfill_missing",
+        "window_id": window_id,
+        "start": _text(window.get("start")),
+        "end": _text(window.get("end")),
+        "market_regime": _text(window.get("market_regime"), MARKET_REGIME),
+        "backfill_window_status": "PARTIAL" if missing else "READY",
+        "return_proxy": _round_float(return_proxy),
+        "drawdown_proxy": _round_float(drawdown_proxy),
+        "turnover": _round_float(turnover),
+        "rotation_count": 1 if turnover > 0 else 0,
+        "false_risk_off_count": false_risk_off_count,
+        "constraint_hit_count": constraint_hit_count,
+        "signal_completeness": "PARTIAL_STATIC_BINDING" if missing else "AVAILABLE",
+        "signal_completeness_ratio": _round_float(signal_completeness_ratio),
+        "price_observation_count": len(common_dates),
+        "return_observation_count": len(daily_returns),
+        "missing_data_list": missing,
+        "cost_proxy_inputs": _cost_proxy_inputs(True),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _cost_proxy_inputs(metrics_available: bool) -> dict[str, Any]:
+    return {
+        "turnover_available": metrics_available,
+        "gross_return_proxy_available": metrics_available,
+        "cost_scenario_inputs_available": metrics_available,
+        "missing_reason": "" if metrics_available else "executable_candidate_backfill_missing",
         "production_effect": PRODUCTION_EFFECT,
     }
 
@@ -1636,7 +1884,331 @@ def _backfill_blocker_action(issue_id: str) -> str:
         return "run_aits_validate_data_and_stop_until_passed"
     if issue_id == "executable_candidate_signal_binding_missing":
         return "define_reviewed_research_signal_and_weight_binding_before_backfill"
+    if issue_id == "historical_dynamic_binding_unavailable":
+        return "extend_binding_to_historical_signal_and_weight_series"
+    if issue_id == "executable_binding_safety_audit_not_passed":
+        return "repair_safety_audit_before_backfill"
+    if issue_id.startswith("missing_") or issue_id.startswith("insufficient_"):
+        return "repair_required_backfill_input_data"
     return "repair_backfill_input"
+
+
+def _load_executable_backfill_inputs(
+    *,
+    reports_dir: Path,
+    as_of: date,
+) -> dict[str, Any]:
+    paths = {
+        "next_candidate_signal_binding": binding_reports.default_executable_binding_json_path(
+            binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        "next_candidate_signal_binding_validation": (
+            binding_reports.default_executable_binding_json_path(
+                binding_reports.SIGNAL_BINDING_VALIDATION_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        "next_candidate_research_weight_binding": (
+            binding_reports.default_executable_binding_json_path(
+                binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        "next_candidate_research_weight_binding_validation": (
+            binding_reports.default_executable_binding_json_path(
+                binding_reports.WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        "executable_binding_safety_audit": (
+            binding_reports.default_executable_binding_json_path(
+                binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        "executable_binding_safety_audit_validation": (
+            binding_reports.default_executable_binding_json_path(
+                binding_reports.SAFETY_AUDIT_VALIDATION_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+    }
+    missing = [f"missing_{name}" for name, path in paths.items() if not path.exists()]
+    return {
+        "paths": paths,
+        "missing_inputs": missing,
+        "signal_payload": _read_json_if_exists(paths["next_candidate_signal_binding"]),
+        "signal_validation": _read_json_if_exists(
+            paths["next_candidate_signal_binding_validation"]
+        ),
+        "weight_payload": _read_json_if_exists(
+            paths["next_candidate_research_weight_binding"]
+        ),
+        "weight_validation": _read_json_if_exists(
+            paths["next_candidate_research_weight_binding_validation"]
+        ),
+        "safety_payload": _read_json_if_exists(paths["executable_binding_safety_audit"]),
+        "safety_validation": _read_json_if_exists(
+            paths["executable_binding_safety_audit_validation"]
+        ),
+    }
+
+
+def _read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return _read_json_mapping(path)
+
+
+def _binding_input_artifact_paths(binding_inputs: Mapping[str, Any]) -> dict[str, str]:
+    paths = _mapping(binding_inputs.get("paths"))
+    return {key: str(path) for key, path in paths.items() if isinstance(path, Path)}
+
+
+def _binding_backfill_blockers(binding_inputs: Mapping[str, Any]) -> list[str]:
+    blockers = list(_list_values(binding_inputs.get("missing_inputs")))
+    signal_payload = _mapping(binding_inputs.get("signal_payload"))
+    signal_validation = _mapping(binding_inputs.get("signal_validation"))
+    weight_payload = _mapping(binding_inputs.get("weight_payload"))
+    weight_validation = _mapping(binding_inputs.get("weight_validation"))
+    safety_payload = _mapping(binding_inputs.get("safety_payload"))
+    safety_validation = _mapping(binding_inputs.get("safety_validation"))
+    safety_status = _text(safety_payload.get("status"), "MISSING")
+    safety_summary = _mapping(safety_payload.get("summary"))
+    safety_acceptable = safety_status == binding_reports.SAFETY_PASS or (
+        safety_status == binding_reports.SAFETY_WARNING
+        and safety_summary.get("acceptable_warning") is True
+    )
+    if _text(safety_validation.get("status")) != PASS_STATUS or not safety_acceptable:
+        blockers.append("executable_binding_safety_audit_not_passed")
+    if _text(signal_validation.get("status")) != PASS_STATUS:
+        blockers.append("signal_binding_validation_not_passed")
+    if _text(weight_validation.get("status")) != PASS_STATUS:
+        blockers.append("research_weight_binding_validation_not_passed")
+    if not _records(signal_payload.get("candidate_signal_series")):
+        blockers.append("missing_candidate_signal_series")
+    if not _records(weight_payload.get("hypothetical_research_weight_series")):
+        blockers.append("missing_hypothetical_research_weight_series")
+    current_weight = _mapping(weight_payload.get("hypothetical_research_weight"))
+    weight_map = _weight_values(current_weight)
+    if not weight_map:
+        blockers.append("missing_hypothetical_research_weight")
+    if abs(sum(weight_map.values()) - 1.0) > 0.000001:
+        blockers.append("hypothetical_research_weight_sum_invalid")
+    if not _binding_payload_research_only(signal_payload):
+        blockers.append("signal_binding_not_research_only")
+    if not _binding_payload_research_only(weight_payload):
+        blockers.append("research_weight_binding_not_research_only")
+    return sorted(set(blockers))
+
+
+def _binding_payload_research_only(payload: Mapping[str, Any]) -> bool:
+    return (
+        payload.get("research_only") is True
+        and payload.get("manual_review_only") is True
+        and _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(payload.get("broker_effect"), "none") == "none"
+        and _text(payload.get("order_effect"), "none") == "none"
+    )
+
+
+def _weight_values(weight_object: Mapping[str, Any]) -> dict[str, float]:
+    weights = _mapping(weight_object.get("weights"))
+    return {
+        _text(symbol).upper(): _float(weight)
+        for symbol, weight in weights.items()
+        if _text(symbol) and _float(weight) >= 0
+    }
+
+
+def _read_price_history(
+    *,
+    prices_path: Path,
+    symbols: Sequence[str],
+) -> tuple[dict[str, dict[date, float]], list[str]]:
+    if not prices_path.exists():
+        return {}, ["missing_price_file"]
+    wanted = {symbol.upper() for symbol in symbols}
+    history: dict[str, dict[date, float]] = {symbol: {} for symbol in wanted}
+    with prices_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            symbol = _text(
+                row.get("symbol"),
+                _text(row.get("ticker"), _text(row.get("canonical_symbol"))),
+            ).upper()
+            if symbol not in wanted:
+                continue
+            parsed_date = _parse_date_value(row.get("date"))
+            price = _float(row.get("adj_close"), _float(row.get("close")))
+            if parsed_date is None or price <= 0:
+                continue
+            history.setdefault(symbol, {})[parsed_date] = price
+    missing = [
+        f"missing_price_history:{symbol}"
+        for symbol in sorted(wanted)
+        if not history.get(symbol)
+    ]
+    return history, missing
+
+
+def _common_price_dates(
+    *,
+    price_history: Mapping[str, Mapping[date, float]],
+    symbols: Sequence[str],
+    start: date | None,
+    end: date | None,
+) -> list[date]:
+    if start is None or end is None or not symbols:
+        return []
+    date_sets = []
+    for symbol in symbols:
+        date_sets.append(
+            {
+                price_date
+                for price_date in price_history.get(symbol, {})
+                if start <= price_date <= end
+            }
+        )
+    if not date_sets:
+        return []
+    return sorted(set.intersection(*date_sets))
+
+
+def _weighted_daily_returns(
+    *,
+    price_history: Mapping[str, Mapping[date, float]],
+    symbols: Sequence[str],
+    dates: Sequence[date],
+    weights: Mapping[str, float],
+) -> list[float]:
+    returns: list[float] = []
+    for previous_date, current_date in zip(dates, dates[1:], strict=False):
+        daily_return = 0.0
+        for symbol in symbols:
+            previous_price = price_history[symbol][previous_date]
+            current_price = price_history[symbol][current_date]
+            daily_return += _float(weights.get(symbol)) * (
+                current_price / previous_price - 1.0
+            )
+        returns.append(daily_return)
+    return returns
+
+
+def _return_and_drawdown(daily_returns: Sequence[float]) -> tuple[float, float]:
+    equity = 1.0
+    peak = 1.0
+    max_drawdown = 0.0
+    for daily_return in daily_returns:
+        equity *= 1.0 + daily_return
+        peak = max(peak, equity)
+        drawdown = equity / peak - 1.0
+        max_drawdown = min(max_drawdown, drawdown)
+    return equity - 1.0, max_drawdown
+
+
+def _backfill_partial_reasons(
+    *,
+    window_results: Sequence[Mapping[str, Any]],
+    signal_payload: Mapping[str, Any],
+    weight_payload: Mapping[str, Any],
+) -> list[str]:
+    reasons = []
+    if any(_text(row.get("backfill_window_status")) == "PARTIAL" for row in window_results):
+        reasons.append("historical_dynamic_binding_unavailable")
+    if len(_records(signal_payload.get("candidate_signal_series"))) <= 1:
+        reasons.append("single_point_signal_binding_used_as_static_proxy")
+    if len(_records(weight_payload.get("hypothetical_research_weight_series"))) <= 1:
+        reasons.append("single_point_weight_binding_used_as_static_proxy")
+    return sorted(set(reasons))
+
+
+def _aggregate_backfill_metrics(
+    window_results: Sequence[Mapping[str, Any]],
+    *,
+    turnover_proxy: float,
+    signal_payload: Mapping[str, Any],
+    weight_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    metric_rows = [
+        row
+        for row in window_results
+        if row.get("return_proxy") is not None and row.get("drawdown_proxy") is not None
+    ]
+    returns = [_float(row.get("return_proxy")) for row in metric_rows]
+    drawdowns = [_float(row.get("drawdown_proxy")) for row in metric_rows]
+    signal_ratios = [_float(row.get("signal_completeness_ratio")) for row in metric_rows]
+    weight_rows = _records(weight_payload.get("hypothetical_research_weight_series"))
+    return {
+        "aggregation_method": "mean_of_required_window_proxies",
+        "metric_window_count": len(metric_rows),
+        "aggregate_return_proxy": _round_float(sum(returns) / len(returns))
+        if returns
+        else None,
+        "aggregate_drawdown_proxy": _round_float(min(drawdowns)) if drawdowns else None,
+        "turnover_proxy": _round_float(turnover_proxy) if metric_rows else None,
+        "rotation_count": 1 if metric_rows and turnover_proxy > 0 else 0,
+        "false_risk_off_count": sum(_int(row.get("false_risk_off_count")) for row in metric_rows),
+        "constraint_hit_count": sum(
+            len(_list_values(row.get("constraint_hit"))) for row in weight_rows
+        ),
+        "signal_completeness": (
+            "AVAILABLE"
+            if signal_ratios and min(signal_ratios) >= 1.0
+            else "PARTIAL_STATIC_BINDING"
+            if signal_ratios
+            else "MISSING"
+        ),
+        "signal_completeness_ratio": _round_float(
+            sum(signal_ratios) / len(signal_ratios)
+        )
+        if signal_ratios
+        else 0.0,
+        "source_signal_row_count": len(_records(signal_payload.get("candidate_signal_series"))),
+        "source_weight_row_count": len(weight_rows),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _weight_turnover(
+    current_weight: Mapping[str, float],
+    previous_weight: Mapping[str, float],
+) -> float:
+    symbols = set(current_weight) | set(previous_weight)
+    return (
+        sum(
+            abs(_float(current_weight.get(symbol)) - _float(previous_weight.get(symbol)))
+            for symbol in symbols
+        )
+        / 2.0
+    )
+
+
+def _parse_date_value(value: Any) -> date | None:
+    try:
+        return date.fromisoformat(_text(value))
+    except ValueError:
+        return None
+
+
+def _signal_row_inside_window(
+    row: Mapping[str, Any],
+    start: date | None,
+    end: date | None,
+) -> bool:
+    signal_date = _parse_date_value(row.get("signal_date"))
+    return bool(signal_date and start and end and start <= signal_date <= end)
+
+
+def _backfill_metrics_available(backfill_status: str) -> bool:
+    return backfill_status in CANDIDATE_BACKFILL_METRIC_STATUSES
 
 
 def _stress_scenario_review(window_id: str, *, executable_backfill: bool) -> dict[str, Any]:
@@ -1809,7 +2381,7 @@ def _research_gate_blockers(
     candidates = [
         (
             "backfill_not_ready",
-            _text(backfill_payload.get("status")) != "CANDIDATE_BACKFILL_READY",
+            _text(backfill_payload.get("status")) not in CANDIDATE_BACKFILL_METRIC_STATUSES,
             _text(backfill_payload.get("next_action")),
         ),
         (
@@ -1943,6 +2515,19 @@ def _int(value: Any, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _float(value: Any, default: float = 0.0) -> float:
+    if isinstance(value, bool):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _round_float(value: float, digits: int = 6) -> float:
+    return round(float(value), digits)
 
 
 def _date_from_payload(payload: Mapping[str, Any]) -> date:
