@@ -2059,6 +2059,19 @@ cost/benchmark/backfill、不调参隐藏 weakness、不改变 candidate spec、
 decision、不创建 paper-shadow、不批准 extended/live、不写 official target weights、不触发
 broker/order、不修改 production。
 
+TRADING-477_CANDIDATE_REDESIGN_HYPOTHESIS_V2 在 TRADING-471~476 归因后生成
+research-only v2 hypotheses。运行
+`aits reports candidate-redesign-hypothesis-v2 --as-of YYYY-MM-DD` 和
+`aits reports validate-candidate-redesign-hypothesis-v2 --latest` 会读取 evidence gap
+ledger、backfill repair plan、signal robustness drilldown、window fragility attribution、
+stress weakness attribution 和 cost/benchmark weakness attribution，生成 P0/P1/P2
+hypotheses，覆盖 signal robustness repair、lower turnover、window stability、stress
+handling、benchmark-relative behavior 和 cost survival。每条 hypothesis 记录 expected
+improvement、changed signal logic、changed regime logic、changed rotation rule、expected
+failure mode、validation method 和 stop condition。该 report 不选择最终 v2 spec、不实现
+binding、不运行 backfill、不 append owner decision、不创建 paper-shadow、不批准 extended/live、
+不写 official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

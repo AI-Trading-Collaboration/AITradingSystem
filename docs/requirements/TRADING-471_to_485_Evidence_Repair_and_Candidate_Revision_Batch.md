@@ -30,7 +30,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-474|window-fragility-attribution|DONE|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
 |TRADING-475|stress-weakness-attribution|DONE|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
 |TRADING-476|cost-benchmark-weakness-attribution|DONE|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
-|TRADING-477|candidate-redesign-hypothesis-v2|READY|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
+|TRADING-477|candidate-redesign-hypothesis-v2|DONE|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
 |TRADING-478|candidate-v2-spec-freeze|READY|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
 |TRADING-479|candidate-v2-executable-binding-update|READY|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
 |TRADING-480|candidate-v2-mini-backfill|READY|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
@@ -180,3 +180,22 @@ owner decision append、production mutation 或 automatic position control。
   candidate spec、未 append owner decision、未创建 paper-shadow、未批准 extended/live、
   未写 official target weights、未触发 broker/order、未修改 production。下一步是
   TRADING-477 candidate redesign hypothesis v2。
+- 2026-06-18: TRADING-477 开始实现。范围限定为只读读取 TRADING-471~476 的 ledger /
+  repair / signal / window / stress / cost-benchmark attribution artifacts，生成 P0/P1/P2
+  v2 research hypotheses，覆盖 signal robustness repair、lower turnover、window
+  stability、stress handling、benchmark-relative behavior 和 cost survival；不冻结 v2
+  spec、不实现 binding、不运行 backfill、不创建 paper-shadow、不批准 extended/live、不写
+  official target weights、不触发 broker/order、不修改 production。
+- 2026-06-18: TRADING-477 完成 pending commit。真实 2026-06-17 hypotheses
+  `candidate_redesign_hypothesis_v2_2026-06-17` 输出
+  `CANDIDATE_REDESIGN_HYPOTHESIS_READY`，source ledger/repair/signal/window 状态分别为
+  `EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY`、`BACKFILL_REPAIRABLE`、
+  `SIGNAL_ROBUSTNESS_REPAIRABLE`、`WINDOW_FRAGILITY_ATTRIBUTION_READY`，source stress
+  和 cost/benchmark design judgment 均为 `REDESIGN_REQUIRED`。Hypotheses=6：
+  P0=3、P1=2、P2=1；required target coverage=6/6，覆盖 signal robustness repair、
+  lower turnover、window stability、stress handling、benchmark-relative behavior 和
+  cost survival。Validation `candidate_redesign_hypothesis_v2_validation_2026-06-17`
+  为 PASS，checks=12、failed=0。未冻结 v2 spec、未实现 binding、未运行 backfill、未
+  append owner decision、未创建 paper-shadow、未批准 extended/live、未写 official target
+  weights、未触发 broker/order、未修改 production。下一步是 TRADING-478 candidate v2
+  spec freeze。

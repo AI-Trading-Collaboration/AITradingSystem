@@ -9272,6 +9272,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_redesign_hypothesis_v2
+    title: Candidate Redesign Hypothesis V2
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports candidate-redesign-hypothesis-v2 --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_redesign_hypothesis_v2_20*.json
+      - outputs/reports/candidate_redesign_hypothesis_v2_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-477 reads TRADING-471~476 evidence repair artifacts and generates
+      research-only P0/P1/P2 v2 redesign hypotheses covering signal robustness,
+      lower turnover, window stability, stress handling, benchmark-relative
+      behavior, and cost survival without selecting a final spec.
+    owner_action: use_as_input_to_trading_478_candidate_v2_spec_freeze
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_redesign_hypothesis_v2_validation
+    title: Candidate Redesign Hypothesis V2 Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-redesign-hypothesis-v2 --latest
+    artifact_globs:
+      - outputs/reports/candidate_redesign_hypothesis_v2_validation_20*.json
+      - outputs/reports/candidate_redesign_hypothesis_v2_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-477 validation checks source coverage, hypothesis rows, required
+      target coverage, P0/P1/P2 priority taxonomy, selection boundary, Reader
+      Brief fields, and the no paper-shadow / no production safety boundary.
+    owner_action: run_after_candidate_redesign_hypothesis_v2
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

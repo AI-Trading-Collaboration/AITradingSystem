@@ -571,6 +571,103 @@ def test_cost_benchmark_weakness_attribution_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_redesign_hypothesis_v2_covers_required_targets(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+
+    payload = repair.build_candidate_redesign_hypothesis_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.CANDIDATE_REDESIGN_HYPOTHESIS_READY
+    assert payload["summary"]["hypothesis_count"] == 6
+    assert payload["summary"]["p0_hypothesis_count"] == 3
+    assert payload["summary"]["p1_hypothesis_count"] == 2
+    assert payload["summary"]["p2_hypothesis_count"] == 1
+    assert payload["summary"]["target_coverage_count"] == len(
+        repair.REQUIRED_REDESIGN_TARGETS
+    )
+    hypotheses = {
+        row["hypothesis_id"]: row for row in payload["candidate_redesign_hypotheses"]
+    }
+    assert "v2_dynamic_signal_repair" in hypotheses
+    assert hypotheses["v2_dynamic_signal_repair"]["priority"] == "P0"
+    assert "signal_robustness_repair" in hypotheses["v2_dynamic_signal_repair"][
+        "target_areas"
+    ]
+    assert "v2_turnover_cost_benchmark_guard" in hypotheses
+    assert {
+        "lower_turnover",
+        "benchmark_relative_behavior",
+        "cost_survival",
+    } <= set(hypotheses["v2_turnover_cost_benchmark_guard"]["target_areas"])
+    assert all(
+        row["paper_shadow_activation_allowed"] is False
+        for row in payload["candidate_redesign_hypotheses"]
+    )
+    coverage = {row["target_area"]: row["covered"] for row in payload["target_coverage"]}
+    assert all(coverage[target] is True for target in repair.REQUIRED_REDESIGN_TARGETS)
+    assert payload["selection_boundary"]["selects_final_spec"] is False
+    assert payload["selection_boundary"]["implements_binding"] is False
+
+    validation = repair.validate_candidate_redesign_hypothesis_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_redesign_hypothesis_v2_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-redesign-hypothesis-v2",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    hypothesis_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(hypothesis_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["hypothesis_count"] == 6
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-redesign-hypothesis-v2",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -628,6 +725,18 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
         stress_attribution,
         repair.default_evidence_repair_json_path(
             repair.STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    cost_attribution = repair.build_cost_benchmark_weakness_attribution_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        cost_attribution,
+        repair.default_evidence_repair_json_path(
+            repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),

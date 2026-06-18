@@ -30,6 +30,7 @@ STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE = "stress_weakness_attribution"
 COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE = (
     "cost_benchmark_weakness_attribution"
 )
+CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE = "candidate_redesign_hypothesis_v2"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -48,6 +49,9 @@ STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
 )
 COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
     f"{COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -75,6 +79,7 @@ STRESS_WEAKNESS_ATTRIBUTION_READY = "STRESS_WEAKNESS_ATTRIBUTION_READY"
 COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY = (
     "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY"
 )
+CANDIDATE_REDESIGN_HYPOTHESIS_READY = "CANDIDATE_REDESIGN_HYPOTHESIS_READY"
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -87,6 +92,7 @@ COST_BENCHMARK_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REPAIR_EVIDENCE_BEFORE_DECISION",
     "COST_BENCHMARK_WEAKNESS_ACCEPTABLE",
 )
+CANDIDATE_REDESIGN_PRIORITIES: tuple[str, ...] = ("P0", "P1", "P2")
 WINDOW_FRAGILITY_JUDGMENTS: tuple[str, ...] = (
     "OVERFIT_RISK",
     "UNDER_OBSERVED",
@@ -122,6 +128,10 @@ REPORT_PREFIXES: dict[str, str] = {
     ),
     COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE: (
         "cost_benchmark_weakness_attribution_validation"
+    ),
+    CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE: "candidate_redesign_hypothesis_v2",
+    CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE: (
+        "candidate_redesign_hypothesis_v2_validation"
     ),
 }
 
@@ -210,6 +220,15 @@ REQUIRED_BENCHMARK_BASELINES: tuple[str, ...] = (
     "qqq_only",
     "spy_only",
     "equal_weight_etf",
+)
+
+REQUIRED_REDESIGN_TARGETS: tuple[str, ...] = (
+    "signal_robustness_repair",
+    "lower_turnover",
+    "window_stability",
+    "stress_handling",
+    "benchmark_relative_behavior",
+    "cost_survival",
 )
 
 
@@ -2123,6 +2142,313 @@ def validate_cost_benchmark_weakness_attribution_payload(
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not rerun source reports."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_candidate_redesign_hypothesis_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    paths = _candidate_redesign_source_paths(reports_dir=reports_dir, as_of=as_of)
+    ledger = _read_json_mapping(paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE])
+    repair_plan = _read_json_mapping(paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE])
+    signal_drilldown = _read_json_mapping(paths[SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE])
+    window_attribution = _read_json_mapping(paths[WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE])
+    stress_attribution = _read_json_mapping(paths[STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE])
+    cost_attribution = _read_json_mapping(
+        paths[COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE]
+    )
+    hypotheses = _candidate_redesign_hypotheses(
+        signal_drilldown=signal_drilldown,
+        window_attribution=window_attribution,
+        stress_attribution=stress_attribution,
+        cost_attribution=cost_attribution,
+        repair_plan=repair_plan,
+        ledger=ledger,
+    )
+    target_coverage = _redesign_target_coverage(hypotheses)
+    priority_counts = {
+        priority: len(
+            [row for row in hypotheses if _text(row.get("priority")) == priority]
+        )
+        for priority in CANDIDATE_REDESIGN_PRIORITIES
+    }
+    summary = {
+        "candidate_redesign_hypothesis_status": CANDIDATE_REDESIGN_HYPOTHESIS_READY,
+        "source_ledger_status": _text(ledger.get("status"), "MISSING"),
+        "source_repair_plan_status": _text(repair_plan.get("status"), "MISSING"),
+        "source_signal_drilldown_status": _text(signal_drilldown.get("status"), "MISSING"),
+        "source_window_attribution_status": _text(
+            window_attribution.get("status"),
+            "MISSING",
+        ),
+        "source_stress_design_judgment": _text(
+            _mapping(stress_attribution.get("summary")).get("design_judgment"),
+            "MISSING",
+        ),
+        "source_cost_benchmark_design_judgment": _text(
+            _mapping(cost_attribution.get("summary")).get("design_judgment"),
+            "MISSING",
+        ),
+        "market_regime": MARKET_REGIME,
+        "requested_date_range": _text(
+            cost_attribution.get("requested_date_range"),
+            _text(stress_attribution.get("requested_date_range"), "not_applicable"),
+        ),
+        "hypothesis_count": len(hypotheses),
+        "p0_hypothesis_count": priority_counts["P0"],
+        "p1_hypothesis_count": priority_counts["P1"],
+        "p2_hypothesis_count": priority_counts["P2"],
+        "target_coverage_count": len(target_coverage),
+        "required_target_count": len(REQUIRED_REDESIGN_TARGETS),
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+        as_of=as_of,
+        status=CANDIDATE_REDESIGN_HYPOTHESIS_READY,
+        purpose=(
+            "Generate research-only v2 redesign hypotheses from TRADING-471~476 "
+            "evidence repair findings."
+        ),
+        input_artifacts={report_type: str(path) for report_type, path in paths.items()},
+        output_decision="HYPOTHESES_READY_FOR_TRADING_478_SPEC_FREEZE_REVIEW",
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+                    paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE],
+                    ledger,
+                ),
+                _source_artifact(
+                    BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+                    paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE],
+                    repair_plan,
+                ),
+                _source_artifact(
+                    SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+                    paths[SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE],
+                    signal_drilldown,
+                ),
+                _source_artifact(
+                    WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+                    paths[WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE],
+                    window_attribution,
+                ),
+                _source_artifact(
+                    STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+                    paths[STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE],
+                    stress_attribution,
+                ),
+                _source_artifact(
+                    COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+                    paths[COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE],
+                    cost_attribution,
+                ),
+            ],
+            "candidate_redesign_hypotheses": hypotheses,
+            "target_coverage": target_coverage,
+            "selection_boundary": {
+                "selects_final_spec": False,
+                "implements_binding": False,
+                "runs_backfill": False,
+                "paper_shadow_activation_allowed": False,
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-477 已生成 v2 redesign hypotheses；"
+                "P0 聚焦 signal repair、stress/window drawdown guard 和 "
+                "turnover/cost/benchmark guard。"
+            ),
+            key_result="HYPOTHESES_READY_FOR_TRADING_478_SPEC_FREEZE_REVIEW",
+            blocking_issues="none",
+            warnings="hypotheses are not frozen specs and are not paper-shadow eligible",
+            next_action="run_trading_478_candidate_v2_spec_freeze",
+        ),
+        next_action="run_trading_478_candidate_v2_spec_freeze",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Hypotheses are research planning artifacts only.",
+            "This report does not freeze a v2 spec or implement executable binding.",
+            "This report does not run backfill or activate paper-shadow.",
+        ],
+        requested_date_range=_text(summary.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def validate_candidate_redesign_hypothesis_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    hypotheses = _records(payload.get("candidate_redesign_hypotheses"))
+    source_artifacts = _records(payload.get("source_artifacts"))
+    source_report_types = {_text(row.get("report_type")) for row in source_artifacts}
+    target_ids = {
+        target
+        for row in hypotheses
+        for target in _list_values(row.get("target_areas"))
+    }
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE}.",
+        "regenerate_candidate_redesign_hypotheses",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status",
+        _text(payload.get("status")) == CANDIDATE_REDESIGN_HYPOTHESIS_READY,
+        f"status must be {CANDIDATE_REDESIGN_HYPOTHESIS_READY}.",
+        "restore_candidate_redesign_status",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Candidate redesign hypotheses must keep production_effect=none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_sources_present",
+        {
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        }
+        <= source_report_types,
+        "Hypothesis report must include all TRADING-471~476 source artifacts.",
+        "restore_required_source_loading",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "hypotheses_present",
+        bool(hypotheses),
+        "Hypothesis report must include candidate redesign hypotheses.",
+        "restore_candidate_redesign_hypotheses",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_targets_covered",
+        set(REQUIRED_REDESIGN_TARGETS) <= target_ids,
+        "Hypotheses must cover all required redesign target areas.",
+        "restore_required_redesign_target_coverage",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "hypothesis_rows_complete",
+        all(_candidate_hypothesis_row_complete(row) for row in hypotheses),
+        "Each hypothesis must include logic changes, validation method, and stop condition.",
+        "restore_hypothesis_required_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "priority_taxonomy",
+        all(_text(row.get("priority")) in CANDIDATE_REDESIGN_PRIORITIES for row in hypotheses),
+        "Hypothesis priorities must be P0/P1/P2.",
+        "restore_hypothesis_priority_taxonomy",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "counts_consistent",
+        _candidate_hypothesis_counts_consistent(payload),
+        "Hypothesis counts must match rows.",
+        "restore_hypothesis_counts",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "selection_boundary_locked",
+        _candidate_selection_boundary_valid(payload.get("selection_boundary")),
+        (
+            "Hypothesis report must not select spec, implement binding, run backfill, "
+            "or activate shadow."
+        ),
+        "restore_hypothesis_selection_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Candidate redesign hypotheses must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-477 candidate redesign hypotheses.",
+        input_artifacts={CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-477 candidate redesign validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_redesign_hypotheses"
+                if status == FAIL_STATUS
+                else "use_validated_hypotheses_for_trading_478"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_redesign_hypotheses"
+            if status == FAIL_STATUS
+            else "use_validated_hypotheses_for_trading_478"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not select a final v2 spec."],
         requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
     )
 
@@ -4165,6 +4491,367 @@ def _cost_benchmark_counts_consistent(payload: Mapping[str, Any]) -> bool:
     )
 
 
+def _candidate_redesign_source_paths(
+    *,
+    reports_dir: Path,
+    as_of: date,
+) -> dict[str, Path]:
+    return {
+        EVIDENCE_GAP_LEDGER_REPORT_TYPE: default_evidence_repair_json_path(
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: default_evidence_repair_json_path(
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: default_evidence_repair_json_path(
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE: default_evidence_repair_json_path(
+            WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE: default_evidence_repair_json_path(
+            STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE: (
+            default_evidence_repair_json_path(
+                COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+    }
+
+
+def _candidate_redesign_hypotheses(
+    *,
+    signal_drilldown: Mapping[str, Any],
+    window_attribution: Mapping[str, Any],
+    stress_attribution: Mapping[str, Any],
+    cost_attribution: Mapping[str, Any],
+    repair_plan: Mapping[str, Any],
+    ledger: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    source_issue_refs = _candidate_source_issue_refs(
+        signal_drilldown=signal_drilldown,
+        window_attribution=window_attribution,
+        stress_attribution=stress_attribution,
+        cost_attribution=cost_attribution,
+        repair_plan=repair_plan,
+        ledger=ledger,
+    )
+    templates = [
+        {
+            "hypothesis_id": "v2_dynamic_signal_repair",
+            "priority": "P0",
+            "target_areas": ["signal_robustness_repair", "window_stability"],
+            "expected_improvement": (
+                "Replace static single-point signal evidence with historical dynamic "
+                "signal series so signal completeness no longer blocks robustness review."
+            ),
+            "changed_signal_logic": (
+                "Compute candidate signal state per historical date with explicit stale "
+                "signal and market-coverage fail-closed checks."
+            ),
+            "changed_regime_logic": (
+                "Keep existing regime interpretation but require date-aligned regime "
+                "inputs before emitting a signal."
+            ),
+            "changed_rotation_rule": (
+                "No new rotation rule; only permit rotations from date-valid signal state."
+            ),
+            "expected_failure_mode": "historical_signal_series_still_incomplete",
+            "validation_method": (
+                "Rerun signal binding, mini backfill, and signal robustness review on "
+                "representative windows without relaxing completeness rules."
+            ),
+            "stop_condition": (
+                "Stop if partial_signal_series, stale_signal_series, or market_coverage_gap "
+                "remains blocking."
+            ),
+            "source_issue_refs": source_issue_refs["signal"],
+        },
+        {
+            "hypothesis_id": "v2_drawdown_stress_guard",
+            "priority": "P0",
+            "target_areas": ["stress_handling", "window_stability"],
+            "expected_improvement": (
+                "Reduce slow-drawdown and stress-heavy fragility by making risk-off "
+                "state respond earlier to persistent drawdown pressure."
+            ),
+            "changed_signal_logic": (
+                "Add drawdown persistence confirmation before maintaining full risk-on "
+                "candidate exposure."
+            ),
+            "changed_regime_logic": (
+                "Treat slow drawdown and AI/semiconductor correction as explicit stress "
+                "sub-regimes in research-only validation."
+            ),
+            "changed_rotation_rule": (
+                "Rotate out of vulnerable sleeve only after persistence confirmation to "
+                "avoid one-day flip churn."
+            ),
+            "expected_failure_mode": "drawdown_guard_lags_or_overreacts_in_v_shaped_recovery",
+            "validation_method": (
+                "Rerun stress review on rapid/slow drawdown, V-shaped recovery, and "
+                "AI/semiconductor correction windows."
+            ),
+            "stop_condition": (
+                "Stop if slow_drawdown remains FAIL or V-shaped recovery coverage remains missing."
+            ),
+            "source_issue_refs": source_issue_refs["stress_window"],
+        },
+        {
+            "hypothesis_id": "v2_turnover_cost_benchmark_guard",
+            "priority": "P0",
+            "target_areas": [
+                "lower_turnover",
+                "benchmark_relative_behavior",
+                "cost_survival",
+            ],
+            "expected_improvement": (
+                "Improve net edge and benchmark margin by reducing unnecessary rotation "
+                "and requiring expected edge to clear source cost thresholds."
+            ),
+            "changed_signal_logic": (
+                "Require stronger signal confirmation before changing sleeves when "
+                "benchmark margin is already thin."
+            ),
+            "changed_regime_logic": (
+                "Keep regime mismatch filter but add benchmark-relative confirmation "
+                "before defensive switches."
+            ),
+            "changed_rotation_rule": (
+                "Add turnover-aware hold band and minimum benefit check before any "
+                "research weight rotation."
+            ),
+            "expected_failure_mode": "lower_turnover_reduces_reactivity_in_fast_drawdowns",
+            "validation_method": (
+                "Rerun cost/benchmark attribution after mini backfill; require improved "
+                "net proxy and no equal-weight ETF underperformance."
+            ),
+            "stop_condition": (
+                "Stop if weak_net_return_proxy or benchmark_underperformance persists."
+            ),
+            "source_issue_refs": source_issue_refs["cost_benchmark"],
+        },
+        {
+            "hypothesis_id": "v2_false_risk_off_rotation_control",
+            "priority": "P1",
+            "target_areas": ["lower_turnover", "stress_handling"],
+            "expected_improvement": (
+                "Reduce false risk-off cluster damage by requiring confirmation before "
+                "risk-off rotations in choppy markets."
+            ),
+            "changed_signal_logic": (
+                "Add disagreement check between risk-off trigger and trend confirmation."
+            ),
+            "changed_regime_logic": (
+                "Separate high-volatility sideways regime from true drawdown regime."
+            ),
+            "changed_rotation_rule": (
+                "Delay risk-off rotation until confirmation unless drawdown guard is breached."
+            ),
+            "expected_failure_mode": "confirmation_delay_misses_rapid_drawdown",
+            "validation_method": (
+                "Compare false_risk_off_cluster and rapid_drawdown windows after mini backfill."
+            ),
+            "stop_condition": (
+                "Stop if false risk-off improves only by worsening rapid_drawdown behavior."
+            ),
+            "source_issue_refs": source_issue_refs["stress_window"],
+        },
+        {
+            "hypothesis_id": "v2_benchmark_relative_edge_filter",
+            "priority": "P1",
+            "target_areas": ["benchmark_relative_behavior", "cost_survival"],
+            "expected_improvement": (
+                "Avoid candidate states that do not clear static/no-trade/QQQ/SPY/equal-weight "
+                "baseline margins."
+            ),
+            "changed_signal_logic": (
+                "Gate new exposure changes when recent candidate edge is below baseline margin."
+            ),
+            "changed_regime_logic": (
+                "Require benchmark-relative context before declaring a regime mismatch opportunity."
+            ),
+            "changed_rotation_rule": (
+                "Hold existing research weights when candidate delta does not clear "
+                "source threshold."
+            ),
+            "expected_failure_mode": "benchmark_gate_blocks_valid_early_recovery",
+            "validation_method": (
+                "Rerun benchmark baseline comparison and vs-returned comparison "
+                "after mini backfill."
+            ),
+            "stop_condition": (
+                "Stop if equal_weight_etf underperformance or all-baseline mixed margin persists."
+            ),
+            "source_issue_refs": source_issue_refs["cost_benchmark"],
+        },
+        {
+            "hypothesis_id": "v2_observation_quality_gate",
+            "priority": "P2",
+            "target_areas": ["signal_robustness_repair", "window_stability"],
+            "expected_improvement": (
+                "Improve auditability by preventing under-observed static proxy windows from "
+                "being treated as strategy conclusions."
+            ),
+            "changed_signal_logic": (
+                "Emit explicit insufficient-evidence state when historical signal "
+                "coverage is incomplete."
+            ),
+            "changed_regime_logic": (
+                "Require each validation window to disclose regime coverage and observation count."
+            ),
+            "changed_rotation_rule": (
+                "No rotation change; fail closed before rotation analysis when "
+                "evidence is incomplete."
+            ),
+            "expected_failure_mode": "evidence_gate_blocks_too_many_windows_for_mini_backfill",
+            "validation_method": (
+                "Validate mini-backfill evidence coverage and Reader Brief disclosure "
+                "before full backfill."
+            ),
+            "stop_condition": (
+                "Stop if required validation windows remain under-observed after binding repair."
+            ),
+            "source_issue_refs": source_issue_refs["repair_evidence"],
+        },
+    ]
+    return [
+        {
+            **template,
+            "paper_shadow_activation_allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for template in templates
+    ]
+
+
+def _candidate_source_issue_refs(
+    *,
+    signal_drilldown: Mapping[str, Any],
+    window_attribution: Mapping[str, Any],
+    stress_attribution: Mapping[str, Any],
+    cost_attribution: Mapping[str, Any],
+    repair_plan: Mapping[str, Any],
+    ledger: Mapping[str, Any],
+) -> dict[str, list[str]]:
+    signal_refs = [
+        _text(row.get("check_id"), _text(row.get("blocker_id")))
+        for row in _records(signal_drilldown.get("signal_blockers"))
+    ]
+    window_refs = [
+        _text(row.get("failure_mode_id"))
+        for row in _records(window_attribution.get("failure_modes"))
+    ]
+    stress_refs = [
+        _text(row.get("root_cause_id"))
+        for row in _records(stress_attribution.get("stress_weakness_root_causes"))
+    ]
+    cost_refs = [
+        _text(row.get("root_cause_id"))
+        for row in _records(cost_attribution.get("cost_benchmark_root_causes"))
+    ]
+    repair_refs = [
+        _text(row.get("window_id"))
+        for row in _records(repair_plan.get("window_repair_diagnostics"))
+    ]
+    ledger_refs = [
+        _text(row.get("gap_id"))
+        for row in _records(ledger.get("evidence_gaps"))
+    ][:8]
+    return {
+        "signal": sorted({item for item in signal_refs if item}),
+        "stress_window": sorted({item for item in [*window_refs, *stress_refs] if item}),
+        "cost_benchmark": sorted({item for item in cost_refs if item}),
+        "repair_evidence": sorted({item for item in [*repair_refs, *ledger_refs] if item}),
+    }
+
+
+def _redesign_target_coverage(
+    hypotheses: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for target in REQUIRED_REDESIGN_TARGETS:
+        covering = [
+            _text(row.get("hypothesis_id"))
+            for row in hypotheses
+            if target in _list_values(row.get("target_areas"))
+        ]
+        rows.append(
+            {
+                "target_area": target,
+                "covering_hypotheses": covering,
+                "covered": bool(covering),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _candidate_hypothesis_row_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "hypothesis_id",
+        "priority",
+        "target_areas",
+        "expected_improvement",
+        "changed_signal_logic",
+        "changed_regime_logic",
+        "changed_rotation_rule",
+        "expected_failure_mode",
+        "validation_method",
+        "stop_condition",
+        "source_issue_refs",
+    )
+    return (
+        all(bool(row.get(key)) for key in required)
+        and _text(row.get("priority")) in CANDIDATE_REDESIGN_PRIORITIES
+        and isinstance(row.get("paper_shadow_activation_allowed"), bool)
+        and row.get("paper_shadow_activation_allowed") is False
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _candidate_hypothesis_counts_consistent(payload: Mapping[str, Any]) -> bool:
+    hypotheses = _records(payload.get("candidate_redesign_hypotheses"))
+    summary = _mapping(payload.get("summary"))
+    target_coverage = _records(payload.get("target_coverage"))
+    return (
+        _int(summary.get("hypothesis_count")) == len(hypotheses)
+        and _int(summary.get("p0_hypothesis_count"))
+        == len([row for row in hypotheses if _text(row.get("priority")) == "P0"])
+        and _int(summary.get("p1_hypothesis_count"))
+        == len([row for row in hypotheses if _text(row.get("priority")) == "P1"])
+        and _int(summary.get("p2_hypothesis_count"))
+        == len([row for row in hypotheses if _text(row.get("priority")) == "P2"])
+        and _int(summary.get("target_coverage_count"))
+        == len([row for row in target_coverage if row.get("covered") is True])
+        and _int(summary.get("required_target_count")) == len(REQUIRED_REDESIGN_TARGETS)
+    )
+
+
+def _candidate_selection_boundary_valid(value: Any) -> bool:
+    boundary = _mapping(value)
+    return (
+        boundary.get("selects_final_spec") is False
+        and boundary.get("implements_binding") is False
+        and boundary.get("runs_backfill") is False
+        and boundary.get("paper_shadow_activation_allowed") is False
+        and _text(boundary.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -4408,6 +5095,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Candidate Redesign Hypotheses", "candidate_redesign_hypotheses"),
+            ("Target Coverage", "target_coverage"),
+        ]
+    if report_type == CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -4449,6 +5144,10 @@ __all__ = [
     "BACKFILL_PARTIALLY_REPAIRABLE",
     "BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC",
     "BACKFILL_REPAIR_STATUSES",
+    "CANDIDATE_REDESIGN_HYPOTHESIS_READY",
+    "CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE",
+    "CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_REDESIGN_PRIORITIES",
     "COST_BENCHMARK_DESIGN_JUDGMENTS",
     "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY",
     "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE",
@@ -4460,6 +5159,7 @@ __all__ = [
     "REQUIRED_BACKFILL_WINDOWS",
     "REQUIRED_BENCHMARK_BASELINES",
     "REQUIRED_COST_SCENARIOS",
+    "REQUIRED_REDESIGN_TARGETS",
     "REQUIRED_STRESS_SCENARIOS",
     "REQUIRED_WINDOW_SPLITS",
     "SIGNAL_BLOCKER_CAUSES",
@@ -4480,6 +5180,7 @@ __all__ = [
     "WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE",
     "WINDOW_FRAGILITY_JUDGMENTS",
     "build_backfill_partial_root_cause_repair_plan_payload",
+    "build_candidate_redesign_hypothesis_payload",
     "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
     "build_signal_robustness_blocker_drilldown_payload",
@@ -4490,6 +5191,7 @@ __all__ = [
     "latest_evidence_repair_json_path",
     "render_evidence_repair_markdown",
     "validate_backfill_partial_root_cause_repair_plan_payload",
+    "validate_candidate_redesign_hypothesis_payload",
     "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
     "validate_signal_robustness_blocker_drilldown_payload",
