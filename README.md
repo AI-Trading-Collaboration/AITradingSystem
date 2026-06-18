@@ -1810,6 +1810,25 @@ extended/live forbidden、next backlog/spec 存在和 no broker/order/official t
 official target weights、修改 candidate/paper-shadow/production state 或触发 broker/order；
 `next_candidate_spec_draft` 只是 research-only spec。
 
+TRADING-449～459_NEXT_RESEARCH_CYCLE_BATCH 在 return-to-research reset 后生成下一轮
+research-only 证据链。依次运行 `aits reports next-research-cycle-intake --as-of
+YYYY-MM-DD`、`next-candidate-spec-freeze`、`next-candidate-backfill`、
+`next-candidate-stress-review`、`next-candidate-cost-benchmark-review`、
+`next-candidate-vs-returned-candidate-comparison`、
+`next-candidate-signal-robustness-review`、
+`next-candidate-overfit-window-sensitivity`、`next-candidate-research-gate`、
+`next-candidate-owner-research-review-packet` 和
+`next-candidate-research-cycle-snapshot`，并用对应 `validate-next-*` 命令生成
+validation artifacts。TRADING-451 backfill 在解释指标前会调用同一 validate-data code
+path，并把 quality gate status 写入 artifact；如果缺 executable next-candidate
+signal/weight binding，backfill 和下游 gate 必须 fail closed 为
+`CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING` / `NEEDS_MORE_EVIDENCE` /
+`NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`，不得补造收益、drawdown、turnover、
+benchmark 或 cost-survival 结论。该批次不创建 paper-shadow candidate、不恢复 normal
+shadow、不批准 extended/live、不写 official target weights、不 append owner decision、不修改
+strategy/candidate/paper-shadow/production state、不触发 broker/order；
+Reader Brief 只读展示 `next_candidate_research_cycle_snapshot`。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

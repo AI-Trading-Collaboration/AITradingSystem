@@ -1,0 +1,2096 @@
+from __future__ import annotations
+
+import json
+import re
+from collections.abc import Mapping, Sequence
+from datetime import UTC, date, datetime
+from pathlib import Path
+from typing import Any
+
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.reports import return_to_research_reset as reset_reports
+
+SCHEMA_VERSION = 1
+PRODUCTION_EFFECT = "none"
+PASS_STATUS = "PASS"
+FAIL_STATUS = "FAIL"
+PASS_WITH_WARNINGS_STATUS = "PASS_WITH_WARNINGS"
+MARKET_REGIME = "ai_after_chatgpt"
+AI_REGIME_START = "2022-12-01"
+
+INTAKE_REPORT_TYPE = "next_research_cycle_intake"
+FROZEN_SPEC_REPORT_TYPE = "next_candidate_spec_frozen"
+BACKFILL_REPORT_TYPE = "next_candidate_backfill"
+STRESS_REVIEW_REPORT_TYPE = "next_candidate_stress_review"
+COST_BENCHMARK_REVIEW_REPORT_TYPE = "next_candidate_cost_benchmark_review"
+VS_RETURNED_REPORT_TYPE = "next_candidate_vs_returned_candidate_comparison"
+SIGNAL_ROBUSTNESS_REPORT_TYPE = "next_candidate_signal_robustness_review"
+WINDOW_SENSITIVITY_REPORT_TYPE = "next_candidate_overfit_window_sensitivity"
+RESEARCH_GATE_REPORT_TYPE = "next_candidate_research_gate"
+OWNER_REVIEW_PACKET_REPORT_TYPE = "next_candidate_owner_research_review_packet"
+CYCLE_SNAPSHOT_REPORT_TYPE = "next_candidate_research_cycle_snapshot"
+
+VALIDATION_SUFFIX = "_validation"
+
+REPORT_PREFIXES: dict[str, str] = {
+    INTAKE_REPORT_TYPE: "next_research_cycle_intake",
+    FROZEN_SPEC_REPORT_TYPE: "next_candidate_spec_frozen",
+    BACKFILL_REPORT_TYPE: "next_candidate_backfill",
+    STRESS_REVIEW_REPORT_TYPE: "next_candidate_stress_review",
+    COST_BENCHMARK_REVIEW_REPORT_TYPE: "next_candidate_cost_benchmark_review",
+    VS_RETURNED_REPORT_TYPE: "next_candidate_vs_returned_candidate_comparison",
+    SIGNAL_ROBUSTNESS_REPORT_TYPE: "next_candidate_signal_robustness_review",
+    WINDOW_SENSITIVITY_REPORT_TYPE: "next_candidate_overfit_window_sensitivity",
+    RESEARCH_GATE_REPORT_TYPE: "next_candidate_research_gate",
+    OWNER_REVIEW_PACKET_REPORT_TYPE: "next_candidate_owner_research_review_packet",
+    CYCLE_SNAPSHOT_REPORT_TYPE: "next_candidate_research_cycle_snapshot",
+}
+REPORT_PREFIXES.update(
+    {
+        f"{report_type}{VALIDATION_SUFFIX}": f"{prefix}{VALIDATION_SUFFIX}"
+        for report_type, prefix in tuple(REPORT_PREFIXES.items())
+    }
+)
+
+NEXT_RESEARCH_CYCLE_REPORT_TYPES: tuple[str, ...] = (
+    INTAKE_REPORT_TYPE,
+    FROZEN_SPEC_REPORT_TYPE,
+    BACKFILL_REPORT_TYPE,
+    STRESS_REVIEW_REPORT_TYPE,
+    COST_BENCHMARK_REVIEW_REPORT_TYPE,
+    VS_RETURNED_REPORT_TYPE,
+    SIGNAL_ROBUSTNESS_REPORT_TYPE,
+    WINDOW_SENSITIVITY_REPORT_TYPE,
+    RESEARCH_GATE_REPORT_TYPE,
+    OWNER_REVIEW_PACKET_REPORT_TYPE,
+    CYCLE_SNAPSHOT_REPORT_TYPE,
+)
+
+RESET_INTAKE_INPUT_TYPES: tuple[str, ...] = (
+    reset_reports.GOVERNANCE_SNAPSHOT_REPORT_TYPE,
+    reset_reports.FAILURE_MODE_ATTRIBUTION_REPORT_TYPE,
+    reset_reports.REUSABLE_EVIDENCE_REPORT_TYPE,
+    reset_reports.HYPOTHESIS_BACKLOG_REPORT_TYPE,
+    reset_reports.NEXT_CANDIDATE_SPEC_REPORT_TYPE,
+    reset_reports.RESEARCH_BACKFILL_PLAN_REPORT_TYPE,
+)
+
+REQUIRED_BACKFILL_WINDOWS: tuple[str, ...] = (
+    "normal_market_regime",
+    "rapid_drawdown",
+    "slow_drawdown",
+    "high_volatility_sideways_market",
+    "ai_semiconductor_correction",
+    "false_risk_off_cluster",
+)
+
+WINDOW_SENSITIVITY_SPLITS: tuple[str, ...] = (
+    "early_window",
+    "middle_window",
+    "recent_window",
+    "stress_heavy_window",
+    "calm_market_window",
+)
+
+LATEST_PROJECT_ARTIFACT_GLOBS: dict[str, tuple[str, ...]] = {
+    "stress_scenario_library": (
+        "reports/etf_portfolio/dynamic_v3_rescue/stress_scenario_library/*/"
+        "stress_scenario_library.json",
+    ),
+    "drawdown_event_casebook": (
+        "reports/etf_portfolio/dynamic_v3_rescue/drawdown_event_casebook/*/"
+        "drawdown_event_casebook.json",
+    ),
+    "flip_rotation_event_casebook": (
+        "reports/etf_portfolio/dynamic_v3_rescue/flip_rotation_event_casebook/*/"
+        "flip_rotation_event_casebook.json",
+    ),
+    "signal_input_completeness": (
+        "reports/etf_portfolio/dynamic_v3_rescue/signal_input_completeness/*/"
+        "signal_input_completeness_report.json",
+    ),
+    "cost_sensitivity_framework": (
+        "reports/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review/*/"
+        "cost_sensitivity_review.json",
+    ),
+    "benchmark_baseline_control": (
+        "reports/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control/*/"
+        "benchmark_baseline_control_pack.json",
+    ),
+}
+
+
+def default_next_research_cycle_json_path(
+    report_type: str,
+    output_dir: Path,
+    as_of: date,
+) -> Path:
+    return output_dir / f"{REPORT_PREFIXES[report_type]}_{as_of.isoformat()}.json"
+
+
+def default_next_research_cycle_markdown_path(
+    report_type: str,
+    output_dir: Path,
+    as_of: date,
+) -> Path:
+    return output_dir / f"{REPORT_PREFIXES[report_type]}_{as_of.isoformat()}.md"
+
+
+def latest_next_research_cycle_json_path(report_type: str, output_dir: Path) -> Path | None:
+    return _latest_dated_path(output_dir, f"{REPORT_PREFIXES[report_type]}_", ".json")
+
+
+def build_next_research_cycle_payloads(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    project_root: Path = PROJECT_ROOT,
+    data_quality_gate: Mapping[str, Any] | None = None,
+) -> dict[str, dict[str, Any]]:
+    intake = build_next_research_cycle_intake_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+    )
+    frozen = build_next_candidate_spec_frozen_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        intake_payload=intake,
+    )
+    backfill = build_next_candidate_backfill_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        frozen_spec_payload=frozen,
+        data_quality_gate=data_quality_gate or {},
+    )
+    stress = build_next_candidate_stress_review_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        project_root=project_root,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    cost_benchmark = build_next_candidate_cost_benchmark_review_payload(
+        as_of=as_of,
+        project_root=project_root,
+        backfill_payload=backfill,
+    )
+    comparison = build_next_candidate_vs_returned_comparison_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost_benchmark,
+    )
+    signal = build_next_candidate_signal_robustness_review_payload(
+        as_of=as_of,
+        project_root=project_root,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    window = build_next_candidate_window_sensitivity_payload(
+        as_of=as_of,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    gate = build_next_candidate_research_gate_payload(
+        as_of=as_of,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost_benchmark,
+        comparison_payload=comparison,
+        signal_robustness_payload=signal,
+        window_sensitivity_payload=window,
+    )
+    owner_packet = build_next_candidate_owner_research_review_packet_payload(
+        as_of=as_of,
+        research_gate_payload=gate,
+    )
+    snapshot = build_next_research_cycle_snapshot_payload(
+        as_of=as_of,
+        intake_payload=intake,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost_benchmark,
+        comparison_payload=comparison,
+        signal_robustness_payload=signal,
+        window_sensitivity_payload=window,
+        research_gate_payload=gate,
+        owner_packet_payload=owner_packet,
+    )
+    return {
+        INTAKE_REPORT_TYPE: intake,
+        FROZEN_SPEC_REPORT_TYPE: frozen,
+        BACKFILL_REPORT_TYPE: backfill,
+        STRESS_REVIEW_REPORT_TYPE: stress,
+        COST_BENCHMARK_REVIEW_REPORT_TYPE: cost_benchmark,
+        VS_RETURNED_REPORT_TYPE: comparison,
+        SIGNAL_ROBUSTNESS_REPORT_TYPE: signal,
+        WINDOW_SENSITIVITY_REPORT_TYPE: window,
+        RESEARCH_GATE_REPORT_TYPE: gate,
+        OWNER_REVIEW_PACKET_REPORT_TYPE: owner_packet,
+        CYCLE_SNAPSHOT_REPORT_TYPE: snapshot,
+    }
+
+
+def build_next_research_cycle_intake_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    inputs = _load_reset_intake_inputs(reports_dir, as_of)
+    snapshot = _payload_from_inputs(inputs, reset_reports.GOVERNANCE_SNAPSHOT_REPORT_TYPE)
+    failure = _payload_from_inputs(inputs, reset_reports.FAILURE_MODE_ATTRIBUTION_REPORT_TYPE)
+    reusable = _payload_from_inputs(inputs, reset_reports.REUSABLE_EVIDENCE_REPORT_TYPE)
+    backlog = _payload_from_inputs(inputs, reset_reports.HYPOTHESIS_BACKLOG_REPORT_TYPE)
+    draft = _payload_from_inputs(inputs, reset_reports.NEXT_CANDIDATE_SPEC_REPORT_TYPE)
+    plan = _payload_from_inputs(inputs, reset_reports.RESEARCH_BACKFILL_PLAN_REPORT_TYPE)
+
+    failure_modes = _records(failure.get("ranked_failure_modes"))
+    reusable_rows = _records(reusable.get("reusable_evidence"))
+    invalidated_rows = _records(reusable.get("invalidated_evidence"))
+    hypotheses = _records(backlog.get("hypotheses"))
+    p0_hypotheses = [row for row in hypotheses if _text(row.get("priority")) == "P0"]
+    candidate_specs = _records(draft.get("candidate_specs"))
+    windows = _records(plan.get("required_backfill_windows"))
+    requested_range = _date_range_from_windows(windows)
+    previous_summary = _mapping(snapshot.get("summary"))
+    summary = {
+        "intake_status": "NEXT_RESEARCH_CYCLE_INTAKE_READY",
+        "previous_candidate_id": _text(
+            previous_summary.get("candidate_id"),
+            reset_reports.CANDIDATE_ID,
+        ),
+        "previous_candidate_status": _text(previous_summary.get("candidate_status")),
+        "owner_action": _text(previous_summary.get("owner_action")),
+        "why_returned_to_research": _text(
+            _mapping(failure.get("summary")).get("recommended_research_direction"),
+            "redesign_candidate_for_cost_survival_and_benchmark_relative_strength",
+        ),
+        "reusable_evidence_count": len(reusable_rows),
+        "invalidated_or_weak_evidence_count": len(invalidated_rows)
+        + len(
+            [
+                row
+                for row in _records(reusable.get("evidence_classification"))
+                if _text(row.get("classification")) == "weak but informative"
+            ]
+        ),
+        "p0_hypothesis_count": len(p0_hypotheses),
+        "next_candidate_spec_count": len(candidate_specs),
+        "selected_market_regime": MARKET_REGIME,
+        "requested_date_range": requested_range,
+        "paper_shadow_candidate_created": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=INTAKE_REPORT_TYPE,
+        as_of=as_of,
+        status=summary["intake_status"],
+        purpose=(
+            "Create the research-only intake pack after the previous candidate was "
+            "returned to research."
+        ),
+        input_artifacts=_input_paths(inputs),
+        output_decision=summary["intake_status"],
+        summary=summary,
+        body={
+            "why_previous_candidate_returned_to_research": [
+                {
+                    "failure_mode_id": _text(row.get("failure_mode_id")),
+                    "classification": _text(row.get("classification")),
+                    "evidence": _text(row.get("evidence")),
+                    "recommended_action": _text(row.get("recommended_action")),
+                }
+                for row in failure_modes[:5]
+            ],
+            "reusable_evidence": reusable_rows,
+            "invalidated_or_weak_evidence": _invalidated_or_weak_evidence(reusable),
+            "p0_hypotheses": p0_hypotheses,
+            "next_candidate_spec_proposal": candidate_specs,
+            "required_backfill_windows": windows,
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "Next research-cycle intake is ready; prior candidate remains "
+                "returned to research."
+            ),
+            key_result=summary["intake_status"],
+            blocking_issues="paper_shadow_candidate_creation_forbidden",
+            warnings="cost and benchmark evidence remain invalidating for the old candidate",
+            next_action="freeze_next_research_candidate_spec",
+        ),
+        next_action="freeze_next_research_candidate_spec",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Intake is a research entry point only.",
+            "It does not create a paper-shadow candidate.",
+        ],
+        requested_date_range=requested_range,
+    )
+
+
+def build_next_candidate_spec_frozen_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    intake_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    if intake_payload is None:
+        intake_path = default_next_research_cycle_json_path(
+            INTAKE_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        )
+        intake_payload = _read_json_mapping(intake_path)
+    reset_draft = _read_json_mapping(
+        reset_reports.default_return_to_research_json_path(
+            reset_reports.NEXT_CANDIDATE_SPEC_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        )
+    )
+    reset_plan = _read_json_mapping(
+        reset_reports.default_return_to_research_json_path(
+            reset_reports.RESEARCH_BACKFILL_PLAN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        )
+    )
+    candidate_specs = _records(reset_draft.get("candidate_specs"))
+    if not candidate_specs:
+        raise ValueError("next_candidate_spec_draft has no candidate_specs rows")
+    selected = candidate_specs[0]
+    windows = _records(reset_plan.get("required_backfill_windows"))
+    frozen_id = _frozen_candidate_id(_text(selected.get("candidate_id")))
+    p0_hypotheses = _records(intake_payload.get("p0_hypotheses"))
+    stop_conditions = [
+        _text(row.get("stop_condition"))
+        for row in p0_hypotheses
+        if _text(row.get("stop_condition"))
+    ]
+    stop_conditions.extend(
+        [
+            "stop if cost/benchmark review remains unavailable or weak",
+            "stop if signal completeness is warning/blocking",
+            "stop if owner has not approved continued research validation",
+        ]
+    )
+    frozen_spec = {
+        "candidate_id": frozen_id,
+        "source_draft_candidate_id": _text(selected.get("candidate_id")),
+        "status": "FROZEN_RESEARCH_SPEC",
+        "source_hypotheses": _list_values(selected.get("source_hypotheses")),
+        "selected_p0_hypotheses": [
+            {
+                "hypothesis_id": _text(row.get("hypothesis_id")),
+                "name": _text(row.get("name")),
+                "expected_improvement": _text(row.get("expected_improvement")),
+            }
+            for row in p0_hypotheses
+        ],
+        "signal_inputs": _list_values(selected.get("signal_inputs")),
+        "regime_assumptions": _list_values(selected.get("regime_filter_assumptions")),
+        "drawdown_handling": _list_values(selected.get("drawdown_handling")),
+        "rotation_handling": _list_values(selected.get("rotation_handling")),
+        "turnover_constraints": _list_values(selected.get("turnover_constraints")),
+        "cost_expectations": _list_values(selected.get("cost_sensitivity_expectations")),
+        "benchmark_expectations": _list_values(
+            selected.get("benchmark_comparison_expectations")
+        ),
+        "validation_windows": windows,
+        "stop_conditions": stop_conditions,
+        "market_regime": MARKET_REGIME,
+        "ai_regime_start": AI_REGIME_START,
+        "paper_shadow_eligible": False,
+        "requires_executable_signal_binding_before_backfill": True,
+        "executable_signal_binding_path": "",
+        "executable_signal_binding_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    summary = {
+        "frozen_spec_status": "NEXT_CANDIDATE_SPEC_FROZEN",
+        "candidate_id": frozen_id,
+        "source_draft_candidate_id": _text(selected.get("candidate_id")),
+        "source_p0_hypothesis_count": len(p0_hypotheses),
+        "validation_window_count": len(windows),
+        "market_regime": MARKET_REGIME,
+        "requested_date_range": _date_range_from_windows(windows),
+        "paper_shadow_eligible": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=FROZEN_SPEC_REPORT_TYPE,
+        as_of=as_of,
+        status=summary["frozen_spec_status"],
+        purpose="Freeze one research-only next candidate spec from the P0 backlog.",
+        input_artifacts={
+            "next_research_cycle_intake": _artifact_id(intake_payload),
+            "next_candidate_spec_draft": _artifact_id(reset_draft),
+            "research_backfill_plan_for_next_candidate": _artifact_id(reset_plan),
+        },
+        output_decision=summary["frozen_spec_status"],
+        summary=summary,
+        body={"frozen_candidate_spec": frozen_spec},
+        reader_brief=_reader_brief(
+            summary=(
+                f"Frozen research spec {frozen_id} is not paper-shadow eligible."
+            ),
+            key_result=summary["frozen_spec_status"],
+            blocking_issues="executable_signal_binding_required_before_backfill",
+            warnings="research spec only; no official weights or broker/order path",
+            next_action="run_research_only_backfill_after_data_quality_gate",
+        ),
+        next_action="run_research_only_backfill_after_data_quality_gate",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Frozen spec is research-only.",
+            "It is not paper-shadow eligible without separate validation and owner review.",
+            "It intentionally does not define official target weights.",
+        ],
+        requested_date_range=summary["requested_date_range"],
+    )
+
+
+def build_next_candidate_backfill_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    frozen_spec_payload: Mapping[str, Any] | None = None,
+    data_quality_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    if frozen_spec_payload is None:
+        frozen_spec_payload = _read_json_mapping(
+            default_next_research_cycle_json_path(
+                FROZEN_SPEC_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        )
+    frozen_spec = _mapping(frozen_spec_payload.get("frozen_candidate_spec"))
+    windows = _records(frozen_spec.get("validation_windows"))
+    data_quality = _normalize_data_quality_gate(data_quality_gate)
+    data_quality_passed = data_quality["passed"]
+    executable_binding_status = _text(
+        frozen_spec.get("executable_signal_binding_status"),
+        "MISSING",
+    )
+    executable_ready = executable_binding_status == "AVAILABLE"
+    if not data_quality_passed:
+        status = "CANDIDATE_BACKFILL_BLOCKED_DATA_QUALITY"
+        blocking_issues = ["data_quality_gate_not_passed"]
+    elif not executable_ready:
+        status = "CANDIDATE_BACKFILL_NEEDS_EXECUTABLE_BINDING"
+        blocking_issues = ["executable_candidate_signal_binding_missing"]
+    else:
+        status = "CANDIDATE_BACKFILL_READY"
+        blocking_issues = []
+
+    window_results = [
+        _backfill_window_result(
+            window,
+            data_quality=data_quality,
+            executable_ready=executable_ready,
+        )
+        for window in windows
+    ]
+    missing_data = sorted(
+        {
+            item
+            for row in window_results
+            for item in _list_values(row.get("missing_data_list"))
+        }
+    )
+    summary = {
+        "candidate_backfill_status": status,
+        "candidate_id": _text(frozen_spec.get("candidate_id")),
+        "market_regime": MARKET_REGIME,
+        "requested_date_range": _date_range_from_windows(windows),
+        "window_count": len(window_results),
+        "data_quality_status": data_quality["status"],
+        "data_quality_report_path": data_quality["report_path"],
+        "return_proxy_available": False,
+        "drawdown_proxy_available": False,
+        "turnover_available": False,
+        "signal_completeness": (
+            "BLOCKED_MISSING_EXECUTABLE_BINDING"
+            if not executable_ready
+            else "AVAILABLE"
+        ),
+        "missing_data_count": len(missing_data),
+        "paper_shadow_outputs_generated": False,
+        "official_target_weights_generated": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=BACKFILL_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Run the research-only backfill gate for the frozen candidate spec and "
+            "fail closed when executable candidate inputs are missing."
+        ),
+        input_artifacts={
+            "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
+            "data_quality_report": data_quality["report_path"],
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "backfill_windows": window_results,
+            "missing_data_list": missing_data,
+            "cost_proxy_inputs": _cost_proxy_placeholder(executable_ready),
+            "blocking_issues": [
+                {"issue_id": issue, "recommended_action": _backfill_blocker_action(issue)}
+                for issue in blocking_issues
+            ],
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "Backfill is fail-closed until the frozen candidate has an executable "
+                "research signal/weight binding."
+            ),
+            key_result=status,
+            blocking_issues="; ".join(blocking_issues) or "none",
+            warnings=f"data_quality_status={data_quality['status']}",
+            next_action=(
+                "bind_executable_research_signal_before_backfill"
+                if blocking_issues
+                else "review_backfill_results"
+            ),
+        ),
+        next_action=(
+            "bind_executable_research_signal_before_backfill"
+            if blocking_issues
+            else "review_backfill_results"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Backfill output is research-only and cannot produce official weights.",
+            (
+                "Missing executable binding is recorded as missing data; no return, "
+                "drawdown, turnover, rotation, or false-risk-off metric is fabricated."
+            ),
+        ],
+        requested_date_range=summary["requested_date_range"],
+    )
+
+
+def build_next_candidate_stress_review_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    project_root: Path = PROJECT_ROOT,
+    frozen_spec_payload: Mapping[str, Any] | None = None,
+    backfill_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    if frozen_spec_payload is None:
+        frozen_spec_payload = _read_json_mapping(
+            default_next_research_cycle_json_path(
+                FROZEN_SPEC_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        )
+    if backfill_payload is None:
+        backfill_payload = _read_json_mapping(
+            default_next_research_cycle_json_path(BACKFILL_REPORT_TYPE, reports_dir, as_of)
+        )
+    sources = _load_project_sources(project_root)
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    executable_backfill = _text(backfill_summary.get("candidate_backfill_status")) == (
+        "CANDIDATE_BACKFILL_READY"
+    )
+    scenario_reviews = [
+        _stress_scenario_review(window_id, executable_backfill=executable_backfill)
+        for window_id in REQUIRED_BACKFILL_WINDOWS
+    ]
+    blocking = [row for row in scenario_reviews if row["scenario_status"] == "BLOCKING"]
+    stress_result = "WEAK" if blocking else "MIXED"
+    summary = {
+        "stress_result": stress_result,
+        "candidate_id": _candidate_id_from_frozen(frozen_spec_payload),
+        "scenario_count": len(scenario_reviews),
+        "blocking_scenario_count": len(blocking),
+        "warning_scenario_count": 0,
+        "market_regime": MARKET_REGIME,
+        "requested_date_range": _text(backfill_summary.get("requested_date_range")),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=STRESS_REVIEW_REPORT_TYPE,
+        as_of=as_of,
+        status=stress_result,
+        purpose=(
+            "Evaluate the frozen next candidate against stress scenarios and "
+            "historical casebooks."
+        ),
+        input_artifacts={
+            "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
+            "next_candidate_backfill": _artifact_id(backfill_payload),
+            **_source_paths(sources),
+        },
+        output_decision=stress_result,
+        summary=summary,
+        body={
+            "scenario_reviews": scenario_reviews,
+            "blocking_scenarios": blocking,
+            "warning_scenarios": [],
+            "reusable_positive_evidence": _reusable_positive_stress_evidence(sources),
+            "failure_cases": blocking,
+        },
+        reader_brief=_reader_brief(
+            summary=f"Stress review is {stress_result}; executable backfill is required.",
+            key_result=stress_result,
+            blocking_issues=_issue_names(blocking, "scenario_id"),
+            warnings="none",
+            next_action="resolve_backfill_binding_before_stress_conclusion",
+        ),
+        next_action="resolve_backfill_binding_before_stress_conclusion",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Stress review does not optimize the candidate.",
+            "Unavailable backfill metrics block strong stress conclusions.",
+        ],
+        requested_date_range=summary["requested_date_range"],
+    )
+
+
+def build_next_candidate_cost_benchmark_review_payload(
+    *,
+    as_of: date,
+    project_root: Path = PROJECT_ROOT,
+    backfill_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    sources = _load_project_sources(project_root)
+    cost_payload = _mapping(_mapping(sources.get("cost_sensitivity_framework")).get("payload"))
+    benchmark_payload = _mapping(
+        _mapping(sources.get("benchmark_baseline_control")).get("payload")
+    )
+    backfill_status = _text(
+        _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
+    )
+    backfill_ready = backfill_status == "CANDIDATE_BACKFILL_READY"
+    scenario_rows = _cost_scenario_reviews(cost_payload, backfill_ready=backfill_ready)
+    baseline_rows = _benchmark_reviews(benchmark_payload, backfill_ready=backfill_ready)
+    status = (
+        "COST_BENCHMARK_REVIEW_READY"
+        if backfill_ready
+        else "COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL"
+    )
+    summary = {
+        "cost_survival_status": (
+            "SURVIVAL_UNTESTED_WITHOUT_EXECUTABLE_BACKFILL"
+            if not backfill_ready
+            else "READY_FOR_INTERPRETATION"
+        ),
+        "benchmark_relative_status": (
+            "RELATIVE_STATUS_UNTESTED_WITHOUT_EXECUTABLE_BACKFILL"
+            if not backfill_ready
+            else "READY_FOR_INTERPRETATION"
+        ),
+        "turnover_penalty": None,
+        "net_proxy_result": "UNAVAILABLE" if not backfill_ready else "AVAILABLE",
+        "scenario_count": len(scenario_rows),
+        "baseline_count": len(baseline_rows),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Evaluate cost survival and benchmark comparison for the frozen candidate "
+            "without optimizing it."
+        ),
+        input_artifacts={
+            "next_candidate_backfill": _artifact_id(backfill_payload),
+            **_source_paths(
+                {
+                    key: value
+                    for key, value in sources.items()
+                    if key in {"cost_sensitivity_framework", "benchmark_baseline_control"}
+                }
+            ),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "cost_scenario_reviews": scenario_rows,
+            "benchmark_reviews": baseline_rows,
+            "blocking_issues": (
+                [
+                    {
+                        "issue_id": "candidate_net_proxy_unavailable",
+                        "recommended_action": (
+                            "complete_research_backfill_before_cost_benchmark_review"
+                        ),
+                    }
+                ]
+                if not backfill_ready
+                else []
+            ),
+        },
+        reader_brief=_reader_brief(
+            summary="Cost/benchmark review is evaluation-only and needs executable backfill.",
+            key_result=status,
+            blocking_issues=(
+                "candidate_net_proxy_unavailable" if not backfill_ready else "none"
+            ),
+            warnings="no optimization performed",
+            next_action="complete_backfill_before_cost_benchmark_interpretation",
+        ),
+        next_action="complete_backfill_before_cost_benchmark_interpretation",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Evaluation only; does not tune or optimize the candidate.",
+            "Previous cost/benchmark policy is reused as policy context only.",
+        ],
+        requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
+    )
+
+
+def build_next_candidate_vs_returned_comparison_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    backfill_payload: Mapping[str, Any],
+    stress_review_payload: Mapping[str, Any],
+    cost_benchmark_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    failure = _read_json_mapping(
+        reset_reports.default_return_to_research_json_path(
+            reset_reports.FAILURE_MODE_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        )
+    )
+    reusable = _read_json_mapping(
+        reset_reports.default_return_to_research_json_path(
+            reset_reports.REUSABLE_EVIDENCE_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        )
+    )
+    backfill_status = _text(
+        _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
+    )
+    backfill_ready = backfill_status == "CANDIDATE_BACKFILL_READY"
+    comparison_rows = _comparison_rows(backfill_ready)
+    comparison_result = (
+        "MIXED_VS_RETURNED_CANDIDATE"
+        if backfill_ready
+        else "NO_IMPROVEMENT"
+    )
+    summary = {
+        "comparison_result": comparison_result,
+        "previous_candidate_id": reset_reports.CANDIDATE_ID,
+        "new_candidate_id": _text(_mapping(backfill_payload.get("summary")).get("candidate_id")),
+        "measurable_improvement_established": backfill_ready,
+        "governance_blockers": (
+            "executable_backfill_missing" if not backfill_ready else "none"
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=VS_RETURNED_REPORT_TYPE,
+        as_of=as_of,
+        status=comparison_result,
+        purpose="Compare the new research candidate against the returned candidate.",
+        input_artifacts={
+            "candidate_failure_mode_attribution": _artifact_id(failure),
+            "reusable_evidence_extraction": _artifact_id(reusable),
+            "next_candidate_backfill": _artifact_id(backfill_payload),
+            "next_candidate_stress_review": _artifact_id(stress_review_payload),
+            "next_candidate_cost_benchmark_review": _artifact_id(cost_benchmark_payload),
+        },
+        output_decision=comparison_result,
+        summary=summary,
+        body={
+            "comparison_rows": comparison_rows,
+            "returned_candidate_failure_modes": _records(failure.get("ranked_failure_modes")),
+            "reusable_previous_evidence": _records(reusable.get("reusable_evidence")),
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "Improvement over the returned candidate is not established without "
+                "new executable backfill evidence."
+            ),
+            key_result=comparison_result,
+            blocking_issues=summary["governance_blockers"],
+            warnings="do_not_reuse_returned_candidate_failure_mode",
+            next_action="resolve_new_candidate_evidence_before_comparison_claim",
+        ),
+        next_action="resolve_new_candidate_evidence_before_comparison_claim",
+        safety_boundary=_safety_boundary(),
+        limitations=["No improvement is claimed from missing new-candidate metrics."],
+        requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
+    )
+
+
+def build_next_candidate_signal_robustness_review_payload(
+    *,
+    as_of: date,
+    project_root: Path = PROJECT_ROOT,
+    frozen_spec_payload: Mapping[str, Any],
+    backfill_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    sources = _load_project_sources(project_root)
+    signal_source = _mapping(sources.get("signal_input_completeness"))
+    frozen_spec = _mapping(frozen_spec_payload.get("frozen_candidate_spec"))
+    executable_ready = _text(frozen_spec.get("executable_signal_binding_status")) == "AVAILABLE"
+    checks = [
+        _signal_check("missing_feature_columns", executable_ready, signal_source),
+        _signal_check("partial_signal_series", executable_ready, signal_source),
+        _signal_check("stale_signal_series", executable_ready, signal_source),
+        _signal_check("schema_version_mismatch", executable_ready, signal_source),
+        _signal_check("market_coverage_gap", executable_ready, signal_source),
+    ]
+    blocking = [row for row in checks if row["status"] == "BLOCKING"]
+    status = "SIGNAL_ROBUSTNESS_BLOCKED" if blocking else "SIGNAL_ROBUSTNESS_READY"
+    summary = {
+        "signal_robustness_status": status,
+        "fail_closed_behavior": True,
+        "blocking_check_count": len(blocking),
+        "sensitivity_to_missing_inputs": "HIGH" if blocking else "LOW",
+        "required_monitoring_field_count": 5,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=SIGNAL_ROBUSTNESS_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose="Check whether the frozen next candidate is robust to signal input quality.",
+        input_artifacts={
+            "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
+            "next_candidate_backfill": _artifact_id(backfill_payload),
+            **_source_paths({"signal_input_completeness": signal_source}),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "signal_quality_checks": checks,
+            "required_monitoring_fields": [
+                "feature_columns_present",
+                "signal_series_completeness",
+                "signal_series_freshness",
+                "schema_version",
+                "market_coverage",
+            ],
+            "fail_closed_behavior": {
+                "missing_or_stale_inputs_block_research_gate": True,
+                "signal_completeness_rules_relaxed": False,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary="Signal robustness is blocked until executable signal inputs exist.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking, "check_id"),
+            warnings="signal completeness rules remain unchanged",
+            next_action="provide_executable_signal_binding_and_rerun_completeness",
+        ),
+        next_action="provide_executable_signal_binding_and_rerun_completeness",
+        safety_boundary=_safety_boundary(),
+        limitations=["Review does not relax signal completeness rules."],
+        requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
+    )
+
+
+def build_next_candidate_window_sensitivity_payload(
+    *,
+    as_of: date,
+    frozen_spec_payload: Mapping[str, Any],
+    backfill_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    backfill_status = _text(
+        _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
+    )
+    backfill_ready = backfill_status == "CANDIDATE_BACKFILL_READY"
+    frozen_spec = _mapping(frozen_spec_payload.get("frozen_candidate_spec"))
+    windows = _records(frozen_spec.get("validation_windows"))
+    splits = [
+        _window_sensitivity_split(split_id, windows, backfill_ready=backfill_ready)
+        for split_id in WINDOW_SENSITIVITY_SPLITS
+    ]
+    status = "WINDOW_MIXED" if backfill_ready else "WINDOW_FRAGILE"
+    summary = {
+        "window_sensitivity_status": status,
+        "split_count": len(splits),
+        "performance_dispersion": None,
+        "turnover_dispersion": None,
+        "drawdown_behavior_dispersion": None,
+        "false_flip_dispersion": None,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=WINDOW_SENSITIVITY_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose="Check whether the next candidate only works in narrow windows.",
+        input_artifacts={
+            "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
+            "next_candidate_backfill": _artifact_id(backfill_payload),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "window_splits": splits,
+            "blocking_issues": (
+                [
+                    {
+                        "issue_id": "window_metrics_unavailable",
+                        "recommended_action": (
+                            "complete_executable_backfill_before_window_sensitivity"
+                        ),
+                    }
+                ]
+                if not backfill_ready
+                else []
+            ),
+        },
+        reader_brief=_reader_brief(
+            summary="Window sensitivity is fragile until window metrics exist.",
+            key_result=status,
+            blocking_issues="window_metrics_unavailable" if not backfill_ready else "none",
+            warnings="does_not_promote_narrow_window_result",
+            next_action="complete_backfill_before_window_stability_claim",
+        ),
+        next_action="complete_backfill_before_window_stability_claim",
+        safety_boundary=_safety_boundary(),
+        limitations=["No stability claim is made without executable backfill metrics."],
+        requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
+    )
+
+
+def build_next_candidate_research_gate_payload(
+    *,
+    as_of: date,
+    frozen_spec_payload: Mapping[str, Any],
+    backfill_payload: Mapping[str, Any],
+    stress_review_payload: Mapping[str, Any],
+    cost_benchmark_payload: Mapping[str, Any],
+    comparison_payload: Mapping[str, Any],
+    signal_robustness_payload: Mapping[str, Any],
+    window_sensitivity_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    blockers = _research_gate_blockers(
+        backfill_payload=backfill_payload,
+        stress_review_payload=stress_review_payload,
+        cost_benchmark_payload=cost_benchmark_payload,
+        comparison_payload=comparison_payload,
+        signal_robustness_payload=signal_robustness_payload,
+        window_sensitivity_payload=window_sensitivity_payload,
+    )
+    decision = "NEEDS_MORE_EVIDENCE" if blockers else "RESEARCH_PROMISING"
+    summary = {
+        "research_gate_decision": decision,
+        "candidate_id": _candidate_id_from_frozen(frozen_spec_payload),
+        "blocker_count": len(blockers),
+        "strongest_positive_evidence_count": 2,
+        "strongest_negative_evidence_count": len(blockers),
+        "paper_shadow_activation_allowed": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=RESEARCH_GATE_REPORT_TYPE,
+        as_of=as_of,
+        status=decision,
+        purpose="Decide whether the new research candidate deserves deeper validation.",
+        input_artifacts={
+            "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
+            "next_candidate_backfill": _artifact_id(backfill_payload),
+            "next_candidate_stress_review": _artifact_id(stress_review_payload),
+            "next_candidate_cost_benchmark_review": _artifact_id(cost_benchmark_payload),
+            "next_candidate_vs_returned_candidate_comparison": _artifact_id(comparison_payload),
+            "next_candidate_signal_robustness_review": _artifact_id(signal_robustness_payload),
+            "next_candidate_overfit_window_sensitivity": _artifact_id(window_sensitivity_payload),
+        },
+        output_decision=decision,
+        summary=summary,
+        body={
+            "strongest_positive_evidence": [
+                "P0 hypotheses directly target cost survival and benchmark weakness.",
+                (
+                    "Stress/drawdown/flip evidence from the old candidate remains "
+                    "reusable as diagnostics."
+                ),
+            ],
+            "strongest_negative_evidence": [
+                _text(row.get("issue_id")) for row in blockers
+            ],
+            "blocker_list": blockers,
+            "required_next_action": (
+                "bind_executable_research_candidate_and_regenerate_backfill"
+                if blockers
+                else "prepare_deeper_research_validation_plan"
+            ),
+        },
+        reader_brief=_reader_brief(
+            summary=f"Research gate decision is {decision}; paper-shadow remains forbidden.",
+            key_result=decision,
+            blocking_issues=_issue_names(blockers, "issue_id"),
+            warnings="research gate cannot activate paper-shadow",
+            next_action=(
+                "bind_executable_research_candidate_and_regenerate_backfill"
+                if blockers
+                else "prepare_deeper_research_validation_plan"
+            ),
+        ),
+        next_action=(
+            "bind_executable_research_candidate_and_regenerate_backfill"
+            if blockers
+            else "prepare_deeper_research_validation_plan"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["This research gate does not allow paper-shadow activation."],
+        requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
+    )
+
+
+def build_next_candidate_owner_research_review_packet_payload(
+    *,
+    as_of: date,
+    research_gate_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    gate_decision = _text(
+        _mapping(research_gate_payload.get("summary")).get("research_gate_decision")
+    )
+    options = [
+        _owner_option(
+            "continue_research_validation",
+            evidence_required=[
+                "executable research signal/weight binding",
+                "new candidate backfill with data quality PASS",
+                "stress/cost/benchmark/signal/window validation reruns",
+            ],
+            risks=[
+                "research time spent before metrics prove improvement",
+                "old failure mode may repeat if cost/benchmark blockers persist",
+            ],
+            next_action="bind_and_rerun_research_validation_chain",
+        ),
+        _owner_option(
+            "revise_hypothesis",
+            evidence_required=[
+                "owner-reviewed hypothesis revision",
+                "updated frozen spec with explicit executable binding",
+            ],
+            risks=["revision may move away from original P0 failure attribution"],
+            next_action="return_to_hypothesis_backlog_for_revision",
+        ),
+        _owner_option(
+            "reject_research_candidate",
+            evidence_required=[
+                "owner decision to reject research candidate",
+                "documented rejection rationale",
+            ],
+            risks=["may discard still-useful diagnostic evidence"],
+            next_action="create_research_rejection_postmortem",
+        ),
+        _owner_option(
+            "hold_for_more_data",
+            evidence_required=["specific data/source or sample condition to wait for"],
+            risks=["research cycle remains incomplete"],
+            next_action="wait_for_required_evidence_without_state_mutation",
+        ),
+    ]
+    summary = {
+        "owner_packet_status": "OWNER_RESEARCH_REVIEW_PACKET_READY",
+        "source_research_gate_decision": gate_decision,
+        "option_count": len(options),
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=OWNER_REVIEW_PACKET_REPORT_TYPE,
+        as_of=as_of,
+        status=summary["owner_packet_status"],
+        purpose="Prepare manual owner options for the research-stage candidate.",
+        input_artifacts={"next_candidate_research_gate": _artifact_id(research_gate_payload)},
+        output_decision=summary["owner_packet_status"],
+        summary=summary,
+        body={"owner_options": options},
+        reader_brief=_reader_brief(
+            summary="Owner research review packet is ready; no decision is appended.",
+            key_result=summary["owner_packet_status"],
+            blocking_issues="none",
+            warnings="manual owner decision required before any state transition",
+            next_action="owner_review_research_options_manually",
+        ),
+        next_action="owner_review_research_options_manually",
+        safety_boundary=_safety_boundary(),
+        limitations=["This packet does not append owner decisions automatically."],
+        requested_date_range=_text(research_gate_payload.get("requested_date_range")),
+    )
+
+
+def build_next_research_cycle_snapshot_payload(
+    *,
+    as_of: date,
+    intake_payload: Mapping[str, Any],
+    frozen_spec_payload: Mapping[str, Any],
+    backfill_payload: Mapping[str, Any],
+    stress_review_payload: Mapping[str, Any],
+    cost_benchmark_payload: Mapping[str, Any],
+    comparison_payload: Mapping[str, Any],
+    signal_robustness_payload: Mapping[str, Any],
+    window_sensitivity_payload: Mapping[str, Any],
+    research_gate_payload: Mapping[str, Any],
+    owner_packet_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    gate_decision = _text(
+        _mapping(research_gate_payload.get("summary")).get("research_gate_decision")
+    )
+    if gate_decision == "RESEARCH_PROMISING":
+        status = "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+    elif gate_decision in {"NEEDS_MORE_EVIDENCE", "RETURN_TO_HYPOTHESIS_BACKLOG"}:
+        status = "NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+    else:
+        status = "NEXT_RESEARCH_CYCLE_BLOCKED"
+    source_payloads = (
+        intake_payload,
+        frozen_spec_payload,
+        backfill_payload,
+        stress_review_payload,
+        cost_benchmark_payload,
+        comparison_payload,
+        signal_robustness_payload,
+        window_sensitivity_payload,
+        research_gate_payload,
+        owner_packet_payload,
+    )
+    summary = {
+        "research_cycle_snapshot_status": status,
+        "research_gate_decision": gate_decision,
+        "candidate_id": _candidate_id_from_frozen(frozen_spec_payload),
+        "market_regime": MARKET_REGIME,
+        "requested_date_range": _text(backfill_payload.get("requested_date_range")),
+        "artifact_count": len(source_payloads),
+        "owner_packet_ready": _text(owner_packet_payload.get("status"))
+        == "OWNER_RESEARCH_REVIEW_PACKET_READY",
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CYCLE_SNAPSHOT_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose="Generate the final snapshot for the new research cycle.",
+        input_artifacts={
+            _text(item.get("report_type")): _artifact_id(item)
+            for item in source_payloads
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "source_statuses": [
+                {
+                    "report_type": _text(item.get("report_type")),
+                    "status": _text(item.get("status")),
+                    "next_action": _text(item.get("next_action")),
+                }
+                for item in source_payloads
+            ],
+            "source_reader_briefs": {
+                _text(item.get("report_type")): _mapping(item.get("reader_brief"))
+                for item in source_payloads
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=f"Next research-cycle snapshot is {status}.",
+            key_result=status,
+            blocking_issues=(
+                "evidence_required_before_owner_ready"
+                if status != "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+                else "none"
+            ),
+            warnings="research-only; no paper-shadow/live/weights/broker approval",
+            next_action=(
+                "complete_missing_research_evidence"
+                if status != "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+                else "manual_owner_research_review"
+            ),
+        ),
+        next_action=(
+            "complete_missing_research_evidence"
+            if status != "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+            else "manual_owner_research_review"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Final snapshot is a research-cycle state report, not a trading approval."],
+        requested_date_range=summary["requested_date_range"],
+    )
+
+
+def validate_next_research_cycle_payload(
+    payload: Mapping[str, Any],
+    *,
+    expected_report_type: str | None = None,
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    expected = expected_report_type or report_type
+    validation_report_type = f"{expected}{VALIDATION_SUFFIX}"
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == expected,
+        f"report_type must be {expected}.",
+        "regenerate_expected_next_research_cycle_artifact",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT,
+        "production_effect must remain none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_mapping(payload.get("reader_brief")).get("key_result")),
+        "Reader Brief fields must be present.",
+        "repair_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/production mutation.",
+        "restore_next_research_cycle_safety_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "market_regime_disclosed",
+        _text(payload.get("market_regime")) == MARKET_REGIME,
+        f"market_regime must be {MARKET_REGIME}.",
+        "disclose_ai_after_chatgpt_regime",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "requested_date_range_disclosed",
+        bool(_text(payload.get("requested_date_range"))),
+        "requested date range must be disclosed.",
+        "restore_requested_date_range",
+    )
+    if report_type == BACKFILL_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        _append_check(
+            checks,
+            blocking_issues,
+            "data_quality_visible",
+            bool(_text(summary.get("data_quality_status"))),
+            "Backfill must disclose data quality status.",
+            "run_validate_data_before_backfill",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "official_weights_not_generated",
+            summary.get("official_target_weights_generated") is False,
+            "Backfill must not generate official target weights.",
+            "remove_official_weight_output_from_backfill",
+        )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=validation_report_type,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose=f"Validate {expected} schema, disclosure, and safety boundary.",
+        input_artifacts={expected: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"{expected} validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_next_research_cycle_artifact"
+                if status == FAIL_STATUS
+                else "use_validated_next_research_cycle_artifact"
+            ),
+        ),
+        next_action=(
+            "repair_next_research_cycle_artifact"
+            if status == FAIL_STATUS
+            else "use_validated_next_research_cycle_artifact"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def write_next_research_cycle_json(payload: Mapping[str, Any], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return output_path
+
+
+def write_next_research_cycle_markdown(payload: Mapping[str, Any], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_next_research_cycle_markdown(payload), encoding="utf-8")
+    return output_path
+
+
+def render_next_research_cycle_markdown(payload: Mapping[str, Any]) -> str:
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    lines = [
+        f"# {_title(report_type)} {payload.get('as_of')}",
+        "",
+        "## 摘要",
+        "",
+        f"- status: {_md_cell(payload.get('status'))}",
+        f"- output_decision: {_md_cell(payload.get('output_decision'))}",
+        f"- market_regime: {_md_cell(payload.get('market_regime'))}",
+        f"- requested_date_range: {_md_cell(payload.get('requested_date_range'))}",
+        f"- production_effect: {_md_cell(payload.get('production_effect'))}",
+        f"- next_action: {_md_cell(payload.get('next_action'))}",
+    ]
+    for key, value in summary.items():
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            lines.append(f"- {key}: {_md_cell(value)}")
+    lines.extend(["", "## Reader Brief", ""])
+    for key, value in _mapping(payload.get("reader_brief")).items():
+        lines.append(f"- {key}: {_md_cell(value)}")
+    for title, key in _markdown_table_keys(report_type):
+        lines.extend(_table_records(title, payload.get(key)))
+    lines.extend(["", "## Safety Boundary", "", "|field|value|", "|---|---|"])
+    for key, value in _mapping(payload.get("safety_boundary")).items():
+        lines.append(f"|{_md_cell(key)}|{_md_cell(value)}|")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _payload(
+    *,
+    report_type: str,
+    as_of: date,
+    status: str,
+    purpose: str,
+    input_artifacts: Mapping[str, Any],
+    output_decision: str,
+    summary: Mapping[str, Any],
+    body: Mapping[str, Any],
+    reader_brief: Mapping[str, Any],
+    next_action: str,
+    safety_boundary: Mapping[str, Any],
+    limitations: Sequence[str],
+    requested_date_range: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": report_type,
+        "as_of": as_of.isoformat(),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
+        "status": status,
+        "production_effect": PRODUCTION_EFFECT,
+        "manual_review_only": True,
+        "research_only": True,
+        "market_regime": MARKET_REGIME,
+        "ai_regime_start": AI_REGIME_START,
+        "requested_date_range": requested_date_range,
+        "purpose": purpose,
+        "input_artifacts": dict(input_artifacts),
+        "output_decision": output_decision,
+        "summary": dict(summary),
+        **dict(body),
+        "reader_brief": dict(reader_brief),
+        "safety_boundary": dict(safety_boundary),
+        "limitations": list(limitations),
+        "next_action": next_action,
+        "methodology": {
+            "collector_mode": "read_existing_return_to_research_and_research_artifacts",
+            "does_not_refresh_data": True,
+            "does_not_fabricate_data": True,
+            "does_not_create_paper_shadow_candidate": True,
+            "does_not_resume_normal_paper_shadow": True,
+            "does_not_approve_extended_shadow": True,
+            "does_not_approve_live_trading": True,
+            "does_not_generate_official_target_weights": True,
+            "does_not_touch_broker_or_orders": True,
+            "does_not_mutate_production": True,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    }
+
+
+def _reader_brief(
+    *,
+    summary: str,
+    key_result: str,
+    blocking_issues: str,
+    warnings: str,
+    next_action: str,
+) -> dict[str, Any]:
+    return {
+        "summary": summary,
+        "key_result": key_result,
+        "blocking_issues": blocking_issues,
+        "warnings": warnings,
+        "safety_boundary": (
+            "research-only next cycle; no paper-shadow activation, no extended shadow, "
+            "no live trading, no official target weights, no broker/order, "
+            "production_effect=none."
+        ),
+        "next_action": next_action,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _safety_boundary() -> dict[str, Any]:
+    return {
+        "mode": "next_research_cycle_reports_only",
+        "production_effect": PRODUCTION_EFFECT,
+        "manual_review_only": True,
+        "research_only": True,
+        "paper_shadow_candidate_created": False,
+        "normal_paper_shadow_resumed": False,
+        "normal_shadow_signoff_packet_generated": False,
+        "observation_clock_started": False,
+        "extended_shadow_approved": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_action_taken": False,
+        "order_ticket_generated": False,
+        "owner_decision_appended": False,
+        "strategy_outputs_mutated": False,
+        "candidate_state_mutated": False,
+        "paper_shadow_state_mutated": False,
+        "production_state_mutated": False,
+    }
+
+
+def _safety_boundary_valid(value: Any) -> bool:
+    safety = _mapping(value)
+    return (
+        _text(safety.get("production_effect")) == PRODUCTION_EFFECT
+        and safety.get("paper_shadow_candidate_created") is False
+        and safety.get("normal_paper_shadow_resumed") is False
+        and safety.get("normal_shadow_signoff_packet_generated") is False
+        and safety.get("observation_clock_started") is False
+        and safety.get("extended_shadow_approved") is False
+        and safety.get("live_trading_allowed") is False
+        and safety.get("official_target_weights_generated") is False
+        and safety.get("broker_action_taken") is False
+        and safety.get("order_ticket_generated") is False
+        and safety.get("owner_decision_appended") is False
+        and safety.get("strategy_outputs_mutated") is False
+        and safety.get("candidate_state_mutated") is False
+        and safety.get("paper_shadow_state_mutated") is False
+        and safety.get("production_state_mutated") is False
+    )
+
+
+def _load_reset_intake_inputs(reports_dir: Path, as_of: date) -> dict[str, dict[str, Any]]:
+    result: dict[str, dict[str, Any]] = {}
+    for report_type in RESET_INTAKE_INPUT_TYPES:
+        path = reset_reports.default_return_to_research_json_path(report_type, reports_dir, as_of)
+        result[report_type] = {"path": _display_path(path), "payload": _read_json_mapping(path)}
+    return result
+
+
+def _load_project_sources(project_root: Path) -> dict[str, dict[str, Any]]:
+    sources: dict[str, dict[str, Any]] = {}
+    for source_id, patterns in LATEST_PROJECT_ARTIFACT_GLOBS.items():
+        path = _latest_matching_path(project_root, patterns)
+        payload = _read_json_mapping(path) if path is not None else {}
+        sources[source_id] = {
+            "path": "" if path is None else _display_path(path),
+            "payload": payload,
+            "available": path is not None,
+        }
+    return sources
+
+
+def _payload_from_inputs(
+    inputs: Mapping[str, Mapping[str, Any]],
+    report_type: str,
+) -> dict[str, Any]:
+    return _mapping(_mapping(inputs.get(report_type)).get("payload"))
+
+
+def _input_paths(inputs: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
+    return {report_type: _text(item.get("path")) for report_type, item in inputs.items()}
+
+
+def _source_paths(sources: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
+    return {source_id: _text(source.get("path")) for source_id, source in sources.items()}
+
+
+def _invalidated_or_weak_evidence(reusable_payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    result = list(_records(reusable_payload.get("invalidated_evidence")))
+    result.extend(
+        row
+        for row in _records(reusable_payload.get("evidence_classification"))
+        if _text(row.get("classification")) == "weak but informative"
+    )
+    return result
+
+
+def _frozen_candidate_id(source_candidate_id: str) -> str:
+    if source_candidate_id.endswith("_draft"):
+        return source_candidate_id[: -len("_draft")]
+    if source_candidate_id:
+        return f"{source_candidate_id}_frozen_research"
+    return "regime_mismatch_filter_v2_research"
+
+
+def _candidate_id_from_frozen(payload: Mapping[str, Any]) -> str:
+    return _text(_mapping(payload.get("frozen_candidate_spec")).get("candidate_id"))
+
+
+def _normalize_data_quality_gate(value: Mapping[str, Any] | None) -> dict[str, Any]:
+    data = _mapping(value)
+    status = _text(data.get("status"), _text(data.get("data_quality_status"), "MISSING"))
+    passed = data.get("passed")
+    if passed is None:
+        passed = status in {PASS_STATUS, PASS_WITH_WARNINGS_STATUS}
+    return {
+        "status": status,
+        "passed": bool(passed),
+        "error_count": _int(data.get("error_count")),
+        "warning_count": _int(data.get("warning_count")),
+        "report_path": _text(data.get("report_path")),
+    }
+
+
+def _backfill_window_result(
+    window: Mapping[str, Any],
+    *,
+    data_quality: Mapping[str, Any],
+    executable_ready: bool,
+) -> dict[str, Any]:
+    missing = []
+    if not data_quality.get("passed"):
+        missing.append("validated_data_quality_gate")
+    if not executable_ready:
+        missing.extend(
+            [
+                "executable_candidate_signal_binding",
+                "validated_next_candidate_signal_series",
+                "candidate_weight_generation_contract",
+            ]
+        )
+    status = "READY" if not missing else "NEEDS_MORE_EVIDENCE"
+    return {
+        "window_id": _text(window.get("window_id")),
+        "start": _text(window.get("start")),
+        "end": _text(window.get("end")),
+        "market_regime": _text(window.get("market_regime"), MARKET_REGIME),
+        "backfill_window_status": status,
+        "return_proxy": None,
+        "drawdown_proxy": None,
+        "turnover": None,
+        "rotation_count": None,
+        "false_risk_off_count": None,
+        "signal_completeness": "AVAILABLE" if executable_ready else "MISSING",
+        "missing_data_list": missing,
+        "cost_proxy_inputs": _cost_proxy_placeholder(executable_ready),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _cost_proxy_placeholder(executable_ready: bool) -> dict[str, Any]:
+    return {
+        "turnover_available": executable_ready,
+        "gross_return_proxy_available": executable_ready,
+        "cost_scenario_inputs_available": executable_ready,
+        "missing_reason": "" if executable_ready else "executable_candidate_backfill_missing",
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _backfill_blocker_action(issue_id: str) -> str:
+    if issue_id == "data_quality_gate_not_passed":
+        return "run_aits_validate_data_and_stop_until_passed"
+    if issue_id == "executable_candidate_signal_binding_missing":
+        return "define_reviewed_research_signal_and_weight_binding_before_backfill"
+    return "repair_backfill_input"
+
+
+def _stress_scenario_review(window_id: str, *, executable_backfill: bool) -> dict[str, Any]:
+    return {
+        "scenario_id": window_id,
+        "scenario_status": "READY" if executable_backfill else "BLOCKING",
+        "evaluation": (
+            "Backfill metrics available for stress interpretation."
+            if executable_backfill
+            else "Executable backfill metrics are unavailable for this stress scenario."
+        ),
+        "rapid_drawdown_behavior": None,
+        "slow_drawdown_behavior": None,
+        "v_shaped_recovery_behavior": None,
+        "high_volatility_sideways_behavior": None,
+        "false_risk_off_cluster_behavior": None,
+        "ai_semiconductor_correction_behavior": None,
+        "recommended_action": (
+            "review_stress_metrics"
+            if executable_backfill
+            else "complete_executable_backfill_before_stress_review"
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _reusable_positive_stress_evidence(
+    sources: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for source_id in (
+        "stress_scenario_library",
+        "drawdown_event_casebook",
+        "flip_rotation_event_casebook",
+    ):
+        source = _mapping(sources.get(source_id))
+        rows.append(
+            {
+                "source_id": source_id,
+                "available": bool(source.get("available")),
+                "artifact_path": _text(source.get("path")),
+                "use": "diagnostic_context_only",
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _cost_scenario_reviews(
+    cost_payload: Mapping[str, Any],
+    *,
+    backfill_ready: bool,
+) -> list[dict[str, Any]]:
+    rows = _records(_mapping(cost_payload.get("policy")).get("scenarios"))
+    if not rows:
+        rows = _records(cost_payload.get("scenario_results"))
+    result = []
+    for row in rows:
+        scenario_id = _text(row.get("scenario_id"), _text(row.get("label")))
+        result.append(
+            {
+                "scenario_id": scenario_id,
+                "label": _text(row.get("label"), scenario_id),
+                "total_cost_bps": row.get("total_cost_bps"),
+                "cost_survival_status": (
+                    "UNTESTED_CANDIDATE_PROXY_MISSING"
+                    if not backfill_ready
+                    else "READY_FOR_INTERPRETATION"
+                ),
+                "net_proxy_result": None,
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return result
+
+
+def _benchmark_reviews(
+    benchmark_payload: Mapping[str, Any],
+    *,
+    backfill_ready: bool,
+) -> list[dict[str, Any]]:
+    baselines = _records(benchmark_payload.get("baselines"))
+    result = []
+    for row in baselines:
+        result.append(
+            {
+                "baseline_id": _text(row.get("baseline_id")),
+                "benchmark_relative_status": (
+                    "UNTESTED_CANDIDATE_PROXY_MISSING"
+                    if not backfill_ready
+                    else "READY_FOR_INTERPRETATION"
+                ),
+                "candidate_delta_vs_baseline": None,
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return result
+
+
+def _comparison_rows(backfill_ready: bool) -> list[dict[str, Any]]:
+    metrics = (
+        "drawdown_mismatch_reduction",
+        "flip_rotation_reduction",
+        "turnover",
+        "cost_survival",
+        "benchmark_relative_behavior",
+        "signal_robustness",
+        "governance_blockers",
+    )
+    return [
+        {
+            "metric_id": metric,
+            "comparison_status": "UNMEASURED" if not backfill_ready else "MIXED",
+            "new_candidate_evidence": None,
+            "returned_candidate_failure_context": "available",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for metric in metrics
+    ]
+
+
+def _signal_check(
+    check_id: str,
+    executable_ready: bool,
+    signal_source: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "check_id": check_id,
+        "status": "PASS" if executable_ready else "BLOCKING",
+        "source_available": bool(signal_source.get("available")),
+        "source_artifact_path": _text(signal_source.get("path")),
+        "fail_closed": True,
+        "signal_completeness_rules_relaxed": False,
+        "recommended_action": (
+            "review_signal_completeness_output"
+            if executable_ready
+            else "provide_executable_candidate_signal_series"
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _window_sensitivity_split(
+    split_id: str,
+    windows: Sequence[Mapping[str, Any]],
+    *,
+    backfill_ready: bool,
+) -> dict[str, Any]:
+    return {
+        "window_split_id": split_id,
+        "source_windows": [_text(row.get("window_id")) for row in windows],
+        "status": "READY" if backfill_ready else "METRICS_UNAVAILABLE",
+        "performance_proxy": None,
+        "turnover_proxy": None,
+        "drawdown_behavior_proxy": None,
+        "false_flip_proxy": None,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _research_gate_blockers(
+    *,
+    backfill_payload: Mapping[str, Any],
+    stress_review_payload: Mapping[str, Any],
+    cost_benchmark_payload: Mapping[str, Any],
+    comparison_payload: Mapping[str, Any],
+    signal_robustness_payload: Mapping[str, Any],
+    window_sensitivity_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    candidates = [
+        (
+            "backfill_not_ready",
+            _text(backfill_payload.get("status")) != "CANDIDATE_BACKFILL_READY",
+            _text(backfill_payload.get("next_action")),
+        ),
+        (
+            "stress_review_weak",
+            _text(stress_review_payload.get("status")) in {"WEAK", "FAIL"},
+            _text(stress_review_payload.get("next_action")),
+        ),
+        (
+            "cost_benchmark_unavailable",
+            _text(cost_benchmark_payload.get("status"))
+            == "COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL",
+            _text(cost_benchmark_payload.get("next_action")),
+        ),
+        (
+            "no_improvement_established",
+            _text(comparison_payload.get("status"))
+            in {"NO_IMPROVEMENT", "WORSE_THAN_RETURNED_CANDIDATE"},
+            _text(comparison_payload.get("next_action")),
+        ),
+        (
+            "signal_robustness_blocked",
+            _text(signal_robustness_payload.get("status")) == "SIGNAL_ROBUSTNESS_BLOCKED",
+            _text(signal_robustness_payload.get("next_action")),
+        ),
+        (
+            "window_sensitivity_fragile",
+            _text(window_sensitivity_payload.get("status"))
+            in {"WINDOW_FRAGILE", "OVERFIT_RISK_HIGH"},
+            _text(window_sensitivity_payload.get("next_action")),
+        ),
+    ]
+    return [
+        {
+            "issue_id": issue_id,
+            "recommended_action": recommended_action,
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for issue_id, active, recommended_action in candidates
+        if active
+    ]
+
+
+def _owner_option(
+    option_id: str,
+    *,
+    evidence_required: Sequence[str],
+    risks: Sequence[str],
+    next_action: str,
+) -> dict[str, Any]:
+    return {
+        "option_id": option_id,
+        "evidence_required": list(evidence_required),
+        "risks": list(risks),
+        "next_action": next_action,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_allowed": False,
+        "broker_order_allowed": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _date_range_from_windows(windows: Sequence[Mapping[str, Any]]) -> str:
+    starts = [_text(row.get("start")) for row in windows if _text(row.get("start"))]
+    ends = [_text(row.get("end")) for row in windows if _text(row.get("end"))]
+    if not starts or not ends:
+        return f"{AI_REGIME_START}..unspecified"
+    return f"{min(starts)}..{max(ends)}"
+
+
+def _append_check(
+    checks: list[dict[str, Any]],
+    blocking_issues: list[dict[str, Any]],
+    check_id: str,
+    passed: bool,
+    message: str,
+    recommended_action: str,
+) -> None:
+    check = {
+        "check_id": check_id,
+        "status": PASS_STATUS if passed else FAIL_STATUS,
+        "message": message,
+        "recommended_action": recommended_action,
+    }
+    checks.append(check)
+    if not passed:
+        blocking_issues.append(
+            {
+                "issue_id": check_id,
+                "message": message,
+                "recommended_action": recommended_action,
+            }
+        )
+
+
+def _read_json_mapping(path: Path) -> dict[str, Any]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, Mapping):
+        raise ValueError(f"JSON payload must be an object: {path}")
+    return dict(raw)
+
+
+def _mapping(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _records(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _list_values(value: Any) -> list[str]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return []
+    return [_text(item) for item in value if _text(item)]
+
+
+def _text(value: Any, default: str = "") -> str:
+    if value is None:
+        return default
+    text = str(value).strip()
+    return text if text else default
+
+
+def _int(value: Any, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _date_from_payload(payload: Mapping[str, Any]) -> date:
+    try:
+        return date.fromisoformat(_text(payload.get("as_of")))
+    except ValueError:
+        return date.today()
+
+
+def _artifact_id(payload: Mapping[str, Any]) -> str:
+    report_type = _text(payload.get("report_type"), "artifact")
+    as_of = _text(payload.get("as_of"), "unknown")
+    return f"{report_type}:{as_of}"
+
+
+def _issue_names(rows: Sequence[Mapping[str, Any]], key: str) -> str:
+    values = [_text(row.get(key)) for row in rows if _text(row.get(key))]
+    return "; ".join(values) if values else "none"
+
+
+def _display_path(value: Any) -> str:
+    path = Path(_text(value))
+    try:
+        rel = path.resolve().relative_to(PROJECT_ROOT.resolve())
+        return rel.as_posix()
+    except (ValueError, OSError):
+        return str(path)
+
+
+def _latest_matching_path(project_root: Path, patterns: Sequence[str]) -> Path | None:
+    candidates: list[Path] = []
+    for pattern in patterns:
+        candidates.extend(project_root.glob(pattern))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime)
+
+
+def _latest_dated_path(output_dir: Path, prefix: str, suffix: str) -> Path | None:
+    pattern = re.compile(rf"^{re.escape(prefix)}(\d{{4}}-\d{{2}}-\d{{2}}){re.escape(suffix)}$")
+    candidates: list[tuple[date, Path]] = []
+    if not output_dir.exists():
+        return None
+    for path in output_dir.iterdir():
+        match = pattern.match(path.name)
+        if not match:
+            continue
+        try:
+            candidates.append((date.fromisoformat(match.group(1)), path))
+        except ValueError:
+            continue
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _md_cell(value: Any) -> str:
+    text = "N/A" if value is None else _text(value)
+    return text.replace("|", "\\|").replace("\n", "<br/>")
+
+
+def _title(report_type: str) -> str:
+    return report_type.replace("_", " ").title()
+
+
+def _markdown_table_keys(report_type: str) -> list[tuple[str, str]]:
+    if report_type == INTAKE_REPORT_TYPE:
+        return [
+            ("P0 Hypotheses", "p0_hypotheses"),
+            ("Reusable Evidence", "reusable_evidence"),
+            ("Invalidated Or Weak Evidence", "invalidated_or_weak_evidence"),
+        ]
+    if report_type == BACKFILL_REPORT_TYPE:
+        return [("Backfill Windows", "backfill_windows"), ("Blocking Issues", "blocking_issues")]
+    if report_type == STRESS_REVIEW_REPORT_TYPE:
+        return [
+            ("Scenario Reviews", "scenario_reviews"),
+            ("Blocking Scenarios", "blocking_scenarios"),
+        ]
+    if report_type == COST_BENCHMARK_REVIEW_REPORT_TYPE:
+        return [
+            ("Cost Scenarios", "cost_scenario_reviews"),
+            ("Benchmark Reviews", "benchmark_reviews"),
+        ]
+    if report_type == VS_RETURNED_REPORT_TYPE:
+        return [("Comparison Rows", "comparison_rows")]
+    if report_type == SIGNAL_ROBUSTNESS_REPORT_TYPE:
+        return [("Signal Quality Checks", "signal_quality_checks")]
+    if report_type == WINDOW_SENSITIVITY_REPORT_TYPE:
+        return [("Window Splits", "window_splits")]
+    if report_type == RESEARCH_GATE_REPORT_TYPE:
+        return [("Blockers", "blocker_list")]
+    if report_type == OWNER_REVIEW_PACKET_REPORT_TYPE:
+        return [("Owner Options", "owner_options")]
+    if report_type.endswith(VALIDATION_SUFFIX):
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    return [("Source Statuses", "source_statuses")]
+
+
+def _table_records(title: str, value: Any) -> list[str]:
+    rows = _records(value)
+    if not rows:
+        return ["", f"## {title}", "", "No rows."]
+    keys = list(rows[0].keys())[:8]
+    lines = [
+        "",
+        f"## {title}",
+        "",
+        "|" + "|".join(keys) + "|",
+        "|" + "|".join(["---"] * len(keys)) + "|",
+    ]
+    for row in rows:
+        lines.append("|" + "|".join(_md_cell(row.get(key)) for key in keys) + "|")
+    return lines
+
+
+__all__ = [
+    "BACKFILL_REPORT_TYPE",
+    "COST_BENCHMARK_REVIEW_REPORT_TYPE",
+    "CYCLE_SNAPSHOT_REPORT_TYPE",
+    "FROZEN_SPEC_REPORT_TYPE",
+    "INTAKE_REPORT_TYPE",
+    "NEXT_RESEARCH_CYCLE_REPORT_TYPES",
+    "OWNER_REVIEW_PACKET_REPORT_TYPE",
+    "REPORT_PREFIXES",
+    "RESEARCH_GATE_REPORT_TYPE",
+    "SIGNAL_ROBUSTNESS_REPORT_TYPE",
+    "STRESS_REVIEW_REPORT_TYPE",
+    "VALIDATION_SUFFIX",
+    "VS_RETURNED_REPORT_TYPE",
+    "WINDOW_SENSITIVITY_REPORT_TYPE",
+    "build_next_candidate_backfill_payload",
+    "build_next_candidate_cost_benchmark_review_payload",
+    "build_next_candidate_owner_research_review_packet_payload",
+    "build_next_candidate_research_gate_payload",
+    "build_next_candidate_signal_robustness_review_payload",
+    "build_next_candidate_spec_frozen_payload",
+    "build_next_candidate_stress_review_payload",
+    "build_next_candidate_vs_returned_comparison_payload",
+    "build_next_candidate_window_sensitivity_payload",
+    "build_next_research_cycle_intake_payload",
+    "build_next_research_cycle_payloads",
+    "build_next_research_cycle_snapshot_payload",
+    "default_next_research_cycle_json_path",
+    "default_next_research_cycle_markdown_path",
+    "latest_next_research_cycle_json_path",
+    "render_next_research_cycle_markdown",
+    "validate_next_research_cycle_payload",
+    "write_next_research_cycle_json",
+    "write_next_research_cycle_markdown",
+]

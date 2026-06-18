@@ -8646,6 +8646,226 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: next_research_cycle_intake
+    title: Next Research Cycle Intake
+    group: research
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports next-research-cycle-intake --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_research_cycle_intake_20*.json
+      - outputs/reports/next_research_cycle_intake_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-449 summarizes the return-to-research reset, reusable evidence,
+      invalidated evidence, P0 hypotheses, draft spec, and requested
+      ai_after_chatgpt research range without creating a paper-shadow candidate.
+    owner_action: use_as_entry_point_for_next_research_cycle
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_spec_frozen
+    title: Next Candidate Spec Frozen
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-spec-freeze --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_spec_frozen_20*.json
+      - outputs/reports/next_candidate_spec_frozen_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-450 freezes one research-only next candidate spec and keeps it
+      ineligible for paper-shadow until separate validation and owner review.
+    owner_action: review_frozen_spec_before_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_backfill
+    title: Next Candidate Backfill
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-backfill --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_backfill_20*.json
+      - outputs/reports/next_candidate_backfill_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-451 runs the same validate-data quality gate before interpreting
+      backfill evidence and fails closed when executable next-candidate inputs
+      are missing.
+    owner_action: resolve_missing_backfill_inputs_before_research_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_stress_review
+    title: Next Candidate Stress Review
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-stress-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_stress_review_20*.json
+      - outputs/reports/next_candidate_stress_review_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-452 reviews rapid/slow drawdown, V-shaped recovery,
+      high-volatility sideways, false risk-off, and AI/semiconductor correction
+      behavior against stress library and casebooks.
+    owner_action: review_blocking_stress_scenarios_before_research_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_cost_benchmark_review
+    title: Next Candidate Cost Benchmark Review
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-cost-benchmark-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_cost_benchmark_review_20*.json
+      - outputs/reports/next_candidate_cost_benchmark_review_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-453 evaluates cost survival and benchmark-relative behavior only;
+      it does not optimize the candidate or produce allocation outputs.
+    owner_action: review_cost_benchmark_status_before_research_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_vs_returned_candidate_comparison
+    title: Next Candidate Vs Returned Candidate Comparison
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-vs-returned-candidate-comparison --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_vs_returned_candidate_comparison_20*.json
+      - outputs/reports/next_candidate_vs_returned_candidate_comparison_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-454 compares the new research candidate against the returned
+      candidate and prevents improvement claims from missing metrics.
+    owner_action: verify_new_candidate_does_not_repeat_returned_failure_mode
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_signal_robustness_review
+    title: Next Candidate Signal Robustness Review
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-signal-robustness-review --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_signal_robustness_review_20*.json
+      - outputs/reports/next_candidate_signal_robustness_review_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-455 checks missing, partial, stale, schema-mismatched, and
+      coverage-gapped signal inputs without relaxing completeness rules.
+    owner_action: resolve_signal_robustness_blockers_before_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_overfit_window_sensitivity
+    title: Next Candidate Overfit Window Sensitivity
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-overfit-window-sensitivity --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_overfit_window_sensitivity_20*.json
+      - outputs/reports/next_candidate_overfit_window_sensitivity_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-456 checks whether the new candidate evidence is stable across
+      early, middle, recent, stress-heavy, and calm windows.
+    owner_action: block_promotion_if_window_evidence_is_fragile
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_research_gate
+    title: Next Candidate Research Gate
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports next-candidate-research-gate --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_research_gate_20*.json
+      - outputs/reports/next_candidate_research_gate_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-457 decides whether the research candidate deserves deeper
+      validation; the gate never activates paper-shadow.
+    owner_action: review_research_gate_before_owner_packet
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_owner_research_review_packet
+    title: Next Candidate Owner Research Review Packet
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports next-candidate-owner-research-review-packet --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_owner_research_review_packet_20*.json
+      - outputs/reports/next_candidate_owner_research_review_packet_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-458 prepares manual owner options without appending an owner
+      decision automatically.
+    owner_action: review_options_manually_without_automatic_state_transition
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_research_cycle_snapshot
+    title: Next Candidate Research Cycle Snapshot
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports next-candidate-research-cycle-snapshot --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_research_cycle_snapshot_20*.json
+      - outputs/reports/next_candidate_research_cycle_snapshot_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-459 collects all next research cycle artifacts and states whether
+      the cycle is ready for owner review, needs more evidence, or is blocked.
+    owner_action: treat_as_current_next_research_cycle_state
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_research_cycle_snapshot_validation
+    title: Next Candidate Research Cycle Snapshot Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-research-cycle-snapshot --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_research_cycle_snapshot_validation_*.json
+      - outputs/reports/next_candidate_research_cycle_snapshot_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Snapshot validation fails closed if the next research cycle enables
+      paper-shadow, extended shadow, live trading, official weights,
+      broker/order, owner append, or production mutation.
+    owner_action: run_after_next_research_cycle_snapshot
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

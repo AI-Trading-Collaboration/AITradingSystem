@@ -33,7 +33,10 @@ from ai_trading_system.cli_commands.portfolio_artifacts import (
 )
 from ai_trading_system.config import (
     PROJECT_ROOT,
+    configured_price_tickers,
+    configured_rate_series,
     load_data_quality,
+    load_universe,
 )
 from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
@@ -98,6 +101,7 @@ from ai_trading_system.reports import decision_stage_review as decision_stage_re
 from ai_trading_system.reports import (
     exact_blocker_warning_inventory as exact_inventory_reports,
 )
+from ai_trading_system.reports import next_research_cycle as next_research_reports
 from ai_trading_system.reports import (
     normal_paper_shadow_observation_clock as normal_observation_clock_reports,
 )
@@ -6612,6 +6616,141 @@ def _write_return_to_research_report(
     )
 
 
+def _write_next_research_cycle_report(
+    payload: Mapping[str, object],
+    *,
+    reports_dir: Path,
+    report_date: date,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[Path, Path]:
+    report_type = str(payload.get("report_type"))
+    json_path = json_output_path or next_research_reports.default_next_research_cycle_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+    md_path = (
+        markdown_output_path
+        or next_research_reports.default_next_research_cycle_markdown_path(
+            report_type,
+            reports_dir,
+            report_date,
+        )
+    )
+    return (
+        next_research_reports.write_next_research_cycle_json(payload, json_path),
+        next_research_reports.write_next_research_cycle_markdown(payload, md_path),
+    )
+
+
+def _next_research_cycle_source_path(
+    *,
+    reports_dir: Path,
+    report_date: date,
+    report_type: str,
+    latest: bool,
+    source_json_path: Path | None,
+    label: str,
+) -> Path:
+    if source_json_path is not None:
+        return source_json_path
+    if latest:
+        latest_path = next_research_reports.latest_next_research_cycle_json_path(
+            report_type,
+            reports_dir,
+        )
+        if latest_path is None:
+            raise typer.BadParameter(f"找不到 latest {label} JSON")
+        return latest_path
+    return next_research_reports.default_next_research_cycle_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+
+
+def _run_next_research_data_quality_gate(
+    *,
+    report_date: date,
+    reports_dir: Path,
+    prices_path: Path,
+    rates_path: Path,
+    data_quality_output_path: Path | None,
+    full_universe: bool,
+) -> dict[str, object]:
+    universe = load_universe()
+    quality_report_path = data_quality_output_path or default_quality_report_path(
+        reports_dir,
+        report_date,
+    )
+    quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(
+            universe,
+            include_full_ai_chain=full_universe,
+        ),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=load_data_quality(),
+        as_of=report_date,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    write_data_quality_report(quality_report, quality_report_path)
+    return {
+        "status": quality_report.status,
+        "passed": quality_report.passed,
+        "error_count": quality_report.error_count,
+        "warning_count": quality_report.warning_count,
+        "report_path": str(quality_report_path),
+    }
+
+
+def _write_next_research_validation(
+    source_payload: Mapping[str, object],
+    *,
+    expected_report_type: str,
+    reports_dir: Path,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[dict[str, object], Path, Path]:
+    payload = next_research_reports.validate_next_research_cycle_payload(
+        source_payload,
+        expected_report_type=expected_report_type,
+    )
+    report_date = _parse_date(str(payload.get("as_of")))
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    return payload, json_path, md_path
+
+
+def _load_next_research_source_payload(
+    *,
+    report_type: str,
+    report_date: date,
+    reports_dir: Path,
+    latest: bool = False,
+    source_json_path: Path | None = None,
+    label: str,
+) -> tuple[Path, dict[str, object]]:
+    source_path = _next_research_cycle_source_path(
+        reports_dir=reports_dir,
+        report_date=report_date,
+        report_type=report_type,
+        latest=latest,
+        source_json_path=source_json_path,
+        label=label,
+    )
+    return source_path, _read_json_mapping_for_report_cli(source_path, label)
+
+
 @reports_app.command("return-to-research-reset")
 def return_to_research_reset_command(
     as_of: Annotated[
@@ -6783,6 +6922,907 @@ def validate_return_to_research_governance_snapshot_command(
     )
     if status == "FAIL":
         raise typer.Exit(code=1)
+
+
+@reports_app.command("next-research-cycle-intake")
+def next_research_cycle_intake_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next research cycle intake 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Intake JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Intake Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-449：生成 next research cycle intake pack。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = next_research_reports.build_next_research_cycle_intake_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    console.print(f"[green]Next research cycle intake：{payload['status']}[/green]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-spec-freeze")
+def next_candidate_spec_freeze_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Frozen next candidate spec 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Frozen spec JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Frozen spec Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-450：冻结 research-only next candidate spec。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = next_research_reports.build_next_candidate_spec_frozen_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(f"[green]Next candidate frozen spec：{payload['status']}[/green]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-backfill")
+def next_candidate_backfill_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate backfill 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量 Markdown 输出路径；不传时按日期使用默认报告路径。"),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option("--full-universe", help="按完整 AI 产业链标的运行 validate-data。"),
+    ] = False,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Backfill JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Backfill Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-451：运行 research-only next candidate backfill gate。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    data_quality_gate = _run_next_research_data_quality_gate(
+        report_date=report_date,
+        reports_dir=reports_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_output_path=data_quality_output_path,
+        full_universe=full_universe,
+    )
+    console.print(
+        f"数据质量状态：{data_quality_gate['status']}；"
+        f"报告：{data_quality_gate['report_path']}"
+    )
+    if data_quality_gate["passed"] is not True:
+        raise typer.Exit(code=1)
+    try:
+        payload = next_research_reports.build_next_candidate_backfill_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+            data_quality_gate=data_quality_gate,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    console.print(f"[yellow]Next candidate backfill：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-stress-review")
+def next_candidate_stress_review_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate stress review 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录，用于读取 stress/casebook artifacts。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """TRADING-452：生成 next candidate stress review。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = next_research_reports.build_next_candidate_stress_review_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+            project_root=project_root,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    style = "green" if payload["status"] in {"STRONG", "MIXED"} else "yellow"
+    console.print(f"[{style}]Next candidate stress review：{payload['status']}[/{style}]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-cost-benchmark-review")
+def next_candidate_cost_benchmark_review_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate cost/benchmark 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录，用于读取 cost/benchmark artifacts。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """TRADING-453：生成 next candidate cost/benchmark review。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    _, backfill = _load_next_research_source_payload(
+        report_type=next_research_reports.BACKFILL_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate backfill",
+    )
+    payload = next_research_reports.build_next_candidate_cost_benchmark_review_payload(
+        as_of=report_date,
+        project_root=project_root,
+        backfill_payload=backfill,
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[yellow]Next candidate cost/benchmark：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-vs-returned-candidate-comparison")
+def next_candidate_vs_returned_comparison_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate comparison 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """TRADING-454：比较 next candidate 与 returned candidate。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    _, backfill = _load_next_research_source_payload(
+        report_type=next_research_reports.BACKFILL_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate backfill",
+    )
+    _, stress = _load_next_research_source_payload(
+        report_type=next_research_reports.STRESS_REVIEW_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate stress review",
+    )
+    _, cost_benchmark = _load_next_research_source_payload(
+        report_type=next_research_reports.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate cost benchmark review",
+    )
+    payload = next_research_reports.build_next_candidate_vs_returned_comparison_payload(
+        as_of=report_date,
+        reports_dir=reports_dir,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost_benchmark,
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[yellow]Next candidate comparison：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-signal-robustness-review")
+def next_candidate_signal_robustness_review_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate signal robustness 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录，用于读取 signal completeness artifacts。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """TRADING-455：生成 signal robustness review。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    _, frozen = _load_next_research_source_payload(
+        report_type=next_research_reports.FROZEN_SPEC_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate frozen spec",
+    )
+    _, backfill = _load_next_research_source_payload(
+        report_type=next_research_reports.BACKFILL_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate backfill",
+    )
+    payload = next_research_reports.build_next_candidate_signal_robustness_review_payload(
+        as_of=report_date,
+        project_root=project_root,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[yellow]Next candidate signal robustness：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-overfit-window-sensitivity")
+def next_candidate_window_sensitivity_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate window sensitivity 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """TRADING-456：生成 overfit/window sensitivity review。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    _, frozen = _load_next_research_source_payload(
+        report_type=next_research_reports.FROZEN_SPEC_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate frozen spec",
+    )
+    _, backfill = _load_next_research_source_payload(
+        report_type=next_research_reports.BACKFILL_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate backfill",
+    )
+    payload = next_research_reports.build_next_candidate_window_sensitivity_payload(
+        as_of=report_date,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[yellow]Next candidate window sensitivity：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-research-gate")
+def next_candidate_research_gate_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate research gate 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """TRADING-457：生成 next candidate research gate。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    _, frozen = _load_next_research_source_payload(
+        report_type=next_research_reports.FROZEN_SPEC_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate frozen spec",
+    )
+    _, backfill = _load_next_research_source_payload(
+        report_type=next_research_reports.BACKFILL_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate backfill",
+    )
+    _, stress = _load_next_research_source_payload(
+        report_type=next_research_reports.STRESS_REVIEW_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate stress review",
+    )
+    _, cost_benchmark = _load_next_research_source_payload(
+        report_type=next_research_reports.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate cost benchmark review",
+    )
+    _, comparison = _load_next_research_source_payload(
+        report_type=next_research_reports.VS_RETURNED_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate comparison",
+    )
+    _, signal = _load_next_research_source_payload(
+        report_type=next_research_reports.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate signal robustness",
+    )
+    _, window = _load_next_research_source_payload(
+        report_type=next_research_reports.WINDOW_SENSITIVITY_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate window sensitivity",
+    )
+    payload = next_research_reports.build_next_candidate_research_gate_payload(
+        as_of=report_date,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost_benchmark,
+        comparison_payload=comparison,
+        signal_robustness_payload=signal,
+        window_sensitivity_payload=window,
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[yellow]Next candidate research gate：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-owner-research-review-packet")
+def next_candidate_owner_research_review_packet_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Owner research review packet 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """TRADING-458：生成 owner research review packet。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    _, gate = _load_next_research_source_payload(
+        report_type=next_research_reports.RESEARCH_GATE_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="next candidate research gate",
+    )
+    payload = next_research_reports.build_next_candidate_owner_research_review_packet_payload(
+        as_of=report_date,
+        research_gate_payload=gate,
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[green]Owner research review packet：{payload['status']}[/green]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+@reports_app.command("next-candidate-research-cycle-snapshot")
+def next_candidate_research_cycle_snapshot_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next research cycle snapshot 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """TRADING-459：生成 next research cycle final snapshot。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    payloads: dict[str, dict[str, object]] = {}
+    for report_type in next_research_reports.NEXT_RESEARCH_CYCLE_REPORT_TYPES[:-1]:
+        _, payload = _load_next_research_source_payload(
+            report_type=report_type,
+            report_date=report_date,
+            reports_dir=reports_dir,
+            label=report_type,
+        )
+        payloads[report_type] = payload
+    payload = next_research_reports.build_next_research_cycle_snapshot_payload(
+        as_of=report_date,
+        intake_payload=payloads[next_research_reports.INTAKE_REPORT_TYPE],
+        frozen_spec_payload=payloads[next_research_reports.FROZEN_SPEC_REPORT_TYPE],
+        backfill_payload=payloads[next_research_reports.BACKFILL_REPORT_TYPE],
+        stress_review_payload=payloads[next_research_reports.STRESS_REVIEW_REPORT_TYPE],
+        cost_benchmark_payload=payloads[
+            next_research_reports.COST_BENCHMARK_REVIEW_REPORT_TYPE
+        ],
+        comparison_payload=payloads[next_research_reports.VS_RETURNED_REPORT_TYPE],
+        signal_robustness_payload=payloads[
+            next_research_reports.SIGNAL_ROBUSTNESS_REPORT_TYPE
+        ],
+        window_sensitivity_payload=payloads[
+            next_research_reports.WINDOW_SENSITIVITY_REPORT_TYPE
+        ],
+        research_gate_payload=payloads[next_research_reports.RESEARCH_GATE_REPORT_TYPE],
+        owner_packet_payload=payloads[
+            next_research_reports.OWNER_REVIEW_PACKET_REPORT_TYPE
+        ],
+    )
+    json_path, md_path = _write_next_research_cycle_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+    )
+    console.print(f"[yellow]Next research cycle snapshot：{payload['status']}[/yellow]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
+def _validate_next_research_cycle_command(
+    *,
+    expected_report_type: str,
+    latest: bool,
+    as_of: str | None,
+    reports_dir: Path,
+    source_json_path: Path | None,
+    json_output_path: Path | None,
+    markdown_output_path: Path | None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_next_research_source_payload(
+        report_type=expected_report_type,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label=expected_report_type,
+    )
+    payload, json_path, md_path = _write_next_research_validation(
+        source_payload,
+        expected_report_type=expected_report_type,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]{expected_report_type} validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-next-research-cycle-intake")
+def validate_next_research_cycle_intake_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest intake artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.INTAKE_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-spec-frozen")
+def validate_next_candidate_spec_frozen_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest frozen spec artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.FROZEN_SPEC_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-backfill")
+def validate_next_candidate_backfill_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest backfill artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.BACKFILL_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-stress-review")
+def validate_next_candidate_stress_review_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest stress review artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.STRESS_REVIEW_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-cost-benchmark-review")
+def validate_next_candidate_cost_benchmark_review_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest cost/benchmark artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-vs-returned-candidate-comparison")
+def validate_next_candidate_vs_returned_comparison_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest comparison artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.VS_RETURNED_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-signal-robustness-review")
+def validate_next_candidate_signal_robustness_review_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest signal robustness artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-overfit-window-sensitivity")
+def validate_next_candidate_window_sensitivity_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest window sensitivity artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.WINDOW_SENSITIVITY_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-research-gate")
+def validate_next_candidate_research_gate_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest research gate artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.RESEARCH_GATE_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-owner-research-review-packet")
+def validate_next_candidate_owner_research_review_packet_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest owner packet artifact。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.OWNER_REVIEW_PACKET_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-research-cycle-snapshot")
+def validate_next_candidate_research_cycle_snapshot_command(
+    latest: Annotated[bool, typer.Option(help="校验 latest research cycle snapshot。")] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_next_research_cycle_command(
+        expected_report_type=next_research_reports.CYCLE_SNAPSHOT_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
 
 
 @reports_app.command("recovery-governance-rerun-after-triage")
