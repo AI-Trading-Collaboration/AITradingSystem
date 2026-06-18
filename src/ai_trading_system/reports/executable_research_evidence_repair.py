@@ -19,16 +19,38 @@ PASS_STATUS = "PASS"
 FAIL_STATUS = "FAIL"
 
 EVIDENCE_GAP_LEDGER_REPORT_TYPE = "executable_research_evidence_gap_ledger"
+BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE = (
+    "backfill_partial_root_cause_repair_plan"
+)
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
+BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE = (
+    f"{BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
+BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
+BACKFILL_PARTIALLY_REPAIRABLE = "BACKFILL_PARTIALLY_REPAIRABLE"
+BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC = (
+    "BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC"
+)
+BACKFILL_REPAIR_STATUSES: tuple[str, ...] = (
+    BACKFILL_REPAIRABLE,
+    BACKFILL_PARTIALLY_REPAIRABLE,
+    BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC,
+)
 
 REPORT_PREFIXES: dict[str, str] = {
     EVIDENCE_GAP_LEDGER_REPORT_TYPE: "executable_research_evidence_gap_ledger",
     EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE: (
         "executable_research_evidence_gap_ledger_validation"
+    ),
+    BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: (
+        "backfill_partial_root_cause_repair_plan"
+    ),
+    BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE: (
+        "backfill_partial_root_cause_repair_plan_validation"
     ),
 }
 
@@ -54,6 +76,22 @@ REQUIRED_GAP_CATEGORIES: tuple[str, ...] = (
     "stress_failure_gap",
     "cost_benchmark_weakness_gap",
     "comparison_weakness_gap",
+)
+
+REQUIRED_BACKFILL_WINDOWS: tuple[str, ...] = (
+    "normal_market_regime",
+    "rapid_drawdown",
+    "slow_drawdown",
+    "high_volatility_sideways_market",
+    "ai_semiconductor_correction",
+    "false_risk_off_cluster",
+)
+
+REPAIRABILITY_TYPES: tuple[str, ...] = (
+    "data_repairable",
+    "binding_repairable",
+    "candidate_spec_issue",
+    "expected_limitation",
 )
 
 
@@ -376,6 +414,338 @@ def validate_executable_research_evidence_gap_ledger_payload(
             "repair_executable_research_evidence_gap_ledger"
             if status == FAIL_STATUS
             else "use_validated_gap_ledger_for_trading_472"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not rerun source reports."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_backfill_partial_root_cause_repair_plan_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    backfill_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.BACKFILL_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    ledger_path = default_evidence_repair_json_path(
+        EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    backfill_payload = _read_json_mapping(backfill_path)
+    ledger_payload = _read_json_mapping(ledger_path)
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    window_diagnostics = _backfill_window_diagnostics(backfill_payload)
+    repair_issue_summary = _repair_issue_summary(
+        backfill_payload=backfill_payload,
+        window_diagnostics=window_diagnostics,
+    )
+    repair_status = _overall_backfill_repair_status(repair_issue_summary)
+    incomplete_windows = [
+        row
+        for row in window_diagnostics
+        if _text(row.get("source_window_status")) != "READY"
+    ]
+    requested_date_range = _text(
+        backfill_payload.get("requested_date_range"),
+        _text(backfill_summary.get("requested_date_range"), "not_applicable"),
+    )
+    binding_repairable_count = len(
+        [
+            row
+            for row in window_diagnostics
+            if "binding_repairable" in _list_values(row.get("repairability"))
+        ]
+    )
+    summary = {
+        "repair_plan_status": repair_status,
+        "source_backfill_status": _text(
+            backfill_summary.get("candidate_backfill_status"),
+            _text(backfill_payload.get("status"), "MISSING"),
+        ),
+        "source_backfill_artifact_id": _artifact_id(backfill_payload),
+        "source_evidence_gap_ledger_artifact_id": _artifact_id(ledger_payload),
+        "candidate_id": _text(backfill_summary.get("candidate_id"), "MISSING"),
+        "market_regime": _text(backfill_summary.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_date_range,
+        "required_window_count": len(REQUIRED_BACKFILL_WINDOWS),
+        "source_window_count": len(_records(backfill_payload.get("backfill_windows"))),
+        "incomplete_window_count": len(incomplete_windows),
+        "data_repairable_window_count": _window_repairability_count(
+            window_diagnostics,
+            "data_repairable",
+        ),
+        "binding_repairable_window_count": binding_repairable_count,
+        "candidate_spec_issue_window_count": _window_repairability_count(
+            window_diagnostics,
+            "candidate_spec_issue",
+        ),
+        "expected_limitation_window_count": _window_repairability_count(
+            window_diagnostics,
+            "expected_limitation",
+        ),
+        "missing_date_policy": "do_not_fabricate_unreported_dates",
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+        as_of=as_of,
+        status=repair_status,
+        purpose=(
+            "Explain why the latest next-candidate backfill is partial and "
+            "classify whether each incomplete window can be repaired."
+        ),
+        input_artifacts={
+            next_cycle.BACKFILL_REPORT_TYPE: str(backfill_path),
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE: str(ledger_path),
+        },
+        output_decision=repair_status,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    next_cycle.BACKFILL_REPORT_TYPE,
+                    backfill_path,
+                    backfill_payload,
+                ),
+                _source_artifact(
+                    EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+                    ledger_path,
+                    ledger_payload,
+                ),
+            ],
+            "window_repair_diagnostics": window_diagnostics,
+            "repair_issue_summary": repair_issue_summary,
+            "classification_policy": {
+                "required_windows": list(REQUIRED_BACKFILL_WINDOWS),
+                "repairability_types": list(REPAIRABILITY_TYPES),
+                "missing_date_policy": (
+                    "If the source backfill reports only a window-level missing "
+                    "historical signal series, the repair plan records "
+                    "missing_dates=[] with missing_dates_status="
+                    "not_enumerated_in_source_artifact instead of fabricating "
+                    "daily gaps."
+                ),
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-472 已生成 backfill partial root-cause repair plan；"
+                "partial backfill 来自 historical signal/weight binding 不完整，"
+                "不能据此宣称完整动态策略 backfill。"
+            ),
+            key_result=repair_status,
+            blocking_issues=(
+                f"incomplete_windows={len(incomplete_windows)}; "
+                f"binding_repairable_windows={binding_repairable_count}"
+            ),
+            warnings=_issue_names(repair_issue_summary, "issue_id"),
+            next_action="run_trading_473_signal_robustness_blocker_drilldown",
+        ),
+        next_action="run_trading_473_signal_robustness_blocker_drilldown",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Repair plan is read-only and does not rerun backfill.",
+            "Missing daily signal dates are not fabricated when the source "
+            "artifact only reports a window-level missing historical series.",
+            "Repairability classification does not weaken signal completeness "
+            "or promote paper-shadow eligibility.",
+        ],
+        requested_date_range=requested_date_range,
+    )
+
+
+def validate_backfill_partial_root_cause_repair_plan_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    diagnostics = _records(payload.get("window_repair_diagnostics"))
+    issue_summary = _records(payload.get("repair_issue_summary"))
+    source_artifacts = _records(payload.get("source_artifacts"))
+    source_report_types = {_text(row.get("report_type")) for row in source_artifacts}
+    window_ids = {_text(row.get("window_id")) for row in diagnostics}
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+        f"report_type must be {BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE}.",
+        "regenerate_backfill_partial_repair_plan",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status_enum",
+        _text(payload.get("status")) in BACKFILL_REPAIR_STATUSES,
+        "Repair plan status must use the governed TRADING-472 taxonomy.",
+        "restore_backfill_repair_status_taxonomy",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Repair plan must keep production_effect=none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "market_regime_visible",
+        _text(payload.get("market_regime")) == MARKET_REGIME
+        and _text(summary.get("market_regime")) == MARKET_REGIME,
+        f"Repair plan must disclose market_regime={MARKET_REGIME}.",
+        "restore_ai_after_chatgpt_regime_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "requested_date_range_visible",
+        bool(_text(payload.get("requested_date_range"))),
+        "Repair plan must disclose requested date range.",
+        "restore_requested_date_range_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_sources_present",
+        {
+            next_cycle.BACKFILL_REPORT_TYPE,
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        }
+        <= source_report_types,
+        "Repair plan must include source backfill and TRADING-471 ledger.",
+        "restore_required_source_loading",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_windows_present",
+        set(REQUIRED_BACKFILL_WINDOWS) <= window_ids,
+        "Repair plan must include all required backfill windows.",
+        "restore_required_window_diagnostics",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "incomplete_windows_visible",
+        _int(summary.get("incomplete_window_count"))
+        == len(
+            [
+                row
+                for row in diagnostics
+                if _text(row.get("source_window_status")) != "READY"
+            ]
+        )
+        and _int(summary.get("incomplete_window_count")) > 0,
+        "Incomplete window count must match window diagnostics and be non-zero.",
+        "restore_incomplete_window_count",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "window_diagnostic_fields_present",
+        all(_backfill_window_diagnostic_complete(row) for row in diagnostics),
+        "Each window diagnostic must include missing date/feature/signal/schema/"
+        "coverage/binding and repairability fields.",
+        "restore_window_diagnostic_required_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "repairability_values_valid",
+        all(
+            set(_list_values(row.get("repairability"))) <= set(REPAIRABILITY_TYPES)
+            for row in diagnostics
+        ),
+        "Each repairability value must use the governed TRADING-472 taxonomy.",
+        "restore_repairability_taxonomy",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "issue_summary_present",
+        bool(issue_summary),
+        "Repair plan must include repair issue summary rows.",
+        "restore_repair_issue_summary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "missing_dates_policy_visible",
+        _text(summary.get("missing_date_policy"))
+        == "do_not_fabricate_unreported_dates"
+        and all(bool(_text(row.get("missing_dates_status"))) for row in diagnostics),
+        "Repair plan must expose missing-date policy and status per window.",
+        "restore_missing_date_policy",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Repair plan must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-472 backfill partial root-cause repair plan.",
+        input_artifacts={BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-472 backfill repair plan validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_backfill_partial_root_cause_repair_plan"
+                if status == FAIL_STATUS
+                else "use_validated_backfill_repair_plan_for_trading_473"
+            ),
+        ),
+        next_action=(
+            "repair_backfill_partial_root_cause_repair_plan"
+            if status == FAIL_STATUS
+            else "use_validated_backfill_repair_plan_for_trading_473"
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not rerun source reports."],
@@ -926,6 +1296,275 @@ def _gap_row_complete(row: Mapping[str, Any]) -> bool:
     )
 
 
+def _backfill_window_diagnostics(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    partial_reason_ids = _partial_reason_ids(payload)
+    rows: list[dict[str, Any]] = []
+    windows_by_id = {
+        _text(row.get("window_id")): row
+        for row in _records(payload.get("backfill_windows"))
+        if _text(row.get("window_id"))
+    }
+    for window_id in REQUIRED_BACKFILL_WINDOWS:
+        source = windows_by_id.get(window_id, {"window_id": window_id})
+        status = _text(source.get("backfill_window_status"), "MISSING")
+        missing_data = _list_values(source.get("missing_data_list"))
+        window_issues = [*missing_data]
+        if status != "READY":
+            window_issues.extend(partial_reason_ids)
+        repairability = sorted(
+            {
+                _classify_backfill_issue(issue_id)["repairability"]
+                for issue_id in window_issues
+                if _text(issue_id)
+            }
+        )
+        binding_issues = _binding_execution_issues(window_id, window_issues)
+        schema_issues = [
+            issue_id for issue_id in window_issues if "schema" in issue_id.lower()
+        ]
+        coverage_issues = [
+            issue_id
+            for issue_id in window_issues
+            if issue_id.startswith(("insufficient_", "missing_price", "price_coverage"))
+        ]
+        feature_issues = [
+            issue_id
+            for issue_id in window_issues
+            if "feature" in issue_id.lower() or issue_id.startswith("missing_input:")
+        ]
+        signal_outputs = [
+            issue_id
+            for issue_id in window_issues
+            if "signal" in issue_id.lower() or issue_id.startswith("historical_")
+        ]
+        missing_dates_status = _missing_dates_status(
+            status=status,
+            missing_data=missing_data,
+        )
+        rows.append(
+            {
+                "window_id": window_id,
+                "start": _text(source.get("start")),
+                "end": _text(source.get("end")),
+                "source_window_status": status,
+                "source_signal_completeness": _text(
+                    source.get("signal_completeness"),
+                    "MISSING",
+                ),
+                "missing_dates": [],
+                "missing_dates_status": missing_dates_status,
+                "missing_feature_inputs": feature_issues,
+                "missing_signal_outputs": signal_outputs,
+                "schema_issue": "; ".join(schema_issues) if schema_issues else "none_reported",
+                "insufficient_market_coverage": (
+                    coverage_issues if coverage_issues else []
+                ),
+                "binding_execution_issue": binding_issues,
+                "repairability": repairability,
+                "repair_path": _window_repair_path(repairability, binding_issues),
+                "issue_ids": sorted(set(window_issues)),
+                "source_missing_data_list": missing_data,
+                "source_partial_reasons": partial_reason_ids,
+                "return_proxy_available": source.get("return_proxy") is not None,
+                "drawdown_proxy_available": source.get("drawdown_proxy") is not None,
+                "price_observation_count": _int(source.get("price_observation_count")),
+                "return_observation_count": _int(source.get("return_observation_count")),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _partial_reason_ids(payload: Mapping[str, Any]) -> list[str]:
+    reasons: list[str] = []
+    raw = payload.get("partial_reasons")
+    if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes)):
+        for item in raw:
+            if isinstance(item, Mapping):
+                reasons.append(_text(item.get("issue_id")))
+            else:
+                reasons.append(_text(item))
+    return sorted({reason for reason in reasons if reason})
+
+
+def _binding_execution_issues(
+    window_id: str,
+    issue_ids: Sequence[str],
+) -> list[str]:
+    binding_terms = (
+        "binding",
+        "historical_signal_series",
+        "single_point_signal",
+        "single_point_weight",
+        "dynamic_binding",
+        "weight_series",
+        "signal_series",
+    )
+    issues = [
+        issue_id
+        for issue_id in issue_ids
+        if any(term in issue_id for term in binding_terms)
+    ]
+    if f"historical_signal_series:{window_id}" in issue_ids:
+        issues.append("missing_window_historical_signal_binding_output")
+    return sorted(set(issues))
+
+
+def _missing_dates_status(*, status: str, missing_data: Sequence[str]) -> str:
+    if status == "READY":
+        return "not_applicable"
+    if any(item.startswith("historical_signal_series:") for item in missing_data):
+        return "not_enumerated_in_source_artifact"
+    if missing_data:
+        return "not_reported_by_source_artifact"
+    return "none_reported"
+
+
+def _window_repair_path(
+    repairability: Sequence[str],
+    binding_issues: Sequence[str],
+) -> str:
+    values = set(repairability)
+    if "candidate_spec_issue" in values:
+        return "revise_candidate_spec_before_repeating_backfill"
+    if "binding_repairable" in values and binding_issues:
+        return "extend_binding_to_historical_signal_and_weight_series"
+    if "data_repairable" in values:
+        return "repair_required_backfill_input_data_then_rerun_backfill"
+    if "expected_limitation" in values:
+        return "document_limitation_and_do_not_claim_complete_backfill"
+    return "no_repair_needed_for_ready_window"
+
+
+def _repair_issue_summary(
+    *,
+    backfill_payload: Mapping[str, Any],
+    window_diagnostics: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    issues: dict[str, set[str]] = {}
+    for row in window_diagnostics:
+        for issue_id in _list_values(row.get("issue_ids")):
+            issues.setdefault(issue_id, set()).add(_text(row.get("window_id")))
+    if not issues:
+        for issue_id in _partial_reason_ids(backfill_payload):
+            issues.setdefault(issue_id, set())
+    rows = []
+    for issue_id, windows in sorted(issues.items()):
+        classification = _classify_backfill_issue(issue_id)
+        rows.append(
+            {
+                "issue_id": issue_id,
+                "affected_windows": sorted(windows),
+                "affected_window_count": len(windows),
+                "root_cause_category": classification["root_cause_category"],
+                "repairability": classification["repairability"],
+                "repair_path": classification["repair_path"],
+                "source_report": next_cycle.BACKFILL_REPORT_TYPE,
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _classify_backfill_issue(issue_id: str) -> dict[str, str]:
+    normalized = issue_id.lower()
+    if "candidate_spec" in normalized or "invalid_candidate" in normalized:
+        return {
+            "repairability": "candidate_spec_issue",
+            "root_cause_category": "candidate_spec_issue",
+            "repair_path": "revise_candidate_spec_before_repeating_backfill",
+        }
+    if "schema" in normalized:
+        return {
+            "repairability": "binding_repairable",
+            "root_cause_category": "schema_or_binding_contract_mismatch",
+            "repair_path": "repair_binding_schema_to_match_contract",
+        }
+    if (
+        "binding" in normalized
+        or "signal_series" in normalized
+        or "weight_series" in normalized
+        or "historical_signal" in normalized
+        or "single_point" in normalized
+    ):
+        return {
+            "repairability": "binding_repairable",
+            "root_cause_category": "historical_dynamic_binding_unavailable",
+            "repair_path": "extend_binding_to_historical_signal_and_weight_series",
+        }
+    if (
+        "price" in normalized
+        or "market_coverage" in normalized
+        or "data_quality" in normalized
+        or "validated_data_quality" in normalized
+        or "feature" in normalized
+    ):
+        return {
+            "repairability": "data_repairable",
+            "root_cause_category": "required_backfill_input_data_gap",
+            "repair_path": "repair_required_backfill_input_data_then_rerun_backfill",
+        }
+    return {
+        "repairability": "expected_limitation",
+        "root_cause_category": "source_artifact_limitation",
+        "repair_path": "document_limitation_and_do_not_claim_complete_backfill",
+    }
+
+
+def _overall_backfill_repair_status(
+    issue_summary: Sequence[Mapping[str, Any]],
+) -> str:
+    repairability = {
+        _text(row.get("repairability")) for row in issue_summary if _text(row.get("repairability"))
+    }
+    if not repairability:
+        return BACKFILL_REPAIRABLE
+    if repairability <= {"data_repairable", "binding_repairable"}:
+        return BACKFILL_REPAIRABLE
+    if "candidate_spec_issue" in repairability:
+        return BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC
+    return BACKFILL_PARTIALLY_REPAIRABLE
+
+
+def _window_repairability_count(
+    diagnostics: Sequence[Mapping[str, Any]],
+    repairability: str,
+) -> int:
+    return len(
+        [
+            row
+            for row in diagnostics
+            if repairability in _list_values(row.get("repairability"))
+        ]
+    )
+
+
+def _backfill_window_diagnostic_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "window_id",
+        "source_window_status",
+        "missing_dates",
+        "missing_dates_status",
+        "missing_feature_inputs",
+        "missing_signal_outputs",
+        "schema_issue",
+        "insufficient_market_coverage",
+        "binding_execution_issue",
+        "repairability",
+        "repair_path",
+    )
+    return (
+        all(key in row for key in required)
+        and isinstance(row.get("missing_dates"), list)
+        and isinstance(row.get("missing_feature_inputs"), list)
+        and isinstance(row.get("missing_signal_outputs"), list)
+        and isinstance(row.get("insufficient_market_coverage"), list)
+        and isinstance(row.get("binding_execution_issue"), list)
+        and isinstance(row.get("repairability"), list)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -1119,6 +1758,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Window Repair Diagnostics", "window_repair_diagnostics"),
+            ("Repair Issue Summary", "repair_issue_summary"),
+        ]
+    if report_type == BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -1154,15 +1801,25 @@ def _md_cell(value: Any) -> str:
 
 
 __all__ = [
+    "BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE",
+    "BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE",
+    "BACKFILL_REPAIRABLE",
+    "BACKFILL_PARTIALLY_REPAIRABLE",
+    "BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC",
+    "BACKFILL_REPAIR_STATUSES",
     "EVIDENCE_GAP_LEDGER_REPORT_TYPE",
     "EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE",
     "REPORT_PREFIXES",
+    "REPAIRABILITY_TYPES",
+    "REQUIRED_BACKFILL_WINDOWS",
     "VALIDATION_SUFFIX",
+    "build_backfill_partial_root_cause_repair_plan_payload",
     "build_executable_research_evidence_gap_ledger_payload",
     "default_evidence_repair_json_path",
     "default_evidence_repair_markdown_path",
     "latest_evidence_repair_json_path",
     "render_evidence_repair_markdown",
+    "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
     "write_evidence_repair_json",
     "write_evidence_repair_markdown",

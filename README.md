@@ -1994,6 +1994,20 @@ fragility、stress failure、cost/benchmark weakness 和 comparison weakness gap
 不 append owner decision、不创建 paper-shadow、不批准 extended/live、不写 official target
 weights、不触发 broker/order、不修改 production。
 
+TRADING-472_BACKFILL_PARTIAL_ROOT_CAUSE_REPAIR_PLAN 在 evidence gap ledger 后解释
+`CANDIDATE_BACKFILL_PARTIAL` 的根因。运行
+`aits reports backfill-partial-root-cause-repair-plan --as-of YYYY-MM-DD` 和
+`aits reports validate-backfill-partial-root-cause-repair-plan --latest` 会读取 latest
+`next_candidate_backfill` 与 TRADING-471 ledger，覆盖 normal market regime、rapid
+drawdown、slow drawdown、high-volatility sideways market、AI / semiconductor correction
+和 false risk-off cluster 六个窗口，逐 incomplete window 记录 missing dates、feature
+inputs、signal outputs、schema issue、market coverage、binding execution issue 和
+repairability。若 source backfill 只报告窗口级 historical signal series 缺失，报告必须
+披露 missing dates 未枚举，不得补造逐日缺口。该 plan 不重新运行 backfill、不刷新数据、
+不补造 metrics、不改变 candidate spec、不削弱 signal completeness rules、不 append owner
+decision、不创建 paper-shadow、不批准 extended/live、不写 official target weights、不触发
+broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

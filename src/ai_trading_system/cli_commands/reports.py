@@ -6873,11 +6873,26 @@ def _write_evidence_repair_validation(
     json_output_path: Path | None = None,
     markdown_output_path: Path | None = None,
 ) -> tuple[dict[str, object], Path, Path]:
-    payload = (
-        evidence_repair_reports.validate_executable_research_evidence_gap_ledger_payload(
-            source_payload
+    source_report_type = str(source_payload.get("report_type"))
+    if source_report_type == evidence_repair_reports.EVIDENCE_GAP_LEDGER_REPORT_TYPE:
+        payload = (
+            evidence_repair_reports.validate_executable_research_evidence_gap_ledger_payload(
+                source_payload
+            )
         )
-    )
+    elif (
+        source_report_type
+        == evidence_repair_reports.BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE
+    ):
+        payload = (
+            evidence_repair_reports.validate_backfill_partial_root_cause_repair_plan_payload(
+                source_payload
+            )
+        )
+    else:
+        raise typer.BadParameter(
+            f"Unsupported evidence repair report_type: {source_report_type}"
+        )
     report_date = _parse_date(str(payload.get("as_of")))
     json_path, md_path = _write_evidence_repair_report(
         payload,
@@ -7754,6 +7769,60 @@ def executable_research_evidence_gap_ledger_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("backfill-partial-root-cause-repair-plan")
+def backfill_partial_root_cause_repair_plan_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Backfill repair plan 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Backfill repair plan JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Backfill repair plan Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-472：解释 partial backfill 根因并生成修复计划。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = (
+            evidence_repair_reports.build_backfill_partial_root_cause_repair_plan_payload(
+                as_of=report_date,
+                reports_dir=reports_dir,
+            )
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(f"[yellow]Backfill repair plan：{payload['status']}[/yellow]")
+    console.print(f"incomplete_window_count：{summary['incomplete_window_count']}")
+    console.print(
+        f"binding_repairable_window_count："
+        f"{summary['binding_repairable_window_count']}"
+    )
+    console.print(
+        f"candidate_spec_issue_window_count："
+        f"{summary['candidate_spec_issue_window_count']}"
+    )
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -8497,6 +8566,59 @@ def validate_executable_research_evidence_gap_ledger_command(
     style = "green" if status == "PASS" else "red"
     summary = payload["summary"]
     console.print(f"[{style}]Evidence gap ledger validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-backfill-partial-root-cause-repair-plan")
+def validate_backfill_partial_root_cause_repair_plan_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest backfill partial repair plan。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=evidence_repair_reports.BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="backfill partial root-cause repair plan",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Backfill repair plan validation：{status}[/{style}]")
     console.print(f"Source JSON：{source_path}")
     console.print(f"Validation JSON：{json_path}")
     console.print(f"Validation Markdown：{md_path}")

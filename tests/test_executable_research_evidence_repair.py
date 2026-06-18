@@ -93,6 +93,118 @@ def test_evidence_gap_ledger_cli_writes_and_validates(tmp_path: Path) -> None:
     assert validation["status"] == "PASS"
 
 
+def test_backfill_partial_repair_plan_classifies_binding_repairable_windows(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    ledger = repair.build_executable_research_evidence_gap_ledger_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        ledger,
+        repair.default_evidence_repair_json_path(
+            repair.EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+    payload = repair.build_backfill_partial_root_cause_repair_plan_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.BACKFILL_REPAIRABLE
+    assert payload["summary"]["source_backfill_status"] == (
+        next_cycle.CANDIDATE_BACKFILL_PARTIAL
+    )
+    assert payload["summary"]["incomplete_window_count"] == 6
+    assert payload["summary"]["binding_repairable_window_count"] == 6
+    assert payload["summary"]["candidate_spec_issue_window_count"] == 0
+    diagnostics = payload["window_repair_diagnostics"]
+    assert {row["window_id"] for row in diagnostics} == set(
+        repair.REQUIRED_BACKFILL_WINDOWS
+    )
+    assert all(row["missing_dates"] == [] for row in diagnostics)
+    assert all(
+        row["missing_dates_status"] == "not_enumerated_in_source_artifact"
+        for row in diagnostics
+    )
+    assert all("binding_repairable" in row["repairability"] for row in diagnostics)
+    assert any(
+        "historical_signal_series:rapid_drawdown" in row["missing_signal_outputs"]
+        for row in diagnostics
+    )
+
+    validation = repair.validate_backfill_partial_root_cause_repair_plan_payload(
+        payload
+    )
+    assert validation["status"] == "PASS"
+
+
+def test_backfill_partial_repair_plan_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    ledger = repair.build_executable_research_evidence_gap_ledger_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        ledger,
+        repair.default_evidence_repair_json_path(
+            repair.EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "backfill-partial-root-cause-repair-plan",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    plan_path = repair.default_evidence_repair_json_path(
+        repair.BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert payload["status"] == repair.BACKFILL_REPAIRABLE
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-backfill-partial-root-cause-repair-plan",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_trading_470_sources(reports_dir: Path) -> None:
     reports_dir.mkdir(parents=True, exist_ok=True)
     binding_sources = {
@@ -144,18 +256,22 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
                 "candidate_id": "candidate_v1",
                 "requested_date_range": "2023-01-03..2025-04-30",
             },
-            "backfill_windows": [
+            "backfill_windows": _backfill_windows_fixture(),
+            "partial_reasons": [
                 {
-                    "window_id": "normal_market_regime",
-                    "start": "2023-01-03",
-                    "end": "2023-07-31",
-                    "backfill_window_status": "PARTIAL",
-                    "signal_completeness": "PARTIAL_STATIC_BINDING",
-                    "missing_data_list": ["historical_signal_series:normal_market_regime"],
-                    "return_proxy": 0.1,
-                    "drawdown_proxy": -0.05,
-                    "turnover": 0.85,
-                }
+                    "issue_id": "historical_dynamic_binding_unavailable",
+                    "recommended_action": (
+                        "extend_binding_to_historical_signal_and_weight_series"
+                    ),
+                },
+                {
+                    "issue_id": "single_point_signal_binding_used_as_static_proxy",
+                    "recommended_action": "repair_backfill_input",
+                },
+                {
+                    "issue_id": "single_point_weight_binding_used_as_static_proxy",
+                    "recommended_action": "repair_backfill_input",
+                },
             ],
             "production_effect": "none",
         },
@@ -283,3 +399,43 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
             RUN_DATE,
         )
         path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _backfill_windows_fixture() -> list[dict[str, object]]:
+    windows = [
+        ("normal_market_regime", "2023-01-03", "2023-07-31", 0.1, -0.05),
+        ("rapid_drawdown", "2024-07-10", "2024-08-09", -0.15, -0.19),
+        ("slow_drawdown", "2025-01-02", "2025-04-30", -0.1, -0.27),
+        (
+            "high_volatility_sideways_market",
+            "2023-08-01",
+            "2023-11-15",
+            -0.01,
+            -0.13,
+        ),
+        (
+            "ai_semiconductor_correction",
+            "2024-03-08",
+            "2024-04-19",
+            -0.08,
+            -0.09,
+        ),
+        ("false_risk_off_cluster", "2023-09-01", "2023-10-31", -0.09, -0.1),
+    ]
+    return [
+        {
+            "window_id": window_id,
+            "start": start,
+            "end": end,
+            "backfill_window_status": "PARTIAL",
+            "signal_completeness": "PARTIAL_STATIC_BINDING",
+            "missing_data_list": [f"historical_signal_series:{window_id}"],
+            "return_proxy": return_proxy,
+            "drawdown_proxy": drawdown_proxy,
+            "turnover": 0.85,
+            "price_observation_count": 10,
+            "return_observation_count": 9,
+            "production_effect": "none",
+        }
+        for window_id, start, end, return_proxy, drawdown_proxy in windows
+    ]

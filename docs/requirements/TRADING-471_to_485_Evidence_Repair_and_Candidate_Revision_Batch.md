@@ -25,7 +25,7 @@ owner decision append、production mutation 或 automatic position control。
 |Step|任务|状态|依赖|验收标准|
 |---|---|---|---|---|
 |TRADING-471|executable-research-evidence-gap-ledger|DONE|TRADING-470 artifacts|生成 `executable_research_evidence_gap_ledger` JSON/Markdown 和 validation artifact；ledger 逐项记录 gap id、source report、current/expected value、root cause category、fix type、blocking、candidate redesign requirement；Reader Brief 披露非聚合原因。|
-|TRADING-472|backfill-partial-root-cause-and-repair-plan|READY|TRADING-471 + latest backfill|解释每个 incomplete window 的缺失日期/feature/signal/schema/coverage/binding issue，并输出 repairability 状态。|
+|TRADING-472|backfill-partial-root-cause-and-repair-plan|DONE|TRADING-471 + latest backfill|解释每个 incomplete window 的缺失日期/feature/signal/schema/coverage/binding issue，并输出 repairability 状态。|
 |TRADING-473|signal-robustness-blocker-drilldown|READY|TRADING-471 + signal robustness review|列出每个 blocker 的 input artifact、failed field、expected/actual value 和 repair path，不放松 signal completeness rules。|
 |TRADING-474|window-fragility-attribution|READY|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
 |TRADING-475|stress-weakness-attribution|READY|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
@@ -66,3 +66,22 @@ owner decision append、production mutation 或 automatic position control。
   decision、未创建 paper-shadow、未批准 extended/live、未写 official target weights、
   未触发 broker/order、未修改 production。下一步是 TRADING-472 backfill partial
   root-cause and repair plan。
+- 2026-06-18: TRADING-472 开始实现。范围限定为只读读取最新
+  `next_candidate_backfill` 和已验证的 TRADING-471 evidence gap ledger，逐窗口记录
+  missing dates / feature inputs / signal outputs / schema / market coverage /
+  binding execution issue；不重新运行 backfill、不补造逐日 signal 缺口、不削弱
+  completeness rules、不改变 candidate spec、不触发 paper-shadow 或 production。
+- 2026-06-18: TRADING-472 完成 pending commit。真实 2026-06-17 repair plan
+  `backfill_partial_root_cause_repair_plan_2026-06-17` 输出 `BACKFILL_REPAIRABLE`；
+  source backfill 为 `CANDIDATE_BACKFILL_PARTIAL`，required windows=6、
+  incomplete windows=6、binding-repairable windows=6、data-repairable windows=0、
+  candidate-spec issue windows=0。所有 incomplete windows 均披露
+  `missing_dates_status=not_enumerated_in_source_artifact`，缺失 signal output 为
+  window-level `historical_signal_series:<window>`，artifact-level root causes 为
+  `historical_dynamic_binding_unavailable`、`single_point_signal_binding_used_as_static_proxy`
+  和 `single_point_weight_binding_used_as_static_proxy`。Validation
+  `backfill_partial_root_cause_repair_plan_validation_2026-06-17` 为 PASS，
+  checks=14、failed=0。未重新运行 backfill、未补造逐日日期或 metrics、未改变
+  candidate spec、未削弱 signal completeness rules、未 append owner decision、未创建
+  paper-shadow、未批准 extended/live、未写 official target weights、未触发 broker/order、
+  未修改 production。下一步是 TRADING-473 signal robustness blocker drilldown。
