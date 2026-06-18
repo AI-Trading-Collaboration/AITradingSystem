@@ -2154,6 +2154,18 @@ weights、no broker/order、Reader Brief 和安全边界。该 packet 不自动 
 decision、不修改 owner decision audit log、不创建 paper-shadow、不批准 extended/live、不写
 official target weights、不触发 broker/order、不修改 production。
 
+TRADING-485_CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT 是 TRADING-471～484 evidence repair
+and candidate revision batch 的最终 research-only snapshot。运行
+`aits reports candidate-v2-research-cycle-snapshot --as-of YYYY-MM-DD` 会收集 v2
+hypotheses、v2 spec、v2 executable binding、mini/full backfill、stress/cost/benchmark
+attribution、research gate 和 owner packet，输出 `V2_RESEARCH_CYCLE_PROMISING`、
+`V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE` 或 `V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG`。
+`aits reports validate-candidate-v2-research-cycle-snapshot --latest` 校验 source
+coverage、source validations、status mapping、Reader Brief 和安全边界。Full backfill
+未执行且 research gate 返回 backlog 时必须保持 return-to-backlog；该 snapshot 不自动
+append owner decision、不修改 owner decision audit log、不创建 paper-shadow、不批准
+extended/live、不写 official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

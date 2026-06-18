@@ -1365,6 +1365,111 @@ def test_candidate_v2_owner_research_review_packet_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_research_cycle_snapshot_returns_to_backlog(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_cycle_snapshot_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+
+    payload = repair.build_candidate_v2_research_cycle_snapshot_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG
+    assert payload["summary"]["source_research_gate_decision"] == (
+        repair.V2_RETURN_TO_HYPOTHESIS_BACKLOG
+    )
+    assert payload["summary"]["recommended_owner_option"] == "revise_hypothesis"
+    assert payload["summary"]["validation_fail_count"] == 0
+    assert payload["summary"]["owner_decision_appended"] is False
+    assert payload["summary"]["paper_shadow_activation_allowed"] is False
+    assert payload["summary"]["extended_shadow_allowed"] is False
+    assert payload["summary"]["live_trading_allowed"] is False
+    assert payload["summary"]["official_target_weights"] is False
+    assert payload["summary"]["broker_order_allowed"] is False
+    assert {row["report_type"] for row in payload["cycle_artifact_summary"]} >= {
+        repair.CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+        repair.CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        repair.CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+        repair.CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE,
+        repair.CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+        repair.STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        repair.CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+        repair.CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE,
+    }
+    assert any(
+        row["evidence_id"] == "source_research_gate_not_promising"
+        for row in payload["blocking_evidence"]
+    )
+
+    validation = repair.validate_candidate_v2_research_cycle_snapshot_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_research_cycle_snapshot_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_cycle_snapshot_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-research-cycle-snapshot",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    snapshot_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    assert payload["status"] == repair.V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG
+    assert payload["summary"]["owner_decision_appended"] is False
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-research-cycle-snapshot",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -1426,6 +1531,17 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
             RUN_DATE,
         ),
     )
+    stress_validation = repair.validate_stress_weakness_attribution_payload(
+        stress_attribution
+    )
+    repair.write_evidence_repair_json(
+        stress_validation,
+        repair.default_evidence_repair_json_path(
+            repair.STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
     cost_attribution = repair.build_cost_benchmark_weakness_attribution_payload(
         as_of=RUN_DATE,
         reports_dir=reports_dir,
@@ -1434,6 +1550,17 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
         cost_attribution,
         repair.default_evidence_repair_json_path(
             repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    cost_validation = repair.validate_cost_benchmark_weakness_attribution_payload(
+        cost_attribution
+    )
+    repair.write_evidence_repair_json(
+        cost_validation,
+        repair.default_evidence_repair_json_path(
+            repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
@@ -1450,6 +1577,17 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
             RUN_DATE,
         ),
     )
+    hypotheses_validation = repair.validate_candidate_redesign_hypothesis_payload(
+        hypotheses
+    )
+    repair.write_evidence_repair_json(
+        hypotheses_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
 
 
 def _write_candidate_v2_spec_freeze(reports_dir: Path) -> None:
@@ -1461,6 +1599,15 @@ def _write_candidate_v2_spec_freeze(reports_dir: Path) -> None:
         spec,
         repair.default_evidence_repair_json_path(
             repair.CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    spec_validation = repair.validate_candidate_v2_spec_freeze_payload(spec)
+    repair.write_evidence_repair_json(
+        spec_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
@@ -1481,6 +1628,17 @@ def _write_candidate_v2_executable_binding_update(
         binding,
         repair.default_evidence_repair_json_path(
             repair.CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    binding_validation = repair.validate_candidate_v2_executable_binding_update_payload(
+        binding
+    )
+    repair.write_evidence_repair_json(
+        binding_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
@@ -1625,6 +1783,42 @@ def _write_candidate_v2_owner_packet_prerequisites(
         research_gate_validation,
         repair.default_evidence_repair_json_path(
             repair.CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
+def _write_candidate_v2_cycle_snapshot_prerequisites(
+    *,
+    reports_dir: Path,
+    feature_path: Path,
+    prices_path: Path,
+) -> None:
+    _write_candidate_v2_owner_packet_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    owner_packet = repair.build_candidate_v2_owner_research_review_packet_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        owner_packet,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    owner_packet_validation = (
+        repair.validate_candidate_v2_owner_research_review_packet_payload(owner_packet)
+    )
+    repair.write_evidence_repair_json(
+        owner_packet_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),

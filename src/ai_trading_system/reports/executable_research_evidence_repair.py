@@ -41,6 +41,7 @@ CANDIDATE_V2_MINI_GATE_REPORT_TYPE = "candidate_v2_mini_gate"
 CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE = "candidate_v2_full_backfill_if_approved"
 CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE = "candidate_v2_research_gate"
 CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE = "candidate_v2_owner_research_review_packet"
+CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE = "candidate_v2_research_cycle_snapshot"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -83,6 +84,9 @@ CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -169,6 +173,14 @@ V2_OWNER_REVIEW_OPTIONS: tuple[str, ...] = (
     "hold_for_more_data",
     "reject_v2_research_candidate",
 )
+V2_RESEARCH_CYCLE_PROMISING = "V2_RESEARCH_CYCLE_PROMISING"
+V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE = "V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG = "V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG"
+V2_RESEARCH_CYCLE_STATUSES: tuple[str, ...] = (
+    V2_RESEARCH_CYCLE_PROMISING,
+    V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE,
+    V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG,
+)
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -251,6 +263,12 @@ REPORT_PREFIXES: dict[str, str] = {
     ),
     CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE: (
         "candidate_v2_owner_research_review_packet_validation"
+    ),
+    CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE: (
+        "candidate_v2_research_cycle_snapshot"
+    ),
+    CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_research_cycle_snapshot_validation"
     ),
 }
 
@@ -4742,6 +4760,301 @@ def validate_candidate_v2_owner_research_review_packet_payload(
     )
 
 
+def build_candidate_v2_research_cycle_snapshot_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    sources = _candidate_v2_cycle_sources(as_of=as_of, reports_dir=reports_dir)
+    source_payloads = {row["report_type"]: row["payload"] for row in sources}
+    source_artifacts = _candidate_v2_cycle_source_artifacts(sources)
+    cycle_summary_rows = _candidate_v2_cycle_summary_rows(sources)
+    research_gate_payload = source_payloads[CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE]
+    owner_packet_payload = source_payloads[CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE]
+    mini_backfill_payload = source_payloads[CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE]
+    mini_gate_payload = source_payloads[CANDIDATE_V2_MINI_GATE_REPORT_TYPE]
+    full_backfill_payload = source_payloads[CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE]
+    gate_summary = _mapping(research_gate_payload.get("summary"))
+    owner_summary = _mapping(owner_packet_payload.get("summary"))
+    mini_summary = _mapping(mini_backfill_payload.get("summary"))
+    mini_gate_summary = _mapping(mini_gate_payload.get("summary"))
+    full_summary = _mapping(full_backfill_payload.get("summary"))
+    validation_failures = [
+        row
+        for row in cycle_summary_rows
+        if _text(row.get("validation_status")) != PASS_STATUS
+    ]
+    gate_decision = _text(research_gate_payload.get("status"))
+    cycle_status = _candidate_v2_research_cycle_status(
+        research_gate_decision=gate_decision,
+        owner_packet_status=_text(owner_packet_payload.get("status")),
+        validation_failure_count=len(validation_failures),
+    )
+    blocking_evidence = _candidate_v2_cycle_blocking_evidence(
+        cycle_status=cycle_status,
+        research_gate_payload=research_gate_payload,
+        owner_packet_payload=owner_packet_payload,
+        mini_backfill_payload=mini_backfill_payload,
+        mini_gate_payload=mini_gate_payload,
+        full_backfill_payload=full_backfill_payload,
+        validation_failures=validation_failures,
+    )
+    positive_evidence = _candidate_v2_cycle_positive_evidence(
+        sources=sources,
+        research_gate_payload=research_gate_payload,
+        owner_packet_payload=owner_packet_payload,
+    )
+    interpretation = _candidate_v2_cycle_interpretation(cycle_status)
+    candidate_id = _text(gate_summary.get("candidate_id"), "MISSING")
+    summary = {
+        "candidate_v2_research_cycle_status": cycle_status,
+        "candidate_id": candidate_id,
+        "source_research_gate_decision": gate_decision,
+        "source_owner_packet_status": _text(owner_packet_payload.get("status")),
+        "recommended_owner_option": _text(
+            owner_summary.get("recommended_owner_option")
+        ),
+        "source_mini_backfill_status": _text(mini_backfill_payload.get("status")),
+        "source_mini_gate_decision": _text(mini_gate_payload.get("status")),
+        "source_full_backfill_status": _text(full_backfill_payload.get("status")),
+        "full_backfill_executed": full_summary.get("full_backfill_executed") is True,
+        "mini_aggregate_return_proxy": mini_summary.get("aggregate_return_proxy"),
+        "mini_aggregate_drawdown_proxy": mini_summary.get("aggregate_drawdown_proxy"),
+        "mini_turnover_proxy": mini_summary.get("aggregate_turnover_proxy"),
+        "full_backfill_allowed": mini_gate_summary.get("full_backfill_allowed") is True,
+        "artifact_count": len(source_artifacts),
+        "source_report_count": len(sources),
+        "validation_pass_count": len(sources) - len(validation_failures),
+        "validation_fail_count": len(validation_failures),
+        "blocking_evidence_count": len(blocking_evidence),
+        "positive_evidence_count": len(positive_evidence),
+        "owner_decision_appended": False,
+        "owner_decision_audit_log_mutated": False,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights": False,
+        "broker_order_allowed": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE,
+        as_of=as_of,
+        status=cycle_status,
+        purpose=(
+            "Collect the candidate v2 research-only cycle artifacts and produce "
+            "the final TRADING-485 snapshot."
+        ),
+        input_artifacts={
+            row["report_type"]: str(row["path"]) for row in sources
+        }
+        | {
+            row["validation_report_type"]: str(row["validation_path"])
+            for row in sources
+        },
+        output_decision=cycle_status,
+        summary=summary,
+        body={
+            "source_artifacts": source_artifacts,
+            "cycle_artifact_summary": cycle_summary_rows,
+            "blocking_evidence": blocking_evidence,
+            "positive_evidence": positive_evidence,
+            "final_interpretation": [interpretation],
+            "source_gate_blocking_evidence": _records(
+                research_gate_payload.get("blocking_evidence")
+            ),
+            "source_owner_options": _records(owner_packet_payload.get("owner_options")),
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "Candidate v2 research cycle snapshot is "
+                f"{cycle_status}; recommended_owner_option="
+                f"{summary['recommended_owner_option']}."
+            ),
+            key_result=cycle_status,
+            blocking_issues=_issue_names(blocking_evidence, "evidence_id"),
+            warnings="owner_decision_not_appended",
+            next_action=_text(interpretation.get("next_action")),
+        ),
+        next_action=_text(interpretation.get("next_action")),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_research_cycle_snapshot",
+            "owner_decision_appended": False,
+            "owner_decision_audit_log_mutated": False,
+            "paper_shadow_outputs_generated": False,
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+        },
+        limitations=[
+            "The snapshot is a research-cycle summary only.",
+            "The snapshot does not append owner decisions automatically.",
+            "The snapshot does not activate paper-shadow, extended shadow, live trading, "
+            "official target weights, broker/order, or production state.",
+        ],
+        requested_date_range=_text(
+            research_gate_payload.get("requested_date_range"), "not_applicable"
+        ),
+    )
+
+
+def validate_candidate_v2_research_cycle_snapshot_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    source_rows = _records(payload.get("cycle_artifact_summary"))
+    blocking = _records(payload.get("blocking_evidence"))
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    source_report_types = {row.get("report_type") for row in source_rows}
+    validation_statuses = {_text(row.get("validation_status")) for row in source_rows}
+    required_sources = {
+        report_type for report_type, _validation_type in _candidate_v2_cycle_source_specs()
+    }
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE}.",
+        "regenerate_candidate_v2_research_cycle_snapshot",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "allowed_status",
+        status in V2_RESEARCH_CYCLE_STATUSES,
+        "Snapshot status must use the candidate v2 research cycle taxonomy.",
+        "restore_candidate_v2_research_cycle_status",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "source_artifacts_complete",
+        source_report_types >= required_sources,
+        "Snapshot must include every required candidate v2 source report.",
+        "restore_candidate_v2_snapshot_sources",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "source_validations_pass",
+        bool(source_rows) and validation_statuses == {PASS_STATUS},
+        "Every candidate v2 source validation must pass before final snapshot use.",
+        "repair_candidate_v2_source_validations",
+    )
+    gate_decision = _text(summary.get("source_research_gate_decision"))
+    expected_status = _candidate_v2_research_cycle_status(
+        research_gate_decision=gate_decision,
+        owner_packet_status=_text(summary.get("source_owner_packet_status")),
+        validation_failure_count=int(summary.get("validation_fail_count") or 0),
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status_matches_gate",
+        status == expected_status,
+        "Snapshot status must follow source research gate and validation evidence.",
+        "restore_snapshot_status_mapping",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "non_promising_requires_blocking_evidence",
+        status == V2_RESEARCH_CYCLE_PROMISING or bool(blocking),
+        "Non-promising snapshots must carry blocking evidence.",
+        "restore_snapshot_blocking_evidence",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "owner_decision_not_appended",
+        summary.get("owner_decision_appended") is False
+        and summary.get("owner_decision_audit_log_mutated") is False,
+        "Snapshot must not append or mutate owner decision records.",
+        "remove_owner_decision_mutation",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "no_execution_surface",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("extended_shadow_allowed") is False
+        and summary.get("live_trading_allowed") is False
+        and summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Snapshot must not create shadow/live/official weights/broker/order output.",
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-485 candidate v2 research-cycle snapshot.",
+        input_artifacts={
+            CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE: _artifact_id(payload)
+        },
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"{CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE} validation is "
+                f"{validation_status}."
+            ),
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_research_cycle_snapshot"
+                if validation_status == FAIL_STATUS
+                else "present_validated_candidate_v2_research_cycle_snapshot"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_research_cycle_snapshot"
+            if validation_status == FAIL_STATUS
+            else "present_validated_candidate_v2_research_cycle_snapshot"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_research_cycle_snapshot_validation"},
+        limitations=["Validation is read-only and does not append owner decisions."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
 def write_evidence_repair_json(payload: Mapping[str, Any], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -8878,6 +9191,278 @@ def _candidate_v2_owner_safety_statements() -> list[dict[str, Any]]:
     ]
 
 
+def _candidate_v2_cycle_source_specs() -> tuple[tuple[str, str], ...]:
+    return (
+        (
+            CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE,
+            CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE,
+        ),
+        (CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE, CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE),
+        (
+            CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+            CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE,
+        ),
+        (CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE, CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE),
+        (CANDIDATE_V2_MINI_GATE_REPORT_TYPE, CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE),
+        (
+            CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+            CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
+        ),
+        (
+            STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        ),
+        (
+            COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        ),
+        (CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE, CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE),
+        (
+            CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE,
+            CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE,
+        ),
+    )
+
+
+def _candidate_v2_cycle_sources(
+    *,
+    as_of: date,
+    reports_dir: Path,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for report_type, validation_report_type in _candidate_v2_cycle_source_specs():
+        path = default_evidence_repair_json_path(report_type, reports_dir, as_of)
+        validation_path = default_evidence_repair_json_path(
+            validation_report_type,
+            reports_dir,
+            as_of,
+        )
+        rows.append(
+            {
+                "report_type": report_type,
+                "validation_report_type": validation_report_type,
+                "path": path,
+                "validation_path": validation_path,
+                "payload": _read_json_mapping(path),
+                "validation_payload": _read_json_mapping(validation_path),
+            }
+        )
+    return rows
+
+
+def _candidate_v2_cycle_source_artifacts(
+    sources: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for source in sources:
+        rows.append(
+            _source_artifact(
+                _text(source.get("report_type")),
+                Path(_text(source.get("path"))),
+                _mapping(source.get("payload")),
+            )
+        )
+        rows.append(
+            _source_artifact(
+                _text(source.get("validation_report_type")),
+                Path(_text(source.get("validation_path"))),
+                _mapping(source.get("validation_payload")),
+            )
+        )
+    return rows
+
+
+def _candidate_v2_cycle_summary_rows(
+    sources: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for source in sources:
+        payload = _mapping(source.get("payload"))
+        validation_payload = _mapping(source.get("validation_payload"))
+        summary = _mapping(payload.get("summary"))
+        rows.append(
+            {
+                "report_type": _text(source.get("report_type")),
+                "status": _text(payload.get("status")),
+                "validation_report_type": _text(source.get("validation_report_type")),
+                "validation_status": _text(validation_payload.get("status")),
+                "artifact_id": _artifact_id(payload),
+                "validation_artifact_id": _artifact_id(validation_payload),
+                "candidate_id": _text(summary.get("candidate_id")),
+                "next_action": _text(payload.get("next_action")),
+                "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+            }
+        )
+    return rows
+
+
+def _candidate_v2_research_cycle_status(
+    *,
+    research_gate_decision: str,
+    owner_packet_status: str,
+    validation_failure_count: int,
+) -> str:
+    if validation_failure_count:
+        return V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE
+    if research_gate_decision == V2_RESEARCH_PROMISING and (
+        owner_packet_status == V2_OWNER_RESEARCH_REVIEW_PACKET_READY
+    ):
+        return V2_RESEARCH_CYCLE_PROMISING
+    if research_gate_decision in {
+        V2_RETURN_TO_HYPOTHESIS_BACKLOG,
+        V2_REJECT_RESEARCH_CANDIDATE,
+    }:
+        return V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG
+    return V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE
+
+
+def _candidate_v2_cycle_blocking_evidence(
+    *,
+    cycle_status: str,
+    research_gate_payload: Mapping[str, Any],
+    owner_packet_payload: Mapping[str, Any],
+    mini_backfill_payload: Mapping[str, Any],
+    mini_gate_payload: Mapping[str, Any],
+    full_backfill_payload: Mapping[str, Any],
+    validation_failures: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    if cycle_status == V2_RESEARCH_CYCLE_PROMISING:
+        return []
+    rows: list[dict[str, Any]] = []
+    gate_summary = _mapping(research_gate_payload.get("summary"))
+    owner_summary = _mapping(owner_packet_payload.get("summary"))
+    mini_gate_summary = _mapping(mini_gate_payload.get("summary"))
+    full_summary = _mapping(full_backfill_payload.get("summary"))
+    rows.append(
+        _mini_gate_evidence(
+            evidence_id="cycle_status_not_promising",
+            category="research_cycle",
+            strength="strong",
+            evidence=f"cycle_status={cycle_status}",
+        )
+    )
+    gate_decision = _text(research_gate_payload.get("status"))
+    if gate_decision != V2_RESEARCH_PROMISING:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="source_research_gate_not_promising",
+                category="research_gate",
+                strength="strong",
+                evidence=(
+                    f"gate_decision={gate_decision}; "
+                    f"reason={_text(gate_summary.get('gate_reason'))}"
+                ),
+            )
+        )
+    if _text(mini_backfill_payload.get("status")) == V2_MINI_BACKFILL_WEAK:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="source_mini_backfill_weak",
+                category="mini_backfill",
+                strength="medium",
+                evidence="candidate_v2_mini_backfill status is weak.",
+            )
+        )
+    if _text(mini_gate_payload.get("status")) != V2_PROCEED_TO_FULL_BACKFILL:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="source_mini_gate_did_not_proceed",
+                category="mini_gate",
+                strength="strong",
+                evidence=(
+                    f"mini_gate={_text(mini_gate_payload.get('status'))}; "
+                    f"full_backfill_allowed={mini_gate_summary.get('full_backfill_allowed')}"
+                ),
+            )
+        )
+    if full_summary.get("full_backfill_executed") is not True:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="source_full_backfill_not_executed",
+                category="full_backfill",
+                strength="strong",
+                evidence=_text(full_summary.get("full_backfill_blocked_reason")),
+            )
+        )
+    if _text(owner_summary.get("recommended_owner_option")) != "continue_research_validation":
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="owner_packet_recommends_non_continuation",
+                category="owner_review_packet",
+                strength="medium",
+                evidence=(
+                    "recommended_owner_option="
+                    f"{_text(owner_summary.get('recommended_owner_option'))}"
+                ),
+            )
+        )
+    for failure in validation_failures:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id=f"source_validation_not_passed:{_text(failure.get('report_type'))}",
+                category="source_validation",
+                strength="strong",
+                evidence=f"validation_status={_text(failure.get('validation_status'))}",
+            )
+        )
+    return rows
+
+
+def _candidate_v2_cycle_positive_evidence(
+    *,
+    sources: Sequence[Mapping[str, Any]],
+    research_gate_payload: Mapping[str, Any],
+    owner_packet_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    pass_count = sum(
+        1
+        for source in sources
+        if _text(_mapping(source.get("validation_payload")).get("status")) == PASS_STATUS
+    )
+    rows = [
+        _mini_gate_evidence(
+            evidence_id="source_validations_passed",
+            category="source_validation",
+            strength="medium",
+            evidence=f"passed_source_validations={pass_count}/{len(sources)}",
+        )
+    ]
+    if _text(owner_packet_payload.get("status")) == V2_OWNER_RESEARCH_REVIEW_PACKET_READY:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="owner_packet_ready",
+                category="owner_review_packet",
+                strength="medium",
+                evidence="owner research review packet is ready and did not append a decision.",
+            )
+        )
+    rows.extend(_records(research_gate_payload.get("positive_evidence"))[:3])
+    return rows
+
+
+def _candidate_v2_cycle_interpretation(cycle_status: str) -> dict[str, Any]:
+    if cycle_status == V2_RESEARCH_CYCLE_PROMISING:
+        return {
+            "cycle_status": cycle_status,
+            "interpretation": "candidate_v2_promising_for_research_validation_only",
+            "next_action": "owner_review_required_before_any_research_validation_continuation",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    if cycle_status == V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG:
+        return {
+            "cycle_status": cycle_status,
+            "interpretation": "candidate_v2_returns_to_hypothesis_backlog",
+            "next_action": "revise_v2_hypothesis_after_owner_review",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    return {
+        "cycle_status": cycle_status,
+        "interpretation": "candidate_v2_needs_more_evidence_before_conclusion",
+        "next_action": "collect_missing_evidence_before_v2_cycle_rerun",
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
 def _mini_gate_evidence(
     *,
     evidence_id: str,
@@ -9237,6 +9822,16 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Cycle Artifact Summary", "cycle_artifact_summary"),
+            ("Blocking Evidence", "blocking_evidence"),
+            ("Positive Evidence", "positive_evidence"),
+            ("Final Interpretation", "final_interpretation"),
+        ]
+    if report_type == CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -9296,6 +9891,8 @@ __all__ = [
     "CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE",
     "CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE",
+    "CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE",
     "CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE",
     "V2_MINI_BACKFILL_BLOCKED",
@@ -9314,6 +9911,10 @@ __all__ = [
     "V2_REJECT_RESEARCH_CANDIDATE",
     "V2_OWNER_RESEARCH_REVIEW_PACKET_READY",
     "V2_OWNER_REVIEW_OPTIONS",
+    "V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE",
+    "V2_RESEARCH_CYCLE_PROMISING",
+    "V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG",
+    "V2_RESEARCH_CYCLE_STATUSES",
     "V2_RESEARCH_GATE_STATUSES",
     "V2_RESEARCH_PROMISING",
     "V2_RETURN_TO_HYPOTHESIS_BACKLOG",
@@ -9358,6 +9959,7 @@ __all__ = [
     "build_candidate_v2_mini_backfill_payload",
     "build_candidate_v2_mini_gate_payload",
     "build_candidate_v2_owner_research_review_packet_payload",
+    "build_candidate_v2_research_cycle_snapshot_payload",
     "build_candidate_v2_research_gate_payload",
     "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
@@ -9376,6 +9978,7 @@ __all__ = [
     "validate_candidate_v2_mini_backfill_payload",
     "validate_candidate_v2_mini_gate_payload",
     "validate_candidate_v2_owner_research_review_packet_payload",
+    "validate_candidate_v2_research_cycle_snapshot_payload",
     "validate_candidate_v2_research_gate_payload",
     "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",

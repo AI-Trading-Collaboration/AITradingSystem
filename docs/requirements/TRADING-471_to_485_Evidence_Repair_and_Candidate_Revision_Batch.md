@@ -38,7 +38,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-482|candidate-v2-full-backfill-if-approved|DONE|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
 |TRADING-483|candidate-v2-research-gate|DONE|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
 |TRADING-484|v2-owner-research-review-packet|DONE|TRADING-483|准备 owner research options；不自动 append owner decision。|
-|TRADING-485|v2-research-cycle-snapshot|READY|TRADING-484|生成最终 v2 research-cycle snapshot。|
+|TRADING-485|v2-research-cycle-snapshot|DONE|TRADING-484|生成最终 v2 research-cycle snapshot。|
 
 ## 硬停止条件
 
@@ -322,3 +322,17 @@ owner decision append、production mutation 或 automatic position control。
   未修改 owner decision audit log、未激活 paper-shadow、未批准 extended/live、未创建
   official weights/broker/order/production。下一步 TRADING-485 只能生成 final v2
   research-cycle snapshot，不得自动记录 owner decision。
+- 2026-06-18: TRADING-485 开始实现。范围限定为只读收集 v2 hypotheses、v2 spec、
+  v2 executable binding、v2 mini/full backfill、v2 stress/cost/benchmark attribution、
+  v2 research gate 和 owner review packet，输出 final v2 research-cycle snapshot：
+  `V2_RESEARCH_CYCLE_PROMISING`、`V2_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE` 或
+  `V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG`。该 snapshot 不 append owner decision、不激活
+  paper-shadow、不批准 extended/live、不创建 official weights/broker/order、不修改
+  production。
+- 2026-06-18: TRADING-485 完成 pending commit。真实 2026-06-17 final v2 snapshot
+  `candidate_v2_research_cycle_snapshot_2026-06-17` 输出
+  `V2_RESEARCH_CYCLE_RETURN_TO_BACKLOG`，source research gate=
+  `V2_RETURN_TO_HYPOTHESIS_BACKLOG`，recommended owner option=`revise_hypothesis`，
+  source validations failed=0，validation PASS / checks=10 / failed=0。该 batch 未 append
+  owner decision、未修改 owner decision audit log、未创建 paper-shadow/extended/live、
+  未创建 official weights/broker/order/production。

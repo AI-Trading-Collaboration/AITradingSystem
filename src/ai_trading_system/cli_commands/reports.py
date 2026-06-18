@@ -6968,6 +6968,15 @@ def _write_evidence_repair_validation(
                 source_payload
             )
         )
+    elif (
+        source_report_type
+        == evidence_repair_reports.CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE
+    ):
+        payload = (
+            evidence_repair_reports.validate_candidate_v2_research_cycle_snapshot_payload(
+                source_payload
+            )
+        )
     else:
         raise typer.BadParameter(
             f"Unsupported evidence repair report_type: {source_report_type}"
@@ -8644,6 +8653,61 @@ def candidate_v2_owner_research_review_packet_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("candidate-v2-research-cycle-snapshot")
+def candidate_v2_research_cycle_snapshot_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Candidate v2 research cycle snapshot 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 research cycle snapshot JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 research cycle snapshot Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-485：生成最终 v2 research-cycle snapshot；不 append owner decision。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = evidence_repair_reports.build_candidate_v2_research_cycle_snapshot_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    style = (
+        "green"
+        if payload["status"] == evidence_repair_reports.V2_RESEARCH_CYCLE_PROMISING
+        else "yellow"
+    )
+    console.print(f"[{style}]Candidate v2 research cycle：{payload['status']}[/{style}]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"source_research_gate_decision：{summary['source_research_gate_decision']}")
+    console.print(f"recommended_owner_option：{summary['recommended_owner_option']}")
+    console.print(f"validation_fail_count：{summary['validation_fail_count']}")
+    console.print(f"owner_decision_appended：{summary['owner_decision_appended']}")
+    console.print(f"paper_shadow_activation_allowed：{summary['paper_shadow_activation_allowed']}")
+    console.print(f"broker_order_allowed：{summary['broker_order_allowed']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -10082,6 +10146,59 @@ def validate_candidate_v2_owner_research_review_packet_command(
     console.print(f"Validation JSON：{json_path}")
     console.print(f"Validation Markdown：{md_path}")
     console.print(f"recommended_owner_option：{summary['recommended_owner_option']}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-candidate-v2-research-cycle-snapshot")
+def validate_candidate_v2_research_cycle_snapshot_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest candidate v2 research cycle snapshot。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=evidence_repair_reports.CANDIDATE_V2_RESEARCH_CYCLE_SNAPSHOT_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="candidate v2 research cycle snapshot",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Candidate v2 research cycle validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
     console.print(
         f"checks：{summary['check_count']}；"
         f"failed：{summary['failed_check_count']}；"

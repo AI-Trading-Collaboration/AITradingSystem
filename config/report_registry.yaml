@@ -9588,6 +9588,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_v2_research_cycle_snapshot
+    title: Candidate V2 Research Cycle Snapshot
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports candidate-v2-research-cycle-snapshot --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_v2_research_cycle_snapshot_20*.json
+      - outputs/reports/candidate_v2_research_cycle_snapshot_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-485 collects candidate v2 hypotheses, spec, executable binding,
+      mini/full backfill, stress/cost/benchmark attribution, research gate, and
+      owner packet artifacts into the final research-only cycle snapshot.
+    owner_action: owner_review_final_v2_cycle_snapshot_before_any_follow_up
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_v2_research_cycle_snapshot_validation
+    title: Candidate V2 Research Cycle Snapshot Validation
+    group: research
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-v2-research-cycle-snapshot --latest
+    artifact_globs:
+      - outputs/reports/candidate_v2_research_cycle_snapshot_validation_20*.json
+      - outputs/reports/candidate_v2_research_cycle_snapshot_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-485 validation checks required source coverage, source validation
+      pass status, status mapping from the v2 research gate, Reader Brief fields,
+      no owner decision append, and the no shadow/live/official-weight/broker/order
+      production boundary.
+    owner_action: run_after_candidate_v2_research_cycle_snapshot
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research
