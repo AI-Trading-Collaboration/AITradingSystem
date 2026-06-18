@@ -9470,6 +9470,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_v2_full_backfill_if_approved
+    title: Candidate V2 Full Backfill If Approved
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports candidate-v2-full-backfill-if-approved --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_v2_full_backfill_if_approved_20*.json
+      - outputs/reports/candidate_v2_full_backfill_if_approved_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-482 reads the validated TRADING-481 mini gate and either stops with
+      blocked full-backfill outputs when the gate does not proceed or, if
+      approved, is the controlled entry point for full v2 backfill.
+    owner_action: stop_unless_candidate_v2_mini_gate_proceeds
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_v2_full_backfill_if_approved_validation
+    title: Candidate V2 Full Backfill If Approved Validation
+    group: research
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-v2-full-backfill-if-approved --latest
+    artifact_globs:
+      - outputs/reports/candidate_v2_full_backfill_if_approved_validation_20*.json
+      - outputs/reports/candidate_v2_full_backfill_if_approved_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-482 validation checks the mini-gate hard stop, required output
+      not-generated disclosure, no synthetic full-backfill metrics, data-quality
+      disclosure, Reader Brief fields, and no paper-shadow / official-weight /
+      broker/order / production boundary.
+    owner_action: run_after_candidate_v2_full_backfill_if_approved
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

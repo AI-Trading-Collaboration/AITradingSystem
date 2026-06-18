@@ -38,6 +38,7 @@ CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE = (
 )
 CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE = "candidate_v2_mini_backfill"
 CANDIDATE_V2_MINI_GATE_REPORT_TYPE = "candidate_v2_mini_gate"
+CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE = "candidate_v2_full_backfill_if_approved"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -71,6 +72,9 @@ CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_MINI_GATE_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -132,6 +136,14 @@ V2_MINI_GATE_STATUSES: tuple[str, ...] = (
     V2_NEEDS_REDESIGN,
     V2_REJECT_RESEARCH_CANDIDATE,
     V2_BLOCKED,
+)
+V2_FULL_BACKFILL_READY = "V2_FULL_BACKFILL_READY"
+V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE = "V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE"
+V2_FULL_BACKFILL_BLOCKED = "V2_FULL_BACKFILL_BLOCKED"
+V2_FULL_BACKFILL_STATUSES: tuple[str, ...] = (
+    V2_FULL_BACKFILL_READY,
+    V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE,
+    V2_FULL_BACKFILL_BLOCKED,
 )
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
@@ -202,6 +214,10 @@ REPORT_PREFIXES: dict[str, str] = {
     ),
     CANDIDATE_V2_MINI_GATE_REPORT_TYPE: "candidate_v2_mini_gate",
     CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE: "candidate_v2_mini_gate_validation",
+    CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE: "candidate_v2_full_backfill_if_approved",
+    CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_full_backfill_if_approved_validation"
+    ),
 }
 
 REQUIRED_SOURCE_REPORT_TYPES: tuple[str, ...] = (
@@ -318,6 +334,16 @@ V2_MINI_BACKFILL_WINDOWS: tuple[str, ...] = (
 )
 V2_PRICE_SYMBOLS: tuple[str, ...] = ("QQQ", "SMH", "SOXX", "SPY")
 DEFAULT_V2_PRICE_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+V2_FULL_BACKFILL_REQUIRED_OUTPUTS: tuple[str, ...] = (
+    "return_proxy",
+    "drawdown_proxy",
+    "turnover",
+    "rotation_count",
+    "false_risk_off_count",
+    "cost_inputs",
+    "benchmark_inputs",
+    "signal_completeness",
+)
 
 
 def default_evidence_repair_json_path(
@@ -3836,6 +3862,280 @@ def validate_candidate_v2_mini_gate_payload(
         ),
         safety_boundary=_safety_boundary()
         | {"mode": "candidate_v2_mini_gate_validation"},
+        limitations=["Validation is read-only and does not run full backfill."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_candidate_v2_full_backfill_if_approved_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    gate_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_MINI_GATE_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    gate_validation_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    gate_payload = _read_json_mapping(gate_path)
+    gate_validation_payload = _read_json_mapping(gate_validation_path)
+    gate_summary = _mapping(gate_payload.get("summary"))
+    gate_decision = _text(gate_payload.get("status"))
+    candidate_id = _text(gate_summary.get("candidate_id"), "MISSING")
+    if gate_decision != V2_PROCEED_TO_FULL_BACKFILL:
+        status = V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE
+        blocked_reason = f"mini_gate_decision:{gate_decision}"
+        full_backfill_windows: list[dict[str, Any]] = []
+        blocked_outputs = _candidate_v2_full_backfill_blocked_outputs(blocked_reason)
+    else:
+        status = V2_FULL_BACKFILL_BLOCKED
+        blocked_reason = "approved_full_backfill_requires_dedicated_runner"
+        full_backfill_windows = []
+        blocked_outputs = _candidate_v2_full_backfill_blocked_outputs(blocked_reason)
+    summary = {
+        "candidate_v2_full_backfill_status": status,
+        "candidate_id": candidate_id,
+        "source_mini_gate_decision": gate_decision,
+        "source_mini_gate_validation_status": _text(gate_validation_payload.get("status")),
+        "source_full_backfill_allowed": gate_summary.get("full_backfill_allowed") is True,
+        "full_backfill_executed": False,
+        "full_backfill_blocked_reason": blocked_reason,
+        "required_output_count": len(V2_FULL_BACKFILL_REQUIRED_OUTPUTS),
+        "generated_output_count": 0,
+        "blocked_output_count": len(blocked_outputs),
+        "data_quality_status": _text(gate_summary.get("data_quality_status")),
+        "data_quality_passed": gate_summary.get("data_quality_passed") is True,
+        "research_only": True,
+        "manual_review_only": True,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Run candidate v2 full backfill only when the TRADING-481 mini gate "
+            "allows it; otherwise stop and report the blocked full-backfill outputs."
+        ),
+        input_artifacts={
+            CANDIDATE_V2_MINI_GATE_REPORT_TYPE: str(gate_path),
+            CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE: str(gate_validation_path),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(CANDIDATE_V2_MINI_GATE_REPORT_TYPE, gate_path, gate_payload),
+                _source_artifact(
+                    CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE,
+                    gate_validation_path,
+                    gate_validation_payload,
+                ),
+            ],
+            "full_backfill_gate_check": {
+                "required_gate_decision": V2_PROCEED_TO_FULL_BACKFILL,
+                "actual_gate_decision": gate_decision,
+                "gate_validation_status": _text(gate_validation_payload.get("status")),
+                "full_backfill_allowed": gate_summary.get("full_backfill_allowed") is True,
+                "passed": gate_decision == V2_PROCEED_TO_FULL_BACKFILL,
+                "production_effect": PRODUCTION_EFFECT,
+            },
+            "full_backfill_windows": full_backfill_windows,
+            "blocked_full_backfill_outputs": blocked_outputs,
+            "data_quality_gate": {
+                "status": _text(gate_summary.get("data_quality_status")),
+                "passed": gate_summary.get("data_quality_passed") is True,
+                "source": CANDIDATE_V2_MINI_GATE_REPORT_TYPE,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"Candidate v2 full backfill is {status}; "
+                f"gate_decision={gate_decision}."
+            ),
+            key_result=status,
+            blocking_issues=blocked_reason,
+            warnings="none",
+            next_action=(
+                "run_full_backfill_after_gate_approval"
+                if status == V2_FULL_BACKFILL_READY
+                else "stop_full_backfill_and_redesign_candidate_v2"
+            ),
+        ),
+        next_action=(
+            "run_full_backfill_after_gate_approval"
+            if status == V2_FULL_BACKFILL_READY
+            else "stop_full_backfill_and_redesign_candidate_v2"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_full_backfill_if_approved",
+            "full_backfill_executed": False,
+            "paper_shadow_outputs_generated": False,
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+        },
+        limitations=[
+            "TRADING-482 stops before full backfill unless TRADING-481 proceeds.",
+            "Blocked reports disclose required outputs as not generated, not as zero values.",
+            "The report does not approve paper-shadow, extended shadow, or live trading.",
+        ],
+        requested_date_range=_text(gate_payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def validate_candidate_v2_full_backfill_if_approved_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    blocked_outputs = _records(payload.get("blocked_full_backfill_outputs"))
+    windows = _records(payload.get("full_backfill_windows"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE}.",
+        "regenerate_candidate_v2_full_backfill_if_approved",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status in V2_FULL_BACKFILL_STATUSES,
+        "Candidate v2 full backfill status must be recognized.",
+        "restore_candidate_v2_full_backfill_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "blocked_when_gate_not_proceed",
+        _text(summary.get("source_mini_gate_decision")) == V2_PROCEED_TO_FULL_BACKFILL
+        or (
+            status == V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE
+            and summary.get("full_backfill_executed") is False
+        ),
+        "Full backfill must stop when mini gate does not proceed.",
+        "restore_candidate_v2_full_backfill_gate_stop",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "blocked_outputs_disclosed",
+        status != V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE
+        or {
+            _text(row.get("output_id"))
+            for row in blocked_outputs
+        }
+        == set(V2_FULL_BACKFILL_REQUIRED_OUTPUTS),
+        "Blocked full backfill must disclose every required output as not generated.",
+        "restore_blocked_full_backfill_output_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_synthetic_full_backfill_metrics_when_blocked",
+        status != V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE or not windows,
+        "Blocked full backfill must not fabricate full-backfill window metrics.",
+        "remove_synthetic_full_backfill_metrics",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "data_quality_visible",
+        bool(_text(summary.get("data_quality_status"))),
+        "Data quality status inherited from mini gate must be visible.",
+        "restore_data_quality_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and summary.get("owner_decision_appended") is False
+        and summary.get("full_backfill_executed") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Full backfill blocked report must not create execution or production output.",
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-482 candidate v2 full backfill if approved.",
+        input_artifacts={CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "source_mini_gate_decision": _text(summary.get("source_mini_gate_decision")),
+            "full_backfill_executed": summary.get("full_backfill_executed") is True,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"{CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE} validation is "
+                f"{validation_status}."
+            ),
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_full_backfill_if_approved"
+                if validation_status == FAIL_STATUS
+                else "use_validated_candidate_v2_full_backfill_blocked_state"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_full_backfill_if_approved"
+            if validation_status == FAIL_STATUS
+            else "use_validated_candidate_v2_full_backfill_blocked_state"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_full_backfill_if_approved_validation"},
         limitations=["Validation is read-only and does not run full backfill."],
         requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
     )
@@ -7703,6 +8003,21 @@ def _candidate_v2_mini_gate_decision(
     return V2_BLOCKED, False, f"unknown_mini_backfill_status:{mini_status}"
 
 
+def _candidate_v2_full_backfill_blocked_outputs(
+    blocked_reason: str,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "output_id": output_id,
+            "generated": False,
+            "not_generated_reason": blocked_reason,
+            "value": None,
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for output_id in V2_FULL_BACKFILL_REQUIRED_OUTPUTS
+    ]
+
+
 def _mini_gate_evidence(
     *,
     evidence_id: str,
@@ -8037,6 +8352,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Blocked Full Backfill Outputs", "blocked_full_backfill_outputs"),
+            ("Full Backfill Windows", "full_backfill_windows"),
+        ]
+    if report_type == CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -8088,6 +8411,8 @@ __all__ = [
     "CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE",
     "CANDIDATE_V2_EXECUTABLE_BINDING_STATUSES",
     "CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE",
+    "CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE",
     "CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_MINI_GATE_REPORT_TYPE",
@@ -8099,6 +8424,10 @@ __all__ = [
     "V2_MINI_BACKFILL_WEAK",
     "V2_MINI_GATE_STATUSES",
     "V2_BLOCKED",
+    "V2_FULL_BACKFILL_BLOCKED",
+    "V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE",
+    "V2_FULL_BACKFILL_READY",
+    "V2_FULL_BACKFILL_STATUSES",
     "V2_NEEDS_REDESIGN",
     "V2_PROCEED_TO_FULL_BACKFILL",
     "V2_REJECT_RESEARCH_CANDIDATE",
@@ -8139,6 +8468,7 @@ __all__ = [
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_candidate_redesign_hypothesis_payload",
     "build_candidate_v2_executable_binding_update_payload",
+    "build_candidate_v2_full_backfill_if_approved_payload",
     "build_candidate_v2_mini_backfill_payload",
     "build_candidate_v2_mini_gate_payload",
     "build_candidate_v2_spec_freeze_payload",
@@ -8154,6 +8484,7 @@ __all__ = [
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_candidate_redesign_hypothesis_payload",
     "validate_candidate_v2_executable_binding_update_payload",
+    "validate_candidate_v2_full_backfill_if_approved_payload",
     "validate_candidate_v2_mini_backfill_payload",
     "validate_candidate_v2_mini_gate_payload",
     "validate_candidate_v2_spec_freeze_payload",

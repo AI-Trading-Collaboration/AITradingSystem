@@ -35,7 +35,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-479|candidate-v2-executable-binding-update|DONE|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
 |TRADING-480|candidate-v2-mini-backfill|DONE|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
 |TRADING-481|candidate-v2-mini-gate|DONE|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
-|TRADING-482|candidate-v2-full-backfill-if-approved|READY|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
+|TRADING-482|candidate-v2-full-backfill-if-approved|DONE|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
 |TRADING-483|candidate-v2-research-gate|READY|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
 |TRADING-484|v2-owner-research-review-packet|READY|TRADING-483|准备 owner research options；不自动 append owner decision。|
 |TRADING-485|v2-research-cycle-snapshot|READY|TRADING-484|生成最终 v2 research-cycle snapshot。|
@@ -275,3 +275,20 @@ owner decision append、production mutation 或 automatic position control。
   Validation `candidate_v2_mini_gate_validation_2026-06-17` 为 PASS，checks=10、
   failed=0。按 gate 决策不得运行 TRADING-482 full backfill；未运行 full backfill、
   未创建 paper-shadow/official weights/broker/order/production。
+- 2026-06-18: TRADING-482 开始实现。范围限定为先读取 TRADING-481 mini gate；
+  若 gate 不是 `V2_PROCEED_TO_FULL_BACKFILL`，输出 blocked artifact，披露 return
+  proxy、drawdown proxy、turnover、rotation count、false risk-off count、cost inputs、
+  benchmark inputs 和 signal completeness 均因 mini gate 未批准而未生成；不运行 full
+  backfill、不补造 metrics、不创建 paper-shadow、不写 official target weights、不触发
+  broker/order、不修改 production。
+- 2026-06-18: TRADING-482 完成 pending commit。真实 2026-06-17 full-backfill-if-approved
+  `candidate_v2_full_backfill_if_approved_2026-06-17` 输出
+  `V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE`；source mini gate decision=
+  `V2_NEEDS_REDESIGN`，source mini gate validation=PASS，full_backfill_executed=false，
+  required outputs=8、generated=0、blocked=8，return proxy、drawdown proxy、turnover、
+  rotation count、false risk-off count、cost inputs、benchmark inputs 和 signal completeness
+  均以 `mini_gate_decision:V2_NEEDS_REDESIGN` 标记为 not generated。Validation
+  `candidate_v2_full_backfill_if_approved_validation_2026-06-17` 为 PASS，checks=9、
+  failed=0。未运行 full backfill、未补造 metrics、未创建 paper-shadow/official
+  weights/broker/order/production。后续 TRADING-483 research gate 只能读取该 blocked
+  state，不得声称 v2 full backfill 已完成。

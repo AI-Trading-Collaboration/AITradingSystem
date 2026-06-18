@@ -1081,6 +1081,97 @@ def test_candidate_v2_mini_gate_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_full_backfill_blocks_when_mini_gate_does_not_proceed(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_full_backfill_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+
+    payload = repair.build_candidate_v2_full_backfill_if_approved_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE
+    assert payload["summary"]["source_mini_gate_decision"] == repair.V2_NEEDS_REDESIGN
+    assert payload["summary"]["full_backfill_executed"] is False
+    assert payload["full_backfill_windows"] == []
+    assert {
+        row["output_id"] for row in payload["blocked_full_backfill_outputs"]
+    } == set(repair.V2_FULL_BACKFILL_REQUIRED_OUTPUTS)
+    assert all(
+        row["generated"] is False
+        for row in payload["blocked_full_backfill_outputs"]
+    )
+    assert payload["safety_boundary"]["full_backfill_executed"] is False
+    assert payload["safety_boundary"]["paper_shadow_outputs_generated"] is False
+
+    validation = repair.validate_candidate_v2_full_backfill_if_approved_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_full_backfill_cli_writes_blocked_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_full_backfill_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-full-backfill-if-approved",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    full_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(full_path.read_text(encoding="utf-8"))
+    assert payload["status"] == repair.V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE
+    assert payload["summary"]["full_backfill_executed"] is False
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-full-backfill-if-approved",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -1234,6 +1325,41 @@ def _write_candidate_v2_mini_gate_prerequisites(
         mini_validation,
         repair.default_evidence_repair_json_path(
             repair.CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
+def _write_candidate_v2_full_backfill_prerequisites(
+    *,
+    reports_dir: Path,
+    feature_path: Path,
+    prices_path: Path,
+) -> None:
+    _write_candidate_v2_mini_gate_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    mini_gate = repair.build_candidate_v2_mini_gate_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+    repair.write_evidence_repair_json(
+        mini_gate,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_MINI_GATE_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    mini_gate_validation = repair.validate_candidate_v2_mini_gate_payload(mini_gate)
+    repair.write_evidence_repair_json(
+        mini_gate_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
