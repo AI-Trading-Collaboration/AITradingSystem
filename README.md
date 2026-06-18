@@ -1939,6 +1939,18 @@ extended/live、不写 official target weights、不 append owner decision、不
 不修改 production。Reader Brief 只读展示 combined
 `next_candidate_signal_window_sensitivity` 摘要。
 
+TRADING-468_RERUN_NEXT_CANDIDATE_RESEARCH_GATE 在 executable binding 和 real metrics
+review 都可读后重跑 research gate。运行
+`aits reports next-candidate-research-gate --as-of YYYY-MM-DD` 和
+`aits reports validate-next-candidate-research-gate --latest` 会生成
+`next_candidate_research_gate` 和 `next_candidate_research_gate_validation` artifacts。
+2026-06-17 真实 rerun 输出 `NEEDS_MORE_EVIDENCE`，validation PASS，blockers=5：
+stress weak、cost/benchmark weak、repeated failure mode unresolved、signal robustness blocked
+和 window sensitivity fragile；required next action 为
+`repair_signal_window_evidence_before_gate_rerun`。该 gate 仍不允许 paper-shadow activation、
+extended shadow、live trading、official target weights、owner decision append、broker/order 或
+production mutation。Reader Brief 只读展示 `next_candidate_research_gate` 摘要。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

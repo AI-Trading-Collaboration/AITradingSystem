@@ -200,6 +200,7 @@ def build_reader_brief_payload(
     next_candidate_signal_window_sensitivity = (
         _next_candidate_signal_window_sensitivity_summary(report_index)
     )
+    next_candidate_research_gate = _next_candidate_research_gate_summary(report_index)
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
     executable_research_weight_binding = _executable_research_weight_binding_summary(
@@ -385,6 +386,7 @@ def build_reader_brief_payload(
         "next_candidate_signal_window_sensitivity": (
             next_candidate_signal_window_sensitivity
         ),
+        "next_candidate_research_gate": next_candidate_research_gate,
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
@@ -747,6 +749,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     next_candidate_signal_window_sensitivity = _mapping(
         payload.get("next_candidate_signal_window_sensitivity")
     )
+    next_candidate_research_gate = _mapping(payload.get("next_candidate_research_gate"))
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
     executable_research_weight_binding = _mapping(
@@ -2110,6 +2113,62 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         next_candidate_signal_window_sensitivity.get(
                             "production_effect"
                         ),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Next Candidate Research Gate",
+            _definition_table(
+                [
+                    ("availability", next_candidate_research_gate.get("availability")),
+                    ("status", next_candidate_research_gate.get("status")),
+                    (
+                        "research_gate_decision",
+                        next_candidate_research_gate.get("research_gate_decision"),
+                    ),
+                    (
+                        "validation_status",
+                        next_candidate_research_gate.get("validation_status"),
+                    ),
+                    (
+                        "safety_audit_status",
+                        next_candidate_research_gate.get("safety_audit_status"),
+                    ),
+                    (
+                        "source_backfill_status",
+                        next_candidate_research_gate.get("source_backfill_status"),
+                    ),
+                    (
+                        "signal_robustness_status",
+                        next_candidate_research_gate.get("signal_robustness_status"),
+                    ),
+                    (
+                        "window_sensitivity_status",
+                        next_candidate_research_gate.get("window_sensitivity_status"),
+                    ),
+                    ("blocker_count", next_candidate_research_gate.get("blocker_count")),
+                    (
+                        "paper_shadow_activation_allowed",
+                        next_candidate_research_gate.get(
+                            "paper_shadow_activation_allowed"
+                        ),
+                    ),
+                    (
+                        "official_target_weights_generated",
+                        next_candidate_research_gate.get(
+                            "official_target_weights_generated"
+                        ),
+                    ),
+                    (
+                        "broker_order_allowed",
+                        next_candidate_research_gate.get("broker_order_allowed"),
+                    ),
+                    ("next_action", next_candidate_research_gate.get("next_action")),
+                    ("detail_report", next_candidate_research_gate.get("detail_report")),
+                    (
+                        "production_effect",
+                        next_candidate_research_gate.get("production_effect"),
                     ),
                 ]
             ),
@@ -9800,6 +9859,111 @@ def _missing_next_candidate_signal_window_sensitivity_summary(
             "next_candidate_signal_robustness_review / "
             "next_candidate_overfit_window_sensitivity artifacts missing; run "
             "TRADING-467 reports."
+        ),
+        "limitation": reason,
+    }
+
+
+def _next_candidate_research_gate_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_next_candidate_research_gate_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "next candidate research gate."
+        )
+    report_path = _report_index_artifact_path(report_index, "next_candidate_research_gate")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_next_candidate_research_gate_summary(
+            "next_candidate_research_gate artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_research_gate_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    status = _text(payload.get("status"), _text(summary.get("research_gate_decision")))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "research_gate_decision": _text(summary.get("research_gate_decision"), status),
+        "validation_status": validation_status,
+        "safety_audit_status": _text(summary.get("safety_audit_status"), "MISSING"),
+        "source_backfill_status": _text(summary.get("source_backfill_status"), "MISSING"),
+        "stress_result": _text(summary.get("stress_result"), "MISSING"),
+        "cost_benchmark_status": _text(summary.get("cost_benchmark_status"), "MISSING"),
+        "vs_returned_status": _text(summary.get("vs_returned_status"), "MISSING"),
+        "signal_robustness_status": _text(
+            summary.get("signal_robustness_status"),
+            "MISSING",
+        ),
+        "window_sensitivity_status": _text(
+            summary.get("window_sensitivity_status"),
+            "MISSING",
+        ),
+        "blocker_count": _int(summary.get("blocker_count")),
+        "strongest_positive_evidence_count": _int(
+            summary.get("strongest_positive_evidence_count")
+        ),
+        "strongest_negative_evidence_count": _int(
+            summary.get("strongest_negative_evidence_count")
+        ),
+        "paper_shadow_activation_allowed": bool(
+            summary.get("paper_shadow_activation_allowed")
+        ),
+        "official_target_weights_generated": bool(
+            summary.get("official_target_weights_generated")
+        ),
+        "broker_order_allowed": bool(summary.get("broker_order_allowed")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": ""
+        if validation_path is None
+        else str(validation_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"research_gate={status}; blockers={_int(summary.get('blocker_count'))}; "
+            f"paper_shadow_allowed={bool(summary.get('paper_shadow_activation_allowed'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the generated TRADING-468 research gate; it "
+            "does not activate paper-shadow, write official weights, append owner "
+            "decisions, or create broker/order artifacts."
+        ),
+    }
+
+
+def _missing_next_candidate_research_gate_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "research_gate_decision": "MISSING",
+        "validation_status": "MISSING",
+        "safety_audit_status": "MISSING",
+        "source_backfill_status": "MISSING",
+        "stress_result": "MISSING",
+        "cost_benchmark_status": "MISSING",
+        "vs_returned_status": "MISSING",
+        "signal_robustness_status": "MISSING",
+        "window_sensitivity_status": "MISSING",
+        "blocker_count": 0,
+        "strongest_positive_evidence_count": 0,
+        "strongest_negative_evidence_count": 0,
+        "paper_shadow_activation_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "next_action": "run_aits_reports_next_candidate_research_gate",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_research_gate artifact missing; run TRADING-468 gate."
         ),
         "limitation": reason,
     }
@@ -26205,20 +26369,21 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_overfit_window_sensitivity": 270,
         "next_candidate_overfit_window_sensitivity_validation": 271,
         "next_candidate_research_gate": 272,
-        "next_candidate_owner_research_review_packet": 273,
-        "next_candidate_research_cycle_snapshot": 274,
-        "next_candidate_research_cycle_snapshot_validation": 275,
-        "next_candidate_executable_binding_contract": 276,
-        "next_candidate_executable_binding_contract_validation": 277,
-        "next_candidate_signal_binding": 278,
-        "next_candidate_signal_binding_validation": 279,
-        "next_candidate_research_weight_binding": 280,
-        "next_candidate_research_weight_binding_validation": 281,
-        "executable_binding_safety_audit": 282,
-        "executable_binding_safety_audit_validation": 283,
-        "report_quality_gate": 284,
-        "reader_brief_quality": 285,
-        "artifact_catalog": 286,
+        "next_candidate_research_gate_validation": 273,
+        "next_candidate_owner_research_review_packet": 274,
+        "next_candidate_research_cycle_snapshot": 275,
+        "next_candidate_research_cycle_snapshot_validation": 276,
+        "next_candidate_executable_binding_contract": 277,
+        "next_candidate_executable_binding_contract_validation": 278,
+        "next_candidate_signal_binding": 279,
+        "next_candidate_signal_binding_validation": 280,
+        "next_candidate_research_weight_binding": 281,
+        "next_candidate_research_weight_binding_validation": 282,
+        "executable_binding_safety_audit": 283,
+        "executable_binding_safety_audit_validation": 284,
+        "report_quality_gate": 285,
+        "reader_brief_quality": 286,
+        "artifact_catalog": 287,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -26459,7 +26624,10 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "确认 window sensitivity 有真实 split metrics、fragility disclosure 和安全边界。"
         ),
         "next_candidate_research_gate": (
-            "查看下一候选 research gate 决策；该 gate 不能开启 paper-shadow。"
+            "查看 TRADING-468 四态 research gate 决策、blockers 和 no paper-shadow 边界。"
+        ),
+        "next_candidate_research_gate_validation": (
+            "确认 research gate source statuses、strongest evidence、blockers 和安全边界。"
         ),
         "next_candidate_owner_research_review_packet": (
             "查看 owner research review options；该 packet 不 append owner decision。"
@@ -26627,6 +26795,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Window sensitivity artifact 生成后立即校验 split metrics 和安全边界。",
+    ),
+    "next_candidate_research_gate": (
+        "manual",
+        "manual research cycle",
+        "TRADING-468 在 executable binding 和 real metrics review 完成后运行。",
+    ),
+    "next_candidate_research_gate_validation": (
+        "manual",
+        "manual research cycle",
+        "Research gate artifact 生成后立即校验四态 taxonomy、evidence 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

@@ -26,6 +26,12 @@ CANDIDATE_BACKFILL_METRIC_STATUSES = {
     CANDIDATE_BACKFILL_COMPLETE,
     CANDIDATE_BACKFILL_PARTIAL,
 }
+RESEARCH_GATE_DECISIONS = {
+    "RESEARCH_PROMISING",
+    "NEEDS_MORE_EVIDENCE",
+    "RETURN_TO_HYPOTHESIS_BACKLOG",
+    "REJECT_RESEARCH_CANDIDATE",
+}
 # TRADING-465 diagnostic bands are conservative review cutoffs, not promotion
 # thresholds. They only classify blockers/warnings from already-computed metrics.
 STRESS_BLOCKING_DRAWDOWN_PROXY = -0.20
@@ -1421,6 +1427,7 @@ def build_next_candidate_research_gate_payload(
     *,
     as_of: date,
     frozen_spec_payload: Mapping[str, Any],
+    safety_audit_payload: Mapping[str, Any] | None = None,
     backfill_payload: Mapping[str, Any],
     stress_review_payload: Mapping[str, Any],
     cost_benchmark_payload: Mapping[str, Any],
@@ -1428,7 +1435,9 @@ def build_next_candidate_research_gate_payload(
     signal_robustness_payload: Mapping[str, Any],
     window_sensitivity_payload: Mapping[str, Any],
 ) -> dict[str, Any]:
+    safety_audit = _mapping(safety_audit_payload)
     blockers = _research_gate_blockers(
+        safety_audit_payload=safety_audit,
         backfill_payload=backfill_payload,
         stress_review_payload=stress_review_payload,
         cost_benchmark_payload=cost_benchmark_payload,
@@ -1436,14 +1445,47 @@ def build_next_candidate_research_gate_payload(
         signal_robustness_payload=signal_robustness_payload,
         window_sensitivity_payload=window_sensitivity_payload,
     )
-    decision = "NEEDS_MORE_EVIDENCE" if blockers else "RESEARCH_PROMISING"
+    decision = _research_gate_decision(
+        blockers=blockers,
+        comparison_payload=comparison_payload,
+    )
+    source_statuses = _research_gate_source_statuses(
+        safety_audit_payload=safety_audit,
+        backfill_payload=backfill_payload,
+        stress_review_payload=stress_review_payload,
+        cost_benchmark_payload=cost_benchmark_payload,
+        comparison_payload=comparison_payload,
+        signal_robustness_payload=signal_robustness_payload,
+        window_sensitivity_payload=window_sensitivity_payload,
+    )
+    positive_evidence = _research_gate_positive_evidence(source_statuses)
+    negative_evidence = _research_gate_negative_evidence(blockers)
+    required_next_action = _research_gate_required_next_action(decision, blockers)
     summary = {
         "research_gate_decision": decision,
         "candidate_id": _candidate_id_from_frozen(frozen_spec_payload),
+        "safety_audit_status": source_statuses["executable_binding_safety_audit"],
+        "source_backfill_status": source_statuses["next_candidate_backfill"],
+        "stress_result": source_statuses["next_candidate_stress_review"],
+        "cost_benchmark_status": source_statuses["next_candidate_cost_benchmark_review"],
+        "vs_returned_status": source_statuses[
+            "next_candidate_vs_returned_candidate_comparison"
+        ],
+        "signal_robustness_status": source_statuses[
+            "next_candidate_signal_robustness_review"
+        ],
+        "window_sensitivity_status": source_statuses[
+            "next_candidate_overfit_window_sensitivity"
+        ],
         "blocker_count": len(blockers),
-        "strongest_positive_evidence_count": 2,
-        "strongest_negative_evidence_count": len(blockers),
+        "strongest_positive_evidence_count": len(positive_evidence),
+        "strongest_negative_evidence_count": len(negative_evidence),
+        "required_next_action": required_next_action,
         "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
         "production_effect": PRODUCTION_EFFECT,
     }
     return _payload(
@@ -1453,6 +1495,7 @@ def build_next_candidate_research_gate_payload(
         purpose="Decide whether the new research candidate deserves deeper validation.",
         input_artifacts={
             "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
+            "executable_binding_safety_audit": _artifact_id(safety_audit),
             "next_candidate_backfill": _artifact_id(backfill_payload),
             "next_candidate_stress_review": _artifact_id(stress_review_payload),
             "next_candidate_cost_benchmark_review": _artifact_id(cost_benchmark_payload),
@@ -1463,41 +1506,26 @@ def build_next_candidate_research_gate_payload(
         output_decision=decision,
         summary=summary,
         body={
-            "strongest_positive_evidence": [
-                "P0 hypotheses directly target cost survival and benchmark weakness.",
-                (
-                    "Stress/drawdown/flip evidence from the old candidate remains "
-                    "reusable as diagnostics."
-                ),
-            ],
-            "strongest_negative_evidence": [
-                _text(row.get("issue_id")) for row in blockers
-            ],
+            "source_statuses": source_statuses,
+            "strongest_positive_evidence": positive_evidence,
+            "strongest_negative_evidence": negative_evidence,
             "blocker_list": blockers,
-            "required_next_action": (
-                "bind_executable_research_candidate_and_regenerate_backfill"
-                if blockers
-                else "prepare_deeper_research_validation_plan"
-            ),
+            "required_next_action": required_next_action,
         },
         reader_brief=_reader_brief(
             summary=f"Research gate decision is {decision}; paper-shadow remains forbidden.",
             key_result=decision,
             blocking_issues=_issue_names(blockers, "issue_id"),
             warnings="research gate cannot activate paper-shadow",
-            next_action=(
-                "bind_executable_research_candidate_and_regenerate_backfill"
-                if blockers
-                else "prepare_deeper_research_validation_plan"
-            ),
+            next_action=required_next_action,
         ),
-        next_action=(
-            "bind_executable_research_candidate_and_regenerate_backfill"
-            if blockers
-            else "prepare_deeper_research_validation_plan"
-        ),
+        next_action=required_next_action,
         safety_boundary=_safety_boundary(),
-        limitations=["This research gate does not allow paper-shadow activation."],
+        limitations=[
+            "This research gate does not allow paper-shadow activation.",
+            "Partial/static proxy evidence cannot be promoted to paper-shadow.",
+            "Gate output remains research-only and cannot write official weights.",
+        ],
         requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
     )
 
@@ -2042,6 +2070,94 @@ def validate_next_research_cycle_payload(
                 and _text(summary.get("blocking_conditions"), "none") != "none",
                 "Fragile window sensitivity must disclose overfit risk and blockers.",
                 "restore_window_fragility_disclosure",
+            )
+    if report_type == RESEARCH_GATE_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        gate_status = _text(payload.get("status"))
+        blockers = _records(payload.get("blocker_list"))
+        source_statuses = _mapping(payload.get("source_statuses"))
+        positive_evidence = _records(payload.get("strongest_positive_evidence"))
+        negative_evidence = _records(payload.get("strongest_negative_evidence"))
+        blocker_ids = {_text(row.get("issue_id")) for row in blockers}
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_research_gate_decision",
+            gate_status in RESEARCH_GATE_DECISIONS,
+            "Research gate status must use TRADING-468 taxonomy.",
+            "restore_research_gate_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "source_statuses_present",
+            all(
+                _text(source_statuses.get(report_id))
+                for report_id in (
+                    "executable_binding_safety_audit",
+                    "next_candidate_backfill",
+                    "next_candidate_stress_review",
+                    "next_candidate_cost_benchmark_review",
+                    "next_candidate_vs_returned_candidate_comparison",
+                    "next_candidate_signal_robustness_review",
+                    "next_candidate_overfit_window_sensitivity",
+                )
+            ),
+            "Research gate must disclose all source statuses.",
+            "restore_research_gate_source_statuses",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "safety_audit_status_visible",
+            bool(_text(summary.get("safety_audit_status"))),
+            "Research gate must disclose executable binding safety audit status.",
+            "restore_gate_safety_audit_disclosure",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "positive_evidence_present",
+            bool(positive_evidence),
+            "Research gate must include strongest positive evidence.",
+            "restore_gate_positive_evidence",
+        )
+        if gate_status != "RESEARCH_PROMISING":
+            _append_check(
+                checks,
+                blocking_issues,
+                "non_promising_blockers_present",
+                bool(blockers) and bool(negative_evidence),
+                "Non-promising research gate must include blockers and negative evidence.",
+                "restore_gate_blocker_evidence",
+            )
+        _append_check(
+            checks,
+            blocking_issues,
+            "paper_shadow_not_allowed",
+            summary.get("paper_shadow_activation_allowed") is False
+            and summary.get("official_target_weights_generated") is False
+            and summary.get("broker_order_allowed") is False,
+            "Research gate must not allow paper-shadow, official weights, or broker/order.",
+            "restore_research_gate_safety_boundary",
+        )
+        if _text(summary.get("signal_robustness_status")) == "SIGNAL_ROBUSTNESS_BLOCKED":
+            _append_check(
+                checks,
+                blocking_issues,
+                "signal_blocker_visible",
+                "signal_robustness_blocked" in blocker_ids,
+                "Blocked signal robustness must be visible in research gate blockers.",
+                "restore_signal_gate_blocker",
+            )
+        if _text(summary.get("window_sensitivity_status")) == "WINDOW_FRAGILE":
+            _append_check(
+                checks,
+                blocking_issues,
+                "window_fragility_blocker_visible",
+                "window_sensitivity_fragile" in blocker_ids,
+                "Fragile window sensitivity must be visible in research gate blockers.",
+                "restore_window_gate_blocker",
             )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
@@ -3437,6 +3553,7 @@ def _window_sensitivity_split(
 
 def _research_gate_blockers(
     *,
+    safety_audit_payload: Mapping[str, Any],
     backfill_payload: Mapping[str, Any],
     stress_review_payload: Mapping[str, Any],
     cost_benchmark_payload: Mapping[str, Any],
@@ -3444,50 +3561,233 @@ def _research_gate_blockers(
     signal_robustness_payload: Mapping[str, Any],
     window_sensitivity_payload: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
+    safety_status = _text(safety_audit_payload.get("status"), "MISSING")
+    safety_summary = _mapping(safety_audit_payload.get("summary"))
+    safety_acceptable = safety_status == binding_reports.SAFETY_PASS or (
+        safety_status == binding_reports.SAFETY_WARNING
+        and safety_summary.get("acceptable_warning") is True
+    )
+    cost_summary = _mapping(cost_benchmark_payload.get("summary"))
+    comparison_summary = _mapping(comparison_payload.get("summary"))
     candidates = [
+        (
+            "safety_audit_not_acceptable",
+            not safety_acceptable,
+            _text(safety_audit_payload.get("next_action"), "repair_executable_binding_safety"),
+            safety_status,
+        ),
         (
             "backfill_not_ready",
             _text(backfill_payload.get("status")) not in CANDIDATE_BACKFILL_METRIC_STATUSES,
             _text(backfill_payload.get("next_action")),
+            _text(backfill_payload.get("status")),
         ),
         (
             "stress_review_weak",
             _text(stress_review_payload.get("status")) in {"WEAK", "FAIL"},
             _text(stress_review_payload.get("next_action")),
+            _text(stress_review_payload.get("status")),
         ),
         (
             "cost_benchmark_unavailable",
             _text(cost_benchmark_payload.get("status"))
             == "COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL",
             _text(cost_benchmark_payload.get("next_action")),
+            _text(cost_benchmark_payload.get("status")),
+        ),
+        (
+            "cost_benchmark_weak",
+            _text(cost_benchmark_payload.get("status")) == "COST_BENCHMARK_REVIEW_WEAK",
+            _text(cost_benchmark_payload.get("next_action")),
+            (
+                f"{_text(cost_benchmark_payload.get('status'))}; "
+                f"benchmark={_text(cost_summary.get('benchmark_relative_status'))}; "
+                f"cost={_text(cost_summary.get('cost_survival_status'))}"
+            ),
+        ),
+        (
+            "repeated_failure_mode_unresolved",
+            _int(comparison_summary.get("repeated_failure_mode_count")) > 0,
+            _text(comparison_payload.get("next_action")),
+            (
+                f"repeated_failure_mode_count="
+                f"{_int(comparison_summary.get('repeated_failure_mode_count'))}"
+            ),
         ),
         (
             "no_improvement_established",
             _text(comparison_payload.get("status"))
             in {"NO_IMPROVEMENT", "WORSE_THAN_RETURNED_CANDIDATE"},
             _text(comparison_payload.get("next_action")),
+            _text(comparison_payload.get("status")),
         ),
         (
             "signal_robustness_blocked",
             _text(signal_robustness_payload.get("status")) == "SIGNAL_ROBUSTNESS_BLOCKED",
             _text(signal_robustness_payload.get("next_action")),
+            (
+                f"{_text(signal_robustness_payload.get('status'))}; "
+                f"blocking_checks="
+                f"{_int(_mapping(signal_robustness_payload.get('summary')).get('blocking_check_count'))}"
+            ),
         ),
         (
             "window_sensitivity_fragile",
             _text(window_sensitivity_payload.get("status"))
             in {"WINDOW_FRAGILE", "OVERFIT_RISK_HIGH"},
             _text(window_sensitivity_payload.get("next_action")),
+            (
+                f"{_text(window_sensitivity_payload.get('status'))}; "
+                f"overfit_risk="
+                f"{_text(_mapping(window_sensitivity_payload.get('summary')).get('overfit_risk'))}"
+            ),
         ),
     ]
     return [
         {
             "issue_id": issue_id,
             "recommended_action": recommended_action,
+            "evidence": evidence,
             "production_effect": PRODUCTION_EFFECT,
         }
-        for issue_id, active, recommended_action in candidates
+        for issue_id, active, recommended_action, evidence in candidates
         if active
     ]
+
+
+def _research_gate_source_statuses(
+    *,
+    safety_audit_payload: Mapping[str, Any],
+    backfill_payload: Mapping[str, Any],
+    stress_review_payload: Mapping[str, Any],
+    cost_benchmark_payload: Mapping[str, Any],
+    comparison_payload: Mapping[str, Any],
+    signal_robustness_payload: Mapping[str, Any],
+    window_sensitivity_payload: Mapping[str, Any],
+) -> dict[str, str]:
+    return {
+        "executable_binding_safety_audit": _text(
+            safety_audit_payload.get("status"),
+            "MISSING",
+        ),
+        "next_candidate_backfill": _text(backfill_payload.get("status"), "MISSING"),
+        "next_candidate_stress_review": _text(
+            stress_review_payload.get("status"),
+            "MISSING",
+        ),
+        "next_candidate_cost_benchmark_review": _text(
+            cost_benchmark_payload.get("status"),
+            "MISSING",
+        ),
+        "next_candidate_vs_returned_candidate_comparison": _text(
+            comparison_payload.get("status"),
+            "MISSING",
+        ),
+        "next_candidate_signal_robustness_review": _text(
+            signal_robustness_payload.get("status"),
+            "MISSING",
+        ),
+        "next_candidate_overfit_window_sensitivity": _text(
+            window_sensitivity_payload.get("status"),
+            "MISSING",
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _research_gate_positive_evidence(
+    source_statuses: Mapping[str, str],
+) -> list[dict[str, Any]]:
+    candidates = [
+        (
+            "safety_audit_acceptable",
+            source_statuses.get("executable_binding_safety_audit")
+            in {binding_reports.SAFETY_PASS, binding_reports.SAFETY_WARNING},
+            source_statuses.get("executable_binding_safety_audit"),
+        ),
+        (
+            "real_backfill_metrics_available",
+            source_statuses.get("next_candidate_backfill") in CANDIDATE_BACKFILL_METRIC_STATUSES,
+            source_statuses.get("next_candidate_backfill"),
+        ),
+        (
+            "row_level_vs_returned_comparison_available",
+            bool(source_statuses.get("next_candidate_vs_returned_candidate_comparison")),
+            source_statuses.get("next_candidate_vs_returned_candidate_comparison"),
+        ),
+    ]
+    return [
+        {
+            "evidence_id": evidence_id,
+            "source_status": _text(source_status),
+            "interpretation": "available_research_evidence_not_promotion_clearance",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for evidence_id, include, source_status in candidates
+        if include
+    ]
+
+
+def _research_gate_negative_evidence(
+    blockers: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "evidence_id": _text(row.get("issue_id")),
+            "evidence": _text(row.get("evidence")),
+            "recommended_action": _text(row.get("recommended_action")),
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for row in blockers
+    ]
+
+
+def _research_gate_decision(
+    *,
+    blockers: Sequence[Mapping[str, Any]],
+    comparison_payload: Mapping[str, Any],
+) -> str:
+    if not blockers:
+        return "RESEARCH_PROMISING"
+    blocker_ids = {_text(row.get("issue_id")) for row in blockers}
+    incomplete_ids = {
+        "safety_audit_not_acceptable",
+        "backfill_not_ready",
+        "signal_robustness_blocked",
+        "window_sensitivity_fragile",
+    }
+    comparison_status = _text(comparison_payload.get("status"))
+    if comparison_status == "WORSE_THAN_RETURNED_CANDIDATE" and not (
+        blocker_ids & incomplete_ids
+    ):
+        return "REJECT_RESEARCH_CANDIDATE"
+    if {
+        "stress_review_weak",
+        "cost_benchmark_weak",
+        "repeated_failure_mode_unresolved",
+        "no_improvement_established",
+    } & blocker_ids and not (blocker_ids & incomplete_ids):
+        return "RETURN_TO_HYPOTHESIS_BACKLOG"
+    return "NEEDS_MORE_EVIDENCE"
+
+
+def _research_gate_required_next_action(
+    decision: str,
+    blockers: Sequence[Mapping[str, Any]],
+) -> str:
+    if decision == "RESEARCH_PROMISING":
+        return "prepare_deeper_research_validation_plan"
+    if decision == "RETURN_TO_HYPOTHESIS_BACKLOG":
+        return "revise_hypothesis_from_repeated_failure_modes"
+    if decision == "REJECT_RESEARCH_CANDIDATE":
+        return "prepare_research_rejection_postmortem"
+    if any(
+        _text(row.get("issue_id"))
+        in {"signal_robustness_blocked", "window_sensitivity_fragile"}
+        for row in blockers
+    ):
+        return "repair_signal_window_evidence_before_gate_rerun"
+    return "collect_missing_research_evidence_before_gate_rerun"
 
 
 def _owner_option(

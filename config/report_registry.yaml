@@ -8925,9 +8925,31 @@ reports:
       - outputs/reports/next_candidate_research_gate_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-457 decides whether the research candidate deserves deeper
-      validation; the gate never activates paper-shadow.
+      TRADING-468 reruns the research gate after executable binding, real
+      backfill metrics, stress/cost/benchmark review, vs-returned comparison,
+      signal robustness, and window sensitivity are available; the gate never
+      activates paper-shadow.
     owner_action: review_research_gate_before_owner_packet
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_research_gate_validation
+    title: Next Candidate Research Gate Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-research-gate --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_research_gate_validation_20*.json
+      - outputs/reports/next_candidate_research_gate_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-468 validation checks the four-state gate taxonomy, source status
+      disclosure, safety audit visibility, strongest evidence, blockers, Reader
+      Brief fields, and the no shadow/live/official weights/broker/order
+      boundary.
+    owner_action: run_after_next_candidate_research_gate
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

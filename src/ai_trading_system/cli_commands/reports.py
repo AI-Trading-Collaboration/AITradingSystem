@@ -7433,6 +7433,12 @@ def next_candidate_research_gate_command(
         reports_dir=reports_dir,
         label="next candidate backfill",
     )
+    _, safety_audit = _load_executable_binding_source_payload(
+        report_type=executable_binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        label="executable binding safety audit",
+    )
     _, stress = _load_next_research_source_payload(
         report_type=next_research_reports.STRESS_REVIEW_REPORT_TYPE,
         report_date=report_date,
@@ -7466,6 +7472,7 @@ def next_candidate_research_gate_command(
     payload = next_research_reports.build_next_candidate_research_gate_payload(
         as_of=report_date,
         frozen_spec_payload=frozen,
+        safety_audit_payload=safety_audit,
         backfill_payload=backfill,
         stress_review_payload=stress,
         cost_benchmark_payload=cost_benchmark,

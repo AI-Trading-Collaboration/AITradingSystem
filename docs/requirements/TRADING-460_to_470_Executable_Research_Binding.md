@@ -273,3 +273,24 @@ Latest confirmed statuses:
   summary. No paper-shadow, official weights, broker/order, owner decision
   append, or production mutation were produced. Next task is TRADING-468
   research gate rerun from executable binding and real metrics.
+- 2026-06-18: TRADING-468 started. Implementation must load the frozen candidate
+  spec, executable binding safety audit, TRADING-464 real backfill, TRADING-465
+  stress/cost/benchmark reviews, TRADING-466 vs-returned comparison, and
+  TRADING-467 signal/window reviews. The gate must output only
+  `RESEARCH_PROMISING`, `NEEDS_MORE_EVIDENCE`,
+  `RETURN_TO_HYPOTHESIS_BACKLOG`, or `REJECT_RESEARCH_CANDIDATE`, must include
+  strongest positive/negative evidence, blockers, and required next action, and
+  still must not allow paper-shadow activation or any official weight/broker/
+  order/production side effect.
+- 2026-06-18: TRADING-468 completed pending commit. The real 2026-06-17 gate
+  loaded executable binding safety audit `EXECUTABLE_BINDING_SAFETY_WARNING`,
+  TRADING-464 backfill `CANDIDATE_BACKFILL_PARTIAL`, TRADING-465 stress
+  `WEAK`, TRADING-465 cost/benchmark `COST_BENCHMARK_REVIEW_WEAK`, TRADING-466
+  comparison `MIXED_VS_RETURNED_CANDIDATE`, TRADING-467 signal
+  `SIGNAL_ROBUSTNESS_BLOCKED`, and TRADING-467 window `WINDOW_FRAGILE`.
+  Decision remained `NEEDS_MORE_EVIDENCE`, validation PASS, blockers=5:
+  stress weak, cost/benchmark weak, repeated failure mode unresolved, signal
+  robustness blocked, and window sensitivity fragile. Required next action is
+  `repair_signal_window_evidence_before_gate_rerun`. The gate produced no
+  paper-shadow activation, official weights, broker/order, owner decision append,
+  or production mutation. Next task is TRADING-469 owner research review packet.
