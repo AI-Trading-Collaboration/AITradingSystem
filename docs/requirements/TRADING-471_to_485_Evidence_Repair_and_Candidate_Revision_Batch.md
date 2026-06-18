@@ -34,7 +34,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-478|candidate-v2-spec-freeze|DONE|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
 |TRADING-479|candidate-v2-executable-binding-update|DONE|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
 |TRADING-480|candidate-v2-mini-backfill|DONE|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
-|TRADING-481|candidate-v2-mini-gate|READY|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
+|TRADING-481|candidate-v2-mini-gate|DONE|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
 |TRADING-482|candidate-v2-full-backfill-if-approved|READY|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
 |TRADING-483|candidate-v2-research-gate|READY|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
 |TRADING-484|v2-owner-research-review-packet|READY|TRADING-483|准备 owner research options；不自动 append owner decision。|
@@ -254,3 +254,24 @@ owner decision append、production mutation 或 automatic position control。
   failed=0。结论为 weak，因此按硬停止条件 TRADING-481 mini gate 必须阻止 full
   backfill，除非后续 owner 明确选择新的修复任务；未运行 full backfill、未生成
   benchmark conclusion、未创建 paper-shadow/official weights/broker/order/production。
+- 2026-06-18: TRADING-481 开始实现。范围限定为只读读取 TRADING-478 v2 spec、
+  TRADING-479 v2 binding safety audit、TRADING-480 mini backfill 与 validation、
+  signal robustness quick check、turnover/cost quick check，输出
+  `V2_PROCEED_TO_FULL_BACKFILL` / `V2_NEEDS_REDESIGN` / `V2_REJECT_RESEARCH_CANDIDATE`
+  / `V2_BLOCKED` gate decision、strongest positive/negative evidence、Reader Brief
+  和 validation artifact。该 gate 不运行 full backfill、不允许 paper-shadow、不写 official
+  target weights、不触发 broker/order、不修改 production。
+- 2026-06-18: TRADING-481 完成 pending commit。真实 2026-06-17 mini gate
+  `candidate_v2_mini_gate_2026-06-17` 输出 `V2_NEEDS_REDESIGN`，
+  full_backfill_allowed=false，blocked_reason=`mini_backfill_weak`；source spec=
+  `CANDIDATE_V2_SPEC_FREEZE_READY`，source binding=
+  `CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS`，source mini backfill=
+  `V2_MINI_BACKFILL_WEAK`，source mini validation=PASS，safety audit=
+  `EXECUTABLE_BINDING_SAFETY_WARNING`，data quality=`PASS_WITH_WARNINGS`。Strongest
+  positive evidence=5（窗口完整、signal completeness=1.0、normal return proxy 正、
+  cost proxy inputs available、dynamic signal rows available）；strongest negative
+  evidence=6（mini weak、slow_drawdown/high_volatility_sideways/false_risk_off 三个
+  return proxy 为负、v_shaped_recovery 未覆盖、source binding warning）。
+  Validation `candidate_v2_mini_gate_validation_2026-06-17` 为 PASS，checks=10、
+  failed=0。按 gate 决策不得运行 TRADING-482 full backfill；未运行 full backfill、
+  未创建 paper-shadow/official weights/broker/order/production。

@@ -2107,6 +2107,18 @@ data quality status、Reader Brief 和安全边界。该 artifact 不是 full ba
 benchmark conclusion、不 append owner decision、不创建 paper-shadow、不批准 extended/live、
 不写 official target weights、不触发 broker/order、不修改 production。
 
+TRADING-481_CANDIDATE_V2_MINI_GATE 在 TRADING-480 后决定是否允许 full backfill。
+运行 `aits reports candidate-v2-mini-gate --as-of YYYY-MM-DD` 会先执行同一 cached-data
+quality gate，再读取 TRADING-478 v2 spec、TRADING-479 binding safety audit、
+TRADING-480 mini backfill 与 validation、signal robustness quick check 和 turnover/cost
+quick check，输出 `V2_PROCEED_TO_FULL_BACKFILL`、`V2_NEEDS_REDESIGN`、
+`V2_REJECT_RESEARCH_CANDIDATE` 或 `V2_BLOCKED`，并列出 strongest positive / negative
+evidence。`aits reports validate-candidate-v2-mini-gate --latest` 校验 decision taxonomy、
+weak-mini hard stop、proceed prerequisites、evidence rows、Reader Brief 和安全边界。若
+mini backfill 为 weak，必须阻止 TRADING-482 full backfill；该 artifact 不运行 full
+backfill、不 append owner decision、不创建 paper-shadow、不批准 extended/live、不写
+official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

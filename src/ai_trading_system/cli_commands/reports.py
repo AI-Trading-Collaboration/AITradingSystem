@@ -6942,6 +6942,10 @@ def _write_evidence_repair_validation(
         payload = evidence_repair_reports.validate_candidate_v2_mini_backfill_payload(
             source_payload
         )
+    elif source_report_type == evidence_repair_reports.CANDIDATE_V2_MINI_GATE_REPORT_TYPE:
+        payload = evidence_repair_reports.validate_candidate_v2_mini_gate_payload(
+            source_payload
+        )
     else:
         raise typer.BadParameter(
             f"Unsupported evidence repair report_type: {source_report_type}"
@@ -8366,6 +8370,97 @@ def candidate_v2_mini_backfill_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("candidate-v2-mini-gate")
+def candidate_v2_mini_gate_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Candidate v2 mini gate 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径，用于同一数据质量 gate。"),
+    ] = evidence_repair_reports.DEFAULT_V2_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量 Markdown 输出路径；不传时按日期使用默认报告路径。"),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option("--full-universe", help="按完整 AI 产业链标的运行 validate-data。"),
+    ] = False,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 mini gate JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 mini gate Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-481：决定 candidate v2 是否允许进入 full backfill。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    data_quality_gate = _run_next_research_data_quality_gate(
+        report_date=report_date,
+        reports_dir=reports_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_output_path=data_quality_output_path,
+        full_universe=full_universe,
+    )
+    console.print(
+        f"数据质量状态：{data_quality_gate['status']}；"
+        f"报告：{data_quality_gate['report_path']}"
+    )
+    if data_quality_gate["passed"] is not True:
+        raise typer.Exit(code=1)
+    try:
+        payload = evidence_repair_reports.build_candidate_v2_mini_gate_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+            data_quality_gate=data_quality_gate,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    style = (
+        "green"
+        if payload["status"] == evidence_repair_reports.V2_PROCEED_TO_FULL_BACKFILL
+        else "yellow"
+    )
+    if payload["status"] in {
+        evidence_repair_reports.V2_BLOCKED,
+        evidence_repair_reports.V2_REJECT_RESEARCH_CANDIDATE,
+    }:
+        style = "red"
+    console.print(f"[{style}]Candidate v2 mini gate：{payload['status']}[/{style}]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"source_mini_backfill_status：{summary['source_mini_backfill_status']}")
+    console.print(f"full_backfill_allowed：{summary['full_backfill_allowed']}")
+    console.print(f"blocked_reason：{summary['full_backfill_blocked_reason']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -9588,6 +9683,59 @@ def validate_candidate_v2_mini_backfill_command(
     style = "green" if status == "PASS" else "red"
     summary = payload["summary"]
     console.print(f"[{style}]Candidate v2 mini backfill validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-candidate-v2-mini-gate")
+def validate_candidate_v2_mini_gate_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest candidate v2 mini gate。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=evidence_repair_reports.CANDIDATE_V2_MINI_GATE_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="candidate v2 mini gate",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Candidate v2 mini gate validation：{status}[/{style}]")
     console.print(f"Source JSON：{source_path}")
     console.print(f"Validation JSON：{json_path}")
     console.print(f"Validation Markdown：{md_path}")

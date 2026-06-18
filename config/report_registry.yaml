@@ -9431,6 +9431,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_v2_mini_gate
+    title: Candidate V2 Mini Gate
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports candidate-v2-mini-gate --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_v2_mini_gate_20*.json
+      - outputs/reports/candidate_v2_mini_gate_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-481 reads the v2 spec, binding safety audit, validated mini
+      backfill, signal robustness quick check, and turnover/cost quick check to
+      decide whether candidate v2 may proceed to full backfill.
+    owner_action: use_as_gate_before_trading_482_full_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_v2_mini_gate_validation
+    title: Candidate V2 Mini Gate Validation
+    group: research
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-v2-mini-gate --latest
+    artifact_globs:
+      - outputs/reports/candidate_v2_mini_gate_validation_20*.json
+      - outputs/reports/candidate_v2_mini_gate_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-481 validation checks gate decision taxonomy, weak-mini hard
+      stop behavior, proceed prerequisites, strongest positive/negative evidence,
+      quick checks, Reader Brief fields, and the no paper-shadow / full-backfill
+      execution / broker/order / production boundary.
+    owner_action: run_after_candidate_v2_mini_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

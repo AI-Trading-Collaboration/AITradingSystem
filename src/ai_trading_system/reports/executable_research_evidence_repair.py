@@ -37,6 +37,7 @@ CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE = (
     "candidate_v2_executable_binding_update"
 )
 CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE = "candidate_v2_mini_backfill"
+CANDIDATE_V2_MINI_GATE_REPORT_TYPE = "candidate_v2_mini_gate"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -67,6 +68,9 @@ CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_MINI_GATE_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -119,6 +123,16 @@ V2_MINI_BACKFILL_STATUSES: tuple[str, ...] = (
 # TRADING-480 uses sign-only research triage before TRADING-481 gate calibration;
 # this is not a tradable acceptance threshold.
 V2_MINI_RETURN_WEAKNESS_CUTOFF = 0.0
+V2_PROCEED_TO_FULL_BACKFILL = "V2_PROCEED_TO_FULL_BACKFILL"
+V2_NEEDS_REDESIGN = "V2_NEEDS_REDESIGN"
+V2_REJECT_RESEARCH_CANDIDATE = "V2_REJECT_RESEARCH_CANDIDATE"
+V2_BLOCKED = "V2_BLOCKED"
+V2_MINI_GATE_STATUSES: tuple[str, ...] = (
+    V2_PROCEED_TO_FULL_BACKFILL,
+    V2_NEEDS_REDESIGN,
+    V2_REJECT_RESEARCH_CANDIDATE,
+    V2_BLOCKED,
+)
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -186,6 +200,8 @@ REPORT_PREFIXES: dict[str, str] = {
     CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE: (
         "candidate_v2_mini_backfill_validation"
     ),
+    CANDIDATE_V2_MINI_GATE_REPORT_TYPE: "candidate_v2_mini_gate",
+    CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE: "candidate_v2_mini_gate_validation",
 }
 
 REQUIRED_SOURCE_REPORT_TYPES: tuple[str, ...] = (
@@ -3459,6 +3475,367 @@ def validate_candidate_v2_mini_backfill_payload(
         ),
         safety_boundary=_safety_boundary()
         | {"mode": "candidate_v2_mini_backfill_validation"},
+        limitations=["Validation is read-only and does not run full backfill."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_candidate_v2_mini_gate_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    data_quality_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    spec_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    binding_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    mini_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    mini_validation_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    signal_path = default_evidence_repair_json_path(
+        SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    cost_path = default_evidence_repair_json_path(
+        COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    spec_payload = _read_json_mapping(spec_path)
+    binding_payload = _read_json_mapping(binding_path)
+    mini_payload = _read_json_mapping(mini_path)
+    mini_validation_payload = _read_json_mapping(mini_validation_path)
+    signal_payload = _read_json_mapping(signal_path)
+    cost_payload = _read_json_mapping(cost_path)
+    spec = _mapping(spec_payload.get("frozen_candidate_spec"))
+    candidate_id = _text(
+        _mapping(mini_payload.get("summary")).get("candidate_id"),
+        _text(spec.get("candidate_id"), "MISSING"),
+    )
+    data_quality = _v2_data_quality_gate(data_quality_gate)
+    signal_quick_check = _candidate_v2_mini_gate_signal_quick_check(
+        binding_payload=binding_payload,
+        signal_payload=signal_payload,
+        mini_payload=mini_payload,
+    )
+    turnover_cost_quick_check = _candidate_v2_mini_gate_turnover_cost_quick_check(
+        mini_payload=mini_payload,
+        cost_payload=cost_payload,
+    )
+    positive_evidence = _candidate_v2_mini_gate_positive_evidence(
+        mini_payload=mini_payload,
+        signal_quick_check=signal_quick_check,
+        turnover_cost_quick_check=turnover_cost_quick_check,
+    )
+    negative_evidence = _candidate_v2_mini_gate_negative_evidence(
+        binding_payload=binding_payload,
+        mini_payload=mini_payload,
+        signal_quick_check=signal_quick_check,
+        turnover_cost_quick_check=turnover_cost_quick_check,
+    )
+    gate_checks = _candidate_v2_mini_gate_input_checks(
+        spec_payload=spec_payload,
+        binding_payload=binding_payload,
+        mini_payload=mini_payload,
+        mini_validation_payload=mini_validation_payload,
+        data_quality=data_quality,
+        signal_quick_check=signal_quick_check,
+        turnover_cost_quick_check=turnover_cost_quick_check,
+    )
+    decision, full_backfill_allowed, blocked_reason = _candidate_v2_mini_gate_decision(
+        gate_checks=gate_checks,
+        mini_payload=mini_payload,
+    )
+    mini_summary = _mapping(mini_payload.get("summary"))
+    binding_summary = _mapping(binding_payload.get("summary"))
+    requested_range = _text(
+        mini_payload.get("requested_date_range"),
+        _text(spec_payload.get("requested_date_range"), f"{AI_REGIME_START}..unspecified"),
+    )
+    summary = {
+        "candidate_v2_mini_gate_decision": decision,
+        "candidate_id": candidate_id,
+        "source_spec_status": _text(spec_payload.get("status")),
+        "source_binding_status": _text(binding_payload.get("status")),
+        "source_mini_backfill_status": _text(mini_payload.get("status")),
+        "source_mini_validation_status": _text(mini_validation_payload.get("status")),
+        "source_safety_audit_status": _text(binding_summary.get("safety_audit_status")),
+        "signal_quick_check_status": _text(signal_quick_check.get("status")),
+        "turnover_cost_quick_check_status": _text(turnover_cost_quick_check.get("status")),
+        "data_quality_status": _text(data_quality.get("status")),
+        "data_quality_passed": data_quality.get("passed") is True,
+        "source_mini_data_quality_status": _text(mini_summary.get("data_quality_status")),
+        "full_backfill_allowed": full_backfill_allowed,
+        "full_backfill_blocked_reason": blocked_reason,
+        "strongest_positive_count": len(positive_evidence),
+        "strongest_negative_count": len(negative_evidence),
+        "research_only": True,
+        "manual_review_only": True,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_MINI_GATE_REPORT_TYPE,
+        as_of=as_of,
+        status=decision,
+        purpose=(
+            "Decide whether candidate v2 deserves a full backfill after the "
+            "compact mini backfill, without permitting paper-shadow or execution."
+        ),
+        input_artifacts={
+            CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE: str(spec_path),
+            CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE: str(binding_path),
+            CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE: str(mini_path),
+            CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE: str(
+                mini_validation_path
+            ),
+            SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: str(signal_path),
+            COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE: str(cost_path),
+            "data_quality_report": _text(data_quality.get("report_path")),
+        },
+        output_decision=decision,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE, spec_path, spec_payload),
+                _source_artifact(
+                    CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+                    binding_path,
+                    binding_payload,
+                ),
+                _source_artifact(CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE, mini_path, mini_payload),
+                _source_artifact(
+                    CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE,
+                    mini_validation_path,
+                    mini_validation_payload,
+                ),
+                _source_artifact(
+                    SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+                    signal_path,
+                    signal_payload,
+                ),
+                _source_artifact(
+                    COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+                    cost_path,
+                    cost_payload,
+                ),
+            ],
+            "gate_input_checks": gate_checks,
+            "signal_robustness_quick_check": signal_quick_check,
+            "turnover_cost_quick_check": turnover_cost_quick_check,
+            "strongest_positive_evidence": positive_evidence,
+            "strongest_negative_evidence": negative_evidence,
+            "data_quality_gate": data_quality,
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"Candidate v2 mini gate decision is {decision}; "
+                f"full_backfill_allowed={full_backfill_allowed}."
+            ),
+            key_result=decision,
+            blocking_issues=blocked_reason or "none",
+            warnings=_join_reasons([_text(mini_summary.get("warning_reason"))]) or "none",
+            next_action=(
+                "run_trading_482_candidate_v2_full_backfill"
+                if full_backfill_allowed
+                else "redesign_or_stop_candidate_v2_before_full_backfill"
+            ),
+        ),
+        next_action=(
+            "run_trading_482_candidate_v2_full_backfill"
+            if full_backfill_allowed
+            else "redesign_or_stop_candidate_v2_before_full_backfill"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_mini_gate",
+            "full_backfill_allowed": full_backfill_allowed,
+            "full_backfill_executed": False,
+            "paper_shadow_outputs_generated": False,
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+        },
+        limitations=[
+            "TRADING-481 is a gate decision only and does not run full backfill.",
+            "A weak mini-backfill status blocks TRADING-482 full backfill.",
+            "The gate does not approve paper-shadow, extended shadow, or live trading.",
+        ],
+        requested_date_range=requested_range,
+    )
+
+
+def validate_candidate_v2_mini_gate_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    gate_checks = _records(payload.get("gate_input_checks"))
+    positive = _records(payload.get("strongest_positive_evidence"))
+    negative = _records(payload.get("strongest_negative_evidence"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == CANDIDATE_V2_MINI_GATE_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_MINI_GATE_REPORT_TYPE}.",
+        "regenerate_candidate_v2_mini_gate",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status in V2_MINI_GATE_STATUSES,
+        "Candidate v2 mini gate decision must be recognized.",
+        "restore_candidate_v2_mini_gate_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "gate_checks_present",
+        bool(gate_checks),
+        "Mini gate must expose source input checks.",
+        "restore_candidate_v2_mini_gate_checks",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "weak_mini_blocks_full_backfill",
+        _text(summary.get("source_mini_backfill_status")) != V2_MINI_BACKFILL_WEAK
+        or (
+            status != V2_PROCEED_TO_FULL_BACKFILL
+            and summary.get("full_backfill_allowed") is False
+        ),
+        "Weak mini backfill must block full backfill.",
+        "restore_weak_mini_hard_stop",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "proceed_requires_promising_validated_inputs",
+        status != V2_PROCEED_TO_FULL_BACKFILL
+        or (
+            _text(summary.get("source_mini_backfill_status"))
+            == V2_MINI_BACKFILL_PROMISING
+            and _text(summary.get("source_mini_validation_status")) == PASS_STATUS
+            and _text(summary.get("source_safety_audit_status"))
+            in {binding_reports.SAFETY_PASS, binding_reports.SAFETY_WARNING}
+            and summary.get("data_quality_passed") is True
+        ),
+        (
+            "Proceed decision requires promising mini backfill, validation pass, "
+            "safety pass/warning, and data quality pass."
+        ),
+        "restore_candidate_v2_proceed_requirements",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "evidence_lists_present",
+        bool(positive) and bool(negative),
+        "Mini gate must include strongest positive and negative evidence.",
+        "restore_candidate_v2_gate_evidence",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "quick_checks_present",
+        bool(_mapping(payload.get("signal_robustness_quick_check")))
+        and bool(_mapping(payload.get("turnover_cost_quick_check"))),
+        "Mini gate must include signal robustness and turnover/cost quick checks.",
+        "restore_candidate_v2_quick_checks",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and summary.get("owner_decision_appended") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Mini gate must not create execution, paper-shadow, or production output.",
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-481 candidate v2 mini gate.",
+        input_artifacts={CANDIDATE_V2_MINI_GATE_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "full_backfill_allowed": summary.get("full_backfill_allowed") is True,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"{CANDIDATE_V2_MINI_GATE_REPORT_TYPE} validation is {validation_status}.",
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_mini_gate"
+                if validation_status == FAIL_STATUS
+                else "use_validated_candidate_v2_mini_gate"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_mini_gate"
+            if validation_status == FAIL_STATUS
+            else "use_validated_candidate_v2_mini_gate"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_mini_gate_validation"},
         limitations=["Validation is read-only and does not run full backfill."],
         requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
     )
@@ -7034,6 +7411,321 @@ def _candidate_v2_mini_status(
     return V2_MINI_BACKFILL_PROMISING
 
 
+def _candidate_v2_mini_gate_signal_quick_check(
+    *,
+    binding_payload: Mapping[str, Any],
+    signal_payload: Mapping[str, Any],
+    mini_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    binding_summary = _mapping(binding_payload.get("summary"))
+    mini_summary = _mapping(mini_payload.get("summary"))
+    uncovered_contexts = [
+        _text(row.get("window_id"))
+        for row in _records(binding_payload.get("v2_signal_context_coverage"))
+        if row.get("covered") is not True
+    ]
+    blocker_rows = _records(signal_payload.get("signal_blockers"))
+    status = (
+        "SIGNAL_QUICK_CHECK_PASS"
+        if not uncovered_contexts
+        and _text(mini_summary.get("signal_completeness")) == "COMPLETE"
+        else "SIGNAL_QUICK_CHECK_WARNING"
+    )
+    return {
+        "check_id": "signal_robustness_quick_check",
+        "status": status,
+        "source_binding_signal_row_count": _int(binding_summary.get("signal_row_count")),
+        "covered_validation_context_count": _int(
+            binding_summary.get("covered_validation_context_count")
+        ),
+        "required_validation_context_count": _int(
+            binding_summary.get("required_validation_context_count")
+        ),
+        "uncovered_validation_contexts": uncovered_contexts,
+        "mini_signal_completeness": _text(mini_summary.get("signal_completeness")),
+        "mini_signal_completeness_ratio": mini_summary.get("signal_completeness_ratio"),
+        "source_signal_blocker_count": len(blocker_rows),
+        "source_signal_drilldown_status": _text(signal_payload.get("status")),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_mini_gate_turnover_cost_quick_check(
+    *,
+    mini_payload: Mapping[str, Any],
+    cost_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    mini_summary = _mapping(mini_payload.get("summary"))
+    cost_inputs = _records(mini_payload.get("cost_proxy_inputs"))
+    unavailable_inputs = [
+        _text(row.get("window_id"))
+        for row in cost_inputs
+        if row.get("cost_scenario_inputs_available") is not True
+    ]
+    negative_windows = [
+        _text(row.get("window_id"))
+        for row in _records(mini_payload.get("mini_backfill_windows"))
+        if row.get("return_proxy") is not None
+        and _float(row.get("return_proxy")) < V2_MINI_RETURN_WEAKNESS_CUTOFF
+    ]
+    status = (
+        "TURNOVER_COST_QUICK_CHECK_WEAK"
+        if _text(mini_payload.get("status")) == V2_MINI_BACKFILL_WEAK
+        else "TURNOVER_COST_QUICK_CHECK_READY"
+    )
+    return {
+        "check_id": "turnover_cost_quick_check",
+        "status": status,
+        "mini_turnover_proxy": mini_summary.get("turnover_proxy"),
+        "mini_aggregate_return_proxy": mini_summary.get("aggregate_return_proxy"),
+        "mini_aggregate_drawdown_proxy": mini_summary.get("aggregate_drawdown_proxy"),
+        "negative_return_windows": negative_windows,
+        "cost_proxy_input_count": len(cost_inputs),
+        "unavailable_cost_proxy_input_windows": unavailable_inputs,
+        "source_cost_benchmark_status": _text(cost_payload.get("status")),
+        "source_design_judgment": _text(
+            _mapping(cost_payload.get("summary")).get("design_judgment")
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_mini_gate_positive_evidence(
+    *,
+    mini_payload: Mapping[str, Any],
+    signal_quick_check: Mapping[str, Any],
+    turnover_cost_quick_check: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    summary = _mapping(mini_payload.get("summary"))
+    rows: list[dict[str, Any]] = []
+    if _int(summary.get("completed_window_count")) == len(V2_MINI_BACKFILL_WINDOWS):
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="mini_windows_complete",
+                category="coverage",
+                strength="strong",
+                evidence=(
+                    f"completed_window_count={summary.get('completed_window_count')}/"
+                    f"{len(V2_MINI_BACKFILL_WINDOWS)}"
+                ),
+            )
+        )
+    if _text(summary.get("signal_completeness")) == "COMPLETE":
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="mini_signal_completeness_complete",
+                category="signal_robustness",
+                strength="medium",
+                evidence=f"signal_completeness_ratio={summary.get('signal_completeness_ratio')}",
+            )
+        )
+    normal_window = _window_by_id(mini_payload, "normal_market_regime")
+    if normal_window and _float(normal_window.get("return_proxy")) >= 0:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="normal_market_positive_return_proxy",
+                category="return_proxy",
+                strength="medium",
+                evidence=f"return_proxy={normal_window.get('return_proxy')}",
+            )
+        )
+    if not _list_values(turnover_cost_quick_check.get("unavailable_cost_proxy_input_windows")):
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="cost_proxy_inputs_available",
+                category="cost_inputs",
+                strength="medium",
+                evidence=(
+                    "cost_proxy_input_count="
+                    f"{turnover_cost_quick_check.get('cost_proxy_input_count')}"
+                ),
+            )
+        )
+    if _int(signal_quick_check.get("source_binding_signal_row_count")) > 1:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="dynamic_signal_rows_available",
+                category="signal_binding",
+                strength="medium",
+                evidence=(
+                    "source_binding_signal_row_count="
+                    f"{signal_quick_check.get('source_binding_signal_row_count')}"
+                ),
+            )
+        )
+    return rows
+
+
+def _candidate_v2_mini_gate_negative_evidence(
+    *,
+    binding_payload: Mapping[str, Any],
+    mini_payload: Mapping[str, Any],
+    signal_quick_check: Mapping[str, Any],
+    turnover_cost_quick_check: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if _text(mini_payload.get("status")) == V2_MINI_BACKFILL_WEAK:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="mini_backfill_weak",
+                category="hard_stop",
+                strength="strong",
+                evidence="source_mini_backfill_status=V2_MINI_BACKFILL_WEAK",
+            )
+        )
+    for window_id in _list_values(turnover_cost_quick_check.get("negative_return_windows")):
+        window = _window_by_id(mini_payload, window_id)
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id=f"negative_return_proxy:{window_id}",
+                category="return_proxy",
+                strength="strong",
+                evidence=(
+                    f"window={window_id}; return_proxy={window.get('return_proxy')}; "
+                    f"drawdown_proxy={window.get('drawdown_proxy')}"
+                ),
+            )
+        )
+    for context in _list_values(signal_quick_check.get("uncovered_validation_contexts")):
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id=f"uncovered_validation_context:{context}",
+                category="signal_robustness",
+                strength="medium",
+                evidence=f"validation_context_not_covered={context}",
+            )
+        )
+    warning_reason = _text(_mapping(binding_payload.get("summary")).get("warning_reason"))
+    if warning_reason:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="source_binding_warning",
+                category="binding_safety",
+                strength="medium",
+                evidence=warning_reason,
+            )
+        )
+    return rows
+
+
+def _candidate_v2_mini_gate_input_checks(
+    *,
+    spec_payload: Mapping[str, Any],
+    binding_payload: Mapping[str, Any],
+    mini_payload: Mapping[str, Any],
+    mini_validation_payload: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+    signal_quick_check: Mapping[str, Any],
+    turnover_cost_quick_check: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    binding_summary = _mapping(binding_payload.get("summary"))
+    checks = [
+        {
+            "check_id": "source_spec_ready",
+            "status": PASS_STATUS
+            if _text(spec_payload.get("status")) == CANDIDATE_V2_SPEC_FREEZE_READY
+            else FAIL_STATUS,
+            "evidence": _text(spec_payload.get("status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "source_binding_safety_allows_gate",
+            "status": PASS_STATUS
+            if _text(binding_summary.get("safety_audit_status"))
+            in {binding_reports.SAFETY_PASS, binding_reports.SAFETY_WARNING}
+            else FAIL_STATUS,
+            "evidence": _text(binding_summary.get("safety_audit_status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "source_mini_backfill_validated",
+            "status": PASS_STATUS
+            if _text(mini_validation_payload.get("status")) == PASS_STATUS
+            else FAIL_STATUS,
+            "evidence": _text(mini_validation_payload.get("status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "current_data_quality_gate_passed",
+            "status": PASS_STATUS if data_quality.get("passed") is True else FAIL_STATUS,
+            "evidence": _text(data_quality.get("status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "mini_backfill_not_blocked",
+            "status": PASS_STATUS
+            if _text(mini_payload.get("status")) != V2_MINI_BACKFILL_BLOCKED
+            else FAIL_STATUS,
+            "evidence": _text(mini_payload.get("status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "signal_quick_check_available",
+            "status": PASS_STATUS
+            if _text(signal_quick_check.get("status"))
+            in {"SIGNAL_QUICK_CHECK_PASS", "SIGNAL_QUICK_CHECK_WARNING"}
+            else FAIL_STATUS,
+            "evidence": _text(signal_quick_check.get("status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "turnover_cost_quick_check_available",
+            "status": PASS_STATUS
+            if _text(turnover_cost_quick_check.get("status"))
+            in {"TURNOVER_COST_QUICK_CHECK_READY", "TURNOVER_COST_QUICK_CHECK_WEAK"}
+            else FAIL_STATUS,
+            "evidence": _text(turnover_cost_quick_check.get("status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    ]
+    return checks
+
+
+def _candidate_v2_mini_gate_decision(
+    *,
+    gate_checks: Sequence[Mapping[str, Any]],
+    mini_payload: Mapping[str, Any],
+) -> tuple[str, bool, str]:
+    failed_checks = [
+        _text(row.get("check_id"))
+        for row in gate_checks
+        if _text(row.get("status")) == FAIL_STATUS
+    ]
+    mini_status = _text(mini_payload.get("status"))
+    if failed_checks:
+        return V2_BLOCKED, False, _join_reasons(failed_checks)
+    if mini_status == V2_MINI_BACKFILL_WEAK:
+        return V2_NEEDS_REDESIGN, False, "mini_backfill_weak"
+    if mini_status in {V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE, V2_MINI_BACKFILL_BLOCKED}:
+        return V2_BLOCKED, False, f"mini_backfill_status:{mini_status}"
+    if mini_status == V2_MINI_BACKFILL_PROMISING:
+        return V2_PROCEED_TO_FULL_BACKFILL, True, ""
+    return V2_BLOCKED, False, f"unknown_mini_backfill_status:{mini_status}"
+
+
+def _mini_gate_evidence(
+    *,
+    evidence_id: str,
+    category: str,
+    strength: str,
+    evidence: str,
+) -> dict[str, Any]:
+    return {
+        "evidence_id": evidence_id,
+        "category": category,
+        "strength": strength,
+        "evidence": evidence,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _window_by_id(payload: Mapping[str, Any], window_id: str) -> dict[str, Any]:
+    for row in _records(payload.get("mini_backfill_windows")):
+        if _text(row.get("window_id")) == window_id:
+            return row
+    return {}
+
+
 def _latest_by_date(rows: Sequence[Mapping[str, Any]], key: str) -> dict[str, Any]:
     if not rows:
         return {}
@@ -7336,6 +8028,15 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_MINI_GATE_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Gate Input Checks", "gate_input_checks"),
+            ("Strongest Positive Evidence", "strongest_positive_evidence"),
+            ("Strongest Negative Evidence", "strongest_negative_evidence"),
+        ]
+    if report_type == CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -7389,11 +8090,18 @@ __all__ = [
     "CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE",
     "CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_V2_MINI_GATE_REPORT_TYPE",
+    "CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE",
     "V2_MINI_BACKFILL_BLOCKED",
     "V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE",
     "V2_MINI_BACKFILL_PROMISING",
     "V2_MINI_BACKFILL_STATUSES",
     "V2_MINI_BACKFILL_WEAK",
+    "V2_MINI_GATE_STATUSES",
+    "V2_BLOCKED",
+    "V2_NEEDS_REDESIGN",
+    "V2_PROCEED_TO_FULL_BACKFILL",
+    "V2_REJECT_RESEARCH_CANDIDATE",
     "CANDIDATE_V2_SPEC_FREEZE_READY",
     "CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE",
     "CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE",
@@ -7432,6 +8140,7 @@ __all__ = [
     "build_candidate_redesign_hypothesis_payload",
     "build_candidate_v2_executable_binding_update_payload",
     "build_candidate_v2_mini_backfill_payload",
+    "build_candidate_v2_mini_gate_payload",
     "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
@@ -7446,6 +8155,7 @@ __all__ = [
     "validate_candidate_redesign_hypothesis_payload",
     "validate_candidate_v2_executable_binding_update_payload",
     "validate_candidate_v2_mini_backfill_payload",
+    "validate_candidate_v2_mini_gate_payload",
     "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
