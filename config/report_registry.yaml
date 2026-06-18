@@ -8866,6 +8866,44 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: next_candidate_executable_binding_contract
+    title: Next Candidate Executable Binding Contract
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-executable-binding-contract --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_executable_binding_contract_20*.json
+      - outputs/reports/next_candidate_executable_binding_contract_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-460 defines the executable research-only binding contract for the
+      frozen next candidate before any signal behavior, hypothetical weights, or
+      real backfill metrics are generated.
+    owner_action: validate_contract_before_signal_binding_implementation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_executable_binding_contract_validation
+    title: Next Candidate Executable Binding Contract Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-executable-binding-contract --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_executable_binding_contract_validation_*.json
+      - outputs/reports/next_candidate_executable_binding_contract_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Contract validation fails closed if required schemas or output types are
+      missing, if research-only metadata is absent, or if shadow/live/official
+      weights/broker/order/production boundaries are weakened.
+    owner_action: run_after_executable_binding_contract
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

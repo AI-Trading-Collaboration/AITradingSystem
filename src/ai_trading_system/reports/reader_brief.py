@@ -190,6 +190,7 @@ def build_reader_brief_payload(
         _return_to_research_governance_snapshot_summary(report_index)
     )
     next_research_cycle_snapshot = _next_research_cycle_snapshot_summary(report_index)
+    executable_binding_contract = _executable_binding_contract_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -361,6 +362,7 @@ def build_reader_brief_payload(
         "decision_stage_governance_snapshot": decision_stage_governance_snapshot,
         "return_to_research_governance_snapshot": return_to_research_governance_snapshot,
         "next_research_cycle_snapshot": next_research_cycle_snapshot,
+        "executable_binding_contract": executable_binding_contract,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -709,6 +711,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         payload.get("return_to_research_governance_snapshot")
     )
     next_research_cycle_snapshot = _mapping(payload.get("next_research_cycle_snapshot"))
+    executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1783,6 +1786,81 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "production_effect",
                         next_research_cycle_snapshot.get("production_effect"),
                     ),
+                ]
+            ),
+        ),
+        _section(
+            "Executable Binding Contract",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        executable_binding_contract.get("availability"),
+                    ),
+                    ("status", executable_binding_contract.get("status")),
+                    (
+                        "contract_status",
+                        executable_binding_contract.get("contract_status"),
+                    ),
+                    (
+                        "candidate_id",
+                        executable_binding_contract.get("candidate_id"),
+                    ),
+                    (
+                        "binding_version",
+                        executable_binding_contract.get("binding_version"),
+                    ),
+                    (
+                        "input_schema_id",
+                        executable_binding_contract.get("input_schema_id"),
+                    ),
+                    (
+                        "output_schema_id",
+                        executable_binding_contract.get("output_schema_id"),
+                    ),
+                    (
+                        "research_only",
+                        executable_binding_contract.get("research_only"),
+                    ),
+                    (
+                        "manual_review_only",
+                        executable_binding_contract.get("manual_review_only"),
+                    ),
+                    (
+                        "official_target_weights",
+                        executable_binding_contract.get("official_target_weights"),
+                    ),
+                    (
+                        "strategy_behavior_implemented",
+                        executable_binding_contract.get("strategy_behavior_implemented"),
+                    ),
+                    (
+                        "signal_binding_implemented",
+                        executable_binding_contract.get("signal_binding_implemented"),
+                    ),
+                    (
+                        "weight_binding_implemented",
+                        executable_binding_contract.get("weight_binding_implemented"),
+                    ),
+                    (
+                        "validation_status",
+                        executable_binding_contract.get("validation_status"),
+                    ),
+                    ("next_action", executable_binding_contract.get("next_action")),
+                    (
+                        "detail_report",
+                        executable_binding_contract.get("detail_report"),
+                    ),
+                    (
+                        "validation_detail_report",
+                        executable_binding_contract.get("validation_detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        executable_binding_contract.get("production_effect"),
+                    ),
+                    ("broker_effect", executable_binding_contract.get("broker_effect")),
+                    ("order_effect", executable_binding_contract.get("order_effect")),
                 ]
             ),
         ),
@@ -8677,6 +8755,102 @@ def _missing_next_research_cycle_snapshot_summary(reason: str) -> dict[str, Any]
         "summary_sentence": (
             "next_candidate_research_cycle_snapshot artifact missing; "
             "run reports next-candidate-research-cycle-snapshot."
+        ),
+        "limitation": reason,
+    }
+
+
+def _executable_binding_contract_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_executable_binding_contract_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "executable binding contract."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_executable_binding_contract",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_executable_binding_contract_summary(
+            "next_candidate_executable_binding_contract artifact missing from "
+            "report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_executable_binding_contract_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    contract = _mapping(payload.get("binding_contract"))
+    input_schema = _mapping(contract.get("input_schema"))
+    output_schema = _mapping(contract.get("output_schema"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    status = _text(payload.get("status"), _text(summary.get("contract_status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "contract_status": _text(summary.get("contract_status"), status),
+        "candidate_id": _text(contract.get("candidate_id"), "MISSING"),
+        "binding_version": _text(contract.get("binding_version"), "MISSING"),
+        "input_schema_id": _text(input_schema.get("schema_id"), "MISSING"),
+        "output_schema_id": _text(output_schema.get("schema_id"), "MISSING"),
+        "research_only": contract.get("research_only") is True,
+        "manual_review_only": contract.get("manual_review_only") is True,
+        "official_target_weights": contract.get("official_target_weights") is True,
+        "strategy_behavior_implemented": contract.get("strategy_behavior_implemented") is True,
+        "signal_binding_implemented": contract.get("signal_binding_implemented") is True,
+        "weight_binding_implemented": contract.get("weight_binding_implemented") is True,
+        "validation_status": validation_status,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_effect": _text(payload.get("broker_effect"), PRODUCTION_EFFECT),
+        "order_effect": _text(payload.get("order_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"executable_binding_contract={status}; validation={validation_status}; "
+            f"signal_binding_implemented={contract.get('signal_binding_implemented') is True}; "
+            f"official_target_weights={contract.get('official_target_weights') is True}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the executable binding contract artifact; "
+            "it does not compute signals, produce hypothetical weights, create "
+            "paper-shadow candidates, approve live trading, or create orders."
+        ),
+    }
+
+
+def _missing_executable_binding_contract_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "contract_status": "MISSING",
+        "candidate_id": "MISSING",
+        "binding_version": "MISSING",
+        "input_schema_id": "MISSING",
+        "output_schema_id": "MISSING",
+        "research_only": False,
+        "manual_review_only": False,
+        "official_target_weights": False,
+        "strategy_behavior_implemented": False,
+        "signal_binding_implemented": False,
+        "weight_binding_implemented": False,
+        "validation_status": "MISSING",
+        "next_action": "run_aits_reports_next_candidate_executable_binding_contract",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": PRODUCTION_EFFECT,
+        "order_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_executable_binding_contract artifact missing; "
+            "run reports next-candidate-executable-binding-contract."
         ),
         "limitation": reason,
     }
@@ -24659,8 +24833,10 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_owner_research_review_packet": 267,
         "next_candidate_research_cycle_snapshot": 268,
         "next_candidate_research_cycle_snapshot_validation": 269,
-        "report_quality_gate": 270,
-        "reader_brief_quality": 271,
+        "next_candidate_executable_binding_contract": 270,
+        "next_candidate_executable_binding_contract_validation": 271,
+        "report_quality_gate": 272,
+        "reader_brief_quality": 273,
         "artifact_catalog": 280,
     }
     artifact_id = _text(item.get("artifact_id"))
@@ -24894,6 +25070,14 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "next_candidate_research_cycle_snapshot_validation": (
             "确认 final next research-cycle snapshot 的 disclosure 和安全边界。"
         ),
+        "next_candidate_executable_binding_contract": (
+            "查看 frozen next candidate 的 executable research-only binding contract；"
+            "该 contract 不实现 strategy behavior。"
+        ),
+        "next_candidate_executable_binding_contract_validation": (
+            "确认 executable binding contract 的 schema、required output types "
+            "和 no shadow/live/weights/broker 边界。"
+        ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
         ),
@@ -24920,6 +25104,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
     "daily_score": ("daily", "daily", "下一个完整 U.S. equity trading day。"),
     "daily_decision_summary": ("daily", "daily", "随 daily-run 每个交易日生成。"),
     "reader_brief": ("daily", "daily", "随 daily-run 每个交易日生成。"),
+    "next_candidate_executable_binding_contract": (
+        "manual",
+        "manual research cycle",
+        "TRADING-460 contract 生成后、TRADING-461 signal binding 前校验。",
+    ),
+    "next_candidate_executable_binding_contract_validation": (
+        "manual",
+        "manual research cycle",
+        "Executable binding contract 生成后立即校验 schema 和安全边界。",
+    ),
     "task_register_consistency": (
         "daily",
         "daily / manual governance",

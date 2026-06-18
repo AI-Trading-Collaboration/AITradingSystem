@@ -1829,6 +1829,19 @@ shadow、不批准 extended/live、不写 official target weights、不 append o
 strategy/candidate/paper-shadow/production state、不触发 broker/order；
 Reader Brief 只读展示 `next_candidate_research_cycle_snapshot`。
 
+TRADING-460_EXECUTABLE_BINDING_CONTRACT 在 final next research-cycle snapshot 后定义
+frozen next candidate 的 executable research-only binding contract。运行
+`aits reports next-candidate-executable-binding-contract --as-of YYYY-MM-DD` 读取
+frozen spec、next research-cycle snapshot、research backfill plan 和 research gate output，
+输出 `next_candidate_executable_binding_contract_YYYY-MM-DD.json/md`；随后运行
+`aits reports validate-next-candidate-executable-binding-contract --latest` 生成 validation
+artifact。该 contract 只定义 required signal/feature inputs、allowed research-only state
+outputs、allowed hypothetical allocation output schema 和 forbidden outputs，不实现 strategy
+behavior、不生成 signal series、不生成 hypothetical weights、不计算 return/drawdown/turnover/
+benchmark metrics。所有输出固定 `research_only=true`、`manual_review_only=true`、
+`official_target_weights=false`、`production_effect=none`、`broker_effect=none`、
+`order_effect=none`；Reader Brief 只读展示 `next_candidate_executable_binding_contract`。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

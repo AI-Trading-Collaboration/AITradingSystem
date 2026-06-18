@@ -101,6 +101,7 @@ from ai_trading_system.reports import decision_stage_review as decision_stage_re
 from ai_trading_system.reports import (
     exact_blocker_warning_inventory as exact_inventory_reports,
 )
+from ai_trading_system.reports import executable_research_binding as executable_binding_reports
 from ai_trading_system.reports import next_research_cycle as next_research_reports
 from ai_trading_system.reports import (
     normal_paper_shadow_observation_clock as normal_observation_clock_reports,
@@ -6644,6 +6645,34 @@ def _write_next_research_cycle_report(
     )
 
 
+def _write_executable_binding_report(
+    payload: Mapping[str, object],
+    *,
+    reports_dir: Path,
+    report_date: date,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[Path, Path]:
+    report_type = str(payload.get("report_type"))
+    json_path = json_output_path or executable_binding_reports.default_executable_binding_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+    md_path = (
+        markdown_output_path
+        or executable_binding_reports.default_executable_binding_markdown_path(
+            report_type,
+            reports_dir,
+            report_date,
+        )
+    )
+    return (
+        executable_binding_reports.write_executable_binding_json(payload, json_path),
+        executable_binding_reports.write_executable_binding_markdown(payload, md_path),
+    )
+
+
 def _next_research_cycle_source_path(
     *,
     reports_dir: Path,
@@ -6664,6 +6693,32 @@ def _next_research_cycle_source_path(
             raise typer.BadParameter(f"找不到 latest {label} JSON")
         return latest_path
     return next_research_reports.default_next_research_cycle_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+
+
+def _executable_binding_source_path(
+    *,
+    reports_dir: Path,
+    report_date: date,
+    report_type: str,
+    latest: bool,
+    source_json_path: Path | None,
+    label: str,
+) -> Path:
+    if source_json_path is not None:
+        return source_json_path
+    if latest:
+        latest_path = executable_binding_reports.latest_executable_binding_json_path(
+            report_type,
+            reports_dir,
+        )
+        if latest_path is None:
+            raise typer.BadParameter(f"找不到 latest {label} JSON")
+        return latest_path
+    return executable_binding_reports.default_executable_binding_json_path(
         report_type,
         reports_dir,
         report_date,
@@ -6731,6 +6786,29 @@ def _write_next_research_validation(
     return payload, json_path, md_path
 
 
+def _write_executable_binding_validation(
+    source_payload: Mapping[str, object],
+    *,
+    expected_report_type: str,
+    reports_dir: Path,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[dict[str, object], Path, Path]:
+    payload = executable_binding_reports.validate_executable_binding_payload(
+        source_payload,
+        expected_report_type=expected_report_type,
+    )
+    report_date = _parse_date(str(payload.get("as_of")))
+    json_path, md_path = _write_executable_binding_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    return payload, json_path, md_path
+
+
 def _load_next_research_source_payload(
     *,
     report_type: str,
@@ -6741,6 +6819,26 @@ def _load_next_research_source_payload(
     label: str,
 ) -> tuple[Path, dict[str, object]]:
     source_path = _next_research_cycle_source_path(
+        reports_dir=reports_dir,
+        report_date=report_date,
+        report_type=report_type,
+        latest=latest,
+        source_json_path=source_json_path,
+        label=label,
+    )
+    return source_path, _read_json_mapping_for_report_cli(source_path, label)
+
+
+def _load_executable_binding_source_payload(
+    *,
+    report_type: str,
+    report_date: date,
+    reports_dir: Path,
+    latest: bool = False,
+    source_json_path: Path | None = None,
+    label: str,
+) -> tuple[Path, dict[str, object]]:
+    source_path = _executable_binding_source_path(
         reports_dir=reports_dir,
         report_date=report_date,
         report_type=report_type,
@@ -7473,6 +7571,53 @@ def next_candidate_research_cycle_snapshot_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("next-candidate-executable-binding-contract")
+def next_candidate_executable_binding_contract_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Executable binding contract 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Contract JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Contract Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-460：定义 frozen next candidate executable binding contract。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = (
+            executable_binding_reports.build_next_candidate_executable_binding_contract_payload(
+                as_of=report_date,
+                reports_dir=reports_dir,
+            )
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_executable_binding_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(f"[green]Executable binding contract：{payload['status']}[/green]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"binding_version：{summary['binding_version']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 def _validate_next_research_cycle_command(
     *,
     expected_report_type: str,
@@ -7495,6 +7640,50 @@ def _validate_next_research_cycle_command(
         label=expected_report_type,
     )
     payload, json_path, md_path = _write_next_research_validation(
+        source_payload,
+        expected_report_type=expected_report_type,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]{expected_report_type} validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+def _validate_executable_binding_command(
+    *,
+    expected_report_type: str,
+    latest: bool,
+    as_of: str | None,
+    reports_dir: Path,
+    source_json_path: Path | None,
+    json_output_path: Path | None,
+    markdown_output_path: Path | None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_executable_binding_source_payload(
+        report_type=expected_report_type,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label=expected_report_type,
+    )
+    payload, json_path, md_path = _write_executable_binding_validation(
         source_payload,
         expected_report_type=expected_report_type,
         reports_dir=reports_dir,
@@ -7816,6 +8005,37 @@ def validate_next_candidate_research_cycle_snapshot_command(
 ) -> None:
     _validate_next_research_cycle_command(
         expected_report_type=next_research_reports.CYCLE_SNAPSHOT_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-executable-binding-contract")
+def validate_next_candidate_executable_binding_contract_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest executable binding contract artifact。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_executable_binding_command(
+        expected_report_type=executable_binding_reports.CONTRACT_REPORT_TYPE,
         latest=latest,
         as_of=as_of,
         reports_dir=reports_dir,
