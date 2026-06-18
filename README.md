@@ -2095,6 +2095,18 @@ Brief 和安全边界。Safety audit failed 时不得进入 TRADING-480 mini bac
 不创建 paper-shadow、不批准 extended/live、不写 official target weights、不触发 broker/order、
 不修改 production。
 
+TRADING-480_CANDIDATE_V2_MINI_BACKFILL 在 TRADING-479 binding safety pass 或 acceptable
+warning 后运行 compact research-only mini backfill。运行
+`aits reports candidate-v2-mini-backfill --as-of YYYY-MM-DD` 会先执行同一 cached-data
+quality gate，再读取 TRADING-479 v2 executable binding update 和标准化日线价格 cache，
+覆盖 normal market regime、slow drawdown、high-volatility sideways market 和 false
+risk-off cluster 四个代表窗口，输出 return proxy、drawdown proxy、turnover、rotation
+count、false risk-off count、constraint hits、signal completeness 和 cost proxy inputs。
+`aits reports validate-candidate-v2-mini-backfill --latest` 校验 window coverage、metrics、
+data quality status、Reader Brief 和安全边界。该 artifact 不是 full backfill，不生成
+benchmark conclusion、不 append owner decision、不创建 paper-shadow、不批准 extended/live、
+不写 official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

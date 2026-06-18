@@ -26575,17 +26575,19 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "candidate_v2_spec_freeze_validation": 293,
         "candidate_v2_executable_binding_update": 294,
         "candidate_v2_executable_binding_update_validation": 295,
-        "next_candidate_executable_binding_contract": 296,
-        "next_candidate_executable_binding_contract_validation": 297,
-        "next_candidate_signal_binding": 298,
-        "next_candidate_signal_binding_validation": 299,
-        "next_candidate_research_weight_binding": 300,
-        "next_candidate_research_weight_binding_validation": 301,
-        "executable_binding_safety_audit": 302,
-        "executable_binding_safety_audit_validation": 303,
-        "report_quality_gate": 304,
-        "reader_brief_quality": 305,
-        "artifact_catalog": 306,
+        "candidate_v2_mini_backfill": 296,
+        "candidate_v2_mini_backfill_validation": 297,
+        "next_candidate_executable_binding_contract": 298,
+        "next_candidate_executable_binding_contract_validation": 299,
+        "next_candidate_signal_binding": 300,
+        "next_candidate_signal_binding_validation": 301,
+        "next_candidate_research_weight_binding": 302,
+        "next_candidate_research_weight_binding_validation": 303,
+        "executable_binding_safety_audit": 304,
+        "executable_binding_safety_audit_validation": 305,
+        "report_quality_gate": 306,
+        "reader_brief_quality": 307,
+        "artifact_catalog": 308,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -27121,6 +27123,17 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Candidate v2 binding update 后立即校验 signal/weight rows 和安全边界。",
+    ),
+    "candidate_v2_mini_backfill": (
+        "manual",
+        "manual research cycle",
+        "TRADING-480 在 v2 binding safety pass 或 acceptable warning 后运行 "
+        "compact mini backfill。",
+    ),
+    "candidate_v2_mini_backfill_validation": (
+        "manual",
+        "manual research cycle",
+        "Candidate v2 mini backfill 后立即校验 representative windows、metrics 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

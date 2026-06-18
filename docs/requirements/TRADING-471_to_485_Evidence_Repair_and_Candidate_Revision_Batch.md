@@ -33,7 +33,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-477|candidate-redesign-hypothesis-v2|DONE|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
 |TRADING-478|candidate-v2-spec-freeze|DONE|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
 |TRADING-479|candidate-v2-executable-binding-update|DONE|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
-|TRADING-480|candidate-v2-mini-backfill|READY|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
+|TRADING-480|candidate-v2-mini-backfill|DONE|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
 |TRADING-481|candidate-v2-mini-gate|READY|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
 |TRADING-482|candidate-v2-full-backfill-if-approved|READY|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
 |TRADING-483|candidate-v2-research-gate|READY|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
@@ -235,3 +235,22 @@ owner decision append、production mutation 或 automatic position control。
   owner decision、未创建 paper-shadow、未批准 extended/live、未写 official target
   weights、未触发 broker/order、未修改 production。下一步是 TRADING-480 candidate v2
   mini backfill。
+- 2026-06-18: TRADING-480 开始实现。范围限定为读取 TRADING-479 v2 binding update，
+  仅在 safety audit pass 或 acceptable warning 时运行 research-only compact mini backfill；
+  覆盖 normal、drawdown、high-volatility sideways 和 false risk-off representative windows，
+  输出 return proxy、drawdown proxy、turnover、rotation count、cost proxy inputs 和 signal
+  completeness。不运行 full backfill、不创建 paper-shadow、不写 official target weights、
+  不触发 broker/order、不修改 production。
+- 2026-06-18: TRADING-480 完成 pending commit。真实 2026-06-17 mini backfill
+  `candidate_v2_mini_backfill_2026-06-17` 输出 `V2_MINI_BACKFILL_WEAK`；
+  source binding=`CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS`，
+  source safety audit=`EXECUTABLE_BINDING_SAFETY_WARNING`，data quality=
+  `PASS_WITH_WARNINGS` 且 passed=true。四个代表窗口均 COMPLETE：normal market
+  regime return/drawdown proxy=0.367401/-0.065783，slow drawdown=-0.056003/-0.184629，
+  high-volatility sideways=-0.029807/-0.109893，false risk-off=-0.066467/-0.076432；
+  aggregate return/drawdown proxy=0.053781/-0.184629，turnover_proxy=1.775，
+  rotation_count=13，false_risk_off_count=42，signal_completeness_ratio=1.0。
+  Validation `candidate_v2_mini_backfill_validation_2026-06-17` 为 PASS，checks=10、
+  failed=0。结论为 weak，因此按硬停止条件 TRADING-481 mini gate 必须阻止 full
+  backfill，除非后续 owner 明确选择新的修复任务；未运行 full backfill、未生成
+  benchmark conclusion、未创建 paper-shadow/official weights/broker/order/production。

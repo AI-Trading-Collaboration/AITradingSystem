@@ -865,6 +865,119 @@ def test_candidate_v2_executable_binding_update_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_mini_backfill_generates_compact_window_metrics(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    _write_candidate_v2_spec_freeze(reports_dir)
+    _write_v2_feature_fixture(feature_path)
+    _write_candidate_v2_executable_binding_update(reports_dir, feature_path)
+    _write_v2_price_fixture(prices_path)
+
+    payload = repair.build_candidate_v2_mini_backfill_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        prices_path=prices_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+
+    assert payload["status"] in {
+        repair.V2_MINI_BACKFILL_PROMISING,
+        repair.V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE,
+        repair.V2_MINI_BACKFILL_WEAK,
+    }
+    assert payload["summary"]["mini_window_count"] == 4
+    assert payload["summary"]["completed_window_count"] == 4
+    assert payload["summary"]["aggregate_return_proxy"] is not None
+    assert payload["summary"]["aggregate_drawdown_proxy"] is not None
+    assert payload["summary"]["turnover_proxy"] is not None
+    assert {row["window_id"] for row in payload["mini_backfill_windows"]} == {
+        "normal_market_regime",
+        "slow_drawdown",
+        "high_volatility_sideways_market",
+        "false_risk_off_cluster",
+    }
+    assert all(
+        row["cost_scenario_inputs_available"] is True
+        for row in payload["cost_proxy_inputs"]
+    )
+    assert payload["summary"]["official_target_weights"] is False
+    assert payload["summary"]["paper_shadow_activation_allowed"] is False
+    assert payload["safety_boundary"]["full_backfill_executed"] is False
+    assert payload["safety_boundary"]["paper_shadow_outputs_generated"] is False
+
+    validation = repair.validate_candidate_v2_mini_backfill_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_mini_backfill_cli_writes_and_validates(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    _write_candidate_v2_spec_freeze(reports_dir)
+    _write_v2_feature_fixture(feature_path)
+    _write_candidate_v2_executable_binding_update(reports_dir, feature_path)
+    _write_v2_price_fixture(prices_path)
+    monkeypatch.setattr(
+        reports_cli,
+        "_run_next_research_data_quality_gate",
+        lambda **_: _passing_data_quality_gate(reports_dir),
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-mini-backfill",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--prices-path",
+            str(prices_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    mini_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(mini_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["mini_window_count"] == 4
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-mini-backfill",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -967,6 +1080,26 @@ def _write_candidate_v2_spec_freeze(reports_dir: Path) -> None:
     )
 
 
+def _write_candidate_v2_executable_binding_update(
+    reports_dir: Path,
+    feature_path: Path,
+) -> None:
+    binding = repair.build_candidate_v2_executable_binding_update_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+    repair.write_evidence_repair_json(
+        binding,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
 def _passing_data_quality_gate(reports_dir: Path) -> dict[str, object]:
     return {
         "status": "PASS",
@@ -1016,6 +1149,51 @@ def _write_v2_feature_fixture(path: Path) -> None:
                         str(rs_smh),
                         "0.18",
                         str(drawdown),
+                    ]
+                )
+            )
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+
+def _write_v2_price_fixture(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [
+        "date,ticker,symbol,open,high,low,close,adj_close,volume,source,updated_at,"
+        "source_symbol,canonical_symbol"
+    ]
+    base_prices = {
+        "QQQ": 100.0,
+        "SMH": 80.0,
+        "SOXX": 70.0,
+        "SPY": 400.0,
+    }
+    date_multipliers = {
+        "2023-01-03": 1.0,
+        "2023-01-04": 1.02,
+        "2023-09-01": 1.10,
+        "2023-09-05": 1.11,
+        "2025-01-02": 1.20,
+        "2025-01-03": 1.18,
+    }
+    for item_date, multiplier in date_multipliers.items():
+        for symbol, base_price in base_prices.items():
+            price = round(base_price * multiplier, 4)
+            rows.append(
+                ",".join(
+                    [
+                        item_date,
+                        symbol,
+                        symbol,
+                        str(price),
+                        str(price),
+                        str(price),
+                        str(price),
+                        str(price),
+                        "1000",
+                        "fixture",
+                        "",
+                        symbol,
+                        symbol,
                     ]
                 )
             )

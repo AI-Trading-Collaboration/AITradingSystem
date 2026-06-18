@@ -9391,6 +9391,46 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_v2_mini_backfill
+    title: Candidate V2 Mini Backfill
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports candidate-v2-mini-backfill --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_v2_mini_backfill_20*.json
+      - outputs/reports/candidate_v2_mini_backfill_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-480 reads the validated TRADING-479 v2 executable binding
+      update after a cached-data quality gate and runs a compact research-only
+      mini backfill over normal, slow drawdown, high-volatility sideways, and
+      false risk-off representative windows.
+    owner_action: use_as_input_to_trading_481_candidate_v2_mini_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_v2_mini_backfill_validation
+    title: Candidate V2 Mini Backfill Validation
+    group: research
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-v2-mini-backfill --latest
+    artifact_globs:
+      - outputs/reports/candidate_v2_mini_backfill_validation_20*.json
+      - outputs/reports/candidate_v2_mini_backfill_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-480 validation checks representative mini-window coverage,
+      return/drawdown/turnover proxy disclosure, cost proxy inputs, data-quality
+      status, Reader Brief fields, and the no paper-shadow / official-weight /
+      broker/order / production boundary.
+    owner_action: run_after_candidate_v2_mini_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

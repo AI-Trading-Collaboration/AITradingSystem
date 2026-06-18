@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import re
 from collections.abc import Mapping, Sequence
@@ -35,6 +36,7 @@ CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE = "candidate_v2_spec_freeze"
 CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE = (
     "candidate_v2_executable_binding_update"
 )
+CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE = "candidate_v2_mini_backfill"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -62,6 +64,9 @@ CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -101,6 +106,19 @@ CANDIDATE_V2_EXECUTABLE_BINDING_STATUSES: tuple[str, ...] = (
     CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS,
     CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED,
 )
+V2_MINI_BACKFILL_PROMISING = "V2_MINI_BACKFILL_PROMISING"
+V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE = "V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE"
+V2_MINI_BACKFILL_WEAK = "V2_MINI_BACKFILL_WEAK"
+V2_MINI_BACKFILL_BLOCKED = "V2_MINI_BACKFILL_BLOCKED"
+V2_MINI_BACKFILL_STATUSES: tuple[str, ...] = (
+    V2_MINI_BACKFILL_PROMISING,
+    V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE,
+    V2_MINI_BACKFILL_WEAK,
+    V2_MINI_BACKFILL_BLOCKED,
+)
+# TRADING-480 uses sign-only research triage before TRADING-481 gate calibration;
+# this is not a tradable acceptance threshold.
+V2_MINI_RETURN_WEAKNESS_CUTOFF = 0.0
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -163,6 +181,10 @@ REPORT_PREFIXES: dict[str, str] = {
     ),
     CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE: (
         "candidate_v2_executable_binding_update_validation"
+    ),
+    CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE: "candidate_v2_mini_backfill",
+    CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_mini_backfill_validation"
     ),
 }
 
@@ -272,6 +294,14 @@ V2_TURNOVER_GUARD_WINDOWS: tuple[str, ...] = (
     "high_volatility_sideways_market",
     "false_risk_off_cluster",
 )
+V2_MINI_BACKFILL_WINDOWS: tuple[str, ...] = (
+    "normal_market_regime",
+    "slow_drawdown",
+    "high_volatility_sideways_market",
+    "false_risk_off_cluster",
+)
+V2_PRICE_SYMBOLS: tuple[str, ...] = ("QQQ", "SMH", "SOXX", "SPY")
+DEFAULT_V2_PRICE_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 
 
 def default_evidence_repair_json_path(
@@ -3123,6 +3153,317 @@ def validate_candidate_v2_executable_binding_update_payload(
     )
 
 
+def build_candidate_v2_mini_backfill_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    prices_path: Path = DEFAULT_V2_PRICE_PATH,
+    data_quality_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    binding_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    binding_payload = _read_json_mapping(binding_path)
+    binding_summary = _mapping(binding_payload.get("summary"))
+    candidate_id = _text(binding_summary.get("candidate_id"), "MISSING")
+    requested_range = _text(
+        binding_payload.get("requested_date_range"),
+        f"{AI_REGIME_START}..unspecified",
+    )
+    data_quality = _v2_data_quality_gate(data_quality_gate)
+    blocking_reasons = _candidate_v2_mini_backfill_blocking_reasons(
+        binding_payload=binding_payload,
+        data_quality=data_quality,
+        prices_path=prices_path,
+    )
+    warning_reasons = list(_list_values(binding_payload.get("warning_reasons")))
+    mini_windows: list[dict[str, Any]] = []
+    price_warnings: list[str] = []
+    if not blocking_reasons:
+        price_history, price_warnings = _candidate_v2_price_history(
+            prices_path=prices_path,
+            symbols=V2_PRICE_SYMBOLS,
+        )
+        if price_warnings:
+            blocking_reasons.extend(price_warnings)
+        else:
+            mini_windows = _candidate_v2_mini_backfill_windows(
+                binding_payload=binding_payload,
+                price_history=price_history,
+            )
+    aggregate = _candidate_v2_mini_aggregate(mini_windows)
+    if blocking_reasons:
+        status = V2_MINI_BACKFILL_BLOCKED
+    else:
+        status = _candidate_v2_mini_status(mini_windows, aggregate)
+    if status == V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE:
+        warning_reasons.append("representative_window_evidence_incomplete_or_mixed")
+    if data_quality.get("warning_count"):
+        warning_reasons.append("data_quality_gate_passed_with_warnings")
+    summary = {
+        "candidate_v2_mini_backfill_status": status,
+        "source_binding_status": _text(binding_payload.get("status")),
+        "source_safety_audit_status": _text(binding_summary.get("safety_audit_status")),
+        "candidate_id": candidate_id,
+        "mini_window_count": len(mini_windows),
+        "required_mini_window_count": len(V2_MINI_BACKFILL_WINDOWS),
+        "completed_window_count": len(
+            [
+                row
+                for row in mini_windows
+                if _text(row.get("mini_backfill_window_status")) == "COMPLETE"
+            ]
+        ),
+        "partial_window_count": len(
+            [
+                row
+                for row in mini_windows
+                if _text(row.get("mini_backfill_window_status")) == "PARTIAL"
+            ]
+        ),
+        "aggregate_return_proxy": aggregate.get("aggregate_return_proxy"),
+        "aggregate_drawdown_proxy": aggregate.get("aggregate_drawdown_proxy"),
+        "turnover_proxy": aggregate.get("turnover_proxy"),
+        "rotation_count": aggregate.get("rotation_count"),
+        "false_risk_off_count": aggregate.get("false_risk_off_count"),
+        "signal_completeness": aggregate.get("signal_completeness"),
+        "signal_completeness_ratio": aggregate.get("signal_completeness_ratio"),
+        "data_quality_status": _text(data_quality.get("status")),
+        "data_quality_passed": data_quality.get("passed") is True,
+        "blocking_reason": _join_reasons(blocking_reasons),
+        "warning_reason": _join_reasons(warning_reasons),
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Run a compact research-only candidate v2 mini backfill across "
+            "representative normal, drawdown, high-volatility sideways, and "
+            "false risk-off windows before any full backfill."
+        ),
+        input_artifacts={
+            CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE: str(binding_path),
+            "prices": str(prices_path),
+            "data_quality_report": _text(data_quality.get("report_path")),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+                    binding_path,
+                    binding_payload,
+                )
+            ],
+            "mini_backfill_windows": mini_windows,
+            "aggregate_metrics": aggregate,
+            "cost_proxy_inputs": _candidate_v2_mini_cost_proxy_inputs(mini_windows),
+            "blocking_reasons": list(dict.fromkeys(blocking_reasons)),
+            "warning_reasons": list(dict.fromkeys(warning_reasons)),
+            "data_quality_gate": data_quality,
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"Candidate v2 mini backfill is {status}; "
+                f"windows={len(mini_windows)}/{len(V2_MINI_BACKFILL_WINDOWS)}."
+            ),
+            key_result=status,
+            blocking_issues=_join_reasons(blocking_reasons) or "none",
+            warnings=_join_reasons(warning_reasons) or "none",
+            next_action=(
+                "repair_candidate_v2_mini_backfill_inputs"
+                if status == V2_MINI_BACKFILL_BLOCKED
+                else "run_trading_481_candidate_v2_mini_gate"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_mini_backfill_inputs"
+            if status == V2_MINI_BACKFILL_BLOCKED
+            else "run_trading_481_candidate_v2_mini_gate"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_mini_backfill",
+            "mini_backfill_executed": status != V2_MINI_BACKFILL_BLOCKED,
+            "full_backfill_executed": False,
+            "paper_shadow_outputs_generated": False,
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+            "backfill_scope": "compact_representative_windows_only",
+        },
+        limitations=[
+            "TRADING-480 is a compact mini backfill, not a full research backfill.",
+            "V-shaped recovery remains outside this compact mini-backfill window set.",
+            "Mini-backfill status does not permit paper-shadow activation.",
+        ],
+        requested_date_range=requested_range,
+    )
+
+
+def validate_candidate_v2_mini_backfill_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    windows = _records(payload.get("mini_backfill_windows"))
+    aggregate = _mapping(payload.get("aggregate_metrics"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE}.",
+        "regenerate_candidate_v2_mini_backfill",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status in V2_MINI_BACKFILL_STATUSES,
+        "Candidate v2 mini backfill status must be recognized.",
+        "restore_candidate_v2_mini_backfill_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "source_binding_safety_allows_backfill",
+        status == V2_MINI_BACKFILL_BLOCKED
+        or _text(summary.get("source_safety_audit_status"))
+        in {binding_reports.SAFETY_PASS, binding_reports.SAFETY_WARNING},
+        "Mini backfill requires pass or acceptable warning source safety audit.",
+        "rerun_or_repair_candidate_v2_binding_safety_audit",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "required_windows_present_when_not_blocked",
+        status == V2_MINI_BACKFILL_BLOCKED
+        or {row.get("window_id") for row in windows} == set(V2_MINI_BACKFILL_WINDOWS),
+        "Mini backfill must cover the compact representative window set.",
+        "restore_candidate_v2_mini_window_set",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "metrics_present_when_not_blocked",
+        status == V2_MINI_BACKFILL_BLOCKED
+        or (
+            aggregate.get("aggregate_return_proxy") is not None
+            and aggregate.get("aggregate_drawdown_proxy") is not None
+            and aggregate.get("turnover_proxy") is not None
+        ),
+        "Mini backfill metrics must include return, drawdown, and turnover proxies.",
+        "restore_candidate_v2_mini_metrics",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "cost_proxy_inputs_present",
+        status == V2_MINI_BACKFILL_BLOCKED
+        or bool(_records(payload.get("cost_proxy_inputs"))),
+        "Mini backfill must expose cost proxy inputs.",
+        "restore_cost_proxy_inputs",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "data_quality_visible",
+        bool(_text(summary.get("data_quality_status"))),
+        "Data quality gate status must be visible.",
+        "run_aits_validate_data_before_mini_backfill",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and summary.get("owner_decision_appended") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Mini backfill must not create execution, paper-shadow, or production output.",
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-480 candidate v2 mini backfill.",
+        input_artifacts={CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "mini_window_count": len(windows),
+            "aggregate_return_proxy": aggregate.get("aggregate_return_proxy"),
+            "aggregate_drawdown_proxy": aggregate.get("aggregate_drawdown_proxy"),
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"{CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE} validation is {validation_status}.",
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_mini_backfill"
+                if validation_status == FAIL_STATUS
+                else "use_validated_candidate_v2_mini_backfill"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_mini_backfill"
+            if validation_status == FAIL_STATUS
+            else "use_validated_candidate_v2_mini_backfill"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_mini_backfill_validation"},
+        limitations=["Validation is read-only and does not run full backfill."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
 def write_evidence_repair_json(payload: Mapping[str, Any], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -3204,7 +3545,11 @@ def _payload(
         "methodology": {
             "collector_mode": "read_existing_trading_470_artifacts",
             "does_not_refresh_data": True,
-            "does_not_run_backfill": True,
+            "does_not_run_backfill": report_type != CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE,
+            "does_not_run_full_backfill": True,
+            "runs_compact_mini_backfill": (
+                report_type == CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE
+            ),
             "does_not_fabricate_data": True,
             "does_not_tune_thresholds": True,
             "does_not_create_paper_shadow_candidate": True,
@@ -6231,6 +6576,464 @@ def _candidate_v2_context_coverage(
     return [dict(row) for row in signal_coverage]
 
 
+def _candidate_v2_mini_backfill_blocking_reasons(
+    *,
+    binding_payload: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+    prices_path: Path,
+) -> list[str]:
+    summary = _mapping(binding_payload.get("summary"))
+    reasons: list[str] = []
+    if _text(binding_payload.get("report_type")) != CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE:
+        reasons.append("candidate_v2_binding_report_type_mismatch")
+    if _text(binding_payload.get("status")) == CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED:
+        reasons.append("candidate_v2_binding_blocked")
+    if summary.get("safety_audit_allows_mini_backfill") is not True:
+        reasons.append("source_safety_audit_does_not_allow_mini_backfill")
+    if _text(summary.get("safety_audit_status")) not in {
+        binding_reports.SAFETY_PASS,
+        binding_reports.SAFETY_WARNING,
+    }:
+        reasons.append("source_safety_audit_not_pass_or_warning")
+    if data_quality.get("passed") is not True:
+        reasons.append("data_quality_gate_not_passed")
+    if not prices_path.exists():
+        reasons.append("price_history_missing")
+    if not _records(binding_payload.get("v2_candidate_signal_series")):
+        reasons.append("v2_signal_series_missing")
+    if not _records(binding_payload.get("v2_hypothetical_research_weight_series")):
+        reasons.append("v2_weight_series_missing")
+    return sorted(set(reasons))
+
+
+def _candidate_v2_price_history(
+    *,
+    prices_path: Path,
+    symbols: Sequence[str],
+) -> tuple[dict[str, dict[date, float]], list[str]]:
+    history: dict[str, dict[date, float]] = {symbol: {} for symbol in symbols}
+    warnings: list[str] = []
+    with prices_path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None:
+            return history, ["price_history_header_missing"]
+        for row in reader:
+            symbol = _price_row_symbol(row)
+            if symbol not in history:
+                continue
+            price_date = _parse_iso_date(_text(row.get("date")))
+            if price_date is None:
+                continue
+            price_value = _price_row_close(row)
+            if price_value <= 0:
+                continue
+            history[symbol][price_date] = price_value
+    for symbol in symbols:
+        if len(history.get(symbol, {})) < 2:
+            warnings.append(f"price_history_insufficient:{symbol}")
+    return history, sorted(set(warnings))
+
+
+def _price_row_symbol(row: Mapping[str, Any]) -> str:
+    for key in ("canonical_symbol", "symbol", "ticker"):
+        value = _text(row.get(key))
+        if value:
+            return value
+    return ""
+
+
+def _price_row_close(row: Mapping[str, Any]) -> float:
+    for key in ("adj_close", "close"):
+        value = _float(row.get(key), -1.0)
+        if value > 0:
+            return value
+    return -1.0
+
+
+def _candidate_v2_mini_backfill_windows(
+    *,
+    binding_payload: Mapping[str, Any],
+    price_history: Mapping[str, Mapping[date, float]],
+) -> list[dict[str, Any]]:
+    binding_windows = {
+        _text(row.get("window_id")): row
+        for row in _records(binding_payload.get("binding_windows"))
+    }
+    return [
+        _candidate_v2_mini_window_metrics(
+            window_id=window_id,
+            source_window=binding_windows.get(window_id, {"window_id": window_id}),
+            binding_payload=binding_payload,
+            price_history=price_history,
+        )
+        for window_id in V2_MINI_BACKFILL_WINDOWS
+    ]
+
+
+def _candidate_v2_mini_window_metrics(
+    *,
+    window_id: str,
+    source_window: Mapping[str, Any],
+    binding_payload: Mapping[str, Any],
+    price_history: Mapping[str, Mapping[date, float]],
+) -> dict[str, Any]:
+    start = _parse_iso_date(_text(source_window.get("start")))
+    end = _parse_iso_date(_text(source_window.get("end")))
+    signal_rows = [
+        row
+        for row in _records(binding_payload.get("v2_candidate_signal_series"))
+        if _text(row.get("validation_window_id")) == window_id
+    ]
+    weight_rows = [
+        row
+        for row in _records(binding_payload.get("v2_hypothetical_research_weight_series"))
+        if _text(row.get("validation_window_id")) == window_id
+    ]
+    if start is None or end is None:
+        return _candidate_v2_partial_mini_window(
+            window_id=window_id,
+            source_window=source_window,
+            signal_rows=signal_rows,
+            weight_rows=weight_rows,
+            missing_reason="source_window_dates_missing",
+        )
+    common_dates = _candidate_v2_common_price_dates(
+        price_history=price_history,
+        start=start,
+        end=end,
+    )
+    daily_returns, skipped_return_count = _candidate_v2_weighted_daily_returns(
+        price_history=price_history,
+        dates=common_dates,
+        weight_rows=weight_rows,
+    )
+    return_proxy, drawdown_proxy = _candidate_v2_return_and_drawdown(daily_returns)
+    signal_dates = {
+        parsed
+        for row in signal_rows
+        if (parsed := _parse_iso_date(_text(row.get("signal_date")))) is not None
+    }
+    signal_completeness_ratio = (
+        round(len(signal_dates & set(common_dates)) / len(common_dates), 6)
+        if common_dates
+        else 0.0
+    )
+    status = "COMPLETE" if daily_returns else "PARTIAL"
+    missing_reason = (
+        "none"
+        if status == "COMPLETE"
+        else "insufficient_price_or_weight_aligned_return_observations"
+    )
+    turnover = round(sum(_float(row.get("turnover_proxy")) for row in weight_rows), 6)
+    rotation_count = len(
+        [row for row in weight_rows if _float(row.get("turnover_proxy")) > 0]
+    )
+    false_risk_off_count = len(
+        [
+            row
+            for row in signal_rows
+            if "false_risk_off" in _text(row.get("guard_reason"))
+            or (
+                window_id == "false_risk_off_cluster"
+                and _text(row.get("base_rotation_state")) == "reduce_ai_risk"
+            )
+        ]
+    )
+    constraint_hit_count = sum(
+        len(_list_values(row.get("constraint_hit"))) for row in weight_rows
+    )
+    return {
+        "window_id": window_id,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "mini_backfill_window_status": status,
+        "missing_reason": missing_reason,
+        "return_proxy": return_proxy,
+        "drawdown_proxy": drawdown_proxy,
+        "turnover": turnover,
+        "average_turnover_proxy": (
+            round(turnover / len(weight_rows), 6) if weight_rows else None
+        ),
+        "rotation_count": rotation_count,
+        "false_risk_off_count": false_risk_off_count,
+        "constraint_hit_count": constraint_hit_count,
+        "signal_completeness": "COMPLETE" if signal_completeness_ratio >= 1.0 else "PARTIAL",
+        "signal_completeness_ratio": signal_completeness_ratio,
+        "price_observation_count": len(common_dates) * len(V2_PRICE_SYMBOLS),
+        "return_observation_count": len(daily_returns),
+        "skipped_return_observation_count": skipped_return_count,
+        "weight_row_count": len(weight_rows),
+        "signal_row_count": len(signal_rows),
+        "cost_proxy_inputs": _candidate_v2_window_cost_proxy_inputs(
+            window_id=window_id,
+            return_proxy=return_proxy,
+            turnover=turnover,
+            return_observation_count=len(daily_returns),
+            missing_reason=missing_reason,
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_partial_mini_window(
+    *,
+    window_id: str,
+    source_window: Mapping[str, Any],
+    signal_rows: Sequence[Mapping[str, Any]],
+    weight_rows: Sequence[Mapping[str, Any]],
+    missing_reason: str,
+) -> dict[str, Any]:
+    return {
+        "window_id": window_id,
+        "start": _text(source_window.get("start")),
+        "end": _text(source_window.get("end")),
+        "mini_backfill_window_status": "PARTIAL",
+        "missing_reason": missing_reason,
+        "return_proxy": None,
+        "drawdown_proxy": None,
+        "turnover": None,
+        "average_turnover_proxy": None,
+        "rotation_count": 0,
+        "false_risk_off_count": 0,
+        "constraint_hit_count": 0,
+        "signal_completeness": "PARTIAL",
+        "signal_completeness_ratio": 0.0,
+        "price_observation_count": 0,
+        "return_observation_count": 0,
+        "skipped_return_observation_count": 0,
+        "weight_row_count": len(weight_rows),
+        "signal_row_count": len(signal_rows),
+        "cost_proxy_inputs": _candidate_v2_window_cost_proxy_inputs(
+            window_id=window_id,
+            return_proxy=None,
+            turnover=None,
+            return_observation_count=0,
+            missing_reason=missing_reason,
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_common_price_dates(
+    *,
+    price_history: Mapping[str, Mapping[date, float]],
+    start: date,
+    end: date,
+) -> list[date]:
+    symbol_dates = []
+    for symbol in V2_PRICE_SYMBOLS:
+        dates = {
+            item
+            for item in price_history.get(symbol, {})
+            if start <= item <= end
+        }
+        symbol_dates.append(dates)
+    if not symbol_dates:
+        return []
+    return sorted(set.intersection(*symbol_dates))
+
+
+def _candidate_v2_weighted_daily_returns(
+    *,
+    price_history: Mapping[str, Mapping[date, float]],
+    dates: Sequence[date],
+    weight_rows: Sequence[Mapping[str, Any]],
+) -> tuple[list[float], int]:
+    returns: list[float] = []
+    skipped = 0
+    for previous_date, current_date in zip(dates, dates[1:], strict=False):
+        weight_row = _candidate_v2_weight_for_date(weight_rows, previous_date)
+        if not weight_row:
+            skipped += 1
+            continue
+        weights = _candidate_v2_weight_values(weight_row)
+        if not weights:
+            skipped += 1
+            continue
+        daily_return = 0.0
+        missing_symbol = False
+        for symbol in V2_PRICE_SYMBOLS:
+            previous_price = price_history.get(symbol, {}).get(previous_date)
+            current_price = price_history.get(symbol, {}).get(current_date)
+            if not previous_price or not current_price:
+                missing_symbol = True
+                break
+            daily_return += weights.get(symbol, 0.0) * (
+                (current_price / previous_price) - 1.0
+            )
+        if missing_symbol:
+            skipped += 1
+            continue
+        returns.append(round(daily_return, 10))
+    return returns, skipped
+
+
+def _candidate_v2_weight_for_date(
+    weight_rows: Sequence[Mapping[str, Any]],
+    target_date: date,
+) -> dict[str, Any]:
+    dated_rows: list[tuple[date, Mapping[str, Any]]] = []
+    for row in weight_rows:
+        signal_date = _parse_iso_date(_text(row.get("signal_date")))
+        if signal_date is None or signal_date > target_date:
+            continue
+        dated_rows.append((signal_date, row))
+    if not dated_rows:
+        return {}
+    return dict(max(dated_rows, key=lambda item: item[0])[1])
+
+
+def _candidate_v2_weight_values(row: Mapping[str, Any]) -> dict[str, float]:
+    weight_object = _mapping(row.get("hypothetical_research_weight"))
+    weights = _mapping(weight_object.get("weights"))
+    return {symbol: _float(weights.get(symbol)) for symbol in (*V2_PRICE_SYMBOLS, "CASH")}
+
+
+def _candidate_v2_return_and_drawdown(
+    daily_returns: Sequence[float],
+) -> tuple[float | None, float | None]:
+    if not daily_returns:
+        return None, None
+    value = 1.0
+    peak = 1.0
+    worst_drawdown = 0.0
+    for daily_return in daily_returns:
+        value *= 1.0 + daily_return
+        peak = max(peak, value)
+        if peak > 0:
+            worst_drawdown = min(worst_drawdown, (value / peak) - 1.0)
+    return round(value - 1.0, 6), round(worst_drawdown, 6)
+
+
+def _candidate_v2_mini_aggregate(
+    mini_windows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    return_values = [
+        _float(row.get("return_proxy"))
+        for row in mini_windows
+        if row.get("return_proxy") is not None
+    ]
+    drawdown_values = [
+        _float(row.get("drawdown_proxy"))
+        for row in mini_windows
+        if row.get("drawdown_proxy") is not None
+    ]
+    turnover_values = [
+        _float(row.get("turnover"))
+        for row in mini_windows
+        if row.get("turnover") is not None
+    ]
+    price_observation_count = sum(_int(row.get("price_observation_count")) for row in mini_windows)
+    return_observation_count = sum(
+        _int(row.get("return_observation_count")) for row in mini_windows
+    )
+    signal_completeness_weight = sum(
+        _float(row.get("signal_completeness_ratio"))
+        * max(_int(row.get("price_observation_count")), 1)
+        for row in mini_windows
+    )
+    signal_completeness_ratio = (
+        round(signal_completeness_weight / price_observation_count, 6)
+        if price_observation_count
+        else 0.0
+    )
+    return {
+        "aggregate_return_proxy": (
+            round(sum(return_values) / len(return_values), 6) if return_values else None
+        ),
+        "aggregate_drawdown_proxy": min(drawdown_values) if drawdown_values else None,
+        "turnover_proxy": (
+            round(sum(turnover_values) / len(turnover_values), 6)
+            if turnover_values
+            else None
+        ),
+        "total_turnover_proxy": round(sum(turnover_values), 6) if turnover_values else None,
+        "rotation_count": sum(_int(row.get("rotation_count")) for row in mini_windows),
+        "false_risk_off_count": sum(
+            _int(row.get("false_risk_off_count")) for row in mini_windows
+        ),
+        "constraint_hit_count": sum(
+            _int(row.get("constraint_hit_count")) for row in mini_windows
+        ),
+        "completed_window_count": len(
+            [
+                row
+                for row in mini_windows
+                if _text(row.get("mini_backfill_window_status")) == "COMPLETE"
+            ]
+        ),
+        "price_observation_count": price_observation_count,
+        "return_observation_count": return_observation_count,
+        "signal_completeness": "COMPLETE" if signal_completeness_ratio >= 1.0 else "PARTIAL",
+        "signal_completeness_ratio": signal_completeness_ratio,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_mini_cost_proxy_inputs(
+    mini_windows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        _candidate_v2_window_cost_proxy_inputs(
+            window_id=_text(row.get("window_id")),
+            return_proxy=row.get("return_proxy"),
+            turnover=row.get("turnover"),
+            return_observation_count=_int(row.get("return_observation_count")),
+            missing_reason=_text(row.get("missing_reason"), "unknown"),
+        )
+        for row in mini_windows
+    ]
+
+
+def _candidate_v2_window_cost_proxy_inputs(
+    *,
+    window_id: str,
+    return_proxy: Any,
+    turnover: Any,
+    return_observation_count: int,
+    missing_reason: str,
+) -> dict[str, Any]:
+    available = (
+        return_proxy is not None
+        and turnover is not None
+        and return_observation_count > 0
+    )
+    return {
+        "window_id": window_id,
+        "gross_return_proxy": return_proxy,
+        "turnover_proxy": turnover,
+        "return_observation_count": return_observation_count,
+        "required_cost_scenarios": list(REQUIRED_COST_SCENARIOS),
+        "turnover_available": turnover is not None,
+        "gross_return_proxy_available": return_proxy is not None,
+        "cost_scenario_inputs_available": available,
+        "missing_reason": "none" if available else missing_reason,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _candidate_v2_mini_status(
+    mini_windows: Sequence[Mapping[str, Any]],
+    aggregate: Mapping[str, Any],
+) -> str:
+    if (
+        len(mini_windows) != len(V2_MINI_BACKFILL_WINDOWS)
+        or _int(aggregate.get("completed_window_count")) != len(V2_MINI_BACKFILL_WINDOWS)
+        or aggregate.get("aggregate_return_proxy") is None
+    ):
+        return V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE
+    window_returns = [
+        _float(row.get("return_proxy"))
+        for row in mini_windows
+        if row.get("return_proxy") is not None
+    ]
+    if _float(aggregate.get("aggregate_return_proxy")) < V2_MINI_RETURN_WEAKNESS_CUTOFF:
+        return V2_MINI_BACKFILL_WEAK
+    if any(value < V2_MINI_RETURN_WEAKNESS_CUTOFF for value in window_returns):
+        return V2_MINI_BACKFILL_WEAK
+    return V2_MINI_BACKFILL_PROMISING
+
+
 def _latest_by_date(rows: Sequence[Mapping[str, Any]], key: str) -> dict[str, Any]:
     if not rows:
         return {}
@@ -6525,6 +7328,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Mini Backfill Windows", "mini_backfill_windows"),
+            ("Cost Proxy Inputs", "cost_proxy_inputs"),
+        ]
+    if report_type == CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -6576,6 +7387,13 @@ __all__ = [
     "CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE",
     "CANDIDATE_V2_EXECUTABLE_BINDING_STATUSES",
     "CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE",
+    "CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE",
+    "V2_MINI_BACKFILL_BLOCKED",
+    "V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE",
+    "V2_MINI_BACKFILL_PROMISING",
+    "V2_MINI_BACKFILL_STATUSES",
+    "V2_MINI_BACKFILL_WEAK",
     "CANDIDATE_V2_SPEC_FREEZE_READY",
     "CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE",
     "CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE",
@@ -6613,6 +7431,7 @@ __all__ = [
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_candidate_redesign_hypothesis_payload",
     "build_candidate_v2_executable_binding_update_payload",
+    "build_candidate_v2_mini_backfill_payload",
     "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
@@ -6626,6 +7445,7 @@ __all__ = [
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_candidate_redesign_hypothesis_payload",
     "validate_candidate_v2_executable_binding_update_payload",
+    "validate_candidate_v2_mini_backfill_payload",
     "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
