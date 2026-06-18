@@ -22,12 +22,18 @@ EVIDENCE_GAP_LEDGER_REPORT_TYPE = "executable_research_evidence_gap_ledger"
 BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE = (
     "backfill_partial_root_cause_repair_plan"
 )
+SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE = (
+    "signal_robustness_blocker_drilldown"
+)
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE = (
     f"{BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE = (
+    f"{SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -40,6 +46,16 @@ BACKFILL_REPAIR_STATUSES: tuple[str, ...] = (
     BACKFILL_PARTIALLY_REPAIRABLE,
     BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC,
 )
+SIGNAL_ROBUSTNESS_REPAIRABLE = "SIGNAL_ROBUSTNESS_REPAIRABLE"
+SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN = (
+    "SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN"
+)
+SIGNAL_ROBUSTNESS_NOT_REPAIRABLE = "SIGNAL_ROBUSTNESS_NOT_REPAIRABLE"
+SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES: tuple[str, ...] = (
+    SIGNAL_ROBUSTNESS_REPAIRABLE,
+    SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN,
+    SIGNAL_ROBUSTNESS_NOT_REPAIRABLE,
+)
 
 REPORT_PREFIXES: dict[str, str] = {
     EVIDENCE_GAP_LEDGER_REPORT_TYPE: "executable_research_evidence_gap_ledger",
@@ -51,6 +67,10 @@ REPORT_PREFIXES: dict[str, str] = {
     ),
     BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE: (
         "backfill_partial_root_cause_repair_plan_validation"
+    ),
+    SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: "signal_robustness_blocker_drilldown",
+    SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE: (
+        "signal_robustness_blocker_drilldown_validation"
     ),
 }
 
@@ -92,6 +112,16 @@ REPAIRABILITY_TYPES: tuple[str, ...] = (
     "binding_repairable",
     "candidate_spec_issue",
     "expected_limitation",
+)
+
+SIGNAL_BLOCKER_CAUSES: tuple[str, ...] = (
+    "missing_feature_columns",
+    "stale_signal_series",
+    "schema_mismatch",
+    "partial_market_coverage",
+    "empty_signal_window",
+    "binding_fail_closed_condition",
+    "invalid_candidate_assumptions",
 )
 
 
@@ -746,6 +776,322 @@ def validate_backfill_partial_root_cause_repair_plan_payload(
             "repair_backfill_partial_root_cause_repair_plan"
             if status == FAIL_STATUS
             else "use_validated_backfill_repair_plan_for_trading_473"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not rerun source reports."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_signal_robustness_blocker_drilldown_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    paths = _signal_drilldown_source_paths(reports_dir=reports_dir, as_of=as_of)
+    signal_review = _read_json_mapping(paths[next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE])
+    signal_binding = _read_json_mapping(paths[binding_reports.SIGNAL_BINDING_REPORT_TYPE])
+    repair_plan = _read_json_mapping(paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE])
+    ledger = _read_json_mapping(paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE])
+    summary = _mapping(signal_review.get("summary"))
+    blocker_rows = _signal_blocker_rows(
+        signal_review=signal_review,
+        signal_binding=signal_binding,
+        repair_plan=repair_plan,
+        paths=paths,
+    )
+    non_blocking_checks = _signal_non_blocking_checks(signal_review)
+    drilldown_status = _overall_signal_drilldown_status(blocker_rows)
+    repairable_without_rule_relaxation = (
+        bool(blocker_rows)
+        and all(row.get("repairable_without_rule_relaxation") is True for row in blocker_rows)
+    )
+    requested_date_range = _text(
+        signal_review.get("requested_date_range"),
+        _text(summary.get("requested_date_range"), "not_applicable"),
+    )
+    payload_summary = {
+        "signal_drilldown_status": drilldown_status,
+        "source_signal_robustness_status": _text(
+            summary.get("signal_robustness_status"),
+            _text(signal_review.get("status"), "MISSING"),
+        ),
+        "source_signal_binding_status": _text(
+            summary.get("source_signal_binding_status"),
+            _text(signal_binding.get("status"), "MISSING"),
+        ),
+        "source_backfill_repair_status": _text(repair_plan.get("status"), "MISSING"),
+        "candidate_id": _text(
+            _mapping(signal_binding.get("summary")).get("candidate_id"),
+            _text(summary.get("candidate_id"), "MISSING"),
+        ),
+        "market_regime": _text(signal_review.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_date_range,
+        "source_blocking_check_count": _int(summary.get("blocking_check_count")),
+        "blocker_count": len(blocker_rows),
+        "repairable_blocker_count": len(
+            [
+                row
+                for row in blocker_rows
+                if row.get("repairable_without_rule_relaxation") is True
+            ]
+        ),
+        "candidate_redesign_blocker_count": len(
+            [row for row in blocker_rows if row.get("requires_candidate_redesign") is True]
+        ),
+        "not_repairable_blocker_count": len(
+            [row for row in blocker_rows if row.get("not_repairable") is True]
+        ),
+        "repairable_without_rule_relaxation": repairable_without_rule_relaxation,
+        "signal_completeness_rules_relaxed": any(
+            row.get("signal_completeness_rules_relaxed") is True for row in blocker_rows
+        ),
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+        as_of=as_of,
+        status=drilldown_status,
+        purpose=(
+            "Drill down why signal robustness is blocked and identify whether "
+            "the candidate can be repaired without weakening completeness rules."
+        ),
+        input_artifacts={report_type: str(path) for report_type, path in paths.items()},
+        output_decision=drilldown_status,
+        summary=payload_summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(
+                    next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+                    paths[next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE],
+                    signal_review,
+                ),
+                _source_artifact(
+                    binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+                    paths[binding_reports.SIGNAL_BINDING_REPORT_TYPE],
+                    signal_binding,
+                ),
+                _source_artifact(
+                    BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+                    paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE],
+                    repair_plan,
+                ),
+                _source_artifact(
+                    EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+                    paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE],
+                    ledger,
+                ),
+            ],
+            "signal_blockers": blocker_rows,
+            "non_blocking_signal_checks": non_blocking_checks,
+            "classification_policy": {
+                "blocker_causes": list(SIGNAL_BLOCKER_CAUSES),
+                "status_taxonomy": list(SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES),
+                "repairable_without_rule_relaxation_meaning": (
+                    "The blocker can be resolved by repairing signal/binding/data "
+                    "inputs while keeping fail-closed completeness rules intact."
+                ),
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-473 已生成 signal robustness blocker drilldown；"
+                "当前 blocker 可通过修复 historical signal/binding coverage 处理，"
+                "不得放松 completeness rules。"
+            ),
+            key_result=drilldown_status,
+            blocking_issues=_issue_names(blocker_rows, "blocker_id"),
+            warnings=(
+                "signal completeness rules remain fail-closed; no paper-shadow eligibility"
+            ),
+            next_action="run_trading_474_window_fragility_attribution",
+        ),
+        next_action="run_trading_474_window_fragility_attribution",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Drilldown is read-only and does not refresh signal inputs.",
+            "Historical signal series are not fabricated.",
+            "Signal completeness rules are not weakened or relaxed.",
+        ],
+        requested_date_range=requested_date_range,
+    )
+
+
+def validate_signal_robustness_blocker_drilldown_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    blockers = _records(payload.get("signal_blockers"))
+    source_artifacts = _records(payload.get("source_artifacts"))
+    source_report_types = {_text(row.get("report_type")) for row in source_artifacts}
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+        f"report_type must be {SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE}.",
+        "regenerate_signal_robustness_blocker_drilldown",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status_enum",
+        _text(payload.get("status")) in SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES,
+        "Signal drilldown status must use the governed TRADING-473 taxonomy.",
+        "restore_signal_drilldown_status_taxonomy",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Signal drilldown must keep production_effect=none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "market_regime_visible",
+        _text(payload.get("market_regime")) == MARKET_REGIME
+        and _text(summary.get("market_regime")) == MARKET_REGIME,
+        f"Signal drilldown must disclose market_regime={MARKET_REGIME}.",
+        "restore_ai_after_chatgpt_regime_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "requested_date_range_visible",
+        bool(_text(payload.get("requested_date_range"))),
+        "Signal drilldown must disclose requested date range.",
+        "restore_requested_date_range_disclosure",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_sources_present",
+        {
+            next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+            binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        }
+        <= source_report_types,
+        "Signal drilldown must include signal review, signal binding, repair plan, ledger.",
+        "restore_required_source_loading",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "blocker_rows_present",
+        bool(blockers),
+        "Signal drilldown must include rows for blocking signal checks.",
+        "restore_signal_blocker_rows",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "blocker_count_consistent",
+        _int(summary.get("blocker_count")) == len(blockers)
+        and _int(summary.get("blocker_count")) > 0,
+        "Blocker count must match signal_blockers and be non-zero.",
+        "restore_signal_blocker_count",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "blocker_fields_present",
+        all(_signal_blocker_row_complete(row) for row in blockers),
+        "Each blocker row must include artifact, field, expected/actual, repair path.",
+        "restore_signal_blocker_required_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "blocker_causes_valid",
+        all(_text(row.get("blocker_cause")) in SIGNAL_BLOCKER_CAUSES for row in blockers),
+        "Each blocker cause must use the governed TRADING-473 taxonomy.",
+        "restore_signal_blocker_cause_taxonomy",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "rules_not_relaxed",
+        summary.get("signal_completeness_rules_relaxed") is False
+        and all(row.get("signal_completeness_rules_relaxed") is False for row in blockers),
+        "Signal completeness rules must not be relaxed.",
+        "restore_fail_closed_signal_completeness_rules",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "repair_decision_consistent",
+        _signal_repair_decision_consistent(payload),
+        "Signal drilldown status must match blocker repairability flags.",
+        "restore_signal_repairability_decision",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Signal drilldown must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-473 signal robustness blocker drilldown.",
+        input_artifacts={SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-473 signal drilldown validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_signal_robustness_blocker_drilldown"
+                if status == FAIL_STATUS
+                else "use_validated_signal_drilldown_for_trading_474"
+            ),
+        ),
+        next_action=(
+            "repair_signal_robustness_blocker_drilldown"
+            if status == FAIL_STATUS
+            else "use_validated_signal_drilldown_for_trading_474"
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not rerun source reports."],
@@ -1565,6 +1911,273 @@ def _backfill_window_diagnostic_complete(row: Mapping[str, Any]) -> bool:
     )
 
 
+def _signal_drilldown_source_paths(*, reports_dir: Path, as_of: date) -> dict[str, Path]:
+    return {
+        next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE: (
+            next_cycle.default_next_research_cycle_json_path(
+                next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        binding_reports.SIGNAL_BINDING_REPORT_TYPE: (
+            binding_reports.default_executable_binding_json_path(
+                binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+                reports_dir,
+                as_of,
+            )
+        ),
+        BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: default_evidence_repair_json_path(
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        EVIDENCE_GAP_LEDGER_REPORT_TYPE: default_evidence_repair_json_path(
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+    }
+
+
+def _signal_blocker_rows(
+    *,
+    signal_review: Mapping[str, Any],
+    signal_binding: Mapping[str, Any],
+    repair_plan: Mapping[str, Any],
+    paths: Mapping[str, Path],
+) -> list[dict[str, Any]]:
+    rows = []
+    for check in _records(signal_review.get("signal_quality_checks")):
+        if _text(check.get("status")) not in {"BLOCKING", "FAIL", "FAILED", "ERROR"}:
+            continue
+        check_id = _text(check.get("check_id"), "unknown_signal_check")
+        cause = _signal_blocker_cause(check_id)
+        field_values = _signal_failed_field_values(
+            check_id=check_id,
+            check=check,
+            signal_review=signal_review,
+            signal_binding=signal_binding,
+            repair_plan=repair_plan,
+        )
+        rules_relaxed = check.get("signal_completeness_rules_relaxed") is True
+        invalid_assumption = cause == "invalid_candidate_assumptions"
+        rows.append(
+            {
+                "blocker_id": f"signal_robustness_{check_id}",
+                "blocker_cause": cause,
+                "source_check_id": check_id,
+                "exact_input_artifact": str(
+                    paths[next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE]
+                ),
+                "supporting_input_artifacts": _signal_supporting_artifacts(
+                    cause,
+                    paths,
+                ),
+                "failed_field": field_values["failed_field"],
+                "expected_value": field_values["expected_value"],
+                "actual_value": field_values["actual_value"],
+                "evidence": _text(check.get("evidence")),
+                "fail_closed": check.get("fail_closed") is True,
+                "signal_completeness_rules_relaxed": rules_relaxed,
+                "repair_path": _signal_repair_path(cause),
+                "repairable_without_rule_relaxation": (
+                    not rules_relaxed and not invalid_assumption
+                ),
+                "requires_candidate_redesign": invalid_assumption,
+                "not_repairable": rules_relaxed,
+                "recommended_action": _text(check.get("recommended_action")),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _signal_non_blocking_checks(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for check in _records(payload.get("signal_quality_checks")):
+        if _text(check.get("status")) in {"BLOCKING", "FAIL", "FAILED", "ERROR"}:
+            continue
+        rows.append(
+            {
+                "check_id": _text(check.get("check_id")),
+                "blocker_cause": _signal_blocker_cause(_text(check.get("check_id"))),
+                "status": _text(check.get("status")),
+                "evidence": _text(check.get("evidence")),
+                "fail_closed": check.get("fail_closed") is True,
+                "signal_completeness_rules_relaxed": (
+                    check.get("signal_completeness_rules_relaxed") is True
+                ),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _signal_blocker_cause(check_id: str) -> str:
+    mapping = {
+        "missing_feature_columns": "missing_feature_columns",
+        "stale_signal_series": "stale_signal_series",
+        "schema_version_mismatch": "schema_mismatch",
+        "schema_mismatch": "schema_mismatch",
+        "market_coverage_gap": "partial_market_coverage",
+        "empty_signal_window": "empty_signal_window",
+        "partial_signal_series": "binding_fail_closed_condition",
+        "invalid_candidate_assumptions": "invalid_candidate_assumptions",
+    }
+    return mapping.get(check_id, "binding_fail_closed_condition")
+
+
+def _signal_failed_field_values(
+    *,
+    check_id: str,
+    check: Mapping[str, Any],
+    signal_review: Mapping[str, Any],
+    signal_binding: Mapping[str, Any],
+    repair_plan: Mapping[str, Any],
+) -> dict[str, str]:
+    review_summary = _mapping(signal_review.get("summary"))
+    binding_summary = _mapping(signal_binding.get("summary"))
+    repair_summary = _mapping(repair_plan.get("summary"))
+    status = _text(check.get("status"))
+    evidence = _text(check.get("evidence"))
+    if check_id == "partial_signal_series":
+        return {
+            "failed_field": "signal_quality_checks[partial_signal_series].status",
+            "expected_value": (
+                "PASS; historical signal series covers frozen validation windows "
+                "without static-proxy completeness gaps"
+            ),
+            "actual_value": (
+                f"{status}; signal_row_count={review_summary.get('signal_row_count')}; "
+                f"backfill_signal_completeness="
+                f"{review_summary.get('backfill_signal_completeness')}"
+            ),
+        }
+    if check_id == "stale_signal_series":
+        return {
+            "failed_field": "signal_quality_checks[stale_signal_series].status",
+            "expected_value": (
+                "PASS; signal dates are inside frozen validation windows and "
+                "support historical backfill coverage"
+            ),
+            "actual_value": (
+                f"{status}; latest_signal_date="
+                f"{binding_summary.get('latest_signal_date')}; "
+                f"warning_reason={binding_summary.get('warning_reason')}"
+            ),
+        }
+    if check_id == "market_coverage_gap":
+        return {
+            "failed_field": "signal_quality_checks[market_coverage_gap].status",
+            "expected_value": (
+                "PASS; missing_data_count=0 and every required backfill window "
+                "has historical signal coverage"
+            ),
+            "actual_value": (
+                f"{status}; evidence={evidence}; "
+                f"incomplete_window_count="
+                f"{repair_summary.get('incomplete_window_count')}; "
+                f"binding_repairable_window_count="
+                f"{repair_summary.get('binding_repairable_window_count')}"
+            ),
+        }
+    if check_id == "missing_feature_columns":
+        return {
+            "failed_field": "signal_quality_checks[missing_feature_columns].status",
+            "expected_value": "PASS; required feature and signal columns are present",
+            "actual_value": f"{status}; evidence={evidence}",
+        }
+    if check_id in {"schema_version_mismatch", "schema_mismatch"}:
+        return {
+            "failed_field": "signal_quality_checks[schema_version_mismatch].status",
+            "expected_value": "PASS; schema and feature versions match binding policy",
+            "actual_value": f"{status}; evidence={evidence}",
+        }
+    return {
+        "failed_field": f"signal_quality_checks[{check_id}].status",
+        "expected_value": "PASS without relaxing signal completeness rules",
+        "actual_value": f"{status}; evidence={evidence}",
+    }
+
+
+def _signal_supporting_artifacts(
+    cause: str,
+    paths: Mapping[str, Path],
+) -> list[str]:
+    artifacts = [str(paths[binding_reports.SIGNAL_BINDING_REPORT_TYPE])]
+    if cause == "partial_market_coverage":
+        artifacts.append(str(paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE]))
+    return artifacts
+
+
+def _signal_repair_path(cause: str) -> str:
+    mapping = {
+        "missing_feature_columns": "repair_required_feature_columns_then_recheck",
+        "stale_signal_series": (
+            "extend_binding_to_historical_signal_series_without_rule_relaxation"
+        ),
+        "schema_mismatch": "align_signal_binding_schema_with_policy_then_recheck",
+        "partial_market_coverage": (
+            "repair_historical_signal_coverage_for_required_backfill_windows"
+        ),
+        "empty_signal_window": "repair_signal_generation_inputs_before_recheck",
+        "binding_fail_closed_condition": (
+            "extend_binding_to_historical_signal_series_without_rule_relaxation"
+        ),
+        "invalid_candidate_assumptions": (
+            "redesign_candidate_assumptions_before_signal_recheck"
+        ),
+    }
+    return mapping.get(cause, "repair_signal_binding_inputs_then_recheck")
+
+
+def _overall_signal_drilldown_status(
+    blockers: Sequence[Mapping[str, Any]],
+) -> str:
+    if any(row.get("not_repairable") is True for row in blockers):
+        return SIGNAL_ROBUSTNESS_NOT_REPAIRABLE
+    if any(row.get("requires_candidate_redesign") is True for row in blockers):
+        return SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN
+    return SIGNAL_ROBUSTNESS_REPAIRABLE
+
+
+def _signal_blocker_row_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "blocker_id",
+        "blocker_cause",
+        "source_check_id",
+        "exact_input_artifact",
+        "failed_field",
+        "expected_value",
+        "actual_value",
+        "repair_path",
+    )
+    return (
+        all(bool(_text(row.get(key))) for key in required)
+        and isinstance(row.get("fail_closed"), bool)
+        and isinstance(row.get("signal_completeness_rules_relaxed"), bool)
+        and isinstance(row.get("repairable_without_rule_relaxation"), bool)
+        and isinstance(row.get("requires_candidate_redesign"), bool)
+        and isinstance(row.get("not_repairable"), bool)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _signal_repair_decision_consistent(payload: Mapping[str, Any]) -> bool:
+    blockers = _records(payload.get("signal_blockers"))
+    expected_status = _overall_signal_drilldown_status(blockers)
+    summary = _mapping(payload.get("summary"))
+    return (
+        _text(payload.get("status")) == expected_status
+        and _int(summary.get("blocker_count")) == len(blockers)
+        and _int(summary.get("not_repairable_blocker_count"))
+        == len([row for row in blockers if row.get("not_repairable") is True])
+        and _int(summary.get("candidate_redesign_blocker_count"))
+        == len([row for row in blockers if row.get("requires_candidate_redesign") is True])
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -1766,6 +2379,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == BACKFILL_PARTIAL_REPAIR_PLAN_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Signal Blockers", "signal_blockers"),
+            ("Non Blocking Signal Checks", "non_blocking_signal_checks"),
+        ]
+    if report_type == SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -1812,15 +2433,24 @@ __all__ = [
     "REPORT_PREFIXES",
     "REPAIRABILITY_TYPES",
     "REQUIRED_BACKFILL_WINDOWS",
+    "SIGNAL_BLOCKER_CAUSES",
+    "SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE",
+    "SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE",
+    "SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES",
+    "SIGNAL_ROBUSTNESS_NEEDS_CANDIDATE_REDESIGN",
+    "SIGNAL_ROBUSTNESS_NOT_REPAIRABLE",
+    "SIGNAL_ROBUSTNESS_REPAIRABLE",
     "VALIDATION_SUFFIX",
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_executable_research_evidence_gap_ledger_payload",
+    "build_signal_robustness_blocker_drilldown_payload",
     "default_evidence_repair_json_path",
     "default_evidence_repair_markdown_path",
     "latest_evidence_repair_json_path",
     "render_evidence_repair_markdown",
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
+    "validate_signal_robustness_blocker_drilldown_payload",
     "write_evidence_repair_json",
     "write_evidence_repair_markdown",
 ]

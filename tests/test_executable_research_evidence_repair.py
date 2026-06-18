@@ -205,6 +205,117 @@ def test_backfill_partial_repair_plan_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_signal_robustness_drilldown_lists_exact_blockers(tmp_path: Path) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+
+    payload = repair.build_signal_robustness_blocker_drilldown_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.SIGNAL_ROBUSTNESS_REPAIRABLE
+    assert payload["summary"]["blocker_count"] == 3
+    assert payload["summary"]["repairable_without_rule_relaxation"] is True
+    assert payload["summary"]["candidate_redesign_blocker_count"] == 0
+    causes = {row["blocker_cause"] for row in payload["signal_blockers"]}
+    assert causes == {
+        "binding_fail_closed_condition",
+        "stale_signal_series",
+        "partial_market_coverage",
+    }
+    assert all(
+        row["signal_completeness_rules_relaxed"] is False
+        for row in payload["signal_blockers"]
+    )
+    assert all(row["expected_value"] for row in payload["signal_blockers"])
+    assert any(
+        row["failed_field"] == "signal_quality_checks[market_coverage_gap].status"
+        for row in payload["signal_blockers"]
+    )
+
+    validation = repair.validate_signal_robustness_blocker_drilldown_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_signal_robustness_drilldown_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "signal-robustness-blocker-drilldown",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    drilldown_path = repair.default_evidence_repair_json_path(
+        repair.SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(drilldown_path.read_text(encoding="utf-8"))
+    assert payload["status"] == repair.SIGNAL_ROBUSTNESS_REPAIRABLE
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-signal-robustness-blocker-drilldown",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.SIGNAL_ROBUSTNESS_DRILLDOWN_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
+def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
+    ledger = repair.build_executable_research_evidence_gap_ledger_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        ledger,
+        repair.default_evidence_repair_json_path(
+            repair.EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    repair_plan = repair.build_backfill_partial_root_cause_repair_plan_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        repair_plan,
+        repair.default_evidence_repair_json_path(
+            repair.BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
 def _write_trading_470_sources(reports_dir: Path) -> None:
     reports_dir.mkdir(parents=True, exist_ok=True)
     binding_sources = {
@@ -219,7 +330,15 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
             "report_type": binding_reports.SIGNAL_BINDING_REPORT_TYPE,
             "as_of": RUN_DATE.isoformat(),
             "status": binding_reports.SIGNAL_BINDING_COMPLETE_WITH_WARNINGS,
-            "summary": {"candidate_id": "candidate_v1", "signal_row_count": 1},
+            "summary": {
+                "candidate_id": "candidate_v1",
+                "signal_row_count": 1,
+                "latest_signal_date": "2026-06-16",
+                "warning_reason": (
+                    "signal_date_outside_frozen_validation_windows,"
+                    "signal_input_completeness_warning"
+                ),
+            },
             "production_effect": "none",
         },
         binding_reports.WEIGHT_BINDING_REPORT_TYPE: {
@@ -335,11 +454,56 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
             "report_type": next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
             "as_of": RUN_DATE.isoformat(),
             "status": "SIGNAL_ROBUSTNESS_BLOCKED",
+            "summary": {
+                "signal_robustness_status": "SIGNAL_ROBUSTNESS_BLOCKED",
+                "source_signal_binding_status": (
+                    binding_reports.SIGNAL_BINDING_COMPLETE_WITH_WARNINGS
+                ),
+                "signal_row_count": 1,
+                "backfill_signal_completeness": "PARTIAL_STATIC_BINDING",
+                "blocking_check_count": 3,
+                "production_effect": "none",
+            },
             "signal_quality_checks": [
+                {
+                    "check_id": "missing_feature_columns",
+                    "status": "PASS",
+                    "evidence": "required feature/signal columns present",
+                    "fail_closed": True,
+                    "signal_completeness_rules_relaxed": False,
+                    "recommended_action": "retain_signal_binding_evidence",
+                },
                 {
                     "check_id": "partial_signal_series",
                     "status": "BLOCKING",
                     "evidence": "signal_row_count=1",
+                    "fail_closed": True,
+                    "signal_completeness_rules_relaxed": False,
+                    "recommended_action": "repair_signal_binding_inputs",
+                },
+                {
+                    "check_id": "stale_signal_series",
+                    "status": "BLOCKING",
+                    "evidence": (
+                        "latest_signal_date=2026-06-16; "
+                        "warning_reasons=signal_date_outside_frozen_validation_windows"
+                    ),
+                    "fail_closed": True,
+                    "signal_completeness_rules_relaxed": False,
+                    "recommended_action": "repair_signal_binding_inputs",
+                },
+                {
+                    "check_id": "schema_version_mismatch",
+                    "status": "PASS",
+                    "evidence": "schema and feature versions inspected",
+                    "fail_closed": True,
+                    "signal_completeness_rules_relaxed": False,
+                    "recommended_action": "retain_signal_binding_evidence",
+                },
+                {
+                    "check_id": "market_coverage_gap",
+                    "status": "BLOCKING",
+                    "evidence": "missing_data_count=6",
                     "fail_closed": True,
                     "signal_completeness_rules_relaxed": False,
                     "recommended_action": "repair_signal_binding_inputs",

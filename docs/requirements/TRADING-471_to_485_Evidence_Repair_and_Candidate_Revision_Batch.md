@@ -26,7 +26,7 @@ owner decision append、production mutation 或 automatic position control。
 |---|---|---|---|---|
 |TRADING-471|executable-research-evidence-gap-ledger|DONE|TRADING-470 artifacts|生成 `executable_research_evidence_gap_ledger` JSON/Markdown 和 validation artifact；ledger 逐项记录 gap id、source report、current/expected value、root cause category、fix type、blocking、candidate redesign requirement；Reader Brief 披露非聚合原因。|
 |TRADING-472|backfill-partial-root-cause-and-repair-plan|DONE|TRADING-471 + latest backfill|解释每个 incomplete window 的缺失日期/feature/signal/schema/coverage/binding issue，并输出 repairability 状态。|
-|TRADING-473|signal-robustness-blocker-drilldown|READY|TRADING-471 + signal robustness review|列出每个 blocker 的 input artifact、failed field、expected/actual value 和 repair path，不放松 signal completeness rules。|
+|TRADING-473|signal-robustness-blocker-drilldown|DONE|TRADING-471 + signal robustness review|列出每个 blocker 的 input artifact、failed field、expected/actual value 和 repair path，不放松 signal completeness rules。|
 |TRADING-474|window-fragility-attribution|READY|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
 |TRADING-475|stress-weakness-attribution|READY|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
 |TRADING-476|cost-benchmark-weakness-attribution|READY|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
@@ -85,3 +85,25 @@ owner decision append、production mutation 或 automatic position control。
   candidate spec、未削弱 signal completeness rules、未 append owner decision、未创建
   paper-shadow、未批准 extended/live、未写 official target weights、未触发 broker/order、
   未修改 production。下一步是 TRADING-473 signal robustness blocker drilldown。
+- 2026-06-18: TRADING-473 开始实现。范围限定为只读读取
+  `next_candidate_signal_robustness_review`、validated signal binding、
+  TRADING-472 repair plan 和 TRADING-471 ledger，逐 blocker 输出 exact input
+  artifact、failed field、expected/actual value、repair path 和是否可在不放松
+  signal completeness rules 的前提下修复；不刷新 signal inputs、不补造 historical
+  signal series、不放宽 completeness rules、不改变 candidate spec、不触发 paper-shadow
+  或 production。
+- 2026-06-18: TRADING-473 完成 pending commit。真实 2026-06-17 drilldown
+  `signal_robustness_blocker_drilldown_2026-06-17` 输出
+  `SIGNAL_ROBUSTNESS_REPAIRABLE`；source signal robustness status 为
+  `SIGNAL_ROBUSTNESS_BLOCKED`，source signal binding 为
+  `CANDIDATE_SIGNAL_BINDING_COMPLETE_WITH_WARNINGS`，source backfill repair plan 为
+  `BACKFILL_REPAIRABLE`。Blocker rows=3：`partial_signal_series`
+  -> `binding_fail_closed_condition`，`stale_signal_series` -> `stale_signal_series`，
+  `market_coverage_gap` -> `partial_market_coverage`；repairable blockers=3，
+  repairable_without_rule_relaxation=true，candidate redesign blockers=0，
+  not repairable blockers=0，signal_completeness_rules_relaxed=false。Validation
+  `signal_robustness_blocker_drilldown_validation_2026-06-17` 为 PASS，
+  checks=14、failed=0。未刷新 signal inputs、未补造 historical signal series、未放松
+  completeness rules、未改变 candidate spec、未 append owner decision、未创建
+  paper-shadow、未批准 extended/live、未写 official target weights、未触发 broker/order、
+  未修改 production。下一步是 TRADING-474 window fragility attribution。

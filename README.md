@@ -2008,6 +2008,18 @@ repairability。若 source backfill 只报告窗口级 historical signal series 
 decision、不创建 paper-shadow、不批准 extended/live、不写 official target weights、不触发
 broker/order、不修改 production。
 
+TRADING-473_SIGNAL_ROBUSTNESS_BLOCKER_DRILLDOWN 在 backfill repair plan 后解释
+`SIGNAL_ROBUSTNESS_BLOCKED` 的具体 blocker。运行
+`aits reports signal-robustness-blocker-drilldown --as-of YYYY-MM-DD` 和
+`aits reports validate-signal-robustness-blocker-drilldown --latest` 会读取 signal
+robustness review、executable signal binding、TRADING-472 repair plan 和 TRADING-471
+ledger，只对 blocking signal checks 输出 rows，记录 exact input artifact、failed field、
+expected value、actual value、blocker cause、fail-closed status、repair path、是否需要
+candidate redesign，以及是否可在不放松 signal completeness rules 的前提下修复。该
+drilldown 不刷新 signal inputs、不补造 historical signal series、不放松 completeness
+rules、不改变 candidate spec、不 append owner decision、不创建 paper-shadow、不批准
+extended/live、不写 official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

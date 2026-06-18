@@ -9110,6 +9110,46 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: signal_robustness_blocker_drilldown
+    title: Signal Robustness Blocker Drilldown
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports signal-robustness-blocker-drilldown --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/signal_robustness_blocker_drilldown_20*.json
+      - outputs/reports/signal_robustness_blocker_drilldown_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-473 reads the signal robustness review, signal binding, TRADING-472
+      repair plan, and TRADING-471 ledger, then records each blocking signal
+      check with exact artifact, failed field, expected/actual value, repair
+      path, and whether repair is possible without relaxing completeness rules.
+    owner_action: use_as_input_to_trading_474_window_fragility_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: signal_robustness_blocker_drilldown_validation
+    title: Signal Robustness Blocker Drilldown Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-signal-robustness-blocker-drilldown --latest
+    artifact_globs:
+      - outputs/reports/signal_robustness_blocker_drilldown_validation_20*.json
+      - outputs/reports/signal_robustness_blocker_drilldown_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-473 validation checks source coverage, blocker rows, exact
+      expected/actual fields, blocker-cause taxonomy, no completeness-rule
+      relaxation, Reader Brief fields, and the no paper-shadow / no production
+      safety boundary.
+    owner_action: run_after_signal_robustness_blocker_drilldown
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research
