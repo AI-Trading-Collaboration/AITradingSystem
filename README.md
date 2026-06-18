@@ -1869,6 +1869,19 @@ artifact。Required fields 包括 `hypothetical_research_weight`、
 target weights、broker/order、owner decision、production mutation 或 backfill performance
 metrics。
 
+TRADING-463_EXECUTABLE_BINDING_SAFETY_AUDIT 在任何 binding-backed backfill 前审计
+TRADING-461/462 的 executable binding code 与 artifacts。运行
+`aits reports executable-binding-safety-audit --as-of YYYY-MM-DD` 读取 signal binding、
+research weight binding 及其 validation artifacts，并扫描 binding module、research policy
+和生成 artifacts 中的 official target weights、broker/order、live allocation、production
+mutation、account/API key、paper-shadow activation 和 owner decision append 语义；运行
+`aits reports validate-executable-binding-safety-audit --latest` 生成 validation artifact。
+输出状态限定为 `EXECUTABLE_BINDING_SAFETY_PASS`、
+`EXECUTABLE_BINDING_SAFETY_WARNING` 或 `EXECUTABLE_BINDING_SAFETY_BLOCKED`。只有 pass 或
+acceptable warning 才能进入 TRADING-464 backfill；blocked 时必须 hard stop。该审计只读，
+不运行 backfill、不创建 paper-shadow、不写 official target weights、不触发 broker/order、
+不 append owner decision、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

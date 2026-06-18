@@ -172,3 +172,25 @@ Latest confirmed statuses:
   warning. No official target weights, backfill metrics, paper-shadow
   activation, owner decision, broker/order, or production mutation were
   produced. Next task is TRADING-463 executable binding safety audit.
+- 2026-06-18: TRADING-463 started. Implementation must audit the executable
+  binding code and artifacts before any backfill rerun, scanning for official
+  target weights, broker integration, order tickets, live allocation,
+  production mutation, account id/API key exposure, paper-shadow activation,
+  and owner decision append. The audit must validate that signal binding is
+  research-only and weight binding is hypothetical-only, and must output
+  `EXECUTABLE_BINDING_SAFETY_PASS`, `EXECUTABLE_BINDING_SAFETY_WARNING`, or
+  `EXECUTABLE_BINDING_SAFETY_BLOCKED`. Backfill remains forbidden unless the
+  safety audit is pass or acceptable warning.
+- 2026-06-18: TRADING-463 completed pending commit. Added
+  `executable_binding_safety_audit` and validation artifacts with report CLI,
+  validation CLI, Reader Brief section, report registry, artifact catalog,
+  system flow, README, focused tests, artifact-level safety checks, and focused
+  static scanning over binding code/policies/artifacts. The real 2026-06-17
+  audit consumed validated signal and research weight binding artifacts, found
+  artifact failures `0` and static blockers `0`, and returned
+  `EXECUTABLE_BINDING_SAFETY_WARNING` with `acceptable_warning=true`; validation
+  PASS. Warnings are safe-context forbidden-term mentions in binding code and
+  artifacts, not positive production behavior. No backfill was run, no
+  paper-shadow was activated, no official target weights, broker/order,
+  owner-decision append, or production mutation were produced. Next task is
+  TRADING-464 binding-backed research backfill.

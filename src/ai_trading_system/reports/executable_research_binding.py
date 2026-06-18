@@ -32,6 +32,8 @@ SIGNAL_BINDING_REPORT_TYPE = "next_candidate_signal_binding"
 SIGNAL_BINDING_VALIDATION_REPORT_TYPE = f"{SIGNAL_BINDING_REPORT_TYPE}{VALIDATION_SUFFIX}"
 WEIGHT_BINDING_REPORT_TYPE = "next_candidate_research_weight_binding"
 WEIGHT_BINDING_VALIDATION_REPORT_TYPE = f"{WEIGHT_BINDING_REPORT_TYPE}{VALIDATION_SUFFIX}"
+SAFETY_AUDIT_REPORT_TYPE = "executable_binding_safety_audit"
+SAFETY_AUDIT_VALIDATION_REPORT_TYPE = f"{SAFETY_AUDIT_REPORT_TYPE}{VALIDATION_SUFFIX}"
 BINDING_VERSION = "next_candidate_executable_binding_contract_v1"
 SIGNAL_BINDING_VERSION = "next_candidate_signal_binding_v1"
 WEIGHT_BINDING_VERSION = "next_candidate_research_weight_binding_v1"
@@ -47,6 +49,9 @@ WEIGHT_BINDING_COMPLETE_WITH_WARNINGS = (
     "CANDIDATE_RESEARCH_WEIGHT_BINDING_COMPLETE_WITH_WARNINGS"
 )
 WEIGHT_BINDING_BLOCKED = "CANDIDATE_RESEARCH_WEIGHT_BINDING_BLOCKED"
+SAFETY_PASS = "EXECUTABLE_BINDING_SAFETY_PASS"
+SAFETY_WARNING = "EXECUTABLE_BINDING_SAFETY_WARNING"
+SAFETY_BLOCKED = "EXECUTABLE_BINDING_SAFETY_BLOCKED"
 DEFAULT_SIGNAL_INPUT_POLICY_PATH = (
     signal_inputs.DEFAULT_SIGNAL_INPUT_COMPLETENESS_POLICY_PATH
 )
@@ -68,6 +73,8 @@ REPORT_PREFIXES: dict[str, str] = {
     WEIGHT_BINDING_VALIDATION_REPORT_TYPE: (
         "next_candidate_research_weight_binding_validation"
     ),
+    SAFETY_AUDIT_REPORT_TYPE: "executable_binding_safety_audit",
+    SAFETY_AUDIT_VALIDATION_REPORT_TYPE: "executable_binding_safety_audit_validation",
 }
 
 REQUIRED_OUTPUT_TYPES: tuple[str, ...] = (
@@ -658,6 +665,177 @@ def build_next_candidate_research_weight_binding_payload(
     )
 
 
+def build_executable_binding_safety_audit_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    project_root: Path = PROJECT_ROOT,
+    static_scan_paths: Sequence[Path] | None = None,
+) -> dict[str, Any]:
+    signal_path = default_executable_binding_json_path(
+        SIGNAL_BINDING_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    signal_validation_path = default_executable_binding_json_path(
+        SIGNAL_BINDING_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    weight_path = default_executable_binding_json_path(
+        WEIGHT_BINDING_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    weight_validation_path = default_executable_binding_json_path(
+        WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    signal_payload = _read_json_mapping(signal_path)
+    signal_validation = _read_json_mapping(signal_validation_path)
+    weight_payload = _read_json_mapping(weight_path)
+    weight_validation = _read_json_mapping(weight_validation_path)
+    signal_summary = _mapping(signal_payload.get("summary"))
+    weight_summary = _mapping(weight_payload.get("summary"))
+    candidate_id = _text(
+        weight_summary.get("candidate_id"),
+        _text(signal_summary.get("candidate_id"), "MISSING"),
+    )
+    requested_range = _text(
+        weight_payload.get("requested_date_range"),
+        _text(signal_payload.get("requested_date_range"), "not_applicable"),
+    )
+    artifact_checks = _executable_binding_artifact_safety_checks(
+        signal_payload=signal_payload,
+        signal_validation=signal_validation,
+        weight_payload=weight_payload,
+        weight_validation=weight_validation,
+    )
+    scan_paths = list(static_scan_paths or _default_safety_scan_paths(reports_dir, as_of))
+    scan_findings = _focused_safety_scan(scan_paths=scan_paths, project_root=project_root)
+    blocking_findings = [
+        finding for finding in scan_findings if finding.get("severity") == "BLOCKING"
+    ]
+    warning_findings = [
+        finding for finding in scan_findings if finding.get("severity") == "WARNING"
+    ]
+    failed_artifact_checks = [
+        check for check in artifact_checks if check.get("status") == "FAIL"
+    ]
+    warning_artifact_checks = [
+        check for check in artifact_checks if check.get("status") == "WARNING"
+    ]
+    if failed_artifact_checks or blocking_findings:
+        status = SAFETY_BLOCKED
+    elif warning_artifact_checks or warning_findings:
+        status = SAFETY_WARNING
+    else:
+        status = SAFETY_PASS
+    summary = {
+        "safety_audit_status": status,
+        "candidate_id": candidate_id,
+        "market_regime": _text(signal_payload.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_range,
+        "artifact_check_count": len(artifact_checks),
+        "failed_artifact_check_count": len(failed_artifact_checks),
+        "warning_artifact_check_count": len(warning_artifact_checks),
+        "static_scan_path_count": len(scan_paths),
+        "static_scan_finding_count": len(scan_findings),
+        "blocking_static_finding_count": len(blocking_findings),
+        "warning_static_finding_count": len(warning_findings),
+        "acceptable_warning": status == SAFETY_WARNING and not failed_artifact_checks,
+        "signal_binding_research_only": _executable_signal_binding_safe(signal_payload),
+        "weight_binding_hypothetical_only": _executable_weight_binding_safe(weight_payload),
+        "official_target_weights": False,
+        "paper_shadow_activation": False,
+        "owner_decision_append": False,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": BROKER_EFFECT,
+        "order_effect": ORDER_EFFECT,
+    }
+    return _payload(
+        report_type=SAFETY_AUDIT_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Audit executable signal and research weight bindings before any "
+            "backfill rerun."
+        ),
+        input_artifacts={
+            "next_candidate_signal_binding": str(signal_path),
+            "next_candidate_signal_binding_validation": str(signal_validation_path),
+            "next_candidate_research_weight_binding": str(weight_path),
+            "next_candidate_research_weight_binding_validation": str(
+                weight_validation_path
+            ),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "artifact_checks": artifact_checks,
+            "static_scan_findings": scan_findings,
+            "scan_paths": [str(path) for path in scan_paths],
+            "blocking_reasons": [
+                *[_text(row.get("issue_id")) for row in failed_artifact_checks],
+                *[_text(row.get("finding_id")) for row in blocking_findings],
+            ],
+            "warning_reasons": [
+                *[_text(row.get("issue_id")) for row in warning_artifact_checks],
+                *[_text(row.get("finding_id")) for row in warning_findings],
+            ],
+            "source_statuses": [
+                _source_status("next_candidate_signal_binding", signal_payload),
+                _source_status("next_candidate_signal_binding_validation", signal_validation),
+                _source_status("next_candidate_research_weight_binding", weight_payload),
+                _source_status(
+                    "next_candidate_research_weight_binding_validation",
+                    weight_validation,
+                ),
+            ],
+        },
+        reader_brief=_reader_brief(
+            summary=f"Executable binding safety audit status is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(failed_artifact_checks, "issue_id")
+            if failed_artifact_checks
+            else _issue_names(blocking_findings, "finding_id"),
+            warnings=_issue_names(warning_artifact_checks, "issue_id")
+            if warning_artifact_checks
+            else _issue_names(warning_findings, "finding_id"),
+            next_action=(
+                "repair_executable_binding_safety_blockers"
+                if status == SAFETY_BLOCKED
+                else "run_backfill_with_executable_binding"
+            ),
+        ),
+        next_action=(
+            "repair_executable_binding_safety_blockers"
+            if status == SAFETY_BLOCKED
+            else "run_backfill_with_executable_binding"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "executable_binding_safety_audit",
+            "static_scan_executed": True,
+            "backfill_executed": False,
+            "hypothetical_research_weights_are_official": False,
+        },
+        limitations=[
+            "Safety audit is read-only and does not run backfill.",
+            "Static scanner warnings require review but do not by themselves authorize trading.",
+        ],
+        requested_date_range=requested_range,
+        methodology_overrides={
+            "collector_mode": "read_existing_binding_artifacts_and_scan_sources",
+            "contract_only": False,
+            "does_not_implement_strategy_behavior": False,
+            "safety_audit_only": True,
+            "does_not_compute_backfill_metrics": True,
+        },
+    )
+
+
 def validate_executable_binding_payload(
     payload: Mapping[str, Any],
     *,
@@ -668,6 +846,8 @@ def validate_executable_binding_payload(
         return _validate_signal_binding_payload(payload)
     if expected == WEIGHT_BINDING_REPORT_TYPE:
         return _validate_weight_binding_payload(payload)
+    if expected == SAFETY_AUDIT_REPORT_TYPE:
+        return _validate_safety_audit_payload(payload)
     report_type = _text(payload.get("report_type"))
     contract = _mapping(payload.get("binding_contract"))
     summary = _mapping(payload.get("summary"))
@@ -1242,6 +1422,150 @@ def _validate_weight_binding_payload(payload: Mapping[str, Any]) -> dict[str, An
     )
 
 
+def _validate_safety_audit_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    status = _text(payload.get("status"))
+    artifact_checks = _records(payload.get("artifact_checks"))
+    scan_findings = _records(payload.get("static_scan_findings"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == SAFETY_AUDIT_REPORT_TYPE,
+        f"report_type must be {SAFETY_AUDIT_REPORT_TYPE}.",
+        "regenerate_expected_safety_audit_artifact",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status in {SAFETY_PASS, SAFETY_WARNING, SAFETY_BLOCKED},
+        "safety audit status must be PASS, WARNING, or BLOCKED.",
+        "restore_safety_audit_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "not_blocked",
+        status != SAFETY_BLOCKED,
+        "backfill cannot proceed when executable binding safety audit is BLOCKED.",
+        "repair_safety_blockers_before_backfill",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "artifact_checks_no_failures",
+        _int(summary.get("failed_artifact_check_count")) == 0,
+        "artifact safety checks must not fail.",
+        "repair_binding_artifact_safety_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "static_scan_no_blockers",
+        _int(summary.get("blocking_static_finding_count")) == 0,
+        "static scan must not find unsafe positive forbidden behavior.",
+        "remove_forbidden_binding_behavior",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "signal_binding_research_only",
+        summary.get("signal_binding_research_only") is True,
+        "signal binding must be research-only.",
+        "repair_signal_binding_safety_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "weight_binding_hypothetical_only",
+        summary.get("weight_binding_hypothetical_only") is True,
+        "weight binding must be hypothetical-only and not official target weights.",
+        "repair_weight_binding_safety_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "production_broker_order_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(payload.get("broker_effect")) == BROKER_EFFECT
+        and _text(payload.get("order_effect")) == ORDER_EFFECT,
+        "production, broker, and order effects must be none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "audit_evidence_present",
+        bool(artifact_checks) and bool(payload.get("scan_paths")),
+        "safety audit must include artifact checks and scan paths.",
+        "restore_safety_audit_evidence",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=SAFETY_AUDIT_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-463 executable binding safety audit output.",
+        input_artifacts={SAFETY_AUDIT_REPORT_TYPE: _text(payload.get("artifact_id"))},
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "safety_audit_status": status,
+            "acceptable_warning": summary.get("acceptable_warning") is True,
+            "artifact_check_count": len(artifact_checks),
+            "static_scan_finding_count": len(scan_findings),
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+            "broker_effect": BROKER_EFFECT,
+            "order_effect": ORDER_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"{SAFETY_AUDIT_REPORT_TYPE} validation is {validation_status}.",
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_executable_binding_safety_audit"
+                if validation_status == FAIL_STATUS
+                else "use_validated_executable_binding_safety_audit"
+            ),
+        ),
+        next_action=(
+            "repair_executable_binding_safety_audit"
+            if validation_status == FAIL_STATUS
+            else "use_validated_executable_binding_safety_audit"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+        methodology_overrides={
+            "contract_only": False,
+            "validates_safety_audit_only": True,
+            "does_not_compute_backfill_metrics": True,
+        },
+    )
+
+
 def write_executable_binding_json(payload: Mapping[str, Any], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -1420,6 +1744,25 @@ def render_executable_binding_markdown(payload: Mapping[str, Any]) -> str:
                     if isinstance(row, Mapping)
                 ],
             )
+        )
+    if payload.get("report_type") == SAFETY_AUDIT_REPORT_TYPE:
+        lines.extend(["", "## Safety Audit", ""])
+        for key in (
+            "safety_audit_status",
+            "artifact_check_count",
+            "failed_artifact_check_count",
+            "static_scan_path_count",
+            "static_scan_finding_count",
+            "blocking_static_finding_count",
+            "warning_static_finding_count",
+            "acceptable_warning",
+        ):
+            lines.append(f"- {key}: {_md_cell(summary.get(key))}")
+        lines.extend(
+            _records_table("Artifact Safety Checks", _records(payload.get("artifact_checks")))
+        )
+        lines.extend(
+            _records_table("Static Scan Findings", _records(payload.get("static_scan_findings")))
         )
     lines.extend(_records_table("Source Statuses", _records(payload.get("source_statuses"))))
     lines.extend(_records_table("Validation Checks", _records(payload.get("checks"))))
@@ -2420,6 +2763,290 @@ def _weight_sum_is_valid(value: Mapping[str, Any]) -> bool:
     return bool(weights) and abs(total - 1.0) <= 0.000001
 
 
+SAFETY_TERM_PATTERNS: dict[str, tuple[str, ...]] = {
+    "official_target_weights": (
+        "official_target_weights",
+        "official target weights",
+        "official target weight",
+    ),
+    "broker_integration": (
+        "broker integration",
+        "broker_order",
+        "broker action",
+        "broker_action",
+    ),
+    "order_ticket": ("order_ticket", "order ticket", "order tickets"),
+    "live_allocation": ("live_allocation", "live allocation", "live trading"),
+    "production_mutation": (
+        "production_state_mutated",
+        "production mutation",
+        "production state",
+    ),
+    "paper_shadow_activation": (
+        "paper_shadow_activation",
+        "paper-shadow activation",
+        "paper shadow activation",
+    ),
+    "owner_decision_append": (
+        "owner_decision_appended",
+        "owner decision append",
+        "append owner decision",
+    ),
+    "account_id": ("account_id", "account id", "accountid"),
+    "api_key": ("api_key", "api key", "apikey", "secret_key", "secret key"),
+}
+
+SAFETY_SAFE_MARKERS: tuple[str, ...] = (
+    "false",
+    "none",
+    "no ",
+    "not ",
+    "without ",
+    "forbidden",
+    "blocked",
+    "read-only",
+    "research-only",
+    "manual_review_only",
+    "not_official_target_weights",
+    "does_not_",
+    "production_effect=none",
+    "不得",
+    "不生成",
+    "不触发",
+    "不修改",
+    "禁止",
+)
+
+
+def _default_safety_scan_paths(reports_dir: Path, as_of: date) -> list[Path]:
+    return [
+        PROJECT_ROOT / "src" / "ai_trading_system" / "reports" / "executable_research_binding.py",
+        DEFAULT_SIGNAL_BINDING_POLICY_PATH,
+        DEFAULT_WEIGHT_BINDING_POLICY_PATH,
+        default_executable_binding_json_path(SIGNAL_BINDING_REPORT_TYPE, reports_dir, as_of),
+        default_executable_binding_json_path(WEIGHT_BINDING_REPORT_TYPE, reports_dir, as_of),
+    ]
+
+
+def _focused_safety_scan(
+    *,
+    scan_paths: Sequence[Path],
+    project_root: Path,
+) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    for path in scan_paths:
+        resolved = path if path.is_absolute() else project_root / path
+        if not resolved.exists() or resolved.is_dir():
+            findings.append(
+                {
+                    "finding_id": f"missing_scan_path:{resolved}",
+                    "severity": "WARNING",
+                    "term_family": "scan_path",
+                    "path": str(resolved),
+                    "line_number": None,
+                    "line_excerpt": "",
+                    "safe_context": True,
+                }
+            )
+            continue
+        try:
+            lines = resolved.read_text(encoding="utf-8").splitlines()
+        except UnicodeDecodeError:
+            findings.append(
+                {
+                    "finding_id": f"unreadable_scan_path:{resolved}",
+                    "severity": "WARNING",
+                    "term_family": "scan_path",
+                    "path": str(resolved),
+                    "line_number": None,
+                    "line_excerpt": "",
+                    "safe_context": True,
+                }
+            )
+            continue
+        for line_number, line in enumerate(lines, start=1):
+            normalized = line.lower()
+            for family, patterns in SAFETY_TERM_PATTERNS.items():
+                if not any(pattern in normalized for pattern in patterns):
+                    continue
+                safe_context = _safety_line_has_safe_context(
+                    lines,
+                    line_number - 1,
+                    normalized,
+                )
+                severity = "WARNING" if safe_context else "BLOCKING"
+                findings.append(
+                    {
+                        "finding_id": f"{family}:{resolved.name}:{line_number}",
+                        "severity": severity,
+                        "term_family": family,
+                        "path": str(resolved),
+                        "line_number": line_number,
+                        "line_excerpt": line.strip()[:240],
+                        "safe_context": safe_context,
+                    }
+                )
+    return findings
+
+
+def _safety_line_has_safe_context(
+    lines: Sequence[str],
+    line_index: int,
+    normalized_line: str,
+) -> bool:
+    window_start = max(0, line_index - 40)
+    window_end = min(len(lines), line_index + 2)
+    context = "\n".join(row.lower() for row in lines[window_start:window_end])
+    if any(marker in context for marker in SAFETY_SAFE_MARKERS):
+        return True
+    if any(
+        marker in context
+        for marker in (
+            "forbidden_output_types",
+            "forbidden_keys",
+            "safety_term_patterns",
+            "safety_safe_markers",
+            "_append_safety_check",
+        )
+    ):
+        return True
+    return any(
+        marker in normalized_line
+        for marker in (
+            "_md_cell(",
+            ".get(",
+            "line_excerpt",
+            "finding_id",
+            "term_family",
+        )
+    )
+
+
+def _executable_binding_artifact_safety_checks(
+    *,
+    signal_payload: Mapping[str, Any],
+    signal_validation: Mapping[str, Any],
+    weight_payload: Mapping[str, Any],
+    weight_validation: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    _append_safety_check(
+        checks,
+        "signal_validation_pass",
+        _text(signal_validation.get("status")) == PASS_STATUS,
+        "Signal binding validation must pass.",
+    )
+    _append_safety_check(
+        checks,
+        "weight_validation_pass",
+        _text(weight_validation.get("status")) == PASS_STATUS,
+        "Research weight binding validation must pass.",
+    )
+    _append_safety_check(
+        checks,
+        "signal_binding_research_only",
+        _executable_signal_binding_safe(signal_payload),
+        "Signal binding must be research-only and effect-free.",
+    )
+    _append_safety_check(
+        checks,
+        "weight_binding_hypothetical_only",
+        _executable_weight_binding_safe(weight_payload),
+        "Weight binding must be hypothetical-only and effect-free.",
+    )
+    _append_safety_check(
+        checks,
+        "no_paper_shadow_activation",
+        _safety_boundary_no_effects(signal_payload)
+        and _safety_boundary_no_effects(weight_payload),
+        (
+            "Binding artifacts must not activate paper-shadow, owner decision, "
+            "broker/order, or production."
+        ),
+    )
+    _append_safety_check(
+        checks,
+        "no_sensitive_account_or_secret_fields",
+        _no_sensitive_account_or_secret_fields(signal_payload, weight_payload),
+        "Binding artifacts must not expose account id, API key, or secret key fields.",
+    )
+    return checks
+
+
+def _append_safety_check(
+    checks: list[dict[str, Any]],
+    issue_id: str,
+    passed: bool,
+    message: str,
+) -> None:
+    checks.append(
+        {
+            "issue_id": issue_id,
+            "status": "PASS" if passed else "FAIL",
+            "severity": "OK" if passed else "BLOCKING",
+            "message": message,
+        }
+    )
+
+
+def _executable_signal_binding_safe(payload: Mapping[str, Any]) -> bool:
+    binding_meta = _mapping(payload.get("signal_binding"))
+    return (
+        payload.get("research_only") is True
+        and payload.get("manual_review_only") is True
+        and binding_meta.get("research_only") is True
+        and binding_meta.get("official_target_weights") is False
+        and binding_meta.get("hypothetical_research_weight_produced") is False
+        and _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(payload.get("broker_effect")) == BROKER_EFFECT
+        and _text(payload.get("order_effect")) == ORDER_EFFECT
+    )
+
+
+def _executable_weight_binding_safe(payload: Mapping[str, Any]) -> bool:
+    binding_meta = _mapping(payload.get("research_weight_binding"))
+    current_weight = _mapping(payload.get("hypothetical_research_weight"))
+    previous_weight = _mapping(payload.get("previous_hypothetical_weight"))
+    return (
+        payload.get("research_only") is True
+        and payload.get("manual_review_only") is True
+        and binding_meta.get("research_only") is True
+        and binding_meta.get("official_target_weights") is False
+        and binding_meta.get("broker_order_produced") is False
+        and binding_meta.get("paper_shadow_activation_produced") is False
+        and binding_meta.get("backfill_metrics_produced") is False
+        and _weight_object_research_only(current_weight)
+        and _weight_object_research_only(previous_weight)
+        and _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(payload.get("broker_effect")) == BROKER_EFFECT
+        and _text(payload.get("order_effect")) == ORDER_EFFECT
+    )
+
+
+def _safety_boundary_no_effects(payload: Mapping[str, Any]) -> bool:
+    safety = _mapping(payload.get("safety_boundary"))
+    return (
+        safety.get("paper_shadow_candidate_created") is False
+        and safety.get("paper_shadow_activation_allowed") is False
+        and safety.get("normal_paper_shadow_resumed") is False
+        and safety.get("extended_shadow_approved") is False
+        and safety.get("live_trading_allowed") is False
+        and safety.get("official_target_weights_generated") is False
+        and safety.get("broker_action_taken") is False
+        and safety.get("order_ticket_generated") is False
+        and safety.get("owner_decision_appended") is False
+        and safety.get("production_state_mutated") is False
+    )
+
+
+def _no_sensitive_account_or_secret_fields(*payloads: Mapping[str, Any]) -> bool:
+    sensitive_keys = {"account_id", "accountid", "api_key", "apikey", "secret_key"}
+    flattened_keys: set[str] = set()
+    for payload in payloads:
+        flattened_keys.update(key.lower() for key in _flatten_keys(payload))
+    return not (sensitive_keys & flattened_keys)
+
+
 def _source_status(source_id: str, payload: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "source_id": source_id,
@@ -2601,6 +3228,11 @@ __all__ = [
     "DEFAULT_SIGNAL_INPUT_POLICY_PATH",
     "DEFAULT_SIGNAL_BINDING_POLICY_PATH",
     "DEFAULT_WEIGHT_BINDING_POLICY_PATH",
+    "SAFETY_AUDIT_REPORT_TYPE",
+    "SAFETY_AUDIT_VALIDATION_REPORT_TYPE",
+    "SAFETY_BLOCKED",
+    "SAFETY_PASS",
+    "SAFETY_WARNING",
     "SIGNAL_BINDING_BLOCKED",
     "SIGNAL_BINDING_COMPLETE",
     "SIGNAL_BINDING_COMPLETE_WITH_WARNINGS",
@@ -2614,6 +3246,7 @@ __all__ = [
     "WEIGHT_BINDING_VALIDATION_REPORT_TYPE",
     "WEIGHT_BINDING_VERSION",
     "VALIDATION_SUFFIX",
+    "build_executable_binding_safety_audit_payload",
     "build_next_candidate_executable_binding_contract_payload",
     "build_next_candidate_research_weight_binding_payload",
     "build_next_candidate_signal_binding_payload",

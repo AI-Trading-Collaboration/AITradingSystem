@@ -592,6 +592,220 @@ def test_reader_brief_summarizes_research_weight_binding(tmp_path: Path) -> None
     assert summary["production_effect"] == "none"
 
 
+def test_executable_binding_safety_audit_allows_acceptable_warning(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    _write_weight_binding_and_validation(reports_dir, weight_policy_path)
+
+    payload = binding.build_executable_binding_safety_audit_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        static_scan_paths=[
+            reports_dir / f"next_candidate_signal_binding_{RUN_DATE.isoformat()}.json",
+            reports_dir
+            / f"next_candidate_research_weight_binding_{RUN_DATE.isoformat()}.json",
+        ],
+    )
+
+    assert payload["status"] in {binding.SAFETY_PASS, binding.SAFETY_WARNING}
+    assert payload["summary"]["failed_artifact_check_count"] == 0
+    assert payload["summary"]["blocking_static_finding_count"] == 0
+    assert payload["summary"]["signal_binding_research_only"] is True
+    assert payload["summary"]["weight_binding_hypothetical_only"] is True
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.SAFETY_AUDIT_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
+
+
+def test_executable_binding_safety_audit_blocks_official_weight_semantics(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    weight_payload = _write_weight_binding_and_validation(reports_dir, weight_policy_path)
+    weight_payload["research_weight_binding"]["official_target_weights"] = True
+    binding.write_executable_binding_json(
+        weight_payload,
+        binding.default_executable_binding_json_path(
+            binding.WEIGHT_BINDING_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+    payload = binding.build_executable_binding_safety_audit_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        static_scan_paths=[
+            reports_dir / f"next_candidate_signal_binding_{RUN_DATE.isoformat()}.json",
+            reports_dir
+            / f"next_candidate_research_weight_binding_{RUN_DATE.isoformat()}.json",
+        ],
+    )
+
+    assert payload["status"] == binding.SAFETY_BLOCKED
+    assert any(
+        check["issue_id"] == "weight_binding_hypothetical_only"
+        for check in payload["artifact_checks"]
+        if check["status"] == "FAIL"
+    )
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.SAFETY_AUDIT_REPORT_TYPE,
+    )
+    assert validation["status"] == "FAIL"
+
+
+def test_executable_binding_safety_audit_blocks_static_secret_like_signal(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    _write_weight_binding_and_validation(reports_dir, weight_policy_path)
+    unsafe_path = tmp_path / "unsafe_binding.py"
+    unsafe_path.write_text('api_key = "unsafe-live-secret-value"\n', encoding="utf-8")
+
+    payload = binding.build_executable_binding_safety_audit_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        static_scan_paths=[unsafe_path],
+    )
+
+    assert payload["status"] == binding.SAFETY_BLOCKED
+    assert payload["summary"]["blocking_static_finding_count"] == 1
+
+
+def test_executable_binding_safety_audit_cli_writes_report_and_validation(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    _write_weight_binding_and_validation(reports_dir, weight_policy_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "executable-binding-safety-audit",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--project-root",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    validation_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-executable-binding-safety-audit",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validation_result.exit_code == 0, validation_result.output
+    validation_path = binding.default_executable_binding_json_path(
+        binding.SAFETY_AUDIT_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    assert json.loads(validation_path.read_text(encoding="utf-8"))["status"] == "PASS"
+
+
+def test_reader_brief_summarizes_executable_binding_safety_audit(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    _write_weight_binding_and_validation(reports_dir, weight_policy_path)
+    payload = binding.build_executable_binding_safety_audit_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        static_scan_paths=[
+            reports_dir / f"next_candidate_signal_binding_{RUN_DATE.isoformat()}.json",
+            reports_dir
+            / f"next_candidate_research_weight_binding_{RUN_DATE.isoformat()}.json",
+        ],
+    )
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.SAFETY_AUDIT_REPORT_TYPE,
+    )
+    audit_path = binding.write_executable_binding_json(
+        payload,
+        binding.default_executable_binding_json_path(
+            binding.SAFETY_AUDIT_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    validation_path = binding.write_executable_binding_json(
+        validation,
+        binding.default_executable_binding_json_path(
+            binding.SAFETY_AUDIT_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    report_index = {
+        "reports": [
+            {
+                "report_id": binding.SAFETY_AUDIT_REPORT_TYPE,
+                "latest_artifact_path": str(audit_path),
+            },
+            {
+                "report_id": binding.SAFETY_AUDIT_VALIDATION_REPORT_TYPE,
+                "latest_artifact_path": str(validation_path),
+            },
+        ]
+    }
+
+    summary = reader_brief._executable_binding_safety_audit_summary(report_index)
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["validation_status"] == "PASS"
+    assert summary["candidate_id"] == (
+        "median_plus_regime_mismatch_filter_research_redesign_v2"
+    )
+    assert summary["failed_artifact_check_count"] == 0
+    assert summary["blocking_static_finding_count"] == 0
+    assert summary["production_effect"] == "none"
+
+
 def _write_next_research_cycle_inputs(reports_dir: Path, project_root: Path) -> None:
     _write_return_to_research_inputs(reports_dir, project_root)
     payloads = next_cycle.build_next_research_cycle_payloads(
@@ -682,6 +896,39 @@ def _write_signal_binding_and_validation(
             RUN_DATE,
         ),
     )
+
+
+def _write_weight_binding_and_validation(
+    reports_dir: Path,
+    weight_policy_path: Path,
+) -> dict[str, object]:
+    weight_payload = binding.build_next_candidate_research_weight_binding_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        weight_binding_policy_path=weight_policy_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+    weight_validation = binding.validate_executable_binding_payload(
+        weight_payload,
+        expected_report_type=binding.WEIGHT_BINDING_REPORT_TYPE,
+    )
+    binding.write_executable_binding_json(
+        weight_payload,
+        binding.default_executable_binding_json_path(
+            binding.WEIGHT_BINDING_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    binding.write_executable_binding_json(
+        weight_validation,
+        binding.default_executable_binding_json_path(
+            binding.WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    return weight_payload
 
 
 def _passing_data_quality_gate(reports_dir: Path) -> dict[str, object]:

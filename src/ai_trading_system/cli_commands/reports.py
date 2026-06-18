@@ -7819,6 +7819,64 @@ def next_candidate_research_weight_binding_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("executable-binding-safety-audit")
+def executable_binding_safety_audit_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Executable binding safety audit 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于解析相对 scan path 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Safety audit JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Safety audit Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-463：审计 executable binding safety boundary。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = executable_binding_reports.build_executable_binding_safety_audit_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+            project_root=project_root,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_executable_binding_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    style = (
+        "red"
+        if payload["status"] == executable_binding_reports.SAFETY_BLOCKED
+        else "yellow"
+        if payload["status"] == executable_binding_reports.SAFETY_WARNING
+        else "green"
+    )
+    console.print(f"[{style}]Executable binding safety audit：{payload['status']}[/{style}]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"artifact_failures：{summary['failed_artifact_check_count']}")
+    console.print(f"static_blockers：{summary['blocking_static_finding_count']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 def _validate_next_research_cycle_command(
     *,
     expected_report_type: str,
@@ -8299,6 +8357,37 @@ def validate_next_candidate_research_weight_binding_command(
 ) -> None:
     _validate_executable_binding_command(
         expected_report_type=executable_binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-executable-binding-safety-audit")
+def validate_executable_binding_safety_audit_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest executable binding safety audit artifact。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_executable_binding_command(
+        expected_report_type=executable_binding_reports.SAFETY_AUDIT_REPORT_TYPE,
         latest=latest,
         as_of=as_of,
         reports_dir=reports_dir,

@@ -8982,6 +8982,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: executable_binding_safety_audit
+    title: Executable Binding Safety Audit
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports executable-binding-safety-audit --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/executable_binding_safety_audit_20*.json
+      - outputs/reports/executable_binding_safety_audit_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-463 audits the executable signal and research weight bindings for
+      official weights, broker/order, live allocation, production mutation,
+      secrets, paper-shadow activation, and owner append before any backfill
+      rerun.
+    owner_action: require_pass_or_acceptable_warning_before_backfill
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: executable_binding_safety_audit_validation
+    title: Executable Binding Safety Audit Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-executable-binding-safety-audit --latest
+    artifact_globs:
+      - outputs/reports/executable_binding_safety_audit_validation_*.json
+      - outputs/reports/executable_binding_safety_audit_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Safety audit validation fails closed if the audit is BLOCKED, artifact
+      checks fail, static scan blockers exist, or signal/weight binding safety
+      metadata is missing.
+    owner_action: run_after_executable_binding_safety_audit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

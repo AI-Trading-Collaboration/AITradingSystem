@@ -195,6 +195,9 @@ def build_reader_brief_payload(
     executable_research_weight_binding = _executable_research_weight_binding_summary(
         report_index
     )
+    executable_binding_safety_audit = _executable_binding_safety_audit_summary(
+        report_index
+    )
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -369,6 +372,7 @@ def build_reader_brief_payload(
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
+        "executable_binding_safety_audit": executable_binding_safety_audit,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -721,6 +725,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
     executable_research_weight_binding = _mapping(
         payload.get("executable_research_weight_binding")
+    )
+    executable_binding_safety_audit = _mapping(
+        payload.get("executable_binding_safety_audit")
     )
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
@@ -2035,6 +2042,76 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "order_effect",
                         executable_research_weight_binding.get("order_effect"),
                     ),
+                ]
+            ),
+        ),
+        _section(
+            "Executable Binding Safety Audit",
+            _definition_table(
+                [
+                    ("availability", executable_binding_safety_audit.get("availability")),
+                    ("status", executable_binding_safety_audit.get("status")),
+                    (
+                        "safety_audit_status",
+                        executable_binding_safety_audit.get("safety_audit_status"),
+                    ),
+                    (
+                        "candidate_id",
+                        executable_binding_safety_audit.get("candidate_id"),
+                    ),
+                    (
+                        "acceptable_warning",
+                        executable_binding_safety_audit.get("acceptable_warning"),
+                    ),
+                    (
+                        "artifact_check_count",
+                        executable_binding_safety_audit.get("artifact_check_count"),
+                    ),
+                    (
+                        "failed_artifact_check_count",
+                        executable_binding_safety_audit.get(
+                            "failed_artifact_check_count"
+                        ),
+                    ),
+                    (
+                        "static_scan_finding_count",
+                        executable_binding_safety_audit.get(
+                            "static_scan_finding_count"
+                        ),
+                    ),
+                    (
+                        "blocking_static_finding_count",
+                        executable_binding_safety_audit.get(
+                            "blocking_static_finding_count"
+                        ),
+                    ),
+                    (
+                        "warning_static_finding_count",
+                        executable_binding_safety_audit.get(
+                            "warning_static_finding_count"
+                        ),
+                    ),
+                    (
+                        "validation_status",
+                        executable_binding_safety_audit.get("validation_status"),
+                    ),
+                    ("next_action", executable_binding_safety_audit.get("next_action")),
+                    (
+                        "detail_report",
+                        executable_binding_safety_audit.get("detail_report"),
+                    ),
+                    (
+                        "validation_detail_report",
+                        executable_binding_safety_audit.get(
+                            "validation_detail_report"
+                        ),
+                    ),
+                    (
+                        "production_effect",
+                        executable_binding_safety_audit.get("production_effect"),
+                    ),
+                    ("broker_effect", executable_binding_safety_audit.get("broker_effect")),
+                    ("order_effect", executable_binding_safety_audit.get("order_effect")),
                 ]
             ),
         ),
@@ -9248,6 +9325,107 @@ def _missing_executable_research_weight_binding_summary(reason: str) -> dict[str
         "summary_sentence": (
             "next_candidate_research_weight_binding artifact missing; run "
             "reports next-candidate-research-weight-binding."
+        ),
+        "limitation": reason,
+    }
+
+
+def _executable_binding_safety_audit_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_executable_binding_safety_audit_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "executable binding safety audit."
+        )
+    report_path = _report_index_artifact_path(report_index, "executable_binding_safety_audit")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_executable_binding_safety_audit_summary(
+            "executable_binding_safety_audit artifact missing from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "executable_binding_safety_audit_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    status = _text(payload.get("status"), _text(summary.get("safety_audit_status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "safety_audit_status": _text(summary.get("safety_audit_status"), status),
+        "candidate_id": _text(summary.get("candidate_id"), "MISSING"),
+        "acceptable_warning": summary.get("acceptable_warning") is True,
+        "artifact_check_count": _int(summary.get("artifact_check_count")),
+        "failed_artifact_check_count": _int(summary.get("failed_artifact_check_count")),
+        "warning_artifact_check_count": _int(summary.get("warning_artifact_check_count")),
+        "static_scan_path_count": _int(summary.get("static_scan_path_count")),
+        "static_scan_finding_count": _int(summary.get("static_scan_finding_count")),
+        "blocking_static_finding_count": _int(
+            summary.get("blocking_static_finding_count")
+        ),
+        "warning_static_finding_count": _int(summary.get("warning_static_finding_count")),
+        "signal_binding_research_only": summary.get("signal_binding_research_only") is True,
+        "weight_binding_hypothetical_only": (
+            summary.get("weight_binding_hypothetical_only") is True
+        ),
+        "official_target_weights": summary.get("official_target_weights") is True,
+        "paper_shadow_activation": summary.get("paper_shadow_activation") is True,
+        "owner_decision_append": summary.get("owner_decision_append") is True,
+        "validation_status": validation_status,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_effect": _text(payload.get("broker_effect"), PRODUCTION_EFFECT),
+        "order_effect": _text(payload.get("order_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"executable_binding_safety_audit={status}; validation={validation_status}; "
+            f"artifact_failures={_int(summary.get('failed_artifact_check_count'))}; "
+            f"static_blockers={_int(summary.get('blocking_static_finding_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the executable binding safety audit; it does not "
+            "run backfill, activate paper-shadow, approve live trading, create "
+            "official target weights, or create orders."
+        ),
+    }
+
+
+def _missing_executable_binding_safety_audit_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "safety_audit_status": "MISSING",
+        "candidate_id": "MISSING",
+        "acceptable_warning": False,
+        "artifact_check_count": 0,
+        "failed_artifact_check_count": 0,
+        "warning_artifact_check_count": 0,
+        "static_scan_path_count": 0,
+        "static_scan_finding_count": 0,
+        "blocking_static_finding_count": 0,
+        "warning_static_finding_count": 0,
+        "signal_binding_research_only": False,
+        "weight_binding_hypothetical_only": False,
+        "official_target_weights": False,
+        "paper_shadow_activation": False,
+        "owner_decision_append": False,
+        "validation_status": "MISSING",
+        "next_action": "run_aits_reports_executable_binding_safety_audit",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": PRODUCTION_EFFECT,
+        "order_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "executable_binding_safety_audit artifact missing; run reports "
+            "executable-binding-safety-audit."
         ),
         "limitation": reason,
     }
@@ -25236,8 +25414,10 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_signal_binding_validation": 273,
         "next_candidate_research_weight_binding": 274,
         "next_candidate_research_weight_binding_validation": 275,
-        "report_quality_gate": 276,
-        "reader_brief_quality": 277,
+        "executable_binding_safety_audit": 276,
+        "executable_binding_safety_audit_validation": 277,
+        "report_quality_gate": 278,
+        "reader_brief_quality": 279,
         "artifact_catalog": 280,
     }
     artifact_id = _text(item.get("artifact_id"))
@@ -25495,6 +25675,13 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "确认 research weight binding 的 required fields、research_only metadata "
             "和 no official weights/broker/order 边界。"
         ),
+        "executable_binding_safety_audit": (
+            "检查 executable signal/weight binding 是否仍无 official weights、"
+            "paper-shadow、broker/order、owner append 或 production mutation。"
+        ),
+        "executable_binding_safety_audit_validation": (
+            "确认 executable binding safety audit 非 BLOCKED，且 static scan 无阻塞。"
+        ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
         ),
@@ -25550,6 +25737,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Research weight binding artifact 生成后立即校验 research-only 安全边界。",
+    ),
+    "executable_binding_safety_audit": (
+        "manual",
+        "manual research cycle",
+        "TRADING-463 在 executable binding backfill 前运行。",
+    ),
+    "executable_binding_safety_audit_validation": (
+        "manual",
+        "manual research cycle",
+        "Safety audit artifact 生成后立即校验；BLOCKED 不得进入 backfill。",
     ),
     "task_register_consistency": (
         "daily",
