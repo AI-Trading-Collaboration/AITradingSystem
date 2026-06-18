@@ -1855,6 +1855,20 @@ latest signal snapshot，输出 `next_candidate_signal_binding_YYYY-MM-DD.json/m
 owner decision、broker/order、production mutation 或 backfill return/drawdown/turnover/cost/
 benchmark metrics；Reader Brief 只读展示 `next_candidate_signal_binding`。
 
+TRADING-462_NEXT_CANDIDATE_RESEARCH_WEIGHT_BINDING 在 validated signal binding 后生成
+hypothetical-only research allocation output。运行
+`aits reports next-candidate-research-weight-binding --as-of YYYY-MM-DD` 会先调用同一路径的
+cached-data quality gate，随后读取 `next_candidate_signal_binding`、signal binding validation
+和 `config/research/next_candidate_research_weight_binding_v1.yaml`，输出
+`next_candidate_research_weight_binding_YYYY-MM-DD.json/md`；运行
+`aits reports validate-next-candidate-research-weight-binding --latest` 生成 validation
+artifact。Required fields 包括 `hypothetical_research_weight`、
+`previous_hypothetical_weight`、`rotation_delta`、`turnover_proxy`、`risk_state`、
+`constraint_hit`、`blocking_reason`。所有 weight outputs 必须 `research_only=true`、
+`not_official_target_weights=true`；该 artifact 不是 paper-shadow、live allocation、official
+target weights、broker/order、owner decision、production mutation 或 backfill performance
+metrics。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

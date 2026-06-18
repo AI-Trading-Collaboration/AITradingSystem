@@ -366,6 +366,232 @@ def test_reader_brief_summarizes_signal_binding(tmp_path: Path) -> None:
     assert summary["production_effect"] == "none"
 
 
+def test_research_weight_binding_converts_signal_to_hypothetical_weights(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+
+    payload = binding.build_next_candidate_research_weight_binding_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        weight_binding_policy_path=weight_policy_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+
+    assert payload["status"] == binding.WEIGHT_BINDING_COMPLETE_WITH_WARNINGS
+    current = payload["hypothetical_research_weight"]
+    previous = payload["previous_hypothetical_weight"]
+    assert current["research_only"] is True
+    assert current["official_target_weights"] is False
+    assert current["weights"] == {
+        "QQQ": 0.3,
+        "SMH": 0.3,
+        "SOXX": 0.25,
+        "SPY": 0.15,
+        "CASH": 0.0,
+    }
+    assert previous["weights"] == {
+        "QQQ": 0.0,
+        "SMH": 0.0,
+        "SOXX": 0.0,
+        "SPY": 1.0,
+        "CASH": 0.0,
+    }
+    assert payload["rotation_delta"]["SPY"] == -0.85
+    assert payload["turnover_proxy"] == 0.85
+    assert payload["risk_state"] == "risk_on"
+    assert payload["constraint_hit"] == []
+    assert payload["research_weight_binding"]["broker_order_produced"] is False
+    assert payload["research_weight_binding"]["backfill_metrics_produced"] is False
+
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.WEIGHT_BINDING_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
+    assert validation["summary"]["failed_check_count"] == 0
+
+
+def test_research_weight_binding_blocks_upstream_signal_binding(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    (tmp_path / "data" / "etf_portfolio" / "signals.csv").unlink()
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+
+    payload = binding.build_next_candidate_research_weight_binding_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        weight_binding_policy_path=weight_policy_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+
+    assert payload["status"] == binding.WEIGHT_BINDING_BLOCKED
+    assert "signal_binding_blocked" in payload["blocking_reasons"]
+    assert payload["blocking_reason"]
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.WEIGHT_BINDING_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
+
+
+def test_research_weight_binding_validation_rejects_missing_research_only(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    payload = binding.build_next_candidate_research_weight_binding_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        weight_binding_policy_path=weight_policy_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+    payload["hypothetical_research_weight"]["research_only"] = False
+
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.WEIGHT_BINDING_REPORT_TYPE,
+    )
+
+    assert validation["status"] == "FAIL"
+    assert any(
+        issue["issue_id"] == "weight_outputs_research_only"
+        for issue in validation["blocking_issues"]
+    )
+
+
+def test_research_weight_binding_cli_writes_report_and_validation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    monkeypatch.setattr(
+        reports_cli,
+        "_run_next_research_data_quality_gate",
+        lambda **_: _passing_data_quality_gate(reports_dir),
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "next-candidate-research-weight-binding",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--weight-binding-policy-path",
+            str(weight_policy_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    validation_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-next-candidate-research-weight-binding",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validation_result.exit_code == 0, validation_result.output
+    report_path = binding.default_executable_binding_json_path(
+        binding.WEIGHT_BINDING_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation_path = binding.default_executable_binding_json_path(
+        binding.WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    assert report_path.exists()
+    assert validation_path.exists()
+    assert json.loads(validation_path.read_text(encoding="utf-8"))["status"] == "PASS"
+
+
+def test_reader_brief_summarizes_research_weight_binding(tmp_path: Path) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_next_research_cycle_inputs(reports_dir, tmp_path)
+    policy_paths = _write_signal_binding_inputs(tmp_path, RUN_DATE)
+    weight_policy_path = _write_weight_binding_policy(tmp_path)
+    _write_contract_and_validation(reports_dir)
+    _write_signal_binding_and_validation(reports_dir, tmp_path, policy_paths)
+    payload = binding.build_next_candidate_research_weight_binding_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        weight_binding_policy_path=weight_policy_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+    validation = binding.validate_executable_binding_payload(
+        payload,
+        expected_report_type=binding.WEIGHT_BINDING_REPORT_TYPE,
+    )
+    weight_path = binding.write_executable_binding_json(
+        payload,
+        binding.default_executable_binding_json_path(
+            binding.WEIGHT_BINDING_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    validation_path = binding.write_executable_binding_json(
+        validation,
+        binding.default_executable_binding_json_path(
+            binding.WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    report_index = {
+        "reports": [
+            {
+                "report_id": binding.WEIGHT_BINDING_REPORT_TYPE,
+                "latest_artifact_path": str(weight_path),
+            },
+            {
+                "report_id": binding.WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+                "latest_artifact_path": str(validation_path),
+            },
+        ]
+    }
+
+    summary = reader_brief._executable_research_weight_binding_summary(report_index)
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["validation_status"] == "PASS"
+    assert summary["candidate_id"] == (
+        "median_plus_regime_mismatch_filter_research_redesign_v2"
+    )
+    assert summary["official_target_weights"] is False
+    assert summary["broker_order_produced"] is False
+    assert summary["backfill_metrics_produced"] is False
+    assert summary["production_effect"] == "none"
+
+
 def _write_next_research_cycle_inputs(reports_dir: Path, project_root: Path) -> None:
     _write_return_to_research_inputs(reports_dir, project_root)
     payloads = next_cycle.build_next_research_cycle_payloads(
@@ -423,6 +649,41 @@ def _write_contract_and_validation(reports_dir: Path) -> None:
     )
 
 
+def _write_signal_binding_and_validation(
+    reports_dir: Path,
+    project_root: Path,
+    policy_paths: dict[str, Path],
+) -> None:
+    signal_payload = binding.build_next_candidate_signal_binding_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=project_root,
+        signal_input_policy_path=policy_paths["signal_input_policy_path"],
+        signal_binding_policy_path=policy_paths["signal_binding_policy_path"],
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+    signal_validation = binding.validate_executable_binding_payload(
+        signal_payload,
+        expected_report_type=binding.SIGNAL_BINDING_REPORT_TYPE,
+    )
+    binding.write_executable_binding_json(
+        signal_payload,
+        binding.default_executable_binding_json_path(
+            binding.SIGNAL_BINDING_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    binding.write_executable_binding_json(
+        signal_validation,
+        binding.default_executable_binding_json_path(
+            binding.SIGNAL_BINDING_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
 def _passing_data_quality_gate(reports_dir: Path) -> dict[str, object]:
     return {
         "status": "PASS",
@@ -431,6 +692,59 @@ def _passing_data_quality_gate(reports_dir: Path) -> dict[str, object]:
         "warning_count": 0,
         "report_path": str(reports_dir / "data_quality_2026-06-17.md"),
     }
+
+
+def _write_weight_binding_policy(tmp_path: Path) -> Path:
+    policy_path = tmp_path / "weight_binding_policy.yaml"
+    policy_path.write_text(
+        """
+schema_version: 1
+policy_id: test_research_weight_binding_policy
+version: 2026-06-17
+status: pilot_baseline
+owner: tests
+research_weight_universe: [QQQ, SMH, SOXX, SPY, CASH]
+initial_previous_hypothetical_weight:
+  QQQ: 0.0
+  SMH: 0.0
+  SOXX: 0.0
+  SPY: 1.0
+  CASH: 0.0
+rotation_profiles:
+  increase_ai_risk:
+    QQQ: 0.30
+    SMH: 0.30
+    SOXX: 0.25
+    SPY: 0.15
+    CASH: 0.0
+  hold_current_research_weight: previous
+  reduce_ai_risk:
+    QQQ: 0.10
+    SMH: 0.10
+    SOXX: 0.10
+    SPY: 0.50
+    CASH: 0.20
+  move_to_cash_research_proxy:
+    QQQ: 0.0
+    SMH: 0.0
+    SOXX: 0.0
+    SPY: 0.0
+    CASH: 1.0
+  blocked:
+    QQQ: 0.0
+    SMH: 0.0
+    SOXX: 0.0
+    SPY: 0.0
+    CASH: 0.0
+constraints:
+  min_weight: 0.0
+  max_single_weight: 1.0
+  total_weight: 1.0
+  total_weight_tolerance: 0.000001
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return policy_path
 
 
 def _write_signal_binding_inputs(tmp_path: Path, as_of: date) -> dict[str, Path]:

@@ -30,19 +30,31 @@ VALIDATION_SUFFIX = "_validation"
 CONTRACT_VALIDATION_REPORT_TYPE = f"{CONTRACT_REPORT_TYPE}{VALIDATION_SUFFIX}"
 SIGNAL_BINDING_REPORT_TYPE = "next_candidate_signal_binding"
 SIGNAL_BINDING_VALIDATION_REPORT_TYPE = f"{SIGNAL_BINDING_REPORT_TYPE}{VALIDATION_SUFFIX}"
+WEIGHT_BINDING_REPORT_TYPE = "next_candidate_research_weight_binding"
+WEIGHT_BINDING_VALIDATION_REPORT_TYPE = f"{WEIGHT_BINDING_REPORT_TYPE}{VALIDATION_SUFFIX}"
 BINDING_VERSION = "next_candidate_executable_binding_contract_v1"
 SIGNAL_BINDING_VERSION = "next_candidate_signal_binding_v1"
+WEIGHT_BINDING_VERSION = "next_candidate_research_weight_binding_v1"
 INPUT_SCHEMA_ID = "next_candidate_executable_binding_input_v1"
 OUTPUT_SCHEMA_ID = "next_candidate_executable_binding_output_v1"
 SIGNAL_BINDING_OUTPUT_SCHEMA_ID = "next_candidate_signal_binding_output_v1"
+WEIGHT_BINDING_OUTPUT_SCHEMA_ID = "next_candidate_research_weight_binding_output_v1"
 SIGNAL_BINDING_COMPLETE = "CANDIDATE_SIGNAL_BINDING_COMPLETE"
 SIGNAL_BINDING_COMPLETE_WITH_WARNINGS = "CANDIDATE_SIGNAL_BINDING_COMPLETE_WITH_WARNINGS"
 SIGNAL_BINDING_BLOCKED = "CANDIDATE_SIGNAL_BINDING_BLOCKED"
+WEIGHT_BINDING_COMPLETE = "CANDIDATE_RESEARCH_WEIGHT_BINDING_COMPLETE"
+WEIGHT_BINDING_COMPLETE_WITH_WARNINGS = (
+    "CANDIDATE_RESEARCH_WEIGHT_BINDING_COMPLETE_WITH_WARNINGS"
+)
+WEIGHT_BINDING_BLOCKED = "CANDIDATE_RESEARCH_WEIGHT_BINDING_BLOCKED"
 DEFAULT_SIGNAL_INPUT_POLICY_PATH = (
     signal_inputs.DEFAULT_SIGNAL_INPUT_COMPLETENESS_POLICY_PATH
 )
 DEFAULT_SIGNAL_BINDING_POLICY_PATH = (
     PROJECT_ROOT / "config" / "research" / "next_candidate_signal_binding_v1.yaml"
+)
+DEFAULT_WEIGHT_BINDING_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "next_candidate_research_weight_binding_v1.yaml"
 )
 RESEARCH_SIGNAL_SYMBOLS: tuple[str, ...] = ("QQQ", "SMH", "SOXX")
 REQUIRED_SIGNAL_SYMBOLS: tuple[str, ...] = (*RESEARCH_SIGNAL_SYMBOLS, "SPY")
@@ -52,6 +64,10 @@ REPORT_PREFIXES: dict[str, str] = {
     CONTRACT_VALIDATION_REPORT_TYPE: "next_candidate_executable_binding_contract_validation",
     SIGNAL_BINDING_REPORT_TYPE: "next_candidate_signal_binding",
     SIGNAL_BINDING_VALIDATION_REPORT_TYPE: "next_candidate_signal_binding_validation",
+    WEIGHT_BINDING_REPORT_TYPE: "next_candidate_research_weight_binding",
+    WEIGHT_BINDING_VALIDATION_REPORT_TYPE: (
+        "next_candidate_research_weight_binding_validation"
+    ),
 }
 
 REQUIRED_OUTPUT_TYPES: tuple[str, ...] = (
@@ -464,6 +480,184 @@ def build_next_candidate_signal_binding_payload(
     )
 
 
+def build_next_candidate_research_weight_binding_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    weight_binding_policy_path: Path = DEFAULT_WEIGHT_BINDING_POLICY_PATH,
+    data_quality_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    signal_path = default_executable_binding_json_path(
+        SIGNAL_BINDING_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    signal_validation_path = default_executable_binding_json_path(
+        SIGNAL_BINDING_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    signal_payload = _read_json_mapping(signal_path)
+    signal_validation = _read_json_mapping(signal_validation_path)
+    signal_summary = _mapping(signal_payload.get("summary"))
+    candidate_id = _text(signal_summary.get("candidate_id"), "MISSING")
+    requested_range = _text(signal_payload.get("requested_date_range"), "not_applicable")
+    normalized_data_quality = _normalize_data_quality_gate(data_quality_gate)
+    policy = _json_safe(_load_signal_binding_policy(weight_binding_policy_path))
+    blocking_reasons = _weight_binding_blocking_reasons(
+        signal_payload=signal_payload,
+        signal_validation=signal_validation,
+        data_quality_gate=normalized_data_quality,
+    )
+    weight_series: list[dict[str, Any]] = []
+    if not blocking_reasons:
+        weight_series, constraint_blocking = _research_weight_series(
+            candidate_id=candidate_id,
+            signal_rows=_records(signal_payload.get("candidate_signal_series")),
+            policy=policy,
+        )
+        blocking_reasons.extend(constraint_blocking)
+    latest_weight_state = _latest_weight_state(
+        candidate_id=candidate_id,
+        weight_series=weight_series,
+        blocking_reasons=blocking_reasons,
+        policy=policy,
+    )
+    warning_reasons = _weight_binding_warning_reasons(
+        data_quality_gate=normalized_data_quality,
+        signal_payload=signal_payload,
+        weight_series=weight_series,
+    )
+    if blocking_reasons:
+        status = WEIGHT_BINDING_BLOCKED
+    elif warning_reasons:
+        status = WEIGHT_BINDING_COMPLETE_WITH_WARNINGS
+    else:
+        status = WEIGHT_BINDING_COMPLETE
+    summary = {
+        "research_weight_binding_status": status,
+        "candidate_id": candidate_id,
+        "binding_version": WEIGHT_BINDING_VERSION,
+        "source_signal_binding_version": _text(signal_summary.get("binding_version")),
+        "market_regime": _text(signal_payload.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_range,
+        "weight_row_count": len(weight_series),
+        "latest_signal_date": _text(latest_weight_state.get("signal_date")),
+        "risk_state": _text(latest_weight_state.get("risk_state"), "blocked"),
+        "rotation_state": _text(latest_weight_state.get("rotation_state"), "blocked"),
+        "turnover_proxy": latest_weight_state.get("turnover_proxy"),
+        "constraint_hit_count": len(_records(latest_weight_state.get("constraint_hit"))),
+        "blocking_reason": _join_reasons(blocking_reasons),
+        "warning_reason": _join_reasons(warning_reasons),
+        "signal_binding_status": _text(signal_payload.get("status"), "MISSING"),
+        "signal_binding_validation_status": _text(signal_validation.get("status"), "MISSING"),
+        "data_quality_status": _text(normalized_data_quality.get("status"), "MISSING"),
+        "data_quality_passed": normalized_data_quality.get("passed") is True,
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "not_official_target_weights": True,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": BROKER_EFFECT,
+        "order_effect": ORDER_EFFECT,
+    }
+    return _payload(
+        report_type=WEIGHT_BINDING_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Convert validated research-only signal state into hypothetical "
+            "research weight output without producing official target weights."
+        ),
+        input_artifacts={
+            "next_candidate_signal_binding": str(signal_path),
+            "next_candidate_signal_binding_validation": str(signal_validation_path),
+            "research_weight_binding_policy": str(weight_binding_policy_path),
+            "data_quality_report": _text(normalized_data_quality.get("report_path")),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "research_weight_binding": {
+                "candidate_id": candidate_id,
+                "binding_version": WEIGHT_BINDING_VERSION,
+                "source_signal_binding_version": _text(signal_summary.get("binding_version")),
+                "output_schema_id": WEIGHT_BINDING_OUTPUT_SCHEMA_ID,
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "not_official_target_weights": True,
+                "production_effect": PRODUCTION_EFFECT,
+                "broker_effect": BROKER_EFFECT,
+                "order_effect": ORDER_EFFECT,
+                "paper_shadow_activation_produced": False,
+                "broker_order_produced": False,
+                "backfill_metrics_produced": False,
+            },
+            "hypothetical_research_weight": latest_weight_state[
+                "hypothetical_research_weight"
+            ],
+            "previous_hypothetical_weight": latest_weight_state[
+                "previous_hypothetical_weight"
+            ],
+            "rotation_delta": latest_weight_state["rotation_delta"],
+            "turnover_proxy": latest_weight_state["turnover_proxy"],
+            "risk_state": latest_weight_state["risk_state"],
+            "constraint_hit": latest_weight_state["constraint_hit"],
+            "blocking_reason": latest_weight_state["blocking_reason"],
+            "hypothetical_research_weight_series": weight_series,
+            "blocking_reasons": list(blocking_reasons),
+            "warning_reasons": list(warning_reasons),
+            "data_quality_gate": normalized_data_quality,
+            "source_signal_summary": dict(signal_summary),
+            "weight_binding_policy": policy,
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "Research-only weight binding produced "
+                f"{len(weight_series)} hypothetical weight row(s)."
+            ),
+            key_result=status,
+            blocking_issues=_join_reasons(blocking_reasons) or "none",
+            warnings=_join_reasons(warning_reasons) or "none",
+            next_action=(
+                "repair_research_weight_binding_inputs"
+                if blocking_reasons
+                else "run_executable_binding_safety_audit"
+            ),
+        ),
+        next_action=(
+            "repair_research_weight_binding_inputs"
+            if blocking_reasons
+            else "run_executable_binding_safety_audit"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "executable_research_weight_binding",
+            "signal_binding_consumed": True,
+            "hypothetical_research_weights_generated": not bool(blocking_reasons),
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+            "backfill_metrics_generated": False,
+        },
+        limitations=[
+            "TRADING-462 outputs hypothetical research weights only.",
+            "The output is not paper-shadow, live allocation, or official target weights.",
+            "Backfill return, drawdown, cost, and benchmark metrics remain uncomputed.",
+        ],
+        requested_date_range=requested_range,
+        methodology_overrides={
+            "collector_mode": "read_validated_signal_binding",
+            "contract_only": False,
+            "does_not_implement_strategy_behavior": False,
+            "research_weight_binding_implemented": not bool(blocking_reasons),
+            "produces_hypothetical_research_weights": not bool(blocking_reasons),
+            "does_not_generate_official_target_weights": True,
+            "does_not_compute_backfill_metrics": True,
+        },
+    )
+
+
 def validate_executable_binding_payload(
     payload: Mapping[str, Any],
     *,
@@ -472,6 +666,8 @@ def validate_executable_binding_payload(
     expected = expected_report_type or CONTRACT_REPORT_TYPE
     if expected == SIGNAL_BINDING_REPORT_TYPE:
         return _validate_signal_binding_payload(payload)
+    if expected == WEIGHT_BINDING_REPORT_TYPE:
+        return _validate_weight_binding_payload(payload)
     report_type = _text(payload.get("report_type"))
     contract = _mapping(payload.get("binding_contract"))
     summary = _mapping(payload.get("summary"))
@@ -827,6 +1023,225 @@ def _validate_signal_binding_payload(payload: Mapping[str, Any]) -> dict[str, An
     )
 
 
+def _validate_weight_binding_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    binding_meta = _mapping(payload.get("research_weight_binding"))
+    data_quality_gate = _mapping(payload.get("data_quality_gate"))
+    source_signal_summary = _mapping(payload.get("source_signal_summary"))
+    weight_series = _records(payload.get("hypothetical_research_weight_series"))
+    blocking_reasons = _records(payload.get("blocking_reasons"))
+    status = _text(payload.get("status"))
+    complete = status in {WEIGHT_BINDING_COMPLETE, WEIGHT_BINDING_COMPLETE_WITH_WARNINGS}
+    current_weight = _mapping(payload.get("hypothetical_research_weight"))
+    previous_weight = _mapping(payload.get("previous_hypothetical_weight"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == WEIGHT_BINDING_REPORT_TYPE,
+        f"report_type must be {WEIGHT_BINDING_REPORT_TYPE}.",
+        "regenerate_expected_weight_binding_artifact",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status
+        in {
+            WEIGHT_BINDING_COMPLETE,
+            WEIGHT_BINDING_COMPLETE_WITH_WARNINGS,
+            WEIGHT_BINDING_BLOCKED,
+        },
+        "research weight binding status must be recognized.",
+        "restore_research_weight_binding_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "production_broker_order_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(payload.get("broker_effect")) == BROKER_EFFECT
+        and _text(payload.get("order_effect")) == ORDER_EFFECT,
+        "production, broker, and order effects must be none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "research_only_metadata",
+        payload.get("research_only") is True
+        and payload.get("manual_review_only") is True
+        and binding_meta.get("research_only") is True
+        and binding_meta.get("manual_review_only") is True
+        and binding_meta.get("official_target_weights") is False
+        and binding_meta.get("not_official_target_weights") is True,
+        "weight binding must be research-only and not official target weights.",
+        "restore_weight_binding_safety_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "candidate_id_and_binding_version",
+        bool(_text(binding_meta.get("candidate_id")))
+        and _text(binding_meta.get("binding_version")) == WEIGHT_BINDING_VERSION,
+        f"weight binding must use binding_version {WEIGHT_BINDING_VERSION}.",
+        "restore_weight_binding_identity",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "signal_binding_validation_passed",
+        (not complete)
+        or _text(summary.get("signal_binding_validation_status")) == PASS_STATUS,
+        "complete weight binding requires validated signal binding.",
+        "rerun_or_repair_signal_binding_validation",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "source_signal_binding_not_blocked",
+        (not complete)
+        or _text(source_signal_summary.get("signal_binding_status"))
+        != SIGNAL_BINDING_BLOCKED,
+        "complete weight binding requires non-blocked source signal binding.",
+        "repair_signal_binding_before_weight_binding",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "data_quality_gate_passed",
+        (not complete) or data_quality_gate.get("passed") is True,
+        "complete weight binding requires validated cached data gate to pass.",
+        "run_aits_validate_data_and_stop_on_failure",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "required_output_fields_present",
+        all(
+            key in payload
+            for key in (
+                "hypothetical_research_weight",
+                "previous_hypothetical_weight",
+                "rotation_delta",
+                "turnover_proxy",
+                "risk_state",
+                "constraint_hit",
+                "blocking_reason",
+            )
+        ),
+        "TRADING-462 required output fields must be present.",
+        "restore_required_weight_binding_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "blocked_artifact_has_reason",
+        status != WEIGHT_BINDING_BLOCKED or bool(blocking_reasons),
+        "blocked weight binding artifacts must expose blocking_reasons.",
+        "add_exact_blocking_reason",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "complete_artifact_has_weight_series",
+        (not complete) or bool(weight_series),
+        "complete weight binding must include a weight series.",
+        "restore_hypothetical_research_weight_series",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "weight_outputs_research_only",
+        _weight_object_research_only(current_weight)
+        and _weight_object_research_only(previous_weight)
+        and all(_weight_series_row_research_only(row) for row in weight_series),
+        "all weight outputs must include research_only=true and safety metadata.",
+        "restore_research_only_weight_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "complete_weight_sum_valid",
+        (not complete) or _weight_sum_is_valid(current_weight),
+        "complete current hypothetical weight must sum to the policy total.",
+        "repair_weight_policy_or_binding_output",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        binding_meta.get("broker_order_produced") is False
+        and binding_meta.get("paper_shadow_activation_produced") is False
+        and binding_meta.get("backfill_metrics_produced") is False,
+        "weight binding must not produce broker/order, paper-shadow, or metrics.",
+        "remove_execution_or_metric_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=WEIGHT_BINDING_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-462 research-only hypothetical weight binding output.",
+        input_artifacts={WEIGHT_BINDING_REPORT_TYPE: _text(payload.get("artifact_id"))},
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "research_weight_binding_status": status,
+            "weight_row_count": len(weight_series),
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+            "broker_effect": BROKER_EFFECT,
+            "order_effect": ORDER_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"{WEIGHT_BINDING_REPORT_TYPE} validation is {validation_status}.",
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_next_candidate_research_weight_binding"
+                if validation_status == FAIL_STATUS
+                else "use_validated_next_candidate_research_weight_binding"
+            ),
+        ),
+        next_action=(
+            "repair_next_candidate_research_weight_binding"
+            if validation_status == FAIL_STATUS
+            else "use_validated_next_candidate_research_weight_binding"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+        methodology_overrides={
+            "contract_only": False,
+            "does_not_implement_strategy_behavior": False,
+            "validates_research_weight_binding_only": True,
+            "does_not_generate_official_target_weights": True,
+            "does_not_compute_backfill_metrics": True,
+        },
+    )
+
+
 def write_executable_binding_json(payload: Mapping[str, Any], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -951,6 +1366,61 @@ def render_executable_binding_markdown(payload: Mapping[str, Any]) -> str:
             lines.extend(["", "## Data Quality Gate", ""])
             for key, value in data_quality_gate.items():
                 lines.append(f"- {key}: {_md_cell(value)}")
+    weight_binding = _mapping(payload.get("research_weight_binding"))
+    if weight_binding:
+        lines.extend(["", "## Research Weight Binding", ""])
+        official_target_weights = _md_cell(weight_binding.get("official_target_weights"))
+        not_official = _md_cell(weight_binding.get("not_official_target_weights"))
+        paper_shadow_activation = _md_cell(
+            weight_binding.get("paper_shadow_activation_produced")
+        )
+        backfill_metrics = _md_cell(weight_binding.get("backfill_metrics_produced"))
+        lines.extend(
+            [
+                f"- candidate_id: {_md_cell(weight_binding.get('candidate_id'))}",
+                f"- binding_version: {_md_cell(weight_binding.get('binding_version'))}",
+                f"- research_only: {_md_cell(weight_binding.get('research_only'))}",
+                f"- manual_review_only: {_md_cell(weight_binding.get('manual_review_only'))}",
+                f"- official_target_weights: {official_target_weights}",
+                f"- not_official_target_weights: {not_official}",
+                f"- production_effect: {_md_cell(weight_binding.get('production_effect'))}",
+                f"- broker_effect: {_md_cell(weight_binding.get('broker_effect'))}",
+                f"- order_effect: {_md_cell(weight_binding.get('order_effect'))}",
+                f"- paper_shadow_activation_produced: {paper_shadow_activation}",
+                f"- broker_order_produced: {_md_cell(weight_binding.get('broker_order_produced'))}",
+                f"- backfill_metrics_produced: {backfill_metrics}",
+            ]
+        )
+        lines.extend(["", "## Latest Hypothetical Research Weight", ""])
+        for key in (
+            "hypothetical_research_weight",
+            "previous_hypothetical_weight",
+            "rotation_delta",
+            "turnover_proxy",
+            "risk_state",
+            "constraint_hit",
+            "blocking_reason",
+        ):
+            lines.append(f"- {key}: {_md_cell(payload.get(key))}")
+        weight_rows = _records(payload.get("hypothetical_research_weight_series"))
+        lines.extend(
+            _records_table(
+                "Hypothetical Research Weight Series",
+                [
+                    {
+                        "signal_date": row.get("signal_date"),
+                        "risk_state": row.get("risk_state"),
+                        "rotation_state": row.get("rotation_state"),
+                        "turnover_proxy": row.get("turnover_proxy"),
+                        "constraint_hit": row.get("constraint_hit"),
+                        "blocking_reason": row.get("blocking_reason"),
+                        "research_only": row.get("research_only"),
+                    }
+                    for row in weight_rows
+                    if isinstance(row, Mapping)
+                ],
+            )
+        )
     lines.extend(_records_table("Source Statuses", _records(payload.get("source_statuses"))))
     lines.extend(_records_table("Validation Checks", _records(payload.get("checks"))))
     lines.extend(["", "## Reader Brief", ""])
@@ -1706,6 +2176,250 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
+def _weight_binding_blocking_reasons(
+    *,
+    signal_payload: Mapping[str, Any],
+    signal_validation: Mapping[str, Any],
+    data_quality_gate: Mapping[str, Any],
+) -> list[str]:
+    reasons: list[str] = []
+    if _text(signal_validation.get("status")) != PASS_STATUS:
+        reasons.append("signal_binding_validation_not_passed")
+    if data_quality_gate.get("passed") is not True:
+        reasons.append("data_quality_gate_not_passed")
+    if _text(signal_payload.get("status")) == SIGNAL_BINDING_BLOCKED:
+        reasons.append("signal_binding_blocked")
+    signal_state = _mapping(signal_payload.get("signal_state"))
+    if not signal_state:
+        reasons.append("missing_signal_state")
+    if _text(signal_state.get("risk_state")) == "blocked":
+        reasons.append("signal_state_blocked")
+    return sorted(set(reasons))
+
+
+def _weight_binding_warning_reasons(
+    *,
+    data_quality_gate: Mapping[str, Any],
+    signal_payload: Mapping[str, Any],
+    weight_series: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    reasons: list[str] = []
+    if _int(data_quality_gate.get("warning_count")):
+        reasons.append("data_quality_gate_passed_with_warnings")
+    reasons.extend(_records(signal_payload.get("warning_reasons")))
+    if weight_series:
+        first = _mapping(weight_series[0])
+        if _text(first.get("previous_weight_source")) == "policy_initial_previous_weight":
+            reasons.append("initial_previous_hypothetical_weight_from_policy")
+    return sorted({_text(reason) for reason in reasons if _text(reason)})
+
+
+def _research_weight_series(
+    *,
+    candidate_id: str,
+    signal_rows: Sequence[Any],
+    policy: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    universe = _texts(policy.get("research_weight_universe"))
+    previous_weights = _weights_from_mapping(
+        _mapping(policy.get("initial_previous_hypothetical_weight")),
+        universe=universe,
+    )
+    previous_source = "policy_initial_previous_weight"
+    output_rows: list[dict[str, Any]] = []
+    blocking: list[str] = []
+    for raw_signal_row in sorted(
+        (_mapping(row) for row in signal_rows),
+        key=lambda row: _text(row.get("signal_date")),
+    ):
+        target_weights = _target_weights_for_signal(
+            signal_row=raw_signal_row,
+            previous_weights=previous_weights,
+            policy=policy,
+            universe=universe,
+        )
+        constraint_hit = _weight_constraint_hits(target_weights, policy=policy)
+        if constraint_hit:
+            blocking.extend(constraint_hit)
+        rotation_delta = {}
+        for symbol in universe:
+            current_weight = target_weights.get(symbol, 0.0)
+            previous_weight = previous_weights.get(symbol, 0.0)
+            rotation_delta[symbol] = _round_float(current_weight - previous_weight)
+        turnover_proxy = _round_float(
+            sum(abs(value) for value in rotation_delta.values()) / 2
+        )
+        blocking_reason = _join_reasons(constraint_hit) or None
+        output_rows.append(
+            {
+                "candidate_id": candidate_id,
+                "binding_version": WEIGHT_BINDING_VERSION,
+                "signal_date": _text(raw_signal_row.get("signal_date")),
+                "risk_state": _text(raw_signal_row.get("risk_state"), "blocked"),
+                "rotation_state": _text(raw_signal_row.get("rotation_state"), "blocked"),
+                "hypothetical_research_weight": _research_weight_object(
+                    weights=target_weights,
+                    signal_date=_text(raw_signal_row.get("signal_date")),
+                    source="rotation_profile",
+                ),
+                "previous_hypothetical_weight": _research_weight_object(
+                    weights=previous_weights,
+                    signal_date=_text(raw_signal_row.get("signal_date")),
+                    source=previous_source,
+                ),
+                "previous_weight_source": previous_source,
+                "rotation_delta": rotation_delta,
+                "turnover_proxy": turnover_proxy,
+                "constraint_hit": constraint_hit,
+                "blocking_reason": blocking_reason,
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "not_official_target_weights": True,
+                "production_effect": PRODUCTION_EFFECT,
+                "broker_effect": BROKER_EFFECT,
+                "order_effect": ORDER_EFFECT,
+            }
+        )
+        previous_weights = target_weights
+        previous_source = "prior_hypothetical_research_weight_row"
+    if not output_rows:
+        blocking.append("empty_weight_binding_window")
+    return output_rows, sorted(set(blocking))
+
+
+def _target_weights_for_signal(
+    *,
+    signal_row: Mapping[str, Any],
+    previous_weights: Mapping[str, float],
+    policy: Mapping[str, Any],
+    universe: Sequence[str],
+) -> dict[str, float]:
+    profiles = _mapping(policy.get("rotation_profiles"))
+    rotation_state = _text(signal_row.get("rotation_state"), "blocked")
+    profile = profiles.get(rotation_state)
+    if _text(profile) == "previous":
+        return {symbol: _round_float(previous_weights.get(symbol, 0.0)) for symbol in universe}
+    if not isinstance(profile, Mapping):
+        profile = _mapping(profiles.get("blocked"))
+    return _weights_from_mapping(_mapping(profile), universe=universe)
+
+
+def _weights_from_mapping(value: Mapping[str, Any], *, universe: Sequence[str]) -> dict[str, float]:
+    return {symbol: _round_float(_float(value.get(symbol))) for symbol in universe}
+
+
+def _weight_constraint_hits(
+    weights: Mapping[str, float],
+    *,
+    policy: Mapping[str, Any],
+) -> list[str]:
+    constraints = _mapping(policy.get("constraints"))
+    min_weight = _float(constraints.get("min_weight"), 0.0)
+    max_weight = _float(constraints.get("max_single_weight"), 1.0)
+    total_weight = _float(constraints.get("total_weight"), 1.0)
+    tolerance = _float(constraints.get("total_weight_tolerance"), 0.000001)
+    hits: list[str] = []
+    for symbol, weight in weights.items():
+        if weight < min_weight:
+            hits.append(f"{symbol}:below_min_weight")
+        if weight > max_weight:
+            hits.append(f"{symbol}:above_max_single_weight")
+    if abs(sum(weights.values()) - total_weight) > tolerance:
+        hits.append("total_weight_mismatch")
+    return hits
+
+
+def _research_weight_object(
+    *,
+    weights: Mapping[str, float],
+    signal_date: str,
+    source: str,
+) -> dict[str, Any]:
+    return {
+        "weight_type": "hypothetical_research_weight",
+        "signal_date": signal_date,
+        "source": source,
+        "weights": {symbol: _round_float(weight) for symbol, weight in weights.items()},
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "not_official_target_weights": True,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": BROKER_EFFECT,
+        "order_effect": ORDER_EFFECT,
+    }
+
+
+def _latest_weight_state(
+    *,
+    candidate_id: str,
+    weight_series: Sequence[Mapping[str, Any]],
+    blocking_reasons: Sequence[str],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    if weight_series:
+        latest = dict(max(weight_series, key=lambda row: _text(row.get("signal_date"))))
+        latest["blocking_reason"] = _join_reasons(blocking_reasons) or latest.get(
+            "blocking_reason"
+        )
+        return latest
+    empty_weight = _research_weight_object(
+        weights=_weights_from_mapping(
+            _mapping(_mapping(policy.get("rotation_profiles")).get("blocked")),
+            universe=_texts(policy.get("research_weight_universe")),
+        ),
+        signal_date="",
+        source="blocked_no_weight_output",
+    )
+    return {
+        "candidate_id": candidate_id,
+        "binding_version": WEIGHT_BINDING_VERSION,
+        "signal_date": "",
+        "risk_state": "blocked",
+        "rotation_state": "blocked",
+        "hypothetical_research_weight": empty_weight,
+        "previous_hypothetical_weight": empty_weight,
+        "rotation_delta": {},
+        "turnover_proxy": None,
+        "constraint_hit": [],
+        "blocking_reason": _join_reasons(blocking_reasons or ["empty_weight_binding_window"]),
+    }
+
+
+def _weight_object_research_only(value: Mapping[str, Any]) -> bool:
+    return (
+        value.get("research_only") is True
+        and value.get("manual_review_only") is True
+        and value.get("official_target_weights") is False
+        and value.get("not_official_target_weights") is True
+        and _text(value.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(value.get("broker_effect")) == BROKER_EFFECT
+        and _text(value.get("order_effect")) == ORDER_EFFECT
+    )
+
+
+def _weight_series_row_research_only(row: Any) -> bool:
+    mapping = _mapping(row)
+    return (
+        mapping.get("research_only") is True
+        and mapping.get("manual_review_only") is True
+        and mapping.get("official_target_weights") is False
+        and mapping.get("not_official_target_weights") is True
+        and _text(mapping.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(mapping.get("broker_effect")) == BROKER_EFFECT
+        and _text(mapping.get("order_effect")) == ORDER_EFFECT
+        and _weight_object_research_only(_mapping(mapping.get("hypothetical_research_weight")))
+        and _weight_object_research_only(_mapping(mapping.get("previous_hypothetical_weight")))
+    )
+
+
+def _weight_sum_is_valid(value: Mapping[str, Any]) -> bool:
+    weights = _mapping(value.get("weights"))
+    total = sum(_float(weight) for weight in weights.values())
+    return bool(weights) and abs(total - 1.0) <= 0.000001
+
+
 def _source_status(source_id: str, payload: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "source_id": source_id,
@@ -1886,14 +2600,22 @@ __all__ = [
     "CONTRACT_VALIDATION_REPORT_TYPE",
     "DEFAULT_SIGNAL_INPUT_POLICY_PATH",
     "DEFAULT_SIGNAL_BINDING_POLICY_PATH",
+    "DEFAULT_WEIGHT_BINDING_POLICY_PATH",
     "SIGNAL_BINDING_BLOCKED",
     "SIGNAL_BINDING_COMPLETE",
     "SIGNAL_BINDING_COMPLETE_WITH_WARNINGS",
     "SIGNAL_BINDING_REPORT_TYPE",
     "SIGNAL_BINDING_VALIDATION_REPORT_TYPE",
     "SIGNAL_BINDING_VERSION",
+    "WEIGHT_BINDING_BLOCKED",
+    "WEIGHT_BINDING_COMPLETE",
+    "WEIGHT_BINDING_COMPLETE_WITH_WARNINGS",
+    "WEIGHT_BINDING_REPORT_TYPE",
+    "WEIGHT_BINDING_VALIDATION_REPORT_TYPE",
+    "WEIGHT_BINDING_VERSION",
     "VALIDATION_SUFFIX",
     "build_next_candidate_executable_binding_contract_payload",
+    "build_next_candidate_research_weight_binding_payload",
     "build_next_candidate_signal_binding_payload",
     "default_executable_binding_json_path",
     "default_executable_binding_markdown_path",

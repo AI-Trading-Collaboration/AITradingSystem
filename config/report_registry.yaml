@@ -8943,6 +8943,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: next_candidate_research_weight_binding
+    title: Next Candidate Research Weight Binding
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-research-weight-binding --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_research_weight_binding_20*.json
+      - outputs/reports/next_candidate_research_weight_binding_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-462 converts validated signal state into hypothetical
+      research-only weights for later backfill metrics while keeping official
+      target weights, broker/order, paper-shadow activation, and production
+      mutation forbidden.
+    owner_action: validate_weight_binding_before_executable_binding_safety_audit
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_research_weight_binding_validation
+    title: Next Candidate Research Weight Binding Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-research-weight-binding --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_research_weight_binding_validation_*.json
+      - outputs/reports/next_candidate_research_weight_binding_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Research weight binding validation rejects artifacts missing
+      research_only metadata, required weight fields, validated data quality,
+      validated signal binding, or no official-weight/broker/order boundaries.
+    owner_action: run_after_next_candidate_research_weight_binding
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

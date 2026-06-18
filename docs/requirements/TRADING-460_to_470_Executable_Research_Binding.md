@@ -150,3 +150,25 @@ Latest confirmed statuses:
   weights, backfill metrics, paper-shadow activation, owner decision,
   broker/order, or production mutation were produced. Next task is TRADING-462
   research-only hypothetical weight binding.
+- 2026-06-18: TRADING-462 started. Implementation must consume the validated
+  TRADING-461 signal binding and cached-data quality gate, convert signal state
+  into hypothetical research-only allocation output, and expose previous
+  hypothetical weight, rotation delta, turnover proxy, risk state,
+  constraint-hit list, and blocking reason. Every weight output must be marked
+  `research_only=true` and `not_official_target_weights=true`; official target
+  weights, broker/order artifacts, paper-shadow activation, production mutation,
+  and backfill metrics remain forbidden.
+- 2026-06-18: TRADING-462 completed pending commit. Added
+  `next_candidate_research_weight_binding` and validation artifacts with report
+  CLI, validation CLI, Reader Brief section, report registry, artifact catalog,
+  system flow, README, governed research-weight policy, and focused tests. The
+  real 2026-06-17 artifact consumed validated signal binding and the
+  cached-data quality gate (`PASS_WITH_WARNINGS`, errors=0), produced one
+  hypothetical research-only weight row dated 2026-06-16, turnover proxy
+  `0.85`, and validation PASS. Status is
+  `CANDIDATE_RESEARCH_WEIGHT_BINDING_COMPLETE_WITH_WARNINGS`; warnings are data
+  quality warnings, initial previous hypothetical weight from policy, latest
+  signal date outside frozen validation windows, and signal input completeness
+  warning. No official target weights, backfill metrics, paper-shadow
+  activation, owner decision, broker/order, or production mutation were
+  produced. Next task is TRADING-463 executable binding safety audit.

@@ -7721,6 +7721,104 @@ def next_candidate_signal_binding_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("next-candidate-research-weight-binding")
+def next_candidate_research_weight_binding_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Next candidate research weight binding 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    weight_binding_policy_path: Annotated[
+        Path,
+        typer.Option(help="Research weight binding governance policy 路径。"),
+    ] = executable_binding_reports.DEFAULT_WEIGHT_BINDING_POLICY_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量 Markdown 输出路径；不传时按日期使用默认报告路径。"),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option("--full-universe", help="按完整 AI 产业链标的运行 validate-data。"),
+    ] = False,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research weight binding JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research weight binding Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-462：生成 research-only hypothetical weight binding。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    data_quality_gate = _run_next_research_data_quality_gate(
+        report_date=report_date,
+        reports_dir=reports_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_output_path=data_quality_output_path,
+        full_universe=full_universe,
+    )
+    console.print(
+        f"数据质量状态：{data_quality_gate['status']}；"
+        f"报告：{data_quality_gate['report_path']}"
+    )
+    if data_quality_gate["passed"] is not True:
+        raise typer.Exit(code=1)
+    try:
+        payload = (
+            executable_binding_reports.build_next_candidate_research_weight_binding_payload(
+                as_of=report_date,
+                reports_dir=reports_dir,
+                weight_binding_policy_path=weight_binding_policy_path,
+                data_quality_gate=data_quality_gate,
+            )
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_executable_binding_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    style = (
+        "red"
+        if payload["status"] == executable_binding_reports.WEIGHT_BINDING_BLOCKED
+        else "yellow"
+    )
+    console.print(
+        f"[{style}]Next candidate research weight binding："
+        f"{payload['status']}[/{style}]"
+    )
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"latest_signal_date：{summary['latest_signal_date']}")
+    console.print(f"turnover_proxy：{summary['turnover_proxy']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 def _validate_next_research_cycle_command(
     *,
     expected_report_type: str,
@@ -8170,6 +8268,37 @@ def validate_next_candidate_signal_binding_command(
 ) -> None:
     _validate_executable_binding_command(
         expected_report_type=executable_binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+        latest=latest,
+        as_of=as_of,
+        reports_dir=reports_dir,
+        source_json_path=source_json_path,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+
+
+@reports_app.command("validate-next-candidate-research-weight-binding")
+def validate_next_candidate_research_weight_binding_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest next candidate research weight binding artifact。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    _validate_executable_binding_command(
+        expected_report_type=executable_binding_reports.WEIGHT_BINDING_REPORT_TYPE,
         latest=latest,
         as_of=as_of,
         reports_dir=reports_dir,

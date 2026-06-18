@@ -1,0 +1,75 @@
+schema_version: 1
+policy_id: next_candidate_research_weight_binding_v1
+version: 2026-06-18
+status: pilot_baseline
+owner: research_validation
+rationale: >
+  TRADING-462 converts the validated research-only signal state from TRADING-461
+  into hypothetical research allocation output so later backfill tasks can
+  compute turnover, drawdown, cost, and benchmark metrics from executable
+  bindings. The allocation vectors are research-only diagnostics and are not
+  official target weights, broker instructions, order tickets, paper-shadow
+  activation, or production state.
+intended_effect: >
+  Provide deterministic, auditable hypothetical weights for research backfill
+  while preserving a hard boundary from official portfolio targets and any
+  execution surface.
+validation_evidence: >
+  TRADING-462 focused tests cover complete weight binding, blocked upstream
+  signal binding, validation rejection of missing research_only metadata, CLI
+  artifact generation, and Reader Brief summary. Real artifacts must also pass
+  data quality, report validation, Ruff, compileall, documentation contract,
+  task-register consistency, report index, Reader Brief quality, and git diff
+  checks before commit.
+review_condition: >
+  Replace or recalibrate before any paper-shadow activation request, promotion
+  gate, official target-weight generation, or after owner changes the candidate
+  hypothesis, ETF universe, transaction-cost model, or acceptable research
+  turnover profile.
+
+research_weight_universe:
+  - QQQ
+  - SMH
+  - SOXX
+  - SPY
+  - CASH
+
+initial_previous_hypothetical_weight:
+  QQQ: 0.0
+  SMH: 0.0
+  SOXX: 0.0
+  SPY: 1.0
+  CASH: 0.0
+
+rotation_profiles:
+  increase_ai_risk:
+    QQQ: 0.30
+    SMH: 0.30
+    SOXX: 0.25
+    SPY: 0.15
+    CASH: 0.0
+  hold_current_research_weight: previous
+  reduce_ai_risk:
+    QQQ: 0.10
+    SMH: 0.10
+    SOXX: 0.10
+    SPY: 0.50
+    CASH: 0.20
+  move_to_cash_research_proxy:
+    QQQ: 0.0
+    SMH: 0.0
+    SOXX: 0.0
+    SPY: 0.0
+    CASH: 1.0
+  blocked:
+    QQQ: 0.0
+    SMH: 0.0
+    SOXX: 0.0
+    SPY: 0.0
+    CASH: 0.0
+
+constraints:
+  min_weight: 0.0
+  max_single_weight: 1.0
+  total_weight: 1.0
+  total_weight_tolerance: 0.000001
