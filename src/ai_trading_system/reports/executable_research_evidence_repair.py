@@ -40,6 +40,7 @@ CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE = "candidate_v2_mini_backfill"
 CANDIDATE_V2_MINI_GATE_REPORT_TYPE = "candidate_v2_mini_gate"
 CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE = "candidate_v2_full_backfill_if_approved"
 CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE = "candidate_v2_research_gate"
+CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE = "candidate_v2_owner_research_review_packet"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -79,6 +80,9 @@ CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -158,6 +162,13 @@ V2_RESEARCH_GATE_STATUSES: tuple[str, ...] = (
     V2_RETURN_TO_HYPOTHESIS_BACKLOG,
     V2_REJECT_RESEARCH_CANDIDATE,
 )
+V2_OWNER_RESEARCH_REVIEW_PACKET_READY = "V2_OWNER_RESEARCH_REVIEW_PACKET_READY"
+V2_OWNER_REVIEW_OPTIONS: tuple[str, ...] = (
+    "continue_research_validation",
+    "revise_hypothesis",
+    "hold_for_more_data",
+    "reject_v2_research_candidate",
+)
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -234,6 +245,12 @@ REPORT_PREFIXES: dict[str, str] = {
     CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE: "candidate_v2_research_gate",
     CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE: (
         "candidate_v2_research_gate_validation"
+    ),
+    CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE: (
+        "candidate_v2_owner_research_review_packet"
+    ),
+    CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_owner_research_review_packet_validation"
     ),
 }
 
@@ -4477,6 +4494,254 @@ def validate_candidate_v2_research_gate_payload(
     )
 
 
+def build_candidate_v2_owner_research_review_packet_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    gate_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    gate_validation_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    gate_payload = _read_json_mapping(gate_path)
+    gate_validation_payload = _read_json_mapping(gate_validation_path)
+    gate_summary = _mapping(gate_payload.get("summary"))
+    gate_decision = _text(gate_payload.get("status"))
+    recommended_option = _candidate_v2_owner_recommended_option(gate_decision)
+    owner_options = _candidate_v2_owner_options(
+        gate_decision=gate_decision,
+        recommended_option=recommended_option,
+    )
+    candidate_id = _text(gate_summary.get("candidate_id"), "MISSING")
+    summary = {
+        "candidate_v2_owner_packet_status": V2_OWNER_RESEARCH_REVIEW_PACKET_READY,
+        "candidate_id": candidate_id,
+        "source_research_gate_decision": gate_decision,
+        "source_research_gate_validation_status": _text(
+            gate_validation_payload.get("status")
+        ),
+        "recommended_owner_option": recommended_option,
+        "owner_option_count": len(owner_options),
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "owner_decision_audit_log_mutated": False,
+        "production_effect": PRODUCTION_EFFECT,
+        "research_only": True,
+        "manual_review_only": True,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE,
+        as_of=as_of,
+        status=V2_OWNER_RESEARCH_REVIEW_PACKET_READY,
+        purpose=(
+            "Prepare owner-facing v2 research review options after the research gate "
+            "without appending an owner decision."
+        ),
+        input_artifacts={
+            CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE: str(gate_path),
+            CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE: str(gate_validation_path),
+        },
+        output_decision=recommended_option,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE, gate_path, gate_payload),
+                _source_artifact(
+                    CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE,
+                    gate_validation_path,
+                    gate_validation_payload,
+                ),
+            ],
+            "owner_options": owner_options,
+            "explicit_safety_statements": _candidate_v2_owner_safety_statements(),
+            "source_gate_blocking_evidence": _records(gate_payload.get("blocking_evidence")),
+            "source_gate_positive_evidence": _records(gate_payload.get("positive_evidence")),
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "Candidate v2 owner research review packet is ready; "
+                f"recommended_option={recommended_option}."
+            ),
+            key_result=V2_OWNER_RESEARCH_REVIEW_PACKET_READY,
+            blocking_issues=_text(gate_summary.get("gate_reason"), "none"),
+            warnings="owner_decision_not_appended",
+            next_action="owner_review_required_before_any_next_research_action",
+        ),
+        next_action="owner_review_required_before_any_next_research_action",
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_owner_research_review_packet",
+            "owner_decision_appended": False,
+            "owner_decision_audit_log_mutated": False,
+            "paper_shadow_outputs_generated": False,
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+        },
+        limitations=[
+            "Owner options are prepared for manual review only.",
+            "The packet does not append an owner decision automatically.",
+            "No option activates paper-shadow, extended shadow, live trading, or broker/order.",
+        ],
+        requested_date_range=_text(gate_payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def validate_candidate_v2_owner_research_review_packet_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    owner_options = _records(payload.get("owner_options"))
+    safety_statements = _records(payload.get("explicit_safety_statements"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE}.",
+        "regenerate_candidate_v2_owner_review_packet",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status == V2_OWNER_RESEARCH_REVIEW_PACKET_READY,
+        "Owner review packet status must be ready.",
+        "restore_candidate_v2_owner_packet_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "owner_options_complete",
+        {row.get("option_id") for row in owner_options} == set(V2_OWNER_REVIEW_OPTIONS),
+        "Owner packet must include all required owner research options.",
+        "restore_candidate_v2_owner_options",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "recommended_option_valid",
+        _text(summary.get("recommended_owner_option")) in V2_OWNER_REVIEW_OPTIONS,
+        "Recommended owner option must be one of the allowed options.",
+        "restore_recommended_owner_option",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "explicit_safety_statements_present",
+        {row.get("statement_id") for row in safety_statements}
+        >= {
+            "no_paper_shadow_activation",
+            "no_extended_shadow",
+            "no_live_trading",
+            "no_official_target_weights",
+            "no_broker_order",
+        },
+        "Owner packet must explicitly state no shadow/live/weights/broker/order.",
+        "restore_owner_packet_safety_statements",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "owner_decision_not_appended",
+        summary.get("owner_decision_appended") is False
+        and summary.get("owner_decision_audit_log_mutated") is False,
+        "Owner packet must not append or mutate owner decision records.",
+        "remove_owner_decision_mutation",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("extended_shadow_allowed") is False
+        and summary.get("live_trading_allowed") is False
+        and summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Owner packet must not create execution, shadow, or production output.",
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-484 candidate v2 owner research review packet.",
+        input_artifacts={
+            CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE: _artifact_id(payload)
+        },
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "recommended_owner_option": _text(summary.get("recommended_owner_option")),
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"{CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE} validation is "
+                f"{validation_status}."
+            ),
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_owner_review_packet"
+                if validation_status == FAIL_STATUS
+                else "present_validated_candidate_v2_owner_packet"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_owner_review_packet"
+            if validation_status == FAIL_STATUS
+            else "present_validated_candidate_v2_owner_packet"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_owner_research_review_packet_validation"},
+        limitations=["Validation is read-only and does not append owner decisions."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
 def write_evidence_repair_json(payload: Mapping[str, Any], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -8498,6 +8763,121 @@ def _candidate_v2_research_gate_positive_evidence(
     ]
 
 
+def _candidate_v2_owner_recommended_option(gate_decision: str) -> str:
+    mapping = {
+        V2_RESEARCH_PROMISING: "continue_research_validation",
+        V2_NEEDS_MORE_EVIDENCE: "hold_for_more_data",
+        V2_RETURN_TO_HYPOTHESIS_BACKLOG: "revise_hypothesis",
+        V2_REJECT_RESEARCH_CANDIDATE: "reject_v2_research_candidate",
+    }
+    return mapping.get(gate_decision, "hold_for_more_data")
+
+
+def _candidate_v2_owner_options(
+    *,
+    gate_decision: str,
+    recommended_option: str,
+) -> list[dict[str, Any]]:
+    option_context = {
+        "continue_research_validation": {
+            "label": "Continue research validation",
+            "rationale": (
+                "Use only when the v2 research gate is promising and owner wants more "
+                "research validation before any shadow discussion."
+            ),
+            "evidence_required": "validated_promising_gate_and_no_execution_surface",
+            "next_research_action": "define_next_research_validation_scope",
+        },
+        "revise_hypothesis": {
+            "label": "Revise hypothesis",
+            "rationale": (
+                "Use when the research gate sends v2 back to the hypothesis backlog, "
+                "especially when full backfill never executed."
+            ),
+            "evidence_required": "blocking_evidence_and_failed_gate_reason_reviewed",
+            "next_research_action": "create_revised_hypothesis_or_return_to_backlog_task",
+        },
+        "hold_for_more_data": {
+            "label": "Hold for more data",
+            "rationale": (
+                "Use when evidence is not decisive and owner wants more observations "
+                "before revising or rejecting the research candidate."
+            ),
+            "evidence_required": "missing_or_under_observed_evidence_identified",
+            "next_research_action": "wait_for_or_collect_required_research_evidence",
+        },
+        "reject_v2_research_candidate": {
+            "label": "Reject v2 research candidate",
+            "rationale": (
+                "Use when the owner accepts the gate evidence as sufficient to stop "
+                "this v2 candidate research path."
+            ),
+            "evidence_required": "owner_confirms_blocking_evidence_is_terminal",
+            "next_research_action": "record_manual_rejection_then_prepare_postmortem_scope",
+        },
+    }
+    return [
+        {
+            "option_id": option_id,
+            "label": _text(option_context[option_id]["label"]),
+            "recommended": option_id == recommended_option,
+            "source_research_gate_decision": gate_decision,
+            "rationale": _text(option_context[option_id]["rationale"]),
+            "evidence_required": _text(option_context[option_id]["evidence_required"]),
+            "next_research_action": _text(option_context[option_id]["next_research_action"]),
+            "paper_shadow_activation_allowed": False,
+            "extended_shadow_allowed": False,
+            "live_trading_allowed": False,
+            "official_target_weights": False,
+            "broker_order_allowed": False,
+            "owner_decision_appended": False,
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for option_id in V2_OWNER_REVIEW_OPTIONS
+    ]
+
+
+def _candidate_v2_owner_safety_statements() -> list[dict[str, Any]]:
+    return [
+        {
+            "statement_id": "no_paper_shadow_activation",
+            "statement": "This packet does not activate paper-shadow.",
+            "allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "statement_id": "no_extended_shadow",
+            "statement": "This packet does not approve extended shadow.",
+            "allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "statement_id": "no_live_trading",
+            "statement": "This packet does not approve live trading.",
+            "allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "statement_id": "no_official_target_weights",
+            "statement": "This packet does not generate official target weights.",
+            "allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "statement_id": "no_broker_order",
+            "statement": "This packet does not create broker actions or order tickets.",
+            "allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "statement_id": "no_owner_decision_append",
+            "statement": "This packet does not append an owner decision.",
+            "allowed": False,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    ]
+
+
 def _mini_gate_evidence(
     *,
     evidence_id: str,
@@ -8849,6 +9229,14 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Owner Options", "owner_options"),
+            ("Explicit Safety Statements", "explicit_safety_statements"),
+        ]
+    if report_type == CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -8906,6 +9294,8 @@ __all__ = [
     "CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_MINI_GATE_REPORT_TYPE",
     "CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE",
+    "CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE",
     "CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE",
     "V2_MINI_BACKFILL_BLOCKED",
@@ -8922,6 +9312,8 @@ __all__ = [
     "V2_NEEDS_REDESIGN",
     "V2_PROCEED_TO_FULL_BACKFILL",
     "V2_REJECT_RESEARCH_CANDIDATE",
+    "V2_OWNER_RESEARCH_REVIEW_PACKET_READY",
+    "V2_OWNER_REVIEW_OPTIONS",
     "V2_RESEARCH_GATE_STATUSES",
     "V2_RESEARCH_PROMISING",
     "V2_RETURN_TO_HYPOTHESIS_BACKLOG",
@@ -8965,6 +9357,7 @@ __all__ = [
     "build_candidate_v2_full_backfill_if_approved_payload",
     "build_candidate_v2_mini_backfill_payload",
     "build_candidate_v2_mini_gate_payload",
+    "build_candidate_v2_owner_research_review_packet_payload",
     "build_candidate_v2_research_gate_payload",
     "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
@@ -8982,6 +9375,7 @@ __all__ = [
     "validate_candidate_v2_full_backfill_if_approved_payload",
     "validate_candidate_v2_mini_backfill_payload",
     "validate_candidate_v2_mini_gate_payload",
+    "validate_candidate_v2_owner_research_review_packet_payload",
     "validate_candidate_v2_research_gate_payload",
     "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",

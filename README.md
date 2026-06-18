@@ -2142,6 +2142,18 @@ blocking evidence、Reader Brief 和安全边界。Full backfill 未执行时不
 即使 promising 也不激活 paper-shadow、不 append owner decision、不批准 extended/live、不写
 official target weights、不触发 broker/order、不修改 production。
 
+TRADING-484_CANDIDATE_V2_OWNER_RESEARCH_REVIEW_PACKET 在 TRADING-483 后准备 owner
+manual review packet。运行
+`aits reports candidate-v2-owner-research-review-packet --as-of YYYY-MM-DD` 会读取 v2
+research gate 与 validation，输出 continue research validation、revise hypothesis、
+hold for more data 和 reject v2 research candidate 四个 owner options、recommended
+owner option、source gate evidence 和 explicit safety statements。`aits reports
+validate-candidate-v2-owner-research-review-packet --latest` 校验 option set、recommended
+option、no paper-shadow activation、no extended shadow、no live trading、no official target
+weights、no broker/order、Reader Brief 和安全边界。该 packet 不自动 append owner
+decision、不修改 owner decision audit log、不创建 paper-shadow、不批准 extended/live、不写
+official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

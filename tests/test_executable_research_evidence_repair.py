@@ -1260,6 +1260,111 @@ def test_candidate_v2_research_gate_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_owner_research_review_packet_prepares_owner_options(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_owner_packet_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+
+    payload = repair.build_candidate_v2_owner_research_review_packet_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.V2_OWNER_RESEARCH_REVIEW_PACKET_READY
+    assert payload["summary"]["source_research_gate_decision"] == (
+        repair.V2_RETURN_TO_HYPOTHESIS_BACKLOG
+    )
+    assert payload["summary"]["recommended_owner_option"] == "revise_hypothesis"
+    assert payload["summary"]["owner_option_count"] == len(repair.V2_OWNER_REVIEW_OPTIONS)
+    assert payload["summary"]["paper_shadow_activation_allowed"] is False
+    assert payload["summary"]["extended_shadow_allowed"] is False
+    assert payload["summary"]["live_trading_allowed"] is False
+    assert payload["summary"]["official_target_weights"] is False
+    assert payload["summary"]["broker_order_allowed"] is False
+    assert payload["summary"]["owner_decision_appended"] is False
+    assert payload["summary"]["owner_decision_audit_log_mutated"] is False
+    assert {row["option_id"] for row in payload["owner_options"]} == set(
+        repair.V2_OWNER_REVIEW_OPTIONS
+    )
+    assert all(row["owner_decision_appended"] is False for row in payload["owner_options"])
+    assert {
+        row["statement_id"] for row in payload["explicit_safety_statements"]
+    } >= {
+        "no_paper_shadow_activation",
+        "no_extended_shadow",
+        "no_live_trading",
+        "no_official_target_weights",
+        "no_broker_order",
+    }
+
+    validation = repair.validate_candidate_v2_owner_research_review_packet_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_owner_research_review_packet_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_owner_packet_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-owner-research-review-packet",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    packet_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_OWNER_REVIEW_PACKET_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(packet_path.read_text(encoding="utf-8"))
+    assert payload["status"] == repair.V2_OWNER_RESEARCH_REVIEW_PACKET_READY
+    assert payload["summary"]["recommended_owner_option"] == "revise_hypothesis"
+    assert payload["summary"]["owner_decision_appended"] is False
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-owner-research-review-packet",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_OWNER_REVIEW_PACKET_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -1484,6 +1589,42 @@ def _write_candidate_v2_research_gate_prerequisites(
         full_backfill_validation,
         repair.default_evidence_repair_json_path(
             repair.CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
+def _write_candidate_v2_owner_packet_prerequisites(
+    *,
+    reports_dir: Path,
+    feature_path: Path,
+    prices_path: Path,
+) -> None:
+    _write_candidate_v2_research_gate_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    research_gate = repair.build_candidate_v2_research_gate_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        research_gate,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    research_gate_validation = repair.validate_candidate_v2_research_gate_payload(
+        research_gate
+    )
+    repair.write_evidence_repair_json(
+        research_gate_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),

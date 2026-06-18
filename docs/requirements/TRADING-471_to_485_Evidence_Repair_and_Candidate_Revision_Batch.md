@@ -37,7 +37,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-481|candidate-v2-mini-gate|DONE|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
 |TRADING-482|candidate-v2-full-backfill-if-approved|DONE|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
 |TRADING-483|candidate-v2-research-gate|DONE|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
-|TRADING-484|v2-owner-research-review-packet|READY|TRADING-483|准备 owner research options；不自动 append owner decision。|
+|TRADING-484|v2-owner-research-review-packet|DONE|TRADING-483|准备 owner research options；不自动 append owner decision。|
 |TRADING-485|v2-research-cycle-snapshot|READY|TRADING-484|生成最终 v2 research-cycle snapshot。|
 
 ## 硬停止条件
@@ -309,3 +309,16 @@ owner decision append、production mutation 或 automatic position control。
   为 PASS，checks=9、failed=0。未激活 paper-shadow、未 append owner decision、未创建
   official weights/broker/order/production。下一步 TRADING-484 只能准备 owner research
   review packet，不得提供 paper-shadow activation 选项。
+- 2026-06-18: TRADING-484 开始实现。范围限定为只读读取 TRADING-483 v2 research
+  gate，准备 owner options：continue research validation、revise hypothesis、hold for more
+  data、reject v2 research candidate；明确 no paper-shadow activation、no extended
+  shadow、no live trading、no official target weights、no broker/order。该 packet 不自动
+  append owner decision、不修改 owner decision audit log、不修改 production。
+- 2026-06-18: TRADING-484 完成 pending commit。真实 2026-06-17 owner research review
+  packet `candidate_v2_owner_research_review_packet_2026-06-17` 输出
+  `V2_OWNER_RESEARCH_REVIEW_PACKET_READY`，source research gate=
+  `V2_RETURN_TO_HYPOTHESIS_BACKLOG`，recommended owner option=`revise_hypothesis`，
+  owner options=4，validation PASS / checks=9 / failed=0。未 append owner decision、
+  未修改 owner decision audit log、未激活 paper-shadow、未批准 extended/live、未创建
+  official weights/broker/order/production。下一步 TRADING-485 只能生成 final v2
+  research-cycle snapshot，不得自动记录 owner decision。

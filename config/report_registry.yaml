@@ -9549,6 +9549,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_v2_owner_research_review_packet
+    title: Candidate V2 Owner Research Review Packet
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports candidate-v2-owner-research-review-packet --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_v2_owner_research_review_packet_20*.json
+      - outputs/reports/candidate_v2_owner_research_review_packet_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-484 reads the validated TRADING-483 v2 research gate and prepares
+      owner research options without appending an owner decision or creating any
+      paper-shadow, extended shadow, live trading, official weight, broker/order,
+      or production output.
+    owner_action: owner_manual_review_required_before_any_next_research_action
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_v2_owner_research_review_packet_validation
+    title: Candidate V2 Owner Research Review Packet Validation
+    group: research
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-v2-owner-research-review-packet --latest
+    artifact_globs:
+      - outputs/reports/candidate_v2_owner_research_review_packet_validation_20*.json
+      - outputs/reports/candidate_v2_owner_research_review_packet_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-484 validation checks the owner option set, recommended option,
+      explicit no shadow/live/official-weight/broker/order statements, Reader
+      Brief fields, no owner decision append, and the no-production boundary.
+    owner_action: run_after_candidate_v2_owner_research_review_packet
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research
