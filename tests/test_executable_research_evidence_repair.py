@@ -468,6 +468,109 @@ def test_stress_weakness_attribution_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_cost_benchmark_weakness_attribution_marks_redesign_required(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+
+    payload = repair.build_cost_benchmark_weakness_attribution_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY
+    assert payload["summary"]["source_cost_benchmark_status"] == (
+        "COST_BENCHMARK_REVIEW_WEAK"
+    )
+    assert payload["summary"]["source_cost_sensitivity_status"] == (
+        "NOT_MEANINGFUL_UNDER_COSTS"
+    )
+    assert payload["summary"]["design_judgment"] == "REDESIGN_REQUIRED"
+    assert payload["summary"]["fixable_by_candidate_redesign"] is True
+    assert payload["summary"]["reject_current_candidate"] is False
+    cost_rows = {
+        row["scenario_id"]: row for row in payload["cost_scenario_attributions"]
+    }
+    assert set(cost_rows) == set(repair.REQUIRED_COST_SCENARIOS)
+    assert cost_rows["zero"]["cost_weakness_reason"] == "weak_net_return_proxy"
+    assert "turnover_proxy=0.85" in cost_rows["high"]["high_turnover_assessment"]
+    assert "cost_drag=0.002125" in cost_rows["high"]["cost_drag_assessment"]
+    benchmark_rows = {
+        row["baseline_id"]: row for row in payload["benchmark_baseline_attributions"]
+    }
+    assert set(benchmark_rows) == set(repair.REQUIRED_BENCHMARK_BASELINES)
+    assert benchmark_rows["equal_weight_etf"]["benchmark_weakness_reason"] == (
+        "benchmark_underperformance"
+    )
+    assert benchmark_rows["static_allocation"]["benchmark_weakness_reason"] == (
+        "insufficient_outperformance_margin"
+    )
+    root_causes = {row["root_cause_id"] for row in payload["cost_benchmark_root_causes"]}
+    assert {
+        "weak_gross_return_proxy",
+        "weak_net_return_proxy",
+        "benchmark_underperformance",
+        "insufficient_benchmark_outperformance",
+        "partial_static_proxy_distortion",
+        "turnover_cost_exposure",
+    } <= root_causes
+
+    validation = repair.validate_cost_benchmark_weakness_attribution_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_cost_benchmark_weakness_attribution_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "cost-benchmark-weakness-attribution",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    attribution_path = repair.default_evidence_repair_json_path(
+        repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(attribution_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["design_judgment"] == "REDESIGN_REQUIRED"
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-cost-benchmark-weakness-attribution",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -513,6 +616,18 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
         window_attribution,
         repair.default_evidence_repair_json_path(
             repair.WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    stress_attribution = repair.build_stress_weakness_attribution_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        stress_attribution,
+        repair.default_evidence_repair_json_path(
+            repair.STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
@@ -567,6 +682,20 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
         )
         path.write_text(json.dumps(payload), encoding="utf-8")
 
+    cost_source_path = reports_dir / "fixtures" / "cost_sensitivity_review.json"
+    cost_source_path.parent.mkdir(parents=True, exist_ok=True)
+    cost_source_path.write_text(
+        json.dumps(_cost_sensitivity_source_fixture()),
+        encoding="utf-8",
+    )
+    benchmark_source_path = (
+        reports_dir / "fixtures" / "benchmark_baseline_control_pack.json"
+    )
+    benchmark_source_path.write_text(
+        json.dumps(_benchmark_baseline_source_fixture()),
+        encoding="utf-8",
+    )
+
     next_sources = {
         next_cycle.BACKFILL_REPORT_TYPE: {
             "report_type": next_cycle.BACKFILL_REPORT_TYPE,
@@ -620,22 +749,38 @@ def _write_trading_470_sources(reports_dir: Path) -> None:
             "report_type": next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
             "as_of": RUN_DATE.isoformat(),
             "status": "COST_BENCHMARK_REVIEW_WEAK",
+            "requested_date_range": "2023-01-03..2025-04-30",
+            "input_artifacts": {
+                "cost_sensitivity_framework": str(cost_source_path),
+                "benchmark_baseline_control": str(benchmark_source_path),
+            },
             "summary": {
                 "cost_survival_status": "COST_SURVIVAL_WARNING",
+                "benchmark_relative_status": "BENCHMARK_UNDERPERFORMS",
                 "turnover_penalty": 0.002125,
                 "net_proxy_result": "AVAILABLE",
+                "source_backfill_status": next_cycle.CANDIDATE_BACKFILL_PARTIAL,
                 "turnover_proxy": 0.85,
                 "aggregate_return_proxy": 0.006,
+                "scenario_count": 4,
+                "baseline_count": 5,
+                "major_blocker_count": 1,
+                "major_warning_count": 4,
+                "production_effect": "none",
             },
-            "benchmark_reviews": [
+            "cost_scenario_reviews": _cost_scenario_reviews_fixture(),
+            "benchmark_reviews": _benchmark_reviews_fixture(),
+            "major_blockers": [
                 {
-                    "baseline_id": "equal_weight_etf",
-                    "benchmark_relative_status": "BENCHMARK_UNDERPERFORMS",
-                    "candidate_delta_vs_baseline": -0.001,
-                    "minimum_outperformance_threshold": 0.0025,
-                    "candidate_return_proxy": 0.006,
-                    "baseline_return_proxy": 0.007,
+                    "issue_id": "equal_weight_etf",
+                    "reason": "BENCHMARK_UNDERPERFORMS",
                 }
+            ],
+            "major_warnings": [
+                {"issue_id": "static_allocation", "reason": "BENCHMARK_MIXED"},
+                {"issue_id": "no_trade", "reason": "BENCHMARK_MIXED"},
+                {"issue_id": "qqq_only", "reason": "BENCHMARK_MIXED"},
+                {"issue_id": "spy_only", "reason": "BENCHMARK_MIXED"},
             ],
             "production_effect": "none",
         },
@@ -885,6 +1030,124 @@ def _stress_reviews_fixture() -> list[dict[str, object]]:
             "recommended_action": "redesign_candidate_stress_handling",
             "production_effect": "none",
         },
+    ]
+
+
+def _cost_sensitivity_source_fixture() -> dict[str, object]:
+    return {
+        "report_type": "etf_dynamic_v3_cost_sensitivity_review",
+        "as_of": RUN_DATE.isoformat(),
+        "cost_sensitivity_status": "NOT_MEANINGFUL_UNDER_COSTS",
+        "turnover": 0.005945,
+        "gross_performance_proxy": 0.00638,
+        "gross_improvement_proxy": 0.001144,
+        "worst_net_improvement_proxy": 0.001129,
+        "meaningful_improvement_threshold": 0.0025,
+        "scenario_results": [
+            {
+                "scenario_id": scenario_id,
+                "label": label,
+                "classification": "NOT_MEANINGFUL",
+                "total_cost_bps": total_cost_bps,
+                "turnover": 0.005945,
+                "cost_drag": cost_drag,
+                "gross_improvement_proxy": 0.001144,
+                "gross_performance_proxy": 0.00638,
+                "net_improvement_proxy": net_improvement,
+                "net_performance_proxy": 0.00638 - cost_drag,
+                "meaningful_improvement_threshold": 0.0025,
+                "improvement_remains_meaningful": False,
+                "production_effect": "none",
+            }
+            for scenario_id, label, total_cost_bps, cost_drag, net_improvement in [
+                ("zero", "Zero Cost", 0.0, 0.0, 0.001144),
+                ("low", "Low Cost", 3.0, 0.000255, 0.001142),
+                ("medium", "Medium Cost", 10.0, 0.00085, 0.001138),
+                ("high", "High Cost", 25.0, 0.002125, 0.001129),
+            ]
+        ],
+        "production_effect": "none",
+    }
+
+
+def _benchmark_baseline_source_fixture() -> dict[str, object]:
+    return {
+        "report_type": "etf_dynamic_v3_benchmark_baseline_control_pack",
+        "as_of": RUN_DATE.isoformat(),
+        "benchmark_baseline_status": "CANDIDATE_UNDERPERFORMS_BASELINES",
+        "required_baselines_present": True,
+        "missing_required_baselines": [],
+        "minimum_outperformance_threshold": 0.0025,
+        "comparison_summary": {
+            "baseline_count": 5,
+            "outperformed_baseline_count": 0,
+            "underperformed_baseline_count": 5,
+        },
+        "baselines": [
+            {
+                "baseline_id": baseline_id,
+                "comparison_classification": "NOT_OUTPERFORMED",
+                "baseline_net_performance_proxy": baseline_return,
+                "candidate_net_performance_proxy": 0.006,
+                "candidate_delta_vs_baseline": 0.006 - baseline_return,
+                "minimum_outperformance_threshold": 0.0025,
+                "production_effect": "none",
+            }
+            for baseline_id, baseline_return in [
+                ("static_allocation", 0.0052),
+                ("no_trade", 0.0052),
+                ("qqq_only", 0.0058),
+                ("spy_only", 0.004),
+                ("equal_weight_etf", 0.008),
+            ]
+        ],
+        "production_effect": "none",
+    }
+
+
+def _cost_scenario_reviews_fixture() -> list[dict[str, object]]:
+    return [
+        {
+            "scenario_id": scenario_id,
+            "label": label,
+            "total_cost_bps": total_cost_bps,
+            "turnover_proxy": 0.85,
+            "gross_return_proxy": 0.006,
+            "cost_drag": cost_drag,
+            "net_proxy_result": 0.006 - cost_drag,
+            "meaningful_threshold": 0.0025,
+            "cost_survival_status": "COST_SURVIVAL_PASS",
+            "source_backfill_status": next_cycle.CANDIDATE_BACKFILL_PARTIAL,
+            "production_effect": "none",
+        }
+        for scenario_id, label, total_cost_bps, cost_drag in [
+            ("zero", "Zero Cost", 0.0, 0.0),
+            ("low", "Low Cost", 3.0, 0.000255),
+            ("medium", "Medium Cost", 10.0, 0.00085),
+            ("high", "High Cost", 25.0, 0.002125),
+        ]
+    ]
+
+
+def _benchmark_reviews_fixture() -> list[dict[str, object]]:
+    return [
+        {
+            "baseline_id": baseline_id,
+            "benchmark_relative_status": status,
+            "candidate_return_proxy": 0.006,
+            "baseline_return_proxy": baseline_return,
+            "candidate_delta_vs_baseline": round(0.006 - baseline_return, 6),
+            "minimum_outperformance_threshold": 0.0025,
+            "source_backfill_status": next_cycle.CANDIDATE_BACKFILL_PARTIAL,
+            "production_effect": "none",
+        }
+        for baseline_id, baseline_return, status in [
+            ("static_allocation", 0.0052, "BENCHMARK_MIXED"),
+            ("no_trade", 0.0052, "BENCHMARK_MIXED"),
+            ("qqq_only", 0.0058, "BENCHMARK_MIXED"),
+            ("spy_only", 0.004, "BENCHMARK_MIXED"),
+            ("equal_weight_etf", 0.008, "BENCHMARK_UNDERPERFORMS"),
+        ]
     ]
 
 

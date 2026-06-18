@@ -29,7 +29,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-473|signal-robustness-blocker-drilldown|DONE|TRADING-471 + signal robustness review|列出每个 blocker 的 input artifact、failed field、expected/actual value 和 repair path，不放松 signal completeness rules。|
 |TRADING-474|window-fragility-attribution|DONE|TRADING-471 + window sensitivity review|比较 early/middle/recent/stress-heavy/calm windows，判断 fragility 来源和是否可继续研究。|
 |TRADING-475|stress-weakness-attribution|DONE|TRADING-471 + stress review|解释 failed stress scenarios、candidate/benchmark behavior、drawdown mismatch、rotation/turnover impact，不调参掩盖 failure。|
-|TRADING-476|cost-benchmark-weakness-attribution|READY|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
+|TRADING-476|cost-benchmark-weakness-attribution|DONE|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
 |TRADING-477|candidate-redesign-hypothesis-v2|READY|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
 |TRADING-478|candidate-v2-spec-freeze|READY|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
 |TRADING-479|candidate-v2-executable-binding-update|READY|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
@@ -154,3 +154,29 @@ owner decision append、production mutation 或 automatic position control。
   spec、未 append owner decision、未创建 paper-shadow、未批准 extended/live、未写
   official target weights、未触发 broker/order、未修改 production。下一步是
   TRADING-476 cost/benchmark weakness attribution。
+- 2026-06-18: TRADING-476 开始实现。范围限定为只读读取
+  `next_candidate_cost_benchmark_review`、其链接的 cost sensitivity source report、
+  benchmark baseline control pack、TRADING-475 stress attribution、TRADING-474 window
+  attribution、TRADING-472 repair plan 和 TRADING-471 ledger，逐 cost scenario 与
+  required baseline 解释 high turnover / cost drag / weak gross and net proxy /
+  benchmark underperformance / insufficient defensive or recovery benefit；不重新运行
+  cost/backfill、不调阈值隐藏 weakness、不改变 candidate spec、不触发 paper-shadow 或
+  production。
+- 2026-06-18: TRADING-476 完成 pending commit。真实 2026-06-17 attribution
+  `cost_benchmark_weakness_attribution_2026-06-17` 输出
+  `COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY`，source cost/benchmark status 为
+  `COST_BENCHMARK_REVIEW_WEAK`，source cost sensitivity 为
+  `NOT_MEANINGFUL_UNDER_COSTS`，source benchmark baseline status 为
+  `CANDIDATE_UNDERPERFORMS_BASELINES`。Cost scenarios=4，均为
+  `weak_net_return_proxy`；benchmark baselines=5，其中 static allocation、no-trade、
+  QQQ-only、SPY-only 为 `insufficient_outperformance_margin`，equal-weight ETF 为
+  `benchmark_underperformance`。Root causes=6：
+  `weak_gross_return_proxy`、`weak_net_return_proxy`、`turnover_cost_exposure`、
+  `insufficient_benchmark_outperformance`、`benchmark_underperformance` 和
+  `partial_static_proxy_distortion`。Design judgment=`REDESIGN_REQUIRED`，
+  fixable_by_candidate_redesign=true，reject_current_candidate=false。Validation
+  `cost_benchmark_weakness_attribution_validation_2026-06-17` 为 PASS，checks=13、
+  failed=0。未重新运行 cost/benchmark/backfill、未调阈值隐藏 weakness、未改变
+  candidate spec、未 append owner decision、未创建 paper-shadow、未批准 extended/live、
+  未写 official target weights、未触发 broker/order、未修改 production。下一步是
+  TRADING-477 candidate redesign hypothesis v2。

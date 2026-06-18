@@ -26567,17 +26567,19 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "window_fragility_attribution_validation": 285,
         "stress_weakness_attribution": 286,
         "stress_weakness_attribution_validation": 287,
-        "next_candidate_executable_binding_contract": 288,
-        "next_candidate_executable_binding_contract_validation": 289,
-        "next_candidate_signal_binding": 290,
-        "next_candidate_signal_binding_validation": 291,
-        "next_candidate_research_weight_binding": 292,
-        "next_candidate_research_weight_binding_validation": 293,
-        "executable_binding_safety_audit": 294,
-        "executable_binding_safety_audit_validation": 295,
-        "report_quality_gate": 296,
-        "reader_brief_quality": 297,
-        "artifact_catalog": 298,
+        "cost_benchmark_weakness_attribution": 288,
+        "cost_benchmark_weakness_attribution_validation": 289,
+        "next_candidate_executable_binding_contract": 290,
+        "next_candidate_executable_binding_contract_validation": 291,
+        "next_candidate_signal_binding": 292,
+        "next_candidate_signal_binding_validation": 293,
+        "next_candidate_research_weight_binding": 294,
+        "next_candidate_research_weight_binding_validation": 295,
+        "executable_binding_safety_audit": 296,
+        "executable_binding_safety_audit_validation": 297,
+        "report_quality_gate": 298,
+        "reader_brief_quality": 299,
+        "artifact_catalog": 300,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -27072,6 +27074,17 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Stress attribution 生成后立即校验 scenario 覆盖、root causes 和安全边界。",
+    ),
+    "cost_benchmark_weakness_attribution": (
+        "manual",
+        "manual research cycle",
+        "TRADING-476 在 stress attribution 后归因 cost/benchmark weakness "
+        "和 redesign repairability。",
+    ),
+    "cost_benchmark_weakness_attribution_validation": (
+        "manual",
+        "manual research cycle",
+        "Cost/benchmark attribution 生成后立即校验 cost scenarios、baselines 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

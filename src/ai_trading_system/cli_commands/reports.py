@@ -6912,6 +6912,15 @@ def _write_evidence_repair_validation(
         payload = evidence_repair_reports.validate_stress_weakness_attribution_payload(
             source_payload
         )
+    elif (
+        source_report_type
+        == evidence_repair_reports.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE
+    ):
+        payload = (
+            evidence_repair_reports.validate_cost_benchmark_weakness_attribution_payload(
+                source_payload
+            )
+        )
     else:
         raise typer.BadParameter(
             f"Unsupported evidence repair report_type: {source_report_type}"
@@ -7997,6 +8006,60 @@ def stress_weakness_attribution_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("cost-benchmark-weakness-attribution")
+def cost_benchmark_weakness_attribution_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Cost/benchmark weakness attribution 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Cost/benchmark attribution JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Cost/benchmark attribution Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-476：归因 cost/benchmark weakness。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = (
+            evidence_repair_reports.build_cost_benchmark_weakness_attribution_payload(
+                as_of=report_date,
+                reports_dir=reports_dir,
+            )
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(
+        f"[yellow]Cost/benchmark weakness attribution：{payload['status']}[/yellow]"
+    )
+    console.print(f"design_judgment：{summary['design_judgment']}")
+    console.print(f"cost_weakness_count：{summary['cost_weakness_count']}")
+    console.print(f"benchmark_weakness_count：{summary['benchmark_weakness_count']}")
+    console.print(
+        f"fixable_by_candidate_redesign："
+        f"{summary['fixable_by_candidate_redesign']}"
+    )
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -8952,6 +9015,61 @@ def validate_stress_weakness_attribution_command(
     style = "green" if status == "PASS" else "red"
     summary = payload["summary"]
     console.print(f"[{style}]Stress attribution validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-cost-benchmark-weakness-attribution")
+def validate_cost_benchmark_weakness_attribution_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest cost/benchmark weakness attribution。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=(
+            evidence_repair_reports.COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE
+        ),
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="cost/benchmark weakness attribution",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Cost/benchmark attribution validation：{status}[/{style}]")
     console.print(f"Source JSON：{source_path}")
     console.print(f"Validation JSON：{json_path}")
     console.print(f"Validation Markdown：{md_path}")

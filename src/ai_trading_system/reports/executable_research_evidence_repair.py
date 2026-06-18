@@ -27,6 +27,9 @@ SIGNAL_ROBUSTNESS_DRILLDOWN_REPORT_TYPE = (
 )
 WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE = "window_fragility_attribution"
 STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE = "stress_weakness_attribution"
+COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE = (
+    "cost_benchmark_weakness_attribution"
+)
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -42,6 +45,9 @@ WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
 )
 STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
     f"{STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE = (
+    f"{COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -66,11 +72,20 @@ SIGNAL_ROBUSTNESS_DRILLDOWN_STATUSES: tuple[str, ...] = (
 )
 WINDOW_FRAGILITY_ATTRIBUTION_READY = "WINDOW_FRAGILITY_ATTRIBUTION_READY"
 STRESS_WEAKNESS_ATTRIBUTION_READY = "STRESS_WEAKNESS_ATTRIBUTION_READY"
+COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY = (
+    "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY"
+)
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
     "REPAIR_EVIDENCE_BEFORE_DECISION",
     "STRESS_WEAKNESS_ACCEPTABLE",
+)
+COST_BENCHMARK_DESIGN_JUDGMENTS: tuple[str, ...] = (
+    "REDESIGN_REQUIRED",
+    "REJECT_CURRENT_CANDIDATE",
+    "REPAIR_EVIDENCE_BEFORE_DECISION",
+    "COST_BENCHMARK_WEAKNESS_ACCEPTABLE",
 )
 WINDOW_FRAGILITY_JUDGMENTS: tuple[str, ...] = (
     "OVERFIT_RISK",
@@ -101,6 +116,12 @@ REPORT_PREFIXES: dict[str, str] = {
     STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE: "stress_weakness_attribution",
     STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE: (
         "stress_weakness_attribution_validation"
+    ),
+    COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE: (
+        "cost_benchmark_weakness_attribution"
+    ),
+    COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE: (
+        "cost_benchmark_weakness_attribution_validation"
     ),
 }
 
@@ -179,6 +200,16 @@ REQUIRED_STRESS_SCENARIOS: tuple[str, ...] = (
     "high_volatility_sideways_market",
     "false_risk_off_cluster",
     "ai_semiconductor_correction",
+)
+
+REQUIRED_COST_SCENARIOS: tuple[str, ...] = ("zero", "low", "medium", "high")
+
+REQUIRED_BENCHMARK_BASELINES: tuple[str, ...] = (
+    "static_allocation",
+    "no_trade",
+    "qqq_only",
+    "spy_only",
+    "equal_weight_etf",
 )
 
 
@@ -1736,6 +1767,359 @@ def validate_stress_weakness_attribution_payload(
             "repair_stress_weakness_attribution"
             if status == FAIL_STATUS
             else "use_validated_stress_attribution_for_trading_476"
+        ),
+        safety_boundary=_safety_boundary(),
+        limitations=["Validation is read-only and does not rerun source reports."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_cost_benchmark_weakness_attribution_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    paths = _cost_benchmark_attribution_source_paths(
+        reports_dir=reports_dir,
+        as_of=as_of,
+    )
+    cost_payload = _read_json_mapping(paths[next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE])
+    cost_source = _read_json_mapping(paths["cost_sensitivity_framework"])
+    benchmark_source = _read_json_mapping(paths["benchmark_baseline_control"])
+    stress_attribution = _read_json_mapping(paths[STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE])
+    window_attribution = _read_json_mapping(paths[WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE])
+    repair_plan = _read_json_mapping(paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE])
+    ledger = _read_json_mapping(paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE])
+    cost_summary = _mapping(cost_payload.get("summary"))
+    cost_rows = _cost_weakness_rows(cost_payload, cost_source)
+    benchmark_rows = _benchmark_weakness_rows(cost_payload, benchmark_source)
+    root_causes = _cost_benchmark_root_causes(
+        cost_rows,
+        benchmark_rows,
+        cost_summary,
+        cost_source,
+        benchmark_source,
+    )
+    design_judgment = _cost_benchmark_design_judgment(root_causes)
+    requested_date_range = _text(
+        cost_payload.get("requested_date_range"),
+        _text(cost_summary.get("requested_date_range"), "not_applicable"),
+    )
+    summary = {
+        "cost_benchmark_weakness_attribution_status": (
+            COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY
+        ),
+        "source_cost_benchmark_status": _text(cost_payload.get("status"), "MISSING"),
+        "source_cost_survival_status": _text(
+            cost_summary.get("cost_survival_status"),
+            "MISSING",
+        ),
+        "source_benchmark_relative_status": _text(
+            cost_summary.get("benchmark_relative_status"),
+            "MISSING",
+        ),
+        "source_cost_sensitivity_status": _text(
+            cost_source.get("cost_sensitivity_status"),
+            "MISSING",
+        ),
+        "source_benchmark_baseline_status": _text(
+            benchmark_source.get("benchmark_baseline_status"),
+            "MISSING",
+        ),
+        "source_stress_design_judgment": _text(
+            _mapping(stress_attribution.get("summary")).get("design_judgment"),
+            "MISSING",
+        ),
+        "source_window_fragility_judgment": _text(
+            _mapping(window_attribution.get("summary")).get("fragility_judgment"),
+            "MISSING",
+        ),
+        "source_backfill_repair_status": _text(repair_plan.get("status"), "MISSING"),
+        "candidate_id": _text(
+            cost_summary.get("candidate_id"),
+            _text(cost_source.get("candidate"), "MISSING"),
+        ),
+        "market_regime": _text(cost_payload.get("market_regime"), MARKET_REGIME),
+        "requested_date_range": requested_date_range,
+        "cost_scenario_count": len(cost_rows),
+        "benchmark_baseline_count": len(benchmark_rows),
+        "cost_weakness_count": len(
+            [row for row in cost_rows if row["cost_weakness_reason"] != "none"]
+        ),
+        "benchmark_weakness_count": len(
+            [
+                row
+                for row in benchmark_rows
+                if row["benchmark_weakness_reason"] != "none"
+            ]
+        ),
+        "root_cause_count": len(root_causes),
+        "design_judgment": design_judgment,
+        "fixable_by_candidate_redesign": design_judgment == "REDESIGN_REQUIRED",
+        "reject_current_candidate": design_judgment == "REJECT_CURRENT_CANDIDATE",
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        as_of=as_of,
+        status=COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY,
+        purpose=(
+            "Attribute why the executable cost/benchmark review remains weak and "
+            "whether weakness is fixable by candidate redesign."
+        ),
+        input_artifacts={report_type: str(path) for report_type, path in paths.items()},
+        output_decision=design_judgment,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _cost_benchmark_source_artifact(
+                    next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+                    paths[next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE],
+                    cost_payload,
+                ),
+                _cost_benchmark_source_artifact(
+                    "cost_sensitivity_framework",
+                    paths["cost_sensitivity_framework"],
+                    cost_source,
+                ),
+                _cost_benchmark_source_artifact(
+                    "benchmark_baseline_control",
+                    paths["benchmark_baseline_control"],
+                    benchmark_source,
+                ),
+                _cost_benchmark_source_artifact(
+                    STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+                    paths[STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE],
+                    stress_attribution,
+                ),
+                _cost_benchmark_source_artifact(
+                    WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+                    paths[WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE],
+                    window_attribution,
+                ),
+                _cost_benchmark_source_artifact(
+                    BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+                    paths[BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE],
+                    repair_plan,
+                ),
+                _cost_benchmark_source_artifact(
+                    EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+                    paths[EVIDENCE_GAP_LEDGER_REPORT_TYPE],
+                    ledger,
+                ),
+            ],
+            "cost_scenario_attributions": cost_rows,
+            "benchmark_baseline_attributions": benchmark_rows,
+            "cost_benchmark_root_causes": root_causes,
+            "candidate_design_implications": _cost_benchmark_design_implications(
+                design_judgment,
+                root_causes,
+            ),
+            "classification_policy": {
+                "required_cost_scenarios": list(REQUIRED_COST_SCENARIOS),
+                "required_benchmark_baselines": list(REQUIRED_BENCHMARK_BASELINES),
+                "design_judgment_taxonomy": list(COST_BENCHMARK_DESIGN_JUDGMENTS),
+                "uses_source_thresholds_only": True,
+                "does_not_tune_thresholds": True,
+                "production_effect": PRODUCTION_EFFECT,
+            },
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                "TRADING-476 已生成 cost/benchmark weakness attribution；"
+                "weakness 来自 weak gross/net improvement、benchmark margin 不足和 "
+                "partial static proxy limitation。"
+            ),
+            key_result=design_judgment,
+            blocking_issues=_issue_names(root_causes, "root_cause_id"),
+            warnings="partial static proxy remains a benchmark interpretation limitation",
+            next_action="run_trading_477_candidate_redesign_hypothesis_v2",
+        ),
+        next_action="run_trading_477_candidate_redesign_hypothesis_v2",
+        safety_boundary=_safety_boundary(),
+        limitations=[
+            "Attribution is read-only and does not rerun cost, benchmark, or backfill.",
+            "No thresholds are tuned to hide cost or benchmark weakness.",
+            (
+                "Defensive and recovery behavior are not fabricated when source rows "
+                "do not isolate them."
+            ),
+        ],
+        requested_date_range=requested_date_range,
+    )
+
+
+def validate_cost_benchmark_weakness_attribution_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    blocking_issues: list[dict[str, Any]] = []
+    report_type = _text(payload.get("report_type"))
+    summary = _mapping(payload.get("summary"))
+    cost_rows = _records(payload.get("cost_scenario_attributions"))
+    benchmark_rows = _records(payload.get("benchmark_baseline_attributions"))
+    source_artifacts = _records(payload.get("source_artifacts"))
+    source_keys = {_text(row.get("source_key")) for row in source_artifacts}
+    cost_ids = {_text(row.get("scenario_id")) for row in cost_rows}
+    baseline_ids = {_text(row.get("baseline_id")) for row in benchmark_rows}
+
+    _append_check(
+        checks,
+        blocking_issues,
+        "report_type",
+        report_type == COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+        f"report_type must be {COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE}.",
+        "regenerate_cost_benchmark_weakness_attribution",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "status",
+        _text(payload.get("status")) == COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY,
+        f"status must be {COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY}.",
+        "restore_cost_benchmark_attribution_status",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "production_effect_none",
+        _text(payload.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Cost/benchmark attribution must keep production_effect=none.",
+        "restore_research_only_boundary",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_sources_present",
+        {
+            next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+            "cost_sensitivity_framework",
+            "benchmark_baseline_control",
+            STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        }
+        <= source_keys,
+        "Cost/benchmark attribution must include review, source policy, and repair sources.",
+        "restore_required_source_loading",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_cost_scenarios_present",
+        set(REQUIRED_COST_SCENARIOS) <= cost_ids,
+        "Cost attribution must include zero/low/medium/high scenarios.",
+        "restore_required_cost_scenarios",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "required_benchmarks_present",
+        set(REQUIRED_BENCHMARK_BASELINES) <= baseline_ids,
+        "Benchmark attribution must include required baseline rows.",
+        "restore_required_benchmark_baselines",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "cost_rows_complete",
+        all(_cost_scenario_attribution_row_complete(row) for row in cost_rows),
+        "Each cost row must include turnover, drag, gross/net proxy, and reason fields.",
+        "restore_cost_scenario_attribution_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "benchmark_rows_complete",
+        all(_benchmark_attribution_row_complete(row) for row in benchmark_rows),
+        "Each benchmark row must include baseline status, delta, and reason fields.",
+        "restore_benchmark_attribution_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "root_causes_present",
+        bool(_records(payload.get("cost_benchmark_root_causes"))),
+        "Cost/benchmark attribution must include root causes.",
+        "restore_cost_benchmark_root_causes",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "design_judgment_valid",
+        _text(summary.get("design_judgment")) in COST_BENCHMARK_DESIGN_JUDGMENTS,
+        "Cost/benchmark design judgment must use the governed taxonomy.",
+        "restore_cost_benchmark_design_judgment",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "counts_consistent",
+        _cost_benchmark_counts_consistent(payload),
+        "Cost/benchmark counts must match attribution rows.",
+        "restore_cost_benchmark_counts",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "reader_brief_present",
+        bool(_text(_mapping(payload.get("reader_brief")).get("key_result"))),
+        "Cost/benchmark attribution must include Reader Brief fields.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        "safety_boundary_locked",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/weights/broker/order/production mutation.",
+        "restore_evidence_repair_safety_boundary",
+    )
+    status = FAIL_STATUS if blocking_issues else PASS_STATUS
+    return _payload(
+        report_type=COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=status,
+        purpose="Validate TRADING-476 cost/benchmark weakness attribution.",
+        input_artifacts={
+            COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE: _artifact_id(payload)
+        },
+        output_decision=status,
+        summary={
+            "validation_status": status,
+            "source_report_type": report_type,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking_issues),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking_issues,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=f"TRADING-476 cost/benchmark attribution validation is {status}.",
+            key_result=status,
+            blocking_issues=_issue_names(blocking_issues, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_cost_benchmark_weakness_attribution"
+                if status == FAIL_STATUS
+                else "use_validated_cost_benchmark_attribution_for_trading_477"
+            ),
+        ),
+        next_action=(
+            "repair_cost_benchmark_weakness_attribution"
+            if status == FAIL_STATUS
+            else "use_validated_cost_benchmark_attribution_for_trading_477"
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not rerun source reports."],
@@ -3312,6 +3696,475 @@ def _stress_counts_consistent(payload: Mapping[str, Any]) -> bool:
     )
 
 
+def _cost_benchmark_attribution_source_paths(
+    *,
+    reports_dir: Path,
+    as_of: date,
+) -> dict[str, Path]:
+    cost_review_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    cost_payload = _read_json_mapping(cost_review_path)
+    input_artifacts = _mapping(cost_payload.get("input_artifacts"))
+    return {
+        next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE: cost_review_path,
+        "cost_sensitivity_framework": _resolve_source_artifact_path(
+            input_artifacts.get("cost_sensitivity_framework")
+        ),
+        "benchmark_baseline_control": _resolve_source_artifact_path(
+            input_artifacts.get("benchmark_baseline_control")
+        ),
+        STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE: default_evidence_repair_json_path(
+            STRESS_WEAKNESS_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE: default_evidence_repair_json_path(
+            WINDOW_FRAGILITY_ATTRIBUTION_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE: default_evidence_repair_json_path(
+            BACKFILL_PARTIAL_REPAIR_PLAN_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+        EVIDENCE_GAP_LEDGER_REPORT_TYPE: default_evidence_repair_json_path(
+            EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        ),
+    }
+
+
+def _resolve_source_artifact_path(value: Any) -> Path:
+    raw = _text(value)
+    if not raw:
+        raise ValueError("Required source artifact path is missing.")
+    path = Path(raw)
+    candidates = [path] if path.is_absolute() else [PROJECT_ROOT / path, path]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(raw)
+
+
+def _cost_benchmark_source_artifact(
+    source_key: str,
+    source_path: Path,
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"), source_key)
+    row = _source_artifact(report_type, source_path, payload)
+    row["source_key"] = source_key
+    return row
+
+
+def _cost_weakness_rows(
+    cost_payload: Mapping[str, Any],
+    cost_source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    review_by_id = {
+        _text(row.get("scenario_id")): row
+        for row in _records(cost_payload.get("cost_scenario_reviews"))
+        if _text(row.get("scenario_id"))
+    }
+    source_by_id = {
+        _text(row.get("scenario_id")): row
+        for row in _records(cost_source.get("scenario_results"))
+        if _text(row.get("scenario_id"))
+    }
+    return [
+        _cost_weakness_row(
+            scenario_id,
+            review_by_id.get(scenario_id),
+            source_by_id.get(scenario_id),
+        )
+        for scenario_id in REQUIRED_COST_SCENARIOS
+    ]
+
+
+def _cost_weakness_row(
+    scenario_id: str,
+    review: Mapping[str, Any] | None,
+    source: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    review_row = _mapping(review)
+    source_row = _mapping(source)
+    reason = _cost_weakness_reason(review_row, source_row)
+    return {
+        "scenario_id": scenario_id,
+        "scenario_status": _text(review_row.get("cost_survival_status"), "MISSING"),
+        "framework_classification": _text(source_row.get("classification"), "MISSING"),
+        "turnover_proxy": review_row.get("turnover_proxy"),
+        "source_turnover": source_row.get("turnover"),
+        "gross_return_proxy": review_row.get("gross_return_proxy"),
+        "gross_improvement_proxy": source_row.get("gross_improvement_proxy"),
+        "cost_drag": review_row.get("cost_drag", source_row.get("cost_drag")),
+        "net_proxy_result": review_row.get("net_proxy_result"),
+        "net_improvement_proxy": source_row.get("net_improvement_proxy"),
+        "meaningful_threshold": review_row.get(
+            "meaningful_threshold",
+            source_row.get("meaningful_improvement_threshold"),
+        ),
+        "cost_weakness_reason": reason,
+        "high_turnover_assessment": _cost_turnover_assessment(review_row, source_row),
+        "cost_drag_assessment": _cost_drag_assessment(review_row, source_row),
+        "gross_return_assessment": _cost_gross_assessment(source_row),
+        "net_return_assessment": _cost_net_assessment(source_row),
+        "defensive_benefit_assessment": "not_isolated_by_cost_scenario_source",
+        "recovery_behavior_assessment": "not_isolated_by_cost_scenario_source",
+        "fixable_by_candidate_redesign": reason
+        in {
+            "weak_gross_return_proxy",
+            "weak_net_return_proxy",
+            "cost_drag_secondary_to_weak_edge",
+        },
+        "recommended_action": _cost_row_recommended_action(reason),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _cost_weakness_reason(
+    review: Mapping[str, Any],
+    source: Mapping[str, Any],
+) -> str:
+    status = _text(review.get("cost_survival_status"))
+    classification = _text(source.get("classification"))
+    threshold = _float(
+        source.get("meaningful_improvement_threshold"),
+        _float(review.get("meaningful_threshold")),
+    )
+    gross = _float(source.get("gross_improvement_proxy"), threshold)
+    net = _float(source.get("net_improvement_proxy"), threshold)
+    if not status and not classification:
+        return "missing_cost_scenario"
+    if net < threshold or classification == "NOT_MEANINGFUL":
+        return "weak_net_return_proxy"
+    if gross < threshold:
+        return "weak_gross_return_proxy"
+    if status in {"COST_SURVIVAL_FAIL", "COST_SURVIVAL_WARNING"}:
+        return "cost_drag_secondary_to_weak_edge"
+    return "none"
+
+
+def _cost_turnover_assessment(
+    review: Mapping[str, Any],
+    source: Mapping[str, Any],
+) -> str:
+    if review.get("turnover_proxy") is not None:
+        return f"turnover_proxy={review.get('turnover_proxy')}"
+    if source.get("turnover") is not None:
+        return f"source_turnover={source.get('turnover')}"
+    return "not_reported"
+
+
+def _cost_drag_assessment(
+    review: Mapping[str, Any],
+    source: Mapping[str, Any],
+) -> str:
+    if review.get("cost_drag") is not None:
+        return f"cost_drag={review.get('cost_drag')}"
+    if source.get("cost_drag") is not None:
+        return f"source_cost_drag={source.get('cost_drag')}"
+    return "not_reported"
+
+
+def _cost_gross_assessment(source: Mapping[str, Any]) -> str:
+    threshold = source.get("meaningful_improvement_threshold")
+    gross = source.get("gross_improvement_proxy")
+    if gross is None:
+        return "not_reported"
+    return f"gross_improvement_proxy={gross}; meaningful_threshold={threshold}"
+
+
+def _cost_net_assessment(source: Mapping[str, Any]) -> str:
+    threshold = source.get("meaningful_improvement_threshold")
+    net = source.get("net_improvement_proxy")
+    if net is None:
+        return "not_reported"
+    return f"net_improvement_proxy={net}; meaningful_threshold={threshold}"
+
+
+def _cost_row_recommended_action(reason: str) -> str:
+    if reason in {"weak_gross_return_proxy", "weak_net_return_proxy"}:
+        return "redesign_candidate_for_larger_net_edge_before_benchmark_review"
+    if reason == "cost_drag_secondary_to_weak_edge":
+        return "redesign_candidate_to_reduce_turnover_or_increase_gross_edge"
+    if reason == "missing_cost_scenario":
+        return "restore_required_cost_scenario_source_row"
+    return "retain_cost_scenario_evidence"
+
+
+def _benchmark_weakness_rows(
+    cost_payload: Mapping[str, Any],
+    benchmark_source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    review_by_id = {
+        _text(row.get("baseline_id")): row
+        for row in _records(cost_payload.get("benchmark_reviews"))
+        if _text(row.get("baseline_id"))
+    }
+    source_by_id = {
+        _text(row.get("baseline_id")): row
+        for row in _records(benchmark_source.get("baselines"))
+        if _text(row.get("baseline_id"))
+    }
+    return [
+        _benchmark_weakness_row(
+            baseline_id,
+            review_by_id.get(baseline_id),
+            source_by_id.get(baseline_id),
+        )
+        for baseline_id in REQUIRED_BENCHMARK_BASELINES
+    ]
+
+
+def _benchmark_weakness_row(
+    baseline_id: str,
+    review: Mapping[str, Any] | None,
+    source: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    review_row = _mapping(review)
+    source_row = _mapping(source)
+    reason = _benchmark_weakness_reason(review_row)
+    return {
+        "baseline_id": baseline_id,
+        "baseline_status": _text(review_row.get("benchmark_relative_status"), "MISSING"),
+        "source_comparison_classification": _text(
+            source_row.get("comparison_classification"),
+            "MISSING",
+        ),
+        "candidate_return_proxy": review_row.get("candidate_return_proxy"),
+        "baseline_return_proxy": review_row.get("baseline_return_proxy"),
+        "candidate_delta_vs_baseline": review_row.get("candidate_delta_vs_baseline"),
+        "minimum_outperformance_threshold": review_row.get(
+            "minimum_outperformance_threshold",
+            source_row.get("minimum_outperformance_threshold"),
+        ),
+        "benchmark_weakness_reason": reason,
+        "defensive_benefit_assessment": _benchmark_defensive_assessment(
+            baseline_id,
+            reason,
+        ),
+        "recovery_behavior_assessment": "not_isolated_by_benchmark_source",
+        "fixable_by_candidate_redesign": reason
+        in {"benchmark_underperformance", "insufficient_outperformance_margin"},
+        "recommended_action": _benchmark_row_recommended_action(reason),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _benchmark_weakness_reason(review: Mapping[str, Any]) -> str:
+    status = _text(review.get("benchmark_relative_status"))
+    if not status:
+        return "missing_benchmark_coverage"
+    if status == "BENCHMARK_UNDERPERFORMS":
+        return "benchmark_underperformance"
+    if status == "BENCHMARK_MIXED":
+        return "insufficient_outperformance_margin"
+    if status == "UNTESTED":
+        return "missing_benchmark_coverage"
+    return "none"
+
+
+def _benchmark_defensive_assessment(baseline_id: str, reason: str) -> str:
+    if reason == "none":
+        return "baseline_margin_cleared"
+    if baseline_id in {"spy_only", "equal_weight_etf", "static_allocation"}:
+        return "insufficient_defensive_or_diversified_benchmark_margin"
+    if baseline_id == "no_trade":
+        return "insufficient_incremental_benefit_vs_no_trade"
+    return "insufficient_growth_benchmark_margin"
+
+
+def _benchmark_row_recommended_action(reason: str) -> str:
+    if reason == "benchmark_underperformance":
+        return "redesign_candidate_for_benchmark_relative_strength"
+    if reason == "insufficient_outperformance_margin":
+        return "increase_edge_before_research_gate_or_reclassify_as_warning"
+    if reason == "missing_benchmark_coverage":
+        return "restore_required_benchmark_baseline_row"
+    return "retain_benchmark_evidence"
+
+
+def _cost_benchmark_root_causes(
+    cost_rows: Sequence[Mapping[str, Any]],
+    benchmark_rows: Sequence[Mapping[str, Any]],
+    summary: Mapping[str, Any],
+    cost_source: Mapping[str, Any],
+    benchmark_source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    by_cause: dict[str, set[str]] = {}
+    if any(_text(row.get("gross_return_assessment")) != "not_reported" for row in cost_rows):
+        if _text(cost_source.get("cost_sensitivity_status")) == "NOT_MEANINGFUL_UNDER_COSTS":
+            by_cause.setdefault("weak_gross_return_proxy", set()).update(
+                _text(row.get("scenario_id")) for row in cost_rows
+            )
+    if any(_text(row.get("cost_weakness_reason")) == "weak_net_return_proxy" for row in cost_rows):
+        by_cause.setdefault("weak_net_return_proxy", set()).update(
+            _text(row.get("scenario_id"))
+            for row in cost_rows
+            if _text(row.get("cost_weakness_reason")) == "weak_net_return_proxy"
+        )
+    if any(_text(row.get("cost_drag_assessment")) != "cost_drag=0.0" for row in cost_rows):
+        by_cause.setdefault("turnover_cost_exposure", set()).update(
+            _text(row.get("scenario_id"))
+            for row in cost_rows
+            if _text(row.get("cost_drag_assessment")) not in {"cost_drag=0.0", "not_reported"}
+        )
+    by_cause.setdefault("partial_static_proxy_distortion", set())
+    if _text(summary.get("source_backfill_status")) != next_cycle.CANDIDATE_BACKFILL_PARTIAL:
+        by_cause.pop("partial_static_proxy_distortion", None)
+    if any(
+        _text(row.get("benchmark_weakness_reason")) == "benchmark_underperformance"
+        for row in benchmark_rows
+    ):
+        by_cause.setdefault("benchmark_underperformance", set()).update(
+            _text(row.get("baseline_id"))
+            for row in benchmark_rows
+            if _text(row.get("benchmark_weakness_reason")) == "benchmark_underperformance"
+        )
+    if any(
+        _text(row.get("benchmark_weakness_reason"))
+        == "insufficient_outperformance_margin"
+        for row in benchmark_rows
+    ):
+        by_cause.setdefault("insufficient_benchmark_outperformance", set()).update(
+            _text(row.get("baseline_id"))
+            for row in benchmark_rows
+            if _text(row.get("benchmark_weakness_reason"))
+            == "insufficient_outperformance_margin"
+        )
+    if not bool(benchmark_source.get("required_baselines_present", True)):
+        by_cause.setdefault("missing_benchmark_coverage", set()).update(
+            _list_values(benchmark_source.get("missing_required_baselines"))
+        )
+    return [
+        {
+            "root_cause_id": cause,
+            "affected_items": sorted(item for item in items if item),
+            "affected_item_count": len({item for item in items if item}),
+            "design_implication": _cost_benchmark_design_implication(cause),
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for cause, items in sorted(by_cause.items())
+    ]
+
+
+def _cost_benchmark_design_judgment(
+    root_causes: Sequence[Mapping[str, Any]],
+) -> str:
+    cause_ids = {_text(row.get("root_cause_id")) for row in root_causes}
+    if "missing_benchmark_coverage" in cause_ids and len(cause_ids) == 1:
+        return "REPAIR_EVIDENCE_BEFORE_DECISION"
+    if cause_ids & {
+        "weak_gross_return_proxy",
+        "weak_net_return_proxy",
+        "benchmark_underperformance",
+        "insufficient_benchmark_outperformance",
+        "turnover_cost_exposure",
+    }:
+        return "REDESIGN_REQUIRED"
+    if "partial_static_proxy_distortion" in cause_ids:
+        return "REPAIR_EVIDENCE_BEFORE_DECISION"
+    return "COST_BENCHMARK_WEAKNESS_ACCEPTABLE"
+
+
+def _cost_benchmark_design_implication(cause: str) -> str:
+    if cause in {"weak_gross_return_proxy", "weak_net_return_proxy"}:
+        return "increase_candidate_edge_before_cost_benchmark_retest"
+    if cause == "turnover_cost_exposure":
+        return "reduce_turnover_or_raise_gross_edge_before_retest"
+    if cause in {
+        "benchmark_underperformance",
+        "insufficient_benchmark_outperformance",
+    }:
+        return "redesign_for_benchmark_relative_strength"
+    if cause == "missing_benchmark_coverage":
+        return "restore_required_benchmark_coverage_before_decision"
+    if cause == "partial_static_proxy_distortion":
+        return "complete_dynamic_binding_before_final_benchmark_claim"
+    return "retain_as_cost_benchmark_warning"
+
+
+def _cost_benchmark_design_implications(
+    design_judgment: str,
+    root_causes: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "design_judgment": design_judgment,
+            "root_cause_id": _text(row.get("root_cause_id")),
+            "implication": _text(row.get("design_implication")),
+            "production_effect": PRODUCTION_EFFECT,
+        }
+        for row in root_causes
+    ]
+
+
+def _cost_scenario_attribution_row_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "scenario_id",
+        "scenario_status",
+        "framework_classification",
+        "cost_weakness_reason",
+        "high_turnover_assessment",
+        "cost_drag_assessment",
+        "gross_return_assessment",
+        "net_return_assessment",
+        "defensive_benefit_assessment",
+        "recovery_behavior_assessment",
+        "recommended_action",
+    )
+    return (
+        all(bool(_text(row.get(key))) for key in required)
+        and isinstance(row.get("fixable_by_candidate_redesign"), bool)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _benchmark_attribution_row_complete(row: Mapping[str, Any]) -> bool:
+    required = (
+        "baseline_id",
+        "baseline_status",
+        "source_comparison_classification",
+        "benchmark_weakness_reason",
+        "defensive_benefit_assessment",
+        "recovery_behavior_assessment",
+        "recommended_action",
+    )
+    return (
+        all(bool(_text(row.get(key))) for key in required)
+        and isinstance(row.get("fixable_by_candidate_redesign"), bool)
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+    )
+
+
+def _cost_benchmark_counts_consistent(payload: Mapping[str, Any]) -> bool:
+    cost_rows = _records(payload.get("cost_scenario_attributions"))
+    benchmark_rows = _records(payload.get("benchmark_baseline_attributions"))
+    summary = _mapping(payload.get("summary"))
+    return (
+        _int(summary.get("cost_scenario_count")) == len(cost_rows)
+        and _int(summary.get("benchmark_baseline_count")) == len(benchmark_rows)
+        and _int(summary.get("cost_weakness_count"))
+        == len([row for row in cost_rows if _text(row.get("cost_weakness_reason")) != "none"])
+        and _int(summary.get("benchmark_weakness_count"))
+        == len(
+            [
+                row
+                for row in benchmark_rows
+                if _text(row.get("benchmark_weakness_reason")) != "none"
+            ]
+        )
+        and _int(summary.get("root_cause_count"))
+        == len(_records(payload.get("cost_benchmark_root_causes")))
+    )
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -3546,6 +4399,15 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == STRESS_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Cost Scenario Attributions", "cost_scenario_attributions"),
+            ("Benchmark Baseline Attributions", "benchmark_baseline_attributions"),
+            ("Cost Benchmark Root Causes", "cost_benchmark_root_causes"),
+        ]
+    if report_type == COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -3587,11 +4449,17 @@ __all__ = [
     "BACKFILL_PARTIALLY_REPAIRABLE",
     "BACKFILL_NOT_REPAIRABLE_WITH_CURRENT_SPEC",
     "BACKFILL_REPAIR_STATUSES",
+    "COST_BENCHMARK_DESIGN_JUDGMENTS",
+    "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY",
+    "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE",
+    "COST_BENCHMARK_WEAKNESS_ATTRIBUTION_VALIDATION_REPORT_TYPE",
     "EVIDENCE_GAP_LEDGER_REPORT_TYPE",
     "EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE",
     "REPORT_PREFIXES",
     "REPAIRABILITY_TYPES",
     "REQUIRED_BACKFILL_WINDOWS",
+    "REQUIRED_BENCHMARK_BASELINES",
+    "REQUIRED_COST_SCENARIOS",
     "REQUIRED_STRESS_SCENARIOS",
     "REQUIRED_WINDOW_SPLITS",
     "SIGNAL_BLOCKER_CAUSES",
@@ -3612,6 +4480,7 @@ __all__ = [
     "WINDOW_FRAGILITY_ATTRIBUTION_VALIDATION_REPORT_TYPE",
     "WINDOW_FRAGILITY_JUDGMENTS",
     "build_backfill_partial_root_cause_repair_plan_payload",
+    "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
     "build_signal_robustness_blocker_drilldown_payload",
     "build_stress_weakness_attribution_payload",
@@ -3621,6 +4490,7 @@ __all__ = [
     "latest_evidence_repair_json_path",
     "render_evidence_repair_markdown",
     "validate_backfill_partial_root_cause_repair_plan_payload",
+    "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",
     "validate_signal_robustness_blocker_drilldown_payload",
     "validate_stress_weakness_attribution_payload",
