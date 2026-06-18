@@ -36,7 +36,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-480|candidate-v2-mini-backfill|DONE|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
 |TRADING-481|candidate-v2-mini-gate|DONE|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
 |TRADING-482|candidate-v2-full-backfill-if-approved|DONE|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
-|TRADING-483|candidate-v2-research-gate|READY|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
+|TRADING-483|candidate-v2-research-gate|DONE|TRADING-482 full backfill|输出 v2 research gate；即使 promising 也不激活 paper-shadow。|
 |TRADING-484|v2-owner-research-review-packet|READY|TRADING-483|准备 owner research options；不自动 append owner decision。|
 |TRADING-485|v2-research-cycle-snapshot|READY|TRADING-484|生成最终 v2 research-cycle snapshot。|
 
@@ -292,3 +292,20 @@ owner decision append、production mutation 或 automatic position control。
   failed=0。未运行 full backfill、未补造 metrics、未创建 paper-shadow/official
   weights/broker/order/production。后续 TRADING-483 research gate 只能读取该 blocked
   state，不得声称 v2 full backfill 已完成。
+- 2026-06-18: TRADING-483 开始实现。范围限定为只读读取 TRADING-482 v2 full
+  backfill artifact、stress review、cost/benchmark review、signal robustness、window
+  sensitivity 和 returned-candidate comparison，输出 `V2_RESEARCH_PROMISING` /
+  `V2_NEEDS_MORE_EVIDENCE` / `V2_RETURN_TO_HYPOTHESIS_BACKLOG` /
+  `V2_REJECT_RESEARCH_CANDIDATE` research gate、Reader Brief 和 validation artifact。
+  当前 TRADING-482 已 blocked，因此 gate 不得声称 promising 或激活 paper-shadow。
+- 2026-06-18: TRADING-483 完成 pending commit。真实 2026-06-17 research gate
+  `candidate_v2_research_gate_2026-06-17` 输出 `V2_RETURN_TO_HYPOTHESIS_BACKLOG`；
+  source full backfill=`V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE`，full_backfill_executed=false，
+  gate_reason=`v2_full_backfill_not_executed`，stress=`WEAK`，cost/benchmark=
+  `COST_BENCHMARK_REVIEW_WEAK`，signal robustness=`SIGNAL_ROBUSTNESS_BLOCKED`，
+  window sensitivity=`WINDOW_FRAGILE`，comparison=`MIXED_VS_RETURNED_CANDIDATE`。
+  Blocking evidence=7，positive evidence=1；paper_shadow_activation_allowed=false，
+  paper_shadow_prepared=false。Validation `candidate_v2_research_gate_validation_2026-06-17`
+  为 PASS，checks=9、failed=0。未激活 paper-shadow、未 append owner decision、未创建
+  official weights/broker/order/production。下一步 TRADING-484 只能准备 owner research
+  review packet，不得提供 paper-shadow activation 选项。

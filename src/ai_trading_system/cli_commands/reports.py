@@ -6955,6 +6955,10 @@ def _write_evidence_repair_validation(
                 source_payload
             )
         )
+    elif source_report_type == evidence_repair_reports.CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE:
+        payload = evidence_repair_reports.validate_candidate_v2_research_gate_payload(
+            source_payload
+        )
     else:
         raise typer.BadParameter(
             f"Unsupported evidence repair report_type: {source_report_type}"
@@ -8524,6 +8528,60 @@ def candidate_v2_full_backfill_if_approved_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("candidate-v2-research-gate")
+def candidate_v2_research_gate_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Candidate v2 research gate 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 research gate JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Candidate v2 research gate Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-483：生成 v2 research gate；不激活 paper-shadow。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = evidence_repair_reports.build_candidate_v2_research_gate_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    style = (
+        "green"
+        if payload["status"] == evidence_repair_reports.V2_RESEARCH_PROMISING
+        else "yellow"
+    )
+    if payload["status"] == evidence_repair_reports.V2_REJECT_RESEARCH_CANDIDATE:
+        style = "red"
+    console.print(f"[{style}]Candidate v2 research gate：{payload['status']}[/{style}]")
+    console.print(f"candidate_id：{summary['candidate_id']}")
+    console.print(f"source_full_backfill_status：{summary['source_full_backfill_status']}")
+    console.print(f"full_backfill_executed：{summary['full_backfill_executed']}")
+    console.print(f"gate_reason：{summary['gate_reason']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -9852,6 +9910,59 @@ def validate_candidate_v2_full_backfill_if_approved_command(
     style = "green" if status == "PASS" else "red"
     summary = payload["summary"]
     console.print(f"[{style}]Candidate v2 full backfill validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@reports_app.command("validate-candidate-v2-research-gate")
+def validate_candidate_v2_research_gate_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest candidate v2 research gate。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=evidence_repair_reports.CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="candidate v2 research gate",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Candidate v2 research gate validation：{status}[/{style}]")
     console.print(f"Source JSON：{source_path}")
     console.print(f"Validation JSON：{json_path}")
     console.print(f"Validation Markdown：{md_path}")

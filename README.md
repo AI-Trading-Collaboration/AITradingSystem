@@ -2131,6 +2131,17 @@ Blocked path 不运行 full backfill、不补造 metrics、不 append owner deci
 paper-shadow、不批准 extended/live、不写 official target weights、不触发 broker/order、不修改
 production。
 
+TRADING-483_CANDIDATE_V2_RESEARCH_GATE 在 TRADING-482 之后输出 v2 research gate。
+运行 `aits reports candidate-v2-research-gate --as-of YYYY-MM-DD` 会读取 v2 full
+backfill artifact、stress review、cost/benchmark review、signal robustness、window
+sensitivity 和 returned-candidate comparison，输出 `V2_RESEARCH_PROMISING`、
+`V2_NEEDS_MORE_EVIDENCE`、`V2_RETURN_TO_HYPOTHESIS_BACKLOG` 或
+`V2_REJECT_RESEARCH_CANDIDATE`。`aits reports validate-candidate-v2-research-gate
+--latest` 校验 decision taxonomy、full-backfill hard stop、source input disclosure、
+blocking evidence、Reader Brief 和安全边界。Full backfill 未执行时不得输出 promising；
+即使 promising 也不激活 paper-shadow、不 append owner decision、不批准 extended/live、不写
+official target weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

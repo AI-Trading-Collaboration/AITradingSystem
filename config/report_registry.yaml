@@ -9509,6 +9509,46 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: candidate_v2_research_gate
+    title: Candidate V2 Research Gate
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports candidate-v2-research-gate --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/candidate_v2_research_gate_20*.json
+      - outputs/reports/candidate_v2_research_gate_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-483 reads the v2 full-backfill artifact, stress review,
+      cost/benchmark review, signal robustness, window sensitivity, and returned
+      candidate comparison to decide whether v2 research is promising, needs
+      more evidence, returns to backlog, or should be rejected.
+    owner_action: use_as_input_to_trading_484_owner_research_review_packet
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: candidate_v2_research_gate_validation
+    title: Candidate V2 Research Gate Validation
+    group: research
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-candidate-v2-research-gate --latest
+    artifact_globs:
+      - outputs/reports/candidate_v2_research_gate_validation_20*.json
+      - outputs/reports/candidate_v2_research_gate_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-483 validation checks decision taxonomy, full-backfill hard stop,
+      source input disclosure, non-promising blocking evidence, Reader Brief
+      fields, and no paper-shadow / official-weight / broker/order / production
+      boundary.
+    owner_action: run_after_candidate_v2_research_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

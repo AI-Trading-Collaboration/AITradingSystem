@@ -39,6 +39,7 @@ CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE = (
 CANDIDATE_V2_MINI_BACKFILL_REPORT_TYPE = "candidate_v2_mini_backfill"
 CANDIDATE_V2_MINI_GATE_REPORT_TYPE = "candidate_v2_mini_gate"
 CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE = "candidate_v2_full_backfill_if_approved"
+CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE = "candidate_v2_research_gate"
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -75,6 +76,9 @@ CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -144,6 +148,15 @@ V2_FULL_BACKFILL_STATUSES: tuple[str, ...] = (
     V2_FULL_BACKFILL_READY,
     V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE,
     V2_FULL_BACKFILL_BLOCKED,
+)
+V2_RESEARCH_PROMISING = "V2_RESEARCH_PROMISING"
+V2_NEEDS_MORE_EVIDENCE = "V2_NEEDS_MORE_EVIDENCE"
+V2_RETURN_TO_HYPOTHESIS_BACKLOG = "V2_RETURN_TO_HYPOTHESIS_BACKLOG"
+V2_RESEARCH_GATE_STATUSES: tuple[str, ...] = (
+    V2_RESEARCH_PROMISING,
+    V2_NEEDS_MORE_EVIDENCE,
+    V2_RETURN_TO_HYPOTHESIS_BACKLOG,
+    V2_REJECT_RESEARCH_CANDIDATE,
 )
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
@@ -217,6 +230,10 @@ REPORT_PREFIXES: dict[str, str] = {
     CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE: "candidate_v2_full_backfill_if_approved",
     CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE: (
         "candidate_v2_full_backfill_if_approved_validation"
+    ),
+    CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE: "candidate_v2_research_gate",
+    CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_research_gate_validation"
     ),
 }
 
@@ -4141,6 +4158,325 @@ def validate_candidate_v2_full_backfill_if_approved_payload(
     )
 
 
+def build_candidate_v2_research_gate_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+) -> dict[str, Any]:
+    full_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    full_validation_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    stress_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.STRESS_REVIEW_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    cost_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    signal_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    window_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    comparison_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.VS_RETURNED_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    full_payload = _read_json_mapping(full_path)
+    full_validation_payload = _read_json_mapping(full_validation_path)
+    stress_payload = _read_json_mapping(stress_path)
+    cost_payload = _read_json_mapping(cost_path)
+    signal_payload = _read_json_mapping(signal_path)
+    window_payload = _read_json_mapping(window_path)
+    comparison_payload = _read_json_mapping(comparison_path)
+    full_summary = _mapping(full_payload.get("summary"))
+    candidate_id = _text(full_summary.get("candidate_id"), "MISSING")
+    gate_inputs = _candidate_v2_research_gate_inputs(
+        full_payload=full_payload,
+        full_validation_payload=full_validation_payload,
+        stress_payload=stress_payload,
+        cost_payload=cost_payload,
+        signal_payload=signal_payload,
+        window_payload=window_payload,
+        comparison_payload=comparison_payload,
+    )
+    decision, reason = _candidate_v2_research_gate_decision(
+        full_payload=full_payload,
+        gate_inputs=gate_inputs,
+    )
+    blocking_evidence = _candidate_v2_research_gate_blocking_evidence(
+        full_payload=full_payload,
+        gate_inputs=gate_inputs,
+    )
+    positive_evidence = _candidate_v2_research_gate_positive_evidence(gate_inputs)
+    summary = {
+        "candidate_v2_research_gate_decision": decision,
+        "candidate_id": candidate_id,
+        "source_full_backfill_status": _text(full_payload.get("status")),
+        "source_full_backfill_validation_status": _text(full_validation_payload.get("status")),
+        "full_backfill_executed": full_summary.get("full_backfill_executed") is True,
+        "paper_shadow_activation_allowed": False,
+        "paper_shadow_prepared": False,
+        "gate_reason": reason,
+        "blocking_evidence_count": len(blocking_evidence),
+        "positive_evidence_count": len(positive_evidence),
+        "stress_review_status": _text(stress_payload.get("status")),
+        "cost_benchmark_review_status": _text(cost_payload.get("status")),
+        "signal_robustness_status": _text(signal_payload.get("status")),
+        "window_sensitivity_status": _text(window_payload.get("status")),
+        "comparison_status": _text(comparison_payload.get("status")),
+        "data_quality_status": _text(full_summary.get("data_quality_status")),
+        "data_quality_passed": full_summary.get("data_quality_passed") is True,
+        "research_only": True,
+        "manual_review_only": True,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+        as_of=as_of,
+        status=decision,
+        purpose=(
+            "Run the candidate v2 research gate after full backfill evidence, "
+            "without allowing paper-shadow activation."
+        ),
+        input_artifacts={
+            CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE: str(full_path),
+            CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE: str(
+                full_validation_path
+            ),
+            next_cycle.STRESS_REVIEW_REPORT_TYPE: str(stress_path),
+            next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE: str(cost_path),
+            next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE: str(signal_path),
+            next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE: str(window_path),
+            next_cycle.VS_RETURNED_REPORT_TYPE: str(comparison_path),
+        },
+        output_decision=decision,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE, full_path, full_payload),
+                _source_artifact(
+                    CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
+                    full_validation_path,
+                    full_validation_payload,
+                ),
+                _source_artifact(next_cycle.STRESS_REVIEW_REPORT_TYPE, stress_path, stress_payload),
+                _source_artifact(
+                    next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+                    cost_path,
+                    cost_payload,
+                ),
+                _source_artifact(
+                    next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+                    signal_path,
+                    signal_payload,
+                ),
+                _source_artifact(
+                    next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+                    window_path,
+                    window_payload,
+                ),
+                _source_artifact(
+                    next_cycle.VS_RETURNED_REPORT_TYPE,
+                    comparison_path,
+                    comparison_payload,
+                ),
+            ],
+            "gate_inputs": gate_inputs,
+            "positive_evidence": positive_evidence,
+            "blocking_evidence": blocking_evidence,
+        },
+        reader_brief=_reader_brief(
+            summary=f"Candidate v2 research gate decision is {decision}; reason={reason}.",
+            key_result=decision,
+            blocking_issues=reason,
+            warnings="none",
+            next_action=(
+                "prepare_trading_484_owner_research_review_packet"
+                if decision == V2_RESEARCH_PROMISING
+                else "return_candidate_v2_to_hypothesis_backlog"
+            ),
+        ),
+        next_action=(
+            "prepare_trading_484_owner_research_review_packet"
+            if decision == V2_RESEARCH_PROMISING
+            else "return_candidate_v2_to_hypothesis_backlog"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_research_gate",
+            "paper_shadow_outputs_generated": False,
+            "paper_shadow_activation_allowed": False,
+            "full_backfill_executed": full_summary.get("full_backfill_executed") is True,
+            "official_target_weights_generated": False,
+            "broker_order_generated": False,
+        },
+        limitations=[
+            "Even a promising v2 research gate does not activate paper-shadow.",
+            "Blocked full-backfill input prevents a promising research-gate conclusion.",
+            "The report does not append owner decisions or mutate production state.",
+        ],
+        requested_date_range=_text(full_payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def validate_candidate_v2_research_gate_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    gate_inputs = _records(payload.get("gate_inputs"))
+    blocking_evidence = _records(payload.get("blocking_evidence"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE}.",
+        "regenerate_candidate_v2_research_gate",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status in V2_RESEARCH_GATE_STATUSES,
+        "Candidate v2 research gate decision must be recognized.",
+        "restore_candidate_v2_research_gate_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "blocked_full_backfill_prevents_promising",
+        summary.get("full_backfill_executed") is True
+        or status != V2_RESEARCH_PROMISING,
+        "Research gate cannot be promising without executed full backfill evidence.",
+        "restore_research_gate_full_backfill_hard_stop",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "gate_inputs_present",
+        bool(gate_inputs),
+        "Research gate must expose source input checks.",
+        "restore_candidate_v2_research_gate_inputs",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "blocking_evidence_present_when_not_promising",
+        status == V2_RESEARCH_PROMISING or bool(blocking_evidence),
+        "Non-promising research gate must include blocking evidence.",
+        "restore_candidate_v2_research_gate_evidence",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_paper_shadow_activation",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("paper_shadow_prepared") is False,
+        "Research gate must not activate or prepare paper-shadow.",
+        "remove_paper_shadow_activation",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and summary.get("owner_decision_appended") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        "Research gate must not create execution or production output.",
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-483 candidate v2 research gate.",
+        input_artifacts={CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE: _artifact_id(payload)},
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "full_backfill_executed": summary.get("full_backfill_executed") is True,
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"{CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE} validation is "
+                f"{validation_status}."
+            ),
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_research_gate"
+                if validation_status == FAIL_STATUS
+                else "use_validated_candidate_v2_research_gate"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_research_gate"
+            if validation_status == FAIL_STATUS
+            else "use_validated_candidate_v2_research_gate"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_research_gate_validation"},
+        limitations=["Validation is read-only and does not activate paper-shadow."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
 def write_evidence_repair_json(payload: Mapping[str, Any], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -8018,6 +8354,150 @@ def _candidate_v2_full_backfill_blocked_outputs(
     ]
 
 
+def _candidate_v2_research_gate_inputs(
+    *,
+    full_payload: Mapping[str, Any],
+    full_validation_payload: Mapping[str, Any],
+    stress_payload: Mapping[str, Any],
+    cost_payload: Mapping[str, Any],
+    signal_payload: Mapping[str, Any],
+    window_payload: Mapping[str, Any],
+    comparison_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    full_summary = _mapping(full_payload.get("summary"))
+    return [
+        {
+            "input_id": "v2_full_backfill",
+            "status": _text(full_payload.get("status")),
+            "passed": full_summary.get("full_backfill_executed") is True,
+            "evidence": _text(full_summary.get("full_backfill_blocked_reason")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "input_id": "v2_full_backfill_validation",
+            "status": _text(full_validation_payload.get("status")),
+            "passed": _text(full_validation_payload.get("status")) == PASS_STATUS,
+            "evidence": (
+                "failed_checks="
+                f"{_mapping(full_validation_payload.get('summary')).get('failed_check_count')}"
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "input_id": "stress_review",
+            "status": _text(stress_payload.get("status")),
+            "passed": _text(stress_payload.get("status")).upper() not in {"FAIL", "WEAK"},
+            "evidence": _text(_mapping(stress_payload.get("summary")).get("stress_status")),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "input_id": "cost_benchmark_review",
+            "status": _text(cost_payload.get("status")),
+            "passed": "WEAK" not in _text(cost_payload.get("status")).upper(),
+            "evidence": _text(
+                _mapping(cost_payload.get("summary")).get("cost_benchmark_status")
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "input_id": "signal_robustness",
+            "status": _text(signal_payload.get("status")),
+            "passed": "BLOCKED" not in _text(signal_payload.get("status")).upper(),
+            "evidence": _text(
+                _mapping(signal_payload.get("summary")).get("signal_robustness_status")
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "input_id": "window_sensitivity",
+            "status": _text(window_payload.get("status")),
+            "passed": "FRAGILE" not in _text(window_payload.get("status")).upper(),
+            "evidence": _text(
+                _mapping(window_payload.get("summary")).get("window_sensitivity_status")
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "input_id": "returned_candidate_comparison",
+            "status": _text(comparison_payload.get("status")),
+            "passed": "MIXED" not in _text(comparison_payload.get("status")).upper(),
+            "evidence": _text(
+                _mapping(comparison_payload.get("summary")).get("comparison_status")
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    ]
+
+
+def _candidate_v2_research_gate_decision(
+    *,
+    full_payload: Mapping[str, Any],
+    gate_inputs: Sequence[Mapping[str, Any]],
+) -> tuple[str, str]:
+    full_summary = _mapping(full_payload.get("summary"))
+    if full_summary.get("full_backfill_executed") is not True:
+        return (
+            V2_RETURN_TO_HYPOTHESIS_BACKLOG,
+            "v2_full_backfill_not_executed",
+        )
+    failed_inputs = [
+        _text(row.get("input_id"))
+        for row in gate_inputs
+        if row.get("passed") is not True
+    ]
+    if failed_inputs:
+        return V2_NEEDS_MORE_EVIDENCE, _join_reasons(failed_inputs)
+    return V2_RESEARCH_PROMISING, "all_required_v2_research_gate_inputs_passed"
+
+
+def _candidate_v2_research_gate_blocking_evidence(
+    *,
+    full_payload: Mapping[str, Any],
+    gate_inputs: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    full_summary = _mapping(full_payload.get("summary"))
+    if full_summary.get("full_backfill_executed") is not True:
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id="v2_full_backfill_not_executed",
+                category="full_backfill",
+                strength="strong",
+                evidence=_text(full_summary.get("full_backfill_blocked_reason")),
+            )
+        )
+    for row in gate_inputs:
+        if row.get("passed") is True:
+            continue
+        rows.append(
+            _mini_gate_evidence(
+                evidence_id=f"gate_input_not_passed:{_text(row.get('input_id'))}",
+                category="research_gate_input",
+                strength="medium",
+                evidence=(
+                    f"status={_text(row.get('status'))}; "
+                    f"evidence={_text(row.get('evidence'))}"
+                ),
+            )
+        )
+    return rows
+
+
+def _candidate_v2_research_gate_positive_evidence(
+    gate_inputs: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        _mini_gate_evidence(
+            evidence_id=f"gate_input_passed:{_text(row.get('input_id'))}",
+            category="research_gate_input",
+            strength="medium",
+            evidence=f"status={_text(row.get('status'))}; evidence={_text(row.get('evidence'))}",
+        )
+        for row in gate_inputs
+        if row.get("passed") is True
+    ]
+
+
 def _mini_gate_evidence(
     *,
     evidence_id: str,
@@ -8360,6 +8840,15 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("Gate Inputs", "gate_inputs"),
+            ("Positive Evidence", "positive_evidence"),
+            ("Blocking Evidence", "blocking_evidence"),
+        ]
+    if report_type == CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -8417,6 +8906,8 @@ __all__ = [
     "CANDIDATE_V2_MINI_BACKFILL_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_MINI_GATE_REPORT_TYPE",
     "CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE",
+    "CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE",
+    "CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE",
     "V2_MINI_BACKFILL_BLOCKED",
     "V2_MINI_BACKFILL_NEEDS_MORE_EVIDENCE",
     "V2_MINI_BACKFILL_PROMISING",
@@ -8431,6 +8922,9 @@ __all__ = [
     "V2_NEEDS_REDESIGN",
     "V2_PROCEED_TO_FULL_BACKFILL",
     "V2_REJECT_RESEARCH_CANDIDATE",
+    "V2_RESEARCH_GATE_STATUSES",
+    "V2_RESEARCH_PROMISING",
+    "V2_RETURN_TO_HYPOTHESIS_BACKLOG",
     "CANDIDATE_V2_SPEC_FREEZE_READY",
     "CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE",
     "CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE",
@@ -8471,6 +8965,7 @@ __all__ = [
     "build_candidate_v2_full_backfill_if_approved_payload",
     "build_candidate_v2_mini_backfill_payload",
     "build_candidate_v2_mini_gate_payload",
+    "build_candidate_v2_research_gate_payload",
     "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
@@ -8487,6 +8982,7 @@ __all__ = [
     "validate_candidate_v2_full_backfill_if_approved_payload",
     "validate_candidate_v2_mini_backfill_payload",
     "validate_candidate_v2_mini_gate_payload",
+    "validate_candidate_v2_research_gate_payload",
     "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",

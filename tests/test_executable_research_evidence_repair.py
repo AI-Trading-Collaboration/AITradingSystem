@@ -1172,6 +1172,94 @@ def test_candidate_v2_full_backfill_cli_writes_blocked_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_research_gate_returns_to_backlog_when_full_backfill_blocked(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_research_gate_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+
+    payload = repair.build_candidate_v2_research_gate_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+
+    assert payload["status"] == repair.V2_RETURN_TO_HYPOTHESIS_BACKLOG
+    assert payload["summary"]["source_full_backfill_status"] == (
+        repair.V2_FULL_BACKFILL_BLOCKED_BY_MINI_GATE
+    )
+    assert payload["summary"]["full_backfill_executed"] is False
+    assert payload["summary"]["paper_shadow_activation_allowed"] is False
+    assert payload["summary"]["paper_shadow_prepared"] is False
+    assert any(
+        row["evidence_id"] == "v2_full_backfill_not_executed"
+        for row in payload["blocking_evidence"]
+    )
+
+    validation = repair.validate_candidate_v2_research_gate_payload(payload)
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_research_gate_cli_writes_and_validates(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    prices_path = tmp_path / "prices_daily.csv"
+    _write_candidate_v2_research_gate_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-research-gate",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    gate_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_RESEARCH_GATE_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(gate_path.read_text(encoding="utf-8"))
+    assert payload["status"] == repair.V2_RETURN_TO_HYPOTHESIS_BACKLOG
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-research-gate",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_RESEARCH_GATE_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -1360,6 +1448,42 @@ def _write_candidate_v2_full_backfill_prerequisites(
         mini_gate_validation,
         repair.default_evidence_repair_json_path(
             repair.CANDIDATE_V2_MINI_GATE_VALIDATION_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
+def _write_candidate_v2_research_gate_prerequisites(
+    *,
+    reports_dir: Path,
+    feature_path: Path,
+    prices_path: Path,
+) -> None:
+    _write_candidate_v2_full_backfill_prerequisites(
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        prices_path=prices_path,
+    )
+    full_backfill = repair.build_candidate_v2_full_backfill_if_approved_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        full_backfill,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_FULL_BACKFILL_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    full_backfill_validation = (
+        repair.validate_candidate_v2_full_backfill_if_approved_payload(full_backfill)
+    )
+    repair.write_evidence_repair_json(
+        full_backfill_validation,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_FULL_BACKFILL_VALIDATION_REPORT_TYPE,
             reports_dir,
             RUN_DATE,
         ),
