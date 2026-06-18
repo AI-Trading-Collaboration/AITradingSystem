@@ -1030,20 +1030,67 @@ def build_next_candidate_vs_returned_comparison_payload(
         _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
     )
     backfill_ready = _backfill_metrics_available(backfill_status)
-    comparison_rows = _comparison_rows(backfill_ready)
-    comparison_result = (
-        "MIXED_VS_RETURNED_CANDIDATE"
-        if backfill_ready
-        else "NO_IMPROVEMENT"
+    comparison_rows = _comparison_rows(
+        backfill_payload=backfill_payload,
+        stress_review_payload=stress_review_payload,
+        cost_benchmark_payload=cost_benchmark_payload,
+        failure_payload=failure,
+        reusable_payload=reusable,
+        backfill_ready=backfill_ready,
     )
+    comparison_result = _comparison_result(comparison_rows, backfill_ready)
+    blocking_issue_names = _comparison_issue_names(
+        comparison_rows,
+        {
+            "NO_IMPROVEMENT",
+            "REGRESSED_VS_REUSABLE_EVIDENCE",
+            "REPEATS_FAILURE_MODE",
+            "UNMEASURED",
+        },
+    )
+    warning_names = _comparison_issue_names(comparison_rows, {"MIXED"})
     summary = {
         "comparison_result": comparison_result,
         "previous_candidate_id": reset_reports.CANDIDATE_ID,
         "new_candidate_id": _text(_mapping(backfill_payload.get("summary")).get("candidate_id")),
-        "measurable_improvement_established": backfill_ready,
-        "governance_blockers": (
-            "executable_backfill_missing" if not backfill_ready else "none"
+        "real_metrics_available": backfill_ready,
+        "measurable_improvement_established": comparison_result
+        == "IMPROVED_OVER_RETURNED_CANDIDATE",
+        "source_backfill_status": backfill_status,
+        "stress_result": _text(
+            _mapping(stress_review_payload.get("summary")).get("stress_result"),
+            _text(stress_review_payload.get("status")),
         ),
+        "cost_survival_status": _text(
+            _mapping(cost_benchmark_payload.get("summary")).get("cost_survival_status")
+        ),
+        "benchmark_relative_status": _text(
+            _mapping(cost_benchmark_payload.get("summary")).get(
+                "benchmark_relative_status"
+            )
+        ),
+        "repeated_failure_mode_count": len(
+            [
+                row
+                for row in comparison_rows
+                if row["comparison_status"] == "REPEATS_FAILURE_MODE"
+            ]
+        ),
+        "improved_metric_count": len(
+            [row for row in comparison_rows if row["comparison_status"] == "IMPROVED"]
+        ),
+        "mixed_metric_count": len(
+            [row for row in comparison_rows if row["comparison_status"] == "MIXED"]
+        ),
+        "no_improvement_count": len(
+            [
+                row
+                for row in comparison_rows
+                if row["comparison_status"]
+                in {"NO_IMPROVEMENT", "REGRESSED_VS_REUSABLE_EVIDENCE"}
+            ]
+        ),
+        "governance_blockers": blocking_issue_names,
         "production_effect": PRODUCTION_EFFECT,
     }
     return _payload(
@@ -1067,17 +1114,22 @@ def build_next_candidate_vs_returned_comparison_payload(
         },
         reader_brief=_reader_brief(
             summary=(
-                "Improvement over the returned candidate is not established without "
-                "new executable backfill evidence."
+                f"Vs-returned comparison is {comparison_result} from real "
+                "binding-backed metrics."
             ),
             key_result=comparison_result,
             blocking_issues=summary["governance_blockers"],
-            warnings="do_not_reuse_returned_candidate_failure_mode",
-            next_action="resolve_new_candidate_evidence_before_comparison_claim",
+            warnings=warning_names,
+            next_action="run_signal_robustness_and_window_sensitivity",
         ),
-        next_action="resolve_new_candidate_evidence_before_comparison_claim",
+        next_action="run_signal_robustness_and_window_sensitivity",
         safety_boundary=_safety_boundary(),
-        limitations=["No improvement is claimed from missing new-candidate metrics."],
+        limitations=[
+            "Comparison uses research-only partial/static proxy metrics.",
+            "Returned candidate numeric metric history is available as failure attribution, "
+            "not as a complete normalized metric table.",
+            "No improvement claim can activate paper-shadow or official weights.",
+        ],
         requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
     )
 
@@ -1704,6 +1756,55 @@ def validate_next_research_cycle_payload(
                 ),
                 "Benchmark review rows must carry candidate-vs-baseline deltas.",
                 "restore_benchmark_metric_rows",
+            )
+    if report_type == VS_RETURNED_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        comparison_status = _text(payload.get("status"))
+        comparison_rows = _records(payload.get("comparison_rows"))
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_vs_returned_status",
+            comparison_status
+            in {
+                "IMPROVED_OVER_RETURNED_CANDIDATE",
+                "MIXED_VS_RETURNED_CANDIDATE",
+                "NO_IMPROVEMENT",
+                "WORSE_THAN_RETURNED_CANDIDATE",
+            },
+            "Vs-returned comparison status must use TRADING-466 taxonomy.",
+            "restore_vs_returned_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "comparison_rows_present",
+            bool(comparison_rows),
+            "Vs-returned comparison must include row-level metric comparisons.",
+            "restore_vs_returned_comparison_rows",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "source_metrics_visible",
+            bool(_text(summary.get("source_backfill_status")))
+            and bool(_text(summary.get("stress_result")))
+            and bool(_text(summary.get("benchmark_relative_status"))),
+            "Vs-returned comparison must disclose source backfill/stress/benchmark statuses.",
+            "restore_vs_returned_source_status_disclosure",
+        )
+        if _text(summary.get("benchmark_relative_status")) == "BENCHMARK_UNDERPERFORMS":
+            _append_check(
+                checks,
+                blocking_issues,
+                "repeated_benchmark_failure_disclosed",
+                any(
+                    _text(row.get("metric_id")) == "benchmark_relative_behavior"
+                    and _text(row.get("comparison_status")) == "REPEATS_FAILURE_MODE"
+                    for row in comparison_rows
+                ),
+                "Benchmark underperformance must be marked as a repeated failure mode.",
+                "restore_repeated_benchmark_failure_disclosure",
             )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
@@ -2673,26 +2774,276 @@ def _benchmark_reviews(
     return result
 
 
-def _comparison_rows(backfill_ready: bool) -> list[dict[str, Any]]:
-    metrics = (
-        "drawdown_mismatch_reduction",
-        "flip_rotation_reduction",
-        "turnover",
-        "cost_survival",
-        "benchmark_relative_behavior",
-        "signal_robustness",
-        "governance_blockers",
+def _comparison_rows(
+    *,
+    backfill_payload: Mapping[str, Any],
+    stress_review_payload: Mapping[str, Any],
+    cost_benchmark_payload: Mapping[str, Any],
+    failure_payload: Mapping[str, Any],
+    reusable_payload: Mapping[str, Any],
+    backfill_ready: bool,
+) -> list[dict[str, Any]]:
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    stress_summary = _mapping(stress_review_payload.get("summary"))
+    cost_summary = _mapping(cost_benchmark_payload.get("summary"))
+    failure_modes = _failure_modes_by_id(failure_payload)
+    reusable_evidence = _evidence_by_source(reusable_payload, "reusable_evidence")
+    invalidated_evidence = _evidence_by_source(reusable_payload, "invalidated_evidence")
+    aggregate_drawdown = _float(backfill_summary.get("aggregate_drawdown_proxy"))
+    stress_result = _text(
+        stress_summary.get("stress_result"),
+        _text(stress_review_payload.get("status")),
     )
+    source_backfill_status = _text(backfill_summary.get("candidate_backfill_status"))
+    cost_survival_status = _text(cost_summary.get("cost_survival_status"))
+    benchmark_relative_status = _text(cost_summary.get("benchmark_relative_status"))
+    signal_completeness = _text(backfill_summary.get("signal_completeness"))
+    partial_static_proxy = source_backfill_status == CANDIDATE_BACKFILL_PARTIAL
+
     return [
-        {
-            "metric_id": metric,
-            "comparison_status": "UNMEASURED" if not backfill_ready else "MIXED",
-            "new_candidate_evidence": None,
-            "returned_candidate_failure_context": "available",
-            "production_effect": PRODUCTION_EFFECT,
-        }
-        for metric in metrics
+        _comparison_row(
+            "drawdown_mismatch",
+            status=(
+                "UNMEASURED"
+                if not backfill_ready
+                else "REGRESSED_VS_REUSABLE_EVIDENCE"
+                if stress_result == "WEAK"
+                or aggregate_drawdown <= STRESS_BLOCKING_DRAWDOWN_PROXY
+                else "MIXED"
+                if partial_static_proxy
+                else "IMPROVED"
+            ),
+            new_evidence=(
+                f"stress_result={stress_result}; "
+                f"aggregate_drawdown_proxy={backfill_summary.get('aggregate_drawdown_proxy')}; "
+                f"worst_drawdown_proxy={stress_summary.get('worst_drawdown_proxy')}"
+            ),
+            returned_context=_returned_context(
+                reusable_evidence.get("drawdown_mismatch_reduction"),
+                failure_modes,
+                "drawdown_mismatch",
+            ),
+            returned_failure_mode_id="",
+            interpretation=(
+                "Drawdown proxy remains weak despite reusable prior mismatch evidence."
+                if backfill_ready
+                else "No executable metric available for drawdown comparison."
+            ),
+        ),
+        _comparison_row(
+            "flip_rotation_behavior",
+            status="UNMEASURED"
+            if not backfill_ready
+            else "MIXED"
+            if partial_static_proxy
+            else "IMPROVED",
+            new_evidence=(
+                f"rotation_count={backfill_summary.get('rotation_count')}; "
+                f"false_risk_off_count={backfill_summary.get('false_risk_off_count')}; "
+                f"metric_mode={backfill_summary.get('backfill_metric_mode')}"
+            ),
+            returned_context=_returned_context(
+                reusable_evidence.get("flip_rotation_reduction"),
+                failure_modes,
+                "flip_rotation_behavior",
+            ),
+            returned_failure_mode_id="",
+            interpretation=(
+                "Static proxy shows low rotation and no false risk-off count, "
+                "but historical dynamic signal behavior is still unavailable."
+            ),
+        ),
+        _comparison_row(
+            "turnover",
+            status="UNMEASURED"
+            if not backfill_ready
+            else "MIXED"
+            if partial_static_proxy
+            else "IMPROVED",
+            new_evidence=f"turnover_proxy={backfill_summary.get('turnover_proxy')}",
+            returned_context=(
+                "Returned candidate failure attribution did not include a normalized "
+                "turnover metric."
+            ),
+            returned_failure_mode_id="",
+            interpretation=(
+                "Turnover proxy is real but comes from one static research weight transition."
+            ),
+        ),
+        _comparison_row(
+            "cost_survival",
+            status="UNMEASURED"
+            if not backfill_ready
+            else "REPEATS_FAILURE_MODE"
+            if cost_survival_status == "COST_SURVIVAL_FAIL"
+            else "MIXED"
+            if cost_survival_status == "COST_SURVIVAL_WARNING"
+            else "IMPROVED",
+            new_evidence=(
+                f"cost_survival_status={cost_survival_status}; "
+                f"turnover_penalty={cost_summary.get('turnover_penalty')}; "
+                f"net_proxy_result={cost_summary.get('net_proxy_result')}"
+            ),
+            returned_context=_returned_context(
+                invalidated_evidence.get("cost_sensitivity"),
+                failure_modes,
+                "cost_survival_failure",
+            ),
+            returned_failure_mode_id="cost_survival_failure",
+            interpretation=(
+                "Cost survival is not a hard fail, but partial proxy status keeps it a warning."
+            ),
+        ),
+        _comparison_row(
+            "benchmark_relative_behavior",
+            status="UNMEASURED"
+            if not backfill_ready
+            else "REPEATS_FAILURE_MODE"
+            if benchmark_relative_status == "BENCHMARK_UNDERPERFORMS"
+            else "MIXED"
+            if benchmark_relative_status == "BENCHMARK_MIXED"
+            else "IMPROVED",
+            new_evidence=f"benchmark_relative_status={benchmark_relative_status}",
+            returned_context=_returned_context(
+                invalidated_evidence.get("benchmark_baseline"),
+                failure_modes,
+                "benchmark_relative_failure",
+            ),
+            returned_failure_mode_id="benchmark_relative_failure",
+            interpretation=(
+                "New candidate still underperforms at least one baseline, repeating "
+                "the returned candidate failure mode."
+            ),
+        ),
+        _comparison_row(
+            "signal_robustness",
+            status="UNMEASURED"
+            if not backfill_ready
+            else "NO_IMPROVEMENT"
+            if signal_completeness != "COMPLETE"
+            else "MIXED",
+            new_evidence=(
+                f"signal_completeness={signal_completeness}; "
+                f"signal_completeness_ratio={backfill_summary.get('signal_completeness_ratio')}"
+            ),
+            returned_context=_returned_context(
+                failure_modes.get("signal_input_stability_warning"),
+                failure_modes,
+                "signal_input_stability_warning",
+            ),
+            returned_failure_mode_id="signal_input_stability_warning",
+            interpretation="Historical signal series remain incomplete for the required windows.",
+        ),
+        _comparison_row(
+            "governance_blockers",
+            status="UNMEASURED"
+            if not backfill_ready
+            else "NO_IMPROVEMENT"
+            if partial_static_proxy
+            or stress_result == "WEAK"
+            or benchmark_relative_status == "BENCHMARK_UNDERPERFORMS"
+            else "MIXED",
+            new_evidence=(
+                f"backfill_status={source_backfill_status}; "
+                f"stress_result={stress_result}; "
+                f"cost_benchmark_status={cost_benchmark_payload.get('status')}"
+            ),
+            returned_context=(
+                "Returned candidate had governance blockers around resumption, "
+                "owner hold, and evidence quality."
+            ),
+            returned_failure_mode_id="normal_resumption_gate_blocked",
+            interpretation=(
+                "Research can continue, but comparison does not clear governance "
+                "blockers."
+            ),
+        ),
     ]
+
+
+def _comparison_row(
+    metric_id: str,
+    *,
+    status: str,
+    new_evidence: str,
+    returned_context: str,
+    returned_failure_mode_id: str,
+    interpretation: str,
+) -> dict[str, Any]:
+    return {
+        "metric_id": metric_id,
+        "comparison_status": status,
+        "new_candidate_evidence": new_evidence,
+        "returned_candidate_failure_context": returned_context,
+        "returned_failure_mode_id": returned_failure_mode_id,
+        "interpretation": interpretation,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _comparison_result(rows: Sequence[Mapping[str, Any]], backfill_ready: bool) -> str:
+    if not backfill_ready:
+        return "NO_IMPROVEMENT"
+    statuses = {_text(row.get("comparison_status")) for row in rows}
+    if "REPEATS_FAILURE_MODE" in statuses or "REGRESSED_VS_REUSABLE_EVIDENCE" in statuses:
+        return "MIXED_VS_RETURNED_CANDIDATE"
+    if statuses <= {"IMPROVED"}:
+        return "IMPROVED_OVER_RETURNED_CANDIDATE"
+    if statuses <= {"NO_IMPROVEMENT", "UNMEASURED"}:
+        return "NO_IMPROVEMENT"
+    return "MIXED_VS_RETURNED_CANDIDATE"
+
+
+def _failure_modes_by_id(payload: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        _text(row.get("failure_mode_id")): row
+        for row in _records(payload.get("ranked_failure_modes"))
+        if _text(row.get("failure_mode_id"))
+    }
+
+
+def _evidence_by_source(
+    payload: Mapping[str, Any],
+    key: str,
+) -> dict[str, dict[str, Any]]:
+    return {
+        _text(row.get("source_id")): row
+        for row in _records(payload.get(key))
+        if _text(row.get("source_id"))
+    }
+
+
+def _returned_context(
+    row: Mapping[str, Any] | None,
+    failure_modes: Mapping[str, Mapping[str, Any]],
+    fallback_id: str,
+) -> str:
+    data = _mapping(row)
+    if data:
+        return (
+            f"{_text(data.get('source_id'), fallback_id)}="
+            f"{_text(data.get('status'), 'AVAILABLE')}; "
+            f"classification={_text(data.get('classification'), 'unknown')}"
+        )
+    failure = _mapping(failure_modes.get(fallback_id))
+    if failure:
+        return (
+            f"{fallback_id}: evidence={_text(failure.get('evidence'))}; "
+            f"domain={_text(failure.get('domain'))}"
+        )
+    return f"{fallback_id}: no returned numeric metric row available"
+
+
+def _comparison_issue_names(
+    rows: Sequence[Mapping[str, Any]],
+    statuses: set[str],
+) -> str:
+    names = [
+        _text(row.get("metric_id"))
+        for row in rows
+        if _text(row.get("comparison_status")) in statuses
+    ]
+    return "; ".join(name for name in names if name) or "none"
 
 
 def _signal_check(

@@ -249,6 +249,107 @@ def test_next_candidate_stress_cost_benchmark_reviews_use_real_backfill_metrics(
     assert summary["cost_validation_status"] == "PASS"
 
 
+def test_next_candidate_vs_returned_comparison_marks_repeated_failure(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_return_to_research_inputs(reports_dir, tmp_path)
+    intake = next_cycle.build_next_research_cycle_intake_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    frozen = next_cycle.build_next_candidate_spec_frozen_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        intake_payload=intake,
+    )
+    _write_minimal_executable_binding_artifacts(reports_dir)
+    _write_cost_benchmark_sources(tmp_path, baseline_proxy=0.99)
+    backfill = next_cycle.build_next_candidate_backfill_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        frozen_spec_payload=frozen,
+        data_quality_gate={"status": "PASS", "passed": True, "report_path": "dq.md"},
+        prices_path=_write_backfill_price_fixture(tmp_path),
+    )
+    stress = next_cycle.build_next_candidate_stress_review_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    cost = next_cycle.build_next_candidate_cost_benchmark_review_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        backfill_payload=backfill,
+    )
+
+    comparison = next_cycle.build_next_candidate_vs_returned_comparison_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost,
+    )
+
+    rows = {row["metric_id"]: row for row in comparison["comparison_rows"]}
+    assert comparison["status"] == "MIXED_VS_RETURNED_CANDIDATE"
+    assert comparison["summary"]["real_metrics_available"] is True
+    assert comparison["summary"]["benchmark_relative_status"] == "BENCHMARK_UNDERPERFORMS"
+    assert comparison["summary"]["repeated_failure_mode_count"] == 1
+    assert rows["benchmark_relative_behavior"]["comparison_status"] == (
+        "REPEATS_FAILURE_MODE"
+    )
+    assert rows["drawdown_mismatch"]["comparison_status"] == "MIXED"
+    assert rows["signal_robustness"]["comparison_status"] == "NO_IMPROVEMENT"
+    assert comparison["reader_brief"]["blocking_issues"] != "none"
+
+    validation = next_cycle.validate_next_research_cycle_payload(
+        comparison,
+        expected_report_type=next_cycle.VS_RETURNED_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
+
+    comparison_path = next_cycle.write_next_research_cycle_json(
+        comparison,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.VS_RETURNED_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    validation_path = next_cycle.write_next_research_cycle_json(
+        validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.VS_RETURNED_REPORT_TYPE}{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    summary = reader_brief._next_candidate_vs_returned_comparison_summary(
+        {
+            "reports": [
+                {
+                    "report_id": next_cycle.VS_RETURNED_REPORT_TYPE,
+                    "latest_artifact_path": str(comparison_path),
+                },
+                {
+                    "report_id": (
+                        f"{next_cycle.VS_RETURNED_REPORT_TYPE}"
+                        f"{next_cycle.VALIDATION_SUFFIX}"
+                    ),
+                    "latest_artifact_path": str(validation_path),
+                },
+            ]
+        }
+    )
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["comparison_result"] == "MIXED_VS_RETURNED_CANDIDATE"
+    assert summary["validation_status"] == "PASS"
+
+
 def test_next_research_cycle_cli_writes_intake_freeze_and_validations(
     tmp_path: Path,
 ) -> None:
@@ -548,7 +649,11 @@ def _write_backfill_price_fixture(tmp_path: Path) -> Path:
     return path
 
 
-def _write_cost_benchmark_sources(project_root: Path) -> None:
+def _write_cost_benchmark_sources(
+    project_root: Path,
+    *,
+    baseline_proxy: float = 0.001,
+) -> None:
     cost_path = (
         project_root
         / "reports"
@@ -594,7 +699,7 @@ def _write_cost_benchmark_sources(project_root: Path) -> None:
                 "baselines": [
                     {
                         "baseline_id": "low_return_static_baseline",
-                        "baseline_net_performance_proxy": 0.001,
+                        "baseline_net_performance_proxy": baseline_proxy,
                     }
                 ],
             },

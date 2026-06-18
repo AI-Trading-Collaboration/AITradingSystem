@@ -194,6 +194,9 @@ def build_reader_brief_payload(
     next_candidate_stress_cost_benchmark = (
         _next_candidate_stress_cost_benchmark_summary(report_index)
     )
+    next_candidate_vs_returned_comparison = (
+        _next_candidate_vs_returned_comparison_summary(report_index)
+    )
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
     executable_research_weight_binding = _executable_research_weight_binding_summary(
@@ -375,6 +378,7 @@ def build_reader_brief_payload(
         "next_research_cycle_snapshot": next_research_cycle_snapshot,
         "next_candidate_backfill": next_candidate_backfill,
         "next_candidate_stress_cost_benchmark": next_candidate_stress_cost_benchmark,
+        "next_candidate_vs_returned_comparison": next_candidate_vs_returned_comparison,
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
@@ -730,6 +734,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     next_candidate_backfill = _mapping(payload.get("next_candidate_backfill"))
     next_candidate_stress_cost_benchmark = _mapping(
         payload.get("next_candidate_stress_cost_benchmark")
+    )
+    next_candidate_vs_returned_comparison = _mapping(
+        payload.get("next_candidate_vs_returned_comparison")
     )
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
@@ -1931,6 +1938,82 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         next_candidate_stress_cost_benchmark.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Next Candidate Vs Returned Comparison",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        next_candidate_vs_returned_comparison.get("availability"),
+                    ),
+                    ("status", next_candidate_vs_returned_comparison.get("status")),
+                    (
+                        "comparison_result",
+                        next_candidate_vs_returned_comparison.get("comparison_result"),
+                    ),
+                    (
+                        "real_metrics_available",
+                        next_candidate_vs_returned_comparison.get(
+                            "real_metrics_available"
+                        ),
+                    ),
+                    (
+                        "source_backfill_status",
+                        next_candidate_vs_returned_comparison.get(
+                            "source_backfill_status"
+                        ),
+                    ),
+                    (
+                        "stress_result",
+                        next_candidate_vs_returned_comparison.get("stress_result"),
+                    ),
+                    (
+                        "benchmark_relative_status",
+                        next_candidate_vs_returned_comparison.get(
+                            "benchmark_relative_status"
+                        ),
+                    ),
+                    (
+                        "repeated_failure_mode_count",
+                        next_candidate_vs_returned_comparison.get(
+                            "repeated_failure_mode_count"
+                        ),
+                    ),
+                    (
+                        "improved_metric_count",
+                        next_candidate_vs_returned_comparison.get(
+                            "improved_metric_count"
+                        ),
+                    ),
+                    (
+                        "mixed_metric_count",
+                        next_candidate_vs_returned_comparison.get("mixed_metric_count"),
+                    ),
+                    (
+                        "no_improvement_count",
+                        next_candidate_vs_returned_comparison.get(
+                            "no_improvement_count"
+                        ),
+                    ),
+                    (
+                        "validation_status",
+                        next_candidate_vs_returned_comparison.get("validation_status"),
+                    ),
+                    (
+                        "next_action",
+                        next_candidate_vs_returned_comparison.get("next_action"),
+                    ),
+                    (
+                        "detail_report",
+                        next_candidate_vs_returned_comparison.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        next_candidate_vs_returned_comparison.get("production_effect"),
                     ),
                 ]
             ),
@@ -9364,6 +9447,111 @@ def _missing_next_candidate_stress_cost_benchmark_summary(
         "summary_sentence": (
             "next_candidate_stress_review / next_candidate_cost_benchmark_review "
             "artifacts missing; run TRADING-465 reports."
+        ),
+        "limitation": reason,
+    }
+
+
+def _next_candidate_vs_returned_comparison_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_next_candidate_vs_returned_comparison_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "next candidate vs returned comparison."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_vs_returned_candidate_comparison",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_next_candidate_vs_returned_comparison_summary(
+            "next_candidate_vs_returned_candidate_comparison artifact missing "
+            "from report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_vs_returned_candidate_comparison_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    status = _text(payload.get("status"), _text(summary.get("comparison_result")))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "comparison_result": _text(summary.get("comparison_result"), status),
+        "previous_candidate_id": _text(summary.get("previous_candidate_id"), "MISSING"),
+        "new_candidate_id": _text(summary.get("new_candidate_id"), "MISSING"),
+        "real_metrics_available": summary.get("real_metrics_available") is True,
+        "source_backfill_status": _text(
+            summary.get("source_backfill_status"),
+            "MISSING",
+        ),
+        "stress_result": _text(summary.get("stress_result"), "MISSING"),
+        "cost_survival_status": _text(summary.get("cost_survival_status"), "MISSING"),
+        "benchmark_relative_status": _text(
+            summary.get("benchmark_relative_status"),
+            "MISSING",
+        ),
+        "repeated_failure_mode_count": _int(
+            summary.get("repeated_failure_mode_count")
+        ),
+        "improved_metric_count": _int(summary.get("improved_metric_count")),
+        "mixed_metric_count": _int(summary.get("mixed_metric_count")),
+        "no_improvement_count": _int(summary.get("no_improvement_count")),
+        "governance_blockers": _text(summary.get("governance_blockers"), "MISSING"),
+        "validation_status": validation_status,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": ""
+        if validation_path is None
+        else str(validation_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"vs_returned={status}; repeated_failures="
+            f"{_int(summary.get('repeated_failure_mode_count'))}; "
+            f"benchmark={_text(summary.get('benchmark_relative_status'), 'MISSING')}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the generated TRADING-466 comparison; it "
+            "does not activate paper-shadow, write official weights, append owner "
+            "decisions, or create broker/order artifacts."
+        ),
+    }
+
+
+def _missing_next_candidate_vs_returned_comparison_summary(
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "comparison_result": "MISSING",
+        "previous_candidate_id": "MISSING",
+        "new_candidate_id": "MISSING",
+        "real_metrics_available": False,
+        "source_backfill_status": "MISSING",
+        "stress_result": "MISSING",
+        "cost_survival_status": "MISSING",
+        "benchmark_relative_status": "MISSING",
+        "repeated_failure_mode_count": 0,
+        "improved_metric_count": 0,
+        "mixed_metric_count": 0,
+        "no_improvement_count": 0,
+        "governance_blockers": "MISSING",
+        "validation_status": "MISSING",
+        "next_action": "run_aits_reports_next_candidate_vs_returned_comparison",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_vs_returned_candidate_comparison artifact missing; "
+            "run TRADING-466 comparison."
         ),
         "limitation": reason,
     }
@@ -25763,23 +25951,24 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_cost_benchmark_review": 264,
         "next_candidate_cost_benchmark_review_validation": 265,
         "next_candidate_vs_returned_candidate_comparison": 266,
-        "next_candidate_signal_robustness_review": 267,
-        "next_candidate_overfit_window_sensitivity": 268,
-        "next_candidate_research_gate": 269,
-        "next_candidate_owner_research_review_packet": 270,
-        "next_candidate_research_cycle_snapshot": 271,
-        "next_candidate_research_cycle_snapshot_validation": 272,
-        "next_candidate_executable_binding_contract": 273,
-        "next_candidate_executable_binding_contract_validation": 274,
-        "next_candidate_signal_binding": 275,
-        "next_candidate_signal_binding_validation": 276,
-        "next_candidate_research_weight_binding": 277,
-        "next_candidate_research_weight_binding_validation": 278,
-        "executable_binding_safety_audit": 279,
-        "executable_binding_safety_audit_validation": 280,
-        "report_quality_gate": 281,
-        "reader_brief_quality": 282,
-        "artifact_catalog": 283,
+        "next_candidate_vs_returned_candidate_comparison_validation": 267,
+        "next_candidate_signal_robustness_review": 268,
+        "next_candidate_overfit_window_sensitivity": 269,
+        "next_candidate_research_gate": 270,
+        "next_candidate_owner_research_review_packet": 271,
+        "next_candidate_research_cycle_snapshot": 272,
+        "next_candidate_research_cycle_snapshot_validation": 273,
+        "next_candidate_executable_binding_contract": 274,
+        "next_candidate_executable_binding_contract_validation": 275,
+        "next_candidate_signal_binding": 276,
+        "next_candidate_signal_binding_validation": 277,
+        "next_candidate_research_weight_binding": 278,
+        "next_candidate_research_weight_binding_validation": 279,
+        "executable_binding_safety_audit": 280,
+        "executable_binding_safety_audit_validation": 281,
+        "report_quality_gate": 282,
+        "reader_brief_quality": 283,
+        "artifact_catalog": 284,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -26003,6 +26192,9 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "next_candidate_vs_returned_candidate_comparison": (
             "比较下一候选与 returned candidate；缺新指标时不得声明改善。"
         ),
+        "next_candidate_vs_returned_candidate_comparison_validation": (
+            "确认 vs-returned comparison 披露 repeated failure modes 和安全边界。"
+        ),
         "next_candidate_signal_robustness_review": (
             "查看 executable signal inputs 缺失是否阻塞 signal robustness。"
         ),
@@ -26148,6 +26340,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Cost/benchmark artifact 生成后立即校验 taxonomy、Reader Brief 和安全边界。",
+    ),
+    "next_candidate_vs_returned_candidate_comparison": (
+        "manual",
+        "manual research cycle",
+        "TRADING-466 在 real backfill/stress/cost/benchmark metrics 后运行。",
+    ),
+    "next_candidate_vs_returned_candidate_comparison_validation": (
+        "manual",
+        "manual research cycle",
+        "Vs-returned comparison 生成后立即校验 repeated failure disclosure。",
     ),
     "task_register_consistency": (
         "daily",

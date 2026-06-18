@@ -8817,6 +8817,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: next_candidate_vs_returned_candidate_comparison_validation
+    title: Next Candidate Vs Returned Candidate Comparison Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-vs-returned-candidate-comparison --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_vs_returned_candidate_comparison_validation_*.json
+      - outputs/reports/next_candidate_vs_returned_candidate_comparison_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-466 validation fails closed if the comparison lacks row-level
+      real-metric evidence, does not disclose repeated benchmark/cost failure
+      modes, or violates the no shadow/live/official weights/broker/order
+      boundary.
+    owner_action: run_after_next_candidate_vs_returned_candidate_comparison
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_signal_robustness_review
     title: Next Candidate Signal Robustness Review
     group: research

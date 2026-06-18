@@ -235,3 +235,21 @@ Latest confirmed statuses:
   no paper-shadow, official weights, broker/order, owner decision append, or
   production mutation were produced. Next task is TRADING-466 vs-returned
   comparison from real metrics.
+- 2026-06-18: TRADING-466 started. Implementation must load returned candidate
+  failure attribution, reusable/invalidated evidence, TRADING-464 backfill,
+  TRADING-465 stress review, and TRADING-465 cost/benchmark review. The
+  comparison must explicitly mark repeated failure modes, especially benchmark
+  underperformance and partial/static proxy limitations, and must not claim
+  `IMPROVED_OVER_RETURNED_CANDIDATE` unless real metrics support it across
+  drawdown, turnover, cost survival, benchmark-relative behavior, signal
+  robustness, and governance blockers.
+- 2026-06-18: TRADING-466 completed pending commit. The real 2026-06-17
+  comparison produced `MIXED_VS_RETURNED_CANDIDATE` with real metrics available
+  but no measurable improvement established. Row-level results: drawdown
+  mismatch `REGRESSED_VS_REUSABLE_EVIDENCE`, flip/rotation `MIXED`, turnover
+  `MIXED`, cost survival `MIXED`, benchmark-relative behavior
+  `REPEATS_FAILURE_MODE`, signal robustness `NO_IMPROVEMENT`, governance
+  blockers `NO_IMPROVEMENT`. Validation PASS. Reader Brief now exposes the
+  vs-returned comparison summary. No paper-shadow, official weights,
+  broker/order, owner decision append, or production mutation were produced.
+  Next task is TRADING-467 signal robustness and window sensitivity rerun.

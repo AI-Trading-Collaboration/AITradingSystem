@@ -1910,6 +1910,19 @@ paper-shadow、不批准 extended/live、不写 official target weights、不触
 owner decision、不修改 production。Reader Brief 只读展示 combined
 `next_candidate_stress_cost_benchmark` 摘要。
 
+TRADING-466_RERUN_NEXT_VS_RETURNED_CANDIDATE_COMPARISON 用 returned candidate failure
+attribution、reusable/invalidated evidence、TRADING-464 backfill、TRADING-465 stress review
+和 TRADING-465 cost/benchmark review 生成 row-level comparison。运行
+`aits reports next-candidate-vs-returned-candidate-comparison --as-of YYYY-MM-DD` 和
+`aits reports validate-next-candidate-vs-returned-candidate-comparison --latest` 会生成
+`next_candidate_vs_returned_candidate_comparison` 和 validation artifacts。2026-06-17 真实
+rerun 输出 `MIXED_VS_RETURNED_CANDIDATE`：benchmark-relative behavior 明确
+`REPEATS_FAILURE_MODE`，drawdown mismatch 相对 reusable evidence 退化，cost survival 只到
+warning，signal robustness 仍受 partial static binding 限制。该 comparison 不创建 paper-shadow、
+不恢复 normal shadow、不批准 extended/live、不写 official target weights、不 append owner decision、
+不触发 broker/order、不修改 production。Reader Brief 只读展示
+`next_candidate_vs_returned_comparison` 摘要。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
