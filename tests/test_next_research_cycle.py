@@ -350,6 +350,155 @@ def test_next_candidate_vs_returned_comparison_marks_repeated_failure(
     assert summary["validation_status"] == "PASS"
 
 
+def test_next_candidate_signal_window_rerun_uses_binding_and_backfill_metrics(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_return_to_research_inputs(reports_dir, tmp_path)
+    intake = next_cycle.build_next_research_cycle_intake_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    frozen = next_cycle.build_next_candidate_spec_frozen_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        intake_payload=intake,
+    )
+    _write_minimal_executable_binding_artifacts(reports_dir)
+    backfill = next_cycle.build_next_candidate_backfill_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        frozen_spec_payload=frozen,
+        data_quality_gate={"status": "PASS", "passed": True, "report_path": "dq.md"},
+        prices_path=_write_backfill_price_fixture(tmp_path),
+    )
+    signal_binding_path = binding_reports.default_executable_binding_json_path(
+        binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    signal_binding = json.loads(signal_binding_path.read_text(encoding="utf-8"))
+
+    signal_review = next_cycle.build_next_candidate_signal_robustness_review_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+        signal_binding_payload=signal_binding,
+    )
+    window_review = next_cycle.build_next_candidate_window_sensitivity_payload(
+        as_of=RUN_DATE,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+
+    signal_checks = {
+        row["check_id"]: row["status"] for row in signal_review["signal_quality_checks"]
+    }
+    assert signal_review["status"] == "SIGNAL_ROBUSTNESS_BLOCKED"
+    assert signal_review["summary"]["source_signal_binding_status"] == (
+        binding_reports.SIGNAL_BINDING_COMPLETE_WITH_WARNINGS
+    )
+    assert signal_review["summary"]["backfill_signal_completeness"] == (
+        "PARTIAL_STATIC_BINDING"
+    )
+    assert signal_checks["partial_signal_series"] == "BLOCKING"
+    assert signal_checks["market_coverage_gap"] == "BLOCKING"
+
+    assert window_review["status"] == "WINDOW_FRAGILE"
+    assert window_review["summary"]["overfit_risk"] == "HIGH"
+    assert window_review["summary"]["partial_static_proxy_split_count"] == len(
+        next_cycle.WINDOW_SENSITIVITY_SPLITS
+    )
+    assert all(
+        row["average_return_proxy"] is not None
+        and row["worst_drawdown_proxy"] is not None
+        for row in window_review["window_splits"]
+    )
+
+    signal_validation = next_cycle.validate_next_research_cycle_payload(
+        signal_review,
+        expected_report_type=next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+    )
+    window_validation = next_cycle.validate_next_research_cycle_payload(
+        window_review,
+        expected_report_type=next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+    )
+    assert signal_validation["status"] == "PASS"
+    assert window_validation["status"] == "PASS"
+
+    signal_path = next_cycle.write_next_research_cycle_json(
+        signal_review,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    window_path = next_cycle.write_next_research_cycle_json(
+        window_review,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    signal_validation_path = next_cycle.write_next_research_cycle_json(
+        signal_validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE}"
+            f"{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    window_validation_path = next_cycle.write_next_research_cycle_json(
+        window_validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE}"
+            f"{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    summary = reader_brief._next_candidate_signal_window_sensitivity_summary(
+        {
+            "reports": [
+                {
+                    "report_id": next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+                    "latest_artifact_path": str(signal_path),
+                },
+                {
+                    "report_id": next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+                    "latest_artifact_path": str(window_path),
+                },
+                {
+                    "report_id": (
+                        f"{next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE}"
+                        f"{next_cycle.VALIDATION_SUFFIX}"
+                    ),
+                    "latest_artifact_path": str(signal_validation_path),
+                },
+                {
+                    "report_id": (
+                        f"{next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE}"
+                        f"{next_cycle.VALIDATION_SUFFIX}"
+                    ),
+                    "latest_artifact_path": str(window_validation_path),
+                },
+            ]
+        }
+    )
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["signal_status"] == "SIGNAL_ROBUSTNESS_BLOCKED"
+    assert summary["window_status"] == "WINDOW_FRAGILE"
+    assert summary["signal_validation_status"] == "PASS"
+    assert summary["window_validation_status"] == "PASS"
+    assert summary["overfit_risk"] == "HIGH"
+
+
 def test_next_research_cycle_cli_writes_intake_freeze_and_validations(
     tmp_path: Path,
 ) -> None:

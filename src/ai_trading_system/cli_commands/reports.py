@@ -7349,6 +7349,7 @@ def next_candidate_signal_robustness_review_command(
     )
     payload = next_research_reports.build_next_candidate_signal_robustness_review_payload(
         as_of=report_date,
+        reports_dir=reports_dir,
         project_root=project_root,
         frozen_spec_payload=frozen,
         backfill_payload=backfill,

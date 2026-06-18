@@ -8849,9 +8849,29 @@ reports:
       - outputs/reports/next_candidate_signal_robustness_review_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-455 checks missing, partial, stale, schema-mismatched, and
-      coverage-gapped signal inputs without relaxing completeness rules.
+      TRADING-467 reruns signal robustness from the executable signal binding
+      and real backfill signal completeness, failing closed on missing, partial,
+      stale, schema-mismatched, or coverage-gapped inputs.
     owner_action: resolve_signal_robustness_blockers_before_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_signal_robustness_review_validation
+    title: Next Candidate Signal Robustness Review Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-signal-robustness-review --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_signal_robustness_review_validation_20*.json
+      - outputs/reports/next_candidate_signal_robustness_review_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-467 validation checks the signal robustness status taxonomy,
+      source binding disclosure, partial signal fail-closed behavior, Reader
+      Brief fields, and no shadow/live/official weights/broker/order boundary.
+    owner_action: run_after_next_candidate_signal_robustness_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
@@ -8867,9 +8887,29 @@ reports:
       - outputs/reports/next_candidate_overfit_window_sensitivity_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-456 checks whether the new candidate evidence is stable across
-      early, middle, recent, stress-heavy, and calm windows.
+      TRADING-467 reruns window sensitivity from executable backfill window
+      metrics across early, middle, recent, stress-heavy, and calm diagnostic
+      splits without promoting partial/static proxy evidence.
     owner_action: block_promotion_if_window_evidence_is_fragile
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_overfit_window_sensitivity_validation
+    title: Next Candidate Overfit Window Sensitivity Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-overfit-window-sensitivity --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_overfit_window_sensitivity_validation_20*.json
+      - outputs/reports/next_candidate_overfit_window_sensitivity_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-467 validation checks split metrics, fragile-window disclosure,
+      overfit risk, Reader Brief fields, and the no shadow/live/official
+      weights/broker/order boundary.
+    owner_action: run_after_next_candidate_window_sensitivity
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

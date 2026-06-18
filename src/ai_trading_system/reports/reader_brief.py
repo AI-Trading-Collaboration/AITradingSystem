@@ -197,6 +197,9 @@ def build_reader_brief_payload(
     next_candidate_vs_returned_comparison = (
         _next_candidate_vs_returned_comparison_summary(report_index)
     )
+    next_candidate_signal_window_sensitivity = (
+        _next_candidate_signal_window_sensitivity_summary(report_index)
+    )
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
     executable_research_weight_binding = _executable_research_weight_binding_summary(
@@ -379,6 +382,9 @@ def build_reader_brief_payload(
         "next_candidate_backfill": next_candidate_backfill,
         "next_candidate_stress_cost_benchmark": next_candidate_stress_cost_benchmark,
         "next_candidate_vs_returned_comparison": next_candidate_vs_returned_comparison,
+        "next_candidate_signal_window_sensitivity": (
+            next_candidate_signal_window_sensitivity
+        ),
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
@@ -737,6 +743,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     next_candidate_vs_returned_comparison = _mapping(
         payload.get("next_candidate_vs_returned_comparison")
+    )
+    next_candidate_signal_window_sensitivity = _mapping(
+        payload.get("next_candidate_signal_window_sensitivity")
     )
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
@@ -2014,6 +2023,93 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         next_candidate_vs_returned_comparison.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Next Candidate Signal Window Sensitivity",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        next_candidate_signal_window_sensitivity.get("availability"),
+                    ),
+                    (
+                        "signal_status",
+                        next_candidate_signal_window_sensitivity.get("signal_status"),
+                    ),
+                    (
+                        "window_status",
+                        next_candidate_signal_window_sensitivity.get("window_status"),
+                    ),
+                    (
+                        "signal_validation_status",
+                        next_candidate_signal_window_sensitivity.get(
+                            "signal_validation_status"
+                        ),
+                    ),
+                    (
+                        "window_validation_status",
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_validation_status"
+                        ),
+                    ),
+                    (
+                        "source_signal_binding_status",
+                        next_candidate_signal_window_sensitivity.get(
+                            "source_signal_binding_status"
+                        ),
+                    ),
+                    (
+                        "source_backfill_status",
+                        next_candidate_signal_window_sensitivity.get(
+                            "source_backfill_status"
+                        ),
+                    ),
+                    (
+                        "signal_blocking_check_count",
+                        next_candidate_signal_window_sensitivity.get(
+                            "signal_blocking_check_count"
+                        ),
+                    ),
+                    (
+                        "window_weak_split_count",
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_weak_split_count"
+                        ),
+                    ),
+                    (
+                        "window_partial_static_proxy_split_count",
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_partial_static_proxy_split_count"
+                        ),
+                    ),
+                    (
+                        "overfit_risk",
+                        next_candidate_signal_window_sensitivity.get("overfit_risk"),
+                    ),
+                    (
+                        "next_action",
+                        next_candidate_signal_window_sensitivity.get("next_action"),
+                    ),
+                    (
+                        "signal_detail_report",
+                        next_candidate_signal_window_sensitivity.get(
+                            "signal_detail_report"
+                        ),
+                    ),
+                    (
+                        "window_detail_report",
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_detail_report"
+                        ),
+                    ),
+                    (
+                        "production_effect",
+                        next_candidate_signal_window_sensitivity.get(
+                            "production_effect"
+                        ),
                     ),
                 ]
             ),
@@ -9552,6 +9648,158 @@ def _missing_next_candidate_vs_returned_comparison_summary(
         "summary_sentence": (
             "next_candidate_vs_returned_candidate_comparison artifact missing; "
             "run TRADING-466 comparison."
+        ),
+        "limitation": reason,
+    }
+
+
+def _next_candidate_signal_window_sensitivity_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_next_candidate_signal_window_sensitivity_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "next candidate signal/window sensitivity reviews."
+        )
+    signal_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_signal_robustness_review",
+    )
+    window_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_overfit_window_sensitivity",
+    )
+    signal_payload = _read_optional_json(signal_path)
+    window_payload = _read_optional_json(window_path)
+    if not signal_payload and not window_payload:
+        return _missing_next_candidate_signal_window_sensitivity_summary(
+            "next_candidate_signal_robustness_review and "
+            "next_candidate_overfit_window_sensitivity artifacts are missing "
+            "from report index latest pointers."
+        )
+    signal_validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_signal_robustness_review_validation",
+    )
+    window_validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_overfit_window_sensitivity_validation",
+    )
+    signal_validation_payload = _read_optional_json(signal_validation_path)
+    window_validation_payload = _read_optional_json(window_validation_path)
+    signal_summary = _mapping(signal_payload.get("summary"))
+    window_summary = _mapping(window_payload.get("summary"))
+    signal_status = _text(
+        signal_payload.get("status"),
+        _text(signal_summary.get("signal_robustness_status"), "MISSING"),
+    )
+    window_status = _text(
+        window_payload.get("status"),
+        _text(window_summary.get("window_sensitivity_status"), "MISSING"),
+    )
+    signal_validation_status = _text(
+        signal_validation_payload.get("status"),
+        _text(
+            _mapping(signal_validation_payload.get("summary")).get(
+                "validation_status"
+            ),
+            "MISSING",
+        ),
+    )
+    window_validation_status = _text(
+        window_validation_payload.get("status"),
+        _text(
+            _mapping(window_validation_payload.get("summary")).get(
+                "validation_status"
+            ),
+            "MISSING",
+        ),
+    )
+    availability = "AVAILABLE" if signal_payload and window_payload else "PARTIAL"
+    return {
+        "availability": availability,
+        "signal_status": signal_status,
+        "window_status": window_status,
+        "signal_validation_status": signal_validation_status,
+        "window_validation_status": window_validation_status,
+        "source_signal_binding_status": _text(
+            signal_summary.get("source_signal_binding_status"),
+            "MISSING",
+        ),
+        "source_backfill_status": _text(
+            window_summary.get("source_backfill_status"),
+            "MISSING",
+        ),
+        "backfill_signal_completeness": _text(
+            signal_summary.get("backfill_signal_completeness"),
+            "MISSING",
+        ),
+        "signal_blocking_check_count": _int(
+            signal_summary.get("blocking_check_count")
+        ),
+        "signal_warning_check_count": _int(signal_summary.get("warning_check_count")),
+        "window_weak_split_count": _int(window_summary.get("weak_split_count")),
+        "window_partial_static_proxy_split_count": _int(
+            window_summary.get("partial_static_proxy_split_count")
+        ),
+        "window_unavailable_split_count": _int(
+            window_summary.get("unavailable_split_count")
+        ),
+        "overfit_risk": _text(window_summary.get("overfit_risk"), "MISSING"),
+        "next_action": _text(
+            window_payload.get("next_action"),
+            _text(signal_payload.get("next_action"), "MISSING"),
+        ),
+        "signal_detail_report": "" if signal_path is None else str(signal_path),
+        "window_detail_report": "" if window_path is None else str(window_path),
+        "signal_validation_detail_report": ""
+        if signal_validation_path is None
+        else str(signal_validation_path),
+        "window_validation_detail_report": ""
+        if window_validation_path is None
+        else str(window_validation_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"signal={signal_status}; window={window_status}; "
+            f"overfit_risk={_text(window_summary.get('overfit_risk'), 'MISSING')}; "
+            f"signal_blocks={_int(signal_summary.get('blocking_check_count'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads generated TRADING-467 research artifacts; it "
+            "does not activate paper-shadow, write official weights, append owner "
+            "decisions, or create broker/order artifacts."
+        ),
+    }
+
+
+def _missing_next_candidate_signal_window_sensitivity_summary(
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "signal_status": "MISSING",
+        "window_status": "MISSING",
+        "signal_validation_status": "MISSING",
+        "window_validation_status": "MISSING",
+        "source_signal_binding_status": "MISSING",
+        "source_backfill_status": "MISSING",
+        "backfill_signal_completeness": "MISSING",
+        "signal_blocking_check_count": 0,
+        "signal_warning_check_count": 0,
+        "window_weak_split_count": 0,
+        "window_partial_static_proxy_split_count": 0,
+        "window_unavailable_split_count": 0,
+        "overfit_risk": "MISSING",
+        "next_action": "run_aits_reports_next_candidate_signal_and_window_sensitivity",
+        "signal_detail_report": "",
+        "window_detail_report": "",
+        "signal_validation_detail_report": "",
+        "window_validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_signal_robustness_review / "
+            "next_candidate_overfit_window_sensitivity artifacts missing; run "
+            "TRADING-467 reports."
         ),
         "limitation": reason,
     }
@@ -25953,22 +26201,24 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_vs_returned_candidate_comparison": 266,
         "next_candidate_vs_returned_candidate_comparison_validation": 267,
         "next_candidate_signal_robustness_review": 268,
-        "next_candidate_overfit_window_sensitivity": 269,
-        "next_candidate_research_gate": 270,
-        "next_candidate_owner_research_review_packet": 271,
-        "next_candidate_research_cycle_snapshot": 272,
-        "next_candidate_research_cycle_snapshot_validation": 273,
-        "next_candidate_executable_binding_contract": 274,
-        "next_candidate_executable_binding_contract_validation": 275,
-        "next_candidate_signal_binding": 276,
-        "next_candidate_signal_binding_validation": 277,
-        "next_candidate_research_weight_binding": 278,
-        "next_candidate_research_weight_binding_validation": 279,
-        "executable_binding_safety_audit": 280,
-        "executable_binding_safety_audit_validation": 281,
-        "report_quality_gate": 282,
-        "reader_brief_quality": 283,
-        "artifact_catalog": 284,
+        "next_candidate_signal_robustness_review_validation": 269,
+        "next_candidate_overfit_window_sensitivity": 270,
+        "next_candidate_overfit_window_sensitivity_validation": 271,
+        "next_candidate_research_gate": 272,
+        "next_candidate_owner_research_review_packet": 273,
+        "next_candidate_research_cycle_snapshot": 274,
+        "next_candidate_research_cycle_snapshot_validation": 275,
+        "next_candidate_executable_binding_contract": 276,
+        "next_candidate_executable_binding_contract_validation": 277,
+        "next_candidate_signal_binding": 278,
+        "next_candidate_signal_binding_validation": 279,
+        "next_candidate_research_weight_binding": 280,
+        "next_candidate_research_weight_binding_validation": 281,
+        "executable_binding_safety_audit": 282,
+        "executable_binding_safety_audit_validation": 283,
+        "report_quality_gate": 284,
+        "reader_brief_quality": 285,
+        "artifact_catalog": 286,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -26196,10 +26446,17 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "确认 vs-returned comparison 披露 repeated failure modes 和安全边界。"
         ),
         "next_candidate_signal_robustness_review": (
-            "查看 executable signal inputs 缺失是否阻塞 signal robustness。"
+            "查看 executable signal binding 对 missing/partial/stale/schema/coverage "
+            "输入是否 fail-closed。"
+        ),
+        "next_candidate_signal_robustness_review_validation": (
+            "确认 signal robustness 使用 TRADING-467 taxonomy、源 binding 状态和安全边界。"
         ),
         "next_candidate_overfit_window_sensitivity": (
-            "检查下一候选是否只依赖窄窗口；缺 window metrics 时 fail closed。"
+            "检查 executable backfill window metrics 是否显示 fragile/overfit 风险。"
+        ),
+        "next_candidate_overfit_window_sensitivity_validation": (
+            "确认 window sensitivity 有真实 split metrics、fragility disclosure 和安全边界。"
         ),
         "next_candidate_research_gate": (
             "查看下一候选 research gate 决策；该 gate 不能开启 paper-shadow。"
@@ -26350,6 +26607,26 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Vs-returned comparison 生成后立即校验 repeated failure disclosure。",
+    ),
+    "next_candidate_signal_robustness_review": (
+        "manual",
+        "manual research cycle",
+        "TRADING-467 在 executable signal binding 和 backfill metrics 后运行。",
+    ),
+    "next_candidate_signal_robustness_review_validation": (
+        "manual",
+        "manual research cycle",
+        "Signal robustness artifact 生成后立即校验 fail-closed disclosure。",
+    ),
+    "next_candidate_overfit_window_sensitivity": (
+        "manual",
+        "manual research cycle",
+        "TRADING-467 在 binding-backed backfill metrics 后评估 window stability。",
+    ),
+    "next_candidate_overfit_window_sensitivity_validation": (
+        "manual",
+        "manual research cycle",
+        "Window sensitivity artifact 生成后立即校验 split metrics 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

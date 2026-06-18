@@ -111,6 +111,27 @@ WINDOW_SENSITIVITY_SPLITS: tuple[str, ...] = (
     "stress_heavy_window",
     "calm_market_window",
 )
+# TRADING-467 diagnostic window groupings are fixed audit buckets for sensitivity
+# review. They do not promote a candidate and rely on the TRADING-465 diagnostic
+# drawdown bands already used by stress review.
+WINDOW_SENSITIVITY_WINDOW_MAP: dict[str, tuple[str, ...]] = {
+    "early_window": (
+        "normal_market_regime",
+        "high_volatility_sideways_market",
+        "false_risk_off_cluster",
+    ),
+    "middle_window": (
+        "rapid_drawdown",
+        "ai_semiconductor_correction",
+    ),
+    "recent_window": ("slow_drawdown",),
+    "stress_heavy_window": (
+        "rapid_drawdown",
+        "slow_drawdown",
+        "ai_semiconductor_correction",
+    ),
+    "calm_market_window": ("normal_market_regime",),
+}
 
 LATEST_PROJECT_ARTIFACT_GLOBS: dict[str, tuple[str, ...]] = {
     "stress_scenario_library": (
@@ -203,6 +224,7 @@ def build_next_research_cycle_payloads(
     )
     signal = build_next_candidate_signal_robustness_review_payload(
         as_of=as_of,
+        reports_dir=reports_dir,
         project_root=project_root,
         frozen_spec_payload=frozen,
         backfill_payload=backfill,
@@ -1137,27 +1159,90 @@ def build_next_candidate_vs_returned_comparison_payload(
 def build_next_candidate_signal_robustness_review_payload(
     *,
     as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
     project_root: Path = PROJECT_ROOT,
     frozen_spec_payload: Mapping[str, Any],
     backfill_payload: Mapping[str, Any],
+    signal_binding_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     sources = _load_project_sources(project_root)
     signal_source = _mapping(sources.get("signal_input_completeness"))
-    frozen_spec = _mapping(frozen_spec_payload.get("frozen_candidate_spec"))
-    executable_ready = _text(frozen_spec.get("executable_signal_binding_status")) == "AVAILABLE"
+    if signal_binding_payload is None:
+        signal_binding_path = binding_reports.default_executable_binding_json_path(
+            binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+            reports_dir,
+            as_of,
+        )
+        signal_binding_payload = (
+            _read_json_mapping(signal_binding_path)
+            if signal_binding_path.exists()
+            else {}
+        )
+    signal_summary = _mapping(signal_binding_payload.get("summary"))
+    signal_findings = _records(signal_binding_payload.get("signal_input_findings"))
+    signal_rows = _records(signal_binding_payload.get("candidate_signal_series"))
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    warning_reasons = _list_values(signal_binding_payload.get("warning_reasons"))
     checks = [
-        _signal_check("missing_feature_columns", executable_ready, signal_source),
-        _signal_check("partial_signal_series", executable_ready, signal_source),
-        _signal_check("stale_signal_series", executable_ready, signal_source),
-        _signal_check("schema_version_mismatch", executable_ready, signal_source),
-        _signal_check("market_coverage_gap", executable_ready, signal_source),
+        _signal_robustness_check(
+            "missing_feature_columns",
+            blocked=_signal_missing_feature_columns(signal_findings),
+            warning=False,
+            evidence="required feature/signal columns present in signal binding findings",
+        ),
+        _signal_robustness_check(
+            "partial_signal_series",
+            blocked=_text(backfill_summary.get("signal_completeness")) != "COMPLETE",
+            warning=False,
+            evidence=(
+                f"signal_row_count={signal_summary.get('signal_row_count')}; "
+                f"backfill_signal_completeness={backfill_summary.get('signal_completeness')}"
+            ),
+        ),
+        _signal_robustness_check(
+            "stale_signal_series",
+            blocked="signal_date_outside_frozen_validation_windows" in warning_reasons,
+            warning=_signal_staleness_warning(signal_findings),
+            evidence=(
+                f"latest_signal_date={signal_summary.get('latest_signal_date')}; "
+                f"warning_reasons={','.join(warning_reasons)}"
+            ),
+        ),
+        _signal_robustness_check(
+            "schema_version_mismatch",
+            blocked=_signal_schema_mismatch(signal_findings),
+            warning=False,
+            evidence="schema and feature versions inspected from signal binding findings",
+        ),
+        _signal_robustness_check(
+            "market_coverage_gap",
+            blocked=_signal_market_coverage_gap(signal_findings, backfill_payload),
+            warning=False,
+            evidence=f"missing_data_count={backfill_summary.get('missing_data_count')}",
+        ),
     ]
     blocking = [row for row in checks if row["status"] == "BLOCKING"]
-    status = "SIGNAL_ROBUSTNESS_BLOCKED" if blocking else "SIGNAL_ROBUSTNESS_READY"
+    warnings = [row for row in checks if row["status"] == "WARNING"]
+    status = (
+        "SIGNAL_ROBUSTNESS_BLOCKED"
+        if blocking
+        else "SIGNAL_ROBUSTNESS_WARNING"
+        if warnings
+        else "SIGNAL_ROBUSTNESS_PASS"
+    )
     summary = {
         "signal_robustness_status": status,
+        "source_signal_binding_status": _text(signal_binding_payload.get("status"), "MISSING"),
+        "signal_row_count": len(signal_rows),
+        "signal_input_status": _text(signal_summary.get("signal_input_status"), "MISSING"),
+        "backfill_signal_completeness": _text(backfill_summary.get("signal_completeness")),
+        "historical_signal_series_available": _text(
+            backfill_summary.get("signal_completeness")
+        )
+        == "COMPLETE",
         "fail_closed_behavior": True,
         "blocking_check_count": len(blocking),
+        "warning_check_count": len(warnings),
         "sensitivity_to_missing_inputs": "HIGH" if blocking else "LOW",
         "required_monitoring_field_count": 5,
         "production_effect": PRODUCTION_EFFECT,
@@ -1170,6 +1255,7 @@ def build_next_candidate_signal_robustness_review_payload(
         input_artifacts={
             "next_candidate_spec_frozen": _artifact_id(frozen_spec_payload),
             "next_candidate_backfill": _artifact_id(backfill_payload),
+            "next_candidate_signal_binding": _artifact_id(signal_binding_payload),
             **_source_paths({"signal_input_completeness": signal_source}),
         },
         output_decision=status,
@@ -1189,15 +1275,18 @@ def build_next_candidate_signal_robustness_review_payload(
             },
         },
         reader_brief=_reader_brief(
-            summary="Signal robustness is blocked until executable signal inputs exist.",
+            summary=f"Signal robustness is {status} from executable binding inputs.",
             key_result=status,
             blocking_issues=_issue_names(blocking, "check_id"),
-            warnings="signal completeness rules remain unchanged",
-            next_action="provide_executable_signal_binding_and_rerun_completeness",
+            warnings=_issue_names(warnings, "check_id"),
+            next_action="review_window_sensitivity_before_research_gate",
         ),
-        next_action="provide_executable_signal_binding_and_rerun_completeness",
+        next_action="review_window_sensitivity_before_research_gate",
         safety_boundary=_safety_boundary(),
-        limitations=["Review does not relax signal completeness rules."],
+        limitations=[
+            "Review does not relax signal completeness rules.",
+            "One latest signal row is not a historical signal series for backfill windows.",
+        ],
         requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
     )
 
@@ -1208,24 +1297,72 @@ def build_next_candidate_window_sensitivity_payload(
     frozen_spec_payload: Mapping[str, Any],
     backfill_payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    backfill_status = _text(
-        _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
-    )
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    backfill_status = _text(backfill_summary.get("candidate_backfill_status"))
     backfill_ready = _backfill_metrics_available(backfill_status)
-    frozen_spec = _mapping(frozen_spec_payload.get("frozen_candidate_spec"))
-    windows = _records(frozen_spec.get("validation_windows"))
+    backfill_windows = _records(backfill_payload.get("backfill_windows"))
+    windows_by_id = {_text(row.get("window_id")): row for row in backfill_windows}
     splits = [
-        _window_sensitivity_split(split_id, windows, backfill_ready=backfill_ready)
+        _window_sensitivity_split(
+            split_id,
+            windows_by_id,
+            backfill_ready=backfill_ready,
+        )
         for split_id in WINDOW_SENSITIVITY_SPLITS
     ]
-    status = "WINDOW_MIXED" if backfill_ready else "WINDOW_FRAGILE"
+    weak_splits = [row for row in splits if row["status"] == "WEAK"]
+    partial_splits = [row for row in splits if row["status"] == "PARTIAL_STATIC_PROXY"]
+    unavailable_splits = [row for row in splits if row["status"] == "METRICS_UNAVAILABLE"]
+    mixed_splits = [row for row in splits if row["status"] == "MIXED"]
+    status = (
+        "WINDOW_FRAGILE"
+        if weak_splits or partial_splits or unavailable_splits
+        else "WINDOW_MIXED"
+        if mixed_splits
+        else "WINDOW_STABLE"
+    )
+    performance_values = [
+        _float(row.get("average_return_proxy"))
+        for row in splits
+        if row.get("average_return_proxy") is not None
+    ]
+    turnover_values = [
+        _float(row.get("average_turnover_proxy"))
+        for row in splits
+        if row.get("average_turnover_proxy") is not None
+    ]
+    drawdown_values = [
+        _float(row.get("worst_drawdown_proxy"))
+        for row in splits
+        if row.get("worst_drawdown_proxy") is not None
+    ]
+    false_flip_values = [
+        _int(row.get("false_flip_proxy"))
+        for row in splits
+        if row.get("false_flip_proxy") is not None
+    ]
+    blocking_issue_ids = [
+        _text(row.get("window_split_id"))
+        for row in [*weak_splits, *partial_splits, *unavailable_splits]
+    ]
+    warning_issue_ids = [_text(row.get("window_split_id")) for row in mixed_splits]
+    overfit_risk = "HIGH" if status == "WINDOW_FRAGILE" else "MEDIUM" if mixed_splits else "LOW"
     summary = {
         "window_sensitivity_status": status,
+        "source_backfill_status": backfill_status,
+        "source_backfill_metric_mode": _text(backfill_summary.get("backfill_metric_mode")),
         "split_count": len(splits),
-        "performance_dispersion": None,
-        "turnover_dispersion": None,
-        "drawdown_behavior_dispersion": None,
-        "false_flip_dispersion": None,
+        "weak_split_count": len(weak_splits),
+        "partial_static_proxy_split_count": len(partial_splits),
+        "unavailable_split_count": len(unavailable_splits),
+        "mixed_split_count": len(mixed_splits),
+        "performance_dispersion": _range_or_none(performance_values),
+        "turnover_dispersion": _range_or_none(turnover_values),
+        "drawdown_behavior_dispersion": _range_or_none(drawdown_values),
+        "false_flip_dispersion": _range_or_none(false_flip_values),
+        "overfit_risk": overfit_risk,
+        "blocking_conditions": "; ".join(blocking_issue_ids) or "none",
+        "warning_conditions": "; ".join(warning_issue_ids) or "none",
         "production_effect": PRODUCTION_EFFECT,
     }
     return _payload(
@@ -1241,29 +1378,41 @@ def build_next_candidate_window_sensitivity_payload(
         summary=summary,
         body={
             "window_splits": splits,
-            "blocking_issues": (
-                [
-                    {
-                        "issue_id": "window_metrics_unavailable",
-                        "recommended_action": (
-                            "complete_executable_backfill_before_window_sensitivity"
-                        ),
-                    }
-                ]
-                if not backfill_ready
-                else []
-            ),
+            "blocking_issues": [
+                {
+                    "issue_id": issue_id,
+                    "recommended_action": "complete_dynamic_binding_before_window_stability_claim",
+                }
+                for issue_id in blocking_issue_ids
+            ],
+            "warning_issues": [
+                {
+                    "issue_id": issue_id,
+                    "recommended_action": "review_window_metric_dispersion",
+                }
+                for issue_id in warning_issue_ids
+            ],
         },
         reader_brief=_reader_brief(
-            summary="Window sensitivity is fragile until window metrics exist.",
+            summary=(
+                f"Window sensitivity is {status}; overfit risk is {overfit_risk} "
+                "from executable backfill window metrics."
+            ),
             key_result=status,
-            blocking_issues="window_metrics_unavailable" if not backfill_ready else "none",
-            warnings="does_not_promote_narrow_window_result",
-            next_action="complete_backfill_before_window_stability_claim",
+            blocking_issues=summary["blocking_conditions"],
+            warnings=summary["warning_conditions"],
+            next_action="rerun_research_gate_with_signal_and_window_reviews",
         ),
-        next_action="complete_backfill_before_window_stability_claim",
+        next_action="rerun_research_gate_with_signal_and_window_reviews",
         safety_boundary=_safety_boundary(),
-        limitations=["No stability claim is made without executable backfill metrics."],
+        limitations=[
+            "Window sensitivity uses research-only executable backfill metrics.",
+            (
+                "Partial static-proxy windows remain fragile because historical "
+                "dynamic signal/weight rows are unavailable."
+            ),
+            "No window result can activate paper-shadow or official weights.",
+        ],
         requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
     )
 
@@ -1805,6 +1954,94 @@ def validate_next_research_cycle_payload(
                 ),
                 "Benchmark underperformance must be marked as a repeated failure mode.",
                 "restore_repeated_benchmark_failure_disclosure",
+            )
+    if report_type == SIGNAL_ROBUSTNESS_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        robustness_status = _text(payload.get("status"))
+        quality_checks = _records(payload.get("signal_quality_checks"))
+        checks_by_id = {_text(row.get("check_id")): row for row in quality_checks}
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_signal_robustness_status",
+            robustness_status
+            in {
+                "SIGNAL_ROBUSTNESS_PASS",
+                "SIGNAL_ROBUSTNESS_WARNING",
+                "SIGNAL_ROBUSTNESS_BLOCKED",
+            },
+            "Signal robustness status must use TRADING-467 taxonomy.",
+            "restore_signal_robustness_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "signal_quality_checks_present",
+            bool(quality_checks),
+            "Signal robustness review must include signal quality checks.",
+            "restore_signal_quality_checks",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "source_signal_binding_status_visible",
+            bool(_text(summary.get("source_signal_binding_status"))),
+            "Signal robustness review must disclose source signal binding status.",
+            "restore_signal_binding_status_disclosure",
+        )
+        if _text(summary.get("backfill_signal_completeness")) != "COMPLETE":
+            _append_check(
+                checks,
+                blocking_issues,
+                "partial_signal_series_fail_closed",
+                _text(checks_by_id.get("partial_signal_series", {}).get("status"))
+                == "BLOCKING",
+                "Partial signal series must fail closed.",
+                "restore_partial_signal_series_blocker",
+            )
+    if report_type == WINDOW_SENSITIVITY_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        window_status = _text(payload.get("status"))
+        window_splits = _records(payload.get("window_splits"))
+        source_backfill_status = _text(summary.get("source_backfill_status"))
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_window_sensitivity_status",
+            window_status in {"WINDOW_STABLE", "WINDOW_MIXED", "WINDOW_FRAGILE"},
+            "Window sensitivity status must use TRADING-467 taxonomy.",
+            "restore_window_sensitivity_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "window_splits_present",
+            bool(window_splits),
+            "Window sensitivity review must include window split rows.",
+            "restore_window_splits",
+        )
+        if source_backfill_status in CANDIDATE_BACKFILL_METRIC_STATUSES:
+            _append_check(
+                checks,
+                blocking_issues,
+                "window_metrics_present",
+                all(
+                    row.get("average_return_proxy") is not None
+                    and row.get("worst_drawdown_proxy") is not None
+                    for row in window_splits
+                ),
+                "Backfill-backed window sensitivity must include real split metrics.",
+                "restore_window_split_metrics",
+            )
+        if window_status == "WINDOW_FRAGILE":
+            _append_check(
+                checks,
+                blocking_issues,
+                "fragility_conditions_visible",
+                _text(summary.get("overfit_risk")) == "HIGH"
+                and _text(summary.get("blocking_conditions"), "none") != "none",
+                "Fragile window sensitivity must disclose overfit risk and blockers.",
+                "restore_window_fragility_disclosure",
             )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
@@ -3046,41 +3283,154 @@ def _comparison_issue_names(
     return "; ".join(name for name in names if name) or "none"
 
 
-def _signal_check(
+def _signal_robustness_check(
     check_id: str,
-    executable_ready: bool,
-    signal_source: Mapping[str, Any],
+    *,
+    blocked: bool,
+    warning: bool,
+    evidence: str,
 ) -> dict[str, Any]:
+    status = "BLOCKING" if blocked else "WARNING" if warning else "PASS"
     return {
         "check_id": check_id,
-        "status": "PASS" if executable_ready else "BLOCKING",
-        "source_available": bool(signal_source.get("available")),
-        "source_artifact_path": _text(signal_source.get("path")),
+        "status": status,
+        "evidence": evidence,
         "fail_closed": True,
         "signal_completeness_rules_relaxed": False,
         "recommended_action": (
-            "review_signal_completeness_output"
-            if executable_ready
-            else "provide_executable_candidate_signal_series"
+            "repair_signal_binding_inputs"
+            if blocked
+            else "monitor_signal_binding_warning"
+            if warning
+            else "retain_signal_binding_evidence"
         ),
         "production_effect": PRODUCTION_EFFECT,
     }
 
 
+def _signal_missing_feature_columns(findings: Sequence[Mapping[str, Any]]) -> bool:
+    return any(
+        _list_values(row.get("missing_required_columns"))
+        for row in findings
+        if _text(row.get("input_id")) in {"etf_feature_matrix", "etf_signal_series"}
+    )
+
+
+def _signal_schema_mismatch(findings: Sequence[Mapping[str, Any]]) -> bool:
+    return any(
+        _list_values(row.get("incompatible_schema_versions"))
+        or _list_values(row.get("incompatible_feature_versions"))
+        for row in findings
+    )
+
+
+def _signal_staleness_warning(findings: Sequence[Mapping[str, Any]]) -> bool:
+    return any(
+        _text(row.get("stale_reason")) not in {"", "within_policy_window"}
+        for row in findings
+    )
+
+
+def _signal_market_coverage_gap(
+    findings: Sequence[Mapping[str, Any]],
+    backfill_payload: Mapping[str, Any],
+) -> bool:
+    finding_gap = any(
+        _list_values(row.get("missing_coverage_values"))
+        for row in findings
+    )
+    window_missing = [
+        item
+        for row in _records(backfill_payload.get("backfill_windows"))
+        for item in _list_values(row.get("missing_data_list"))
+    ]
+    historical_gap = any(
+        _text(item).startswith("historical_signal_series:")
+        for item in [*_list_values(backfill_payload.get("missing_data_list")), *window_missing]
+    )
+    return finding_gap or historical_gap
+
+
+def _range_or_none(values: Sequence[float | int]) -> float | int | None:
+    if not values:
+        return None
+    return _round_float(max(values) - min(values))
+
+
 def _window_sensitivity_split(
     split_id: str,
-    windows: Sequence[Mapping[str, Any]],
+    windows_by_id: Mapping[str, Mapping[str, Any]],
     *,
     backfill_ready: bool,
 ) -> dict[str, Any]:
+    source_ids = WINDOW_SENSITIVITY_WINDOW_MAP.get(split_id, ())
+    rows = [windows_by_id[window_id] for window_id in source_ids if window_id in windows_by_id]
+    metric_rows = [
+        row
+        for row in rows
+        if row.get("return_proxy") is not None and row.get("drawdown_proxy") is not None
+    ]
+    if not backfill_ready or not metric_rows:
+        return {
+            "window_split_id": split_id,
+            "source_windows": list(source_ids),
+            "available_source_windows": [_text(row.get("window_id")) for row in rows],
+            "status": "METRICS_UNAVAILABLE",
+            "average_return_proxy": None,
+            "average_turnover_proxy": None,
+            "worst_drawdown_proxy": None,
+            "false_flip_proxy": None,
+            "rotation_proxy": None,
+            "metric_window_count": 0,
+            "partial_window_count": 0,
+            "evaluation": "Executable backfill metrics are unavailable for this split.",
+            "recommended_action": "complete_executable_backfill_before_window_sensitivity",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    returns = [_float(row.get("return_proxy")) for row in metric_rows]
+    drawdowns = [_float(row.get("drawdown_proxy")) for row in metric_rows]
+    turnovers = [_float(row.get("turnover")) for row in metric_rows]
+    false_flips = [_int(row.get("false_risk_off_count")) for row in metric_rows]
+    rotations = [_int(row.get("rotation_count")) for row in metric_rows]
+    partial_count = len(
+        [row for row in metric_rows if _text(row.get("backfill_window_status")) == "PARTIAL"]
+    )
+    average_return = _round_float(sum(returns) / len(returns))
+    worst_drawdown = _round_float(min(drawdowns))
+    average_turnover = _round_float(sum(turnovers) / len(turnovers))
+    if worst_drawdown <= STRESS_BLOCKING_DRAWDOWN_PROXY:
+        status = "WEAK"
+        evaluation = "Worst drawdown proxy breaches conservative stress blocker."
+        recommended_action = "repair_or_revise_candidate_before_research_gate"
+    elif partial_count:
+        status = "PARTIAL_STATIC_PROXY"
+        evaluation = "Metrics exist but rely on partial static binding evidence."
+        recommended_action = "complete_dynamic_binding_before_window_stability_claim"
+    elif worst_drawdown <= STRESS_WARNING_DRAWDOWN_PROXY or average_return < 0:
+        status = "MIXED"
+        evaluation = "Return/drawdown proxy is mixed in this diagnostic split."
+        recommended_action = "review_window_metric_dispersion"
+    else:
+        status = "STABLE"
+        evaluation = "Return/drawdown proxy is stable within the diagnostic band."
+        recommended_action = "retain_window_sensitivity_evidence"
     return {
         "window_split_id": split_id,
-        "source_windows": [_text(row.get("window_id")) for row in windows],
-        "status": "READY" if backfill_ready else "METRICS_UNAVAILABLE",
-        "performance_proxy": None,
-        "turnover_proxy": None,
-        "drawdown_behavior_proxy": None,
-        "false_flip_proxy": None,
+        "source_windows": list(source_ids),
+        "available_source_windows": [_text(row.get("window_id")) for row in rows],
+        "status": status,
+        "average_return_proxy": average_return,
+        "average_turnover_proxy": average_turnover,
+        "worst_drawdown_proxy": worst_drawdown,
+        "false_flip_proxy": sum(false_flips),
+        "rotation_proxy": sum(rotations),
+        "metric_window_count": len(metric_rows),
+        "partial_window_count": partial_count,
+        "evaluation": evaluation,
+        "recommended_action": recommended_action,
+        "performance_proxy": average_return,
+        "turnover_proxy": average_turnover,
+        "drawdown_behavior_proxy": worst_drawdown,
         "production_effect": PRODUCTION_EFFECT,
     }
 

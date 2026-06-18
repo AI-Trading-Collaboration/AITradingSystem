@@ -1923,6 +1923,22 @@ warning，signal robustness 仍受 partial static binding 限制。该 compariso
 不触发 broker/order、不修改 production。Reader Brief 只读展示
 `next_candidate_vs_returned_comparison` 摘要。
 
+TRADING-467_RERUN_SIGNAL_ROBUSTNESS_AND_WINDOW_SENSITIVITY 用 executable signal binding
+和 TRADING-464 real backfill window metrics 重新评估 signal robustness 与 window sensitivity。
+运行 `aits reports next-candidate-signal-robustness-review --as-of YYYY-MM-DD`、
+`aits reports validate-next-candidate-signal-robustness-review --latest`、
+`aits reports next-candidate-overfit-window-sensitivity --as-of YYYY-MM-DD` 和
+`aits reports validate-next-candidate-overfit-window-sensitivity --latest` 会生成
+`next_candidate_signal_robustness_review`、`next_candidate_signal_robustness_review_validation`、
+`next_candidate_overfit_window_sensitivity` 和
+`next_candidate_overfit_window_sensitivity_validation` artifacts。2026-06-17 真实 rerun 输出
+`SIGNAL_ROBUSTNESS_BLOCKED`（blocking checks=3）和 `WINDOW_FRAGILE`
+（`overfit_risk=HIGH`、weak splits=2、partial static proxy splits=3），validations PASS。
+这些报告只解释 research-only evidence，不创建 paper-shadow、不恢复 normal shadow、不批准
+extended/live、不写 official target weights、不 append owner decision、不触发 broker/order、
+不修改 production。Reader Brief 只读展示 combined
+`next_candidate_signal_window_sensitivity` 摘要。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

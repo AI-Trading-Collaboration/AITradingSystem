@@ -253,3 +253,23 @@ Latest confirmed statuses:
   vs-returned comparison summary. No paper-shadow, official weights,
   broker/order, owner decision append, or production mutation were produced.
   Next task is TRADING-467 signal robustness and window sensitivity rerun.
+- 2026-06-18: TRADING-467 started. Implementation must rerun signal robustness
+  and window sensitivity from the executable signal binding, TRADING-464 real
+  backfill window metrics, and current source signal completeness evidence. It
+  must explicitly test missing feature columns, partial signal series, stale
+  signal series, schema mismatch, market coverage gap, early/middle/recent/
+  stress-heavy/calm windows, overfit risk, and blocking conditions. Partial
+  static proxy metrics must remain fragile and must not promote the candidate.
+- 2026-06-18: TRADING-467 completed pending commit. The real 2026-06-17 signal
+  robustness rerun consumed `next_candidate_signal_binding` and TRADING-464
+  backfill metrics, produced `SIGNAL_ROBUSTNESS_BLOCKED`, and validation PASS.
+  Blocking checks count is 3: partial signal series, stale latest-only signal
+  row outside frozen validation windows, and historical market coverage gaps.
+  The window sensitivity rerun consumed real backfill window rows, produced
+  `WINDOW_FRAGILE`, and validation PASS. It reported `overfit_risk=HIGH`,
+  weak splits=2, partial static proxy splits=3, unavailable splits=0,
+  performance dispersion `0.603795`, drawdown dispersion `0.208261`, and no
+  false flip dispersion. Reader Brief now exposes the combined signal/window
+  summary. No paper-shadow, official weights, broker/order, owner decision
+  append, or production mutation were produced. Next task is TRADING-468
+  research gate rerun from executable binding and real metrics.
