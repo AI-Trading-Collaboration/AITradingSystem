@@ -216,3 +216,22 @@ Latest confirmed statuses:
   windows. No paper-shadow, official target weights, broker/order, owner
   decision append, or production mutation were produced. Next task is
   TRADING-465 stress/cost/benchmark rerun from the real backfill metrics.
+- 2026-06-18: TRADING-465 started. Implementation must load the latest complete
+  or partial backfill and rerun stress scenario, drawdown casebook,
+  flip/rotation casebook, cost sensitivity, and benchmark baseline reviews from
+  real metrics. Because the current backfill is partial/static-proxy, stress and
+  benchmark conclusions must remain conservative and must expose major blockers
+  and warnings instead of forcing `RESEARCH_PROMISING`.
+- 2026-06-18: TRADING-465 completed pending commit. `next_candidate_stress_review`
+  now consumes TRADING-464 window metrics and produced `WEAK` on the 2026-06-17
+  real run: 1 blocking scenario (`slow_drawdown`), 5 warnings, worst drawdown
+  proxy `-0.277213`, worst return proxy `-0.150273`, validation PASS.
+  `next_candidate_cost_benchmark_review` now computes cost drag, net proxy, and
+  benchmark deltas from aggregate return proxy `0.006166` and turnover proxy
+  `0.85`; the real run produced `COST_BENCHMARK_REVIEW_WEAK`, cost survival
+  `COST_SURVIVAL_WARNING`, benchmark relative status `BENCHMARK_UNDERPERFORMS`,
+  1 major blocker and 4 warnings, validation PASS. Reader Brief now exposes a
+  combined stress/cost/benchmark summary. All outputs remain research-only and
+  no paper-shadow, official weights, broker/order, owner decision append, or
+  production mutation were produced. Next task is TRADING-466 vs-returned
+  comparison from real metrics.

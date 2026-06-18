@@ -26,6 +26,17 @@ CANDIDATE_BACKFILL_METRIC_STATUSES = {
     CANDIDATE_BACKFILL_COMPLETE,
     CANDIDATE_BACKFILL_PARTIAL,
 }
+# TRADING-465 diagnostic bands are conservative review cutoffs, not promotion
+# thresholds. They only classify blockers/warnings from already-computed metrics.
+STRESS_BLOCKING_DRAWDOWN_PROXY = -0.20
+STRESS_WARNING_DRAWDOWN_PROXY = -0.10
+DEFAULT_COST_MEANINGFUL_THRESHOLD = 0.0025
+DEFAULT_COST_SCENARIOS: tuple[dict[str, Any], ...] = (
+    {"scenario_id": "zero", "label": "Zero Cost", "total_cost_bps": 0.0},
+    {"scenario_id": "low", "label": "Low Cost", "total_cost_bps": 3.0},
+    {"scenario_id": "medium", "label": "Medium Cost", "total_cost_bps": 10.0},
+    {"scenario_id": "high", "label": "High Cost", "total_cost_bps": 25.0},
+)
 
 INTAKE_REPORT_TYPE = "next_research_cycle_intake"
 FROZEN_SPEC_REPORT_TYPE = "next_candidate_spec_frozen"
@@ -720,18 +731,49 @@ def build_next_candidate_stress_review_payload(
     executable_backfill = _backfill_metrics_available(
         _text(backfill_summary.get("candidate_backfill_status"))
     )
+    backfill_windows_by_id = {
+        _text(row.get("window_id")): row
+        for row in _records(backfill_payload.get("backfill_windows"))
+    }
     scenario_reviews = [
-        _stress_scenario_review(window_id, executable_backfill=executable_backfill)
+        _stress_scenario_review(
+            window_id,
+            executable_backfill=executable_backfill,
+            window_metrics=backfill_windows_by_id.get(window_id, {}),
+            backfill_status=_text(backfill_summary.get("candidate_backfill_status")),
+        )
         for window_id in REQUIRED_BACKFILL_WINDOWS
     ]
-    blocking = [row for row in scenario_reviews if row["scenario_status"] == "BLOCKING"]
-    stress_result = "WEAK" if blocking else "MIXED"
+    blocking = [
+        row for row in scenario_reviews if row["scenario_status"] in {"BLOCKING", "FAIL"}
+    ]
+    warnings = [row for row in scenario_reviews if row["scenario_status"] == "WARNING"]
+    stress_result = (
+        "WEAK"
+        if blocking
+        else "MIXED_WITH_WARNINGS"
+        if warnings
+        else "STRESS_REVIEW_PASS"
+    )
     summary = {
         "stress_result": stress_result,
         "candidate_id": _candidate_id_from_frozen(frozen_spec_payload),
         "scenario_count": len(scenario_reviews),
         "blocking_scenario_count": len(blocking),
-        "warning_scenario_count": 0,
+        "warning_scenario_count": len(warnings),
+        "source_backfill_status": _text(backfill_summary.get("candidate_backfill_status")),
+        "partial_static_proxy": _text(backfill_summary.get("backfill_metric_mode"))
+        == "static_hypothetical_research_weight_proxy",
+        "worst_drawdown_proxy": min(
+            [_float(row.get("drawdown_proxy")) for row in scenario_reviews],
+            default=0.0,
+        ),
+        "worst_return_proxy": min(
+            [_float(row.get("return_proxy")) for row in scenario_reviews],
+            default=0.0,
+        ),
+        "major_blocker_count": len(blocking),
+        "major_warning_count": len(warnings),
         "market_regime": MARKET_REGIME,
         "requested_date_range": _text(backfill_summary.get("requested_date_range")),
         "production_effect": PRODUCTION_EFFECT,
@@ -754,22 +796,30 @@ def build_next_candidate_stress_review_payload(
         body={
             "scenario_reviews": scenario_reviews,
             "blocking_scenarios": blocking,
-            "warning_scenarios": [],
+            "warning_scenarios": warnings,
             "reusable_positive_evidence": _reusable_positive_stress_evidence(sources),
             "failure_cases": blocking,
+            "major_blockers": [
+                {"issue_id": _text(row.get("scenario_id")), "reason": row.get("evaluation")}
+                for row in blocking
+            ],
+            "major_warnings": [
+                {"issue_id": _text(row.get("scenario_id")), "reason": row.get("evaluation")}
+                for row in warnings
+            ],
         },
         reader_brief=_reader_brief(
-            summary=f"Stress review is {stress_result}; executable backfill is required.",
+            summary=f"Stress review is {stress_result} from binding-backed backfill metrics.",
             key_result=stress_result,
             blocking_issues=_issue_names(blocking, "scenario_id"),
-            warnings="none",
-            next_action="resolve_backfill_binding_before_stress_conclusion",
+            warnings=_issue_names(warnings, "scenario_id"),
+            next_action="review_cost_benchmark_after_stress_metrics",
         ),
-        next_action="resolve_backfill_binding_before_stress_conclusion",
+        next_action="review_cost_benchmark_after_stress_metrics",
         safety_boundary=_safety_boundary(),
         limitations=[
             "Stress review does not optimize the candidate.",
-            "Unavailable backfill metrics block strong stress conclusions.",
+            "Partial static-proxy backfill metrics cannot prove full dynamic robustness.",
         ],
         requested_date_range=summary["requested_date_range"],
     )
@@ -790,28 +840,81 @@ def build_next_candidate_cost_benchmark_review_payload(
         _mapping(backfill_payload.get("summary")).get("candidate_backfill_status")
     )
     backfill_ready = _backfill_metrics_available(backfill_status)
-    scenario_rows = _cost_scenario_reviews(cost_payload, backfill_ready=backfill_ready)
-    baseline_rows = _benchmark_reviews(benchmark_payload, backfill_ready=backfill_ready)
+    scenario_rows = _cost_scenario_reviews(
+        cost_payload,
+        backfill_payload=backfill_payload,
+        backfill_ready=backfill_ready,
+    )
+    baseline_rows = _benchmark_reviews(
+        benchmark_payload,
+        backfill_payload=backfill_payload,
+        backfill_ready=backfill_ready,
+    )
+    cost_blockers = [
+        row
+        for row in scenario_rows
+        if _text(row.get("cost_survival_status")) in {"COST_SURVIVAL_FAIL", "UNTESTED"}
+    ]
+    cost_warnings = [
+        row
+        for row in scenario_rows
+        if _text(row.get("cost_survival_status")) == "COST_SURVIVAL_WARNING"
+    ]
+    benchmark_blockers = [
+        row
+        for row in baseline_rows
+        if _text(row.get("benchmark_relative_status"))
+        in {"BENCHMARK_UNDERPERFORMS", "UNTESTED"}
+    ]
+    benchmark_warnings = [
+        row
+        for row in baseline_rows
+        if _text(row.get("benchmark_relative_status")) == "BENCHMARK_MIXED"
+    ]
     status = (
-        "COST_BENCHMARK_REVIEW_READY"
+        "COST_BENCHMARK_REVIEW_WEAK"
+        if cost_blockers or benchmark_blockers
+        else "COST_BENCHMARK_REVIEW_MIXED"
+        if cost_warnings or benchmark_warnings or backfill_status == CANDIDATE_BACKFILL_PARTIAL
+        else "COST_BENCHMARK_REVIEW_PASS"
+    )
+    cost_survival_status = (
+        "COST_SURVIVAL_UNTESTED_WITHOUT_EXECUTABLE_BACKFILL"
+        if not backfill_ready
+        else "COST_SURVIVAL_FAIL"
+        if cost_blockers
+        else "COST_SURVIVAL_WARNING"
+        if cost_warnings or backfill_status == CANDIDATE_BACKFILL_PARTIAL
+        else "COST_SURVIVAL_PASS"
+    )
+    benchmark_relative_status = (
+        "RELATIVE_STATUS_UNTESTED_WITHOUT_EXECUTABLE_BACKFILL"
+        if not backfill_ready
+        else "BENCHMARK_UNDERPERFORMS"
+        if benchmark_blockers
+        else "BENCHMARK_MIXED"
+        if benchmark_warnings or backfill_status == CANDIDATE_BACKFILL_PARTIAL
+        else "BENCHMARK_OUTPERFORMS"
+    )
+    status = (
+        status
         if backfill_ready
         else "COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL"
     )
     summary = {
-        "cost_survival_status": (
-            "SURVIVAL_UNTESTED_WITHOUT_EXECUTABLE_BACKFILL"
-            if not backfill_ready
-            else "READY_FOR_INTERPRETATION"
-        ),
-        "benchmark_relative_status": (
-            "RELATIVE_STATUS_UNTESTED_WITHOUT_EXECUTABLE_BACKFILL"
-            if not backfill_ready
-            else "READY_FOR_INTERPRETATION"
-        ),
-        "turnover_penalty": None,
+        "cost_survival_status": cost_survival_status,
+        "benchmark_relative_status": benchmark_relative_status,
+        "turnover_penalty": _cost_turnover_penalty(scenario_rows),
         "net_proxy_result": "UNAVAILABLE" if not backfill_ready else "AVAILABLE",
+        "source_backfill_status": backfill_status,
+        "aggregate_return_proxy": _mapping(backfill_payload.get("summary")).get(
+            "aggregate_return_proxy"
+        ),
+        "turnover_proxy": _mapping(backfill_payload.get("summary")).get("turnover_proxy"),
         "scenario_count": len(scenario_rows),
         "baseline_count": len(baseline_rows),
+        "major_blocker_count": len(cost_blockers) + len(benchmark_blockers),
+        "major_warning_count": len(cost_warnings) + len(benchmark_warnings),
         "production_effect": PRODUCTION_EFFECT,
     }
     return _payload(
@@ -837,33 +940,65 @@ def build_next_candidate_cost_benchmark_review_payload(
         body={
             "cost_scenario_reviews": scenario_rows,
             "benchmark_reviews": baseline_rows,
-            "blocking_issues": (
-                [
+            "major_blockers": [
+                *[
                     {
-                        "issue_id": "candidate_net_proxy_unavailable",
-                        "recommended_action": (
-                            "complete_research_backfill_before_cost_benchmark_review"
-                        ),
+                        "issue_id": _text(row.get("scenario_id")),
+                        "reason": _text(row.get("cost_survival_status")),
                     }
-                ]
-                if not backfill_ready
-                else []
-            ),
+                    for row in cost_blockers
+                ],
+                *[
+                    {
+                        "issue_id": _text(row.get("baseline_id")),
+                        "reason": _text(row.get("benchmark_relative_status")),
+                    }
+                    for row in benchmark_blockers
+                ],
+            ],
+            "major_warnings": [
+                *[
+                    {
+                        "issue_id": _text(row.get("scenario_id")),
+                        "reason": _text(row.get("cost_survival_status")),
+                    }
+                    for row in cost_warnings
+                ],
+                *[
+                    {
+                        "issue_id": _text(row.get("baseline_id")),
+                        "reason": _text(row.get("benchmark_relative_status")),
+                    }
+                    for row in benchmark_warnings
+                ],
+            ],
+            "blocking_issues": [
+                {
+                    "issue_id": "candidate_net_proxy_unavailable",
+                    "recommended_action": (
+                        "complete_research_backfill_before_cost_benchmark_review"
+                    ),
+                }
+            ]
+            if not backfill_ready
+            else [],
         },
         reader_brief=_reader_brief(
-            summary="Cost/benchmark review is evaluation-only and needs executable backfill.",
+            summary=f"Cost/benchmark review is {status} from real backfill metrics.",
             key_result=status,
             blocking_issues=(
-                "candidate_net_proxy_unavailable" if not backfill_ready else "none"
+                "candidate_net_proxy_unavailable"
+                if not backfill_ready
+                else _review_issue_names(cost_blockers + benchmark_blockers)
             ),
-            warnings="no optimization performed",
-            next_action="complete_backfill_before_cost_benchmark_interpretation",
+            warnings=_review_issue_names(cost_warnings + benchmark_warnings),
+            next_action="compare_against_returned_candidate_with_real_metrics",
         ),
-        next_action="complete_backfill_before_cost_benchmark_interpretation",
+        next_action="compare_against_returned_candidate_with_real_metrics",
         safety_boundary=_safety_boundary(),
         limitations=[
             "Evaluation only; does not tune or optimize the candidate.",
-            "Previous cost/benchmark policy is reused as policy context only.",
+            "Partial static-proxy backfill limits benchmark interpretation.",
         ],
         requested_date_range=_text(_mapping(backfill_payload.get("summary")).get("requested_date_range")),
     )
@@ -1470,6 +1605,105 @@ def validate_next_research_cycle_payload(
                 and summary.get("owner_decision_appended") is False,
                 "Backfill must not generate broker/order or owner-decision side effects.",
                 "remove_side_effects_from_backfill",
+            )
+    if report_type == STRESS_REVIEW_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        stress_status = _text(payload.get("status"))
+        scenario_rows = _records(payload.get("scenario_reviews"))
+        source_backfill_status = _text(summary.get("source_backfill_status"))
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_stress_status",
+            stress_status in {"WEAK", "MIXED_WITH_WARNINGS", "STRESS_REVIEW_PASS"},
+            "Stress review status must use TRADING-465 taxonomy.",
+            "restore_stress_review_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "stress_scenarios_present",
+            bool(scenario_rows),
+            "Stress review must include scenario review rows.",
+            "restore_stress_scenario_rows",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "source_backfill_status_visible",
+            bool(source_backfill_status),
+            "Stress review must disclose source backfill status.",
+            "restore_source_backfill_disclosure",
+        )
+        if source_backfill_status in CANDIDATE_BACKFILL_METRIC_STATUSES:
+            _append_check(
+                checks,
+                blocking_issues,
+                "stress_metric_rows_present",
+                all(
+                    row.get("return_proxy") is not None
+                    and row.get("drawdown_proxy") is not None
+                    for row in scenario_rows
+                ),
+                "Stress review must carry backfill return/drawdown proxy metrics.",
+                "restore_stress_review_metric_rows",
+            )
+    if report_type == COST_BENCHMARK_REVIEW_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        review_status = _text(payload.get("status"))
+        cost_rows = _records(payload.get("cost_scenario_reviews"))
+        benchmark_rows = _records(payload.get("benchmark_reviews"))
+        source_backfill_status = _text(summary.get("source_backfill_status"))
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_cost_benchmark_status",
+            review_status
+            in {
+                "COST_BENCHMARK_REVIEW_PASS",
+                "COST_BENCHMARK_REVIEW_MIXED",
+                "COST_BENCHMARK_REVIEW_WEAK",
+                "COST_BENCHMARK_NEEDS_EXECUTABLE_BACKFILL",
+            },
+            "Cost/benchmark review status must use TRADING-465 taxonomy.",
+            "restore_cost_benchmark_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "cost_scenarios_present",
+            bool(cost_rows),
+            "Cost/benchmark review must include cost scenario rows.",
+            "restore_cost_scenario_rows",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "source_backfill_status_visible",
+            bool(source_backfill_status),
+            "Cost/benchmark review must disclose source backfill status.",
+            "restore_source_backfill_disclosure",
+        )
+        if source_backfill_status in CANDIDATE_BACKFILL_METRIC_STATUSES:
+            _append_check(
+                checks,
+                blocking_issues,
+                "cost_metric_rows_present",
+                all(row.get("net_proxy_result") is not None for row in cost_rows),
+                "Cost review must carry net proxy metrics from backfill inputs.",
+                "restore_cost_metric_rows",
+            )
+            _append_check(
+                checks,
+                blocking_issues,
+                "benchmark_metric_rows_present",
+                not benchmark_rows
+                or all(
+                    row.get("candidate_delta_vs_baseline") is not None
+                    for row in benchmark_rows
+                ),
+                "Benchmark review rows must carry candidate-vs-baseline deltas.",
+                "restore_benchmark_metric_rows",
             )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
@@ -2211,24 +2445,81 @@ def _backfill_metrics_available(backfill_status: str) -> bool:
     return backfill_status in CANDIDATE_BACKFILL_METRIC_STATUSES
 
 
-def _stress_scenario_review(window_id: str, *, executable_backfill: bool) -> dict[str, Any]:
+def _stress_scenario_review(
+    window_id: str,
+    *,
+    executable_backfill: bool,
+    window_metrics: Mapping[str, Any],
+    backfill_status: str,
+) -> dict[str, Any]:
+    if not executable_backfill or not window_metrics:
+        return {
+            "scenario_id": window_id,
+            "scenario_status": "BLOCKING",
+            "evaluation": "Executable backfill metrics are unavailable for this scenario.",
+            "return_proxy": None,
+            "drawdown_proxy": None,
+            "turnover_proxy": None,
+            "rotation_count": None,
+            "false_risk_off_count": None,
+            "rapid_drawdown_behavior": None,
+            "slow_drawdown_behavior": None,
+            "v_shaped_recovery_behavior": None,
+            "high_volatility_sideways_behavior": None,
+            "false_risk_off_cluster_behavior": None,
+            "ai_semiconductor_correction_behavior": None,
+            "recommended_action": "complete_executable_backfill_before_stress_review",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    return_proxy = _float(window_metrics.get("return_proxy"))
+    drawdown_proxy = _float(window_metrics.get("drawdown_proxy"))
+    partial = _text(window_metrics.get("backfill_window_status")) == "PARTIAL"
+    if drawdown_proxy <= STRESS_BLOCKING_DRAWDOWN_PROXY:
+        scenario_status = "FAIL"
+        evaluation = "Drawdown proxy breaches conservative stress blocker."
+    elif drawdown_proxy <= STRESS_WARNING_DRAWDOWN_PROXY or return_proxy < 0:
+        scenario_status = "WARNING"
+        evaluation = "Return/drawdown proxy remains weak in this stress window."
+    elif partial or backfill_status == CANDIDATE_BACKFILL_PARTIAL:
+        scenario_status = "WARNING"
+        evaluation = "Metric is real but partial because binding lacks historical signals."
+    else:
+        scenario_status = "PASS"
+        evaluation = "Backfill proxy is non-negative and drawdown is within diagnostic band."
     return {
         "scenario_id": window_id,
-        "scenario_status": "READY" if executable_backfill else "BLOCKING",
-        "evaluation": (
-            "Backfill metrics available for stress interpretation."
-            if executable_backfill
-            else "Executable backfill metrics are unavailable for this stress scenario."
+        "scenario_status": scenario_status,
+        "evaluation": evaluation,
+        "return_proxy": window_metrics.get("return_proxy"),
+        "drawdown_proxy": window_metrics.get("drawdown_proxy"),
+        "turnover_proxy": window_metrics.get("turnover"),
+        "rotation_count": window_metrics.get("rotation_count"),
+        "false_risk_off_count": window_metrics.get("false_risk_off_count"),
+        "rapid_drawdown_behavior": _scenario_metric_label(
+            window_id,
+            "rapid_drawdown",
+            drawdown_proxy,
         ),
-        "rapid_drawdown_behavior": None,
-        "slow_drawdown_behavior": None,
+        "slow_drawdown_behavior": _scenario_metric_label(
+            window_id,
+            "slow_drawdown",
+            drawdown_proxy,
+        ),
         "v_shaped_recovery_behavior": None,
-        "high_volatility_sideways_behavior": None,
-        "false_risk_off_cluster_behavior": None,
-        "ai_semiconductor_correction_behavior": None,
+        "high_volatility_sideways_behavior": _scenario_metric_label(
+            window_id,
+            "high_volatility_sideways_market",
+            drawdown_proxy,
+        ),
+        "false_risk_off_cluster_behavior": window_metrics.get("false_risk_off_count"),
+        "ai_semiconductor_correction_behavior": _scenario_metric_label(
+            window_id,
+            "ai_semiconductor_correction",
+            drawdown_proxy,
+        ),
         "recommended_action": (
             "review_stress_metrics"
-            if executable_backfill
+            if scenario_status == "PASS"
             else "complete_executable_backfill_before_stress_review"
         ),
         "production_effect": PRODUCTION_EFFECT,
@@ -2261,47 +2552,121 @@ def _cost_scenario_reviews(
     cost_payload: Mapping[str, Any],
     *,
     backfill_ready: bool,
+    backfill_payload: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     rows = _records(_mapping(cost_payload.get("policy")).get("scenarios"))
     if not rows:
         rows = _records(cost_payload.get("scenario_results"))
+    if not rows:
+        rows = [dict(row) for row in DEFAULT_COST_SCENARIOS]
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    gross_proxy = _float(backfill_summary.get("aggregate_return_proxy"))
+    turnover_proxy = _float(backfill_summary.get("turnover_proxy"))
+    threshold = _float(
+        cost_payload.get("meaningful_improvement_threshold"),
+        DEFAULT_COST_MEANINGFUL_THRESHOLD,
+    )
     result = []
     for row in rows:
         scenario_id = _text(row.get("scenario_id"), _text(row.get("label")))
+        total_cost_bps = _float(row.get("total_cost_bps"))
+        cost_drag = turnover_proxy * total_cost_bps / 10000.0
+        net_proxy = gross_proxy - cost_drag
+        if not backfill_ready:
+            survival_status = "UNTESTED"
+        elif net_proxy < 0:
+            survival_status = "COST_SURVIVAL_FAIL"
+        elif net_proxy < threshold:
+            survival_status = "COST_SURVIVAL_WARNING"
+        else:
+            survival_status = "COST_SURVIVAL_PASS"
         result.append(
             {
                 "scenario_id": scenario_id,
                 "label": _text(row.get("label"), scenario_id),
-                "total_cost_bps": row.get("total_cost_bps"),
-                "cost_survival_status": (
-                    "UNTESTED_CANDIDATE_PROXY_MISSING"
-                    if not backfill_ready
-                    else "READY_FOR_INTERPRETATION"
-                ),
-                "net_proxy_result": None,
+                "total_cost_bps": total_cost_bps,
+                "turnover_proxy": turnover_proxy if backfill_ready else None,
+                "gross_return_proxy": gross_proxy if backfill_ready else None,
+                "cost_drag": _round_float(cost_drag) if backfill_ready else None,
+                "net_proxy_result": _round_float(net_proxy) if backfill_ready else None,
+                "meaningful_threshold": threshold,
+                "cost_survival_status": survival_status,
+                "source_backfill_status": _text(backfill_summary.get("candidate_backfill_status")),
                 "production_effect": PRODUCTION_EFFECT,
             }
         )
     return result
 
 
+def _scenario_metric_label(
+    window_id: str,
+    target_window_id: str,
+    drawdown_proxy: float,
+) -> str | None:
+    if window_id != target_window_id:
+        return None
+    if drawdown_proxy <= STRESS_BLOCKING_DRAWDOWN_PROXY:
+        return "WEAK"
+    if drawdown_proxy <= STRESS_WARNING_DRAWDOWN_PROXY:
+        return "MIXED"
+    return "OK"
+
+
+def _cost_turnover_penalty(rows: Sequence[Mapping[str, Any]]) -> float | None:
+    penalties = [
+        _float(row.get("cost_drag"))
+        for row in rows
+        if row.get("cost_drag") is not None
+    ]
+    if not penalties:
+        return None
+    return _round_float(max(penalties))
+
+
+def _review_issue_names(rows: Sequence[Mapping[str, Any]]) -> str:
+    names = [
+        _text(row.get("scenario_id"), _text(row.get("baseline_id")))
+        for row in rows
+    ]
+    return "; ".join(name for name in names if name) or "none"
+
+
 def _benchmark_reviews(
     benchmark_payload: Mapping[str, Any],
     *,
     backfill_ready: bool,
+    backfill_payload: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     baselines = _records(benchmark_payload.get("baselines"))
+    backfill_summary = _mapping(backfill_payload.get("summary"))
+    candidate_proxy = _float(backfill_summary.get("aggregate_return_proxy"))
+    threshold = _float(
+        benchmark_payload.get("minimum_outperformance_threshold"),
+        DEFAULT_COST_MEANINGFUL_THRESHOLD,
+    )
     result = []
     for row in baselines:
+        baseline_proxy = _float(row.get("baseline_net_performance_proxy"))
+        delta = candidate_proxy - baseline_proxy
+        if not backfill_ready:
+            relative_status = "UNTESTED"
+        elif delta < 0:
+            relative_status = "BENCHMARK_UNDERPERFORMS"
+        elif delta < threshold:
+            relative_status = "BENCHMARK_MIXED"
+        else:
+            relative_status = "BENCHMARK_OUTPERFORMS"
         result.append(
             {
                 "baseline_id": _text(row.get("baseline_id")),
-                "benchmark_relative_status": (
-                    "UNTESTED_CANDIDATE_PROXY_MISSING"
-                    if not backfill_ready
-                    else "READY_FOR_INTERPRETATION"
-                ),
-                "candidate_delta_vs_baseline": None,
+                "benchmark_relative_status": relative_status,
+                "candidate_return_proxy": candidate_proxy if backfill_ready else None,
+                "baseline_return_proxy": baseline_proxy if backfill_ready else None,
+                "candidate_delta_vs_baseline": _round_float(delta)
+                if backfill_ready
+                else None,
+                "minimum_outperformance_threshold": threshold,
+                "source_backfill_status": _text(backfill_summary.get("candidate_backfill_status")),
                 "production_effect": PRODUCTION_EFFECT,
             }
         )

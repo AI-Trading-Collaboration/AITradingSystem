@@ -191,6 +191,9 @@ def build_reader_brief_payload(
     )
     next_research_cycle_snapshot = _next_research_cycle_snapshot_summary(report_index)
     next_candidate_backfill = _next_candidate_backfill_summary(report_index)
+    next_candidate_stress_cost_benchmark = (
+        _next_candidate_stress_cost_benchmark_summary(report_index)
+    )
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
     executable_research_weight_binding = _executable_research_weight_binding_summary(
@@ -371,6 +374,7 @@ def build_reader_brief_payload(
         "return_to_research_governance_snapshot": return_to_research_governance_snapshot,
         "next_research_cycle_snapshot": next_research_cycle_snapshot,
         "next_candidate_backfill": next_candidate_backfill,
+        "next_candidate_stress_cost_benchmark": next_candidate_stress_cost_benchmark,
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
@@ -724,6 +728,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     next_research_cycle_snapshot = _mapping(payload.get("next_research_cycle_snapshot"))
     next_candidate_backfill = _mapping(payload.get("next_candidate_backfill"))
+    next_candidate_stress_cost_benchmark = _mapping(
+        payload.get("next_candidate_stress_cost_benchmark")
+    )
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
     executable_research_weight_binding = _mapping(
@@ -1850,6 +1857,81 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("next_action", next_candidate_backfill.get("next_action")),
                     ("detail_report", next_candidate_backfill.get("detail_report")),
                     ("production_effect", next_candidate_backfill.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Next Candidate Stress Cost Benchmark",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        next_candidate_stress_cost_benchmark.get("availability"),
+                    ),
+                    (
+                        "stress_status",
+                        next_candidate_stress_cost_benchmark.get("stress_status"),
+                    ),
+                    (
+                        "cost_benchmark_status",
+                        next_candidate_stress_cost_benchmark.get(
+                            "cost_benchmark_status"
+                        ),
+                    ),
+                    (
+                        "cost_survival_status",
+                        next_candidate_stress_cost_benchmark.get(
+                            "cost_survival_status"
+                        ),
+                    ),
+                    (
+                        "benchmark_relative_status",
+                        next_candidate_stress_cost_benchmark.get(
+                            "benchmark_relative_status"
+                        ),
+                    ),
+                    (
+                        "source_backfill_status",
+                        next_candidate_stress_cost_benchmark.get(
+                            "source_backfill_status"
+                        ),
+                    ),
+                    (
+                        "stress_validation_status",
+                        next_candidate_stress_cost_benchmark.get(
+                            "stress_validation_status"
+                        ),
+                    ),
+                    (
+                        "cost_validation_status",
+                        next_candidate_stress_cost_benchmark.get(
+                            "cost_validation_status"
+                        ),
+                    ),
+                    (
+                        "major_blocker_count",
+                        next_candidate_stress_cost_benchmark.get("major_blocker_count"),
+                    ),
+                    (
+                        "major_warning_count",
+                        next_candidate_stress_cost_benchmark.get("major_warning_count"),
+                    ),
+                    (
+                        "next_action",
+                        next_candidate_stress_cost_benchmark.get("next_action"),
+                    ),
+                    (
+                        "stress_detail_report",
+                        next_candidate_stress_cost_benchmark.get("stress_detail_report"),
+                    ),
+                    (
+                        "cost_detail_report",
+                        next_candidate_stress_cost_benchmark.get("cost_detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        next_candidate_stress_cost_benchmark.get("production_effect"),
+                    ),
                 ]
             ),
         ),
@@ -9143,6 +9225,145 @@ def _missing_next_candidate_backfill_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "next_candidate_backfill artifact missing; run reports "
             "next-candidate-backfill."
+        ),
+        "limitation": reason,
+    }
+
+
+def _next_candidate_stress_cost_benchmark_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_next_candidate_stress_cost_benchmark_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "next candidate stress/cost/benchmark review."
+        )
+    stress_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_stress_review",
+    )
+    cost_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_cost_benchmark_review",
+    )
+    stress_payload = _read_optional_json(stress_path)
+    cost_payload = _read_optional_json(cost_path)
+    if not stress_payload and not cost_payload:
+        return _missing_next_candidate_stress_cost_benchmark_summary(
+            "next_candidate_stress_review and next_candidate_cost_benchmark_review "
+            "artifacts are missing from report index latest pointers."
+        )
+    stress_validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_stress_review_validation",
+    )
+    cost_validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_cost_benchmark_review_validation",
+    )
+    stress_validation_payload = _read_optional_json(stress_validation_path)
+    cost_validation_payload = _read_optional_json(cost_validation_path)
+    stress_summary = _mapping(stress_payload.get("summary"))
+    cost_summary = _mapping(cost_payload.get("summary"))
+    stress_status = _text(
+        stress_payload.get("status"),
+        _text(stress_summary.get("stress_result"), "MISSING"),
+    )
+    cost_status = _text(
+        cost_payload.get("status"),
+        _text(cost_summary.get("cost_benchmark_status"), "MISSING"),
+    )
+    stress_validation_status = _text(
+        stress_validation_payload.get("status"),
+        _text(
+            _mapping(stress_validation_payload.get("summary")).get("validation_status"),
+            "MISSING",
+        ),
+    )
+    cost_validation_status = _text(
+        cost_validation_payload.get("status"),
+        _text(
+            _mapping(cost_validation_payload.get("summary")).get("validation_status"),
+            "MISSING",
+        ),
+    )
+    availability = "AVAILABLE" if stress_payload and cost_payload else "PARTIAL"
+    source_backfill_status = _text(
+        cost_summary.get("source_backfill_status"),
+        _text(stress_summary.get("source_backfill_status"), "MISSING"),
+    )
+    blocker_count = _int(stress_summary.get("major_blocker_count")) + _int(
+        cost_summary.get("major_blocker_count")
+    )
+    warning_count = _int(stress_summary.get("major_warning_count")) + _int(
+        cost_summary.get("major_warning_count")
+    )
+    return {
+        "availability": availability,
+        "stress_status": stress_status,
+        "cost_benchmark_status": cost_status,
+        "cost_survival_status": _text(
+            cost_summary.get("cost_survival_status"),
+            "MISSING",
+        ),
+        "benchmark_relative_status": _text(
+            cost_summary.get("benchmark_relative_status"),
+            "MISSING",
+        ),
+        "source_backfill_status": source_backfill_status,
+        "stress_validation_status": stress_validation_status,
+        "cost_validation_status": cost_validation_status,
+        "major_blocker_count": blocker_count,
+        "major_warning_count": warning_count,
+        "next_action": _text(
+            cost_payload.get("next_action"),
+            _text(stress_payload.get("next_action"), "MISSING"),
+        ),
+        "stress_detail_report": "" if stress_path is None else str(stress_path),
+        "cost_detail_report": "" if cost_path is None else str(cost_path),
+        "stress_validation_detail_report": ""
+        if stress_validation_path is None
+        else str(stress_validation_path),
+        "cost_validation_detail_report": ""
+        if cost_validation_path is None
+        else str(cost_validation_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"stress={stress_status}; cost_benchmark={cost_status}; "
+            f"backfill={source_backfill_status}; blockers={blocker_count}; "
+            f"warnings={warning_count}."
+        ),
+        "limitation": (
+            "Reader Brief only reads generated TRADING-465 research artifacts; it "
+            "does not optimize the candidate, create paper-shadow, write official "
+            "weights, or create broker/order artifacts."
+        ),
+    }
+
+
+def _missing_next_candidate_stress_cost_benchmark_summary(
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "stress_status": "MISSING",
+        "cost_benchmark_status": "MISSING",
+        "cost_survival_status": "MISSING",
+        "benchmark_relative_status": "MISSING",
+        "source_backfill_status": "MISSING",
+        "stress_validation_status": "MISSING",
+        "cost_validation_status": "MISSING",
+        "major_blocker_count": 0,
+        "major_warning_count": 0,
+        "next_action": "run_aits_reports_next_candidate_stress_and_cost_benchmark",
+        "stress_detail_report": "",
+        "cost_detail_report": "",
+        "stress_validation_detail_report": "",
+        "cost_validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_stress_review / next_candidate_cost_benchmark_review "
+            "artifacts missing; run TRADING-465 reports."
         ),
         "limitation": reason,
     }
@@ -25538,25 +25759,27 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_backfill": 260,
         "next_candidate_backfill_validation": 261,
         "next_candidate_stress_review": 262,
-        "next_candidate_cost_benchmark_review": 263,
-        "next_candidate_vs_returned_candidate_comparison": 264,
-        "next_candidate_signal_robustness_review": 265,
-        "next_candidate_overfit_window_sensitivity": 266,
-        "next_candidate_research_gate": 267,
-        "next_candidate_owner_research_review_packet": 268,
-        "next_candidate_research_cycle_snapshot": 269,
-        "next_candidate_research_cycle_snapshot_validation": 270,
-        "next_candidate_executable_binding_contract": 271,
-        "next_candidate_executable_binding_contract_validation": 272,
-        "next_candidate_signal_binding": 273,
-        "next_candidate_signal_binding_validation": 274,
-        "next_candidate_research_weight_binding": 275,
-        "next_candidate_research_weight_binding_validation": 276,
-        "executable_binding_safety_audit": 277,
-        "executable_binding_safety_audit_validation": 278,
-        "report_quality_gate": 279,
-        "reader_brief_quality": 280,
-        "artifact_catalog": 281,
+        "next_candidate_stress_review_validation": 263,
+        "next_candidate_cost_benchmark_review": 264,
+        "next_candidate_cost_benchmark_review_validation": 265,
+        "next_candidate_vs_returned_candidate_comparison": 266,
+        "next_candidate_signal_robustness_review": 267,
+        "next_candidate_overfit_window_sensitivity": 268,
+        "next_candidate_research_gate": 269,
+        "next_candidate_owner_research_review_packet": 270,
+        "next_candidate_research_cycle_snapshot": 271,
+        "next_candidate_research_cycle_snapshot_validation": 272,
+        "next_candidate_executable_binding_contract": 273,
+        "next_candidate_executable_binding_contract_validation": 274,
+        "next_candidate_signal_binding": 275,
+        "next_candidate_signal_binding_validation": 276,
+        "next_candidate_research_weight_binding": 277,
+        "next_candidate_research_weight_binding_validation": 278,
+        "executable_binding_safety_audit": 279,
+        "executable_binding_safety_audit_validation": 280,
+        "report_quality_gate": 281,
+        "reader_brief_quality": 282,
+        "artifact_catalog": 283,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -25768,8 +25991,14 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "next_candidate_stress_review": (
             "查看 stress/drawdown/flip evidence 对下一候选的 research-only 复核。"
         ),
+        "next_candidate_stress_review_validation": (
+            "确认 stress review 使用真实 backfill metrics、taxonomy 和安全边界。"
+        ),
         "next_candidate_cost_benchmark_review": (
             "查看 cost survival 和 benchmark-relative blockers 是否已被新候选解决。"
+        ),
+        "next_candidate_cost_benchmark_review_validation": (
+            "确认 cost/benchmark review 使用真实 backfill metrics 且保持 research-only。"
         ),
         "next_candidate_vs_returned_candidate_comparison": (
             "比较下一候选与 returned candidate；缺新指标时不得声明改善。"
@@ -25899,6 +26128,26 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Backfill artifact 生成后立即校验 metric rows、taxonomy 和安全边界。",
+    ),
+    "next_candidate_stress_review": (
+        "manual",
+        "manual research cycle",
+        "TRADING-465 在 binding-backed backfill complete/partial 后重新评估 stress scenarios。",
+    ),
+    "next_candidate_stress_review_validation": (
+        "manual",
+        "manual research cycle",
+        "Stress review artifact 生成后立即校验 taxonomy、Reader Brief 和安全边界。",
+    ),
+    "next_candidate_cost_benchmark_review": (
+        "manual",
+        "manual research cycle",
+        "TRADING-465 在真实 backfill metrics 可用后重新评估 cost/benchmark。",
+    ),
+    "next_candidate_cost_benchmark_review_validation": (
+        "manual",
+        "manual research cycle",
+        "Cost/benchmark artifact 生成后立即校验 taxonomy、Reader Brief 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

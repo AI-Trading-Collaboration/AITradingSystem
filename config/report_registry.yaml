@@ -8734,10 +8734,30 @@ reports:
       - outputs/reports/next_candidate_stress_review_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-452 reviews rapid/slow drawdown, V-shaped recovery,
-      high-volatility sideways, false risk-off, and AI/semiconductor correction
-      behavior against stress library and casebooks.
+      TRADING-465 reviews rapid/slow drawdown, high-volatility sideways, false
+      risk-off, and AI/semiconductor correction behavior from TRADING-464
+      complete or partial real backfill metrics. Partial static proxy metrics
+      must remain visible and conservative.
     owner_action: review_blocking_stress_scenarios_before_research_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_stress_review_validation
+    title: Next Candidate Stress Review Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-stress-review --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_stress_review_validation_*.json
+      - outputs/reports/next_candidate_stress_review_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-465 validation fails closed if the stress review lacks Reader
+      Brief fields, uses an invalid taxonomy, or violates the research-only
+      no shadow/live/official weights/broker/order boundary.
+    owner_action: run_after_next_candidate_stress_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
@@ -8753,9 +8773,29 @@ reports:
       - outputs/reports/next_candidate_cost_benchmark_review_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-453 evaluates cost survival and benchmark-relative behavior only;
-      it does not optimize the candidate or produce allocation outputs.
+      TRADING-465 evaluates cost survival and benchmark-relative behavior from
+      TRADING-464 aggregate return and turnover proxy metrics only; it does not
+      optimize the candidate or produce allocation outputs.
     owner_action: review_cost_benchmark_status_before_research_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_cost_benchmark_review_validation
+    title: Next Candidate Cost Benchmark Review Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-cost-benchmark-review --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_cost_benchmark_review_validation_*.json
+      - outputs/reports/next_candidate_cost_benchmark_review_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-465 validation fails closed if the cost/benchmark review lacks
+      Reader Brief fields, uses an invalid taxonomy, or violates the
+      research-only no shadow/live/official weights/broker/order boundary.
+    owner_action: run_after_next_candidate_cost_benchmark_review
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

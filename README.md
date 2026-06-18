@@ -1895,6 +1895,21 @@ static hypothetical research-weight proxy metrics 并标为 `CANDIDATE_BACKFILL_
 它解释成完整历史动态策略。该 backfill 只生成 research metrics，不创建 paper-shadow、不写
 official target weights、不触发 broker/order、不 append owner decision、不修改 production。
 
+TRADING-465_RERUN_NEXT_CANDIDATE_STRESS_COST_BENCHMARK 用 TRADING-464 的 complete 或
+partial real backfill metrics 重新评估 stress、drawdown/flip casebook、cost sensitivity 和
+benchmark baseline。运行 `aits reports next-candidate-stress-review --as-of YYYY-MM-DD`、
+`aits reports validate-next-candidate-stress-review --latest`、
+`aits reports next-candidate-cost-benchmark-review --as-of YYYY-MM-DD` 和
+`aits reports validate-next-candidate-cost-benchmark-review --latest` 会生成
+`next_candidate_stress_review`、`next_candidate_stress_review_validation`、
+`next_candidate_cost_benchmark_review` 和
+`next_candidate_cost_benchmark_review_validation` artifacts。2026-06-17 真实 rerun 基于
+`CANDIDATE_BACKFILL_PARTIAL` static proxy，stress 为 `WEAK`，cost/benchmark 为
+`COST_BENCHMARK_REVIEW_WEAK`；这仍是 research-only review，不优化 candidate、不推进
+paper-shadow、不批准 extended/live、不写 official target weights、不触发 broker/order、不 append
+owner decision、不修改 production。Reader Brief 只读展示 combined
+`next_candidate_stress_cost_benchmark` 摘要。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

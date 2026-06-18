@@ -116,6 +116,139 @@ def test_next_candidate_backfill_runs_partial_static_binding_metrics(
     assert validation["status"] == "PASS"
 
 
+def test_next_candidate_stress_cost_benchmark_reviews_use_real_backfill_metrics(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_return_to_research_inputs(reports_dir, tmp_path)
+    intake = next_cycle.build_next_research_cycle_intake_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    frozen = next_cycle.build_next_candidate_spec_frozen_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        intake_payload=intake,
+    )
+    _write_minimal_executable_binding_artifacts(reports_dir)
+    _write_cost_benchmark_sources(tmp_path)
+    backfill = next_cycle.build_next_candidate_backfill_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        frozen_spec_payload=frozen,
+        data_quality_gate={"status": "PASS", "passed": True, "report_path": "dq.md"},
+        prices_path=_write_backfill_price_fixture(tmp_path),
+    )
+
+    stress = next_cycle.build_next_candidate_stress_review_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    cost = next_cycle.build_next_candidate_cost_benchmark_review_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        backfill_payload=backfill,
+    )
+
+    assert stress["status"] == "MIXED_WITH_WARNINGS"
+    assert stress["summary"]["source_backfill_status"] == next_cycle.CANDIDATE_BACKFILL_PARTIAL
+    assert stress["summary"]["partial_static_proxy"] is True
+    assert stress["summary"]["major_warning_count"] == len(next_cycle.REQUIRED_BACKFILL_WINDOWS)
+    assert all(
+        row["return_proxy"] is not None
+        and row["drawdown_proxy"] is not None
+        and row["scenario_status"] == "WARNING"
+        for row in stress["scenario_reviews"]
+    )
+
+    assert cost["status"] == "COST_BENCHMARK_REVIEW_MIXED"
+    assert cost["summary"]["source_backfill_status"] == next_cycle.CANDIDATE_BACKFILL_PARTIAL
+    assert cost["summary"]["net_proxy_result"] == "AVAILABLE"
+    assert cost["summary"]["cost_survival_status"] == "COST_SURVIVAL_WARNING"
+    assert cost["summary"]["benchmark_relative_status"] == "BENCHMARK_MIXED"
+    assert cost["cost_scenario_reviews"][0]["net_proxy_result"] is not None
+    assert cost["benchmark_reviews"][0]["candidate_delta_vs_baseline"] is not None
+    assert cost["summary"]["production_effect"] == "none"
+
+    stress_validation = next_cycle.validate_next_research_cycle_payload(
+        stress,
+        expected_report_type=next_cycle.STRESS_REVIEW_REPORT_TYPE,
+    )
+    cost_validation = next_cycle.validate_next_research_cycle_payload(
+        cost,
+        expected_report_type=next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+    )
+    assert stress_validation["status"] == "PASS"
+    assert cost_validation["status"] == "PASS"
+
+    stress_path = next_cycle.write_next_research_cycle_json(
+        stress,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.STRESS_REVIEW_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    cost_path = next_cycle.write_next_research_cycle_json(
+        cost,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    stress_validation_path = next_cycle.write_next_research_cycle_json(
+        stress_validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.STRESS_REVIEW_REPORT_TYPE}{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    cost_validation_path = next_cycle.write_next_research_cycle_json(
+        cost_validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE}"
+            f"{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    report_index = {
+        "reports": [
+            {
+                "report_id": next_cycle.STRESS_REVIEW_REPORT_TYPE,
+                "latest_artifact_path": str(stress_path),
+            },
+            {
+                "report_id": f"{next_cycle.STRESS_REVIEW_REPORT_TYPE}"
+                f"{next_cycle.VALIDATION_SUFFIX}",
+                "latest_artifact_path": str(stress_validation_path),
+            },
+            {
+                "report_id": next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+                "latest_artifact_path": str(cost_path),
+            },
+            {
+                "report_id": f"{next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE}"
+                f"{next_cycle.VALIDATION_SUFFIX}",
+                "latest_artifact_path": str(cost_validation_path),
+            },
+        ]
+    }
+
+    summary = reader_brief._next_candidate_stress_cost_benchmark_summary(report_index)
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["stress_status"] == "MIXED_WITH_WARNINGS"
+    assert summary["cost_benchmark_status"] == "COST_BENCHMARK_REVIEW_MIXED"
+    assert summary["stress_validation_status"] == "PASS"
+    assert summary["cost_validation_status"] == "PASS"
+
+
 def test_next_research_cycle_cli_writes_intake_freeze_and_validations(
     tmp_path: Path,
 ) -> None:
@@ -413,6 +546,62 @@ def _write_backfill_price_fixture(tmp_path: Path) -> Path:
     path = tmp_path / "prices_daily.csv"
     path.write_text("\n".join(rows) + "\n", encoding="utf-8")
     return path
+
+
+def _write_cost_benchmark_sources(project_root: Path) -> None:
+    cost_path = (
+        project_root
+        / "reports"
+        / "etf_portfolio"
+        / "dynamic_v3_rescue"
+        / "cost_sensitivity_review"
+        / "fixture"
+        / "cost_sensitivity_review.json"
+    )
+    cost_path.parent.mkdir(parents=True, exist_ok=True)
+    cost_path.write_text(
+        json.dumps(
+            {
+                "meaningful_improvement_threshold": 0.001,
+                "policy": {
+                    "scenarios": [
+                        {
+                            "scenario_id": "medium",
+                            "label": "Medium Cost",
+                            "total_cost_bps": 10.0,
+                        }
+                    ]
+                },
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    benchmark_path = (
+        project_root
+        / "reports"
+        / "etf_portfolio"
+        / "dynamic_v3_rescue"
+        / "benchmark_baseline_control"
+        / "fixture"
+        / "benchmark_baseline_control_pack.json"
+    )
+    benchmark_path.parent.mkdir(parents=True, exist_ok=True)
+    benchmark_path.write_text(
+        json.dumps(
+            {
+                "minimum_outperformance_threshold": 0.001,
+                "baselines": [
+                    {
+                        "baseline_id": "low_return_static_baseline",
+                        "baseline_net_performance_proxy": 0.001,
+                    }
+                ],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
 
 def _validation_payload(report_type: str, source_report_type: str) -> dict[str, object]:
