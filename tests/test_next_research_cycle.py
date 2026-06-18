@@ -51,7 +51,7 @@ def test_next_research_cycle_builds_fail_closed_research_chain(tmp_path: Path) -
     assert gate["summary"]["paper_shadow_activation_allowed"] is False
 
     snapshot = payloads[next_cycle.CYCLE_SNAPSHOT_REPORT_TYPE]
-    assert snapshot["status"] == "NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+    assert snapshot["status"] == "EXECUTABLE_RESEARCH_CYCLE_BLOCKED"
     assert snapshot["summary"]["live_trading_allowed"] is False
     assert snapshot["summary"]["broker_order_allowed"] is False
 
@@ -774,6 +774,156 @@ def test_next_candidate_owner_packet_lists_all_manual_options_without_append(
     assert summary["owner_decision_appended"] is False
 
 
+def test_executable_research_cycle_snapshot_collects_required_sources(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    frozen = {
+        "report_type": next_cycle.FROZEN_SPEC_REPORT_TYPE,
+        "as_of": RUN_DATE.isoformat(),
+        "status": "NEXT_CANDIDATE_SPEC_FROZEN",
+        "production_effect": "none",
+        "frozen_candidate_spec": {
+            "candidate_id": "median_plus_regime_mismatch_filter_research_redesign_v2"
+        },
+        "safety_boundary": _test_safety_boundary(),
+    }
+    payload = next_cycle.build_next_research_cycle_snapshot_payload(
+        as_of=RUN_DATE,
+        intake_payload={
+            "report_type": next_cycle.INTAKE_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "NEXT_RESEARCH_CYCLE_INTAKE_READY",
+            "production_effect": "none",
+        },
+        frozen_spec_payload=frozen,
+        executable_contract_payload={
+            "report_type": binding_reports.CONTRACT_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "EXECUTABLE_BINDING_CONTRACT_READY",
+            "production_effect": "none",
+        },
+        signal_binding_payload={
+            "report_type": binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": binding_reports.SIGNAL_BINDING_COMPLETE_WITH_WARNINGS,
+            "production_effect": "none",
+        },
+        weight_binding_payload={
+            "report_type": binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": binding_reports.WEIGHT_BINDING_COMPLETE_WITH_WARNINGS,
+            "production_effect": "none",
+        },
+        safety_audit_payload={
+            "report_type": binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": binding_reports.SAFETY_WARNING,
+            "production_effect": "none",
+        },
+        backfill_payload={
+            "report_type": next_cycle.BACKFILL_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": next_cycle.CANDIDATE_BACKFILL_PARTIAL,
+            "requested_date_range": "2023-01-03..2025-04-30",
+            "production_effect": "none",
+        },
+        stress_review_payload={
+            "report_type": next_cycle.STRESS_REVIEW_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "WEAK",
+            "production_effect": "none",
+        },
+        cost_benchmark_payload={
+            "report_type": next_cycle.COST_BENCHMARK_REVIEW_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "COST_BENCHMARK_REVIEW_WEAK",
+            "production_effect": "none",
+        },
+        comparison_payload={
+            "report_type": next_cycle.VS_RETURNED_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "MIXED_VS_RETURNED_CANDIDATE",
+            "production_effect": "none",
+        },
+        signal_robustness_payload={
+            "report_type": next_cycle.SIGNAL_ROBUSTNESS_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "SIGNAL_ROBUSTNESS_BLOCKED",
+            "production_effect": "none",
+        },
+        window_sensitivity_payload={
+            "report_type": next_cycle.WINDOW_SENSITIVITY_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "WINDOW_FRAGILE",
+            "production_effect": "none",
+        },
+        research_gate_payload={
+            "report_type": next_cycle.RESEARCH_GATE_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "NEEDS_MORE_EVIDENCE",
+            "summary": {"research_gate_decision": "NEEDS_MORE_EVIDENCE"},
+            "production_effect": "none",
+        },
+        owner_packet_payload={
+            "report_type": next_cycle.OWNER_REVIEW_PACKET_REPORT_TYPE,
+            "as_of": RUN_DATE.isoformat(),
+            "status": "OWNER_RESEARCH_REVIEW_PACKET_READY",
+            "production_effect": "none",
+        },
+    )
+
+    assert payload["status"] == "EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+    assert payload["summary"]["missing_required_artifact_count"] == 0
+    assert payload["summary"]["owner_packet_ready"] is True
+    assert payload["summary"]["paper_shadow_activation_allowed"] is False
+    assert payload["final_interpretation"]["fabricated_metrics"] is False
+
+    validation = next_cycle.validate_next_research_cycle_payload(
+        payload,
+        expected_report_type=next_cycle.CYCLE_SNAPSHOT_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
+
+    snapshot_path = next_cycle.write_next_research_cycle_json(
+        payload,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.CYCLE_SNAPSHOT_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    validation_path = next_cycle.write_next_research_cycle_json(
+        validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.CYCLE_SNAPSHOT_REPORT_TYPE}{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    summary = reader_brief._next_research_cycle_snapshot_summary(
+        {
+            "reports": [
+                {
+                    "report_id": next_cycle.CYCLE_SNAPSHOT_REPORT_TYPE,
+                    "latest_artifact_path": str(snapshot_path),
+                },
+                {
+                    "report_id": (
+                        f"{next_cycle.CYCLE_SNAPSHOT_REPORT_TYPE}"
+                        f"{next_cycle.VALIDATION_SUFFIX}"
+                    ),
+                    "latest_artifact_path": str(validation_path),
+                },
+            ]
+        }
+    )
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["status"] == "EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+    assert summary["validation_status"] == "PASS"
+
+
 def test_next_research_cycle_cli_writes_intake_freeze_and_validations(
     tmp_path: Path,
 ) -> None:
@@ -917,7 +1067,7 @@ def test_reader_brief_summarizes_next_research_cycle_snapshot(tmp_path: Path) ->
     summary = reader_brief._next_research_cycle_snapshot_summary(report_index)
 
     assert summary["availability"] == "AVAILABLE"
-    assert summary["status"] == "NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+    assert summary["status"] == "EXECUTABLE_RESEARCH_CYCLE_BLOCKED"
     assert summary["research_gate_decision"] == "NEEDS_MORE_EVIDENCE"
     assert summary["validation_status"] == "PASS"
     assert summary["paper_shadow_activation_allowed"] is False

@@ -7549,10 +7549,36 @@ def next_candidate_research_cycle_snapshot_command(
             label=report_type,
         )
         payloads[report_type] = payload
+    executable_payloads: dict[str, dict[str, object]] = {}
+    for report_type in (
+        executable_binding_reports.CONTRACT_REPORT_TYPE,
+        executable_binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+        executable_binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+        executable_binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+    ):
+        _, payload = _load_executable_binding_source_payload(
+            report_type=report_type,
+            report_date=report_date,
+            reports_dir=reports_dir,
+            label=report_type,
+        )
+        executable_payloads[report_type] = payload
     payload = next_research_reports.build_next_research_cycle_snapshot_payload(
         as_of=report_date,
         intake_payload=payloads[next_research_reports.INTAKE_REPORT_TYPE],
         frozen_spec_payload=payloads[next_research_reports.FROZEN_SPEC_REPORT_TYPE],
+        executable_contract_payload=executable_payloads[
+            executable_binding_reports.CONTRACT_REPORT_TYPE
+        ],
+        signal_binding_payload=executable_payloads[
+            executable_binding_reports.SIGNAL_BINDING_REPORT_TYPE
+        ],
+        weight_binding_payload=executable_payloads[
+            executable_binding_reports.WEIGHT_BINDING_REPORT_TYPE
+        ],
+        safety_audit_payload=executable_payloads[
+            executable_binding_reports.SAFETY_AUDIT_REPORT_TYPE
+        ],
         backfill_payload=payloads[next_research_reports.BACKFILL_REPORT_TYPE],
         stress_review_payload=payloads[next_research_reports.STRESS_REVIEW_REPORT_TYPE],
         cost_benchmark_payload=payloads[

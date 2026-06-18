@@ -9004,8 +9004,9 @@ reports:
       - outputs/reports/next_candidate_research_cycle_snapshot_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-459 collects all next research cycle artifacts and states whether
-      the cycle is ready for owner review, needs more evidence, or is blocked.
+      TRADING-470 collects executable binding, real metrics, rerun reviews,
+      research gate, and owner packet artifacts into the final executable
+      research-cycle snapshot.
     owner_action: treat_as_current_next_research_cycle_state
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
@@ -9022,9 +9023,10 @@ reports:
       - outputs/reports/next_candidate_research_cycle_snapshot_validation_*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      Snapshot validation fails closed if the next research cycle enables
-      paper-shadow, extended shadow, live trading, official weights,
-      broker/order, owner append, or production mutation.
+      Snapshot validation fails closed if required executable research-cycle
+      sources are missing or the snapshot enables paper-shadow, extended shadow,
+      live trading, official weights, broker/order, owner append, or production
+      mutation.
     owner_action: run_after_next_research_cycle_snapshot
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false

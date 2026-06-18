@@ -32,6 +32,13 @@ RESEARCH_GATE_DECISIONS = {
     "RETURN_TO_HYPOTHESIS_BACKLOG",
     "REJECT_RESEARCH_CANDIDATE",
 }
+EXECUTABLE_RESEARCH_CYCLE_STATUSES = {
+    "EXECUTABLE_RESEARCH_CYCLE_PROMISING",
+    "EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE",
+    "EXECUTABLE_RESEARCH_CYCLE_RETURN_TO_BACKLOG",
+    "EXECUTABLE_RESEARCH_CYCLE_REJECT",
+    "EXECUTABLE_RESEARCH_CYCLE_BLOCKED",
+}
 # TRADING-465 diagnostic bands are conservative review cutoffs, not promotion
 # thresholds. They only classify blockers/warnings from already-computed metrics.
 STRESS_BLOCKING_DRAWDOWN_PROXY = -0.20
@@ -1666,6 +1673,10 @@ def build_next_research_cycle_snapshot_payload(
     as_of: date,
     intake_payload: Mapping[str, Any],
     frozen_spec_payload: Mapping[str, Any],
+    executable_contract_payload: Mapping[str, Any] | None = None,
+    signal_binding_payload: Mapping[str, Any] | None = None,
+    weight_binding_payload: Mapping[str, Any] | None = None,
+    safety_audit_payload: Mapping[str, Any] | None = None,
     backfill_payload: Mapping[str, Any],
     stress_review_payload: Mapping[str, Any],
     cost_benchmark_payload: Mapping[str, Any],
@@ -1678,15 +1689,29 @@ def build_next_research_cycle_snapshot_payload(
     gate_decision = _text(
         _mapping(research_gate_payload.get("summary")).get("research_gate_decision")
     )
-    if gate_decision == "RESEARCH_PROMISING":
-        status = "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
-    elif gate_decision in {"NEEDS_MORE_EVIDENCE", "RETURN_TO_HYPOTHESIS_BACKLOG"}:
-        status = "NEXT_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
-    else:
-        status = "NEXT_RESEARCH_CYCLE_BLOCKED"
+    executable_contract = _required_source_payload(
+        executable_contract_payload,
+        binding_reports.CONTRACT_REPORT_TYPE,
+    )
+    signal_binding = _required_source_payload(
+        signal_binding_payload,
+        binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+    )
+    weight_binding = _required_source_payload(
+        weight_binding_payload,
+        binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+    )
+    safety_audit = _required_source_payload(
+        safety_audit_payload,
+        binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+    )
     source_payloads = (
         intake_payload,
         frozen_spec_payload,
+        executable_contract,
+        signal_binding,
+        weight_binding,
+        safety_audit,
         backfill_payload,
         stress_review_payload,
         cost_benchmark_payload,
@@ -1696,6 +1721,12 @@ def build_next_research_cycle_snapshot_payload(
         research_gate_payload,
         owner_packet_payload,
     )
+    source_statuses = _snapshot_source_statuses(source_payloads)
+    missing_required = _snapshot_missing_required_artifacts(source_statuses)
+    status = _executable_research_cycle_status(
+        gate_decision=gate_decision,
+        missing_required=missing_required,
+    )
     summary = {
         "research_cycle_snapshot_status": status,
         "research_gate_decision": gate_decision,
@@ -1703,20 +1734,39 @@ def build_next_research_cycle_snapshot_payload(
         "market_regime": MARKET_REGIME,
         "requested_date_range": _text(backfill_payload.get("requested_date_range")),
         "artifact_count": len(source_payloads),
+        "executable_artifact_count": len(
+            [executable_contract, signal_binding, weight_binding, safety_audit]
+        ),
+        "missing_required_artifact_count": len(missing_required),
+        "missing_required_artifacts": missing_required,
         "owner_packet_ready": _text(owner_packet_payload.get("status"))
         == "OWNER_RESEARCH_REVIEW_PACKET_READY",
+        "source_backfill_status": _text(backfill_payload.get("status"), "MISSING"),
+        "stress_result": _text(stress_review_payload.get("status"), "MISSING"),
+        "cost_benchmark_status": _text(cost_benchmark_payload.get("status"), "MISSING"),
+        "vs_returned_status": _text(comparison_payload.get("status"), "MISSING"),
+        "signal_robustness_status": _text(
+            signal_robustness_payload.get("status"),
+            "MISSING",
+        ),
+        "window_sensitivity_status": _text(
+            window_sensitivity_payload.get("status"),
+            "MISSING",
+        ),
+        "owner_packet_status": _text(owner_packet_payload.get("status"), "MISSING"),
         "paper_shadow_activation_allowed": False,
         "extended_shadow_allowed": False,
         "live_trading_allowed": False,
         "official_target_weights_generated": False,
         "broker_order_allowed": False,
+        "owner_decision_appended": False,
         "production_effect": PRODUCTION_EFFECT,
     }
     return _payload(
         report_type=CYCLE_SNAPSHOT_REPORT_TYPE,
         as_of=as_of,
         status=status,
-        purpose="Generate the final snapshot for the new research cycle.",
+        purpose="Generate the final executable research-cycle snapshot.",
         input_artifacts={
             _text(item.get("report_type")): _artifact_id(item)
             for item in source_payloads
@@ -1724,41 +1774,53 @@ def build_next_research_cycle_snapshot_payload(
         output_decision=status,
         summary=summary,
         body={
-            "source_statuses": [
-                {
-                    "report_type": _text(item.get("report_type")),
-                    "status": _text(item.get("status")),
-                    "next_action": _text(item.get("next_action")),
-                }
-                for item in source_payloads
-            ],
+            "source_statuses": source_statuses,
             "source_reader_briefs": {
                 _text(item.get("report_type")): _mapping(item.get("reader_brief"))
                 for item in source_payloads
             },
+            "missing_required_artifacts": missing_required,
+            "final_interpretation": {
+                "based_on_real_executable_binding": not missing_required,
+                "fabricated_metrics": False,
+                "paper_shadow_activation_allowed": False,
+                "official_target_weights_generated": False,
+                "broker_order_allowed": False,
+                "production_effect": PRODUCTION_EFFECT,
+            },
         },
         reader_brief=_reader_brief(
-            summary=f"Next research-cycle snapshot is {status}.",
+            summary=f"Executable research-cycle snapshot is {status}.",
             key_result=status,
             blocking_issues=(
-                "evidence_required_before_owner_ready"
-                if status != "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+                "; ".join(missing_required)
+                if missing_required
+                else "evidence_required_before_owner_ready"
+                if status != "EXECUTABLE_RESEARCH_CYCLE_PROMISING"
                 else "none"
             ),
             warnings="research-only; no paper-shadow/live/weights/broker approval",
             next_action=(
-                "complete_missing_research_evidence"
-                if status != "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+                "repair_missing_executable_research_cycle_artifacts"
+                if missing_required
+                else "complete_missing_research_evidence"
+                if status != "EXECUTABLE_RESEARCH_CYCLE_PROMISING"
                 else "manual_owner_research_review"
             ),
         ),
         next_action=(
-            "complete_missing_research_evidence"
-            if status != "NEXT_RESEARCH_CYCLE_READY_FOR_OWNER_REVIEW"
+            "repair_missing_executable_research_cycle_artifacts"
+            if missing_required
+            else "complete_missing_research_evidence"
+            if status != "EXECUTABLE_RESEARCH_CYCLE_PROMISING"
             else "manual_owner_research_review"
         ),
         safety_boundary=_safety_boundary(),
-        limitations=["Final snapshot is a research-cycle state report, not a trading approval."],
+        limitations=[
+            "Final snapshot is a research-cycle state report, not a trading approval.",
+            "No generated metric is fabricated; missing executable artifacts block the snapshot.",
+            "Snapshot cannot activate paper-shadow or write official weights.",
+        ],
         requested_date_range=summary["requested_date_range"],
     )
 
@@ -2277,6 +2339,75 @@ def validate_next_research_cycle_payload(
             and summary.get("order_ticket_generated") is False,
             "Owner packet must forbid shadow/live/official weights/broker/order.",
             "restore_owner_packet_safety_boundary",
+        )
+    if report_type == CYCLE_SNAPSHOT_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        snapshot_status = _text(payload.get("status"))
+        source_statuses = _records(payload.get("source_statuses"))
+        source_types = {_text(row.get("report_type")) for row in source_statuses}
+        required_source_types = {
+            binding_reports.CONTRACT_REPORT_TYPE,
+            binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+            binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+            binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+            BACKFILL_REPORT_TYPE,
+            STRESS_REVIEW_REPORT_TYPE,
+            COST_BENCHMARK_REVIEW_REPORT_TYPE,
+            VS_RETURNED_REPORT_TYPE,
+            SIGNAL_ROBUSTNESS_REPORT_TYPE,
+            WINDOW_SENSITIVITY_REPORT_TYPE,
+            RESEARCH_GATE_REPORT_TYPE,
+            OWNER_REVIEW_PACKET_REPORT_TYPE,
+        }
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_executable_cycle_status",
+            snapshot_status in EXECUTABLE_RESEARCH_CYCLE_STATUSES,
+            "Executable research-cycle snapshot must use TRADING-470 taxonomy.",
+            "restore_executable_cycle_status_taxonomy",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "required_sources_present",
+            required_source_types <= source_types,
+            "Executable research-cycle snapshot must include all required sources.",
+            "restore_executable_cycle_source_statuses",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "owner_packet_ready_visible",
+            bool(summary.get("owner_packet_ready")),
+            "Executable research-cycle snapshot must disclose owner packet readiness.",
+            "restore_cycle_owner_packet_disclosure",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "no_fabricated_missing_artifacts",
+            _int(summary.get("missing_required_artifact_count")) == len(
+                _list_values(summary.get("missing_required_artifacts"))
+            ),
+            "Missing required artifact count must match listed missing artifacts.",
+            "restore_cycle_missing_artifact_accounting",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "no_shadow_live_weights_broker_owner_append",
+            summary.get("paper_shadow_activation_allowed") is False
+            and summary.get("extended_shadow_allowed") is False
+            and summary.get("live_trading_allowed") is False
+            and summary.get("official_target_weights_generated") is False
+            and summary.get("broker_order_allowed") is False
+            and summary.get("owner_decision_appended") is False,
+            (
+                "Executable research-cycle snapshot must forbid shadow/live/"
+                "official weights/broker/order/owner append."
+            ),
+            "restore_executable_cycle_safety_boundary",
         )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
@@ -3907,6 +4038,82 @@ def _research_gate_required_next_action(
     ):
         return "repair_signal_window_evidence_before_gate_rerun"
     return "collect_missing_research_evidence_before_gate_rerun"
+
+
+def _snapshot_source_statuses(
+    source_payloads: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "report_type": _text(item.get("report_type"), "MISSING"),
+            "status": _text(item.get("status"), "MISSING"),
+            "next_action": _text(item.get("next_action")),
+            "production_effect": _text(item.get("production_effect"), PRODUCTION_EFFECT),
+        }
+        for item in source_payloads
+    ]
+
+
+def _required_source_payload(
+    payload: Mapping[str, Any] | None,
+    report_type: str,
+) -> dict[str, Any]:
+    data = _mapping(payload)
+    if data:
+        return data
+    return {
+        "report_type": report_type,
+        "status": "MISSING",
+        "next_action": "generate_required_executable_research_cycle_artifact",
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _snapshot_missing_required_artifacts(
+    source_statuses: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    status_by_type = {
+        _text(row.get("report_type")): _text(row.get("status"))
+        for row in source_statuses
+    }
+    required = (
+        binding_reports.CONTRACT_REPORT_TYPE,
+        binding_reports.SIGNAL_BINDING_REPORT_TYPE,
+        binding_reports.WEIGHT_BINDING_REPORT_TYPE,
+        binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+        BACKFILL_REPORT_TYPE,
+        STRESS_REVIEW_REPORT_TYPE,
+        COST_BENCHMARK_REVIEW_REPORT_TYPE,
+        VS_RETURNED_REPORT_TYPE,
+        SIGNAL_ROBUSTNESS_REPORT_TYPE,
+        WINDOW_SENSITIVITY_REPORT_TYPE,
+        RESEARCH_GATE_REPORT_TYPE,
+        OWNER_REVIEW_PACKET_REPORT_TYPE,
+    )
+    return [
+        report_type
+        for report_type in required
+        if not _text(status_by_type.get(report_type))
+        or _text(status_by_type.get(report_type)) == "MISSING"
+    ]
+
+
+def _executable_research_cycle_status(
+    *,
+    gate_decision: str,
+    missing_required: Sequence[str],
+) -> str:
+    if missing_required:
+        return "EXECUTABLE_RESEARCH_CYCLE_BLOCKED"
+    if gate_decision == "RESEARCH_PROMISING":
+        return "EXECUTABLE_RESEARCH_CYCLE_PROMISING"
+    if gate_decision == "NEEDS_MORE_EVIDENCE":
+        return "EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE"
+    if gate_decision == "RETURN_TO_HYPOTHESIS_BACKLOG":
+        return "EXECUTABLE_RESEARCH_CYCLE_RETURN_TO_BACKLOG"
+    if gate_decision == "REJECT_RESEARCH_CANDIDATE":
+        return "EXECUTABLE_RESEARCH_CYCLE_REJECT"
+    return "EXECUTABLE_RESEARCH_CYCLE_BLOCKED"
 
 
 def _owner_option(

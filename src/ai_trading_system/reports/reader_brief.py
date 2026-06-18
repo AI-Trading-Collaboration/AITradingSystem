@@ -26820,11 +26820,11 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "确认 owner packet 含 continue/revise/return/reject/hold options 和安全边界。"
         ),
         "next_candidate_research_cycle_snapshot": (
-            "查看 TRADING-449~459 final research-cycle state "
+            "查看 TRADING-470 executable research-cycle final snapshot "
             "和 no shadow/live/weights/broker 边界。"
         ),
         "next_candidate_research_cycle_snapshot_validation": (
-            "确认 final next research-cycle snapshot 的 disclosure 和安全边界。"
+            "确认 executable research-cycle snapshot source coverage 和安全边界。"
         ),
         "next_candidate_executable_binding_contract": (
             "查看 frozen next candidate 的 executable research-only binding contract；"
@@ -27002,6 +27002,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Owner packet artifact 生成后立即校验 option set、no-append 和安全边界。",
+    ),
+    "next_candidate_research_cycle_snapshot": (
+        "manual",
+        "manual research cycle",
+        "TRADING-470 在 owner packet 后生成 executable research-cycle final snapshot。",
+    ),
+    "next_candidate_research_cycle_snapshot_validation": (
+        "manual",
+        "manual research cycle",
+        "Executable research-cycle snapshot 生成后立即校验 source coverage 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

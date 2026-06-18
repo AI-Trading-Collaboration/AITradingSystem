@@ -1964,6 +1964,24 @@ revise hypothesis、return to hypothesis backlog、reject research candidate 和
 extended/live、不写 official target weights、不触发 broker/order、不修改 production。Reader Brief
 只读展示 `next_candidate_owner_research_review_packet` 摘要。
 
+TRADING-470_EXECUTABLE_RESEARCH_CYCLE_SNAPSHOT 在 owner packet 后生成 executable
+research-cycle final snapshot。运行
+`aits reports next-candidate-research-cycle-snapshot --as-of YYYY-MM-DD` 和
+`aits reports validate-next-candidate-research-cycle-snapshot --latest` 会收集 executable
+binding contract、signal binding、research weight binding、safety audit、real backfill、
+stress/cost/benchmark、vs-returned comparison、signal robustness、window sensitivity、
+research gate 和 owner packet，输出 `next_candidate_research_cycle_snapshot` 与 validation
+artifacts。2026-06-17 真实 snapshot 收集 14 个 artifacts，其中 executable binding
+artifacts=4，missing required artifacts=0，最终状态为
+`EXECUTABLE_RESEARCH_CYCLE_NEEDS_MORE_EVIDENCE`；research gate 仍为
+`NEEDS_MORE_EVIDENCE`，backfill 为 `CANDIDATE_BACKFILL_PARTIAL`，stress 为 `WEAK`，
+cost/benchmark 为 `COST_BENCHMARK_REVIEW_WEAK`，vs-returned 为
+`MIXED_VS_RETURNED_CANDIDATE`，signal robustness 为 `SIGNAL_ROBUSTNESS_BLOCKED`，
+window sensitivity 为 `WINDOW_FRAGILE`。该 snapshot 只汇总 real executable research
+evidence，不伪造 metrics、不 append owner decision、不创建 paper-shadow、不批准
+extended/live、不写 official target weights、不触发 broker/order、不修改 production。Reader
+Brief 只读展示 `next_candidate_research_cycle_snapshot` 摘要。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
