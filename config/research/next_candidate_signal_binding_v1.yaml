@@ -1,0 +1,41 @@
+schema_version: 1
+policy_id: next_candidate_signal_binding_v1
+version: 2026-06-18
+status: pilot_baseline
+owner: research_validation
+rationale: >
+  TRADING-461 adds a research-only executable signal binding for the frozen
+  next candidate after the TRADING-449 to TRADING-459 cycle stopped because no
+  signal or weight binding existed. The policy converts the existing ETF
+  signal series into auditable signal state only; it does not create target
+  weights, orders, broker instructions, paper-shadow activation, or production
+  mutation.
+intended_effect: >
+  Provide a deterministic signal-state bridge that later research-only weight
+  binding and backfill tasks can consume while preserving fail-closed input
+  validation and manual-review-only governance.
+validation_evidence: >
+  TRADING-461 focused tests cover complete signal binding, blocked missing
+  signal inputs, validation rejection of forbidden outputs, CLI artifact
+  generation, and Reader Brief summary. Real artifacts must also pass data
+  quality, report validation, Ruff, compileall, documentation contract, and
+  task-register consistency before commit.
+review_condition: >
+  Recalibrate before any promotion gate, paper-shadow activation request,
+  official target-weight generation, or after the owner changes the signal
+  model scale, ETF research universe, or frozen candidate hypothesis.
+
+score_normalization:
+  composite_score_center: 50.0
+  composite_score_span: 50.0
+  normalized_min: -1.0
+  normalized_max: 1.0
+
+risk_state_rules:
+  risk_on_direction_values:
+    - bullish
+  risk_off_direction_values:
+    - bearish
+
+rotation_state_rules:
+  neutral_band: 0.0

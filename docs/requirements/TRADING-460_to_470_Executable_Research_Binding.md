@@ -131,3 +131,22 @@ Latest confirmed statuses:
   catalog, system flow, README, and focused tests. The contract is schema-only:
   strategy behavior, signal binding, research weight binding, and real metrics
   remain unimplemented by design. Next task is TRADING-461 signal binding.
+- 2026-06-18: TRADING-461 started. Implementation must consume validated cached
+  data and the TRADING-460 contract, fail closed for missing/stale/schema-empty
+  signal or feature inputs, and output only research-only signal state,
+  uncertainty, and blocking reasons. It must not produce research weights,
+  official target weights, paper-shadow activation, broker/order artifacts, or
+  backfill metrics.
+- 2026-06-18: TRADING-461 completed pending commit. Added
+  `next_candidate_signal_binding` and validation artifacts with report CLI,
+  validation CLI, Reader Brief section, report registry, artifact catalog,
+  system flow, README, governed signal-binding policy, and focused tests. The
+  real 2026-06-17 artifact consumed the TRADING-460 contract validation and the
+  cached-data quality gate (`PASS_WITH_WARNINGS`, errors=0), produced one
+  research-only latest signal row dated 2026-06-16, and validated PASS. Status
+  is `CANDIDATE_SIGNAL_BINDING_COMPLETE_WITH_WARNINGS`; warnings are data
+  quality warnings, latest signal date outside frozen validation windows, and
+  signal input completeness warning. No hypothetical weights, official target
+  weights, backfill metrics, paper-shadow activation, owner decision,
+  broker/order, or production mutation were produced. Next task is TRADING-462
+  research-only hypothetical weight binding.

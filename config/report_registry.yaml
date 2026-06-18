@@ -8904,6 +8904,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: next_candidate_signal_binding
+    title: Next Candidate Signal Binding
+    group: research
+    cadence: manual
+    audience: reviewer
+    owner: system
+    command: aits reports next-candidate-signal-binding --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/next_candidate_signal_binding_20*.json
+      - outputs/reports/next_candidate_signal_binding_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-461 consumes validated cached data, the TRADING-460 contract, and
+      signal/feature inputs to produce research-only executable signal states
+      without weights, broker/order, paper-shadow activation, or backfill
+      metrics.
+    owner_action: validate_signal_binding_before_research_weight_binding
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_signal_binding_validation
+    title: Next Candidate Signal Binding Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-signal-binding --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_signal_binding_validation_*.json
+      - outputs/reports/next_candidate_signal_binding_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Signal binding validation fails closed if validated-input status,
+      research-only metadata, signal series/state output, or no
+      official-weight/broker/order boundaries are missing.
+    owner_action: run_after_next_candidate_signal_binding
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
     title: Research Safety Boundary Audit
     group: governance

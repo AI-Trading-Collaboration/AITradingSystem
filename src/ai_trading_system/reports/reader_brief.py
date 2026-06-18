@@ -191,6 +191,7 @@ def build_reader_brief_payload(
     )
     next_research_cycle_snapshot = _next_research_cycle_snapshot_summary(report_index)
     executable_binding_contract = _executable_binding_contract_summary(report_index)
+    executable_signal_binding = _executable_signal_binding_summary(report_index)
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -363,6 +364,7 @@ def build_reader_brief_payload(
         "return_to_research_governance_snapshot": return_to_research_governance_snapshot,
         "next_research_cycle_snapshot": next_research_cycle_snapshot,
         "executable_binding_contract": executable_binding_contract,
+        "executable_signal_binding": executable_signal_binding,
         "research_safety_boundary_audit": research_safety_boundary_audit,
         "artifact_lineage_graph": artifact_lineage_graph,
         "task_register_consistency": task_register_consistency,
@@ -712,6 +714,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     next_research_cycle_snapshot = _mapping(payload.get("next_research_cycle_snapshot"))
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
+    executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
     research_safety_boundary_audit = _mapping(
         payload.get("research_safety_boundary_audit")
     )
@@ -1861,6 +1864,72 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     ("broker_effect", executable_binding_contract.get("broker_effect")),
                     ("order_effect", executable_binding_contract.get("order_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Executable Signal Binding",
+            _definition_table(
+                [
+                    ("availability", executable_signal_binding.get("availability")),
+                    ("status", executable_signal_binding.get("status")),
+                    (
+                        "signal_binding_status",
+                        executable_signal_binding.get("signal_binding_status"),
+                    ),
+                    ("candidate_id", executable_signal_binding.get("candidate_id")),
+                    (
+                        "binding_version",
+                        executable_signal_binding.get("binding_version"),
+                    ),
+                    (
+                        "latest_signal_date",
+                        executable_signal_binding.get("latest_signal_date"),
+                    ),
+                    (
+                        "signal_row_count",
+                        executable_signal_binding.get("signal_row_count"),
+                    ),
+                    ("signal_score", executable_signal_binding.get("signal_score")),
+                    ("regime_state", executable_signal_binding.get("regime_state")),
+                    ("risk_state", executable_signal_binding.get("risk_state")),
+                    ("rotation_state", executable_signal_binding.get("rotation_state")),
+                    ("confidence", executable_signal_binding.get("confidence")),
+                    ("uncertainty", executable_signal_binding.get("uncertainty")),
+                    (
+                        "blocking_reason",
+                        executable_signal_binding.get("blocking_reason"),
+                    ),
+                    (
+                        "validation_status",
+                        executable_signal_binding.get("validation_status"),
+                    ),
+                    (
+                        "official_target_weights",
+                        executable_signal_binding.get("official_target_weights"),
+                    ),
+                    (
+                        "hypothetical_research_weight_produced",
+                        executable_signal_binding.get(
+                            "hypothetical_research_weight_produced"
+                        ),
+                    ),
+                    (
+                        "backfill_metrics_produced",
+                        executable_signal_binding.get("backfill_metrics_produced"),
+                    ),
+                    ("next_action", executable_signal_binding.get("next_action")),
+                    ("detail_report", executable_signal_binding.get("detail_report")),
+                    (
+                        "validation_detail_report",
+                        executable_signal_binding.get("validation_detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        executable_signal_binding.get("production_effect"),
+                    ),
+                    ("broker_effect", executable_signal_binding.get("broker_effect")),
+                    ("order_effect", executable_signal_binding.get("order_effect")),
                 ]
             ),
         ),
@@ -8851,6 +8920,118 @@ def _missing_executable_binding_contract_summary(reason: str) -> dict[str, Any]:
         "summary_sentence": (
             "next_candidate_executable_binding_contract artifact missing; "
             "run reports next-candidate-executable-binding-contract."
+        ),
+        "limitation": reason,
+    }
+
+
+def _executable_signal_binding_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_executable_signal_binding_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "executable signal binding."
+        )
+    report_path = _report_index_artifact_path(report_index, "next_candidate_signal_binding")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_executable_signal_binding_summary(
+            "next_candidate_signal_binding artifact missing from report index "
+            "latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_signal_binding_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    signal_binding = _mapping(payload.get("signal_binding"))
+    signal_state = _mapping(payload.get("signal_state"))
+    confidence_uncertainty = _mapping(signal_state.get("confidence_uncertainty"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    status = _text(payload.get("status"), _text(summary.get("signal_binding_status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "signal_binding_status": _text(summary.get("signal_binding_status"), status),
+        "candidate_id": _text(summary.get("candidate_id"), "MISSING"),
+        "binding_version": _text(signal_binding.get("binding_version"), "MISSING"),
+        "latest_signal_date": _text(summary.get("latest_signal_date"), "MISSING"),
+        "signal_row_count": _int(summary.get("signal_row_count")),
+        "signal_score": signal_state.get("signal_score"),
+        "regime_state": _text(signal_state.get("regime_state"), "MISSING"),
+        "risk_state": _text(signal_state.get("risk_state"), "MISSING"),
+        "rotation_state": _text(signal_state.get("rotation_state"), "MISSING"),
+        "confidence": _text(confidence_uncertainty.get("confidence"), "MISSING"),
+        "uncertainty": _text(confidence_uncertainty.get("uncertainty"), "MISSING"),
+        "blocking_reason": _text(summary.get("blocking_reason"), "none"),
+        "warning_reason": _text(summary.get("warning_reason"), "none"),
+        "research_only": signal_binding.get("research_only") is True,
+        "manual_review_only": signal_binding.get("manual_review_only") is True,
+        "official_target_weights": signal_binding.get("official_target_weights") is True,
+        "hypothetical_research_weight_produced": (
+            signal_binding.get("hypothetical_research_weight_produced") is True
+        ),
+        "backfill_metrics_produced": signal_binding.get("backfill_metrics_produced") is True,
+        "validation_status": validation_status,
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_effect": _text(payload.get("broker_effect"), PRODUCTION_EFFECT),
+        "order_effect": _text(payload.get("order_effect"), PRODUCTION_EFFECT),
+        "summary_sentence": (
+            f"executable_signal_binding={status}; validation={validation_status}; "
+            f"rows={_int(summary.get('signal_row_count'))}; "
+            "official_target_weights="
+            f"{signal_binding.get('official_target_weights') is True}; "
+            "hypothetical_weights="
+            f"{signal_binding.get('hypothetical_research_weight_produced') is True}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the signal binding artifact; it does not "
+            "produce weights, run backfill, create paper-shadow candidates, "
+            "approve live trading, or create orders."
+        ),
+    }
+
+
+def _missing_executable_signal_binding_summary(reason: str) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "signal_binding_status": "MISSING",
+        "candidate_id": "MISSING",
+        "binding_version": "MISSING",
+        "latest_signal_date": "MISSING",
+        "signal_row_count": 0,
+        "signal_score": None,
+        "regime_state": "MISSING",
+        "risk_state": "MISSING",
+        "rotation_state": "MISSING",
+        "confidence": "MISSING",
+        "uncertainty": "MISSING",
+        "blocking_reason": "MISSING",
+        "warning_reason": "MISSING",
+        "research_only": False,
+        "manual_review_only": False,
+        "official_target_weights": False,
+        "hypothetical_research_weight_produced": False,
+        "backfill_metrics_produced": False,
+        "validation_status": "MISSING",
+        "next_action": "run_aits_reports_next_candidate_signal_binding",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": PRODUCTION_EFFECT,
+        "order_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_signal_binding artifact missing; run reports "
+            "next-candidate-signal-binding."
         ),
         "limitation": reason,
     }
@@ -24835,8 +25016,10 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_research_cycle_snapshot_validation": 269,
         "next_candidate_executable_binding_contract": 270,
         "next_candidate_executable_binding_contract_validation": 271,
-        "report_quality_gate": 272,
-        "reader_brief_quality": 273,
+        "next_candidate_signal_binding": 272,
+        "next_candidate_signal_binding_validation": 273,
+        "report_quality_gate": 274,
+        "reader_brief_quality": 275,
         "artifact_catalog": 280,
     }
     artifact_id = _text(item.get("artifact_id"))
@@ -25078,6 +25261,14 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "确认 executable binding contract 的 schema、required output types "
             "和 no shadow/live/weights/broker 边界。"
         ),
+        "next_candidate_signal_binding": (
+            "查看 frozen next candidate 的 research-only executable signal state；"
+            "该 artifact 不生成 weights、backfill metrics、paper-shadow 或 broker/order。"
+        ),
+        "next_candidate_signal_binding_validation": (
+            "确认 signal binding 的 validated-input、research-only metadata "
+            "和 no official weights/broker/order 边界。"
+        ),
         "research_safety_boundary_audit": (
             "检查 research artifacts 和 task scope 是否保持 no broker / no order / no production。"
         ),
@@ -25113,6 +25304,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Executable binding contract 生成后立即校验 schema 和安全边界。",
+    ),
+    "next_candidate_signal_binding": (
+        "manual",
+        "manual research cycle",
+        "TRADING-461 在 contract validation 和 validate-data 通过后生成。",
+    ),
+    "next_candidate_signal_binding_validation": (
+        "manual",
+        "manual research cycle",
+        "Signal binding artifact 生成后立即校验 research-only 安全边界。",
     ),
     "task_register_consistency": (
         "daily",

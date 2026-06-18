@@ -1842,6 +1842,19 @@ benchmark metrics。所有输出固定 `research_only=true`、`manual_review_onl
 `official_target_weights=false`、`production_effect=none`、`broker_effect=none`、
 `order_effect=none`；Reader Brief 只读展示 `next_candidate_executable_binding_contract`。
 
+TRADING-461_NEXT_CANDIDATE_SIGNAL_BINDING 在 contract validation 后实现
+research-only executable signal binding。运行
+`aits reports next-candidate-signal-binding --as-of YYYY-MM-DD` 会先调用同一路径的
+cached-data quality gate，随后读取 TRADING-460 contract validation、frozen spec、signal
+input completeness policy、ETF signal series、ETF feature matrix、daily feature records 和
+latest signal snapshot，输出 `next_candidate_signal_binding_YYYY-MM-DD.json/md`；运行
+`aits reports validate-next-candidate-signal-binding --latest` 生成 validation artifact。
+该 layer 只输出 candidate signal series、latest signal state、`signal_score`、
+`regime_state`、`risk_state`、`rotation_state`、confidence/uncertainty 和 blocking reason。
+它不生成 hypothetical research weights、official target weights、paper-shadow activation、
+owner decision、broker/order、production mutation 或 backfill return/drawdown/turnover/cost/
+benchmark metrics；Reader Brief 只读展示 `next_candidate_signal_binding`。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
