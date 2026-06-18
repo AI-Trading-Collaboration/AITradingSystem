@@ -9031,6 +9031,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: executable_research_evidence_gap_ledger
+    title: Executable Research Evidence Gap Ledger
+    group: governance
+    cadence: manual
+    audience: owner
+    owner: system
+    command: aits reports executable-research-evidence-gap-ledger --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/executable_research_evidence_gap_ledger_20*.json
+      - outputs/reports/executable_research_evidence_gap_ledger_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-471 reads the TRADING-470 executable research-cycle artifacts and
+      records non-aggregated evidence gaps across backfill coverage, signal
+      robustness, window fragility, stress weakness, cost/benchmark weakness,
+      and vs-returned comparison weakness.
+    owner_action: use_as_input_to_trading_472_backfill_repair_plan
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: executable_research_evidence_gap_ledger_validation
+    title: Executable Research Evidence Gap Ledger Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-executable-research-evidence-gap-ledger --latest
+    artifact_globs:
+      - outputs/reports/executable_research_evidence_gap_ledger_validation_20*.json
+      - outputs/reports/executable_research_evidence_gap_ledger_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-471 validation checks required source coverage, required gap
+      categories, non-aggregated rows, Reader Brief fields, and no paper-shadow,
+      official weights, broker/order, owner append, or production mutation.
+    owner_action: run_after_executable_research_evidence_gap_ledger
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
     title: Next Candidate Executable Binding Contract
     group: research

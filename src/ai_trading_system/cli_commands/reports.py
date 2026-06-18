@@ -102,6 +102,9 @@ from ai_trading_system.reports import (
     exact_blocker_warning_inventory as exact_inventory_reports,
 )
 from ai_trading_system.reports import executable_research_binding as executable_binding_reports
+from ai_trading_system.reports import (
+    executable_research_evidence_repair as evidence_repair_reports,
+)
 from ai_trading_system.reports import next_research_cycle as next_research_reports
 from ai_trading_system.reports import (
     normal_paper_shadow_observation_clock as normal_observation_clock_reports,
@@ -6673,6 +6676,34 @@ def _write_executable_binding_report(
     )
 
 
+def _write_evidence_repair_report(
+    payload: Mapping[str, object],
+    *,
+    reports_dir: Path,
+    report_date: date,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[Path, Path]:
+    report_type = str(payload.get("report_type"))
+    json_path = json_output_path or evidence_repair_reports.default_evidence_repair_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+    md_path = (
+        markdown_output_path
+        or evidence_repair_reports.default_evidence_repair_markdown_path(
+            report_type,
+            reports_dir,
+            report_date,
+        )
+    )
+    return (
+        evidence_repair_reports.write_evidence_repair_json(payload, json_path),
+        evidence_repair_reports.write_evidence_repair_markdown(payload, md_path),
+    )
+
+
 def _next_research_cycle_source_path(
     *,
     reports_dir: Path,
@@ -6719,6 +6750,32 @@ def _executable_binding_source_path(
             raise typer.BadParameter(f"找不到 latest {label} JSON")
         return latest_path
     return executable_binding_reports.default_executable_binding_json_path(
+        report_type,
+        reports_dir,
+        report_date,
+    )
+
+
+def _evidence_repair_source_path(
+    *,
+    reports_dir: Path,
+    report_date: date,
+    report_type: str,
+    latest: bool,
+    source_json_path: Path | None,
+    label: str,
+) -> Path:
+    if source_json_path is not None:
+        return source_json_path
+    if latest:
+        latest_path = evidence_repair_reports.latest_evidence_repair_json_path(
+            report_type,
+            reports_dir,
+        )
+        if latest_path is None:
+            raise typer.BadParameter(f"找不到 latest {label} JSON")
+        return latest_path
+    return evidence_repair_reports.default_evidence_repair_json_path(
         report_type,
         reports_dir,
         report_date,
@@ -6809,6 +6866,29 @@ def _write_executable_binding_validation(
     return payload, json_path, md_path
 
 
+def _write_evidence_repair_validation(
+    source_payload: Mapping[str, object],
+    *,
+    reports_dir: Path,
+    json_output_path: Path | None = None,
+    markdown_output_path: Path | None = None,
+) -> tuple[dict[str, object], Path, Path]:
+    payload = (
+        evidence_repair_reports.validate_executable_research_evidence_gap_ledger_payload(
+            source_payload
+        )
+    )
+    report_date = _parse_date(str(payload.get("as_of")))
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    return payload, json_path, md_path
+
+
 def _load_next_research_source_payload(
     *,
     report_type: str,
@@ -6839,6 +6919,26 @@ def _load_executable_binding_source_payload(
     label: str,
 ) -> tuple[Path, dict[str, object]]:
     source_path = _executable_binding_source_path(
+        reports_dir=reports_dir,
+        report_date=report_date,
+        report_type=report_type,
+        latest=latest,
+        source_json_path=source_json_path,
+        label=label,
+    )
+    return source_path, _read_json_mapping_for_report_cli(source_path, label)
+
+
+def _load_evidence_repair_source_payload(
+    *,
+    report_type: str,
+    report_date: date,
+    reports_dir: Path,
+    latest: bool = False,
+    source_json_path: Path | None = None,
+    label: str,
+) -> tuple[Path, dict[str, object]]:
+    source_path = _evidence_repair_source_path(
         reports_dir=reports_dir,
         report_date=report_date,
         report_type=report_type,
@@ -7606,6 +7706,54 @@ def next_candidate_research_cycle_snapshot_command(
     console.print(f"Markdown：{md_path}")
 
 
+@reports_app.command("executable-research-evidence-gap-ledger")
+def executable_research_evidence_gap_ledger_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Evidence gap ledger 日期。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Evidence gap ledger JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Evidence gap ledger Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """TRADING-471：生成 executable research evidence gap ledger。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        payload = (
+            evidence_repair_reports.build_executable_research_evidence_gap_ledger_payload(
+                as_of=report_date,
+                reports_dir=reports_dir,
+            )
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = _write_evidence_repair_report(
+        payload,
+        reports_dir=reports_dir,
+        report_date=report_date,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    summary = payload["summary"]
+    console.print(f"[yellow]Evidence gap ledger：{payload['status']}[/yellow]")
+    console.print(f"gap_count：{summary['gap_count']}")
+    console.print(f"blocking_gap_count：{summary['blocking_gap_count']}")
+    console.print(f"candidate_redesign_gap_count：{summary['candidate_redesign_gap_count']}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{md_path}")
+
+
 @reports_app.command("next-candidate-executable-binding-contract")
 def next_candidate_executable_binding_contract_command(
     as_of: Annotated[
@@ -8306,6 +8454,59 @@ def validate_next_candidate_research_cycle_snapshot_command(
         json_output_path=json_output_path,
         markdown_output_path=markdown_output_path,
     )
+
+
+@reports_app.command("validate-executable-research-evidence-gap-ledger")
+def validate_executable_research_evidence_gap_ledger_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest executable research evidence gap ledger。"),
+    ] = False,
+    as_of: Annotated[str | None, typer.Option("--as-of", "--date")] = None,
+    reports_dir: Annotated[Path, typer.Option(help="报告 artifact 所在目录。")] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    source_json_path: Annotated[Path | None, typer.Option(help="Source JSON 路径。")] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Validation Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_path, source_payload = _load_evidence_repair_source_payload(
+        report_type=evidence_repair_reports.EVIDENCE_GAP_LEDGER_REPORT_TYPE,
+        report_date=report_date,
+        reports_dir=reports_dir,
+        latest=latest,
+        source_json_path=source_json_path,
+        label="executable research evidence gap ledger",
+    )
+    payload, json_path, md_path = _write_evidence_repair_validation(
+        source_payload,
+        reports_dir=reports_dir,
+        json_output_path=json_output_path,
+        markdown_output_path=markdown_output_path,
+    )
+    status = payload["status"]
+    style = "green" if status == "PASS" else "red"
+    summary = payload["summary"]
+    console.print(f"[{style}]Evidence gap ledger validation：{status}[/{style}]")
+    console.print(f"Source JSON：{source_path}")
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation Markdown：{md_path}")
+    console.print(
+        f"checks：{summary['check_count']}；"
+        f"failed：{summary['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    if status == "FAIL":
+        raise typer.Exit(code=1)
 
 
 @reports_app.command("validate-next-candidate-executable-binding-contract")

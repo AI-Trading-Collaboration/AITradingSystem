@@ -1982,6 +1982,18 @@ evidence，不伪造 metrics、不 append owner decision、不创建 paper-shado
 extended/live、不写 official target weights、不触发 broker/order、不修改 production。Reader
 Brief 只读展示 `next_candidate_research_cycle_snapshot` 摘要。
 
+TRADING-471_EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER 在 TRADING-470 snapshot 后生成
+non-aggregated evidence gap ledger。运行
+`aits reports executable-research-evidence-gap-ledger --as-of YYYY-MM-DD` 和
+`aits reports validate-executable-research-evidence-gap-ledger --latest` 会读取 executable
+binding contract、signal binding、research weight binding、safety audit、backfill、
+stress/cost/benchmark、vs-returned comparison、signal robustness、window sensitivity、
+research gate 和 final snapshot，逐条输出 backfill coverage、signal robustness、window
+fragility、stress failure、cost/benchmark weakness 和 comparison weakness gaps。该 ledger
+只解释为什么 candidate 仍为 `NEEDS_MORE_EVIDENCE`，不运行上游、不补造 metrics、不调参、
+不 append owner decision、不创建 paper-shadow、不批准 extended/live、不写 official target
+weights、不触发 broker/order、不修改 production。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly
