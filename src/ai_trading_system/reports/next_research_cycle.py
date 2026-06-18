@@ -1535,31 +1535,52 @@ def build_next_candidate_owner_research_review_packet_payload(
     as_of: date,
     research_gate_payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    gate_decision = _text(
-        _mapping(research_gate_payload.get("summary")).get("research_gate_decision")
+    gate_summary = _mapping(research_gate_payload.get("summary"))
+    gate_decision = _text(gate_summary.get("research_gate_decision"))
+    gate_blockers = _records(research_gate_payload.get("blocker_list"))
+    gate_required_next_action = _text(
+        gate_summary.get("required_next_action"),
+        _text(research_gate_payload.get("next_action"), "MISSING"),
     )
+    blocker_names = _issue_names(gate_blockers, "issue_id")
     options = [
         _owner_option(
             "continue_research_validation",
             evidence_required=[
-                "executable research signal/weight binding",
-                "new candidate backfill with data quality PASS",
-                "stress/cost/benchmark/signal/window validation reruns",
+                "repair or explain gate blockers before any promotion claim",
+                gate_required_next_action,
+                "fresh research gate rerun after blocker repair",
             ],
             risks=[
-                "research time spent before metrics prove improvement",
-                "old failure mode may repeat if cost/benchmark blockers persist",
+                "research time spent while current gate remains non-promising",
+                f"current blockers remain: {blocker_names}",
             ],
-            next_action="bind_and_rerun_research_validation_chain",
+            next_action=gate_required_next_action,
         ),
         _owner_option(
             "revise_hypothesis",
             evidence_required=[
                 "owner-reviewed hypothesis revision",
-                "updated frozen spec with explicit executable binding",
+                "updated frozen spec that addresses repeated failure modes",
+                "new executable binding contract or policy revision if inputs change",
             ],
-            risks=["revision may move away from original P0 failure attribution"],
+            risks=[
+                "revision may move away from original P0 failure attribution",
+                "revised hypothesis still may not survive cost/benchmark review",
+            ],
             next_action="return_to_hypothesis_backlog_for_revision",
+        ),
+        _owner_option(
+            "return_to_hypothesis_backlog",
+            evidence_required=[
+                "owner decision to stop this candidate path for now",
+                "backlog note preserving current blockers and reusable evidence",
+            ],
+            risks=[
+                "candidate-specific implementation work pauses",
+                "useful executable binding infrastructure remains but candidate evidence resets",
+            ],
+            next_action="record_backlog_return_without_owner_decision_append",
         ),
         _owner_option(
             "reject_research_candidate",
@@ -1567,25 +1588,38 @@ def build_next_candidate_owner_research_review_packet_payload(
                 "owner decision to reject research candidate",
                 "documented rejection rationale",
             ],
-            risks=["may discard still-useful diagnostic evidence"],
+            risks=[
+                "may discard still-useful diagnostic evidence",
+                "requires separate owner decision before any state change",
+            ],
             next_action="create_research_rejection_postmortem",
         ),
         _owner_option(
             "hold_for_more_data",
-            evidence_required=["specific data/source or sample condition to wait for"],
-            risks=["research cycle remains incomplete"],
+            evidence_required=[
+                "specific data/source or sample condition to wait for",
+                "review date or exit condition for the hold",
+            ],
+            risks=[
+                "research cycle remains incomplete",
+                "current weak/fragile evidence remains unresolved during hold",
+            ],
             next_action="wait_for_required_evidence_without_state_mutation",
         ),
     ]
     summary = {
         "owner_packet_status": "OWNER_RESEARCH_REVIEW_PACKET_READY",
         "source_research_gate_decision": gate_decision,
+        "source_gate_blocker_count": len(gate_blockers),
+        "source_gate_required_next_action": gate_required_next_action,
         "option_count": len(options),
+        "owner_option_ids": [row["option_id"] for row in options],
         "paper_shadow_activation_allowed": False,
         "extended_shadow_allowed": False,
         "live_trading_allowed": False,
         "official_target_weights_generated": False,
         "broker_order_allowed": False,
+        "order_ticket_generated": False,
         "owner_decision_appended": False,
         "production_effect": PRODUCTION_EFFECT,
     }
@@ -1597,17 +1631,32 @@ def build_next_candidate_owner_research_review_packet_payload(
         input_artifacts={"next_candidate_research_gate": _artifact_id(research_gate_payload)},
         output_decision=summary["owner_packet_status"],
         summary=summary,
-        body={"owner_options": options},
+        body={
+            "source_gate_blockers": gate_blockers,
+            "owner_options": options,
+            "explicit_non_actions": {
+                "paper_shadow_activation": False,
+                "extended_shadow": False,
+                "live_trading": False,
+                "official_weights": False,
+                "broker_order": False,
+                "owner_decision_append": False,
+                "production_mutation": False,
+            },
+        },
         reader_brief=_reader_brief(
             summary="Owner research review packet is ready; no decision is appended.",
             key_result=summary["owner_packet_status"],
-            blocking_issues="none",
+            blocking_issues=blocker_names,
             warnings="manual owner decision required before any state transition",
             next_action="owner_review_research_options_manually",
         ),
         next_action="owner_review_research_options_manually",
         safety_boundary=_safety_boundary(),
-        limitations=["This packet does not append owner decisions automatically."],
+        limitations=[
+            "This packet does not append owner decisions automatically.",
+            "No option in this packet activates paper-shadow, official weights, or broker/order.",
+        ],
         requested_date_range=_text(research_gate_payload.get("requested_date_range")),
     )
 
@@ -2159,6 +2208,76 @@ def validate_next_research_cycle_payload(
                 "Fragile window sensitivity must be visible in research gate blockers.",
                 "restore_window_gate_blocker",
             )
+    if report_type == OWNER_REVIEW_PACKET_REPORT_TYPE:
+        summary = _mapping(payload.get("summary"))
+        packet_status = _text(payload.get("status"))
+        owner_options = _records(payload.get("owner_options"))
+        option_ids = {_text(row.get("option_id")) for row in owner_options}
+        required_option_ids = {
+            "continue_research_validation",
+            "revise_hypothesis",
+            "return_to_hypothesis_backlog",
+            "reject_research_candidate",
+            "hold_for_more_data",
+        }
+        _append_check(
+            checks,
+            blocking_issues,
+            "allowed_owner_packet_status",
+            packet_status == "OWNER_RESEARCH_REVIEW_PACKET_READY",
+            "Owner research review packet must use TRADING-469 status.",
+            "restore_owner_packet_status",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "source_research_gate_visible",
+            bool(_text(summary.get("source_research_gate_decision"))),
+            "Owner packet must disclose source research gate decision.",
+            "restore_owner_packet_gate_disclosure",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "required_owner_options_present",
+            required_option_ids <= option_ids,
+            "Owner packet must include continue/revise/return/reject/hold options.",
+            "restore_owner_option_set",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "owner_options_complete",
+            all(
+                _list_values(row.get("evidence_required"))
+                and _list_values(row.get("risks"))
+                and bool(_text(row.get("next_action")))
+                for row in owner_options
+            ),
+            "Every owner option must include evidence, risks, and next action.",
+            "restore_owner_option_details",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "owner_decision_not_appended",
+            summary.get("owner_decision_appended") is False,
+            "Owner packet must not append owner decision automatically.",
+            "restore_owner_packet_no_append_boundary",
+        )
+        _append_check(
+            checks,
+            blocking_issues,
+            "no_shadow_live_weights_broker",
+            summary.get("paper_shadow_activation_allowed") is False
+            and summary.get("extended_shadow_allowed") is False
+            and summary.get("live_trading_allowed") is False
+            and summary.get("official_target_weights_generated") is False
+            and summary.get("broker_order_allowed") is False
+            and summary.get("order_ticket_generated") is False,
+            "Owner packet must forbid shadow/live/official weights/broker/order.",
+            "restore_owner_packet_safety_boundary",
+        )
     status = FAIL_STATUS if blocking_issues else PASS_STATUS
     return _payload(
         report_type=validation_report_type,

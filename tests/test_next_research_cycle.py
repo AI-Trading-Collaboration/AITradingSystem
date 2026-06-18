@@ -630,6 +630,150 @@ def test_next_candidate_research_gate_uses_real_metric_reviews_and_stays_safe(
     assert summary["paper_shadow_activation_allowed"] is False
 
 
+def test_next_candidate_owner_packet_lists_all_manual_options_without_append(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    _write_return_to_research_inputs(reports_dir, tmp_path)
+    intake = next_cycle.build_next_research_cycle_intake_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    frozen = next_cycle.build_next_candidate_spec_frozen_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        intake_payload=intake,
+    )
+    _write_minimal_executable_binding_artifacts(reports_dir)
+    _write_cost_benchmark_sources(tmp_path, baseline_proxy=0.99)
+    backfill = next_cycle.build_next_candidate_backfill_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        frozen_spec_payload=frozen,
+        data_quality_gate={"status": "PASS", "passed": True, "report_path": "dq.md"},
+        prices_path=_write_backfill_price_fixture(tmp_path),
+    )
+    stress = next_cycle.build_next_candidate_stress_review_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    cost = next_cycle.build_next_candidate_cost_benchmark_review_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        backfill_payload=backfill,
+    )
+    comparison = next_cycle.build_next_candidate_vs_returned_comparison_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost,
+    )
+    signal = next_cycle.build_next_candidate_signal_robustness_review_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        project_root=tmp_path,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    window = next_cycle.build_next_candidate_window_sensitivity_payload(
+        as_of=RUN_DATE,
+        frozen_spec_payload=frozen,
+        backfill_payload=backfill,
+    )
+    safety = json.loads(
+        binding_reports.default_executable_binding_json_path(
+            binding_reports.SAFETY_AUDIT_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ).read_text(encoding="utf-8")
+    )
+    gate = next_cycle.build_next_candidate_research_gate_payload(
+        as_of=RUN_DATE,
+        frozen_spec_payload=frozen,
+        safety_audit_payload=safety,
+        backfill_payload=backfill,
+        stress_review_payload=stress,
+        cost_benchmark_payload=cost,
+        comparison_payload=comparison,
+        signal_robustness_payload=signal,
+        window_sensitivity_payload=window,
+    )
+
+    packet = next_cycle.build_next_candidate_owner_research_review_packet_payload(
+        as_of=RUN_DATE,
+        research_gate_payload=gate,
+    )
+
+    option_ids = {row["option_id"] for row in packet["owner_options"]}
+    assert packet["status"] == "OWNER_RESEARCH_REVIEW_PACKET_READY"
+    assert packet["summary"]["source_research_gate_decision"] == "NEEDS_MORE_EVIDENCE"
+    assert packet["summary"]["option_count"] == 5
+    assert option_ids == {
+        "continue_research_validation",
+        "revise_hypothesis",
+        "return_to_hypothesis_backlog",
+        "reject_research_candidate",
+        "hold_for_more_data",
+    }
+    assert packet["summary"]["owner_decision_appended"] is False
+    assert packet["summary"]["paper_shadow_activation_allowed"] is False
+    assert packet["summary"]["official_target_weights_generated"] is False
+    assert all(
+        row["evidence_required"] and row["risks"] and row["next_action"]
+        for row in packet["owner_options"]
+    )
+
+    validation = next_cycle.validate_next_research_cycle_payload(
+        packet,
+        expected_report_type=next_cycle.OWNER_REVIEW_PACKET_REPORT_TYPE,
+    )
+    assert validation["status"] == "PASS"
+
+    packet_path = next_cycle.write_next_research_cycle_json(
+        packet,
+        next_cycle.default_next_research_cycle_json_path(
+            next_cycle.OWNER_REVIEW_PACKET_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    validation_path = next_cycle.write_next_research_cycle_json(
+        validation,
+        next_cycle.default_next_research_cycle_json_path(
+            f"{next_cycle.OWNER_REVIEW_PACKET_REPORT_TYPE}"
+            f"{next_cycle.VALIDATION_SUFFIX}",
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+    summary = reader_brief._next_candidate_owner_research_review_packet_summary(
+        {
+            "reports": [
+                {
+                    "report_id": next_cycle.OWNER_REVIEW_PACKET_REPORT_TYPE,
+                    "latest_artifact_path": str(packet_path),
+                },
+                {
+                    "report_id": (
+                        f"{next_cycle.OWNER_REVIEW_PACKET_REPORT_TYPE}"
+                        f"{next_cycle.VALIDATION_SUFFIX}"
+                    ),
+                    "latest_artifact_path": str(validation_path),
+                },
+            ]
+        }
+    )
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["status"] == "OWNER_RESEARCH_REVIEW_PACKET_READY"
+    assert summary["validation_status"] == "PASS"
+    assert summary["owner_decision_appended"] is False
+
+
 def test_next_research_cycle_cli_writes_intake_freeze_and_validations(
     tmp_path: Path,
 ) -> None:

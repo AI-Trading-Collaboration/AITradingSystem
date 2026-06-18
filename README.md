@@ -1951,6 +1951,19 @@ stress weak、cost/benchmark weak、repeated failure mode unresolved、signal ro
 extended shadow、live trading、official target weights、owner decision append、broker/order 或
 production mutation。Reader Brief 只读展示 `next_candidate_research_gate` 摘要。
 
+TRADING-469_OWNER_RESEARCH_REVIEW_PACKET_AFTER_REAL_METRICS 在 TRADING-468 gate 后准备
+manual owner options。运行
+`aits reports next-candidate-owner-research-review-packet --as-of YYYY-MM-DD` 和
+`aits reports validate-next-candidate-owner-research-review-packet --latest` 会生成
+`next_candidate_owner_research_review_packet` 和 validation artifacts。2026-06-17 真实 packet
+读取 `NEEDS_MORE_EVIDENCE` gate、blockers=5 和
+`repair_signal_window_evidence_before_gate_rerun`，输出
+`OWNER_RESEARCH_REVIEW_PACKET_READY`，validation PASS，并列出 continue research validation、
+revise hypothesis、return to hypothesis backlog、reject research candidate 和 hold for more data
+五个 owner options。该 packet 不 append owner decision、不激活 paper-shadow、不批准
+extended/live、不写 official target weights、不触发 broker/order、不修改 production。Reader Brief
+只读展示 `next_candidate_owner_research_review_packet` 摘要。
+
 TRADING-380_CANDIDATE_REJECTION_POSTMORTEM_TEMPLATE 新增 candidate rejection postmortem
 template。`aits reports candidate-rejection-postmortem-template --as-of YYYY-MM-DD`
 只读读取同日 report index 中的 latest promotion board、owner decision audit log、monthly

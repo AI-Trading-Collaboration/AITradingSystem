@@ -201,6 +201,9 @@ def build_reader_brief_payload(
         _next_candidate_signal_window_sensitivity_summary(report_index)
     )
     next_candidate_research_gate = _next_candidate_research_gate_summary(report_index)
+    next_candidate_owner_research_review_packet = (
+        _next_candidate_owner_research_review_packet_summary(report_index)
+    )
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
     executable_research_weight_binding = _executable_research_weight_binding_summary(
@@ -387,6 +390,9 @@ def build_reader_brief_payload(
             next_candidate_signal_window_sensitivity
         ),
         "next_candidate_research_gate": next_candidate_research_gate,
+        "next_candidate_owner_research_review_packet": (
+            next_candidate_owner_research_review_packet
+        ),
         "executable_binding_contract": executable_binding_contract,
         "executable_signal_binding": executable_signal_binding,
         "executable_research_weight_binding": executable_research_weight_binding,
@@ -750,6 +756,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         payload.get("next_candidate_signal_window_sensitivity")
     )
     next_candidate_research_gate = _mapping(payload.get("next_candidate_research_gate"))
+    next_candidate_owner_research_review_packet = _mapping(
+        payload.get("next_candidate_owner_research_review_packet")
+    )
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
     executable_research_weight_binding = _mapping(
@@ -2169,6 +2178,78 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "production_effect",
                         next_candidate_research_gate.get("production_effect"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Next Candidate Owner Research Review Packet",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        next_candidate_owner_research_review_packet.get("availability"),
+                    ),
+                    ("status", next_candidate_owner_research_review_packet.get("status")),
+                    (
+                        "validation_status",
+                        next_candidate_owner_research_review_packet.get(
+                            "validation_status"
+                        ),
+                    ),
+                    (
+                        "source_research_gate_decision",
+                        next_candidate_owner_research_review_packet.get(
+                            "source_research_gate_decision"
+                        ),
+                    ),
+                    (
+                        "source_gate_blocker_count",
+                        next_candidate_owner_research_review_packet.get(
+                            "source_gate_blocker_count"
+                        ),
+                    ),
+                    (
+                        "option_count",
+                        next_candidate_owner_research_review_packet.get("option_count"),
+                    ),
+                    (
+                        "owner_decision_appended",
+                        next_candidate_owner_research_review_packet.get(
+                            "owner_decision_appended"
+                        ),
+                    ),
+                    (
+                        "paper_shadow_activation_allowed",
+                        next_candidate_owner_research_review_packet.get(
+                            "paper_shadow_activation_allowed"
+                        ),
+                    ),
+                    (
+                        "official_target_weights_generated",
+                        next_candidate_owner_research_review_packet.get(
+                            "official_target_weights_generated"
+                        ),
+                    ),
+                    (
+                        "broker_order_allowed",
+                        next_candidate_owner_research_review_packet.get(
+                            "broker_order_allowed"
+                        ),
+                    ),
+                    (
+                        "next_action",
+                        next_candidate_owner_research_review_packet.get("next_action"),
+                    ),
+                    (
+                        "detail_report",
+                        next_candidate_owner_research_review_packet.get("detail_report"),
+                    ),
+                    (
+                        "production_effect",
+                        next_candidate_owner_research_review_packet.get(
+                            "production_effect"
+                        ),
                     ),
                 ]
             ),
@@ -9964,6 +10045,108 @@ def _missing_next_candidate_research_gate_summary(reason: str) -> dict[str, Any]
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             "next_candidate_research_gate artifact missing; run TRADING-468 gate."
+        ),
+        "limitation": reason,
+    }
+
+
+def _next_candidate_owner_research_review_packet_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_next_candidate_owner_research_review_packet_summary(
+            "report_index artifact missing; Reader Brief cannot discover "
+            "next candidate owner research review packet."
+        )
+    report_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_owner_research_review_packet",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_next_candidate_owner_research_review_packet_summary(
+            "next_candidate_owner_research_review_packet artifact missing from "
+            "report index latest pointer."
+        )
+    validation_path = _report_index_artifact_path(
+        report_index,
+        "next_candidate_owner_research_review_packet_validation",
+    )
+    validation_payload = _read_optional_json(validation_path)
+    summary = _mapping(payload.get("summary"))
+    validation_status = _text(
+        validation_payload.get("status"),
+        _text(_mapping(validation_payload.get("summary")).get("validation_status"), "MISSING"),
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "MISSING"),
+        "validation_status": validation_status,
+        "source_research_gate_decision": _text(
+            summary.get("source_research_gate_decision"),
+            "MISSING",
+        ),
+        "source_gate_blocker_count": _int(summary.get("source_gate_blocker_count")),
+        "source_gate_required_next_action": _text(
+            summary.get("source_gate_required_next_action"),
+            "MISSING",
+        ),
+        "option_count": _int(summary.get("option_count")),
+        "owner_option_ids": _texts(summary.get("owner_option_ids")),
+        "owner_decision_appended": bool(summary.get("owner_decision_appended")),
+        "paper_shadow_activation_allowed": bool(
+            summary.get("paper_shadow_activation_allowed")
+        ),
+        "extended_shadow_allowed": bool(summary.get("extended_shadow_allowed")),
+        "live_trading_allowed": bool(summary.get("live_trading_allowed")),
+        "official_target_weights_generated": bool(
+            summary.get("official_target_weights_generated")
+        ),
+        "broker_order_allowed": bool(summary.get("broker_order_allowed")),
+        "next_action": _text(payload.get("next_action"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "validation_detail_report": ""
+        if validation_path is None
+        else str(validation_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"owner_packet={_text(payload.get('status'), 'MISSING')}; "
+            f"options={_int(summary.get('option_count'))}; "
+            f"owner_decision_appended={bool(summary.get('owner_decision_appended'))}."
+        ),
+        "limitation": (
+            "Reader Brief only reads the generated TRADING-469 owner packet; it "
+            "does not append owner decisions, activate paper-shadow, write official "
+            "weights, or create broker/order artifacts."
+        ),
+    }
+
+
+def _missing_next_candidate_owner_research_review_packet_summary(
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "validation_status": "MISSING",
+        "source_research_gate_decision": "MISSING",
+        "source_gate_blocker_count": 0,
+        "source_gate_required_next_action": "MISSING",
+        "option_count": 0,
+        "owner_option_ids": [],
+        "owner_decision_appended": False,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_generated": False,
+        "broker_order_allowed": False,
+        "next_action": "run_aits_reports_next_candidate_owner_research_review_packet",
+        "detail_report": "",
+        "validation_detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "next_candidate_owner_research_review_packet artifact missing; run "
+            "TRADING-469 packet."
         ),
         "limitation": reason,
     }
@@ -26371,19 +26554,20 @@ def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
         "next_candidate_research_gate": 272,
         "next_candidate_research_gate_validation": 273,
         "next_candidate_owner_research_review_packet": 274,
-        "next_candidate_research_cycle_snapshot": 275,
-        "next_candidate_research_cycle_snapshot_validation": 276,
-        "next_candidate_executable_binding_contract": 277,
-        "next_candidate_executable_binding_contract_validation": 278,
-        "next_candidate_signal_binding": 279,
-        "next_candidate_signal_binding_validation": 280,
-        "next_candidate_research_weight_binding": 281,
-        "next_candidate_research_weight_binding_validation": 282,
-        "executable_binding_safety_audit": 283,
-        "executable_binding_safety_audit_validation": 284,
-        "report_quality_gate": 285,
-        "reader_brief_quality": 286,
-        "artifact_catalog": 287,
+        "next_candidate_owner_research_review_packet_validation": 275,
+        "next_candidate_research_cycle_snapshot": 276,
+        "next_candidate_research_cycle_snapshot_validation": 277,
+        "next_candidate_executable_binding_contract": 278,
+        "next_candidate_executable_binding_contract_validation": 279,
+        "next_candidate_signal_binding": 280,
+        "next_candidate_signal_binding_validation": 281,
+        "next_candidate_research_weight_binding": 282,
+        "next_candidate_research_weight_binding_validation": 283,
+        "executable_binding_safety_audit": 284,
+        "executable_binding_safety_audit_validation": 285,
+        "report_quality_gate": 286,
+        "reader_brief_quality": 287,
+        "artifact_catalog": 288,
     }
     artifact_id = _text(item.get("artifact_id"))
     return (order.get(artifact_id, 999), artifact_id)
@@ -26630,7 +26814,10 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
             "确认 research gate source statuses、strongest evidence、blockers 和安全边界。"
         ),
         "next_candidate_owner_research_review_packet": (
-            "查看 owner research review options；该 packet 不 append owner decision。"
+            "查看 TRADING-469 owner options；该 packet 不 append owner decision。"
+        ),
+        "next_candidate_owner_research_review_packet_validation": (
+            "确认 owner packet 含 continue/revise/return/reject/hold options 和安全边界。"
         ),
         "next_candidate_research_cycle_snapshot": (
             "查看 TRADING-449~459 final research-cycle state "
@@ -26805,6 +26992,16 @@ _READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
         "manual",
         "manual research cycle",
         "Research gate artifact 生成后立即校验四态 taxonomy、evidence 和安全边界。",
+    ),
+    "next_candidate_owner_research_review_packet": (
+        "manual",
+        "manual research cycle",
+        "TRADING-469 在 research gate rerun 后准备 owner options packet。",
+    ),
+    "next_candidate_owner_research_review_packet_validation": (
+        "manual",
+        "manual research cycle",
+        "Owner packet artifact 生成后立即校验 option set、no-append 和安全边界。",
     ),
     "task_register_consistency": (
         "daily",

@@ -8965,9 +8965,30 @@ reports:
       - outputs/reports/next_candidate_owner_research_review_packet_20*.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-458 prepares manual owner options without appending an owner
-      decision automatically.
+      TRADING-469 prepares manual owner options after real metrics and the
+      rerun research gate are available, without appending an owner decision
+      automatically.
     owner_action: review_options_manually_without_automatic_state_transition
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: next_candidate_owner_research_review_packet_validation
+    title: Next Candidate Owner Research Review Packet Validation
+    group: governance
+    cadence: manual
+    audience: operator
+    owner: system
+    command: aits reports validate-next-candidate-owner-research-review-packet --latest
+    artifact_globs:
+      - outputs/reports/next_candidate_owner_research_review_packet_validation_20*.json
+      - outputs/reports/next_candidate_owner_research_review_packet_validation_20*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-469 validation checks the required continue/revise/return/reject/
+      hold option set, option evidence/risks/actions, source gate disclosure,
+      Reader Brief fields, no owner decision append, and no shadow/live/official
+      weights/broker/order boundary.
+    owner_action: run_after_next_candidate_owner_research_review_packet
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
