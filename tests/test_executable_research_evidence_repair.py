@@ -7,6 +7,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.cli_commands import reports as reports_cli
 from ai_trading_system.reports import executable_research_binding as binding_reports
 from ai_trading_system.reports import executable_research_evidence_repair as repair
 from ai_trading_system.reports import next_research_cycle as next_cycle
@@ -762,6 +763,108 @@ def test_candidate_v2_spec_freeze_cli_writes_and_validates(
     assert validation["status"] == "PASS"
 
 
+def test_candidate_v2_executable_binding_update_generates_v2_rows(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    _write_candidate_v2_spec_freeze(reports_dir)
+    _write_v2_feature_fixture(feature_path)
+
+    payload = repair.build_candidate_v2_executable_binding_update_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+        feature_path=feature_path,
+        data_quality_gate=_passing_data_quality_gate(reports_dir),
+    )
+
+    assert payload["status"] == repair.CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS
+    assert payload["summary"]["signal_row_count"] > 1
+    assert payload["summary"]["weight_row_count"] == payload["summary"]["signal_row_count"]
+    assert payload["summary"]["safety_audit_status"] in {
+        binding_reports.SAFETY_PASS,
+        binding_reports.SAFETY_WARNING,
+    }
+    assert payload["summary"]["safety_audit_allows_mini_backfill"] is True
+    assert payload["summary"]["paper_shadow_eligible"] is False
+    assert any(
+        row["turnover_guard_applied"] is True
+        for row in payload["v2_candidate_signal_series"]
+    )
+    assert all(
+        row["hypothetical_research_weight"]["official_target_weights"] is False
+        for row in payload["v2_hypothetical_research_weight_series"]
+    )
+
+    validation = repair.validate_candidate_v2_executable_binding_update_payload(
+        payload
+    )
+    assert validation["status"] == "PASS"
+
+
+def test_candidate_v2_executable_binding_update_cli_writes_and_validates(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    feature_path = tmp_path / "features.csv"
+    _write_trading_470_sources(reports_dir)
+    _write_evidence_repair_prerequisites(reports_dir)
+    _write_candidate_v2_spec_freeze(reports_dir)
+    _write_v2_feature_fixture(feature_path)
+    monkeypatch.setattr(
+        reports_cli,
+        "_run_next_research_data_quality_gate",
+        lambda **_: _passing_data_quality_gate(reports_dir),
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "candidate-v2-executable-binding-update",
+            "--as-of",
+            RUN_DATE.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--feature-path",
+            str(feature_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    binding_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    payload = json.loads(binding_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["signal_row_count"] > 1
+
+    validate_result = runner.invoke(
+        app,
+        [
+            "reports",
+            "validate-candidate-v2-executable-binding-update",
+            "--latest",
+            "--reports-dir",
+            str(reports_dir),
+        ],
+    )
+    assert validate_result.exit_code == 0, validate_result.output
+
+    validation_path = repair.default_evidence_repair_json_path(
+        repair.CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE,
+        reports_dir,
+        RUN_DATE,
+    )
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert validation["status"] == "PASS"
+
+
 def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
     ledger = repair.build_executable_research_evidence_gap_ledger_payload(
         as_of=RUN_DATE,
@@ -847,6 +950,76 @@ def _write_evidence_repair_prerequisites(reports_dir: Path) -> None:
             RUN_DATE,
         ),
     )
+
+
+def _write_candidate_v2_spec_freeze(reports_dir: Path) -> None:
+    spec = repair.build_candidate_v2_spec_freeze_payload(
+        as_of=RUN_DATE,
+        reports_dir=reports_dir,
+    )
+    repair.write_evidence_repair_json(
+        spec,
+        repair.default_evidence_repair_json_path(
+            repair.CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+            reports_dir,
+            RUN_DATE,
+        ),
+    )
+
+
+def _passing_data_quality_gate(reports_dir: Path) -> dict[str, object]:
+    return {
+        "status": "PASS",
+        "passed": True,
+        "error_count": 0,
+        "warning_count": 0,
+        "report_path": str(reports_dir / "data_quality_fixture.md"),
+    }
+
+
+def _write_v2_feature_fixture(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    dates = [
+        "2023-01-03",
+        "2023-09-01",
+        "2024-03-08",
+        "2024-07-10",
+        "2025-01-02",
+    ]
+    symbols = ("QQQ", "SMH", "SOXX", "SPY")
+    rows = [
+        "date,symbol,above_ma_20,above_ma_50,above_ma_100,above_ma_200,"
+        "ma_20_slope,ret_20d,ret_60d,ret_120d,rs_vs_spy_60d,rs_vs_qqq_60d,"
+        "rs_vs_smh_60d,realized_vol_20d,drawdown_63d"
+    ]
+    for item in dates:
+        for symbol in symbols:
+            rs_spy = 0.0 if symbol == "SPY" else 0.06
+            rs_qqq = 0.0 if symbol in {"SPY", "QQQ"} else 0.04
+            rs_smh = 0.0 if symbol != "SOXX" else 0.01
+            drawdown = -0.2 if item == "2025-01-02" else -0.03
+            rows.append(
+                ",".join(
+                    [
+                        item,
+                        symbol,
+                        "true",
+                        "true",
+                        "true",
+                        "true",
+                        "0.01",
+                        "0.04",
+                        "0.08",
+                        "0.12",
+                        str(rs_spy),
+                        str(rs_qqq),
+                        str(rs_smh),
+                        "0.18",
+                        str(drawdown),
+                    ]
+                )
+            )
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
 
 
 def _write_trading_470_sources(reports_dir: Path) -> None:

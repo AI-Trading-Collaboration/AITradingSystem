@@ -32,6 +32,9 @@ COST_BENCHMARK_WEAKNESS_ATTRIBUTION_REPORT_TYPE = (
 )
 CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE = "candidate_redesign_hypothesis_v2"
 CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE = "candidate_v2_spec_freeze"
+CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE = (
+    "candidate_v2_executable_binding_update"
+)
 VALIDATION_SUFFIX = "_validation"
 EVIDENCE_GAP_LEDGER_VALIDATION_REPORT_TYPE = (
     f"{EVIDENCE_GAP_LEDGER_REPORT_TYPE}{VALIDATION_SUFFIX}"
@@ -56,6 +59,9 @@ CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE = (
 )
 CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE = (
     f"{CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE}{VALIDATION_SUFFIX}"
+)
+CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE = (
+    f"{CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE}{VALIDATION_SUFFIX}"
 )
 LEDGER_READY_STATUS = "EXECUTABLE_RESEARCH_EVIDENCE_GAP_LEDGER_READY"
 BACKFILL_REPAIRABLE = "BACKFILL_REPAIRABLE"
@@ -85,6 +91,16 @@ COST_BENCHMARK_WEAKNESS_ATTRIBUTION_READY = (
 )
 CANDIDATE_REDESIGN_HYPOTHESIS_READY = "CANDIDATE_REDESIGN_HYPOTHESIS_READY"
 CANDIDATE_V2_SPEC_FREEZE_READY = "CANDIDATE_V2_SPEC_FREEZE_READY"
+CANDIDATE_V2_EXECUTABLE_BINDING_READY = "CANDIDATE_V2_EXECUTABLE_BINDING_READY"
+CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS = (
+    "CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS"
+)
+CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED = "CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED"
+CANDIDATE_V2_EXECUTABLE_BINDING_STATUSES: tuple[str, ...] = (
+    CANDIDATE_V2_EXECUTABLE_BINDING_READY,
+    CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS,
+    CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED,
+)
 STRESS_DESIGN_JUDGMENTS: tuple[str, ...] = (
     "REDESIGN_REQUIRED",
     "REJECT_CURRENT_CANDIDATE",
@@ -141,6 +157,12 @@ REPORT_PREFIXES: dict[str, str] = {
     CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE: "candidate_v2_spec_freeze",
     CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE: (
         "candidate_v2_spec_freeze_validation"
+    ),
+    CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE: (
+        "candidate_v2_executable_binding_update"
+    ),
+    CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE: (
+        "candidate_v2_executable_binding_update_validation"
     ),
 }
 
@@ -238,6 +260,17 @@ REQUIRED_REDESIGN_TARGETS: tuple[str, ...] = (
     "stress_handling",
     "benchmark_relative_behavior",
     "cost_survival",
+)
+
+V2_SIGNAL_BINDING_VERSION = "candidate_v2_signal_binding_v1"
+V2_WEIGHT_BINDING_VERSION = "candidate_v2_research_weight_binding_v1"
+DEFAULT_V2_FEATURE_PATH = PROJECT_ROOT / "data" / "etf_portfolio" / "features.csv"
+V2_REQUIRED_SIGNAL_SYMBOLS: tuple[str, ...] = ("QQQ", "SMH", "SOXX", "SPY")
+V2_AI_SIGNAL_SYMBOLS: tuple[str, ...] = ("QQQ", "SMH", "SOXX")
+V2_TURNOVER_GUARD_WINDOWS: tuple[str, ...] = (
+    "slow_drawdown",
+    "high_volatility_sideways_market",
+    "false_risk_off_cluster",
 )
 
 
@@ -2679,6 +2712,413 @@ def validate_candidate_v2_spec_freeze_payload(
         ),
         safety_boundary=_safety_boundary(),
         limitations=["Validation is read-only and does not implement v2 binding."],
+        requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
+    )
+
+
+def build_candidate_v2_executable_binding_update_payload(
+    *,
+    as_of: date,
+    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    feature_path: Path = DEFAULT_V2_FEATURE_PATH,
+    weight_policy_path: Path = binding_reports.DEFAULT_WEIGHT_BINDING_POLICY_PATH,
+    data_quality_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    spec_path = default_evidence_repair_json_path(
+        CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    backfill_path = next_cycle.default_next_research_cycle_json_path(
+        next_cycle.BACKFILL_REPORT_TYPE,
+        reports_dir,
+        as_of,
+    )
+    spec_payload = _read_json_mapping(spec_path)
+    backfill_payload = _read_json_mapping(backfill_path)
+    spec = _mapping(spec_payload.get("frozen_candidate_spec"))
+    candidate_id = _text(spec.get("candidate_id"), "MISSING")
+    requested_range = _text(
+        spec_payload.get("requested_date_range"),
+        _text(
+            _mapping(backfill_payload.get("summary")).get("requested_date_range"),
+            f"{AI_REGIME_START}..unspecified",
+        ),
+    )
+    data_quality = _v2_data_quality_gate(data_quality_gate)
+    binding_windows = _candidate_v2_binding_windows(spec, backfill_payload)
+    blocking_reasons = _candidate_v2_binding_blocking_reasons(
+        spec_payload=spec_payload,
+        spec=spec,
+        data_quality=data_quality,
+        feature_path=feature_path,
+        binding_windows=binding_windows,
+    )
+    warning_reasons: list[str] = []
+    signal_rows: list[dict[str, Any]] = []
+    signal_coverage: list[dict[str, Any]] = []
+    if not blocking_reasons:
+        signal_rows, signal_coverage, signal_warnings = _candidate_v2_signal_rows(
+            candidate_id=candidate_id,
+            feature_path=feature_path,
+            binding_windows=binding_windows,
+        )
+        warning_reasons.extend(signal_warnings)
+        if not signal_rows:
+            blocking_reasons.append("empty_v2_signal_series")
+    policy = _candidate_v2_weight_policy(weight_policy_path)
+    weight_rows: list[dict[str, Any]] = []
+    if not blocking_reasons:
+        weight_rows, weight_blocking = _candidate_v2_weight_rows(
+            candidate_id=candidate_id,
+            signal_rows=signal_rows,
+            policy=policy,
+        )
+        blocking_reasons.extend(weight_blocking)
+    warning_reasons.extend(_candidate_v2_binding_warnings(data_quality, signal_coverage))
+    safety_audit = _candidate_v2_binding_safety_audit(
+        signal_rows=signal_rows,
+        weight_rows=weight_rows,
+        spec=spec,
+        data_quality=data_quality,
+        blocking_reasons=blocking_reasons,
+        warning_reasons=warning_reasons,
+    )
+    safety_status = _text(safety_audit.get("safety_audit_status"))
+    if blocking_reasons or safety_status == binding_reports.SAFETY_BLOCKED:
+        status = CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED
+    elif warning_reasons or safety_status == binding_reports.SAFETY_WARNING:
+        status = CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS
+    else:
+        status = CANDIDATE_V2_EXECUTABLE_BINDING_READY
+    latest_signal = _latest_by_date(signal_rows, "signal_date")
+    latest_weight = _latest_by_date(weight_rows, "signal_date")
+    latest_weight_object = _mapping(latest_weight.get("hypothetical_research_weight"))
+    average_turnover = (
+        round(
+            sum(_float(row.get("turnover_proxy")) for row in weight_rows)
+            / len(weight_rows),
+            6,
+        )
+        if weight_rows
+        else None
+    )
+    context_coverage = _candidate_v2_context_coverage(signal_coverage)
+    summary = {
+        "candidate_v2_executable_binding_status": status,
+        "source_spec_status": _text(spec_payload.get("status")),
+        "candidate_id": candidate_id,
+        "signal_binding_status": (
+            "V2_SIGNAL_BINDING_COMPLETE"
+            if signal_rows
+            else "V2_SIGNAL_BINDING_BLOCKED"
+        ),
+        "signal_row_count": len(signal_rows),
+        "covered_validation_context_count": len(
+            [row for row in context_coverage if row.get("covered") is True]
+        ),
+        "required_validation_context_count": len(context_coverage),
+        "latest_signal_date": _text(latest_signal.get("signal_date")),
+        "latest_signal_score": latest_signal.get("signal_score"),
+        "research_weight_binding_status": (
+            "V2_RESEARCH_WEIGHT_BINDING_COMPLETE"
+            if weight_rows
+            else "V2_RESEARCH_WEIGHT_BINDING_BLOCKED"
+        ),
+        "weight_row_count": len(weight_rows),
+        "latest_turnover_proxy": latest_weight.get("turnover_proxy"),
+        "average_turnover_proxy": average_turnover,
+        "latest_hypothetical_weight": _mapping(latest_weight_object.get("weights")),
+        "safety_audit_status": safety_status,
+        "safety_audit_allows_mini_backfill": safety_status
+        in {binding_reports.SAFETY_PASS, binding_reports.SAFETY_WARNING},
+        "data_quality_status": _text(data_quality.get("status")),
+        "data_quality_passed": data_quality.get("passed") is True,
+        "blocking_reason": _join_reasons(blocking_reasons),
+        "warning_reason": _join_reasons(warning_reasons),
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "not_official_target_weights": True,
+        "paper_shadow_eligible": False,
+        "paper_shadow_activation_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "broker_order_allowed": False,
+        "owner_decision_appended": False,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+    return _payload(
+        report_type=CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+        as_of=as_of,
+        status=status,
+        purpose=(
+            "Implement the frozen candidate v2 research-only signal binding, "
+            "hypothetical research weight binding, and executable binding safety "
+            "audit without producing paper-shadow, official weights, broker/order, "
+            "or production outputs."
+        ),
+        input_artifacts={
+            CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE: str(spec_path),
+            next_cycle.BACKFILL_REPORT_TYPE: str(backfill_path),
+            "feature_cache": str(feature_path),
+            "weight_binding_policy": str(weight_policy_path),
+            "data_quality_report": _text(data_quality.get("report_path")),
+        },
+        output_decision=status,
+        summary=summary,
+        body={
+            "source_artifacts": [
+                _source_artifact(CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE, spec_path, spec_payload),
+                _source_artifact(next_cycle.BACKFILL_REPORT_TYPE, backfill_path, backfill_payload),
+            ],
+            "v2_signal_binding": {
+                "candidate_id": candidate_id,
+                "binding_version": V2_SIGNAL_BINDING_VERSION,
+                "source_spec_version": _text(spec.get("spec_version")),
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "not_official_target_weights": True,
+                "hypothetical_research_weight_produced": False,
+                "backfill_metrics_produced": False,
+                "production_effect": PRODUCTION_EFFECT,
+                "broker_effect": "none",
+                "order_effect": "none",
+            },
+            "v2_candidate_signal_series": signal_rows,
+            "v2_signal_context_coverage": context_coverage,
+            "v2_research_weight_binding": {
+                "candidate_id": candidate_id,
+                "binding_version": V2_WEIGHT_BINDING_VERSION,
+                "source_signal_binding_version": V2_SIGNAL_BINDING_VERSION,
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "not_official_target_weights": True,
+                "paper_shadow_activation_produced": False,
+                "broker_order_produced": False,
+                "backfill_metrics_produced": False,
+                "production_effect": PRODUCTION_EFFECT,
+                "broker_effect": "none",
+                "order_effect": "none",
+            },
+            "v2_hypothetical_research_weight_series": weight_rows,
+            "v2_executable_binding_safety_audit": safety_audit,
+            "blocking_reasons": list(dict.fromkeys(blocking_reasons)),
+            "warning_reasons": list(dict.fromkeys(warning_reasons)),
+            "data_quality_gate": data_quality,
+            "candidate_v2_spec": dict(spec),
+            "binding_windows": binding_windows,
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"Candidate v2 executable binding update is {status}; "
+                f"signal rows={len(signal_rows)}, weight rows={len(weight_rows)}."
+            ),
+            key_result=status,
+            blocking_issues=_join_reasons(blocking_reasons) or "none",
+            warnings=_join_reasons(warning_reasons) or "none",
+            next_action=(
+                "repair_candidate_v2_executable_binding"
+                if status == CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED
+                else "run_trading_480_candidate_v2_mini_backfill"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_executable_binding"
+            if status == CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED
+            else "run_trading_480_candidate_v2_mini_backfill"
+        ),
+        safety_boundary=_safety_boundary()
+        | {
+            "mode": "candidate_v2_executable_binding_update",
+            "signal_binding_implemented": bool(signal_rows),
+            "hypothetical_research_weights_generated": bool(weight_rows),
+            "backfill_metrics_generated": False,
+            "safety_audit_status": safety_status,
+        },
+        limitations=[
+            "TRADING-479 implements research-only v2 binding, not backfill metrics.",
+            "Hypothetical weights are for later research evaluation only.",
+            "Safety audit failure blocks TRADING-480 mini backfill.",
+        ],
+        requested_date_range=requested_range,
+    )
+
+
+def validate_candidate_v2_executable_binding_update_payload(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    report_type = _text(payload.get("report_type"))
+    status = _text(payload.get("status"))
+    summary = _mapping(payload.get("summary"))
+    signal_binding = _mapping(payload.get("v2_signal_binding"))
+    weight_binding = _mapping(payload.get("v2_research_weight_binding"))
+    signal_rows = _records(payload.get("v2_candidate_signal_series"))
+    weight_rows = _records(payload.get("v2_hypothetical_research_weight_series"))
+    safety_audit = _mapping(payload.get("v2_executable_binding_safety_audit"))
+    checks: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    _append_check(
+        checks,
+        blocking,
+        "report_type",
+        report_type == CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE,
+        f"report_type must be {CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE}.",
+        "regenerate_candidate_v2_executable_binding_update",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "allowed_status",
+        status in CANDIDATE_V2_EXECUTABLE_BINDING_STATUSES,
+        "Candidate v2 executable binding status must be recognized.",
+        "restore_candidate_v2_binding_status",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "source_spec_ready",
+        _text(summary.get("source_spec_status")) == CANDIDATE_V2_SPEC_FREEZE_READY,
+        "TRADING-479 must read a ready TRADING-478 spec freeze artifact.",
+        "rerun_candidate_v2_spec_freeze",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "research_only_metadata",
+        payload.get("research_only") is True
+        and payload.get("manual_review_only") is True
+        and signal_binding.get("research_only") is True
+        and weight_binding.get("research_only") is True
+        and signal_binding.get("official_target_weights") is False
+        and weight_binding.get("official_target_weights") is False,
+        "Signal and weight bindings must be research-only and not official weights.",
+        "restore_candidate_v2_binding_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "non_static_signal_series_when_ready",
+        status == CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED or len(signal_rows) > 1,
+        "Ready v2 binding must repair the static one-row signal limitation.",
+        "regenerate_historical_v2_signal_series",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "weight_series_present_when_ready",
+        status == CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED or bool(weight_rows),
+        "Ready v2 binding must include hypothetical research weight rows.",
+        "regenerate_v2_weight_binding",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "weight_outputs_research_only",
+        all(_candidate_v2_weight_row_safe(row) for row in weight_rows),
+        "All v2 weight rows must carry research-only metadata.",
+        "restore_research_only_weight_metadata",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_audit_not_failed_when_ready",
+        status == CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED
+        or _text(safety_audit.get("safety_audit_status"))
+        in {binding_reports.SAFETY_PASS, binding_reports.SAFETY_WARNING},
+        "Ready v2 binding requires pass or acceptable warning safety audit.",
+        "repair_candidate_v2_safety_audit",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "data_quality_visible",
+        bool(_text(summary.get("data_quality_status"))),
+        "Data quality gate status must be visible in summary.",
+        "run_aits_validate_data_before_binding",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "no_execution_surface",
+        summary.get("paper_shadow_activation_allowed") is False
+        and summary.get("official_target_weights") is False
+        and summary.get("broker_order_allowed") is False
+        and summary.get("owner_decision_appended") is False
+        and _text(summary.get("production_effect")) == PRODUCTION_EFFECT,
+        (
+            "TRADING-479 must not create paper-shadow, official weights, "
+            "broker/order, or production output."
+        ),
+        "remove_execution_surface",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "reader_brief",
+        _reader_brief_complete(payload),
+        "Reader Brief fields must be populated.",
+        "restore_reader_brief_fields",
+    )
+    _append_check(
+        checks,
+        blocking,
+        "safety_boundary",
+        _safety_boundary_valid(payload.get("safety_boundary")),
+        "Safety boundary must forbid shadow/live/official weights/broker/order/production.",
+        "restore_safety_boundary",
+    )
+    validation_status = FAIL_STATUS if blocking else PASS_STATUS
+    return _payload(
+        report_type=CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE,
+        as_of=_date_from_payload(payload),
+        status=validation_status,
+        purpose="Validate TRADING-479 candidate v2 executable binding update.",
+        input_artifacts={
+            CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE: _artifact_id(payload)
+        },
+        output_decision=validation_status,
+        summary={
+            "validation_status": validation_status,
+            "source_report_type": report_type,
+            "candidate_id": _text(summary.get("candidate_id")),
+            "source_status": status,
+            "signal_row_count": len(signal_rows),
+            "weight_row_count": len(weight_rows),
+            "safety_audit_status": _text(safety_audit.get("safety_audit_status")),
+            "check_count": len(checks),
+            "failed_check_count": len(blocking),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        body={
+            "checks": checks,
+            "blocking_issues": blocking,
+            "warning_issues": [],
+        },
+        reader_brief=_reader_brief(
+            summary=(
+                f"{CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE} validation is "
+                f"{validation_status}."
+            ),
+            key_result=validation_status,
+            blocking_issues=_issue_names(blocking, "issue_id"),
+            warnings="none",
+            next_action=(
+                "repair_candidate_v2_executable_binding"
+                if validation_status == FAIL_STATUS
+                else "use_validated_candidate_v2_executable_binding_update"
+            ),
+        ),
+        next_action=(
+            "repair_candidate_v2_executable_binding"
+            if validation_status == FAIL_STATUS
+            else "use_validated_candidate_v2_executable_binding_update"
+        ),
+        safety_boundary=_safety_boundary()
+        | {"mode": "candidate_v2_executable_binding_update_validation"},
+        limitations=["Validation is read-only and does not run mini backfill."],
         requested_date_range=_text(payload.get("requested_date_range"), "not_applicable"),
     )
 
@@ -5255,6 +5695,553 @@ def _candidate_v2_freeze_boundary_valid(value: Any) -> bool:
     )
 
 
+def _v2_data_quality_gate(value: Mapping[str, Any] | None) -> dict[str, Any]:
+    gate = _mapping(value)
+    return {
+        "status": _text(gate.get("status"), "MISSING"),
+        "passed": gate.get("passed") is True,
+        "error_count": _int(gate.get("error_count")),
+        "warning_count": _int(gate.get("warning_count")),
+        "report_path": _text(gate.get("report_path")),
+    }
+
+
+def _candidate_v2_binding_windows(
+    spec: Mapping[str, Any],
+    backfill_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    source_windows = {
+        _text(row.get("window_id")): _mapping(row)
+        for row in _records(backfill_payload.get("backfill_windows"))
+    }
+    rows: list[dict[str, Any]] = []
+    for window_id in _list_values(spec.get("validation_windows")):
+        key = _text(window_id)
+        source = source_windows.get(key, {})
+        rows.append(
+            {
+                "window_id": key,
+                "start": _text(source.get("start")),
+                "end": _text(source.get("end")),
+                "source_available": bool(source),
+                "source_status": _text(source.get("backfill_window_status"), "MISSING"),
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    return rows
+
+
+def _candidate_v2_binding_blocking_reasons(
+    *,
+    spec_payload: Mapping[str, Any],
+    spec: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+    feature_path: Path,
+    binding_windows: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    reasons: list[str] = []
+    if _text(spec_payload.get("status")) != CANDIDATE_V2_SPEC_FREEZE_READY:
+        reasons.append("candidate_v2_spec_freeze_not_ready")
+    if not _candidate_v2_spec_complete(spec):
+        reasons.append("candidate_v2_spec_incomplete")
+    if data_quality.get("passed") is not True:
+        reasons.append("data_quality_gate_not_passed")
+    if not feature_path.exists():
+        reasons.append("feature_cache_missing")
+    if not any(_text(row.get("start")) and _text(row.get("end")) for row in binding_windows):
+        reasons.append("validation_window_dates_missing")
+    return sorted(set(reasons))
+
+
+def _candidate_v2_signal_rows(
+    *,
+    candidate_id: str,
+    feature_path: Path,
+    binding_windows: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+    import pandas as pd
+
+    from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
+    from ai_trading_system.etf_portfolio.signals import generate_signals_for_date
+
+    features = pd.read_csv(feature_path)
+    if features.empty:
+        return [], [], ["feature_cache_empty"]
+    features["_date"] = pd.to_datetime(features["date"], errors="coerce")
+    strategy = load_etf_config_bundle().strategy
+    signal_rows: list[dict[str, Any]] = []
+    coverage: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    features_without_helper_column = features.drop(columns=["_date"])
+    for window in binding_windows:
+        window_id = _text(window.get("window_id"))
+        start = _parse_iso_date(_text(window.get("start")))
+        end = _parse_iso_date(_text(window.get("end")))
+        if start is None or end is None:
+            coverage.append(
+                {
+                    "window_id": window_id,
+                    "covered": False,
+                    "signal_row_count": 0,
+                    "reason": "source_window_dates_missing",
+                    "production_effect": PRODUCTION_EFFECT,
+                }
+            )
+            warnings.append(f"validation_context_dates_missing:{window_id}")
+            continue
+        date_mask = (features["_date"] >= pd.Timestamp(start)) & (
+            features["_date"] <= pd.Timestamp(end)
+        )
+        window_dates = [
+            pd.Timestamp(item).date()
+            for item in sorted(features.loc[date_mask, "_date"].dropna().unique())
+        ]
+        row_count_before = len(signal_rows)
+        skipped_missing_symbols = 0
+        for signal_date in window_dates:
+            selected_symbols = set(
+                features.loc[
+                    features["_date"] == pd.Timestamp(signal_date),
+                    "symbol",
+                ].astype(str)
+            )
+            if set(V2_REQUIRED_SIGNAL_SYMBOLS) - selected_symbols:
+                skipped_missing_symbols += 1
+                continue
+            records = generate_signals_for_date(
+                features_without_helper_column,
+                strategy=strategy,
+                run_date=signal_date,
+            )
+            by_symbol = {
+                str(record.symbol): record.to_record()
+                for record in records
+                if str(record.symbol) in V2_REQUIRED_SIGNAL_SYMBOLS
+            }
+            if set(V2_REQUIRED_SIGNAL_SYMBOLS) - set(by_symbol):
+                skipped_missing_symbols += 1
+                continue
+            signal_rows.append(
+                _candidate_v2_signal_row(
+                    candidate_id=candidate_id,
+                    signal_date=signal_date.isoformat(),
+                    window_id=window_id,
+                    records_by_symbol=by_symbol,
+                )
+            )
+        produced = len(signal_rows) - row_count_before
+        if skipped_missing_symbols:
+            warnings.append(f"market_coverage_gap:{window_id}")
+        coverage.append(
+            {
+                "window_id": window_id,
+                "covered": produced > 0,
+                "signal_row_count": produced,
+                "reason": "covered" if produced else "no_feature_dates_in_window",
+                "skipped_missing_symbol_date_count": skipped_missing_symbols,
+                "production_effect": PRODUCTION_EFFECT,
+            }
+        )
+    signal_rows.sort(key=lambda row: _text(row.get("signal_date")))
+    return signal_rows, coverage, sorted(set(warnings))
+
+
+def _candidate_v2_signal_row(
+    *,
+    candidate_id: str,
+    signal_date: str,
+    window_id: str,
+    records_by_symbol: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    symbol_scores = {
+        symbol: _float(records_by_symbol[symbol].get("composite_score"))
+        for symbol in V2_REQUIRED_SIGNAL_SYMBOLS
+    }
+    normalized_scores = {
+        symbol: round((score - 50.0) / 50.0, 6)
+        for symbol, score in symbol_scores.items()
+    }
+    ai_scores = [normalized_scores[symbol] for symbol in V2_AI_SIGNAL_SYMBOLS]
+    ai_median = sorted(ai_scores)[len(ai_scores) // 2]
+    spy_signal = normalized_scores["SPY"]
+    ai_vs_spy_delta = round(ai_median - spy_signal, 6)
+    directions = {
+        _text(records_by_symbol[symbol].get("direction")).lower()
+        for symbol in V2_REQUIRED_SIGNAL_SYMBOLS
+    }
+    if directions and directions.issubset({"bullish"}):
+        risk_state = "risk_on"
+    elif "bearish" in directions:
+        risk_state = "risk_off"
+    else:
+        risk_state = "neutral"
+    if risk_state == "risk_off":
+        base_rotation = "reduce_ai_risk"
+    elif ai_vs_spy_delta > 0:
+        base_rotation = "increase_ai_risk"
+    elif ai_vs_spy_delta < 0:
+        base_rotation = "reduce_ai_risk"
+    else:
+        base_rotation = "hold_current_research_weight"
+    rotation_state, guard_reason = _candidate_v2_guarded_rotation(
+        base_rotation=base_rotation,
+        window_id=window_id,
+    )
+    confidence_values = sorted(
+        {
+            _text(records_by_symbol[symbol].get("confidence")).lower()
+            for symbol in V2_REQUIRED_SIGNAL_SYMBOLS
+            if _text(records_by_symbol[symbol].get("confidence"))
+        }
+    )
+    return {
+        "candidate_id": candidate_id,
+        "binding_version": V2_SIGNAL_BINDING_VERSION,
+        "signal_date": signal_date,
+        "validation_window_id": window_id,
+        "signal_score": round(sum(ai_scores) / len(ai_scores), 6),
+        "risk_state": risk_state,
+        "base_rotation_state": base_rotation,
+        "rotation_state": rotation_state,
+        "turnover_guard_applied": bool(guard_reason),
+        "guard_reason": guard_reason,
+        "component_scores": {
+            "symbol_composite_scores": {
+                symbol: round(score, 6) for symbol, score in symbol_scores.items()
+            },
+            "normalized_symbol_scores": normalized_scores,
+            "ai_median_signal_score": round(ai_median, 6),
+            "spy_signal_score": round(spy_signal, 6),
+            "ai_vs_spy_delta": ai_vs_spy_delta,
+            "directions": sorted(directions),
+            "confidence_values": confidence_values,
+        },
+        "source_signal_records": {
+            symbol: {
+                "trend_score": records_by_symbol[symbol].get("trend_score"),
+                "momentum_score": records_by_symbol[symbol].get("momentum_score"),
+                "relative_strength_score": records_by_symbol[symbol].get(
+                    "relative_strength_score"
+                ),
+                "risk_score": records_by_symbol[symbol].get("risk_score"),
+                "composite_score": records_by_symbol[symbol].get("composite_score"),
+            }
+            for symbol in V2_REQUIRED_SIGNAL_SYMBOLS
+        },
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "not_official_target_weights": True,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": "none",
+        "order_effect": "none",
+    }
+
+
+def _candidate_v2_guarded_rotation(
+    *,
+    base_rotation: str,
+    window_id: str,
+) -> tuple[str, str]:
+    if base_rotation == "increase_ai_risk" and window_id in V2_TURNOVER_GUARD_WINDOWS:
+        return "hold_current_research_weight", f"{window_id}:turnover_aware_hold_band"
+    if base_rotation == "reduce_ai_risk" and window_id == "false_risk_off_cluster":
+        return "hold_current_research_weight", "false_risk_off_cluster:rotation_guard"
+    return base_rotation, ""
+
+
+def _candidate_v2_weight_policy(path: Path) -> dict[str, Any]:
+    from ai_trading_system.yaml_loader import safe_load_yaml_path
+
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, Mapping):
+        raise ValueError(f"Weight binding policy must be a mapping: {path}")
+    return dict(raw)
+
+
+def _candidate_v2_weight_rows(
+    *,
+    candidate_id: str,
+    signal_rows: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    universe = _list_values(policy.get("research_weight_universe"))
+    previous_weights = _candidate_v2_weights_from_mapping(
+        _mapping(policy.get("initial_previous_hypothetical_weight")),
+        universe=universe,
+    )
+    previous_source = "policy_initial_previous_weight"
+    rows: list[dict[str, Any]] = []
+    blocking: list[str] = []
+    for signal in signal_rows:
+        target_weights = _candidate_v2_target_weights(
+            signal=signal,
+            previous_weights=previous_weights,
+            policy=policy,
+            universe=universe,
+        )
+        constraint_hit = _candidate_v2_weight_constraint_hits(target_weights, policy)
+        if constraint_hit:
+            blocking.extend(constraint_hit)
+        rotation_delta = {
+            symbol: round(
+                target_weights.get(symbol, 0.0) - previous_weights.get(symbol, 0.0),
+                6,
+            )
+            for symbol in universe
+        }
+        turnover_proxy = round(sum(abs(value) for value in rotation_delta.values()) / 2, 6)
+        signal_date = _text(signal.get("signal_date"))
+        rows.append(
+            {
+                "candidate_id": candidate_id,
+                "binding_version": V2_WEIGHT_BINDING_VERSION,
+                "signal_date": signal_date,
+                "validation_window_id": _text(signal.get("validation_window_id")),
+                "risk_state": _text(signal.get("risk_state"), "blocked"),
+                "rotation_state": _text(signal.get("rotation_state"), "blocked"),
+                "guard_reason": _text(signal.get("guard_reason")),
+                "hypothetical_research_weight": _candidate_v2_weight_object(
+                    weights=target_weights,
+                    signal_date=signal_date,
+                    source="candidate_v2_turnover_guarded_rotation_profile",
+                ),
+                "previous_hypothetical_weight": _candidate_v2_weight_object(
+                    weights=previous_weights,
+                    signal_date=signal_date,
+                    source=previous_source,
+                ),
+                "previous_weight_source": previous_source,
+                "rotation_delta": rotation_delta,
+                "turnover_proxy": turnover_proxy,
+                "constraint_hit": constraint_hit,
+                "blocking_reason": _join_reasons(constraint_hit) or None,
+                "research_only": True,
+                "manual_review_only": True,
+                "official_target_weights": False,
+                "not_official_target_weights": True,
+                "production_effect": PRODUCTION_EFFECT,
+                "broker_effect": "none",
+                "order_effect": "none",
+            }
+        )
+        previous_weights = target_weights
+        previous_source = "prior_v2_hypothetical_research_weight_row"
+    if not rows:
+        blocking.append("empty_v2_weight_binding_window")
+    return rows, sorted(set(blocking))
+
+
+def _candidate_v2_target_weights(
+    *,
+    signal: Mapping[str, Any],
+    previous_weights: Mapping[str, float],
+    policy: Mapping[str, Any],
+    universe: Sequence[str],
+) -> dict[str, float]:
+    profiles = _mapping(policy.get("rotation_profiles"))
+    rotation_state = _text(signal.get("rotation_state"), "blocked")
+    profile = profiles.get(rotation_state)
+    if _text(profile) == "previous":
+        return {symbol: round(previous_weights.get(symbol, 0.0), 6) for symbol in universe}
+    if not isinstance(profile, Mapping):
+        profile = _mapping(profiles.get("blocked"))
+    return _candidate_v2_weights_from_mapping(_mapping(profile), universe=universe)
+
+
+def _candidate_v2_weights_from_mapping(
+    value: Mapping[str, Any],
+    *,
+    universe: Sequence[str],
+) -> dict[str, float]:
+    return {symbol: round(_float(value.get(symbol)), 6) for symbol in universe}
+
+
+def _candidate_v2_weight_constraint_hits(
+    weights: Mapping[str, float],
+    policy: Mapping[str, Any],
+) -> list[str]:
+    constraints = _mapping(policy.get("constraints"))
+    min_weight = _float(constraints.get("min_weight"), 0.0)
+    max_weight = _float(constraints.get("max_single_weight"), 1.0)
+    total_weight = _float(constraints.get("total_weight"), 1.0)
+    tolerance = _float(constraints.get("total_weight_tolerance"), 0.000001)
+    hits: list[str] = []
+    for symbol, weight in weights.items():
+        if weight < min_weight:
+            hits.append(f"{symbol}:below_min_weight")
+        if weight > max_weight:
+            hits.append(f"{symbol}:above_max_single_weight")
+    if abs(sum(weights.values()) - total_weight) > tolerance:
+        hits.append("total_weight_mismatch")
+    return hits
+
+
+def _candidate_v2_weight_object(
+    *,
+    weights: Mapping[str, float],
+    signal_date: str,
+    source: str,
+) -> dict[str, Any]:
+    return {
+        "weight_type": "hypothetical_research_weight",
+        "signal_date": signal_date,
+        "source": source,
+        "weights": {symbol: round(weight, 6) for symbol, weight in weights.items()},
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "not_official_target_weights": True,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": "none",
+        "order_effect": "none",
+    }
+
+
+def _candidate_v2_binding_warnings(
+    data_quality: Mapping[str, Any],
+    signal_coverage: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    warnings: list[str] = []
+    if _int(data_quality.get("warning_count")):
+        warnings.append("data_quality_gate_passed_with_warnings")
+    for row in signal_coverage:
+        if row.get("covered") is not True:
+            warnings.append(f"validation_context_not_covered:{_text(row.get('window_id'))}")
+    return sorted(set(warnings))
+
+
+def _candidate_v2_binding_safety_audit(
+    *,
+    signal_rows: Sequence[Mapping[str, Any]],
+    weight_rows: Sequence[Mapping[str, Any]],
+    spec: Mapping[str, Any],
+    data_quality: Mapping[str, Any],
+    blocking_reasons: Sequence[str],
+    warning_reasons: Sequence[str],
+) -> dict[str, Any]:
+    artifact_checks = [
+        {
+            "check_id": "data_quality_gate_passed",
+            "status": PASS_STATUS if data_quality.get("passed") is True else FAIL_STATUS,
+            "evidence": _text(data_quality.get("status"), "MISSING"),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "spec_not_paper_shadow_eligible",
+            "status": PASS_STATUS if spec.get("paper_shadow_eligible") is False else FAIL_STATUS,
+            "evidence": f"paper_shadow_eligible={spec.get('paper_shadow_eligible')}",
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "signal_binding_research_only",
+            "status": PASS_STATUS
+            if signal_rows and all(_candidate_v2_signal_row_safe(row) for row in signal_rows)
+            else FAIL_STATUS,
+            "evidence": f"signal_rows={len(signal_rows)}",
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "weight_binding_hypothetical_only",
+            "status": PASS_STATUS
+            if weight_rows and all(_candidate_v2_weight_row_safe(row) for row in weight_rows)
+            else FAIL_STATUS,
+            "evidence": f"weight_rows={len(weight_rows)}",
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "check_id": "no_execution_surface",
+            "status": PASS_STATUS,
+            "evidence": "paper_shadow=false; official_target_weights=false; broker_order=false",
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    ]
+    failed_checks = [
+        row for row in artifact_checks if _text(row.get("status")) == FAIL_STATUS
+    ]
+    if blocking_reasons or failed_checks:
+        status = binding_reports.SAFETY_BLOCKED
+    elif warning_reasons:
+        status = binding_reports.SAFETY_WARNING
+    else:
+        status = binding_reports.SAFETY_PASS
+    return {
+        "safety_audit_status": status,
+        "acceptable_warning": status == binding_reports.SAFETY_WARNING and not failed_checks,
+        "artifact_check_count": len(artifact_checks),
+        "failed_artifact_check_count": len(failed_checks),
+        "warning_reason_count": len(set(warning_reasons)),
+        "artifact_checks": artifact_checks,
+        "blocking_reasons": list(dict.fromkeys(blocking_reasons)),
+        "warning_reasons": list(dict.fromkeys(warning_reasons)),
+        "signal_binding_research_only": bool(signal_rows)
+        and all(_candidate_v2_signal_row_safe(row) for row in signal_rows),
+        "weight_binding_hypothetical_only": bool(weight_rows)
+        and all(_candidate_v2_weight_row_safe(row) for row in weight_rows),
+        "official_target_weights": False,
+        "paper_shadow_activation": False,
+        "owner_decision_append": False,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_effect": "none",
+        "order_effect": "none",
+    }
+
+
+def _candidate_v2_signal_row_safe(row: Mapping[str, Any]) -> bool:
+    return (
+        row.get("research_only") is True
+        and row.get("manual_review_only") is True
+        and row.get("official_target_weights") is False
+        and row.get("not_official_target_weights") is True
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(row.get("broker_effect")) == "none"
+        and _text(row.get("order_effect")) == "none"
+    )
+
+
+def _candidate_v2_weight_row_safe(row: Mapping[str, Any]) -> bool:
+    return (
+        row.get("research_only") is True
+        and row.get("manual_review_only") is True
+        and row.get("official_target_weights") is False
+        and row.get("not_official_target_weights") is True
+        and _text(row.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(row.get("broker_effect")) == "none"
+        and _text(row.get("order_effect")) == "none"
+        and _candidate_v2_weight_object_safe(_mapping(row.get("hypothetical_research_weight")))
+        and _candidate_v2_weight_object_safe(_mapping(row.get("previous_hypothetical_weight")))
+    )
+
+
+def _candidate_v2_weight_object_safe(value: Mapping[str, Any]) -> bool:
+    return (
+        value.get("research_only") is True
+        and value.get("manual_review_only") is True
+        and value.get("official_target_weights") is False
+        and value.get("not_official_target_weights") is True
+        and _text(value.get("production_effect")) == PRODUCTION_EFFECT
+        and _text(value.get("broker_effect")) == "none"
+        and _text(value.get("order_effect")) == "none"
+    )
+
+
+def _candidate_v2_context_coverage(
+    signal_coverage: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    return [dict(row) for row in signal_coverage]
+
+
+def _latest_by_date(rows: Sequence[Mapping[str, Any]], key: str) -> dict[str, Any]:
+    if not rows:
+        return {}
+    return dict(max(rows, key=lambda row: _text(row.get(key))))
+
+
+def _join_reasons(values: Sequence[Any]) -> str:
+    reasons = [_text(value) for value in values if _text(value)]
+    return "; ".join(dict.fromkeys(reasons))
+
+
 def _reader_brief(
     *,
     summary: str,
@@ -5390,6 +6377,19 @@ def _float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _parse_iso_date(value: str) -> date | None:
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _reader_brief_complete(payload: Mapping[str, Any]) -> bool:
+    brief = _mapping(payload.get("reader_brief"))
+    required = ("summary", "key_result", "blocking_issues", "warnings", "next_action")
+    return all(bool(_text(brief.get(key))) for key in required)
+
+
 def _date_from_payload(payload: Mapping[str, Any]) -> date:
     try:
         return date.fromisoformat(_text(payload.get("as_of")))
@@ -5513,6 +6513,18 @@ def _markdown_tables(report_type: str) -> list[tuple[str, str]]:
         ]
     if report_type == CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE:
         return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
+    if report_type == CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE:
+        return [
+            ("Source Artifacts", "source_artifacts"),
+            ("V2 Signal Context Coverage", "v2_signal_context_coverage"),
+            ("V2 Candidate Signal Series", "v2_candidate_signal_series"),
+            (
+                "V2 Hypothetical Research Weight Series",
+                "v2_hypothetical_research_weight_series",
+            ),
+        ]
+    if report_type == CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE:
+        return [("Checks", "checks"), ("Blocking Issues", "blocking_issues")]
     return []
 
 
@@ -5558,6 +6570,12 @@ __all__ = [
     "CANDIDATE_REDESIGN_HYPOTHESIS_REPORT_TYPE",
     "CANDIDATE_REDESIGN_HYPOTHESIS_VALIDATION_REPORT_TYPE",
     "CANDIDATE_REDESIGN_PRIORITIES",
+    "CANDIDATE_V2_EXECUTABLE_BINDING_BLOCKED",
+    "CANDIDATE_V2_EXECUTABLE_BINDING_READY",
+    "CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS",
+    "CANDIDATE_V2_EXECUTABLE_BINDING_REPORT_TYPE",
+    "CANDIDATE_V2_EXECUTABLE_BINDING_STATUSES",
+    "CANDIDATE_V2_EXECUTABLE_BINDING_VALIDATION_REPORT_TYPE",
     "CANDIDATE_V2_SPEC_FREEZE_READY",
     "CANDIDATE_V2_SPEC_FREEZE_REPORT_TYPE",
     "CANDIDATE_V2_SPEC_FREEZE_VALIDATION_REPORT_TYPE",
@@ -5594,6 +6612,7 @@ __all__ = [
     "WINDOW_FRAGILITY_JUDGMENTS",
     "build_backfill_partial_root_cause_repair_plan_payload",
     "build_candidate_redesign_hypothesis_payload",
+    "build_candidate_v2_executable_binding_update_payload",
     "build_candidate_v2_spec_freeze_payload",
     "build_cost_benchmark_weakness_attribution_payload",
     "build_executable_research_evidence_gap_ledger_payload",
@@ -5606,6 +6625,7 @@ __all__ = [
     "render_evidence_repair_markdown",
     "validate_backfill_partial_root_cause_repair_plan_payload",
     "validate_candidate_redesign_hypothesis_payload",
+    "validate_candidate_v2_executable_binding_update_payload",
     "validate_candidate_v2_spec_freeze_payload",
     "validate_cost_benchmark_weakness_attribution_payload",
     "validate_executable_research_evidence_gap_ledger_payload",

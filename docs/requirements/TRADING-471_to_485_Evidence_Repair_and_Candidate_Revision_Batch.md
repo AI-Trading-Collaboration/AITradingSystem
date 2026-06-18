@@ -32,7 +32,7 @@ owner decision append、production mutation 或 automatic position control。
 |TRADING-476|cost-benchmark-weakness-attribution|DONE|TRADING-471 + cost/benchmark review|解释 cost weakness、benchmark weakness、baseline 对比和 redesign repairability。|
 |TRADING-477|candidate-redesign-hypothesis-v2|DONE|TRADING-471~476|基于 gap 生成 P0/P1/P2 v2 research hypotheses，只生成假设，不激活 paper-shadow。|
 |TRADING-478|candidate-v2-spec-freeze|DONE|TRADING-477|冻结 research-only v2 spec，明确与 TRADING-470 candidate 的差异和 stop conditions。|
-|TRADING-479|candidate-v2-executable-binding-update|READY|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
+|TRADING-479|candidate-v2-executable-binding-update|DONE|TRADING-478|实现 v2 research-only binding 并通过 safety audit；若 safety audit failed，禁止 backfill。|
 |TRADING-480|candidate-v2-mini-backfill|READY|TRADING-479 safety pass|只跑 compact representative windows，输出 mini-backfill 状态。|
 |TRADING-481|candidate-v2-mini-gate|READY|TRADING-480|决定是否进入 full backfill；不允许 paper-shadow。|
 |TRADING-482|candidate-v2-full-backfill-if-approved|READY|TRADING-481 approval|只有 mini gate 为 `V2_PROCEED_TO_FULL_BACKFILL` 时才运行 full backfill。|
@@ -216,3 +216,22 @@ owner decision append、production mutation 或 automatic position control。
   failed=0。未实现 binding、未运行 backfill、未 append owner decision、未创建
   paper-shadow、未批准 extended/live、未写 official target weights、未触发 broker/order、
   未修改 production。下一步是 TRADING-479 candidate v2 executable binding update。
+- 2026-06-18: TRADING-479 开始实现。范围限定为读取 TRADING-478 frozen v2 spec，
+  生成 research-only v2 signal binding、hypothetical research weight binding 和 executable
+  binding safety audit summary，保持 research_only/manual_review_only、official target
+  weights=false、production/broker/order effect=none；缺失、stale 或 invalid input 必须
+  fail closed。若 safety audit failed，本批次不得进入 TRADING-480 mini backfill。
+- 2026-06-18: TRADING-479 完成 pending commit。真实 2026-06-17 binding update
+  `candidate_v2_executable_binding_update_2026-06-17` 输出
+  `CANDIDATE_V2_EXECUTABLE_BINDING_READY_WITH_WARNINGS`，candidate id=
+  `median_plus_regime_mismatch_filter_v2_turnover_cost_benchmark_guard`。
+  Signal rows=396、weight rows=396，covered validation contexts=6/7；未覆盖
+  `v_shaped_recovery`，原因是 source backfill window dates missing。Latest signal date=
+  `2025-04-30`，average_turnover_proxy=0.031818，latest_turnover_proxy=0.0。
+  Data quality=`PASS_WITH_WARNINGS`，safety audit=`EXECUTABLE_BINDING_SAFETY_WARNING`
+  且 allows mini backfill=true。Validation
+  `candidate_v2_executable_binding_update_validation_2026-06-17` 为 PASS，checks=12、
+  failed=0。未运行 backfill、未生成 return/drawdown/cost/benchmark metrics、未 append
+  owner decision、未创建 paper-shadow、未批准 extended/live、未写 official target
+  weights、未触发 broker/order、未修改 production。下一步是 TRADING-480 candidate v2
+  mini backfill。
