@@ -1,0 +1,26 @@
+schema_version: "1.0"
+status: "COMPATIBILITY_POLICY_READY"
+policy_metadata:
+  owner: "research_governance"
+  status: "baseline_v1"
+  rationale: "Keep historical task-specific B2/B3 runners readable while preventing new feature expansion there."
+  intended_effect: "New research workflow work enters Campaign control plane."
+  validation_evidence: "tests/test_research_campaign.py"
+  review_condition: "Review before deleting or rewriting legacy runner commands."
+deprecated_task_specific_runners:
+  - runner_id: "b2-control-window-research"
+    replacement: "aits research campaign ..."
+    compatibility_status: "read_only_historical"
+    extension_allowed: false
+  - runner_id: "b2-targeted-evidence-research"
+    replacement: "aits research campaign ..."
+    compatibility_status: "read_only_historical"
+    extension_allowed: false
+  - runner_id: "b2-final-decision-research"
+    replacement: "aits research campaign ..."
+    compatibility_status: "read_only_historical"
+    extension_allowed: false
+  - runner_id: "b3-signal-precheck"
+    replacement: "aits research campaign ..."
+    compatibility_status: "read_only_historical"
+    extension_allowed: false

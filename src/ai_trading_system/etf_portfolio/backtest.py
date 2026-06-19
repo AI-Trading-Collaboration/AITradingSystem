@@ -70,6 +70,10 @@ class ETFAccountingStep:
     ending_equity: float
 
 
+B0_STATIC_DEFAULT_BENCHMARK_ID = "B000"
+B0_STATIC_DEFAULT_BENCHMARK_NAME = "static_default_portfolio"
+
+
 def run_portfolio_backtest(
     prices: pd.DataFrame,
     *,
@@ -327,6 +331,8 @@ def benchmark_registry(config: ETFConfigBundle) -> dict[str, ETFBenchmarkConfig]
     configured = dict(settings.benchmarks)
     if not configured:
         configured = _legacy_benchmark_registry(config)
+    else:
+        configured = _include_default_static_portfolio_benchmark(configured, config)
     active = set(settings.baselines)
     return {
         benchmark_id: benchmark
@@ -699,6 +705,33 @@ def _legacy_benchmark_registry(config: ETFConfigBundle) -> dict[str, ETFBenchmar
             short_window=50,
             long_window=200,
         )
+    return registry
+
+
+def _include_default_static_portfolio_benchmark(
+    configured: dict[str, ETFBenchmarkConfig],
+    config: ETFConfigBundle,
+) -> dict[str, ETFBenchmarkConfig]:
+    if B0_STATIC_DEFAULT_BENCHMARK_NAME not in config.backtest.backtest.baselines:
+        return configured
+    if any(
+        benchmark.name == B0_STATIC_DEFAULT_BENCHMARK_NAME
+        for benchmark in configured.values()
+    ):
+        return configured
+    registry = dict(configured)
+    registry[B0_STATIC_DEFAULT_BENCHMARK_ID] = ETFBenchmarkConfig(
+        name=B0_STATIC_DEFAULT_BENCHMARK_NAME,
+        benchmark_type="static_portfolio",
+        weights={
+            symbol: asset.default_weight
+            for symbol, asset in config.assets.assets.items()
+        },
+        description=(
+            "Research-only B0 static strategic baseline derived from "
+            "config/etf_portfolio/assets.yaml default_weight values."
+        ),
+    )
     return registry
 
 

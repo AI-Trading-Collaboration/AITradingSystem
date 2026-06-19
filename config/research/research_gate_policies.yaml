@@ -1,0 +1,58 @@
+schema_version: "1.0"
+scorecards:
+  risk-overlay-utility-v1:
+    policy_metadata:
+      owner: "research_governance"
+      status: "baseline_v1"
+      rationale: "B2 risk overlay must show repeatable drawdown protection without unacceptable re-entry or utility cost."
+      intended_effect: "Gate current-form risk overlay without hardcoded B2 status names."
+      validation_evidence: "TRADING-588_to_604 artifacts and tests/test_research_campaign.py"
+      review_condition: "Review after B2 final repeatability round or redesign."
+    required_evidence_categories:
+      - "TRIGGER_BEHAVIOR"
+      - "DRAWDOWN_PROTECTION"
+      - "REENTRY_BEHAVIOR"
+      - "TURNOVER_COST"
+      - "WINDOW_STABILITY"
+      - "SAFETY"
+    missing_evidence_outcome: "NEEDS_MORE_EVIDENCE"
+    blocking_evidence_outcome: "WEAK"
+    pass_outcome: "PROMISING"
+    over_budget_outcome: "OWNER_OVERRIDE_REQUIRED"
+    blocking_reason_outcome_map:
+      REENTRY_LAG_SIGNAL_DRIVEN: "RETURN_TO_DESIGN"
+      FAST_RISK_NOT_SUPPORTED: "NARROW_ROLE"
+      FAST_RISK_NOT_SUPPORTED_BY_CURRENT_DESIGN: "NARROW_ROLE"
+      SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY: "NEEDS_MORE_EVIDENCE"
+  signal-only-precheck-v1:
+    policy_metadata:
+      owner: "research_governance"
+      status: "baseline_v1"
+      rationale: "Signal-only Campaigns must not require portfolio metrics before signal direction is valid."
+      intended_effect: "Keep B3 precheck from jumping to combo backfill or weight generation."
+      validation_evidence: "TRADING-557_to_604 artifacts and tests/test_research_campaign.py"
+      review_condition: "Review when B3 signal redesign outputs a non-BLOCKED signal artifact."
+    required_evidence_categories:
+      - "SIGNAL_COVERAGE"
+      - "SIGNAL_DIRECTION"
+      - "SAFETY"
+    missing_evidence_outcome: "NEEDS_MORE_EVIDENCE"
+    blocking_evidence_outcome: "RETURN_TO_DESIGN"
+    pass_outcome: "PASS"
+    over_budget_outcome: "OWNER_OVERRIDE_REQUIRED"
+    blocking_reason_outcome_map:
+      SIGNAL_DIRECTION_MIXED: "MIXED"
+      SIGNAL_DIRECTION_WRONG_TILT: "RETURN_TO_DESIGN"
+interaction_effect_policy:
+  policy_metadata:
+    owner: "research_governance"
+    status: "baseline_v1"
+    rationale: "Interaction classifications require governed thresholds because they affect research interpretation."
+    intended_effect: "Classify additive, redundant, and interfering module combinations consistently."
+    validation_evidence: "tests/test_research_campaign.py"
+    review_condition: "Review after enough Campaign interaction evidence accumulates."
+  classification_thresholds:
+    positive_synergy_min: 0.02
+    negative_interference_max: -0.02
+    mostly_additive_abs_max: 0.02
+    redundant_abs_max: 0.005

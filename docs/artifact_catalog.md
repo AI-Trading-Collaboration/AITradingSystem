@@ -4,6 +4,10 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## Research Campaign Control Plane
+
+TRADING-605～622 的 Campaign 控制面 artifact 位于 `data/research_campaigns/<campaign_id>/` 和 `outputs/research_campaigns/<campaign_id>/`。`data/research_campaigns/<campaign_id>/spec.json` 是初始化后规范化的 Campaign Spec；`state.json` 是 canonical campaign status；`evidence.jsonl` 是统一 Evidence Record store；`transitions.jsonl` 是状态机 audit log；`runs.jsonl` 是 stage runner 审计；`reproducibility_manifest.json` 记录 commit、spec/config checksums、windows、outputs 和 data quality status；`outputs/research_campaigns/<campaign_id>/owner_packet_<campaign_id>.json/md` 是 Campaign Reader Brief / owner packet。生成入口是 `aits research campaign init|validate|plan|run|diagnose|gate|status|packet|archive`，上游配置为 `config/research/module_capability_registry.yaml`、`config/research/research_window_policy.yaml`、`config/research/research_gate_policies.yaml`、`config/research/campaign_migrations.yaml` 和 sample specs。该 artifact family 只控制研究工作流、预算、holdout policy、module boundary、gate 和 next actions；不刷新市场数据、不运行 broker/order、不写 official target weights、不 append owner decision、不创建 paper-shadow、不修改 production。B2/B3 迁移 evidence 是 historical import，不代表重新跑回测或批准 current-form 研究结论。
+
 ## ETF Portfolio runtime artifact policy
 
 `data/etf_portfolio/`、`data/simulation/` 和 `reports/` 是本地运行产物目录，默认由 ETF daily run、simulation、backtest、P1/P2 observe-only reports 或 report integration 命令生成，并通过 `.gitignore` 排除在源码提交之外。它们可以作为本机审计证据和人工复核输入，但不是 source artifacts。

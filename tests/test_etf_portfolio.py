@@ -349,6 +349,7 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
         "config_hash",
     }.issubset(result.weights.columns)
     assert set(result.summary["benchmark_metrics"]) == {
+        "B000",
         "B001",
         "B002",
         "B003",
@@ -415,10 +416,25 @@ def test_benchmark_registry_loads_required_ids_and_static_weights_sum_to_one() -
     config = load_etf_config_bundle()
     registry = benchmark_registry(config)
 
-    assert set(registry) == {"B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008"}
+    assert set(registry) == {
+        "B000",
+        "B001",
+        "B002",
+        "B003",
+        "B004",
+        "B005",
+        "B006",
+        "B007",
+        "B008",
+    }
+    assert registry["B000"].name == "static_default_portfolio"
+    assert registry["B000"].weights == {
+        symbol: asset.default_weight for symbol, asset in config.assets.assets.items()
+    }
     assert registry["B004"].symbol == "SOXX"
     assert registry["B005"].name == "static_growth_balanced"
     assert registry["B006"].name == "static_ai_growth"
+    assert abs(sum(registry["B000"].weights.values()) - 1.0) < 1e-8
     assert abs(sum(registry["B005"].weights.values()) - 1.0) < 1e-8
     assert abs(sum(registry["B006"].weights.values()) - 1.0) < 1e-8
 
@@ -441,6 +457,12 @@ def test_benchmark_weight_policies_are_deterministic_and_no_early_ma_trade() -> 
         prices=prices,
         signal_date=dates[-1],
     )
+    static_default = benchmark_weights_for_date(
+        config=config,
+        benchmark_id="B000",
+        prices=prices,
+        signal_date=dates[-1],
+    )
     early_ma = benchmark_weights_for_date(
         config=config,
         benchmark_id="B007",
@@ -449,6 +471,13 @@ def test_benchmark_weight_policies_are_deterministic_and_no_early_ma_trade() -> 
     )
 
     assert buy_hold == {"SPY": 1.0}
+    assert static_default == {
+        "SPY": 0.30,
+        "QQQ": 0.40,
+        "SMH": 0.15,
+        "SOXX": 0.0,
+        "CASH": 0.15,
+    }
     assert static_growth == {"SPY": 0.30, "QQQ": 0.50, "CASH": 0.20}
     assert early_ma == {"CASH": 1.0}
 

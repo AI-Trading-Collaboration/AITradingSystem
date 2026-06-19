@@ -1,0 +1,163 @@
+schema_version: "1.0"
+migrations:
+  b2-risk-overlay-current-form:
+    legacy_status: "B2_TARGETED_EVIDENCE_MIXED"
+    stage: "TARGETED_EVIDENCE"
+    outcome: "NEEDS_MORE_EVIDENCE"
+    reason_codes:
+      - "FAST_RISK_NOT_SUPPORTED"
+      - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
+      - "REENTRY_LAG_SIGNAL_DRIVEN"
+    evidence_budget_used:
+      mini_rounds: 1
+      targeted_rounds: 1
+      window_expansions: 1
+      redesign_rounds: 0
+      needs_more_evidence_occurrences: 1
+      holdout_accesses: 0
+      owner_overrides: 0
+    source_artifacts:
+      - "TRADING-575_to_580_B2_Control_Window_Evidence_Completion"
+      - "TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope"
+      - "TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision"
+    stage_history:
+      - run_id: "legacy-b2-targeted-evidence"
+        stage: "TARGETED_EVIDENCE"
+        outcome: "NEEDS_MORE_EVIDENCE"
+        reason_codes:
+          - "FAST_RISK_NOT_SUPPORTED"
+          - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
+          - "REENTRY_LAG_SIGNAL_DRIVEN"
+        created_at: "2026-06-19T00:00:00Z"
+    evidence_records:
+      - evidence_id: "b2-fast-risk-no-trigger"
+        run_id: "legacy-b2-targeted-evidence"
+        stage: "TARGETED_EVIDENCE"
+        category: "TRIGGER_BEHAVIOR"
+        metric_name: "fast_risk_trigger_support"
+        value: "unsupported_current_design"
+        direction: "negative"
+        window_id: "rapid_drawdown_no_trigger"
+        status: "FAIL"
+        confidence: "medium"
+        source_artifact_id: "b2_fast_risk_no_trigger_audit"
+        reason_codes:
+          - "FAST_RISK_NOT_SUPPORTED"
+      - evidence_id: "b2-slow-drawdown-single-window"
+        run_id: "legacy-b2-targeted-evidence"
+        stage: "TARGETED_EVIDENCE"
+        category: "DRAWDOWN_PROTECTION"
+        metric_name: "slow_drawdown_repeatability"
+        value: "single_positive_window_only"
+        direction: "mixed"
+        window_id: "slow_drawdown_known_positive"
+        status: "MIXED"
+        confidence: "medium"
+        source_artifact_id: "b2_slow_drawdown_repeatability_study"
+        reason_codes:
+          - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
+      - evidence_id: "b2-reentry-lag-signal-driven"
+        run_id: "legacy-b2-targeted-evidence"
+        stage: "TARGETED_EVIDENCE"
+        category: "REENTRY_BEHAVIOR"
+        metric_name: "reentry_lag_root_cause"
+        value: "signal_driven"
+        direction: "negative"
+        window_id: "slow_drawdown_known_positive"
+        status: "FAIL"
+        confidence: "medium"
+        source_artifact_id: "b2_reentry_lag_root_cause_review"
+        reason_codes:
+          - "REENTRY_LAG_SIGNAL_DRIVEN"
+      - evidence_id: "b2-control-window-clean"
+        run_id: "legacy-b2-control-window"
+        stage: "FULL_DIAGNOSTIC"
+        category: "SAFETY"
+        metric_name: "control_window_false_risk_off"
+        value: 0
+        direction: "positive"
+        window_id: "control_calm_no_trigger"
+        status: "PASS"
+        confidence: "high"
+        source_artifact_id: "b2_no_trigger_correctness_review"
+        reason_codes:
+          - "CONTROL_BEHAVIOR_CLEAN"
+      - evidence_id: "b2-window-stability-missing-repeatability"
+        run_id: "legacy-b2-targeted-evidence"
+        stage: "TARGETED_EVIDENCE"
+        category: "WINDOW_STABILITY"
+        metric_name: "independent_slow_drawdown_window_count"
+        value: 1
+        direction: "mixed"
+        window_id: "slow_drawdown_known_positive"
+        status: "MIXED"
+        confidence: "medium"
+        source_artifact_id: "b2_slow_drawdown_edge_validation"
+        reason_codes:
+          - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
+      - evidence_id: "b2-turnover-cost-mixed"
+        run_id: "legacy-b2-full-diagnostic"
+        stage: "FULL_DIAGNOSTIC"
+        category: "TURNOVER_COST"
+        metric_name: "cost_benchmark_utility"
+        value: "mixed"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        source_artifact_id: "b2_cost_benchmark_utility_review"
+        reason_codes:
+          - "B2_UTILITY_MIXED"
+  b3-slow-tilt-signal-precheck:
+    legacy_status: "B3_PRECHECK_MIXED"
+    stage: "INPUT_PRECHECK"
+    outcome: "MIXED"
+    reason_codes:
+      - "SIGNAL_DIRECTION_MIXED"
+    evidence_budget_used:
+      mini_rounds: 0
+      targeted_rounds: 0
+      window_expansions: 0
+      redesign_rounds: 0
+      needs_more_evidence_occurrences: 0
+      holdout_accesses: 0
+      owner_overrides: 0
+    source_artifacts:
+      - "TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2"
+      - "TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution"
+    evidence_records:
+      - evidence_id: "b3-signal-direction-mixed"
+        run_id: "legacy-b3-precheck"
+        stage: "INPUT_PRECHECK"
+        category: "SIGNAL_DIRECTION"
+        metric_name: "slow_tilt_signal_direction"
+        value: "mixed"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        source_artifact_id: "b3_signal_direction_failure_taxonomy"
+        reason_codes:
+          - "SIGNAL_DIRECTION_MIXED"
+      - evidence_id: "b3-no-weight-generation"
+        run_id: "legacy-b3-precheck"
+        stage: "INPUT_PRECHECK"
+        category: "SAFETY"
+        metric_name: "portfolio_metric_generation"
+        value: "not_generated"
+        direction: "positive"
+        status: "PASS"
+        confidence: "high"
+        source_artifact_id: "b3_signal_precheck_resolution_plan"
+        reason_codes:
+          - "SIGNAL_ONLY_NO_WEIGHT_GENERATION"
+      - evidence_id: "b3-signal-coverage-present"
+        run_id: "legacy-b3-precheck"
+        stage: "INPUT_PRECHECK"
+        category: "SIGNAL_COVERAGE"
+        metric_name: "signal_precheck_coverage"
+        value: "available_for_precheck"
+        direction: "positive"
+        status: "PASS"
+        confidence: "medium"
+        source_artifact_id: "b3_redesign_candidate_precheck_v2"
+        reason_codes:
+          - "B3_PRECHECK_MIXED"

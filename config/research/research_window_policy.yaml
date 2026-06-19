@@ -1,0 +1,86 @@
+schema_version: "1.0"
+policy_metadata:
+  owner: "research_governance"
+  status: "baseline_v1"
+  rationale: "Separate development, diagnostic, full, and untouched holdout access."
+  intended_effect: "Prevent premature holdout use and keep window lineage auditable."
+  validation_evidence: "tests/test_research_campaign.py"
+  review_condition: "Review when adding or reclassifying research windows."
+catalogs:
+  b2-development-v1:
+    catalog_type: "development"
+    holdout: false
+    lineage: "TRADING-537_to_604 historical B2 artifacts"
+    contamination_status: "research_seen"
+    windows:
+      - window_id: "b2_dev_ai_after_chatgpt"
+        start: "2022-12-01"
+        end: "2025-04-30"
+        tags:
+          - "development"
+          - "ai_after_chatgpt"
+  b2-diagnostic-v1:
+    catalog_type: "diagnostic"
+    holdout: false
+    lineage: "B2 control/risk-heavy diagnostic catalogs"
+    contamination_status: "research_seen"
+    windows:
+      - window_id: "slow_drawdown_known_positive"
+        start: "2023-08-01"
+        end: "2023-11-30"
+        tags:
+          - "slow_drawdown"
+      - window_id: "rapid_drawdown_no_trigger"
+        start: "2024-07-01"
+        end: "2024-08-31"
+        tags:
+          - "rapid_drawdown"
+      - window_id: "control_calm_no_trigger"
+        start: "2024-01-01"
+        end: "2024-03-31"
+        tags:
+          - "control"
+  b2-holdout-v1:
+    catalog_type: "holdout"
+    holdout: true
+    lineage: "untouched final gate holdout"
+    contamination_status: "untouched"
+    windows:
+      - window_id: "b2_untouched_final_gate"
+        start: "2025-05-01"
+        end: "2026-06-18"
+        tags:
+          - "holdout"
+  b3-development-v1:
+    catalog_type: "development"
+    holdout: false
+    lineage: "B3 signal-direction attribution artifacts"
+    contamination_status: "research_seen"
+    windows:
+      - window_id: "b3_signal_dev_ai_after_chatgpt"
+        start: "2022-12-01"
+        end: "2025-04-30"
+        tags:
+          - "signal_direction"
+  b3-diagnostic-v1:
+    catalog_type: "diagnostic"
+    holdout: false
+    lineage: "B3 precheck v1/v2 diagnostic artifacts"
+    contamination_status: "research_seen"
+    windows:
+      - window_id: "b3_wrong_tilt_diagnostic"
+        start: "2023-01-03"
+        end: "2025-04-30"
+        tags:
+          - "signal_direction"
+  b3-holdout-v1:
+    catalog_type: "holdout"
+    holdout: true
+    lineage: "untouched final gate holdout"
+    contamination_status: "untouched"
+    windows:
+      - window_id: "b3_untouched_final_gate"
+        start: "2025-05-01"
+        end: "2026-06-18"
+        tags:
+          - "holdout"

@@ -1,0 +1,206 @@
+schema_version: "1.0"
+policy_metadata:
+  owner: "research_governance"
+  status: "baseline_v1"
+  rationale: "Declare reusable research module boundaries before Campaign execution."
+  intended_effect: "Prevent cross-layer leakage and task-specific module mixing."
+  validation_evidence: "tests/test_research_campaign.py"
+  review_condition: "Review when adding a module type, mechanism, or Campaign runner adapter."
+modules:
+  b0-static:
+    module_type: "BASELINE"
+    input_contract:
+      - "static_research_allocation_policy"
+    output_contract:
+      - "baseline_utility"
+    allowed_layers:
+      - "evaluation"
+    allowed_mechanisms:
+      - "static_baseline"
+    required_features: []
+    required_signals: []
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+      - "holdout"
+    compatible_modules:
+      - "execution-control-e"
+      - "risk-overlay-b2"
+      - "slow-tilt-b3"
+    incompatible_modules: []
+    forbidden_outputs:
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    interaction_alias: "B0"
+  execution-control-e:
+    module_type: "EXECUTION_POLICY"
+    input_contract:
+      - "research_target_exposure"
+    output_contract:
+      - "hypothetical_research_weight"
+      - "turnover_proxy"
+      - "constraint_hit"
+    allowed_layers:
+      - "execution"
+    allowed_mechanisms:
+      - "execution_control"
+    required_features: []
+    required_signals: []
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+    compatible_modules:
+      - "risk-overlay-b2"
+      - "slow-tilt-b3"
+    incompatible_modules: []
+    forbidden_outputs:
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    interaction_alias: "E"
+  risk-overlay-b2:
+    module_type: "RISK_OVERLAY"
+    input_contract:
+      - "risk_signal_state"
+      - "baseline_research_exposure"
+    output_contract:
+      - "research_only_exposure_scaler"
+      - "risk_state"
+      - "reentry_state"
+    allowed_layers:
+      - "signal"
+      - "target_allocation"
+    allowed_mechanisms:
+      - "risk_signal"
+      - "exposure_scaler"
+      - "reentry_logic"
+    required_features:
+      - "drawdown"
+      - "realized_volatility"
+    required_signals:
+      - "risk_state"
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+    compatible_modules:
+      - "execution-control-e"
+    incompatible_modules:
+      - "regime-information-g"
+    forbidden_outputs:
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    interaction_alias: "R"
+  slow-tilt-b3:
+    module_type: "SIGNAL"
+    input_contract:
+      - "trend_features"
+      - "signal_quality_flags"
+    output_contract:
+      - "signal_score"
+      - "state"
+      - "confidence"
+    allowed_layers:
+      - "signal"
+    allowed_mechanisms:
+      - "slow_tilt"
+    required_features:
+      - "trend_gap"
+      - "relative_strength"
+    required_signals: []
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+    compatible_modules:
+      - "execution-control-e"
+      - "risk-overlay-b2"
+    incompatible_modules: []
+    forbidden_outputs:
+      - "target_weight"
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    interaction_alias: "T"
+  confidence-shrinkage-c:
+    module_type: "CONFIDENCE_MODIFIER"
+    input_contract:
+      - "signal_confidence"
+    output_contract:
+      - "confidence_adjustment"
+    allowed_layers:
+      - "signal"
+    allowed_mechanisms:
+      - "confidence_shrinkage"
+    required_features: []
+    required_signals:
+      - "confidence"
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+    compatible_modules: []
+    incompatible_modules: []
+    forbidden_outputs:
+      - "target_weight"
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    requires_gate_approval_for_interaction: true
+    interaction_alias: "C"
+  regime-information-g:
+    module_type: "REGIME_MODIFIER"
+    input_contract:
+      - "regime_features"
+    output_contract:
+      - "regime_state"
+    allowed_layers:
+      - "signal"
+    allowed_mechanisms:
+      - "regime_filter"
+    required_features:
+      - "market_regime"
+    required_signals: []
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+    compatible_modules: []
+    incompatible_modules:
+      - "risk-overlay-b2"
+    forbidden_outputs:
+      - "target_weight"
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    requires_gate_approval_for_interaction: true
+    interaction_alias: "G"
+  p0-mixed-allocator:
+    module_type: "P0_MIXED_ALLOCATOR"
+    input_contract:
+      - "legacy_mixed_strategy_bundle"
+    output_contract:
+      - "target_weight"
+    allowed_layers:
+      - "target_allocation"
+    allowed_mechanisms:
+      - "p0_mixed_allocator"
+    required_features: []
+    required_signals: []
+    supported_window_types:
+      - "development"
+    compatible_modules: []
+    incompatible_modules:
+      - "risk-overlay-b2"
+      - "slow-tilt-b3"
+      - "execution-control-e"
+    forbidden_outputs:
+      - "official_target_weight"
+      - "broker_order"
+    version: "legacy"
+    approved_for_campaign_modules: false
+    interaction_alias: "P0"
