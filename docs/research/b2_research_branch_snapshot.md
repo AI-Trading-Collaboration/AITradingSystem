@@ -1,0 +1,24 @@
+# B2 Research Branch Snapshot
+
+- Status: CONTINUE_B2_ONLY_WITH_TARGETED_EVIDENCE
+- Market Regime: ai_after_chatgpt
+- Requested Range: 2022-12-01 to 2026-06-18
+- Data Quality: PASS_WITH_WARNINGS
+- Production Effect: none
+
+## Reader Brief
+
+- Summary: B2 branch remains B2-only with targeted evidence collection; all downstream modules stay blocked.
+- Key Result: CONTINUE_B2_ONLY_WITH_TARGETED_EVIDENCE
+- Blocking Issues: none
+- Warnings: Research-only B2 follow-up diagnostics; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action.
+- Safety Boundary: research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none
+- Next Action: Manual owner/research review before any subsequent gate.
+
+## Allowed Flags
+
+- B4_retest_allowed: False
+- b5_allowed: False
+- b6_allowed: False
+- v3_allowed: False
+- paper_shadow_allowed: False

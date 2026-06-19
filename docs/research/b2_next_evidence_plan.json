@@ -1,0 +1,121 @@
+{
+  "allowed_decisions": [
+    "RUN_MORE_B2_RISK_WINDOWS",
+    "RUN_MORE_B2_REENTRY_CASES",
+    "RUN_MORE_B2_FALSE_RISK_OFF_CASES",
+    "RETURN_B2_TO_DESIGN",
+    "STOP_B2_RESEARCH_LINE"
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "estimated_minimum_evidence_count": {
+    "V_shaped_recovery_cases": 1,
+    "additional_calm_or_false_alarm_controls": 2,
+    "additional_risk_heavy_windows": 4,
+    "complete_trigger_reentry_cases": 2,
+    "false_risk_off_cluster_cases": 1,
+    "note": "Planning estimate only; not an official promotion threshold.",
+    "total_targeted_cases": 10
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T12:05:26.759617+00:00",
+  "holdout_accessed": false,
+  "kill_criteria": [
+    "additional triggered windows still show negative utility without clear drawdown benefit",
+    "re-entry lag remains high in multiple independent trigger episodes",
+    "false risk-off appears in calm/control windows",
+    "signal binding issue appears without threshold tuning"
+  ],
+  "market_regime": "ai_after_chatgpt",
+  "promotion_criteria": [
+    "drawdown protection is clear in multiple independent risk-heavy windows",
+    "re-entry cost is acceptable in complete trigger/re-entry lifecycles",
+    "net utility is not mixed or weak after cost/benchmark review",
+    "trigger behavior is stable across risk-heavy and calm controls"
+  ],
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "RUN_MORE_B2_RISK_WINDOWS",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 should continue only with a targeted evidence plan focused on trigger coverage and re-entry cases.",
+    "warnings": "Research-only B2 follow-up diagnostics; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_next_evidence_plan",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "required_V_shaped_recovery_cases": [
+    "one triggered V-shaped recovery or explicit no-trigger justification"
+  ],
+  "required_additional_windows": [
+    "independent rapid drawdown case with broad AI/semiconductor stress",
+    "second slow drawdown case with measurable recovery phase",
+    "volatility spike where B2 signal should plausibly bind",
+    "semiconductor correction with sector-led drawdown pressure"
+  ],
+  "required_calm_control_windows": [
+    "one additional calm market control outside 2023-01-03 to 2023-07-31",
+    "one shallow pullback control with no unnecessary exposure reduction"
+  ],
+  "required_false_risk_off_cases": [
+    "one false-risk-off cluster with independent B2 signal rerun"
+  ],
+  "required_metrics": [
+    "trigger count and trigger dates",
+    "risk-off dates and re-entry dates",
+    "return/drawdown/turnover/cost/benchmark deltas vs B0",
+    "missed rebound proxy",
+    "false risk-off count",
+    "window-level utility classification"
+  ],
+  "required_trigger_events": [
+    "at least two independent risk-trigger episodes",
+    "at least one trigger that starts before or during drawdown acceleration",
+    "at least one trigger with complete risk-off and re-entry lifecycle"
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_control_window_rerun": "D:\\Work\\AITradingSystem\\docs\\research\\b2_control_window_rerun.json",
+    "b2_cost_benchmark_utility_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_utility_review.json",
+    "b2_drawdown_protection_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_drawdown_protection_attribution.json",
+    "b2_false_risk_off_reentry_cost_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_cost_review.json",
+    "b2_full_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_backfill.json",
+    "b2_full_diagnostic_with_control_windows": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_with_control_windows.json",
+    "b2_no_trigger_correctness_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_no_trigger_correctness_review.json",
+    "b2_only_research_gate_v3": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate_v3.json",
+    "b2_path_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\b2_path_decision_snapshot.json",
+    "b2_signal_robustness_trigger_stability": "D:\\Work\\AITradingSystem\\docs\\research\\b2_signal_robustness_trigger_stability.json",
+    "b3_signal_precheck_resolution_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_precheck_resolution_plan.json"
+  },
+  "source_statuses": {
+    "design": "B2_DESIGN_ACCEPTABLE_NEEDS_MORE_EVIDENCE",
+    "gate_v3": "B2_ONLY_NEEDS_MORE_EVIDENCE",
+    "root_cause": "B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER",
+    "scorecard": "B2_WINDOW_UTILITY_MIXED"
+  },
+  "status": "RUN_MORE_B2_RISK_WINDOWS",
+  "task_id": "TRADING-585"
+}

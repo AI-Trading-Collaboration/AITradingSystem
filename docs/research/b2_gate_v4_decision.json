@@ -1,0 +1,107 @@
+{
+  "B4_retest_allowed": false,
+  "allowed_outcomes": [
+    "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
+    "B2_ONLY_RETURN_TO_DESIGN",
+    "B2_ONLY_WEAK",
+    "B2_ONLY_REJECT_CURRENT_FORM",
+    "B2_ONLY_RESEARCH_PROMISING"
+  ],
+  "b5_allowed": false,
+  "b6_allowed": false,
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "decision_inputs": {
+    "design": "B2_DESIGN_ACCEPTABLE_NEEDS_MORE_EVIDENCE",
+    "full_diagnostic": "B2_FULL_DIAGNOSTIC_COMPLETE",
+    "next_evidence_plan": "RUN_MORE_B2_RISK_WINDOWS",
+    "root_cause": "B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER",
+    "scorecard": "B2_WINDOW_UTILITY_MIXED"
+  },
+  "decision_rules_applied": [
+    {
+      "check_id": "full diagnostic complete",
+      "message": "complete",
+      "status": "PASS"
+    },
+    {
+      "check_id": "no structural blocker",
+      "message": "targeted evidence path remains valid",
+      "status": "PASS"
+    },
+    {
+      "check_id": "B4/B5/B6/v3 blocked",
+      "message": "hard rule preserved",
+      "status": "PASS"
+    },
+    {
+      "check_id": "paper-shadow blocked",
+      "message": "hard rule preserved",
+      "status": "PASS"
+    }
+  ],
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T12:05:26.759617+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "paper_shadow_allowed": false,
+  "promising_requirements": {
+    "acceptable_reentry_cost": false,
+    "acceptable_utility": false,
+    "clear_drawdown_protection": false,
+    "no_untouched_holdout_used": true,
+    "stable_trigger_behavior": false
+  },
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 gate v4 continues B2-only research with a defined evidence plan.",
+    "warnings": "Research-only B2 follow-up diagnostics; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_gate_v4_decision",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "interpretation_note": "B2 gate v4 uses completed diagnostic artifacts only.",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_control_window_rerun": "D:\\Work\\AITradingSystem\\docs\\research\\b2_control_window_rerun.json",
+    "b2_cost_benchmark_utility_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_utility_review.json",
+    "b2_drawdown_protection_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_drawdown_protection_attribution.json",
+    "b2_false_risk_off_reentry_cost_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_cost_review.json",
+    "b2_full_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_backfill.json",
+    "b2_full_diagnostic_with_control_windows": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_with_control_windows.json",
+    "b2_no_trigger_correctness_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_no_trigger_correctness_review.json",
+    "b2_only_research_gate_v3": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate_v3.json",
+    "b2_path_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\b2_path_decision_snapshot.json",
+    "b2_signal_robustness_trigger_stability": "D:\\Work\\AITradingSystem\\docs\\research\\b2_signal_robustness_trigger_stability.json",
+    "b3_signal_precheck_resolution_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_precheck_resolution_plan.json"
+  },
+  "status": "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
+  "task_id": "TRADING-586",
+  "v3_allowed": false
+}

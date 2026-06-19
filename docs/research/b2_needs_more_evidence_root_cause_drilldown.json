@@ -1,0 +1,133 @@
+{
+  "completed_evidence_summary": {
+    "control_false_risk_off_count": 0,
+    "control_unnecessary_exposure_reduction_count": 0,
+    "full_diagnostic_status": "B2_FULL_DIAGNOSTIC_COMPLETE",
+    "risk_trigger_count": 33,
+    "triggered_window_count": 1
+  },
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T12:05:26.759617+00:00",
+  "holdout_accessed": false,
+  "input_statuses": {
+    "control_rerun": "B2_CONTROL_RERUN_COMPLETE",
+    "drawdown": "B2_DRAWDOWN_PROTECTION_MIXED",
+    "full_diagnostic": "B2_FULL_DIAGNOSTIC_COMPLETE",
+    "gate_v3": "B2_ONLY_NEEDS_MORE_EVIDENCE",
+    "no_trigger": "B2_NO_TRIGGER_CORRECTNESS_PASS",
+    "reentry": "B2_REENTRY_LAG_HIGH",
+    "robustness": "B2_TRIGGER_STABILITY_WEAK",
+    "utility": "B2_UTILITY_MIXED"
+  },
+  "market_regime": "ai_after_chatgpt",
+  "primary_root_causes": [
+    "insufficient risk-heavy sample",
+    "drawdown protection mixed",
+    "trigger coverage too low",
+    "re-entry lag uncertainty",
+    "cost / benchmark utility mixed",
+    "signal robustness uncertainty",
+    "window dispersion too high",
+    "no structural blocker but insufficient positive evidence"
+  ],
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 remains needs-more-evidence because completed evidence is concentrated and mixed, not because control behavior is structurally broken.",
+    "warnings": "Research-only B2 follow-up diagnostics; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_needs_more_evidence_root_cause_drilldown",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "root_cause_classification": [
+    {
+      "category": "insufficient risk-heavy sample",
+      "evidence": "Only one diagnostic window produced material B2 triggers.",
+      "present": true
+    },
+    {
+      "category": "drawdown protection mixed",
+      "evidence": "Slow drawdown improves drawdown, while most risk-heavy windows do not trigger.",
+      "present": true
+    },
+    {
+      "category": "trigger coverage too low",
+      "evidence": "Trigger evidence is concentrated in slow_drawdown.",
+      "present": true
+    },
+    {
+      "category": "re-entry lag uncertainty",
+      "evidence": "The only triggered window has 14 re-entry lag days.",
+      "present": true
+    },
+    {
+      "category": "V-shaped recovery opportunity cost",
+      "evidence": "Current V-shaped proxy shows no missed rebound, but it also has no B2 trigger.",
+      "present": false
+    },
+    {
+      "category": "cost / benchmark utility mixed",
+      "evidence": "Aggregate benchmark-relative return is negative despite drawdown improvement.",
+      "present": true
+    },
+    {
+      "category": "signal robustness uncertainty",
+      "evidence": "Risk signal coverage passes with warnings and one stale input.",
+      "present": true
+    },
+    {
+      "category": "window dispersion too high",
+      "evidence": "One triggered window drives nearly all non-zero B2 behavior.",
+      "present": true
+    },
+    {
+      "category": "no structural blocker but insufficient positive evidence",
+      "evidence": "Control-window behavior is clean and no binding issue is reported.",
+      "present": true
+    }
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_control_window_rerun": "D:\\Work\\AITradingSystem\\docs\\research\\b2_control_window_rerun.json",
+    "b2_cost_benchmark_utility_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_utility_review.json",
+    "b2_drawdown_protection_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_drawdown_protection_attribution.json",
+    "b2_false_risk_off_reentry_cost_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_cost_review.json",
+    "b2_full_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_backfill.json",
+    "b2_full_diagnostic_with_control_windows": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_with_control_windows.json",
+    "b2_no_trigger_correctness_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_no_trigger_correctness_review.json",
+    "b2_only_research_gate_v3": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate_v3.json",
+    "b2_path_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\b2_path_decision_snapshot.json",
+    "b2_signal_robustness_trigger_stability": "D:\\Work\\AITradingSystem\\docs\\research\\b2_signal_robustness_trigger_stability.json",
+    "b3_signal_precheck_resolution_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_precheck_resolution_plan.json"
+  },
+  "status": "B2_NEEDS_MORE_EVIDENCE_BUT_NO_STRUCTURAL_BLOCKER",
+  "structural_blocker_detected": false,
+  "task_id": "TRADING-582"
+}
