@@ -1,0 +1,345 @@
+{
+  "comparison_semantics": {
+    "b0h_usage": "secondary natural-drift reference only",
+    "b2_b3_b4_primary_variant": "E0 for module-only attribution",
+    "benchmark_relative_delta": "return_delta versus stated comparator control",
+    "cost_assumption_source": "config/etf_portfolio/risk.yaml transaction_costs (commission_bps + slippage_bps)",
+    "cost_delta": "turnover_delta * 2.0bps / 10000",
+    "e1_usage": "execution-control interaction reference, not module-only attribution",
+    "primary_b0_for_module_attribution": "B0R static target + naive rebalance"
+  },
+  "comparisons": [
+    {
+      "benchmark_relative_delta": 0.003019283696003683,
+      "benchmark_relative_delta_source": "B0R primary comparator",
+      "candidate_layer": "B1",
+      "candidate_metrics": {
+        "cagr": 0.6278562664757685,
+        "calmar": 10.051235439436518,
+        "max_drawdown": -0.06246558149581727,
+        "sharpe": 3.2354138566255175,
+        "sortino": 5.711548913544178,
+        "time_in_market": 1.0,
+        "total_return": 0.315963876284143,
+        "turnover": 0.12431805306786908
+      },
+      "comparator_layer": "B0R",
+      "comparator_metrics": {
+        "cagr": 0.6212340705020254,
+        "calmar": 10.137334965228895,
+        "max_drawdown": -0.061281793748836466,
+        "sharpe": 3.246793362595372,
+        "sortino": 5.7388111195247795,
+        "time_in_market": 1.0,
+        "total_return": 0.31294459258813934,
+        "turnover": 0.5987679672402312
+      },
+      "comparison_id": "B1_vs_B0",
+      "cost_delta": -9.488998283447242e-05,
+      "drawdown_delta": -0.0011837877469808022,
+      "execution_variant": "E1",
+      "return_delta": 0.003019283696003683,
+      "signal_robustness_result": "NOT_APPLICABLE_B1_EXECUTION_CONTROL_NO_SIGNAL_INPUT",
+      "stress_result": "NOT_EVALUATED_B1_NORMAL_MARKET_MINI_WINDOW_ONLY",
+      "turnover_delta": -0.4744499141723621,
+      "window_result": "NORMAL_MARKET_REGIME_MINI_WINDOW_ONLY"
+    },
+    {
+      "benchmark_relative_delta": -2.220446049250313e-16,
+      "benchmark_relative_delta_source": "same-window B0R control",
+      "candidate_layer": "B2",
+      "candidate_metrics": {
+        "cagr": -0.5926120261570995,
+        "calmar": -5.408534837243081,
+        "max_drawdown": -0.10956978996906575,
+        "sharpe": -3.341913324438812,
+        "sortino": -4.08249147196199,
+        "time_in_market": 1.0,
+        "total_return": -0.07210104910132231,
+        "turnover": 0.13832659396583322
+      },
+      "comparator_layer": "B0R",
+      "comparator_metrics": {
+        "cagr": -0.5926120261570984,
+        "calmar": -5.4085348372430815,
+        "max_drawdown": -0.10956978996906552,
+        "sharpe": -3.341913324438812,
+        "sortino": -4.0824914719619905,
+        "time_in_market": 1.0,
+        "total_return": -0.07210104910132209,
+        "turnover": 0.13832659396583283
+      },
+      "comparison_id": "B2_vs_B0",
+      "cost_delta": 7.771561172376096e-20,
+      "drawdown_delta": -2.220446049250313e-16,
+      "execution_variant": "E0",
+      "return_delta": -2.220446049250313e-16,
+      "signal_robustness_result": "SIGNAL_DIAGNOSTICS_PASS",
+      "stress_result": "NOT_EVALUATED_IN_CURRENT_MINI_BACKFILL",
+      "turnover_delta": 3.885780586188048e-16,
+      "window_result": "SINGLE_MINI_WINDOW_2024-07-10_TO_2024-08-09"
+    },
+    {
+      "benchmark_relative_delta": -0.002234939938683067,
+      "benchmark_relative_delta_source": "same-window B0R control",
+      "candidate_layer": "B3",
+      "candidate_metrics": {
+        "cagr": -0.6042321162660276,
+        "calmar": -5.417459480837857,
+        "max_drawdown": -0.11153421975803646,
+        "sharpe": -3.390423219633327,
+        "sortino": -4.126445065253695,
+        "time_in_market": 1.0,
+        "total_return": -0.07433598904000516,
+        "turnover": 0.3602859012026848
+      },
+      "comparator_layer": "B0R",
+      "comparator_metrics": {
+        "cagr": -0.5926120261570984,
+        "calmar": -5.4085348372430815,
+        "max_drawdown": -0.10956978996906552,
+        "sharpe": -3.341913324438812,
+        "sortino": -4.0824914719619905,
+        "time_in_market": 1.0,
+        "total_return": -0.07210104910132209,
+        "turnover": 0.13832659396583283
+      },
+      "comparison_id": "B3_vs_B0",
+      "cost_delta": 4.439186144737039e-05,
+      "drawdown_delta": -0.001964429788970934,
+      "execution_variant": "E0",
+      "return_delta": -0.002234939938683067,
+      "signal_robustness_result": "SIGNAL_DIAGNOSTICS_PASS",
+      "stress_result": "NOT_EVALUATED_IN_CURRENT_MINI_BACKFILL",
+      "turnover_delta": 0.22195930723685195,
+      "window_result": "SINGLE_MINI_WINDOW_2024-07-10_TO_2024-08-09"
+    },
+    {
+      "benchmark_relative_delta": -0.002234939938683067,
+      "benchmark_relative_delta_source": "same-window B0R control",
+      "candidate_layer": "B4",
+      "candidate_metrics": {
+        "cagr": -0.6042321162660276,
+        "calmar": -5.417459480837857,
+        "max_drawdown": -0.11153421975803646,
+        "sharpe": -3.390423219633328,
+        "sortino": -4.126445065253696,
+        "time_in_market": 1.0,
+        "total_return": -0.07433598904000516,
+        "turnover": 0.36028590120268433
+      },
+      "comparator_layer": "B0R",
+      "comparator_metrics": {
+        "cagr": -0.5926120261570984,
+        "calmar": -5.4085348372430815,
+        "max_drawdown": -0.10956978996906552,
+        "sharpe": -3.341913324438812,
+        "sortino": -4.0824914719619905,
+        "time_in_market": 1.0,
+        "total_return": -0.07210104910132209,
+        "turnover": 0.13832659396583283
+      },
+      "comparison_id": "B4_vs_B0",
+      "cost_delta": 4.43918614473703e-05,
+      "drawdown_delta": -0.001964429788970934,
+      "execution_variant": "E0",
+      "return_delta": -0.002234939938683067,
+      "signal_robustness_result": {
+        "B2": "SIGNAL_DIAGNOSTICS_PASS",
+        "B3": "SIGNAL_DIAGNOSTICS_PASS"
+      },
+      "stress_result": "NOT_EVALUATED_IN_CURRENT_MINI_BACKFILL",
+      "turnover_delta": 0.2219593072368515,
+      "window_result": "SINGLE_MINI_WINDOW_2024-07-10_TO_2024-08-09"
+    },
+    {
+      "benchmark_relative_delta": -0.002234939938682845,
+      "benchmark_relative_delta_source": "B2 E0 branch comparator",
+      "candidate_layer": "B4",
+      "candidate_metrics": {
+        "cagr": -0.6042321162660276,
+        "calmar": -5.417459480837857,
+        "max_drawdown": -0.11153421975803646,
+        "sharpe": -3.390423219633328,
+        "sortino": -4.126445065253696,
+        "time_in_market": 1.0,
+        "total_return": -0.07433598904000516,
+        "turnover": 0.36028590120268433
+      },
+      "comparator_layer": "B2",
+      "comparator_metrics": {
+        "cagr": -0.5926120261570995,
+        "calmar": -5.408534837243081,
+        "max_drawdown": -0.10956978996906575,
+        "sharpe": -3.341913324438812,
+        "sortino": -4.08249147196199,
+        "time_in_market": 1.0,
+        "total_return": -0.07210104910132231,
+        "turnover": 0.13832659396583322
+      },
+      "comparison_id": "B4_vs_B2",
+      "cost_delta": 4.439186144737022e-05,
+      "drawdown_delta": -0.001964429788970712,
+      "execution_variant": "E0",
+      "return_delta": -0.002234939938682845,
+      "signal_robustness_result": {
+        "B2": "SIGNAL_DIAGNOSTICS_PASS",
+        "B3": "SIGNAL_DIAGNOSTICS_PASS"
+      },
+      "stress_result": "NOT_EVALUATED_IN_CURRENT_MINI_BACKFILL",
+      "turnover_delta": 0.22195930723685112,
+      "window_result": "SINGLE_MINI_WINDOW_2024-07-10_TO_2024-08-09"
+    },
+    {
+      "benchmark_relative_delta": 0.0,
+      "benchmark_relative_delta_source": "B3 E0 branch comparator",
+      "candidate_layer": "B4",
+      "candidate_metrics": {
+        "cagr": -0.6042321162660276,
+        "calmar": -5.417459480837857,
+        "max_drawdown": -0.11153421975803646,
+        "sharpe": -3.390423219633328,
+        "sortino": -4.126445065253696,
+        "time_in_market": 1.0,
+        "total_return": -0.07433598904000516,
+        "turnover": 0.36028590120268433
+      },
+      "comparator_layer": "B3",
+      "comparator_metrics": {
+        "cagr": -0.6042321162660276,
+        "calmar": -5.417459480837857,
+        "max_drawdown": -0.11153421975803646,
+        "sharpe": -3.390423219633327,
+        "sortino": -4.126445065253695,
+        "time_in_market": 1.0,
+        "total_return": -0.07433598904000516,
+        "turnover": 0.3602859012026848
+      },
+      "comparison_id": "B4_vs_B3",
+      "cost_delta": -8.881784197001253e-20,
+      "drawdown_delta": 0.0,
+      "execution_variant": "E0",
+      "return_delta": 0.0,
+      "signal_robustness_result": {
+        "B2": "SIGNAL_DIAGNOSTICS_PASS",
+        "B3": "SIGNAL_DIAGNOSTICS_PASS"
+      },
+      "stress_result": "NOT_EVALUATED_IN_CURRENT_MINI_BACKFILL",
+      "turnover_delta": -4.440892098500626e-16,
+      "window_result": "SINGLE_MINI_WINDOW_2024-07-10_TO_2024-08-09"
+    }
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "e1_interaction_reference": {
+    "b2_e1_vs_b2_e0": {
+      "cagr_delta": 0.0006703393637909061,
+      "drawdown_reduction": 0.00118728141013702,
+      "return_delta": 0.0001271389574352133,
+      "sharpe_delta": -0.08190573920861999,
+      "turnover_delta": -0.13832659396583322
+    },
+    "b3_e1_vs_b3_e0": {
+      "cagr_delta": -0.0016495287142777038,
+      "drawdown_reduction": -3.1791865034880296e-05,
+      "return_delta": -0.00032212357905758715,
+      "sharpe_delta": -0.05020753963835567,
+      "turnover_delta": -0.25518179306669475
+    },
+    "b4_e1_vs_b2_e1": {
+      "cagr_delta": -0.013939958186996115,
+      "drawdown_reduction": -0.003183503064142501,
+      "return_delta": -0.0026842024751755345,
+      "sharpe_delta": -0.016811695624250333,
+      "turnover_delta": 0.10510410813598989
+    },
+    "b4_e1_vs_b3_e1": {
+      "cagr_delta": 5.551115123125783e-16,
+      "drawdown_reduction": 1.1102230246251565e-16,
+      "return_delta": 1.1102230246251565e-16,
+      "sharpe_delta": 0.0,
+      "turnover_delta": -1.6653345369377348e-16
+    },
+    "b4_e1_vs_b4_e0": {
+      "cagr_delta": -0.0016495287142771486,
+      "drawdown_reduction": -3.179186503476927e-05,
+      "return_delta": -0.00032212357905747613,
+      "sharpe_delta": -0.05020753963835434,
+      "turnover_delta": -0.2551817930666944
+    }
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T09:53:52.364235+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "module_usefulness": [
+    {
+      "drawdown_delta": -0.0011837877469808022,
+      "independently_useful_status": "CONDITIONAL_MIXED_USEFULNESS",
+      "layer_id": "B1",
+      "rationale": "B1E lowers turnover and slightly improves return versus B0R, but worsens drawdown.",
+      "return_delta": 0.003019283696003683,
+      "turnover_delta": -0.4744499141723621
+    },
+    {
+      "drawdown_delta": -2.220446049250313e-16,
+      "independently_useful_status": "NOT_PROVEN_USEFUL_IN_CURRENT_WINDOW",
+      "layer_id": "B2",
+      "rationale": "B2 risk scaler did not create observable difference versus same-window B0R.",
+      "return_delta": -2.220446049250313e-16,
+      "turnover_delta": 3.885780586188048e-16
+    },
+    {
+      "drawdown_delta": -0.001964429788970934,
+      "independently_useful_status": "NOT_INDEPENDENTLY_USEFUL_IN_CURRENT_WINDOW",
+      "layer_id": "B3",
+      "rationale": "B3 worsened return/drawdown and increased turnover versus same-window B0R.",
+      "return_delta": -0.002234939938683067,
+      "turnover_delta": 0.22195930723685195
+    },
+    {
+      "drawdown_delta": -0.001964429788970934,
+      "independently_useful_status": "INCONCLUSIVE_NOT_INDEPENDENTLY_USEFUL",
+      "layer_id": "B4",
+      "rationale": "B4 remains inconclusive and matches B3 in the current mini window.",
+      "return_delta": -0.002234939938683067,
+      "turnover_delta": 0.2219593072368515
+    }
+  ],
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B1_B4_COMPONENT_ATTRIBUTION_READY",
+    "next_action": "Keep B5/B6/v3 blocked unless B4 evidence is no longer inconclusive.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B1-B4 component attribution was computed from canonical research artifacts.",
+    "warnings": "Diagnosis only; does not continue B5/B6/v3 or change strategy logic."
+  },
+  "report_type": "b1_b4_component_result_attribution",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "B0": "D:\\Work\\AITradingSystem\\docs\\research\\b0_static_strategic_baseline_result.json",
+    "B1": "D:\\Work\\AITradingSystem\\docs\\research\\b1_isolated_attribution_result.json",
+    "B2": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_scaler_research_result.json",
+    "B3": "D:\\Work\\AITradingSystem\\docs\\research\\b3_relative_tilt_research_result.json",
+    "B4": "D:\\Work\\AITradingSystem\\docs\\research\\b4_risk_tilt_interaction_result.json"
+  },
+  "status": "B1_B4_COMPONENT_ATTRIBUTION_READY",
+  "task_id": "TRADING-521"
+}

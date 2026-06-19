@@ -1,0 +1,106 @@
+{
+  "classification_options_considered": [
+    "B4_INCONCLUSIVE_DUE_TO_INSUFFICIENT_EVIDENCE",
+    "B4_INCONCLUSIVE_DUE_TO_NEGATIVE_INTERFERENCE",
+    "B4_INCONCLUSIVE_DUE_TO_WEAK_COMPONENT",
+    "B4_REQUIRES_MORE_WINDOWS",
+    "B4_SHOULD_RETURN_TO_DESIGN"
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T09:53:52.364235+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "primary_root_causes": [
+    "sample window insufficient",
+    "utility score ambiguous",
+    "B3 weak",
+    "turnover/cost offsets benefit",
+    "interaction formula / threshold issue"
+  ],
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "B4_REQUIRES_MORE_WINDOWS",
+    "next_action": "Keep B5/B6/v3 blocked unless B4 evidence is no longer inconclusive.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B4 remains inconclusive mainly because current evidence is too narrow.",
+    "warnings": "Diagnosis only; does not continue B5/B6/v3 or change strategy logic."
+  },
+  "recommended_interpretation": "Run more B4 windows before B5; if B3 remains weak or B2 remains inactive, return to B2/B3 design instead of confidence shrinkage.",
+  "report_type": "b4_interaction_inconclusive_drilldown",
+  "root_cause_taxonomy": [
+    {
+      "cause": "B2 weak",
+      "evidence": "B2 E0 matched same-window B0R; risk scaler did not create observable benefit.",
+      "present": true
+    },
+    {
+      "cause": "B3 weak",
+      "evidence": "B3 E0 underperformed B0R on return and drawdown in the mini window.",
+      "present": true
+    },
+    {
+      "cause": "B2 and B3 conflict",
+      "evidence": "No conflict observed; B4 E0 effectively matched B3 E0 because B2 exposure stayed full.",
+      "present": false
+    },
+    {
+      "cause": "sample window insufficient",
+      "evidence": "Only one short mini window is available for B2/B3/B4 interaction evidence.",
+      "present": true
+    },
+    {
+      "cause": "utility score ambiguous",
+      "evidence": "Only return/drawdown/turnover partial utility is available; frozen scorecard components for tracking error, worst-window, dispersion, cost drag, stress and signal robustness penalties are not complete.",
+      "present": true
+    },
+    {
+      "cause": "turnover/cost offsets benefit",
+      "evidence": "B4 increased turnover/cost proxy while reducing return versus B0R.",
+      "present": true
+    },
+    {
+      "cause": "stress result mixed",
+      "evidence": "Stress result is not available in the current mini-backfill.",
+      "present": true
+    },
+    {
+      "cause": "benchmark result mixed",
+      "evidence": "External benchmark-relative gate is not available; only B0R proxy is available.",
+      "present": true
+    },
+    {
+      "cause": "signal robustness issue",
+      "evidence": "B2 and B3 signal diagnostics passed; issue is evidence breadth, not BLOCKED signal.",
+      "present": false
+    },
+    {
+      "cause": "interaction formula / threshold issue",
+      "evidence": "Formula is deterministic, but B2 threshold activation was not observed in this window.",
+      "present": true
+    }
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_b4_status": "B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+  "source_interaction_classification": "INCONCLUSIVE",
+  "status": "B4_REQUIRES_MORE_WINDOWS",
+  "task_id": "TRADING-522"
+}

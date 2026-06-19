@@ -1,0 +1,82 @@
+{
+  "allowed_decisions": [
+    "PROCEED_TO_CONFIDENCE_SHRINKAGE",
+    "RUN_MORE_B4_WINDOWS",
+    "REVISE_B2_RISK_SCALER",
+    "REVISE_B3_SLOW_TILT",
+    "RETURN_TO_ABLATION_DESIGN",
+    "STOP_CURRENT_RESEARCH_LINE"
+  ],
+  "b5_allowed": false,
+  "b6_allowed": false,
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "decision": "RUN_MORE_B4_WINDOWS",
+  "decision_basis": {
+    "b4_drilldown_status": "B4_REQUIRES_MORE_WINDOWS",
+    "baseline_audit_status": "E0_E1_BASELINE_CONSISTENCY_PASS_WITH_LIMITATIONS",
+    "component_attribution_status": "B1_B4_COMPONENT_ATTRIBUTION_READY",
+    "selected_root_causes": [
+      "sample window insufficient",
+      "utility score ambiguous",
+      "B3 weak",
+      "turnover/cost offsets benefit",
+      "interaction formula / threshold issue"
+    ]
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T09:53:52.364235+00:00",
+  "hard_rule_checks": [
+    {
+      "check_id": "Do not allow B5 unless B4 is no longer inconclusive",
+      "message": "B4 diagnosis status is still inconclusive/more-windows.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "Do not allow B6 unless B5 is valid",
+      "message": "B5 is not valid; it remains blocked.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "No production side effects",
+      "message": "No paper-shadow/live/official weights/broker/order outputs are generated.",
+      "status": "PASS"
+    }
+  ],
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "next_actions": [
+    "Run additional B4 windows with the same frozen B2/B3 policies.",
+    "Keep B5/B6/v3 blocked until B4 has non-INCONCLUSIVE evidence.",
+    "If additional windows keep B2 inactive or B3 weak, revise B2/B3 design."
+  ],
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "RUN_MORE_B4_WINDOWS",
+    "next_action": "Keep B5/B6/v3 blocked unless B4 evidence is no longer inconclusive.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B4 remains inconclusive; do not proceed to B5/B6/v3.",
+    "warnings": "Diagnosis only; does not continue B5/B6/v3 or change strategy logic."
+  },
+  "report_type": "b4_next_decision_checkpoint",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "RUN_MORE_B4_WINDOWS",
+  "task_id": "TRADING-524"
+}

@@ -40,6 +40,10 @@ REQUIRED_JSON_ARTIFACTS = (
     "candidate_v3_spec_from_proven_effects.json",
     "candidate_v3_mini_gate_result.json",
     "weight_research_program_v1_snapshot.json",
+    "b1_b4_component_result_attribution.json",
+    "b4_interaction_inconclusive_drilldown.json",
+    "e0_e1_baseline_consistency_audit.json",
+    "b4_next_decision_checkpoint.json",
 )
 
 
@@ -279,6 +283,30 @@ def test_program_snapshot_does_not_claim_missing_later_ablation_results() -> Non
     assert payload["selected_modules"] == []
     assert payload["v3_candidate_status"] == "V3_SPEC_BLOCKED_NO_PROVEN_EFFECTS"
     assert payload["v3_mini_gate_status"] == "V3_BLOCKED"
+
+
+def test_b1_b4_diagnosis_artifacts_keep_b5_b6_blocked() -> None:
+    attribution = _read_json("b1_b4_component_result_attribution.json")
+    drilldown = _read_json("b4_interaction_inconclusive_drilldown.json")
+    baseline = _read_json("e0_e1_baseline_consistency_audit.json")
+    decision = _read_json("b4_next_decision_checkpoint.json")
+
+    assert attribution["status"] == "B1_B4_COMPONENT_ATTRIBUTION_READY"
+    assert {row["comparison_id"] for row in attribution["comparisons"]} == {
+        "B1_vs_B0",
+        "B2_vs_B0",
+        "B3_vs_B0",
+        "B4_vs_B0",
+        "B4_vs_B2",
+        "B4_vs_B3",
+    }
+    assert all("benchmark_relative_delta" in row for row in attribution["comparisons"])
+    assert all("cost_delta" in row for row in attribution["comparisons"])
+    assert drilldown["status"] == "B4_REQUIRES_MORE_WINDOWS"
+    assert baseline["status"] == "E0_E1_BASELINE_CONSISTENCY_PASS_WITH_LIMITATIONS"
+    assert decision["status"] == "RUN_MORE_B4_WINDOWS"
+    assert decision["b5_allowed"] is False
+    assert decision["b6_allowed"] is False
 
 
 def _read_json(file_name: str) -> dict[str, object]:

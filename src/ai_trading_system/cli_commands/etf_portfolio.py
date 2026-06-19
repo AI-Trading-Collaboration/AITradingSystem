@@ -1124,6 +1124,9 @@ from ai_trading_system.etf_portfolio.weight_research_b4 import run_b4_interactio
 from ai_trading_system.etf_portfolio.weight_research_checkpoint import (
     run_weight_research_checkpoint,
 )
+from ai_trading_system.etf_portfolio.weight_research_diagnosis import (
+    run_b1_b4_diagnosis_batch,
+)
 from ai_trading_system.etf_portfolio.weight_research_interfaces import (
     build_dependency_boundary_validation,
     build_research_layer_interface_contract,
@@ -36284,6 +36287,49 @@ def weight_research_checkpoint_command(
             "Source Alias："
             f"{DEFAULT_RESEARCH_SOURCE_DIR / 'weight_research_program_v1_snapshot.json'}"
         )
+
+
+@weight_research_app.command("diagnose-b1-b4")
+def weight_research_diagnose_b1_b4_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Diagnosis output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research diagnosis aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-521~524 B1-B4 diagnosis without continuing B5/B6/v3."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b1_b4_diagnosis_batch(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    decision = payloads["b4_next_decision_checkpoint"]
+    typer.echo(f"b1_b4_diagnosis_status={decision['status']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_next_decision_checkpoint.json'}"
+        )
+    if decision["b5_allowed"] or decision["b6_allowed"]:
+        raise typer.Exit(code=1)
 
 
 @weight_research_app.command("run-b1")
