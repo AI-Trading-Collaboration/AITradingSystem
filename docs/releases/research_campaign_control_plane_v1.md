@@ -39,6 +39,15 @@
 - 新增 B2 Campaign E2E compute、full-path parity、evidence-budget final-decision drill 和 legacy B2 runner deprecation readiness。
 - `validation-pack` rc3 写入 `outputs/research_campaigns/control_plane_v1_rc3_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
 
+## rc4 更新
+
+- 新增 B2 next-action freeze，固化 current stage/outcome、reason codes、evidence budget、allowed/blocked/owner actions。
+- 新增 Campaign-managed B2 final repeatability run，通过 `campaign run --stage next` 和 B2 compute adapter 执行最后 targeted evidence，当前输出 `B2_FINAL_REPEATABILITY_RUN_COMPLETE`。
+- 新增 B2 final gate，使用 Campaign gate policy 和预算约束；当前 final repeatability 后预算耗尽，输出 `OWNER_OVERRIDE_REQUIRED`，不输出 generic `NEEDS_MORE_EVIDENCE`。
+- 新增 B2 owner review packet，汇总假设、fast-risk、slow-drawdown、control windows、re-entry lag、utility、final gate 和 owner options；不 append owner decision。
+- 新增 B2 branch finalization snapshot，当前输出 `OWNER_REVIEW_REQUIRED`，并固定 B4/B5/B6/v3/paper-shadow 全部不允许。
+- `validation-pack` rc4 写入 `outputs/research_campaigns/control_plane_v1_rc4_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
+
 ## 限制
 
 - B2 Campaign compute 已覆盖 targeted/full/gate，但 legacy B2 task-specific CLI 仍保留到 owner deprecation review 后。

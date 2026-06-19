@@ -203,7 +203,7 @@ def campaign_validation_pack_command(
         typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
     ] = None,
 ) -> None:
-    """写出 Control Plane v1 rc3 adapter/parity/budget/next-action validation pack。"""
+    """写出 Control Plane v1 rc4 adapter/parity/budget/next-action validation pack。"""
     try:
         payload = write_campaign_control_plane_v1_validation_artifacts(
             campaign_root=campaign_root,

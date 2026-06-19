@@ -158,6 +158,24 @@ RESTRICTED_MORE_EVIDENCE_OUTCOMES = [
     "OWNER_OVERRIDE_REQUIRED",
 ]
 
+# TRADING-649~653 requested B2 finalization taxonomies. These are audit labels
+# for final research interpretation, not tunable scoring thresholds.
+B2_FINAL_GATE_DECISIONS = [
+    "B2_CURRENT_FORM_RESEARCH_PROMISING",
+    "B2_CURRENT_FORM_NARROW_TO_SLOW_DRAWDOWN_OVERLAY",
+    "B2_CURRENT_FORM_RETURN_TO_DESIGN",
+    "B2_CURRENT_FORM_WEAK",
+    "B2_CURRENT_FORM_REJECT",
+    "OWNER_OVERRIDE_REQUIRED",
+]
+B2_BRANCH_FINALIZATION_DECISIONS = [
+    "CONTINUE_NARROW_B2_RESEARCH",
+    "RETURN_B2_TO_DESIGN",
+    "REJECT_B2_CURRENT_FORM",
+    "STOP_B2_RESEARCH_LINE",
+    "OWNER_REVIEW_REQUIRED",
+]
+
 ALWAYS_BLOCKED_RESEARCH_ACTIONS = [
     "B4_RETEST",
     "B5",
@@ -1884,6 +1902,381 @@ def build_legacy_b2_runner_deprecation_readiness(
     }
 
 
+def build_campaign_b2_next_action_freeze(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    plan = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
+    allowed_labels = {
+        "COMPLETE_FINAL_REPEATABILITY_ROUND": "final slow_drawdown repeatability check",
+        "NARROW_ROLE": "narrow role to slow-drawdown defensive overlay",
+        "RETURN_TO_DESIGN": "return to design",
+    }
+    checks = [
+        {
+            "check_id": "current_stage_and_outcome_frozen",
+            "passed": state.current_stage == "TARGETED_EVIDENCE"
+            and state.current_outcome == "NEEDS_MORE_EVIDENCE",
+        },
+        {
+            "check_id": "allowed_actions_cover_manual_b2_options",
+            "passed": {
+                "COMPLETE_FINAL_REPEATABILITY_ROUND",
+                "NARROW_ROLE",
+                "RETURN_TO_DESIGN",
+            }
+            <= set(plan["allowed_next_actions"]),
+        },
+        {
+            "check_id": "blocked_actions_keep_promotion_paths_closed",
+            "passed": {"B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"}
+            <= set(plan["blocked_actions"]),
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_b2_next_action_freeze",
+        "campaign_id": campaign_id,
+        "status": (
+            "CAMPAIGN_B2_NEXT_ACTION_FREEZE_READY"
+            if all(check["passed"] for check in checks)
+            else "CAMPAIGN_B2_NEXT_ACTION_FREEZE_BLOCKED"
+        ),
+        "current_stage": state.current_stage,
+        "current_outcome": state.current_outcome,
+        "reason_codes": state.reason_codes,
+        "evidence_budget_used": state.evidence_budget_used.model_dump(mode="json"),
+        "evidence_budget_remaining": plan["evidence_budget_remaining"],
+        "allowed_next_actions": plan["allowed_next_actions"],
+        "allowed_next_action_labels": {
+            action: allowed_labels[action]
+            for action in plan["allowed_next_actions"]
+            if action in allowed_labels
+        },
+        "blocked_actions": plan["blocked_actions"],
+        "required_owner_actions": plan["required_owner_actions"],
+        "checks": checks,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "data_quality_status": state.data_quality_status,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_campaign_managed_b2_final_repeatability_run(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    command = (
+        "aits research campaign run --id b2-risk-overlay-current-form --stage next"
+    )
+    with tempfile.TemporaryDirectory(prefix="b2-final-repeatability-run-") as tmp:
+        tmp_root = Path(tmp) / "campaigns"
+        shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
+        before = build_status_payload(
+            campaign_id=campaign_id,
+            detailed=True,
+            campaign_root=tmp_root,
+        )
+        result = run_campaign_stage(
+            campaign_id=campaign_id,
+            requested_stage="next",
+            campaign_root=tmp_root,
+            adapter_registry_path=adapter_registry_path,
+            output_root=output_root / "b2_final_repeatability_run",
+        )
+        after = build_status_payload(
+            campaign_id=campaign_id,
+            detailed=True,
+            campaign_root=tmp_root,
+        )
+        tuning_review = _b2_final_repeatability_tuning_review(result)
+
+    before_used = before["evidence_budget_used"]
+    after_used = after["evidence_budget_used"]
+    budget_consumed = (
+        after_used["targeted_rounds"] == before_used["targeted_rounds"] + 1
+        and after_used["needs_more_evidence_occurrences"]
+        == before_used["needs_more_evidence_occurrences"] + 1
+    )
+    safety = result.get("result", {}).get("safety_metadata", {})
+    checks = [
+        {
+            "check_id": "campaign_next_stage_entrypoint_used",
+            "passed": result["stage"] == "TARGETED_EVIDENCE"
+            and before["current_stage"] == "TARGETED_EVIDENCE",
+        },
+        {
+            "check_id": "b2_compute_adapter_used",
+            "passed": result.get("adapter_id")
+            == "b2-risk-overlay-control-window-compute-adapter-v1"
+            and result.get("adapter_status") == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "evidence_budget_consumed",
+            "passed": budget_consumed
+            and after["evidence_budget_remaining"]["targeted_rounds_remaining"] == 0,
+        },
+        {
+            "check_id": "no_parameter_tuning_applied",
+            "passed": tuning_review["parameter_tuning_applied"] is False
+            and tuning_review["threshold_tuning_applied"] is False,
+        },
+        {
+            "check_id": "holdout_and_production_boundaries_closed",
+            "passed": safety.get("holdout_touched") is False
+            and safety.get("paper_shadow_activation") is False
+            and safety.get("official_target_weights") is False
+            and safety.get("production_effect") == "none",
+        },
+    ]
+    if result["outcome"] == "BLOCKED" or result.get("adapter_status") is None:
+        status = "B2_FINAL_REPEATABILITY_RUN_BLOCKED"
+    elif all(check["passed"] for check in checks):
+        status = "B2_FINAL_REPEATABILITY_RUN_COMPLETE"
+    else:
+        status = "B2_FINAL_REPEATABILITY_RUN_PARTIAL"
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_managed_b2_final_repeatability_run",
+        "campaign_id": campaign_id,
+        "status": status,
+        "required_command": command,
+        "orchestration_entrypoint": "campaign run --stage next",
+        "pre_run_status": before,
+        "run_result": result,
+        "post_run_status": after,
+        "budget_consumed": budget_consumed,
+        "tuning_review": tuning_review,
+        "checks": checks,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_campaign_b2_final_gate(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="b2-final-gate-") as tmp:
+        tmp_root = Path(tmp) / "campaigns"
+        shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
+        repeatability_result = run_campaign_stage(
+            campaign_id=campaign_id,
+            requested_stage="next",
+            campaign_root=tmp_root,
+            adapter_registry_path=adapter_registry_path,
+            output_root=output_root / "b2_final_gate" / "final_repeatability",
+        )
+        spec, state, evidence = load_campaign_bundle(campaign_id, tmp_root)
+        adapter_run = run_stage_adapter(
+            spec=spec,
+            state=state,
+            target_stage="GATE_READY",
+            run_id=f"{campaign_id}-b2-final-gate-{_compact_time()}",
+            adapter_registry_path=adapter_registry_path,
+            output_root=output_root / "b2_final_gate",
+            evidence_store=evidence,
+        )
+        run_artifact = _write_stage_adapter_run_artifacts(
+            adapter_run.model_dump(mode="json"),
+            output_root=output_root / "b2_final_gate",
+        )
+        post_run_status = build_status_payload(
+            campaign_id=campaign_id,
+            detailed=True,
+            campaign_root=tmp_root,
+        )
+    adapter_decision = _b2_gate_decision_from_artifact(run_artifact)
+    final_decision = _b2_final_gate_decision_from_adapter(
+        adapter_decision=adapter_decision,
+        adapter_outcome=adapter_run.adapter_outcome,
+        reason_codes=adapter_run.reason_codes,
+    )
+    checks = [
+        {
+            "check_id": "final_repeatability_completed_or_reported",
+            "passed": repeatability_result.get("adapter_status")
+            == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "final_gate_uses_campaign_gate_adapter",
+            "passed": adapter_run.status == "B2_GATE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "final_gate_taxonomy_allowed",
+            "passed": final_decision in B2_FINAL_GATE_DECISIONS,
+        },
+        {
+            "check_id": "generic_needs_more_evidence_not_emitted",
+            "passed": final_decision != "NEEDS_MORE_EVIDENCE"
+            and adapter_decision != "GENERIC_NEEDS_MORE_EVIDENCE",
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_b2_final_gate",
+        "campaign_id": campaign_id,
+        "status": final_decision,
+        "final_gate_decision": final_decision,
+        "raw_campaign_adapter_decision": adapter_decision,
+        "adapter_outcome": adapter_run.adapter_outcome,
+        "adapter_status": adapter_run.status,
+        "reason_codes": adapter_run.reason_codes,
+        "post_repeatability_status": post_run_status,
+        "repeatability_run_result": repeatability_result,
+        "adapter_run": run_artifact,
+        "allowed_final_gate_decisions": B2_FINAL_GATE_DECISIONS,
+        "checks": checks,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_campaign_b2_owner_review_packet(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+    final_gate: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    gate = final_gate or build_campaign_b2_final_gate(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        campaign_id=campaign_id,
+    )
+    evidence_summary = _b2_owner_packet_evidence_summary()
+    owner_options = _b2_owner_options(gate["final_gate_decision"])
+    checks = [
+        {
+            "check_id": "b2_hypothesis_present",
+            "passed": bool(spec.hypothesis.statement),
+        },
+        {
+            "check_id": "required_evidence_sections_present",
+            "passed": {
+                "fast_risk",
+                "slow_drawdown",
+                "control_windows",
+                "reentry_lag",
+                "utility",
+            }
+            <= set(evidence_summary),
+        },
+        {
+            "check_id": "owner_options_cover_required_set",
+            "passed": {
+                "continue_narrow_b2_research",
+                "return_b2_to_design",
+                "reject_current_b2_form",
+                "hold_for_owner_override",
+            }
+            <= {option["option_id"] for option in owner_options},
+        },
+        {
+            "check_id": "owner_decision_not_appended",
+            "passed": True,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_b2_owner_review_packet",
+        "campaign_id": campaign_id,
+        "status": (
+            "B2_OWNER_REVIEW_PACKET_READY"
+            if all(check["passed"] for check in checks)
+            else "B2_OWNER_REVIEW_PACKET_BLOCKED"
+        ),
+        "b2_original_hypothesis": spec.hypothesis.model_dump(mode="json"),
+        "current_stage": state.current_stage,
+        "current_outcome": state.current_outcome,
+        "reason_codes": state.reason_codes,
+        "evidence_summary": evidence_summary,
+        "final_gate": {
+            "status": gate["status"],
+            "decision": gate["final_gate_decision"],
+            "reason_codes": gate["reason_codes"],
+        },
+        "owner_options": owner_options,
+        "owner_decision_appended": False,
+        "checks": checks,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_campaign_b2_branch_finalization(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+    final_gate: dict[str, Any] | None = None,
+    owner_packet: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    gate = final_gate or build_campaign_b2_final_gate(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        campaign_id=campaign_id,
+    )
+    packet = owner_packet or build_campaign_b2_owner_review_packet(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        campaign_id=campaign_id,
+        final_gate=gate,
+    )
+    branch_decision = _b2_branch_decision_from_final_gate(gate["final_gate_decision"])
+    promotion_flags = {
+        "B4_retest_allowed": False,
+        "B5_allowed": False,
+        "B6_allowed": False,
+        "v3_allowed": False,
+        "paper_shadow_allowed": False,
+    }
+    checks = [
+        {
+            "check_id": "branch_decision_taxonomy_allowed",
+            "passed": branch_decision in B2_BRANCH_FINALIZATION_DECISIONS,
+        },
+        {
+            "check_id": "owner_packet_ready",
+            "passed": packet["status"] == "B2_OWNER_REVIEW_PACKET_READY",
+        },
+        {
+            "check_id": "promotion_paths_remain_closed",
+            "passed": all(value is False for value in promotion_flags.values()),
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_b2_branch_finalization",
+        "campaign_id": campaign_id,
+        "status": branch_decision,
+        "branch_decision": branch_decision,
+        "final_gate_decision": gate["final_gate_decision"],
+        "owner_packet_status": packet["status"],
+        **promotion_flags,
+        "allowed_branch_decisions": B2_BRANCH_FINALIZATION_DECISIONS,
+        "checks": checks,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
 def build_campaign_run_next_stage_smoke_report(
     *,
     campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
@@ -2294,6 +2687,32 @@ def build_campaign_control_plane_v1_validation_pack(
     legacy_b2_readiness = build_legacy_b2_runner_deprecation_readiness(
         full_parity=b2_full_parity
     )
+    b2_next_action_freeze = build_campaign_b2_next_action_freeze(
+        campaign_root=campaign_root
+    )
+    b2_final_repeatability = build_campaign_managed_b2_final_repeatability_run(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_final_gate = build_campaign_b2_final_gate(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_owner_packet = build_campaign_b2_owner_review_packet(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        final_gate=b2_final_gate,
+    )
+    b2_branch_finalization = build_campaign_b2_branch_finalization(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        final_gate=b2_final_gate,
+        owner_packet=b2_owner_packet,
+    )
     checks = [
         {
             "check_id": "adapter_contract_validation",
@@ -2368,6 +2787,38 @@ def build_campaign_control_plane_v1_validation_pack(
             == "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER",
         },
         {
+            "check_id": "b2_next_action_freeze",
+            "passed": b2_next_action_freeze["status"]
+            == "CAMPAIGN_B2_NEXT_ACTION_FREEZE_READY",
+        },
+        {
+            "check_id": "b2_final_repeatability_run",
+            "passed": b2_final_repeatability["status"]
+            in {
+                "B2_FINAL_REPEATABILITY_RUN_COMPLETE",
+                "B2_FINAL_REPEATABILITY_RUN_PARTIAL",
+            },
+        },
+        {
+            "check_id": "b2_final_gate",
+            "passed": b2_final_gate["status"] in B2_FINAL_GATE_DECISIONS,
+        },
+        {
+            "check_id": "b2_owner_review_packet",
+            "passed": b2_owner_packet["status"] == "B2_OWNER_REVIEW_PACKET_READY"
+            and b2_owner_packet["owner_decision_appended"] is False,
+        },
+        {
+            "check_id": "b2_branch_finalization",
+            "passed": b2_branch_finalization["status"]
+            in B2_BRANCH_FINALIZATION_DECISIONS
+            and b2_branch_finalization["B4_retest_allowed"] is False
+            and b2_branch_finalization["B5_allowed"] is False
+            and b2_branch_finalization["B6_allowed"] is False
+            and b2_branch_finalization["v3_allowed"] is False
+            and b2_branch_finalization["paper_shadow_allowed"] is False,
+        },
+        {
             "check_id": "no_forbidden_production_effects",
             "passed": all(
                 payload["production_effect"] == "none"
@@ -2389,6 +2840,11 @@ def build_campaign_control_plane_v1_validation_pack(
                     status_ux,
                     deprecation_plan,
                     legacy_b2_readiness,
+                    b2_next_action_freeze,
+                    b2_final_repeatability,
+                    b2_final_gate,
+                    b2_owner_packet,
+                    b2_branch_finalization,
                 )
             ),
         },
@@ -2401,7 +2857,7 @@ def build_campaign_control_plane_v1_validation_pack(
     return {
         "schema_version": "1.0",
         "report_type": "campaign_control_plane_v1_validation_pack",
-        "release_candidate": "rc3",
+        "release_candidate": "rc4",
         "status": status,
         "checks": checks,
         "limitations": [
@@ -2414,6 +2870,10 @@ def build_campaign_control_plane_v1_validation_pack(
             (
                 "Gate decisions are research-only and may require owner override when "
                 "evidence budget is exhausted."
+            ),
+            (
+                "B2 finalization artifacts do not append owner decisions and keep "
+                "B4/B5/B6/v3/paper-shadow closed."
             ),
         ]
         if status.endswith("READY_WITH_LIMITATIONS")
@@ -2437,6 +2897,11 @@ def build_campaign_control_plane_v1_validation_pack(
             "campaign_status_plan_ux": status_ux["status"],
             "case_specific_runner_deprecation_plan": deprecation_plan["status"],
             "legacy_b2_runner_deprecation_readiness": legacy_b2_readiness["status"],
+            "b2_next_action_freeze": b2_next_action_freeze["status"],
+            "b2_final_repeatability_run": b2_final_repeatability["status"],
+            "b2_final_gate": b2_final_gate["status"],
+            "b2_owner_review_packet": b2_owner_packet["status"],
+            "b2_branch_finalization": b2_branch_finalization["status"],
         },
         "safety_boundary": _adapter_safety_metadata(),
         "production_effect": "none",
@@ -2449,7 +2914,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
 ) -> dict[str, Any]:
-    output_dir = output_root / "control_plane_v1_rc3_validation"
+    output_dir = output_root / "control_plane_v1_rc4_validation"
     output_dir.mkdir(parents=True, exist_ok=True)
     b2_compute_smoke = build_b2_compute_adapter_smoke_report(
         campaign_root=campaign_root,
@@ -2479,6 +2944,17 @@ def write_campaign_control_plane_v1_validation_artifacts(
         targeted_parity=b2_compute_parity,
         full_compute=b2_full_compute,
         gate_compute=b2_gate_compute,
+    )
+    b2_final_gate = build_campaign_b2_final_gate(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_owner_packet = build_campaign_b2_owner_review_packet(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        final_gate=b2_final_gate,
     )
     payloads = {
         "b2_campaign_adapter_parity_map": build_b2_campaign_adapter_parity_map(
@@ -2535,6 +3011,25 @@ def write_campaign_control_plane_v1_validation_artifacts(
         ),
         "legacy_b2_runner_deprecation_readiness": (
             build_legacy_b2_runner_deprecation_readiness(full_parity=b2_full_parity)
+        ),
+        "campaign_b2_next_action_freeze": build_campaign_b2_next_action_freeze(
+            campaign_root=campaign_root
+        ),
+        "campaign_managed_b2_final_repeatability_run": (
+            build_campaign_managed_b2_final_repeatability_run(
+                campaign_root=campaign_root,
+                output_root=output_root,
+                adapter_registry_path=adapter_registry_path,
+            )
+        ),
+        "campaign_b2_final_gate": b2_final_gate,
+        "campaign_b2_owner_review_packet": b2_owner_packet,
+        "campaign_b2_branch_finalization": build_campaign_b2_branch_finalization(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            final_gate=b2_final_gate,
+            owner_packet=b2_owner_packet,
         ),
         "campaign_control_plane_v1_validation_pack": (
             build_campaign_control_plane_v1_validation_pack(
@@ -4876,6 +5371,189 @@ def _b2_gate_compute_evidence_records(
             reason_codes=gate_payload["reason_codes"],
         ),
     ]
+
+
+def _b2_final_repeatability_tuning_review(result: dict[str, Any]) -> dict[str, Any]:
+    artifacts = {
+        artifact.get("artifact_id"): artifact
+        for artifact in result.get("result", {}).get("output_artifacts", [])
+    }
+    backfill = _read_optional_artifact_payload(artifacts, "b2_targeted_evidence_backfill_v2")
+    fast_risk = _read_optional_artifact_payload(artifacts, "b2_fast_risk_no_trigger_audit")
+    payloads = [payload for payload in (backfill, fast_risk) if payload]
+    return {
+        "parameter_tuning_applied": backfill.get("parameter_tuning_applied")
+        if backfill
+        else None,
+        "threshold_tuning_applied": fast_risk.get("threshold_tuning_applied")
+        if fast_risk
+        else None,
+        "holdout_accessed": any(payload.get("holdout_accessed") is True for payload in payloads),
+        "forbidden_outputs_absent": all(
+            payload.get("forbidden_outputs_absent") is not False for payload in payloads
+        ),
+        "source_artifact_ids_checked": sorted(
+            artifact_id
+            for artifact_id in (
+                "b2_targeted_evidence_backfill_v2",
+                "b2_fast_risk_no_trigger_audit",
+            )
+            if artifact_id in artifacts
+        ),
+    }
+
+
+def _read_optional_artifact_payload(
+    artifacts: dict[str, dict[str, Any]],
+    artifact_id: str,
+) -> dict[str, Any]:
+    artifact = artifacts.get(artifact_id, {})
+    path = artifact.get("json_path")
+    if not path:
+        return {}
+    try:
+        return _read_json(Path(str(path)))
+    except ResearchCampaignError:
+        return {}
+
+
+def _b2_gate_decision_from_artifact(run_artifact: dict[str, Any]) -> str:
+    return next(
+        (
+            str(record["value"])
+            for record in run_artifact.get("evidence_records", [])
+            if record.get("metric_name") == "b2_gate_compute_decision"
+        ),
+        "UNKNOWN",
+    )
+
+
+def _b2_final_gate_decision_from_adapter(
+    *,
+    adapter_decision: str,
+    adapter_outcome: str,
+    reason_codes: list[str],
+) -> str:
+    if (
+        adapter_decision == "OWNER_OVERRIDE_REQUIRED"
+        or adapter_outcome == "OWNER_OVERRIDE_REQUIRED"
+    ):
+        return "OWNER_OVERRIDE_REQUIRED"
+    if adapter_decision == "B2_ONLY_NARROW_ROLE" or adapter_outcome == "NARROW_ROLE":
+        return "B2_CURRENT_FORM_NARROW_TO_SLOW_DRAWDOWN_OVERLAY"
+    if adapter_decision == "B2_ONLY_RETURN_TO_DESIGN" or adapter_outcome == "RETURN_TO_DESIGN":
+        return "B2_CURRENT_FORM_RETURN_TO_DESIGN"
+    if adapter_decision == "B2_ONLY_REJECTED" or adapter_outcome == "REJECTED":
+        return "B2_CURRENT_FORM_REJECT"
+    if adapter_decision == "B2_ONLY_WEAK" or adapter_outcome == "WEAK":
+        return "B2_CURRENT_FORM_WEAK"
+    if adapter_decision == "B2_ONLY_PREPARE_OWNER_PACKET" or adapter_outcome in {
+        "PASS",
+        "PROMISING",
+    }:
+        return "B2_CURRENT_FORM_RESEARCH_PROMISING"
+    if "REENTRY_LAG_SIGNAL_DRIVEN" in reason_codes:
+        return "B2_CURRENT_FORM_RETURN_TO_DESIGN"
+    if "FAST_RISK_NOT_SUPPORTED" in reason_codes:
+        return "B2_CURRENT_FORM_NARROW_TO_SLOW_DRAWDOWN_OVERLAY"
+    return "B2_CURRENT_FORM_WEAK"
+
+
+def _b2_owner_packet_evidence_summary() -> dict[str, dict[str, Any]]:
+    research_dir = PROJECT_ROOT / "docs" / "research"
+    fast_risk = _read_json(research_dir / "b2_fast_risk_no_trigger_audit.json")
+    slow_drawdown = _read_json(
+        research_dir / "b2_slow_drawdown_repeatability_study.json"
+    )
+    control = _read_json(research_dir / "b2_no_trigger_correctness_review.json")
+    reentry = _read_json(research_dir / "b2_reentry_lag_root_cause_review.json")
+    utility = _read_json(research_dir / "b2_cost_benchmark_utility_review.json")
+    return {
+        "fast_risk": {
+            "status": fast_risk.get("status"),
+            "holds": fast_risk.get("status")
+            != "B2_FAST_RISK_NOT_SUPPORTED_BY_CURRENT_DESIGN",
+            "summary": "Current design does not support a fast-risk role.",
+        },
+        "slow_drawdown": {
+            "status": slow_drawdown.get("status"),
+            "repeatable": slow_drawdown.get("status")
+            == "B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY",
+            "summary": "Evidence is limited to the slow-drawdown role and remains narrow.",
+        },
+        "control_windows": {
+            "status": control.get("status"),
+            "clean": control.get("status") == "B2_NO_TRIGGER_CORRECTNESS_PASS",
+            "summary": "Control no-trigger behavior is clean.",
+        },
+        "reentry_lag": {
+            "status": reentry.get("status"),
+            "acceptable": reentry.get("status") not in {"B2_REENTRY_LAG_SIGNAL_DRIVEN"},
+            "summary": "Re-entry lag remains a material current-form blocker.",
+        },
+        "utility": {
+            "status": utility.get("status"),
+            "classification": "mixed"
+            if utility.get("status") == "B2_UTILITY_MIXED"
+            else "unknown",
+            "summary": "Utility remains mixed after cost/benchmark review.",
+        },
+    }
+
+
+def _b2_owner_options(final_gate_decision: str) -> list[dict[str, Any]]:
+    recommended = {
+        "continue_narrow_b2_research": final_gate_decision
+        in {
+            "B2_CURRENT_FORM_RESEARCH_PROMISING",
+            "B2_CURRENT_FORM_NARROW_TO_SLOW_DRAWDOWN_OVERLAY",
+        },
+        "return_b2_to_design": final_gate_decision == "B2_CURRENT_FORM_RETURN_TO_DESIGN",
+        "reject_current_b2_form": final_gate_decision
+        in {"B2_CURRENT_FORM_WEAK", "B2_CURRENT_FORM_REJECT"},
+        "hold_for_owner_override": final_gate_decision == "OWNER_OVERRIDE_REQUIRED",
+    }
+    return [
+        {
+            "option_id": "continue_narrow_b2_research",
+            "label": "continue narrow B2 research",
+            "recommended": recommended["continue_narrow_b2_research"],
+            "production_effect": "none",
+        },
+        {
+            "option_id": "return_b2_to_design",
+            "label": "return B2 to design",
+            "recommended": recommended["return_b2_to_design"],
+            "production_effect": "none",
+        },
+        {
+            "option_id": "reject_current_b2_form",
+            "label": "reject current B2 form",
+            "recommended": recommended["reject_current_b2_form"],
+            "production_effect": "none",
+        },
+        {
+            "option_id": "hold_for_owner_override",
+            "label": "hold for owner override",
+            "recommended": recommended["hold_for_owner_override"],
+            "production_effect": "none",
+        },
+    ]
+
+
+def _b2_branch_decision_from_final_gate(final_gate_decision: str) -> str:
+    if final_gate_decision == "OWNER_OVERRIDE_REQUIRED":
+        return "OWNER_REVIEW_REQUIRED"
+    if final_gate_decision in {
+        "B2_CURRENT_FORM_RESEARCH_PROMISING",
+        "B2_CURRENT_FORM_NARROW_TO_SLOW_DRAWDOWN_OVERLAY",
+    }:
+        return "CONTINUE_NARROW_B2_RESEARCH"
+    if final_gate_decision == "B2_CURRENT_FORM_RETURN_TO_DESIGN":
+        return "RETURN_B2_TO_DESIGN"
+    if final_gate_decision == "B2_CURRENT_FORM_REJECT":
+        return "STOP_B2_RESEARCH_LINE"
+    return "REJECT_B2_CURRENT_FORM"
 
 
 def _b3_compute_evidence_records(

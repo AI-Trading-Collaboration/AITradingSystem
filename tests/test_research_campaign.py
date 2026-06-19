@@ -18,7 +18,12 @@ from ai_trading_system.research_campaign import (
     build_b2_full_diagnostic_compute_report,
     build_b2_gate_compute_report,
     build_b3_signal_compute_adapter_smoke_report,
+    build_campaign_b2_branch_finalization,
+    build_campaign_b2_final_gate,
+    build_campaign_b2_next_action_freeze,
+    build_campaign_b2_owner_review_packet,
     build_campaign_evidence_budget_final_decision_drill,
+    build_campaign_managed_b2_final_repeatability_run,
     build_campaign_run_next_stage_smoke_report,
     build_campaign_status_ux_report,
     build_campaign_validation_payload,
@@ -187,6 +192,11 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
         "campaign_status_plan_ux_report",
         "case_specific_runner_deprecation_plan",
         "legacy_b2_runner_deprecation_readiness",
+        "campaign_b2_next_action_freeze",
+        "campaign_managed_b2_final_repeatability_run",
+        "campaign_b2_final_gate",
+        "campaign_b2_owner_review_packet",
+        "campaign_b2_branch_finalization",
         "campaign_control_plane_v1_validation_pack",
     }
     assert expected <= set(payload["artifacts"])
@@ -263,6 +273,65 @@ def test_b2_full_gate_e2e_parity_budget_drill_and_legacy_readiness(
     assert final_drill["status"] == "CAMPAIGN_EVIDENCE_BUDGET_FINAL_DECISION_PASS"
     assert final_drill["gate_run_result"]["outcome"] == "OWNER_OVERRIDE_REQUIRED"
     assert legacy["status"] == "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER"
+
+
+def test_b2_finalization_freeze_repeatability_gate_packet_and_branch(
+    tmp_path: Path,
+) -> None:
+    initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
+
+    output_root = tmp_path / "outputs"
+    freeze = build_campaign_b2_next_action_freeze(campaign_root=tmp_path)
+    repeatability = build_campaign_managed_b2_final_repeatability_run(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    final_gate = build_campaign_b2_final_gate(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    packet = build_campaign_b2_owner_review_packet(
+        campaign_root=tmp_path,
+        output_root=output_root,
+        final_gate=final_gate,
+    )
+    branch = build_campaign_b2_branch_finalization(
+        campaign_root=tmp_path,
+        output_root=output_root,
+        final_gate=final_gate,
+        owner_packet=packet,
+    )
+
+    assert freeze["status"] == "CAMPAIGN_B2_NEXT_ACTION_FREEZE_READY"
+    assert {
+        "COMPLETE_FINAL_REPEATABILITY_ROUND",
+        "NARROW_ROLE",
+        "RETURN_TO_DESIGN",
+    } <= set(freeze["allowed_next_actions"])
+    assert {"B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"} <= set(
+        freeze["blocked_actions"]
+    )
+    assert repeatability["status"] == "B2_FINAL_REPEATABILITY_RUN_COMPLETE"
+    assert repeatability["orchestration_entrypoint"] == "campaign run --stage next"
+    assert repeatability["run_result"]["adapter_status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+    assert repeatability["budget_consumed"] is True
+    assert repeatability["tuning_review"]["parameter_tuning_applied"] is False
+    assert final_gate["status"] == "OWNER_OVERRIDE_REQUIRED"
+    assert final_gate["raw_campaign_adapter_decision"] == "OWNER_OVERRIDE_REQUIRED"
+    assert packet["status"] == "B2_OWNER_REVIEW_PACKET_READY"
+    assert packet["owner_decision_appended"] is False
+    assert {
+        "continue_narrow_b2_research",
+        "return_b2_to_design",
+        "reject_current_b2_form",
+        "hold_for_owner_override",
+    } <= {option["option_id"] for option in packet["owner_options"]}
+    assert branch["status"] == "OWNER_REVIEW_REQUIRED"
+    assert branch["B4_retest_allowed"] is False
+    assert branch["B5_allowed"] is False
+    assert branch["B6_allowed"] is False
+    assert branch["v3_allowed"] is False
+    assert branch["paper_shadow_allowed"] is False
 
 
 def test_budget_forced_transition_b3_smoke_status_ux_and_deprecation_plan(
