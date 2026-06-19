@@ -48,6 +48,7 @@ outputs/runs/*
 outputs/shadow_iterations/*
 !outputs/shadow_iterations/.gitkeep
 /reports/
+run/clean_clone_release_acceptance/
 
 # Notebooks
 .ipynb_checkpoints/

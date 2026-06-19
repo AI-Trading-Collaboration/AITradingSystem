@@ -85,6 +85,7 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
         paths.reports_dir / "order_intent_candidates_2026-05-06.json"
     )
     input_path = tmp_path / "data" / "raw" / "prices_daily.csv"
+    config_path = tmp_path / "config" / "scheduled_tasks.yaml"
     for path, text in (
         (canonical_plan, "# canonical plan\n"),
         (canonical_run, "# canonical run\n"),
@@ -100,6 +101,7 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
             '{"report_type": "order_intent_candidates"}\n',
         ),
         (input_path, "date,ticker,close\n2026-05-06,NVDA,1\n"),
+        (config_path, "schema_version: 1\n"),
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
@@ -128,6 +130,12 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
             *copied_to_run,
         ),
         legacy_output_artifacts=(*copied_to_legacy,),
+        command=("aits", "ops", "daily-run", "--as-of", "2026-05-06"),
+        resolved_config={"scheduled_tasks": config_path},
+        schema_versions={"scheduled_tasks": "1"},
+        random_seed=None,
+        elapsed_seconds=12.5,
+        warnings=("sample_warning",),
         generated_at=datetime(2026, 5, 6, 21, 5, tzinfo=UTC),
     )
 
@@ -149,8 +157,35 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     manifest_text = manifest_path.read_text(encoding="utf-8")
     manifest = json.loads(manifest_text)
     expected_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    expected_config_sha = hashlib.sha256(config_path.read_bytes()).hexdigest()
     input_records = {record["path"]: record for record in manifest["input_artifacts"]}
+    required_manifest_fields = {
+        "git_commit",
+        "command",
+        "resolved_config",
+        "input_artifacts",
+        "input_checksums",
+        "schema_versions",
+        "as_of",
+        "random_seed",
+        "environment_summary",
+        "output_artifacts",
+        "elapsed_seconds",
+        "warnings",
+    }
+    assert required_manifest_fields <= set(manifest)
     assert input_records[str(input_path)]["sha256"] == expected_sha
+    assert manifest["input_checksums"][str(input_path)] == expected_sha
+    assert manifest["resolved_config"]["scheduled_tasks"]["sha256"] == expected_config_sha
+    assert manifest["schema_versions"]["run_manifest"] == "1"
+    assert manifest["schema_versions"]["scheduled_tasks"] == "1"
+    assert manifest["report_type"] == "daily_run_manifest"
+    assert manifest["production_effect"] == "none"
+    assert manifest["command"] == ["aits", "ops", "daily-run", "--as-of", "2026-05-06"]
+    assert manifest["random_seed"] == "not_applicable"
+    assert manifest["environment_summary"]["python_version"]
+    assert manifest["elapsed_seconds"] == 12.5
+    assert manifest["warnings"] == ["sample_warning"]
     assert manifest["run_id"] == "daily_ops_run:2026-05-06:test"
     assert manifest["execution_timestamp_utc"] == "20260506T210500Z"
     assert manifest["legacy_output_mode"] == "mirror"

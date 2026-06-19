@@ -5212,7 +5212,13 @@ def run_data_warning_repair_plan(
         output_dir=data_warning_impact_dir,
     )
     actions = _warning_repair_actions(impact)
-    matrix = _warning_blocking_matrix(impact, actions)
+    matrix = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_warning_blocking_matrix",
+        "status": "PASS",
+        **_warning_blocking_matrix(impact, actions),
+        **SYSTEM_TARGET_SAFETY,
+    }
     repair_plan_id = _stable_id(
         "data-warning-repair-plan",
         impact_id,
@@ -5869,13 +5875,19 @@ def run_risk_capped_backfill(
     reallocation_events = [
         event for row in ledger for event in _records(row.get("reallocation_events"))
     ]
-    summary = _risk_capped_backfill_summary(
-        source_backfill["manifest"],
-        states,
-        ledger,
-        cap_events,
-        reallocation_events,
-    )
+    summary = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_risk_capped_backfill_summary",
+        "status": "PASS" if states else "FAIL",
+        **_risk_capped_backfill_summary(
+            source_backfill["manifest"],
+            states,
+            ledger,
+            cap_events,
+            reallocation_events,
+        ),
+        **SYSTEM_TARGET_SAFETY,
+    }
     backfill_id = _stable_id(
         "risk-capped-backfill",
         source_backfill["backfill_id"],
@@ -6376,7 +6388,13 @@ def generate_smoothed_limited_target(
         )
         smoothing_events.extend(_records(result.get("smoothing_events")))
         lag_events.extend(_records(result.get("lag_events")))
-    summary = _smoothed_weight_jump_reduction_summary(target_rows)
+    summary = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_weight_jump_reduction_summary",
+        "status": "PASS" if target_rows else "FAIL",
+        **_smoothed_weight_jump_reduction_summary(target_rows),
+        **SYSTEM_TARGET_SAFETY,
+    }
     smoothed_id = _stable_id(
         "smoothed-limited",
         target_id,
@@ -7473,7 +7491,13 @@ def register_smoothed_confirmation_targets(
         regime_validation_id=regime_validation_id,
         output_dir=regime_validation_dir,
     )
-    targets = _smoothed_confirmation_targets(review, regime)
+    targets = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_smoothed_confirmation_targets",
+        "status": "PASS",
+        **_smoothed_confirmation_targets(review, regime),
+        **SYSTEM_TARGET_SAFETY,
+    }
     confirmation_id = _stable_id(
         "smoothed-confirmation",
         review_id,

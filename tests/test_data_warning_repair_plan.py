@@ -30,6 +30,10 @@ def test_data_warning_repair_plan_keeps_manual_repair_boundary(tmp_path) -> None
     matrix = repair["warning_blocking_matrix"]
 
     assert actions
+    assert matrix["schema_version"] == 1
+    assert matrix["report_type"] == "etf_dynamic_v3_data_warning_blocking_matrix"
+    assert matrix["status"] == "PASS"
+    assert matrix["production_effect"] == "none"
     assert actions[0]["warning_id"] == "pass_with_warnings_detail_unavailable"
     assert actions[0]["recommended_repair_action"] == "manual_review"
     assert actions[0]["auto_repair_allowed"] is False

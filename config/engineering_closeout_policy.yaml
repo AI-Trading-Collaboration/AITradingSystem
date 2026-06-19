@@ -1,0 +1,95 @@
+schema_version: 1
+policy_id: engineering_closeout_policy_v1
+policy_version: 2026-06-19
+policy_metadata:
+  owner: system
+  status: baseline
+  rationale: >
+    Define auditable Stage B engineering-closeout expectations for schema/config
+    consolidation, reproducibility manifests, validation tier coverage, and
+    structured error taxonomy before platform freeze.
+  intended_effect: >
+    Make engineering-closeout blockers and limitations visible without modifying
+    strategy logic, research conclusions, official target weights, broker/order
+    state, or production state.
+  validation_evidence: >
+    Validated by aits reports engineering-stage-b-readiness and
+    validate-engineering-stage-b-readiness.
+  review_condition: >
+    Review before clean-clone release acceptance, platform freeze, or any change
+    that alters schema/config/reproducibility/test/error contracts.
+stage_b:
+  config_contract_registry_path: config/config_contract_registry.yaml
+  required_artifact_fields:
+    - schema_version
+    - report_type
+    - status
+    - production_effect
+  required_safety_fields:
+    - production_effect
+  required_run_manifest_fields:
+    - git_commit
+    - command
+    - resolved_config
+    - input_artifacts
+    - input_checksums
+    - schema_versions
+    - as_of
+    - random_seed
+    - environment_summary
+    - output_artifacts
+    - elapsed_seconds
+    - warnings
+  required_validation_tiers:
+    - fast-unit
+    - contract-validation
+    - report-validation
+    - integration
+    - reproducibility
+    - slow-research-regression
+  existing_validation_tier_aliases:
+    fast: fast-unit
+    reader-brief: report-validation
+    dynamic-v3: slow-research-regression
+    trading-engine: integration
+  required_error_categories:
+    - INPUT_MISSING
+    - INPUT_STALE
+    - SCHEMA_INCOMPATIBLE
+    - CONFIG_INVALID
+    - ARTIFACT_NOT_FOUND
+    - REPORT_SOURCE_INCOMPLETE
+    - RESEARCH_GATE_BLOCKED
+    - SAFETY_BOUNDARY_BLOCKED
+    - INTERNAL_ERROR
+  required_log_fields:
+    - run_id
+    - candidate_id
+    - stage
+    - artifact_id
+    - elapsed_seconds
+    - status
+    - next_action
+  release_blocking_checks:
+    - report_index_unwaived_warnings_zero
+    - expired_waivers_zero
+    - unsafe_production_effect_zero
+    - validation_tier_runner_available
+    - closeout_policy_parseable
+  warning_checks:
+    - schema_version_missing_latest_artifacts
+    - config_without_schema_version_or_policy_metadata
+    - run_manifest_missing_required_fields
+    - validation_tier_reproducibility_missing
+    - error_taxonomy_not_centralized
+    - reports_cli_growth_requires_refactor
+safety_boundary:
+  production_effect: none
+  does_not_run_upstream_commands: true
+  does_not_refresh_data: true
+  does_not_modify_strategy_logic: true
+  does_not_modify_research_decisions: true
+  does_not_activate_paper_shadow: true
+  does_not_generate_official_target_weights: true
+  does_not_touch_broker_or_orders: true
+  does_not_modify_production: true

@@ -23,6 +23,8 @@ from ai_trading_system.trading_engine.signal_snapshots import (
 )
 
 DAILY_DECISION_SUMMARY_SCHEMA_VERSION = 1
+DAILY_TASK_DASHBOARD_SCHEMA_VERSION = 1
+DAILY_TASK_DASHBOARD_REPORT_TYPE = "daily_task_dashboard"
 PAPER_TRADING_TREND_WINDOWS: tuple[int, ...] = (7, 14, 30)
 PAPER_TRADING_TREND_REPLAY_MODE = "daily_independent"
 RESEARCH_GOVERNANCE_REPORT_TYPE = "research_governance_summary"
@@ -159,6 +161,8 @@ def build_daily_task_dashboard_payload(
     report: DailyTaskDashboardReport,
 ) -> TraceRecord:
     return {
+        "schema_version": DAILY_TASK_DASHBOARD_SCHEMA_VERSION,
+        "report_type": DAILY_TASK_DASHBOARD_REPORT_TYPE,
         "as_of": report.as_of.isoformat(),
         "generated_at": report.generated_at.isoformat(),
         "status": report.status,

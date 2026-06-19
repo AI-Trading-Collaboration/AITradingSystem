@@ -17183,6 +17183,9 @@ def _export_weight_path_artifacts(
         "constraint_limit",
     ]
     metadata = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_path_metadata",
+        "status": "PASS" if daily_weight_rows else "MISSING",
         "candidate_id": candidate_id,
         "evaluation_id": evaluation_id,
         "weight_path_start": daily_weight_rows[0]["date"] if daily_weight_rows else "",
@@ -17200,6 +17203,7 @@ def _export_weight_path_artifacts(
         ),
         "missing_fields": missing_fields if daily_weight_rows else ["daily_weights"],
         "metadata_path": str(output_dir / "weight_path_metadata.json"),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
     _write_csv(output_dir / "daily_weights.csv", daily_weight_rows)
     _write_json(output_dir / "rebalance_events.json", {"events": rebalance_events})

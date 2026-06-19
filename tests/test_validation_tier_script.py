@@ -46,6 +46,12 @@ def test_validation_tier_print_only_writes_command_summary(tmp_path: Path) -> No
     assert payload["workers"] == "16"
     assert payload["dist"] == "loadfile"
     assert "tests/test_report_index.py" in " ".join(payload["command"]).replace("\\", "/")
+    assert "tests/test_clean_clone_release_acceptance.py" in " ".join(
+        payload["command"]
+    ).replace("\\", "/")
+    assert "tests/test_engineering_release_candidate.py" in " ".join(
+        payload["command"]
+    ).replace("\\", "/")
     assert "-n 16 --dist loadfile" in " ".join(payload["command"])
 
 
@@ -104,6 +110,16 @@ def test_runtime_artifacts_are_written_for_print_only(tmp_path: Path) -> None:
     payload = json.loads(summary_path.read_text(encoding="utf-8"))
     reader_brief = reader_brief_path.read_text(encoding="utf-8")
     assert payload["report_type"] == "test_runtime_summary"
+    assert payload["git_commit"]
+    assert payload["resolved_config"] == {"validation_tier": "contract-validation"}
+    assert payload["as_of"]
+    assert payload["random_seed"] == "not_applicable"
+    assert payload["environment_summary"]["python_version"]
+    assert payload["schema_versions"]["test_runtime_summary"] == "1"
+    assert payload["input_artifacts"]
+    assert payload["input_checksums"]
+    assert payload["output_artifacts"]
+    assert payload["warnings"] == ["validation_status=PRINT_ONLY"]
     assert payload["resolved_tier"] == "contract-validation"
     assert payload["suite_family"] == "contract_validation"
     assert payload["promotion_blocking"] is True
@@ -119,6 +135,7 @@ def test_formal_suite_contracts_are_registered() -> None:
         "contract-validation": ("contract_validation", True, False),
         "report-validation": ("report_validation", True, False),
         "integration": ("integration", False, True),
+        "reproducibility": ("reproducibility", True, False),
         "slow-research-regression": ("slow_research_regression", False, True),
         "full": ("full_pytest", True, True),
     }
@@ -133,6 +150,7 @@ def test_formal_suite_contracts_are_registered() -> None:
     assert resolve_tier("reader-brief") == "report-validation"
     assert resolve_tier("dynamic-v3") == "slow-research-regression"
     assert resolve_tier("trading-engine") == "integration"
+    assert resolve_tier("artifact-reproduce") == "reproducibility"
 
 
 def test_reader_brief_alias_preserves_report_validation_coverage() -> None:
@@ -163,3 +181,18 @@ def test_slow_research_tier_discovers_related_test_files() -> None:
     assert "tests/test_backtest_sim_outcome.py" in normalized
     assert "tests/test_etf_dynamic_rescue.py" in normalized
     assert "tests/test_sim_defensive_validation.py" in normalized
+
+
+def test_reproducibility_tier_covers_lineage_and_manifest_contracts() -> None:
+    command = build_command(
+        "artifact-reproduce",
+        python_executable="python",
+        repo_root=Path.cwd(),
+        workers="1",
+    )
+    normalized = " ".join(command).replace("\\", "/")
+
+    assert "tests/test_artifact_lineage.py" in normalized
+    assert "tests/test_engineering_stage_b_readiness.py" in normalized
+    assert "tests/test_pit_source_manifest.py" in normalized
+    assert "tests/trading_engine/test_backtest_snapshot_manifest.py" in normalized

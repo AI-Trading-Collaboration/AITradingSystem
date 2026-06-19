@@ -1,0 +1,99 @@
+schema_version: 1
+policy_id: config_contract_registry_v1
+policy_version: 2026-06-19
+policy_metadata:
+  owner: system
+  status: baseline
+  rationale: >
+    Register legacy configuration files that do not yet carry inline
+    schema_version or policy_metadata so Stage B engineering closeout can audit
+    their owner, status, and review boundary without mass-editing operational
+    config payloads.
+  intended_effect: >
+    Provide explicit config contract coverage for release-readiness checks while
+    preserving existing config semantics, strategy behavior, data flows, and
+    production boundaries.
+  validation_evidence: >
+    Validated by aits reports engineering-stage-b-readiness and
+    validate-engineering-stage-b-readiness.
+  review_condition: >
+    Review before platform freeze, before changing config schema compatibility
+    rules, or when a registered config migrates to inline schema_version or
+    policy_metadata.
+defaults:
+  owner: system
+  status: legacy_registered
+  schema_contract: legacy_unversioned_config
+  rationale: >
+    Existing config is covered by this registry for auditability; inline schema
+    migration remains preferred when the config contract changes.
+  review_condition: >
+    Replace registry coverage with inline schema_version or policy_metadata when
+    the owning module next changes the config contract.
+config_contracts:
+  - path: config/benchmark_policy.yaml
+  - path: config/catalyst_calendar.yaml
+  - path: config/daily_shadow_weight_iteration_policy.yaml
+  - path: config/data/market_data_freshness.yaml
+  - path: config/data/market_data_refresh.yaml
+  - path: config/data_quality.yaml
+  - path: config/data_sources.yaml
+  - path: config/etf_portfolio/dynamic_v3_rescue/benchmark_baseline_control_v1.yaml
+  - path: config/etf_portfolio/dynamic_v3_rescue/candidate_regression_replay_v1.yaml
+  - path: config/etf_portfolio/dynamic_v3_rescue/cost_sensitivity_review_v1.yaml
+  - path: config/etf_portfolio/dynamic_v3_rescue/paper_shadow_outcome_attribution_v1.yaml
+  - path: config/execution_policy.yaml
+  - path: config/features.yaml
+  - path: config/feedback_sample_policy.yaml
+  - path: config/fundamental_features.yaml
+  - path: config/fundamental_metrics.yaml
+  - path: config/ibkr_paper_controlled_fill.local.yaml
+  - path: config/ibkr_paper_controlled_fill.yaml
+  - path: config/ibkr_paper_order.local.yaml
+  - path: config/ibkr_paper_order.yaml
+  - path: config/ibkr_paper_readonly.local.yaml
+  - path: config/ibkr_paper_readonly.yaml
+  - path: config/industry_chain.yaml
+  - path: config/market_regimes.yaml
+  - path: config/paper_signal_quality_policy.yaml
+  - path: config/paperbroker_fill_model_calibration_policy.yaml
+  - path: config/parameter_governance.yaml
+  - path: config/parameters/production/current.yaml
+  - path: config/parameters/promotion/promotion_rules.yaml
+  - path: config/parameters/shadow/shadow_backtest.yaml
+  - path: config/parameters/signal_ablation.yaml
+  - path: config/parameters/weight_tuning_v0_1.yaml
+  - path: config/parameters/weight_tuning_v0_2_stability.yaml
+  - path: config/portfolio/portfolio_candidate_profiles.yaml
+  - path: config/portfolio/portfolio_candidate_review.yaml
+  - path: config/portfolio/portfolio_candidate_tracking.yaml
+  - path: config/portfolio/portfolio_sensitivity_profiles.yaml
+  - path: config/portfolio/portfolio_tracking_review.yaml
+  - path: config/portfolio/portfolio_tracking_review_windows.yaml
+  - path: config/portfolio.yaml
+  - path: config/production_boundary_static_scan_allowlist.yaml
+  - path: config/risk_events.yaml
+  - path: config/rule_cards.yaml
+  - path: config/scenario_library.yaml
+  - path: config/sec_companies.yaml
+  - path: config/sec_pit_backfill.yaml
+  - path: config/sec_pit_evaluation.yaml
+  - path: config/sec_pit_evaluation_policy.yaml
+  - path: config/sec_pit_shadow_observe.yaml
+  - path: config/shadow_parameter_impact_policy.yaml
+  - path: config/shadow_promotion_proposal_policy.yaml
+  - path: config/signals/signal_calibration_profiles.yaml
+  - path: config/ticker_aliases.yaml
+  - path: config/trading_engine.yaml
+  - path: config/universe.yaml
+  - path: config/watchlist.yaml
+  - path: config/watchlist_lifecycle.yaml
+  - path: config/weight_adjustment_candidate_policy.yaml
+  - path: config/weight_candidate_evaluation_policy.yaml
+  - path: config/weight_promotion_gate_policy.yaml
+  - path: config/weights/shadow_parameter_objective.yaml
+  - path: config/weights/shadow_parameter_promotion_contract.yaml
+  - path: config/weights/shadow_parameter_search_space.yaml
+  - path: config/weights/shadow_position_gate_profiles.yaml
+  - path: config/weights/shadow_weight_profiles.yaml
+  - path: config/weights/weight_profile_current.yaml

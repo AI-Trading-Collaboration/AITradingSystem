@@ -86,14 +86,12 @@ def test_default_report_index_visibility_waivers_load() -> None:
 
     assert policy["schema_version"] == 1
     assert policy["policy_id"] == "report_index_visibility_waivers_v1"
+    assert policy["policy_metadata"]["status"] == "active_empty"
+    assert policy["waivers"] == []
     assert all(item.get("created_at") for item in policy["waivers"])
     assert all(item.get("expires_at") for item in policy["waivers"])
     assert all(item.get("review_status") == "approved_active" for item in policy["waivers"])
     assert all(item.get("linked_task_id") for item in policy["waivers"])
-    assert any(
-        "etf_dynamic_shadow_weekly_review" in item.get("report_ids", [])
-        for item in policy["waivers"]
-    )
 
 
 @pytest.mark.parametrize("value", [None, "missing"])
@@ -117,6 +115,29 @@ def test_report_registry_rejects_unknown_artifact_selection_policy(tmp_path: Pat
     registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
 
     with pytest.raises(ValueError, match="artifact_selection_policy"):
+        load_report_registry(registry_path)
+
+
+def test_report_registry_rejects_unknown_visibility_policy(tmp_path: Path) -> None:
+    registry_path = _write_registry(tmp_path)
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    registry["reports"][0]["visibility_policy"] = "quietly_ignore_missing"
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="visibility_policy"):
+        load_report_registry(registry_path)
+
+
+def test_report_registry_rejects_required_legacy_optional_visibility(
+    tmp_path: Path,
+) -> None:
+    registry_path = _write_registry(tmp_path)
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    registry["reports"][0]["visibility_policy"] = "legacy_optional"
+    registry["reports"][0]["required_for_daily_reading"] = True
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="cannot be required_for_daily_reading"):
         load_report_registry(registry_path)
 
 
@@ -329,6 +350,52 @@ def test_report_index_explicit_waivers_clear_optional_visibility_warnings(
     assert reports["optional_missing"]["visibility_status"] == "WAIVED"
     assert reports["optional_stale"]["visibility_status"] == "WAIVED"
     assert reports["optional_stale"]["freshness_status"] == "STALE"
+
+
+def test_report_index_non_current_visibility_policy_does_not_need_waiver(
+    tmp_path: Path,
+) -> None:
+    missing_entry = _registry_entry(
+        "legacy_missing",
+        "Legacy Missing",
+        "outputs/reports/legacy_missing_*.json",
+        freshness_sla_days=1,
+    )
+    missing_entry["visibility_policy"] = "legacy_optional"
+    stale_entry = _registry_entry(
+        "deprecated_stale",
+        "Deprecated Stale",
+        "outputs/reports/deprecated_stale_*.json",
+        freshness_sla_days=1,
+    )
+    stale_entry["visibility_policy"] = "deprecated_optional"
+    registry_path = _write_custom_registry(tmp_path, [missing_entry, stale_entry])
+    _write_json(
+        tmp_path / "outputs" / "reports" / "deprecated_stale_2026-05-01.json",
+        {"report_type": "deprecated_stale", "status": "PASS", "production_effect": "none"},
+    )
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 4),
+        project_root=tmp_path,
+        registry_path=registry_path,
+        waiver_path=None,
+    )
+    reports = {item["report_id"]: item for item in payload["reports"]}
+
+    assert payload["status"] == "PASS"
+    assert payload["warnings"] == []
+    assert payload["summary"]["missing_count"] == 0
+    assert payload["summary"]["stale_count"] == 0
+    assert payload["summary"]["non_current_visibility_count"] == 2
+    assert payload["visibility_audit"]["non_current_visibility_report_ids"] == [
+        "legacy_missing",
+        "deprecated_stale",
+    ]
+    assert reports["legacy_missing"]["freshness_status"] == "LEGACY_MISSING"
+    assert reports["legacy_missing"]["visibility_status"] == "LEGACY_OPTIONAL"
+    assert reports["deprecated_stale"]["freshness_status"] == "DEPRECATED_STALE"
+    assert reports["deprecated_stale"]["visibility_status"] == "DEPRECATED_OPTIONAL"
 
 
 def test_report_index_does_not_waive_required_missing_artifacts(tmp_path: Path) -> None:

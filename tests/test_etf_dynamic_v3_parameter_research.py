@@ -624,6 +624,13 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     weight_report = weight_path_report_payload(evaluation_id=evaluation_id, search_root=output_dir)
     assert Path(weight_report["daily_weights_path"]).exists()
     assert Path(weight_report["weight_path_metadata_path"]).exists()
+    weight_metadata = json.loads(
+        Path(weight_report["weight_path_metadata_path"]).read_text(encoding="utf-8")
+    )
+    assert weight_metadata["schema_version"] == 1
+    assert weight_metadata["report_type"] == "etf_dynamic_v3_weight_path_metadata"
+    assert weight_metadata["status"] == "PASS"
+    assert weight_metadata["production_effect"] == "none"
 
     attribution = run_candidate_attribution(
         sweep_id=sweep_id,

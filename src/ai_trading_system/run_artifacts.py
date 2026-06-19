@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+import platform
 import re
 import shutil
+import subprocess
+import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Any
 
 from ai_trading_system.core.artifacts import ArtifactRef
 
@@ -203,6 +207,12 @@ def write_run_manifest(
     input_artifacts: Iterable[Path],
     canonical_output_artifacts: Iterable[Path],
     legacy_output_artifacts: Iterable[Path],
+    command: Iterable[str] | str | None = None,
+    resolved_config: Mapping[str, Path | str] | None = None,
+    schema_versions: Mapping[str, int | str] | None = None,
+    random_seed: int | str | None = None,
+    elapsed_seconds: float | None = None,
+    warnings: Iterable[str] | None = None,
     generated_at: datetime | None = None,
 ) -> Path:
     manifest = build_run_manifest(
@@ -215,6 +225,12 @@ def write_run_manifest(
         input_artifacts=input_artifacts,
         canonical_output_artifacts=canonical_output_artifacts,
         legacy_output_artifacts=legacy_output_artifacts,
+        command=command,
+        resolved_config=resolved_config,
+        schema_versions=schema_versions,
+        random_seed=random_seed,
+        elapsed_seconds=elapsed_seconds,
+        warnings=warnings,
         generated_at=generated_at,
     )
     paths.manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -236,28 +252,52 @@ def build_run_manifest(
     input_artifacts: Iterable[Path],
     canonical_output_artifacts: Iterable[Path],
     legacy_output_artifacts: Iterable[Path],
+    command: Iterable[str] | str | None = None,
+    resolved_config: Mapping[str, Path | str] | None = None,
+    schema_versions: Mapping[str, int | str] | None = None,
+    random_seed: int | str | None = None,
+    elapsed_seconds: float | None = None,
+    warnings: Iterable[str] | None = None,
     generated_at: datetime | None = None,
 ) -> Mapping[str, object]:
+    input_paths = tuple(dict.fromkeys(input_artifacts))
+    output_paths = tuple(dict.fromkeys(canonical_output_artifacts))
+    legacy_output_paths = tuple(dict.fromkeys(legacy_output_artifacts))
+    input_records = [_artifact_record(path) for path in input_paths]
+    output_records = [_artifact_record(path) for path in output_paths]
+    legacy_output_records = [_artifact_record(path) for path in legacy_output_paths]
+    resolved_config_records = _resolved_config_records(resolved_config or {})
+    schema_version_records = {"run_manifest": str(SCHEMA_VERSION)}
+    schema_version_records.update(
+        {str(key): str(value) for key, value in (schema_versions or {}).items()}
+    )
     return {
         "schema_version": SCHEMA_VERSION,
+        "report_type": "daily_run_manifest",
+        "production_effect": "none",
         "run_id": paths.run_id,
         "safe_run_id": paths.safe_run_id,
         "execution_timestamp_utc": paths.execution_timestamp_utc,
         "as_of": paths.as_of.isoformat(),
         "generated_at": (generated_at or datetime.now(tz=UTC)).isoformat(),
+        "git_commit": _git_commit(project_root) or "unknown",
+        "command": _command_list(command),
+        "resolved_config": resolved_config_records,
+        "input_checksums": _artifact_checksums(input_records),
+        "schema_versions": schema_version_records,
+        "random_seed": "not_applicable" if random_seed in (None, "") else random_seed,
+        "environment_summary": _environment_summary(),
+        "elapsed_seconds": 0.0 if elapsed_seconds is None else round(float(elapsed_seconds), 6),
+        "warnings": [str(item) for item in (warnings or ())],
         "project_root": str(project_root),
         "run_root": str(paths.run_root),
         "status": status,
         "visibility_cutoff": visibility_cutoff.isoformat(),
         "visibility_cutoff_source": visibility_cutoff_source,
         "legacy_output_mode": legacy_output_mode,
-        "input_artifacts": [_artifact_record(path) for path in dict.fromkeys(input_artifacts)],
-        "output_artifacts": [
-            _artifact_record(path) for path in dict.fromkeys(canonical_output_artifacts)
-        ],
-        "legacy_output_artifacts": [
-            _artifact_record(path) for path in dict.fromkeys(legacy_output_artifacts)
-        ],
+        "input_artifacts": input_records,
+        "output_artifacts": output_records,
+        "legacy_output_artifacts": legacy_output_records,
     }
 
 
@@ -273,3 +313,54 @@ def collect_run_files(paths: RunArtifactPaths) -> tuple[Path, ...]:
 
 def _artifact_record(path: Path) -> Mapping[str, object]:
     return ArtifactRef.from_path(path).to_manifest_record()
+
+
+def _artifact_checksums(records: Iterable[Mapping[str, Any]]) -> dict[str, str]:
+    checksums: dict[str, str] = {}
+    for record in records:
+        path = str(record.get("path") or "")
+        if not path:
+            continue
+        checksums[path] = str(record.get("sha256") or "")
+    return checksums
+
+
+def _command_list(command: Iterable[str] | str | None) -> list[str]:
+    if command is None:
+        return ["unknown"]
+    if isinstance(command, str):
+        return [command]
+    values = [str(item) for item in command if str(item)]
+    return values or ["unknown"]
+
+
+def _environment_summary() -> dict[str, str]:
+    return {
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+        "working_directory": str(Path.cwd()),
+    }
+
+
+def _git_commit(project_root: Path) -> str | None:
+    try:
+        completed = subprocess.run(
+            ("git", "rev-parse", "HEAD"),
+            cwd=project_root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip() or None
+
+
+def _resolved_config_records(config: Mapping[str, Path | str]) -> dict[str, Mapping[str, object]]:
+    records: dict[str, Mapping[str, object]] = {}
+    for key, value in config.items():
+        records[str(key)] = _artifact_record(Path(value))
+    return records

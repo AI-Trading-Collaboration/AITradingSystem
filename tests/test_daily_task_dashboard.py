@@ -54,6 +54,8 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
 
     assert isinstance(report, DailyTaskDashboardReport)
     assert report.status == "PASS"
+    assert payload["schema_version"] == 1
+    assert payload["report_type"] == "daily_task_dashboard"
     assert report.risk_count == 2
     assert "关键结论总览" in html
     assert "Paper Trading Summary" in html

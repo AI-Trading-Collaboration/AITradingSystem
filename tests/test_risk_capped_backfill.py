@@ -23,6 +23,9 @@ def test_risk_capped_backfill_generates_state_history_and_summary(tmp_path) -> N
     summary = result["risk_capped_backfill_summary"]
     assert result["risk_capped_method_states"]
     assert result["risk_capped_trade_ledger"]
+    assert summary["schema_version"] == 1
+    assert summary["report_type"] == "etf_dynamic_v3_risk_capped_backfill_summary"
+    assert summary["status"] == "PASS"
     assert summary["method"] == "risk_capped_limited_adjustment"
     assert summary["cap_event_count"] >= 0
     assert summary["data_quality"] in {"PASS", "PASS_WITH_WARNINGS"}

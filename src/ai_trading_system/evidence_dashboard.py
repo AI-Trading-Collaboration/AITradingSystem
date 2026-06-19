@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any, cast
 
 TraceRecord = dict[str, Any]
+SCHEMA_VERSION = 1
+REPORT_TYPE = "evidence_dashboard"
 
 
 @dataclass(frozen=True)
@@ -192,6 +194,8 @@ def render_evidence_dashboard(report: EvidenceDashboardReport) -> str:
 
 def build_evidence_dashboard_payload(report: EvidenceDashboardReport) -> TraceRecord:
     return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": REPORT_TYPE,
         "as_of": report.as_of.isoformat(),
         "generated_at": report.generated_at.isoformat(),
         "status": report.status,

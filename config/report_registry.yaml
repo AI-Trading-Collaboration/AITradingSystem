@@ -158,6 +158,7 @@ reports:
     title: Data Registry Consistency
     group: shadow
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: operator
     owner: system
     command: aits data inspect-registry --latest
@@ -174,6 +175,7 @@ reports:
     title: Price Cache Reconcile
     group: shadow
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: operator
     owner: system
     command: aits data reconcile-price-cache --latest
@@ -285,6 +287,7 @@ reports:
     title: ETF Portfolio Brief
     group: daily
     cadence: daily
+    visibility_policy: legacy_optional
     audience: investor
     owner: system
     command: aits etf report daily --date YYYY-MM-DD
@@ -332,6 +335,7 @@ reports:
     title: ETF Data Quality Report
     group: data_quality
     cadence: daily
+    visibility_policy: legacy_optional
     audience: operator
     owner: system
     command: aits etf data validate
@@ -363,6 +367,7 @@ reports:
     title: ETF Experiment Run Manifest
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf experiments run --pack etf_calibration_v1
@@ -378,6 +383,7 @@ reports:
     title: ETF Experiment Comparison
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf experiments compare --latest
@@ -394,6 +400,7 @@ reports:
     title: ETF Experiment Candidate Selection
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf experiments select-candidates --latest
@@ -425,6 +432,7 @@ reports:
     title: ETF Experiment Weekly Review
     group: research
     cadence: weekly
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf experiments weekly-review --latest
@@ -537,6 +545,7 @@ reports:
     title: ETF AI Confirmation Report
     group: research
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf ai-confirmation report --date YYYY-MM-DD
@@ -553,6 +562,7 @@ reports:
     title: ETF AI Confirmation Shadow Overlay
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf ai-confirmation overlay --date YYYY-MM-DD --candidate <candidate_id>
@@ -617,6 +627,7 @@ reports:
     title: ETF Satellite Relative Strength Features
     group: research
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf satellite features --date YYYY-MM-DD
@@ -633,6 +644,7 @@ reports:
     title: ETF Satellite Replacement Report
     group: research
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf satellite report --date YYYY-MM-DD
@@ -649,6 +661,7 @@ reports:
     title: ETF Satellite Shadow Experiment
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf satellite experiment --date YYYY-MM-DD
@@ -908,6 +921,7 @@ reports:
     title: ETF Shadow Candidate Owner Approval
     group: governance
     cadence: weekly
+    visibility_policy: deprecated_optional
     audience: reviewer
     owner: system
     command: aits etf shadow-review approve --package PACKAGE.json --shape SHAPE_ID
@@ -926,6 +940,7 @@ reports:
     title: ETF Shadow Candidate Approved Enrollment
     group: governance
     cadence: weekly
+    visibility_policy: deprecated_optional
     audience: reviewer
     owner: system
     command: aits etf shadow-review enroll-approved --approval APPROVAL.json --package PACKAGE.json
@@ -1144,6 +1159,7 @@ reports:
     title: ETF Dynamic Shadow Owner Approval
     group: governance
     cadence: ad_hoc
+    visibility_policy: deprecated_optional
     audience: reviewer
     owner: project_owner
     command: aits etf dynamic-shadow approve --package <package_path> --candidate <candidate_id>
@@ -1162,6 +1178,7 @@ reports:
     title: ETF Dynamic Shadow Enrollment
     group: shadow
     cadence: ad_hoc
+    visibility_policy: deprecated_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-shadow enroll-approved --latest
@@ -1180,6 +1197,7 @@ reports:
     title: ETF Dynamic Shadow Forward Update
     group: shadow
     cadence: daily
+    visibility_policy: deprecated_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-shadow update --latest
@@ -1198,6 +1216,7 @@ reports:
     title: ETF Dynamic Shadow Weekly Review
     group: shadow
     cadence: weekly
+    visibility_policy: deprecated_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-shadow weekly-review --latest
@@ -1328,6 +1347,7 @@ reports:
     title: ETF Dynamic v0.3 Constraint-Aware Rescue Evaluation Report
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-v3-rescue run --latest-v2-review
@@ -1825,6 +1845,7 @@ reports:
     title: ETF Dynamic v3 Rescue Candidate Interpretation Pack
     group: research
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-v3-rescue candidate interpretation-pack --candidate-id <candidate_id>
@@ -7109,6 +7130,7 @@ reports:
     title: ETF Operations Health Report
     group: governance
     cadence: daily
+    visibility_policy: legacy_optional
     audience: operator
     owner: system
     command: aits etf ops report --cadence daily --as-of YYYY-MM-DD
@@ -7140,6 +7162,7 @@ reports:
     title: ETF Data Quality Governance Report
     group: data_quality
     cadence: daily
+    visibility_policy: legacy_optional
     audience: operator
     owner: system
     command: aits etf data-quality report --as-of YYYY-MM-DD
@@ -7172,6 +7195,7 @@ reports:
     title: ETF Strategy Evidence Dashboard
     group: governance
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf evidence-dashboard report --as-of YYYY-MM-DD
@@ -7220,6 +7244,7 @@ reports:
     title: ETF Baseline Review Owner Decision
     group: governance
     cadence: weekly
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf baseline-review capture-decision --review-package-path PACKAGE.json
@@ -7236,6 +7261,7 @@ reports:
     title: ETF Baseline Change Proposal Draft
     group: governance
     cadence: ad_hoc
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf baseline-review proposal-draft --review-package-path PACKAGE.json --decision-path DECISION.json
@@ -7252,6 +7278,7 @@ reports:
     title: ETF Baseline Review Outcome Tracker
     group: governance
     cadence: weekly
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits etf baseline-review outcome --candidate CANDIDATE_ID
@@ -7311,6 +7338,179 @@ reports:
     owner_action: regenerate_if_missing_or_stale
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: canonical_system_status
+    title: Canonical System Status
+    group: governance
+    cadence: daily
+    audience: owner
+    owner: system
+    command: aits system status --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/canonical_system_status_*.json
+      - outputs/reports/canonical_system_status_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Canonical owner/operator status should reflect the latest report index, research gate, data health, validation health, safety boundary, and next action.
+    owner_action: use_as_first_status_entrypoint_before_platform_freeze_or_research_turn
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: canonical_system_doctor
+    title: Canonical System Doctor
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits system doctor --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/canonical_system_doctor_*.json
+      - outputs/reports/canonical_system_doctor_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Canonical system status must fail closed on unwaived report-index warnings, expired waivers, missing workflow definitions, unsafe production effect, or blocked status before it is used as the primary entrypoint.
+    owner_action: fix_doctor_blockers_before_platform_freeze_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: engineering_surface_inventory
+    title: Engineering Surface Inventory
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports engineering-surface-inventory --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/engineering_surface_inventory_*.json
+      - outputs/reports/engineering_surface_inventory_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Engineering closeout scope should be refreshed before canonical CLI, status, artifact lifecycle, schema, or documentation freeze work.
+    owner_action: use_inventory_as_scope_for_engineering_closeout_tasks
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: engineering_surface_inventory_validation
+    title: Engineering Surface Inventory Validation
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports validate-engineering-surface-inventory --latest
+    artifact_globs:
+      - outputs/reports/engineering_surface_inventory_validation_*.json
+      - outputs/reports/engineering_surface_inventory_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Engineering surface inventory validation should be reviewed before using the inventory as the platform freeze scope.
+    owner_action: fix_inventory_validation_blockers_before_platform_freeze_scope_signoff
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: artifact_lifecycle_inventory
+    title: Artifact Lifecycle Inventory
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports artifact-lifecycle-inventory --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/artifact_lifecycle_inventory_*.json
+      - outputs/reports/artifact_lifecycle_inventory_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Artifact lifecycle/latest pointer policy should be refreshed before platform freeze, retention review, or clean-clone release acceptance.
+    owner_action: review_lifecycle_limitations_before_platform_freeze
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: artifact_lifecycle_inventory_validation
+    title: Artifact Lifecycle Inventory Validation
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports validate-artifact-lifecycle-inventory --latest
+    artifact_globs:
+      - outputs/reports/artifact_lifecycle_inventory_validation_*.json
+      - outputs/reports/artifact_lifecycle_inventory_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Validation should fail closed on unwaived report-index warnings, expired waivers, unknown lifecycle statuses, or unsafe artifact production effects before lifecycle policy is used for freeze signoff.
+    owner_action: fix_lifecycle_validation_blockers_before_a4_signoff
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: engineering_stage_b_readiness
+    title: Engineering Stage B Readiness
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports engineering-stage-b-readiness --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/engineering_stage_b_readiness_*.json
+      - outputs/reports/engineering_stage_b_readiness_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Stage B schema/config/reproducibility/test/error taxonomy readiness should be refreshed before clean-clone release acceptance or platform freeze.
+    owner_action: resolve_stage_b_warning_backlog_before_platform_freeze
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: engineering_stage_b_readiness_validation
+    title: Engineering Stage B Readiness Validation
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports validate-engineering-stage-b-readiness --latest
+    artifact_globs:
+      - outputs/reports/engineering_stage_b_readiness_validation_*.json
+      - outputs/reports/engineering_stage_b_readiness_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Validation should fail closed on report-index blockers, unsafe production effects, or missing Stage B readiness contract before release acceptance.
+    owner_action: run_after_engineering_stage_b_readiness
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: clean_clone_release_acceptance
+    title: Clean Clone Release Acceptance
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: python scripts/run_clean_clone_release_acceptance.py --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/clean_clone_release_acceptance_*.json
+    freshness_sla_days: 30
+    freshness_rationale: Clean-clone or audited dirty-snapshot release acceptance should be refreshed before platform freeze, release tagging, or compatibility signoff.
+    owner_action: commit_closeout_changes_and_rerun_clean_clone_acceptance_before_platform_freeze
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: engineering_closeout_release_candidate
+    title: Engineering Closeout Release Candidate
+    group: governance
+    cadence: ad_hoc
+    audience: owner
+    owner: system
+    command: aits reports engineering-closeout-release-candidate --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/engineering_closeout_release_candidate_????-??-??.json
+    freshness_sla_days: 30
+    freshness_rationale: Platform freeze requires a current closeout release candidate that links clean-clone PASS, release-blocking tests, stable CLI/schema, changelog, and compatibility policy.
+    owner_action: review_release_candidate_before_tagging_or_platform_freeze
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: engineering_closeout_release_candidate_validation
+    title: Engineering Closeout Release Candidate Validation
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits reports validate-engineering-closeout-release-candidate --latest
+    artifact_globs:
+      - outputs/reports/engineering_closeout_release_candidate_validation_????-??-??.json
+    freshness_sla_days: 30
+    freshness_rationale: Release candidate validation must fail closed if blocking closeout checks remain before platform freeze signoff.
+    owner_action: run_after_engineering_closeout_release_candidate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: task_register_consistency
     title: Task Register Consistency
@@ -9850,6 +10050,7 @@ reports:
     title: Parameter Governance
     group: governance
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: aits feedback evaluate-parameter-governance
@@ -9898,6 +10099,7 @@ reports:
     title: Weight Candidate Evaluation
     group: research
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: python scripts/run_weight_candidate_evaluation.py
@@ -9914,6 +10116,7 @@ reports:
     title: Weight Promotion Gate
     group: governance
     cadence: daily
+    visibility_policy: legacy_optional
     audience: reviewer
     owner: system
     command: python scripts/run_weight_promotion_gate.py

@@ -26,8 +26,11 @@ def test_evidence_dashboard_links_conclusion_to_inputs(tmp_path: Path) -> None:
         scores_daily_path=inputs["scores"],
     )
     html = render_evidence_dashboard(report)
+    payload = build_evidence_dashboard_payload(report)
 
     assert report.status == "PASS"
+    assert payload["schema_version"] == 1
+    assert payload["report_type"] == "evidence_dashboard"
     assert "今日决策视图" in html
     assert "告警聚合" in html
     assert "最近可用评分趋势" in html

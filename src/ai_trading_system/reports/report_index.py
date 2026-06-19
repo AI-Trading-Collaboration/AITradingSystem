@@ -25,6 +25,16 @@ ARTIFACT_SELECTION_POLICIES = frozenset(
         "latest_available",
     }
 )
+DEFAULT_VISIBILITY_POLICY = "current"
+VISIBILITY_POLICIES = frozenset(
+    {
+        DEFAULT_VISIBILITY_POLICY,
+        "legacy_optional",
+        "deprecated_optional",
+        "archived_optional",
+    }
+)
+NON_CURRENT_VISIBILITY_POLICIES = VISIBILITY_POLICIES - {DEFAULT_VISIBILITY_POLICY}
 DEFAULT_FRESHNESS_BASIS = "calendar_days"
 FRESHNESS_BASIS_VALUES = frozenset(
     {
@@ -115,6 +125,19 @@ def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str,
             raise ValueError(
                 f"report registry {report_id} artifact_selection_policy must be one of "
                 f"{sorted(ARTIFACT_SELECTION_POLICIES)}"
+            )
+        visibility_policy = _string(entry.get("visibility_policy"), DEFAULT_VISIBILITY_POLICY)
+        if visibility_policy not in VISIBILITY_POLICIES:
+            raise ValueError(
+                f"report registry {report_id} visibility_policy must be one of "
+                f"{sorted(VISIBILITY_POLICIES)}"
+            )
+        if visibility_policy in NON_CURRENT_VISIBILITY_POLICIES and bool(
+            entry.get("required_for_daily_reading")
+        ):
+            raise ValueError(
+                f"report registry {report_id} visibility_policy={visibility_policy} "
+                "cannot be required_for_daily_reading"
             )
         if "freshness_basis" in entry:
             freshness_basis = _string(entry.get("freshness_basis"))
@@ -261,6 +284,12 @@ def build_report_index_payload(
     production_effect_risks = [
         item for item in reports if item["artifact_production_effect_risk"] is True
     ]
+    non_current_visibility = [
+        item
+        for item in reports
+        if _string(item.get("visibility_policy"), DEFAULT_VISIBILITY_POLICY)
+        != DEFAULT_VISIBILITY_POLICY
+    ]
     warnings = [_warning_text(issue) for issue in unwaived_issues]
     if warnings:
         status = "PASS_WITH_WARNINGS"
@@ -287,6 +316,7 @@ def build_report_index_payload(
             "stale_count": len(stale),
             "required_missing_count": len(required_missing),
             "production_effect_risk_count": len(production_effect_risks),
+            "non_current_visibility_count": len(non_current_visibility),
             "explicit_waiver_count": len(explicit_waivers),
             "expired_waiver_count": len(expired_waivers),
             "inactive_waiver_count": len(inactive_waivers),
@@ -325,6 +355,9 @@ def build_report_index_payload(
             "required_missing_report_ids": [item["report_id"] for item in required_missing],
             "production_effect_risk_report_ids": [
                 item["report_id"] for item in production_effect_risks
+            ],
+            "non_current_visibility_report_ids": [
+                item["report_id"] for item in non_current_visibility
             ],
         },
         "methodology": {
@@ -386,6 +419,7 @@ def render_report_index_html(payload: Mapping[str, Any]) -> str:
             _summary_item("inactive waivers", summary.get("inactive_waiver_count")),
             _summary_item("unwaived warnings", summary.get("unwaived_warning_count")),
             _summary_item("production effect risk", summary.get("production_effect_risk_count")),
+            _summary_item("non-current visibility", summary.get("non_current_visibility_count")),
             "</section>",
             "<section>",
             "<h2>Visibility Audit</h2>",
@@ -423,6 +457,7 @@ def _report_record(
 ) -> dict[str, Any]:
     artifact_selection_policy = _artifact_selection_policy(entry, defaults)
     freshness_basis = _freshness_basis(entry, defaults)
+    visibility_policy = _visibility_policy(entry, defaults)
     latest = _latest_artifact(
         report_id=_string(entry.get("report_id")),
         artifact_globs=_strings(entry.get("artifact_globs")),
@@ -451,6 +486,10 @@ def _report_record(
         missing_status=_string(defaults.get("missing_status"), "MISSING"),
         stale_status=_string(defaults.get("stale_status"), "STALE"),
     )
+    freshness_status = _visibility_adjusted_freshness_status(
+        freshness_status,
+        visibility_policy=visibility_policy,
+    )
     json_payload = _read_json_object(path) if path is not None and path.suffix == ".json" else {}
     artifact_status = _artifact_status(json_payload, exists=exists)
     artifact_production_effect = (
@@ -471,6 +510,7 @@ def _report_record(
         "latest_artifact_name": "" if path is None else path.name,
         "artifact_date": "" if artifact_date is None else artifact_date.isoformat(),
         "artifact_selection_policy": artifact_selection_policy,
+        "visibility_policy": visibility_policy,
         "artifact_temporal_relation": artifact_temporal_relation,
         "artifact_after_as_of": artifact_temporal_relation == "AFTER_AS_OF",
         "exists": exists,
@@ -537,6 +577,20 @@ def _artifact_selection_policy(
     )
     if raw_policy not in ARTIFACT_SELECTION_POLICIES:
         return DEFAULT_ARTIFACT_SELECTION_POLICY
+    return raw_policy
+
+
+def _visibility_policy(
+    entry: Mapping[str, Any],
+    defaults: Mapping[str, Any],
+) -> str:
+    raw_policy = (
+        _string(entry.get("visibility_policy"))
+        or _string(defaults.get("visibility_policy"))
+        or DEFAULT_VISIBILITY_POLICY
+    )
+    if raw_policy not in VISIBILITY_POLICIES:
+        return DEFAULT_VISIBILITY_POLICY
     return raw_policy
 
 
@@ -645,6 +699,19 @@ def _freshness_status(
     return "FRESH" if age_days <= sla else stale_status
 
 
+def _visibility_adjusted_freshness_status(
+    freshness_status: str,
+    *,
+    visibility_policy: str,
+) -> str:
+    if visibility_policy == DEFAULT_VISIBILITY_POLICY:
+        return freshness_status
+    if freshness_status not in {"MISSING", "STALE"}:
+        return freshness_status
+    prefix = visibility_policy.removesuffix("_optional").upper()
+    return f"{prefix}_{freshness_status}"
+
+
 def _artifact_status(payload: Mapping[str, Any], *, exists: bool) -> str:
     if not exists:
         return "MISSING"
@@ -697,7 +764,7 @@ def _apply_visibility_waivers(
         report = dict(raw_report)
         issue = _report_visibility_issue(report)
         if issue is None:
-            report["visibility_status"] = "OK"
+            report["visibility_status"] = _report_visibility_status(report)
             report["visibility_issue"] = {}
             report["visibility_waiver"] = {}
             updated.append(report)
@@ -719,6 +786,13 @@ def _apply_visibility_waivers(
             unwaived_issues.append(issue)
         updated.append(report)
     return updated, explicit_waivers, unwaived_issues
+
+
+def _report_visibility_status(report: Mapping[str, Any]) -> str:
+    visibility_policy = _string(report.get("visibility_policy"), DEFAULT_VISIBILITY_POLICY)
+    if visibility_policy == DEFAULT_VISIBILITY_POLICY:
+        return "OK"
+    return visibility_policy.upper()
 
 
 def _report_visibility_issue(report: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -870,6 +944,7 @@ def _report_row(report: Mapping[str, Any]) -> str:
             _string(report.get("artifact_temporal_relation")),
             _string(report.get("artifact_selection_policy")),
             _string(report.get("freshness_basis")),
+            _string(report.get("visibility_policy")),
         )
         if item
     )

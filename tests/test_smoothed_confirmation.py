@@ -23,6 +23,9 @@ def test_smoothed_confirmation_registers_targets_and_safety_boundary(tmp_path) -
     )
 
     targets = result["smoothed_confirmation_targets"]
+    assert targets["schema_version"] == 1
+    assert targets["report_type"] == "etf_dynamic_v3_smoothed_confirmation_targets"
+    assert targets["status"] == "PASS"
     target_ids = {row["target_id"] for row in targets["targets"]}
     assert target_ids >= {
         "smooth_3d_vs_limited",

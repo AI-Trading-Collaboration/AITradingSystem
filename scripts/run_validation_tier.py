@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
 import subprocess
 import sys
 import time
@@ -48,6 +50,8 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_validation_tier_script.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
+            "tests/test_clean_clone_release_acceptance.py",
+            "tests/test_engineering_release_candidate.py",
             "tests/test_artifact_lineage.py",
             "tests/test_report_quality_gate.py",
             "tests/test_cli_direct.py",
@@ -66,6 +70,8 @@ TIER_SPECS: dict[str, TierSpec] = {
             "tests/test_validation_tier_script.py",
             "tests/test_documentation_contract.py",
             "tests/test_report_index.py",
+            "tests/test_clean_clone_release_acceptance.py",
+            "tests/test_engineering_release_candidate.py",
             "tests/test_artifact_lineage.py",
             "tests/test_report_quality_gate.py",
             "tests/test_formal_research_method_contract.py",
@@ -111,6 +117,25 @@ TIER_SPECS: dict[str, TierSpec] = {
         paths=("tests/trading_engine", "tests/test_ops_daily.py", "tests/test_scheduled_tasks.py"),
         pytest_args=("-q", "--durations=40", "--durations-min=1"),
     ),
+    "reproducibility": TierSpec(
+        description=(
+            "Artifact lineage, source manifests, run manifest contracts, and engineering "
+            "reproducibility readiness."
+        ),
+        suite_family="reproducibility",
+        promotion_blocking=True,
+        slow_suite_allowed=False,
+        paths=(
+            "tests/test_artifact_lineage.py",
+            "tests/test_artifact_lifecycle_inventory.py",
+            "tests/test_engineering_stage_b_readiness.py",
+            "tests/test_pit_source_manifest.py",
+            "tests/trading_engine/test_backtest_snapshot_manifest.py",
+            "tests/trading_engine/test_backtest_manifest_refresh.py",
+            "tests/trading_engine/test_validate_data_manifest_context.py",
+        ),
+        pytest_args=("-q", "--durations=25", "--durations-min=1"),
+    ),
     "slow-research-regression": TierSpec(
         description="ETF dynamic-v3 rescue, historical replay, simulation, and advisory tests.",
         suite_family="slow_research_regression",
@@ -133,6 +158,7 @@ TIER_ALIASES: dict[str, str] = {
     "reader-brief": "report-validation",
     "dynamic-v3": "slow-research-regression",
     "trading-engine": "integration",
+    "artifact-reproduce": "reproducibility",
 }
 
 
@@ -242,6 +268,7 @@ def _artifact_dir(repo_root: Path, args: argparse.Namespace, run_id: str) -> Pat
 
 def _runtime_payload(
     *,
+    repo_root: Path,
     requested_tier: str,
     resolved_tier: str,
     spec: TierSpec,
@@ -256,9 +283,12 @@ def _runtime_payload(
     artifact_dir: Path | None = None,
 ) -> dict[str, object]:
     elapsed = round((ended_at - started_at).total_seconds(), 2)
+    input_artifacts = _command_input_artifacts(command, repo_root=repo_root)
+    output_artifacts = _runtime_output_artifacts(artifact_dir)
     payload: dict[str, object] = {
         "schema_version": 1,
         "report_type": "test_runtime_summary",
+        "git_commit": _git_commit(repo_root) or "unknown",
         "tier": requested_tier,
         "requested_tier": requested_tier,
         "resolved_tier": resolved_tier,
@@ -273,6 +303,15 @@ def _runtime_payload(
         "dist": dist,
         "extra_pytest_args": list(extra_pytest_args),
         "command": list(command),
+        "resolved_config": {"validation_tier": resolved_tier},
+        "input_artifacts": input_artifacts,
+        "input_checksums": _artifact_checksums(input_artifacts),
+        "schema_versions": {"test_runtime_summary": "1"},
+        "as_of": started_at.date().isoformat(),
+        "random_seed": "not_applicable",
+        "environment_summary": _environment_summary(),
+        "output_artifacts": output_artifacts,
+        "warnings": [] if status == "PASS" else [f"validation_status={status}"],
         "started_at_utc": started_at.isoformat().replace("+00:00", "Z"),
         "ended_at_utc": ended_at.isoformat().replace("+00:00", "Z"),
         "elapsed_seconds": elapsed,
@@ -297,6 +336,92 @@ def _runtime_payload(
     if requested_tier != resolved_tier:
         payload["legacy_alias_for"] = resolved_tier
     return payload
+
+
+def _command_input_artifacts(command: Sequence[str], *, repo_root: Path) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    for token in command:
+        if not token or token.startswith("-"):
+            continue
+        path = Path(token)
+        candidate = path if path.is_absolute() else repo_root / path
+        if not _is_relative_to(candidate, repo_root) or not candidate.exists():
+            continue
+        records.append(_artifact_record(candidate))
+    return records
+
+
+def _runtime_output_artifacts(artifact_dir: Path | None) -> list[dict[str, object]]:
+    if artifact_dir is None:
+        return []
+    return [
+        _artifact_record(artifact_dir / "test_runtime_summary.json"),
+        _artifact_record(artifact_dir / "test_runtime_reader_brief.md"),
+    ]
+
+
+def _artifact_checksums(records: Sequence[dict[str, object]]) -> dict[str, str]:
+    checksums: dict[str, str] = {}
+    for record in records:
+        path = str(record.get("path") or "")
+        if path:
+            checksums[path] = str(record.get("sha256") or "")
+    return checksums
+
+
+def _artifact_record(path: Path) -> dict[str, object]:
+    exists = path.exists()
+    is_file = exists and path.is_file()
+    is_dir = exists and path.is_dir()
+    return {
+        "path": str(path),
+        "exists": exists,
+        "artifact_type": "directory" if is_dir else path.suffix.lower().lstrip(".") or "file",
+        "sha256": _sha256_file(path) if is_file else None,
+        "size_bytes": path.stat().st_size if is_file else None,
+        "file_count": sum(1 for item in path.rglob("*") if item.is_file()) if is_dir else None,
+    }
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _environment_summary() -> dict[str, str]:
+    return {
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+        "working_directory": str(Path.cwd()),
+    }
+
+
+def _git_commit(repo_root: Path) -> str | None:
+    try:
+        completed = subprocess.run(
+            ("git", "rev-parse", "HEAD"),
+            cwd=repo_root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip() or None
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
 
 
 def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
@@ -460,6 +585,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.print_only:
         ended_at = _utc_now()
         payload = _runtime_payload(
+            repo_root=repo_root,
             requested_tier=args.tier,
             resolved_tier=resolved_tier,
             spec=spec,
@@ -487,6 +613,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     status = "PASS" if result["exit_code"] == 0 else "FAIL"
     ended_at = _utc_now()
     payload = _runtime_payload(
+        repo_root=repo_root,
         requested_tier=args.tier,
         resolved_tier=resolved_tier,
         spec=spec,

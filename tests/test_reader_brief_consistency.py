@@ -34,7 +34,9 @@ def test_reader_brief_consistency_passes_standard_sections(tmp_path: Path) -> No
     assert "Reader Brief Consistency Pack" in markdown
 
 
-def test_reader_brief_consistency_warns_for_legacy_section_gap(tmp_path: Path) -> None:
+def test_reader_brief_consistency_uses_view_model_for_legacy_section_gap(
+    tmp_path: Path,
+) -> None:
     legacy_path = tmp_path / "legacy_report_2026-05-04.json"
     _write_json(
         legacy_path,
@@ -69,10 +71,17 @@ def test_reader_brief_consistency_warns_for_legacy_section_gap(tmp_path: Path) -
     )
     validation = validate_reader_brief_consistency_payload(payload)
 
-    assert payload["consistency_status"] == "PASS_WITH_WARNINGS"
-    assert payload["summary"]["missing_section_count"] > 0
-    assert validation["validation_status"] == "PASS_WITH_WARNINGS"
+    assert payload["consistency_status"] == "PASS"
+    assert payload["summary"]["missing_section_count"] == 0
+    assert payload["summary"]["native_template_gap_count"] > 0
+    assert payload["summary"]["view_model_derived_section_count"] > 0
+    assert validation["validation_status"] == "PASS"
     assert validation["summary"]["source_checked_report_count"] == 3
+    legacy_check = next(
+        check for check in payload["report_checks"] if check["report_id"] == "legacy_report"
+    )
+    assert legacy_check["native_template_gaps"]
+    assert legacy_check["view_model_derived_sections"]
     assert "3 Reader Brief-facing reports" in validation["reader_brief"]["summary"]
 
 

@@ -2,180 +2,22 @@ schema_version: 1
 policy_id: report_index_visibility_waivers_v1
 policy_metadata:
   owner: system
-  status: pilot_baseline
+  status: active_empty
   rationale: >
-    Distinguish legacy or optional report visibility exceptions from unreviewed
-    report-index warnings while keeping report indexing read-only.
+    Report index visibility exceptions must remain explicit and reviewable.
+    The legacy/optional artifact families that previously required waivers are
+    now classified in `config/report_registry.yaml` with `visibility_policy`,
+    so the current report index does not need any active waiver.
   intended_effect: >
-    Allow `aits reports index` to return PASS_WITH_EXPLICIT_WAIVERS when every
-    missing or stale visibility issue is explained by a reviewed waiver.
+    Keep the waiver governance entry point available while requiring any new
+    optional missing/stale exception to be added deliberately with owner,
+    expiry, linked task, accepted impact, validation coverage, and exit
+    condition.
   validation_evidence: >
-    Focused report-index tests cover explicit waiver application, U.S. equity
-    trading-day freshness, and required-missing fail-closed behavior.
+    Focused report-index tests cover explicit waiver application, visibility
+    policy classification, U.S. equity trading-day freshness, and required
+    missing fail-closed behavior.
   review_condition: >
-    Review when any waived artifact family starts producing canonical runtime
-    artifacts, when the registry entry is retired, or before using waived
-    sections as primary investment evidence.
-waivers:
-  - waiver_id: legacy_optional_etf_experiment_visibility_missing_2026-06-15
-    issue_status: MISSING
-    report_ids:
-      - etf_experiment_run_manifest
-      - etf_experiment_comparison
-      - etf_experiment_candidate_selection
-      - etf_experiment_weekly_review
-    owner: system
-    created_at: 2026-06-15
-    expires_at: 2026-07-31
-    review_status: approved_active
-    linked_task_id: TRADING-352A_REPORT_INDEX_WARNING_CLEANUP
-    reason: >
-      Legacy ETF experiment artifact families are registered for Reader Brief
-      and report navigation, but the current Dynamic v3 paper-shadow research
-      path does not require them for daily reading.
-    accepted_impact: >
-      These optional sections remain visible as waived missing; they must not be
-      interpreted as available experiment evidence.
-    validation_coverage: >
-      Report-index focused tests verify missing optional entries can only clear
-      warnings through explicit waiver metadata.
-    exit_condition: >
-      Remove this waiver after the experiment workflow is rerun into canonical
-      report paths or after the registry entries are retired.
-  - waiver_id: legacy_optional_ai_satellite_visibility_missing_2026-06-15
-    issue_status: MISSING
-    report_ids:
-      - etf_ai_confirmation_report
-      - etf_ai_confirmation_overlay
-      - etf_satellite_features
-      - etf_satellite_replacement_report
-      - etf_satellite_shadow_experiment
-    owner: system
-    created_at: 2026-06-15
-    expires_at: 2026-07-31
-    review_status: approved_active
-    linked_task_id: TRADING-352A_REPORT_INDEX_WARNING_CLEANUP
-    reason: >
-      Optional AI confirmation and satellite replacement report families are
-      registered for research navigation, but no current artifact is required
-      for the TRADING-351/352 paper-shadow daily or drift-monitor path.
-    accepted_impact: >
-      Reader Brief may display waived missing optional AI/satellite sections;
-      no candidate conclusion may treat them as refreshed evidence.
-    validation_coverage: >
-      Report-index audit exposes the waiver id, issue status, owner, reason and
-      accepted impact in machine-readable JSON.
-    exit_condition: >
-      Remove this waiver when AI confirmation or satellite replacement reports
-      are regenerated, or when those registry entries are no longer used.
-  - waiver_id: legacy_optional_dynamic_shadow_visibility_missing_2026-06-15
-    issue_status: MISSING
-    report_ids:
-      - etf_shadow_candidate_owner_approval
-      - etf_shadow_candidate_enrollment
-      - etf_dynamic_shadow_owner_approval
-      - etf_dynamic_shadow_enrollment
-      - etf_dynamic_shadow_forward_update
-      - etf_dynamic_shadow_weekly_review
-    owner: system
-    created_at: 2026-06-15
-    expires_at: 2026-07-31
-    review_status: approved_active
-    linked_task_id: TRADING-352A_REPORT_INDEX_WARNING_CLEANUP
-    reason: >
-      Older ETF dynamic-shadow workflow entries remain in the report registry
-      for audit navigation, but the current paper-shadow protocol does not use
-      those artifacts as active production or broker evidence.
-    accepted_impact: >
-      Dynamic-shadow sections are explicitly waived as missing legacy optional
-      visibility and remain excluded from primary paper-shadow conclusions.
-    validation_coverage: >
-      Report-index visibility audit lists each waived report id and leaves
-      required missing artifacts unwaivable.
-    exit_condition: >
-      Remove this waiver when the dynamic-shadow workflow is regenerated,
-      superseded by paper-shadow weekly review, or removed from the registry.
-  - waiver_id: initial_paper_shadow_weekly_review_visibility_missing_2026-06-15
-    issue_status: MISSING
-    report_ids:
-      - etf_dynamic_v3_paper_shadow_weekly_review
-    owner: system
-    created_at: 2026-06-15
-    expires_at: 2026-07-31
-    review_status: approved_active
-    linked_task_id: TRADING-353_PAPER_SHADOW_WEEKLY_REVIEW
-    reason: >
-      TRADING-353 adds the paper-shadow weekly review artifact family and
-      registry entry, but no owner-reviewed canonical weekly artifact has been
-      generated in the default reports directory yet.
-    accepted_impact: >
-      Reader Brief and report index may show the weekly review as waived
-      missing until the first real weekly review is produced; no weekly
-      CONTINUE/WATCH/RETURN_TO_RESEARCH/REJECT conclusion is implied.
-    validation_coverage: >
-      The TRADING-353 focused tests generate weekly review artifacts in an
-      isolated temp directory and validate the artifact contract; report-index
-      validation exposes this waiver in the visibility audit for the default
-      local report tree.
-    exit_condition: >
-      Remove this waiver after the first canonical
-      paper_shadow_weekly_review artifact is generated in default reports, or
-      if the registry entry is retired.
-  - waiver_id: legacy_optional_baseline_review_visibility_missing_2026-06-15
-    issue_status: MISSING
-    report_ids:
-      - etf_dynamic_v3_rescue_evaluation_report
-      - etf_dynamic_v3_interpretation_pack
-      - etf_baseline_review_decision
-      - etf_baseline_change_proposal_draft
-      - etf_baseline_review_outcome
-    owner: system
-    created_at: 2026-06-15
-    expires_at: 2026-07-31
-    review_status: approved_active
-    linked_task_id: TRADING-352A_REPORT_INDEX_WARNING_CLEANUP
-    reason: >
-      Baseline review and older Dynamic v3 rescue artifacts are optional owner
-      review surfaces. They are not generated by TRADING-351/352 and are not
-      required for the current paper-shadow drift conclusion.
-    accepted_impact: >
-      Missing baseline review artifacts remain visible with waiver metadata; no
-      baseline change, approval, or production effect is implied.
-    validation_coverage: >
-      The waiver file is loaded by `aits reports index` and included in the
-      generated JSON visibility audit.
-    exit_condition: >
-      Remove this waiver after owner baseline-review artifacts are generated or
-      the registry entries are retired.
-  - waiver_id: legacy_optional_runtime_visibility_stale_2026-06-15
-    issue_status: STALE
-    report_ids:
-      - data_registry_consistency
-      - price_cache_reconcile
-      - etf_portfolio_brief
-      - etf_data_quality
-      - etf_operations_health_report
-      - etf_data_quality_governance_report
-      - etf_strategy_evidence_dashboard
-      - parameter_governance
-      - weight_candidate_evaluation
-      - weight_promotion_gate
-    owner: system
-    created_at: 2026-06-15
-    expires_at: 2026-07-31
-    review_status: approved_active
-    linked_task_id: TRADING-352A_REPORT_INDEX_WARNING_CLEANUP
-    reason: >
-      These optional or legacy review artifacts predate the latest paper-shadow
-      daily/drift-monitor run. They remain useful navigation history, but they
-      are not current primary evidence for TRADING-352.
-    accepted_impact: >
-      The stale artifacts stay listed as stale and waived; downstream reports
-      must not treat them as fresh unless regenerated.
-    validation_coverage: >
-      Focused report-index tests verify stale optional entries can be converted
-      to explicit waivers without changing the artifact freshness status.
-    exit_condition: >
-      Remove individual report ids from this waiver as each artifact is
-      regenerated, superseded by a current workflow, or removed from the
-      registry.
+    Review before adding any new waiver, before a platform freeze signoff, or
+    when a legacy/optional report family is promoted back to current evidence.
+waivers: []

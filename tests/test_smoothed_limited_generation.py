@@ -26,6 +26,11 @@ def test_smoothed_generation_preserves_weight_sum_and_safety(tmp_path) -> None:
         assert row["broker_action_allowed"] is False
     assert result["smoothing_events"]
     assert result["lag_events"]
+    summary = result["weight_jump_reduction_summary"]
+    assert summary["schema_version"] == 1
+    assert summary["report_type"] == "etf_dynamic_v3_smoothed_weight_jump_reduction_summary"
+    assert summary["status"] == "PASS"
+    assert summary["production_effect"] == "none"
 
     validation = system_target.validate_smoothed_limited_artifact(
         smoothed_id=result["smoothed_id"],

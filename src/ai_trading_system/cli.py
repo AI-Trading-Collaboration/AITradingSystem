@@ -37,6 +37,7 @@ from ai_trading_system.cli_commands.score_daily import score_daily_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
 from ai_trading_system.cli_commands.security import security_app
 from ai_trading_system.cli_commands.signals import signals_app
+from ai_trading_system.cli_commands.system import system_app
 from ai_trading_system.cli_commands.thesis import thesis_app
 from ai_trading_system.cli_commands.trace import trace_app
 from ai_trading_system.cli_commands.trade_review import register_trade_review_commands
@@ -69,6 +70,7 @@ app.add_typer(report_app, name="report")
 app.add_typer(run_app, name="run")
 app.add_typer(experiments_app, name="experiments")
 app.add_typer(ops_app, name="ops")
+app.add_typer(system_app, name="system")
 app.add_typer(security_app, name="security")
 app.add_typer(llm_app, name="llm")
 app.add_typer(pit_snapshots_app, name="pit-snapshots")

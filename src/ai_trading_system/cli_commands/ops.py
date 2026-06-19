@@ -44,6 +44,7 @@ from ai_trading_system.historical_replay import (
     run_historical_replay_window,
 )
 from ai_trading_system.ops_daily import (
+    DailyOpsRunReport,
     build_daily_ops_plan,
     default_daily_ops_plan_path,
     default_daily_ops_run_metadata_path,
@@ -100,6 +101,7 @@ from ai_trading_system.run_artifacts import (
     validate_legacy_output_mode,
     write_run_manifest,
 )
+from ai_trading_system.scheduled_tasks import DEFAULT_SCHEDULED_TASKS_CONFIG_PATH
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
@@ -781,6 +783,30 @@ def daily_ops_run_command(
                 *(artifact.path for artifact in run_report.metadata.produced_artifacts),
                 *legacy_outputs,
             ),
+            command=_daily_run_manifest_command(
+                plan_date=plan_date,
+                download_start=download_start,
+                include_download_data=include_download_data,
+                include_pit_snapshots=include_pit_snapshots,
+                include_sec_fundamentals=include_sec_fundamentals,
+                include_valuation_snapshots=include_valuation_snapshots,
+                include_secret_scan=include_secret_scan,
+                risk_event_openai_precheck=risk_event_openai_precheck,
+                risk_event_openai_precheck_max_candidates=(
+                    risk_event_openai_precheck_max_candidates
+                ),
+                llm_request_profile=llm_request_profile,
+                full_universe=full_universe,
+                plan_output_path=plan_output_path,
+                output_path=output_path,
+                run_output_root=run_output_root,
+                resolved_run_id=resolved_run_id,
+                legacy_mode=legacy_mode,
+            ),
+            resolved_config={"scheduled_tasks": DEFAULT_SCHEDULED_TASKS_CONFIG_PATH},
+            schema_versions={"scheduled_tasks": "1"},
+            elapsed_seconds=(run_report.finished_at - run_report.started_at).total_seconds(),
+            warnings=_daily_run_manifest_warnings(run_report),
         )
 
     status = run_report.status
@@ -807,6 +833,91 @@ def daily_ops_run_command(
         console.print(f"失败步骤：{failed.step_id}；return_code={failed.return_code}")
     if status not in {"PASS", "PASS_WITH_SKIPS"}:
         raise typer.Exit(code=1)
+
+
+def _daily_run_manifest_command(
+    *,
+    plan_date: date,
+    download_start: str,
+    include_download_data: bool,
+    include_pit_snapshots: bool,
+    include_sec_fundamentals: bool,
+    include_valuation_snapshots: bool,
+    include_secret_scan: bool,
+    risk_event_openai_precheck: bool,
+    risk_event_openai_precheck_max_candidates: int | None,
+    llm_request_profile: str,
+    full_universe: bool,
+    plan_output_path: Path | None,
+    output_path: Path | None,
+    run_output_root: Path,
+    resolved_run_id: str,
+    legacy_mode: str,
+) -> tuple[str, ...]:
+    command = [
+        "aits",
+        "ops",
+        "daily-run",
+        "--as-of",
+        plan_date.isoformat(),
+        "--download-start",
+        download_start,
+        "--run-output-root",
+        str(run_output_root),
+        "--run-id",
+        resolved_run_id,
+        "--legacy-output-mode",
+        legacy_mode,
+        "--llm-request-profile",
+        llm_request_profile,
+        "--include-download-data" if include_download_data else "--skip-download-data",
+        "--include-pit-snapshots" if include_pit_snapshots else "--skip-pit-snapshots",
+        (
+            "--include-sec-fundamentals"
+            if include_sec_fundamentals
+            else "--skip-sec-fundamentals"
+        ),
+        (
+            "--include-valuation-snapshots"
+            if include_valuation_snapshots
+            else "--skip-valuation-snapshots"
+        ),
+        "--include-secret-scan" if include_secret_scan else "--skip-secret-scan",
+        (
+            "--risk-event-openai-precheck"
+            if risk_event_openai_precheck
+            else "--skip-risk-event-openai-precheck"
+        ),
+    ]
+    if risk_event_openai_precheck_max_candidates is not None:
+        command.extend(
+            [
+                "--risk-event-openai-precheck-max-candidates",
+                str(risk_event_openai_precheck_max_candidates),
+            ]
+        )
+    if full_universe:
+        command.append("--full-universe")
+    if plan_output_path is not None:
+        command.extend(["--plan-output-path", str(plan_output_path)])
+    if output_path is not None:
+        command.extend(["--output-path", str(output_path)])
+    return tuple(command)
+
+
+def _daily_run_manifest_warnings(report: DailyOpsRunReport) -> tuple[str, ...]:
+    warnings: list[str] = []
+    if report.missing_env_vars:
+        warnings.append("missing_env_vars:" + ",".join(report.missing_env_vars))
+    warnings.extend(
+        "input_visibility:" + issue.code for issue in report.visibility_issues
+    )
+    warnings.extend(
+        f"step:{result.step_id}:{result.status}"
+        for result in report.step_results
+        if result.status not in {"PASS", "SKIP"}
+    )
+    return tuple(warnings)
 
 
 @ops_app.command("replay-day")

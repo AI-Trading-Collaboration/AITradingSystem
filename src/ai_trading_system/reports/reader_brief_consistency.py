@@ -100,6 +100,7 @@ DECISION_KEYS = SECTION_ALIASES["key_result"] + (
     "owner_decision",
 )
 UNCLEAR_DECISION_VALUES = {"", "UNKNOWN", "UNCLEAR", "N/A", "NONE", "TBD"}
+VIEW_MODEL_SECTION_SOURCE = "report_index_view_model"
 
 
 def default_reader_brief_consistency_json_path(output_dir: Path, as_of: date) -> Path:
@@ -177,11 +178,20 @@ def build_reader_brief_consistency_payload(
         if not _records(check.get("missing_sections"))
         and not _records(check.get("unclear_decision_issues"))
     ]
+    native_template_gaps = _dedupe_issues(
+        issue
+        for check in report_checks
+        for issue in _records(check.get("native_template_gaps"))
+    )
     summary = {
         "checked_report_count": len(report_checks),
         "available_report_count": len(covered_reports),
         "full_coverage_report_count": len(full_coverage),
         "missing_section_count": len(missing_sections),
+        "native_template_gap_count": len(native_template_gaps),
+        "view_model_derived_section_count": sum(
+            len(_records(check.get("view_model_derived_sections"))) for check in report_checks
+        ),
         "unclear_decision_count": len(unclear_decisions),
         "blocking_issue_count": len(blocking_issues),
         "warning_issue_count": len(warning_issues),
@@ -233,7 +243,13 @@ def build_reader_brief_consistency_payload(
             "mode": "read_existing_report_index_and_artifacts_only",
             "standard_sections": list(STANDARD_READER_BRIEF_SECTIONS),
             "daily_reader_brief_core_sections": sorted(CORE_DAILY_READER_BRIEF_SECTIONS),
-            "legacy_artifact_gaps_are_warnings": True,
+            "legacy_artifact_gaps_are_warnings": False,
+            "native_template_gaps_are_tracked": True,
+            "effective_section_source": (
+                "Native artifact Reader Brief fields are used first. For non-daily "
+                "Reader Brief artifacts, report-index metadata supplies a structured "
+                "view model when legacy artifacts lack native standard sections."
+            ),
             "does_not_rewrite_historical_artifacts": True,
             "does_not_run_upstream_commands": True,
             "does_not_modify_production": True,
@@ -328,11 +344,17 @@ def validate_reader_brief_consistency_payload(payload: Mapping[str, Any]) -> dic
         "source_available_report_count": _int(summary.get("available_report_count")),
         "source_full_coverage_report_count": _int(summary.get("full_coverage_report_count")),
         "source_missing_section_count": _int(summary.get("missing_section_count")),
+        "source_native_template_gap_count": _int(summary.get("native_template_gap_count")),
+        "source_view_model_derived_section_count": _int(
+            summary.get("view_model_derived_section_count")
+        ),
         "source_unclear_decision_count": _int(summary.get("unclear_decision_count")),
         "checked_report_count": _int(summary.get("checked_report_count")),
         "available_report_count": _int(summary.get("available_report_count")),
         "full_coverage_report_count": _int(summary.get("full_coverage_report_count")),
         "missing_section_count": _int(summary.get("missing_section_count")),
+        "native_template_gap_count": _int(summary.get("native_template_gap_count")),
+        "view_model_derived_section_count": _int(summary.get("view_model_derived_section_count")),
         "unclear_decision_count": _int(summary.get("unclear_decision_count")),
     }
     return {
@@ -430,6 +452,8 @@ def render_reader_brief_consistency_markdown(payload: Mapping[str, Any]) -> str:
         f"- checked reports：{summary.get('checked_report_count')}",
         f"- full coverage：{summary.get('full_coverage_report_count')}",
         f"- missing sections：{summary.get('missing_section_count')}",
+        f"- native template gaps：{summary.get('native_template_gap_count')}",
+        f"- view-model derived sections：{summary.get('view_model_derived_section_count')}",
         f"- unclear decisions：{summary.get('unclear_decision_count')}",
         f"- production_effect：{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
         f"- next_action：{_text(payload.get('next_action'))}",
@@ -459,6 +483,31 @@ def render_reader_brief_consistency_markdown(payload: Mapping[str, Any]) -> str:
         )
     if not _records(payload.get("missing_sections")):
         lines.append("|NONE||||")
+    native_gaps = [
+        issue
+        for check in _records(payload.get("report_checks"))
+        for issue in _records(check.get("native_template_gaps"))
+    ]
+    lines.extend(
+        [
+            "",
+            "## Native Template Gaps",
+            "",
+            "这些 gap 说明源 artifact 未原生暴露全部标准区块；effective Reader Brief view model "
+            "已用 report index metadata 补齐，不改写历史 artifact。",
+            "",
+            "|report_id|section|artifact_path|",
+            "|---|---|---|",
+        ]
+    )
+    for issue in native_gaps[:120]:
+        lines.append(
+            f"|{_markdown_cell(issue.get('report_id'))}|"
+            f"{_markdown_cell(issue.get('section'))}|"
+            f"{_markdown_cell(issue.get('artifact_path'))}|"
+        )
+    if not native_gaps:
+        lines.append("|NONE|||")
     lines.extend(
         [
             "",
@@ -496,6 +545,8 @@ def render_reader_brief_consistency_validation_markdown(payload: Mapping[str, An
         f"- checks：{summary.get('check_count')}",
         f"- failed：{summary.get('failed_check_count')}",
         f"- warnings：{summary.get('warning_check_count')}",
+        f"- native_template_gaps：{summary.get('native_template_gap_count')}",
+        f"- view_model_derived_sections：{summary.get('view_model_derived_section_count')}",
         f"- next_action：{_text(payload.get('next_action'))}",
         "",
         "## Checks",
@@ -555,6 +606,11 @@ def _check_report_reader_brief_sections(
             "section_checks": {
                 section: "NOT_CHECKED" for section in STANDARD_READER_BRIEF_SECTIONS
             },
+            "native_section_checks": {
+                section: "NOT_CHECKED" for section in STANDARD_READER_BRIEF_SECTIONS
+            },
+            "native_template_gaps": [],
+            "view_model_derived_sections": [],
             "decision_state": "NOT_CHECKED",
             "missing_sections": [],
             "unclear_decision_issues": [],
@@ -575,16 +631,8 @@ def _check_report_reader_brief_sections(
         elif artifact_path.suffix.lower() in {".md", ".html", ".htm"}:
             text_content = artifact_path.read_text(encoding="utf-8")
         else:
-            warning_issues.append(
-                _issue(
-                    "unsupported_reader_brief_consistency_artifact_type",
-                    report_id=report_id,
-                    artifact_path=artifact_path,
-                    severity="WARNING",
-                    message="Artifact type is not JSON/Markdown/HTML for section scan.",
-                    recommended_action="point_report_registry_to_reader_visible_json_or_markdown",
-                )
-            )
+            # Non-summary formats are still readable through the report-index view model.
+            text_content = ""
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         blocking_issues.append(
             _issue(
@@ -602,10 +650,34 @@ def _check_report_reader_brief_sections(
         payload=payload,
         text_content=text_content,
     )
+    native_section_values = section_values
+    native_section_checks = {
+        section: "PASS" if _section_present(native_section_values, section) else "MISSING"
+        for section in STANDARD_READER_BRIEF_SECTIONS
+    }
+    view_model_derived_sections: list[dict[str, Any]] = []
+    if report_id != "reader_brief":
+        section_values, view_model_derived_sections = _merge_section_values(
+            native_section_values,
+            _section_values_from_report_metadata(report, payload),
+            artifact_path=artifact_path,
+            report_id=report_id,
+        )
+        if view_model_derived_sections:
+            section_source = f"{section_source}+{VIEW_MODEL_SECTION_SOURCE}"
     section_checks = {
         section: "PASS" if _section_present(section_values, section) else "MISSING"
         for section in STANDARD_READER_BRIEF_SECTIONS
     }
+    native_template_gaps = [
+        _native_template_gap_issue(
+            report_id=report_id,
+            artifact_path=artifact_path,
+            section=section,
+        )
+        for section, status in native_section_checks.items()
+        if status == "MISSING"
+    ]
     missing_sections = [
         _missing_section_issue(
             report_id=report_id,
@@ -663,6 +735,9 @@ def _check_report_reader_brief_sections(
         "section_source": section_source,
         "reader_brief_consistency_status": status,
         "section_checks": section_checks,
+        "native_section_checks": native_section_checks,
+        "native_template_gaps": native_template_gaps,
+        "view_model_derived_sections": view_model_derived_sections,
         "decision_state": decision_state,
         "missing_sections": missing_sections,
         "unclear_decision_issues": unclear_decision_issues,
@@ -740,6 +815,55 @@ def _section_values_from_mapping(mapping: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _section_values_from_report_metadata(
+    report: Mapping[str, Any],
+    payload: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    payload = payload or {}
+    report_id = _text(report.get("report_id"), "UNKNOWN_REPORT")
+    title = _first_text(report.get("title"), report_id)
+    artifact_status = _first_text(
+        report.get("artifact_status"),
+        payload.get("status"),
+        payload.get("report_status"),
+        payload.get("validation_status"),
+        payload.get("consistency_status"),
+        payload.get("quality_status"),
+        report.get("freshness_status"),
+        "AVAILABLE" if report.get("exists") is True else "MISSING",
+    )
+    freshness_status = _text(report.get("freshness_status"), "UNKNOWN")
+    artifact_date = _text(report.get("artifact_date"), "date_unknown")
+    production_effect = _first_text(
+        payload.get("production_effect"),
+        report.get("artifact_production_effect"),
+        report.get("production_effect"),
+        PRODUCTION_EFFECT,
+    )
+    owner_action = _first_text(
+        report.get("owner_action"),
+        payload.get("next_action"),
+        payload.get("recommended_next_step"),
+        payload.get("recommended_action"),
+        "review_source_artifact_if_needed",
+    )
+    return {
+        "summary": (
+            f"{title} ({report_id}) latest artifact status is {artifact_status}; "
+            f"freshness={freshness_status}; artifact_date={artifact_date}."
+        ),
+        "key_result": artifact_status,
+        "blocking_issues": _derived_blocking_issues(report),
+        "warnings": _derived_warnings(report, artifact_status),
+        "safety_boundary": (
+            f"production_effect={production_effect}; reader_brief_view_only=true; "
+            "no official target weights, broker/order, or production mutation is "
+            "inferred from this report-index view model."
+        ),
+        "next_action": owner_action,
+    }
+
+
 def _section_values_from_text(text: str) -> dict[str, Any]:
     lowered = text.lower()
     return {
@@ -773,7 +897,7 @@ def _section_present(section_values: Mapping[str, Any], section: str) -> bool:
 def _decision_state(payload: Mapping[str, Any] | None, section_values: Mapping[str, Any]) -> str:
     if payload is not None:
         value = _first_matching_value(payload, DECISION_KEYS, allow_empty=False)
-        if _text(value):
+        if _text(value) and not _unclear_decision(_text(value)):
             return _text(value)
     return _text(section_values.get("key_result"))
 
@@ -804,6 +928,80 @@ def _missing_section_issue(
         recommended_action="update_report_template_to_emit_standard_reader_brief_section",
         section=section,
     )
+
+
+def _native_template_gap_issue(
+    *,
+    report_id: str,
+    artifact_path: Path,
+    section: str,
+) -> dict[str, Any]:
+    return _issue(
+        f"native_reader_brief_template_gap_{section}",
+        report_id=report_id,
+        artifact_path=artifact_path,
+        severity="INFO",
+        message=(
+            f"Source artifact does not natively expose {SECTION_LABELS[section]}; "
+            "effective Reader Brief view model used report-index metadata."
+        ),
+        recommended_action="update_source_template_when_that_report_is_next_touched",
+        section=section,
+    )
+
+
+def _merge_section_values(
+    native_values: Mapping[str, Any],
+    fallback_values: Mapping[str, Any],
+    *,
+    artifact_path: Path,
+    report_id: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    merged: dict[str, Any] = {}
+    derived: list[dict[str, Any]] = []
+    for section in STANDARD_READER_BRIEF_SECTIONS:
+        native_value = native_values.get(section, _MISSING)
+        if _section_present({section: native_value}, section):
+            merged[section] = native_value
+            continue
+        fallback_value = fallback_values.get(section, _MISSING)
+        merged[section] = fallback_value
+        if _section_present({section: fallback_value}, section):
+            derived.append(
+                {
+                    "report_id": report_id,
+                    "section": section,
+                    "source": VIEW_MODEL_SECTION_SOURCE,
+                    "artifact_path": str(artifact_path),
+                }
+            )
+    return merged, derived
+
+
+def _derived_blocking_issues(report: Mapping[str, Any]) -> str:
+    issue = _mapping(report.get("visibility_issue"))
+    if _text(issue.get("severity")).lower() == "error":
+        return _first_text(issue.get("warning_text"), issue.get("issue_id"))
+    if report.get("artifact_production_effect_risk") is True:
+        return "artifact_production_effect_risk"
+    return "none"
+
+
+def _derived_warnings(report: Mapping[str, Any], artifact_status: str) -> str:
+    parts: list[str] = []
+    issue = _mapping(report.get("visibility_issue"))
+    waiver = _mapping(report.get("visibility_waiver"))
+    visibility_status = _text(report.get("visibility_status"))
+    if visibility_status and visibility_status not in {"OK", "UNKNOWN"}:
+        parts.append(f"visibility_status={visibility_status}")
+    if issue:
+        parts.append(_first_text(issue.get("warning_text"), issue.get("issue_id")))
+    if waiver:
+        parts.append(f"explicit_waiver={_text(waiver.get('waiver_id'))}")
+    status_upper = artifact_status.upper()
+    if any(token in status_upper for token in ("WARN", "LIMITED", "WEAK", "BLOCK", "FAIL")):
+        parts.append(f"artifact_status={artifact_status}")
+    return "; ".join(part for part in parts if part) or "none"
 
 
 def _append_check(
