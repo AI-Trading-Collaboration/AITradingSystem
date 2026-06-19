@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-502",
+  "report_type": "ablation_protocol",
+  "status": "ABLATION_PROTOCOL_FROZEN",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "principles": [
+    "Each layer adds exactly one primary mechanism.",
+    "Each layer must prove independent net gain versus the previous layer.",
+    "B6 must show regime information has incremental value above trend, volatility and risk scaling."
+  ],
+  "required_outputs_per_layer": [
+    "return_proxy",
+    "drawdown_proxy",
+    "turnover",
+    "rotation_count",
+    "cost_adjusted_proxy",
+    "benchmark_relative_result",
+    "stress_result",
+    "window_stability",
+    "signal_robustness_status"
+  ],
+  "layers": [
+    {"layer_id": "B0", "name": "static_strategic_baseline", "incremental_mechanism": "static strategic baseline only", "comparison": "control"},
+    {"layer_id": "B1", "name": "execution_control_baseline", "incremental_mechanism": "execution/no-trade/turnover control", "comparison": "B1 vs B0"},
+    {"layer_id": "B2", "name": "fast_asymmetric_risk_scaler", "incremental_mechanism": "fast asymmetric risk scaler", "comparison": "B2 vs B0"},
+    {"layer_id": "B3", "name": "slow_relative_tilt", "incremental_mechanism": "slow relative tilt", "comparison": "B3 vs B0"},
+    {"layer_id": "B4", "name": "tilt_plus_risk_scaler", "incremental_mechanism": "combine B2 and B3 only", "comparison": "B4 vs B2 and B4 vs B3"},
+    {"layer_id": "B5", "name": "confidence_shrinkage", "incremental_mechanism": "confidence shrinkage", "comparison": "B5 vs B4"},
+    {"layer_id": "B6", "name": "regime_information_incremental_value", "incremental_mechanism": "regime information", "comparison": "B6 vs B5"}
+  ],
+  "hard_stops": [
+    "B0 is not reproducible",
+    "window catalog is not frozen",
+    "scorecard parameters are not frozen",
+    "any layer emits official target weight semantics",
+    "signal robustness is BLOCKED",
+    "stress, cost/benchmark or window stability is WEAK/FRAGILE",
+    "comparison versus baseline has no independent net gain"
+  ],
+  "reader_brief": {
+    "summary": "B0-B6 消融顺序已冻结，每层只增加一个主要假设。",
+    "key_result": "ABLATION_PROTOCOL_FROZEN",
+    "blocking_issues": "B0 control 和 B1 execution-control mini-backfill 已完成；B1 证据 mixed，B2-B6 尚未有真实运行结果。",
+    "warnings": "不得跳过 mini-backfill 直接 full-backfill。",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "next_action": "review B1 mixed evidence before any B2-B6 runner implementation"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "production_effect": "none"
+  }
+}

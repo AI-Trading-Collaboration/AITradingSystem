@@ -1,0 +1,38 @@
+{
+  "b4_interaction_classification": "INCONCLUSIVE",
+  "b4_status": "B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+  "blocked_comparisons": [
+    "C x R",
+    "C x T",
+    "C x E",
+    "C x R x T"
+  ],
+  "blocking_source": "docs/research/b4_risk_tilt_interaction_result.json",
+  "generated_at": "2026-06-19T09:26:40.360052+00:00",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "CONFIDENCE_INTERACTION_BLOCKED_CORE_COMBO_INCONCLUSIVE",
+    "next_action": "continue only after the stated blocker is resolved",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Confidence interaction review is blocked by B4 inconclusive evidence.",
+    "warnings": "research-only; no official target weights or production effect"
+  },
+  "reason": "No screened core combination is ready for confidence shrinkage; B4 reports only partial utility and missing full scorecard gates.",
+  "report_type": "confidence_interaction_review",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "CONFIDENCE_INTERACTION_BLOCKED_CORE_COMBO_INCONCLUSIVE",
+  "task_id": "TRADING-515B"
+}

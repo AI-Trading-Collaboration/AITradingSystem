@@ -1,0 +1,156 @@
+{
+  "added_mechanism": "execution_no_trade_turnover_control_only",
+  "artifact_boundary": {
+    "evaluation_artifact_id": "WRP1-20260619T085127Z-B1E-B0R-b1e-vs-b0r-evaluation",
+    "executed_weight_artifact_id": "WRP1-20260619T085127Z-B1E-B0R-b1e-executed-weight-path",
+    "feature_artifact_id": "WRP1-20260619T085127Z-B1E-B0R-price-return-feature-artifact",
+    "run_manifest_artifact_id": "WRP1-20260619T085127Z-B1E-B0R-run-manifest",
+    "signal_artifact_id": "WRP1-20260619T085127Z-B1E-B0R-no-signal-artifact",
+    "target_path_artifact_id": "WRP1-20260619T085127Z-B1E-B0R-static-target-path"
+  },
+  "attribution_gate": {
+    "b1_attribution_valid": true,
+    "b2_b3_continuation_condition": "B1_ATTRIBUTION_VALID_*",
+    "b2_b3_may_continue": true,
+    "e0_e1_variants_required_for_r_t": true,
+    "execution_default_candidate_allowed": false
+  },
+  "b0h_metrics": {
+    "cagr": 0.6436060539766779,
+    "calmar": 10.303370889451724,
+    "max_drawdown": -0.06246558149581727,
+    "sharpe": 3.234727156997759,
+    "sortino": 5.716313794685279,
+    "time_in_market": 1.0,
+    "total_return": 0.32312327586413025,
+    "turnover": 0.0
+  },
+  "b0r_metrics": {
+    "cagr": 0.6212340705020254,
+    "calmar": 10.137334965228895,
+    "max_drawdown": -0.061281793748836466,
+    "sharpe": 3.246793362595372,
+    "sortino": 5.7388111195247795,
+    "time_in_market": 1.0,
+    "total_return": 0.31294459258813934,
+    "turnover": 0.5987679672402312
+  },
+  "b1e_metrics": {
+    "cagr": 0.6278562664757685,
+    "calmar": 10.051235439436518,
+    "max_drawdown": -0.06246558149581727,
+    "sharpe": 3.2354138566255175,
+    "sortino": 5.711548913544178,
+    "time_in_market": 1.0,
+    "total_return": 0.315963876284143,
+    "turnover": 0.12431805306786908
+  },
+  "b1e_vs_b0h_secondary_comparison": {
+    "cagr_delta": -0.015749787500909385,
+    "drawdown_reduction": 0.0,
+    "return_delta": -0.007159399579987236,
+    "sharpe_delta": 0.0006866996277583581,
+    "turnover_delta": 0.12431805306786908
+  },
+  "b1e_vs_b0r_comparison": {
+    "cagr_delta": 0.006622195973743139,
+    "drawdown_reduction": -0.0011837877469808022,
+    "return_delta": 0.003019283696003683,
+    "sharpe_delta": -0.011379505969854709,
+    "turnover_delta": -0.4744499141723621
+  },
+  "base_layer": "B0R",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "price_cache_rows": 53410,
+    "price_cache_sha256": "4f98b69eeae4793895726aa7bacac0d1505e962e85e4f22d6a22fa96ff3e8dc0",
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "execution_metrics": {
+    "average_execution_delay": "NOT_MODELED_B1_USES_SKIP_OR_TRADE_DECISIONS",
+    "constraint_hit_count": 0,
+    "cost_saved": 9.488998283447237e-05,
+    "executed_turnover": 0.12431805306786908,
+    "gross_target_turnover": 0.5987679672402311,
+    "missed_benefit_proxy": 0.0,
+    "skipped_trades": 140,
+    "urgent_risk_action_delay": "NOT_APPLICABLE_NO_RISK_SIGNAL_IN_B1"
+  },
+  "first_signal_date": "2023-01-03",
+  "forbidden_logic_check": "PASS_NO_P0_ALLOCATOR_SIGNALS_REGIME_FEATURE_STORE_OR_CONFIDENCE",
+  "generated_at": "2026-06-19T08:51:27.173658+00:00",
+  "holdout_accessed": false,
+  "input_artifacts": {
+    "contract_validation_status": "PASS",
+    "data_quality_report": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "policy_config": "D:\\Work\\AITradingSystem\\config\\etf_portfolio\\weight_research_unblock.yaml",
+    "prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv"
+  },
+  "last_signal_date": "2023-07-27",
+  "layer_id": "B1E",
+  "market_regime": "ai_after_chatgpt",
+  "policy": {
+    "allowed_mechanisms": [
+      "deadband",
+      "minimum_benefit_over_cost_threshold",
+      "turnover_budget",
+      "max_adjustment_cap"
+    ],
+    "deadband_abs_weight": 0.02,
+    "forbidden_mechanisms": [
+      "trend_signal",
+      "momentum_signal",
+      "relative_strength_signal",
+      "risk_scaler",
+      "regime_signal",
+      "confidence_shrinkage",
+      "mixed_dynamic_allocation_logic"
+    ],
+    "max_daily_turnover": 0.1,
+    "max_single_asset_adjustment": 0.05,
+    "min_benefit_cost_ratio": 1.0,
+    "policy_id": "b1_execution_control_v0_1"
+  },
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B1_ATTRIBUTION_VALID_MIXED",
+    "next_action": "冻结五层接口并建立 signal diagnostics framework",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B1E 已使用 B0R 作为 primary comparator 形成可审计归因。",
+    "warnings": "若结果为 mixed/negative，E 不得默认进入最终候选，后续 R/T 必须运行 E0/E1。"
+  },
+  "report_type": "b1_isolated_attribution_result",
+  "requested_end": "2023-07-31",
+  "requested_start": "2023-01-03",
+  "row_count": 142,
+  "run_id": "WRP1-20260619T085127Z-B1E-B0R",
+  "runtime_quality": {
+    "etf_price_quality_status": "PASS"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "signal_robustness_status": "NOT_APPLICABLE_B1_EXECUTION_CONTROL_NO_SIGNAL_INPUT",
+  "status": "B1_ATTRIBUTION_VALID_MIXED",
+  "target_path_validation": {
+    "b0r_target_path_checksum": "668f538ecc30ef2a7f54a17b76586e25d89569cfc2229e12301ee87efb7a446c",
+    "b1e_target_path_checksum": "668f538ecc30ef2a7f54a17b76586e25d89569cfc2229e12301ee87efb7a446c",
+    "same_row_count": true,
+    "same_target_path": true,
+    "status": "PASS"
+  },
+  "task_id": "TRADING-511G"
+}

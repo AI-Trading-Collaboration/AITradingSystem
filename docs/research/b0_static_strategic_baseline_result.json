@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-510",
+  "report_type": "b0_static_strategic_baseline_result",
+  "status": "B0_MINI_BACKFILL_COMPLETE_CONTROL_ONLY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "experiment_id": "WRP1-20260619-B0-001",
+  "layer_id": "B0",
+  "layer_name": "static_strategic_baseline",
+  "window": {
+    "window_id": "normal_market_regime",
+    "start_date": "2023-01-03",
+    "end_date": "2023-07-31",
+    "effective_signal_start": "2023-01-03",
+    "effective_signal_end": "2023-07-27",
+    "row_count": 142,
+    "catalog_source": "docs/research/research_window_catalog.json",
+    "allowed_stage": "B0-B6 mini-backfill",
+    "holdout_usage": false
+  },
+  "data_quality_gate": {
+    "required_command": "aits validate-data",
+    "run_status": "PASS_WITH_WARNINGS",
+    "passed": true,
+    "error_count": 0,
+    "warning_count": 1,
+    "info_count": 12,
+    "report_path": "outputs/reports/data_quality_2026-06-19.md",
+    "audit_record_path": "artifacts/data_refresh_audit/validation/validate_data_2026-06-19_088e591e9080670e.json",
+    "warning_codes": ["prices_download_manifest_checksum_missing"],
+    "price_cache": {
+      "path": "data/raw/prices_daily.csv",
+      "row_count": 53410,
+      "min_date": "2018-01-02",
+      "max_date": "2026-06-18",
+      "sha256": "4f98b69eeae4793895726aa7bacac0d1505e962e85e4f22d6a22fa96ff3e8dc0"
+    }
+  },
+  "runtime_quality": {
+    "source": "aits etf backtest run",
+    "data_quality_status_in_summary": "PASS",
+    "requested_start": "2023-01-03",
+    "requested_end": "2023-07-31",
+    "config_hash": "0ea671ed7c2f9fd4391da83a97b83cd2a2e98c15d2df0e96bf285b69bc9ac768"
+  },
+  "baseline_source": {
+    "benchmark_id": "B000",
+    "benchmark_name": "static_default_portfolio",
+    "source_policy_version": "etf_assets_v0_1",
+    "source_config_path": "config/etf_portfolio/assets.yaml",
+    "source_config_sha256": "faba16530b53fcb5bb3d596eb4eb31deed0537b67e6070945b2d12371369698a",
+    "backtest_config_path": "config/etf_portfolio/backtest.yaml",
+    "backtest_config_sha256": "df8e98a36961e57f1253688fb5dd1c767fe747f071d10455682111e6e5599580",
+    "weights": {
+      "SPY": 0.30,
+      "QQQ": 0.40,
+      "SMH": 0.15,
+      "SOXX": 0.00,
+      "CASH": 0.15
+    },
+    "semantics": "research-only static control derived from configured default_weight values; not official target weights"
+  },
+  "backtest_artifacts": {
+    "run_id": "etf-backtest-20260619T074656Z",
+    "root": "reports/etf_portfolio/backtests/weight_research_v1_b0/etf-backtest-20260619T074656Z",
+    "summary_json": "reports/etf_portfolio/backtests/weight_research_v1_b0/etf-backtest-20260619T074656Z/summary.json",
+    "summary_json_sha256": "f72971a0431ed3e1733ef516fbe344a69eccbed1b940e245b0b40bd8a2b817c6",
+    "metrics_json": "reports/etf_portfolio/backtests/weight_research_v1_b0/etf-backtest-20260619T074656Z/metrics.json",
+    "metrics_json_sha256": "ea10263cf2c1ade9526bf52cb67e44096323451d2fce9f769cd779ed7c4831ad"
+  },
+  "required_outputs": {
+    "return_proxy": 0.3131014381271231,
+    "drawdown_proxy": -0.06126027638998621,
+    "turnover": 0.0,
+    "rotation_count": 0,
+    "cost_adjusted_proxy": 0.3131014381271231,
+    "cost_adjusted_proxy_note": "B000 uses the existing static benchmark convention: no rebalance turnover after initialization and no broker/order execution model.",
+    "benchmark_relative_result": {
+      "primary_benchmark_id": "B001",
+      "primary_benchmark_name": "buy_and_hold_spy",
+      "excess_total_return": 0.11119932345522576,
+      "drawdown_reduction": 0.01411673412365144
+    },
+    "stress_result": "NOT_EVALUATED_IN_B0_NORMAL_MARKET_MINI_WINDOW",
+    "window_stability": "SINGLE_ALLOWED_MINI_WINDOW_ONLY",
+    "signal_robustness_status": "NOT_APPLICABLE_STATIC_CONTROL"
+  },
+  "benchmark_context": [
+    {"benchmark_id": "B001", "benchmark_name": "buy_and_hold_spy", "total_return": 0.20190211467189734, "cagr": 0.38592436003827624, "max_drawdown": -0.07537701051363765, "sharpe": 2.4433712325432544, "turnover": 0.0},
+    {"benchmark_id": "B005", "benchmark_name": "static_growth_balanced", "total_return": 0.273794425962014, "cagr": 0.5364354851980686, "max_drawdown": -0.05952763492853841, "sharpe": 3.2805576243265584, "turnover": 0.0},
+    {"benchmark_id": "B006", "benchmark_name": "static_ai_growth", "total_return": 0.34966067955130264, "cagr": 0.7025614797635833, "max_drawdown": -0.06495942963717649, "sharpe": 3.3121671083322526, "turnover": 0.0},
+    {"benchmark_id": "B000", "benchmark_name": "static_default_portfolio", "total_return": 0.3131014381271231, "cagr": 0.6215777896959382, "max_drawdown": -0.06126027638998621, "sharpe": 3.2481675087835313, "turnover": 0.0}
+  ],
+  "hard_stop_review": {
+    "b0_reproducible": true,
+    "window_catalog_frozen_for_mini_backfill": true,
+    "scorecard_parameters_frozen": true,
+    "official_target_weight_semantics_present": false,
+    "touched_final_holdout": false,
+    "b1_to_b6_layer_results_available": false,
+    "v3_candidate_allowed": false
+  },
+  "limitations": [
+    "This is a B0 control result only; it does not prove incremental value for B1-B6.",
+    "The untouched temporal holdout remains blocked and was not used.",
+    "Stress/window stability is not concluded from this single normal-market mini window.",
+    "B000 benchmark turnover follows the existing benchmark convention and does not model an initial broker execution ticket."
+  ],
+  "reader_brief": {
+    "summary": "B0 static strategic baseline mini-backfill completed on the cataloged normal-market diagnostic window.",
+    "key_result": "B0_MINI_BACKFILL_COMPLETE_CONTROL_ONLY",
+    "blocking_issues": "B1 execution-control mini-backfill is complete with mixed evidence; B2-B6 independent layer runners and signal robustness evidence are still missing; untouched holdout remains blocked.",
+    "warnings": "B0 is a control baseline, not a candidate promotion or v3 approval.",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "next_action": "review B1 mixed evidence before any B2-B6 claim"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

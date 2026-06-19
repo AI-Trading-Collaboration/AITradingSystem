@@ -1,0 +1,59 @@
+{
+  "gate_checks": [
+    {
+      "check": "candidate_spec_exists",
+      "status": "FAIL"
+    },
+    {
+      "check": "signal_robustness_not_blocked",
+      "status": "NOT_EVALUATED"
+    },
+    {
+      "check": "window_not_fragile",
+      "status": "NOT_EVALUATED"
+    },
+    {
+      "check": "stress_not_weak",
+      "status": "NOT_EVALUATED"
+    },
+    {
+      "check": "medium_cost_result_not_weak",
+      "status": "NOT_EVALUATED"
+    },
+    {
+      "check": "benchmark_relative_result_not_weak",
+      "status": "NOT_EVALUATED"
+    },
+    {
+      "check": "no_unresolved_negative_interaction",
+      "status": "FAIL"
+    }
+  ],
+  "generated_at": "2026-06-19T09:26:40.360052+00:00",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "V3_BLOCKED",
+    "next_action": "continue only after the stated blocker is resolved",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "V3 mini gate is blocked because no candidate spec exists.",
+    "warnings": "research-only; no official target weights or production effect"
+  },
+  "report_type": "candidate_v3_mini_gate_result",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "V3_BLOCKED",
+  "task_id": "TRADING-519",
+  "untouched_holdout_accessed": false
+}

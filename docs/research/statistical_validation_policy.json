@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-503",
+  "report_type": "statistical_validation_policy",
+  "status": "VALIDATION_POLICY_FROZEN",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "default_backtest_start": "2022-12-01",
+  "validation_sets": [
+    {"set_id": "development_windows", "use": "design and debugging", "final_holdout_allowed": false},
+    {"set_id": "diagnostic_casebook_windows", "use": "stress diagnosis and failure attribution", "final_holdout_allowed": false},
+    {"set_id": "mini_backfill_windows", "use": "first-stage gate only", "final_holdout_allowed": false},
+    {"set_id": "untouched_temporal_holdout", "use": "final independent check before any full candidate conclusion", "final_holdout_allowed": true},
+    {"set_id": "do_not_touch_until_final", "use": "reserved until final candidate check", "final_holdout_allowed": true}
+  ],
+  "required_methods": [
+    "purged_walk_forward",
+    "leave_one_regime_out",
+    "parameter_neighborhood_stability",
+    "block_bootstrap",
+    "medium_cost_assumption",
+    "high_cost_assumption",
+    "worst_window_penalty",
+    "tracking_error_budget",
+    "turnover_budget"
+  ],
+  "policy_rules": [
+    "Repeatedly used stress casebook and historical diagnostics must be tagged development or diagnostic.",
+    "No final holdout can be selected after looking at candidate results.",
+    "Full-backfill admission requires mini-backfill gate pass and scorecard frozen before execution.",
+    "Validation PASS is not a research result PASS."
+  ],
+  "reader_brief": {
+    "summary": "统计验证策略已冻结；已用诊断窗口不能再作为最终独立 holdout。",
+    "key_result": "VALIDATION_POLICY_FROZEN",
+    "blocking_issues": "actual untouched holdout dates must be preserved in research_window_catalog before full-backfill.",
+    "warnings": "development/diagnostic results can guide redesign but cannot be final proof.",
+    "safety_boundary": "research_only=true; production_effect=none",
+    "next_action": "freeze research_window_catalog and scorecard contract"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "production_effect": "none"
+  }
+}

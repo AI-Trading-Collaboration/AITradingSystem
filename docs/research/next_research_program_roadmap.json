@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-504",
+  "report_type": "next_research_program_roadmap",
+  "status": "ROADMAP_READY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "hypotheses": [
+    {
+      "hypothesis_id": "H1",
+      "statement": "B0 plus no-trade / turnover control can improve net utility by reducing low-value rebalances.",
+      "expected_measurable_gain": "lower turnover and better medium/high cost-adjusted proxy versus B0",
+      "required_inputs": ["B0 weights", "price cache", "cost policy", "rebalance calendar"],
+      "mini_backfill_windows": ["normal_market_regime", "high_volatility_sideways_market", "false_risk_off_cluster"],
+      "kill_criteria": ["turnover not reduced", "net utility not improved versus B0", "data quality gate fails"],
+      "full_backfill_admission_rule": "UTILITY_IMPROVED versus B0 under medium and high cost without worse worst-window result",
+      "expected_failure_mode": "execution cost reduction may also suppress useful rebalance",
+      "resource_budget": "mini-backfill only before owner review",
+      "research_gate": "H1_MINI_GATE"
+    },
+    {
+      "hypothesis_id": "H2",
+      "statement": "B0 plus fast asymmetric risk overlay can improve stress and drawdown behavior without excessive recovery lag.",
+      "expected_measurable_gain": "drawdown and stress proxy improve versus B0 while benchmark-relative result is not WEAK",
+      "required_inputs": ["risk features", "drawdown casebook", "flip/rotation casebook", "B0 weights"],
+      "mini_backfill_windows": ["rapid_drawdown", "slow_drawdown", "v_shaped_recovery"],
+      "kill_criteria": ["V-shaped recovery miss is unacceptable", "false risk-off count rises materially", "stress remains WEAK"],
+      "full_backfill_admission_rule": "stress result not WEAK and cost/benchmark not WEAK versus B0",
+      "expected_failure_mode": "risk overlay improves drawdown only by missing upside",
+      "resource_budget": "risk overlay ablation only",
+      "research_gate": "H2_MINI_GATE"
+    },
+    {
+      "hypothesis_id": "H3",
+      "statement": "B0 plus slow relative tilt with confidence-shrinkage interface can produce stable allocation value.",
+      "expected_measurable_gain": "benchmark-relative proxy improves while window stability and signal robustness are not blocked",
+      "required_inputs": ["relative strength features", "AI universe map", "benchmark baseline control", "B0 weights"],
+      "mini_backfill_windows": ["normal_market_regime", "ai_semiconductor_correction", "leave_one_regime_out_mini"],
+      "kill_criteria": ["outperformance margin insufficient", "window remains FRAGILE", "parameter neighborhood unstable"],
+      "full_backfill_admission_rule": "UTILITY_IMPROVED versus B0 and B1 with stable source attribution",
+      "expected_failure_mode": "slow tilt may overfit semiconductor-relative window",
+      "resource_budget": "slow tilt only; shrinkage fields reserved until B5",
+      "research_gate": "H3_MINI_GATE"
+    }
+  ],
+  "deferred_direction": "complex regime filter combinations deferred until B1-B5 simple modules prove insufficient",
+  "reader_brief": {
+    "summary": "下一阶段只保留 H1/H2/H3 三个简单研究方向，暂不直接研究复杂 regime filter 组合。",
+    "key_result": "ROADMAP_READY",
+    "blocking_issues": "B0 control and H1/B1 execution-control mini-backfill are complete, but B1 evidence is mixed; H2/H3/B2-B6 remain blocked by independent runner, signal robustness and owner/system review requirements.",
+    "warnings": "Roadmap and B1 mixed evidence are research-only and do not approve candidate v3.",
+    "safety_boundary": "manual_review_only=true; no paper-shadow; production_effect=none",
+    "next_action": "review B1 mixed evidence before deciding whether to implement H2/B2 or H3/B3"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "production_effect": "none"
+  }
+}

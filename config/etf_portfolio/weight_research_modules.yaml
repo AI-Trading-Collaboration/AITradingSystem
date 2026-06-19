@@ -1,0 +1,65 @@
+policy_metadata:
+  version: weight_research_modules_v0_1
+  status: pilot_baseline_pre_experiment
+  owner: system
+  rationale: "Freeze B2/B3 research-only signal and target-mapping parameters before mini-backfill so thresholds cannot be changed after seeing results."
+  intended_effect: "Support auditable B2/B3 module attribution without official target weights or production execution."
+  validation: "Covered by focused unit tests, signal diagnostics, validate-data gate, and mini-backfill artifacts before any synthesis."
+  review_condition: "Review after B2/B3 mini-backfills, before B4 interaction, or whenever owner supplies better calibrated policy inputs."
+
+b2_risk_signal:
+  signal_id: b2_fast_asymmetric_risk_signal_v0_1
+  source_feature_columns:
+    - realized_vol_20d
+    - drawdown_63d
+    - above_ma_200
+  score_mapping_source: config/etf_portfolio/strategy.yaml#score_mapping
+  risk_off_score_max: 45.0
+  elevated_risk_score_max: 65.0
+  min_coverage: 0.80
+  max_stale_days: 10
+  rationale: "Use existing governed ETF risk feature mapping, then classify portfolio-level risk state from weighted risk score."
+
+b2_target_mapping:
+  mapping_id: b2_risk_scaler_target_mapping_v0_1
+  normal_exposure_scaler: 1.00
+  elevated_risk_exposure_scaler: 0.85
+  risk_off_exposure_scaler: 0.55
+  cash_symbol: CASH
+  rationale: "Fast de-risk by reducing total equity exposure only; do not change relative asset selection."
+  forbidden_mechanisms:
+    - relative_tilt
+    - momentum_allocation
+    - regime_allocation
+    - execution_control
+    - official_target_weights
+
+b3_relative_tilt_signal:
+  signal_id: b3_slow_relative_tilt_signal_v0_1
+  source_feature_columns:
+    SPY: []
+    QQQ:
+      - rs_vs_spy_60d
+    SMH:
+      - rs_vs_qqq_60d
+      - rs_vs_spy_60d
+  score_mapping_source: config/etf_portfolio/strategy.yaml#score_mapping
+  neutral_score: 50.0
+  underweight_score_max: 40.0
+  overweight_score_min: 60.0
+  min_coverage: 0.80
+  max_stale_days: 10
+  rationale: "Use existing relative-strength feature mapping to create a slow tilt signal for current non-cash baseline holdings."
+
+b3_target_mapping:
+  mapping_id: b3_slow_relative_tilt_target_mapping_v0_1
+  max_relative_tilt: 0.25
+  preserve_total_equity_exposure: true
+  cash_symbol: CASH
+  rationale: "Reallocate within existing non-cash baseline holdings while preserving total equity exposure; do not add risk scaling or execution control."
+  forbidden_mechanisms:
+    - risk_scaling
+    - momentum_allocation
+    - regime_allocation
+    - execution_control
+    - official_target_weights

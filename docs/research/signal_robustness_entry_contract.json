@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-511B",
+  "report_type": "signal_robustness_entry_contract",
+  "status": "SIGNAL_ROBUSTNESS_ENTRY_CONTRACT_FROZEN",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "contract_version": "signal_robustness_entry_v1",
+  "required_inputs": [
+    "ablation_runner_scope_freeze",
+    "research_window_catalog_or_holdout_policy",
+    "validated_price_cache",
+    "layer_specific_feature_manifest",
+    "layer_specific_signal_series",
+    "schema_version_manifest"
+  ],
+  "required_feature_columns": {
+    "common": ["date", "symbol", "source_artifact_id", "feature_schema_version", "data_quality_status"],
+    "B1": [],
+    "B2": ["date", "symbol", "drawdown_state", "volatility_state", "feature_schema_version", "data_quality_status"],
+    "B3": ["date", "symbol", "relative_strength_state", "feature_schema_version", "data_quality_status"],
+    "B4": ["date", "symbol", "B2_result_ref", "B3_result_ref", "feature_schema_version", "data_quality_status"],
+    "B5": ["date", "symbol", "confidence_state", "feature_schema_version", "data_quality_status"],
+    "B6": ["date", "symbol", "regime_state", "feature_schema_version", "data_quality_status"]
+  },
+  "required_signal_series": {
+    "B1": [],
+    "B2": ["risk_scaler_signal"],
+    "B3": ["slow_relative_tilt_signal"],
+    "B4": ["B2_result", "B3_result"],
+    "B5": ["confidence_shrinkage_signal"],
+    "B6": ["regime_information_signal"]
+  },
+  "coverage_threshold": {
+    "min_symbol_date_coverage": 0.95,
+    "min_required_window_coverage": 1.0,
+    "min_non_null_signal_coverage": 0.95,
+    "policy_metadata": {
+      "version": "signal_robustness_entry_v1",
+      "status": "pilot_baseline",
+      "owner": "system",
+      "rationale": "Prevent sparse or stale signal series from entering B2-B6 ablation results.",
+      "intended_effect": "Fail closed when layer-specific signals are too incomplete to support independent attribution.",
+      "validation_evidence": "Focused tests cover missing required fields, stale behavior and blocking conditions.",
+      "review_condition": "Review after B1/B2 mini-backfill or before any full-backfill admission."
+    }
+  },
+  "stale_input_behavior": {
+    "max_calendar_days_since_source_update": 5,
+    "on_stale_required_input": "FAIL_CLOSED",
+    "on_stale_optional_warning_input": "WARN_ONLY_WITH_DISCLOSURE"
+  },
+  "schema_compatibility": {
+    "required_schema_version_fields": ["feature_schema_version", "signal_schema_version"],
+    "compatible_versions": ["v1"],
+    "on_unknown_schema_version": "FAIL_CLOSED"
+  },
+  "fail_closed_behavior": [
+    "missing required feature column",
+    "missing required signal series",
+    "coverage below threshold",
+    "stale required input",
+    "unknown schema version",
+    "data quality gate failed",
+    "mixed logic detected",
+    "official target weight semantics present"
+  ],
+  "allowed_warnings": [
+    "B1 has no signal series because it is execution-control only",
+    "non-blocking optional diagnostic series missing",
+    "validate-data PASS_WITH_WARNINGS when warnings are disclosed"
+  ],
+  "blocking_conditions": [
+    "signal robustness status BLOCKED",
+    "coverage below configured threshold",
+    "stale required signal or feature input",
+    "required layer signal unavailable",
+    "schema compatibility failure",
+    "using P0 mixed dynamic strategy instead of a layer-specific runner"
+  ],
+  "layer_entry_rules": {
+    "B1": {
+      "signal_robustness_required": false,
+      "entry_status": "NO_SIGNAL_LAYER_ALLOWED",
+      "required_disclosure": "B1 must disclose that no signal series is consumed and must fail if any trend/momentum/relative/risk/regime/confidence signal is supplied."
+    },
+    "B2": {"signal_robustness_required": true, "entry_status": "REQUIRES_VALIDATED_SIGNAL_ROBUSTNESS"},
+    "B3": {"signal_robustness_required": true, "entry_status": "REQUIRES_VALIDATED_SIGNAL_ROBUSTNESS"},
+    "B4": {"signal_robustness_required": true, "entry_status": "REQUIRES_B2_B3_SIGNAL_ROBUSTNESS"},
+    "B5": {"signal_robustness_required": true, "entry_status": "REQUIRES_VALIDATED_CONFIDENCE_SIGNAL"},
+    "B6": {"signal_robustness_required": true, "entry_status": "REQUIRES_VALIDATED_REGIME_SIGNAL"}
+  },
+  "reader_brief": {
+    "summary": "Signal robustness entry contract is frozen before later ablation layers.",
+    "key_result": "SIGNAL_ROBUSTNESS_ENTRY_CONTRACT_FROZEN",
+    "blocking_issues": "B2-B6 cannot run until their layer-specific signals pass coverage, freshness and schema checks.",
+    "warnings": "B1 is allowed to run with no signal series only because it is execution-control only.",
+    "safety_boundary": "research_only=true; production_effect=none",
+    "next_action": "validate contracts, then run B1-only execution control"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

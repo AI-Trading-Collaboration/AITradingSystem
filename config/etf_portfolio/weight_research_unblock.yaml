@@ -1,0 +1,32 @@
+policy_metadata:
+  version: weight_research_unblock_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "Freeze B1 execution-control knobs before running the first post-B0 ablation; values are conservative pilot controls, not calibrated investment conclusions."
+  validation: "Covered by focused contract and B1 runner tests; must be reviewed after B1 mini-backfill before any B2-B6 execution."
+  review_condition: "Review before any full-backfill, before any parameter change, or after B1 mini-backfill shows mixed/weak utility."
+
+b1_execution_control:
+  policy_id: b1_execution_control_v0_1
+  deadband_abs_weight: 0.02
+  min_benefit_cost_ratio: 1.0
+  max_daily_turnover: 0.10
+  max_single_asset_adjustment: 0.05
+  cost_source: config/etf_portfolio/risk.yaml#transaction_costs
+  allowed_mechanisms:
+    - deadband
+    - minimum_benefit_over_cost_threshold
+    - turnover_budget
+    - max_adjustment_cap
+  forbidden_mechanisms:
+    - trend_signal
+    - momentum_signal
+    - relative_strength_signal
+    - risk_scaler
+    - regime_signal
+    - confidence_shrinkage
+    - mixed_dynamic_allocation_logic
+  rationale: "B1 tests whether explicit rebalance friction around B0 static weights can reduce churn without adding any signal or risk logic."
+  intended_effect: "Only change execution path from an idealized static target to a no-trade/limited-adjustment path when drift is small or cost benefit is insufficient."
+  validation_evidence: "Planned validation: 511A-C contract validation, validate-data gate, B1 mini-backfill, and B1 vs B0 comparison."
+  review_condition: "Review after B1 mini-backfill; do not reuse these values for official target weights or production execution."

@@ -1,0 +1,80 @@
+{
+  "blocked_modules": [
+    "C",
+    "G"
+  ],
+  "conditional_modules": [
+    "E"
+  ],
+  "generated_at": "2026-06-19T09:26:40.360052+00:00",
+  "inconclusive_modules": [
+    "R",
+    "T",
+    "R x T"
+  ],
+  "market_regime": "ai_after_chatgpt",
+  "module_decisions": [
+    {
+      "decision": "CONDITIONAL",
+      "module": "E",
+      "reason": "B1E is valid mixed; improves turnover but cannot default into final candidates."
+    },
+    {
+      "decision": "INCONCLUSIVE",
+      "module": "R",
+      "reason": "B2 completed mini-backfill but full stress/benchmark/scorecard gates are missing."
+    },
+    {
+      "decision": "INCONCLUSIVE",
+      "module": "T",
+      "reason": "B3 completed mini-backfill but worsened E1 return/drawdown in the mini window."
+    },
+    {
+      "decision": "INCONCLUSIVE",
+      "module": "R x T",
+      "reason": "Only return/drawdown/turnover partial utility is available; frozen scorecard components for tracking error, worst-window, dispersion, cost drag, stress and signal robustness penalties are not complete."
+    },
+    {
+      "decision": "BLOCKED",
+      "module": "C",
+      "reason": "No screened core combination is ready for confidence shrinkage; B4 reports only partial utility and missing full scorecard gates."
+    },
+    {
+      "decision": "BLOCKED",
+      "module": "G",
+      "reason": "B5 confidence review is blocked and B4 is INCONCLUSIVE; there is no selected pre-regime combination to test."
+    }
+  ],
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "INCONCLUSIVE",
+    "next_action": "continue only after the stated blocker is resolved",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Main and interaction synthesis is inconclusive after B4.",
+    "warnings": "research-only; no official target weights or production effect"
+  },
+  "rejected_modules": [],
+  "report_type": "main_interaction_effect_synthesis",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "selected_modules": [],
+  "source_statuses": {
+    "B1": "B1_ATTRIBUTION_VALID_MIXED",
+    "B2": "B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+    "B3": "B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+    "B4": "B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY"
+  },
+  "status": "INCONCLUSIVE",
+  "task_id": "TRADING-517"
+}

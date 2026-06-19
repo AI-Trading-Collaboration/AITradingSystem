@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-511A",
+  "report_type": "ablation_runner_scope_freeze",
+  "status": "ABLATION_RUNNER_SCOPE_FROZEN",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "scope_version": "weight_research_ablation_scope_v1",
+  "layers": [
+    {
+      "layer_id": "B0",
+      "name": "static_strategic_baseline",
+      "base_layer": null,
+      "added_mechanism": "static_strategic_baseline_only",
+      "allowed_mechanisms": ["static_strategic_baseline"],
+      "forbidden_mechanisms": ["execution_control", "fast_asymmetric_risk_scaler", "slow_relative_tilt", "confidence_shrinkage", "regime_information", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["price_returns", "static_default_weights"],
+      "runner_contract": "control only"
+    },
+    {
+      "layer_id": "B1",
+      "name": "execution_control_baseline",
+      "base_layer": "B0",
+      "added_mechanism": "execution_no_trade_turnover_control_only",
+      "allowed_mechanisms": ["deadband", "minimum_benefit_over_cost_threshold", "turnover_budget", "max_adjustment_cap"],
+      "forbidden_mechanisms": ["trend_signal", "momentum_signal", "relative_strength_signal", "risk_scaler", "regime_signal", "confidence_shrinkage", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["price_returns", "static_default_weights", "transaction_cost_policy"],
+      "runner_contract": "must not call P0 allocator, signals, regimes or feature store"
+    },
+    {
+      "layer_id": "B2",
+      "name": "fast_asymmetric_risk_scaler",
+      "base_layer": "B0",
+      "added_mechanism": "fast_asymmetric_risk_scaler_only",
+      "allowed_mechanisms": ["fast_derisk_scaler", "slow_reentry_scaler"],
+      "forbidden_mechanisms": ["execution_control", "slow_relative_tilt", "regime_signal", "confidence_shrinkage", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["price_returns", "drawdown_state", "volatility_state"],
+      "runner_contract": "must isolate risk scaler from relative tilt and regime logic"
+    },
+    {
+      "layer_id": "B3",
+      "name": "slow_relative_tilt",
+      "base_layer": "B0",
+      "added_mechanism": "slow_relative_tilt_only",
+      "allowed_mechanisms": ["relative_tilt"],
+      "forbidden_mechanisms": ["execution_control", "fast_asymmetric_risk_scaler", "regime_signal", "confidence_shrinkage", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["price_returns", "relative_strength_state"],
+      "runner_contract": "must isolate slow tilt from risk scaler and regime logic"
+    },
+    {
+      "layer_id": "B4",
+      "name": "tilt_plus_risk_scaler",
+      "base_layer": ["B2", "B3"],
+      "added_mechanism": "b2_b3_combination_only",
+      "allowed_mechanisms": ["fast_asymmetric_risk_scaler", "slow_relative_tilt", "combination_interface"],
+      "forbidden_mechanisms": ["execution_control", "regime_signal", "confidence_shrinkage", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["B2_result", "B3_result"],
+      "runner_contract": "must combine only validated B2 and B3 outputs"
+    },
+    {
+      "layer_id": "B5",
+      "name": "confidence_shrinkage",
+      "base_layer": "B4",
+      "added_mechanism": "confidence_shrinkage_only",
+      "allowed_mechanisms": ["confidence_shrinkage"],
+      "forbidden_mechanisms": ["execution_control", "new_relative_tilt", "new_risk_scaler", "regime_signal", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["B4_result", "confidence_state"],
+      "runner_contract": "must shrink B4 output without adding new signals"
+    },
+    {
+      "layer_id": "B6",
+      "name": "regime_information_incremental_value",
+      "base_layer": "B5",
+      "added_mechanism": "regime_information_only",
+      "allowed_mechanisms": ["regime_information"],
+      "forbidden_mechanisms": ["execution_control", "new_relative_tilt", "new_risk_scaler", "new_confidence_policy", "mixed_dynamic_allocation_logic"],
+      "input_series_allowed": ["B5_result", "regime_state"],
+      "runner_contract": "must prove regime information adds value above B5"
+    }
+  ],
+  "global_forbidden_substitutes": [
+    "P0 dynamic strategy",
+    "allocate_portfolio mixed allocator",
+    "generate_signals_for_date",
+    "generate_regime_for_date",
+    "feature store driven mixed logic",
+    "paper_shadow_candidate",
+    "official_target_weights",
+    "broker_order_artifact",
+    "production_mutation"
+  ],
+  "runner_requirements": [
+    "Each runner declares exactly one added mechanism or the B4 B2+B3 combination interface.",
+    "Each runner rejects unapproved mixed logic before producing data-dependent results.",
+    "Each runner emits research-only artifacts with safety boundary fields.",
+    "Each runner must disclose data quality status and input artifact paths.",
+    "No runner may emit official target weights, paper-shadow activation, broker/order/live or production mutation."
+  ],
+  "reader_brief": {
+    "summary": "B1-B6 runner scope is frozen; existing mixed P0 dynamic strategy is explicitly forbidden as an ablation substitute.",
+    "key_result": "ABLATION_RUNNER_SCOPE_FROZEN",
+    "blocking_issues": "B2-B6 still require independent runners; B1 may run only through the B1-only execution-control runner.",
+    "warnings": "Scope freeze is not a research result PASS.",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "next_action": "validate 511A-C contracts before running B1"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

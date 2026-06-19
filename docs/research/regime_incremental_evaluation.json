@@ -1,0 +1,30 @@
+{
+  "blocked_comparison": "best_pre_regime_combination_vs_same_plus_regime",
+  "generated_at": "2026-06-19T09:26:40.360052+00:00",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "REGIME_INCREMENTAL_EVALUATION_BLOCKED_NO_PRE_REGIME_COMBO",
+    "next_action": "continue only after the stated blocker is resolved",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Regime incremental evaluation is blocked before a best pre-regime combo exists.",
+    "warnings": "research-only; no official target weights or production effect"
+  },
+  "reason": "B5 confidence review is blocked and B4 is INCONCLUSIVE; there is no selected pre-regime combination to test.",
+  "report_type": "regime_incremental_evaluation",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "REGIME_INCREMENTAL_EVALUATION_BLOCKED_NO_PRE_REGIME_COMBO",
+  "task_id": "TRADING-516B"
+}

@@ -1,0 +1,44 @@
+{
+  "allowed_inputs": [
+    "input_completeness",
+    "signal_agreement",
+    "schema_compatibility",
+    "market_coverage",
+    "recent_calibration_stability",
+    "uncertainty_measures"
+  ],
+  "entry_rule": "Run only after a core E/R/T combination has non-BLOCKED signal diagnostics, same-window controls, and non-INCONCLUSIVE interaction evidence.",
+  "forbidden_inputs": [
+    "future_returns",
+    "evaluation_result",
+    "holdout_performance",
+    "owner_decision",
+    "broker_or_order_state"
+  ],
+  "generated_at": "2026-06-19T09:26:40.360052+00:00",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "CONFIDENCE_CONTRACT_READY_RESEARCH_ONLY",
+    "next_action": "continue only after the stated blocker is resolved",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Confidence shrinkage contract is frozen but not allowed to run yet.",
+    "warnings": "research-only; no official target weights or production effect"
+  },
+  "report_type": "confidence_shrinkage_contract",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "CONFIDENCE_CONTRACT_READY_RESEARCH_ONLY",
+  "task_id": "TRADING-515A"
+}

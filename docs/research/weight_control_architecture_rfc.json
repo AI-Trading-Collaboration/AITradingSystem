@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-501",
+  "report_type": "weight_control_architecture_rfc",
+  "status": "RFC_READY_FOR_RESEARCH_ONLY_IMPLEMENTATION",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "architecture": {
+    "strategic_baseline_weight": "research-only static control, proposed source config/etf_portfolio/assets.yaml default_weight",
+    "slow_relative_tilt": "low-frequency relative allocation adjustment",
+    "fast_asymmetric_risk_overlay": "fast de-risk and slower or conditional re-entry",
+    "confidence_shrinkage": "shrink dynamic output back toward strategic baseline under weak evidence",
+    "execution_turnover_control": "no-trade band, turnover budget and benefit-over-cost gate"
+  },
+  "layers": [
+    {
+      "layer_id": "signal_layer",
+      "inputs": ["price features", "market features", "risk features", "fundamental or valuation features", "source artifact refs"],
+      "outputs": ["normalized_signal_state", "confidence_state", "schema_version", "data_quality_status"],
+      "allowed_variables": ["signal value", "signal direction", "confidence", "missingness flags"],
+      "forbidden_outputs": ["target_weight", "order", "broker_action", "paper_shadow_activation"]
+    },
+    {
+      "layer_id": "allocator_layer",
+      "inputs": ["strategic baseline weights", "slow signal score", "confidence state"],
+      "outputs": ["research_only_hypothetical_allocation", "tilt_explanation", "constraint_hits"],
+      "allowed_variables": ["tilt score", "tilt cap", "baseline shrinkage amount"],
+      "forbidden_outputs": ["official target weight", "broker order", "production config mutation"]
+    },
+    {
+      "layer_id": "risk_control_layer",
+      "inputs": ["risk state", "drawdown state", "volatility state", "stress labels"],
+      "outputs": ["risk_exposure_scaler", "risk_state_reason", "reentry_state"],
+      "allowed_variables": ["fast de-risk scaler", "slow re-entry scaler", "partial recovery scaler"],
+      "forbidden_outputs": ["research success conclusion", "trade instruction"]
+    },
+    {
+      "layer_id": "execution_layer",
+      "inputs": ["previous hypothetical allocation", "candidate hypothetical allocation", "cost policy", "turnover budget"],
+      "outputs": ["simulated_rebalance_path", "turnover_proxy", "cost_adjusted_proxy", "no_trade_reason"],
+      "allowed_variables": ["deadband", "minimum benefit over cost", "max daily adjustment", "max weekly adjustment"],
+      "forbidden_outputs": ["order ticket", "broker routing", "official target weights"]
+    }
+  ],
+  "signal_to_score_contract": "Signal layer emits normalized score and confidence; allocator consumes score only after schema/data-quality checks pass.",
+  "score_to_tilt_contract": "Allocator maps score to bounded slow tilt around strategic baseline, then applies confidence shrinkage.",
+  "risk_state_to_exposure_contract": "Risk-control layer emits a scalar/cap that can reduce exposure faster than it restores exposure.",
+  "execution_control_contract": "Execution layer can leave research-only allocation unchanged when turnover cost exceeds expected benefit.",
+  "reader_brief": {
+    "summary": "下一阶段权重控制拆成 signal、allocator、risk-control 和 execution layers，不再让单一 regime-to-weight 规则承担全部功能。",
+    "key_result": "RFC_READY_FOR_RESEARCH_ONLY_IMPLEMENTATION",
+    "blocking_issues": "B0 control 和 B1 execution-control runner 已完成；B1 证据 mixed，B2-B6 独立 runner 尚未实现，不得解释为策略上线。",
+    "warnings": "所有 allocation outputs 都是 research-only hypothetical allocation；B1 mixed evidence 不授权后续层自动执行。",
+    "safety_boundary": "no paper-shadow, no official target weights, no broker/order, production_effect=none",
+    "next_action": "review B1 mixed evidence before later mechanisms"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "hypothetical_only": true,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "production_effect": "none"
+  }
+}

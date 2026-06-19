@@ -1115,6 +1115,39 @@ from ai_trading_system.etf_portfolio.weight_calibration_profiling import (
     write_weight_calibration_profiling_report,
     write_weight_calibration_profiling_validation_report,
 )
+from ai_trading_system.etf_portfolio.weight_research_b2 import (
+    DEFAULT_WEIGHT_RESEARCH_MODULES_CONFIG_PATH,
+    run_b2_risk_scaler_research,
+)
+from ai_trading_system.etf_portfolio.weight_research_b3 import run_b3_relative_tilt_research
+from ai_trading_system.etf_portfolio.weight_research_b4 import run_b4_interaction_research
+from ai_trading_system.etf_portfolio.weight_research_checkpoint import (
+    run_weight_research_checkpoint,
+)
+from ai_trading_system.etf_portfolio.weight_research_interfaces import (
+    build_dependency_boundary_validation,
+    build_research_layer_interface_contract,
+    build_signal_diagnostics_framework_contract,
+    write_dependency_boundary_validation,
+    write_research_layer_interface_contract,
+    write_signal_diagnostics_framework_contract,
+)
+from ai_trading_system.etf_portfolio.weight_research_unblock import (
+    DEFAULT_HISTORICAL_B1_RESULT_PATH,
+    DEFAULT_HOLDOUT_POLICY_PATH,
+    DEFAULT_RESEARCH_SOURCE_DIR,
+    DEFAULT_SCOPE_FREEZE_PATH,
+    DEFAULT_SIGNAL_ROBUSTNESS_CONTRACT_PATH,
+    DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    DEFAULT_WEIGHT_RESEARCH_UNBLOCK_CONFIG_PATH,
+    build_b1_metric_semantics_audit,
+    build_contract_validation,
+    run_b1_execution_control,
+    run_b1_isolated_attribution,
+    run_static_baseline_family,
+    write_b1_metric_semantics_audit,
+    write_contract_validation,
+)
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -1159,6 +1192,10 @@ parameter_review_app = typer.Typer(
 )
 weight_calibration_app = typer.Typer(
     help="ETF dual-track weight calibration。",
+    no_args_is_help=True,
+)
+weight_research_app = typer.Typer(
+    help="ETF weight research unblock and ablation runner workflow。",
     no_args_is_help=True,
 )
 ops_app = typer.Typer(help="ETF operations workflow planning。", no_args_is_help=True)
@@ -2237,6 +2274,7 @@ etf_app.add_typer(weekly_review_app, name="weekly-review")
 etf_app.add_typer(decision_journal_app, name="decision-journal")
 etf_app.add_typer(parameter_review_app, name="parameter-review")
 etf_app.add_typer(weight_calibration_app, name="weight-calibration")
+etf_app.add_typer(weight_research_app, name="weight-research")
 etf_app.add_typer(ops_app, name="ops")
 etf_app.add_typer(data_quality_app, name="data-quality")
 etf_app.add_typer(evidence_dashboard_app, name="evidence-dashboard")
@@ -35785,6 +35823,508 @@ def backtest_diagnostics_command(
     typer.echo(f"ETF allocation stability status：{payload['status']}")
     typer.echo(f"JSON：{json_path}")
     typer.echo(f"Markdown：{markdown_path}")
+
+
+@weight_research_app.command("validate-contracts")
+def weight_research_validate_contracts_command(
+    scope_path: Annotated[
+        Path,
+        typer.Option("--scope-path", help="511A ablation runner scope freeze JSON。"),
+    ] = DEFAULT_SCOPE_FREEZE_PATH,
+    signal_contract_path: Annotated[
+        Path,
+        typer.Option("--signal-contract-path", help="511B signal robustness contract JSON。"),
+    ] = DEFAULT_SIGNAL_ROBUSTNESS_CONTRACT_PATH,
+    holdout_policy_path: Annotated[
+        Path,
+        typer.Option("--holdout-policy-path", help="511C untouched holdout policy JSON。"),
+    ] = DEFAULT_HOLDOUT_POLICY_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Weight research unblock policy YAML。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_UNBLOCK_CONFIG_PATH,
+    layer_id: Annotated[str, typer.Option("--layer-id", help="Layer to validate。")] = "B1",
+    start: Annotated[str | None, typer.Option("--from", help="Optional run window start。")] = None,
+    end: Annotated[str | None, typer.Option("--to", help="Optional run window end。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Validation output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+) -> None:
+    """Validate 511A-C contracts before any B1-B6 ablation runner."""
+    run_start = _parse_date(start) if start else None
+    run_end = _parse_date(end) if end else None
+    payload = build_contract_validation(
+        scope_path=scope_path,
+        signal_contract_path=signal_contract_path,
+        holdout_policy_path=holdout_policy_path,
+        config_path=config_path,
+        layer_id=layer_id,
+        run_start=run_start,
+        run_end=run_end,
+    )
+    json_path, markdown_path = write_contract_validation(payload, output_dir=output_dir)
+    typer.echo(f"weight_research_contract_validation_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("audit-b1")
+def weight_research_audit_b1_command(
+    historical_b1_path: Annotated[
+        Path,
+        typer.Option("--historical-b1-path", help="Historical 511D B1 result JSON。"),
+    ] = DEFAULT_HISTORICAL_B1_RESULT_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Audit output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical audit artifact。",
+        ),
+    ] = False,
+) -> None:
+    """Audit historical B1 metric semantics and comparator attribution."""
+    payload = build_b1_metric_semantics_audit(historical_b1_path=historical_b1_path)
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    json_path, markdown_path = write_b1_metric_semantics_audit(
+        payload,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"b1_metric_semantics_audit_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b1_metric_semantics_and_comparator_audit.json'}"
+        )
+    if payload["status"] == "B1_ATTRIBUTION_INVALID":
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("run-static-baselines")
+def weight_research_run_static_baselines_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    start: Annotated[str, typer.Option("--from", help="Baseline mini-backfill start date。")] = (
+        "2023-01-03"
+    ),
+    end: Annotated[str, typer.Option("--to", help="Baseline mini-backfill end date。")] = (
+        "2023-07-31"
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Baseline output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
+    ] = None,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical baseline artifact。",
+        ),
+    ] = False,
+) -> None:
+    """Run B0H/B0R static baseline family for B1 attribution repair."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payload, json_path, markdown_path, daily_path = run_static_baseline_family(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        data_quality_output_path=data_quality_output_path,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"static_baseline_family_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    typer.echo(f"Daily：{daily_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'static_baseline_family_result.json'}"
+        )
+    if payload["status"] == "STATIC_BASELINE_FAMILY_BLOCKED":
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("run-b1-attribution")
+def weight_research_run_b1_attribution_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    start: Annotated[str, typer.Option("--from", help="B1E attribution start date。")] = (
+        "2023-01-03"
+    ),
+    end: Annotated[str, typer.Option("--to", help="B1E attribution end date。")] = (
+        "2023-07-31"
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B1E attribution output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
+    ] = None,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical attribution artifact。",
+        ),
+    ] = False,
+) -> None:
+    """Run isolated B1E vs B0R attribution gate."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payload, json_path, markdown_path, daily_path = run_b1_isolated_attribution(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        data_quality_output_path=data_quality_output_path,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"b1_isolated_attribution_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    typer.echo(f"Daily：{daily_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b1_isolated_attribution_result.json'}"
+        )
+    if payload["status"] == "B1_ATTRIBUTION_INVALID":
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("freeze-interfaces")
+def weight_research_freeze_interfaces_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Interface contract output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical 512A/512B artifacts。",
+        ),
+    ] = False,
+) -> None:
+    """Freeze research layer interfaces and signal diagnostics framework contracts."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    interface_payload = build_research_layer_interface_contract()
+    interface_json, interface_md = write_research_layer_interface_contract(
+        interface_payload,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    dependency_payload = build_dependency_boundary_validation()
+    dependency_json, dependency_md = write_dependency_boundary_validation(
+        dependency_payload,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    diagnostics_payload = build_signal_diagnostics_framework_contract()
+    diagnostics_json, diagnostics_md = write_signal_diagnostics_framework_contract(
+        diagnostics_payload,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"research_layer_interface_status={interface_payload['status']}")
+    typer.echo(f"dependency_boundary_validation_status={dependency_payload['status']}")
+    typer.echo(f"signal_diagnostics_framework_status={diagnostics_payload['status']}")
+    typer.echo(f"Interface JSON：{interface_json}")
+    typer.echo(f"Interface Markdown：{interface_md}")
+    typer.echo(f"Dependency JSON：{dependency_json}")
+    typer.echo(f"Dependency Markdown：{dependency_md}")
+    typer.echo(f"Diagnostics JSON：{diagnostics_json}")
+    typer.echo(f"Diagnostics Markdown：{diagnostics_md}")
+    if write_source_alias:
+        typer.echo(
+            "Source Aliases："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'research_layer_interface_contract.json'}, "
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'dependency_boundary_validation.json'}, "
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'signal_diagnostics_framework_contract.json'}"
+        )
+    if dependency_payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("run-b2")
+def weight_research_run_b2_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    start: Annotated[str, typer.Option("--from", help="B2 mini-backfill start date。")] = (
+        "2024-07-10"
+    ),
+    end: Annotated[str, typer.Option("--to", help="B2 mini-backfill end date。")] = (
+        "2024-08-09"
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B2 output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    modules_config_path: Annotated[
+        Path,
+        typer.Option("--modules-config", help="Weight research modules policy YAML。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_MODULES_CONFIG_PATH,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical B2 artifact。",
+        ),
+    ] = False,
+) -> None:
+    """Run B2 risk signal, diagnostics, target mapping, and E0/E1 mini-backfill."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payload, json_path, markdown_path, component_paths = run_b2_risk_scaler_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        modules_config_path=modules_config_path,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"b2_risk_scaler_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    for name, path in sorted(component_paths.items()):
+        typer.echo(f"{name}：{path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_risk_scaler_research_result.json'}"
+        )
+    if payload["status"] in {"B2_SIGNAL_BLOCKED", "B2_SIGNAL_NEEDS_REVISION"}:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("run-b3")
+def weight_research_run_b3_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    start: Annotated[str, typer.Option("--from", help="B3 mini-backfill start date。")] = (
+        "2024-07-10"
+    ),
+    end: Annotated[str, typer.Option("--to", help="B3 mini-backfill end date。")] = (
+        "2024-08-09"
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B3 output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    modules_config_path: Annotated[
+        Path,
+        typer.Option("--modules-config", help="Weight research modules policy YAML。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_MODULES_CONFIG_PATH,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical B3 artifact。",
+        ),
+    ] = False,
+) -> None:
+    """Run B3 relative-tilt signal, diagnostics, target mapping, and E0/E1 mini-backfill."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payload, json_path, markdown_path, component_paths = run_b3_relative_tilt_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        modules_config_path=modules_config_path,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"b3_relative_tilt_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    for name, path in sorted(component_paths.items()):
+        typer.echo(f"{name}：{path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b3_relative_tilt_research_result.json'}"
+        )
+    if payload["status"] in {"B3_SIGNAL_BLOCKED", "B3_SIGNAL_NEEDS_REVISION"}:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("run-b4")
+def weight_research_run_b4_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    start: Annotated[str, typer.Option("--from", help="B4 mini-backfill start date。")] = (
+        "2024-07-10"
+    ),
+    end: Annotated[str, typer.Option("--to", help="B4 mini-backfill end date。")] = (
+        "2024-08-09"
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B4 output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    modules_config_path: Annotated[
+        Path,
+        typer.Option("--modules-config", help="Weight research modules policy YAML。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_MODULES_CONFIG_PATH,
+    b2_result_path: Annotated[
+        Path,
+        typer.Option("--b2-result", help="Canonical B2 result JSON。"),
+    ] = DEFAULT_RESEARCH_SOURCE_DIR / "b2_risk_scaler_research_result.json",
+    b3_result_path: Annotated[
+        Path,
+        typer.Option("--b3-result", help="Canonical B3 result JSON。"),
+    ] = DEFAULT_RESEARCH_SOURCE_DIR / "b3_relative_tilt_research_result.json",
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research canonical B4 artifact。",
+        ),
+    ] = False,
+) -> None:
+    """Run B4 B2-risk x B3-tilt interaction and E0/E1 mini-backfill."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payload, json_path, markdown_path, component_paths = run_b4_interaction_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        modules_config_path=modules_config_path,
+        b2_result_path=b2_result_path,
+        b3_result_path=b3_result_path,
+        alias_dir=alias_dir,
+    )
+    typer.echo(f"b4_interaction_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    for name, path in sorted(component_paths.items()):
+        typer.echo(f"{name}：{path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_risk_tilt_interaction_result.json'}"
+        )
+    if payload["status"] in {
+        "B4_INTERACTION_BLOCKED",
+        "B4_COMPONENT_SIGNAL_BLOCKED",
+    }:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("checkpoint")
+def weight_research_checkpoint_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Checkpoint output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research checkpoint aliases。",
+        ),
+    ] = True,
+) -> None:
+    """Write B5/B6 blocked reviews, synthesis, v3 gates and TRADING-520 snapshot."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_weight_research_checkpoint(
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    snapshot = payloads["weight_research_program_v1_snapshot"]
+    typer.echo(f"weight_research_checkpoint_status={snapshot['status']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'weight_research_program_v1_snapshot.json'}"
+        )
+
+
+@weight_research_app.command("run-b1")
+def weight_research_run_b1_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    start: Annotated[str, typer.Option("--from", help="B1 mini-backfill start date。")] = (
+        "2023-01-03"
+    ),
+    end: Annotated[str, typer.Option("--to", help="B1 mini-backfill end date。")] = (
+        "2023-07-31"
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B1 output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option("--data-quality-output-path", help="validate-data markdown output path。"),
+    ] = None,
+) -> None:
+    """Run B1 execution-control only after 511A-C contract validation."""
+    payload, json_path, markdown_path, daily_path = run_b1_execution_control(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        start=_parse_date(start),
+        end=_parse_date(end),
+        output_dir=output_dir,
+        data_quality_output_path=data_quality_output_path,
+    )
+    typer.echo(f"b1_execution_control_status={payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
+    typer.echo(f"Daily：{daily_path}")
+    if payload["status"] == "B1_BLOCKED":
+        raise typer.Exit(code=1)
 
 
 @simulation_app.command("record")

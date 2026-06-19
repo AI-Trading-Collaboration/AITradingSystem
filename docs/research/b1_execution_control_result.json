@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-511D",
+  "report_type": "b1_execution_control_result",
+  "status": "B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "experiment_id": "WRP1-20260619-B1-001",
+  "layer_id": "B1",
+  "base_layer": "B0",
+  "added_mechanism": "execution_no_trade_turnover_control_only",
+  "scope_validation": {
+    "status": "PASS",
+    "artifact": "reports/etf_portfolio/weight_research/unblock_511/contract_validation_20260619T082538.json",
+    "sha256": "84ecc9abf70514cc4ee62c3573bda1d312f2f59e47f63121acb79ddd6ec80d8a"
+  },
+  "window": {
+    "window_id": "normal_market_regime",
+    "start_date": "2023-01-03",
+    "end_date": "2023-07-31",
+    "effective_signal_start": "2023-01-03",
+    "effective_signal_end": "2023-07-27",
+    "row_count": 142,
+    "holdout_accessed": false
+  },
+  "data_quality_gate": {
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "passed": true,
+    "error_count": 0,
+    "warning_count": 1,
+    "info_count": 12,
+    "report_path": "outputs/reports/data_quality_2026-06-19.md"
+  },
+  "policy": {
+    "config_path": "config/etf_portfolio/weight_research_unblock.yaml",
+    "config_sha256": "3cd92b7e28a5d120e322475dd52394a957afed0e546548ff3ddbec5dc6e6d298",
+    "policy_id": "b1_execution_control_v0_1",
+    "allowed_mechanisms": ["deadband", "minimum_benefit_over_cost_threshold", "turnover_budget", "max_adjustment_cap"],
+    "forbidden_mechanisms": ["trend_signal", "momentum_signal", "relative_strength_signal", "risk_scaler", "regime_signal", "confidence_shrinkage", "mixed_dynamic_allocation_logic"]
+  },
+  "runtime_artifacts": {
+    "result_json": "reports/etf_portfolio/weight_research/unblock_511/b1_execution_control_result_20260619T082549.json",
+    "result_json_sha256": "23447425392d7d5b11e4c5291eccf4066c672d0f36872242824990249919bc81",
+    "daily_csv": "reports/etf_portfolio/weight_research/unblock_511/b1_execution_control_daily_20260619T082549.csv",
+    "daily_csv_sha256": "52eb35632b9d270e2b4de878a859aa0f2e17c5b30cab37dca1402c13d11e815e"
+  },
+  "b1_metrics": {
+    "total_return": 0.315963876284143,
+    "cagr": 0.6278562664757685,
+    "max_drawdown": -0.06246558149581727,
+    "turnover": 0.12431805306786908
+  },
+  "b0_metrics": {
+    "total_return": 0.3131014381271231,
+    "cagr": 0.6215777896959382,
+    "max_drawdown": -0.06126027638998621,
+    "turnover": 0.0
+  },
+  "b1_vs_b0_comparison": {
+    "return_delta": 0.0028624381570199198,
+    "cagr_delta": 0.006278476779830289,
+    "drawdown_reduction": -0.001205305105831056,
+    "turnover_delta": 0.12431805306786908
+  },
+  "signal_robustness_status": "NOT_APPLICABLE_B1_EXECUTION_CONTROL_NO_SIGNAL_INPUT",
+  "forbidden_logic_check": "PASS_NO_P0_ALLOCATOR_SIGNALS_REGIME_FEATURE_STORE_OR_CONFIDENCE",
+  "interpretation": {
+    "result_class": "MIXED_RESEARCH_ONLY",
+    "reason": "B1 improves total return by 0.286 percentage points versus B0 in the mini window, but max drawdown is 0.121 percentage points worse and turnover increases from zero.",
+    "next_gate_implication": "Do not continue to B2 automatically; owner/system should review whether B1 evidence is sufficient or whether B1 policy needs revision."
+  },
+  "reader_brief": {
+    "summary": "B1 execution-control mini-backfill completed without using mixed P0 dynamic logic.",
+    "key_result": "B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY",
+    "blocking_issues": "B2-B6 remain blocked pending independent runners and signal robustness evidence.",
+    "warnings": "B1 result is mixed: return improves slightly, drawdown and turnover worsen.",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "next_action": "manual review B1 evidence before authorizing any B2 runner implementation"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

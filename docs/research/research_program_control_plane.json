@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-505",
+  "report_type": "research_program_control_plane",
+  "status": "CONTROL_PLANE_CONTRACT_READY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "reads": [
+    "docs/research/next_research_program_roadmap.json",
+    "docs/research/ablation_protocol.json",
+    "docs/research/statistical_validation_policy.json",
+    "docs/research/research_window_catalog.json",
+    "docs/research/portfolio_utility_scorecard_contract.json"
+  ],
+  "outputs": [
+    "experiment_run_manifest",
+    "experiment_id",
+    "candidate_id",
+    "mini_backfill_admission",
+    "full_backfill_admission",
+    "research_program_status"
+  ],
+  "experiment_id_contract": {
+    "format": "WRP1-<YYYYMMDD>-<layer_id>-<sequence>",
+    "layer_id_allowed_values": ["B0", "B1", "B2", "B3", "B4", "B5", "B6"],
+    "candidate_id_format": "research_only_<hypothesis_id>_<layer_id>_<short_hash>"
+  },
+  "admission_rules": {
+    "mini_backfill": [
+      "B0 control source frozen",
+      "research_window_catalog available",
+      "scorecard contract frozen",
+      "validate-data runtime gate available",
+      "safety boundary check pass"
+    ],
+    "full_backfill": [
+      "mini backfill complete",
+      "UTILITY_IMPROVED or explicitly reviewed UTILITY_MIXED",
+      "stress not WEAK",
+      "cost/benchmark not WEAK",
+      "signal robustness not BLOCKED",
+      "window stability not FRAGILE",
+      "untouched holdout frozen before execution"
+    ]
+  },
+  "forbidden_outputs": [
+    "paper_shadow_candidate",
+    "official_target_weights",
+    "broker_order_artifact",
+    "automatic_owner_decision",
+    "production_mutation"
+  ],
+  "current_program_status": "WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE",
+  "current_executable_result": "B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY_MIXED",
+  "reader_brief": {
+    "summary": "研究控制面合同已定义；B0 control 和 B1 execution-control mini-backfill 已完成，后续仍需 owner/system 复核后才能进入 B2-B6。",
+    "key_result": "CONTROL_PLANE_CONTRACT_READY",
+    "blocking_issues": "B1 证据为 mixed；B2-B6 independent runner、signal robustness evidence 和 owner/system review 尚未完成。",
+    "warnings": "control plane readiness and B1 mixed evidence are not approval for later-layer execution.",
+    "safety_boundary": "no paper-shadow, no official target weights, no broker/order, production_effect=none",
+    "next_action": "review B1 mixed evidence and keep B2-B6 blocked until independent runner scopes and signal evidence are approved"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

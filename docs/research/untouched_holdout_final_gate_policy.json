@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-511C",
+  "report_type": "untouched_holdout_final_gate_policy",
+  "status": "UNTOUCHED_HOLDOUT_AND_FINAL_GATE_FROZEN",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "policy_version": "untouched_holdout_final_gate_v1",
+  "window_sets": {
+    "development_windows": [
+      {"window_id": "ai_cycle_development_full", "start_date": "2022-12-01", "end_date": "2026-06-18", "allowed_layers": ["B0", "B1", "B2", "B3", "B4", "B5", "B6"], "purpose": "development context only"},
+      {"window_id": "high_volatility_sideways_market", "start_date": "2023-08-01", "end_date": "2023-11-15", "allowed_layers": ["B1", "B2"], "purpose": "development and turnover diagnostic"},
+      {"window_id": "false_risk_off_cluster", "start_date": "2023-09-01", "end_date": "2023-10-31", "allowed_layers": ["B1", "B2"], "purpose": "development diagnostic"}
+    ],
+    "mini_backfill_windows": [
+      {"window_id": "normal_market_regime", "start_date": "2023-01-03", "end_date": "2023-07-31", "allowed_layers": ["B0", "B1", "B2", "B3", "B4", "B5", "B6"], "purpose": "mini-backfill first pass"},
+      {"window_id": "rapid_drawdown", "start_date": "2024-07-10", "end_date": "2024-08-09", "allowed_layers": ["B2", "B4"], "purpose": "stress mini diagnostic"},
+      {"window_id": "slow_drawdown", "start_date": "2025-01-02", "end_date": "2025-04-30", "allowed_layers": ["B2", "B4"], "purpose": "stress mini diagnostic"},
+      {"window_id": "ai_semiconductor_correction", "start_date": "2024-03-08", "end_date": "2024-04-19", "allowed_layers": ["B3", "B4"], "purpose": "AI semiconductor mini diagnostic"}
+    ],
+    "full_backfill_windows": [
+      {"window_id": "ai_cycle_full_pre_holdout", "start_date": "2022-12-01", "end_date": "2026-06-18", "allowed_layers": ["B1", "B2", "B3", "B4", "B5", "B6"], "purpose": "full-backfill only after mini gates pass"}
+    ],
+    "untouched_holdout_windows": [
+      {"window_id": "future_ai_cycle_holdout_2026_h2", "start_date": "2026-07-01", "end_date": "2026-12-31", "allowed_layers": [], "purpose": "final independent holdout", "data_available": false}
+    ]
+  },
+  "holdout_access_policy": {
+    "development_can_access_holdout": false,
+    "mini_backfill_can_access_holdout": false,
+    "full_backfill_can_access_holdout": false,
+    "final_gate_can_access_holdout": true,
+    "final_gate_prerequisites": [
+      "B1-B6 full-backfill completed without hard-stop blockers",
+      "signal robustness not BLOCKED",
+      "scorecard version unchanged or explicitly reviewed",
+      "validate-data gate passes for the full holdout window",
+      "holdout end date has passed and cached data covers the full holdout",
+      "manual owner review authorizes final holdout access"
+    ],
+    "on_early_holdout_use": "FAIL_CLOSED"
+  },
+  "validation_rules": [
+    "No B1-B6 development or mini-backfill run may overlap untouched_holdout_windows.",
+    "No full-backfill run may overlap untouched_holdout_windows.",
+    "Final gate must fail when holdout data is unavailable or owner authorization is missing.",
+    "Reports must disclose whether holdout was accessed.",
+    "Runtime artifacts must keep official_target_weights=false and production_effect=none."
+  ],
+  "reader_brief": {
+    "summary": "Untouched holdout and final gate policy are frozen before further ablation experiments.",
+    "key_result": "UNTOUCHED_HOLDOUT_AND_FINAL_GATE_FROZEN",
+    "blocking_issues": "Final gate is blocked until 2026-H2 holdout data exists and owner authorizes access.",
+    "warnings": "Development, mini-backfill and full-backfill windows cannot use the untouched holdout.",
+    "safety_boundary": "research_only=true; production_effect=none",
+    "next_action": "validate contracts, then run B1 on the normal_market_regime mini window only"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

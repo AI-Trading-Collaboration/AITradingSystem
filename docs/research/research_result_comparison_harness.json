@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-509",
+  "report_type": "research_result_comparison_harness",
+  "status": "COMPARISON_HARNESS_CONTRACT_READY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "comparison_pairs": [
+    "B0 vs B1",
+    "B1 vs B2",
+    "B2 vs B3",
+    "B3 vs B4",
+    "B4 vs B5",
+    "B5 vs B6",
+    "new candidate vs returned candidate",
+    "new candidate vs static baseline",
+    "new candidate vs no-trade baseline"
+  ],
+  "statuses": [
+    "IMPROVED",
+    "MIXED",
+    "NO_IMPROVEMENT",
+    "WORSE",
+    "INVALID_COMPARISON"
+  ],
+  "required_explanations": [
+    "module causing improvement",
+    "cost impact",
+    "worst-window impact",
+    "benchmark-relative impact",
+    "stress impact",
+    "signal robustness impact"
+  ],
+  "invalid_conditions": [
+    "missing previous-layer result",
+    "data quality gate failed",
+    "different window catalog without explicit disclosure",
+    "scorecard version mismatch",
+    "official target weight semantics present"
+  ],
+  "reader_brief": {
+    "summary": "比较框架合同已定义，要求显示改善来自哪个模块以及成本和最差窗口是否恶化。",
+    "key_result": "COMPARISON_HARNESS_CONTRACT_READY",
+    "blocking_issues": "B0 source result exists; first comparison cannot run until B1 source result exists.",
+    "warnings": "INVALID_COMPARISON must be used instead of filling missing metrics.",
+    "safety_boundary": "research_only=true; production_effect=none",
+    "next_action": "run B1 before first comparison"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "production_effect": "none"
+  }
+}

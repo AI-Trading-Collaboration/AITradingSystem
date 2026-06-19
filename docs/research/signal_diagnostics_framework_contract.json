@@ -1,0 +1,64 @@
+{
+  "accepted_statuses": [
+    "SIGNAL_DIAGNOSTICS_PASS",
+    "SIGNAL_DIAGNOSTICS_PASS_WITH_WARNINGS",
+    "SIGNAL_DIAGNOSTICS_BLOCKED"
+  ],
+  "forbidden_outputs": [
+    "target_weight",
+    "executed_weight",
+    "portfolio_return",
+    "backtest_result",
+    "broker_order",
+    "official_target_weight"
+  ],
+  "generated_at": "2026-06-19T08:55:21.956573+00:00",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "B2/B3 进入 target mapping 前必须得到非 BLOCKED diagnostics。",
+    "key_result": "SIGNAL_DIAGNOSTICS_FRAMEWORK_READY",
+    "next_action": "实现 B2/B3 signal 时先输出 signal artifact 并运行 diagnostics。",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "summary": "通用 signal diagnostics framework 已冻结，只评价 signal 质量。",
+    "warnings": "Diagnostics PASS 不是组合收益或候选晋级结论。"
+  },
+  "report_type": "signal_diagnostics_framework_contract",
+  "required_checks": [
+    "coverage",
+    "freshness",
+    "schema_compatibility",
+    "missingness",
+    "state_transitions",
+    "cross_window_stability",
+    "event_based_diagnostics",
+    "robustness_status",
+    "fail_closed_reason"
+  ],
+  "required_input_columns": [
+    "date",
+    "symbol",
+    "signal_score",
+    "state",
+    "confidence"
+  ],
+  "runner_contract": {
+    "blocks_on_empty_signal_artifact": true,
+    "blocks_on_missing_required_columns": true,
+    "blocks_on_stale_signal_artifact": true,
+    "evaluates_portfolio_return": false,
+    "evaluates_signal_only": true
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "SIGNAL_DIAGNOSTICS_FRAMEWORK_READY",
+  "task_id": "TRADING-512B"
+}

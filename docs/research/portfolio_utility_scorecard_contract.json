@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-507",
+  "report_type": "portfolio_utility_scorecard_contract",
+  "status": "SCORECARD_CONTRACT_FROZEN_FOR_MINI_BACKFILL",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "policy_metadata": {
+    "owner": "system",
+    "version": "weight_research_program_v1_scorecard_2026-06-19",
+    "status": "pilot_baseline_pre_experiment",
+    "rationale": "Freeze a transparent utility score before B0-B6 experiments so lambdas cannot be adjusted after seeing results.",
+    "intended_effect": "Compare return, drawdown, turnover, tracking error, worst-window, dispersion, cost drag and signal robustness in one auditable score.",
+    "validation_evidence": "Planned validation: focused contract tests plus first B0/B1 mini-backfill review before any full-backfill admission.",
+    "review_condition": "Review after B0-B3 mini-backfill or if owner changes risk/cost priorities before experiment execution."
+  },
+  "utility_formula": "net_return_proxy * 1.0 - drawdown_penalty * 0.75 - turnover_penalty * 0.25 - tracking_error_penalty * 0.20 - worst_window_penalty * 0.50 - window_dispersion_penalty * 0.25 - cost_drag * 1.0 - signal_robustness_penalty * 0.50",
+  "lambda_parameters": [
+    {"parameter": "net_return_weight", "value": 1.0, "rationale": "Anchor score in net return proxy after costs."},
+    {"parameter": "drawdown_penalty_weight", "value": 0.75, "rationale": "Drawdown is a core risk objective but should not mechanically dominate all return evidence in pilot mini-backfill."},
+    {"parameter": "turnover_penalty_weight", "value": 0.25, "rationale": "Turnover is penalized separately from cost drag to expose churn even when cost assumptions are low."},
+    {"parameter": "tracking_error_penalty_weight", "value": 0.2, "rationale": "Tracking error matters for benchmark-relative interpretation but remains secondary to hard stress/cost gates."},
+    {"parameter": "worst_window_penalty_weight", "value": 0.5, "rationale": "Worst-window weakness must reduce utility so average return cannot hide fragile windows."},
+    {"parameter": "window_dispersion_penalty_weight", "value": 0.25, "rationale": "Window dispersion is a pilot stability penalty, separate from hard FRAGILE gate."},
+    {"parameter": "cost_drag_weight", "value": 1.0, "rationale": "Cost drag is directly subtracted from net utility."},
+    {"parameter": "signal_robustness_penalty_weight", "value": 0.5, "rationale": "Signal robustness problems reduce utility and BLOCKED status remains a hard stop."}
+  ],
+  "statuses": [
+    "UTILITY_IMPROVED",
+    "UTILITY_MIXED",
+    "UTILITY_WEAK",
+    "UTILITY_INVALID"
+  ],
+  "rules": [
+    "Parameters are frozen before experiment execution.",
+    "Risk overlay and alpha allocator may use separate scorecards only if declared before results.",
+    "UTILITY_IMPROVED cannot override hard stops for data quality, stress, cost/benchmark, signal robustness or window fragility."
+  ],
+  "reader_brief": {
+    "summary": "统一 portfolio utility scorecard 已冻结为 pilot baseline，lambda 调整不得发生在看到结果之后。",
+    "key_result": "SCORECARD_CONTRACT_FROZEN_FOR_MINI_BACKFILL",
+    "blocking_issues": "B1 mini-backfill produced mixed evidence; later runners still need independent score components and signal robustness evidence.",
+    "warnings": "Pilot lambdas are policy assumptions, not calibrated investment truths; B1 mixed evidence does not authorize lambda changes.",
+    "safety_boundary": "research_only=true; production_effect=none",
+    "next_action": "review B1 mixed evidence without changing frozen lambdas"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "production_effect": "none"
+  }
+}

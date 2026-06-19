@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-508",
+  "report_type": "ablation_runner_contract",
+  "status": "RUNNER_CONTRACT_READY_B0_B1_IMPLEMENTED_ONLY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "inputs": [
+    "ablation_layer_id",
+    "candidate_spec",
+    "research_window_catalog",
+    "input_data_artifacts",
+    "scorecard_contract",
+    "safety_metadata"
+  ],
+  "outputs": [
+    "ablation_run_result",
+    "utility_score",
+    "stress_summary",
+    "cost_summary",
+    "benchmark_summary",
+    "window_stability_summary",
+    "signal_robustness_summary",
+    "blocking_reasons"
+  ],
+  "runtime_gate": {
+    "required": true,
+    "gate": "aits validate-data or same validation code path",
+    "failure_behavior": "stop before feature/scoring/backfill output",
+    "output_requirement": "downstream result must disclose data_quality_status and source quality report"
+  },
+  "mechanism_rule": "Each ablation layer can add only one primary mechanism.",
+  "forbidden_outputs": [
+    "official_target_weights",
+    "paper_shadow_activation",
+    "broker_order",
+    "production_mutation",
+    "automatic_owner_decision"
+  ],
+  "reader_brief": {
+    "summary": "通用 ablation runner 合同已定义，B0 static control 和 B1 execution-control runner 已完成；B2-B6 runner 尚未实现。",
+    "key_result": "RUNNER_CONTRACT_READY_B0_B1_IMPLEMENTED_ONLY",
+    "blocking_issues": "B1 evidence is mixed; B2-B6 independent runner and signal robustness evidence are required before later-layer execution.",
+    "warnings": "Contract readiness and B1 mixed evidence are not approval for B2-B6.",
+    "safety_boundary": "runner must emit research-only hypothetical outputs only",
+    "next_action": "review B1 mixed evidence before implementing B2 or B3"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "production_effect": "none"
+  }
+}

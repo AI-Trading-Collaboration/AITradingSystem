@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "task_id": "TRADING-500",
+  "report_type": "weight_research_retrospective",
+  "status": "RETROSPECTIVE_READY",
+  "as_of": "2026-06-19",
+  "market_regime": "ai_after_chatgpt",
+  "requested_date_range": "2022-12-01..2026-06-18",
+  "source_artifacts": [
+    "outputs/reports/candidate_v2_research_cycle_snapshot_2026-06-17.json",
+    "outputs/reports/candidate_v2_mini_gate_2026-06-17.json",
+    "outputs/reports/stress_weakness_attribution_2026-06-17.json",
+    "outputs/reports/cost_benchmark_weakness_attribution_2026-06-17.json",
+    "outputs/reports/signal_robustness_blocker_drilldown_2026-06-17.json",
+    "outputs/reports/window_fragility_attribution_2026-06-17.json"
+  ],
+  "failure_taxonomy": [
+    "DATA_COVERAGE_FAILURE",
+    "BINDING_FAILURE",
+    "SIGNAL_ROBUSTNESS_FAILURE",
+    "ALLOCATOR_MAPPING_FAILURE",
+    "RISK_CONTROL_FAILURE",
+    "EXECUTION_COST_FAILURE",
+    "BENCHMARK_FAILURE",
+    "WINDOW_FRAGILITY_FAILURE",
+    "OVERFIT_RISK",
+    "GOVERNANCE_HOLD"
+  ],
+  "failure_attribution": [
+    {
+      "category": "DATA_COVERAGE_FAILURE",
+      "evidence": "signal series coverage gap, market coverage gap, stale or partial signal inputs",
+      "next_action": "repair data coverage before interpreting new candidate results"
+    },
+    {
+      "category": "BINDING_FAILURE",
+      "evidence": "v_shaped_recovery source window dates missing; previous binding used partial/static proxy evidence",
+      "next_action": "extend executable binding to historical signal and research-weight series"
+    },
+    {
+      "category": "SIGNAL_ROBUSTNESS_FAILURE",
+      "evidence": "latest signal robustness review was BLOCKED by partial/stale/coverage checks",
+      "next_action": "separate signal quality repair from allocator redesign"
+    },
+    {
+      "category": "ALLOCATOR_MAPPING_FAILURE",
+      "evidence": "single regime-to-weight rule carried signal, risk, cost and execution behavior",
+      "next_action": "split signal, allocator, risk-control and execution layers"
+    },
+    {
+      "category": "RISK_CONTROL_FAILURE",
+      "evidence": "slow_drawdown failed and V-shaped recovery coverage was missing",
+      "next_action": "test fast asymmetric risk overlay as independent ablation"
+    },
+    {
+      "category": "EXECUTION_COST_FAILURE",
+      "evidence": "medium/high cost scenarios remained weak after mini backfill",
+      "next_action": "test no-trade band and turnover control before adding alpha complexity"
+    },
+    {
+      "category": "BENCHMARK_FAILURE",
+      "evidence": "candidate underperformed or had insufficient margin versus QQQ/SPY/SMH/SOXX/equal-weight baselines",
+      "next_action": "require benchmark-relative rows in every ablation result"
+    },
+    {
+      "category": "WINDOW_FRAGILITY_FAILURE",
+      "evidence": "window sensitivity was FRAGILE with weak recent and stress-heavy splits",
+      "next_action": "freeze development versus diagnostic versus holdout usage"
+    },
+    {
+      "category": "OVERFIT_RISK",
+      "evidence": "prior research reused diagnostic/stress windows and showed high overfit risk",
+      "next_action": "require parameter-neighborhood stability and purged walk-forward before full backfill"
+    },
+    {
+      "category": "GOVERNANCE_HOLD",
+      "evidence": "no active governance bypass; safety boundaries remained fail-closed",
+      "next_action": "preserve hard stops; do not use validation PASS as research PASS"
+    }
+  ],
+  "reader_brief": {
+    "summary": "上一轮候选失败不是单一工程问题，而是 data coverage、binding、signal robustness、allocator mapping、risk control、cost/benchmark 和 window fragility 的组合问题。",
+    "key_result": "RETROSPECTIVE_READY",
+    "blocking_issues": "B1 已有 mixed execution-control mini-backfill；B2-B6 真实消融结果尚不存在，不能进入 candidate v3。",
+    "warnings": "已反复使用的 stress/casebook 只能作为 development 或 diagnostic set。",
+    "safety_boundary": "research_only=true; manual_review_only=true; production_effect=none",
+    "next_action": "review B1 mixed evidence and keep B2-B6 blocked until independent runner and signal evidence requirements are satisfied"
+  },
+  "safety_boundary": {
+    "research_only": true,
+    "manual_review_only": true,
+    "paper_shadow_activation": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "official_target_weights": false,
+    "broker_action_allowed": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "production_effect": "none"
+  }
+}

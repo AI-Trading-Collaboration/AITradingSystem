@@ -1,0 +1,100 @@
+{
+  "checks": [
+    {
+      "check_id": "return_delta_semantics",
+      "message": "absolute total-return fraction difference: B1 total_return - historical B0 total_return",
+      "observed_value": 0.0028624381570199198,
+      "status": "PASS"
+    },
+    {
+      "check_id": "drawdown_reduction_semantics",
+      "message": "abs(B0 max_drawdown) - abs(B1 max_drawdown); positive means drawdown improved",
+      "observed_value": -0.001205305105831056,
+      "status": "PASS"
+    },
+    {
+      "check_id": "turnover_delta_semantics",
+      "message": "absolute cumulative-turnover difference: B1 turnover - historical B0 turnover",
+      "observed_value": 0.12431805306786908,
+      "status": "PASS"
+    },
+    {
+      "check_id": "historical_b0_turnover_zero",
+      "message": "historical B0 reports zero turnover, so it is not a valid rebalance comparator",
+      "observed_value": 0.0,
+      "status": "WARN"
+    },
+    {
+      "check_id": "historical_b1_positive_turnover",
+      "message": "historical B1 positive turnover can come from static target rebalancing drift, not only execution control",
+      "observed_value": 0.12431805306786908,
+      "status": "WARN"
+    },
+    {
+      "check_id": "pure_execution_attribution",
+      "message": "B1 - historical B0 mixes execution/no-trade controls with the introduction of static target rebalancing",
+      "observed_value": "requires B0R comparator",
+      "status": "WARN"
+    }
+  ],
+  "generated_at": "2026-06-19T08:51:06.754835+00:00",
+  "historical_b1_usage_scope": {
+    "allowed": [
+      "runner smoke test",
+      "research-only mixed evidence",
+      "input for comparator audit"
+    ],
+    "forbidden": [
+      "pure execution-control attribution conclusion",
+      "permission to skip B0R",
+      "permission to continue B2-B6 without B1 attribution rerun"
+    ]
+  },
+  "market_regime": "ai_after_chatgpt",
+  "metric_contract": {
+    "drawdown_reduction": {
+      "formula": "abs(comparator.max_drawdown) - abs(candidate.max_drawdown)",
+      "historical_comparator": "historical B0 field in TRADING-511D artifact",
+      "positive_direction": "candidate drawdown is smaller",
+      "unit": "absolute max-drawdown fraction"
+    },
+    "return_delta": {
+      "formula": "candidate.total_return - comparator.total_return",
+      "historical_comparator": "historical B0 field in TRADING-511D artifact",
+      "positive_direction": "candidate return is higher",
+      "unit": "absolute return fraction"
+    },
+    "turnover_delta": {
+      "formula": "candidate.turnover - comparator.turnover",
+      "historical_comparator": "historical B0 field in TRADING-511D artifact",
+      "positive_direction": "lower is better for execution control when comparator is B0R",
+      "unit": "absolute cumulative turnover"
+    }
+  },
+  "reader_brief": {
+    "blocking_issues": "B1E 必须使用 B0R 作为 primary comparator 后才能进入有效归因。",
+    "key_result": "B1_ATTRIBUTION_PARTIAL",
+    "next_action": "运行 B0H/B0R baseline family，然后重新运行 B1E vs B0R。",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "summary": "历史 B1 指标单位和方向可以解释，但 comparator attribution 只部分有效。",
+    "warnings": "历史 B1 - B0 不应解释为纯 execution/no-trade 模块贡献。"
+  },
+  "report_type": "b1_metric_semantics_and_comparator_audit",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "historical_b1_result": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_result.json",
+    "historical_b1_status": "B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY"
+  },
+  "status": "B1_ATTRIBUTION_PARTIAL",
+  "task_id": "TRADING-511E"
+}

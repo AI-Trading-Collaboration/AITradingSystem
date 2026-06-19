@@ -1,0 +1,174 @@
+{
+  "common_artifact_fields": [
+    "schema_version",
+    "artifact_family",
+    "candidate_module_id",
+    "run_id",
+    "source_artifact_ids",
+    "input_checksum",
+    "as_of_date",
+    "window_id",
+    "resolved_config",
+    "safety_metadata"
+  ],
+  "dependency_direction_rules": [
+    "evaluation_must_not_import_signal_or_allocator_implementation",
+    "signal_must_not_import_execution_or_evaluation",
+    "target_must_only_consume_signal_artifacts",
+    "execution_must_only_consume_target_path_artifacts"
+  ],
+  "generated_at": "2026-06-19T08:55:21.941572+00:00",
+  "layers": [
+    {
+      "allowed_outputs": [
+        "momentum",
+        "trend_gap",
+        "realized_volatility",
+        "drawdown",
+        "relative_strength",
+        "breadth",
+        "correlation"
+      ],
+      "artifact_family": "feature_artifact",
+      "consumes": [
+        "raw_price_data",
+        "volume_data",
+        "approved_macro_inputs"
+      ],
+      "forbidden_outputs": [
+        "signal_state",
+        "target_weight",
+        "executed_weight",
+        "backtest_result"
+      ],
+      "layer_id": "feature",
+      "produces": [
+        "feature_matrix",
+        "feature_quality_flags"
+      ]
+    },
+    {
+      "allowed_outputs": [
+        "signal_score",
+        "state",
+        "confidence",
+        "coverage",
+        "missing_or_stale_flags",
+        "blocking_reason"
+      ],
+      "artifact_family": "signal_artifact",
+      "consumes": [
+        "feature_artifact"
+      ],
+      "forbidden_outputs": [
+        "target_weight",
+        "turnover_budget",
+        "broker_order",
+        "backtest_result"
+      ],
+      "layer_id": "signal",
+      "produces": [
+        "signal_score",
+        "state",
+        "confidence",
+        "diagnostics"
+      ]
+    },
+    {
+      "allowed_outputs": [
+        "relative_tilt",
+        "exposure_scaler",
+        "target_deviation_from_baseline",
+        "target_confidence"
+      ],
+      "artifact_family": "target_path_artifact",
+      "consumes": [
+        "signal_artifact"
+      ],
+      "forbidden_outputs": [
+        "executed_weight",
+        "execution_cost",
+        "hidden_feature_recalculation",
+        "broker_order"
+      ],
+      "layer_id": "target",
+      "produces": [
+        "research_only_target_path"
+      ]
+    },
+    {
+      "allowed_outputs": [
+        "executed_weight",
+        "skipped_adjustment",
+        "execution_delay",
+        "turnover",
+        "cost_proxy",
+        "constraint_hit"
+      ],
+      "artifact_family": "executed_weight_artifact",
+      "consumes": [
+        "target_path_artifact"
+      ],
+      "forbidden_outputs": [
+        "signal_state",
+        "feature_matrix",
+        "official_target_weight",
+        "broker_order"
+      ],
+      "layer_id": "execution",
+      "produces": [
+        "executed_hypothetical_research_weights"
+      ]
+    },
+    {
+      "allowed_outputs": [
+        "utility",
+        "return_delta",
+        "drawdown_delta",
+        "turnover_delta",
+        "cost_delta",
+        "worst_window",
+        "gate_status"
+      ],
+      "artifact_family": "evaluation_artifact",
+      "consumes": [
+        "executed_weight_artifact",
+        "market_return_data"
+      ],
+      "forbidden_outputs": [
+        "modified_feature",
+        "modified_signal",
+        "modified_target_path",
+        "allocator_rerun"
+      ],
+      "layer_id": "evaluation",
+      "produces": [
+        "research_metrics",
+        "gate_result"
+      ]
+    }
+  ],
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "B2/B3 仍需通过 signal diagnostics 后才能进入 target mapping。",
+    "key_result": "RESEARCH_LAYER_INTERFACE_CONTRACT_READY",
+    "next_action": "运行 dependency boundary validation 并建立 signal diagnostics framework。",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Feature、Signal、Target、Execution、Evaluation 五层接口已冻结。",
+    "warnings": "该合同只冻结边界，不代表 B2-B6 信号或目标路径已实现。"
+  },
+  "report_type": "research_layer_interface_contract",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "RESEARCH_LAYER_INTERFACE_CONTRACT_READY",
+  "task_id": "TRADING-512A"
+}

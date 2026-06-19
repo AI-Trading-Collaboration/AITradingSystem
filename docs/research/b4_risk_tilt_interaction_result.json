@@ -1,0 +1,361 @@
+{
+  "b2_signal_artifact": {
+    "checksum": "0bf6031510d99d985374bf10f9bfb1554c96551304de72d8f3818c534bb885ca",
+    "diagnostics_status": "SIGNAL_DIAGNOSTICS_PASS",
+    "row_count": 23
+  },
+  "b2_target_path_artifact": {
+    "checksum": "fe2013ec8ca20c1990fff194494b920abc7f0063bdc4e787aa9192be1550eeda",
+    "row_count": 21
+  },
+  "b3_signal_artifact": {
+    "checksum": "5e267c82cb38044d72d777446870348776e31a53ecb11c3b8a1a85aebfa5ace1",
+    "diagnostics_status": "SIGNAL_DIAGNOSTICS_PASS",
+    "row_count": 69
+  },
+  "b3_target_path_artifact": {
+    "checksum": "b26c274ad12cf9efca489bf9844fa31ffbf5ff0da33466bcbb69b407c542528f",
+    "row_count": 21
+  },
+  "b4_e0_metrics": {
+    "cagr": -0.6042321162660276,
+    "calmar": -5.417459480837857,
+    "max_drawdown": -0.11153421975803646,
+    "sharpe": -3.390423219633328,
+    "sortino": -4.126445065253696,
+    "time_in_market": 1.0,
+    "total_return": -0.07433598904000516,
+    "turnover": 0.36028590120268433
+  },
+  "b4_e1_metrics": {
+    "cagr": -0.6058816449803047,
+    "calmar": -5.430700947052694,
+    "max_drawdown": -0.11156601162307123,
+    "sharpe": -3.4406307592716825,
+    "sortino": -4.1713397846165465,
+    "time_in_market": 1.0,
+    "total_return": -0.07465811261906263,
+    "turnover": 0.10510410813598989
+  },
+  "b4_e1_vs_b2_e1_comparison": {
+    "cagr_delta": -0.013939958186996115,
+    "drawdown_reduction": -0.003183503064142501,
+    "return_delta": -0.0026842024751755345,
+    "sharpe_delta": -0.016811695624250333,
+    "turnover_delta": 0.10510410813598989
+  },
+  "b4_e1_vs_b3_e1_comparison": {
+    "cagr_delta": 5.551115123125783e-16,
+    "drawdown_reduction": 1.1102230246251565e-16,
+    "return_delta": 1.1102230246251565e-16,
+    "sharpe_delta": 0.0,
+    "turnover_delta": -1.6653345369377348e-16
+  },
+  "b4_e1_vs_b4_e0_comparison": {
+    "cagr_delta": -0.0016495287142771486,
+    "drawdown_reduction": -3.179186503476927e-05,
+    "return_delta": -0.00032212357905747613,
+    "sharpe_delta": -0.05020753963835434,
+    "turnover_delta": -0.2551817930666944
+  },
+  "b4_target_path_artifact": {
+    "checksum": "8fbb5852305c048f7287e5aeaa572dcf5092de3e5128b2fb22c116fb1535e8fb",
+    "row_count": 21
+  },
+  "component_signal_gate": "B4_COMPONENT_SIGNALS_READY",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "execution_interaction": {
+    "cost_saved": 5.103635861333889e-05,
+    "executed_turnover": 0.10510410813598989,
+    "gross_target_turnover": 0.36028590120268433,
+    "skipped_trades": 19,
+    "turnover_saved": 0.2551817930666944
+  },
+  "feature_artifact": {
+    "checksum": "d42948c07bb926da1e071697c253cd09b4b4f3a47c286bd2307597bdddacb078",
+    "row_count": 115
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T09:23:17.695276+00:00",
+  "holdout_accessed": false,
+  "input_artifacts": {
+    "b2_result_path": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_scaler_research_result.json",
+    "b2_result_status": "B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+    "b3_result_path": "D:\\Work\\AITradingSystem\\docs\\research\\b3_relative_tilt_research_result.json",
+    "b3_result_status": "B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+    "contract_validation_status": "PASS",
+    "data_quality_report": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "modules_config_path": "D:\\Work\\AITradingSystem\\config\\etf_portfolio\\weight_research_modules.yaml",
+    "prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv"
+  },
+  "interaction_effects": {
+    "classification": "INCONCLUSIVE",
+    "classification_reason": "Only return/drawdown/turnover partial utility is available; frozen scorecard components for tracking error, worst-window, dispersion, cost drag, stress and signal robustness penalties are not complete.",
+    "e_x_r_partial_utility": 4.996003610813204e-16,
+    "e_x_r_x_t_partial_utility": -3.885780586188048e-16,
+    "e_x_t_partial_utility": 0.02785023228234415,
+    "missing_scorecard_components": [
+      "tracking_error_penalty",
+      "worst_window_penalty",
+      "window_dispersion_penalty",
+      "cost_drag",
+      "signal_robustness_penalty",
+      "stress_gate",
+      "benchmark_relative_gate"
+    ],
+    "partial_utility_by_branch": {
+      "B0R": -0.18886004006957943,
+      "B1E": -0.15326079156308364,
+      "B2_E0": -0.18886004006957993,
+      "B2_E1": -0.15326079156308364,
+      "B3_E0": -0.2480581291592037,
+      "B3_E1": -0.18460864837036375,
+      "B4_E0": -0.24805812915920358,
+      "B4_E1": -0.18460864837036353
+    },
+    "partial_utility_formula": "total_return - 0.75 * abs(max_drawdown) - 0.25 * turnover",
+    "r_x_t_partial_utility": 6.106226635438361e-16
+  },
+  "market_regime": "ai_after_chatgpt",
+  "policy": {
+    "execution_control_policy_id": "b1_execution_control_v0_1",
+    "interaction_formula": "B2_total_exposure_x_B3_relative_non_cash_mix",
+    "source_branch_statuses": {
+      "B2": "B2_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+      "B3": "B3_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY"
+    }
+  },
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+    "next_action": "Continue only to governed B5/B6 evidence or keep v3 candidate blocked.",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B4 combined B2 total-exposure scaling with B3 relative tilt and completed E0/E1 mini-backfill.",
+    "warnings": "B4 is interaction evidence only; it does not select a candidate or create official target weights."
+  },
+  "report_type": "b4_risk_tilt_interaction_result",
+  "requested_end": "2024-08-09",
+  "requested_start": "2024-07-10",
+  "run_id": "WRP1-20260619T092317Z-B4-RISK-TILT",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "same_window_controls": {
+    "b0r_metrics": {
+      "cagr": -0.5926120261570984,
+      "calmar": -5.4085348372430815,
+      "max_drawdown": -0.10956978996906552,
+      "sharpe": -3.341913324438812,
+      "sortino": -4.0824914719619905,
+      "time_in_market": 1.0,
+      "total_return": -0.07210104910132209,
+      "turnover": 0.13832659396583283
+    },
+    "b1e_metrics": {
+      "cagr": -0.5919416867933086,
+      "calmar": -5.461597952140623,
+      "max_drawdown": -0.10838250855892873,
+      "sharpe": -3.423819063647432,
+      "sortino": -4.146139764910356,
+      "time_in_market": 1.0,
+      "total_return": -0.0719739101438871,
+      "turnover": 0.0
+    },
+    "control_window": {
+      "end": "2024-08-09",
+      "start": "2024-07-10"
+    }
+  },
+  "schema_version": 1,
+  "signal_diagnostics": {
+    "B2": {
+      "as_of_date": "2024-08-09",
+      "checks": [
+        {
+          "check_id": "schema_compatibility",
+          "message": "missing=[]",
+          "status": "PASS"
+        },
+        {
+          "check_id": "non_empty_signal_artifact",
+          "message": "signal rows > 0",
+          "status": "PASS"
+        },
+        {
+          "check_id": "freshness",
+          "message": "stale_days=0",
+          "status": "PASS"
+        },
+        {
+          "check_id": "missingness",
+          "message": "rate=0.000000",
+          "status": "PASS"
+        },
+        {
+          "check_id": "coverage",
+          "message": "coverage=1.000000",
+          "status": "PASS"
+        },
+        {
+          "check_id": "state_transitions",
+          "message": "transition_count=0",
+          "status": "PASS"
+        },
+        {
+          "check_id": "cross_window_stability",
+          "message": "not_evaluated_no_window_id",
+          "status": "PASS"
+        },
+        {
+          "check_id": "event_based_diagnostics",
+          "message": "event_count=0",
+          "status": "PASS"
+        }
+      ],
+      "evaluates_portfolio_return": false,
+      "fail_closed_reason": "none",
+      "forbidden_outputs_absent": true,
+      "generated_at": "2026-06-19T09:23:17.695276+00:00",
+      "market_regime": "ai_after_chatgpt",
+      "metrics": {
+        "coverage": 1.0,
+        "cross_window_state_stability": null,
+        "date_count": 23,
+        "event_count": 0,
+        "max_signal_date": "2024-08-09",
+        "missing_cell_rate": 0.0,
+        "row_count": 23,
+        "stale_days": 0,
+        "state_transition_count": 0,
+        "symbol_count": 1
+      },
+      "reader_brief": {
+        "blocking_issues": "none",
+        "key_result": "SIGNAL_DIAGNOSTICS_PASS",
+        "next_action": "Use non-BLOCKED signal diagnostics before target mapping.",
+        "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+        "summary": "Signal diagnostics evaluated signal quality only.",
+        "warnings": "Diagnostics does not evaluate portfolio return."
+      },
+      "report_type": "signal_diagnostics_report",
+      "robustness_status": "SIGNAL_DIAGNOSTICS_PASS",
+      "safety_boundary": {
+        "broker_action_allowed": false,
+        "manual_review_only": true,
+        "official_target_weights": false,
+        "order_ticket_generated": false,
+        "owner_decision_appended": false,
+        "paper_shadow_activation": false,
+        "production_effect": "none",
+        "research_only": true
+      },
+      "schema_version": 1,
+      "signal_artifact_id": "b2_fast_asymmetric_risk_signal_v0_1",
+      "status": "SIGNAL_DIAGNOSTICS_PASS",
+      "task_id": "TRADING-512B"
+    },
+    "B3": {
+      "as_of_date": "2024-08-09",
+      "checks": [
+        {
+          "check_id": "schema_compatibility",
+          "message": "missing=[]",
+          "status": "PASS"
+        },
+        {
+          "check_id": "non_empty_signal_artifact",
+          "message": "signal rows > 0",
+          "status": "PASS"
+        },
+        {
+          "check_id": "freshness",
+          "message": "stale_days=0",
+          "status": "PASS"
+        },
+        {
+          "check_id": "missingness",
+          "message": "rate=0.000000",
+          "status": "PASS"
+        },
+        {
+          "check_id": "coverage",
+          "message": "coverage=1.000000",
+          "status": "PASS"
+        },
+        {
+          "check_id": "state_transitions",
+          "message": "transition_count=9",
+          "status": "PASS"
+        },
+        {
+          "check_id": "cross_window_stability",
+          "message": "not_evaluated_no_window_id",
+          "status": "PASS"
+        },
+        {
+          "check_id": "event_based_diagnostics",
+          "message": "event_count=0",
+          "status": "PASS"
+        }
+      ],
+      "evaluates_portfolio_return": false,
+      "fail_closed_reason": "none",
+      "forbidden_outputs_absent": true,
+      "generated_at": "2026-06-19T09:23:17.695276+00:00",
+      "market_regime": "ai_after_chatgpt",
+      "metrics": {
+        "coverage": 1.0,
+        "cross_window_state_stability": null,
+        "date_count": 23,
+        "event_count": 0,
+        "max_signal_date": "2024-08-09",
+        "missing_cell_rate": 0.0,
+        "row_count": 69,
+        "stale_days": 0,
+        "state_transition_count": 9,
+        "symbol_count": 3
+      },
+      "reader_brief": {
+        "blocking_issues": "none",
+        "key_result": "SIGNAL_DIAGNOSTICS_PASS",
+        "next_action": "Use non-BLOCKED signal diagnostics before target mapping.",
+        "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+        "summary": "Signal diagnostics evaluated signal quality only.",
+        "warnings": "Diagnostics does not evaluate portfolio return."
+      },
+      "report_type": "signal_diagnostics_report",
+      "robustness_status": "SIGNAL_DIAGNOSTICS_PASS",
+      "safety_boundary": {
+        "broker_action_allowed": false,
+        "manual_review_only": true,
+        "official_target_weights": false,
+        "order_ticket_generated": false,
+        "owner_decision_appended": false,
+        "paper_shadow_activation": false,
+        "production_effect": "none",
+        "research_only": true
+      },
+      "schema_version": 1,
+      "signal_artifact_id": "b3_slow_relative_tilt_signal_v0_1",
+      "status": "SIGNAL_DIAGNOSTICS_PASS",
+      "task_id": "TRADING-512B"
+    }
+  },
+  "status": "B4_INTERACTION_MINI_BACKFILL_WITH_E0_E1_COMPLETE_RESEARCH_ONLY",
+  "task_id": "TRADING-514A_to_514B"
+}

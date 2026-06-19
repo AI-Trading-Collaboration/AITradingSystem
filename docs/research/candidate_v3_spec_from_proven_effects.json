@@ -1,0 +1,35 @@
+{
+  "blocked_by": [
+    "B4 interaction classification is INCONCLUSIVE",
+    "B5 confidence interaction review is blocked",
+    "B6 regime incremental evaluation is blocked",
+    "full scorecard/stress/benchmark gates are incomplete"
+  ],
+  "generated_at": "2026-06-19T09:26:40.360052+00:00",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "see artifact body",
+    "key_result": "V3_SPEC_BLOCKED_NO_PROVEN_EFFECTS",
+    "next_action": "continue only after the stated blocker is resolved",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Candidate v3 spec is blocked because no module set is selected.",
+    "warnings": "research-only; no official target weights or production effect"
+  },
+  "report_type": "candidate_v3_spec_from_proven_effects",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "selected_modules": [],
+  "status": "V3_SPEC_BLOCKED_NO_PROVEN_EFFECTS",
+  "task_id": "TRADING-518"
+}

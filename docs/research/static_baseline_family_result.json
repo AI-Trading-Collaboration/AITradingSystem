@@ -1,0 +1,113 @@
+{
+  "artifact_boundary": {
+    "evaluation_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-b0h-b0r-evaluation",
+    "executed_weight_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-b0h-b0r-executed-weight-path",
+    "feature_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-price-return-feature-artifact",
+    "run_manifest_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-run-manifest",
+    "signal_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-no-signal-artifact",
+    "target_path_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-static-target-path"
+  },
+  "b0h_contract": {
+    "expected_turnover_source": "none after initial research starting weights",
+    "semantics": "static buy-and-hold / natural drift reference",
+    "uses_market_signal": false,
+    "uses_rebalance_rule": false
+  },
+  "b0h_metrics": {
+    "cagr": 0.6436060539766779,
+    "calmar": 10.303370889451724,
+    "max_drawdown": -0.06246558149581727,
+    "sharpe": 3.234727156997759,
+    "sortino": 5.716313794685279,
+    "time_in_market": 1.0,
+    "total_return": 0.32312327586413025,
+    "turnover": 0.0
+  },
+  "b0r_contract": {
+    "expected_turnover_source": "drift back to pre-frozen static target weights",
+    "rebalance_rule": "daily deterministic rebalance to frozen static target path",
+    "semantics": "static target + naive deterministic rebalance reference",
+    "uses_cost_threshold": false,
+    "uses_deadband": false,
+    "uses_market_signal": false,
+    "uses_turnover_optimization": false
+  },
+  "b0r_metrics": {
+    "cagr": 0.6212340705020254,
+    "calmar": 10.137334965228895,
+    "max_drawdown": -0.061281793748836466,
+    "sharpe": 3.246793362595372,
+    "sortino": 5.7388111195247795,
+    "time_in_market": 1.0,
+    "total_return": 0.31294459258813934,
+    "turnover": 0.5987679672402312
+  },
+  "b0r_vs_b0h_comparison": {
+    "cagr_delta": -0.022371983474652524,
+    "drawdown_reduction": 0.0011837877469808022,
+    "return_delta": -0.010178683275990918,
+    "sharpe_delta": 0.012066205597613067,
+    "turnover_delta": 0.5987679672402312
+  },
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "price_cache_rows": 53410,
+    "price_cache_sha256": "4f98b69eeae4793895726aa7bacac0d1505e962e85e4f22d6a22fa96ff3e8dc0",
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "first_signal_date": "2023-01-03",
+  "forbidden_logic_check": "PASS_NO_P0_ALLOCATOR_SIGNALS_REGIME_FEATURE_STORE_OR_CONFIDENCE",
+  "generated_at": "2026-06-19T08:51:15.162894+00:00",
+  "holdout_accessed": false,
+  "input_artifacts": {
+    "contract_validation_status": "PASS",
+    "data_quality_report": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "policy_config": "D:\\Work\\AITradingSystem\\config\\etf_portfolio\\weight_research_unblock.yaml",
+    "prices_path": "D:\\Work\\AITradingSystem\\data\\raw\\prices_daily.csv"
+  },
+  "last_signal_date": "2023-07-27",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "B1E attribution rerun 尚未完成前不得继续 B2/B3。",
+    "key_result": "STATIC_BASELINE_FAMILY_READY_RESEARCH_ONLY",
+    "next_action": "运行 B1E vs B0R attribution gate。",
+    "safety_boundary": "research_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B0H/B0R 双基准已生成；B0R 可作为 B1E 的 primary comparator。",
+    "warnings": "B0R 的 turnover 来自预先冻结的静态目标再平衡，不代表市场信号。"
+  },
+  "report_type": "static_baseline_family_result",
+  "requested_end": "2023-07-31",
+  "requested_start": "2023-01-03",
+  "row_count_per_variant": {
+    "B0H": 142,
+    "B0R": 142
+  },
+  "run_id": "WRP1-20260619T085115Z-B0H-B0R",
+  "runtime_quality": {
+    "etf_price_quality_status": "PASS"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "STATIC_BASELINE_FAMILY_READY_RESEARCH_ONLY",
+  "target_path": {
+    "same_as_b1_static_target_path": true,
+    "source_config_path": "config/etf_portfolio/assets.yaml#assets.default_weight",
+    "target_path_artifact_id": "WRP1-20260619T085115Z-B0H-B0R-static-target-path",
+    "target_path_checksum": "668f538ecc30ef2a7f54a17b76586e25d89569cfc2229e12301ee87efb7a446c"
+  },
+  "task_id": "TRADING-511F"
+}
