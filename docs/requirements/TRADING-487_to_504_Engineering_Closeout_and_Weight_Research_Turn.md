@@ -41,9 +41,10 @@ Boundary 和 Next Action；源 artifact 原生缺口保留为 `native_template_g
 历史 artifact。真实 `reader_brief_consistency_pack_2026-06-19` 和 validation 均为 `PASS`；
 legacy waiver cleanup 已把 30 个历史/可选 report family 迁移为 registry
 `visibility_policy` 并将 waiver policy 收口为 `waivers: []`；真实 report index 为 `PASS`，
-waiver inventory 为 0 active。clean-clone release acceptance runner 已建立，但最终 clean
-worktree PASS 和 platform freeze 仍需后续推进；
-Stage D weight research RFC baseline 已补齐。
+waiver inventory 为 0 active。clean-clone release acceptance 已在 clean worktree 上
+输出 `CLEAN_CLONE_ACCEPTANCE_PASS`，release candidate 输出
+`ENGINEERING_CLOSEOUT_READY` 且 validation=`PASS`；Stage D weight research RFC baseline
+已补齐。
 后续如需要拆分单项任务，应使用未占用的新 ID，或在本批次文档中维护阶段状态。
 
 ## 阶段边界
@@ -200,8 +201,8 @@ TRADING-500 to 504 等价于权重研究复盘与方向定义阶段：
   `ARTIFACT_LIFECYCLE_READY_WITH_LIMITATIONS`，validation 为 `PASS_WITH_WARNINGS`；
   限制来自 legacy / superseded artifact review；Stage C 后 report index missing/stale
   和 explicit waivers 均为 0，历史/可选导航面通过 registry `visibility_policy` 披露。
-- 尚未执行真实 archive / deletion / pointer rewrite，也未完成 clean-clone release acceptance；
-  A4 当前是只读 signoff baseline，不是物理清理。
+- 尚未执行真实 archive / deletion / pointer rewrite；A4 当前是只读 signoff baseline，
+  不是物理清理。物理归档/删除若未来需要，必须单独登记并审计。
 
 ## Stage B：可维护性与可复现性收尾
 
@@ -275,9 +276,9 @@ and error taxonomy。
   contract 字段不同；验证覆盖为 Stage B readiness `PASS`、相关 generator tests 和
   `reproducibility` tier；退出条件是这些 artifacts 被新生成器产出的同类 latest artifact
   自然替代后，不再需要 metadata migration。
-- Stage B readiness contract 已满足；Reader Brief effective view model、legacy waiver cleanup
-  和 clean-clone release acceptance runner 已完成；提交后 clean worktree PASS 和 platform
-  freeze release candidate 仍属于 Stage C 后续。
+- Stage B readiness contract 已满足；Reader Brief effective view model、legacy waiver cleanup、
+  clean-clone release acceptance 和 platform freeze release candidate 已完成，当前 release
+  candidate 为 `ENGINEERING_CLOSEOUT_READY`。
 
 ## Stage C：阅读体验、发布与平台冻结
 
@@ -320,6 +321,11 @@ legacy deprecation cleanup、clean-clone release acceptance 和 platform freeze 
   latest report lookup、canonical system status、system doctor 和可选 `artifact-reproduce`
   tier；dirty worktree 默认 fail closed，显式 dirty snapshot 只能输出
   `CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES`，不能作为 release PASS。
+- 2026-06-19：真实 clean worktree acceptance 已重跑通过，artifact
+  `clean_clone_release_acceptance_2026-06-19` 输出
+  `CLEAN_CLONE_ACCEPTANCE_PASS`，steps=11、failed=0、blocking=0；此前 Windows
+  checkout 路径过长导致 `git_clone` fail closed，已通过缩短默认 work dir 到 `run/ccra`
+  并为 clone 启用 `core.longpaths=true` 修复，补充回归测试后重新验证。
 - 2026-06-19：新增 `aits reports engineering-closeout-release-candidate --as-of
   YYYY-MM-DD` 和 `aits reports validate-engineering-closeout-release-candidate --latest`。
   该 release candidate report 只读聚合 latest status/doctor、report index、Stage B
@@ -328,9 +334,11 @@ legacy deprecation cleanup、clean-clone release acceptance 和 platform freeze 
   CLI/schema、compatibility policy、post-freeze change admission rules 和 engineering
   closeout Reader Brief；clean clone 未 PASS、dirty worktree 或 release-blocking tier failure
   必须保持 `ENGINEERING_CLOSEOUT_BLOCKED`。
-- 该 baseline 尚未完成 README 历史段落瘦身、legacy command/schema cleanup、
-  提交后的 clean-clone release acceptance PASS 或 `ENGINEERING_CLOSEOUT_READY` release
-  candidate，因此不能宣称 platform freeze 完成。
+- 2026-06-19：release candidate 已在 clean worktree 上重跑通过，artifact
+  `engineering_closeout_release_candidate_2026-06-19` 输出
+  `ENGINEERING_CLOSEOUT_READY`，checks=11、blocking=0、warnings=0；validation 输出
+  `PASS`，checks=4、failed=0、warnings=0。README 历史段落瘦身和 legacy command/schema
+  cleanup 可作为后续普通整理项处理，不阻塞本轮 platform freeze release candidate。
 
 ## Stage D：权重研究复盘与方向定义
 
@@ -446,7 +454,7 @@ report index、Reader Brief quality、validation tiers 和 clean-clone smoke。
   `PASS`，missing=0、stale=0、explicit_waiver_count=0、unwaived=0、
   non_current_visibility_count=30；waiver inventory 和 validation 均为 `PASS`，active=0；
   canonical system status 为 `ENGINEERING_CONTROL_PLANE_READY`，doctor 为 `PASS`、
-  warnings=0。clean-clone release acceptance PASS 和 platform freeze 仍未完成。
+  warnings=0。
 - 2026-06-19：release-blocking validation tiers 已重跑并写入 runtime artifacts：
   `fast-unit`、`contract-validation`、`report-validation` 和 `reproducibility` 均为 `PASS`。
   `fast-unit` 首次发现 direct CLI 兼容回归（`reports_cli.report_index_command` 拆分后未
@@ -455,15 +463,14 @@ report index、Reader Brief quality、validation tiers 和 clean-clone smoke。
   先生成必要 source artifacts，再运行 doctor、report、validation 和 artifact reproduce。
 - 2026-06-19：clean-clone sample/minimal workflow 已实现为
   `scripts/run_clean_clone_release_acceptance.py`，并登记
-  `outputs/reports/clean_clone_release_acceptance_YYYY-MM-DD.json/md`。当前工作树仍有未提交
-  工程收尾变更，因此只能用 `--allow-dirty-snapshot` 生成 BLOCKED smoke artifact。真实
+  `outputs/reports/clean_clone_release_acceptance_YYYY-MM-DD.json/md`。实现期间工作树仍有未提交
+  工程收尾变更，因此先用 `--allow-dirty-snapshot` 生成 BLOCKED smoke artifact。真实
   dirty-snapshot artifact 为 `CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES`，
   steps=10、failed=0、blocking=1，且 `artifact_reproduce_validation_tier` PASS；真实
-  `CLEAN_CLONE_ACCEPTANCE_PASS` 仍要求提交后 clean worktree 重新运行，且通过后才能进入
-  platform freeze release candidate 复核。
+  `CLEAN_CLONE_ACCEPTANCE_PASS` 后续已在提交后的 clean worktree 重新运行通过。
 - 2026-06-19：TRADING-499 release candidate artifact 已实现；新增
   `engineering_closeout_release_candidate` / validation report family，用于记录 release
   version/tag、changelog、stable CLI/schema、compatibility policy、post-freeze change
-  admission rules 和 engineering closeout Reader Brief。当前 dirty worktree / dirty-snapshot
-  clean-clone evidence 会让该 report fail closed；最终 `ENGINEERING_CLOSEOUT_READY` 仍需
-  提交后 clean-clone PASS 并重跑 release candidate validation。
+  admission rules 和 engineering closeout Reader Brief。dirty worktree / dirty-snapshot
+  clean-clone evidence 会让该 report fail closed；提交后真实 clean-clone PASS 已完成，
+  release candidate 输出 `ENGINEERING_CLOSEOUT_READY` 且 validation=`PASS`。
