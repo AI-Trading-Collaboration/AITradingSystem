@@ -1,0 +1,97 @@
+{
+  "V_shaped_recovery_opportunity_cost_uncertainty": {
+    "current_proxy": 0.0,
+    "gap": "V-shaped recovery has no B2 trigger, so missed rebound cost is not stressed."
+  },
+  "cost_benchmark_weakness_or_incompleteness": "B2_COST_BENCHMARK_MIXED",
+  "current_b2_gate": "B2_ONLY_NEEDS_MORE_EVIDENCE",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "evidence_needed_to_clear": [
+    "More than one risk-heavy window with B2 trigger evidence.",
+    "False risk-off accounting in shallow pullback / sideways volatility windows.",
+    "Re-entry lag evidence across recovery windows.",
+    "Cost and benchmark review that is not mixed or weak."
+  ],
+  "false_risk_off_uncertainty": {
+    "false_risk_off_count": 0,
+    "gap": "No false-risk-off trigger has been observed; shallow-pullback evidence is thin."
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T11:04:46.858965+00:00",
+  "holdout_accessed": false,
+  "insufficient_trigger_coverage": {
+    "gap": "Only one source window currently exercises B2 risk triggers.",
+    "risk_trigger_count": 33,
+    "triggered_window_count": 1
+  },
+  "market_regime": "ai_after_chatgpt",
+  "missing_risk_heavy_windows": [
+    "rapid_drawdown",
+    "high_volatility_sideways",
+    "semiconductor_correction",
+    "v_shaped_recovery",
+    "false_risk_off_cluster",
+    "risk_off_but_quick_recovery",
+    "risk_signal_false_positive"
+  ],
+  "re_entry_lag_uncertainty": {
+    "gap": "Lag is observed in only one triggered slow-drawdown window.",
+    "max_reentry_lag": 14
+  },
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_EVIDENCE_GAP_LEDGER_READY",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 evidence gaps are listed before rerunning any promotion-style gate.",
+    "warnings": "Research-only B2/B3 v2 review; no threshold tuning, weight generation, B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_evidence_gap_ledger",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "signal_robustness_gaps": [
+    "B2 trigger robustness across volatility-spike and shallow-pullback windows is absent.",
+    "No threshold sensitivity rerun is allowed in this task."
+  ],
+  "source_artifacts": {
+    "b2_cost_benchmark_survival_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_survival_review.json",
+    "b2_false_risk_off_reentry_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_attribution.json",
+    "b2_only_research_gate": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate.json",
+    "b2_only_risk_heavy_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_risk_heavy_diagnostic_backfill.json",
+    "b2_risk_heavy_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_catalog.json",
+    "b3_redesign_hypothesis_ranking": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_ranking.json",
+    "b3_signal_direction_precheck": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_direction_precheck.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "final_branch_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\final_branch_decision_snapshot.json"
+  },
+  "status": "B2_EVIDENCE_GAP_LEDGER_READY",
+  "task_id": "TRADING-557",
+  "window_stability_gaps": [
+    "Only one triggered source window is available.",
+    "Window set still needs additional non-holdout diagnostic stress observations."
+  ]
+}

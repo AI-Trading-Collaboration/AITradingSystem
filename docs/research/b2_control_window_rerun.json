@@ -1,0 +1,1861 @@
+{
+  "B3_used": false,
+  "B4_B5_B6_v3_used": false,
+  "aggregate": {
+    "false_risk_off_count": 0,
+    "trigger_count": 0,
+    "unnecessary_exposure_reduction_count": 0,
+    "window_count": 2
+  },
+  "b2_logic_only": true,
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T11:43:42.959164+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_CONTROL_RERUN_COMPLETE",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Independent B2 control-window signal rerun artifacts are generated.",
+    "warnings": "Research-only B2 control-window evidence; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_control_window_rerun",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_b3_branch_status_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\b2_b3_branch_status_snapshot.json",
+    "b2_cost_benchmark_utility_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_utility_review.json",
+    "b2_drawdown_protection_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_drawdown_protection_attribution.json",
+    "b2_false_risk_off_reentry_cost_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_cost_review.json",
+    "b2_full_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_backfill.json",
+    "b2_only_full_diagnostic_gate": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_full_diagnostic_gate.json",
+    "b2_signal_robustness_trigger_stability": "D:\\Work\\AITradingSystem\\docs\\research\\b2_signal_robustness_trigger_stability.json",
+    "b3_signal_precheck_resolution_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_precheck_resolution_plan.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B2_CONTROL_RERUN_COMPLETE",
+  "task_id": "TRADING-576",
+  "untouched_holdout_used": false,
+  "window_results": [
+    {
+      "benchmark_opportunity_cost": 0.0,
+      "component_artifacts": {
+        "risk_signal_artifact": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\weight_research\\b2_control_normal_uptrend_control_risk_signal_20260619T114342.csv",
+        "target_path_artifact": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\weight_research\\b2_control_normal_uptrend_control_target_path_20260619T114342.csv"
+      },
+      "control_window_status": "B2_CONTROL_NO_TRIGGER_PASS",
+      "end_date": "2023-07-31",
+      "excess_turnover_proxy": 0.0,
+      "exposure_scaler_changes": [],
+      "false_risk_off_count": 0,
+      "independent_b2_rerun": true,
+      "missed_normal_uptrend_exposure": 0.0,
+      "no_trigger_reference": {
+        "elevated_risk_score_max": 65.0,
+        "expected_exposure_scaler": 1.0,
+        "expected_state": "NORMAL",
+        "risk_off_score_max": 45.0
+      },
+      "risk_signal_values": [
+        {
+          "date": "2023-01-03",
+          "risk_coverage": 1.0,
+          "risk_score": 70.18218352797332,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-04",
+          "risk_coverage": 1.0,
+          "risk_score": 71.76455963608436,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-05",
+          "risk_coverage": 1.0,
+          "risk_score": 69.27891656468549,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-06",
+          "risk_coverage": 1.0,
+          "risk_score": 72.63593045883054,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-09",
+          "risk_coverage": 1.0,
+          "risk_score": 73.7025048043273,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-10",
+          "risk_coverage": 1.0,
+          "risk_score": 77.86432021479001,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-11",
+          "risk_coverage": 1.0,
+          "risk_score": 86.33844718428851,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-12",
+          "risk_coverage": 1.0,
+          "risk_score": 86.70880477330577,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-13",
+          "risk_coverage": 1.0,
+          "risk_score": 86.76394864139347,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-17",
+          "risk_coverage": 1.0,
+          "risk_score": 88.31760948714452,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-18",
+          "risk_coverage": 1.0,
+          "risk_score": 81.01843621132059,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-19",
+          "risk_coverage": 1.0,
+          "risk_score": 80.11291429015701,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-20",
+          "risk_coverage": 1.0,
+          "risk_score": 87.3485940292726,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-23",
+          "risk_coverage": 1.0,
+          "risk_score": 86.75667596197272,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-24",
+          "risk_coverage": 1.0,
+          "risk_score": 88.03928432982858,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-25",
+          "risk_coverage": 1.0,
+          "risk_score": 88.00724918301442,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-26",
+          "risk_coverage": 1.0,
+          "risk_score": 97.72218081156954,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-27",
+          "risk_coverage": 1.0,
+          "risk_score": 98.17580705313316,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-30",
+          "risk_coverage": 1.0,
+          "risk_score": 88.30446178855017,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-31",
+          "risk_coverage": 1.0,
+          "risk_score": 97.65576812327517,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-01",
+          "risk_coverage": 1.0,
+          "risk_score": 97.27232594905432,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-02",
+          "risk_coverage": 1.0,
+          "risk_score": 96.49009418796842,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-03",
+          "risk_coverage": 1.0,
+          "risk_score": 96.38327455856687,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-06",
+          "risk_coverage": 1.0,
+          "risk_score": 96.69345899351023,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-07",
+          "risk_coverage": 1.0,
+          "risk_score": 96.42438578384237,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-08",
+          "risk_coverage": 1.0,
+          "risk_score": 95.72961162686082,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-09",
+          "risk_coverage": 1.0,
+          "risk_score": 95.70228377617647,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-10",
+          "risk_coverage": 1.0,
+          "risk_score": 95.51209700590307,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-13",
+          "risk_coverage": 1.0,
+          "risk_score": 95.36639748931083,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-14",
+          "risk_coverage": 1.0,
+          "risk_score": 95.29893077203906,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-15",
+          "risk_coverage": 1.0,
+          "risk_score": 95.60118282270548,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-16",
+          "risk_coverage": 1.0,
+          "risk_score": 95.25555177905754,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-17",
+          "risk_coverage": 1.0,
+          "risk_score": 95.72364378335702,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-21",
+          "risk_coverage": 1.0,
+          "risk_score": 94.35212820532585,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-22",
+          "risk_coverage": 1.0,
+          "risk_score": 94.27410504855787,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-23",
+          "risk_coverage": 1.0,
+          "risk_score": 95.43124088123173,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-24",
+          "risk_coverage": 1.0,
+          "risk_score": 93.79427248234225,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-27",
+          "risk_coverage": 1.0,
+          "risk_score": 94.61991745496401,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-28",
+          "risk_coverage": 1.0,
+          "risk_score": 95.04170464682527,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-01",
+          "risk_coverage": 1.0,
+          "risk_score": 94.34287874074062,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-02",
+          "risk_coverage": 1.0,
+          "risk_score": 96.43287983855161,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-03",
+          "risk_coverage": 1.0,
+          "risk_score": 98.213164076216,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-06",
+          "risk_coverage": 1.0,
+          "risk_score": 98.57338085471089,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-07",
+          "risk_coverage": 1.0,
+          "risk_score": 98.42304897668836,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-08",
+          "risk_coverage": 1.0,
+          "risk_score": 98.92839966326609,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-09",
+          "risk_coverage": 1.0,
+          "risk_score": 97.14430907124073,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-10",
+          "risk_coverage": 1.0,
+          "risk_score": 77.97202763960082,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-13",
+          "risk_coverage": 1.0,
+          "risk_score": 87.9865060586106,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-14",
+          "risk_coverage": 1.0,
+          "risk_score": 97.71980089648069,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-15",
+          "risk_coverage": 1.0,
+          "risk_score": 90.40813650133373,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-16",
+          "risk_coverage": 1.0,
+          "risk_score": 97.39298912663621,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-17",
+          "risk_coverage": 1.0,
+          "risk_score": 97.18928461604331,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-20",
+          "risk_coverage": 1.0,
+          "risk_score": 97.92956934569688,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-21",
+          "risk_coverage": 1.0,
+          "risk_score": 98.94843689210889,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-22",
+          "risk_coverage": 1.0,
+          "risk_score": 98.25155540855768,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-23",
+          "risk_coverage": 1.0,
+          "risk_score": 98.53294400378122,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.13278154849174,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.0495536656714,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-28",
+          "risk_coverage": 1.0,
+          "risk_score": 98.96767218679507,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-29",
+          "risk_coverage": 1.0,
+          "risk_score": 98.60115853905533,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-30",
+          "risk_coverage": 1.0,
+          "risk_score": 98.56210977583922,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-31",
+          "risk_coverage": 1.0,
+          "risk_score": 98.72639013530919,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-03",
+          "risk_coverage": 1.0,
+          "risk_score": 98.71331070850904,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-04",
+          "risk_coverage": 1.0,
+          "risk_score": 98.76861076078055,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-05",
+          "risk_coverage": 1.0,
+          "risk_score": 98.74600621137348,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-06",
+          "risk_coverage": 1.0,
+          "risk_score": 98.9407438259041,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-10",
+          "risk_coverage": 1.0,
+          "risk_score": 99.01357566375161,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-11",
+          "risk_coverage": 1.0,
+          "risk_score": 98.9936281626836,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-12",
+          "risk_coverage": 1.0,
+          "risk_score": 99.10719154393874,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-13",
+          "risk_coverage": 1.0,
+          "risk_score": 99.15103365266842,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-14",
+          "risk_coverage": 1.0,
+          "risk_score": 99.69252063847406,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-17",
+          "risk_coverage": 1.0,
+          "risk_score": 99.70348884511672,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-18",
+          "risk_coverage": 1.0,
+          "risk_score": 99.73425599122015,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-19",
+          "risk_coverage": 1.0,
+          "risk_score": 99.70474059743299,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-20",
+          "risk_coverage": 1.0,
+          "risk_score": 99.71861917772749,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-21",
+          "risk_coverage": 1.0,
+          "risk_score": 99.77064489750458,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.59535319943274,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-25",
+          "risk_coverage": 1.0,
+          "risk_score": 98.28629075411534,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-26",
+          "risk_coverage": 1.0,
+          "risk_score": 98.48828033526253,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.08155914295165,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-28",
+          "risk_coverage": 1.0,
+          "risk_score": 99.62797504428869,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-01",
+          "risk_coverage": 1.0,
+          "risk_score": 99.88079434192223,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-02",
+          "risk_coverage": 1.0,
+          "risk_score": 99.58991622529008,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-03",
+          "risk_coverage": 1.0,
+          "risk_score": 99.25010534137401,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-04",
+          "risk_coverage": 1.0,
+          "risk_score": 99.13864737144954,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-05",
+          "risk_coverage": 1.0,
+          "risk_score": 99.829143087567,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-08",
+          "risk_coverage": 1.0,
+          "risk_score": 100.0,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-09",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49476917779359,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-10",
+          "risk_coverage": 1.0,
+          "risk_score": 99.76389939785511,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-11",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47030279415162,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-12",
+          "risk_coverage": 1.0,
+          "risk_score": 99.43224397515301,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-15",
+          "risk_coverage": 1.0,
+          "risk_score": 99.80633624158544,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-16",
+          "risk_coverage": 1.0,
+          "risk_score": 99.81451084230945,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-17",
+          "risk_coverage": 1.0,
+          "risk_score": 99.58600153626435,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-18",
+          "risk_coverage": 1.0,
+          "risk_score": 99.20980457148211,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-19",
+          "risk_coverage": 1.0,
+          "risk_score": 99.24669581733043,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-22",
+          "risk_coverage": 1.0,
+          "risk_score": 99.26771677763087,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-23",
+          "risk_coverage": 1.0,
+          "risk_score": 99.61278048775063,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.48083124432485,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-25",
+          "risk_coverage": 1.0,
+          "risk_score": 97.64725217278831,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-26",
+          "risk_coverage": 1.0,
+          "risk_score": 97.28916402271973,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-30",
+          "risk_coverage": 1.0,
+          "risk_score": 97.28572185985016,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-31",
+          "risk_coverage": 1.0,
+          "risk_score": 97.10550017889689,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-01",
+          "risk_coverage": 1.0,
+          "risk_score": 97.17373224086856,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-02",
+          "risk_coverage": 1.0,
+          "risk_score": 97.17886388174351,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-05",
+          "risk_coverage": 1.0,
+          "risk_score": 97.11726369327485,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-06",
+          "risk_coverage": 1.0,
+          "risk_score": 97.11824084802305,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-07",
+          "risk_coverage": 1.0,
+          "risk_score": 97.19546911092688,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-08",
+          "risk_coverage": 1.0,
+          "risk_score": 97.1933770160715,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-09",
+          "risk_coverage": 1.0,
+          "risk_score": 97.25633797222291,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-12",
+          "risk_coverage": 1.0,
+          "risk_score": 97.20047409661417,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-13",
+          "risk_coverage": 1.0,
+          "risk_score": 97.25104389528089,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-14",
+          "risk_coverage": 1.0,
+          "risk_score": 97.27067662776282,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-15",
+          "risk_coverage": 1.0,
+          "risk_score": 97.26883064232044,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-16",
+          "risk_coverage": 1.0,
+          "risk_score": 97.37708613953905,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-20",
+          "risk_coverage": 1.0,
+          "risk_score": 97.38742618955862,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-21",
+          "risk_coverage": 1.0,
+          "risk_score": 97.20984440932924,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-22",
+          "risk_coverage": 1.0,
+          "risk_score": 97.30356414557312,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-23",
+          "risk_coverage": 1.0,
+          "risk_score": 97.21633438852878,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-26",
+          "risk_coverage": 1.0,
+          "risk_score": 98.73765145948516,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.40768264302883,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-28",
+          "risk_coverage": 1.0,
+          "risk_score": 99.37543685708702,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-29",
+          "risk_coverage": 1.0,
+          "risk_score": 99.6353958861101,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-30",
+          "risk_coverage": 1.0,
+          "risk_score": 99.63076865572874,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-03",
+          "risk_coverage": 1.0,
+          "risk_score": 99.62253957450939,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-05",
+          "risk_coverage": 1.0,
+          "risk_score": 99.53466008744742,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-06",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47627651444724,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-07",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49527434210306,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-10",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47423907938061,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-11",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47712875856482,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-12",
+          "risk_coverage": 1.0,
+          "risk_score": 99.63084961556157,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-13",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49653066405726,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-14",
+          "risk_coverage": 1.0,
+          "risk_score": 99.53778065807019,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-17",
+          "risk_coverage": 1.0,
+          "risk_score": 99.45165622967727,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-18",
+          "risk_coverage": 1.0,
+          "risk_score": 99.48200311561574,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-19",
+          "risk_coverage": 1.0,
+          "risk_score": 99.43545317507899,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-20",
+          "risk_coverage": 1.0,
+          "risk_score": 99.16861212083286,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-21",
+          "risk_coverage": 1.0,
+          "risk_score": 99.16755976588516,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.28667521784263,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-25",
+          "risk_coverage": 1.0,
+          "risk_score": 99.24444506520184,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-26",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49072676258145,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.43865836275012,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-28",
+          "risk_coverage": 1.0,
+          "risk_score": 99.35076242606377,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-31",
+          "risk_coverage": 1.0,
+          "risk_score": 99.40262631979381,
+          "risk_state": "NORMAL"
+        }
+      ],
+      "risk_state_counts": {
+        "NORMAL": 144
+      },
+      "signal_checksum": "d36ff18cdb8cc3accde72313ccd82c3c6661c3d6f1df667ee677288691ed53ae",
+      "source_window_id": "normal_market_regime",
+      "start_date": "2023-01-03",
+      "target_path_checksum": "e1832d32d4ac2a031c71358431efa4ab9dc132c6b010550bade9fcbb946ccb3c",
+      "trigger_count": 0,
+      "trigger_dates": [],
+      "unnecessary_exposure_reduction_count": 0,
+      "window_id": "normal_uptrend_control"
+    },
+    {
+      "benchmark_opportunity_cost": 0.0,
+      "component_artifacts": {
+        "risk_signal_artifact": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\weight_research\\b2_control_calm_market_control_risk_signal_20260619T114342.csv",
+        "target_path_artifact": "D:\\Work\\AITradingSystem\\reports\\etf_portfolio\\weight_research\\b2_control_calm_market_control_target_path_20260619T114342.csv"
+      },
+      "control_window_status": "B2_CONTROL_NO_TRIGGER_PASS",
+      "end_date": "2023-07-31",
+      "excess_turnover_proxy": 0.0,
+      "exposure_scaler_changes": [],
+      "false_risk_off_count": 0,
+      "independent_b2_rerun": true,
+      "missed_normal_uptrend_exposure": 0.0,
+      "no_trigger_reference": {
+        "elevated_risk_score_max": 65.0,
+        "expected_exposure_scaler": 1.0,
+        "expected_state": "NORMAL",
+        "risk_off_score_max": 45.0
+      },
+      "risk_signal_values": [
+        {
+          "date": "2023-01-03",
+          "risk_coverage": 1.0,
+          "risk_score": 70.18218352797332,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-04",
+          "risk_coverage": 1.0,
+          "risk_score": 71.76455963608436,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-05",
+          "risk_coverage": 1.0,
+          "risk_score": 69.27891656468549,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-06",
+          "risk_coverage": 1.0,
+          "risk_score": 72.63593045883054,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-09",
+          "risk_coverage": 1.0,
+          "risk_score": 73.7025048043273,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-10",
+          "risk_coverage": 1.0,
+          "risk_score": 77.86432021479001,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-11",
+          "risk_coverage": 1.0,
+          "risk_score": 86.33844718428851,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-12",
+          "risk_coverage": 1.0,
+          "risk_score": 86.70880477330577,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-13",
+          "risk_coverage": 1.0,
+          "risk_score": 86.76394864139347,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-17",
+          "risk_coverage": 1.0,
+          "risk_score": 88.31760948714452,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-18",
+          "risk_coverage": 1.0,
+          "risk_score": 81.01843621132059,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-19",
+          "risk_coverage": 1.0,
+          "risk_score": 80.11291429015701,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-20",
+          "risk_coverage": 1.0,
+          "risk_score": 87.3485940292726,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-23",
+          "risk_coverage": 1.0,
+          "risk_score": 86.75667596197272,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-24",
+          "risk_coverage": 1.0,
+          "risk_score": 88.03928432982858,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-25",
+          "risk_coverage": 1.0,
+          "risk_score": 88.00724918301442,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-26",
+          "risk_coverage": 1.0,
+          "risk_score": 97.72218081156954,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-27",
+          "risk_coverage": 1.0,
+          "risk_score": 98.17580705313316,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-30",
+          "risk_coverage": 1.0,
+          "risk_score": 88.30446178855017,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-01-31",
+          "risk_coverage": 1.0,
+          "risk_score": 97.65576812327517,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-01",
+          "risk_coverage": 1.0,
+          "risk_score": 97.27232594905432,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-02",
+          "risk_coverage": 1.0,
+          "risk_score": 96.49009418796842,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-03",
+          "risk_coverage": 1.0,
+          "risk_score": 96.38327455856687,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-06",
+          "risk_coverage": 1.0,
+          "risk_score": 96.69345899351023,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-07",
+          "risk_coverage": 1.0,
+          "risk_score": 96.42438578384237,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-08",
+          "risk_coverage": 1.0,
+          "risk_score": 95.72961162686082,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-09",
+          "risk_coverage": 1.0,
+          "risk_score": 95.70228377617647,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-10",
+          "risk_coverage": 1.0,
+          "risk_score": 95.51209700590307,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-13",
+          "risk_coverage": 1.0,
+          "risk_score": 95.36639748931083,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-14",
+          "risk_coverage": 1.0,
+          "risk_score": 95.29893077203906,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-15",
+          "risk_coverage": 1.0,
+          "risk_score": 95.60118282270548,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-16",
+          "risk_coverage": 1.0,
+          "risk_score": 95.25555177905754,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-17",
+          "risk_coverage": 1.0,
+          "risk_score": 95.72364378335702,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-21",
+          "risk_coverage": 1.0,
+          "risk_score": 94.35212820532585,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-22",
+          "risk_coverage": 1.0,
+          "risk_score": 94.27410504855787,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-23",
+          "risk_coverage": 1.0,
+          "risk_score": 95.43124088123173,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-24",
+          "risk_coverage": 1.0,
+          "risk_score": 93.79427248234225,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-27",
+          "risk_coverage": 1.0,
+          "risk_score": 94.61991745496401,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-02-28",
+          "risk_coverage": 1.0,
+          "risk_score": 95.04170464682527,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-01",
+          "risk_coverage": 1.0,
+          "risk_score": 94.34287874074062,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-02",
+          "risk_coverage": 1.0,
+          "risk_score": 96.43287983855161,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-03",
+          "risk_coverage": 1.0,
+          "risk_score": 98.213164076216,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-06",
+          "risk_coverage": 1.0,
+          "risk_score": 98.57338085471089,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-07",
+          "risk_coverage": 1.0,
+          "risk_score": 98.42304897668836,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-08",
+          "risk_coverage": 1.0,
+          "risk_score": 98.92839966326609,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-09",
+          "risk_coverage": 1.0,
+          "risk_score": 97.14430907124073,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-10",
+          "risk_coverage": 1.0,
+          "risk_score": 77.97202763960082,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-13",
+          "risk_coverage": 1.0,
+          "risk_score": 87.9865060586106,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-14",
+          "risk_coverage": 1.0,
+          "risk_score": 97.71980089648069,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-15",
+          "risk_coverage": 1.0,
+          "risk_score": 90.40813650133373,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-16",
+          "risk_coverage": 1.0,
+          "risk_score": 97.39298912663621,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-17",
+          "risk_coverage": 1.0,
+          "risk_score": 97.18928461604331,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-20",
+          "risk_coverage": 1.0,
+          "risk_score": 97.92956934569688,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-21",
+          "risk_coverage": 1.0,
+          "risk_score": 98.94843689210889,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-22",
+          "risk_coverage": 1.0,
+          "risk_score": 98.25155540855768,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-23",
+          "risk_coverage": 1.0,
+          "risk_score": 98.53294400378122,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.13278154849174,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.0495536656714,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-28",
+          "risk_coverage": 1.0,
+          "risk_score": 98.96767218679507,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-29",
+          "risk_coverage": 1.0,
+          "risk_score": 98.60115853905533,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-30",
+          "risk_coverage": 1.0,
+          "risk_score": 98.56210977583922,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-03-31",
+          "risk_coverage": 1.0,
+          "risk_score": 98.72639013530919,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-03",
+          "risk_coverage": 1.0,
+          "risk_score": 98.71331070850904,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-04",
+          "risk_coverage": 1.0,
+          "risk_score": 98.76861076078055,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-05",
+          "risk_coverage": 1.0,
+          "risk_score": 98.74600621137348,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-06",
+          "risk_coverage": 1.0,
+          "risk_score": 98.9407438259041,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-10",
+          "risk_coverage": 1.0,
+          "risk_score": 99.01357566375161,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-11",
+          "risk_coverage": 1.0,
+          "risk_score": 98.9936281626836,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-12",
+          "risk_coverage": 1.0,
+          "risk_score": 99.10719154393874,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-13",
+          "risk_coverage": 1.0,
+          "risk_score": 99.15103365266842,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-14",
+          "risk_coverage": 1.0,
+          "risk_score": 99.69252063847406,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-17",
+          "risk_coverage": 1.0,
+          "risk_score": 99.70348884511672,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-18",
+          "risk_coverage": 1.0,
+          "risk_score": 99.73425599122015,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-19",
+          "risk_coverage": 1.0,
+          "risk_score": 99.70474059743299,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-20",
+          "risk_coverage": 1.0,
+          "risk_score": 99.71861917772749,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-21",
+          "risk_coverage": 1.0,
+          "risk_score": 99.77064489750458,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.59535319943274,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-25",
+          "risk_coverage": 1.0,
+          "risk_score": 98.28629075411534,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-26",
+          "risk_coverage": 1.0,
+          "risk_score": 98.48828033526253,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.08155914295165,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-04-28",
+          "risk_coverage": 1.0,
+          "risk_score": 99.62797504428869,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-01",
+          "risk_coverage": 1.0,
+          "risk_score": 99.88079434192223,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-02",
+          "risk_coverage": 1.0,
+          "risk_score": 99.58991622529008,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-03",
+          "risk_coverage": 1.0,
+          "risk_score": 99.25010534137401,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-04",
+          "risk_coverage": 1.0,
+          "risk_score": 99.13864737144954,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-05",
+          "risk_coverage": 1.0,
+          "risk_score": 99.829143087567,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-08",
+          "risk_coverage": 1.0,
+          "risk_score": 100.0,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-09",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49476917779359,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-10",
+          "risk_coverage": 1.0,
+          "risk_score": 99.76389939785511,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-11",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47030279415162,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-12",
+          "risk_coverage": 1.0,
+          "risk_score": 99.43224397515301,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-15",
+          "risk_coverage": 1.0,
+          "risk_score": 99.80633624158544,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-16",
+          "risk_coverage": 1.0,
+          "risk_score": 99.81451084230945,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-17",
+          "risk_coverage": 1.0,
+          "risk_score": 99.58600153626435,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-18",
+          "risk_coverage": 1.0,
+          "risk_score": 99.20980457148211,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-19",
+          "risk_coverage": 1.0,
+          "risk_score": 99.24669581733043,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-22",
+          "risk_coverage": 1.0,
+          "risk_score": 99.26771677763087,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-23",
+          "risk_coverage": 1.0,
+          "risk_score": 99.61278048775063,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.48083124432485,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-25",
+          "risk_coverage": 1.0,
+          "risk_score": 97.64725217278831,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-26",
+          "risk_coverage": 1.0,
+          "risk_score": 97.28916402271973,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-30",
+          "risk_coverage": 1.0,
+          "risk_score": 97.28572185985016,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-05-31",
+          "risk_coverage": 1.0,
+          "risk_score": 97.10550017889689,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-01",
+          "risk_coverage": 1.0,
+          "risk_score": 97.17373224086856,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-02",
+          "risk_coverage": 1.0,
+          "risk_score": 97.17886388174351,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-05",
+          "risk_coverage": 1.0,
+          "risk_score": 97.11726369327485,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-06",
+          "risk_coverage": 1.0,
+          "risk_score": 97.11824084802305,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-07",
+          "risk_coverage": 1.0,
+          "risk_score": 97.19546911092688,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-08",
+          "risk_coverage": 1.0,
+          "risk_score": 97.1933770160715,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-09",
+          "risk_coverage": 1.0,
+          "risk_score": 97.25633797222291,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-12",
+          "risk_coverage": 1.0,
+          "risk_score": 97.20047409661417,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-13",
+          "risk_coverage": 1.0,
+          "risk_score": 97.25104389528089,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-14",
+          "risk_coverage": 1.0,
+          "risk_score": 97.27067662776282,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-15",
+          "risk_coverage": 1.0,
+          "risk_score": 97.26883064232044,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-16",
+          "risk_coverage": 1.0,
+          "risk_score": 97.37708613953905,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-20",
+          "risk_coverage": 1.0,
+          "risk_score": 97.38742618955862,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-21",
+          "risk_coverage": 1.0,
+          "risk_score": 97.20984440932924,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-22",
+          "risk_coverage": 1.0,
+          "risk_score": 97.30356414557312,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-23",
+          "risk_coverage": 1.0,
+          "risk_score": 97.21633438852878,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-26",
+          "risk_coverage": 1.0,
+          "risk_score": 98.73765145948516,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.40768264302883,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-28",
+          "risk_coverage": 1.0,
+          "risk_score": 99.37543685708702,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-29",
+          "risk_coverage": 1.0,
+          "risk_score": 99.6353958861101,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-06-30",
+          "risk_coverage": 1.0,
+          "risk_score": 99.63076865572874,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-03",
+          "risk_coverage": 1.0,
+          "risk_score": 99.62253957450939,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-05",
+          "risk_coverage": 1.0,
+          "risk_score": 99.53466008744742,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-06",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47627651444724,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-07",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49527434210306,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-10",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47423907938061,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-11",
+          "risk_coverage": 1.0,
+          "risk_score": 99.47712875856482,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-12",
+          "risk_coverage": 1.0,
+          "risk_score": 99.63084961556157,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-13",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49653066405726,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-14",
+          "risk_coverage": 1.0,
+          "risk_score": 99.53778065807019,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-17",
+          "risk_coverage": 1.0,
+          "risk_score": 99.45165622967727,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-18",
+          "risk_coverage": 1.0,
+          "risk_score": 99.48200311561574,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-19",
+          "risk_coverage": 1.0,
+          "risk_score": 99.43545317507899,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-20",
+          "risk_coverage": 1.0,
+          "risk_score": 99.16861212083286,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-21",
+          "risk_coverage": 1.0,
+          "risk_score": 99.16755976588516,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-24",
+          "risk_coverage": 1.0,
+          "risk_score": 99.28667521784263,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-25",
+          "risk_coverage": 1.0,
+          "risk_score": 99.24444506520184,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-26",
+          "risk_coverage": 1.0,
+          "risk_score": 99.49072676258145,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-27",
+          "risk_coverage": 1.0,
+          "risk_score": 99.43865836275012,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-28",
+          "risk_coverage": 1.0,
+          "risk_score": 99.35076242606377,
+          "risk_state": "NORMAL"
+        },
+        {
+          "date": "2023-07-31",
+          "risk_coverage": 1.0,
+          "risk_score": 99.40262631979381,
+          "risk_state": "NORMAL"
+        }
+      ],
+      "risk_state_counts": {
+        "NORMAL": 144
+      },
+      "signal_checksum": "d36ff18cdb8cc3accde72313ccd82c3c6661c3d6f1df667ee677288691ed53ae",
+      "source_window_id": "normal_market_regime",
+      "start_date": "2023-01-03",
+      "target_path_checksum": "e1832d32d4ac2a031c71358431efa4ab9dc132c6b010550bade9fcbb946ccb3c",
+      "trigger_count": 0,
+      "trigger_dates": [],
+      "unnecessary_exposure_reduction_count": 0,
+      "window_id": "calm_market_control"
+    }
+  ]
+}

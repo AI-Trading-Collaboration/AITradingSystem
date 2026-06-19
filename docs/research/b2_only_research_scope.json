@@ -1,0 +1,104 @@
+{
+  "allowed_mechanisms": [
+    "risk trigger",
+    "risk-off exposure scaler",
+    "risk re-entry logic",
+    "risk-heavy window diagnostics",
+    "false risk-off accounting",
+    "re-entry lag accounting"
+  ],
+  "b2_definition": "B0 static strategic baseline + fast asymmetric risk scaler only",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_mechanisms": [
+    "slow relative tilt",
+    "regime filter",
+    "confidence shrinkage",
+    "momentum allocator",
+    "relative strength allocator",
+    "P0 mixed dynamic strategy",
+    "official target weights",
+    "broker/order/live output"
+  ],
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:44:48.143853+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_ONLY_RESEARCH_SCOPE_PASS",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2-only scope is frozen to B0 static baseline plus fast asymmetric risk scaler.",
+    "warnings": "Research-only post-branch review; no B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_only_research_scope",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "research_outputs_only": true,
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "scope_validation": [
+    {
+      "check_id": "B3 slow tilt excluded",
+      "message": "B3 is not part of B2-only scope.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "B5 confidence excluded",
+      "message": "Confidence shrinkage remains blocked.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "B6 regime excluded",
+      "message": "Regime filter remains blocked.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "P0 mixed allocator excluded",
+      "message": "P0 mixed strategy is not a module proxy.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "B5/B6/v3 blocked",
+      "message": "Source gates keep b5_allowed=false, b6_allowed=false and v3_allowed=false.",
+      "status": "PASS"
+    }
+  ],
+  "source_artifacts": {
+    "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+    "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+    "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+    "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+    "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+    "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+    "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B2_ONLY_RESEARCH_SCOPE_PASS",
+  "task_id": "TRADING-537"
+}

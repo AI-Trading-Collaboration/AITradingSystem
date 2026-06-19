@@ -1,0 +1,91 @@
+{
+  "V_shaped_recovery_lag": {
+    "observed": false,
+    "reason": "B2 did not trigger in the current V-shaped recovery source window."
+  },
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "days_out_of_market_or_lower_exposure": 33,
+  "false_risk_off_opportunity_cost": 0.0,
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T11:04:46.858965+00:00",
+  "holdout_accessed": false,
+  "lower_exposure_days": 33,
+  "market_regime": "ai_after_chatgpt",
+  "missed_rebound_return_proxy": {
+    "available": true,
+    "interpretation": "No B2 trigger in V-shaped source window; lag cost not observed.",
+    "return_delta_vs_B0": 0.0,
+    "trigger_count": 0
+  },
+  "re_entry_dates": [
+    "2025-03-10"
+  ],
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_REENTRY_LAG_HIGH",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 re-entry review finds lag uncertainty in the only triggered risk window.",
+    "warnings": "Research-only B2/B3 v2 review; no threshold tuning, weight generation, B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "redesign_required": false,
+  "reentry_lag_days": 14,
+  "report_type": "b2_reentry_opportunity_cost_review",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "risk_off_dates": [
+    "2025-04-04",
+    "2025-04-07",
+    "2025-04-08",
+    "2025-04-09",
+    "2025-04-10",
+    "2025-04-11",
+    "2025-04-14",
+    "2025-04-15",
+    "2025-04-16",
+    "2025-04-17",
+    "2025-04-21",
+    "2025-04-22",
+    "2025-04-23",
+    "2025-04-24",
+    "2025-04-25",
+    "2025-04-28"
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_cost_benchmark_survival_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_survival_review.json",
+    "b2_false_risk_off_reentry_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_attribution.json",
+    "b2_only_research_gate": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate.json",
+    "b2_only_risk_heavy_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_risk_heavy_diagnostic_backfill.json",
+    "b2_risk_heavy_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_catalog.json",
+    "b3_redesign_hypothesis_ranking": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_ranking.json",
+    "b3_signal_direction_precheck": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_direction_precheck.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "final_branch_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\final_branch_decision_snapshot.json"
+  },
+  "status": "B2_REENTRY_LAG_HIGH",
+  "task_id": "TRADING-560"
+}

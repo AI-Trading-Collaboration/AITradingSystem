@@ -1,0 +1,605 @@
+{
+  "benchmark_relative_status": "MIXED_VS_B0_RETURN_DRAG_WITH_DRAWDOWN_BENEFIT",
+  "comparisons": [
+    {
+      "comparison": "B2 vs B0",
+      "evidence": {
+        "V_shaped_recovery_opportunity_cost": 0.0,
+        "benchmark_relative_delta": -0.02813265242856111,
+        "cost_delta_vs_B0": 0.00027354656464329306,
+        "drawdown_delta_vs_B0": 0.014543173743443605,
+        "false_risk_off_count": 0,
+        "max_reentry_lag": 14,
+        "return_delta_vs_B0": -0.02813265242856111,
+        "risk_trigger_count": 33,
+        "triggered_window_count": 1,
+        "turnover_delta_vs_B0": 1.3677328232164652
+      },
+      "status": "MIXED"
+    },
+    {
+      "comparison": "B2 vs B1 optional wrapper baseline",
+      "evidence": [
+        {
+          "benchmark_relative_delta": 0.003019283696003683,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -9.488998283447242e-05,
+          "drawdown_delta": -0.0011837877469808022,
+          "return_delta": 0.003019283696003683,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.4744499141723621,
+          "window_id": "normal_uptrend",
+          "window_result": "computed"
+        },
+        {
+          "benchmark_relative_delta": 0.00012713895743499126,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -2.7665318793166565e-05,
+          "drawdown_delta": 0.0011872814101367979,
+          "return_delta": 0.00012713895743499126,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.13832659396583283,
+          "window_id": "rapid_drawdown",
+          "window_result": "computed"
+        },
+        {
+          "benchmark_relative_delta": 0.001310430616670244,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -7.09909383153728e-05,
+          "drawdown_delta": 0.0021981949422403835,
+          "return_delta": 0.001310430616670244,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.354954691576864,
+          "window_id": "slow_drawdown",
+          "window_result": "computed"
+        },
+        {
+          "benchmark_relative_delta": -0.000799146746924162,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -5.029911651509926e-05,
+          "drawdown_delta": 0.00014994919061972478,
+          "return_delta": -0.000799146746924162,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.2514955825754963,
+          "window_id": "high_volatility_sideways",
+          "window_result": "computed"
+        },
+        {
+          "benchmark_relative_delta": 0.00201914348977672,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -1.8503872027051092e-05,
+          "drawdown_delta": -0.0005521753413050279,
+          "return_delta": 0.00201914348977672,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.09251936013525547,
+          "window_id": "v_shaped_recovery",
+          "window_result": "computed"
+        },
+        {
+          "benchmark_relative_delta": 2.857012489398958e-05,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -1.7376500434465898e-05,
+          "drawdown_delta": 0.00011038775822769242,
+          "return_delta": 2.857012489398958e-05,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.08688250217232948,
+          "window_id": "semiconductor_correction",
+          "window_result": "computed"
+        },
+        {
+          "benchmark_relative_delta": 9.924234559943734e-05,
+          "candidate_layer": "B1",
+          "comparator_layer": "B0",
+          "comparison_id": "B1_vs_B0",
+          "constraint_hits": 0,
+          "cost_delta": -2.684196785493032e-05,
+          "drawdown_delta": 0.0002577070147143923,
+          "return_delta": 9.924234559943734e-05,
+          "risk_trigger_count": null,
+          "tilt_contribution": null,
+          "turnover_delta": -0.1342098392746516,
+          "window_id": "false_risk_off_cluster",
+          "window_result": "computed"
+        }
+      ],
+      "status": "SOURCE_SEPARATE_NOT_COMBINED"
+    },
+    {
+      "comparison": "B2 vs static benchmark",
+      "evidence": "B0 static baseline is the canonical comparator for this batch.",
+      "status": "B0_STATIC_PROXY_USED"
+    },
+    {
+      "comparison": "B2 vs no-trade baseline",
+      "evidence": "No no-trade risk-heavy window artifact is available in this batch.",
+      "status": "NOT_WINDOW_ALIGNED_SOURCE_ABSENT"
+    }
+  ],
+  "cost_survival_status": "B2_COST_BENCHMARK_MIXED",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "drawdown_benefit": 0.014543173743443605,
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:44:48.143853+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "net_utility_delta": -0.0138630252497608,
+  "opportunity_cost": 0.02813265242856111,
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_COST_BENCHMARK_MIXED",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 cost and benchmark survival remains mixed on current diagnostic evidence.",
+    "warnings": "Research-only post-branch review; no B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_cost_benchmark_survival_review",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+    "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+    "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+    "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+    "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+    "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+    "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B2_COST_BENCHMARK_MIXED",
+  "task_id": "TRADING-541",
+  "turnover_cost": 0.00027354656464329306,
+  "worst_window_delta": {
+    "V_shaped_recovery_opportunity_cost": 0.0,
+    "benchmark_relative_delta": -0.02813265242856111,
+    "cost_delta_vs_B0": 0.00027354656464329306,
+    "drawdown_delta_vs_B0": 0.014543173743443605,
+    "end_date": "2025-04-30",
+    "exposure_scaler_changes": [
+      {
+        "date": "2025-03-10",
+        "exposure_scaler": 0.85,
+        "risk_score": 60.717538694447285,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-11",
+        "exposure_scaler": 0.85,
+        "risk_score": 60.35726367622287,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-12",
+        "exposure_scaler": 0.85,
+        "risk_score": 61.94365561268737,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-13",
+        "exposure_scaler": 0.85,
+        "risk_score": 59.34740362141278,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-14",
+        "exposure_scaler": 0.85,
+        "risk_score": 62.91072984431212,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-17",
+        "exposure_scaler": 0.85,
+        "risk_score": 64.19069001653394,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-18",
+        "exposure_scaler": 0.85,
+        "risk_score": 61.580416500039945,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-19",
+        "exposure_scaler": 0.85,
+        "risk_score": 63.20255989551734,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-20",
+        "exposure_scaler": 0.85,
+        "risk_score": 62.686730921528266,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-21",
+        "exposure_scaler": 0.85,
+        "risk_score": 63.09925806482781,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-26",
+        "exposure_scaler": 0.85,
+        "risk_score": 62.89851388414635,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-27",
+        "exposure_scaler": 0.85,
+        "risk_score": 63.048792792186326,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-28",
+        "exposure_scaler": 0.85,
+        "risk_score": 58.782649785962754,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-03-31",
+        "exposure_scaler": 0.85,
+        "risk_score": 59.960833438594804,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-01",
+        "exposure_scaler": 0.85,
+        "risk_score": 60.80767262148716,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-02",
+        "exposure_scaler": 0.85,
+        "risk_score": 62.13464786707658,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-03",
+        "exposure_scaler": 0.85,
+        "risk_score": 50.189673513444156,
+        "risk_state": "ELEVATED_RISK",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-04",
+        "exposure_scaler": 0.55,
+        "risk_score": 38.676979966545545,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-07",
+        "exposure_scaler": 0.55,
+        "risk_score": 39.53192392881526,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-08",
+        "exposure_scaler": 0.55,
+        "risk_score": 38.40749736312448,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-09",
+        "exposure_scaler": 0.55,
+        "risk_score": 36.62906868282383,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-10",
+        "exposure_scaler": 0.55,
+        "risk_score": 29.237837814680805,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-11",
+        "exposure_scaler": 0.55,
+        "risk_score": 31.901086580653256,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-14",
+        "exposure_scaler": 0.55,
+        "risk_score": 33.02066569026202,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-15",
+        "exposure_scaler": 0.55,
+        "risk_score": 33.0570865729361,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-16",
+        "exposure_scaler": 0.55,
+        "risk_score": 28.972724027722748,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-17",
+        "exposure_scaler": 0.55,
+        "risk_score": 29.035181313076556,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-21",
+        "exposure_scaler": 0.55,
+        "risk_score": 25.382044456437402,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-22",
+        "exposure_scaler": 0.55,
+        "risk_score": 28.677696401644393,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-23",
+        "exposure_scaler": 0.55,
+        "risk_score": 31.109398870285553,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-24",
+        "exposure_scaler": 0.55,
+        "risk_score": 34.50036541199243,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-25",
+        "exposure_scaler": 0.55,
+        "risk_score": 36.630056691653415,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-28",
+        "exposure_scaler": 0.55,
+        "risk_score": 36.5726405887835,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      }
+    ],
+    "false_risk_off_count": 0,
+    "reentry_lag": 14,
+    "return_delta_vs_B0": -0.02813265242856111,
+    "risk_off_events": [
+      {
+        "date": "2025-04-04",
+        "exposure_scaler": 0.55,
+        "risk_score": 38.676979966545545,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-07",
+        "exposure_scaler": 0.55,
+        "risk_score": 39.53192392881526,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-08",
+        "exposure_scaler": 0.55,
+        "risk_score": 38.40749736312448,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-09",
+        "exposure_scaler": 0.55,
+        "risk_score": 36.62906868282383,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-10",
+        "exposure_scaler": 0.55,
+        "risk_score": 29.237837814680805,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-11",
+        "exposure_scaler": 0.55,
+        "risk_score": 31.901086580653256,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-14",
+        "exposure_scaler": 0.55,
+        "risk_score": 33.02066569026202,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-15",
+        "exposure_scaler": 0.55,
+        "risk_score": 33.0570865729361,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-16",
+        "exposure_scaler": 0.55,
+        "risk_score": 28.972724027722748,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-17",
+        "exposure_scaler": 0.55,
+        "risk_score": 29.035181313076556,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-21",
+        "exposure_scaler": 0.55,
+        "risk_score": 25.382044456437402,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-22",
+        "exposure_scaler": 0.55,
+        "risk_score": 28.677696401644393,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-23",
+        "exposure_scaler": 0.55,
+        "risk_score": 31.109398870285553,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-24",
+        "exposure_scaler": 0.55,
+        "risk_score": 34.50036541199243,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-25",
+        "exposure_scaler": 0.55,
+        "risk_score": 36.630056691653415,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      },
+      {
+        "date": "2025-04-28",
+        "exposure_scaler": 0.55,
+        "risk_score": 36.5726405887835,
+        "risk_state": "RISK_OFF",
+        "window_id": "slow_drawdown"
+      }
+    ],
+    "risk_reentry_events": [
+      {
+        "first_trigger_date": "2025-03-10",
+        "reentry_lag_days": 14
+      }
+    ],
+    "risk_trigger_count": 33,
+    "risk_trigger_dates": [
+      "2025-03-10",
+      "2025-03-11",
+      "2025-03-12",
+      "2025-03-13",
+      "2025-03-14",
+      "2025-03-17",
+      "2025-03-18",
+      "2025-03-19",
+      "2025-03-20",
+      "2025-03-21",
+      "2025-03-26",
+      "2025-03-27",
+      "2025-03-28",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-04-02",
+      "2025-04-03",
+      "2025-04-04",
+      "2025-04-07",
+      "2025-04-08",
+      "2025-04-09",
+      "2025-04-10",
+      "2025-04-11",
+      "2025-04-14",
+      "2025-04-15",
+      "2025-04-16",
+      "2025-04-17",
+      "2025-04-21",
+      "2025-04-22",
+      "2025-04-23",
+      "2025-04-24",
+      "2025-04-25",
+      "2025-04-28"
+    ],
+    "source_window_id": "slow_drawdown",
+    "start_date": "2025-01-02",
+    "turnover_delta_vs_B0": 1.3677328232164652,
+    "window_id": "slow_drawdown"
+  }
+}

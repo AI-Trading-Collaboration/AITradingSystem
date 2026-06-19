@@ -1,0 +1,167 @@
+{
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T11:04:46.858965+00:00",
+  "holdout_accessed": false,
+  "interpretation": "Current evidence shows B2 can bind in slow drawdown, but trigger coverage is too concentrated to prove robustness.",
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_TRIGGER_COVERAGE_TOO_LOW",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 trigger sensitivity is mapped without changing thresholds.",
+    "warnings": "Research-only B2/B3 v2 review; no threshold tuning, weight generation, B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_risk_trigger_sensitivity_map",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_cost_benchmark_survival_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_survival_review.json",
+    "b2_false_risk_off_reentry_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_attribution.json",
+    "b2_only_research_gate": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate.json",
+    "b2_only_risk_heavy_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_risk_heavy_diagnostic_backfill.json",
+    "b2_risk_heavy_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_catalog.json",
+    "b3_redesign_hypothesis_ranking": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_ranking.json",
+    "b3_signal_direction_precheck": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_direction_precheck.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "final_branch_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\final_branch_decision_snapshot.json"
+  },
+  "status": "B2_TRIGGER_COVERAGE_TOO_LOW",
+  "task_id": "TRADING-559",
+  "threshold_changed": false,
+  "triggered_window_count": 1,
+  "window_count": 8,
+  "window_rows": [
+    {
+      "non_trigger_interpretation": "no_trigger_observed_without_threshold_change",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "rapid_drawdown",
+      "threshold_changed": false,
+      "window_id": "rapid_drawdown"
+    },
+    {
+      "non_trigger_interpretation": "risk_signal_bound_and_scaled_exposure",
+      "risk_trigger_count": 33,
+      "risk_trigger_dates": [
+        "2025-03-10",
+        "2025-03-11",
+        "2025-03-12",
+        "2025-03-13",
+        "2025-03-14",
+        "2025-03-17",
+        "2025-03-18",
+        "2025-03-19",
+        "2025-03-20",
+        "2025-03-21",
+        "2025-03-26",
+        "2025-03-27",
+        "2025-03-28",
+        "2025-03-31",
+        "2025-04-01",
+        "2025-04-02",
+        "2025-04-03",
+        "2025-04-04",
+        "2025-04-07",
+        "2025-04-08",
+        "2025-04-09",
+        "2025-04-10",
+        "2025-04-11",
+        "2025-04-14",
+        "2025-04-15",
+        "2025-04-16",
+        "2025-04-17",
+        "2025-04-21",
+        "2025-04-22",
+        "2025-04-23",
+        "2025-04-24",
+        "2025-04-25",
+        "2025-04-28"
+      ],
+      "signal_binding_status": "BOUND",
+      "source_window_id": "slow_drawdown",
+      "threshold_changed": false,
+      "window_id": "slow_drawdown"
+    },
+    {
+      "non_trigger_interpretation": "no_trigger_observed_without_threshold_change",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "rapid_drawdown",
+      "threshold_changed": false,
+      "window_id": "volatility_spike"
+    },
+    {
+      "non_trigger_interpretation": "window_may_be_too_calm_or_threshold_not_binding",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "high_volatility_sideways",
+      "threshold_changed": false,
+      "window_id": "high_volatility_sideways"
+    },
+    {
+      "non_trigger_interpretation": "no_trigger_observed_without_threshold_change",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "semiconductor_correction",
+      "threshold_changed": false,
+      "window_id": "semiconductor_correction"
+    },
+    {
+      "non_trigger_interpretation": "window_may_be_too_calm_or_threshold_not_binding",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "v_shaped_recovery",
+      "threshold_changed": false,
+      "window_id": "v_shaped_recovery"
+    },
+    {
+      "non_trigger_interpretation": "no_trigger_observed_but_false_positive_uncertainty_remains",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "false_risk_off_cluster",
+      "threshold_changed": false,
+      "window_id": "false_risk_off_cluster"
+    },
+    {
+      "non_trigger_interpretation": "no_trigger_observed_but_false_positive_uncertainty_remains",
+      "risk_trigger_count": 0,
+      "risk_trigger_dates": [],
+      "signal_binding_status": "NOT_TRIGGERED",
+      "source_window_id": "false_risk_off_cluster",
+      "threshold_changed": false,
+      "window_id": "shallow_pullback_false_alarm"
+    }
+  ]
+}

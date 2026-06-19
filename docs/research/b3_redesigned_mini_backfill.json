@@ -1,0 +1,70 @@
+{
+  "blocked_reason": "B3 signal-direction precheck is not PASS; no redesigned B3 weights are generated.",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:44:48.143853+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "metrics": {
+    "benchmark_relative_delta": null,
+    "cost_delta_vs_B0": null,
+    "drawdown_delta_vs_B0": null,
+    "return_delta_vs_B0": null,
+    "tilt_contribution": null,
+    "turnover_delta_vs_B0": null,
+    "window_result": "not_run",
+    "wrong_tilt_dates": []
+  },
+  "mini_backfill_executed": false,
+  "precheck_status": "B3_SIGNAL_DIRECTION_PRECHECK_MIXED",
+  "reader_brief": {
+    "blocking_issues": "B3_REDESIGNED_MINI_BACKFILL_BLOCKED",
+    "key_result": "B3_REDESIGNED_MINI_BACKFILL_BLOCKED",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B3 redesigned mini-backfill is blocked until signal-direction precheck passes.",
+    "warnings": "Research-only post-branch review; no B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b3_redesigned_mini_backfill",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+    "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+    "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+    "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+    "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+    "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+    "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B3_REDESIGNED_MINI_BACKFILL_BLOCKED",
+  "task_id": "TRADING-546"
+}

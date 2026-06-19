@@ -1,0 +1,228 @@
+{
+  "constraints_status": "B3_REDESIGN_CONSTRAINTS_FROZEN",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:44:48.143853+00:00",
+  "holdout_accessed": false,
+  "hypotheses": [
+    {
+      "changed_logic": "Lower max relative tilt cap.",
+      "diagnostic_window": "semiconductor_correction",
+      "expected_failure_mode": "Cap becomes too small to matter.",
+      "expected_improvement": "Limit drawdown and turnover damage from wrong direction.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "smaller_tilt_cap",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "wrong_direction_loss_and_turnover_delta",
+      "rank": 1,
+      "selected_for_precheck": true
+    },
+    {
+      "changed_logic": "Shrink active tilt toward baseline weights.",
+      "diagnostic_window": "semiconductor_correction",
+      "expected_failure_mode": "No improvement versus static baseline.",
+      "expected_improvement": "Keep B3 closer to B0 when confidence is low.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "baseline_shrinkage",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "drawdown_delta_vs_B0",
+      "rank": 2,
+      "selected_for_precheck": true
+    },
+    {
+      "changed_logic": "Add persistence confirmation to RS state changes.",
+      "diagnostic_window": "v_shaped_recovery",
+      "expected_failure_mode": "Confirmation misses early trend windows.",
+      "expected_improvement": "Require confirmation before overweight/underweight changes.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "relative_strength_confirmation",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "directional_agreement",
+      "rank": 3,
+      "selected_for_precheck": true
+    },
+    {
+      "changed_logic": "Smooth signal scores before target mapping.",
+      "diagnostic_window": "v_shaped_recovery",
+      "expected_failure_mode": "Smoothing hides real inflections.",
+      "expected_improvement": "Reduce overreaction and repeated wrong-tilt dates.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "stronger_smoothing",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "return_delta_vs_B0",
+      "rank": 4,
+      "selected_for_precheck": false
+    },
+    {
+      "changed_logic": "Use a longer RS lookback before tilt scoring.",
+      "diagnostic_window": "slow_drawdown",
+      "expected_failure_mode": "Too slow to react after semiconductor leadership shifts.",
+      "expected_improvement": "Reduce signal lag/noise from short relative-strength reversals.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "slower_relative_strength_window",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "return_delta_vs_B0",
+      "rank": 5,
+      "selected_for_precheck": false
+    },
+    {
+      "changed_logic": "Disable or shrink tilt when risk volatility is high.",
+      "diagnostic_window": "high_volatility_sideways",
+      "expected_failure_mode": "Filter removes useful recovery exposure.",
+      "expected_improvement": "Avoid B3 direction errors during unstable markets.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "avoid_tilt_during_high_vol_regimes",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "return_delta_vs_B0",
+      "rank": 6,
+      "selected_for_precheck": false
+    },
+    {
+      "changed_logic": "Gate tilt by recent asset-level contribution evidence.",
+      "diagnostic_window": "slow_drawdown",
+      "expected_failure_mode": "Contribution filter overfits diagnostic windows.",
+      "expected_improvement": "Drop assets whose tilt contribution is persistently negative.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "asset_level_contribution_filter",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "return_delta_vs_B0",
+      "rank": 7,
+      "selected_for_precheck": false
+    },
+    {
+      "changed_logic": "Multiply tilt by signal coverage/confidence.",
+      "diagnostic_window": "slow_drawdown",
+      "expected_failure_mode": "Confidence proxy does not map to future contribution.",
+      "expected_improvement": "Use confidence to scale tilt magnitude.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "confidence_weighted_tilt",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "main_metric": "return_delta_vs_B0",
+      "rank": 8,
+      "selected_for_precheck": false
+    },
+    {
+      "changed_logic": "Diagnostic-only inversion test before any production-style redesign.",
+      "diagnostic_window": "slow_drawdown",
+      "expected_failure_mode": "Inversion overfits wrong-tilt dates and fails normal windows.",
+      "expected_improvement": "Detect whether B3 signal direction is structurally reversed.",
+      "forbidden_mechanisms": [
+        "B5 confidence",
+        "B6 regime",
+        "official target weights",
+        "holdout",
+        "broker/order/live output"
+      ],
+      "hypothesis_id": "direction_inversion_test",
+      "kill_criteria": "Reject if normal-uptrend agreement worsens or turnover increases.",
+      "main_metric": "wrong_direction_rate",
+      "rank": 9,
+      "selected_for_precheck": false
+    }
+  ],
+  "market_regime": "ai_after_chatgpt",
+  "ranking_policy_version": "b3_redesign_hypothesis_ranking_pilot_2026-06-19",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B3_REDESIGN_HYPOTHESES_RANKED",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B3 redesign hypotheses are ranked under frozen signal-direction constraints.",
+    "warnings": "Research-only post-branch review; no B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b3_redesign_hypothesis_ranking",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "selected_hypothesis_ids": [
+    "smaller_tilt_cap",
+    "baseline_shrinkage",
+    "relative_strength_confirmation"
+  ],
+  "source_artifacts": {
+    "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+    "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+    "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+    "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+    "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+    "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+    "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B3_REDESIGN_HYPOTHESES_RANKED",
+  "task_id": "TRADING-544"
+}

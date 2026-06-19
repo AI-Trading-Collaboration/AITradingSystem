@@ -1,0 +1,282 @@
+{
+  "coverage_validation": [
+    {
+      "check_id": "required windows present",
+      "message": "ready",
+      "status": "PASS"
+    },
+    {
+      "check_id": "all diagnostic only",
+      "message": "no holdout rows are allowed",
+      "status": "PASS"
+    }
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:44:48.143853+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_RISK_HEAVY_WINDOW_CATALOG_READY",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 risk-heavy diagnostic windows cover drawdown, recovery and false-positive probes.",
+    "warnings": "Research-only post-branch review; no B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_risk_heavy_window_catalog",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "required_coverage": [
+    "rapid_drawdown",
+    "slow_drawdown",
+    "high_volatility_sideways",
+    "semiconductor_correction",
+    "v_shaped_recovery",
+    "false_risk_off_cluster",
+    "risk_off_but_quick_recovery",
+    "risk_signal_false_positive"
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+    "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+    "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+    "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+    "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+    "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+    "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B2_RISK_HEAVY_WINDOW_CATALOG_READY",
+  "task_id": "TRADING-538",
+  "untouched_holdout_used": false,
+  "windows": [
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2024-08-09",
+      "expected_b2_behavior": "Trigger quickly only if risk score breaches risk-off policy.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "rapid drawdown diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "rapid_drawdown",
+      "start_date": "2024-07-10",
+      "window_id": "rapid_drawdown"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2025-04-30",
+      "expected_b2_behavior": "De-risk during persistent drawdown and re-enter after risk normalizes.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "slow drawdown diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "slow_drawdown",
+      "start_date": "2025-01-02",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2023-11-15",
+      "expected_b2_behavior": "Avoid excessive false risk-off churn in sideways volatility.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "high-volatility sideways diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "high_volatility_sideways",
+      "start_date": "2023-08-01",
+      "window_id": "high_volatility_sideways"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2024-04-19",
+      "expected_b2_behavior": "Protect drawdown without confusing single-industry weakness for market exit.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "AI / semiconductor correction diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "semiconductor_correction",
+      "start_date": "2024-03-08",
+      "window_id": "semiconductor_correction"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2023-12-15",
+      "expected_b2_behavior": "Re-enter quickly enough to limit recovery opportunity cost.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "V-shaped recovery diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "v_shaped_recovery",
+      "start_date": "2023-10-27",
+      "window_id": "v_shaped_recovery"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2023-10-31",
+      "expected_b2_behavior": "Keep exposure unless risk trigger is confirmed.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "false risk-off cluster diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "false_risk_off_cluster",
+      "start_date": "2023-09-01",
+      "window_id": "false_risk_off_cluster"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2023-12-15",
+      "expected_b2_behavior": "Do not stay under-exposed through a sharp recovery.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "risk-off followed by quick recovery diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "v_shaped_recovery",
+      "start_date": "2023-10-27",
+      "window_id": "risk_off_but_quick_recovery"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "PASS_WITH_WARNINGS",
+      "end_date": "2023-10-31",
+      "expected_b2_behavior": "Expose any false-positive risk-off count and opportunity cost.",
+      "holdout_allowed": false,
+      "market_regime": "ai_after_chatgpt",
+      "risk_intensity": "risk signal false-positive diagnostic",
+      "source_artifacts": {
+        "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+        "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+        "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+        "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+        "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+        "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+        "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+        "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+        "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+        "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+        "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+      },
+      "source_window_id": "false_risk_off_cluster",
+      "start_date": "2023-09-01",
+      "window_id": "risk_signal_false_positive"
+    }
+  ]
+}

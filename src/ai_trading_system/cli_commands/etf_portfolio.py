@@ -1119,6 +1119,15 @@ from ai_trading_system.etf_portfolio.weight_research_b2 import (
     DEFAULT_WEIGHT_RESEARCH_MODULES_CONFIG_PATH,
     run_b2_risk_scaler_research,
 )
+from ai_trading_system.etf_portfolio.weight_research_b2_b3_v2 import (
+    run_b2_b3_v2_research,
+)
+from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+    run_b2_control_window_research,
+)
+from ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic import (
+    run_b2_full_diagnostic_research,
+)
 from ai_trading_system.etf_portfolio.weight_research_b3 import run_b3_relative_tilt_research
 from ai_trading_system.etf_portfolio.weight_research_b4 import run_b4_interaction_research
 from ai_trading_system.etf_portfolio.weight_research_branching import (
@@ -1140,6 +1149,9 @@ from ai_trading_system.etf_portfolio.weight_research_interfaces import (
     write_dependency_boundary_validation,
     write_research_layer_interface_contract,
     write_signal_diagnostics_framework_contract,
+)
+from ai_trading_system.etf_portfolio.weight_research_post_branch import (
+    run_post_b2_b3_research,
 )
 from ai_trading_system.etf_portfolio.weight_research_unblock import (
     DEFAULT_HISTORICAL_B1_RESULT_PATH,
@@ -36428,6 +36440,202 @@ def weight_research_branch_b2_b3_command(
             f"{DEFAULT_RESEARCH_SOURCE_DIR / 'research_program_checkpoint_after_branching.json'}"
         )
     if program["b5_allowed"] or program["b6_allowed"] or program["v3_allowed"]:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("post-b2-b3-research")
+def weight_research_post_b2_b3_research_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Post-branch research output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research TRADING-537~556 aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-537~556 post-B2/B3 research gates without B5/B6/v3."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_post_b2_b3_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    final = payloads["final_branch_decision_snapshot"]
+    typer.echo(f"final_branch_decision_status={final['status']}")
+    typer.echo(f"b5_allowed={final['b5_allowed']}")
+    typer.echo(f"b6_allowed={final['b6_allowed']}")
+    typer.echo(f"v3_allowed={final['v3_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'final_branch_decision_snapshot.json'}"
+        )
+    if final["b5_allowed"] or final["b6_allowed"] or final["v3_allowed"]:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("b2-b3-v2-research")
+def weight_research_b2_b3_v2_research_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B2/B3 v2 research output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research TRADING-557~564 aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-557~564 B2 evidence expansion and B3 signal-only precheck v2."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_b3_v2_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    branch = payloads["branch_decision_after_b2_v2_b3_precheck_v2"]
+    typer.echo(f"branch_decision_status={branch['status']}")
+    typer.echo(f"b5_allowed={branch['b5_allowed']}")
+    typer.echo(f"b6_allowed={branch['b6_allowed']}")
+    typer.echo(f"v3_allowed={branch['v3_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'branch_decision_after_b2_v2_b3_precheck_v2.json'}"
+        )
+    if branch["b5_allowed"] or branch["b6_allowed"] or branch["v3_allowed"]:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("b2-full-diagnostic-research")
+def weight_research_b2_full_diagnostic_research_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B2 full diagnostic output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research TRADING-565~574 aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-565~574 B2 full diagnostic and B3 signal resolution."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_full_diagnostic_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    snapshot = payloads["b2_b3_branch_status_snapshot"]
+    typer.echo(f"branch_snapshot_status={snapshot['status']}")
+    typer.echo(f"B4_retest_allowed={snapshot['B4_retest_allowed']}")
+    typer.echo(f"b5_allowed={snapshot['b5_allowed']}")
+    typer.echo(f"b6_allowed={snapshot['b6_allowed']}")
+    typer.echo(f"v3_allowed={snapshot['v3_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_b3_branch_status_snapshot.json'}"
+        )
+    if (
+        snapshot["B4_retest_allowed"]
+        or snapshot["b5_allowed"]
+        or snapshot["b6_allowed"]
+        or snapshot["v3_allowed"]
+    ):
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("b2-control-window-research")
+def weight_research_b2_control_window_research_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B2 control-window output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research TRADING-575~580 aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-575~580 independent B2 control-window evidence completion."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_control_window_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    snapshot = payloads["b2_path_decision_snapshot"]
+    typer.echo(f"b2_path_decision_status={snapshot['status']}")
+    typer.echo(f"B4_retest_allowed={snapshot['B4_retest_allowed']}")
+    typer.echo(f"b5_allowed={snapshot['b5_allowed']}")
+    typer.echo(f"b6_allowed={snapshot['b6_allowed']}")
+    typer.echo(f"v3_allowed={snapshot['v3_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_path_decision_snapshot.json'}"
+        )
+    if (
+        snapshot["B4_retest_allowed"]
+        or snapshot["b5_allowed"]
+        or snapshot["b6_allowed"]
+        or snapshot["v3_allowed"]
+    ):
         raise typer.Exit(code=1)
 
 

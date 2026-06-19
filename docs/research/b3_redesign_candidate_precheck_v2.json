@@ -1,0 +1,95 @@
+{
+  "B4_executed": false,
+  "B5_executed": false,
+  "backfill_executed": false,
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T11:04:46.858965+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B3_PRECHECK_MIXED",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B3 v2 candidate precheck is signal-only and remains mixed.",
+    "warnings": "Research-only B2/B3 v2 review; no threshold tuning, weight generation, B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "ready_for_mini_backfill": false,
+  "report_type": "b3_redesign_candidate_precheck_v2",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "signal_only_precheck": true,
+  "source_artifacts": {
+    "b2_cost_benchmark_survival_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_survival_review.json",
+    "b2_false_risk_off_reentry_attribution": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_attribution.json",
+    "b2_only_research_gate": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate.json",
+    "b2_only_risk_heavy_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_risk_heavy_diagnostic_backfill.json",
+    "b2_risk_heavy_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_catalog.json",
+    "b3_redesign_hypothesis_ranking": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_ranking.json",
+    "b3_signal_direction_precheck": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_direction_precheck.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "final_branch_decision_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\final_branch_decision_snapshot.json"
+  },
+  "status": "B3_PRECHECK_MIXED",
+  "task_id": "TRADING-563",
+  "taxonomy_status": "B3_SIGNAL_DIRECTION_FAILURE_TAXONOMY_READY",
+  "tested_hypotheses": [
+    {
+      "B4_run": false,
+      "backfill_run": false,
+      "changed_signal_logic": "Lower max relative tilt cap.",
+      "hypothesis_id": "smaller_tilt_cap",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "signal_quality_result": "MIXED",
+      "weight_generated": false,
+      "wrong_direction_risk": "still_present"
+    },
+    {
+      "B4_run": false,
+      "backfill_run": false,
+      "changed_signal_logic": "Shrink active tilt toward baseline weights.",
+      "hypothesis_id": "baseline_shrinkage",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "signal_quality_result": "MIXED",
+      "weight_generated": false,
+      "wrong_direction_risk": "still_present"
+    },
+    {
+      "B4_run": false,
+      "backfill_run": false,
+      "changed_signal_logic": "Add persistence confirmation to RS state changes.",
+      "hypothesis_id": "relative_strength_confirmation",
+      "kill_criteria": "Reject if return/drawdown remains negative versus B0 or turnover/cost worsens without compensating benchmark-relative benefit.",
+      "signal_quality_result": "MIXED",
+      "weight_generated": false,
+      "wrong_direction_risk": "still_present"
+    }
+  ],
+  "v3_executed": false,
+  "weight_generation": false
+}

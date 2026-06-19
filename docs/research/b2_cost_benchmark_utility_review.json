@@ -1,0 +1,101 @@
+{
+  "cost_scenarios": [
+    {
+      "benchmark_relative_result": -0.028132652428561555,
+      "cost_rate": 0.0,
+      "drawdown_benefit": 0.01454317374344316,
+      "net_utility_delta_vs_B0": -0.013589478685118395,
+      "opportunity_cost": 0.028132652428561555,
+      "scenario": "zero",
+      "turnover_penalty": 0.0,
+      "worst_window_penalty": -0.02813265242856111
+    },
+    {
+      "benchmark_relative_result": -0.028132652428561555,
+      "cost_rate": 5e-05,
+      "drawdown_benefit": 0.01454317374344316,
+      "net_utility_delta_vs_B0": -0.013657865326279217,
+      "opportunity_cost": 0.028132652428561555,
+      "scenario": "low",
+      "turnover_penalty": 6.838664116082332e-05,
+      "worst_window_penalty": -0.02813265242856111
+    },
+    {
+      "benchmark_relative_result": -0.028132652428561555,
+      "cost_rate": 0.0001,
+      "drawdown_benefit": 0.01454317374344316,
+      "net_utility_delta_vs_B0": -0.013726251967440041,
+      "opportunity_cost": 0.028132652428561555,
+      "scenario": "medium",
+      "turnover_penalty": 0.00013677328232164664,
+      "worst_window_penalty": -0.02813265242856111
+    },
+    {
+      "benchmark_relative_result": -0.028132652428561555,
+      "cost_rate": 0.00025,
+      "drawdown_benefit": 0.01454317374344316,
+      "net_utility_delta_vs_B0": -0.01393141189092251,
+      "opportunity_cost": 0.028132652428561555,
+      "scenario": "high",
+      "turnover_penalty": 0.0003419332058041166,
+      "worst_window_penalty": -0.02813265242856111
+    }
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T11:30:42.653818+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "net_utility_delta_vs_B0": -0.0138630252497608,
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_UTILITY_MIXED",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 utility remains mixed after cost and benchmark review.",
+    "warnings": "Research-only B2 full diagnostic and B3 signal resolution; no B2 tuning, B3 weights, B3 mini-backfill, B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_cost_benchmark_utility_review",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b1_wrapper_compatibility_with_b2": "D:\\Work\\AITradingSystem\\docs\\research\\b1_wrapper_compatibility_with_b2.json",
+    "b2_cost_benchmark_survival_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_survival_review.json",
+    "b2_only_research_gate_v2": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_gate_v2.json",
+    "b2_only_risk_heavy_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_risk_heavy_diagnostic_backfill.json",
+    "b2_reentry_opportunity_cost_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_reentry_opportunity_cost_review.json",
+    "b2_risk_heavy_window_expansion_v2": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_expansion_v2.json",
+    "b2_risk_trigger_sensitivity_map": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_trigger_sensitivity_map.json",
+    "b3_redesign_candidate_precheck_v2": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_candidate_precheck_v2.json",
+    "b3_signal_direction_failure_taxonomy": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_direction_failure_taxonomy.json",
+    "branch_decision_after_b2_v2_b3_precheck_v2": "D:\\Work\\AITradingSystem\\docs\\research\\branch_decision_after_b2_v2_b3_precheck_v2.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "source_cost_status": "B2_COST_BENCHMARK_MIXED",
+  "status": "B2_UTILITY_MIXED",
+  "task_id": "TRADING-570"
+}

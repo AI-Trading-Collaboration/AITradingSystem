@@ -1,0 +1,143 @@
+{
+  "backlog_items": [
+    {
+      "allowed_windows": "diagnostic_only",
+      "blocked_reason": "none",
+      "current_status": "B2_ONLY_NEEDS_MORE_EVIDENCE",
+      "forbidden_windows": [
+        "untouched_holdout"
+      ],
+      "hypothesis_id": "B2_ONLY_RISK_HEAVY_EVIDENCE",
+      "kill_criteria": "reject_or_return_to_design_if_required_evidence_fails",
+      "next_action": "continue_b2_only_diagnostics",
+      "owner_required": false,
+      "required_evidence": "More triggered risk-heavy windows with acceptable cost/re-entry.",
+      "target_module": "B2"
+    },
+    {
+      "allowed_windows": "diagnostic_only",
+      "blocked_reason": "precheck_not_pass",
+      "current_status": "B3_REDESIGN_RETURN_TO_HYPOTHESIS",
+      "forbidden_windows": [
+        "untouched_holdout"
+      ],
+      "hypothesis_id": "B3_SIGNAL_DIRECTION_REDESIGN",
+      "kill_criteria": "reject_or_return_to_design_if_required_evidence_fails",
+      "next_action": "return_to_hypothesis_precheck",
+      "owner_required": false,
+      "required_evidence": "Signal-direction precheck PASS before redesigned mini-backfill.",
+      "target_module": "B3"
+    },
+    {
+      "allowed_windows": "diagnostic_only",
+      "blocked_reason": "combined_artifact_absent",
+      "current_status": "B1_WRAPPER_MIXED_WITH_B2",
+      "forbidden_windows": [
+        "untouched_holdout"
+      ],
+      "hypothesis_id": "B1_B2_WRAPPER_COMBINED_TEST",
+      "kill_criteria": "reject_or_return_to_design_if_required_evidence_fails",
+      "next_action": "build_combined_wrapper_test_after_owner_review",
+      "owner_required": true,
+      "required_evidence": "Combined B1+B2 artifact proving no risk-off delay.",
+      "target_module": "B1+B2"
+    },
+    {
+      "allowed_windows": "diagnostic_only",
+      "blocked_reason": "no_valid_b3",
+      "current_status": "B1_B3_WRAPPER_TEST_BLOCKED_NO_VALID_B3",
+      "forbidden_windows": [
+        "untouched_holdout"
+      ],
+      "hypothesis_id": "B1_B3_WRAPPER_AFTER_VALID_B3",
+      "kill_criteria": "reject_or_return_to_design_if_required_evidence_fails",
+      "next_action": "blocked_until_valid_b3",
+      "owner_required": false,
+      "required_evidence": "Valid redesigned B3 gate.",
+      "target_module": "B1+B3"
+    },
+    {
+      "allowed_windows": "diagnostic_only",
+      "blocked_reason": "no_valid_b3",
+      "current_status": "B4_REDESIGNED_RETEST_BLOCKED_NO_VALID_B3",
+      "forbidden_windows": [
+        "untouched_holdout"
+      ],
+      "hypothesis_id": "B4_REDESIGNED_RETEST",
+      "kill_criteria": "reject_or_return_to_design_if_required_evidence_fails",
+      "next_action": "blocked_until_b3_reentry",
+      "owner_required": false,
+      "required_evidence": "B2 research value plus B3 redesigned re-entry gate.",
+      "target_module": "B4"
+    },
+    {
+      "allowed_windows": "diagnostic_only",
+      "blocked_reason": "no_positive_redesigned_b4",
+      "current_status": "B5_READMISSION_BLOCKED",
+      "forbidden_windows": [
+        "untouched_holdout"
+      ],
+      "hypothesis_id": "B5_READMISSION",
+      "kill_criteria": "reject_or_return_to_design_if_required_evidence_fails",
+      "next_action": "blocked_until_redesigned_b4_positive",
+      "owner_required": false,
+      "required_evidence": "Redesigned B4 positive/additive and all robustness gates pass.",
+      "target_module": "B5"
+    }
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:44:48.143853+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "BACKLOG_READY",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Candidate exploration backlog is structured with explicit blockers.",
+    "warnings": "Research-only post-branch review; no B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "candidate_exploration_backlog_manager",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "ablation_path_branching_decision": "D:\\Work\\AITradingSystem\\docs\\research\\ablation_path_branching_decision.json",
+    "b1_b4_multi_window_diagnostic_expansion": "D:\\Work\\AITradingSystem\\docs\\research\\b1_b4_multi_window_diagnostic_expansion.json",
+    "b1_execution_control_adoption_review": "D:\\Work\\AITradingSystem\\docs\\research\\b1_execution_control_adoption_review.json",
+    "b2_only_research_candidate_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b2_only_research_candidate_checkpoint.json",
+    "b2_risk_heavy_window_evaluation": "D:\\Work\\AITradingSystem\\docs\\research\\b2_risk_heavy_window_evaluation.json",
+    "b3_redesign_hypothesis_pack": "D:\\Work\\AITradingSystem\\docs\\research\\b3_redesign_hypothesis_pack.json",
+    "b3_slow_tilt_signal_direction_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b3_slow_tilt_signal_direction_audit.json",
+    "b4_interaction_evidence_synthesis": "D:\\Work\\AITradingSystem\\docs\\research\\b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint": "D:\\Work\\AITradingSystem\\docs\\research\\b5_admission_checkpoint.json",
+    "research_program_checkpoint_after_branching": "D:\\Work\\AITradingSystem\\docs\\research\\research_program_checkpoint_after_branching.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "BACKLOG_READY",
+  "task_id": "TRADING-554"
+}
