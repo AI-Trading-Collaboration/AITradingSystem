@@ -18,9 +18,22 @@
 - 新增 E/R/T 消融与两两交互矩阵生成；C/G 未 gate 批准前不进入矩阵。
 - 旧 B2/B3 task-specific runners 标记为 read-only historical compatibility，新功能只进入 Campaign 控制面。
 
+## rc2 更新
+
+- 新增 adapter run mode contract：`AUDITED_ARTIFACT_MODE`、`COMPUTE_MODE`、`DRY_RUN_MODE`、`VALIDATION_ONLY_MODE`。
+- Adapter run artifact 现在披露 `compute_performed`、`imported_evidence`、`parity_source`、`failure_mode` 和 `holdout_touched=false`。
+- 新增 B2 control-window compute adapter，调用既有 B2 risk overlay control-window rerun 计算路径，输出 `B2_COMPUTE_ADAPTER_SMOKE_PASS` 和 compute evidence records。
+- 新增 B2 compute/audited parity validation，当前输出 `B2_COMPUTE_PARITY_PASS`。
+- `campaign run --stage next` 现在按 plan 推荐阶段执行 safe B2 stage，并在 adapter missing、预算耗尽或 holdout 越权时 fail-closed。
+- 新增 evidence budget forced transition report，证明 exhausted budget 不再继续泛化 `NEEDS_MORE_EVIDENCE`。
+- 新增 B3 signal-only compute smoke，保持 `B3_PRECHECK_MIXED`，不生成 weights，不运行 mini-backfill，不允许 B4/B5/B6/v3。
+- 新增 `campaign allowed-actions|blocked-actions|budget|source-artifacts|deprecation-plan`，`status/plan` 显示 adapter run mode、预算和 source artifacts。
+- `validation-pack` rc2 写入 `outputs/research_campaigns/control_plane_v1_rc2_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
+
 ## 限制
 
-- 当前 adapter 是 audited-artifact adapter：读取并验证既有 B2/B3 JSON artifacts，不伪造 metrics，也不替代所有旧 task-specific CLI。
+- 当前 compute adapter 只覆盖 B2 control-window diagnostic smoke 与 B3 signal-only smoke；尚不替代所有旧 task-specific CLI。
+- Audited-artifact adapter 仍保留用于 parity 和历史 evidence 审计。
 - 未配置 adapter、输入缺失、holdout 越权、输出 invalid 或 safety metadata 不合格时 fail-closed。
 - B3 仍只支持 signal-precheck，不允许 weight generation、mini-backfill、B4/B5/B6/v3 或 paper-shadow。
 - Owner packet 不自动 append owner decision。

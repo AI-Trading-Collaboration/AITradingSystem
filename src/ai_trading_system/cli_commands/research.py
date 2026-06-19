@@ -18,6 +18,7 @@ from ai_trading_system.research_campaign import (
     ResearchCampaignError,
     archive_campaign,
     build_campaign_validation_payload,
+    build_case_specific_runner_deprecation_plan,
     build_owner_packet,
     build_status_payload,
     campaign_plan,
@@ -202,7 +203,7 @@ def campaign_validation_pack_command(
         typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
     ] = None,
 ) -> None:
-    """写出 Control Plane v1 adapter/parity/budget/next-action validation pack。"""
+    """写出 Control Plane v1 rc2 adapter/parity/budget/next-action validation pack。"""
     try:
         payload = write_campaign_control_plane_v1_validation_artifacts(
             campaign_root=campaign_root,
@@ -245,6 +246,123 @@ def plan_campaign_command(
         raise typer.BadParameter(str(exc)) from exc
     _write_json_if_requested(json_output_path, payload)
     _print_campaign_plan(payload)
+
+
+@campaign_app.command("allowed-actions")
+def allowed_actions_campaign_command(
+    campaign_id: Annotated[str, typer.Option("--id", help="Campaign id。")],
+    campaign_root: Annotated[
+        Path,
+        typer.Option(help="Campaign 状态目录。"),
+    ] = DEFAULT_CAMPAIGN_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """输出当前 Campaign 允许的下一步动作。"""
+    try:
+        payload = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
+    except ResearchCampaignError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    result = {
+        "campaign_id": campaign_id,
+        "allowed_next_actions": payload["allowed_next_actions"],
+        "adapter_run_mode": payload["adapter_run_mode"],
+        "production_effect": "none",
+    }
+    _write_json_if_requested(json_output_path, result)
+    _print_action_list("Allowed actions", result["allowed_next_actions"])
+
+
+@campaign_app.command("blocked-actions")
+def blocked_actions_campaign_command(
+    campaign_id: Annotated[str, typer.Option("--id", help="Campaign id。")],
+    campaign_root: Annotated[
+        Path,
+        typer.Option(help="Campaign 状态目录。"),
+    ] = DEFAULT_CAMPAIGN_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """输出当前 Campaign 被阻断的动作。"""
+    try:
+        payload = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
+    except ResearchCampaignError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    result = {
+        "campaign_id": campaign_id,
+        "blocked_actions": payload["blocked_actions"],
+        "required_owner_actions": payload["required_owner_actions"],
+        "adapter_run_mode": payload["adapter_run_mode"],
+        "production_effect": "none",
+    }
+    _write_json_if_requested(json_output_path, result)
+    _print_action_list("Blocked actions", result["blocked_actions"])
+    _print_action_list("Owner required", result["required_owner_actions"])
+
+
+@campaign_app.command("budget")
+def budget_campaign_command(
+    campaign_id: Annotated[str, typer.Option("--id", help="Campaign id。")],
+    campaign_root: Annotated[
+        Path,
+        typer.Option(help="Campaign 状态目录。"),
+    ] = DEFAULT_CAMPAIGN_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """输出 evidence budget used/remaining。"""
+    try:
+        payload = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
+    except ResearchCampaignError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    result = {
+        "campaign_id": campaign_id,
+        "budget_status": payload["budget_status"],
+        "evidence_budget_used": payload["evidence_budget_used"],
+        "evidence_budget_remaining": payload["evidence_budget_remaining"],
+        "production_effect": "none",
+    }
+    _write_json_if_requested(json_output_path, result)
+    _print_status("Campaign budget", result["budget_status"])
+    console.print(f"used={result['evidence_budget_used']}")
+    console.print(f"remaining={result['evidence_budget_remaining']}")
+
+
+@campaign_app.command("source-artifacts")
+def source_artifacts_campaign_command(
+    campaign_id: Annotated[str, typer.Option("--id", help="Campaign id。")],
+    campaign_root: Annotated[
+        Path,
+        typer.Option(help="Campaign 状态目录。"),
+    ] = DEFAULT_CAMPAIGN_ROOT,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """输出 Campaign source artifact lineage。"""
+    try:
+        payload = build_status_payload(
+            campaign_id=campaign_id,
+            detailed=True,
+            campaign_root=campaign_root,
+        )
+    except ResearchCampaignError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    result = {
+        "campaign_id": campaign_id,
+        "source_artifacts": payload["source_artifacts"],
+        "adapter_runtime": payload["adapter_runtime"],
+        "production_effect": "none",
+    }
+    _write_json_if_requested(json_output_path, result)
+    _print_action_list("Source artifacts", result["source_artifacts"])
 
 
 @campaign_app.command("run")
@@ -300,6 +418,10 @@ def run_campaign_command(
     _write_json_if_requested(json_output_path, payload)
     _print_status("Campaign stage run", payload["outcome"])
     console.print(f"run_id={payload['run_id']}；stage={payload['stage']}")
+    console.print(
+        f"adapter={payload.get('adapter_id') or 'none'}；"
+        f"status={payload.get('adapter_status')}"
+    )
     if payload["outcome"] == "BLOCKED":
         raise typer.Exit(code=1)
 
@@ -404,6 +526,7 @@ def status_campaign_command(
     _write_json_if_requested(json_output_path, payload)
     _print_status("Campaign status", payload["current_outcome"])
     console.print(f"stage={payload['current_stage']}；evidence={payload['evidence_record_count']}")
+    console.print(f"budget={payload['budget_status']}；run_mode={payload['adapter_run_mode']}")
     console.print(f"allowed={', '.join(payload['allowed_next_actions']) or 'none'}")
     console.print(f"blocked={', '.join(payload['blocked_actions']) or 'none'}")
 
@@ -465,10 +588,32 @@ def archive_campaign_command(
     console.print(f"stage={payload['current_stage']}；reason={payload['archive_reason']}")
 
 
+@campaign_app.command("deprecation-plan")
+def deprecation_plan_campaign_command(
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """输出旧 B2/B3 task-specific runner 的 Campaign 替代边界。"""
+    payload = build_case_specific_runner_deprecation_plan()
+    _write_json_if_requested(json_output_path, payload)
+    _print_status("Campaign deprecation plan", payload["status"])
+    for runner in payload["old_runners"]:
+        console.print(
+            f"{runner['old_command']} -> {runner['replacement_campaign_command']}；"
+            f"parity={runner['parity_status']}；status={runner['deprecation_status']}"
+        )
+
+
 def _print_campaign_plan(payload: dict[str, object]) -> None:
     _print_status("Campaign plan", str(payload["current_outcome"]))
     console.print(f"stage={payload['current_stage']}；next={payload['next_recommended_stage']}")
     console.print(f"budget={payload['budget_status']}")
+    console.print(
+        f"adapter={payload.get('adapter_id') or 'none'}；"
+        f"run_mode={payload.get('adapter_run_mode') or 'none'}"
+    )
     console.print(f"allowed={', '.join(payload['allowed_next_actions']) or 'none'}")
     console.print(f"blocked={', '.join(payload['blocked_actions']) or 'none'}")
     console.print(f"owner_required={', '.join(payload['required_owner_actions']) or 'none'}")
@@ -489,3 +634,12 @@ def _write_json_if_requested(path: Path | None, payload: dict[str, object]) -> N
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _print_action_list(label: str, values: object) -> None:
+    console.print(f"{label}:")
+    if not values:
+        console.print("- none")
+        return
+    for value in values:
+        console.print(f"- {value}")

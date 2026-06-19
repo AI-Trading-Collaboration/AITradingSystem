@@ -11,7 +11,14 @@ from ai_trading_system.cli import app
 from ai_trading_system.research_campaign import (
     DEFAULT_MODULE_REGISTRY_PATH,
     CampaignSpec,
+    build_b2_compute_adapter_smoke_report,
+    build_b2_compute_parity_validation,
+    build_b3_signal_compute_adapter_smoke_report,
+    build_campaign_run_next_stage_smoke_report,
+    build_campaign_status_ux_report,
     build_campaign_validation_payload,
+    build_case_specific_runner_deprecation_plan,
+    build_evidence_budget_forced_transition_report,
     campaign_plan,
     classify_interaction_effect,
     evaluate_gate,
@@ -46,8 +53,17 @@ def test_stage_adapter_contract_validation_passes() -> None:
     assert payload["validation_status"] == "PASS"
     assert {
         "b2-risk-overlay-audited-artifact-adapter-v1",
+        "b2-risk-overlay-control-window-compute-adapter-v1",
         "b3-signal-precheck-audited-artifact-adapter-v1",
+        "b3-signal-precheck-compute-adapter-v1",
     } <= set(payload["adapter_ids"])
+    assert payload["adapter_run_modes"]["b2-risk-overlay-audited-artifact-adapter-v1"] == (
+        "AUDITED_ARTIFACT_MODE"
+    )
+    assert payload["adapter_run_modes"]["b2-risk-overlay-control-window-compute-adapter-v1"] == (
+        "COMPUTE_MODE"
+    )
+    assert "COMPUTE_MODE" in payload["run_modes"]
     assert "SIGNAL_PRECHECK" in payload["supported_stages"]
     assert payload["safety_boundary"]["official_target_weights"] is False
 
@@ -88,7 +104,7 @@ def test_b3_migration_stays_signal_only_and_does_not_require_portfolio_metrics(
     assert state.safety_boundary["official_target_weights"] is False
 
 
-def test_b2_stage_runner_uses_configured_audited_artifact_adapter(tmp_path: Path) -> None:
+def test_b2_stage_runner_uses_configured_compute_adapter(tmp_path: Path) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
 
     payload = run_campaign_stage(
@@ -99,9 +115,14 @@ def test_b2_stage_runner_uses_configured_audited_artifact_adapter(tmp_path: Path
     )
 
     assert payload["outcome"] == "NEEDS_MORE_EVIDENCE"
-    assert payload["generated_evidence_count"] == 4
-    assert payload["adapter_status"] == "ADAPTER_READY"
-    assert payload["result"]["adapter_id"] == "b2-risk-overlay-audited-artifact-adapter-v1"
+    assert payload["generated_evidence_count"] == 5
+    assert payload["adapter_status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
+    assert payload["result"]["adapter_id"] == (
+        "b2-risk-overlay-control-window-compute-adapter-v1"
+    )
+    assert payload["result"]["run_mode"] == "COMPUTE_MODE"
+    assert payload["result"]["compute_performed"] is True
+    assert payload["result"]["imported_evidence"] is False
     assert payload["result"]["stage"] == "TARGETED_EVIDENCE"
     assert Path(payload["result"]["json_path"]).exists()
     assert payload["safety_boundary"]["production_effect"] == "none"
@@ -121,7 +142,9 @@ def test_b3_signal_precheck_adapter_stays_signal_only_and_blocks_backfill(
     plan = campaign_plan(campaign_id="b3-slow-tilt-signal-precheck", campaign_root=tmp_path)
 
     assert payload["outcome"] == "MIXED"
-    assert payload["adapter_status"] == "ADAPTER_READY"
+    assert payload["adapter_status"] == "B3_SIGNAL_COMPUTE_ADAPTER_SMOKE_PASS"
+    assert payload["result"]["adapter_id"] == "b3-signal-precheck-compute-adapter-v1"
+    assert payload["result"]["run_mode"] == "COMPUTE_MODE"
     assert payload["result"]["stage"] == "SIGNAL_PRECHECK"
     assert payload["generated_evidence_count"] == 3
     assert "B3_MINI_BACKFILL" in plan["blocked_actions"]
@@ -145,12 +168,68 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
         "b2_campaign_parity_validation",
         "evidence_budget_enforcement_report",
         "campaign_next_action_parity_review",
+        "b2_compute_adapter_smoke",
+        "b2_compute_parity_validation",
+        "campaign_run_next_stage_smoke",
+        "evidence_budget_forced_transition_report",
+        "b3_signal_compute_adapter_smoke",
+        "campaign_status_plan_ux_report",
+        "case_specific_runner_deprecation_plan",
         "campaign_control_plane_v1_validation_pack",
     }
     assert expected <= set(payload["artifacts"])
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
+
+
+def test_b2_compute_parity_and_run_next_smoke_pass(tmp_path: Path) -> None:
+    initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
+
+    smoke = build_b2_compute_adapter_smoke_report(
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+    )
+    parity = build_b2_compute_parity_validation(
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+        smoke_report=smoke,
+    )
+    run_next = build_campaign_run_next_stage_smoke_report(
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+    )
+
+    assert smoke["status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
+    assert parity["status"] == "B2_COMPUTE_PARITY_PASS"
+    assert run_next["status"] == "CAMPAIGN_RUN_NEXT_STAGE_SMOKE_PASS"
+    assert run_next["run_result"]["adapter_status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
+
+
+def test_budget_forced_transition_b3_smoke_status_ux_and_deprecation_plan(
+    tmp_path: Path,
+) -> None:
+    initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
+    initialize_campaign(spec_path=B3_SPEC, campaign_root=tmp_path)
+
+    budget = build_evidence_budget_forced_transition_report(
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+    )
+    b3_smoke = build_b3_signal_compute_adapter_smoke_report(
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+    )
+    ux = build_campaign_status_ux_report(campaign_root=tmp_path)
+    deprecation = build_case_specific_runner_deprecation_plan()
+
+    assert budget["status"] == "EVIDENCE_BUDGET_FORCED_TRANSITION_PASS"
+    assert budget["exhausted_budget_run_result"]["outcome"] == "BLOCKED"
+    assert b3_smoke["status"] == "B3_SIGNAL_COMPUTE_ADAPTER_SMOKE_PASS"
+    assert b3_smoke["adapter_run"]["compute_performed"] is True
+    assert ux["status"] == "CAMPAIGN_STATUS_AND_PLAN_UX_PASS"
+    assert ux["concise_status"]["adapter_run_mode"] == "COMPUTE_MODE"
+    assert deprecation["status"] == "CASE_SPECIFIC_RUNNER_DEPRECATION_PLAN_READY"
 
 
 def test_p0_mixed_allocator_cannot_masquerade_as_single_module() -> None:

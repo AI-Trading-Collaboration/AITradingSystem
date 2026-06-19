@@ -9,18 +9,52 @@ policy_metadata:
   review_condition: "Review before deleting or rewriting legacy runner commands."
 deprecated_task_specific_runners:
   - runner_id: "b2-control-window-research"
-    replacement: "aits research campaign ..."
+    old_command: "aits etf weight-research b2-control-window-research"
+    replacement: "aits research campaign run --id b2-risk-overlay-current-form --stage next"
+    parity_status: "B2_COMPUTE_PARITY_PENDING_OWNER_REVIEW"
+    deprecation_status: "KEEP_COMPATIBILITY"
+    compatibility_window: "keep_until_campaign_compute_parity_and_owner_review"
+    commands_not_yet_replaceable: []
+    blockers:
+      - "Campaign compute adapter currently covers control-window diagnostic smoke only."
     compatibility_status: "read_only_historical"
     extension_allowed: false
   - runner_id: "b2-targeted-evidence-research"
-    replacement: "aits research campaign ..."
+    old_command: "aits etf weight-research b2-targeted-evidence-research"
+    replacement: "aits research campaign run --id b2-risk-overlay-current-form --stage TARGETED_EVIDENCE"
+    parity_status: "PARTIAL_CAMPAIGN_PARITY"
+    deprecation_status: "KEEP_COMPATIBILITY"
+    compatibility_window: "keep_until_all_targeted_evidence_outputs_have_compute_or_audited_parity"
+    commands_not_yet_replaceable:
+      - "full targeted-evidence scorecard rerun"
+      - "final role-scope decision artifacts"
+    blockers:
+      - "Campaign only has minimal B2 compute smoke in this batch."
     compatibility_status: "read_only_historical"
     extension_allowed: false
   - runner_id: "b2-final-decision-research"
-    replacement: "aits research campaign ..."
+    old_command: "aits etf weight-research b2-final-decision-research"
+    replacement: "aits research campaign gate/status/packet --id b2-risk-overlay-current-form"
+    parity_status: "AUDITED_ARTIFACT_PARITY_ONLY"
+    deprecation_status: "KEEP_COMPATIBILITY"
+    compatibility_window: "keep_until_owner_packet_and_final_gate_parity_are_reviewed"
+    commands_not_yet_replaceable:
+      - "final B2 role reclassification package"
+    blockers:
+      - "Owner review of final decision semantics is still required."
     compatibility_status: "read_only_historical"
     extension_allowed: false
-  - runner_id: "b3-signal-precheck"
-    replacement: "aits research campaign ..."
+  - runner_id: "b2-b3-v2-research"
+    old_command: "aits etf weight-research b2-b3-v2-research"
+    replacement: "aits research campaign run --id b3-slow-tilt-signal-precheck --stage INPUT_PRECHECK"
+    parity_status: "B3_SIGNAL_COMPUTE_SMOKE_ONLY"
+    deprecation_status: "KEEP_COMPATIBILITY"
+    compatibility_window: "keep_until_B3_signal_precheck_compute_parity_and_owner_review"
+    commands_not_yet_replaceable:
+      - "B2 evidence gap ledger v2"
+      - "B2 risk trigger sensitivity map"
+      - "B2/B3 branch decision after v2"
+    blockers:
+      - "B3 Campaign adapter is signal-only and does not replace the full B2/B3 v2 runner."
     compatibility_status: "read_only_historical"
     extension_allowed: false

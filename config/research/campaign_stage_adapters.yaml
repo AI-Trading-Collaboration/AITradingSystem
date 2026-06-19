@@ -9,6 +9,9 @@ policy_metadata:
 adapters:
   b2-risk-overlay-audited-artifact-adapter-v1:
     adapter_version: "1.0"
+    supported_run_modes:
+      - "AUDITED_ARTIFACT_MODE"
+    default_run_mode: "AUDITED_ARTIFACT_MODE"
     supported_stage:
       - "TARGETED_EVIDENCE"
       - "FULL_DIAGNOSTIC"
@@ -74,11 +77,13 @@ adapters:
       broker_effect: "none"
       order_effect: "none"
       production_effect: "none"
+      holdout_touched: false
     failure_modes:
       - "ADAPTER_INPUT_MISSING"
       - "ADAPTER_OUTPUT_INVALID"
       - "ADAPTER_HOLDOUT_BLOCKED"
       - "ADAPTER_SAFETY_BLOCKED"
+    parity_source: "docs/research/b2_control_window_rerun.json"
     stage_outcomes:
       TARGETED_EVIDENCE: "NEEDS_MORE_EVIDENCE"
       FULL_DIAGNOSTIC: "NEEDS_MORE_EVIDENCE"
@@ -177,8 +182,88 @@ adapters:
           - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
           - "REENTRY_LAG_SIGNAL_DRIVEN"
           - "UTILITY_MIXED"
+  b2-risk-overlay-control-window-compute-adapter-v1:
+    adapter_version: "1.0"
+    supported_run_modes:
+      - "COMPUTE_MODE"
+    default_run_mode: "COMPUTE_MODE"
+    supported_stage:
+      - "TARGETED_EVIDENCE"
+    supported_module:
+      - "risk-overlay-b2"
+    supported_campaign_type:
+      - "b2-risk-overlay-current-form"
+      - "weight-research-v1"
+    required_inputs:
+      - artifact_id: "research_window_catalog"
+        path: "docs/research/research_window_catalog.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_full_diagnostic_backfill"
+        path: "docs/research/b2_full_diagnostic_backfill.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_drawdown_protection_attribution"
+        path: "docs/research/b2_drawdown_protection_attribution.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_false_risk_off_reentry_cost_review"
+        path: "docs/research/b2_false_risk_off_reentry_cost_review.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_cost_benchmark_utility_review"
+        path: "docs/research/b2_cost_benchmark_utility_review.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_signal_robustness_trigger_stability"
+        path: "docs/research/b2_signal_robustness_trigger_stability.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_only_full_diagnostic_gate"
+        path: "docs/research/b2_only_full_diagnostic_gate.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_b3_branch_status_snapshot"
+        path: "docs/research/b2_b3_branch_status_snapshot.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b3_signal_precheck_resolution_plan"
+        path: "docs/research/b3_signal_precheck_resolution_plan.json"
+        stages: ["TARGETED_EVIDENCE"]
+    optional_inputs: []
+    produced_artifacts:
+      - "b2_control_window_rerun_compute.json"
+      - "b2_control_window_rerun_compute.md"
+      - "B2 control-window risk signal component CSV"
+      - "B2 control-window target path component CSV"
+      - "Campaign evidence records"
+      - "Reader Brief section"
+    produced_evidence_categories:
+      - "TRIGGER_BEHAVIOR"
+      - "PORTFOLIO_EFFECT"
+      - "SAFETY"
+    supported_windows:
+      - "control"
+      - "diagnostic"
+    forbidden_windows:
+      - "untouched_holdout"
+    safety_boundary:
+      research_only: true
+      manual_review_only: true
+      official_target_weights: false
+      paper_shadow_activation: false
+      paper_shadow_allowed: false
+      broker_effect: "none"
+      order_effect: "none"
+      production_effect: "none"
+      holdout_touched: false
+    failure_modes:
+      - "ADAPTER_INPUT_MISSING"
+      - "ADAPTER_RUN_FAILED"
+      - "ADAPTER_OUTPUT_INVALID"
+      - "ADAPTER_HOLDOUT_BLOCKED"
+      - "ADAPTER_SAFETY_BLOCKED"
+    stage_outcomes:
+      TARGETED_EVIDENCE: "NEEDS_MORE_EVIDENCE"
+    parity_source: "docs/research/b2_control_window_rerun.json"
+    evidence_mappings: []
   b3-signal-precheck-audited-artifact-adapter-v1:
     adapter_version: "1.0"
+    supported_run_modes:
+      - "AUDITED_ARTIFACT_MODE"
+    default_run_mode: "AUDITED_ARTIFACT_MODE"
     supported_stage:
       - "SIGNAL_PRECHECK"
       - "SIGNAL_DIRECTION_TAXONOMY"
@@ -226,11 +311,13 @@ adapters:
       broker_effect: "none"
       order_effect: "none"
       production_effect: "none"
+      holdout_touched: false
     failure_modes:
       - "ADAPTER_INPUT_MISSING"
       - "ADAPTER_OUTPUT_INVALID"
       - "ADAPTER_HOLDOUT_BLOCKED"
       - "ADAPTER_SAFETY_BLOCKED"
+    parity_source: "docs/research/b3_signal_direction_failure_taxonomy.json"
     stage_outcomes:
       SIGNAL_PRECHECK: "MIXED"
       SIGNAL_DIRECTION_TAXONOMY: "MIXED"
@@ -286,3 +373,62 @@ adapters:
         status: "MIXED"
         confidence: "medium"
         reason_codes: ["REDESIGN_HYPOTHESIS_RANKING_READY"]
+  b3-signal-precheck-compute-adapter-v1:
+    adapter_version: "1.0"
+    supported_run_modes:
+      - "COMPUTE_MODE"
+    default_run_mode: "COMPUTE_MODE"
+    supported_stage:
+      - "SIGNAL_PRECHECK"
+    supported_module:
+      - "slow-tilt-b3"
+    supported_campaign_type:
+      - "b3-slow-tilt-signal-precheck"
+      - "weight-research-v1"
+    required_inputs:
+      - artifact_id: "b3_signal_direction_precheck"
+        path: "docs/research/b3_signal_direction_precheck.json"
+        stages: ["SIGNAL_PRECHECK"]
+      - artifact_id: "b3_slow_tilt_signal_direction_audit"
+        path: "docs/research/b3_slow_tilt_signal_direction_audit.json"
+        stages: ["SIGNAL_PRECHECK"]
+      - artifact_id: "b3_redesign_hypothesis_ranking"
+        path: "docs/research/b3_redesign_hypothesis_ranking.json"
+        stages: ["SIGNAL_PRECHECK"]
+      - artifact_id: "final_branch_decision_snapshot"
+        path: "docs/research/final_branch_decision_snapshot.json"
+        stages: ["SIGNAL_PRECHECK"]
+    optional_inputs: []
+    produced_artifacts:
+      - "b3_signal_direction_failure_taxonomy_compute.json"
+      - "b3_signal_precheck_compute.json"
+      - "Campaign evidence records"
+      - "Reader Brief section"
+    produced_evidence_categories:
+      - "SIGNAL_DIRECTION"
+      - "REDESIGN_HYPOTHESIS"
+      - "SAFETY"
+    supported_windows:
+      - "development"
+      - "diagnostic"
+    forbidden_windows:
+      - "untouched_holdout"
+    safety_boundary:
+      research_only: true
+      manual_review_only: true
+      official_target_weights: false
+      paper_shadow_activation: false
+      paper_shadow_allowed: false
+      broker_effect: "none"
+      order_effect: "none"
+      production_effect: "none"
+      holdout_touched: false
+    failure_modes:
+      - "ADAPTER_INPUT_MISSING"
+      - "ADAPTER_OUTPUT_INVALID"
+      - "ADAPTER_HOLDOUT_BLOCKED"
+      - "ADAPTER_SAFETY_BLOCKED"
+    stage_outcomes:
+      SIGNAL_PRECHECK: "MIXED"
+    parity_source: "docs/research/b3_signal_direction_failure_taxonomy.json"
+    evidence_mappings: []
