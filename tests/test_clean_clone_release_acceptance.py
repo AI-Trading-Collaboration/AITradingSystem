@@ -83,6 +83,30 @@ def test_markdown_renders_blocked_status_and_safety_boundary() -> None:
     assert "broker/order" in markdown
 
 
+def test_default_work_dir_keeps_known_windows_checkout_path_short() -> None:
+    module = _load_module()
+    checkout_root = (
+        Path("D:/repo")
+        / module.DEFAULT_WORK_DIR
+        / "ccra_20260619T000000Z"
+        / "checkout"
+    )
+    longest_known_relative = Path(
+        "run/review/register/promotion-gate-threshold-calibration/"
+        "promotion-gate-threshold-calibration_81379cf981004dad/"
+        "promotion_gate_threshold_calibration_manifest.json"
+    )
+
+    assert module.DEFAULT_WORK_DIR == Path("run/ccra")
+    assert len(str(checkout_root / longest_known_relative)) < 260
+    assert module._git_clone_command(Path("D:/repo"), checkout_root)[:4] == [
+        "git",
+        "-c",
+        "core.longpaths=true",
+        "clone",
+    ]
+
+
 def _load_module() -> ModuleType:
     path = PROJECT_ROOT / "scripts" / "run_clean_clone_release_acceptance.py"
     spec = importlib.util.spec_from_file_location("run_clean_clone_release_acceptance", path)

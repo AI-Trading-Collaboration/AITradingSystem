@@ -17,6 +17,9 @@ PRODUCTION_EFFECT = "none"
 PASS_STATUS = "CLEAN_CLONE_ACCEPTANCE_PASS"
 BLOCKED_DIRTY_STATUS = "CLEAN_CLONE_ACCEPTANCE_BLOCKED_UNCOMMITTED_CHANGES"
 FAIL_STATUS = "CLEAN_CLONE_ACCEPTANCE_FAIL"
+DEFAULT_WORK_DIR = Path("run/ccra")
+RUN_ID_PREFIX = "ccra"
+GIT_LONGPATHS_CONFIG = "core.longpaths=true"
 
 
 def main() -> int:
@@ -28,7 +31,7 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    run_id = f"clean_clone_acceptance_{datetime.now(tz=UTC).strftime('%Y%m%dT%H%M%SZ')}"
+    run_id = f"{RUN_ID_PREFIX}_{datetime.now(tz=UTC).strftime('%Y%m%dT%H%M%SZ')}"
     run_root = work_dir / run_id
     run_root.mkdir(parents=True, exist_ok=False)
     checkout_root = run_root / "checkout"
@@ -67,14 +70,7 @@ def main() -> int:
             steps.append(
                 _run_step(
                     "git_clone",
-                    [
-                        "git",
-                        "clone",
-                        "--local",
-                        "--no-hardlinks",
-                        str(source_root),
-                        str(checkout_root),
-                    ],
+                    _git_clone_command(source_root, checkout_root),
                     cwd=run_root,
                     timeout_seconds=args.command_timeout_seconds,
                 )
@@ -513,6 +509,19 @@ def _git_status_porcelain(source_root: Path) -> list[str]:
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
+def _git_clone_command(source_root: Path, checkout_root: Path) -> list[str]:
+    return [
+        "git",
+        "-c",
+        GIT_LONGPATHS_CONFIG,
+        "clone",
+        "--local",
+        "--no-hardlinks",
+        str(source_root),
+        str(checkout_root),
+    ]
+
+
 def _copy_git_visible_files(source_root: Path, checkout_root: Path) -> None:
     result = subprocess.run(
         ["git", "ls-files", "-co", "--exclude-standard"],
@@ -657,7 +666,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--as-of", help="Acceptance date in YYYY-MM-DD format.")
     parser.add_argument("--source-root", type=Path, default=Path.cwd())
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/reports"))
-    parser.add_argument("--work-dir", type=Path, default=Path("run/clean_clone_release_acceptance"))
+    parser.add_argument("--work-dir", type=Path, default=DEFAULT_WORK_DIR)
     parser.add_argument("--command-timeout-seconds", type=int, default=180)
     parser.add_argument(
         "--allow-dirty-snapshot",
