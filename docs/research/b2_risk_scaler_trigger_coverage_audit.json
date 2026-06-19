@@ -1,0 +1,3503 @@
+{
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:10:12.093438+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_REQUIRES_RISK_HEAVY_WINDOWS",
+    "next_action": "Do not run B5 unless b5_admission_checkpoint allows it.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 trigger coverage was audited across diagnostic windows.",
+    "warnings": "Research-only diagnosis; B5/B6/v3 remain blocked unless checkpoint allows."
+  },
+  "recommended_risk_heavy_windows": [
+    "slow_drawdown"
+  ],
+  "report_type": "b2_risk_scaler_trigger_coverage_audit",
+  "risk_off_events": [
+    {
+      "date": "2025-04-04",
+      "exposure_scaler": 0.55,
+      "risk_score": 38.676979966545545,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-07",
+      "exposure_scaler": 0.55,
+      "risk_score": 39.53192392881526,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-08",
+      "exposure_scaler": 0.55,
+      "risk_score": 38.40749736312448,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-09",
+      "exposure_scaler": 0.55,
+      "risk_score": 36.62906868282383,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-10",
+      "exposure_scaler": 0.55,
+      "risk_score": 29.237837814680805,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-11",
+      "exposure_scaler": 0.55,
+      "risk_score": 31.901086580653256,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-14",
+      "exposure_scaler": 0.55,
+      "risk_score": 33.02066569026202,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-15",
+      "exposure_scaler": 0.55,
+      "risk_score": 33.0570865729361,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-16",
+      "exposure_scaler": 0.55,
+      "risk_score": 28.972724027722748,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-17",
+      "exposure_scaler": 0.55,
+      "risk_score": 29.035181313076556,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-21",
+      "exposure_scaler": 0.55,
+      "risk_score": 25.382044456437402,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-22",
+      "exposure_scaler": 0.55,
+      "risk_score": 28.677696401644393,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-23",
+      "exposure_scaler": 0.55,
+      "risk_score": 31.109398870285553,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-24",
+      "exposure_scaler": 0.55,
+      "risk_score": 34.50036541199243,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-25",
+      "exposure_scaler": 0.55,
+      "risk_score": 36.630056691653415,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-28",
+      "exposure_scaler": 0.55,
+      "risk_score": 36.5726405887835,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    }
+  ],
+  "risk_reentry_events": [
+    {
+      "date": "2025-03-24",
+      "from_state": "ELEVATED_RISK",
+      "to_state": "NORMAL"
+    }
+  ],
+  "risk_scaler_exposure_changes": [
+    {
+      "date": "2025-03-10",
+      "exposure_scaler": 0.85,
+      "risk_score": 60.717538694447285,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-11",
+      "exposure_scaler": 0.85,
+      "risk_score": 60.35726367622287,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-12",
+      "exposure_scaler": 0.85,
+      "risk_score": 61.94365561268737,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-13",
+      "exposure_scaler": 0.85,
+      "risk_score": 59.34740362141278,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-14",
+      "exposure_scaler": 0.85,
+      "risk_score": 62.91072984431212,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-17",
+      "exposure_scaler": 0.85,
+      "risk_score": 64.19069001653394,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-18",
+      "exposure_scaler": 0.85,
+      "risk_score": 61.580416500039945,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-19",
+      "exposure_scaler": 0.85,
+      "risk_score": 63.20255989551734,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-20",
+      "exposure_scaler": 0.85,
+      "risk_score": 62.686730921528266,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-21",
+      "exposure_scaler": 0.85,
+      "risk_score": 63.09925806482781,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-26",
+      "exposure_scaler": 0.85,
+      "risk_score": 62.89851388414635,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-27",
+      "exposure_scaler": 0.85,
+      "risk_score": 63.048792792186326,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-28",
+      "exposure_scaler": 0.85,
+      "risk_score": 58.782649785962754,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-03-31",
+      "exposure_scaler": 0.85,
+      "risk_score": 59.960833438594804,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-01",
+      "exposure_scaler": 0.85,
+      "risk_score": 60.80767262148716,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-02",
+      "exposure_scaler": 0.85,
+      "risk_score": 62.13464786707658,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-03",
+      "exposure_scaler": 0.85,
+      "risk_score": 50.189673513444156,
+      "risk_state": "ELEVATED_RISK",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-04",
+      "exposure_scaler": 0.55,
+      "risk_score": 38.676979966545545,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-07",
+      "exposure_scaler": 0.55,
+      "risk_score": 39.53192392881526,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-08",
+      "exposure_scaler": 0.55,
+      "risk_score": 38.40749736312448,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-09",
+      "exposure_scaler": 0.55,
+      "risk_score": 36.62906868282383,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-10",
+      "exposure_scaler": 0.55,
+      "risk_score": 29.237837814680805,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-11",
+      "exposure_scaler": 0.55,
+      "risk_score": 31.901086580653256,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-14",
+      "exposure_scaler": 0.55,
+      "risk_score": 33.02066569026202,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-15",
+      "exposure_scaler": 0.55,
+      "risk_score": 33.0570865729361,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-16",
+      "exposure_scaler": 0.55,
+      "risk_score": 28.972724027722748,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-17",
+      "exposure_scaler": 0.55,
+      "risk_score": 29.035181313076556,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-21",
+      "exposure_scaler": 0.55,
+      "risk_score": 25.382044456437402,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-22",
+      "exposure_scaler": 0.55,
+      "risk_score": 28.677696401644393,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-23",
+      "exposure_scaler": 0.55,
+      "risk_score": 31.109398870285553,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-24",
+      "exposure_scaler": 0.55,
+      "risk_score": 34.50036541199243,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-25",
+      "exposure_scaler": 0.55,
+      "risk_score": 36.630056691653415,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "date": "2025-04-28",
+      "exposure_scaler": 0.55,
+      "risk_score": 36.5726405887835,
+      "risk_state": "RISK_OFF",
+      "window_id": "slow_drawdown"
+    }
+  ],
+  "risk_signal_values": [
+    {
+      "date": "2023-01-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 70.18218352797332,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 71.76455963608436,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 69.27891656468549,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 72.63593045883054,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 73.7025048043273,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 77.86432021479001,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.33844718428851,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.70880477330577,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.76394864139347,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 88.31760948714452,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 81.01843621132059,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 80.11291429015701,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 87.3485940292726,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.75667596197269,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 88.03928432982858,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 88.00724918301442,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.72218081156954,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.17580705313314,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 88.30446178855017,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-01-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.65576812327515,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.27232594905433,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.49009418796842,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.38327455856687,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.69345899351023,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.42438578384238,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.72961162686082,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.70228377617649,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.5120970059031,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.36639748931083,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.29893077203906,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.60118282270548,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.25555177905754,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.72364378335702,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.35212820532585,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.27410504855787,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.43124088123173,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.79427248234227,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.619917454964,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-02-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.04170464682527,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.34287874074062,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.4328798385516,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.213164076216,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.5733808547109,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.42304897668836,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.92839966326609,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.14430907124073,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 77.97202763960082,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 87.9865060586106,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.71980089648069,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.40813650133373,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.39298912663621,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.18928461604331,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.92956934569688,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.94843689210889,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.25155540855768,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.53294400378122,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.13278154849174,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.0495536656714,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.96767218679507,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.60115853905533,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.56210977583922,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-03-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.72639013530919,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.71331070850904,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.76861076078055,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.74600621137348,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.9407438259041,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.01357566375161,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.9936281626836,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.10719154393874,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.15103365266842,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.69252063847406,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.70348884511672,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.73425599122015,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.70474059743299,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.71861917772749,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.77064489750458,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.59535319943274,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.28629075411534,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.48828033526253,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.08155914295165,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-04-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.62797504428869,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.88079434192223,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.58991622529008,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.25010534137401,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.13864737144954,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.829143087567,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 100.0,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.49476917779359,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.76389939785511,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.47030279415162,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.43224397515301,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.80633624158544,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.81451084230945,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.58600153626435,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.20980457148211,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.24669581733043,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.26771677763087,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.61278048775063,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.48083124432485,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.64725217278831,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.28916402271973,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.28572185985016,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-05-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.10550017889689,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.17373224086856,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.17886388174351,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.11726369327485,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.11824084802305,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.19546911092688,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.1933770160715,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.25633797222291,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.20047409661417,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.25104389528089,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.27067662776282,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.26883064232044,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.37708613953905,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.38742618955862,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.20984440932924,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.30356414557312,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.21633438852878,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.73765145948516,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.40768264302883,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.37543685708702,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.6353958861101,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-06-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.63076865572874,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.62253957450939,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.53466008744742,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.47627651444724,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.49527434210306,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.47423907938061,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.47712875856482,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.63084961556157,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.49653066405726,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.53778065807019,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.45165622967727,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.48200311561574,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.43545317507899,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.16861212083286,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.16755976588516,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.28667521784263,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.24444506520184,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.49072676258145,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.43865836275012,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.35076242606377,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-07-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.40262631979381,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.05946307942493,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.57271012937296,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.75831746856505,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.81087397893988,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.81039344469372,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.97488365704594,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.20802670405241,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.79206196239748,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.13176958212772,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.00392280584198,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.62664069543736,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 89.00063118706518,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.1330515434308,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.11178657844764,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 87.48004377573837,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-07-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.22988845771216,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 85.2995772971865,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 81.5665762145154,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 76.76000724250208,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 77.84948166725623,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 76.91041872814601,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 79.38776776288523,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-08-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 80.15326380163985,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.48098163929761,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.52904793240708,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.20110765442243,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.76802774294224,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.83880631585964,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.10381646705775,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.00537090447895,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.077372319952,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.71951508671327,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.01998546756123,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.5780310647704,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.88143923944348,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.93091070830428,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.95144613844698,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.01242185717003,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.44945923800333,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.69565365241719,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.76601497183499,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.16254090735445,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-01-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.06678695242543,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 90.76268534253471,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 91.38923637108148,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.88353586678481,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.13359489727245,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.66711460441621,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.28520307362729,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.344654334082,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.15633774868151,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.67736266647503,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.7668773524655,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.99974490401317,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.0505975380109,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.12618350842156,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.45865279502564,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 92.00964638308942,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.60609668797507,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.29128853220041,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 89.09593311569189,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-02-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 91.0712415601257,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 87.47382812469881,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.90325860038665,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 89.14566112299666,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 74.26527757990283,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 75.74548854452652,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-10",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 60.717538694447285,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-11",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 60.35726367622287,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-12",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 61.94365561268737,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-13",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 59.34740362141278,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-14",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 62.91072984431212,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-17",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 64.19069001653394,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-18",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 61.580416500039945,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-19",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 63.20255989551734,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-20",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 62.686730921528266,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-21",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 63.09925806482781,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 73.04429872752398,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 83.08311992987655,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2025-03-26",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 62.89851388414635,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-27",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 63.048792792186326,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-28",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 58.782649785962754,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-03-31",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 59.960833438594804,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-04-01",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 60.80767262148716,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-04-02",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 62.13464786707658,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-04-03",
+      "exposure_scaler": 0.85,
+      "risk_coverage": 1.0,
+      "risk_score": 50.189673513444156,
+      "risk_state": "ELEVATED_RISK"
+    },
+    {
+      "date": "2025-04-04",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 38.676979966545545,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-07",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 39.53192392881526,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-08",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 38.40749736312448,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-09",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 36.62906868282383,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-10",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 29.237837814680805,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-11",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 31.901086580653256,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-14",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 33.02066569026202,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-15",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 33.0570865729361,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-16",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 28.972724027722748,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-17",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 29.035181313076556,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-21",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 25.382044456437402,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-22",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 28.677696401644393,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-23",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 31.109398870285553,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-24",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 34.50036541199243,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-25",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 36.630056691653415,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-28",
+      "exposure_scaler": 0.55,
+      "risk_coverage": 1.0,
+      "risk_score": 36.5726405887835,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 37.4715141092014,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2025-04-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 37.62401538602332,
+      "risk_state": "RISK_OFF"
+    },
+    {
+      "date": "2023-08-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.41365325533506,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.0549545891998,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.10756323744766,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.10712615767311,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.1312370104425,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.02931289872912,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.5471875908184,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.69730316805958,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.66306702024973,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.48558245851845,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.06525802403222,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.57026047811551,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.71851230396241,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.75012644280251,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.8441101975492,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.45695730624296,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.74719718586273,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.58156262196755,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.46616564342659,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.39474517616111,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.53348795619485,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.90950476541543,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-08-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.90973050821796,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.90955154861405,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.9405908362442,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.98455587572319,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.67766039848306,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.45641119621509,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.69936429807227,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.73688451911084,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.03550103970205,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.317045787991,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.97828251356653,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.08744044383512,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.20784590598907,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.28515631192559,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.83946641457185,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.11966897509296,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.00565836401184,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.22954710135431,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.87749570991662,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.49218320722356,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.54558965922719,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.48588618644477,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.21233180124284,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.23164759469586,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.10323443709314,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.8397427885834,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.47846379323197,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.0079878190458,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.34385073854324,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.51449193195913,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.3469996567273,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.12682951606335,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.71198426087915,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.37209921247958,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.88083196586058,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.17128631263496,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.44474054606242,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.2108228396539,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 83.30304455688042,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 77.18100551875807,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 81.39936364732428,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 85.68136969775956,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.8443987865651,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.76197406853439,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.45962225489352,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.05872826416689,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.0605330318737,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.09511876456408,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.12748137025626,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.13518391724266,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.62317909854993,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.70912275277142,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.14602440827497,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.5998344452341,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 81.39936364732428,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 85.68136969775956,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.8443987865651,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.76197406853439,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.45962225489352,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.05872826416689,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.0605330318737,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.09511876456408,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.12748137025626,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.13518391724266,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.62317909854993,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.70912275277142,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.14602440827497,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.5998344452341,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.82265850939676,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.09933219992193,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.08714714505425,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.9476557120135,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.64319927423291,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.71412359155191,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.68556449186055,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.65494577750688,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.65437370413258,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-11-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.65874070319781,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.82374588990912,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.83452751072417,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.8307558386685,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.7894695150825,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.62946495688146,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.62959066993825,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 100.0,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 100.0,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 100.0,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 100.0,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-12-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 100.0,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.40677491011819,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.12784173580191,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.21770474232211,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.20376241240812,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.68659338068849,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.42785711500046,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.50701715486483,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.55222952687663,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.08644775520509,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.12631028031532,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.15420036420896,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.14642388452084,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.11332514415587,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.16755069813557,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-03-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.25121011582392,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.61924467749024,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.62772973247985,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.70085441752518,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.29852570229536,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.02814225018453,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.51763239820238,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.63363922322131,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.95299888381841,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.95129612065547,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.45614632462132,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.88799366887676,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.13542122902557,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.77962320072324,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.10053644041727,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2024-04-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.27736787432323,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-01",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.90955154861405,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.9405908362442,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.98455587572319,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-07",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.67766039848306,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-08",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.45641119621509,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.69936429807227,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.73688451911084,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.03550103970205,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-14",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.317045787991,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-15",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.97828251356653,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.08744044383512,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.20784590598907,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.28515631192559,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-21",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 94.83946641457185,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-22",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.11966897509296,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.00565836401184,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.22954710135431,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.87749570991662,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-28",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.49218320722356,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-09-29",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.54558965922719,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-02",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 96.48588618644477,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-03",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.21233180124284,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-04",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.23164759469586,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-05",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.10323443709314,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-06",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.8397427885834,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-09",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.47846379323197,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-10",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.0079878190458,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-11",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.34385073854324,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-12",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.51449193195913,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-13",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.3469996567273,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-16",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 99.12682951606335,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-17",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 98.71198426087915,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-18",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 97.37209921247958,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-19",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.88083196586058,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-20",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.17128631263496,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-23",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 93.44474054606242,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-24",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 95.2108228396539,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-25",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 83.30304455688042,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-26",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 77.18100551875807,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-27",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 81.39936364732428,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-30",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 85.68136969775956,
+      "risk_state": "NORMAL"
+    },
+    {
+      "date": "2023-10-31",
+      "exposure_scaler": 1.0,
+      "risk_coverage": 1.0,
+      "risk_score": 86.8443987865651,
+      "risk_state": "NORMAL"
+    }
+  ],
+  "risk_trigger_count": 33,
+  "risk_trigger_dates": [
+    "2025-03-10",
+    "2025-03-11",
+    "2025-03-12",
+    "2025-03-13",
+    "2025-03-14",
+    "2025-03-17",
+    "2025-03-18",
+    "2025-03-19",
+    "2025-03-20",
+    "2025-03-21",
+    "2025-03-26",
+    "2025-03-27",
+    "2025-03-28",
+    "2025-03-31",
+    "2025-04-01",
+    "2025-04-02",
+    "2025-04-03",
+    "2025-04-04",
+    "2025-04-07",
+    "2025-04-08",
+    "2025-04-09",
+    "2025-04-10",
+    "2025-04-11",
+    "2025-04-14",
+    "2025-04-15",
+    "2025-04-16",
+    "2025-04-17",
+    "2025-04-21",
+    "2025-04-22",
+    "2025-04-23",
+    "2025-04-24",
+    "2025-04-25",
+    "2025-04-28"
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "status": "B2_REQUIRES_RISK_HEAVY_WINDOWS",
+  "task_id": "TRADING-525",
+  "unused_risk_signal_reason": "current_window_no_trigger_but_risk_heavy_windows_trigger",
+  "window_risk_intensity": [
+    {
+      "average_risk_score": 95.94655629970222,
+      "min_risk_score": 69.27891656468549,
+      "non_normal_days": 0,
+      "risk_trigger_count": 0,
+      "window_id": "normal_uptrend"
+    },
+    {
+      "average_risk_score": 89.94050251149672,
+      "min_risk_score": 76.76000724250208,
+      "non_normal_days": 0,
+      "risk_trigger_count": 0,
+      "window_id": "rapid_drawdown"
+    },
+    {
+      "average_risk_score": 73.41941321950418,
+      "min_risk_score": 25.382044456437402,
+      "non_normal_days": 35,
+      "risk_trigger_count": 33,
+      "window_id": "slow_drawdown"
+    },
+    {
+      "average_risk_score": 96.67473318537034,
+      "min_risk_score": 77.18100551875807,
+      "non_normal_days": 0,
+      "risk_trigger_count": 0,
+      "window_id": "high_volatility_sideways"
+    },
+    {
+      "average_risk_score": 98.03449228565955,
+      "min_risk_score": 81.39936364732428,
+      "non_normal_days": 0,
+      "risk_trigger_count": 0,
+      "window_id": "v_shaped_recovery"
+    },
+    {
+      "average_risk_score": 97.97141337881023,
+      "min_risk_score": 93.27736787432323,
+      "non_normal_days": 0,
+      "risk_trigger_count": 0,
+      "window_id": "semiconductor_correction"
+    },
+    {
+      "average_risk_score": 95.3647217551276,
+      "min_risk_score": 77.18100551875807,
+      "non_normal_days": 0,
+      "risk_trigger_count": 0,
+      "window_id": "false_risk_off_cluster"
+    }
+  ]
+}

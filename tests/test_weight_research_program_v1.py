@@ -44,6 +44,11 @@ REQUIRED_JSON_ARTIFACTS = (
     "b4_interaction_inconclusive_drilldown.json",
     "e0_e1_baseline_consistency_audit.json",
     "b4_next_decision_checkpoint.json",
+    "b2_risk_scaler_trigger_coverage_audit.json",
+    "b3_slow_tilt_negative_contribution_attribution.json",
+    "b1_b4_multi_window_diagnostic_expansion.json",
+    "b4_interaction_evidence_synthesis.json",
+    "b5_admission_checkpoint.json",
 )
 
 
@@ -307,6 +312,23 @@ def test_b1_b4_diagnosis_artifacts_keep_b5_b6_blocked() -> None:
     assert decision["status"] == "RUN_MORE_B4_WINDOWS"
     assert decision["b5_allowed"] is False
     assert decision["b6_allowed"] is False
+
+
+def test_b2_b3_b4_extended_diagnosis_blocks_b5_admission() -> None:
+    b2 = _read_json("b2_risk_scaler_trigger_coverage_audit.json")
+    b3 = _read_json("b3_slow_tilt_negative_contribution_attribution.json")
+    multi = _read_json("b1_b4_multi_window_diagnostic_expansion.json")
+    synthesis = _read_json("b4_interaction_evidence_synthesis.json")
+    checkpoint = _read_json("b5_admission_checkpoint.json")
+
+    assert b2["status"] == "B2_REQUIRES_RISK_HEAVY_WINDOWS"
+    assert b3["status"] == "B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION"
+    assert multi["status"] == "MULTI_WINDOW_DIAGNOSTIC_COMPLETE"
+    assert synthesis["status"] == "B4_REDUNDANT"
+    assert checkpoint["status"] == "B5_ADMISSION_BLOCKED_MORE_EVIDENCE"
+    assert checkpoint["b5_allowed"] is False
+    assert checkpoint["b6_allowed"] is False
+    assert checkpoint["v3_allowed"] is False
 
 
 def _read_json(file_name: str) -> dict[str, object]:

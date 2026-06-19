@@ -1127,6 +1127,9 @@ from ai_trading_system.etf_portfolio.weight_research_checkpoint import (
 from ai_trading_system.etf_portfolio.weight_research_diagnosis import (
     run_b1_b4_diagnosis_batch,
 )
+from ai_trading_system.etf_portfolio.weight_research_extended_diagnosis import (
+    run_b2_b3_b4_diagnostic_expansion,
+)
 from ai_trading_system.etf_portfolio.weight_research_interfaces import (
     build_dependency_boundary_validation,
     build_research_layer_interface_contract,
@@ -36329,6 +36332,52 @@ def weight_research_diagnose_b1_b4_command(
             f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b4_next_decision_checkpoint.json'}"
         )
     if decision["b5_allowed"] or decision["b6_allowed"]:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("diagnose-b2-b4-expansion")
+def weight_research_diagnose_b2_b4_expansion_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Diagnosis output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research extended diagnosis aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-525~529 B2/B3/B4 diagnostics without running B5/B6/v3."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_b3_b4_diagnostic_expansion(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    checkpoint = payloads["b5_admission_checkpoint"]
+    typer.echo(f"b5_admission_status={checkpoint['status']}")
+    typer.echo(f"b5_allowed={checkpoint['b5_allowed']}")
+    typer.echo(f"b6_allowed={checkpoint['b6_allowed']}")
+    typer.echo(f"v3_allowed={checkpoint['v3_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b5_admission_checkpoint.json'}"
+        )
+    if checkpoint["b6_allowed"] or checkpoint["v3_allowed"]:
         raise typer.Exit(code=1)
 
 

@@ -1,0 +1,70 @@
+{
+  "b5_allowed": false,
+  "b6_allowed": false,
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:10:12.093438+00:00",
+  "hard_rule_checks": [
+    {
+      "check_id": "B5 allowed only for positive/additive B4",
+      "message": "B4_REDUNDANT",
+      "status": "PASS"
+    },
+    {
+      "check_id": "If b5_allowed=false then b6_allowed=false",
+      "message": "enforced",
+      "status": "PASS"
+    },
+    {
+      "check_id": "If b5_allowed=false then v3_allowed=false",
+      "message": "enforced",
+      "status": "PASS"
+    },
+    {
+      "check_id": "No automatic B5 run",
+      "message": "checkpoint only",
+      "status": "PASS"
+    }
+  ],
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "next_recommended_task": "REVIEW_B4_REDUNDANCY_BEFORE_B5",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B5_ADMISSION_BLOCKED_MORE_EVIDENCE",
+    "next_action": "Do not run B5 unless b5_admission_checkpoint allows it.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B5 admission checkpoint evaluated B4 interaction evidence.",
+    "warnings": "Research-only diagnosis; B5/B6/v3 remain blocked unless checkpoint allows."
+  },
+  "report_type": "b5_admission_checkpoint",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_statuses": {
+    "TRADING-525": "B2_REQUIRES_RISK_HEAVY_WINDOWS",
+    "TRADING-526": "B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION",
+    "TRADING-528": "B4_REDUNDANT"
+  },
+  "status": "B5_ADMISSION_BLOCKED_MORE_EVIDENCE",
+  "task_id": "TRADING-529",
+  "v3_allowed": false
+}
