@@ -1121,6 +1121,9 @@ from ai_trading_system.etf_portfolio.weight_research_b2 import (
 )
 from ai_trading_system.etf_portfolio.weight_research_b3 import run_b3_relative_tilt_research
 from ai_trading_system.etf_portfolio.weight_research_b4 import run_b4_interaction_research
+from ai_trading_system.etf_portfolio.weight_research_branching import (
+    run_b2_b3_branching_checkpoint,
+)
 from ai_trading_system.etf_portfolio.weight_research_checkpoint import (
     run_weight_research_checkpoint,
 )
@@ -36378,6 +36381,53 @@ def weight_research_diagnose_b2_b4_expansion_command(
             f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b5_admission_checkpoint.json'}"
         )
     if checkpoint["b6_allowed"] or checkpoint["v3_allowed"]:
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("branch-b2-b3")
+def weight_research_branch_b2_b3_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Branching checkpoint output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research branching aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-530~536 B2/B3 branching checkpoint without B5/B6/v3."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_b3_branching_checkpoint(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    program = payloads["research_program_checkpoint_after_branching"]
+    typer.echo(f"research_program_branching_status={program['status']}")
+    typer.echo(f"recommended_next_branch={program['recommended_next_branch']}")
+    typer.echo(f"b5_allowed={program['b5_allowed']}")
+    typer.echo(f"b6_allowed={program['b6_allowed']}")
+    typer.echo(f"v3_allowed={program['v3_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'research_program_checkpoint_after_branching.json'}"
+        )
+    if program["b5_allowed"] or program["b6_allowed"] or program["v3_allowed"]:
         raise typer.Exit(code=1)
 
 

@@ -49,6 +49,13 @@ REQUIRED_JSON_ARTIFACTS = (
     "b1_b4_multi_window_diagnostic_expansion.json",
     "b4_interaction_evidence_synthesis.json",
     "b5_admission_checkpoint.json",
+    "b2_risk_heavy_window_evaluation.json",
+    "b3_slow_tilt_signal_direction_audit.json",
+    "b1_execution_control_adoption_review.json",
+    "ablation_path_branching_decision.json",
+    "b2_only_research_candidate_checkpoint.json",
+    "b3_redesign_hypothesis_pack.json",
+    "research_program_checkpoint_after_branching.json",
 )
 
 
@@ -329,6 +336,26 @@ def test_b2_b3_b4_extended_diagnosis_blocks_b5_admission() -> None:
     assert checkpoint["b5_allowed"] is False
     assert checkpoint["b6_allowed"] is False
     assert checkpoint["v3_allowed"] is False
+
+
+def test_b2_b3_branching_checkpoint_keeps_current_combo_blocked() -> None:
+    b2 = _read_json("b2_risk_heavy_window_evaluation.json")
+    b3 = _read_json("b3_slow_tilt_signal_direction_audit.json")
+    branch = _read_json("ablation_path_branching_decision.json")
+    b2_only = _read_json("b2_only_research_candidate_checkpoint.json")
+    program = _read_json("research_program_checkpoint_after_branching.json")
+
+    assert b2["status"] == "B2_RISK_OVERLAY_MIXED"
+    assert b3["status"] == "B3_REDESIGN_REQUIRED"
+    assert branch["status"] == "CONTINUE_B2_ONLY_PATH"
+    assert b2_only["status"] == "B2_ONLY_NEEDS_MORE_EVIDENCE"
+    assert program["status"] == "CONTINUE_B2_ONLY_RESEARCH"
+    assert branch["b5_allowed"] is False
+    assert branch["b6_allowed"] is False
+    assert branch["v3_allowed"] is False
+    assert program["b5_allowed"] is False
+    assert program["b6_allowed"] is False
+    assert program["v3_allowed"] is False
 
 
 def _read_json(file_name: str) -> dict[str, object]:

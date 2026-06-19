@@ -1,0 +1,80 @@
+{
+  "b5_allowed": false,
+  "b6_allowed": false,
+  "blocked_modules": [
+    "B3_CURRENT_FORM",
+    "B4_CURRENT_COMBO",
+    "B5",
+    "B6",
+    "v3"
+  ],
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:25:11.472459+00:00",
+  "holdout_accessed": false,
+  "input_statuses": {
+    "TRADING-528": "B4_REDUNDANT",
+    "TRADING-529": "B5_ADMISSION_BLOCKED_MORE_EVIDENCE",
+    "TRADING-530": "B2_RISK_OVERLAY_MIXED",
+    "TRADING-531": "B3_REDESIGN_REQUIRED",
+    "TRADING-532": "B1_OPTIONAL_WRAPPER"
+  },
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "CONTINUE_B2_ONLY_PATH",
+    "next_action": "Manual owner/research review before any next task.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "Ablation path was branched after B4 redundancy evidence.",
+    "warnings": "Research-only branching diagnosis; no B5/B6/v3 or production action."
+  },
+  "rejected_branches": [
+    {
+      "branch": "REDESIGN_B3_BEFORE_COMBO",
+      "reason": "B3 redesign is needed, but B2-only path can be evaluated first."
+    },
+    {
+      "branch": "DROP_B3_CURRENT_FORM",
+      "reason": "Current form is blocked from combo, but hypotheses should be preserved."
+    },
+    {
+      "branch": "RETEST_B4_AFTER_B3_REDESIGN",
+      "reason": "Requires a redesigned B3 artifact first."
+    },
+    {
+      "branch": "STOP_CURRENT_ABLATION_LINE",
+      "reason": "B2 has mixed but distinct risk-heavy evidence."
+    }
+  ],
+  "report_type": "ablation_path_branching_decision",
+  "required_next_tasks": [
+    "Run deeper B2-only research on risk-heavy diagnostic windows.",
+    "Review B3 redesign hypotheses before any B4 retest.",
+    "Keep B5/B6/v3 blocked until a non-redundant B4 or approved B2-only path exists."
+  ],
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "selected_branch": "CONTINUE_B2_ONLY_PATH",
+  "status": "CONTINUE_B2_ONLY_PATH",
+  "task_id": "TRADING-533",
+  "v3_allowed": false
+}

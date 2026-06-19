@@ -1,0 +1,51 @@
+{
+  "benchmark_relative_impact": -0.02813265242856111,
+  "cost_turnover_impact": {
+    "cost_delta": 0.00027354656464329306,
+    "turnover_delta": 1.3677328232164652
+  },
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "drawdown_benefit": 0.014543173743443605,
+  "false_risk_off_behavior": 0,
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T10:25:11.472459+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "paper_shadow_allowed": false,
+  "re_entry_lag": 14,
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_ONLY_NEEDS_MORE_EVIDENCE",
+    "next_action": "Manual owner/research review before any next task.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2-only research candidate checkpoint evaluated risk-overlay evidence.",
+    "warnings": "Research-only branching diagnosis; no B5/B6/v3 or production action."
+  },
+  "report_type": "b2_only_research_candidate_checkpoint",
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "signal_robustness": "B2_REQUIRES_RISK_HEAVY_WINDOWS",
+  "status": "B2_ONLY_NEEDS_MORE_EVIDENCE",
+  "stress_result": "MIXED_SLOW_DRAWDOWN_HELP_RETURN_COST_HURT",
+  "task_id": "TRADING-534",
+  "window_stability": "INSUFFICIENT_ONLY_ONE_TRIGGERED_WINDOW"
+}
