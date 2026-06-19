@@ -103,3 +103,18 @@ sensitive-field label metadata，例如安全审计报告在说明需要检查 `
 2. 回归测试证明真实 secret value 仍 fail closed；
 3. daily-run 或等价 replay/validation artifact 显示 secret hygiene gate 通过；
 4. task register 更新状态，并在日报/运营摘要中保留本次事件的修复说明。
+
+## TRADING-499A Classification
+
+- classification: generated-report false positive + scanner rule issue.
+- true secret exposure: not found in the affected lines. The scanner-matched value was the generated audit source file name from safety finding metadata, not a credential value.
+- documentation-only match: observed only after documenting the exact source-location token; fixed by rewording docs rather than allowlisting docs.
+- allowlist scope: limited to known generated governance report families and metadata contexts that encode `<term_family>:<source_file>:<line>` source locations, including safety audit finding ids, warning summaries, Markdown warning rows, and Reader Brief consistency `decision_state` embeddings.
+- strictness retained: real `api_key` / `secret_key` / token / password / authorization / bearer literals still emit `ERROR`; quoted JSON secret key/value forms are now detected.
+- production boundary: no paper-shadow activation, no live trading, no broker/order action, no official target weights, and no production mutation.
+
+## Progress Log
+
+| Date | Task | Status | Notes |
+|---|---|---|---|
+| 2026-06-19 | TRADING-499A | DONE | 分类为 generated-report false positive + scanner rule issue，不是真实 credential exposure；实现窄范围 generated governance report metadata allowlist，并增强 quoted JSON secret key/value 与 `secret_key` 检测。验证通过 focused tests `tests/test_secret_hygiene.py` 6 passed、`aits security scan-secrets --as-of 2026-06-18` PASS（scanned files=9777、errors=0、warnings=0）、task-register consistency run/validate PASS、report index PASS（reports=530、unwaived=0）、system doctor PASS（checks=9、failed=0、warnings=0）、validation tiers `fast-unit` 74 passed、`contract-validation` 73 passed、`report-validation` 55 passed、`reproducibility` 23 passed、scoped Ruff PASS、compileall PASS、`git diff --check` PASS。 |

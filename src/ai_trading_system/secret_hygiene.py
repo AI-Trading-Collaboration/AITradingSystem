@@ -8,9 +8,27 @@ from pathlib import Path
 
 SECRET_PATTERNS = (
     re.compile(
-        r"(?i)\b(api[_-]?key|secret|token|password|authorization)\b\s*[:=]\s*['\"]?([A-Za-z0-9_.\-]{24,})"
+        r"(?i)['\"]?\b(api[_-]?key|secret[_-]?key|secret|token|password|authorization)\b['\"]?\s*[:=]\s*['\"]?([A-Za-z0-9_.\-]{24,})"
     ),
     re.compile(r"(?i)\bBearer\s+([A-Za-z0-9_.\-]{24,})"),
+)
+GENERATED_REPORT_METADATA_FILE_PATTERN = re.compile(
+    r"^(executable_binding_safety_audit|next_candidate_research_cycle_snapshot|"
+    r"reader_brief_consistency_pack)_\d{4}-\d{2}-\d{2}\.(json|md)$"
+)
+GENERATED_REPORT_METADATA_LABELS = {
+    "api_key",
+    "apikey",
+    "api-key",
+    "secret_key",
+    "secret-key",
+    "secret",
+    "token",
+    "password",
+    "authorization",
+}
+SOURCE_LOCATION_VALUE_PATTERN = re.compile(
+    r"^[A-Za-z0-9_.\-]+\.(py|yaml|yml|json|md)$"
 )
 SCANNED_SUFFIXES = {
     ".csv",
@@ -178,24 +196,83 @@ def _scan_file(path: Path, findings: list[SecretScanFinding]) -> None:
         return
     for line_number, line in enumerate(text.splitlines(), start=1):
         for pattern in SECRET_PATTERNS:
-            match = pattern.search(line)
-            if match is None:
-                continue
-            value = match.group(match.lastindex or 1)
-            label = match.group(1) if (match.lastindex or 0) > 1 else "Bearer"
-            findings.append(
-                SecretScanFinding(
-                    severity=SecretFindingSeverity.ERROR,
-                    code="suspected_secret_literal",
+            for match in pattern.finditer(line):
+                value = match.group(match.lastindex or 1)
+                label = match.group(1) if (match.lastindex or 0) > 1 else "Bearer"
+                if _is_allowed_generated_report_metadata_match(
                     path=path,
-                    line_number=line_number,
-                    matched_label=label,
-                    redacted_value=_redact(value),
-                    message=(
-                        "疑似 secret literal 出现在可扫描文件中；" "应改为环境变量或安全密钥管理。"
-                    ),
+                    line=line,
+                    label=label,
+                    value=value,
+                ):
+                    continue
+                findings.append(
+                    SecretScanFinding(
+                        severity=SecretFindingSeverity.ERROR,
+                        code="suspected_secret_literal",
+                        path=path,
+                        line_number=line_number,
+                        matched_label=label,
+                        redacted_value=_redact(value),
+                        message=(
+                            "疑似 secret literal 出现在可扫描文件中；"
+                            "应改为环境变量或安全密钥管理。"
+                        ),
+                    )
                 )
-            )
+
+
+def _is_allowed_generated_report_metadata_match(
+    *,
+    path: Path,
+    line: str,
+    label: str,
+    value: str,
+) -> bool:
+    if GENERATED_REPORT_METADATA_FILE_PATTERN.fullmatch(path.name) is None:
+        return False
+
+    normalized_label = label.lower().replace("-", "_")
+    if normalized_label not in GENERATED_REPORT_METADATA_LABELS:
+        return False
+    if SOURCE_LOCATION_VALUE_PATTERN.fullmatch(value) is None:
+        return False
+
+    source_location = re.compile(
+        rf"(?<![A-Za-z0-9_.\-]){re.escape(label)}:{re.escape(value)}:\d+"
+        r"(?![A-Za-z0-9_.\-])",
+        flags=re.IGNORECASE,
+    )
+    if source_location.search(line) is None:
+        return False
+
+    return _has_generated_report_metadata_context(line)
+
+
+def _has_generated_report_metadata_context(line: str) -> bool:
+    stripped = line.strip()
+    # Generated governance reports encode finding metadata as
+    # <term_family>:<source_file>:<line>. These are audit source locations, not
+    # secret values, and this allowlist is limited to those report metadata forms.
+    if (
+        stripped.startswith('"finding_id":')
+        or stripped.startswith('"warnings":')
+        or stripped.startswith("- warnings:")
+    ):
+        return True
+    if stripped.startswith('"decision_state":') and "\\n- warnings:" in stripped:
+        return True
+    if re.fullmatch(
+        r'"[A-Za-z0-9_\-]+:[A-Za-z0-9_.\-]+\.(py|yaml|yml|json|md):\d+",?',
+        stripped,
+    ):
+        return True
+    if re.match(
+        r"^\|[A-Za-z0-9_\-]+:[A-Za-z0-9_.\-]+\.(py|yaml|yml|json|md):\d+\|",
+        stripped,
+    ):
+        return True
+    return False
 
 
 def _redact(value: str) -> str:

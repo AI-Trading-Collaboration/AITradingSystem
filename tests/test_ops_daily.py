@@ -1062,7 +1062,7 @@ def test_run_daily_ops_plan_writes_redacted_failure_diagnostic(tmp_path: Path) -
         include_secret_scan=False,
         skip_risk_event_openai_precheck=True,
     )
-    secret = "sk-live-test-secret"
+    secret = "TEST_ONLY_NON_PROVIDER_SECRET"
     validate_step = next(step for step in plan.steps if step.step_id == "validate_data")
     validate_step.produced_paths[0].parent.mkdir(parents=True, exist_ok=True)
     validate_step.produced_paths[0].write_text("- 状态：PASS\n", encoding="utf-8")

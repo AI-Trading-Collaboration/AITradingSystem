@@ -50,7 +50,7 @@ def test_llm_claim_precheck_fails_closed_without_provider_permission(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -98,7 +98,7 @@ def test_llm_claim_precheck_rejects_unsupported_reasoning_effort(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -133,7 +133,7 @@ def test_llm_claim_precheck_rejects_unsupported_http_client(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -190,7 +190,7 @@ def test_llm_claim_precheck_uses_requests_client_by_default(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -244,7 +244,7 @@ def test_openai_claim_precheck_reuses_recent_request_cache(tmp_path: Path) -> No
 
     first_report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=data_sources,
         input_path=tmp_path / "input.yaml",
         http_post_json=fake_post,
@@ -253,7 +253,7 @@ def test_openai_claim_precheck_reuses_recent_request_cache(tmp_path: Path) -> No
     )
     second_report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=data_sources,
         input_path=tmp_path / "input.yaml",
         http_post_json=fake_post,
@@ -275,7 +275,7 @@ def test_openai_claim_precheck_reuses_recent_request_cache(tmp_path: Path) -> No
     assert cache_payload["provider_request_id"] == calls[0]
     assert cache_payload["client_name"] == "custom"
     assert cache_payload["request"]["headers"]["Authorization"] == "Bearer ***"
-    assert "sk-test" not in cache_text
+    assert "TEST_ONLY_NON_PROVIDER_SECRET" not in cache_text
     assert list((cache_dir / "archive" / "openai" / "responses" / "2026-05-04").glob("*.json"))
 
 
@@ -308,7 +308,7 @@ def test_openai_claim_precheck_refreshes_expired_request_cache(tmp_path: Path) -
 
     run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=data_sources,
         input_path=tmp_path / "input.yaml",
         http_post_json=fake_post,
@@ -318,7 +318,7 @@ def test_openai_claim_precheck_refreshes_expired_request_cache(tmp_path: Path) -
     )
     expired_report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=data_sources,
         input_path=tmp_path / "input.yaml",
         http_post_json=fake_post,
@@ -351,7 +351,7 @@ def test_openai_claim_precheck_fails_closed_when_cache_not_allowed(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -394,7 +394,7 @@ def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -432,7 +432,7 @@ def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
     assert payload["claim_count"] == 1
     assert payload["records"][0]["reasoning_effort"] == DEFAULT_OPENAI_REASONING_EFFORT
     assert source_text not in queue_text
-    assert "sk-test" not in queue_text
+    assert "TEST_ONLY_NON_PROVIDER_SECRET" not in queue_text
 
 
 def test_llm_claim_precheck_retries_retryable_http_error_before_success(
@@ -459,7 +459,7 @@ def test_llm_claim_precheck_retries_retryable_http_error_before_success(
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -510,7 +510,7 @@ def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None
 
     report = run_openai_claim_precheck(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -539,7 +539,10 @@ def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None
         520,
         520,
     ]
-    assert "sk-test" not in json.dumps(error_issue.diagnostics, ensure_ascii=False)
+    assert "TEST_ONLY_NON_PROVIDER_SECRET" not in json.dumps(
+        error_issue.diagnostics,
+        ensure_ascii=False,
+    )
 
 
 def test_openai_claim_schema_cannot_emit_trade_action_fields() -> None:

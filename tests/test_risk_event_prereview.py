@@ -177,7 +177,7 @@ def test_run_openai_risk_event_prereview_writes_pending_queue_without_source_tex
 
     report = run_openai_risk_event_prereview(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -218,7 +218,7 @@ def test_run_openai_risk_event_prereview_writes_pending_queue_without_source_tex
     assert payload["record_count"] == 1
     assert payload["records"][0]["response_id"] == "resp_test"
     assert source_text not in queue_text
-    assert "sk-test" not in queue_text
+    assert "TEST_ONLY_NON_PROVIDER_SECRET" not in queue_text
 
 
 def test_openai_prereview_allows_production_request_after_as_of_with_cutoff(
@@ -240,7 +240,7 @@ def test_openai_prereview_allows_production_request_after_as_of_with_cutoff(
 
     report = run_openai_risk_event_prereview(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -289,7 +289,7 @@ def test_openai_prereview_rejects_request_after_visibility_cutoff(
 
     report = run_openai_risk_event_prereview(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -336,7 +336,7 @@ def test_openai_prereview_rejects_request_after_as_of_without_cutoff(
 
     report = run_openai_risk_event_prereview(
         packet,
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -392,7 +392,7 @@ def test_risk_events_precheck_openai_cli_fails_closed_without_permission(
         yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False, allow_unicode=True),
         encoding="utf-8",
     )
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_NON_PROVIDER_SECRET")
 
     result = CliRunner().invoke(
         app,
@@ -445,7 +445,7 @@ def test_official_candidates_auto_precheck_writes_only_pending_review(
 
     report = run_openai_risk_event_prereview_for_official_candidates(
         (_official_candidate(tmp_path),),
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -475,7 +475,7 @@ def test_official_candidates_auto_precheck_writes_only_pending_review(
     assert payload["record_count"] == 1
     assert request_payload["content_sent_level"] == "metadata_only"
     assert captured_timeout == [DEFAULT_OPENAI_TIMEOUT_SECONDS]
-    assert "sk-test" not in queue_path.read_text(encoding="utf-8")
+    assert "TEST_ONLY_NON_PROVIDER_SECRET" not in queue_path.read_text(encoding="utf-8")
 
 
 def test_official_candidates_auto_precheck_prioritizes_ai_policy_candidates(
@@ -517,7 +517,7 @@ def test_official_candidates_auto_precheck_prioritizes_ai_policy_candidates(
 
     report = run_openai_risk_event_prereview_for_official_candidates(
         (low_priority, high_priority),
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -564,7 +564,7 @@ def test_official_candidates_irrelevant_output_does_not_add_review_queue(
 
     report = run_openai_risk_event_prereview_for_official_candidates(
         (_official_candidate(tmp_path),),
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -642,7 +642,7 @@ def test_precheck_triaged_official_candidates_cli_filters_high_priority_bucket(
             issues=(),
         )
 
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_NON_PROVIDER_SECRET")
     monkeypatch.setattr(
         "ai_trading_system.cli_commands.risk_events."
         "run_openai_risk_event_prereview_for_official_candidates",
@@ -693,7 +693,7 @@ def test_official_candidates_auto_precheck_reports_openai_timeout(
     second_candidate = replace(first_candidate, candidate_id=f"{first_candidate.candidate_id}:2")
     report = run_openai_risk_event_prereview_for_official_candidates(
         (first_candidate, second_candidate),
-        api_key="sk-test",
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
         data_sources=DataSourcesConfig(
             sources=[
                 _source(
@@ -732,7 +732,7 @@ def test_official_candidates_auto_precheck_reports_openai_timeout(
     assert "## 请求诊断" in markdown
     assert "Client request id" in markdown
     assert "custom" in markdown
-    assert "sk-test" not in markdown
+    assert "TEST_ONLY_NON_PROVIDER_SECRET" not in markdown
 
 
 def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
