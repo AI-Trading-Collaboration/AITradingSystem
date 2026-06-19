@@ -1,0 +1,225 @@
+{
+  "allowed_stage": "diagnostic",
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T12:22:29.043509+00:00",
+  "holdout_accessed": false,
+  "holdout_allowed": false,
+  "locked_windows": [
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2025-04-30",
+      "expected_B2_behavior": "trigger during persistent drawdown and re-enter cleanly",
+      "holdout_allowed": false,
+      "reentry_expectation": "complete re-entry lifecycle expected",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "high",
+      "source_window_id": "slow_drawdown",
+      "start_date": "2025-01-02",
+      "trigger_expectation": "trigger expected",
+      "window_group": "slow_drawdown_repeatability",
+      "window_id": "slow_drawdown_repeat_primary"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2024-08-09",
+      "expected_B2_behavior": "trigger before or during rapid drawdown if fast risk binds",
+      "holdout_allowed": false,
+      "reentry_expectation": "quick recovery expected if trigger occurs",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "high",
+      "source_window_id": "rapid_drawdown",
+      "start_date": "2024-07-10",
+      "trigger_expectation": "trigger expected if current design supports fast risk",
+      "window_group": "rapid_drawdown",
+      "window_id": "rapid_drawdown_fast_risk"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2024-08-09",
+      "expected_B2_behavior": "trigger if volatility shock produces binding risk signal",
+      "holdout_allowed": false,
+      "reentry_expectation": "quick recovery expected if trigger occurs",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "high",
+      "source_window_id": "volatility_spike",
+      "start_date": "2024-07-10",
+      "trigger_expectation": "trigger expected if volatility spike is supported",
+      "window_group": "volatility_spike",
+      "window_id": "volatility_spike_fast_risk"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2023-12-15",
+      "expected_B2_behavior": "avoid staying de-risked through fast rebound",
+      "holdout_allowed": false,
+      "reentry_expectation": "fast re-entry required after risk clears",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "medium",
+      "source_window_id": "v_shaped_recovery",
+      "start_date": "2023-10-27",
+      "trigger_expectation": "trigger only if risk signal binds before rebound",
+      "window_group": "v_shaped_recovery",
+      "window_id": "v_shaped_recovery_reentry_case"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2023-10-31",
+      "expected_B2_behavior": "avoid false risk-off cluster",
+      "holdout_allowed": false,
+      "reentry_expectation": "not applicable unless false trigger appears",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "low",
+      "source_window_id": "false_risk_off_cluster",
+      "start_date": "2023-09-01",
+      "trigger_expectation": "no trigger expected",
+      "window_group": "false_risk_off_shallow_pullback",
+      "window_id": "false_risk_off_cluster_control"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2023-10-31",
+      "expected_B2_behavior": "avoid shallow-pullback de-risking",
+      "holdout_allowed": false,
+      "reentry_expectation": "not applicable unless false trigger appears",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "low",
+      "source_window_id": "shallow_pullback_false_alarm",
+      "start_date": "2023-09-01",
+      "trigger_expectation": "no trigger expected",
+      "window_group": "false_risk_off_shallow_pullback",
+      "window_id": "shallow_pullback_false_alarm_control"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2023-07-31",
+      "expected_B2_behavior": "remain inactive in normal uptrend",
+      "holdout_allowed": false,
+      "reentry_expectation": "not applicable",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "control",
+      "source_window_id": "normal_uptrend_control",
+      "start_date": "2023-01-03",
+      "trigger_expectation": "no trigger expected",
+      "window_group": "calm_normal_control",
+      "window_id": "normal_uptrend_control_repeat"
+    },
+    {
+      "allowed_stage": "diagnostic",
+      "data_quality_status": "requires_validate_data_at_runtime",
+      "end_date": "2023-07-31",
+      "expected_B2_behavior": "remain inactive in calm market",
+      "holdout_allowed": false,
+      "reentry_expectation": "not applicable",
+      "regime_label": "ai_after_chatgpt",
+      "risk_intensity": "control",
+      "source_window_id": "calm_market_control",
+      "start_date": "2023-01-03",
+      "trigger_expectation": "no trigger expected",
+      "window_group": "calm_normal_control",
+      "window_id": "calm_market_control_repeat"
+    }
+  ],
+  "market_regime": "ai_after_chatgpt",
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_TARGETED_EVIDENCE_WINDOWS_INCOMPLETE",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 targeted evidence windows are locked without holdout use.",
+    "warnings": "Research-only B2 targeted evidence diagnostics; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_targeted_evidence_window_lock",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_control_window_rerun": "D:\\Work\\AITradingSystem\\docs\\research\\b2_control_window_rerun.json",
+    "b2_cost_benchmark_utility_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_utility_review.json",
+    "b2_false_risk_off_reentry_cost_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_false_risk_off_reentry_cost_review.json",
+    "b2_full_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_backfill.json",
+    "b2_gate_v4_decision": "D:\\Work\\AITradingSystem\\docs\\research\\b2_gate_v4_decision.json",
+    "b2_next_evidence_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b2_next_evidence_plan.json",
+    "b2_no_trigger_correctness_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_no_trigger_correctness_review.json",
+    "b2_per_window_utility_scorecard": "D:\\Work\\AITradingSystem\\docs\\research\\b2_per_window_utility_scorecard.json",
+    "b2_research_branch_snapshot": "D:\\Work\\AITradingSystem\\docs\\research\\b2_research_branch_snapshot.json",
+    "b2_signal_robustness_trigger_stability": "D:\\Work\\AITradingSystem\\docs\\research\\b2_signal_robustness_trigger_stability.json",
+    "b3_signal_precheck_resolution_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_precheck_resolution_plan.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B2_TARGETED_EVIDENCE_WINDOWS_INCOMPLETE",
+  "targeted_window_limitations": [
+    "Only one independent slow-drawdown diagnostic window is currently available.",
+    "No untouched holdout is used or unlocked."
+  ],
+  "task_id": "TRADING-588",
+  "window_group_summary": [
+    {
+      "available_count": 1,
+      "required_count": 2,
+      "status": "incomplete",
+      "window_group": "slow_drawdown_repeatability"
+    },
+    {
+      "available_count": 1,
+      "required_count": 1,
+      "status": "complete",
+      "window_group": "rapid_drawdown"
+    },
+    {
+      "available_count": 1,
+      "required_count": 1,
+      "status": "complete",
+      "window_group": "volatility_spike"
+    },
+    {
+      "available_count": 1,
+      "required_count": 1,
+      "status": "complete",
+      "window_group": "v_shaped_recovery"
+    },
+    {
+      "available_count": 2,
+      "required_count": 2,
+      "status": "complete",
+      "window_group": "false_risk_off_shallow_pullback"
+    },
+    {
+      "available_count": 2,
+      "required_count": 2,
+      "status": "complete",
+      "window_group": "calm_normal_control"
+    }
+  ]
+}

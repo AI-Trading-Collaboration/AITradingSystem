@@ -1131,6 +1131,9 @@ from ai_trading_system.etf_portfolio.weight_research_b2_followup import (
 from ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic import (
     run_b2_full_diagnostic_research,
 )
+from ai_trading_system.etf_portfolio.weight_research_b2_targeted_evidence import (
+    run_b2_targeted_evidence_research,
+)
 from ai_trading_system.etf_portfolio.weight_research_b3 import run_b3_relative_tilt_research
 from ai_trading_system.etf_portfolio.weight_research_b4 import run_b4_interaction_research
 from ai_trading_system.etf_portfolio.weight_research_branching import (
@@ -36678,6 +36681,62 @@ def weight_research_b2_followup_research_command(
         typer.echo(
             "Source Alias："
             f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot.json'}"
+        )
+    if (
+        snapshot["B4_retest_allowed"]
+        or snapshot["b5_allowed"]
+        or snapshot["b6_allowed"]
+        or snapshot["v3_allowed"]
+        or snapshot["paper_shadow_allowed"]
+    ):
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("b2-targeted-evidence-research")
+def weight_research_b2_targeted_evidence_research_command(
+    prices_path: Annotated[Path, typer.Option("--prices-path", help="价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="FRED rates cache for validate-data gate。"),
+    ] = DEFAULT_RATES_CACHE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B2 targeted evidence output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research TRADING-588~596 aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-588~596 B2 targeted evidence and role-scope diagnostics."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_targeted_evidence_research(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    gate = payloads["b2_gate_v5"]
+    snapshot = payloads["b2_research_branch_snapshot_v2"]
+    typer.echo(f"b2_gate_v5_status={gate['status']}")
+    typer.echo(f"b2_research_branch_snapshot_v2_status={snapshot['status']}")
+    typer.echo(f"B4_retest_allowed={snapshot['B4_retest_allowed']}")
+    typer.echo(f"b5_allowed={snapshot['b5_allowed']}")
+    typer.echo(f"b6_allowed={snapshot['b6_allowed']}")
+    typer.echo(f"v3_allowed={snapshot['v3_allowed']}")
+    typer.echo(f"paper_shadow_allowed={snapshot['paper_shadow_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot_v2.json'}"
         )
     if (
         snapshot["B4_retest_allowed"]
