@@ -1,0 +1,57 @@
+{
+  "campaign_id": "b2-risk-overlay-current-form",
+  "created_at": "2026-06-19T13:32:19Z",
+  "current_outcome": "NEEDS_MORE_EVIDENCE",
+  "current_stage": "TARGETED_EVIDENCE",
+  "data_quality_status": "NOT_REQUIRED_CONTROL_PLANE_ONLY",
+  "evidence_budget_used": {
+    "holdout_accesses": 0,
+    "mini_rounds": 1,
+    "needs_more_evidence_occurrences": 1,
+    "owner_overrides": 0,
+    "redesign_rounds": 0,
+    "targeted_rounds": 1,
+    "window_expansions": 1
+  },
+  "legacy_status": "B2_TARGETED_EVIDENCE_MIXED",
+  "migrated_from_legacy": true,
+  "program_id": "weight-research-v1",
+  "reason_codes": [
+    "FAST_RISK_NOT_SUPPORTED",
+    "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+    "REENTRY_LAG_SIGNAL_DRIVEN",
+    "UTILITY_MIXED"
+  ],
+  "safety_boundary": {
+    "broker_effect": "none",
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_effect": "none",
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": "1.0",
+  "source_artifacts": [
+    "TRADING-575_to_580_B2_Control_Window_Evidence_Completion",
+    "TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope",
+    "TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision"
+  ],
+  "stage_history": [
+    {
+      "created_at": "2026-06-19T00:00:00Z",
+      "outcome": "NEEDS_MORE_EVIDENCE",
+      "reason_codes": [
+        "FAST_RISK_NOT_SUPPORTED",
+        "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+        "REENTRY_LAG_SIGNAL_DRIVEN",
+        "UTILITY_MIXED"
+      ],
+      "run_id": "legacy-b2-targeted-evidence",
+      "stage": "TARGETED_EVIDENCE"
+    }
+  ],
+  "title": "B2 risk overlay current-form evaluation",
+  "updated_at": "2026-06-19T13:32:19Z"
+}

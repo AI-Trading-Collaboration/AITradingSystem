@@ -1,0 +1,78 @@
+{
+  "campaign_id": "b2-risk-overlay-current-form",
+  "evidence_budget": {
+    "compute_budget": null,
+    "max_mini_rounds": 1,
+    "max_needs_more_evidence_occurrences": 2,
+    "max_redesign_rounds": 1,
+    "max_targeted_rounds": 2,
+    "max_window_expansions": 1,
+    "owner_override_required_after_budget": true,
+    "time_budget": null
+  },
+  "hypothesis": {
+    "expected_failure_modes": [
+      "trigger_too_late",
+      "reentry_too_slow",
+      "opportunity_cost_high"
+    ],
+    "expected_gain": [
+      "drawdown_reduction",
+      "acceptable_false_risk_off"
+    ],
+    "statement": "Risk overlay may reduce losses in risk-heavy windows while remaining inactive in calm markets.\n"
+  },
+  "market_regime": "ai_after_chatgpt",
+  "metadata": {},
+  "module_graph": {
+    "allowed_interaction_order": 2,
+    "allowed_mechanisms": [
+      "risk_signal",
+      "exposure_scaler",
+      "reentry_logic"
+    ],
+    "baseline": "b0-static",
+    "forbidden_mechanisms": [
+      "slow_tilt",
+      "confidence_shrinkage",
+      "regime_filter",
+      "p0_mixed_allocator"
+    ],
+    "modules": [
+      "risk-overlay-b2"
+    ]
+  },
+  "owner_authorized_holdout": false,
+  "program_id": "weight-research-v1",
+  "requested_date_range": "2022-12-01..2025-04-30",
+  "safety": {
+    "broker_effect": "none",
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_effect": "none",
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": "1.0",
+  "scorecard_policy": "risk-overlay-utility-v1",
+  "stop_rules": [
+    {
+      "code": "STOP_IF_NO_REPEATABLE_PROTECTION"
+    },
+    {
+      "code": "RETURN_TO_DESIGN_IF_REENTRY_LAG_STRUCTURAL"
+    },
+    {
+      "code": "NARROW_ROLE_IF_FAST_RISK_UNSUPPORTED"
+    }
+  ],
+  "title": "B2 risk overlay current-form evaluation",
+  "window_policy": {
+    "development_catalog": "b2-development-v1",
+    "diagnostic_catalog": "b2-diagnostic-v1",
+    "full_catalog": null,
+    "holdout_access": "FINAL_GATE_ONLY",
+    "holdout_catalog": "b2-holdout-v1"
+  }
+}

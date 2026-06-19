@@ -13,6 +13,7 @@ from ai_trading_system.research_campaign import (
     DEFAULT_GATE_POLICY_PATH,
     DEFAULT_MIGRATION_PATH,
     DEFAULT_MODULE_REGISTRY_PATH,
+    DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     DEFAULT_WINDOW_POLICY_PATH,
     ResearchCampaignError,
     archive_campaign,
@@ -26,6 +27,8 @@ from ai_trading_system.research_campaign import (
     load_campaign_bundle,
     load_campaign_spec,
     run_campaign_stage,
+    validate_stage_adapter_contracts,
+    write_campaign_control_plane_v1_validation_artifacts,
 )
 
 console = Console()
@@ -144,6 +147,77 @@ def validate_campaign_command(
         raise typer.Exit(code=1)
 
 
+@campaign_app.command("validate-adapters")
+def validate_campaign_adapters_command(
+    adapter_registry_path: Annotated[
+        Path,
+        typer.Option("--adapter-registry", help="Campaign stage adapter registry 路径。"),
+    ] = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    module_registry_path: Annotated[
+        Path,
+        typer.Option("--module-registry", help="Module capability registry 路径。"),
+    ] = DEFAULT_MODULE_REGISTRY_PATH,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """验证 Campaign stage adapter contract、输入 artifact 和 safety metadata。"""
+    try:
+        payload = validate_stage_adapter_contracts(
+            adapter_registry_path=adapter_registry_path,
+            module_registry_path=module_registry_path,
+        )
+    except ResearchCampaignError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _write_json_if_requested(json_output_path, payload)
+    _print_status("Campaign adapter contract validation", payload["validation_status"])
+    console.print(
+        f"adapters={payload['adapter_count']}；"
+        f"issues={len(payload['issues'])}；"
+        f"production_effect={payload['production_effect']}"
+    )
+    for issue in payload["issues"][:10]:
+        console.print(f"{issue['severity']}: {issue['issue_id']}: {issue['message']}")
+    if payload["validation_status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@campaign_app.command("validation-pack")
+def campaign_validation_pack_command(
+    campaign_root: Annotated[
+        Path,
+        typer.Option(help="Campaign 状态目录。"),
+    ] = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Campaign 输出 artifact 根目录。"),
+    ] = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Annotated[
+        Path,
+        typer.Option("--adapter-registry", help="Campaign stage adapter registry 路径。"),
+    ] = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """写出 Control Plane v1 adapter/parity/budget/next-action validation pack。"""
+    try:
+        payload = write_campaign_control_plane_v1_validation_artifacts(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+        )
+    except ResearchCampaignError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _write_json_if_requested(json_output_path, payload)
+    _print_status("Campaign validation pack", payload["status"])
+    console.print(
+        f"artifacts={len(payload['artifacts'])}；production_effect={payload['production_effect']}"
+    )
+
+
 @campaign_app.command("plan")
 def plan_campaign_command(
     campaign_id: Annotated[str, typer.Option("--id", help="Campaign id。")],
@@ -196,6 +270,14 @@ def run_campaign_command(
         Path,
         typer.Option("--window-policy", help="Window/holdout policy 路径。"),
     ] = DEFAULT_WINDOW_POLICY_PATH,
+    adapter_registry_path: Annotated[
+        Path,
+        typer.Option("--adapter-registry", help="Campaign stage adapter registry 路径。"),
+    ] = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Campaign 输出 artifact 根目录。"),
+    ] = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     json_output_path: Annotated[
         Path | None,
         typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
@@ -210,6 +292,8 @@ def run_campaign_command(
             module_registry_path=module_registry_path,
             gate_policy_path=gate_policy_path,
             window_policy_path=window_policy_path,
+            adapter_registry_path=adapter_registry_path,
+            output_root=output_root,
         )
     except ResearchCampaignError as exc:
         raise typer.BadParameter(str(exc)) from exc

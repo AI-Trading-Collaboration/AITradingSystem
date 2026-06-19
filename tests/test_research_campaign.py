@@ -20,7 +20,9 @@ from ai_trading_system.research_campaign import (
     load_campaign_spec,
     plan_experiment_matrix,
     run_campaign_stage,
+    validate_stage_adapter_contracts,
     validate_stage_transition,
+    write_campaign_control_plane_v1_validation_artifacts,
     write_campaign_state,
 )
 
@@ -36,6 +38,18 @@ def test_b2_and_b3_sample_specs_validate() -> None:
         assert payload["validation_status"] == "PASS"
         assert payload["market_regime"] == "ai_after_chatgpt"
         assert payload["safety_boundary"]["official_target_weights"] is False
+
+
+def test_stage_adapter_contract_validation_passes() -> None:
+    payload = validate_stage_adapter_contracts()
+
+    assert payload["validation_status"] == "PASS"
+    assert {
+        "b2-risk-overlay-audited-artifact-adapter-v1",
+        "b3-signal-precheck-audited-artifact-adapter-v1",
+    } <= set(payload["adapter_ids"])
+    assert "SIGNAL_PRECHECK" in payload["supported_stages"]
+    assert payload["safety_boundary"]["official_target_weights"] is False
 
 
 def test_b2_migration_represents_stage_outcome_reason_codes_and_next_actions(
@@ -74,19 +88,69 @@ def test_b3_migration_stays_signal_only_and_does_not_require_portfolio_metrics(
     assert state.safety_boundary["official_target_weights"] is False
 
 
-def test_migrated_stage_runner_uses_imported_audited_evidence(tmp_path: Path) -> None:
+def test_b2_stage_runner_uses_configured_audited_artifact_adapter(tmp_path: Path) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
 
     payload = run_campaign_stage(
         campaign_id="b2-risk-overlay-current-form",
         requested_stage="TARGETED_EVIDENCE",
         campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
     )
 
     assert payload["outcome"] == "NEEDS_MORE_EVIDENCE"
-    assert payload["generated_evidence_count"] == 0
-    assert payload["result"]["source"] == "imported_audited_evidence"
+    assert payload["generated_evidence_count"] == 4
+    assert payload["adapter_status"] == "ADAPTER_READY"
+    assert payload["result"]["adapter_id"] == "b2-risk-overlay-audited-artifact-adapter-v1"
+    assert payload["result"]["stage"] == "TARGETED_EVIDENCE"
+    assert Path(payload["result"]["json_path"]).exists()
     assert payload["safety_boundary"]["production_effect"] == "none"
+
+
+def test_b3_signal_precheck_adapter_stays_signal_only_and_blocks_backfill(
+    tmp_path: Path,
+) -> None:
+    initialize_campaign(spec_path=B3_SPEC, campaign_root=tmp_path)
+
+    payload = run_campaign_stage(
+        campaign_id="b3-slow-tilt-signal-precheck",
+        requested_stage="INPUT_PRECHECK",
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+    )
+    plan = campaign_plan(campaign_id="b3-slow-tilt-signal-precheck", campaign_root=tmp_path)
+
+    assert payload["outcome"] == "MIXED"
+    assert payload["adapter_status"] == "ADAPTER_READY"
+    assert payload["result"]["stage"] == "SIGNAL_PRECHECK"
+    assert payload["generated_evidence_count"] == 3
+    assert "B3_MINI_BACKFILL" in plan["blocked_actions"]
+    assert "CONTINUE_SIGNAL_DIRECTION_REDESIGN" in plan["allowed_next_actions"]
+
+
+def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
+    tmp_path: Path,
+) -> None:
+    initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
+    initialize_campaign(spec_path=B3_SPEC, campaign_root=tmp_path)
+
+    payload = write_campaign_control_plane_v1_validation_artifacts(
+        campaign_root=tmp_path,
+        output_root=tmp_path / "outputs",
+    )
+
+    assert payload["status"] == "RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS"
+    expected = {
+        "b2_campaign_adapter_parity_map",
+        "b2_campaign_parity_validation",
+        "evidence_budget_enforcement_report",
+        "campaign_next_action_parity_review",
+        "campaign_control_plane_v1_validation_pack",
+    }
+    assert expected <= set(payload["artifacts"])
+    for paths in payload["artifacts"].values():
+        assert Path(paths["json_path"]).exists()
+        assert Path(paths["markdown_path"]).exists()
 
 
 def test_p0_mixed_allocator_cannot_masquerade_as_single_module() -> None:

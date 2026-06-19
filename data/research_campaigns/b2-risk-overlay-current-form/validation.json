@@ -1,0 +1,29 @@
+{
+  "campaign_id": "b2-risk-overlay-current-form",
+  "data_quality_status": "NOT_REQUIRED_CONTROL_PLANE_ONLY",
+  "issues": [],
+  "market_regime": "ai_after_chatgpt",
+  "program_id": "weight-research-v1",
+  "report_type": "research_campaign_validation",
+  "requested_date_range": "2022-12-01..2025-04-30",
+  "safety_boundary": {
+    "broker_effect": "none",
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_effect": "none",
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": "1.0",
+  "status": "PASS",
+  "summary": {
+    "error_count": 0,
+    "issue_count": 0,
+    "module_count": 1,
+    "stop_rule_count": 3,
+    "warning_count": 0
+  },
+  "validation_status": "PASS"
+}

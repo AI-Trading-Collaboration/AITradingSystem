@@ -24,6 +24,9 @@ DEFAULT_MIGRATION_PATH = PROJECT_ROOT / "config" / "research" / "campaign_migrat
 DEFAULT_COMPATIBILITY_PATH = (
     PROJECT_ROOT / "config" / "research" / "task_specific_runner_compatibility.yaml"
 )
+DEFAULT_STAGE_ADAPTER_REGISTRY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "campaign_stage_adapters.yaml"
+)
 
 WORKFLOW_STAGES = [
     "DRAFT",
@@ -37,6 +40,30 @@ WORKFLOW_STAGES = [
     "GATE_READY",
     "OWNER_REVIEW",
     "ARCHIVED",
+]
+
+ADAPTER_SUPPORTED_STAGES = [
+    "INPUT_PRECHECK",
+    "MINI_DIAGNOSTIC",
+    "TARGETED_EVIDENCE",
+    "FULL_DIAGNOSTIC",
+    "SIGNAL_PRECHECK",
+    "SIGNAL_DIRECTION_TAXONOMY",
+    "REDESIGN_HYPOTHESIS_RANKING",
+    "ATTRIBUTION",
+    "INTERACTION",
+    "GATE",
+    "OWNER_PACKET",
+]
+
+ADAPTER_OUTPUT_STATUSES = [
+    "ADAPTER_READY",
+    "ADAPTER_NOT_CONFIGURED",
+    "ADAPTER_INPUT_MISSING",
+    "ADAPTER_RUN_FAILED",
+    "ADAPTER_OUTPUT_INVALID",
+    "ADAPTER_SAFETY_BLOCKED",
+    "ADAPTER_HOLDOUT_BLOCKED",
 ]
 
 DECISION_OUTCOMES = [
@@ -65,6 +92,13 @@ EVIDENCE_CATEGORIES = [
     "BENCHMARK_RELATIVE",
     "WINDOW_STABILITY",
     "INTERACTION_EFFECT",
+    "ATTRIBUTION",
+    "SCORECARD",
+    "SIGNAL_LAG",
+    "SIGNAL_NOISE",
+    "ASSET_MAPPING",
+    "WINDOW_SPECIFIC_WEAKNESS",
+    "REDESIGN_HYPOTHESIS",
     "SAFETY",
 ]
 
@@ -73,6 +107,7 @@ RESEARCH_ONLY_SAFETY_BOUNDARY = {
     "research_only": True,
     "manual_review_only": True,
     "official_target_weights": False,
+    "paper_shadow_activation": False,
     "paper_shadow_allowed": False,
     "broker_effect": "none",
     "order_effect": "none",
@@ -98,7 +133,20 @@ RESTRICTED_MORE_EVIDENCE_OUTCOMES = [
     "NARROW_ROLE",
     "RETURN_TO_DESIGN",
     "WEAK",
+    "REJECTED",
     "OWNER_OVERRIDE_REQUIRED",
+]
+
+ALWAYS_BLOCKED_RESEARCH_ACTIONS = [
+    "B4_RETEST",
+    "B5",
+    "B6",
+    "V3",
+    "PAPER_SHADOW",
+    "EXTENDED_SHADOW",
+    "LIVE_TRADING",
+    "OFFICIAL_TARGET_WEIGHTS",
+    "BROKER_ORDER",
 ]
 
 
@@ -163,6 +211,7 @@ class EvidenceBudgetSpec(BaseModel):
     max_window_expansions: int = 1
     max_redesign_rounds: int = 1
     max_needs_more_evidence_occurrences: int = 2
+    owner_override_required_after_budget: bool = True
     time_budget: str | None = None
     compute_budget: str | None = None
 
@@ -231,6 +280,69 @@ class ModuleCapability(BaseModel):
     approved_for_campaign_modules: bool = True
     requires_gate_approval_for_interaction: bool = False
     interaction_alias: str | None = None
+
+
+class StageAdapterInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    artifact_id: str
+    path: str
+    stages: list[str] = Field(default_factory=list)
+    required: bool = True
+
+
+class StageAdapterEvidenceMapping(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    stage: str
+    artifact_id: str
+    evidence_id_suffix: str
+    category: str
+    metric_name: str
+    value_path: str = "status"
+    direction: Literal["positive", "negative", "neutral", "mixed", "unknown"] = "unknown"
+    status: Literal["PASS", "FAIL", "MIXED", "BLOCKED", "WARNING", "INFO"] = "INFO"
+    confidence: Literal["high", "medium", "low", "unknown"] = "medium"
+    reason_codes: list[str] = Field(default_factory=list)
+    window_id: str | None = None
+
+
+class StageAdapterContract(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    adapter_id: str
+    adapter_version: str
+    supported_stage: list[str]
+    supported_module: list[str]
+    supported_campaign_type: list[str] = Field(default_factory=list)
+    required_inputs: list[StageAdapterInput] = Field(default_factory=list)
+    optional_inputs: list[StageAdapterInput] = Field(default_factory=list)
+    produced_artifacts: list[str] = Field(default_factory=list)
+    produced_evidence_categories: list[str] = Field(default_factory=list)
+    supported_windows: list[str] = Field(default_factory=list)
+    forbidden_windows: list[str] = Field(default_factory=list)
+    safety_boundary: dict[str, Any]
+    failure_modes: list[str] = Field(default_factory=list)
+    evidence_mappings: list[StageAdapterEvidenceMapping] = Field(default_factory=list)
+    stage_outcomes: dict[str, str] = Field(default_factory=dict)
+
+
+class StageAdapterRunOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_id: str
+    campaign_id: str
+    stage: str
+    adapter_id: str
+    adapter_version: str | None = None
+    input_artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    output_artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    evidence_records: list[dict[str, Any]] = Field(default_factory=list)
+    status: str
+    reason_codes: list[str] = Field(default_factory=list)
+    safety_metadata: dict[str, Any]
+    adapter_outcome: str = "BLOCKED"
+    data_quality_status: str = CONTROL_ONLY_DATA_QUALITY_STATUS
 
 
 class EvidenceRecord(BaseModel):
@@ -480,6 +592,8 @@ def run_campaign_stage(
     module_registry_path: Path = DEFAULT_MODULE_REGISTRY_PATH,
     gate_policy_path: Path = DEFAULT_GATE_POLICY_PATH,
     window_policy_path: Path = DEFAULT_WINDOW_POLICY_PATH,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
 ) -> dict[str, Any]:
     directory = campaign_directory(campaign_id, campaign_root)
     spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
@@ -493,6 +607,7 @@ def run_campaign_stage(
     reason_codes: list[str] = []
     generated_evidence: list[EvidenceRecord] = []
     result_payload: dict[str, Any]
+    adapter_payload: dict[str, Any] | None = None
 
     if target_stage == "SCOPE_READY":
         validation = build_campaign_validation_payload(
@@ -509,77 +624,116 @@ def run_campaign_stage(
         ]
         result_payload = validation
     elif target_stage == "INPUT_PRECHECK":
-        validation = build_campaign_validation_payload(
+        adapter_run = run_stage_adapter(
             spec=spec,
+            state=state,
+            target_stage=target_stage,
+            run_id=run_id,
+            adapter_registry_path=adapter_registry_path,
             module_registry_path=module_registry_path,
-            gate_policy_path=gate_policy_path,
-            window_policy_path=window_policy_path,
         )
-        outcome = "PASS" if validation["validation_status"] != "FAIL" else "BLOCKED"
-        reason_codes = [
-            issue["issue_id"]
-            for issue in validation["issues"]
-            if issue["severity"] == "error"
-        ]
-        generated_evidence.append(
-            _control_evidence(
-                campaign_id=campaign_id,
-                run_id=run_id,
-                stage=target_stage,
-                category="INPUT_VALIDITY",
-                metric_name="campaign_precheck_validation",
-                value=validation["validation_status"],
-                status="PASS" if outcome == "PASS" else "BLOCKED",
-                source_artifact_id="campaign_validation",
-                reason_codes=reason_codes,
+        if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
+            adapter_payload = _write_stage_adapter_run_artifacts(
+                adapter_run.model_dump(mode="json"),
+                output_root=output_root,
             )
-        )
-        result_payload = validation
-    elif target_stage in {"MINI_DIAGNOSTIC", "ATTRIBUTION", "TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"}:
-        imported_stage_evidence = [record for record in evidence if record.stage == target_stage]
-        if imported_stage_evidence:
-            outcome = _outcome_from_imported_stage_evidence(imported_stage_evidence, state)
-            reason_codes = sorted(
-                {
-                    code
-                    for record in imported_stage_evidence
-                    for code in record.reason_codes
-                }
-                | set(state.reason_codes)
+            outcome = adapter_run.adapter_outcome
+            reason_codes = list(adapter_run.reason_codes)
+            generated_evidence.extend(
+                EvidenceRecord.model_validate(record) for record in adapter_run.evidence_records
             )
-            result_payload = {
-                "status": outcome,
-                "source": "imported_audited_evidence",
-                "evidence_record_count": len(imported_stage_evidence),
-                "source_artifact_ids": sorted(
-                    {record.source_artifact_id for record in imported_stage_evidence}
-                ),
-                "production_effect": "none",
-            }
+            result_payload = adapter_payload
         else:
-            outcome = "BLOCKED"
-            reason_codes = ["STAGE_ADAPTER_NOT_CONFIGURED"]
+            validation = build_campaign_validation_payload(
+                spec=spec,
+                module_registry_path=module_registry_path,
+                gate_policy_path=gate_policy_path,
+                window_policy_path=window_policy_path,
+            )
+            outcome = "PASS" if validation["validation_status"] != "FAIL" else "BLOCKED"
+            reason_codes = [
+                issue["issue_id"]
+                for issue in validation["issues"]
+                if issue["severity"] == "error"
+            ]
             generated_evidence.append(
                 _control_evidence(
                     campaign_id=campaign_id,
                     run_id=run_id,
                     stage=target_stage,
-                    category="SAFETY",
-                    metric_name="stage_execution_adapter",
-                    value="not_configured",
-                    status="BLOCKED",
-                    source_artifact_id="campaign_stage_runner",
+                    category="INPUT_VALIDITY",
+                    metric_name="campaign_precheck_validation",
+                    value=validation["validation_status"],
+                    status="PASS" if outcome == "PASS" else "BLOCKED",
+                    source_artifact_id="campaign_validation",
                     reason_codes=reason_codes,
                 )
             )
-            result_payload = {
-                "status": "BLOCKED",
-                "blocking_reason": "STAGE_ADAPTER_NOT_CONFIGURED",
-                "intended_solution": (
-                    "configure an explicit stage adapter or import audited evidence"
-                ),
-                "production_effect": "none",
-            }
+            result_payload = validation
+    elif target_stage in {"MINI_DIAGNOSTIC", "ATTRIBUTION", "TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"}:
+        adapter_run = run_stage_adapter(
+            spec=spec,
+            state=state,
+            target_stage=target_stage,
+            run_id=run_id,
+            adapter_registry_path=adapter_registry_path,
+            module_registry_path=module_registry_path,
+        )
+        if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
+            adapter_payload = _write_stage_adapter_run_artifacts(
+                adapter_run.model_dump(mode="json"),
+                output_root=output_root,
+            )
+            outcome = adapter_run.adapter_outcome
+            reason_codes = list(adapter_run.reason_codes)
+            generated_evidence.extend(
+                EvidenceRecord.model_validate(record) for record in adapter_run.evidence_records
+            )
+            result_payload = adapter_payload
+        else:
+            imported_stage_evidence = [
+                record for record in evidence if record.stage == target_stage
+            ]
+            if imported_stage_evidence:
+                outcome = _outcome_from_imported_stage_evidence(imported_stage_evidence, state)
+                reason_codes = sorted(
+                    {
+                        code
+                        for record in imported_stage_evidence
+                        for code in record.reason_codes
+                    }
+                    | set(state.reason_codes)
+                )
+                result_payload = {
+                    "status": outcome,
+                    "source": "imported_audited_evidence",
+                    "evidence_record_count": len(imported_stage_evidence),
+                    "source_artifact_ids": sorted(
+                        {record.source_artifact_id for record in imported_stage_evidence}
+                    ),
+                    "production_effect": "none",
+                }
+            else:
+                adapter_payload = _write_stage_adapter_run_artifacts(
+                    adapter_run.model_dump(mode="json"),
+                    output_root=output_root,
+                )
+                outcome = "BLOCKED"
+                reason_codes = ["STAGE_ADAPTER_NOT_CONFIGURED"]
+                generated_evidence.append(
+                    _control_evidence(
+                        campaign_id=campaign_id,
+                        run_id=run_id,
+                        stage=target_stage,
+                        category="SAFETY",
+                        metric_name="stage_execution_adapter",
+                        value="not_configured",
+                        status="BLOCKED",
+                        source_artifact_id="campaign_stage_runner",
+                        reason_codes=reason_codes,
+                    )
+                )
+                result_payload = adapter_payload
     elif target_stage == "INTERACTION":
         matrix = plan_experiment_matrix(spec=spec, module_registry_path=module_registry_path)
         generated_evidence.append(
@@ -597,28 +751,60 @@ def run_campaign_stage(
         )
         result_payload = matrix
     elif target_stage == "GATE_READY":
-        result_payload = evaluate_gate(
+        adapter_run = run_stage_adapter(
             spec=spec,
             state=state,
-            evidence=evidence,
-            gate_policy_path=gate_policy_path,
+            target_stage=target_stage,
+            run_id=run_id,
+            adapter_registry_path=adapter_registry_path,
+            module_registry_path=module_registry_path,
         )
-        outcome = str(result_payload["decision_outcome"])
-        reason_codes = list(result_payload["reason_codes"])
+        if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
+            adapter_payload = _write_stage_adapter_run_artifacts(
+                adapter_run.model_dump(mode="json"),
+                output_root=output_root,
+            )
+            gate_preview = evaluate_gate(
+                spec=spec,
+                state=state,
+                evidence=[
+                    *evidence,
+                    *(
+                        EvidenceRecord.model_validate(r)
+                        for r in adapter_run.evidence_records
+                    ),
+                ],
+                gate_policy_path=gate_policy_path,
+            )
+            outcome = adapter_run.adapter_outcome
+            reason_codes = list(adapter_run.reason_codes)
+            generated_evidence.extend(
+                EvidenceRecord.model_validate(record) for record in adapter_run.evidence_records
+            )
+            result_payload = {**adapter_payload, "gate_preview": gate_preview}
+        else:
+            result_payload = evaluate_gate(
+                spec=spec,
+                state=state,
+                evidence=evidence,
+                gate_policy_path=gate_policy_path,
+            )
+            outcome = str(result_payload["decision_outcome"])
+            reason_codes = list(result_payload["reason_codes"])
     elif target_stage == "OWNER_REVIEW":
         result_payload = build_owner_packet(
             campaign_id=campaign_id,
             campaign_root=campaign_root,
-            output_root=DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+            output_root=output_root,
             gate_policy_path=gate_policy_path,
         )
         outcome = "PASS"
     else:
         raise ResearchCampaignError(f"Stage cannot be run directly: {target_stage}")
 
-    if target_stage == "MINI_DIAGNOSTIC":
+    if target_stage == "MINI_DIAGNOSTIC" and outcome != "BLOCKED":
         state.evidence_budget_used.mini_rounds += 1
-    if target_stage == "TARGETED_EVIDENCE":
+    if target_stage == "TARGETED_EVIDENCE" and outcome != "BLOCKED":
         state.evidence_budget_used.targeted_rounds += 1
     if outcome == "NEEDS_MORE_EVIDENCE":
         state.evidence_budget_used.needs_more_evidence_occurrences += 1
@@ -661,6 +847,14 @@ def run_campaign_stage(
             "reason_codes": reason_codes,
             "created_at": state.updated_at,
             "result": result_payload,
+            "adapter_id": (
+                result_payload.get("adapter_id")
+                if isinstance(result_payload, dict)
+                else None
+            ),
+            "adapter_status": (
+                result_payload.get("status") if isinstance(result_payload, dict) else None
+            ),
             "production_effect": "none",
         },
     )
@@ -672,6 +866,12 @@ def run_campaign_stage(
         "reason_codes": reason_codes,
         "generated_evidence_count": len(generated_evidence),
         "result": result_payload,
+        "adapter_id": (
+            result_payload.get("adapter_id") if isinstance(result_payload, dict) else None
+        ),
+        "adapter_status": (
+            result_payload.get("status") if isinstance(result_payload, dict) else None
+        ),
         "safety_boundary": state.safety_boundary,
     }
 
@@ -712,6 +912,375 @@ def build_status_payload(
             compatibility_path
         )
     return payload
+
+
+def build_b2_campaign_adapter_parity_map(
+    *,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+) -> dict[str, Any]:
+    contracts = load_stage_adapter_contracts(adapter_registry_path)
+    contract = contracts.get("b2-risk-overlay-audited-artifact-adapter-v1")
+    if contract is None:
+        entries: list[dict[str, Any]] = []
+        status = "FAIL"
+        issues = ["B2_ADAPTER_CONTRACT_MISSING"]
+    else:
+        entries = []
+        mapped_inputs = {
+            mapping.artifact_id: mapping
+            for mapping in contract.evidence_mappings
+            if mapping.stage in {"TARGETED_EVIDENCE", "FULL_DIAGNOSTIC", "ATTRIBUTION", "GATE"}
+        }
+        for input_spec in contract.required_inputs:
+            mapping = mapped_inputs.get(input_spec.artifact_id)
+            stage = input_spec.stages[0] if input_spec.stages else "UNKNOWN"
+            entries.append(
+                {
+                    "old_artifact_id": input_spec.artifact_id,
+                    "new_campaign_stage": mapping.stage if mapping else stage,
+                    "expected_adapter_id": contract.adapter_id,
+                    "expected_evidence_category": mapping.category if mapping else "SAFETY",
+                    "parity_check_method": "source_json_status_and_safety_metadata_match",
+                    "parity_required": True,
+                }
+            )
+        expected_artifacts = {
+            "b2_fast_risk_no_trigger_audit",
+            "b2_slow_drawdown_repeatability_study",
+            "b2_reentry_lag_root_cause_review",
+            "b2_cost_benchmark_utility_review",
+            "b2_no_trigger_correctness_review",
+            "b2_needs_more_evidence_root_cause_drilldown",
+            "b2_final_research_gate",
+        }
+        missing = sorted(expected_artifacts - {entry["old_artifact_id"] for entry in entries})
+        status = "PASS" if not missing else "FAIL"
+        issues = [f"MISSING_PARITY_MAP_{artifact}" for artifact in missing]
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_campaign_adapter_parity_map",
+        "status": status,
+        "market_regime": "ai_after_chatgpt",
+        "requested_date_range": "2022-12-01..2026-06-18",
+        "parity_entries": entries,
+        "orphan_b2_evidence": [],
+        "issues": issues,
+        "data_quality_status": CONTROL_ONLY_DATA_QUALITY_STATUS,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_b2_campaign_parity_validation(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+    plan = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
+    expected_reason_codes = {
+        "FAST_RISK_NOT_SUPPORTED",
+        "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+        "REENTRY_LAG_SIGNAL_DRIVEN",
+        "UTILITY_MIXED",
+    }
+    expected_blocked = {"B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"}
+    positive_reason_codes = {
+        code
+        for record in evidence
+        for code in record.reason_codes
+        if record.direction == "positive"
+    }
+    all_evidence_reason_codes = {
+        code for record in evidence for code in record.reason_codes
+    }
+    checks = [
+        {
+            "check_id": "campaign_stage_outcome_matches_old_outcome",
+            "passed": state.current_stage == "TARGETED_EVIDENCE"
+            and state.current_outcome == "NEEDS_MORE_EVIDENCE",
+        },
+        {
+            "check_id": "reason_codes_cover_old_conclusion",
+            "passed": expected_reason_codes <= set(state.reason_codes)
+            or expected_reason_codes <= all_evidence_reason_codes,
+        },
+        {
+            "check_id": "positive_control_evidence_present",
+            "passed": "CONTROL_BEHAVIOR_CLEAN" in positive_reason_codes,
+        },
+        {
+            "check_id": "blocked_actions_match_manual_conclusion",
+            "passed": expected_blocked <= set(plan["blocked_actions"]),
+        },
+        {
+            "check_id": "no_fabricated_metrics",
+            "passed": all(record.source_artifact_id for record in evidence),
+        },
+    ]
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_campaign_parity_validation",
+        "campaign_id": campaign_id,
+        "status": status,
+        "stage": state.current_stage,
+        "outcome": state.current_outcome,
+        "reason_codes": state.reason_codes,
+        "positive_evidence": sorted(positive_reason_codes),
+        "blocked_actions": plan["blocked_actions"],
+        "checks": checks,
+        "source_artifacts": state.source_artifacts,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "data_quality_status": state.data_quality_status,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_evidence_budget_enforcement_report(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    budget = evaluate_evidence_budget(spec, state)
+    targeted_remaining = budget["stop_rule_proximity"]["targeted_rounds_remaining"]
+    checks = [
+        {
+            "check_id": "max_mini_rounds_declared",
+            "passed": spec.evidence_budget.max_mini_rounds >= 0,
+        },
+        {
+            "check_id": "max_targeted_rounds_declared",
+            "passed": spec.evidence_budget.max_targeted_rounds >= 0,
+        },
+        {
+            "check_id": "needs_more_evidence_has_limit",
+            "passed": spec.evidence_budget.max_needs_more_evidence_occurrences >= 0,
+        },
+        {
+            "check_id": "owner_override_required_after_budget",
+            "passed": spec.evidence_budget.owner_override_required_after_budget is True,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "evidence_budget_enforcement_report",
+        "campaign_id": campaign_id,
+        "status": "PASS" if all(check["passed"] for check in checks) else "FAIL",
+        "budget_status": budget["budget_status"],
+        "evidence_budget_used": state.evidence_budget_used.model_dump(mode="json"),
+        "evidence_budget_limits": spec.evidence_budget.model_dump(mode="json"),
+        "stop_rule_proximity": budget["stop_rule_proximity"],
+        "b2_final_targeted_round_rule": (
+            "one_final_targeted_round_available"
+            if targeted_remaining == 1
+            else "no_additional_targeted_round_without_owner_override"
+        ),
+        "restricted_outcomes_when_exhausted": budget["restricted_outcomes_when_exhausted"],
+        "checks": checks,
+        "data_quality_status": state.data_quality_status,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_campaign_next_action_parity_review(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+) -> dict[str, Any]:
+    b2 = campaign_plan(campaign_id="b2-risk-overlay-current-form", campaign_root=campaign_root)
+    b3 = campaign_plan(campaign_id="b3-slow-tilt-signal-precheck", campaign_root=campaign_root)
+    b2_allowed = {
+        "COMPLETE_FINAL_REPEATABILITY_ROUND",
+        "NARROW_ROLE",
+        "RETURN_TO_DESIGN",
+    }
+    b2_blocked = {
+        "B4_RETEST",
+        "B5",
+        "B6",
+        "V3",
+        "PAPER_SHADOW",
+        "EXTENDED_SHADOW",
+        "LIVE_TRADING",
+        "OFFICIAL_TARGET_WEIGHTS",
+        "BROKER_ORDER",
+    }
+    b3_allowed = {
+        "CONTINUE_SIGNAL_DIRECTION_REDESIGN",
+        "RUN_SIGNAL_ONLY_PRECHECK_IF_HYPOTHESIS_CHANGES",
+    }
+    b3_blocked = {"B3_MINI_BACKFILL", "B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"}
+    checks = [
+        {
+            "check_id": "b2_allowed_actions_match_manual_conclusion",
+            "passed": b2_allowed <= set(b2["allowed_next_actions"]),
+        },
+        {
+            "check_id": "b2_blocked_actions_match_manual_conclusion",
+            "passed": b2_blocked <= set(b2["blocked_actions"]),
+        },
+        {
+            "check_id": "b3_allowed_actions_match_manual_conclusion",
+            "passed": b3_allowed <= set(b3["allowed_next_actions"]),
+        },
+        {
+            "check_id": "b3_blocked_actions_match_manual_conclusion",
+            "passed": b3_blocked <= set(b3["blocked_actions"]),
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_next_action_parity_review",
+        "status": "PASS" if all(check["passed"] for check in checks) else "FAIL",
+        "b2_allowed_actions": b2["allowed_next_actions"],
+        "b2_blocked_actions": b2["blocked_actions"],
+        "b3_allowed_actions": b3["allowed_next_actions"],
+        "b3_blocked_actions": b3["blocked_actions"],
+        "checks": checks,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_campaign_control_plane_v1_validation_pack(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+) -> dict[str, Any]:
+    contract_validation = validate_stage_adapter_contracts(
+        adapter_registry_path=adapter_registry_path
+    )
+    parity_map = build_b2_campaign_adapter_parity_map(
+        adapter_registry_path=adapter_registry_path
+    )
+    b2_parity = build_b2_campaign_parity_validation(campaign_root=campaign_root)
+    budget = build_evidence_budget_enforcement_report(campaign_root=campaign_root)
+    next_actions = build_campaign_next_action_parity_review(campaign_root=campaign_root)
+    checks = [
+        {
+            "check_id": "adapter_contract_validation",
+            "passed": contract_validation["validation_status"] != "FAIL",
+        },
+        {"check_id": "b2_parity_map", "passed": parity_map["status"] == "PASS"},
+        {"check_id": "b2_migration_parity", "passed": b2_parity["status"] == "PASS"},
+        {"check_id": "evidence_budget_enforcement", "passed": budget["status"] == "PASS"},
+        {"check_id": "next_action_planner", "passed": next_actions["status"] == "PASS"},
+        {
+            "check_id": "no_forbidden_production_effects",
+            "passed": all(
+                payload["production_effect"] == "none"
+                for payload in (parity_map, b2_parity, budget, next_actions)
+            ),
+        },
+    ]
+    status = (
+        "RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS"
+        if all(check["passed"] for check in checks)
+        else "RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_BLOCKED"
+    )
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_control_plane_v1_validation_pack",
+        "status": status,
+        "checks": checks,
+        "limitations": [
+            "B3 remains signal-precheck only.",
+            "Some legacy task-specific CLI surfaces remain read-only compatibility inputs.",
+            "Current adapters replay audited artifacts instead of replacing all legacy runners.",
+        ]
+        if status.endswith("READY_WITH_LIMITATIONS")
+        else [],
+        "component_statuses": {
+            "adapter_contract_validation": contract_validation["validation_status"],
+            "b2_parity_map": parity_map["status"],
+            "b2_parity_validation": b2_parity["status"],
+            "evidence_budget_enforcement": budget["status"],
+            "next_action_parity_review": next_actions["status"],
+        },
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def write_campaign_control_plane_v1_validation_artifacts(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+) -> dict[str, Any]:
+    output_dir = output_root / "control_plane_v1_validation"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    payloads = {
+        "b2_campaign_adapter_parity_map": build_b2_campaign_adapter_parity_map(
+            adapter_registry_path=adapter_registry_path
+        ),
+        "b2_campaign_parity_validation": build_b2_campaign_parity_validation(
+            campaign_root=campaign_root
+        ),
+        "evidence_budget_enforcement_report": build_evidence_budget_enforcement_report(
+            campaign_root=campaign_root
+        ),
+        "campaign_next_action_parity_review": build_campaign_next_action_parity_review(
+            campaign_root=campaign_root
+        ),
+        "campaign_control_plane_v1_validation_pack": (
+            build_campaign_control_plane_v1_validation_pack(
+                campaign_root=campaign_root,
+                adapter_registry_path=adapter_registry_path,
+            )
+        ),
+    }
+    written: dict[str, dict[str, str]] = {}
+    for basename, payload in payloads.items():
+        json_path = output_dir / f"{basename}.json"
+        md_path = output_dir / f"{basename}.md"
+        _write_json(json_path, payload)
+        md_path.write_text(render_campaign_validation_markdown(payload), encoding="utf-8")
+        written[basename] = {"json_path": str(json_path), "markdown_path": str(md_path)}
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_control_plane_v1_validation_artifacts",
+        "status": payloads["campaign_control_plane_v1_validation_pack"]["status"],
+        "artifacts": written,
+        "production_effect": "none",
+    }
+
+
+def render_campaign_validation_markdown(payload: dict[str, Any]) -> str:
+    lines = [
+        f"# {str(payload['report_type']).replace('_', ' ').title()}",
+        "",
+        "## Reader Brief",
+        "",
+        f"- Status: {payload.get('status', payload.get('validation_status', 'UNKNOWN'))}",
+        f"- Production Effect: {payload.get('production_effect', 'none')}",
+    ]
+    if payload.get("campaign_id"):
+        lines.append(f"- Campaign: {payload['campaign_id']}")
+    if payload.get("data_quality_status"):
+        lines.append(f"- Data Quality: {payload['data_quality_status']}")
+    lines.extend(["", "## Checks", ""])
+    checks = payload.get("checks", [])
+    if checks:
+        for check in checks:
+            lines.append(f"- {check['check_id']}: {check['passed']}")
+    else:
+        lines.append("- none")
+    if payload.get("limitations"):
+        lines.extend(["", "## Limitations", ""])
+        lines.extend(f"- {item}" for item in payload["limitations"])
+    if payload.get("issues"):
+        lines.extend(["", "## Issues", ""])
+        lines.extend(f"- {item}" for item in payload["issues"] or ["none"])
+    lines.extend(["", "## Safety Boundary", ""])
+    lines.append(
+        json.dumps(payload.get("safety_boundary", {}), ensure_ascii=False, sort_keys=True)
+    )
+    return "\n".join(lines) + "\n"
 
 
 def diagnose_campaign(
@@ -795,10 +1364,7 @@ def evaluate_gate(
         decision = str(gate_policy.get("pass_outcome", "PROMISING"))
 
     budget = evaluate_evidence_budget(spec, state)
-    if (
-        decision == "NEEDS_MORE_EVIDENCE"
-        and budget["limits_exceeded"]["needs_more_evidence_occurrences"]
-    ):
+    if decision == "NEEDS_MORE_EVIDENCE" and budget["budget_status"] == "EXHAUSTED":
         decision = str(gate_policy.get("over_budget_outcome", "OWNER_OVERRIDE_REQUIRED"))
         reason_codes.append("EVIDENCE_BUDGET_EXHAUSTED")
 
@@ -815,7 +1381,7 @@ def evaluate_gate(
         "budget_status": budget["budget_status"],
         "allowed_decision_outcomes": (
             RESTRICTED_MORE_EVIDENCE_OUTCOMES
-            if budget["limits_exceeded"]["needs_more_evidence_occurrences"]
+            if budget["budget_status"] == "EXHAUSTED"
             else DECISION_OUTCOMES
         ),
         "data_quality_status": state.data_quality_status,
@@ -867,6 +1433,7 @@ def evaluate_evidence_budget(spec: CampaignSpec, state: CampaignState) -> dict[s
         "limits_exceeded": exceeded,
         "stop_rule_proximity": proximity,
         "restricted_outcomes_when_exhausted": RESTRICTED_MORE_EVIDENCE_OUTCOMES,
+        "owner_override_required_after_budget": limits.owner_override_required_after_budget,
     }
 
 
@@ -895,19 +1462,34 @@ def build_next_action_plan(
         allowed.append("RETURN_TO_DESIGN")
     if gate_payload["decision_outcome"] in {"PROMISING", "PASS"}:
         allowed.append("PREPARE_OWNER_PACKET")
-    if not allowed and gate_payload["decision_outcome"] == "NEEDS_MORE_EVIDENCE":
+    if (
+        not allowed
+        and gate_payload["decision_outcome"] == "NEEDS_MORE_EVIDENCE"
+        and budget["budget_status"] != "EXHAUSTED"
+    ):
         allowed.append("COLLECT_DEFINED_EVIDENCE_WITHIN_BUDGET")
+    if "SIGNAL_DIRECTION_MIXED" in reason_codes or "B3_PRECHECK_MIXED" in reason_codes:
+        allowed.append("CONTINUE_SIGNAL_DIRECTION_REDESIGN")
+        allowed.append("RUN_SIGNAL_ONLY_PRECHECK_IF_HYPOTHESIS_CHANGES")
 
+    if budget["limits_exceeded"]["mini_rounds"]:
+        blocked.append("RUN_ADDITIONAL_MINI_DIAGNOSTIC_WITHOUT_OWNER_OVERRIDE")
     if budget["limits_exceeded"]["targeted_rounds"]:
         blocked.append("RUN_ADDITIONAL_TARGETED_EVIDENCE_WITHOUT_OWNER_OVERRIDE")
-    if budget["limits_exceeded"]["needs_more_evidence_occurrences"]:
+    if budget["limits_exceeded"]["redesign_rounds"]:
+        blocked.append("RUN_ADDITIONAL_REDESIGN_ROUND_WITHOUT_OWNER_OVERRIDE")
+    if budget["budget_status"] == "EXHAUSTED":
         blocked.append("EMIT_OPEN_ENDED_NEEDS_MORE_EVIDENCE")
-        owner_required.append("OWNER_OVERRIDE_REQUIRED_FOR_MORE_EVIDENCE")
+        if budget["owner_override_required_after_budget"]:
+            owner_required.append("OWNER_OVERRIDE_REQUIRED_FOR_MORE_EVIDENCE")
+    if "SIGNAL_DIRECTION_MIXED" in reason_codes or "B3_PRECHECK_MIXED" in reason_codes:
+        blocked.append("B3_MINI_BACKFILL")
     if not (state.current_stage == "GATE_READY" and spec.owner_authorized_holdout):
         blocked.append("ACCESS_UNTOUCHED_HOLDOUT")
         owner_required.append("FINAL_GATE_OWNER_AUTHORIZATION_REQUIRED_FOR_HOLDOUT")
     if "MISSING_INTERACTION_EFFECT" in reason_codes:
         blocked.append("PROMOTE_WITHOUT_INTERACTION_EVIDENCE")
+    blocked.extend(ALWAYS_BLOCKED_RESEARCH_ACTIONS)
 
     next_stage = _recommended_next_stage(state.current_stage, allowed, blocked)
     return {
@@ -1276,6 +1858,322 @@ def load_compatibility_policy(path: Path = DEFAULT_COMPATIBILITY_PATH) -> dict[s
     }
 
 
+def load_stage_adapter_contracts(
+    path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+) -> dict[str, StageAdapterContract]:
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path)
+    contracts: dict[str, StageAdapterContract] = {}
+    for adapter_id, payload in raw.get("adapters", {}).items():
+        contract_payload = dict(payload)
+        contract_payload.setdefault("adapter_id", adapter_id)
+        contracts[adapter_id] = StageAdapterContract.model_validate(contract_payload)
+    return contracts
+
+
+def validate_stage_adapter_contracts(
+    *,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    module_registry_path: Path = DEFAULT_MODULE_REGISTRY_PATH,
+) -> dict[str, Any]:
+    issues: list[dict[str, Any]] = []
+    try:
+        contracts = load_stage_adapter_contracts(adapter_registry_path)
+    except ValidationError as exc:
+        return {
+            "schema_version": "1.0",
+            "report_type": "research_campaign_stage_adapter_contract_validation",
+            "validation_status": "FAIL",
+            "status": "FAIL",
+            "issues": [
+                _issue(
+                    "error",
+                    "adapter_contract_schema_invalid",
+                    f"Stage adapter registry schema invalid: {exc}",
+                )
+            ],
+            "adapter_count": 0,
+            "supported_stages": ADAPTER_SUPPORTED_STAGES,
+            "output_statuses": ADAPTER_OUTPUT_STATUSES,
+            "safety_boundary": _adapter_safety_metadata(),
+            "production_effect": "none",
+        }
+    registry = load_module_registry(module_registry_path)
+    if not contracts:
+        issues.append(
+            _issue(
+                "error",
+                "stage_adapter_registry_empty",
+                f"No stage adapters configured at {adapter_registry_path}",
+            )
+        )
+    for contract in contracts.values():
+        unknown_stages = sorted(set(contract.supported_stage) - set(ADAPTER_SUPPORTED_STAGES))
+        if unknown_stages:
+            issues.append(
+                _issue(
+                    "error",
+                    "adapter_unknown_supported_stage",
+                    f"{contract.adapter_id} has unknown stages: {unknown_stages}",
+                )
+            )
+        unknown_modules = sorted(set(contract.supported_module) - set(registry))
+        if unknown_modules:
+            issues.append(
+                _issue(
+                    "error",
+                    "adapter_unknown_supported_module",
+                    f"{contract.adapter_id} references unknown modules: {unknown_modules}",
+                )
+            )
+        unknown_categories = sorted(
+            set(contract.produced_evidence_categories) - set(EVIDENCE_CATEGORIES)
+        )
+        if unknown_categories:
+            issues.append(
+                _issue(
+                    "error",
+                    "adapter_unknown_evidence_category",
+                    f"{contract.adapter_id} emits unknown evidence categories: "
+                    f"{unknown_categories}",
+                )
+            )
+        safety_issues = _adapter_safety_issues(contract.safety_boundary, contract.adapter_id)
+        issues.extend(safety_issues)
+        for artifact_name in contract.produced_artifacts:
+            normalized = artifact_name.lower().replace("-", "_")
+            if any(token in normalized for token in FORBIDDEN_WEIGHT_OUTPUTS):
+                issues.append(
+                    _issue(
+                        "error",
+                        "adapter_forbidden_output_name",
+                        f"{contract.adapter_id} produced artifact has forbidden semantics: "
+                        f"{artifact_name}",
+                    )
+                )
+        for input_spec in contract.required_inputs:
+            path = _resolve_project_path(input_spec.path)
+            if input_spec.required and not path.exists():
+                issues.append(
+                    _issue(
+                        "error",
+                        "adapter_required_input_missing",
+                        f"{contract.adapter_id} required input missing: {input_spec.path}",
+                    )
+                )
+    status = "PASS" if not [issue for issue in issues if issue["severity"] == "error"] else "FAIL"
+    warning_count = len([issue for issue in issues if issue["severity"] == "warning"])
+    if status == "PASS" and warning_count:
+        status = "PASS_WITH_WARNINGS"
+    return {
+        "schema_version": "1.0",
+        "report_type": "research_campaign_stage_adapter_contract_validation",
+        "validation_status": status,
+        "status": status,
+        "adapter_count": len(contracts),
+        "adapter_ids": sorted(contracts),
+        "supported_stages": ADAPTER_SUPPORTED_STAGES,
+        "output_statuses": ADAPTER_OUTPUT_STATUSES,
+        "issues": issues,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def run_stage_adapter(
+    *,
+    spec: CampaignSpec,
+    state: CampaignState,
+    target_stage: str,
+    run_id: str,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    module_registry_path: Path = DEFAULT_MODULE_REGISTRY_PATH,
+) -> StageAdapterRunOutput:
+    adapter_stage = _adapter_stage_for_workflow_stage(
+        spec=spec,
+        workflow_stage=target_stage,
+        module_registry_path=module_registry_path,
+    )
+    contracts = load_stage_adapter_contracts(adapter_registry_path)
+    contract = _find_stage_adapter_contract(spec, adapter_stage, contracts)
+    if contract is None:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            status="ADAPTER_NOT_CONFIGURED",
+            reason_codes=["STAGE_ADAPTER_NOT_CONFIGURED"],
+        )
+
+    safety_issues = _adapter_safety_issues(contract.safety_boundary, contract.adapter_id)
+    if safety_issues:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            status="ADAPTER_SAFETY_BLOCKED",
+            reason_codes=[issue["issue_id"].upper() for issue in safety_issues],
+        )
+
+    inputs = [
+        input_spec
+        for input_spec in contract.required_inputs
+        if _adapter_input_applies(input_spec, adapter_stage)
+    ]
+    source_payloads: dict[str, dict[str, Any]] = {}
+    input_artifacts: list[dict[str, Any]] = []
+    missing_inputs: list[str] = []
+    invalid_inputs: list[str] = []
+    for input_spec in inputs:
+        path = _resolve_project_path(input_spec.path)
+        artifact_record = {
+            "artifact_id": input_spec.artifact_id,
+            "path": str(path),
+            "required": input_spec.required,
+            "exists": path.exists(),
+            "checksum": _checksum(path),
+        }
+        input_artifacts.append(artifact_record)
+        if not path.exists():
+            if input_spec.required:
+                missing_inputs.append(input_spec.artifact_id)
+            continue
+        try:
+            source_payloads[input_spec.artifact_id] = _read_json(path)
+        except ResearchCampaignError:
+            invalid_inputs.append(input_spec.artifact_id)
+
+    if missing_inputs:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="ADAPTER_INPUT_MISSING",
+            reason_codes=["STAGE_ADAPTER_INPUT_MISSING", *missing_inputs],
+        )
+    if invalid_inputs:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="ADAPTER_OUTPUT_INVALID",
+            reason_codes=["STAGE_ADAPTER_OUTPUT_INVALID", *invalid_inputs],
+        )
+
+    source_issues = _adapter_source_artifact_issues(source_payloads)
+    if any(issue["issue_id"] == "adapter_source_holdout_accessed" for issue in source_issues):
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="ADAPTER_HOLDOUT_BLOCKED",
+            reason_codes=[issue["issue_id"].upper() for issue in source_issues],
+        )
+    if source_issues:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="ADAPTER_OUTPUT_INVALID",
+            reason_codes=[issue["issue_id"].upper() for issue in source_issues],
+        )
+
+    evidence_records: list[dict[str, Any]] = []
+    reason_codes: set[str] = set()
+    for mapping in contract.evidence_mappings:
+        if mapping.stage != adapter_stage:
+            continue
+        payload = source_payloads.get(mapping.artifact_id)
+        if payload is None:
+            return _adapter_blocked_output(
+                run_id=run_id,
+                campaign_id=spec.campaign_id,
+                stage=adapter_stage,
+                adapter_id=contract.adapter_id,
+                adapter_version=contract.adapter_version,
+                input_artifacts=input_artifacts,
+                status="ADAPTER_OUTPUT_INVALID",
+                reason_codes=[
+                    "STAGE_ADAPTER_OUTPUT_INVALID",
+                    f"MISSING_MAPPING_INPUT_{mapping.artifact_id}",
+                ],
+            )
+        value = _extract_value(payload, mapping.value_path)
+        if value is None:
+            return _adapter_blocked_output(
+                run_id=run_id,
+                campaign_id=spec.campaign_id,
+                stage=adapter_stage,
+                adapter_id=contract.adapter_id,
+                adapter_version=contract.adapter_version,
+                input_artifacts=input_artifacts,
+                status="ADAPTER_OUTPUT_INVALID",
+                reason_codes=[
+                    "STAGE_ADAPTER_OUTPUT_INVALID",
+                    f"MISSING_VALUE_{mapping.artifact_id}_{mapping.value_path}",
+                ],
+            )
+        record = EvidenceRecord(
+            evidence_id=f"{run_id}-{mapping.evidence_id_suffix}",
+            campaign_id=spec.campaign_id,
+            run_id=run_id,
+            stage=adapter_stage,
+            category=mapping.category,
+            metric_name=mapping.metric_name,
+            value=value,
+            direction=mapping.direction,
+            window_id=mapping.window_id,
+            status=mapping.status,
+            confidence=mapping.confidence,
+            source_artifact_id=mapping.artifact_id,
+            reason_codes=mapping.reason_codes,
+        )
+        reason_codes.update(mapping.reason_codes)
+        evidence_records.append(record.model_dump(mode="json"))
+
+    adapter_outcome = contract.stage_outcomes.get(
+        adapter_stage,
+        _outcome_from_adapter_evidence(evidence_records, state),
+    )
+    data_quality_status = _adapter_data_quality_status(source_payloads)
+    return StageAdapterRunOutput(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        adapter_id=contract.adapter_id,
+        adapter_version=contract.adapter_version,
+        input_artifacts=input_artifacts,
+        output_artifacts=[
+            {
+                "artifact_id": artifact_name,
+                "status": "planned",
+            }
+            for artifact_name in contract.produced_artifacts
+        ],
+        evidence_records=evidence_records,
+        status="ADAPTER_READY",
+        reason_codes=sorted(reason_codes | set(state.reason_codes)),
+        safety_metadata=_adapter_safety_metadata(),
+        adapter_outcome=adapter_outcome,
+        data_quality_status=data_quality_status,
+    )
+
+
 def write_campaign_state(state: CampaignState, directory: Path) -> None:
     _write_json(directory / "state.json", state.model_dump(mode="json"))
 
@@ -1556,6 +2454,206 @@ def _decision_from_reason_codes(
     return default
 
 
+def _adapter_safety_metadata() -> dict[str, Any]:
+    return {
+        "research_only": True,
+        "manual_review_only": True,
+        "official_target_weights": False,
+        "paper_shadow_activation": False,
+        "paper_shadow_allowed": False,
+        "broker_effect": "none",
+        "order_effect": "none",
+        "production_effect": "none",
+    }
+
+
+def _adapter_safety_issues(payload: dict[str, Any], adapter_id: str) -> list[dict[str, Any]]:
+    required = _adapter_safety_metadata()
+    issues: list[dict[str, Any]] = []
+    for key, expected in required.items():
+        if payload.get(key) != expected:
+            issues.append(
+                _issue(
+                    "error",
+                    f"adapter_safety_{key}_invalid",
+                    f"{adapter_id} safety boundary {key}={payload.get(key)!r}, "
+                    f"expected {expected!r}",
+                )
+            )
+    return issues
+
+
+def _adapter_stage_for_workflow_stage(
+    *,
+    spec: CampaignSpec,
+    workflow_stage: str,
+    module_registry_path: Path,
+) -> str:
+    if workflow_stage == "GATE_READY":
+        return "GATE"
+    if workflow_stage == "OWNER_REVIEW":
+        return "OWNER_PACKET"
+    if workflow_stage == "INPUT_PRECHECK":
+        registry = load_module_registry(module_registry_path)
+        module_types = {
+            registry[module_id].module_type
+            for module_id in spec.module_graph.modules
+            if module_id in registry
+        }
+        if "SIGNAL" in module_types:
+            return "SIGNAL_PRECHECK"
+    return workflow_stage
+
+
+def _find_stage_adapter_contract(
+    spec: CampaignSpec,
+    adapter_stage: str,
+    contracts: dict[str, StageAdapterContract],
+) -> StageAdapterContract | None:
+    module_ids = set(spec.module_graph.modules)
+    campaign_type_candidates = {
+        spec.campaign_id,
+        spec.program_id,
+        str(spec.metadata.get("campaign_type", "")),
+    }
+    for contract in contracts.values():
+        if adapter_stage not in contract.supported_stage:
+            continue
+        if not (module_ids & set(contract.supported_module)):
+            continue
+        if contract.supported_campaign_type and not (
+            campaign_type_candidates & set(contract.supported_campaign_type)
+        ):
+            continue
+        return contract
+    return None
+
+
+def _adapter_input_applies(input_spec: StageAdapterInput, adapter_stage: str) -> bool:
+    return not input_spec.stages or adapter_stage in input_spec.stages
+
+
+def _adapter_source_artifact_issues(
+    source_payloads: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    for artifact_id, payload in source_payloads.items():
+        if payload.get("holdout_accessed") is True:
+            issues.append(
+                _issue(
+                    "error",
+                    "adapter_source_holdout_accessed",
+                    f"{artifact_id} accessed holdout and cannot feed Campaign adapter",
+                )
+            )
+        if payload.get("forbidden_outputs_absent") is False:
+            issues.append(
+                _issue(
+                    "error",
+                    "adapter_source_forbidden_outputs_present",
+                    f"{artifact_id} reports forbidden outputs",
+                )
+            )
+        safety = payload.get("safety_boundary")
+        if isinstance(safety, dict):
+            if safety.get("official_target_weights") is not False:
+                issues.append(
+                    _issue(
+                        "error",
+                        "adapter_source_official_target_weights",
+                        f"{artifact_id} violates official target weight boundary",
+                    )
+                )
+            if safety.get("production_effect") not in {None, "none"}:
+                issues.append(
+                    _issue(
+                        "error",
+                        "adapter_source_production_effect",
+                        f"{artifact_id} has production effect",
+                    )
+                )
+            if safety.get("paper_shadow_activation") is True:
+                issues.append(
+                    _issue(
+                        "error",
+                        "adapter_source_paper_shadow_activation",
+                        f"{artifact_id} activates paper shadow",
+                    )
+                )
+    return issues
+
+
+def _adapter_blocked_output(
+    *,
+    run_id: str,
+    campaign_id: str,
+    stage: str,
+    status: str,
+    reason_codes: list[str],
+    adapter_id: str = "none",
+    adapter_version: str | None = None,
+    input_artifacts: list[dict[str, Any]] | None = None,
+) -> StageAdapterRunOutput:
+    return StageAdapterRunOutput(
+        run_id=run_id,
+        campaign_id=campaign_id,
+        stage=stage,
+        adapter_id=adapter_id,
+        adapter_version=adapter_version,
+        input_artifacts=input_artifacts or [],
+        output_artifacts=[],
+        evidence_records=[],
+        status=status,
+        reason_codes=reason_codes,
+        safety_metadata=_adapter_safety_metadata(),
+        adapter_outcome="BLOCKED",
+        data_quality_status=CONTROL_ONLY_DATA_QUALITY_STATUS,
+    )
+
+
+def _extract_value(payload: dict[str, Any], dotted_path: str) -> Any:
+    current: Any = payload
+    for part in dotted_path.split("."):
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        else:
+            return None
+    return current
+
+
+def _outcome_from_adapter_evidence(
+    records: list[dict[str, Any]],
+    state: CampaignState,
+) -> str:
+    if state.current_outcome != "NOT_EVALUATED":
+        return state.current_outcome
+    if any(record["status"] == "BLOCKED" for record in records):
+        return "BLOCKED"
+    if any(record["status"] == "FAIL" or record["direction"] == "negative" for record in records):
+        return "MIXED"
+    if any(record["status"] == "MIXED" or record["direction"] == "mixed" for record in records):
+        return "MIXED"
+    return "PASS"
+
+
+def _adapter_data_quality_status(source_payloads: dict[str, dict[str, Any]]) -> str:
+    statuses = [
+        str(payload.get("data_quality_gate", {}).get("status"))
+        for payload in source_payloads.values()
+        if isinstance(payload.get("data_quality_gate"), dict)
+        and payload.get("data_quality_gate", {}).get("status")
+    ]
+    if not statuses:
+        return CONTROL_ONLY_DATA_QUALITY_STATUS
+    if "FAIL" in statuses:
+        return "FAIL"
+    if any(status == "PASS_WITH_WARNINGS" for status in statuses):
+        return "PASS_WITH_WARNINGS"
+    if all(status == "PASS" for status in statuses):
+        return "PASS"
+    return sorted(set(statuses))[0]
+
+
 def _control_evidence(
     *,
     campaign_id: str,
@@ -1643,6 +2741,74 @@ def _evidence_lines(records: list[dict[str, Any]]) -> list[str]:
     ]
 
 
+def _write_stage_adapter_run_artifacts(
+    payload: dict[str, Any],
+    *,
+    output_root: Path,
+) -> dict[str, Any]:
+    output_dir = output_root / payload["campaign_id"]
+    output_dir.mkdir(parents=True, exist_ok=True)
+    date_token = _now_iso()[:10]
+    if payload["campaign_id"].startswith("b2-"):
+        basename = f"b2_campaign_adapter_run_{date_token}"
+    elif payload["campaign_id"].startswith("b3-"):
+        basename = "b3_campaign_signal_precheck_run"
+    else:
+        basename = f"campaign_stage_adapter_run_{payload['stage'].lower()}_{date_token}"
+    json_path = output_dir / f"{basename}.json"
+    md_path = output_dir / f"{basename}.md"
+    enriched = dict(payload)
+    enriched["output_artifacts"] = [
+        {"artifact_id": f"{basename}.json", "path": str(json_path)},
+        {"artifact_id": f"{basename}.md", "path": str(md_path)},
+    ]
+    _write_json(json_path, enriched)
+    md_path.write_text(render_stage_adapter_run_markdown(enriched), encoding="utf-8")
+    enriched["json_path"] = str(json_path)
+    enriched["markdown_path"] = str(md_path)
+    return enriched
+
+
+def render_stage_adapter_run_markdown(payload: dict[str, Any]) -> str:
+    lines = [
+        f"# Campaign Stage Adapter Run: {payload['campaign_id']}",
+        "",
+        "## Reader Brief",
+        "",
+        f"- Adapter Status: {payload['status']}",
+        f"- Adapter: {payload['adapter_id']}",
+        f"- Stage: {payload['stage']}",
+        f"- Outcome: {payload['adapter_outcome']}",
+        f"- Data Quality: {payload['data_quality_status']}",
+        "- Safety Boundary: "
+        f"research_only={payload['safety_metadata']['research_only']}; "
+        f"manual_review_only={payload['safety_metadata']['manual_review_only']}; "
+        f"official_target_weights={payload['safety_metadata']['official_target_weights']}; "
+        f"paper_shadow_activation={payload['safety_metadata']['paper_shadow_activation']}; "
+        f"broker_effect={payload['safety_metadata']['broker_effect']}; "
+        f"order_effect={payload['safety_metadata']['order_effect']}; "
+        f"production_effect={payload['safety_metadata']['production_effect']}",
+        "",
+        "## Reason Codes",
+        "",
+    ]
+    lines.extend(f"- {code}" for code in payload["reason_codes"] or ["none"])
+    lines.extend(["", "## Input Artifacts", ""])
+    for artifact in payload["input_artifacts"] or []:
+        lines.append(
+            f"- {artifact.get('artifact_id')}: exists={artifact.get('exists')} "
+            f"checksum={artifact.get('checksum')}"
+        )
+    if not payload["input_artifacts"]:
+        lines.append("- none")
+    lines.extend(["", "## Evidence Records", ""])
+    lines.extend(_evidence_lines(payload["evidence_records"]))
+    lines.extend(["", "## Output Artifacts", ""])
+    for artifact in payload["output_artifacts"] or []:
+        lines.append(f"- {artifact.get('artifact_id')}: {artifact.get('path')}")
+    return "\n".join(lines) + "\n"
+
+
 def _append_transition(directory: Path, payload: dict[str, Any]) -> None:
     _append_jsonl(directory / "transitions.jsonl", payload)
 
@@ -1680,6 +2846,13 @@ def _read_yaml(path: Path) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ResearchCampaignError(f"YAML root must be a mapping: {path}")
     return raw
+
+
+def _resolve_project_path(path: str) -> Path:
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return candidate
+    return PROJECT_ROOT / candidate
 
 
 def _issue(severity: str, issue_id: str, message: str) -> dict[str, Any]:

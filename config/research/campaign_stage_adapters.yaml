@@ -1,0 +1,288 @@
+schema_version: "1.0"
+policy_metadata:
+  owner: "research_governance"
+  status: "baseline_v1"
+  rationale: "Connect Research Campaign stages to audited B2/B3 research artifacts without fabricating metrics."
+  intended_effect: "Make adapter support explicit, fail-closed, and reviewable."
+  validation_evidence: "tests/test_research_campaign.py"
+  review_condition: "Review when replacing audited-artifact adapters with direct recomputation adapters."
+adapters:
+  b2-risk-overlay-audited-artifact-adapter-v1:
+    adapter_version: "1.0"
+    supported_stage:
+      - "TARGETED_EVIDENCE"
+      - "FULL_DIAGNOSTIC"
+      - "ATTRIBUTION"
+      - "GATE"
+    supported_module:
+      - "risk-overlay-b2"
+    supported_campaign_type:
+      - "b2-risk-overlay-current-form"
+      - "weight-research-v1"
+    required_inputs:
+      - artifact_id: "b2_fast_risk_no_trigger_audit"
+        path: "docs/research/b2_fast_risk_no_trigger_audit.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_slow_drawdown_repeatability_study"
+        path: "docs/research/b2_slow_drawdown_repeatability_study.json"
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_reentry_lag_root_cause_review"
+        path: "docs/research/b2_reentry_lag_root_cause_review.json"
+        stages: ["TARGETED_EVIDENCE", "ATTRIBUTION"]
+      - artifact_id: "b2_cost_benchmark_utility_review"
+        path: "docs/research/b2_cost_benchmark_utility_review.json"
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_no_trigger_correctness_review"
+        path: "docs/research/b2_no_trigger_correctness_review.json"
+        stages: ["FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_needs_more_evidence_root_cause_drilldown"
+        path: "docs/research/b2_needs_more_evidence_root_cause_drilldown.json"
+        stages: ["ATTRIBUTION"]
+      - artifact_id: "b2_final_research_gate"
+        path: "docs/research/b2_final_research_gate.json"
+        stages: ["GATE"]
+    optional_inputs:
+      - artifact_id: "b2_branch_snapshot_final"
+        path: "docs/research/b2_branch_snapshot_final.json"
+        stages: ["GATE"]
+        required: false
+    produced_artifacts:
+      - "b2_campaign_adapter_run_<date>.json"
+      - "b2_campaign_adapter_run_<date>.md"
+      - "Campaign evidence records"
+      - "Reader Brief section"
+    produced_evidence_categories:
+      - "TRIGGER_BEHAVIOR"
+      - "DRAWDOWN_PROTECTION"
+      - "REENTRY_BEHAVIOR"
+      - "TURNOVER_COST"
+      - "WINDOW_STABILITY"
+      - "ATTRIBUTION"
+      - "SAFETY"
+    supported_windows:
+      - "development"
+      - "diagnostic"
+      - "control"
+    forbidden_windows:
+      - "untouched_holdout"
+    safety_boundary:
+      research_only: true
+      manual_review_only: true
+      official_target_weights: false
+      paper_shadow_activation: false
+      paper_shadow_allowed: false
+      broker_effect: "none"
+      order_effect: "none"
+      production_effect: "none"
+    failure_modes:
+      - "ADAPTER_INPUT_MISSING"
+      - "ADAPTER_OUTPUT_INVALID"
+      - "ADAPTER_HOLDOUT_BLOCKED"
+      - "ADAPTER_SAFETY_BLOCKED"
+    stage_outcomes:
+      TARGETED_EVIDENCE: "NEEDS_MORE_EVIDENCE"
+      FULL_DIAGNOSTIC: "NEEDS_MORE_EVIDENCE"
+      ATTRIBUTION: "NEEDS_MORE_EVIDENCE"
+      GATE: "RETURN_TO_DESIGN"
+    evidence_mappings:
+      - stage: "TARGETED_EVIDENCE"
+        artifact_id: "b2_fast_risk_no_trigger_audit"
+        evidence_id_suffix: "fast-risk-no-trigger"
+        category: "TRIGGER_BEHAVIOR"
+        metric_name: "fast_risk_trigger_support"
+        value_path: "status"
+        direction: "negative"
+        status: "FAIL"
+        confidence: "medium"
+        reason_codes: ["FAST_RISK_NOT_SUPPORTED"]
+        window_id: "rapid_drawdown_no_trigger"
+      - stage: "TARGETED_EVIDENCE"
+        artifact_id: "b2_slow_drawdown_repeatability_study"
+        evidence_id_suffix: "slow-drawdown-single-window"
+        category: "DRAWDOWN_PROTECTION"
+        metric_name: "slow_drawdown_repeatability"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"]
+        window_id: "slow_drawdown"
+      - stage: "TARGETED_EVIDENCE"
+        artifact_id: "b2_reentry_lag_root_cause_review"
+        evidence_id_suffix: "reentry-lag-signal-driven"
+        category: "REENTRY_BEHAVIOR"
+        metric_name: "reentry_lag_root_cause"
+        value_path: "status"
+        direction: "negative"
+        status: "FAIL"
+        confidence: "medium"
+        reason_codes: ["REENTRY_LAG_SIGNAL_DRIVEN"]
+        window_id: "slow_drawdown"
+      - stage: "TARGETED_EVIDENCE"
+        artifact_id: "b2_cost_benchmark_utility_review"
+        evidence_id_suffix: "utility-mixed"
+        category: "TURNOVER_COST"
+        metric_name: "cost_benchmark_utility"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["UTILITY_MIXED"]
+      - stage: "FULL_DIAGNOSTIC"
+        artifact_id: "b2_no_trigger_correctness_review"
+        evidence_id_suffix: "control-behavior-clean"
+        category: "SAFETY"
+        metric_name: "control_window_no_trigger_correctness"
+        value_path: "status"
+        direction: "positive"
+        status: "PASS"
+        confidence: "high"
+        reason_codes: ["CONTROL_BEHAVIOR_CLEAN"]
+      - stage: "FULL_DIAGNOSTIC"
+        artifact_id: "b2_cost_benchmark_utility_review"
+        evidence_id_suffix: "full-diagnostic-utility-mixed"
+        category: "TURNOVER_COST"
+        metric_name: "full_diagnostic_utility"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["UTILITY_MIXED"]
+      - stage: "ATTRIBUTION"
+        artifact_id: "b2_needs_more_evidence_root_cause_drilldown"
+        evidence_id_suffix: "root-cause-more-evidence"
+        category: "ATTRIBUTION"
+        metric_name: "needs_more_evidence_root_cause"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes:
+          - "FAST_RISK_NOT_SUPPORTED"
+          - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
+          - "REENTRY_LAG_SIGNAL_DRIVEN"
+          - "UTILITY_MIXED"
+      - stage: "GATE"
+        artifact_id: "b2_final_research_gate"
+        evidence_id_suffix: "final-research-gate"
+        category: "SAFETY"
+        metric_name: "final_research_gate"
+        value_path: "status"
+        direction: "negative"
+        status: "FAIL"
+        confidence: "high"
+        reason_codes:
+          - "RETURN_TO_DESIGN"
+          - "FAST_RISK_NOT_SUPPORTED"
+          - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
+          - "REENTRY_LAG_SIGNAL_DRIVEN"
+          - "UTILITY_MIXED"
+  b3-signal-precheck-audited-artifact-adapter-v1:
+    adapter_version: "1.0"
+    supported_stage:
+      - "SIGNAL_PRECHECK"
+      - "SIGNAL_DIRECTION_TAXONOMY"
+      - "REDESIGN_HYPOTHESIS_RANKING"
+    supported_module:
+      - "slow-tilt-b3"
+    supported_campaign_type:
+      - "b3-slow-tilt-signal-precheck"
+      - "weight-research-v1"
+    required_inputs:
+      - artifact_id: "b3_signal_direction_failure_taxonomy"
+        path: "docs/research/b3_signal_direction_failure_taxonomy.json"
+        stages: ["SIGNAL_PRECHECK", "SIGNAL_DIRECTION_TAXONOMY"]
+      - artifact_id: "b3_signal_precheck_resolution_plan"
+        path: "docs/research/b3_signal_precheck_resolution_plan.json"
+        stages: ["SIGNAL_PRECHECK"]
+      - artifact_id: "b3_redesign_hypothesis_ranking"
+        path: "docs/research/b3_redesign_hypothesis_ranking.json"
+        stages: ["SIGNAL_PRECHECK", "REDESIGN_HYPOTHESIS_RANKING"]
+    optional_inputs: []
+    produced_artifacts:
+      - "b3_campaign_signal_precheck_run.json"
+      - "b3_campaign_signal_precheck_run.md"
+      - "Campaign evidence records"
+      - "Reader Brief section"
+    produced_evidence_categories:
+      - "SIGNAL_DIRECTION"
+      - "SIGNAL_LAG"
+      - "SIGNAL_NOISE"
+      - "ASSET_MAPPING"
+      - "WINDOW_SPECIFIC_WEAKNESS"
+      - "REDESIGN_HYPOTHESIS"
+      - "SAFETY"
+    supported_windows:
+      - "development"
+      - "diagnostic"
+    forbidden_windows:
+      - "untouched_holdout"
+    safety_boundary:
+      research_only: true
+      manual_review_only: true
+      official_target_weights: false
+      paper_shadow_activation: false
+      paper_shadow_allowed: false
+      broker_effect: "none"
+      order_effect: "none"
+      production_effect: "none"
+    failure_modes:
+      - "ADAPTER_INPUT_MISSING"
+      - "ADAPTER_OUTPUT_INVALID"
+      - "ADAPTER_HOLDOUT_BLOCKED"
+      - "ADAPTER_SAFETY_BLOCKED"
+    stage_outcomes:
+      SIGNAL_PRECHECK: "MIXED"
+      SIGNAL_DIRECTION_TAXONOMY: "MIXED"
+      REDESIGN_HYPOTHESIS_RANKING: "MIXED"
+    evidence_mappings:
+      - stage: "SIGNAL_PRECHECK"
+        artifact_id: "b3_signal_direction_failure_taxonomy"
+        evidence_id_suffix: "signal-direction-mixed"
+        category: "SIGNAL_DIRECTION"
+        metric_name: "slow_tilt_signal_direction"
+        value_path: "source_precheck_status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["SIGNAL_DIRECTION_MIXED", "B3_PRECHECK_MIXED"]
+      - stage: "SIGNAL_PRECHECK"
+        artifact_id: "b3_signal_precheck_resolution_plan"
+        evidence_id_suffix: "signal-only-no-weight-generation"
+        category: "SAFETY"
+        metric_name: "portfolio_metric_generation"
+        value_path: "status"
+        direction: "positive"
+        status: "PASS"
+        confidence: "high"
+        reason_codes: ["SIGNAL_ONLY_NO_WEIGHT_GENERATION"]
+      - stage: "SIGNAL_PRECHECK"
+        artifact_id: "b3_redesign_hypothesis_ranking"
+        evidence_id_suffix: "redesign-hypothesis-ranking"
+        category: "REDESIGN_HYPOTHESIS"
+        metric_name: "redesign_hypothesis_ranking"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["REDESIGN_HYPOTHESIS_RANKING_READY"]
+      - stage: "SIGNAL_DIRECTION_TAXONOMY"
+        artifact_id: "b3_signal_direction_failure_taxonomy"
+        evidence_id_suffix: "signal-direction-taxonomy"
+        category: "SIGNAL_DIRECTION"
+        metric_name: "failure_taxonomy"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["SIGNAL_DIRECTION_MIXED", "B3_PRECHECK_MIXED"]
+      - stage: "REDESIGN_HYPOTHESIS_RANKING"
+        artifact_id: "b3_redesign_hypothesis_ranking"
+        evidence_id_suffix: "redesign-hypothesis-ranking"
+        category: "REDESIGN_HYPOTHESIS"
+        metric_name: "hypothesis_ranking"
+        value_path: "status"
+        direction: "mixed"
+        status: "MIXED"
+        confidence: "medium"
+        reason_codes: ["REDESIGN_HYPOTHESIS_RANKING_READY"]

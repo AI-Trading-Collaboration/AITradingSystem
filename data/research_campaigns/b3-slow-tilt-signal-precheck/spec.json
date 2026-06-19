@@ -1,0 +1,73 @@
+{
+  "campaign_id": "b3-slow-tilt-signal-precheck",
+  "evidence_budget": {
+    "compute_budget": null,
+    "max_mini_rounds": 1,
+    "max_needs_more_evidence_occurrences": 1,
+    "max_redesign_rounds": 1,
+    "max_targeted_rounds": 1,
+    "max_window_expansions": 0,
+    "owner_override_required_after_budget": true,
+    "time_budget": null
+  },
+  "hypothesis": {
+    "expected_failure_modes": [
+      "wrong_tilt_direction",
+      "lagged_signal",
+      "noise_dominant"
+    ],
+    "expected_gain": [
+      "signal_direction_improvement"
+    ],
+    "statement": "Slow tilt may add signal-level directional information after redesign, but current evidence is mixed and must not produce weights before signal quality is repaired.\n"
+  },
+  "market_regime": "ai_after_chatgpt",
+  "metadata": {},
+  "module_graph": {
+    "allowed_interaction_order": 1,
+    "allowed_mechanisms": [
+      "slow_tilt"
+    ],
+    "baseline": "b0-static",
+    "forbidden_mechanisms": [
+      "risk_signal",
+      "exposure_scaler",
+      "confidence_shrinkage",
+      "regime_filter",
+      "p0_mixed_allocator"
+    ],
+    "modules": [
+      "slow-tilt-b3"
+    ]
+  },
+  "owner_authorized_holdout": false,
+  "program_id": "weight-research-v1",
+  "requested_date_range": "2022-12-01..2025-04-30",
+  "safety": {
+    "broker_effect": "none",
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_effect": "none",
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": "1.0",
+  "scorecard_policy": "signal-only-precheck-v1",
+  "stop_rules": [
+    {
+      "code": "RETURN_TO_DESIGN_IF_SIGNAL_DIRECTION_WRONG"
+    },
+    {
+      "code": "BLOCK_COMBO_BACKFILL_UNTIL_SIGNAL_PRECHECK_PASS"
+    }
+  ],
+  "title": "B3 slow-tilt signal-direction precheck",
+  "window_policy": {
+    "development_catalog": "b3-development-v1",
+    "diagnostic_catalog": "b3-diagnostic-v1",
+    "full_catalog": null,
+    "holdout_access": "FINAL_GATE_ONLY",
+    "holdout_catalog": "b3-holdout-v1"
+  }
+}

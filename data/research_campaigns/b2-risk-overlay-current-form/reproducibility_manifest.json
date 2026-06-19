@@ -1,0 +1,70 @@
+{
+  "campaign_id": "b2-risk-overlay-current-form",
+  "configs": [
+    {
+      "checksum": "4596951bdc4ac45f4df4bb1b4a1914c8034b85057aae4c113677e6b9771610e7",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\module_capability_registry.yaml"
+    },
+    {
+      "checksum": "6c10eab4486132f1f719302cd5f1c26c3f782bb1071c8b6dde54e1594fae4463",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\research_gate_policies.yaml"
+    },
+    {
+      "checksum": "a51bad25deae00e542b64d5b40af04926cf2011b032d6947a6a520ac76741c6f",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\research_window_policy.yaml"
+    },
+    {
+      "checksum": "b6b63f5d47068bd57617678b734022d9c4155e4a827d90b054d83f44f11ee3fb",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\campaign_migrations.yaml"
+    }
+  ],
+  "data_quality_status": "NOT_REQUIRED_CONTROL_PLANE_ONLY",
+  "generated_at": "2026-06-19T13:32:19Z",
+  "git_commit": "c66804f64dc1dfe3828418e6933c7899ef1774e0",
+  "git_dirty": true,
+  "inputs": [],
+  "manifest_type": "research_campaign_reproducibility",
+  "market_regime": "ai_after_chatgpt",
+  "outputs": [
+    {
+      "checksum": "042ae2c8e0f3e1aa389e59cd8061d5e2e0f09b38901d8434121e154bc7458d3d",
+      "exists": true,
+      "path": "data\\research_campaigns\\b2-risk-overlay-current-form\\spec.json"
+    },
+    {
+      "checksum": "647134891b6feac71d5068e108c1fcb899fa66ca43db3820199f2ba53c19702e",
+      "exists": true,
+      "path": "data\\research_campaigns\\b2-risk-overlay-current-form\\validation.json"
+    },
+    {
+      "checksum": "b11af22864f237fb9831b78ba21f4e78fe3ae783791d7640fbe2e137b6772d97",
+      "exists": true,
+      "path": "data\\research_campaigns\\b2-risk-overlay-current-form\\state.json"
+    },
+    {
+      "checksum": "6eb4165689bf7c5c34499ca520c9050014e5bf27c485b886c1746062de1216db",
+      "exists": true,
+      "path": "data\\research_campaigns\\b2-risk-overlay-current-form\\evidence.jsonl"
+    }
+  ],
+  "production_effect": "none",
+  "requested_date_range": "2022-12-01..2025-04-30",
+  "schema_version": "1.0",
+  "seed": null,
+  "spec": {
+    "checksum": "af385369270303485bcf3b944ee5de83d972520d217af4a684a6dbedd7705cb7",
+    "path": "docs\\examples\\research_campaigns\\b2_risk_overlay_current_form.yaml"
+  },
+  "transition_source": "campaign_init",
+  "windows": {
+    "development_catalog": "b2-development-v1",
+    "diagnostic_catalog": "b2-diagnostic-v1",
+    "full_catalog": null,
+    "holdout_access": "FINAL_GATE_ONLY",
+    "holdout_catalog": "b2-holdout-v1"
+  }
+}

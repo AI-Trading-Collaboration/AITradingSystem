@@ -1,0 +1,41 @@
+{
+  "campaign_id": "b3-slow-tilt-signal-precheck",
+  "created_at": "2026-06-19T13:32:19Z",
+  "current_outcome": "MIXED",
+  "current_stage": "INPUT_PRECHECK",
+  "data_quality_status": "NOT_REQUIRED_CONTROL_PLANE_ONLY",
+  "evidence_budget_used": {
+    "holdout_accesses": 0,
+    "mini_rounds": 0,
+    "needs_more_evidence_occurrences": 0,
+    "owner_overrides": 0,
+    "redesign_rounds": 0,
+    "targeted_rounds": 0,
+    "window_expansions": 0
+  },
+  "legacy_status": "B3_PRECHECK_MIXED",
+  "migrated_from_legacy": true,
+  "program_id": "weight-research-v1",
+  "reason_codes": [
+    "SIGNAL_DIRECTION_MIXED",
+    "B3_PRECHECK_MIXED"
+  ],
+  "safety_boundary": {
+    "broker_effect": "none",
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_effect": "none",
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": "1.0",
+  "source_artifacts": [
+    "TRADING-557_to_564_B2_Evidence_Expansion_and_B3_Precheck_v2",
+    "TRADING-565_to_574_B2_Full_Diagnostic_and_B3_Resolution"
+  ],
+  "stage_history": [],
+  "title": "B3 slow-tilt signal-direction precheck",
+  "updated_at": "2026-06-19T13:32:19Z"
+}

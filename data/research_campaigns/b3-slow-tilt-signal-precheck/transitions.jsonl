@@ -1,0 +1,1 @@
+{"campaign_id": "b3-slow-tilt-signal-precheck", "created_at": "2026-06-19T13:32:19Z", "from_stage": null, "outcome": "MIXED", "reason_codes": ["SIGNAL_DIRECTION_MIXED", "B3_PRECHECK_MIXED"], "source": "campaign_init", "to_stage": "INPUT_PRECHECK", "transition_id": "b3-slow-tilt-signal-precheck-init"}

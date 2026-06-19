@@ -1,0 +1,70 @@
+{
+  "campaign_id": "b3-slow-tilt-signal-precheck",
+  "configs": [
+    {
+      "checksum": "4596951bdc4ac45f4df4bb1b4a1914c8034b85057aae4c113677e6b9771610e7",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\module_capability_registry.yaml"
+    },
+    {
+      "checksum": "6c10eab4486132f1f719302cd5f1c26c3f782bb1071c8b6dde54e1594fae4463",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\research_gate_policies.yaml"
+    },
+    {
+      "checksum": "a51bad25deae00e542b64d5b40af04926cf2011b032d6947a6a520ac76741c6f",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\research_window_policy.yaml"
+    },
+    {
+      "checksum": "b6b63f5d47068bd57617678b734022d9c4155e4a827d90b054d83f44f11ee3fb",
+      "exists": true,
+      "path": "D:\\Work\\AITradingSystem\\config\\research\\campaign_migrations.yaml"
+    }
+  ],
+  "data_quality_status": "NOT_REQUIRED_CONTROL_PLANE_ONLY",
+  "generated_at": "2026-06-19T13:32:19Z",
+  "git_commit": "c66804f64dc1dfe3828418e6933c7899ef1774e0",
+  "git_dirty": true,
+  "inputs": [],
+  "manifest_type": "research_campaign_reproducibility",
+  "market_regime": "ai_after_chatgpt",
+  "outputs": [
+    {
+      "checksum": "d2c95f28650efa25e5e95b591114f788c583bb158554ace8a3aab77284e03fb8",
+      "exists": true,
+      "path": "data\\research_campaigns\\b3-slow-tilt-signal-precheck\\spec.json"
+    },
+    {
+      "checksum": "83b4b0eaaa4e16999c9302273f52d28a864fdb73e18f807f008fa4bf1ae780cc",
+      "exists": true,
+      "path": "data\\research_campaigns\\b3-slow-tilt-signal-precheck\\validation.json"
+    },
+    {
+      "checksum": "e8e2f279ce45966aaacf40deed0e0a9be9770de82b937f78506c0255e20d08d2",
+      "exists": true,
+      "path": "data\\research_campaigns\\b3-slow-tilt-signal-precheck\\state.json"
+    },
+    {
+      "checksum": "43b28890520b786f03a80145193f26b6859d0954aa32b687803e823221b3046b",
+      "exists": true,
+      "path": "data\\research_campaigns\\b3-slow-tilt-signal-precheck\\evidence.jsonl"
+    }
+  ],
+  "production_effect": "none",
+  "requested_date_range": "2022-12-01..2025-04-30",
+  "schema_version": "1.0",
+  "seed": null,
+  "spec": {
+    "checksum": "2706048ad6b630bff3f102d0df01a8166891fe58e955e12f10200fbc116fbd81",
+    "path": "docs\\examples\\research_campaigns\\b3_slow_tilt_signal_precheck.yaml"
+  },
+  "transition_source": "campaign_init",
+  "windows": {
+    "development_catalog": "b3-development-v1",
+    "diagnostic_catalog": "b3-diagnostic-v1",
+    "full_catalog": null,
+    "holdout_access": "FINAL_GATE_ONLY",
+    "holdout_catalog": "b3-holdout-v1"
+  }
+}

@@ -1,0 +1,1 @@
+{"campaign_id": "b2-risk-overlay-current-form", "created_at": "2026-06-19T13:32:19Z", "from_stage": null, "outcome": "NEEDS_MORE_EVIDENCE", "reason_codes": ["FAST_RISK_NOT_SUPPORTED", "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY", "REENTRY_LAG_SIGNAL_DRIVEN", "UTILITY_MIXED"], "source": "campaign_init", "to_stage": "TARGETED_EVIDENCE", "transition_id": "b2-risk-overlay-current-form-init"}

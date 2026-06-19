@@ -8,6 +8,7 @@ migrations:
       - "FAST_RISK_NOT_SUPPORTED"
       - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
       - "REENTRY_LAG_SIGNAL_DRIVEN"
+      - "UTILITY_MIXED"
     evidence_budget_used:
       mini_rounds: 1
       targeted_rounds: 1
@@ -28,6 +29,7 @@ migrations:
           - "FAST_RISK_NOT_SUPPORTED"
           - "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY"
           - "REENTRY_LAG_SIGNAL_DRIVEN"
+          - "UTILITY_MIXED"
         created_at: "2026-06-19T00:00:00Z"
     evidence_records:
       - evidence_id: "b2-fast-risk-no-trigger"
@@ -106,13 +108,14 @@ migrations:
         confidence: "medium"
         source_artifact_id: "b2_cost_benchmark_utility_review"
         reason_codes:
-          - "B2_UTILITY_MIXED"
+          - "UTILITY_MIXED"
   b3-slow-tilt-signal-precheck:
     legacy_status: "B3_PRECHECK_MIXED"
     stage: "INPUT_PRECHECK"
     outcome: "MIXED"
     reason_codes:
       - "SIGNAL_DIRECTION_MIXED"
+      - "B3_PRECHECK_MIXED"
     evidence_budget_used:
       mini_rounds: 0
       targeted_rounds: 0
