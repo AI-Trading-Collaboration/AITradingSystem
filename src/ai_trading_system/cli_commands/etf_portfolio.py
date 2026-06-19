@@ -1125,6 +1125,9 @@ from ai_trading_system.etf_portfolio.weight_research_b2_b3_v2 import (
 from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
     run_b2_control_window_research,
 )
+from ai_trading_system.etf_portfolio.weight_research_b2_final_decision import (
+    run_b2_final_evidence_role_decision,
+)
 from ai_trading_system.etf_portfolio.weight_research_b2_followup import (
     run_b2_followup_research,
 )
@@ -36737,6 +36740,53 @@ def weight_research_b2_targeted_evidence_research_command(
         typer.echo(
             "Source Alias："
             f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_research_branch_snapshot_v2.json'}"
+        )
+    if (
+        snapshot["B4_retest_allowed"]
+        or snapshot["b5_allowed"]
+        or snapshot["b6_allowed"]
+        or snapshot["v3_allowed"]
+        or snapshot["paper_shadow_allowed"]
+    ):
+        raise typer.Exit(code=1)
+
+
+@weight_research_app.command("b2-final-decision-research")
+def weight_research_b2_final_decision_research_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="B2 final decision output directory。"),
+    ] = DEFAULT_WEIGHT_RESEARCH_REPORT_DIR,
+    write_source_alias: Annotated[
+        bool,
+        typer.Option(
+            "--write-source-alias/--no-write-source-alias",
+            help="Also update docs/research TRADING-597~604 aliases。",
+        ),
+    ] = False,
+) -> None:
+    """Run TRADING-597~604 B2 final evidence and role decision diagnostics."""
+    alias_dir = DEFAULT_RESEARCH_SOURCE_DIR if write_source_alias else None
+    payloads, paths = run_b2_final_evidence_role_decision(
+        output_dir=output_dir,
+        alias_dir=alias_dir,
+    )
+    gate = payloads["b2_final_research_gate"]
+    snapshot = payloads["b2_branch_snapshot_final"]
+    typer.echo(f"b2_final_research_gate_status={gate['status']}")
+    typer.echo(f"b2_branch_snapshot_final_status={snapshot['status']}")
+    typer.echo(f"B4_retest_allowed={snapshot['B4_retest_allowed']}")
+    typer.echo(f"b5_allowed={snapshot['b5_allowed']}")
+    typer.echo(f"b6_allowed={snapshot['b6_allowed']}")
+    typer.echo(f"v3_allowed={snapshot['v3_allowed']}")
+    typer.echo(f"paper_shadow_allowed={snapshot['paper_shadow_allowed']}")
+    for name, (json_path, markdown_path) in sorted(paths.items()):
+        typer.echo(f"{name}.json：{json_path}")
+        typer.echo(f"{name}.md：{markdown_path}")
+    if write_source_alias:
+        typer.echo(
+            "Source Alias："
+            f"{DEFAULT_RESEARCH_SOURCE_DIR / 'b2_branch_snapshot_final.json'}"
         )
     if (
         snapshot["B4_retest_allowed"]

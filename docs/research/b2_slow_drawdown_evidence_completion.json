@@ -1,0 +1,220 @@
+{
+  "B0_comparison_source": "canonical_non_holdout_B2_vs_B0_diagnostic_rows",
+  "B2_only_rerun_on_additional_window": "NOT_RUN_NO_ADDITIONAL_INDEPENDENT_SLOW_DRAWDOWN_WINDOW",
+  "additional_slow_drawdown_evidence": [],
+  "additional_slow_drawdown_windows_found": 0,
+  "additional_slow_drawdown_windows_required": 1,
+  "additional_slow_drawdown_windows_with_metrics": 0,
+  "data_quality_gate": {
+    "error_count": 0,
+    "info_count": 12,
+    "passed": true,
+    "report_path": "D:\\Work\\AITradingSystem\\outputs\\reports\\data_quality_2026-06-19.md",
+    "required_command": "aits validate-data",
+    "status": "PASS_WITH_WARNINGS",
+    "warning_count": 1
+  },
+  "forbidden_outputs_absent": true,
+  "generated_at": "2026-06-19T12:37:35.447289+00:00",
+  "holdout_accessed": false,
+  "market_regime": "ai_after_chatgpt",
+  "original_slow_drawdown_evidence": {
+    "B0_comparison": "B2_vs_B0",
+    "cost_delta": 0.00027354656464329306,
+    "drawdown_delta": 0.014543173743443605,
+    "end_date": "2025-04-30",
+    "exposure_reduction_path": [
+      {
+        "execution_date": "2025-01-03",
+        "exposure_scaler": 1.0,
+        "risk_state": "NORMAL",
+        "signal_date": "2025-01-02"
+      },
+      {
+        "execution_date": "2025-03-11",
+        "exposure_scaler": 0.85,
+        "risk_state": "ELEVATED_RISK",
+        "signal_date": "2025-03-10"
+      },
+      {
+        "execution_date": "2025-03-25",
+        "exposure_scaler": 1.0,
+        "risk_state": "NORMAL",
+        "signal_date": "2025-03-24"
+      },
+      {
+        "execution_date": "2025-03-27",
+        "exposure_scaler": 0.85,
+        "risk_state": "ELEVATED_RISK",
+        "signal_date": "2025-03-26"
+      },
+      {
+        "execution_date": "2025-04-07",
+        "exposure_scaler": 0.55,
+        "risk_state": "RISK_OFF",
+        "signal_date": "2025-04-04"
+      }
+    ],
+    "missed_rebound_proxy": 0.0,
+    "re_entry_lag": 14,
+    "return_delta": -0.02813265242856111,
+    "risk_off_date": "2025-04-04",
+    "risk_trigger_count": 33,
+    "source_window_id": "slow_drawdown",
+    "start_date": "2025-01-02",
+    "trigger_date": "2025-03-10",
+    "turnover_delta": 1.3677328232164652,
+    "window_id": "slow_drawdown",
+    "window_utility": -0.0138630252497608,
+    "window_utility_classification": "mixed_drawdown_help_with_utility_cost"
+  },
+  "primary_slow_drawdown_window": "slow_drawdown",
+  "promising_from_single_window_allowed": false,
+  "reader_brief": {
+    "blocking_issues": "none",
+    "key_result": "B2_SLOW_DRAWDOWN_NO_ADDITIONAL_WINDOW",
+    "next_action": "Manual owner/research review before any subsequent gate.",
+    "safety_boundary": "research_only=true; manual_review_only=true; official_target_weights=false; production_effect=none",
+    "summary": "B2 slow-drawdown repeatability cannot be completed unless a second independent non-holdout slow-drawdown window exists.",
+    "warnings": "Research-only B2 final decision diagnostics; no B2 tuning, B3/B4/B5/B6/v3, paper-shadow, broker/order or production action."
+  },
+  "report_type": "b2_slow_drawdown_evidence_completion",
+  "requested_date_range": {
+    "end_date": "2026-06-18",
+    "source": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json",
+    "start_date": "2022-12-01"
+  },
+  "safety_boundary": {
+    "broker_action_allowed": false,
+    "extended_shadow_allowed": false,
+    "live_trading_allowed": false,
+    "manual_review_only": true,
+    "official_target_weights": false,
+    "order_ticket_generated": false,
+    "owner_decision_appended": false,
+    "paper_shadow_activation": false,
+    "paper_shadow_allowed": false,
+    "production_effect": "none",
+    "research_only": true
+  },
+  "schema_version": 1,
+  "source_artifacts": {
+    "b2_control_window_rerun": "D:\\Work\\AITradingSystem\\docs\\research\\b2_control_window_rerun.json",
+    "b2_cost_benchmark_utility_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_cost_benchmark_utility_review.json",
+    "b2_fast_risk_no_trigger_audit": "D:\\Work\\AITradingSystem\\docs\\research\\b2_fast_risk_no_trigger_audit.json",
+    "b2_full_diagnostic_backfill": "D:\\Work\\AITradingSystem\\docs\\research\\b2_full_diagnostic_backfill.json",
+    "b2_gate_v5": "D:\\Work\\AITradingSystem\\docs\\research\\b2_gate_v5.json",
+    "b2_no_trigger_correctness_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_no_trigger_correctness_review.json",
+    "b2_reentry_lag_root_cause_review": "D:\\Work\\AITradingSystem\\docs\\research\\b2_reentry_lag_root_cause_review.json",
+    "b2_research_branch_snapshot_v2": "D:\\Work\\AITradingSystem\\docs\\research\\b2_research_branch_snapshot_v2.json",
+    "b2_role_narrowing_assessment": "D:\\Work\\AITradingSystem\\docs\\research\\b2_role_narrowing_assessment.json",
+    "b2_signal_robustness_trigger_stability": "D:\\Work\\AITradingSystem\\docs\\research\\b2_signal_robustness_trigger_stability.json",
+    "b2_slow_drawdown_repeatability_study": "D:\\Work\\AITradingSystem\\docs\\research\\b2_slow_drawdown_repeatability_study.json",
+    "b2_targeted_evidence_backfill_v2": "D:\\Work\\AITradingSystem\\docs\\research\\b2_targeted_evidence_backfill_v2.json",
+    "b2_targeted_evidence_scorecard": "D:\\Work\\AITradingSystem\\docs\\research\\b2_targeted_evidence_scorecard.json",
+    "b2_targeted_evidence_window_lock": "D:\\Work\\AITradingSystem\\docs\\research\\b2_targeted_evidence_window_lock.json",
+    "b3_signal_precheck_resolution_plan": "D:\\Work\\AITradingSystem\\docs\\research\\b3_signal_precheck_resolution_plan.json",
+    "research_window_catalog": "D:\\Work\\AITradingSystem\\docs\\research\\research_window_catalog.json"
+  },
+  "status": "B2_SLOW_DRAWDOWN_NO_ADDITIONAL_WINDOW",
+  "task_id": "TRADING-597",
+  "threshold_tuning_applied": false,
+  "window_inventory": [
+    {
+      "end_date": "2026-06-18",
+      "holdout_blocked": false,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": false,
+      "purpose": "development context only",
+      "rejection_reason": "not_labeled_slow_drawdown",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2022-12-01",
+      "window_id": "ai_cycle_development_full"
+    },
+    {
+      "end_date": "2023-07-31",
+      "holdout_blocked": false,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": false,
+      "purpose": "development / mini-backfill diagnostic",
+      "rejection_reason": "not_labeled_slow_drawdown",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2023-01-03",
+      "window_id": "normal_market_regime"
+    },
+    {
+      "end_date": "2024-08-09",
+      "holdout_blocked": false,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": false,
+      "purpose": "stress diagnostic",
+      "rejection_reason": "not_labeled_slow_drawdown",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2024-07-10",
+      "window_id": "rapid_drawdown"
+    },
+    {
+      "end_date": "2025-04-30",
+      "holdout_blocked": false,
+      "independent_from_primary": false,
+      "is_slow_drawdown_candidate": true,
+      "is_untouched_holdout": false,
+      "purpose": "stress diagnostic",
+      "rejection_reason": "primary_slow_drawdown_window_already_used",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2025-01-02",
+      "window_id": "slow_drawdown"
+    },
+    {
+      "end_date": "2023-11-15",
+      "holdout_blocked": false,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": false,
+      "purpose": "stress diagnostic and turnover diagnostic",
+      "rejection_reason": "not_labeled_slow_drawdown",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2023-08-01",
+      "window_id": "high_volatility_sideways_market"
+    },
+    {
+      "end_date": "2024-04-19",
+      "holdout_blocked": false,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": false,
+      "purpose": "AI / semiconductor stress diagnostic",
+      "rejection_reason": "not_labeled_slow_drawdown",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2024-03-08",
+      "window_id": "ai_semiconductor_correction"
+    },
+    {
+      "end_date": "2023-10-31",
+      "holdout_blocked": false,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": false,
+      "purpose": "false risk-off diagnostic",
+      "rejection_reason": "not_labeled_slow_drawdown",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": "2023-09-01",
+      "window_id": "false_risk_off_cluster"
+    },
+    {
+      "end_date": null,
+      "holdout_blocked": true,
+      "independent_from_primary": true,
+      "is_slow_drawdown_candidate": false,
+      "is_untouched_holdout": true,
+      "purpose": "final independent holdout",
+      "rejection_reason": "untouched_holdout_blocked",
+      "selected_as_additional_slow_drawdown": false,
+      "start_date": null,
+      "window_id": "untouched_temporal_holdout"
+    }
+  ]
+}
