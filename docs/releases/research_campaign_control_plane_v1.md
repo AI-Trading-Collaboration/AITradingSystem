@@ -48,13 +48,23 @@
 - 新增 B2 branch finalization snapshot，当前输出 `OWNER_REVIEW_REQUIRED`，并固定 B4/B5/B6/v3/paper-shadow 全部不允许。
 - `validation-pack` rc4 写入 `outputs/research_campaigns/control_plane_v1_rc4_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
 
+## rc5 更新
+
+- 新增 B2 owner decision record，显式记录 `owner_action=return_to_design`，append 到 `data/research_campaigns/b2-risk-overlay-current-form/owner_decisions.jsonl`，并把 B2 current-form state 更新为 `ARCHIVED + RETURNED_TO_DESIGN`。
+- 新增 B2 current-form campaign archive，保留 evidence、source artifacts、stage history 和 transitions lineage。
+- 新增 B2 reusable evidence report，区分 reusable、weak informative、invalidated、role-specific-only 和 not reusable evidence。
+- 新增 slow-drawdown defensive overlay RFC、re-entry policy design contract 和 fast-shock trigger feasibility RFC；三者均为 design-only，不实现策略、不运行 backfill、不访问 untouched holdout。
+- 新增 post-B2 campaign program snapshot，披露 B2 current-form status、owner decision、redesign artifacts、B3 status 和 B4/B5/B6/v3/paper-shadow flags。
+- 归档后的 `campaign run --stage next` 返回 archived no-op，不消耗 evidence budget、不写新 evidence、不触发 production effect。
+- `validation-pack` rc5 写入 `outputs/research_campaigns/control_plane_v1_rc5_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
+
 ## 限制
 
 - B2 Campaign compute 已覆盖 targeted/full/gate，但 legacy B2 task-specific CLI 仍保留到 owner deprecation review 后。
 - Audited-artifact adapter 仍保留用于 parity 和历史 evidence 审计。
 - 未配置 adapter、输入缺失、holdout 越权、输出 invalid 或 safety metadata 不合格时 fail-closed。
 - B3 仍只支持 signal-precheck，不允许 weight generation、mini-backfill、B4/B5/B6/v3 或 paper-shadow。
-- Owner packet 不自动 append owner decision。
+- Owner packet 仍不自动 append owner decision；只有显式 B2 owner decision record builder 会写 audit log。
 
 ## 安全边界
 

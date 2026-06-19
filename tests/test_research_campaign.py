@@ -15,13 +15,16 @@ from ai_trading_system.research_campaign import (
     build_b2_campaign_full_parity_validation,
     build_b2_compute_adapter_smoke_report,
     build_b2_compute_parity_validation,
+    build_b2_current_form_campaign_archive,
     build_b2_full_diagnostic_compute_report,
     build_b2_gate_compute_report,
     build_b3_signal_compute_adapter_smoke_report,
     build_campaign_b2_branch_finalization,
     build_campaign_b2_final_gate,
     build_campaign_b2_next_action_freeze,
+    build_campaign_b2_owner_decision_record,
     build_campaign_b2_owner_review_packet,
+    build_campaign_b2_reusable_evidence_report,
     build_campaign_evidence_budget_final_decision_drill,
     build_campaign_managed_b2_final_repeatability_run,
     build_campaign_run_next_stage_smoke_report,
@@ -29,7 +32,11 @@ from ai_trading_system.research_campaign import (
     build_campaign_validation_payload,
     build_case_specific_runner_deprecation_plan,
     build_evidence_budget_forced_transition_report,
+    build_fast_shock_trigger_feasibility_rfc,
     build_legacy_b2_runner_deprecation_readiness,
+    build_post_b2_campaign_program_snapshot,
+    build_reentry_policy_design_contract,
+    build_slow_drawdown_defensive_overlay_rfc,
     campaign_plan,
     classify_interaction_effect,
     evaluate_gate,
@@ -128,9 +135,7 @@ def test_b2_stage_runner_uses_configured_compute_adapter(tmp_path: Path) -> None
     assert payload["outcome"] == "NEEDS_MORE_EVIDENCE"
     assert payload["generated_evidence_count"] == 6
     assert payload["adapter_status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
-    assert payload["result"]["adapter_id"] == (
-        "b2-risk-overlay-control-window-compute-adapter-v1"
-    )
+    assert payload["result"]["adapter_id"] == ("b2-risk-overlay-control-window-compute-adapter-v1")
     assert payload["result"]["run_mode"] == "COMPUTE_MODE"
     assert payload["result"]["compute_performed"] is True
     assert payload["result"]["imported_evidence"] is False
@@ -197,6 +202,13 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
         "campaign_b2_final_gate",
         "campaign_b2_owner_review_packet",
         "campaign_b2_branch_finalization",
+        "campaign_b2_owner_decision_record",
+        "b2_current_form_campaign_archive",
+        "campaign_b2_reusable_evidence_report",
+        "slow_drawdown_defensive_overlay_rfc",
+        "reentry_policy_design_contract",
+        "fast_shock_trigger_feasibility_rfc",
+        "post_b2_campaign_program_snapshot",
         "campaign_control_plane_v1_validation_pack",
     }
     assert expected <= set(payload["artifacts"])
@@ -308,9 +320,7 @@ def test_b2_finalization_freeze_repeatability_gate_packet_and_branch(
         "NARROW_ROLE",
         "RETURN_TO_DESIGN",
     } <= set(freeze["allowed_next_actions"])
-    assert {"B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"} <= set(
-        freeze["blocked_actions"]
-    )
+    assert {"B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"} <= set(freeze["blocked_actions"])
     assert repeatability["status"] == "B2_FINAL_REPEATABILITY_RUN_COMPLETE"
     assert repeatability["orchestration_entrypoint"] == "campaign run --stage next"
     assert repeatability["run_result"]["adapter_status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
@@ -332,6 +342,78 @@ def test_b2_finalization_freeze_repeatability_gate_packet_and_branch(
     assert branch["B6_allowed"] is False
     assert branch["v3_allowed"] is False
     assert branch["paper_shadow_allowed"] is False
+
+
+def test_b2_owner_decision_archive_reusable_evidence_and_redesign_snapshot(
+    tmp_path: Path,
+) -> None:
+    initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
+    initialize_campaign(spec_path=B3_SPEC, campaign_root=tmp_path)
+
+    owner = build_campaign_b2_owner_decision_record(
+        campaign_root=tmp_path,
+        owner_action="return_to_design",
+        decision_id="test-b2-owner-return-to-design",
+        apply_to_campaign_state=True,
+    )
+    _, state, evidence = load_campaign_bundle("b2-risk-overlay-current-form", tmp_path)
+    owner_decisions = [
+        json.loads(line)
+        for line in (tmp_path / "b2-risk-overlay-current-form" / "owner_decisions.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+
+    assert owner["status"] == "B2_OWNER_DECISION_RECORDED"
+    assert owner["owner_action"] == "return_to_design"
+    assert owner["decision_outcome"] == "RETURNED_TO_DESIGN"
+    assert owner["owner_decision_appended"] is True
+    assert owner["campaign_state_updated"] is True
+    assert all(value is False for value in owner["disallowed_owner_approvals"].values())
+    assert state.current_stage == "ARCHIVED"
+    assert state.current_outcome == "RETURNED_TO_DESIGN"
+    assert "OWNER_DECISION_RETURN_TO_DESIGN" in state.reason_codes
+    assert evidence
+    assert len(owner_decisions) == 1
+
+    archive = build_b2_current_form_campaign_archive(campaign_root=tmp_path)
+    reusable = build_campaign_b2_reusable_evidence_report(campaign_root=tmp_path)
+    slow_rfc = build_slow_drawdown_defensive_overlay_rfc(campaign_root=tmp_path)
+    reentry = build_reentry_policy_design_contract(campaign_root=tmp_path)
+    fast_rfc = build_fast_shock_trigger_feasibility_rfc(campaign_root=tmp_path)
+    snapshot = build_post_b2_campaign_program_snapshot(
+        campaign_root=tmp_path,
+        owner_decision=owner,
+        archive=archive,
+        reusable_evidence=reusable,
+        slow_drawdown_rfc=slow_rfc,
+        reentry_contract=reentry,
+        fast_shock_rfc=fast_rfc,
+    )
+    plan = campaign_plan(campaign_id="b2-risk-overlay-current-form", campaign_root=tmp_path)
+
+    assert archive["status"] == "B2_CURRENT_FORM_RETURNED_TO_DESIGN"
+    assert archive["evidence_record_count"] == len(evidence)
+    assert archive["B4_retest_allowed"] is False
+    assert archive["B5_allowed"] is False
+    assert archive["B6_allowed"] is False
+    assert archive["v3_allowed"] is False
+    assert archive["paper_shadow_allowed"] is False
+    assert reusable["status"] == "B2_REUSABLE_EVIDENCE_REPORT_READY"
+    assert reusable["invalidated_evidence"][0]["evidence_id"] == "fast_risk_current_form"
+    assert slow_rfc["status"] == "SLOW_DRAWDOWN_OVERLAY_RFC_READY"
+    assert reentry["status"] == "REENTRY_POLICY_CONTRACT_READY"
+    assert fast_rfc["status"] == "FAST_SHOCK_RFC_READY"
+    assert snapshot["status"] == "POST_B2_CAMPAIGN_PROGRAM_SNAPSHOT_READY"
+    assert snapshot["current_b2_campaign_status"] == "B2_CURRENT_FORM_RETURNED_TO_DESIGN"
+    assert snapshot["B4_retest_allowed"] is False
+    assert snapshot["B5_allowed"] is False
+    assert snapshot["B6_allowed"] is False
+    assert snapshot["v3_allowed"] is False
+    assert snapshot["paper_shadow_allowed"] is False
+    assert plan["allowed_next_actions"] == []
+    assert "REOPEN_ARCHIVED_CAMPAIGN_WITHOUT_OWNER_ACTION" in plan["blocked_actions"]
 
 
 def test_budget_forced_transition_b3_smoke_status_ux_and_deprecation_plan(

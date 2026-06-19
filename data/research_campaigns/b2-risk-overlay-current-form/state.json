@@ -1,8 +1,8 @@
 {
   "campaign_id": "b2-risk-overlay-current-form",
   "created_at": "2026-06-19T13:32:19Z",
-  "current_outcome": "NEEDS_MORE_EVIDENCE",
-  "current_stage": "TARGETED_EVIDENCE",
+  "current_outcome": "RETURNED_TO_DESIGN",
+  "current_stage": "ARCHIVED",
   "data_quality_status": "NOT_REQUIRED_CONTROL_PLANE_ONLY",
   "evidence_budget_used": {
     "holdout_accesses": 0,
@@ -17,9 +17,11 @@
   "migrated_from_legacy": true,
   "program_id": "weight-research-v1",
   "reason_codes": [
+    "B2_CURRENT_FORM_ARCHIVED",
     "FAST_RISK_NOT_SUPPORTED",
-    "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+    "OWNER_DECISION_RETURN_TO_DESIGN",
     "REENTRY_LAG_SIGNAL_DRIVEN",
+    "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
     "UTILITY_MIXED"
   ],
   "safety_boundary": {
@@ -36,7 +38,8 @@
   "source_artifacts": [
     "TRADING-575_to_580_B2_Control_Window_Evidence_Completion",
     "TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope",
-    "TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision"
+    "TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision",
+    "TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan"
   ],
   "stage_history": [
     {
@@ -50,8 +53,24 @@
       ],
       "run_id": "legacy-b2-targeted-evidence",
       "stage": "TARGETED_EVIDENCE"
+    },
+    {
+      "created_at": "2026-06-19T15:37:51Z",
+      "decision_id": "TRADING-654_b2-risk-overlay-current-form_return_to_design_2026-06-20",
+      "outcome": "RETURNED_TO_DESIGN",
+      "reason_codes": [
+        "B2_CURRENT_FORM_ARCHIVED",
+        "FAST_RISK_NOT_SUPPORTED",
+        "OWNER_DECISION_RETURN_TO_DESIGN",
+        "REENTRY_LAG_SIGNAL_DRIVEN",
+        "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+        "UTILITY_MIXED"
+      ],
+      "run_id": "b2-risk-overlay-current-form-owner-decision-return_to_design-20260619T153751Z",
+      "source": "b2_owner_decision",
+      "stage": "ARCHIVED"
     }
   ],
   "title": "B2 risk overlay current-form evaluation",
-  "updated_at": "2026-06-19T13:32:19Z"
+  "updated_at": "2026-06-19T15:37:51Z"
 }

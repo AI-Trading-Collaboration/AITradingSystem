@@ -203,7 +203,7 @@ def campaign_validation_pack_command(
         typer.Option("--json-output-path", help="可选 JSON 输出路径。"),
     ] = None,
 ) -> None:
-    """写出 Control Plane v1 rc4 adapter/parity/budget/next-action validation pack。"""
+    """写出 Control Plane v1 rc5 adapter/parity/budget/next-action validation pack。"""
     try:
         payload = write_campaign_control_plane_v1_validation_artifacts(
             campaign_root=campaign_root,
@@ -419,8 +419,7 @@ def run_campaign_command(
     _print_status("Campaign stage run", payload["outcome"])
     console.print(f"run_id={payload['run_id']}；stage={payload['stage']}")
     console.print(
-        f"adapter={payload.get('adapter_id') or 'none'}；"
-        f"status={payload.get('adapter_status')}"
+        f"adapter={payload.get('adapter_id') or 'none'}；status={payload.get('adapter_status')}"
     )
     if payload["outcome"] == "BLOCKED":
         raise typer.Exit(code=1)

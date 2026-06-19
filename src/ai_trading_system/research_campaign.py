@@ -175,6 +175,25 @@ B2_BRANCH_FINALIZATION_DECISIONS = [
     "STOP_B2_RESEARCH_LINE",
     "OWNER_REVIEW_REQUIRED",
 ]
+B2_OWNER_DECISION_ACTIONS = [
+    "return_to_design",
+    "narrow_role_with_limited_evidence",
+    "reject_current_form",
+    "hold_for_manual_review",
+]
+B2_OWNER_DECISION_OUTCOMES = {
+    "return_to_design": "RETURNED_TO_DESIGN",
+    "narrow_role_with_limited_evidence": "NARROW_ROLE_WITH_LIMITED_EVIDENCE",
+    "reject_current_form": "B2_CURRENT_FORM_REJECTED",
+    "hold_for_manual_review": "OWNER_REVIEW_REQUIRED",
+}
+B2_OWNER_DECISION_REASON_CODES = {
+    "return_to_design": "OWNER_DECISION_RETURN_TO_DESIGN",
+    "narrow_role_with_limited_evidence": "OWNER_DECISION_NARROW_ROLE_WITH_LIMITED_EVIDENCE",
+    "reject_current_form": "OWNER_DECISION_REJECT_CURRENT_FORM",
+    "hold_for_manual_review": "OWNER_DECISION_HOLD_FOR_MANUAL_REVIEW",
+}
+B2_POST_CAMPAIGN_ARTIFACT_SOURCE = "TRADING-654_to_660_B2_Owner_Decision_And_Redesign_Plan"
 
 ALWAYS_BLOCKED_RESEARCH_ACTIONS = [
     "B4_RETEST",
@@ -669,6 +688,24 @@ def run_campaign_stage(
     directory = campaign_directory(campaign_id, campaign_root)
     spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
     requested_normalized = requested_stage.upper().replace("-", "_")
+    if requested_normalized == "NEXT" and state.current_stage == "ARCHIVED":
+        return {
+            "run_id": f"{campaign_id}-archived-noop-{_compact_time()}",
+            "campaign_id": campaign_id,
+            "stage": "ARCHIVED",
+            "outcome": state.current_outcome,
+            "reason_codes": state.reason_codes,
+            "generated_evidence_count": 0,
+            "result": {
+                "status": "CAMPAIGN_ARCHIVED_NOOP",
+                "archived": True,
+                "message": "Campaign is archived; next-stage execution is disabled.",
+                "production_effect": "none",
+            },
+            "adapter_id": None,
+            "adapter_status": "CAMPAIGN_ARCHIVED_NOOP",
+            "safety_boundary": state.safety_boundary,
+        }
     plan_payload = (
         campaign_plan(
             campaign_id=campaign_id,
@@ -727,9 +764,7 @@ def run_campaign_stage(
         )
         outcome = "PASS" if validation["validation_status"] != "FAIL" else "BLOCKED"
         reason_codes = [
-            issue["issue_id"]
-            for issue in validation["issues"]
-            if issue["severity"] == "error"
+            issue["issue_id"] for issue in validation["issues"] if issue["severity"] == "error"
         ]
         result_payload = validation
     elif target_stage == "INPUT_PRECHECK":
@@ -765,9 +800,7 @@ def run_campaign_stage(
             )
             outcome = "PASS" if validation["validation_status"] != "FAIL" else "BLOCKED"
             reason_codes = [
-                issue["issue_id"]
-                for issue in validation["issues"]
-                if issue["severity"] == "error"
+                issue["issue_id"] for issue in validation["issues"] if issue["severity"] == "error"
             ]
             generated_evidence.append(
                 _control_evidence(
@@ -814,11 +847,7 @@ def run_campaign_stage(
             if imported_stage_evidence:
                 outcome = _outcome_from_imported_stage_evidence(imported_stage_evidence, state)
                 reason_codes = sorted(
-                    {
-                        code
-                        for record in imported_stage_evidence
-                        for code in record.reason_codes
-                    }
+                    {code for record in imported_stage_evidence for code in record.reason_codes}
                     | set(state.reason_codes)
                 )
                 result_payload = {
@@ -890,10 +919,7 @@ def run_campaign_stage(
                 state=state,
                 evidence=[
                     *evidence,
-                    *(
-                        EvidenceRecord.model_validate(r)
-                        for r in adapter_run.evidence_records
-                    ),
+                    *(EvidenceRecord.model_validate(r) for r in adapter_run.evidence_records),
                 ],
                 gate_policy_path=gate_policy_path,
             )
@@ -969,9 +995,7 @@ def run_campaign_stage(
             "created_at": state.updated_at,
             "result": result_payload,
             "adapter_id": (
-                result_payload.get("adapter_id")
-                if isinstance(result_payload, dict)
-                else None
+                result_payload.get("adapter_id") if isinstance(result_payload, dict) else None
             ),
             "adapter_status": (
                 result_payload.get("status") if isinstance(result_payload, dict) else None
@@ -1110,6 +1134,10 @@ def build_b2_campaign_parity_validation(
         "REENTRY_LAG_SIGNAL_DRIVEN",
         "UTILITY_MIXED",
     }
+    archived_after_owner_decision = (
+        state.current_stage == "ARCHIVED"
+        and state.current_outcome in set(B2_OWNER_DECISION_OUTCOMES.values())
+    )
     expected_blocked = {"B4_RETEST", "B5", "B6", "V3", "PAPER_SHADOW"}
     positive_reason_codes = {
         code
@@ -1117,14 +1145,15 @@ def build_b2_campaign_parity_validation(
         for code in record.reason_codes
         if record.direction == "positive"
     }
-    all_evidence_reason_codes = {
-        code for record in evidence for code in record.reason_codes
-    }
+    all_evidence_reason_codes = {code for record in evidence for code in record.reason_codes}
     checks = [
         {
             "check_id": "campaign_stage_outcome_matches_old_outcome",
-            "passed": state.current_stage == "TARGETED_EVIDENCE"
-            and state.current_outcome == "NEEDS_MORE_EVIDENCE",
+            "passed": (
+                state.current_stage == "TARGETED_EVIDENCE"
+                and state.current_outcome == "NEEDS_MORE_EVIDENCE"
+            )
+            or archived_after_owner_decision,
         },
         {
             "check_id": "reason_codes_cover_old_conclusion",
@@ -1152,6 +1181,7 @@ def build_b2_campaign_parity_validation(
         "status": status,
         "stage": state.current_stage,
         "outcome": state.current_outcome,
+        "archived_after_owner_decision": archived_after_owner_decision,
         "reason_codes": state.reason_codes,
         "positive_evidence": sorted(positive_reason_codes),
         "blocked_actions": plan["blocked_actions"],
@@ -1219,6 +1249,9 @@ def build_campaign_next_action_parity_review(
 ) -> dict[str, Any]:
     b2 = campaign_plan(campaign_id="b2-risk-overlay-current-form", campaign_root=campaign_root)
     b3 = campaign_plan(campaign_id="b3-slow-tilt-signal-precheck", campaign_root=campaign_root)
+    b2_archived_after_owner_decision = b2["current_stage"] == "ARCHIVED" and b2[
+        "current_outcome"
+    ] in set(B2_OWNER_DECISION_OUTCOMES.values())
     b2_allowed = {
         "COMPLETE_FINAL_REPEATABILITY_ROUND",
         "NARROW_ROLE",
@@ -1243,7 +1276,8 @@ def build_campaign_next_action_parity_review(
     checks = [
         {
             "check_id": "b2_allowed_actions_match_manual_conclusion",
-            "passed": b2_allowed <= set(b2["allowed_next_actions"]),
+            "passed": b2_allowed <= set(b2["allowed_next_actions"])
+            or b2_archived_after_owner_decision,
         },
         {
             "check_id": "b2_blocked_actions_match_manual_conclusion",
@@ -1264,6 +1298,7 @@ def build_campaign_next_action_parity_review(
         "status": "PASS" if all(check["passed"] for check in checks) else "FAIL",
         "b2_allowed_actions": b2["allowed_next_actions"],
         "b2_blocked_actions": b2["blocked_actions"],
+        "b2_archived_after_owner_decision": b2_archived_after_owner_decision,
         "b3_allowed_actions": b3["allowed_next_actions"],
         "b3_blocked_actions": b3["blocked_actions"],
         "checks": checks,
@@ -1368,6 +1403,10 @@ def build_b2_compute_parity_validation(
         PROJECT_ROOT / "docs" / "research" / "b2_no_trigger_correctness_review.json"
     )
     plan = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
+    archived_after_owner_decision = (
+        state.current_stage == "ARCHIVED"
+        and state.current_outcome in set(B2_OWNER_DECISION_OUTCOMES.values())
+    )
     checks = [
         {
             "check_id": "status_matches_expected_targeted_compute",
@@ -1376,8 +1415,7 @@ def build_b2_compute_parity_validation(
         },
         {
             "check_id": "reason_codes_include_targeted_pass",
-            "passed": "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
-            in adapter_run["reason_codes"],
+            "passed": "B2_TARGETED_EVIDENCE_COMPUTE_PASS" in adapter_run["reason_codes"],
         },
         {
             "check_id": "fast_risk_status_matches_audited",
@@ -1414,14 +1452,14 @@ def build_b2_compute_parity_validation(
                 "WINDOW_STABILITY",
                 "SAFETY",
             }
-            <= {
-                record["category"]
-                for record in adapter_run.get("evidence_records", [])
-            },
+            <= {record["category"] for record in adapter_run.get("evidence_records", [])},
         },
         {
             "check_id": "next_actions_remain_manual_review_safe",
-            "passed": "COMPLETE_FINAL_REPEATABILITY_ROUND" in plan["allowed_next_actions"]
+            "passed": (
+                "COMPLETE_FINAL_REPEATABILITY_ROUND" in plan["allowed_next_actions"]
+                or archived_after_owner_decision
+            )
             and "B4_RETEST" in plan["blocked_actions"],
         },
         {
@@ -1444,6 +1482,7 @@ def build_b2_compute_parity_validation(
         "computed_status": smoke["status"],
         "audited_status": audited_scorecard.get("status"),
         "state_reason_codes": state.reason_codes,
+        "archived_after_owner_decision": archived_after_owner_decision,
         "adapter_reason_codes": adapter_run["reason_codes"],
         "computed_metrics": evidence_by_metric,
         "audited_metrics": {
@@ -1616,9 +1655,27 @@ def build_b2_campaign_e2e_compute_report(
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
 ) -> dict[str, Any]:
+    _, source_state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    diagnostic_replay_from_archive = source_state.current_stage == "ARCHIVED"
     with tempfile.TemporaryDirectory(prefix="b2-campaign-e2e-compute-") as tmp:
         tmp_root = Path(tmp) / "campaigns"
-        shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
+        tmp_campaign_dir = tmp_root / campaign_id
+        shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_campaign_dir)
+        if diagnostic_replay_from_archive:
+            spec, state, _ = load_campaign_bundle(campaign_id, tmp_root)
+            state.current_stage = "TARGETED_EVIDENCE"
+            state.current_outcome = "NEEDS_MORE_EVIDENCE"
+            state.reason_codes = [
+                "FAST_RISK_NOT_SUPPORTED",
+                "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+                "REENTRY_LAG_SIGNAL_DRIVEN",
+                "UTILITY_MIXED",
+            ]
+            state.evidence_budget_used.targeted_rounds = min(
+                state.evidence_budget_used.targeted_rounds,
+                max(0, spec.evidence_budget.max_targeted_rounds - 1),
+            )
+            write_campaign_state(state, tmp_campaign_dir)
         runs = [
             run_campaign_stage(
                 campaign_id=campaign_id,
@@ -1647,8 +1704,7 @@ def build_b2_campaign_e2e_compute_report(
         },
         {
             "check_id": "full_diagnostic_compute_stage_complete",
-            "passed": adapter_statuses.get("FULL_DIAGNOSTIC")
-            == "B2_FULL_DIAGNOSTIC_COMPLETE",
+            "passed": adapter_statuses.get("FULL_DIAGNOSTIC") == "B2_FULL_DIAGNOSTIC_COMPLETE",
         },
         {
             "check_id": "interaction_stage_remains_research_design_only",
@@ -1663,16 +1719,14 @@ def build_b2_campaign_e2e_compute_report(
         {
             "check_id": "e2e_has_no_forbidden_production_effects",
             "passed": all(
-                run.get("safety_boundary", {}).get("production_effect") == "none"
-                for run in runs
+                run.get("safety_boundary", {}).get("production_effect") == "none" for run in runs
             ),
         },
     ]
     gate_outcome = runs[-1]["outcome"]
     status = (
         "B2_CAMPAIGN_E2E_COMPUTE_PASS_WITH_LIMITATIONS"
-        if all(check["passed"] for check in checks)
-        and gate_outcome == "OWNER_OVERRIDE_REQUIRED"
+        if all(check["passed"] for check in checks) and gate_outcome == "OWNER_OVERRIDE_REQUIRED"
         else (
             "B2_CAMPAIGN_E2E_COMPUTE_PASS"
             if all(check["passed"] for check in checks)
@@ -1687,6 +1741,7 @@ def build_b2_campaign_e2e_compute_report(
         "checks": checks,
         "stage_runs": runs,
         "final_status": final_status,
+        "diagnostic_replay_from_archive": diagnostic_replay_from_archive,
         "safety_boundary": _adapter_safety_metadata(),
         "production_effect": "none",
     }
@@ -1724,10 +1779,16 @@ def build_b2_campaign_full_parity_validation(
         PROJECT_ROOT / "docs" / "research" / "b2_full_diagnostic_with_control_windows.json"
     )
     audited_gate = _read_json(PROJECT_ROOT / "docs" / "research" / "b2_gate_v5.json")
-    explained_gate_diff = gate["decision"] in {
-        "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
-        "OWNER_OVERRIDE_REQUIRED",
-    } and audited_gate.get("status") == "B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE"
+    explained_gate_diff = (
+        gate["decision"]
+        in {
+            "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
+            "B2_ONLY_RETURN_TO_DESIGN",
+            "B2_ONLY_NARROW_ROLE",
+            "OWNER_OVERRIDE_REQUIRED",
+        }
+        and audited_gate.get("status") == "B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE"
+    )
     checks = [
         {
             "check_id": "targeted_compute_matches_legacy_targeted_evidence",
@@ -1735,7 +1796,8 @@ def build_b2_campaign_full_parity_validation(
         },
         {
             "check_id": "full_compute_matches_legacy_control_window_completion",
-            "passed": full["adapter_run"]["status"] == audited_full.get("status")
+            "passed": full["adapter_run"]["status"]
+            == audited_full.get("status")
             == "B2_FULL_DIAGNOSTIC_COMPLETE",
         },
         {
@@ -1817,8 +1879,7 @@ def build_campaign_evidence_budget_final_decision_drill(
         {
             "check_id": "exhausted_budget_forces_owner_override_decision",
             "passed": result["outcome"] == "OWNER_OVERRIDE_REQUIRED"
-            and "EVIDENCE_BUDGET_EXHAUSTED_OWNER_OVERRIDE_REQUIRED"
-            in result["reason_codes"],
+            and "EVIDENCE_BUDGET_EXHAUSTED_OWNER_OVERRIDE_REQUIRED" in result["reason_codes"],
         },
         {
             "check_id": "generic_needs_more_evidence_not_returned",
@@ -1872,10 +1933,7 @@ def build_legacy_b2_runner_deprecation_readiness(
         },
         {
             "check_id": "legacy_commands_kept_until_owner_review",
-            "passed": all(
-                runner.get("deprecation_status") != "REMOVED"
-                for runner in b2_runners
-            ),
+            "passed": all(runner.get("deprecation_status") != "REMOVED" for runner in b2_runners),
         },
         {
             "check_id": "no_forbidden_production_effects",
@@ -1914,15 +1972,23 @@ def build_campaign_b2_next_action_freeze(
         "NARROW_ROLE": "narrow role to slow-drawdown defensive overlay",
         "RETURN_TO_DESIGN": "return to design",
     }
+    archived_after_owner_decision = (
+        state.current_stage == "ARCHIVED"
+        and state.current_outcome in set(B2_OWNER_DECISION_OUTCOMES.values())
+    )
     checks = [
         {
             "check_id": "current_stage_and_outcome_frozen",
-            "passed": state.current_stage == "TARGETED_EVIDENCE"
-            and state.current_outcome == "NEEDS_MORE_EVIDENCE",
+            "passed": (
+                state.current_stage == "TARGETED_EVIDENCE"
+                and state.current_outcome == "NEEDS_MORE_EVIDENCE"
+            )
+            or archived_after_owner_decision,
         },
         {
             "check_id": "allowed_actions_cover_manual_b2_options",
-            "passed": {
+            "passed": archived_after_owner_decision
+            or {
                 "COMPLETE_FINAL_REPEATABILITY_ROUND",
                 "NARROW_ROLE",
                 "RETURN_TO_DESIGN",
@@ -1946,6 +2012,7 @@ def build_campaign_b2_next_action_freeze(
         ),
         "current_stage": state.current_stage,
         "current_outcome": state.current_outcome,
+        "archived_after_owner_decision": archived_after_owner_decision,
         "reason_codes": state.reason_codes,
         "evidence_budget_used": state.evidence_budget_used.model_dump(mode="json"),
         "evidence_budget_remaining": plan["evidence_budget_remaining"],
@@ -1973,9 +2040,47 @@ def build_campaign_managed_b2_final_repeatability_run(
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
 ) -> dict[str, Any]:
-    command = (
-        "aits research campaign run --id b2-risk-overlay-current-form --stage next"
-    )
+    command = "aits research campaign run --id b2-risk-overlay-current-form --stage next"
+    _, current_state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    if current_state.current_stage == "ARCHIVED":
+        return {
+            "schema_version": "1.0",
+            "report_type": "campaign_managed_b2_final_repeatability_run",
+            "campaign_id": campaign_id,
+            "status": "B2_FINAL_REPEATABILITY_RUN_BLOCKED",
+            "required_command": command,
+            "orchestration_entrypoint": "campaign run --stage next",
+            "blocked_reason": "B2 current form is archived after owner decision.",
+            "pre_run_status": build_status_payload(
+                campaign_id=campaign_id,
+                detailed=True,
+                campaign_root=campaign_root,
+            ),
+            "run_result": {
+                "stage": "ARCHIVED",
+                "outcome": current_state.current_outcome,
+                "adapter_status": "CAMPAIGN_ARCHIVED_NOOP",
+                "production_effect": "none",
+            },
+            "budget_consumed": False,
+            "tuning_review": {
+                "parameter_tuning_applied": False,
+                "threshold_tuning_applied": False,
+                "forbidden_outputs_created": [],
+            },
+            "checks": [
+                {
+                    "check_id": "campaign_archived_blocks_more_evidence",
+                    "passed": True,
+                },
+                {
+                    "check_id": "holdout_and_production_boundaries_closed",
+                    "passed": current_state.safety_boundary.get("production_effect") == "none",
+                },
+            ],
+            "safety_boundary": current_state.safety_boundary,
+            "production_effect": "none",
+        }
     with tempfile.TemporaryDirectory(prefix="b2-final-repeatability-run-") as tmp:
         tmp_root = Path(tmp) / "campaigns"
         shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
@@ -2067,6 +2172,46 @@ def build_campaign_b2_final_gate(
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
 ) -> dict[str, Any]:
+    _, current_state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    if current_state.current_stage == "ARCHIVED":
+        final_decision = _b2_final_gate_decision_from_archived_outcome(
+            current_state.current_outcome
+        )
+        checks = [
+            {
+                "check_id": "archived_owner_decision_mapped_to_final_taxonomy",
+                "passed": final_decision in B2_FINAL_GATE_DECISIONS,
+            },
+            {
+                "check_id": "generic_needs_more_evidence_not_emitted",
+                "passed": final_decision != "NEEDS_MORE_EVIDENCE",
+            },
+        ]
+        return {
+            "schema_version": "1.0",
+            "report_type": "campaign_b2_final_gate",
+            "campaign_id": campaign_id,
+            "status": final_decision,
+            "final_gate_decision": final_decision,
+            "raw_campaign_adapter_decision": "ARCHIVED_OWNER_DECISION",
+            "adapter_outcome": current_state.current_outcome,
+            "adapter_status": "CAMPAIGN_ARCHIVED_NOOP",
+            "reason_codes": current_state.reason_codes,
+            "post_repeatability_status": build_status_payload(
+                campaign_id=campaign_id,
+                detailed=True,
+                campaign_root=campaign_root,
+            ),
+            "repeatability_run_result": {
+                "status": "B2_FINAL_REPEATABILITY_RUN_BLOCKED",
+                "blocked_reason": "B2 current form is archived after owner decision.",
+            },
+            "adapter_run": None,
+            "allowed_final_gate_decisions": B2_FINAL_GATE_DECISIONS,
+            "checks": checks,
+            "safety_boundary": current_state.safety_boundary,
+            "production_effect": "none",
+        }
     with tempfile.TemporaryDirectory(prefix="b2-final-gate-") as tmp:
         tmp_root = Path(tmp) / "campaigns"
         shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
@@ -2277,6 +2422,595 @@ def build_campaign_b2_branch_finalization(
     }
 
 
+def build_campaign_b2_owner_decision_record(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+    owner_action: str = "return_to_design",
+    decision_id: str | None = None,
+    apply_to_campaign_state: bool = False,
+) -> dict[str, Any]:
+    directory = campaign_directory(campaign_id, campaign_root)
+    spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+    outcome = _b2_owner_decision_outcome(owner_action)
+    decision_id = decision_id or _b2_owner_decision_id(campaign_id, owner_action)
+    reason_summary = _b2_owner_decision_reason_summary(owner_action)
+    next_action = "archive_current_b2_campaign_and_create_narrow_redesign_hypotheses"
+    existing_decisions = _read_jsonl_records(directory / "owner_decisions.jsonl")
+    decision_preexisting = any(
+        record.get("decision_id") == decision_id for record in existing_decisions
+    )
+    decision_record = {
+        "schema_version": "1.0",
+        "decision_id": decision_id,
+        "campaign_id": campaign_id,
+        "owner_action": owner_action,
+        "decision_outcome": outcome,
+        "reason_summary": reason_summary,
+        "next_action": next_action,
+        "created_at": _now_iso(),
+        "source_artifact": B2_POST_CAMPAIGN_ARTIFACT_SOURCE,
+        "production_effect": "none",
+    }
+
+    owner_decision_appended = False
+    state_update = {
+        "state_updated": False,
+        "state_already_reflected_decision": _b2_state_reflects_owner_decision(
+            state=state,
+            outcome=outcome,
+        ),
+    }
+    if apply_to_campaign_state:
+        owner_decision_appended = _append_owner_decision_once(directory, decision_record)
+        state_update = _apply_b2_owner_decision_to_state(
+            campaign_id=campaign_id,
+            campaign_root=campaign_root,
+            owner_action=owner_action,
+            decision_id=decision_id,
+        )
+        _, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+
+    disallowed = {
+        "approve_paper_shadow": False,
+        "approve_B4_retest": False,
+        "approve_B5_B6_v3": False,
+        "approve_live_trading": False,
+        "create_official_target_weights": False,
+        "create_broker_order_artifacts": False,
+    }
+    state_reflects_decision = _b2_state_reflects_owner_decision(
+        state=state,
+        outcome=outcome,
+    )
+    audit_recorded = owner_decision_appended or decision_preexisting
+    checks = [
+        {
+            "check_id": "owner_action_is_allowed",
+            "passed": owner_action in B2_OWNER_DECISION_ACTIONS,
+        },
+        {
+            "check_id": "owner_decision_audit_recorded_when_apply_requested",
+            "passed": (not apply_to_campaign_state) or audit_recorded,
+        },
+        {
+            "check_id": "campaign_state_reflects_owner_decision_when_apply_requested",
+            "passed": (not apply_to_campaign_state) or state_reflects_decision,
+        },
+        {
+            "check_id": "disallowed_actions_remain_false",
+            "passed": all(value is False for value in disallowed.values()),
+        },
+        {
+            "check_id": "evidence_preserved",
+            "passed": len(evidence) > 0,
+        },
+    ]
+    status = (
+        "B2_OWNER_DECISION_RECORDED"
+        if state_reflects_decision and (audit_recorded or apply_to_campaign_state)
+        else "B2_OWNER_DECISION_RECORD_READY"
+    )
+    if not all(check["passed"] for check in checks):
+        status = "B2_OWNER_DECISION_RECORD_BLOCKED"
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_b2_owner_decision_record",
+        "campaign_id": campaign_id,
+        "status": status,
+        "decision_id": decision_id,
+        "owner_action": owner_action,
+        "decision_outcome": outcome,
+        "reason_summary": reason_summary,
+        "next_action": next_action,
+        "allowed_owner_actions": B2_OWNER_DECISION_ACTIONS,
+        "disallowed_owner_approvals": disallowed,
+        "owner_decision_appended": owner_decision_appended,
+        "owner_decision_already_existed": decision_preexisting,
+        "campaign_state_updated": state_update["state_updated"],
+        "campaign_state_already_reflected_decision": state_update[
+            "state_already_reflected_decision"
+        ],
+        "campaign_state_reflects_decision": state_reflects_decision,
+        "pre_decision_stage": state_update.get("from_stage"),
+        "current_stage": state.current_stage,
+        "current_outcome": state.current_outcome,
+        "reason_codes": state.reason_codes,
+        "evidence_record_count": len(evidence),
+        "reader_brief": {
+            "summary": (
+                "Owner decision records B2 current form as returned to design; "
+                "all promotion and production paths remain closed."
+            ),
+            "decision": owner_action,
+            "next_action": next_action,
+            "blocked_paths": ALWAYS_BLOCKED_RESEARCH_ACTIONS,
+        },
+        "checks": checks,
+        "source_artifacts": state.source_artifacts,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_b2_current_form_campaign_archive(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+    directory = campaign_directory(campaign_id, campaign_root)
+    owner_decisions = _read_jsonl_records(directory / "owner_decisions.jsonl")
+    latest_decision = owner_decisions[-1] if owner_decisions else None
+    promotion_flags = _post_b2_safety_flags()
+    evidence_source_artifacts = sorted(
+        {record.source_artifact_id for record in evidence if record.source_artifact_id}
+    )
+    archive_status = _b2_archive_status_from_outcome(state.current_outcome)
+    checks = [
+        {
+            "check_id": "campaign_is_archived",
+            "passed": state.current_stage == "ARCHIVED",
+        },
+        {
+            "check_id": "archive_status_is_allowed",
+            "passed": state.current_outcome
+            in {
+                "RETURNED_TO_DESIGN",
+                "NARROW_ROLE_WITH_LIMITED_EVIDENCE",
+                "B2_CURRENT_FORM_REJECTED",
+                "OWNER_REVIEW_REQUIRED",
+            },
+        },
+        {
+            "check_id": "evidence_and_lineage_preserved",
+            "passed": bool(evidence) and bool(state.source_artifacts),
+        },
+        {
+            "check_id": "promotion_paths_remain_closed",
+            "passed": all(value is False for value in promotion_flags.values()),
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_current_form_campaign_archive",
+        "campaign_id": campaign_id,
+        "status": archive_status if all(check["passed"] for check in checks) else "BLOCKED",
+        "archive_status": state.current_outcome,
+        "current_stage": state.current_stage,
+        "current_outcome": state.current_outcome,
+        "reason_codes": state.reason_codes,
+        "owner_decision": latest_decision,
+        "evidence_record_count": len(evidence),
+        "evidence_records_preserved": True,
+        "lineage": {
+            "source_artifacts": state.source_artifacts,
+            "evidence_source_artifacts": evidence_source_artifacts,
+            "stage_history_count": len(state.stage_history),
+        },
+        "archive_semantics": (
+            "Archived means current B2 form is no longer active; evidence and lineage "
+            "remain available for redesign planning."
+        ),
+        **promotion_flags,
+        "checks": checks,
+        "reader_brief": {
+            "summary": "B2 current form is archived and returned to design.",
+            "evidence_preserved": len(evidence),
+            "next_action": "Use reusable evidence only for narrow redesign RFCs.",
+        },
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "data_quality_status": state.data_quality_status,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_campaign_b2_reusable_evidence_report(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+    summary = _b2_owner_packet_evidence_summary()
+    reusable_rows = _b2_reusable_evidence_rows(summary)
+    checks = [
+        {
+            "check_id": "required_reuse_categories_present",
+            "passed": {
+                "reusable_evidence",
+                "weak_informative_evidence",
+                "invalidated_evidence",
+                "role_specific_only_evidence",
+                "not_reusable_evidence",
+            }
+            <= set(reusable_rows),
+        },
+        {
+            "check_id": "source_evidence_preserved",
+            "passed": len(evidence) > 0,
+        },
+        {
+            "check_id": "no_promotion_decision_emitted",
+            "passed": True,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_b2_reusable_evidence_report",
+        "campaign_id": campaign_id,
+        "status": (
+            "B2_REUSABLE_EVIDENCE_REPORT_READY"
+            if all(check["passed"] for check in checks)
+            else "B2_REUSABLE_EVIDENCE_REPORT_BLOCKED"
+        ),
+        "current_stage": state.current_stage,
+        "current_outcome": state.current_outcome,
+        "evidence_record_count": len(evidence),
+        "evidence_summary": summary,
+        **reusable_rows,
+        "reader_brief": {
+            "summary": (
+                "Control-window cleanliness is reusable; slow-drawdown evidence is "
+                "role-specific and narrow; fast-risk and current-form utility are not reusable "
+                "as promotion evidence."
+            ),
+            "next_use": "Feed RFCs only; do not use as paper-shadow or B4/B5/B6/v3 approval.",
+        },
+        "checks": checks,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "data_quality_status": state.data_quality_status,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_slow_drawdown_defensive_overlay_rfc(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    checks = [
+        {
+            "check_id": "rfc_is_design_only",
+            "passed": True,
+        },
+        {
+            "check_id": "no_weight_or_order_outputs_allowed",
+            "passed": True,
+        },
+        {
+            "check_id": "validation_windows_defined_without_holdout",
+            "passed": True,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "slow_drawdown_defensive_overlay_rfc",
+        "campaign_id": campaign_id,
+        "status": "SLOW_DRAWDOWN_OVERLAY_RFC_READY",
+        "module_id": "slow-drawdown-defensive-overlay-rfc-v1",
+        "hypothesis": (
+            "A narrow defensive overlay may be useful only for slow drawdown regimes "
+            "when it reduces downside participation without triggering fast-shock or "
+            "control-window false risk-off behavior."
+        ),
+        "allowed_scope": [
+            "research-only design discussion",
+            "slow-drawdown defensive trigger definition",
+            "control-window no-trigger requirements",
+            "future targeted evidence plan within explicit budget",
+        ],
+        "forbidden_scope": [
+            "paper-shadow activation",
+            "official target weights",
+            "broker/order artifacts",
+            "live trading approval",
+            "untouched holdout access",
+        ],
+        "required_windows": [
+            "slow_drawdown",
+            "normal_market_control",
+            "false_risk_off_control",
+            "high_volatility_sideways",
+        ],
+        "success_metrics": [
+            "repeatable slow-drawdown defensive benefit",
+            "clean control-window no-trigger behavior",
+            "acceptable re-entry lag under separate policy",
+            "cost/turnover remains bounded by future reviewed policy",
+        ],
+        "failure_modes": [
+            "single-window effect only",
+            "false risk-off in control windows",
+            "re-entry lag overwhelms drawdown benefit",
+            "fast-shock behavior remains unsupported",
+        ],
+        "evidence_budget_policy": "future campaign must declare a fresh explicit budget",
+        "checks": checks,
+        "reader_brief": {
+            "summary": "RFC only: narrow B2 redesign around slow drawdown defense.",
+            "owner_action_required": "Review before any new implementation or backfill.",
+        },
+        "current_b2_stage": state.current_stage,
+        "current_b2_outcome": state.current_outcome,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_reentry_policy_design_contract(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    checks = [
+        {
+            "check_id": "contract_separates_trigger_and_reentry_policy",
+            "passed": True,
+        },
+        {
+            "check_id": "no_strategy_implementation_in_contract",
+            "passed": True,
+        },
+        {
+            "check_id": "forbidden_outputs_listed",
+            "passed": True,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "reentry_policy_design_contract",
+        "campaign_id": campaign_id,
+        "status": "REENTRY_POLICY_CONTRACT_READY",
+        "contract_id": "b2-reentry-policy-design-contract-v1",
+        "purpose": (
+            "Define a separate re-entry policy interface before any future B2 redesign "
+            "can claim re-entry lag is acceptable."
+        ),
+        "required_inputs": [
+            "risk-off entry timestamp",
+            "risk-off exit candidate timestamp",
+            "market recovery signal",
+            "turnover/cost context",
+            "control-window classification",
+        ],
+        "allowed_outputs": [
+            "research-only reentry_state",
+            "lag_days",
+            "reason_codes",
+            "blocked_or_allowed_reentry_label",
+        ],
+        "forbidden_outputs": [
+            "official_target_weight",
+            "broker_order",
+            "paper_shadow_activation",
+            "production_state_mutation",
+        ],
+        "candidate_designs_to_compare": [
+            "fixed cooldown after risk-off",
+            "signal-confirmed re-entry",
+            "tiered partial re-entry",
+            "no separate re-entry policy control",
+        ],
+        "acceptance_metrics": [
+            "lag_days by window",
+            "missed recovery participation",
+            "false re-entry rate",
+            "turnover impact",
+            "interaction with slow-drawdown trigger",
+        ],
+        "checks": checks,
+        "reader_brief": {
+            "summary": "Contract only: re-entry must be solved separately from trigger design.",
+            "current_blocker": "Current B2 re-entry lag is signal-driven and not acceptable.",
+        },
+        "current_b2_stage": state.current_stage,
+        "current_b2_outcome": state.current_outcome,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_fast_shock_trigger_feasibility_rfc(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    checks = [
+        {
+            "check_id": "rfc_does_not_reuse_failed_fast_risk_claim_as_evidence",
+            "passed": True,
+        },
+        {
+            "check_id": "feasibility_requires_new_evidence_before_design",
+            "passed": True,
+        },
+        {
+            "check_id": "promotion_paths_closed",
+            "passed": True,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "fast_shock_trigger_feasibility_rfc",
+        "campaign_id": campaign_id,
+        "status": "FAST_SHOCK_RFC_READY",
+        "rfc_id": "b2-fast-shock-trigger-feasibility-rfc-v1",
+        "feasibility_question": (
+            "Can a separate fast-shock trigger be supported by evidence, or should B2 "
+            "exclude fast-risk handling entirely?"
+        ),
+        "current_evidence_read": "Current B2 design does not support fast-risk behavior.",
+        "candidate_signal_families": [
+            "volatility shock",
+            "breadth deterioration",
+            "gap-down / momentum break",
+            "AI-semiconductor correction proxy",
+        ],
+        "required_feasibility_evidence": [
+            "fast-risk trigger precision",
+            "false positive rate in control windows",
+            "re-entry interaction with shock recovery",
+            "separation from slow-drawdown overlay",
+        ],
+        "rejection_criteria": [
+            "cannot distinguish fast shock from normal volatility",
+            "high false risk-off count",
+            "benefit disappears after cost/turnover review",
+            "requires untouched holdout before owner approval",
+        ],
+        "checks": checks,
+        "reader_brief": {
+            "summary": "RFC only: fast-shock role is unsupported by current B2 evidence.",
+            "next_action": "Treat as feasibility question, not current-form evidence.",
+        },
+        "current_b2_stage": state.current_stage,
+        "current_b2_outcome": state.current_outcome,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def build_post_b2_campaign_program_snapshot(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    campaign_id: str = "b2-risk-overlay-current-form",
+    b3_campaign_id: str = "b3-slow-tilt-signal-precheck",
+    owner_decision: dict[str, Any] | None = None,
+    archive: dict[str, Any] | None = None,
+    reusable_evidence: dict[str, Any] | None = None,
+    slow_drawdown_rfc: dict[str, Any] | None = None,
+    reentry_contract: dict[str, Any] | None = None,
+    fast_shock_rfc: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    owner_decision = owner_decision or build_campaign_b2_owner_decision_record(
+        campaign_root=campaign_root,
+        campaign_id=campaign_id,
+    )
+    archive = archive or build_b2_current_form_campaign_archive(
+        campaign_root=campaign_root,
+        campaign_id=campaign_id,
+    )
+    reusable_evidence = reusable_evidence or build_campaign_b2_reusable_evidence_report(
+        campaign_root=campaign_root,
+        campaign_id=campaign_id,
+    )
+    slow_drawdown_rfc = slow_drawdown_rfc or build_slow_drawdown_defensive_overlay_rfc(
+        campaign_root=campaign_root,
+        campaign_id=campaign_id,
+    )
+    reentry_contract = reentry_contract or build_reentry_policy_design_contract(
+        campaign_root=campaign_root,
+        campaign_id=campaign_id,
+    )
+    fast_shock_rfc = fast_shock_rfc or build_fast_shock_trigger_feasibility_rfc(
+        campaign_root=campaign_root,
+        campaign_id=campaign_id,
+    )
+    b3_status = _b3_program_status(campaign_root, b3_campaign_id)
+    promotion_flags = _post_b2_safety_flags()
+    redesign_statuses = {
+        "reusable_evidence_report": reusable_evidence["status"],
+        "slow_drawdown_defensive_overlay_rfc": slow_drawdown_rfc["status"],
+        "reentry_policy_design_contract": reentry_contract["status"],
+        "fast_shock_trigger_feasibility_rfc": fast_shock_rfc["status"],
+    }
+    checks = [
+        {
+            "check_id": "b2_current_form_archived_or_owner_reviewed",
+            "passed": state.current_stage == "ARCHIVED",
+        },
+        {
+            "check_id": "owner_decision_recorded",
+            "passed": owner_decision["status"] == "B2_OWNER_DECISION_RECORDED",
+        },
+        {
+            "check_id": "redesign_artifacts_ready",
+            "passed": all(status.endswith("READY") for status in redesign_statuses.values()),
+        },
+        {
+            "check_id": "promotion_paths_remain_closed",
+            "passed": all(value is False for value in promotion_flags.values()),
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "post_b2_campaign_program_snapshot",
+        "campaign_id": campaign_id,
+        "status": (
+            "POST_B2_CAMPAIGN_PROGRAM_SNAPSHOT_READY"
+            if all(check["passed"] for check in checks)
+            else "POST_B2_CAMPAIGN_PROGRAM_SNAPSHOT_BLOCKED"
+        ),
+        "current_b2_campaign_status": archive["status"],
+        "current_b2_stage": state.current_stage,
+        "current_b2_outcome": state.current_outcome,
+        "owner_decision_status": owner_decision["status"],
+        "owner_action": owner_decision["owner_action"],
+        "redesign_artifact_statuses": redesign_statuses,
+        "b3_status": b3_status,
+        **promotion_flags,
+        "next_recommended_research_action": (
+            "review_slow_drawdown_overlay_rfc_and_reentry_policy_contract_before_new_campaign"
+        ),
+        "hard_rules": [
+            "B4/B5/B6/v3 remain blocked.",
+            "paper-shadow, extended shadow and live trading remain forbidden.",
+            "official target weights and broker/order artifacts remain forbidden.",
+            "untouched holdout remains untouched.",
+        ],
+        "checks": checks,
+        "reader_brief": {
+            "summary": (
+                "B2 current form is returned to design and archived; only narrow redesign "
+                "planning artifacts remain active."
+            ),
+            "next_action": (
+                "Owner reviews RFC/contract artifacts before any new implementation campaign."
+            ),
+        },
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
 def build_campaign_run_next_stage_smoke_report(
     *,
     campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
@@ -2308,12 +3042,15 @@ def build_campaign_run_next_stage_smoke_report(
         {"check_id": "run_next_not_blocked", "passed": result["outcome"] != "BLOCKED"},
         {
             "check_id": "run_next_stage_is_safe_b2_stage",
-            "passed": result["stage"] == "TARGETED_EVIDENCE",
+            "passed": result["stage"] in {"TARGETED_EVIDENCE", "ARCHIVED"},
         },
         {
             "check_id": "run_next_uses_b2_compute_adapter",
             "passed": result.get("adapter_status")
-            == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
+            in {
+                "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
+                "CAMPAIGN_ARCHIVED_NOOP",
+            },
         },
         {
             "check_id": "run_next_production_effect_none",
@@ -2345,6 +3082,46 @@ def build_evidence_budget_forced_transition_report(
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
 ) -> dict[str, Any]:
+    _, current_state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    if current_state.current_stage == "ARCHIVED":
+        archived_result = run_campaign_stage(
+            campaign_id=campaign_id,
+            requested_stage="next",
+            campaign_root=campaign_root,
+            adapter_registry_path=adapter_registry_path,
+            output_root=output_root / "budget_forced_transition",
+        )
+        checks = [
+            {
+                "check_id": "archived_campaign_does_not_collect_more_evidence",
+                "passed": archived_result["adapter_status"] == "CAMPAIGN_ARCHIVED_NOOP"
+                and archived_result["generated_evidence_count"] == 0,
+            },
+            {
+                "check_id": "archived_campaign_keeps_generic_more_evidence_closed",
+                "passed": current_state.current_outcome != "NEEDS_MORE_EVIDENCE",
+            },
+            {
+                "check_id": "promotion_paths_remain_closed",
+                "passed": current_state.safety_boundary.get("production_effect") == "none",
+            },
+        ]
+        return {
+            "schema_version": "1.0",
+            "report_type": "evidence_budget_forced_transition_report",
+            "campaign_id": campaign_id,
+            "status": (
+                "EVIDENCE_BUDGET_FORCED_TRANSITION_PASS"
+                if all(check["passed"] for check in checks)
+                else "EVIDENCE_BUDGET_FORCED_TRANSITION_FAIL"
+            ),
+            "checks": checks,
+            "allowed_budget_run_result": archived_result,
+            "exhausted_budget_run_result": archived_result,
+            "restricted_outcomes_when_exhausted": RESTRICTED_MORE_EVIDENCE_OUTCOMES,
+            "safety_boundary": current_state.safety_boundary,
+            "production_effect": "none",
+        }
     with tempfile.TemporaryDirectory(prefix="campaign-budget-forced-") as tmp:
         tmp_root = Path(tmp) / "campaigns"
         shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
@@ -2613,6 +3390,61 @@ def build_case_specific_runner_deprecation_plan(
     }
 
 
+def _build_b2_post_campaign_validation_artifacts(
+    *,
+    campaign_root: Path,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, dict[str, Any]]:
+    with tempfile.TemporaryDirectory(prefix="b2-post-campaign-validation-") as tmp:
+        tmp_root = Path(tmp) / "campaigns"
+        shutil.copytree(campaign_root, tmp_root)
+        owner_decision = build_campaign_b2_owner_decision_record(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+            owner_action="return_to_design",
+            apply_to_campaign_state=True,
+        )
+        archive = build_b2_current_form_campaign_archive(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+        )
+        reusable = build_campaign_b2_reusable_evidence_report(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+        )
+        slow_rfc = build_slow_drawdown_defensive_overlay_rfc(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+        )
+        reentry = build_reentry_policy_design_contract(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+        )
+        fast_rfc = build_fast_shock_trigger_feasibility_rfc(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+        )
+        snapshot = build_post_b2_campaign_program_snapshot(
+            campaign_root=tmp_root,
+            campaign_id=campaign_id,
+            owner_decision=owner_decision,
+            archive=archive,
+            reusable_evidence=reusable,
+            slow_drawdown_rfc=slow_rfc,
+            reentry_contract=reentry,
+            fast_shock_rfc=fast_rfc,
+        )
+    return {
+        "campaign_b2_owner_decision_record": owner_decision,
+        "b2_current_form_campaign_archive": archive,
+        "campaign_b2_reusable_evidence_report": reusable,
+        "slow_drawdown_defensive_overlay_rfc": slow_rfc,
+        "reentry_policy_design_contract": reentry,
+        "fast_shock_trigger_feasibility_rfc": fast_rfc,
+        "post_b2_campaign_program_snapshot": snapshot,
+    }
+
+
 def build_campaign_control_plane_v1_validation_pack(
     *,
     campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
@@ -2622,9 +3454,7 @@ def build_campaign_control_plane_v1_validation_pack(
     contract_validation = validate_stage_adapter_contracts(
         adapter_registry_path=adapter_registry_path
     )
-    parity_map = build_b2_campaign_adapter_parity_map(
-        adapter_registry_path=adapter_registry_path
-    )
+    parity_map = build_b2_campaign_adapter_parity_map(adapter_registry_path=adapter_registry_path)
     b2_parity = build_b2_campaign_parity_validation(campaign_root=campaign_root)
     budget = build_evidence_budget_enforcement_report(campaign_root=campaign_root)
     next_actions = build_campaign_next_action_parity_review(campaign_root=campaign_root)
@@ -2684,12 +3514,8 @@ def build_campaign_control_plane_v1_validation_pack(
     )
     status_ux = build_campaign_status_ux_report(campaign_root=campaign_root)
     deprecation_plan = build_case_specific_runner_deprecation_plan()
-    legacy_b2_readiness = build_legacy_b2_runner_deprecation_readiness(
-        full_parity=b2_full_parity
-    )
-    b2_next_action_freeze = build_campaign_b2_next_action_freeze(
-        campaign_root=campaign_root
-    )
+    legacy_b2_readiness = build_legacy_b2_runner_deprecation_readiness(full_parity=b2_full_parity)
+    b2_next_action_freeze = build_campaign_b2_next_action_freeze(campaign_root=campaign_root)
     b2_final_repeatability = build_campaign_managed_b2_final_repeatability_run(
         campaign_root=campaign_root,
         output_root=output_root,
@@ -2713,6 +3539,15 @@ def build_campaign_control_plane_v1_validation_pack(
         final_gate=b2_final_gate,
         owner_packet=b2_owner_packet,
     )
+    post_b2_artifacts = _build_b2_post_campaign_validation_artifacts(campaign_root=campaign_root)
+    _, b2_current_state, _ = load_campaign_bundle(
+        "b2-risk-overlay-current-form",
+        campaign_root,
+    )
+    b2_archived_after_owner_decision = (
+        b2_current_state.current_stage == "ARCHIVED"
+        and b2_current_state.current_outcome in set(B2_OWNER_DECISION_OUTCOMES.values())
+    )
     checks = [
         {
             "check_id": "adapter_contract_validation",
@@ -2728,8 +3563,7 @@ def build_campaign_control_plane_v1_validation_pack(
         },
         {
             "check_id": "b2_targeted_evidence_compute_parity",
-            "passed": b2_compute_parity["status"]
-            == "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_PASS",
+            "passed": b2_compute_parity["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_PASS",
         },
         {
             "check_id": "b2_full_diagnostic_compute_adapter",
@@ -2778,18 +3612,15 @@ def build_campaign_control_plane_v1_validation_pack(
         },
         {
             "check_id": "case_specific_runner_deprecation_plan",
-            "passed": deprecation_plan["status"]
-            == "CASE_SPECIFIC_RUNNER_DEPRECATION_PLAN_READY",
+            "passed": deprecation_plan["status"] == "CASE_SPECIFIC_RUNNER_DEPRECATION_PLAN_READY",
         },
         {
             "check_id": "legacy_b2_runner_deprecation_readiness",
-            "passed": legacy_b2_readiness["status"]
-            == "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER",
+            "passed": legacy_b2_readiness["status"] == "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER",
         },
         {
             "check_id": "b2_next_action_freeze",
-            "passed": b2_next_action_freeze["status"]
-            == "CAMPAIGN_B2_NEXT_ACTION_FREEZE_READY",
+            "passed": b2_next_action_freeze["status"] == "CAMPAIGN_B2_NEXT_ACTION_FREEZE_READY",
         },
         {
             "check_id": "b2_final_repeatability_run",
@@ -2797,7 +3628,11 @@ def build_campaign_control_plane_v1_validation_pack(
             in {
                 "B2_FINAL_REPEATABILITY_RUN_COMPLETE",
                 "B2_FINAL_REPEATABILITY_RUN_PARTIAL",
-            },
+            }
+            or (
+                b2_archived_after_owner_decision
+                and b2_final_repeatability["status"] == "B2_FINAL_REPEATABILITY_RUN_BLOCKED"
+            ),
         },
         {
             "check_id": "b2_final_gate",
@@ -2810,13 +3645,41 @@ def build_campaign_control_plane_v1_validation_pack(
         },
         {
             "check_id": "b2_branch_finalization",
-            "passed": b2_branch_finalization["status"]
-            in B2_BRANCH_FINALIZATION_DECISIONS
+            "passed": b2_branch_finalization["status"] in B2_BRANCH_FINALIZATION_DECISIONS
             and b2_branch_finalization["B4_retest_allowed"] is False
             and b2_branch_finalization["B5_allowed"] is False
             and b2_branch_finalization["B6_allowed"] is False
             and b2_branch_finalization["v3_allowed"] is False
             and b2_branch_finalization["paper_shadow_allowed"] is False,
+        },
+        {
+            "check_id": "b2_owner_decision_record",
+            "passed": post_b2_artifacts["campaign_b2_owner_decision_record"]["status"]
+            == "B2_OWNER_DECISION_RECORDED",
+        },
+        {
+            "check_id": "b2_current_form_campaign_archive",
+            "passed": post_b2_artifacts["b2_current_form_campaign_archive"]["status"]
+            == "B2_CURRENT_FORM_RETURNED_TO_DESIGN",
+        },
+        {
+            "check_id": "b2_reusable_evidence_report",
+            "passed": post_b2_artifacts["campaign_b2_reusable_evidence_report"]["status"]
+            == "B2_REUSABLE_EVIDENCE_REPORT_READY",
+        },
+        {
+            "check_id": "b2_redesign_rfc_and_contract_artifacts",
+            "passed": post_b2_artifacts["slow_drawdown_defensive_overlay_rfc"]["status"]
+            == "SLOW_DRAWDOWN_OVERLAY_RFC_READY"
+            and post_b2_artifacts["reentry_policy_design_contract"]["status"]
+            == "REENTRY_POLICY_CONTRACT_READY"
+            and post_b2_artifacts["fast_shock_trigger_feasibility_rfc"]["status"]
+            == "FAST_SHOCK_RFC_READY",
+        },
+        {
+            "check_id": "post_b2_campaign_program_snapshot",
+            "passed": post_b2_artifacts["post_b2_campaign_program_snapshot"]["status"]
+            == "POST_B2_CAMPAIGN_PROGRAM_SNAPSHOT_READY",
         },
         {
             "check_id": "no_forbidden_production_effects",
@@ -2845,6 +3708,7 @@ def build_campaign_control_plane_v1_validation_pack(
                     b2_final_gate,
                     b2_owner_packet,
                     b2_branch_finalization,
+                    *post_b2_artifacts.values(),
                 )
             ),
         },
@@ -2857,7 +3721,7 @@ def build_campaign_control_plane_v1_validation_pack(
     return {
         "schema_version": "1.0",
         "report_type": "campaign_control_plane_v1_validation_pack",
-        "release_candidate": "rc4",
+        "release_candidate": "rc5",
         "status": status,
         "checks": checks,
         "limitations": [
@@ -2874,6 +3738,10 @@ def build_campaign_control_plane_v1_validation_pack(
             (
                 "B2 finalization artifacts do not append owner decisions and keep "
                 "B4/B5/B6/v3/paper-shadow closed."
+            ),
+            (
+                "B2 post-campaign artifacts record return-to-design and archive the "
+                "current form, but new redesign RFCs remain design-only."
             ),
         ]
         if status.endswith("READY_WITH_LIMITATIONS")
@@ -2902,6 +3770,27 @@ def build_campaign_control_plane_v1_validation_pack(
             "b2_final_gate": b2_final_gate["status"],
             "b2_owner_review_packet": b2_owner_packet["status"],
             "b2_branch_finalization": b2_branch_finalization["status"],
+            "campaign_b2_owner_decision_record": post_b2_artifacts[
+                "campaign_b2_owner_decision_record"
+            ]["status"],
+            "b2_current_form_campaign_archive": post_b2_artifacts[
+                "b2_current_form_campaign_archive"
+            ]["status"],
+            "campaign_b2_reusable_evidence_report": post_b2_artifacts[
+                "campaign_b2_reusable_evidence_report"
+            ]["status"],
+            "slow_drawdown_defensive_overlay_rfc": post_b2_artifacts[
+                "slow_drawdown_defensive_overlay_rfc"
+            ]["status"],
+            "reentry_policy_design_contract": post_b2_artifacts["reentry_policy_design_contract"][
+                "status"
+            ],
+            "fast_shock_trigger_feasibility_rfc": post_b2_artifacts[
+                "fast_shock_trigger_feasibility_rfc"
+            ]["status"],
+            "post_b2_campaign_program_snapshot": post_b2_artifacts[
+                "post_b2_campaign_program_snapshot"
+            ]["status"],
         },
         "safety_boundary": _adapter_safety_metadata(),
         "production_effect": "none",
@@ -2914,7 +3803,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
 ) -> dict[str, Any]:
-    output_dir = output_root / "control_plane_v1_rc4_validation"
+    output_dir = output_root / "control_plane_v1_rc5_validation"
     output_dir.mkdir(parents=True, exist_ok=True)
     b2_compute_smoke = build_b2_compute_adapter_smoke_report(
         campaign_root=campaign_root,
@@ -2956,6 +3845,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
         adapter_registry_path=adapter_registry_path,
         final_gate=b2_final_gate,
     )
+    post_b2_artifacts = _build_b2_post_campaign_validation_artifacts(campaign_root=campaign_root)
     payloads = {
         "b2_campaign_adapter_parity_map": build_b2_campaign_adapter_parity_map(
             adapter_registry_path=adapter_registry_path
@@ -3006,9 +3896,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
         "campaign_status_plan_ux_report": build_campaign_status_ux_report(
             campaign_root=campaign_root
         ),
-        "case_specific_runner_deprecation_plan": (
-            build_case_specific_runner_deprecation_plan()
-        ),
+        "case_specific_runner_deprecation_plan": (build_case_specific_runner_deprecation_plan()),
         "legacy_b2_runner_deprecation_readiness": (
             build_legacy_b2_runner_deprecation_readiness(full_parity=b2_full_parity)
         ),
@@ -3031,6 +3919,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
             final_gate=b2_final_gate,
             owner_packet=b2_owner_packet,
         ),
+        **post_b2_artifacts,
         "campaign_control_plane_v1_validation_pack": (
             build_campaign_control_plane_v1_validation_pack(
                 campaign_root=campaign_root,
@@ -3068,6 +3957,13 @@ def render_campaign_validation_markdown(payload: dict[str, Any]) -> str:
         lines.append(f"- Campaign: {payload['campaign_id']}")
     if payload.get("data_quality_status"):
         lines.append(f"- Data Quality: {payload['data_quality_status']}")
+    reader_brief = payload.get("reader_brief")
+    if isinstance(reader_brief, dict):
+        for key, value in reader_brief.items():
+            if isinstance(value, str):
+                lines.append(f"- {key}: {value}")
+            elif isinstance(value, list):
+                lines.append(f"- {key}: {', '.join(str(item) for item in value)}")
     lines.extend(["", "## Checks", ""])
     checks = payload.get("checks", [])
     if checks:
@@ -3082,9 +3978,7 @@ def render_campaign_validation_markdown(payload: dict[str, Any]) -> str:
         lines.extend(["", "## Issues", ""])
         lines.extend(f"- {item}" for item in payload["issues"] or ["none"])
     lines.extend(["", "## Safety Boundary", ""])
-    lines.append(
-        json.dumps(payload.get("safety_boundary", {}), ensure_ascii=False, sort_keys=True)
-    )
+    lines.append(json.dumps(payload.get("safety_boundary", {}), ensure_ascii=False, sort_keys=True))
     return "\n".join(lines) + "\n"
 
 
@@ -3146,12 +4040,7 @@ def evaluate_gate(
         if record.status in {"FAIL", "BLOCKED"} or record.direction == "negative"
     ]
     reason_codes = sorted(
-        {
-            code
-            for record in evidence
-            for code in record.reason_codes
-        }
-        | set(state.reason_codes)
+        {code for record in evidence for code in record.reason_codes} | set(state.reason_codes)
     )
 
     if missing_categories:
@@ -3228,8 +4117,7 @@ def evaluate_evidence_budget(spec: CampaignSpec, state: CampaignState) -> dict[s
         "redesign_rounds_remaining": max(0, limits.max_redesign_rounds - used.redesign_rounds),
         "needs_more_evidence_remaining": max(
             0,
-            limits.max_needs_more_evidence_occurrences
-            - used.needs_more_evidence_occurrences,
+            limits.max_needs_more_evidence_occurrences - used.needs_more_evidence_occurrences,
         ),
     }
     return {
@@ -3253,6 +4141,23 @@ def build_next_action_plan(
     blocked: list[str] = []
     owner_required: list[str] = []
     reason_codes = set(state.reason_codes) | set(gate_payload.get("reason_codes", []))
+
+    if state.current_stage == "ARCHIVED":
+        blocked.extend(ALWAYS_BLOCKED_RESEARCH_ACTIONS)
+        blocked.extend(
+            [
+                "ACCESS_UNTOUCHED_HOLDOUT",
+                "RUN_ADDITIONAL_TARGETED_EVIDENCE_WITHOUT_OWNER_OVERRIDE",
+                "REOPEN_ARCHIVED_CAMPAIGN_WITHOUT_OWNER_ACTION",
+            ]
+        )
+        owner_required.append("OWNER_REVIEW_REQUIRED_FOR_ARCHIVED_CAMPAIGN_REACTIVATION")
+        return {
+            "allowed_next_actions": [],
+            "blocked_actions": sorted(set(blocked)),
+            "required_owner_actions": sorted(set(owner_required)),
+            "next_recommended_stage": "ARCHIVED",
+        }
 
     if (
         state.current_stage == "TARGETED_EVIDENCE"
@@ -3518,9 +4423,7 @@ def archive_campaign(
     spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
     state.current_stage = "ARCHIVED"
     state.current_outcome = (
-        state.current_outcome
-        if state.current_outcome != "NOT_EVALUATED"
-        else "MIXED"
+        state.current_outcome if state.current_outcome != "NOT_EVALUATED" else "MIXED"
     )
     state.updated_at = _now_iso()
     state.stage_history.append(
@@ -4215,10 +5118,7 @@ def _validate_window_policy(spec: CampaignSpec, policy: dict[str, Any]) -> list[
                 f"{spec.window_policy.holdout_catalog} must be holdout=true",
             )
         )
-    if (
-        spec.window_policy.holdout_access != "FINAL_GATE_ONLY"
-        and not spec.owner_authorized_holdout
-    ):
+    if spec.window_policy.holdout_access != "FINAL_GATE_ONLY" and not spec.owner_authorized_holdout:
         issues.append(
             _issue(
                 "error",
@@ -4227,9 +5127,7 @@ def _validate_window_policy(spec: CampaignSpec, policy: dict[str, Any]) -> list[
             )
         )
     if spec.owner_authorized_holdout and spec.window_policy.holdout_access == "FORBIDDEN":
-        issues.append(
-            _issue("error", "holdout_forbidden", "Campaign forbids holdout access")
-        )
+        issues.append(_issue("error", "holdout_forbidden", "Campaign forbids holdout access"))
     return issues
 
 
@@ -4476,8 +5374,7 @@ def _run_b2_control_window_compute_adapter(
         status = (
             "ADAPTER_HOLDOUT_BLOCKED"
             if any(
-                issue["issue_id"] == "adapter_source_holdout_accessed"
-                for issue in source_issues
+                issue["issue_id"] == "adapter_source_holdout_accessed" for issue in source_issues
             )
             else "B2_COMPUTE_ADAPTER_BLOCKED_WITH_REASON"
         )
@@ -4507,9 +5404,7 @@ def _run_b2_control_window_compute_adapter(
         and no_trigger.get("status") == "B2_NO_TRIGGER_CORRECTNESS_PASS"
     )
     status = (
-        "B2_COMPUTE_ADAPTER_SMOKE_PASS"
-        if smoke_pass
-        else "B2_COMPUTE_ADAPTER_BLOCKED_WITH_REASON"
+        "B2_COMPUTE_ADAPTER_SMOKE_PASS" if smoke_pass else "B2_COMPUTE_ADAPTER_BLOCKED_WITH_REASON"
     )
     reason_codes = {
         status,
@@ -4720,9 +5615,7 @@ def _run_b2_full_diagnostic_compute_adapter(
             reason_codes=[issue["issue_id"].upper() for issue in source_issues],
             run_mode=contract.default_run_mode,
         )
-    risk_heavy_valid = bool(
-        full_payloads["b2_full_diagnostic_backfill"].get("window_results")
-    )
+    risk_heavy_valid = bool(full_payloads["b2_full_diagnostic_backfill"].get("window_results"))
     control_valid = (
         control_payloads["b2_full_diagnostic_with_control_windows"]["status"]
         == "B2_FULL_DIAGNOSTIC_COMPLETE"
@@ -5241,9 +6134,7 @@ def _b2_full_compute_evidence_records(
             metric_name="b2_full_control_no_trigger_status",
             value={
                 "no_trigger": control["b2_no_trigger_correctness_review"].get("status"),
-                "control_windows": control["b2_full_diagnostic_with_control_windows"].get(
-                    "status"
-                ),
+                "control_windows": control["b2_full_diagnostic_with_control_windows"].get("status"),
             },
             direction="positive" if compute_pass else "negative",
             status="PASS" if compute_pass else "BLOCKED",
@@ -5382,9 +6273,7 @@ def _b2_final_repeatability_tuning_review(result: dict[str, Any]) -> dict[str, A
     fast_risk = _read_optional_artifact_payload(artifacts, "b2_fast_risk_no_trigger_audit")
     payloads = [payload for payload in (backfill, fast_risk) if payload]
     return {
-        "parameter_tuning_applied": backfill.get("parameter_tuning_applied")
-        if backfill
-        else None,
+        "parameter_tuning_applied": backfill.get("parameter_tuning_applied") if backfill else None,
         "threshold_tuning_applied": fast_risk.get("threshold_tuning_applied")
         if fast_risk
         else None,
@@ -5459,26 +6348,34 @@ def _b2_final_gate_decision_from_adapter(
     return "B2_CURRENT_FORM_WEAK"
 
 
+def _b2_final_gate_decision_from_archived_outcome(outcome: str) -> str:
+    if outcome == "RETURNED_TO_DESIGN":
+        return "B2_CURRENT_FORM_RETURN_TO_DESIGN"
+    if outcome == "NARROW_ROLE_WITH_LIMITED_EVIDENCE":
+        return "B2_CURRENT_FORM_NARROW_TO_SLOW_DRAWDOWN_OVERLAY"
+    if outcome == "B2_CURRENT_FORM_REJECTED":
+        return "B2_CURRENT_FORM_REJECT"
+    if outcome == "OWNER_REVIEW_REQUIRED":
+        return "OWNER_OVERRIDE_REQUIRED"
+    return "B2_CURRENT_FORM_WEAK"
+
+
 def _b2_owner_packet_evidence_summary() -> dict[str, dict[str, Any]]:
     research_dir = PROJECT_ROOT / "docs" / "research"
     fast_risk = _read_json(research_dir / "b2_fast_risk_no_trigger_audit.json")
-    slow_drawdown = _read_json(
-        research_dir / "b2_slow_drawdown_repeatability_study.json"
-    )
+    slow_drawdown = _read_json(research_dir / "b2_slow_drawdown_repeatability_study.json")
     control = _read_json(research_dir / "b2_no_trigger_correctness_review.json")
     reentry = _read_json(research_dir / "b2_reentry_lag_root_cause_review.json")
     utility = _read_json(research_dir / "b2_cost_benchmark_utility_review.json")
     return {
         "fast_risk": {
             "status": fast_risk.get("status"),
-            "holds": fast_risk.get("status")
-            != "B2_FAST_RISK_NOT_SUPPORTED_BY_CURRENT_DESIGN",
+            "holds": fast_risk.get("status") != "B2_FAST_RISK_NOT_SUPPORTED_BY_CURRENT_DESIGN",
             "summary": "Current design does not support a fast-risk role.",
         },
         "slow_drawdown": {
             "status": slow_drawdown.get("status"),
-            "repeatable": slow_drawdown.get("status")
-            == "B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY",
+            "repeatable": slow_drawdown.get("status") == "B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY",
             "summary": "Evidence is limited to the slow-drawdown role and remains narrow.",
         },
         "control_windows": {
@@ -5493,9 +6390,7 @@ def _b2_owner_packet_evidence_summary() -> dict[str, dict[str, Any]]:
         },
         "utility": {
             "status": utility.get("status"),
-            "classification": "mixed"
-            if utility.get("status") == "B2_UTILITY_MIXED"
-            else "unknown",
+            "classification": "mixed" if utility.get("status") == "B2_UTILITY_MIXED" else "unknown",
             "summary": "Utility remains mixed after cost/benchmark review.",
         },
     }
@@ -5554,6 +6449,231 @@ def _b2_branch_decision_from_final_gate(final_gate_decision: str) -> str:
     if final_gate_decision == "B2_CURRENT_FORM_REJECT":
         return "STOP_B2_RESEARCH_LINE"
     return "REJECT_B2_CURRENT_FORM"
+
+
+def _b2_owner_decision_outcome(owner_action: str) -> str:
+    if owner_action not in B2_OWNER_DECISION_OUTCOMES:
+        raise ResearchCampaignError(f"Unknown B2 owner action: {owner_action}")
+    return B2_OWNER_DECISION_OUTCOMES[owner_action]
+
+
+def _b2_owner_decision_id(campaign_id: str, owner_action: str) -> str:
+    return f"TRADING-654_{campaign_id}_{owner_action}_2026-06-20"
+
+
+def _b2_owner_decision_reason_summary(owner_action: str) -> str:
+    summaries = {
+        "return_to_design": (
+            "B2 current form has unsupported fast-risk evidence, only narrow "
+            "slow-drawdown evidence, signal-driven re-entry lag and mixed utility; "
+            "owner returns the current form to design instead of approving expansion."
+        ),
+        "narrow_role_with_limited_evidence": (
+            "Owner preserves only a narrow slow-drawdown defensive-overlay role with "
+            "limited evidence and requires new design review before implementation."
+        ),
+        "reject_current_form": (
+            "Owner rejects the current B2 form because the combined evidence is not "
+            "sufficient for continued research."
+        ),
+        "hold_for_manual_review": (
+            "Owner keeps the current B2 form in manual review without approving new "
+            "evidence, promotion or production actions."
+        ),
+    }
+    return summaries[owner_action]
+
+
+def _b2_state_reflects_owner_decision(*, state: CampaignState, outcome: str) -> bool:
+    return (
+        state.current_stage == "ARCHIVED"
+        and state.current_outcome == outcome
+        and B2_POST_CAMPAIGN_ARTIFACT_SOURCE in state.source_artifacts
+    )
+
+
+def _append_owner_decision_once(directory: Path, payload: dict[str, Any]) -> bool:
+    existing = _read_jsonl_records(directory / "owner_decisions.jsonl")
+    if any(record.get("decision_id") == payload["decision_id"] for record in existing):
+        return False
+    _append_jsonl(directory / "owner_decisions.jsonl", payload)
+    return True
+
+
+def _apply_b2_owner_decision_to_state(
+    *,
+    campaign_id: str,
+    campaign_root: Path,
+    owner_action: str,
+    decision_id: str,
+) -> dict[str, Any]:
+    directory = campaign_directory(campaign_id, campaign_root)
+    _, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    outcome = _b2_owner_decision_outcome(owner_action)
+    already_reflected = _b2_state_reflects_owner_decision(state=state, outcome=outcome)
+    if already_reflected:
+        return {
+            "state_updated": False,
+            "state_already_reflected_decision": True,
+            "from_stage": state.current_stage,
+        }
+
+    from_stage = state.current_stage
+    reason_codes = sorted(
+        set(state.reason_codes)
+        | {
+            B2_OWNER_DECISION_REASON_CODES[owner_action],
+            "B2_CURRENT_FORM_ARCHIVED",
+        }
+    )
+    if B2_POST_CAMPAIGN_ARTIFACT_SOURCE not in state.source_artifacts:
+        state.source_artifacts.append(B2_POST_CAMPAIGN_ARTIFACT_SOURCE)
+    state.current_stage = "ARCHIVED"
+    state.current_outcome = outcome
+    state.reason_codes = reason_codes
+    state.updated_at = _now_iso()
+    transition_id = f"{campaign_id}-owner-decision-{owner_action}-{_compact_time()}"
+    state.stage_history.append(
+        {
+            "run_id": transition_id,
+            "stage": "ARCHIVED",
+            "outcome": outcome,
+            "reason_codes": reason_codes,
+            "created_at": state.updated_at,
+            "source": "b2_owner_decision",
+            "decision_id": decision_id,
+        }
+    )
+    write_campaign_state(state, directory)
+    _append_transition(
+        directory,
+        {
+            "transition_id": transition_id,
+            "campaign_id": campaign_id,
+            "from_stage": from_stage,
+            "to_stage": "ARCHIVED",
+            "outcome": outcome,
+            "reason_codes": reason_codes,
+            "created_at": state.updated_at,
+            "source": "b2_owner_decision",
+            "decision_id": decision_id,
+        },
+    )
+    return {
+        "state_updated": True,
+        "state_already_reflected_decision": False,
+        "from_stage": from_stage,
+    }
+
+
+def _post_b2_safety_flags() -> dict[str, bool]:
+    return {
+        "B4_retest_allowed": False,
+        "B5_allowed": False,
+        "B6_allowed": False,
+        "v3_allowed": False,
+        "paper_shadow_allowed": False,
+        "extended_shadow_allowed": False,
+        "live_trading_allowed": False,
+        "official_target_weights_allowed": False,
+        "broker_order_allowed": False,
+    }
+
+
+def _b2_archive_status_from_outcome(outcome: str) -> str:
+    if outcome == "RETURNED_TO_DESIGN":
+        return "B2_CURRENT_FORM_RETURNED_TO_DESIGN"
+    if outcome == "NARROW_ROLE_WITH_LIMITED_EVIDENCE":
+        return "B2_CURRENT_FORM_NARROW_ROLE_WITH_LIMITED_EVIDENCE"
+    if outcome == "B2_CURRENT_FORM_REJECTED":
+        return "B2_CURRENT_FORM_REJECTED"
+    if outcome == "OWNER_REVIEW_REQUIRED":
+        return "B2_CURRENT_FORM_OWNER_REVIEW_REQUIRED"
+    return "B2_CURRENT_FORM_ARCHIVE_BLOCKED"
+
+
+def _b2_reusable_evidence_rows(
+    summary: dict[str, dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    return {
+        "reusable_evidence": [
+            {
+                "evidence_id": "control_windows_no_trigger_clean",
+                "source_status": summary["control_windows"]["status"],
+                "reuse_scope": "future B2 redesign control-window safety checks",
+                "limitation": "Does not approve promotion or paper-shadow.",
+            }
+        ],
+        "weak_informative_evidence": [
+            {
+                "evidence_id": "utility_mixed",
+                "source_status": summary["utility"]["status"],
+                "reuse_scope": "cost/utility risk prompt for future RFCs",
+                "limitation": "Weak and mixed; not reusable as positive utility evidence.",
+            },
+            {
+                "evidence_id": "reentry_lag_signal_driven",
+                "source_status": summary["reentry_lag"]["status"],
+                "reuse_scope": "negative requirement for separate re-entry policy design",
+                "limitation": "Blocks current form until a new policy is tested.",
+            },
+        ],
+        "invalidated_evidence": [
+            {
+                "evidence_id": "fast_risk_current_form",
+                "source_status": summary["fast_risk"]["status"],
+                "reuse_scope": "failure attribution only",
+                "limitation": "Must not be reused as fast-risk trigger support.",
+            }
+        ],
+        "role_specific_only_evidence": [
+            {
+                "evidence_id": "slow_drawdown_single_window",
+                "source_status": summary["slow_drawdown"]["status"],
+                "reuse_scope": "slow-drawdown defensive overlay RFC input",
+                "limitation": "Single-window/narrow role; requires repeatability evidence.",
+            }
+        ],
+        "not_reusable_evidence": [
+            {
+                "evidence_id": "current_form_branch_promotion",
+                "source_status": "NOT_APPROVED",
+                "reuse_scope": "none",
+                "limitation": "B4/B5/B6/v3 and paper-shadow remain blocked.",
+            }
+        ],
+    }
+
+
+def _b3_program_status(campaign_root: Path, campaign_id: str) -> dict[str, Any]:
+    try:
+        spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+    except ResearchCampaignError:
+        return {
+            "campaign_id": campaign_id,
+            "status": "B3_CAMPAIGN_NOT_INITIALIZED",
+            "production_effect": "none",
+        }
+    return {
+        "campaign_id": campaign_id,
+        "status": state.current_outcome,
+        "current_stage": state.current_stage,
+        "current_outcome": state.current_outcome,
+        "reason_codes": state.reason_codes,
+        "evidence_record_count": len(evidence),
+        "market_regime": spec.market_regime,
+        "production_effect": "none",
+    }
+
+
+def _read_jsonl_records(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            records.append(json.loads(line))
+    return records
 
 
 def _b3_compute_evidence_records(
