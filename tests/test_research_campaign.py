@@ -11,14 +11,20 @@ from ai_trading_system.cli import app
 from ai_trading_system.research_campaign import (
     DEFAULT_MODULE_REGISTRY_PATH,
     CampaignSpec,
+    build_b2_campaign_e2e_compute_report,
+    build_b2_campaign_full_parity_validation,
     build_b2_compute_adapter_smoke_report,
     build_b2_compute_parity_validation,
+    build_b2_full_diagnostic_compute_report,
+    build_b2_gate_compute_report,
     build_b3_signal_compute_adapter_smoke_report,
+    build_campaign_evidence_budget_final_decision_drill,
     build_campaign_run_next_stage_smoke_report,
     build_campaign_status_ux_report,
     build_campaign_validation_payload,
     build_case_specific_runner_deprecation_plan,
     build_evidence_budget_forced_transition_report,
+    build_legacy_b2_runner_deprecation_readiness,
     campaign_plan,
     classify_interaction_effect,
     evaluate_gate,
@@ -115,8 +121,8 @@ def test_b2_stage_runner_uses_configured_compute_adapter(tmp_path: Path) -> None
     )
 
     assert payload["outcome"] == "NEEDS_MORE_EVIDENCE"
-    assert payload["generated_evidence_count"] == 5
-    assert payload["adapter_status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
+    assert payload["generated_evidence_count"] == 6
+    assert payload["adapter_status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
     assert payload["result"]["adapter_id"] == (
         "b2-risk-overlay-control-window-compute-adapter-v1"
     )
@@ -168,13 +174,19 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
         "b2_campaign_parity_validation",
         "evidence_budget_enforcement_report",
         "campaign_next_action_parity_review",
-        "b2_compute_adapter_smoke",
-        "b2_compute_parity_validation",
+        "b2_targeted_evidence_compute_adapter",
+        "b2_targeted_evidence_compute_parity",
+        "b2_full_diagnostic_compute_adapter",
+        "b2_gate_compute_adapter",
+        "b2_campaign_e2e_compute",
+        "b2_campaign_full_parity_validation",
         "campaign_run_next_stage_smoke",
         "evidence_budget_forced_transition_report",
+        "campaign_evidence_budget_final_decision_drill",
         "b3_signal_compute_adapter_smoke",
         "campaign_status_plan_ux_report",
         "case_specific_runner_deprecation_plan",
+        "legacy_b2_runner_deprecation_readiness",
         "campaign_control_plane_v1_validation_pack",
     }
     assert expected <= set(payload["artifacts"])
@@ -200,10 +212,57 @@ def test_b2_compute_parity_and_run_next_smoke_pass(tmp_path: Path) -> None:
         output_root=tmp_path / "outputs",
     )
 
-    assert smoke["status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
-    assert parity["status"] == "B2_COMPUTE_PARITY_PASS"
+    assert smoke["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+    assert parity["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_PASS"
     assert run_next["status"] == "CAMPAIGN_RUN_NEXT_STAGE_SMOKE_PASS"
-    assert run_next["run_result"]["adapter_status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
+    assert run_next["run_result"]["adapter_status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+
+
+def test_b2_full_gate_e2e_parity_budget_drill_and_legacy_readiness(
+    tmp_path: Path,
+) -> None:
+    initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
+
+    output_root = tmp_path / "outputs"
+    targeted = build_b2_compute_parity_validation(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    full = build_b2_full_diagnostic_compute_report(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    gate = build_b2_gate_compute_report(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    e2e = build_b2_campaign_e2e_compute_report(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    full_parity = build_b2_campaign_full_parity_validation(
+        campaign_root=tmp_path,
+        output_root=output_root,
+        targeted_parity=targeted,
+        full_compute=full,
+        gate_compute=gate,
+    )
+    final_drill = build_campaign_evidence_budget_final_decision_drill(
+        campaign_root=tmp_path,
+        output_root=output_root,
+    )
+    legacy = build_legacy_b2_runner_deprecation_readiness(full_parity=full_parity)
+
+    assert full["status"] == "B2_FULL_DIAGNOSTIC_COMPUTE_PASS"
+    assert full["adapter_run"]["status"] == "B2_FULL_DIAGNOSTIC_COMPLETE"
+    assert gate["status"] == "B2_GATE_COMPUTE_PASS"
+    assert gate["decision"] == "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN"
+    assert e2e["status"] == "B2_CAMPAIGN_E2E_COMPUTE_PASS_WITH_LIMITATIONS"
+    assert e2e["stage_runs"][-1]["outcome"] == "OWNER_OVERRIDE_REQUIRED"
+    assert full_parity["status"] == "B2_CAMPAIGN_FULL_PARITY_PASS_WITH_EXPLAINED_DIFFS"
+    assert final_drill["status"] == "CAMPAIGN_EVIDENCE_BUDGET_FINAL_DECISION_PASS"
+    assert final_drill["gate_run_result"]["outcome"] == "OWNER_OVERRIDE_REQUIRED"
+    assert legacy["status"] == "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER"
 
 
 def test_budget_forced_transition_b3_smoke_status_ux_and_deprecation_plan(

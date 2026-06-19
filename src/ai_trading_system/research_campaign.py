@@ -68,6 +68,13 @@ ADAPTER_OUTPUT_STATUSES = [
     "ADAPTER_HOLDOUT_BLOCKED",
     "B2_COMPUTE_ADAPTER_SMOKE_PASS",
     "B2_COMPUTE_ADAPTER_BLOCKED_WITH_REASON",
+    "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
+    "B2_TARGETED_EVIDENCE_COMPUTE_BLOCKED_WITH_REASON",
+    "B2_FULL_DIAGNOSTIC_COMPLETE",
+    "B2_FULL_DIAGNOSTIC_PARTIAL",
+    "B2_FULL_DIAGNOSTIC_BLOCKED",
+    "B2_GATE_COMPUTE_PASS",
+    "B2_GATE_COMPUTE_BLOCKED_WITH_REASON",
     "B3_SIGNAL_COMPUTE_ADAPTER_SMOKE_PASS",
     "B3_SIGNAL_COMPUTE_ADAPTER_BLOCKED_WITH_REASON",
 ]
@@ -718,6 +725,7 @@ def run_campaign_stage(
             gate_policy_path=gate_policy_path,
             window_policy_path=window_policy_path,
             output_root=output_root,
+            evidence_store=evidence,
         )
         if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
             adapter_payload = _write_stage_adapter_run_artifacts(
@@ -768,6 +776,7 @@ def run_campaign_stage(
             gate_policy_path=gate_policy_path,
             window_policy_path=window_policy_path,
             output_root=output_root,
+            evidence_store=evidence,
         )
         if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
             adapter_payload = _write_stage_adapter_run_artifacts(
@@ -851,6 +860,7 @@ def run_campaign_stage(
             gate_policy_path=gate_policy_path,
             window_policy_path=window_policy_path,
             output_root=output_root,
+            evidence_store=evidence,
         )
         if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
             adapter_payload = _write_stage_adapter_run_artifacts(
@@ -1276,7 +1286,7 @@ def build_b2_compute_adapter_smoke_report(
         },
         {
             "check_id": "b2_smoke_status_pass",
-            "passed": adapter_run.status == "B2_COMPUTE_ADAPTER_SMOKE_PASS",
+            "passed": adapter_run.status == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
         },
         {
             "check_id": "no_forbidden_production_effects",
@@ -1285,13 +1295,13 @@ def build_b2_compute_adapter_smoke_report(
         },
     ]
     status = (
-        "B2_COMPUTE_ADAPTER_SMOKE_PASS"
+        "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
         if all(check["passed"] for check in checks)
-        else "B2_COMPUTE_ADAPTER_BLOCKED_WITH_REASON"
+        else "B2_TARGETED_EVIDENCE_COMPUTE_BLOCKED_WITH_REASON"
     )
     return {
         "schema_version": "1.0",
-        "report_type": "b2_compute_adapter_smoke",
+        "report_type": "b2_targeted_evidence_compute_adapter_smoke",
         "campaign_id": campaign_id,
         "status": status,
         "checks": checks,
@@ -1324,46 +1334,68 @@ def build_b2_compute_parity_validation(
         record["metric_name"]: record.get("value")
         for record in adapter_run.get("evidence_records", [])
     }
-    audited_rerun = _read_json(PROJECT_ROOT / "docs" / "research" / "b2_control_window_rerun.json")
+    audited_fast = _read_json(
+        PROJECT_ROOT / "docs" / "research" / "b2_fast_risk_no_trigger_audit.json"
+    )
+    audited_slow = _read_json(
+        PROJECT_ROOT / "docs" / "research" / "b2_slow_drawdown_repeatability_study.json"
+    )
+    audited_reentry = _read_json(
+        PROJECT_ROOT / "docs" / "research" / "b2_reentry_lag_root_cause_review.json"
+    )
+    audited_scorecard = _read_json(
+        PROJECT_ROOT / "docs" / "research" / "b2_targeted_evidence_scorecard.json"
+    )
     audited_no_trigger = _read_json(
         PROJECT_ROOT / "docs" / "research" / "b2_no_trigger_correctness_review.json"
     )
     plan = campaign_plan(campaign_id=campaign_id, campaign_root=campaign_root)
     checks = [
         {
-            "check_id": "status_matches_expected_control_rerun",
-            "passed": smoke["status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS"
-            and audited_rerun.get("status") == "B2_CONTROL_RERUN_COMPLETE",
+            "check_id": "status_matches_expected_targeted_compute",
+            "passed": smoke["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+            and audited_scorecard.get("status") == "B2_TARGETED_EVIDENCE_MIXED",
         },
         {
-            "check_id": "reason_codes_include_smoke_pass",
-            "passed": "B2_COMPUTE_ADAPTER_SMOKE_PASS" in adapter_run["reason_codes"],
+            "check_id": "reason_codes_include_targeted_pass",
+            "passed": "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+            in adapter_run["reason_codes"],
         },
         {
-            "check_id": "risk_trigger_count_matches_audited",
-            "passed": evidence_by_metric.get("risk_trigger_count")
-            == audited_rerun.get("aggregate", {}).get("trigger_count"),
+            "check_id": "fast_risk_status_matches_audited",
+            "passed": evidence_by_metric.get("b2_fast_risk_no_trigger_status")
+            == audited_fast.get("status"),
         },
         {
-            "check_id": "false_risk_off_count_matches_audited",
-            "passed": evidence_by_metric.get("false_risk_off_count")
-            == audited_rerun.get("aggregate", {}).get("false_risk_off_count"),
+            "check_id": "slow_drawdown_status_matches_audited",
+            "passed": evidence_by_metric.get("b2_slow_drawdown_repeatability_status")
+            == audited_slow.get("status"),
         },
         {
-            "check_id": "exposure_change_count_matches_audited",
-            "passed": evidence_by_metric.get("unnecessary_exposure_reduction_count")
-            == audited_rerun.get("aggregate", {}).get(
-                "unnecessary_exposure_reduction_count"
-            ),
+            "check_id": "reentry_lag_status_matches_audited",
+            "passed": evidence_by_metric.get("b2_reentry_lag_root_cause_status")
+            == audited_reentry.get("status"),
+        },
+        {
+            "check_id": "targeted_scorecard_status_matches_audited",
+            "passed": evidence_by_metric.get("b2_targeted_evidence_scorecard_status")
+            == audited_scorecard.get("status"),
         },
         {
             "check_id": "no_trigger_status_matches_audited",
-            "passed": evidence_by_metric.get("no_trigger_correctness_status")
+            "passed": evidence_by_metric.get("b2_targeted_control_no_trigger_status")
             == audited_no_trigger.get("status"),
         },
         {
-            "check_id": "evidence_categories_cover_control_safety_and_portfolio",
-            "passed": {"TRIGGER_BEHAVIOR", "SAFETY", "PORTFOLIO_EFFECT"}
+            "check_id": "evidence_categories_cover_b2_gate_requirements",
+            "passed": {
+                "TRIGGER_BEHAVIOR",
+                "DRAWDOWN_PROTECTION",
+                "REENTRY_BEHAVIOR",
+                "TURNOVER_COST",
+                "WINDOW_STABILITY",
+                "SAFETY",
+            }
             <= {
                 record["category"]
                 for record in adapter_run.get("evidence_records", [])
@@ -1381,26 +1413,472 @@ def build_b2_compute_parity_validation(
         },
     ]
     status = (
-        "B2_COMPUTE_PARITY_PASS"
+        "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_PASS"
         if all(check["passed"] for check in checks)
-        else "B2_COMPUTE_PARITY_FAIL"
+        else "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_FAIL"
     )
     return {
         "schema_version": "1.0",
-        "report_type": "b2_compute_parity_validation",
+        "report_type": "b2_targeted_evidence_compute_parity_validation",
         "campaign_id": campaign_id,
         "status": status,
         "checks": checks,
         "computed_status": smoke["status"],
-        "audited_status": audited_rerun.get("status"),
+        "audited_status": audited_scorecard.get("status"),
         "state_reason_codes": state.reason_codes,
         "adapter_reason_codes": adapter_run["reason_codes"],
         "computed_metrics": evidence_by_metric,
-        "audited_metrics": audited_rerun.get("aggregate", {}),
-        "parity_source": str(PROJECT_ROOT / "docs" / "research" / "b2_control_window_rerun.json"),
+        "audited_metrics": {
+            "fast_risk": audited_fast.get("status"),
+            "slow_drawdown": audited_slow.get("status"),
+            "reentry_lag": audited_reentry.get("status"),
+            "targeted_scorecard": audited_scorecard.get("status"),
+            "no_trigger": audited_no_trigger.get("status"),
+        },
+        "parity_source": str(
+            PROJECT_ROOT / "docs" / "research" / "b2_targeted_evidence_scorecard.json"
+        ),
         "market_regime": spec.market_regime,
         "requested_date_range": spec.requested_date_range,
         "data_quality_status": smoke["data_quality_status"],
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_b2_full_diagnostic_compute_report(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
+    adapter_run = run_stage_adapter(
+        spec=spec,
+        state=state,
+        target_stage="FULL_DIAGNOSTIC",
+        run_id=f"{campaign_id}-b2-full-compute-{_compact_time()}",
+        adapter_registry_path=adapter_registry_path,
+        output_root=output_root,
+    )
+    run_artifact = _write_stage_adapter_run_artifacts(
+        adapter_run.model_dump(mode="json"),
+        output_root=output_root,
+    )
+    categories = {record["category"] for record in run_artifact.get("evidence_records", [])}
+    checks = [
+        {
+            "check_id": "full_compute_mode_selected",
+            "passed": adapter_run.run_mode == "COMPUTE_MODE",
+        },
+        {
+            "check_id": "full_diagnostic_complete_with_control_windows",
+            "passed": adapter_run.status == "B2_FULL_DIAGNOSTIC_COMPLETE",
+        },
+        {
+            "check_id": "full_diagnostic_evidence_categories_complete",
+            "passed": {
+                "TRIGGER_BEHAVIOR",
+                "DRAWDOWN_PROTECTION",
+                "REENTRY_BEHAVIOR",
+                "TURNOVER_COST",
+                "WINDOW_STABILITY",
+                "SAFETY",
+            }
+            <= categories,
+        },
+        {
+            "check_id": "no_forbidden_production_effects",
+            "passed": run_artifact["safety_metadata"]["production_effect"] == "none"
+            and run_artifact["safety_metadata"]["holdout_touched"] is False,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_full_diagnostic_compute_report",
+        "campaign_id": campaign_id,
+        "status": (
+            "B2_FULL_DIAGNOSTIC_COMPUTE_PASS"
+            if all(check["passed"] for check in checks)
+            else "B2_FULL_DIAGNOSTIC_COMPUTE_FAIL"
+        ),
+        "checks": checks,
+        "adapter_run": run_artifact,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "data_quality_status": adapter_run.data_quality_status,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_b2_gate_compute_report(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
+    adapter_run = run_stage_adapter(
+        spec=spec,
+        state=state,
+        target_stage="GATE_READY",
+        run_id=f"{campaign_id}-b2-gate-compute-{_compact_time()}",
+        adapter_registry_path=adapter_registry_path,
+        output_root=output_root,
+        evidence_store=evidence,
+    )
+    run_artifact = _write_stage_adapter_run_artifacts(
+        adapter_run.model_dump(mode="json"),
+        output_root=output_root,
+    )
+    decision = next(
+        (
+            record["value"]
+            for record in run_artifact.get("evidence_records", [])
+            if record["metric_name"] == "b2_gate_compute_decision"
+        ),
+        "UNKNOWN",
+    )
+    checks = [
+        {
+            "check_id": "gate_compute_status_pass",
+            "passed": adapter_run.status == "B2_GATE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "generic_needs_more_evidence_not_emitted",
+            "passed": decision != "GENERIC_NEEDS_MORE_EVIDENCE",
+        },
+        {
+            "check_id": "gate_decision_is_b2_constrained",
+            "passed": decision
+            in {
+                "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
+                "B2_ONLY_RETURN_TO_DESIGN",
+                "B2_ONLY_NARROW_ROLE",
+                "B2_ONLY_PREPARE_OWNER_PACKET",
+                "OWNER_OVERRIDE_REQUIRED",
+                "B2_ONLY_MIXED",
+                "B2_ONLY_WEAK",
+                "B2_ONLY_REJECTED",
+            },
+        },
+        {
+            "check_id": "no_forbidden_production_effects",
+            "passed": run_artifact["safety_metadata"]["production_effect"] == "none"
+            and run_artifact["safety_metadata"]["holdout_touched"] is False,
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_gate_compute_report",
+        "campaign_id": campaign_id,
+        "status": (
+            "B2_GATE_COMPUTE_PASS"
+            if all(check["passed"] for check in checks)
+            else "B2_GATE_COMPUTE_BLOCKED_WITH_REASON"
+        ),
+        "decision": decision,
+        "checks": checks,
+        "adapter_run": run_artifact,
+        "market_regime": spec.market_regime,
+        "requested_date_range": spec.requested_date_range,
+        "data_quality_status": adapter_run.data_quality_status,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_b2_campaign_e2e_compute_report(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="b2-campaign-e2e-compute-") as tmp:
+        tmp_root = Path(tmp) / "campaigns"
+        shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_root / campaign_id)
+        runs = [
+            run_campaign_stage(
+                campaign_id=campaign_id,
+                requested_stage=stage,
+                campaign_root=tmp_root,
+                adapter_registry_path=adapter_registry_path,
+                output_root=output_root / "b2_campaign_e2e_compute",
+            )
+            for stage in ("TARGETED_EVIDENCE", "FULL_DIAGNOSTIC", "INTERACTION", "GATE")
+        ]
+        final_status = build_status_payload(
+            campaign_id=campaign_id,
+            detailed=True,
+            campaign_root=tmp_root,
+        )
+    adapter_statuses = {
+        run["stage"]: run.get("adapter_status")
+        for run in runs
+        if run.get("adapter_status") is not None
+    }
+    checks = [
+        {
+            "check_id": "targeted_compute_stage_passed",
+            "passed": adapter_statuses.get("TARGETED_EVIDENCE")
+            == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "full_diagnostic_compute_stage_complete",
+            "passed": adapter_statuses.get("FULL_DIAGNOSTIC")
+            == "B2_FULL_DIAGNOSTIC_COMPLETE",
+        },
+        {
+            "check_id": "interaction_stage_remains_research_design_only",
+            "passed": runs[2]["stage"] == "INTERACTION"
+            and runs[2]["outcome"] == "PASS"
+            and runs[2]["result"]["production_effect"] == "none",
+        },
+        {
+            "check_id": "gate_compute_stage_passed",
+            "passed": adapter_statuses.get("GATE_READY") == "B2_GATE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "e2e_has_no_forbidden_production_effects",
+            "passed": all(
+                run.get("safety_boundary", {}).get("production_effect") == "none"
+                for run in runs
+            ),
+        },
+    ]
+    gate_outcome = runs[-1]["outcome"]
+    status = (
+        "B2_CAMPAIGN_E2E_COMPUTE_PASS_WITH_LIMITATIONS"
+        if all(check["passed"] for check in checks)
+        and gate_outcome == "OWNER_OVERRIDE_REQUIRED"
+        else (
+            "B2_CAMPAIGN_E2E_COMPUTE_PASS"
+            if all(check["passed"] for check in checks)
+            else "B2_CAMPAIGN_E2E_COMPUTE_FAIL"
+        )
+    )
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_campaign_e2e_compute_report",
+        "campaign_id": campaign_id,
+        "status": status,
+        "checks": checks,
+        "stage_runs": runs,
+        "final_status": final_status,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_b2_campaign_full_parity_validation(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    targeted_parity: dict[str, Any] | None = None,
+    full_compute: dict[str, Any] | None = None,
+    gate_compute: dict[str, Any] | None = None,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    targeted = targeted_parity or build_b2_compute_parity_validation(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        campaign_id=campaign_id,
+    )
+    full = full_compute or build_b2_full_diagnostic_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        campaign_id=campaign_id,
+    )
+    gate = gate_compute or build_b2_gate_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        campaign_id=campaign_id,
+    )
+    audited_full = _read_json(
+        PROJECT_ROOT / "docs" / "research" / "b2_full_diagnostic_with_control_windows.json"
+    )
+    audited_gate = _read_json(PROJECT_ROOT / "docs" / "research" / "b2_gate_v5.json")
+    explained_gate_diff = gate["decision"] in {
+        "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN",
+        "OWNER_OVERRIDE_REQUIRED",
+    } and audited_gate.get("status") == "B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE"
+    checks = [
+        {
+            "check_id": "targeted_compute_matches_legacy_targeted_evidence",
+            "passed": targeted["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_PASS",
+        },
+        {
+            "check_id": "full_compute_matches_legacy_control_window_completion",
+            "passed": full["adapter_run"]["status"] == audited_full.get("status")
+            == "B2_FULL_DIAGNOSTIC_COMPLETE",
+        },
+        {
+            "check_id": "gate_compute_is_constrained_and_explained",
+            "passed": gate["status"] == "B2_GATE_COMPUTE_PASS" and explained_gate_diff,
+        },
+        {
+            "check_id": "parity_sources_stay_research_only",
+            "passed": full["production_effect"] == "none"
+            and gate["production_effect"] == "none"
+            and targeted["production_effect"] == "none",
+        },
+    ]
+    status = (
+        "B2_CAMPAIGN_FULL_PARITY_PASS_WITH_EXPLAINED_DIFFS"
+        if all(check["passed"] for check in checks)
+        else "B2_CAMPAIGN_FULL_PARITY_FAIL"
+    )
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_campaign_full_parity_validation",
+        "campaign_id": campaign_id,
+        "status": status,
+        "checks": checks,
+        "explained_differences": [
+            (
+                "Campaign gate replaces legacy open-ended "
+                "B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE "
+                "with a defined evidence plan or owner override when budget is exhausted."
+            )
+        ]
+        if status.endswith("WITH_EXPLAINED_DIFFS")
+        else [],
+        "legacy_statuses": {
+            "b2_full_diagnostic_with_control_windows": audited_full.get("status"),
+            "b2_gate_v5": audited_gate.get("status"),
+        },
+        "campaign_statuses": {
+            "targeted_compute_parity": targeted["status"],
+            "full_compute_adapter": full["adapter_run"]["status"],
+            "gate_compute": gate["decision"],
+        },
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_campaign_evidence_budget_final_decision_drill(
+    *,
+    campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
+    output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    campaign_id: str = "b2-risk-overlay-current-form",
+) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="campaign-budget-final-decision-") as tmp:
+        tmp_root = Path(tmp) / "campaigns"
+        tmp_campaign_dir = tmp_root / campaign_id
+        shutil.copytree(campaign_directory(campaign_id, campaign_root), tmp_campaign_dir)
+        spec, state, _ = load_campaign_bundle(campaign_id, tmp_root)
+        state.current_stage = "INTERACTION"
+        state.current_outcome = "NEEDS_MORE_EVIDENCE"
+        state.evidence_budget_used.targeted_rounds = spec.evidence_budget.max_targeted_rounds
+        state.evidence_budget_used.needs_more_evidence_occurrences = (
+            spec.evidence_budget.max_needs_more_evidence_occurrences
+        )
+        write_campaign_state(state, tmp_campaign_dir)
+        result = run_campaign_stage(
+            campaign_id=campaign_id,
+            requested_stage="GATE",
+            campaign_root=tmp_root,
+            adapter_registry_path=adapter_registry_path,
+            output_root=output_root / "budget_final_decision_drill",
+        )
+    checks = [
+        {
+            "check_id": "gate_adapter_still_runs_under_explicit_gate_stage",
+            "passed": result["adapter_status"] == "B2_GATE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "exhausted_budget_forces_owner_override_decision",
+            "passed": result["outcome"] == "OWNER_OVERRIDE_REQUIRED"
+            and "EVIDENCE_BUDGET_EXHAUSTED_OWNER_OVERRIDE_REQUIRED"
+            in result["reason_codes"],
+        },
+        {
+            "check_id": "generic_needs_more_evidence_not_returned",
+            "passed": result["outcome"] != "NEEDS_MORE_EVIDENCE",
+        },
+        {
+            "check_id": "production_effect_none",
+            "passed": result["safety_boundary"]["production_effect"] == "none",
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "campaign_evidence_budget_final_decision_drill",
+        "campaign_id": campaign_id,
+        "status": (
+            "CAMPAIGN_EVIDENCE_BUDGET_FINAL_DECISION_PASS"
+            if all(check["passed"] for check in checks)
+            else "CAMPAIGN_EVIDENCE_BUDGET_FINAL_DECISION_FAIL"
+        ),
+        "checks": checks,
+        "gate_run_result": result,
+        "safety_boundary": _adapter_safety_metadata(),
+        "production_effect": "none",
+    }
+
+
+def build_legacy_b2_runner_deprecation_readiness(
+    *,
+    full_parity: dict[str, Any] | None = None,
+    compatibility_path: Path = DEFAULT_COMPATIBILITY_PATH,
+) -> dict[str, Any]:
+    parity = full_parity or build_b2_campaign_full_parity_validation()
+    policy = load_compatibility_policy(compatibility_path)
+    b2_runners = [
+        runner
+        for runner in policy.get("deprecated_task_specific_runners", [])
+        if str(runner.get("runner_id", "")).startswith("b2-")
+    ]
+    checks = [
+        {
+            "check_id": "b2_runner_inventory_present",
+            "passed": bool(b2_runners),
+        },
+        {
+            "check_id": "full_campaign_compute_parity_available",
+            "passed": parity["status"]
+            in {
+                "B2_CAMPAIGN_FULL_PARITY_PASS",
+                "B2_CAMPAIGN_FULL_PARITY_PASS_WITH_EXPLAINED_DIFFS",
+            },
+        },
+        {
+            "check_id": "legacy_commands_kept_until_owner_review",
+            "passed": all(
+                runner.get("deprecation_status") != "REMOVED"
+                for runner in b2_runners
+            ),
+        },
+        {
+            "check_id": "no_forbidden_production_effects",
+            "passed": parity["production_effect"] == "none",
+        },
+    ]
+    return {
+        "schema_version": "1.0",
+        "report_type": "legacy_b2_runner_deprecation_readiness",
+        "status": (
+            "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER"
+            if all(check["passed"] for check in checks)
+            else "LEGACY_B2_RUNNER_DEPRECATION_BLOCKED"
+        ),
+        "checks": checks,
+        "parity_status": parity["status"],
+        "b2_legacy_runners": b2_runners,
+        "exit_condition": (
+            "Owner review approves removal after Campaign compute parity has no unexplained diffs "
+            "and CLI replacement documentation is accepted."
+        ),
         "safety_boundary": _adapter_safety_metadata(),
         "production_effect": "none",
     }
@@ -1441,7 +1919,8 @@ def build_campaign_run_next_stage_smoke_report(
         },
         {
             "check_id": "run_next_uses_b2_compute_adapter",
-            "passed": result.get("adapter_status") == "B2_COMPUTE_ADAPTER_SMOKE_PASS",
+            "passed": result.get("adapter_status")
+            == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
         },
         {
             "check_id": "run_next_production_effect_none",
@@ -1767,12 +2246,40 @@ def build_campaign_control_plane_v1_validation_pack(
         adapter_registry_path=adapter_registry_path,
         smoke_report=b2_compute_smoke,
     )
+    b2_full_compute = build_b2_full_diagnostic_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_gate_compute = build_b2_gate_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_e2e_compute = build_b2_campaign_e2e_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_full_parity = build_b2_campaign_full_parity_validation(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        targeted_parity=b2_compute_parity,
+        full_compute=b2_full_compute,
+        gate_compute=b2_gate_compute,
+    )
     run_next_smoke = build_campaign_run_next_stage_smoke_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
     )
     forced_budget = build_evidence_budget_forced_transition_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    final_decision_drill = build_campaign_evidence_budget_final_decision_drill(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
@@ -1784,6 +2291,9 @@ def build_campaign_control_plane_v1_validation_pack(
     )
     status_ux = build_campaign_status_ux_report(campaign_root=campaign_root)
     deprecation_plan = build_case_specific_runner_deprecation_plan()
+    legacy_b2_readiness = build_legacy_b2_runner_deprecation_readiness(
+        full_parity=b2_full_parity
+    )
     checks = [
         {
             "check_id": "adapter_contract_validation",
@@ -1794,15 +2304,36 @@ def build_campaign_control_plane_v1_validation_pack(
         {"check_id": "evidence_budget_enforcement", "passed": budget["status"] == "PASS"},
         {"check_id": "next_action_planner", "passed": next_actions["status"] == "PASS"},
         {
-            "check_id": "b2_compute_adapter_smoke",
-            "passed": b2_compute_smoke["status"] == "B2_COMPUTE_ADAPTER_SMOKE_PASS",
+            "check_id": "b2_targeted_evidence_compute_adapter",
+            "passed": b2_compute_smoke["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS",
         },
         {
-            "check_id": "b2_compute_audited_parity",
+            "check_id": "b2_targeted_evidence_compute_parity",
             "passed": b2_compute_parity["status"]
+            == "B2_TARGETED_EVIDENCE_COMPUTE_PARITY_PASS",
+        },
+        {
+            "check_id": "b2_full_diagnostic_compute_adapter",
+            "passed": b2_full_compute["status"] == "B2_FULL_DIAGNOSTIC_COMPUTE_PASS",
+        },
+        {
+            "check_id": "b2_gate_compute_adapter",
+            "passed": b2_gate_compute["status"] == "B2_GATE_COMPUTE_PASS",
+        },
+        {
+            "check_id": "b2_campaign_e2e_compute",
+            "passed": b2_e2e_compute["status"]
             in {
-                "B2_COMPUTE_PARITY_PASS",
-                "B2_COMPUTE_PARITY_PASS_WITH_EXPLAINED_DIFFS",
+                "B2_CAMPAIGN_E2E_COMPUTE_PASS",
+                "B2_CAMPAIGN_E2E_COMPUTE_PASS_WITH_LIMITATIONS",
+            },
+        },
+        {
+            "check_id": "b2_campaign_full_path_parity",
+            "passed": b2_full_parity["status"]
+            in {
+                "B2_CAMPAIGN_FULL_PARITY_PASS",
+                "B2_CAMPAIGN_FULL_PARITY_PASS_WITH_EXPLAINED_DIFFS",
             },
         },
         {
@@ -1812,6 +2343,11 @@ def build_campaign_control_plane_v1_validation_pack(
         {
             "check_id": "evidence_budget_forced_transition",
             "passed": forced_budget["status"] == "EVIDENCE_BUDGET_FORCED_TRANSITION_PASS",
+        },
+        {
+            "check_id": "evidence_budget_final_decision_drill",
+            "passed": final_decision_drill["status"]
+            == "CAMPAIGN_EVIDENCE_BUDGET_FINAL_DECISION_PASS",
         },
         {
             "check_id": "b3_signal_compute_adapter_smoke",
@@ -1827,6 +2363,11 @@ def build_campaign_control_plane_v1_validation_pack(
             == "CASE_SPECIFIC_RUNNER_DEPRECATION_PLAN_READY",
         },
         {
+            "check_id": "legacy_b2_runner_deprecation_readiness",
+            "passed": legacy_b2_readiness["status"]
+            == "LEGACY_B2_RUNNER_KEEP_COMPATIBILITY_LAYER",
+        },
+        {
             "check_id": "no_forbidden_production_effects",
             "passed": all(
                 payload["production_effect"] == "none"
@@ -1837,11 +2378,17 @@ def build_campaign_control_plane_v1_validation_pack(
                     next_actions,
                     b2_compute_smoke,
                     b2_compute_parity,
+                    b2_full_compute,
+                    b2_gate_compute,
+                    b2_e2e_compute,
+                    b2_full_parity,
                     run_next_smoke,
                     forced_budget,
+                    final_decision_drill,
                     b3_compute_smoke,
                     status_ux,
                     deprecation_plan,
+                    legacy_b2_readiness,
                 )
             ),
         },
@@ -1854,19 +2401,19 @@ def build_campaign_control_plane_v1_validation_pack(
     return {
         "schema_version": "1.0",
         "report_type": "campaign_control_plane_v1_validation_pack",
-        "release_candidate": "rc2",
+        "release_candidate": "rc3",
         "status": status,
         "checks": checks,
         "limitations": [
             "B3 remains signal-precheck only.",
             "Some legacy task-specific CLI surfaces remain read-only compatibility inputs.",
             (
-                "B2 compute adapter covers the control-window diagnostic smoke, "
-                "not every legacy B2 runner."
+                "B2 Campaign compute now covers targeted/full/gate paths, but legacy B2 "
+                "task-specific runners stay available until owner deprecation review."
             ),
             (
-                "Old B2/B3 task-specific runners are not removed until owner review "
-                "and compatibility coverage are complete."
+                "Gate decisions are research-only and may require owner override when "
+                "evidence budget is exhausted."
             ),
         ]
         if status.endswith("READY_WITH_LIMITATIONS")
@@ -1877,13 +2424,19 @@ def build_campaign_control_plane_v1_validation_pack(
             "b2_parity_validation": b2_parity["status"],
             "evidence_budget_enforcement": budget["status"],
             "next_action_parity_review": next_actions["status"],
-            "b2_compute_adapter_smoke": b2_compute_smoke["status"],
-            "b2_compute_parity_validation": b2_compute_parity["status"],
+            "b2_targeted_evidence_compute_adapter": b2_compute_smoke["status"],
+            "b2_targeted_evidence_compute_parity": b2_compute_parity["status"],
+            "b2_full_diagnostic_compute_adapter": b2_full_compute["status"],
+            "b2_gate_compute_adapter": b2_gate_compute["status"],
+            "b2_campaign_e2e_compute": b2_e2e_compute["status"],
+            "b2_campaign_full_parity_validation": b2_full_parity["status"],
             "campaign_run_next_stage_smoke": run_next_smoke["status"],
             "evidence_budget_forced_transition": forced_budget["status"],
+            "evidence_budget_final_decision_drill": final_decision_drill["status"],
             "b3_signal_compute_adapter_smoke": b3_compute_smoke["status"],
             "campaign_status_plan_ux": status_ux["status"],
             "case_specific_runner_deprecation_plan": deprecation_plan["status"],
+            "legacy_b2_runner_deprecation_readiness": legacy_b2_readiness["status"],
         },
         "safety_boundary": _adapter_safety_metadata(),
         "production_effect": "none",
@@ -1896,12 +2449,36 @@ def write_campaign_control_plane_v1_validation_artifacts(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
 ) -> dict[str, Any]:
-    output_dir = output_root / "control_plane_v1_rc2_validation"
+    output_dir = output_root / "control_plane_v1_rc3_validation"
     output_dir.mkdir(parents=True, exist_ok=True)
     b2_compute_smoke = build_b2_compute_adapter_smoke_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
+    )
+    b2_compute_parity = build_b2_compute_parity_validation(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        smoke_report=b2_compute_smoke,
+    )
+    b2_full_compute = build_b2_full_diagnostic_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_gate_compute = build_b2_gate_compute_report(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+    )
+    b2_full_parity = build_b2_campaign_full_parity_validation(
+        campaign_root=campaign_root,
+        output_root=output_root,
+        adapter_registry_path=adapter_registry_path,
+        targeted_parity=b2_compute_parity,
+        full_compute=b2_full_compute,
+        gate_compute=b2_gate_compute,
     )
     payloads = {
         "b2_campaign_adapter_parity_map": build_b2_campaign_adapter_parity_map(
@@ -1916,13 +2493,16 @@ def write_campaign_control_plane_v1_validation_artifacts(
         "campaign_next_action_parity_review": build_campaign_next_action_parity_review(
             campaign_root=campaign_root
         ),
-        "b2_compute_adapter_smoke": b2_compute_smoke,
-        "b2_compute_parity_validation": build_b2_compute_parity_validation(
+        "b2_targeted_evidence_compute_adapter": b2_compute_smoke,
+        "b2_targeted_evidence_compute_parity": b2_compute_parity,
+        "b2_full_diagnostic_compute_adapter": b2_full_compute,
+        "b2_gate_compute_adapter": b2_gate_compute,
+        "b2_campaign_e2e_compute": build_b2_campaign_e2e_compute_report(
             campaign_root=campaign_root,
             output_root=output_root,
             adapter_registry_path=adapter_registry_path,
-            smoke_report=b2_compute_smoke,
         ),
+        "b2_campaign_full_parity_validation": b2_full_parity,
         "campaign_run_next_stage_smoke": build_campaign_run_next_stage_smoke_report(
             campaign_root=campaign_root,
             output_root=output_root,
@@ -1930,6 +2510,13 @@ def write_campaign_control_plane_v1_validation_artifacts(
         ),
         "evidence_budget_forced_transition_report": (
             build_evidence_budget_forced_transition_report(
+                campaign_root=campaign_root,
+                output_root=output_root,
+                adapter_registry_path=adapter_registry_path,
+            )
+        ),
+        "campaign_evidence_budget_final_decision_drill": (
+            build_campaign_evidence_budget_final_decision_drill(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
@@ -1945,6 +2532,9 @@ def write_campaign_control_plane_v1_validation_artifacts(
         ),
         "case_specific_runner_deprecation_plan": (
             build_case_specific_runner_deprecation_plan()
+        ),
+        "legacy_b2_runner_deprecation_readiness": (
+            build_legacy_b2_runner_deprecation_readiness(full_parity=b2_full_parity)
         ),
         "campaign_control_plane_v1_validation_pack": (
             build_campaign_control_plane_v1_validation_pack(
@@ -2719,6 +3309,7 @@ def run_stage_adapter(
     gate_policy_path: Path = DEFAULT_GATE_POLICY_PATH,
     window_policy_path: Path = DEFAULT_WINDOW_POLICY_PATH,
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    evidence_store: list[EvidenceRecord] | None = None,
 ) -> StageAdapterRunOutput:
     adapter_stage = _adapter_stage_for_workflow_stage(
         spec=spec,
@@ -2843,6 +3434,7 @@ def run_stage_adapter(
             gate_policy_path=gate_policy_path,
             window_policy_path=window_policy_path,
             output_root=output_root,
+            evidence_store=evidence_store or [],
         )
 
     evidence_records: list[dict[str, Any]] = []
@@ -3257,6 +3849,7 @@ def _run_compute_stage_adapter(
     gate_policy_path: Path,
     window_policy_path: Path,
     output_root: Path,
+    evidence_store: list[EvidenceRecord],
 ) -> StageAdapterRunOutput:
     validation = build_campaign_validation_payload(
         spec=spec,
@@ -3291,6 +3884,7 @@ def _run_compute_stage_adapter(
             contract=contract,
             input_artifacts=input_artifacts,
             output_root=output_root,
+            evidence_store=evidence_store,
         )
     if contract.adapter_id == "b3-signal-precheck-compute-adapter-v1":
         return _run_b3_signal_compute_adapter(
@@ -3326,7 +3920,38 @@ def _run_b2_control_window_compute_adapter(
     contract: StageAdapterContract,
     input_artifacts: list[dict[str, Any]],
     output_root: Path,
+    evidence_store: list[EvidenceRecord],
 ) -> StageAdapterRunOutput:
+    if adapter_stage == "TARGETED_EVIDENCE":
+        return _run_b2_targeted_evidence_compute_adapter(
+            spec=spec,
+            state=state,
+            adapter_stage=adapter_stage,
+            run_id=run_id,
+            contract=contract,
+            input_artifacts=input_artifacts,
+            output_root=output_root,
+        )
+    if adapter_stage == "FULL_DIAGNOSTIC":
+        return _run_b2_full_diagnostic_compute_adapter(
+            spec=spec,
+            state=state,
+            adapter_stage=adapter_stage,
+            run_id=run_id,
+            contract=contract,
+            input_artifacts=input_artifacts,
+            output_root=output_root,
+        )
+    if adapter_stage == "GATE":
+        return _run_b2_gate_compute_adapter(
+            spec=spec,
+            state=state,
+            adapter_stage=adapter_stage,
+            run_id=run_id,
+            contract=contract,
+            input_artifacts=input_artifacts,
+            evidence_store=evidence_store,
+        )
     from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
         run_b2_control_window_research,
     )
@@ -3427,6 +4052,289 @@ def _run_b2_control_window_compute_adapter(
             "NEEDS_MORE_EVIDENCE" if smoke_pass else "BLOCKED",
         ),
         data_quality_status=_adapter_data_quality_status(payloads),
+    )
+
+
+def _run_b2_targeted_evidence_compute_adapter(
+    *,
+    spec: CampaignSpec,
+    state: CampaignState,
+    adapter_stage: str,
+    run_id: str,
+    contract: StageAdapterContract,
+    input_artifacts: list[dict[str, Any]],
+    output_root: Path,
+) -> StageAdapterRunOutput:
+    from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+        run_b2_control_window_research,
+    )
+    from ai_trading_system.etf_portfolio.weight_research_b2_targeted_evidence import (
+        run_b2_targeted_evidence_research,
+    )
+
+    compute_dir = output_root / spec.campaign_id / "b2_targeted_compute"
+    try:
+        targeted_payloads, targeted_paths = run_b2_targeted_evidence_research(
+            output_dir=compute_dir,
+            alias_dir=None,
+            generated_at=datetime.now(UTC),
+        )
+        control_payloads, control_paths = run_b2_control_window_research(
+            output_dir=compute_dir / "control_windows",
+            alias_dir=None,
+            generated_at=datetime.now(UTC),
+        )
+    except Exception as exc:  # pragma: no cover - runtime failure is reported fail-closed.
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="B2_TARGETED_EVIDENCE_COMPUTE_BLOCKED_WITH_REASON",
+            reason_codes=["B2_TARGETED_COMPUTE_EXCEPTION", type(exc).__name__],
+            run_mode=contract.default_run_mode,
+        )
+
+    payloads = {**targeted_payloads, **control_payloads}
+    source_issues = _adapter_source_artifact_issues(payloads)
+    if source_issues:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="B2_TARGETED_EVIDENCE_COMPUTE_BLOCKED_WITH_REASON",
+            reason_codes=[issue["issue_id"].upper() for issue in source_issues],
+            run_mode=contract.default_run_mode,
+        )
+    targeted_pass = (
+        targeted_payloads["b2_targeted_evidence_backfill_v2"]["status"]
+        == "B2_TARGETED_EVIDENCE_BACKFILL_PARTIAL"
+        and targeted_payloads["b2_targeted_evidence_scorecard"]["status"]
+        == "B2_TARGETED_EVIDENCE_MIXED"
+        and control_payloads["b2_no_trigger_correctness_review"]["status"]
+        == "B2_NO_TRIGGER_CORRECTNESS_PASS"
+    )
+    status = (
+        "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+        if targeted_pass
+        else "B2_TARGETED_EVIDENCE_COMPUTE_BLOCKED_WITH_REASON"
+    )
+    evidence_records = _b2_targeted_compute_evidence_records(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        targeted=targeted_payloads,
+        control=control_payloads,
+        compute_pass=targeted_pass,
+    )
+    reason_codes = {
+        status,
+        *state.reason_codes,
+        "FAST_RISK_NOT_SUPPORTED",
+        "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+        "REENTRY_LAG_SIGNAL_DRIVEN",
+        "UTILITY_MIXED",
+        "CONTROL_BEHAVIOR_CLEAN",
+    }
+    return StageAdapterRunOutput(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        adapter_id=contract.adapter_id,
+        run_mode=contract.default_run_mode,
+        adapter_version=contract.adapter_version,
+        input_artifacts=input_artifacts,
+        output_artifacts=_compute_output_artifacts(
+            {**targeted_paths, **control_paths},
+            payloads,
+        ),
+        evidence_records=[record.model_dump(mode="json") for record in evidence_records],
+        compute_performed=True,
+        imported_evidence=False,
+        parity_source=contract.parity_source,
+        failure_mode=None if targeted_pass else status,
+        status=status,
+        reason_codes=sorted(reason_codes),
+        safety_metadata=_adapter_safety_metadata(),
+        adapter_outcome=contract.stage_outcomes.get(
+            adapter_stage,
+            "NEEDS_MORE_EVIDENCE" if targeted_pass else "BLOCKED",
+        ),
+        data_quality_status=_adapter_data_quality_status(payloads),
+    )
+
+
+def _run_b2_full_diagnostic_compute_adapter(
+    *,
+    spec: CampaignSpec,
+    state: CampaignState,
+    adapter_stage: str,
+    run_id: str,
+    contract: StageAdapterContract,
+    input_artifacts: list[dict[str, Any]],
+    output_root: Path,
+) -> StageAdapterRunOutput:
+    from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+        run_b2_control_window_research,
+    )
+    from ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic import (
+        run_b2_full_diagnostic_research,
+    )
+
+    compute_dir = output_root / spec.campaign_id / "b2_full_compute"
+    try:
+        full_payloads, full_paths = run_b2_full_diagnostic_research(
+            output_dir=compute_dir,
+            alias_dir=None,
+            generated_at=datetime.now(UTC),
+        )
+        control_payloads, control_paths = run_b2_control_window_research(
+            output_dir=compute_dir / "control_windows",
+            alias_dir=None,
+            generated_at=datetime.now(UTC),
+        )
+    except Exception as exc:  # pragma: no cover - runtime failure is reported fail-closed.
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="B2_FULL_DIAGNOSTIC_BLOCKED",
+            reason_codes=["B2_FULL_DIAGNOSTIC_COMPUTE_EXCEPTION", type(exc).__name__],
+            run_mode=contract.default_run_mode,
+        )
+
+    payloads = {**full_payloads, **control_payloads}
+    source_issues = _adapter_source_artifact_issues(payloads)
+    if source_issues:
+        return _adapter_blocked_output(
+            run_id=run_id,
+            campaign_id=spec.campaign_id,
+            stage=adapter_stage,
+            adapter_id=contract.adapter_id,
+            adapter_version=contract.adapter_version,
+            input_artifacts=input_artifacts,
+            status="B2_FULL_DIAGNOSTIC_BLOCKED",
+            reason_codes=[issue["issue_id"].upper() for issue in source_issues],
+            run_mode=contract.default_run_mode,
+        )
+    risk_heavy_valid = bool(
+        full_payloads["b2_full_diagnostic_backfill"].get("window_results")
+    )
+    control_valid = (
+        control_payloads["b2_full_diagnostic_with_control_windows"]["status"]
+        == "B2_FULL_DIAGNOSTIC_COMPLETE"
+        and control_payloads["b2_no_trigger_correctness_review"]["status"]
+        == "B2_NO_TRIGGER_CORRECTNESS_PASS"
+    )
+    if not risk_heavy_valid:
+        status = "B2_FULL_DIAGNOSTIC_BLOCKED"
+    elif control_valid:
+        status = "B2_FULL_DIAGNOSTIC_COMPLETE"
+    else:
+        status = "B2_FULL_DIAGNOSTIC_PARTIAL"
+    evidence_records = _b2_full_compute_evidence_records(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        full=full_payloads,
+        control=control_payloads,
+        status=status,
+    )
+    reason_codes = {
+        status,
+        *state.reason_codes,
+        "CONTROL_BEHAVIOR_CLEAN" if control_valid else "CONTROL_BEHAVIOR_INCOMPLETE",
+        "UTILITY_MIXED",
+        "REENTRY_LAG_HIGH",
+        "TRIGGER_STABILITY_WEAK",
+    }
+    return StageAdapterRunOutput(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        adapter_id=contract.adapter_id,
+        run_mode=contract.default_run_mode,
+        adapter_version=contract.adapter_version,
+        input_artifacts=input_artifacts,
+        output_artifacts=_compute_output_artifacts(
+            {**full_paths, **control_paths},
+            payloads,
+        ),
+        evidence_records=[record.model_dump(mode="json") for record in evidence_records],
+        compute_performed=True,
+        imported_evidence=False,
+        parity_source=contract.parity_source,
+        failure_mode=None if status != "B2_FULL_DIAGNOSTIC_BLOCKED" else status,
+        status=status,
+        reason_codes=sorted(reason_codes),
+        safety_metadata=_adapter_safety_metadata(),
+        adapter_outcome=contract.stage_outcomes.get(
+            adapter_stage,
+            "NEEDS_MORE_EVIDENCE" if status != "B2_FULL_DIAGNOSTIC_BLOCKED" else "BLOCKED",
+        ),
+        data_quality_status=_adapter_data_quality_status(payloads),
+    )
+
+
+def _run_b2_gate_compute_adapter(
+    *,
+    spec: CampaignSpec,
+    state: CampaignState,
+    adapter_stage: str,
+    run_id: str,
+    contract: StageAdapterContract,
+    input_artifacts: list[dict[str, Any]],
+    evidence_store: list[EvidenceRecord],
+) -> StageAdapterRunOutput:
+    gate_payload = _build_b2_gate_compute_payload(
+        spec=spec,
+        state=state,
+        evidence=evidence_store,
+    )
+    status = (
+        "B2_GATE_COMPUTE_PASS"
+        if gate_payload["decision"] != "GENERIC_NEEDS_MORE_EVIDENCE"
+        else "B2_GATE_COMPUTE_BLOCKED_WITH_REASON"
+    )
+    evidence_records = _b2_gate_compute_evidence_records(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        gate_payload=gate_payload,
+        compute_pass=status == "B2_GATE_COMPUTE_PASS",
+    )
+    return StageAdapterRunOutput(
+        run_id=run_id,
+        campaign_id=spec.campaign_id,
+        stage=adapter_stage,
+        adapter_id=contract.adapter_id,
+        run_mode=contract.default_run_mode,
+        adapter_version=contract.adapter_version,
+        input_artifacts=input_artifacts,
+        output_artifacts=[
+            {
+                "artifact_id": "b2_gate_compute",
+                "status": gate_payload["decision"],
+            }
+        ],
+        evidence_records=[record.model_dump(mode="json") for record in evidence_records],
+        compute_performed=True,
+        imported_evidence=False,
+        parity_source=contract.parity_source,
+        failure_mode=None if status == "B2_GATE_COMPUTE_PASS" else status,
+        status=status,
+        reason_codes=sorted(set(gate_payload["reason_codes"]) | {status}),
+        safety_metadata=_adapter_safety_metadata(),
+        adapter_outcome=gate_payload["campaign_outcome"],
+        data_quality_status=CONTROL_ONLY_DATA_QUALITY_STATUS,
     )
 
 
@@ -3615,6 +4523,357 @@ def _b2_compute_evidence_records(
             confidence="high" if smoke_pass else "medium",
             source_artifact_id="b2_no_trigger_correctness_compute",
             reason_codes=reason_codes,
+        ),
+    ]
+
+
+def _b2_targeted_compute_evidence_records(
+    *,
+    run_id: str,
+    campaign_id: str,
+    stage: str,
+    targeted: dict[str, dict[str, Any]],
+    control: dict[str, dict[str, Any]],
+    compute_pass: bool,
+) -> list[EvidenceRecord]:
+    status: Literal["PASS", "FAIL", "MIXED", "BLOCKED", "WARNING", "INFO"] = (
+        "MIXED" if compute_pass else "BLOCKED"
+    )
+    reason_codes = [
+        "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+        if compute_pass
+        else "B2_TARGETED_EVIDENCE_COMPUTE_REVIEW_REQUIRED",
+        "FAST_RISK_NOT_SUPPORTED",
+        "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
+        "REENTRY_LAG_SIGNAL_DRIVEN",
+        "UTILITY_MIXED",
+    ]
+    no_trigger = control["b2_no_trigger_correctness_review"]
+    window_lock = targeted["b2_targeted_evidence_window_lock"]
+    backfill = targeted["b2_targeted_evidence_backfill_v2"]
+    return [
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-targeted-fast-risk",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="TRIGGER_BEHAVIOR",
+            metric_name="b2_fast_risk_no_trigger_status",
+            value=targeted["b2_fast_risk_no_trigger_audit"].get("status"),
+            direction="negative",
+            status="FAIL" if compute_pass else "BLOCKED",
+            confidence="medium",
+            source_artifact_id="b2_fast_risk_no_trigger_audit_compute",
+            reason_codes=["FAST_RISK_NOT_SUPPORTED", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-targeted-slow-drawdown-repeatability",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="DRAWDOWN_PROTECTION",
+            metric_name="b2_slow_drawdown_repeatability_status",
+            value=targeted["b2_slow_drawdown_repeatability_study"].get("status"),
+            direction="mixed",
+            status=status,
+            confidence="medium",
+            source_artifact_id="b2_slow_drawdown_repeatability_study_compute",
+            reason_codes=["SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-targeted-reentry-lag",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="REENTRY_BEHAVIOR",
+            metric_name="b2_reentry_lag_root_cause_status",
+            value=targeted["b2_reentry_lag_root_cause_review"].get("status"),
+            direction="negative",
+            status="FAIL" if compute_pass else "BLOCKED",
+            confidence="medium",
+            source_artifact_id="b2_reentry_lag_root_cause_review_compute",
+            reason_codes=["REENTRY_LAG_SIGNAL_DRIVEN", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-targeted-utility-scorecard",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="TURNOVER_COST",
+            metric_name="b2_targeted_evidence_scorecard_status",
+            value=targeted["b2_targeted_evidence_scorecard"].get("status"),
+            direction="mixed",
+            status=status,
+            confidence="medium",
+            source_artifact_id="b2_targeted_evidence_scorecard_compute",
+            reason_codes=["UTILITY_MIXED", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-targeted-window-stability",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="WINDOW_STABILITY",
+            metric_name="b2_targeted_window_lock_status",
+            value={
+                "status": window_lock.get("status"),
+                "window_count": backfill.get("aggregate", {}).get("window_count"),
+            },
+            direction="mixed",
+            status=status,
+            confidence="medium",
+            source_artifact_id="b2_targeted_evidence_window_lock_compute",
+            reason_codes=["SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-targeted-control-no-trigger",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="SAFETY",
+            metric_name="b2_targeted_control_no_trigger_status",
+            value=no_trigger.get("status"),
+            direction="positive" if compute_pass else "negative",
+            status="PASS" if compute_pass else "BLOCKED",
+            confidence="high",
+            source_artifact_id="b2_no_trigger_correctness_compute",
+            reason_codes=["CONTROL_BEHAVIOR_CLEAN", *reason_codes],
+        ),
+    ]
+
+
+def _b2_full_compute_evidence_records(
+    *,
+    run_id: str,
+    campaign_id: str,
+    stage: str,
+    full: dict[str, dict[str, Any]],
+    control: dict[str, dict[str, Any]],
+    status: str,
+) -> list[EvidenceRecord]:
+    compute_pass = status != "B2_FULL_DIAGNOSTIC_BLOCKED"
+    evidence_status: Literal["PASS", "FAIL", "MIXED", "BLOCKED", "WARNING", "INFO"] = (
+        "MIXED" if compute_pass else "BLOCKED"
+    )
+    reason_codes = [
+        status,
+        "TRIGGER_STABILITY_WEAK",
+        "REENTRY_LAG_HIGH",
+        "UTILITY_MIXED",
+    ]
+    backfill = full["b2_full_diagnostic_backfill"]
+    aggregate = backfill.get("aggregate", {})
+    return [
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-full-diagnostic-backfill",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="WINDOW_STABILITY",
+            metric_name="b2_full_diagnostic_window_count",
+            value=len(backfill.get("window_results", [])),
+            direction="mixed",
+            status=evidence_status,
+            confidence="medium",
+            source_artifact_id="b2_full_diagnostic_backfill_compute",
+            reason_codes=reason_codes,
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-full-trigger-stability",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="TRIGGER_BEHAVIOR",
+            metric_name="b2_signal_robustness_trigger_stability_status",
+            value=full["b2_signal_robustness_trigger_stability"].get("status"),
+            direction="negative",
+            status="FAIL" if compute_pass else "BLOCKED",
+            confidence="medium",
+            source_artifact_id="b2_signal_robustness_trigger_stability_compute",
+            reason_codes=["TRIGGER_STABILITY_WEAK", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-full-drawdown-attribution",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="DRAWDOWN_PROTECTION",
+            metric_name="b2_drawdown_protection_attribution_status",
+            value={
+                "status": full["b2_drawdown_protection_attribution"].get("status"),
+                "max_drawdown_delta": aggregate.get("max_drawdown_delta"),
+            },
+            direction="mixed",
+            status=evidence_status,
+            confidence="medium",
+            source_artifact_id="b2_drawdown_protection_attribution_compute",
+            reason_codes=["SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-full-reentry-cost",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="REENTRY_BEHAVIOR",
+            metric_name="b2_false_risk_off_reentry_cost_status",
+            value=full["b2_false_risk_off_reentry_cost_review"].get("status"),
+            direction="negative",
+            status="FAIL" if compute_pass else "BLOCKED",
+            confidence="medium",
+            source_artifact_id="b2_false_risk_off_reentry_cost_review_compute",
+            reason_codes=["REENTRY_LAG_HIGH", "REENTRY_LAG_SIGNAL_DRIVEN", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-full-utility",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="TURNOVER_COST",
+            metric_name="b2_cost_benchmark_utility_status",
+            value=full["b2_cost_benchmark_utility_review"].get("status"),
+            direction="mixed",
+            status=evidence_status,
+            confidence="medium",
+            source_artifact_id="b2_cost_benchmark_utility_review_compute",
+            reason_codes=["UTILITY_MIXED", *reason_codes],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-full-control-no-trigger",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="SAFETY",
+            metric_name="b2_full_control_no_trigger_status",
+            value={
+                "no_trigger": control["b2_no_trigger_correctness_review"].get("status"),
+                "control_windows": control["b2_full_diagnostic_with_control_windows"].get(
+                    "status"
+                ),
+            },
+            direction="positive" if compute_pass else "negative",
+            status="PASS" if compute_pass else "BLOCKED",
+            confidence="high",
+            source_artifact_id="b2_full_diagnostic_with_control_windows_compute",
+            reason_codes=["CONTROL_BEHAVIOR_CLEAN", *reason_codes],
+        ),
+    ]
+
+
+def _build_b2_gate_compute_payload(
+    *,
+    spec: CampaignSpec,
+    state: CampaignState,
+    evidence: list[EvidenceRecord],
+) -> dict[str, Any]:
+    gate = evaluate_gate(spec=spec, state=state, evidence=evidence)
+    budget = evaluate_evidence_budget(spec, state)
+    plan = build_next_action_plan(
+        spec=spec,
+        state=state,
+        evidence=evidence,
+        gate_payload=gate,
+    )
+    reason_codes = set(gate["reason_codes"]) | set(state.reason_codes)
+    needs_more_evidence = (
+        gate["decision_outcome"] == "NEEDS_MORE_EVIDENCE"
+        or state.current_outcome == "NEEDS_MORE_EVIDENCE"
+        or "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY" in reason_codes
+    )
+    if budget["budget_status"] == "EXHAUSTED" and needs_more_evidence:
+        decision = "OWNER_OVERRIDE_REQUIRED"
+        campaign_outcome = "OWNER_OVERRIDE_REQUIRED"
+        reason_codes.update(
+            {
+                "EVIDENCE_BUDGET_EXHAUSTED",
+                "EVIDENCE_BUDGET_EXHAUSTED_OWNER_OVERRIDE_REQUIRED",
+                "GENERIC_NEEDS_MORE_EVIDENCE_DISALLOWED",
+            }
+        )
+    elif "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY" in reason_codes:
+        decision = "B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN"
+        campaign_outcome = "NEEDS_MORE_EVIDENCE"
+        reason_codes.update(
+            {
+                "COMPLETE_FINAL_REPEATABILITY_ROUND",
+                "GENERIC_NEEDS_MORE_EVIDENCE_REPLACED_WITH_DEFINED_PLAN",
+            }
+        )
+    elif "REENTRY_LAG_SIGNAL_DRIVEN" in reason_codes:
+        decision = "B2_ONLY_RETURN_TO_DESIGN"
+        campaign_outcome = "RETURN_TO_DESIGN"
+    elif "FAST_RISK_NOT_SUPPORTED" in reason_codes:
+        decision = "B2_ONLY_NARROW_ROLE"
+        campaign_outcome = "NARROW_ROLE"
+    elif gate["decision_outcome"] in {"PROMISING", "PASS"}:
+        decision = "B2_ONLY_PREPARE_OWNER_PACKET"
+        campaign_outcome = gate["decision_outcome"]
+    elif gate["decision_outcome"] in {"MIXED", "WEAK", "REJECTED", "RETURN_TO_DESIGN"}:
+        decision = f"B2_ONLY_{gate['decision_outcome']}"
+        campaign_outcome = gate["decision_outcome"]
+    else:
+        decision = "GENERIC_NEEDS_MORE_EVIDENCE"
+        campaign_outcome = "BLOCKED"
+        reason_codes.add("GATE_DECISION_NOT_CONSTRAINED")
+    return {
+        "schema_version": "1.0",
+        "report_type": "b2_gate_compute",
+        "campaign_id": spec.campaign_id,
+        "status": "B2_GATE_COMPUTE_PASS"
+        if decision != "GENERIC_NEEDS_MORE_EVIDENCE"
+        else "B2_GATE_COMPUTE_BLOCKED_WITH_REASON",
+        "decision": decision,
+        "campaign_outcome": campaign_outcome,
+        "raw_gate_decision_outcome": gate["decision_outcome"],
+        "budget_status": budget["budget_status"],
+        "evidence_budget_used": state.evidence_budget_used.model_dump(mode="json"),
+        "evidence_budget_limits": spec.evidence_budget.model_dump(mode="json"),
+        "stop_rule_proximity": budget["stop_rule_proximity"],
+        "allowed_next_actions": plan["allowed_next_actions"],
+        "blocked_actions": plan["blocked_actions"],
+        "required_owner_actions": plan["required_owner_actions"],
+        "reason_codes": sorted(reason_codes),
+        "data_quality_status": state.data_quality_status,
+        "safety_boundary": state.safety_boundary,
+        "production_effect": "none",
+    }
+
+
+def _b2_gate_compute_evidence_records(
+    *,
+    run_id: str,
+    campaign_id: str,
+    stage: str,
+    gate_payload: dict[str, Any],
+    compute_pass: bool,
+) -> list[EvidenceRecord]:
+    return [
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-gate-compute-decision",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="SAFETY",
+            metric_name="b2_gate_compute_decision",
+            value=gate_payload["decision"],
+            direction="positive" if compute_pass else "negative",
+            status="PASS" if compute_pass else "BLOCKED",
+            confidence="high",
+            source_artifact_id="b2_gate_compute",
+            reason_codes=gate_payload["reason_codes"],
+        ),
+        EvidenceRecord(
+            evidence_id=f"{run_id}-b2-gate-budget-status",
+            campaign_id=campaign_id,
+            run_id=run_id,
+            stage=stage,
+            category="SAFETY",
+            metric_name="b2_gate_budget_status",
+            value=gate_payload["budget_status"],
+            direction="neutral",
+            status="INFO",
+            confidence="high",
+            source_artifact_id="b2_gate_compute",
+            reason_codes=gate_payload["reason_codes"],
         ),
     ]
 

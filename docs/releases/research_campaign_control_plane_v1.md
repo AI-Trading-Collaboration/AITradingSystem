@@ -30,9 +30,18 @@
 - 新增 `campaign allowed-actions|blocked-actions|budget|source-artifacts|deprecation-plan`，`status/plan` 显示 adapter run mode、预算和 source artifacts。
 - `validation-pack` rc2 写入 `outputs/research_campaigns/control_plane_v1_rc2_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
 
+## rc3 更新
+
+- B2 compute adapter 覆盖 `TARGETED_EVIDENCE`、`FULL_DIAGNOSTIC` 和 `GATE`。
+- Targeted compute 输出 `B2_TARGETED_EVIDENCE_COMPUTE_PASS`，并生成 trigger、drawdown、re-entry、utility、window-stability 和 safety evidence。
+- Full diagnostic compute 同时验证 risk-heavy evidence 与 control-window no-trigger evidence，当前输出 `B2_FULL_DIAGNOSTIC_COMPLETE`。
+- Gate compute 从 Campaign evidence store、evidence budget 和 stop rules 生成 constrained B2 decision；预算可用时输出 `B2_ONLY_CONTINUE_WITH_DEFINED_EVIDENCE_PLAN`，预算耗尽时输出 `OWNER_OVERRIDE_REQUIRED`，不再发出 generic `NEEDS_MORE_EVIDENCE`。
+- 新增 B2 Campaign E2E compute、full-path parity、evidence-budget final-decision drill 和 legacy B2 runner deprecation readiness。
+- `validation-pack` rc3 写入 `outputs/research_campaigns/control_plane_v1_rc3_validation/`，当前状态仍为 `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`。
+
 ## 限制
 
-- 当前 compute adapter 只覆盖 B2 control-window diagnostic smoke 与 B3 signal-only smoke；尚不替代所有旧 task-specific CLI。
+- B2 Campaign compute 已覆盖 targeted/full/gate，但 legacy B2 task-specific CLI 仍保留到 owner deprecation review 后。
 - Audited-artifact adapter 仍保留用于 parity 和历史 evidence 审计。
 - 未配置 adapter、输入缺失、holdout 越权、输出 invalid 或 safety metadata 不合格时 fail-closed。
 - B3 仍只支持 signal-precheck，不允许 weight generation、mini-backfill、B4/B5/B6/v3 或 paper-shadow。

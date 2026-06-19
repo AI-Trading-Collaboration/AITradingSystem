@@ -189,6 +189,8 @@ adapters:
     default_run_mode: "COMPUTE_MODE"
     supported_stage:
       - "TARGETED_EVIDENCE"
+      - "FULL_DIAGNOSTIC"
+      - "GATE"
     supported_module:
       - "risk-overlay-b2"
     supported_campaign_type:
@@ -197,33 +199,57 @@ adapters:
     required_inputs:
       - artifact_id: "research_window_catalog"
         path: "docs/research/research_window_catalog.json"
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_next_evidence_plan"
+        path: "docs/research/b2_next_evidence_plan.json"
         stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_per_window_utility_scorecard"
+        path: "docs/research/b2_per_window_utility_scorecard.json"
+        stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_control_window_rerun"
+        path: "docs/research/b2_control_window_rerun.json"
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_no_trigger_correctness_review"
+        path: "docs/research/b2_no_trigger_correctness_review.json"
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
       - artifact_id: "b2_full_diagnostic_backfill"
         path: "docs/research/b2_full_diagnostic_backfill.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
       - artifact_id: "b2_drawdown_protection_attribution"
         path: "docs/research/b2_drawdown_protection_attribution.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
       - artifact_id: "b2_false_risk_off_reentry_cost_review"
         path: "docs/research/b2_false_risk_off_reentry_cost_review.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
       - artifact_id: "b2_cost_benchmark_utility_review"
         path: "docs/research/b2_cost_benchmark_utility_review.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
       - artifact_id: "b2_signal_robustness_trigger_stability"
         path: "docs/research/b2_signal_robustness_trigger_stability.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
       - artifact_id: "b2_only_full_diagnostic_gate"
         path: "docs/research/b2_only_full_diagnostic_gate.json"
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_gate_v4_decision"
+        path: "docs/research/b2_gate_v4_decision.json"
         stages: ["TARGETED_EVIDENCE"]
+      - artifact_id: "b2_gate_v5"
+        path: "docs/research/b2_gate_v5.json"
+        stages: ["TARGETED_EVIDENCE", "GATE"]
       - artifact_id: "b2_b3_branch_status_snapshot"
         path: "docs/research/b2_b3_branch_status_snapshot.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
+      - artifact_id: "b2_research_branch_snapshot_v2"
+        path: "docs/research/b2_research_branch_snapshot_v2.json"
+        stages: ["TARGETED_EVIDENCE", "GATE"]
       - artifact_id: "b3_signal_precheck_resolution_plan"
         path: "docs/research/b3_signal_precheck_resolution_plan.json"
-        stages: ["TARGETED_EVIDENCE"]
+        stages: ["TARGETED_EVIDENCE", "FULL_DIAGNOSTIC"]
     optional_inputs: []
     produced_artifacts:
+      - "b2_targeted_evidence_compute.json"
+      - "b2_full_diagnostic_compute.json"
+      - "b2_gate_compute.json"
       - "b2_control_window_rerun_compute.json"
       - "b2_control_window_rerun_compute.md"
       - "B2 control-window risk signal component CSV"
@@ -232,6 +258,11 @@ adapters:
       - "Reader Brief section"
     produced_evidence_categories:
       - "TRIGGER_BEHAVIOR"
+      - "DRAWDOWN_PROTECTION"
+      - "REENTRY_BEHAVIOR"
+      - "TURNOVER_COST"
+      - "BENCHMARK_RELATIVE"
+      - "WINDOW_STABILITY"
       - "PORTFOLIO_EFFECT"
       - "SAFETY"
     supported_windows:
@@ -257,6 +288,8 @@ adapters:
       - "ADAPTER_SAFETY_BLOCKED"
     stage_outcomes:
       TARGETED_EVIDENCE: "NEEDS_MORE_EVIDENCE"
+      FULL_DIAGNOSTIC: "NEEDS_MORE_EVIDENCE"
+      GATE: "RETURN_TO_DESIGN"
     parity_source: "docs/research/b2_control_window_rerun.json"
     evidence_mappings: []
   b3-signal-precheck-audited-artifact-adapter-v1:
