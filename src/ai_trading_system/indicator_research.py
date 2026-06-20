@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -82,6 +83,12 @@ EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE = 0.10
 EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE = 0.40
 # Validation-only scenario cap used for counterfactual reporting; not a production policy.
 DEFAULT_MASKING_ABLATION_CAP_RATIO = 0.50
+# Validation-only diagnostics thresholds; these classify robustness evidence only and
+# never change scoring, gates, or production weights.
+ROBUSTNESS_SMALL_RETURN_DELTA = 0.001
+ROBUSTNESS_HIGH_NOISE_STD = 0.02
+ROBUSTNESS_CLUSTER_DOMINANCE_SHARE = 0.50
+ROBUSTNESS_TOP_DATE_CONCENTRATION_SHARE = 0.50
 # Isolated daily traces stay useful, but stability claims need a multi-date diagnostic window.
 HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY = 20
 FULL_ADVISORY_TRACE_SOURCE = "full_advisory_score_daily_trace"
@@ -877,6 +884,12 @@ def write_indicator_validation_pack_stability_report(
         "outcome_availability_repeatable": (
             first_projection["outcome_availability_summary"]
             == second_projection["outcome_availability_summary"]
+        ),
+        "masking_robustness_repeatable": (
+            first_projection["masking_robustness_summary"]
+            == second_projection["masking_robustness_summary"]
+            and first_projection["masking_robustness_delta_count"]
+            == second_projection["masking_robustness_delta_count"]
         ),
         "lineage_manifest_repair_repeatable": (
             first_projection["lineage_manifest_repair_summary"]
@@ -2113,6 +2126,142 @@ def build_valuation_crowding_masking_effectiveness_review(
     )
 
 
+def build_valuation_crowding_masking_robustness_review(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    effectiveness = build_valuation_crowding_masking_effectiveness_review(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    cases_by_source = _robustness_cases_by_source(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    scenario_delta_matrix = _scenario_delta_matrix(
+        effectiveness.get("conclusion_matrix", [])
+    )
+    aggregation = _robustness_aggregation(effectiveness)
+    case_diagnostics = _robustness_case_diagnostics(cases_by_source, capped_masking_ratio)
+    ten_day_support = _ten_day_baseline_support_attribution(
+        cases_by_source,
+        capped_masking_ratio,
+        effectiveness,
+    )
+    short_horizon_explanation = _short_horizon_neutral_explanation(
+        cases_by_source,
+        scenario_delta_matrix,
+        effectiveness,
+    )
+    maturity_tracker = _pending_twenty_day_maturity_tracker(
+        effectiveness.get("outcome_availability_records", [])
+    )
+    conservative_gate = _conservative_evidence_gate(
+        effectiveness,
+        aggregation,
+        scenario_delta_matrix,
+    )
+    final_recommendation = conservative_gate["final_validation_recommendation"]
+    issues = []
+    if maturity_tracker["current_20d_mature_cases"] < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "insufficient_long_horizon_evidence",
+                "message": (
+                    "20d evidence remains below the validation floor and is not used "
+                    "for the final validation-only recommendation."
+                ),
+            }
+        )
+    if final_recommendation == "keep_preliminary_short_horizon_only":
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "conservative_gate_kept_preliminary",
+                "message": conservative_gate["rationale"],
+            }
+        )
+    return _base_payload(
+        registry,
+        report_type="valuation_crowding_masking_robustness_review",
+        status="PASS_WITH_WARNINGS" if issues else "PASS",
+        issues=issues,
+        summary={
+            "source_effectiveness_recommendation": effectiveness.get("summary", {}).get(
+                "decision_recommendation"
+            ),
+            "final_validation_recommendation": final_recommendation,
+            "scenario_delta_row_count": len(scenario_delta_matrix),
+            "case_diagnostic_count": case_diagnostics["diagnostic_case_count"],
+            "current_20d_mature_cases": maturity_tracker[
+                "current_20d_mature_cases"
+            ],
+            "pending_20d_cases": maturity_tracker["pending_20d_cases"],
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "read_only": True,
+            "production_weight_logic_changed": False,
+        },
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        source_effectiveness_summary=effectiveness.get("summary", {}),
+        scenario_delta_matrix=scenario_delta_matrix,
+        aggregation=aggregation,
+        case_diagnostics=case_diagnostics,
+        ten_day_baseline_support_attribution=ten_day_support,
+        short_horizon_neutral_explanation=short_horizon_explanation,
+        conservative_evidence_gate=conservative_gate,
+        pending_20d_maturity_tracker=maturity_tracker,
+        final_validation_recommendation={
+            "decision_recommendation": final_recommendation,
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "rationale": conservative_gate["rationale"],
+        },
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
 def build_lineage_manifest_repair_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -2883,6 +3032,23 @@ def write_indicator_framework_validation_pack(
             ),
         ),
         (
+            "valuation_crowding_masking_robustness_review",
+            build_valuation_crowding_masking_robustness_review(
+                registry_path=registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
+                bridge_artifact_root=bridge_artifact_root,
+                outcome_ticker=outcome_ticker,
+                capped_masking_ratio=capped_masking_ratio,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
             "historical_multi_stage_weight_trace_validation",
             build_historical_multi_stage_weight_trace_validation(
                 registry_path=registry_path,
@@ -2997,6 +3163,7 @@ def write_indicator_framework_validation_pack(
             {"check_id": "counterfactual_ablation", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "outcome_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_effectiveness_review", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "masking_robustness_review", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "historical_trace_validation", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "gate_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "component_historical_trace", "status": "PASS_WITH_WARNINGS"},
@@ -6695,6 +6862,942 @@ def _scenario_horizon_recommendation_contributions(
     }
 
 
+def _robustness_cases_by_source(
+    *,
+    registry_path: Path,
+    trace_path: Path | None,
+    prices_path: Path | None,
+    gate_audit_root: Path | None,
+    bridge_artifact_root: Path | None,
+    outcome_ticker: str,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+    asset_universe: str | None,
+) -> dict[str, list[dict[str, Any]]]:
+    casebook = build_masking_casebook(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    cases = [dict(item) for item in casebook.get("casebook", []) if isinstance(item, Mapping)]
+    gate_audit = build_gate_availability_audit(
+        registry_path=registry_path,
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    availability = [
+        dict(item)
+        for item in gate_audit.get("gate_availability", [])
+        if isinstance(item, Mapping)
+    ]
+    full_dates = {
+        str(record.get("date"))
+        for record in availability
+        if record.get("full_advisory_trace_eligible")
+    }
+    component_only_dates = {
+        str(record.get("date"))
+        for record in availability
+        if record.get("component_validation_trace_eligible")
+        and not record.get("full_advisory_trace_eligible")
+    }
+    full_cases = [
+        _with_validation_source(case, "full_advisory_only")
+        for case in cases
+        if str(case.get("date") or "") in full_dates
+    ]
+    component_cases = [
+        _with_validation_source(case, "component_only")
+        for case in cases
+        if str(case.get("date") or "") in component_only_dates
+    ]
+    bridge = build_backtest_trace_bridge(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    bridge_cases = [
+        _with_validation_source(
+            _bridge_record_to_effectiveness_case(record),
+            "backtest_bridge",
+        )
+        for record in bridge.get("bridge_records", [])
+        if isinstance(record, Mapping)
+    ]
+    return {
+        "full_advisory_only": full_cases,
+        "component_only": component_cases,
+        "backtest_bridge": bridge_cases,
+        "all_validation_sources": [*full_cases, *component_cases, *bridge_cases],
+    }
+
+
+def _with_validation_source(
+    case: Mapping[str, Any],
+    validation_source: str,
+) -> dict[str, Any]:
+    row = dict(case)
+    row["validation_source"] = validation_source
+    return row
+
+
+def _scenario_delta_matrix(
+    conclusion_matrix: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows_by_key = {
+        (str(row.get("horizon") or ""), str(row.get("scenario_id") or "")): row
+        for row in conclusion_matrix
+        if isinstance(row, Mapping)
+    }
+    comparisons = (
+        ("baseline_vs_no_valuation_crowding_masking", "baseline", "no_valuation_crowding_masking"),
+        ("baseline_vs_capped_masking", "baseline", "capped_masking"),
+        ("capped_masking_vs_no_masking", "capped_masking", "no_valuation_crowding_masking"),
+    )
+    fields = (
+        "avg_return",
+        "median_return",
+        "hit_rate",
+        "downside_capture",
+        "max_drawdown",
+        "missed_upside_count",
+        "false_risk_off_count",
+        "drawdown_reduced_count",
+        "turnover",
+        "constraint_hit_count",
+    )
+    delta_rows: list[dict[str, Any]] = []
+    for horizon in (f"{item}d" for item in MASKING_OUTCOME_HORIZONS):
+        for comparison_id, left_id, right_id in comparisons:
+            left = rows_by_key.get((horizon, left_id), {})
+            right = rows_by_key.get((horizon, right_id), {})
+            delta = {
+                f"delta_{field}": _optional_delta(left.get(field), right.get(field))
+                for field in fields
+            }
+            delta_rows.append(
+                {
+                    "comparison_id": comparison_id,
+                    "left_scenario": left_id,
+                    "right_scenario": right_id,
+                    "horizon": horizon,
+                    "horizon_trading_days": int(horizon.removesuffix("d")),
+                    "evidence_status": left.get("evidence_status")
+                    or right.get("evidence_status")
+                    or "unknown",
+                    **delta,
+                    "left_sample_count": left.get("sample_count"),
+                    "right_sample_count": right.get("sample_count"),
+                    "promotion_gate_allowed": False,
+                }
+            )
+    return delta_rows
+
+
+def _optional_delta(left: Any, right: Any) -> float | None:
+    left_value = _optional_float(left)
+    right_value = _optional_float(right)
+    if left_value is None or right_value is None:
+        return None
+    return left_value - right_value
+
+
+def _robustness_aggregation(effectiveness: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "equal_weight_by_date": _equal_weight_group_aggregation(
+            effectiveness.get("by_date", []),
+            group_field="date",
+        ),
+        "equal_weight_by_asset": _equal_weight_group_aggregation(
+            effectiveness.get("by_asset", []),
+            group_field="asset",
+        ),
+        "equal_weight_by_correlated_asset_cluster": _equal_weight_group_aggregation(
+            effectiveness.get("by_correlated_asset_cluster", []),
+            group_field="correlated_asset_cluster",
+        ),
+        "full_advisory_only": _single_layer_aggregation(
+            effectiveness.get("layers", {}).get("full_advisory_only", {})
+            if isinstance(effectiveness.get("layers"), Mapping)
+            else {}
+        ),
+        "all_validation_sources": _all_sources_matrix_aggregation(
+            effectiveness.get("conclusion_matrix", [])
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _equal_weight_group_aggregation(
+    group_layers: Any,
+    *,
+    group_field: str,
+) -> dict[str, Any]:
+    groups = [
+        group for group in group_layers if isinstance(group, Mapping) and group.get(group_field)
+    ] if isinstance(group_layers, Sequence) and not isinstance(group_layers, (str, bytes)) else []
+    horizon_results = []
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        scenario_values: dict[str, list[float]] = {
+            scenario_id: [] for scenario_id in MASKING_ABLATION_SCENARIOS
+        }
+        for group in groups:
+            scenarios = group.get("scenarios", {})
+            if not isinstance(scenarios, Mapping):
+                continue
+            for scenario_id in MASKING_ABLATION_SCENARIOS:
+                scenario = scenarios.get(scenario_id, {})
+                if not isinstance(scenario, Mapping):
+                    continue
+                by_horizon = scenario.get("by_horizon", {})
+                if not isinstance(by_horizon, Mapping):
+                    continue
+                metrics = by_horizon.get(f"{horizon}d", {})
+                if not isinstance(metrics, Mapping):
+                    continue
+                value = _optional_float(metrics.get("avg_return"))
+                if value is not None:
+                    scenario_values[scenario_id].append(value)
+        scenario_avg_returns = {
+            scenario_id: _mean(values)
+            for scenario_id, values in scenario_values.items()
+        }
+        horizon_results.append(
+            {
+                "horizon": f"{horizon}d",
+                "horizon_trading_days": horizon,
+                "scenario_avg_returns": scenario_avg_returns,
+                "winning_scenario": _winning_scenario(scenario_avg_returns),
+                "group_count_with_data": max(
+                    (len(values) for values in scenario_values.values()),
+                    default=0,
+                ),
+            }
+        )
+    return {
+        "aggregation_id": f"equal_weight_by_{group_field}",
+        "group_field": group_field,
+        "group_count": len(groups),
+        "horizon_results": horizon_results,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _single_layer_aggregation(layer: Mapping[str, Any]) -> dict[str, Any]:
+    scenarios = layer.get("scenarios", {}) if isinstance(layer, Mapping) else {}
+    horizon_results = []
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        scenario_avg_returns = {}
+        for scenario_id in MASKING_ABLATION_SCENARIOS:
+            scenario = scenarios.get(scenario_id, {}) if isinstance(scenarios, Mapping) else {}
+            by_horizon = scenario.get("by_horizon", {}) if isinstance(scenario, Mapping) else {}
+            metrics = by_horizon.get(f"{horizon}d", {}) if isinstance(by_horizon, Mapping) else {}
+            scenario_avg_returns[scenario_id] = (
+                _optional_float(metrics.get("avg_return"))
+                if isinstance(metrics, Mapping)
+                else None
+            )
+        horizon_results.append(
+            {
+                "horizon": f"{horizon}d",
+                "horizon_trading_days": horizon,
+                "scenario_avg_returns": scenario_avg_returns,
+                "winning_scenario": _winning_scenario(scenario_avg_returns),
+            }
+        )
+    return {
+        "aggregation_id": "full_advisory_only",
+        "sample_quality": layer.get("sample_quality", {}) if isinstance(layer, Mapping) else {},
+        "horizon_results": horizon_results,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _all_sources_matrix_aggregation(
+    conclusion_matrix: Any,
+) -> dict[str, Any]:
+    rows = (
+        [row for row in conclusion_matrix if isinstance(row, Mapping)]
+        if isinstance(conclusion_matrix, Sequence)
+        and not isinstance(conclusion_matrix, (str, bytes))
+        else []
+    )
+    horizon_results = []
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        scenario_avg_returns = {
+            str(row.get("scenario_id")): _optional_float(row.get("avg_return"))
+            for row in rows
+            if row.get("horizon") == f"{horizon}d"
+        }
+        horizon_results.append(
+            {
+                "horizon": f"{horizon}d",
+                "horizon_trading_days": horizon,
+                "scenario_avg_returns": scenario_avg_returns,
+                "winning_scenario": _winning_scenario(scenario_avg_returns),
+            }
+        )
+    return {
+        "aggregation_id": "all_validation_sources",
+        "horizon_results": horizon_results,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _mean(values: Sequence[float]) -> float | None:
+    if not values:
+        return None
+    return sum(values) / len(values)
+
+
+def _winning_scenario(values: Mapping[str, float | None]) -> str:
+    usable = {key: value for key, value in values.items() if value is not None}
+    if not usable:
+        return "insufficient_evidence"
+    return max(usable.items(), key=lambda item: item[1])[0]
+
+
+def _robustness_case_diagnostics(
+    cases_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+    capped_masking_ratio: float,
+) -> dict[str, Any]:
+    rows = _case_comparison_rows(cases_by_source, capped_masking_ratio)
+    baseline_rows = [
+        row for row in rows if row["comparison_id"] == "baseline_vs_no_valuation_crowding_masking"
+    ]
+    return {
+        "diagnostic_case_count": len(rows),
+        "top_winning_cases": sorted(
+            baseline_rows,
+            key=lambda row: row["delta_return"],
+            reverse=True,
+        )[:10],
+        "top_losing_cases": sorted(baseline_rows, key=lambda row: row["delta_return"])[:10],
+        "false_risk_off_cases": [
+            row for row in baseline_rows if row.get("false_risk_off")
+        ][:20],
+        "missed_upside_cases": [
+            row for row in baseline_rows if row.get("missed_upside")
+        ][:20],
+        "drawdown_reduction_cases": [
+            row for row in baseline_rows if row.get("drawdown_reduced")
+        ][:20],
+        "by_asset": _case_diagnostic_group_summary(baseline_rows, "asset"),
+        "by_regime": _case_diagnostic_group_summary(baseline_rows, "market_regime"),
+        "by_event_window": _case_diagnostic_event_window_summary(baseline_rows),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _case_comparison_rows(
+    cases_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+    capped_masking_ratio: float,
+) -> list[dict[str, Any]]:
+    comparisons = (
+        ("baseline_vs_no_valuation_crowding_masking", "baseline", "no_valuation_crowding_masking"),
+        ("baseline_vs_capped_masking", "baseline", "capped_masking"),
+        ("capped_masking_vs_no_masking", "capped_masking", "no_valuation_crowding_masking"),
+    )
+    rows: list[dict[str, Any]] = []
+    for validation_source, cases in cases_by_source.items():
+        if validation_source == "all_validation_sources":
+            continue
+        for case in cases:
+            for horizon in MASKING_OUTCOME_HORIZONS:
+                if not _case_horizon_available(case, horizon):
+                    continue
+                outcomes = case.get("outcomes", {})
+                if not isinstance(outcomes, Mapping):
+                    continue
+                raw_return = outcomes.get(f"return_{horizon}d")
+                if not isinstance(raw_return, float):
+                    continue
+                scenario_returns = {
+                    scenario_id: _scenario_weight(
+                        case,
+                        scenario_id,
+                        capped_masking_ratio,
+                    )[0]
+                    * raw_return
+                    for scenario_id in MASKING_ABLATION_SCENARIOS
+                }
+                for comparison_id, left_id, right_id in comparisons:
+                    delta_return = scenario_returns[left_id] - scenario_returns[right_id]
+                    rows.append(
+                        {
+                            "comparison_id": comparison_id,
+                            "left_scenario": left_id,
+                            "right_scenario": right_id,
+                            "case_id": case.get("case_id"),
+                            "date": case.get("date"),
+                            "decision_time": case.get("decision_time"),
+                            "asset": case.get("asset"),
+                            "market_regime": case.get("market_regime") or "ai_after_chatgpt",
+                            "event_window_ids": list(case.get("event_window_ids") or []),
+                            "correlated_asset_cluster": _asset_cluster_id(
+                                str(case.get("asset") or DEFAULT_TRACE_ASSET)
+                            ),
+                            "validation_source": validation_source,
+                            "horizon": f"{horizon}d",
+                            "horizon_trading_days": horizon,
+                            "raw_return": raw_return,
+                            "left_weighted_return": scenario_returns[left_id],
+                            "right_weighted_return": scenario_returns[right_id],
+                            "delta_return": delta_return,
+                            "false_risk_off": bool(case.get("false_risk_off")),
+                            "missed_upside": bool(case.get("missed_upside")),
+                            "drawdown_reduced": bool(case.get("drawdown_reduced")),
+                            "promotion_gate_allowed": False,
+                        }
+                    )
+    return rows
+
+
+def _case_diagnostic_group_summary(
+    rows: Sequence[Mapping[str, Any]],
+    field: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[str(row.get(field) or "UNKNOWN")].append(row)
+    return [
+        {
+            field: group_key,
+            "case_count": len(group_rows),
+            "avg_delta_return": _mean(
+                [_float(row.get("delta_return")) for row in group_rows]
+            ),
+            "positive_delta_count": sum(
+                1 for row in group_rows if _float(row.get("delta_return")) > 0
+            ),
+            "negative_delta_count": sum(
+                1 for row in group_rows if _float(row.get("delta_return")) < 0
+            ),
+            "promotion_gate_allowed": False,
+        }
+        for group_key, group_rows in sorted(grouped.items())
+    ]
+
+
+def _case_diagnostic_event_window_summary(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        event_ids = row.get("event_window_ids") or ["no_event_window"]
+        for event_id in event_ids:
+            grouped[str(event_id)].append(row)
+    return [
+        {
+            "event_window_id": event_id,
+            "case_count": len(group_rows),
+            "avg_delta_return": _mean(
+                [_float(row.get("delta_return")) for row in group_rows]
+            ),
+            "promotion_gate_allowed": False,
+        }
+        for event_id, group_rows in sorted(grouped.items())
+    ]
+
+
+def _ten_day_baseline_support_attribution(
+    cases_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+    capped_masking_ratio: float,
+    effectiveness: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = [
+        row
+        for row in _case_comparison_rows(cases_by_source, capped_masking_ratio)
+        if row["comparison_id"] == "baseline_vs_no_valuation_crowding_masking"
+        and row["horizon"] == "10d"
+    ]
+    winning_rows = [row for row in rows if _float(row.get("delta_return")) > 0]
+    by_date = _case_diagnostic_group_summary(winning_rows, "date")
+    by_cluster = _case_diagnostic_group_summary(winning_rows, "correlated_asset_cluster")
+    by_source = _case_diagnostic_group_summary(winning_rows, "validation_source")
+    top_date_share = _top_group_share(by_date)
+    top_cluster_share = _top_group_share(by_cluster)
+    source_counts = {row["validation_source"]: row["case_count"] for row in by_source}
+    full_delta = _mean(
+        [
+            _float(row.get("delta_return"))
+            for row in winning_rows
+            if row.get("validation_source") == "full_advisory_only"
+        ]
+    )
+    all_delta = _mean([_float(row.get("delta_return")) for row in winning_rows])
+    return {
+        "horizon": "10d",
+        "baseline_win_case_count": len(winning_rows),
+        "baseline_total_case_count": len(rows),
+        "top_date_share": top_date_share,
+        "wins_concentrated_in_few_dates": top_date_share
+        > ROBUSTNESS_TOP_DATE_CONCENTRATION_SHARE,
+        "top_cluster_share": top_cluster_share,
+        "semiconductor_ai_cluster_share": _named_group_share(
+            by_cluster,
+            "semiconductor_ai",
+            group_field="correlated_asset_cluster",
+        ),
+        "source_counts": source_counts,
+        "component_or_bridge_driven": (
+            source_counts.get("full_advisory_only", 0)
+            < source_counts.get("backtest_bridge", 0)
+            + source_counts.get("component_only", 0)
+        ),
+        "full_advisory_only_avg_positive_delta": full_delta,
+        "all_sources_avg_positive_delta": all_delta,
+        "full_advisory_only_still_holds": full_delta is not None and full_delta > 0,
+        "single_extreme_event_driven": _single_extreme_event_driven(winning_rows),
+        "by_date": by_date,
+        "by_correlated_asset_cluster": by_cluster,
+        "by_validation_source": by_source,
+        "source_recommendation_contribution": _matrix_contribution_for(
+            effectiveness.get("conclusion_matrix", []),
+            scenario_id="baseline",
+            horizon="10d",
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _top_group_share(group_rows: Sequence[Mapping[str, Any]]) -> float:
+    total = sum(int(row.get("case_count") or 0) for row in group_rows)
+    if total <= 0:
+        return 0.0
+    return max(int(row.get("case_count") or 0) for row in group_rows) / total
+
+
+def _named_group_share(
+    group_rows: Sequence[Mapping[str, Any]],
+    group_name: str,
+    *,
+    group_field: str,
+) -> float:
+    total = sum(int(row.get("case_count") or 0) for row in group_rows)
+    if total <= 0:
+        return 0.0
+    named = sum(
+        int(row.get("case_count") or 0)
+        for row in group_rows
+        if row.get(group_field) == group_name
+    )
+    return named / total
+
+
+def _single_extreme_event_driven(rows: Sequence[Mapping[str, Any]]) -> bool:
+    total_abs = sum(abs(_float(row.get("delta_return"))) for row in rows)
+    if total_abs <= 0:
+        return False
+    max_abs = max(abs(_float(row.get("delta_return"))) for row in rows)
+    return max_abs / total_abs > ROBUSTNESS_TOP_DATE_CONCENTRATION_SHARE
+
+
+def _matrix_contribution_for(
+    conclusion_matrix: Any,
+    *,
+    scenario_id: str,
+    horizon: str,
+) -> str:
+    if not isinstance(conclusion_matrix, Sequence) or isinstance(
+        conclusion_matrix,
+        (str, bytes),
+    ):
+        return "unknown"
+    for row in conclusion_matrix:
+        if not isinstance(row, Mapping):
+            continue
+        if row.get("scenario_id") == scenario_id and row.get("horizon") == horizon:
+            return str(row.get("recommendation_contribution") or "unknown")
+    return "unknown"
+
+
+def _short_horizon_neutral_explanation(
+    cases_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+    scenario_delta_matrix: Sequence[Mapping[str, Any]],
+    effectiveness: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    all_cases = cases_by_source.get("all_validation_sources", [])
+    explanations = []
+    for horizon in (1, 5):
+        returns = _raw_returns_for_horizon(all_cases, horizon)
+        delta_rows = [
+            row
+            for row in scenario_delta_matrix
+            if row.get("horizon") == f"{horizon}d"
+        ]
+        max_delta = max(
+            (
+                abs(_optional_float(row.get("delta_avg_return")) or 0.0)
+                for row in delta_rows
+            ),
+            default=0.0,
+        )
+        positive_share = _ratio(sum(1 for value in returns if value > 0), len(returns))
+        negative_share = _ratio(sum(1 for value in returns if value < 0), len(returns))
+        baseline_row = _matrix_row_for(
+            effectiveness.get("conclusion_matrix", []),
+            scenario_id="baseline",
+            horizon=f"{horizon}d",
+        )
+        mature_sample = int(baseline_row.get("full_advisory_sample_count") or 0)
+        explanations.append(
+            {
+                "horizon": f"{horizon}d",
+                "mature_sample_sufficient": mature_sample
+                >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES,
+                "full_advisory_mature_sample_count": mature_sample,
+                "scenario_difference_small": max_delta < ROBUSTNESS_SMALL_RETURN_DELTA,
+                "max_abs_delta_avg_return": max_delta,
+                "outcome_noise_std": _stddev(returns),
+                "outcome_noise_high": (_stddev(returns) or 0.0)
+                > ROBUSTNESS_HIGH_NOISE_STD,
+                "diluted_by_same_date_or_cluster": _short_horizon_diluted(
+                    effectiveness,
+                    horizon,
+                ),
+                "short_horizon_whipsaw": (
+                    (positive_share or 0.0) > 0.25 and (negative_share or 0.0) > 0.25
+                ),
+                "positive_return_share": positive_share,
+                "negative_return_share": negative_share,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return explanations
+
+
+def _raw_returns_for_horizon(
+    cases: Sequence[Mapping[str, Any]],
+    horizon: int,
+) -> list[float]:
+    values = []
+    for case in cases:
+        if not _case_horizon_available(case, horizon):
+            continue
+        outcomes = case.get("outcomes", {})
+        if not isinstance(outcomes, Mapping):
+            continue
+        value = outcomes.get(f"return_{horizon}d")
+        if isinstance(value, float):
+            values.append(value)
+    return values
+
+
+def _stddev(values: Sequence[float]) -> float | None:
+    if len(values) < 2:
+        return None
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / len(values)
+    return math.sqrt(variance)
+
+
+def _matrix_row_for(
+    conclusion_matrix: Any,
+    *,
+    scenario_id: str,
+    horizon: str,
+) -> Mapping[str, Any]:
+    if not isinstance(conclusion_matrix, Sequence) or isinstance(
+        conclusion_matrix,
+        (str, bytes),
+    ):
+        return {}
+    for row in conclusion_matrix:
+        if (
+            isinstance(row, Mapping)
+            and row.get("scenario_id") == scenario_id
+            and row.get("horizon") == horizon
+        ):
+            return row
+    return {}
+
+
+def _short_horizon_diluted(effectiveness: Mapping[str, Any], horizon: int) -> bool:
+    date_winner = _aggregation_winner(
+        effectiveness,
+        aggregation_key="by_date",
+        horizon=horizon,
+    )
+    cluster_winner = _aggregation_winner(
+        effectiveness,
+        aggregation_key="by_correlated_asset_cluster",
+        horizon=horizon,
+    )
+    return date_winner != cluster_winner or date_winner == "insufficient_evidence"
+
+
+def _aggregation_winner(
+    effectiveness: Mapping[str, Any],
+    *,
+    aggregation_key: str,
+    horizon: int,
+) -> str:
+    aggregation = _equal_weight_group_aggregation(
+        effectiveness.get(aggregation_key, []),
+        group_field="date" if aggregation_key == "by_date" else "correlated_asset_cluster",
+    )
+    for row in aggregation["horizon_results"]:
+        if row["horizon_trading_days"] == horizon:
+            return str(row.get("winning_scenario") or "insufficient_evidence")
+    return "insufficient_evidence"
+
+
+def _pending_twenty_day_maturity_tracker(
+    outcome_records: Any,
+) -> dict[str, Any]:
+    records = (
+        [record for record in outcome_records if isinstance(record, Mapping)]
+        if isinstance(outcome_records, Sequence)
+        and not isinstance(outcome_records, (str, bytes))
+        else []
+    )
+    mature: list[Mapping[str, Any]] = []
+    pending: list[Mapping[str, Any]] = []
+    for record in records:
+        status = _record_horizon_status(record, 20)
+        if status == OUTCOME_WINDOW_STATUS_AVAILABLE:
+            mature.append(record)
+        elif status == OUTCOME_WINDOW_STATUS_NOT_MATURE:
+            pending.append(record)
+    pending_details = [_pending_twenty_day_detail(record) for record in pending]
+    return {
+        "current_20d_mature_cases": len(mature),
+        "pending_20d_cases": len(pending),
+        "expected_maturity_dates": pending_details[:50],
+        "by_asset": _pending_tracker_group(pending_details, "asset"),
+        "by_date": _pending_tracker_group(pending_details, "as_of_date"),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _pending_twenty_day_detail(record: Mapping[str, Any]) -> dict[str, Any]:
+    as_of_date = str(record.get("as_of_date") or record.get("date") or "")
+    parsed = _parse_iso_date(as_of_date)
+    expected = _add_business_days(parsed, 20) if parsed is not None else None
+    return {
+        "case_id": record.get("case_id"),
+        "as_of_date": as_of_date,
+        "asset": record.get("asset"),
+        "scenario": record.get("scenario"),
+        "trace_source": record.get("trace_source"),
+        "expected_maturity_date": None if expected is None else expected.isoformat(),
+        "expected_maturity_date_basis": "business_day_projection_not_signal_input",
+        "promotion_gate_allowed": False,
+    }
+
+
+def _add_business_days(start: date, days: int) -> date:
+    current = start
+    remaining = days
+    while remaining > 0:
+        current += timedelta(days=1)
+        if current.weekday() < 5:
+            remaining -= 1
+    return current
+
+
+def _pending_tracker_group(
+    pending_details: Sequence[Mapping[str, Any]],
+    field: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for detail in pending_details:
+        grouped[str(detail.get(field) or "UNKNOWN")].append(detail)
+    return [
+        {
+            field: group_key,
+            "pending_20d_cases": len(group_rows),
+            "earliest_expected_maturity_date": min(
+                str(row.get("expected_maturity_date") or "9999-12-31")
+                for row in group_rows
+            ),
+            "promotion_gate_allowed": False,
+        }
+        for group_key, group_rows in sorted(grouped.items())
+    ]
+
+
+def _conservative_evidence_gate(
+    effectiveness: Mapping[str, Any],
+    aggregation: Mapping[str, Any],
+    scenario_delta_matrix: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    source_decision = str(
+        effectiveness.get("summary", {}).get("decision_recommendation")
+        if isinstance(effectiveness.get("summary"), Mapping)
+        else ""
+    )
+    horizon_contributions = {}
+    recommendation = effectiveness.get("decision_recommendation", {})
+    if isinstance(recommendation, Mapping):
+        raw_contributions = recommendation.get("horizon_contributions", {})
+        if isinstance(raw_contributions, Mapping):
+            horizon_contributions = {str(k): str(v) for k, v in raw_contributions.items()}
+    actionable = [
+        contribution
+        for horizon, contribution in horizon_contributions.items()
+        if horizon in {"1", "5", "10"}
+        and contribution
+        not in {
+            "insufficient_evidence",
+            "conflicting_horizon_signal",
+            "neutral_or_mixed",
+        }
+    ]
+    top_action = _most_common(actionable)
+    two_horizons_consistent = top_action is not None and actionable.count(top_action) >= 2
+    full_winners = _winners_by_horizon(aggregation.get("full_advisory_only", {}))
+    all_winners = _winners_by_horizon(aggregation.get("all_validation_sources", {}))
+    date_winners = _winners_by_horizon(aggregation.get("equal_weight_by_date", {}))
+    cluster_winners = _winners_by_horizon(
+        aggregation.get("equal_weight_by_correlated_asset_cluster", {})
+    )
+    full_conflict = _winner_conflict(full_winners, all_winners)
+    date_conflict = _winner_conflict(date_winners, all_winners)
+    cluster_conflict = _winner_conflict(cluster_winners, all_winners)
+    cluster_dominated = _cluster_dominated(aggregation)
+    risk_not_worse = _risk_not_worse_for_action(scenario_delta_matrix, top_action)
+    checks = [
+        {
+            "check_id": "two_primary_horizons_consistent",
+            "passed": two_horizons_consistent,
+        },
+        {
+            "check_id": "full_advisory_only_not_conflicting",
+            "passed": not full_conflict,
+        },
+        {
+            "check_id": "date_level_not_conflicting",
+            "passed": not date_conflict,
+        },
+        {
+            "check_id": "cluster_not_single_dominant",
+            "passed": not cluster_dominated and not cluster_conflict,
+        },
+        {
+            "check_id": "missed_upside_false_risk_off_not_worse",
+            "passed": risk_not_worse,
+        },
+        {"check_id": "promotion_gate_allowed_false", "passed": True},
+    ]
+    if source_decision == "insufficient_evidence":
+        final = "insufficient_evidence"
+        rationale = "Source effectiveness review remains insufficient_evidence."
+    elif top_action is not None and all(check["passed"] for check in checks):
+        final = top_action
+        rationale = f"Conservative evidence gate supports {top_action}."
+    else:
+        final = "keep_preliminary_short_horizon_only"
+        rationale = (
+            "Conservative evidence gate blocks stronger recommendation because "
+            "horizon support is mixed, incomplete, or not robust across aggregation levels."
+        )
+    return {
+        "final_validation_recommendation": final,
+        "source_effectiveness_recommendation": source_decision,
+        "horizon_contributions": horizon_contributions,
+        "candidate_if_all_checks_pass": top_action,
+        "checks": checks,
+        "rationale": rationale,
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
+
+
+def _most_common(values: Sequence[str]) -> str | None:
+    if not values:
+        return None
+    counts: dict[str, int] = defaultdict(int)
+    for value in values:
+        counts[value] += 1
+    return max(counts.items(), key=lambda item: item[1])[0]
+
+
+def _winners_by_horizon(aggregation: Any) -> dict[str, str]:
+    if not isinstance(aggregation, Mapping):
+        return {}
+    rows = aggregation.get("horizon_results", [])
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+        return {}
+    return {
+        str(row.get("horizon")): str(row.get("winning_scenario"))
+        for row in rows
+        if isinstance(row, Mapping)
+    }
+
+
+def _winner_conflict(left: Mapping[str, str], right: Mapping[str, str]) -> bool:
+    for horizon in ("1d", "5d", "10d"):
+        left_winner = left.get(horizon)
+        right_winner = right.get(horizon)
+        if not left_winner or not right_winner:
+            continue
+        if "insufficient" in left_winner or "insufficient" in right_winner:
+            continue
+        if left_winner != right_winner:
+            return True
+    return False
+
+
+def _cluster_dominated(aggregation: Mapping[str, Any]) -> bool:
+    cluster_aggregation = aggregation.get("equal_weight_by_correlated_asset_cluster", {})
+    if not isinstance(cluster_aggregation, Mapping):
+        return False
+    group_count = int(cluster_aggregation.get("group_count") or 0)
+    return group_count <= 1
+
+
+def _risk_not_worse_for_action(
+    scenario_delta_matrix: Sequence[Mapping[str, Any]],
+    action: str | None,
+) -> bool:
+    if action is None:
+        return False
+    relevant = [
+        row
+        for row in scenario_delta_matrix
+        if row.get("horizon") in {"1d", "5d", "10d"}
+    ]
+    if action == "prefer_capped_masking_candidate":
+        comparison = "baseline_vs_capped_masking"
+    elif action in {"baseline_over_defensive_candidate", "disable_masking_candidate"}:
+        comparison = "baseline_vs_no_valuation_crowding_masking"
+    elif action == "keep_baseline_masking_candidate":
+        comparison = "baseline_vs_no_valuation_crowding_masking"
+    else:
+        return False
+    rows = [row for row in relevant if row.get("comparison_id") == comparison]
+    if not rows:
+        return False
+    return all(
+        (_optional_float(row.get("delta_missed_upside_count")) or 0.0) <= 0
+        and (_optional_float(row.get("delta_false_risk_off_count")) or 0.0) <= 0
+        for row in rows
+    )
+
+
 def _capped_supports_preference(
     baseline: Mapping[str, Any],
     capped: Mapping[str, Any],
@@ -7525,6 +8628,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "valuation_crowding_ablation_validation",
         "valuation_crowding_outcome_availability_audit",
         "valuation_crowding_masking_effectiveness_review",
+        "valuation_crowding_masking_robustness_review",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
@@ -7563,6 +8667,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     effectiveness_review = _read_pack_artifact_json(
         artifacts,
         "valuation_crowding_masking_effectiveness_review",
+    )
+    robustness_review = _read_pack_artifact_json(
+        artifacts,
+        "valuation_crowding_masking_robustness_review",
     )
     outcome_availability = _read_pack_artifact_json(
         artifacts,
@@ -7655,6 +8763,16 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
             outcome_availability.get("summary", {})
             if isinstance(outcome_availability, Mapping)
             else {}
+        ),
+        "masking_robustness_summary": (
+            robustness_review.get("summary", {})
+            if isinstance(robustness_review, Mapping)
+            else {}
+        ),
+        "masking_robustness_delta_count": (
+            len(robustness_review.get("scenario_delta_matrix", []))
+            if isinstance(robustness_review, Mapping)
+            else 0
         ),
         "lineage_manifest_repair_summary": (
             lineage_repair.get("summary", {}) if isinstance(lineage_repair, Mapping) else {}
