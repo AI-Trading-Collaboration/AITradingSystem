@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
+import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +60,47 @@ TRACE_CONFIDENCE_COMPONENT = "MEDIUM_COMPONENT_DIAGNOSTIC"
 TRACE_CONFIDENCE_BRIDGE = "MEDIUM_BACKTEST_BRIDGE_DIAGNOSTIC"
 TRACE_CONFIDENCE_NOT_ELIGIBLE = "LOW_NOT_TRACE_ELIGIBLE"
 NON_PROMOTION_ALLOWED_USES = ["diagnostic", "ablation", "sensitivity_analysis"]
+DEFAULT_TRACE_ASSET = "AI_RISK_ASSET_BASKET"
+PRICE_TICKER_ALIASES = {"GOOGL": "GOOG"}
+GATE_ROOT_CAUSE_CLASSES = (
+    "expected_pit_limitation",
+    "ingestion_issue",
+    "timestamp_model_issue",
+    "replay_config_issue",
+    "lineage_manifest_missing",
+)
+DEFAULT_EVENT_WINDOW_CATALOG = (
+    {
+        "event_window_id": "strong_trend_up",
+        "label": "强趋势上涨窗口",
+        "start_date": "2026-05-29",
+        "end_date": "2026-06-12",
+    },
+    {
+        "event_window_id": "drawdown",
+        "label": "回撤窗口",
+        "start_date": "2026-04-24",
+        "end_date": "2026-05-01",
+    },
+    {
+        "event_window_id": "vix_up",
+        "label": "VIX 上行窗口",
+        "start_date": "2026-05-01",
+        "end_date": "2026-05-08",
+    },
+    {
+        "event_window_id": "fomc_around",
+        "label": "FOMC 前后窗口",
+        "start_date": "2026-06-17",
+        "end_date": "2026-06-18",
+    },
+    {
+        "event_window_id": "semiconductor_ai_volatility",
+        "label": "半导体/AI 主线波动窗口",
+        "start_date": "2026-06-05",
+        "end_date": "2026-06-12",
+    },
+)
 
 
 class IndicatorResearchError(ValueError):
@@ -1366,16 +1409,28 @@ def build_masking_casebook(
     )
     pair_rows = _pair_trace_rows(trace_rows, upstream_indicator_id, downstream_indicator_id)
     component_index = _component_trace_index(trace_rows)
-    price_series = _read_price_series(prices_path, outcome_ticker)
-    cases = [
-        _masking_casebook_row(
-            row,
-            component_index=component_index,
-            price_series=price_series,
-            outcome_ticker=outcome_ticker,
-        )
-        for row in pair_rows
-    ]
+    price_series_by_ticker = _read_price_series_by_ticker(prices_path)
+    fallback_price_series = price_series_by_ticker.get(outcome_ticker.upper(), [])
+    cases = []
+    for row in pair_rows:
+        for case_asset in _casebook_assets_for_row(row, asset_universe=asset_universe):
+            case_outcome_ticker = _price_ticker_for_asset(
+                case_asset,
+                price_series_by_ticker,
+                fallback_ticker=outcome_ticker,
+            )
+            cases.append(
+                _masking_casebook_row(
+                    row,
+                    component_index=component_index,
+                    price_series=price_series_by_ticker.get(
+                        case_outcome_ticker,
+                        fallback_price_series,
+                    ),
+                    outcome_ticker=case_outcome_ticker,
+                    case_asset=case_asset,
+                )
+            )
     issues: list[dict[str, Any]] = []
     if trace_path is None:
         issues.append(
@@ -1499,8 +1554,23 @@ def build_valuation_crowding_ablation_validation(
         summary={
             "scenario_count": len(scenarios),
             "case_count": len(cases),
+            "date_count": casebook["summary"].get("date_count"),
+            "asset_count": casebook["summary"].get("asset_count"),
             "outcome_ticker": outcome_ticker,
             "capped_masking_ratio": capped_masking_ratio,
+            "sample_quality_breakdown": {
+                key: casebook["summary"].get(key)
+                for key in (
+                    "date_count",
+                    "asset_count",
+                    "case_count",
+                    "masking_case_count",
+                    "eligible_dates",
+                    "component_eligible_dates",
+                    "full_advisory_equivalent_count",
+                    "partial_component_only_count",
+                )
+            },
             "read_only": True,
             "production_weight_logic_changed": False,
         },
@@ -1540,12 +1610,14 @@ def build_historical_multi_stage_weight_trace_validation(
         event_window_end=event_window_end,
         asset_universe=asset_universe,
     )
+    lineage_records = _trace_lineage_records(trace_path, trace_rows)
     dates = sorted({str(row.get("date")) for row in trace_rows if row.get("date")})
     trace_field_audit = _trace_contract_field_audit(registry, trace_rows) if trace_rows else {}
     masking_results = list(_masking_from_trace(registry, trace_rows).values()) if trace_rows else []
     date_summaries = _trace_date_summaries(trace_rows)
     availability = _gate_availability_records(
         gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
         trace_rows=trace_rows,
         start_date=start_date,
         end_date=end_date,
@@ -1597,6 +1669,7 @@ def build_historical_multi_stage_weight_trace_validation(
             "missing_trace_field_record_count": len(
                 trace_field_audit.get("missing_field_records", [])
             ),
+            **_lineage_summary(lineage_records),
             "sufficient_history_for_stability": (
                 len(dates) >= HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY
             ),
@@ -1621,6 +1694,7 @@ def build_historical_multi_stage_weight_trace_validation(
             asset_universe=asset_universe,
         ),
         trace_contract_field_audit=trace_field_audit,
+        historical_replay_lineage_manifest=lineage_records,
         historical_masking_results=masking_results,
         gate_availability_summary=_gate_availability_summary(availability),
         date_level_summary=date_summaries,
@@ -1649,6 +1723,7 @@ def build_gate_availability_audit(
     )
     records = _gate_availability_records(
         gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
         trace_rows=trace_rows,
         start_date=start_date,
         end_date=end_date,
@@ -1656,9 +1731,17 @@ def build_gate_availability_audit(
         event_window_end=event_window_end,
         asset_universe=asset_universe,
     )
+    lineage_records = _trace_lineage_records(trace_path, trace_rows)
+    root_cause_records = [
+        _gate_root_cause_record(record)
+        for record in records
+        if not record.get("full_advisory_trace_eligible")
+    ]
     summary = {
         **_gate_availability_summary(records),
         **_trace_sample_quality_stats(registry, trace_rows, gate_availability=records),
+        **_lineage_summary(lineage_records),
+        "root_cause_case_count": len(root_cause_records),
     }
     return _base_payload(
         registry,
@@ -1675,6 +1758,8 @@ def build_gate_availability_audit(
             asset_universe=asset_universe,
         ),
         gate_availability=records,
+        gate_root_cause_analysis=root_cause_records,
+        historical_replay_lineage_manifest=lineage_records,
         rule=(
             "Production data_quality_gate is not relaxed. Dates that fail full advisory "
             "eligibility may only enter component diagnostics when component_validation_"
@@ -1705,6 +1790,7 @@ def build_component_level_historical_trace(
     )
     availability = _gate_availability_records(
         gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
         trace_rows=source_rows,
         start_date=start_date,
         end_date=end_date,
@@ -1712,6 +1798,10 @@ def build_component_level_historical_trace(
         event_window_end=event_window_end,
         asset_universe=asset_universe,
     )
+    availability_by_key = {
+        (str(record.get("date") or ""), str(record.get("asset") or "").upper()): record
+        for record in availability
+    }
     availability_by_date = {record["date"]: record for record in availability}
     rows = []
     keep_modules = {
@@ -1730,7 +1820,11 @@ def build_component_level_historical_trace(
         if not is_component and not is_masking_pair:
             continue
         row_date = str(row.get("date") or "")
-        gate_record = availability_by_date.get(row_date, {})
+        row_asset = str(row.get("asset") or "").upper()
+        gate_record = availability_by_key.get(
+            (row_date, row_asset),
+            availability_by_date.get(row_date, {}),
+        )
         full_eligible = bool(gate_record.get("full_advisory_trace_eligible", True))
         component_eligible = bool(
             gate_record.get("component_validation_trace_eligible", True)
@@ -1824,16 +1918,32 @@ def build_backtest_trace_bridge(
         event_window_end=event_window_end,
         asset_universe=asset_universe,
     )
-    price_series = _read_price_series(prices_path, outcome_ticker)
+    price_series_by_ticker = _read_price_series_by_ticker(prices_path)
+    fallback_price_series = price_series_by_ticker.get(outcome_ticker.upper(), [])
     pair_rows = _pair_trace_rows(
         trace_rows,
         "valuation_crowding_indicator",
         "trend_strength_indicator",
     )
-    bridge_records = [
-        _backtest_bridge_record(row, price_series=price_series, outcome_ticker=outcome_ticker)
-        for row in pair_rows
-    ]
+    bridge_records = []
+    for row in pair_rows:
+        for case_asset in _casebook_assets_for_row(row, asset_universe=asset_universe):
+            case_outcome_ticker = _price_ticker_for_asset(
+                case_asset,
+                price_series_by_ticker,
+                fallback_ticker=outcome_ticker,
+            )
+            bridge_records.append(
+                _backtest_bridge_record(
+                    row,
+                    price_series=price_series_by_ticker.get(
+                        case_outcome_ticker,
+                        fallback_price_series,
+                    ),
+                    outcome_ticker=case_outcome_ticker,
+                    case_asset=case_asset,
+                )
+            )
     source_artifacts = _scan_bridge_source_artifacts(bridge_artifact_root)
     status = "PASS" if bridge_records or source_artifacts else "PASS_WITH_WARNINGS"
     issues = []
@@ -2898,19 +3008,317 @@ def _trace_indicator_keys(trace_rows: Sequence[Mapping[str, Any]]) -> set[str]:
     return keys
 
 
-def _read_trace_rows(trace_path: Path | None) -> list[dict[str, Any]]:
+def _read_trace_payload(trace_path: Path | None) -> dict[str, Any]:
     if trace_path is None:
-        return []
+        return {}
     if not trace_path.exists():
         raise IndicatorResearchError(f"trace path not found: {trace_path}")
     raw = json.loads(trace_path.read_text(encoding="utf-8"))
     if isinstance(raw, dict):
-        rows = raw.get("rows", [])
-    else:
-        rows = raw
+        return dict(raw)
+    if isinstance(raw, list):
+        return {"rows": raw}
+    raise IndicatorResearchError("trace JSON must be a list or contain a rows list")
+
+
+def _read_trace_rows(trace_path: Path | None) -> list[dict[str, Any]]:
+    payload = _read_trace_payload(trace_path)
+    rows = payload.get("rows", [])
     if not isinstance(rows, list):
         raise IndicatorResearchError("trace JSON must be a list or contain a rows list")
     return [dict(row) for row in rows if isinstance(row, Mapping)]
+
+
+def _trace_lineage_records(
+    trace_path: Path | None,
+    trace_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    if trace_path is None:
+        return []
+    payload = _read_trace_payload(trace_path)
+    explicit = _explicit_lineage_manifests(payload)
+    if explicit:
+        return [
+            _normalize_lineage_manifest_record(item, trace_path=trace_path)
+            for item in explicit
+            if isinstance(item, Mapping)
+        ]
+    source_paths = payload.get("source_trace_paths", [])
+    if isinstance(source_paths, str):
+        source_paths = [source_paths]
+    if isinstance(source_paths, Sequence):
+        records = [
+            _lineage_manifest_from_source_trace(trace_path, str(source_path))
+            for source_path in source_paths
+            if str(source_path)
+        ]
+        return [record for record in records if record is not None]
+    return [
+        _fallback_lineage_manifest(trace_path, row_date)
+        for row_date in _trace_dates(trace_rows)
+    ]
+
+
+def _explicit_lineage_manifests(payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    for key in (
+        "historical_replay_manifests",
+        "lineage_manifests",
+        "historical_replay_manifest",
+        "lineage_manifest",
+    ):
+        value = payload.get(key)
+        if isinstance(value, Mapping):
+            return [value]
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, Mapping)]
+    return []
+
+
+def _normalize_lineage_manifest_record(
+    raw: Mapping[str, Any],
+    *,
+    trace_path: Path | None,
+) -> dict[str, Any]:
+    as_of_date = str(raw.get("as_of_date") or raw.get("as_of") or raw.get("date") or "")[:10]
+    source_path = str(raw.get("source_artifact_path") or raw.get("artifact_path") or "")
+    if not source_path and trace_path is not None:
+        source_path = str(trace_path)
+    return {
+        "source_artifact_path": source_path,
+        "generated_at": str(raw.get("generated_at") or ""),
+        "as_of_date": as_of_date,
+        "decision_time": str(raw.get("decision_time") or as_of_date),
+        "config_hash": str(raw.get("config_hash") or ""),
+        "input_snapshot_hash": str(raw.get("input_snapshot_hash") or ""),
+        "trace_contract_version": str(
+            raw.get("trace_contract_version") or raw.get("trace_contract_id") or ""
+        ),
+        "production_equivalent": bool(raw.get("production_equivalent")),
+        "proof_status": str(raw.get("proof_status") or "EXPLICIT_LINEAGE_MANIFEST"),
+    }
+
+
+def _lineage_manifest_from_source_trace(
+    parent_trace_path: Path,
+    source_path_text: str,
+) -> dict[str, Any] | None:
+    source_path = _resolve_trace_source_path(parent_trace_path, source_path_text)
+    if source_path is None:
+        return {
+            "source_artifact_path": source_path_text,
+            "generated_at": "",
+            "as_of_date": "",
+            "decision_time": "",
+            "config_hash": "",
+            "input_snapshot_hash": "",
+            "trace_contract_version": "",
+            "production_equivalent": False,
+            "proof_status": "SOURCE_TRACE_MISSING",
+        }
+    try:
+        source_payload = _read_trace_payload(source_path)
+    except (OSError, json.JSONDecodeError, IndicatorResearchError):
+        return None
+    source_rows = _read_trace_rows(source_path)
+    as_of_date = _source_trace_as_of_date(source_payload, source_rows)
+    bundle = _read_optional_json(source_path.parent / "trace_bundle.json")
+    run_manifest = bundle.get("run_manifest", {}) if isinstance(bundle, Mapping) else {}
+    if not isinstance(run_manifest, Mapping):
+        run_manifest = {}
+    decision_time = _lineage_decision_time(source_payload, run_manifest, as_of_date)
+    config_hash = _lineage_config_hash(source_payload, bundle)
+    input_snapshot_hash = _lineage_input_snapshot_hash(source_payload, bundle)
+    trace_contract_version = str(
+        source_payload.get("trace_contract_version")
+        or source_payload.get("trace_contract_id")
+        or source_payload.get("summary", {}).get("trace_contract_id", "")
+    )
+    production_equivalent = bool(
+        source_payload.get("report_type") == "daily_indicator_weight_trace"
+        and source_payload.get("status") == "PASS"
+        and run_manifest.get("command") == "aits score-daily"
+        and as_of_date
+        and decision_time
+        and config_hash
+        and input_snapshot_hash
+        and trace_contract_version
+    )
+    return {
+        "source_artifact_path": str(source_path),
+        "generated_at": str(source_payload.get("generated_at") or bundle.get("generated_at") or ""),
+        "as_of_date": as_of_date,
+        "decision_time": decision_time,
+        "config_hash": config_hash,
+        "input_snapshot_hash": input_snapshot_hash,
+        "trace_contract_version": trace_contract_version,
+        "production_equivalent": production_equivalent,
+        "proof_status": (
+            "PRODUCTION_EQUIVALENT_LINEAGE_PROVEN"
+            if production_equivalent
+            else "LINEAGE_FIELDS_INCOMPLETE"
+        ),
+    }
+
+
+def _resolve_trace_source_path(parent_trace_path: Path, source_path_text: str) -> Path | None:
+    source_path = Path(source_path_text)
+    candidates = [source_path]
+    if not source_path.is_absolute():
+        candidates = [
+            PROJECT_ROOT / source_path,
+            parent_trace_path.parent / source_path,
+        ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _source_trace_as_of_date(
+    payload: Mapping[str, Any],
+    trace_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    summary = payload.get("summary", {})
+    if not isinstance(summary, Mapping):
+        summary = {}
+    for value in (summary.get("as_of"), payload.get("as_of"), payload.get("date")):
+        parsed = _parse_iso_date(str(value or ""))
+        if parsed is not None:
+            return parsed.isoformat()
+    dates = _trace_dates(trace_rows)
+    return dates[0] if dates else ""
+
+
+def _lineage_decision_time(
+    payload: Mapping[str, Any],
+    run_manifest: Mapping[str, Any],
+    as_of_date: str,
+) -> str:
+    for value in (payload.get("decision_time"), run_manifest.get("decision_time")):
+        if value not in (None, ""):
+            return str(value)
+    date_window = run_manifest.get("date_window", {})
+    if isinstance(date_window, Mapping):
+        for key in ("end", "start"):
+            value = date_window.get(key)
+            if value not in (None, ""):
+                return str(value)
+    return as_of_date
+
+
+def _lineage_config_hash(payload: Mapping[str, Any], bundle: Mapping[str, Any]) -> str:
+    for value in (payload.get("config_hash"), bundle.get("config_hash")):
+        if value not in (None, ""):
+            return str(value)
+    run_manifest = bundle.get("run_manifest", {})
+    if isinstance(run_manifest, Mapping):
+        config_payload = {
+            "config_ids": run_manifest.get("config_ids", []),
+            "config_paths": run_manifest.get("config_paths", {}),
+            "rule_versions": (
+                run_manifest.get("parameters", {}).get("rule_versions", {})
+                if isinstance(run_manifest.get("parameters"), Mapping)
+                else {}
+            ),
+        }
+        return _hash_jsonable(config_payload)
+    return ""
+
+
+def _lineage_input_snapshot_hash(payload: Mapping[str, Any], bundle: Mapping[str, Any]) -> str:
+    for value in (payload.get("input_snapshot_hash"), bundle.get("input_snapshot_hash")):
+        if value not in (None, ""):
+            return str(value)
+    snapshot_payload = {
+        "dataset_refs": bundle.get("dataset_refs", []),
+        "quality_refs": bundle.get("quality_refs", []),
+        "source_artifacts": payload.get("source_artifacts", []),
+    }
+    if snapshot_payload["dataset_refs"] or snapshot_payload["quality_refs"]:
+        return _hash_jsonable(snapshot_payload)
+    return ""
+
+
+def _fallback_lineage_manifest(trace_path: Path, row_date: str) -> dict[str, Any]:
+    return {
+        "source_artifact_path": str(trace_path),
+        "generated_at": "",
+        "as_of_date": row_date,
+        "decision_time": row_date,
+        "config_hash": "",
+        "input_snapshot_hash": _file_sha256(trace_path),
+        "trace_contract_version": "",
+        "production_equivalent": False,
+        "proof_status": "LINEAGE_MANIFEST_MISSING",
+    }
+
+
+def _lineage_by_date(records: Sequence[Mapping[str, Any]]) -> dict[str, Mapping[str, Any]]:
+    by_date: dict[str, Mapping[str, Any]] = {}
+    for record in records:
+        row_date = str(record.get("as_of_date") or "")[:10]
+        if not row_date:
+            continue
+        current = by_date.get(row_date)
+        if current is None or (
+            record.get("production_equivalent") and not current.get("production_equivalent")
+        ):
+            by_date[row_date] = record
+    return by_date
+
+
+def _lineage_manifest_complete(record: Mapping[str, Any] | None) -> bool:
+    if not record:
+        return False
+    required = (
+        "source_artifact_path",
+        "generated_at",
+        "as_of_date",
+        "decision_time",
+        "config_hash",
+        "input_snapshot_hash",
+        "trace_contract_version",
+    )
+    return bool(record.get("production_equivalent")) and all(record.get(key) for key in required)
+
+
+def _lineage_summary(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    return {
+        "lineage_manifest_record_count": len(records),
+        "production_equivalent_lineage_count": sum(
+            1 for record in records if _lineage_manifest_complete(record)
+        ),
+        "lineage_manifest_missing_count": sum(
+            1 for record in records if not _lineage_manifest_complete(record)
+        ),
+    }
+
+
+def _read_optional_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+    return dict(raw) if isinstance(raw, Mapping) else {}
+
+
+def _hash_jsonable(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _trace_dates(trace_rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    return sorted({str(row.get("date")) for row in trace_rows if row.get("date")})
 
 
 def _filter_trace_rows(
@@ -2986,6 +3394,9 @@ def _trace_sample_quality_stats(
     trace_dates = {str(row.get("date")) for row in trace_rows if row.get("date")}
     case_rows = list(cases or [])
     availability = list(gate_availability or [])
+    availability_dates = {
+        str(record.get("date")) for record in availability if record.get("date")
+    }
     if availability:
         full_dates = {
             str(record.get("date"))
@@ -3002,11 +3413,8 @@ def _trace_sample_quality_stats(
         full_dates = set(trace_dates)
         component_dates = set(trace_dates)
         partial_component_dates = set()
-    assets = {
-        str(row.get("asset"))
-        for row in [*trace_rows, *case_rows]
-        if row.get("asset")
-    }
+    asset_rows = case_rows if case_rows else availability or trace_rows
+    assets = {str(row.get("asset")) for row in asset_rows if row.get("asset")}
     masking_case_count = (
         len(case_rows)
         if case_rows
@@ -3018,24 +3426,69 @@ def _trace_sample_quality_stats(
             )
         )
     )
+    sample_case_count = len(case_rows) if case_rows else len(availability) or masking_case_count
     regimes = {
         str(row.get("market_regime") or registry.market_regime.regime_id)
         for row in trace_rows
     }
     return {
+        "date_count": len(
+            trace_dates
+            | availability_dates
+            | {str(row.get("date")) for row in case_rows if row.get("date")}
+        ),
         "eligible_dates": len(full_dates),
         "component_eligible_dates": len(component_dates),
         "asset_count": len(assets),
+        "case_count": sample_case_count,
         "masking_case_count": masking_case_count,
         "regime_count": len(regimes) if trace_rows else 0,
         "full_advisory_equivalent_count": len(full_dates),
         "partial_component_only_count": len(partial_component_dates),
+        "event_window_coverage": _event_window_coverage(trace_rows, case_rows, availability),
     }
+
+
+def _event_window_coverage(
+    trace_rows: Sequence[Mapping[str, Any]],
+    case_rows: Sequence[Mapping[str, Any]],
+    availability: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: Sequence[Mapping[str, Any]]
+    rows = case_rows if case_rows else availability or trace_rows
+    coverage = []
+    for window in DEFAULT_EVENT_WINDOW_CATALOG:
+        start = _parse_iso_date(str(window["start_date"]))
+        end = _parse_iso_date(str(window["end_date"]))
+        window_rows = [
+            row
+            for row in rows
+            if _date_in_window(str(row.get("date") or ""), start=start, end=end)
+        ]
+        coverage.append(
+            {
+                **window,
+                "date_count": len({str(row.get("date")) for row in window_rows if row.get("date")}),
+                "asset_count": len(
+                    {str(row.get("asset")) for row in window_rows if row.get("asset")}
+                ),
+                "case_count": len(window_rows),
+            }
+        )
+    return coverage
+
+
+def _date_in_window(value: str, *, start: date | None, end: date | None) -> bool:
+    parsed = _parse_iso_date(value)
+    if parsed is None or start is None or end is None:
+        return False
+    return start <= parsed <= end
 
 
 def _gate_availability_records(
     *,
     gate_audit_root: Path | None,
+    trace_path: Path | None,
     trace_rows: Sequence[Mapping[str, Any]],
     start_date: str | None = None,
     end_date: str | None = None,
@@ -3045,7 +3498,13 @@ def _gate_availability_records(
 ) -> list[dict[str, Any]]:
     trace_dates = {str(row.get("date")) for row in trace_rows if row.get("date")}
     audit_dates = _gate_audit_dates(gate_audit_root)
-    all_dates = sorted(trace_dates | audit_dates)
+    requested_dates = _requested_audit_dates(
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+    )
+    all_dates = sorted(trace_dates | audit_dates | requested_dates)
     filtered_dates = [
         item
         for item in all_dates
@@ -3058,7 +3517,10 @@ def _gate_availability_records(
         )
     ]
     if asset_universe and not trace_rows and not audit_dates:
-        filtered_dates = []
+        filtered_dates = sorted(requested_dates)
+    lineage_records = _trace_lineage_records(trace_path, trace_rows)
+    lineage_by_date = _lineage_by_date(lineage_records)
+    requested_assets = _parse_asset_universe(asset_universe)
     records = []
     for row_date in filtered_dates:
         date_root = None if gate_audit_root is None else gate_audit_root / row_date
@@ -3073,7 +3535,9 @@ def _gate_availability_records(
         fa_status = feature_availability["status"]
         data_quality_passed = dq_status in {"PASS", "PASS_WITH_WARNINGS"}
         feature_passed = fa_status in {"PASS", "PASS_WITH_WARNINGS"}
-        full_eligible = trace_exists and data_quality_passed and feature_passed
+        lineage_manifest = lineage_by_date.get(row_date)
+        lineage_ok = _lineage_manifest_complete(lineage_manifest)
+        full_eligible = trace_exists and data_quality_passed and feature_passed and lineage_ok
         component_eligible = data_quality_passed and (
             trace_exists or fa_status in {"FAIL", "PASS", "PASS_WITH_WARNINGS"}
         )
@@ -3081,43 +3545,289 @@ def _gate_availability_records(
             trace_exists=trace_exists,
             data_quality=data_quality,
             feature_availability=feature_availability,
+            lineage_manifest=lineage_manifest,
+            lineage_ok=lineage_ok,
         )
-        records.append(
-            {
-                "date": row_date,
-                "trace_row_count": sum(
-                    1 for row in trace_rows if str(row.get("date") or "") == row_date
-                ),
-                "full_advisory_trace_eligible": full_eligible,
-                "component_validation_trace_eligible": component_eligible,
-                "reason_if_not_full_eligible": "" if full_eligible else "; ".join(reasons),
-                "data_quality_status": dq_status,
-                "feature_availability_status": fa_status,
-                "data_quality_fail_closed_reasons": data_quality["issues"],
-                "feature_availability_fail_closed_reasons": feature_availability["issues"],
-                "trace_source": (
-                    FULL_ADVISORY_TRACE_SOURCE
-                    if full_eligible
-                    else (
-                        COMPONENT_VALIDATION_TRACE_SOURCE
-                        if component_eligible
-                        else INELIGIBLE_TRACE_SOURCE
-                    )
-                ),
-                "confidence": (
-                    TRACE_CONFIDENCE_FULL_ADVISORY
-                    if full_eligible
-                    else (
-                        TRACE_CONFIDENCE_COMPONENT
-                        if component_eligible
-                        else TRACE_CONFIDENCE_NOT_ELIGIBLE
-                    )
-                ),
-                "promotion_gate_allowed": False,
-                "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
-            }
-        )
+        for asset in _gate_record_assets(
+            row_date,
+            trace_rows=trace_rows,
+            requested_assets=requested_assets,
+        ):
+            root_cause = _gate_root_cause_fields(
+                row_date=row_date,
+                asset=asset,
+                trace_exists=trace_exists,
+                data_quality_passed=data_quality_passed,
+                feature_passed=feature_passed,
+                lineage_ok=lineage_ok,
+                data_quality=data_quality,
+                feature_availability=feature_availability,
+                lineage_manifest=lineage_manifest,
+            )
+            trace_row_count = _trace_row_count_for_date_asset(
+                trace_rows,
+                row_date=row_date,
+                asset=asset,
+            )
+            records.append(
+                {
+                    "date": row_date,
+                    "asset": asset,
+                    "trace_row_count": trace_row_count,
+                    "full_advisory_trace_eligible": full_eligible,
+                    "component_validation_trace_eligible": component_eligible,
+                    "reason_if_not_full_eligible": "" if full_eligible else "; ".join(reasons),
+                    "data_quality_status": dq_status,
+                    "feature_availability_status": fa_status,
+                    "data_quality_fail_closed_reasons": data_quality["issues"],
+                    "feature_availability_fail_closed_reasons": feature_availability["issues"],
+                    "historical_replay_manifest": dict(lineage_manifest or {}),
+                    "lineage_manifest_complete": lineage_ok,
+                    **root_cause,
+                    "trace_source": (
+                        FULL_ADVISORY_TRACE_SOURCE
+                        if full_eligible
+                        else (
+                            COMPONENT_VALIDATION_TRACE_SOURCE
+                            if component_eligible
+                            else INELIGIBLE_TRACE_SOURCE
+                        )
+                    ),
+                    "confidence": (
+                        TRACE_CONFIDENCE_FULL_ADVISORY
+                        if full_eligible
+                        else (
+                            TRACE_CONFIDENCE_COMPONENT
+                            if component_eligible
+                            else TRACE_CONFIDENCE_NOT_ELIGIBLE
+                        )
+                    ),
+                    "promotion_gate_allowed": False,
+                    "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+                }
+            )
     return records
+
+
+def _requested_audit_dates(
+    *,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+) -> set[str]:
+    start = _parse_iso_date(event_window_start or start_date or "")
+    end = _parse_iso_date(event_window_end or end_date or "")
+    if start is None or end is None or end < start:
+        return set()
+    dates: set[str] = set()
+    current = start
+    while current <= end:
+        if current.weekday() < 5:
+            dates.add(current.isoformat())
+        current += timedelta(days=1)
+    return dates
+
+
+def _gate_record_assets(
+    row_date: str,
+    *,
+    trace_rows: Sequence[Mapping[str, Any]],
+    requested_assets: Sequence[str],
+) -> list[str]:
+    if requested_assets:
+        return sorted({asset.upper() for asset in requested_assets})
+    date_assets = {
+        str(row.get("asset") or "").upper()
+        for row in trace_rows
+        if str(row.get("date") or "") == row_date and row.get("asset")
+    }
+    if date_assets:
+        return sorted(date_assets)
+    all_assets = {
+        str(row.get("asset") or "").upper()
+        for row in trace_rows
+        if row.get("asset")
+    }
+    if all_assets:
+        return sorted(all_assets)
+    return [DEFAULT_TRACE_ASSET]
+
+
+def _trace_row_count_for_date_asset(
+    trace_rows: Sequence[Mapping[str, Any]],
+    *,
+    row_date: str,
+    asset: str,
+) -> int:
+    asset = asset.upper()
+    count = 0
+    for row in trace_rows:
+        if str(row.get("date") or "") != row_date:
+            continue
+        row_asset = str(row.get("asset") or "").upper()
+        if row_asset in {asset, DEFAULT_TRACE_ASSET}:
+            count += 1
+    return count
+
+
+def _gate_root_cause_fields(
+    *,
+    row_date: str,
+    asset: str,
+    trace_exists: bool,
+    data_quality_passed: bool,
+    feature_passed: bool,
+    lineage_ok: bool,
+    data_quality: Mapping[str, Any],
+    feature_availability: Mapping[str, Any],
+    lineage_manifest: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    if trace_exists and data_quality_passed and feature_passed and lineage_ok:
+        return {
+            "blocked_gate": "",
+            "blocked_gates": [],
+            "missing_or_late_feature": "",
+            "feature_available_time": "",
+            "decision_time": "",
+            "reason_class": "",
+            "can_be_repaired_without_relaxing_production_gate": False,
+        }
+    blocked_gates = _blocked_gates(
+        trace_exists=trace_exists,
+        data_quality_passed=data_quality_passed,
+        feature_passed=feature_passed,
+        lineage_ok=lineage_ok,
+    )
+    issue = _primary_root_cause_issue(data_quality, feature_availability, blocked_gates)
+    reason_class = _classify_gate_root_cause(
+        trace_exists=trace_exists,
+        data_quality_passed=data_quality_passed,
+        feature_passed=feature_passed,
+        lineage_ok=lineage_ok,
+        issue=issue,
+    )
+    missing_or_late_feature = _missing_or_late_feature(issue, blocked_gates)
+    return {
+        "blocked_gate": blocked_gates[0] if blocked_gates else "",
+        "blocked_gates": blocked_gates,
+        "missing_or_late_feature": missing_or_late_feature,
+        "feature_available_time": _issue_time(issue, "available_time") or "not_reported",
+        "decision_time": (
+            _issue_time(issue, "decision_time")
+            or str((lineage_manifest or {}).get("decision_time") or row_date)
+        ),
+        "reason_class": reason_class,
+        "can_be_repaired_without_relaxing_production_gate": (
+            reason_class != "expected_pit_limitation"
+        ),
+    }
+
+
+def _gate_root_cause_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "date": record.get("date"),
+        "asset": record.get("asset"),
+        "blocked_gate": record.get("blocked_gate"),
+        "missing_or_late_feature": record.get("missing_or_late_feature"),
+        "feature_available_time": record.get("feature_available_time"),
+        "decision_time": record.get("decision_time"),
+        "reason_class": record.get("reason_class"),
+        "can_be_repaired_without_relaxing_production_gate": record.get(
+            "can_be_repaired_without_relaxing_production_gate"
+        ),
+        "trace_source": record.get("trace_source"),
+        "confidence": record.get("confidence"),
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+    }
+
+
+def _blocked_gates(
+    *,
+    trace_exists: bool,
+    data_quality_passed: bool,
+    feature_passed: bool,
+    lineage_ok: bool,
+) -> list[str]:
+    blocked: list[str] = []
+    if not data_quality_passed:
+        blocked.append("data_quality_gate")
+    if not feature_passed:
+        blocked.append("feature_availability_gate")
+    if not trace_exists:
+        blocked.append("historical_replay_trace")
+    if trace_exists and not lineage_ok:
+        blocked.append("historical_replay_lineage_manifest")
+    return blocked
+
+
+def _primary_root_cause_issue(
+    data_quality: Mapping[str, Any],
+    feature_availability: Mapping[str, Any],
+    blocked_gates: Sequence[str],
+) -> Mapping[str, Any]:
+    if "feature_availability_gate" in blocked_gates:
+        issues = feature_availability.get("issues", [])
+        if isinstance(issues, Sequence) and issues:
+            return issues[0] if isinstance(issues[0], Mapping) else {}
+    if "data_quality_gate" in blocked_gates:
+        issues = data_quality.get("issues", [])
+        if isinstance(issues, Sequence) and issues:
+            return issues[0] if isinstance(issues[0], Mapping) else {}
+    return {}
+
+
+def _classify_gate_root_cause(
+    *,
+    trace_exists: bool,
+    data_quality_passed: bool,
+    feature_passed: bool,
+    lineage_ok: bool,
+    issue: Mapping[str, Any],
+) -> str:
+    issue_text = " ".join(
+        str(issue.get(key) or "")
+        for key in ("code", "rule_or_source", "message")
+    )
+    lowered = issue_text.lower()
+    if not feature_passed and "available_time_after_decision_time" in lowered:
+        return "expected_pit_limitation"
+    if not trace_exists and data_quality_passed and feature_passed:
+        return "replay_config_issue"
+    if trace_exists and not lineage_ok:
+        return "lineage_manifest_missing"
+    if "report_missing" in lowered or "lineage" in lowered:
+        return "lineage_manifest_missing"
+    if any(token in lowered for token in ("timestamp", "available_time", "decision_time")):
+        return "timestamp_model_issue"
+    return "ingestion_issue"
+
+
+def _missing_or_late_feature(issue: Mapping[str, Any], blocked_gates: Sequence[str]) -> str:
+    for key in ("rule_or_source", "code", "source", "feature"):
+        value = issue.get(key)
+        if value not in (None, ""):
+            return str(value)
+    if "historical_replay_lineage_manifest" in blocked_gates:
+        return "historical_replay_lineage_manifest"
+    if "historical_replay_trace" in blocked_gates:
+        return "multi_stage_weight_trace"
+    return "UNKNOWN"
+
+
+def _issue_time(issue: Mapping[str, Any], field: str) -> str:
+    for key in (field, f"{field}_utc"):
+        value = issue.get(key)
+        if value not in (None, ""):
+            return str(value)
+    message = str(issue.get("message") or "")
+    date_time_pattern = (
+        rf"{re.escape(field)}\s*[=:：]\s*"
+        r"([0-9]{4}-[0-9]{2}-[0-9]{2}(?:[T ][^。；;,\s]+)?)"
+    )
+    match = re.search(date_time_pattern, message)
+    return "" if match is None else match.group(1)
 
 
 def _gate_audit_dates(gate_audit_root: Path | None) -> set[str]:
@@ -3189,10 +3899,15 @@ def _gate_failure_reasons(
     trace_exists: bool,
     data_quality: Mapping[str, Any],
     feature_availability: Mapping[str, Any],
+    lineage_manifest: Mapping[str, Any] | None,
+    lineage_ok: bool,
 ) -> list[str]:
     reasons: list[str] = []
     if not trace_exists:
         reasons.append("multi-stage trace missing for date")
+    if trace_exists and not lineage_ok:
+        proof_status = str((lineage_manifest or {}).get("proof_status") or "MISSING")
+        reasons.append(f"lineage_manifest={proof_status}")
     if data_quality.get("status") not in {"PASS", "PASS_WITH_WARNINGS"}:
         reasons.append(f"data_quality={data_quality.get('status')}")
     if feature_availability.get("status") not in {"PASS", "PASS_WITH_WARNINGS"}:
@@ -3212,22 +3927,38 @@ def _gate_failure_reasons(
 
 def _gate_availability_summary(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     reason_counts: dict[str, int] = {}
+    reason_class_counts: dict[str, int] = {}
+    audited_dates = {str(record.get("date")) for record in records if record.get("date")}
+    assets = {str(record.get("asset")) for record in records if record.get("asset")}
+    full_dates = {
+        str(record.get("date"))
+        for record in records
+        if record.get("full_advisory_trace_eligible")
+    }
+    component_dates = {
+        str(record.get("date"))
+        for record in records
+        if record.get("component_validation_trace_eligible")
+    }
     for record in records:
         if record.get("full_advisory_trace_eligible"):
             continue
         reason = str(record.get("reason_if_not_full_eligible") or "UNKNOWN")
         reason_counts[reason] = reason_counts.get(reason, 0) + 1
+        reason_class = str(record.get("reason_class") or "UNKNOWN")
+        reason_class_counts[reason_class] = reason_class_counts.get(reason_class, 0) + 1
     return {
-        "audited_date_count": len(records),
-        "full_advisory_trace_eligible_count": sum(
-            1 for record in records if record.get("full_advisory_trace_eligible")
-        ),
-        "component_validation_trace_eligible_count": sum(
-            1 for record in records if record.get("component_validation_trace_eligible")
-        ),
-        "not_full_eligible_count": sum(
+        "audited_date_count": len(audited_dates),
+        "date_count": len(audited_dates),
+        "asset_count": len(assets),
+        "case_count": len(records),
+        "blocked_case_count": sum(
             1 for record in records if not record.get("full_advisory_trace_eligible")
         ),
+        "full_advisory_trace_eligible_count": len(full_dates),
+        "component_validation_trace_eligible_count": len(component_dates),
+        "not_full_eligible_count": len(audited_dates - full_dates),
+        "root_cause_reason_class_counts": dict(sorted(reason_class_counts.items())),
         "fail_closed_reason_counts": dict(sorted(reason_counts.items())),
     }
 
@@ -3237,11 +3968,14 @@ def _backtest_bridge_record(
     *,
     price_series: Sequence[tuple[date, float]],
     outcome_ticker: str,
+    case_asset: str | None = None,
 ) -> dict[str, Any]:
     signal_date = _parse_iso_date(str(row.get("date") or ""))
+    asset = (case_asset or str(row.get("asset") or DEFAULT_TRACE_ASSET)).upper()
     return {
         "date": row.get("date"),
-        "asset": row.get("asset"),
+        "asset": asset,
+        "source_trace_asset": row.get("asset"),
         "trace_source": BACKTEST_TRACE_BRIDGE_SOURCE,
         "confidence": TRACE_CONFIDENCE_BRIDGE,
         "promotion_gate_allowed": False,
@@ -3310,8 +4044,10 @@ def _bridge_artifact_record(path: Path) -> dict[str, Any] | None:
     summary = raw.get("summary", {})
     if not isinstance(summary, Mapping):
         summary = {}
+    lineage = _bridge_source_lineage_manifest(path, raw, date_value)
     return {
         "artifact_path": str(path),
+        **lineage,
         "artifact_type": str(
             raw.get("report_type")
             or raw.get("artifact_type")
@@ -3325,6 +4061,24 @@ def _bridge_artifact_record(path: Path) -> dict[str, Any] | None:
         "confidence": TRACE_CONFIDENCE_BRIDGE,
         "promotion_gate_allowed": False,
         "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+    }
+
+
+def _bridge_source_lineage_manifest(
+    path: Path,
+    raw: Mapping[str, Any],
+    date_value: str | None,
+) -> dict[str, Any]:
+    as_of_date = "" if date_value is None else str(date_value)[:10]
+    return {
+        "source_artifact_path": str(path),
+        "generated_at": str(raw.get("generated_at") or raw.get("created_at") or ""),
+        "as_of_date": as_of_date,
+        "decision_time": str(raw.get("decision_time") or as_of_date),
+        "config_hash": str(raw.get("config_hash") or ""),
+        "input_snapshot_hash": str(raw.get("input_snapshot_hash") or _file_sha256(path)),
+        "trace_contract_version": str(raw.get("trace_contract_version") or ""),
+        "production_equivalent": bool(raw.get("production_equivalent")),
     }
 
 
@@ -3474,8 +4228,10 @@ def _masking_casebook_row(
     component_index: Mapping[tuple[str, str], Mapping[str, Any]],
     price_series: Sequence[tuple[date, float]],
     outcome_ticker: str,
+    case_asset: str | None = None,
 ) -> dict[str, Any]:
     row_date = str(row.get("date") or "")
+    asset = (case_asset or str(row.get("asset") or DEFAULT_TRACE_ASSET)).upper()
     signal_date = _parse_iso_date(row_date)
     trend_component = component_index.get((row_date, "trend_strength_indicator"))
     valuation_component = component_index.get((row_date, "valuation_crowding_indicator"))
@@ -3506,13 +4262,14 @@ def _masking_casebook_row(
         outcomes.get(f"return_{horizon}d") is None for horizon in MASKING_OUTCOME_HORIZONS
     )
     return {
-        "case_id": f"{row_date}:{row.get('asset', '')}:{row.get('reason_code', '')}",
+        "case_id": f"{row_date}:{asset}:{row.get('reason_code', '')}",
         "date": row_date,
         "sample_id": (
             f"{row_date}:{row.get('module_id', '')}:"
             f"{row.get('downstream_indicator_id', '')}"
         ),
-        "asset": row.get("asset"),
+        "asset": asset,
+        "source_trace_asset": row.get("asset"),
         "outcome_ticker": outcome_ticker,
         "trend_raw_direction": _trend_direction(trend_component, b_intended),
         "valuation_crowding_raw_direction": _valuation_direction(
@@ -3541,12 +4298,21 @@ def _masking_casebook_row(
         "outcome_missing": outcome_missing,
         "constraint_hit": bool(row.get("constraint_hit")),
         "reason_code": row.get("reason_code"),
+        "trace_source": COMPONENT_VALIDATION_TRACE_SOURCE,
+        "confidence": TRACE_CONFIDENCE_COMPONENT,
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+        "event_window_ids": _event_window_ids_for_date(row_date),
     }
 
 
 def _read_price_series(prices_path: Path | None, ticker: str) -> list[tuple[date, float]]:
+    return _read_price_series_by_ticker(prices_path).get(ticker.upper(), [])
+
+
+def _read_price_series_by_ticker(prices_path: Path | None) -> dict[str, list[tuple[date, float]]]:
     if prices_path is None:
-        return []
+        return {}
     if not prices_path.exists():
         raise IndicatorResearchError(f"prices path not found: {prices_path}")
     with prices_path.open("r", encoding="utf-8", newline="") as handle:
@@ -3559,16 +4325,15 @@ def _read_price_series(prices_path: Path | None, ticker: str) -> list[tuple[date
             raise IndicatorResearchError(
                 f"prices CSV missing required columns: {', '.join(sorted(missing))}"
             )
-        by_date: dict[date, float] = {}
+        by_ticker: dict[str, dict[date, float]] = defaultdict(dict)
         for record in reader:
-            if str(record.get(ticker_field, "")).upper() != ticker.upper():
-                continue
+            ticker = str(record.get(ticker_field, "")).upper()
             parsed_date = _parse_iso_date(str(record.get("date") or ""))
             price = _float(record.get(price_field))
-            if parsed_date is None or price <= 0:
+            if not ticker or parsed_date is None or price <= 0:
                 continue
-            by_date[parsed_date] = price
-    return sorted(by_date.items())
+            by_ticker[ticker][parsed_date] = price
+    return {ticker: sorted(by_date.items()) for ticker, by_date in by_ticker.items()}
 
 
 def _forward_outcome_payload(
@@ -3620,11 +4385,13 @@ def _ablation_scenario_metrics(
     capped_masking_ratio: float,
 ) -> dict[str, Any]:
     weighted_returns: dict[int, list[float]] = {horizon: [] for horizon in MASKING_OUTCOME_HORIZONS}
+    raw_returns: dict[int, list[float]] = {horizon: [] for horizon in MASKING_OUTCOME_HORIZONS}
     weighted_drawdowns: list[float] = []
     dated_weights: list[tuple[str, float]] = []
     constraint_hit_count = 0
     false_risk_off_count = 0
     missed_upside_count = 0
+    drawdown_reduced_count = 0
     drawdown_preservation = 0.0
     for case in cases:
         weight, applied_suppression = _scenario_weight(case, scenario_id, capped_masking_ratio)
@@ -3640,6 +4407,8 @@ def _ablation_scenario_metrics(
                 false_risk_off_count += 1
             if case.get("missed_upside"):
                 missed_upside_count += 1
+            if case.get("drawdown_reduced"):
+                drawdown_reduced_count += 1
         outcomes = case.get("outcomes", {})
         if not isinstance(outcomes, Mapping):
             outcomes = {}
@@ -3648,6 +4417,7 @@ def _ablation_scenario_metrics(
             value = outcomes.get(f"return_{horizon}d")
             if isinstance(value, float):
                 weighted_returns[horizon].append(weight * value)
+                raw_returns[horizon].append(value)
                 min_forward_return = min(min_forward_return, value)
         drawdown = outcomes.get("max_drawdown_20d")
         if isinstance(drawdown, float):
@@ -3666,16 +4436,30 @@ def _ablation_scenario_metrics(
         )
         for horizon, values in weighted_returns.items()
     }
+    hit_rates = {
+        f"hit_rate_{horizon}d": (
+            sum(1 for value in values if value > 0) / len(values) if values else None
+        )
+        for horizon, values in raw_returns.items()
+    }
     return {
         "scenario_id": scenario_id,
         **averages,
+        **hit_rates,
         "max_drawdown": min(weighted_drawdowns) if weighted_drawdowns else None,
         "drawdown_preservation": drawdown_preservation,
+        "drawdown_reduced_count": drawdown_reduced_count,
         "false_risk_off_count": false_risk_off_count,
         "missed_upside_count": missed_upside_count,
         "turnover": turnover,
         "constraint_hit_count": constraint_hit_count,
         "case_count": len(cases),
+        "sample_quality_breakdown": {
+            "date_count": len({str(case.get("date")) for case in cases if case.get("date")}),
+            "asset_count": len({str(case.get("asset")) for case in cases if case.get("asset")}),
+            "case_count": len(cases),
+            "outcome_missing_count": sum(1 for case in cases if case.get("outcome_missing")),
+        },
     }
 
 
@@ -3769,6 +4553,45 @@ def _valuation_direction(
     if value > 50:
         return "valuation_crowding_supportive"
     return "valuation_crowding_neutral"
+
+
+def _casebook_assets_for_row(
+    row: Mapping[str, Any],
+    *,
+    asset_universe: str | None,
+) -> list[str]:
+    requested = _parse_asset_universe(asset_universe)
+    if requested:
+        return requested
+    asset = str(row.get("asset") or DEFAULT_TRACE_ASSET).upper()
+    return [asset]
+
+
+def _price_ticker_for_asset(
+    asset: str,
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    *,
+    fallback_ticker: str,
+) -> str:
+    ticker = asset.upper()
+    if ticker in price_series_by_ticker:
+        return ticker
+    alias = PRICE_TICKER_ALIASES.get(ticker)
+    if alias and alias in price_series_by_ticker:
+        return alias
+    return fallback_ticker.upper()
+
+
+def _event_window_ids_for_date(row_date: str) -> list[str]:
+    return [
+        str(window["event_window_id"])
+        for window in DEFAULT_EVENT_WINDOW_CATALOG
+        if _date_in_window(
+            row_date,
+            start=_parse_iso_date(str(window["start_date"])),
+            end=_parse_iso_date(str(window["end_date"])),
+        )
+    ]
 
 
 def _parse_iso_date(value: str) -> date | None:

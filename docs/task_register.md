@@ -151,6 +151,11 @@
 |PROD-005|趋势判断/规则治理 owner approval|P1|BLOCKED_OWNER_INPUT|项目 owner + 系统验证|`GOV-001/GOV-002/GOV-003` 已有 rule card、rule version 注入和受控 promotion/retirement 基础版；下一步需要 owner 对 production rule baseline、promotion 条件和 retirement 条件形成批准记录|核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition 和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot 和 trace 能追溯本次运行使用的规则版本|2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001` 继续保持进行中。|
 |PROD-006|趋势判断/forward shadow 与 outcome 成熟度|P1|BLOCKED_EXTERNAL|系统验证 + 时间窗口|`SHADOW-002/SHADOW-003/REPORT-005` 已有 challenger shadow runner、样本成熟度报告和 production vs challenger 复盘入口；下一步等待真实 prediction outcome 样本达到可评估窗口|shadow maturity 报告按 candidate、horizon 和 `ai_after_chatgpt` regime 输出样本数、pending/missing、收益、胜率、回撤和 benchmark excess；样本不足时 promotion gate 维持观察或缺失状态；达到门槛前，回测或 shadow 结果不得被写成 production 规则晋级结论|2026-05-06: 从 `PROD-001` 拆出，原因：趋势判断长期可信度需要真实前向样本，但该成熟度受交易日和 label horizon 限制，适合作为独立时间窗口任务。2026-05-10: owner 要求继续积累 outcome 样本；本轮刷新成熟度/校准报告，样本不足仍保持外部时间窗口阻塞。|
 
+## 当前推进补充
+
+- 2026-06-20 / `TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1`：继续 `VALIDATING` 的样本规模扩张与 gate root-cause analysis。本轮验收聚焦 explicit historical replay/lineage manifest、blocked date root-cause 分类、date range/event window/asset universe 扩样、casebook/ablation sample quality 输出和 non-promotion safety metadata；仍保持 read-only / validation-only，不修改 production 权重逻辑，不影响 paper-shadow/live/broker/order/official weights。
+- 2026-06-20 / `TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1`：样本规模扩张与 gate root-cause analysis 已完成实现并进入复核。Expanded trace 覆盖 22 个 full advisory equivalent dates / 352 rows；gate audit 覆盖 40 dates、8 assets、320 cases，component_validation_trace_eligible_count=28、full_advisory_trace_eligible_count=22；casebook/ablation/bridge 均为 176 diagnostic cases，validation-pack-stability `PASS`。验证通过 focused 并行 pytest、full 并行 validation tier、Ruff、compile、task-register consistency 和 `git diff --check`；所有新增输出仍为 validation-only，`promotion_gate_allowed=false`，不得进入 promotion gate。
+
 ## 暂缓任务
 
 本节保留已明确暂缓、但未来可能因数据规模、owner 决策或外部条件变化而重新打开的任务。

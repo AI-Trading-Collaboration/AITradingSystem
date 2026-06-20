@@ -258,6 +258,32 @@ def test_masking_casebook_artifact_generation(tmp_path: Path) -> None:
     assert isinstance(case["drawdown_reduced"], bool)
     assert isinstance(case["missed_upside"], bool)
     assert isinstance(case["false_risk_off"], bool)
+    assert case["promotion_gate_allowed"] is False
+    assert case["allowed_uses"] == ["diagnostic", "ablation", "sensitivity_analysis"]
+
+
+def test_masking_casebook_expands_asset_universe_sample_counts(tmp_path: Path) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+
+    payload = build_masking_casebook(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+    )
+
+    assert payload["status"] == "PASS"
+    assert payload["summary"]["date_count"] == 2
+    assert payload["summary"]["asset_count"] == 5
+    assert payload["summary"]["case_count"] == 10
+    assert {case["asset"] for case in payload["casebook"]} == {
+        "GOOGL",
+        "MSFT",
+        "QQQ",
+        "SMH",
+        "SPY",
+    }
 
 
 def test_valuation_crowding_ablation_result_schema(tmp_path: Path) -> None:
@@ -283,8 +309,14 @@ def test_valuation_crowding_ablation_result_schema(tmp_path: Path) -> None:
         "avg_return_20d",
         "max_drawdown",
         "drawdown_preservation",
+        "drawdown_reduced_count",
         "false_risk_off_count",
+        "hit_rate_1d",
+        "hit_rate_5d",
+        "hit_rate_10d",
+        "hit_rate_20d",
         "missed_upside_count",
+        "sample_quality_breakdown",
         "turnover",
         "constraint_hit_count",
     }
@@ -301,6 +333,8 @@ def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) 
     assert payload["summary"]["date_count"] == 2
     assert payload["summary"]["masking_pair_result_count"] == 1
     assert payload["summary"]["missing_trace_field_record_count"] == 0
+    assert payload["summary"]["production_equivalent_lineage_count"] == 2
+    assert payload["historical_replay_lineage_manifest"]
     assert payload["date_level_summary"]
     assert payload["historical_masking_results"][0]["masking_status"] == "HIGH_MASKING"
 
@@ -324,10 +358,38 @@ def test_gate_availability_audit_splits_full_and_component_eligibility(
     assert fail_closed["full_advisory_trace_eligible"] is False
     assert fail_closed["component_validation_trace_eligible"] is True
     assert "feature_availability=FAIL" in fail_closed["reason_if_not_full_eligible"]
+    assert fail_closed["blocked_gate"] == "feature_availability_gate"
+    assert fail_closed["missing_or_late_feature"] == "sec_fundamentals_filing"
+    assert fail_closed["decision_time"] == "2023-01-05"
+    assert fail_closed["reason_class"] == "expected_pit_limitation"
+    assert fail_closed["can_be_repaired_without_relaxing_production_gate"] is False
     assert fail_closed["trace_source"] == "component_level_validation_trace"
     assert fail_closed["confidence"] == "MEDIUM_COMPONENT_DIAGNOSTIC"
     assert fail_closed["promotion_gate_allowed"] is False
     assert payload["summary"]["partial_component_only_count"] == 1
+    assert payload["summary"]["root_cause_case_count"] >= 1
+    assert payload["gate_root_cause_analysis"][0]["promotion_gate_allowed"] is False
+
+
+def test_gate_availability_requires_explicit_lineage_for_full_equivalence(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_trace(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path, component_only_date="2023-01-06")
+
+    payload = build_gate_availability_audit(
+        trace_path=trace_path,
+        gate_audit_root=gate_root,
+        start_date="2023-01-03",
+        end_date="2023-01-04",
+    )
+
+    records = {item["date"]: item for item in payload["gate_availability"]}
+    assert records["2023-01-03"]["full_advisory_trace_eligible"] is False
+    assert records["2023-01-03"]["component_validation_trace_eligible"] is True
+    assert records["2023-01-03"]["blocked_gate"] == "historical_replay_lineage_manifest"
+    assert records["2023-01-03"]["reason_class"] == "lineage_manifest_missing"
+    assert records["2023-01-03"]["trace_source"] == "component_level_validation_trace"
 
 
 def test_component_level_historical_trace_marks_non_promotion_source_confidence(
@@ -371,6 +433,8 @@ def test_backtest_trace_bridge_schema_and_non_promotion_marker(tmp_path: Path) -
     assert payload["status"] == "PASS"
     assert payload["summary"]["bridge_record_count"] == 2
     assert payload["summary"]["source_artifact_count"] == 1
+    assert payload["summary"]["date_count"] == 2
+    assert payload["summary"]["case_count"] == 2
     record = payload["bridge_records"][0]
     assert record["trace_source"] == "backtest_trace_bridge"
     assert record["confidence"] == "MEDIUM_BACKTEST_BRIDGE_DIAGNOSTIC"
@@ -379,6 +443,10 @@ def test_backtest_trace_bridge_schema_and_non_promotion_marker(tmp_path: Path) -
     assert {"return_1d", "return_5d", "return_10d", "return_20d"} <= set(
         record["outcomes"]
     )
+    source = payload["source_artifacts"][0]
+    assert source["source_artifact_path"].endswith("historical_backtest_summary.json")
+    assert source["as_of_date"] == "2023-01-04"
+    assert source["promotion_gate_allowed"] is False
 
 
 def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> None:
@@ -693,7 +761,26 @@ def _write_casebook_trace(tmp_path: Path) -> Path:
                 ),
             ]
         )
-    path.write_text(json.dumps({"rows": rows}, ensure_ascii=False), encoding="utf-8")
+    lineage_manifests = [
+        {
+            "source_artifact_path": f"fixture/daily_indicator_weight_trace_{row_date}.json",
+            "generated_at": f"{row_date}T21:30:00+00:00",
+            "as_of_date": row_date,
+            "decision_time": row_date,
+            "config_hash": f"config-{row_date}",
+            "input_snapshot_hash": f"inputs-{row_date}",
+            "trace_contract_version": "multi_stage_weight_trace_contract_v1",
+            "production_equivalent": True,
+        }
+        for row_date in ("2023-01-03", "2023-01-04")
+    ]
+    path.write_text(
+        json.dumps(
+            {"rows": rows, "lineage_manifests": lineage_manifests},
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     return path
 
 
@@ -779,9 +866,20 @@ def _write_outcome_prices(tmp_path: Path) -> Path:
         119.0,
     ]
     start = date(2023, 1, 3)
+    tickers = {
+        "QQQ": 1.00,
+        "SPY": 0.75,
+        "SMH": 1.25,
+        "MSFT": 2.00,
+        "GOOGL": 1.50,
+        "NVDA": 3.00,
+        "AMD": 1.10,
+        "TSM": 0.95,
+    }
     for offset, price in enumerate(prices):
         row_date = start + timedelta(days=offset)
-        lines.append(f"{row_date.isoformat()},QQQ,{price}")
+        for ticker, multiplier in tickers.items():
+            lines.append(f"{row_date.isoformat()},{ticker},{price * multiplier:.4f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
