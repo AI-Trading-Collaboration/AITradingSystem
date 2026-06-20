@@ -1,0 +1,756 @@
+schema_version: "1.0"
+policy_version: indicator_research_registry_v1
+policy_metadata:
+  owner: research_governance
+  status: baseline_v1
+  rationale: >
+    Register every current daily-report indicator, constraint, and heuristic that
+    can affect signal interpretation or research weight before running deeper
+    indicator-specific research.
+  intended_effect: >
+    Prevent downstream signal conclusions from being interpreted as independent
+    effects when an unvalidated upstream constraint may be masking them.
+  validation_evidence: tests/test_indicator_research.py
+  review_condition: >
+    Review whenever daily scoring modules, position gates, Research Campaign
+    adapters, or report conclusion boundaries change.
+market_regime:
+  regime_id: ai_after_chatgpt
+  requested_date_range: "2022-12-01..present"
+  anchor_event: "ChatGPT public launch on 2022-11-30"
+data_quality_status: NOT_REQUIRED_CONFIG_ONLY
+safety_boundary:
+  research_only: true
+  manual_review_only: true
+  official_target_weights: false
+  paper_shadow_activation: false
+  extended_shadow_allowed: false
+  live_trading_allowed: false
+  broker_effect: none
+  order_effect: none
+  production_effect: none
+  holdout_touched: false
+
+ontology:
+  object_types:
+    - RAW_DATA
+    - FEATURE
+    - INDICATOR
+    - SIGNAL_MAPPING
+    - SIGNAL
+    - CONSTRAINT_MODIFIER
+    - ALLOCATION_INTENT
+    - RESEARCH_WEIGHT
+    - OUTCOME
+  roles:
+    - RETURN_ALLOCATION_PREDICTOR
+    - RISK_STATE_INDICATOR
+    - CONSTRAINT_GUARDRAIL_INDICATOR
+    - CONFIDENCE_RELIABILITY_INDICATOR
+    - EXECUTION_INDICATOR
+    - INFORMATIONAL_ONLY
+    - IMMUTABLE_SAFETY_CONSTRAINT
+  constraint_types:
+    - IMMUTABLE_SAFETY_CONSTRAINT
+    - RESEARCHABLE_STRATEGY_CONSTRAINT
+    - MANUAL_REVIEW_GUARDRAIL
+    - NOT_A_CONSTRAINT
+  dependency_edge_types:
+    - CONSUMES
+    - MODIFIES
+    - CAPS
+    - MASKS
+    - CONDITIONS
+    - REQUIRES
+    - DUPLICATES
+    - CONFLICTS_WITH
+  coverage_statuses:
+    - RESEARCHED
+    - REGISTERED_NOT_RESEARCHED
+    - USED_IN_DAILY_NOT_REGISTERED
+    - HIGH_IMPACT_UNVALIDATED
+    - INFORMATIONAL_ONLY
+    - DEPRECATED_OR_UNKNOWN
+  gate_outcomes:
+    - SIGNAL_MAPPING_PROMISING
+    - SIGNAL_MAPPING_OBSERVE
+    - SIGNAL_MAPPING_CONDITIONAL_ONLY
+    - INCREMENTAL_EFFECT_NOT_PROVEN
+    - EFFECT_MASKED_BY_UPSTREAM_CONSTRAINT
+    - MAPPING_NEEDS_REDESIGN
+    - INDICATOR_REDUNDANT
+    - INDICATOR_WEAK
+    - REJECT_CURRENT_MAPPING
+    - OWNER_REVIEW_REQUIRED
+
+validation_policy:
+  impact_bands:
+    high_hit_rate_label: high
+    high_weight_impact_label: high
+  dominance:
+    dominant_hit_rate_min: 0.50
+    dominant_share_of_adjustment_min: 0.30
+  masking:
+    moderate_min: 0.25
+    high_min: 0.60
+  calibration:
+    min_trigger_observations_for_mapping_research: 20
+    min_walk_forward_windows: 4
+  holdout:
+    default_development_window: "2022-12-01..2024-12-31"
+    default_diagnostic_window: "2025-01-01..2025-12-31"
+    final_holdout_access: OWNER_AUTHORIZATION_REQUIRED
+    purge_days: 5
+    embargo_days: 5
+
+trace_contract:
+  contract_id: multi_stage_weight_trace_contract_v1
+  required_stages:
+    - raw_feature_values
+    - indicator_values
+    - signal_scores
+    - signal_states
+    - raw_signal_target
+    - pre_constraint_target
+    - post_each_constraint_target
+    - post_all_constraints_target
+    - post_execution_research_weight
+    - final_research_weight
+  required_delta_fields:
+    - date
+    - asset
+    - module_id
+    - mapping_version
+    - weight_before
+    - weight_after
+    - delta
+    - reason_code
+    - constraint_hit
+    - upstream_indicator_id
+    - downstream_indicator_id
+  required_masking_fields:
+    - upstream_indicator_id
+    - downstream_indicator_id
+    - b_intended_change
+    - a_suppressed_change
+  forbidden_outputs:
+    - official_target_weights
+    - broker_order
+    - live_order
+    - production_position_mutation
+
+mapping_candidate_families:
+  - family_id: M0_INFORMATIONAL_ONLY
+    description: Display only; no signal or weight effect.
+    may_affect_weight: false
+  - family_id: M1_LINEAR_SCORE
+    description: Monotonic score with governed direction and output range.
+    may_affect_weight: true
+  - family_id: M2_QUANTILE_SCORE
+    description: Cross-section or time-series quantile score.
+    may_affect_weight: true
+  - family_id: M3_THRESHOLD_STATE
+    description: Discrete state from governed trigger bands.
+    may_affect_weight: true
+  - family_id: M4_SOFT_PENALTY
+    description: Bounded score or exposure penalty.
+    may_affect_weight: true
+  - family_id: M5_HARD_CAP
+    description: Hard exposure cap; requires masking and dominance audit first.
+    may_affect_weight: true
+  - family_id: M6_CONTEXT_AWARE_MAPPING
+    description: Mapping conditional on regime, signal agreement, or data quality.
+    may_affect_weight: true
+
+indicators:
+  - indicator_id: trend_strength_indicator
+    object_type: INDICATOR
+    display_name: Trend strength and relative strength
+    role: RETURN_ALLOCATION_PREDICTOR
+    source_features:
+      - category: trend
+        subject: SPY
+        feature: above_ma_100
+      - category: trend
+        subject: SPY
+        feature: above_ma_200
+      - category: trend
+        subject: QQQ
+        feature: above_ma_100
+      - category: trend
+        subject: QQQ
+        feature: above_ma_200
+      - category: trend
+        subject: SMH/SPY
+        feature: relative_strength_return_20d
+    economic_interpretation: AI beta trend and semiconductor relative leadership.
+    daily_component_id: trend
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: NOT_A_CONSTRAINT
+    mapping_version: scoring_rules_v1.trend
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: PASS_PRICE_CACHE_REQUIRED
+      lookahead: PRICE_FEATURES_DECISION_DATE_ONLY
+      revision: NOT_REVISION_PRONE
+      staleness: COVERED_BY_VALIDATE_DATA
+    expected_impact:
+      hit_rate_band: high
+      weight_impact_band: medium
+    target_family: forward_relative_return_and_allocation_transfer
+    evaluation_metrics:
+      - rank_correlation
+      - monotonicity
+      - cost_adjusted_contribution
+      - benchmark_relative_return
+    implementation_refs:
+      - config/scoring_rules.yaml:trend
+      - src/ai_trading_system/scoring/daily.py:_score_hard_data_module
+    notes: >
+      Existing B3 work is signal-only and conditional on current constraints;
+      independent effect cannot be concluded until upstream masking is audited.
+
+  - indicator_id: fundamental_quality_indicator
+    object_type: INDICATOR
+    display_name: Fundamental quality
+    role: RETURN_ALLOCATION_PREDICTOR
+    source_features:
+      - category: fundamentals
+        subject: AI_CORE_MEDIAN
+        feature: gross_margin_quarterly_median
+      - category: fundamentals
+        subject: AI_CORE_MEDIAN
+        feature: operating_margin_quarterly_median
+      - category: fundamentals
+        subject: AI_CORE_MEDIAN
+        feature: research_and_development_intensity_quarterly_median
+    economic_interpretation: Fundamental quality and reinvestment capacity of AI core universe.
+    daily_component_id: fundamentals
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: NOT_A_CONSTRAINT
+    mapping_version: scoring_rules_v1.fundamentals
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: SEC_PIT_OR_VALIDATED_VENDOR_REQUIRED
+      lookahead: AVAILABLE_TIME_REQUIRED
+      revision: REVISION_RISK_TRACKED
+      staleness: SEC_METRICS_VALIDATION_REQUIRED
+    expected_impact:
+      hit_rate_band: medium
+      weight_impact_band: medium
+    target_family: forward_fundamental_quality_association
+    evaluation_metrics:
+      - cross_sectional_rank_correlation
+      - revision_stability
+      - sample_coverage
+    implementation_refs:
+      - config/scoring_rules.yaml:fundamentals
+      - src/ai_trading_system/scoring/daily.py:_score_fundamental_module
+
+  - indicator_id: macro_liquidity_indicator
+    object_type: INDICATOR
+    display_name: Macro liquidity
+    role: RISK_STATE_INDICATOR
+    source_features:
+      - category: macro_liquidity
+        subject: DGS10
+        feature: rate_change_20d
+      - category: macro_liquidity
+        subject: DGS2
+        feature: rate_change_20d
+      - category: macro_liquidity
+        subject: DTWEXBGS
+        feature: return_20d
+    economic_interpretation: Rate and dollar pressure on AI duration and risk appetite.
+    daily_component_id: macro_liquidity
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: NOT_A_CONSTRAINT
+    mapping_version: scoring_rules_v1.macro_liquidity
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: FRED_OR_VALIDATED_MACRO_CACHE_REQUIRED
+      lookahead: DECISION_DATE_ONLY
+      revision: MACRO_REVISION_RISK_DISCLOSED
+      staleness: COVERED_BY_VALIDATE_DATA
+    expected_impact:
+      hit_rate_band: medium
+      weight_impact_band: medium
+    target_family: risk_state_and_forward_drawdown
+    evaluation_metrics:
+      - risk_event_recall
+      - trigger_delay
+      - drawdown_protection
+    implementation_refs:
+      - config/scoring_rules.yaml:macro_liquidity
+
+  - indicator_id: market_stress_indicator
+    object_type: INDICATOR
+    display_name: Market stress and risk sentiment
+    role: RISK_STATE_INDICATOR
+    source_features:
+      - category: risk_sentiment
+        subject: ^VIX
+        feature: vix_current
+      - category: risk_sentiment
+        subject: ^VIX
+        feature: vix_percentile_252
+      - category: risk_sentiment
+        subject: ^VIX
+        feature: return_5d
+    economic_interpretation: Volatility shock and market stress regime.
+    daily_component_id: risk_sentiment
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: RESEARCHABLE_STRATEGY_CONSTRAINT
+    mapping_version: scoring_rules_v1.risk_sentiment+risk_budget_v1
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: VALIDATED_VIX_CACHE_REQUIRED
+      lookahead: DECISION_DATE_ONLY
+      revision: NOT_REVISION_PRONE
+      staleness: COVERED_BY_VALIDATE_DATA
+    expected_impact:
+      hit_rate_band: medium
+      weight_impact_band: high
+    target_family: drawdown_protection_and_reentry_lag
+    evaluation_metrics:
+      - risk_event_recall
+      - false_positive_rate
+      - v_shaped_recovery_opportunity_cost
+    implementation_refs:
+      - config/scoring_rules.yaml:risk_sentiment
+      - src/ai_trading_system/scoring/position_gates.py:_risk_budget_gate
+
+  - indicator_id: valuation_crowding_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Valuation and crowding
+    role: CONSTRAINT_GUARDRAIL_INDICATOR
+    source_features:
+      - category: valuation
+        subject: AI_CORE_MEDIAN
+        feature: valuation_percentile
+      - category: valuation
+        subject: AI_CORE
+        feature: overheated_snapshot_ratio
+    economic_interpretation: Expensive valuation and crowded AI exposure can cap new risk.
+    daily_component_id: valuation
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: RESEARCHABLE_STRATEGY_CONSTRAINT
+    mapping_version: scoring_rules_v1.valuation+position_gate_valuation_v1
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: VALUATION_SNAPSHOT_AS_OF_CAPTURED_AT_REQUIRED
+      lookahead: CAPTURED_AT_NOT_AFTER_SIGNAL_DATE
+      revision: VENDOR_REVISION_RISK_DISCLOSED
+      staleness: VALUATION_VALIDATE_REQUIRED
+    expected_impact:
+      hit_rate_band: high
+      weight_impact_band: high
+    target_family: constraint_drag_drawdown_benefit_masking
+    evaluation_metrics:
+      - constraint_hit_rate
+      - weight_suppression
+      - constraint_drag
+      - protection_cases
+      - false_cap_cases
+      - masking_ratio
+    implementation_refs:
+      - config/scoring_rules.yaml:valuation
+      - config/scoring_rules.yaml:position_gates.valuation
+      - src/ai_trading_system/scoring/position_gates.py:_valuation_gate
+    pilot_output_if_untraced: VALUATION_CROWDING_UNTESTED_HIGH_IMPACT
+    notes: >
+      Current hard-cap behavior must be audited before downstream trend or
+      relative-strength conclusions are interpreted as independent effects.
+
+  - indicator_id: policy_geopolitics_risk_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Policy and geopolitics risk events
+    role: RISK_STATE_INDICATOR
+    source_features:
+      - category: POLICY_GEOPOLITICS
+        subject: active_or_watch_l3_count
+        feature: count
+      - category: POLICY_GEOPOLITICS
+        subject: active_or_watch_l2_count
+        feature: count
+      - category: POLICY_GEOPOLITICS
+        subject: minimum_exposure_multiplier
+        feature: multiplier
+    economic_interpretation: Event risk that may reduce AI exposure or require manual review.
+    daily_component_id: policy_geopolitics
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: RESEARCHABLE_STRATEGY_CONSTRAINT
+    mapping_version: scoring_rules_v1.policy_geopolitics+risk_event_gate_v1
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: RISK_EVENT_REVIEW_ATTESTATION_REQUIRED
+      lookahead: REVIEWED_AT_NOT_AFTER_SIGNAL_DATE
+      revision: EVENT_STATUS_REINTERPRETED_POINT_IN_TIME
+      staleness: RISK_EVENT_VALIDATION_REQUIRED
+    expected_impact:
+      hit_rate_band: medium
+      weight_impact_band: high
+    target_family: event_risk_recall_and_false_positive_cost
+    evaluation_metrics:
+      - event_recall
+      - false_positive_rate
+      - exposure_multiplier_drag
+    implementation_refs:
+      - config/scoring_rules.yaml:policy_geopolitics
+      - src/ai_trading_system/scoring/position_gates.py:_risk_event_gate
+
+  - indicator_id: confidence_reliability_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Confidence and input reliability
+    role: CONFIDENCE_RELIABILITY_INDICATOR
+    source_features:
+      - category: confidence
+        subject: score_components
+        feature: source_type_confidence
+      - category: confidence
+        subject: manual_review
+        feature: failure_or_warning
+    economic_interpretation: Input reliability should shrink conclusions without releasing risk.
+    daily_component_id: confidence
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: RESEARCHABLE_STRATEGY_CONSTRAINT
+    mapping_version: scoring_rules_v1.confidence_policy
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: SOURCE_STATUS_AS_OF_REQUIRED
+      lookahead: DECISION_DATE_ONLY
+      revision: SOURCE_STATUS_REVISION_DISCLOSED
+      staleness: COVERED_BY_SOURCE_VALIDATORS
+    expected_impact:
+      hit_rate_band: high
+      weight_impact_band: medium
+    target_family: signal_reliability_and_bad_signal_reduction
+    evaluation_metrics:
+      - bad_signal_reduction
+      - valid_signal_over_shrinkage
+      - worst_window_improvement
+    implementation_refs:
+      - config/scoring_rules.yaml:confidence_policy
+      - src/ai_trading_system/scoring/daily.py:_confidence_position_gate
+
+  - indicator_id: data_quality_gate_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Cached data quality gate
+    role: IMMUTABLE_SAFETY_CONSTRAINT
+    source_features:
+      - category: data_quality
+        subject: cached_market_macro_data
+        feature: validate_data_status
+    economic_interpretation: Invalid cached market or macro data must stop downstream reports.
+    daily_component_id: data_quality_gate
+    used_in_daily_report: true
+    affects_signal: true
+    affects_weight: true
+    constraint_type: IMMUTABLE_SAFETY_CONSTRAINT
+    mapping_version: data_quality_gate_v1
+    research_status: RESEARCHED
+    owner: data_governance
+    data_gate:
+      point_in_time: REQUIRED_GATE
+      lookahead: REQUIRED_GATE
+      revision: REQUIRED_GATE
+      staleness: REQUIRED_GATE
+    expected_impact:
+      hit_rate_band: unknown
+      weight_impact_band: high
+    target_family: safety_fail_closed
+    evaluation_metrics:
+      - schema_completeness_freshness_duplicate_suspicious_value_validation
+    implementation_refs:
+      - src/ai_trading_system/data/quality.py
+      - docs/system_flow.md
+
+  - indicator_id: thesis_manual_review_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Thesis manual review guardrail
+    role: CONSTRAINT_GUARDRAIL_INDICATOR
+    source_features:
+      - category: thesis
+        subject: trade_theses
+        feature: validation_status
+    economic_interpretation: Missing or failed thesis review blocks full investment interpretation.
+    daily_component_id: thesis
+    used_in_daily_report: true
+    affects_signal: false
+    affects_weight: true
+    constraint_type: MANUAL_REVIEW_GUARDRAIL
+    mapping_version: position_gate_thesis_v1
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: research_governance
+    data_gate:
+      point_in_time: THESIS_STATUS_AS_OF_REQUIRED
+      lookahead: STATUS_UPDATED_AT_NOT_AFTER_SIGNAL_DATE
+      revision: MANUAL_REVISION_RISK_DISCLOSED
+      staleness: THESIS_VALIDATE_REQUIRED
+    expected_impact:
+      hit_rate_band: medium
+      weight_impact_band: high
+    target_family: manual_review_error_prevention
+    evaluation_metrics:
+      - manual_review_failure_recall
+      - false_block_rate
+    implementation_refs:
+      - src/ai_trading_system/scoring/position_gates.py:_thesis_gate
+
+  - indicator_id: portfolio_limit_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Portfolio concentration and AI exposure limits
+    role: CONSTRAINT_GUARDRAIL_INDICATOR
+    source_features:
+      - category: portfolio
+        subject: max_total_ai_exposure
+        feature: configured_limit
+      - category: portfolio
+        subject: concentration
+        feature: ai_exposure_bucket
+    economic_interpretation: Portfolio-level exposure and concentration limits.
+    daily_component_id: portfolio_limits
+    used_in_daily_report: true
+    affects_signal: false
+    affects_weight: true
+    constraint_type: RESEARCHABLE_STRATEGY_CONSTRAINT
+    mapping_version: portfolio_limit_gate_v1
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: portfolio_governance
+    data_gate:
+      point_in_time: PORTFOLIO_SNAPSHOT_AS_OF_REQUIRED
+      lookahead: SNAPSHOT_NOT_AFTER_DECISION_DATE
+      revision: MANUAL_POSITION_REVISION_DISCLOSED
+      staleness: PORTFOLIO_EXPOSURE_VALIDATION_REQUIRED
+    expected_impact:
+      hit_rate_band: medium
+      weight_impact_band: high
+    target_family: concentration_risk_and_constraint_drag
+    evaluation_metrics:
+      - concentration_hit_rate
+      - drawdown_benefit
+      - missed_opportunity
+    implementation_refs:
+      - src/ai_trading_system/scoring/position_gates.py:_portfolio_limit_gate
+      - src/ai_trading_system/scoring/position_gates.py:_portfolio_concentration_cap
+
+  - indicator_id: execution_deadband_indicator
+    object_type: CONSTRAINT_MODIFIER
+    display_name: Minimum action delta and execution deadband
+    role: EXECUTION_INDICATOR
+    source_features:
+      - category: execution
+        subject: position_change
+        feature: minimum_action_delta
+    economic_interpretation: Avoid low-benefit research weight churn.
+    daily_component_id: execution_deadband
+    used_in_daily_report: true
+    affects_signal: false
+    affects_weight: true
+    constraint_type: RESEARCHABLE_STRATEGY_CONSTRAINT
+    mapping_version: scoring_rules_v1.position_change
+    research_status: REGISTERED_NOT_RESEARCHED
+    owner: execution_governance
+    data_gate:
+      point_in_time: CONFIG_VERSION_REQUIRED
+      lookahead: NOT_APPLICABLE
+      revision: CONFIG_CHANGE_AUDIT_REQUIRED
+      staleness: CONFIG_CURRENT
+    expected_impact:
+      hit_rate_band: high
+      weight_impact_band: medium
+    target_family: turnover_reduction_and_missed_opportunity
+    evaluation_metrics:
+      - turnover_reduction
+      - missed_opportunity
+      - no_trade_correctness
+    implementation_refs:
+      - config/scoring_rules.yaml:position_change
+
+mappings:
+  - mapping_version: scoring_rules_v1.trend
+    indicator_id: trend_strength_indicator
+    family: M1_LINEAR_SCORE
+    direction: higher_is_bullish
+    output_range: "0..100 score contribution"
+    parameter_source: config/scoring_rules.yaml:trend.signals
+    status: pilot_baseline
+  - mapping_version: scoring_rules_v1.fundamentals
+    indicator_id: fundamental_quality_indicator
+    family: M1_LINEAR_SCORE
+    direction: higher_is_bullish
+    output_range: "0..100 score contribution"
+    parameter_source: config/scoring_rules.yaml:fundamentals.signals
+    status: pilot_baseline
+  - mapping_version: scoring_rules_v1.macro_liquidity
+    indicator_id: macro_liquidity_indicator
+    family: M3_THRESHOLD_STATE
+    direction: lower_rate_and_dollar_pressure_is_bullish
+    output_range: "0..100 score contribution"
+    parameter_source: config/scoring_rules.yaml:macro_liquidity.signals
+    status: pilot_baseline
+  - mapping_version: scoring_rules_v1.risk_sentiment+risk_budget_v1
+    indicator_id: market_stress_indicator
+    family: M4_SOFT_PENALTY
+    direction: lower_stress_is_bullish
+    output_range: "score contribution plus optional risk budget cap"
+    parameter_source: config/scoring_rules.yaml:risk_sentiment and config/portfolio.yaml:risk_budget
+    status: pilot_baseline
+  - mapping_version: scoring_rules_v1.valuation+position_gate_valuation_v1
+    indicator_id: valuation_crowding_indicator
+    family: M5_HARD_CAP
+    direction: higher_valuation_or_crowding_is_bearish
+    output_range: "score contribution plus max position cap"
+    parameter_source: config/scoring_rules.yaml:valuation and position_gates.valuation
+    status: pilot_baseline_unvalidated
+    review_requirement: masking_and_dominance_audit_required_before_parameter_change
+  - mapping_version: scoring_rules_v1.policy_geopolitics+risk_event_gate_v1
+    indicator_id: policy_geopolitics_risk_indicator
+    family: M5_HARD_CAP
+    direction: higher_event_severity_is_bearish
+    output_range: "score contribution plus event multiplier cap"
+    parameter_source: config/scoring_rules.yaml:policy_geopolitics and risk_events
+    status: pilot_baseline_unvalidated
+  - mapping_version: scoring_rules_v1.confidence_policy
+    indicator_id: confidence_reliability_indicator
+    family: M4_SOFT_PENALTY
+    direction: lower_confidence_shrinks_position
+    output_range: "confidence adjusted risk asset band"
+    parameter_source: config/scoring_rules.yaml:confidence_policy
+    status: pilot_baseline
+  - mapping_version: data_quality_gate_v1
+    indicator_id: data_quality_gate_indicator
+    family: M5_HARD_CAP
+    direction: invalid_or_stale_cache_is_fail_closed
+    output_range: "hard block before downstream scoring/reporting when validation fails"
+    parameter_source: src/ai_trading_system/data/quality.py:validate_data_cache
+    status: immutable_safety_gate
+    review_requirement: >
+      Immutable fail-closed safety gate; not a tunable strategy heuristic and not
+      eligible for official/paper-shadow/live/broker/order weight promotion.
+  - mapping_version: position_gate_thesis_v1
+    indicator_id: thesis_manual_review_indicator
+    family: M5_HARD_CAP
+    direction: failed_review_caps_position
+    output_range: "max position cap"
+    parameter_source: config/scoring_rules.yaml:position_gates.thesis
+    status: pilot_baseline
+  - mapping_version: portfolio_limit_gate_v1
+    indicator_id: portfolio_limit_indicator
+    family: M5_HARD_CAP
+    direction: higher_concentration_caps_position
+    output_range: "max position cap"
+    parameter_source: config/portfolio.yaml:position_limits and risk_budget
+    status: pilot_baseline
+  - mapping_version: scoring_rules_v1.position_change
+    indicator_id: execution_deadband_indicator
+    family: M3_THRESHOLD_STATE
+    direction: smaller_delta_is_no_trade
+    output_range: "no-trade / review action boundary"
+    parameter_source: config/scoring_rules.yaml:position_change
+    status: pilot_baseline
+
+dependencies:
+  - from_node: trend_strength_indicator
+    to_node: scoring_rules_v1.trend
+    edge_type: CONSUMES
+    rationale: Trend indicator feeds daily trend score mapping.
+  - from_node: scoring_rules_v1.trend
+    to_node: allocation_intent
+    edge_type: MODIFIES
+    rationale: Trend score contributes to model risk-asset AI band.
+  - from_node: valuation_crowding_indicator
+    to_node: scoring_rules_v1.valuation+position_gate_valuation_v1
+    edge_type: CONSUMES
+    rationale: Valuation/crowding feeds both score and hard cap mapping.
+  - from_node: valuation_crowding_indicator
+    to_node: trend_strength_indicator
+    edge_type: MASKS
+    rationale: Valuation hard cap can suppress trend-driven allocation intent.
+  - from_node: valuation_crowding_indicator
+    to_node: final_research_weight
+    edge_type: CAPS
+    rationale: Valuation gate can cap post-constraint research weight.
+  - from_node: market_stress_indicator
+    to_node: final_research_weight
+    edge_type: CAPS
+    rationale: Stress/risk budget can cap risk exposure.
+  - from_node: policy_geopolitics_risk_indicator
+    to_node: final_research_weight
+    edge_type: CAPS
+    rationale: Active event risk can apply exposure multipliers.
+  - from_node: confidence_reliability_indicator
+    to_node: final_research_weight
+    edge_type: CAPS
+    rationale: Confidence gate can shrink model position band.
+  - from_node: data_quality_gate_indicator
+    to_node: all_indicator_research
+    edge_type: REQUIRES
+    rationale: Cached data quality must pass before data-dependent downstream outputs.
+  - from_node: thesis_manual_review_indicator
+    to_node: final_research_weight
+    edge_type: CONDITIONS
+    rationale: Manual thesis status conditions whether score can be used as complete conclusion.
+  - from_node: execution_deadband_indicator
+    to_node: post_execution_research_weight
+    edge_type: MODIFIES
+    rationale: Execution deadband can prevent small target changes from becoming research action.
+
+research_stages:
+  - stage_id: STAGE_0_INVENTORY
+    title: Indicator Inventory
+    output_artifact: daily_indicator_inventory
+  - stage_id: STAGE_1_DATA_PIT_LEAKAGE_GATE
+    title: Data / PIT / Leakage Gate
+    output_artifact: indicator_data_gate_audit
+  - stage_id: STAGE_2_ROLE_HYPOTHESIS_FREEZE
+    title: Role and Hypothesis Freeze
+    output_artifact: indicator_role_and_target_registry
+  - stage_id: STAGE_3_MAPPING_FREE_DIAGNOSTICS
+    title: Mapping-Free Indicator Diagnostics
+    output_artifact: indicator_diagnostics
+  - stage_id: STAGE_4_MAPPING_CANDIDATE_DESIGN
+    title: Mapping Candidate Design
+    output_artifact: indicator_mapping_plan
+  - stage_id: STAGE_5_CALIBRATION_STABILITY
+    title: Calibration and Stability
+    output_artifact: indicator_calibration_stability
+  - stage_id: STAGE_6_CONDITIONAL_INCREMENTAL_EFFECT
+    title: Conditional and Incremental Effect
+    output_artifact: conditional_incremental_effect
+  - stage_id: STAGE_7_MASKING_DOMINANCE_AUDIT
+    title: Masking and Dominance Audit
+    output_artifact: masking_and_dominance_audit
+  - stage_id: STAGE_8_FACTORIAL_COUNTERFACTUAL
+    title: Counterfactual Factorial Study
+    output_artifact: factorial_counterfactual_plan
+  - stage_id: STAGE_9_PORTFOLIO_TRANSMISSION
+    title: Portfolio Transmission and Execution
+    output_artifact: portfolio_signal_transfer_attribution
+  - stage_id: STAGE_10_OOS_MULTIPLE_TESTING
+    title: Out-of-Sample and Multiple Testing Validation
+    output_artifact: trial_ledger_and_holdout_service
+  - stage_id: STAGE_11_RESEARCH_GATE
+    title: Research Gate
+    output_artifact: indicator_research_gate

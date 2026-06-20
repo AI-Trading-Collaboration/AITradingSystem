@@ -140,6 +140,11 @@ from ai_trading_system.fundamentals.tsm_ir import (
     merge_tsm_ir_quarterly_rows_into_sec_metrics_as_of,
     select_tsm_ir_quarterly_metric_rows_as_of,
 )
+from ai_trading_system.indicator_research import (
+    build_daily_indicator_weight_trace,
+    default_daily_indicator_weight_trace_path,
+    write_daily_indicator_weight_trace,
+)
 from ai_trading_system.industry_node_state import (
     build_industry_node_heat_report,
     render_industry_node_heat_section,
@@ -482,6 +487,10 @@ def score_daily(
     calculation_explainers_path: Annotated[
         Path | None,
         typer.Option(help="JSON 计算解释输出路径。"),
+    ] = None,
+    daily_indicator_weight_trace_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON 日报指标 multi-stage weight trace 输出路径。"),
     ] = None,
     belief_state_path: Annotated[
         Path | None,
@@ -871,6 +880,13 @@ def score_daily(
     calculation_explainers_output = (
         calculation_explainers_path
         or default_calculation_explainers_path(
+            score_report_output.parent,
+            score_date,
+        )
+    )
+    daily_indicator_weight_trace_output = (
+        daily_indicator_weight_trace_path
+        or default_daily_indicator_weight_trace_path(
             score_report_output.parent,
             score_date,
         )
@@ -1510,6 +1526,15 @@ def score_daily(
         validation_report_path=execution_policy_report_output,
     )
     scores_output = write_scores_csv(score_report, scores_path)
+    daily_indicator_weight_trace = build_daily_indicator_weight_trace(
+        score_report,
+        scores_path=scores_output,
+        decision_snapshot_path=decision_snapshot_output,
+    )
+    daily_indicator_weight_trace_output = write_daily_indicator_weight_trace(
+        daily_indicator_weight_trace,
+        daily_indicator_weight_trace_output,
+    )
     daily_market_regime = BacktestRegimeContext(
         regime_id=default_market_regime.regime_id,
         name=default_market_regime.name,
@@ -1692,6 +1717,7 @@ def score_daily(
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
     console.print(f"Calculation explainers：{calculation_explainers_output}")
+    console.print(f"Daily indicator weight trace：{daily_indicator_weight_trace_output}")
     if current_context_output is not None and current_effective_weights_output is not None:
         console.print(f"Current context：{current_context_output}")
         console.print(f"Current effective weights：{current_effective_weights_output}")

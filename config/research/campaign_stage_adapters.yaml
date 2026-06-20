@@ -465,3 +465,73 @@ adapters:
       SIGNAL_PRECHECK: "MIXED"
     parity_source: "docs/research/b3_signal_direction_failure_taxonomy.json"
     evidence_mappings: []
+  indicator-research-framework-v1-adapter:
+    adapter_version: "1.0"
+    supported_run_modes:
+      - "VALIDATION_ONLY_MODE"
+    default_run_mode: "VALIDATION_ONLY_MODE"
+    supported_stage:
+      - "INPUT_PRECHECK"
+      - "MINI_DIAGNOSTIC"
+      - "ATTRIBUTION"
+      - "INTERACTION"
+      - "GATE"
+      - "OWNER_PACKET"
+    supported_module:
+      - "indicator-research-framework-v1"
+    supported_campaign_type:
+      - "indicator-to-signal-research-v1"
+      - "weight-research-v1"
+    required_inputs:
+      - artifact_id: "indicator_research_registry"
+        path: "config/research/indicator_research_registry.yaml"
+        stages: ["INPUT_PRECHECK", "MINI_DIAGNOSTIC", "ATTRIBUTION", "INTERACTION", "GATE"]
+    optional_inputs:
+      - artifact_id: "multi_stage_weight_trace"
+        path: "outputs/research_indicators/multi_stage_weight_trace.json"
+        stages: ["ATTRIBUTION", "INTERACTION", "GATE"]
+        required: false
+    produced_artifacts:
+      - "daily_indicator_inventory.json"
+      - "indicator_dependency_graph.json"
+      - "multi_stage_weight_trace_contract.json"
+      - "indicator_mapping_candidate_plan_<indicator_id>.json"
+      - "indicator_masking_and_dominance_audit_<indicator_id>.json"
+      - "indicator_to_signal_research_gate_<indicator_id>.json"
+      - "indicator_to_signal_research_framework_v1_validation_pack.json"
+    produced_evidence_categories:
+      - "INPUT_VALIDITY"
+      - "SIGNAL_COVERAGE"
+      - "ATTRIBUTION"
+      - "INTERACTION_EFFECT"
+      - "SCORECARD"
+      - "SAFETY"
+    supported_windows:
+      - "development"
+      - "diagnostic"
+    forbidden_windows:
+      - "untouched_holdout"
+    safety_boundary:
+      research_only: true
+      manual_review_only: true
+      official_target_weights: false
+      paper_shadow_activation: false
+      paper_shadow_allowed: false
+      broker_effect: "none"
+      order_effect: "none"
+      production_effect: "none"
+      holdout_touched: false
+    failure_modes:
+      - "ADAPTER_INPUT_MISSING"
+      - "ADAPTER_OUTPUT_INVALID"
+      - "ADAPTER_HOLDOUT_BLOCKED"
+      - "ADAPTER_SAFETY_BLOCKED"
+    stage_outcomes:
+      INPUT_PRECHECK: "NEEDS_MORE_EVIDENCE"
+      MINI_DIAGNOSTIC: "NEEDS_MORE_EVIDENCE"
+      ATTRIBUTION: "NEEDS_MORE_EVIDENCE"
+      INTERACTION: "NEEDS_MORE_EVIDENCE"
+      GATE: "OWNER_OVERRIDE_REQUIRED"
+      OWNER_PACKET: "OWNER_OVERRIDE_REQUIRED"
+    parity_source: "config/research/indicator_research_registry.yaml"
+    evidence_mappings: []

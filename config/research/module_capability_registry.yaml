@@ -179,6 +179,49 @@ modules:
     approved_for_campaign_modules: true
     requires_gate_approval_for_interaction: true
     interaction_alias: "G"
+  indicator-research-framework-v1:
+    module_type: "INDICATOR_RESEARCH_CONTROL_PLANE"
+    input_contract:
+      - "indicator_registry"
+      - "daily_report_metric_surface"
+      - "multi_stage_weight_trace_optional"
+    output_contract:
+      - "indicator_inventory"
+      - "indicator_dependency_graph"
+      - "mapping_candidate_plan"
+      - "masking_audit"
+      - "indicator_research_gate"
+      - "validation_pack"
+    allowed_layers:
+      - "signal"
+      - "target_allocation"
+      - "evaluation"
+    allowed_mechanisms:
+      - "indicator_inventory"
+      - "mapping_registry"
+      - "masking_audit"
+      - "factorial_planner"
+      - "research_gate"
+    required_features: []
+    required_signals: []
+    supported_window_types:
+      - "development"
+      - "diagnostic"
+    compatible_modules:
+      - "b0-static"
+      - "execution-control-e"
+      - "risk-overlay-b2"
+      - "slow-tilt-b3"
+    incompatible_modules:
+      - "p0-mixed-allocator"
+    forbidden_outputs:
+      - "target_weight"
+      - "official_target_weight"
+      - "broker_order"
+    version: "1.0"
+    approved_for_campaign_modules: true
+    requires_gate_approval_for_interaction: true
+    interaction_alias: "I"
   p0-mixed-allocator:
     module_type: "P0_MIXED_ALLOCATOR"
     input_contract:

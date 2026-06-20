@@ -7,6 +7,34 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.indicator_research import (
+    DEFAULT_INDICATOR_OUTPUT_ROOT,
+    DEFAULT_INDICATOR_REGISTRY_PATH,
+    DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    DEFAULT_MASKING_OUTCOME_TICKER,
+    IndicatorResearchError,
+    build_backtest_trace_bridge,
+    build_component_level_historical_trace,
+    build_coverage_audit,
+    build_daily_indicator_coverage_gap_report,
+    build_daily_indicator_inventory,
+    build_dependency_graph,
+    build_gate_availability_audit,
+    build_historical_multi_stage_weight_trace_validation,
+    build_indicator_diagnostics,
+    build_indicator_research_gate,
+    build_mapping_plan,
+    build_masking_audit,
+    build_masking_casebook,
+    build_multi_stage_weight_trace_contract,
+    build_ontology_payload,
+    build_valuation_crowding_ablation_validation,
+    build_valuation_crowding_pilot_audit,
+    build_valuation_crowding_pilot_validation_report,
+    write_indicator_artifact_pair,
+    write_indicator_framework_validation_pack,
+    write_indicator_validation_pack_stability_report,
+)
 from ai_trading_system.research_campaign import (
     DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     DEFAULT_CAMPAIGN_ROOT,
@@ -38,7 +66,885 @@ campaign_app = typer.Typer(
     help="Research Campaign spec、状态机、证据和 owner packet。",
     no_args_is_help=True,
 )
+indicators_app = typer.Typer(
+    help="日报指标、约束、mapping、遮蔽和研究 gate 控制面。",
+    no_args_is_help=True,
+)
 research_app.add_typer(campaign_app, name="campaign")
+research_app.add_typer(indicators_app, name="indicators")
+
+
+@indicators_app.command("ontology")
+def indicator_ontology_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """验证并输出 indicator / signal / constraint ontology。"""
+    payload = _build_indicator_payload(
+        lambda: build_ontology_payload(registry_path=registry_path)
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="indicator_research_ontology",
+    )
+    _print_indicator_artifact("Indicator ontology", payload, paths)
+
+
+@indicators_app.command("inventory")
+def indicator_inventory_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """扫描当前日报指标、约束和 heuristic registry，输出全量 inventory。"""
+    payload = _build_indicator_payload(
+        lambda: build_daily_indicator_inventory(registry_path=registry_path)
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="daily_indicator_inventory",
+    )
+    _print_indicator_artifact("Daily indicator inventory", payload, paths)
+
+
+@indicators_app.command("coverage")
+def indicator_coverage_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 research coverage 分类和高影响未验证缺口。"""
+    payload = _build_indicator_payload(lambda: build_coverage_audit(registry_path=registry_path))
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="indicator_research_coverage_audit",
+    )
+    _print_indicator_artifact("Indicator coverage audit", payload, paths)
+
+
+@indicators_app.command("coverage-gap")
+def indicator_coverage_gap_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选日报 multi-stage weight trace JSON。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出日报指标 coverage gap report。"""
+    payload = _build_indicator_payload(
+        lambda: build_daily_indicator_coverage_gap_report(
+            registry_path=registry_path,
+            trace_path=trace_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="daily_indicator_coverage_gap_report",
+    )
+    _print_indicator_artifact("Daily indicator coverage gap", payload, paths)
+
+
+@indicators_app.command("graph")
+def indicator_graph_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 Feature -> Indicator -> Mapping -> Constraint -> Research Weight 依赖图。"""
+    payload = _build_indicator_payload(
+        lambda: build_dependency_graph(registry_path=registry_path, trace_path=trace_path)
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="indicator_dependency_graph",
+    )
+    _print_indicator_artifact("Indicator dependency graph", payload, paths)
+
+
+@indicators_app.command("trace-contract")
+def indicator_trace_contract_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 multi-stage research weight trace contract。"""
+    payload = _build_indicator_payload(
+        lambda: build_multi_stage_weight_trace_contract(registry_path=registry_path)
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="multi_stage_weight_trace_contract",
+    )
+    _print_indicator_artifact("Multi-stage weight trace contract", payload, paths)
+
+
+@indicators_app.command("diagnose")
+def indicator_diagnose_command(
+    indicator_id: Annotated[str, typer.Option("--id", help="Indicator id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 mapping-free diagnostics，不生成 research weight。"""
+    payload = _build_indicator_payload(
+        lambda: build_indicator_diagnostics(
+            indicator_id=indicator_id,
+            registry_path=registry_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id=f"mapping_free_indicator_diagnostics_{indicator_id}",
+    )
+    _print_indicator_artifact("Indicator diagnostics", payload, paths)
+
+
+@indicators_app.command("mapping-plan")
+def indicator_mapping_plan_command(
+    indicator_id: Annotated[str, typer.Option("--id", help="Indicator id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """生成 mapping candidate hypothesis cards，不运行 backfill。"""
+    payload = _build_indicator_payload(
+        lambda: build_mapping_plan(indicator_id=indicator_id, registry_path=registry_path)
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id=f"indicator_mapping_candidate_plan_{indicator_id}",
+    )
+    _print_indicator_artifact("Indicator mapping plan", payload, paths)
+
+
+@indicators_app.command("masking")
+def indicator_masking_command(
+    indicator_id: Annotated[str, typer.Option("--id", help="Indicator id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """计算或声明 masking ratio / dominance audit。"""
+    payload = _build_indicator_payload(
+        lambda: build_masking_audit(
+            indicator_id=indicator_id,
+            registry_path=registry_path,
+            trace_path=trace_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id=f"indicator_masking_and_dominance_audit_{indicator_id}",
+    )
+    _print_indicator_artifact("Indicator masking audit", payload, paths)
+
+
+@indicators_app.command("gate")
+def indicator_gate_command(
+    indicator_id: Annotated[str, typer.Option("--id", help="Indicator id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 indicator-to-signal research gate。"""
+    payload = _build_indicator_payload(
+        lambda: build_indicator_research_gate(
+            indicator_id=indicator_id,
+            registry_path=registry_path,
+            trace_path=trace_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id=f"indicator_to_signal_research_gate_{indicator_id}",
+    )
+    _print_indicator_artifact("Indicator research gate", payload, paths)
+
+
+@indicators_app.command("valuation-crowding-pilot")
+def valuation_crowding_pilot_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 valuation/crowding 高影响覆盖审计 pilot。"""
+    payload = _build_indicator_payload(
+        lambda: build_valuation_crowding_pilot_audit(
+            registry_path=registry_path,
+            trace_path=trace_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="valuation_crowding_pilot_audit",
+    )
+    _print_indicator_artifact("Valuation/crowding pilot", payload, paths)
+
+
+@indicators_app.command("valuation-crowding-pilot-validation")
+def valuation_crowding_pilot_validation_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 valuation/crowding high-impact pilot validation report。"""
+    payload = _build_indicator_payload(
+        lambda: build_valuation_crowding_pilot_validation_report(
+            registry_path=registry_path,
+            trace_path=trace_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="valuation_crowding_pilot_validation_report",
+    )
+    _print_indicator_artifact("Valuation/crowding pilot validation", payload, paths)
+
+
+@indicators_app.command("masking-casebook")
+def indicator_masking_casebook_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 forward outcome。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="casebook outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 valuation/crowding -> trend masking casebook。"""
+    payload = _build_indicator_payload(
+        lambda: build_masking_casebook(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            outcome_ticker=outcome_ticker,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="indicator_masking_casebook_valuation_crowding_trend",
+    )
+    _print_indicator_artifact("Indicator masking casebook", payload, paths)
+
+
+@indicators_app.command("ablation-validation")
+def indicator_ablation_validation_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 forward outcome。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="ablation outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 valuation/crowding masking 只读 counterfactual/ablation validation。"""
+    payload = _build_indicator_payload(
+        lambda: build_valuation_crowding_ablation_validation(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="valuation_crowding_ablation_validation",
+    )
+    _print_indicator_artifact("Valuation/crowding ablation validation", payload, paths)
+
+
+@indicators_app.command("historical-trace-validation")
+def indicator_historical_trace_validation_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 historical/replay multi-stage trace JSON。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 historical replay/backtest multi-stage weight trace validation。"""
+    payload = _build_indicator_payload(
+        lambda: build_historical_multi_stage_weight_trace_validation(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            gate_audit_root=gate_audit_root,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="historical_multi_stage_weight_trace_validation",
+    )
+    _print_indicator_artifact("Historical trace validation", payload, paths)
+
+
+@indicators_app.command("gate-availability-audit")
+def indicator_gate_availability_audit_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 historical/replay multi-stage trace JSON。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="historical gate audit 输出根目录。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 historical trace gate availability audit。"""
+    payload = _build_indicator_payload(
+        lambda: build_gate_availability_audit(
+            registry_path=registry_path,
+            gate_audit_root=gate_audit_root,
+            trace_path=trace_path,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="historical_trace_gate_availability_audit",
+    )
+    _print_indicator_artifact("Historical gate availability audit", payload, paths)
+
+
+@indicators_app.command("component-historical-trace")
+def indicator_component_historical_trace_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 historical/replay multi-stage trace JSON。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 component-level historical trace，供 masking diagnostic 使用。"""
+    payload = _build_indicator_payload(
+        lambda: build_component_level_historical_trace(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            gate_audit_root=gate_audit_root,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="component_level_historical_trace",
+    )
+    _print_indicator_artifact("Component-level historical trace", payload, paths)
+
+
+@indicators_app.command("backtest-trace-bridge")
+def indicator_backtest_trace_bridge_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 historical/replay multi-stage trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 forward outcome。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="bridge outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """从 backtest/historical simulation/advisory outcome artifact 导出 trace bridge。"""
+    payload = _build_indicator_payload(
+        lambda: build_backtest_trace_bridge(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="backtest_trace_bridge",
+    )
+    _print_indicator_artifact("Backtest trace bridge", payload, paths)
+
+
+@indicators_app.command("validation-pack")
+def indicator_validation_pack_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--prices-path",
+            help="可选 prices_daily.csv，用于 casebook/ablation outcome。",
+        ),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="casebook/ablation outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """写出 TRADING-665～685 indicator framework v1 validation pack。"""
+    payload = _build_indicator_payload(
+        lambda: write_indicator_framework_validation_pack(
+            registry_path=registry_path,
+            output_root=output_root,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    _print_status("Indicator validation pack", payload["status"])
+    console.print(
+        f"artifacts={len(payload['artifacts'])}；production_effect={payload['production_effect']}"
+    )
+
+
+@indicators_app.command("validation-pack-stability")
+def indicator_validation_pack_stability_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--prices-path",
+            help="可选 prices_daily.csv，用于 casebook/ablation outcome。",
+        ),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="casebook/ablation outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """对 validation-pack 做两次 rerun 稳定性检查。"""
+    payload = _build_indicator_payload(
+        lambda: write_indicator_validation_pack_stability_report(
+            registry_path=registry_path,
+            output_root=output_root,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    _print_status("Indicator validation pack stability", payload["status"])
+    console.print(
+        f"stable={payload['summary']['stable']}；"
+        f"artifact_count={payload['summary']['artifact_count']}；"
+        f"production_effect={payload['production_effect']}"
+    )
 
 
 @campaign_app.command("init")
@@ -633,6 +1539,31 @@ def _write_json_if_requested(path: Path | None, payload: dict[str, object]) -> N
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _build_indicator_payload(builder):  # type: ignore[no-untyped-def]
+    try:
+        return builder()
+    except IndicatorResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+def _print_indicator_artifact(
+    label: str,
+    payload: dict[str, object],
+    paths: dict[str, str],
+) -> None:
+    _print_status(label, str(payload["status"]))
+    summary = payload.get("summary")
+    if isinstance(summary, dict):
+        compact = "; ".join(f"{key}={value}" for key, value in list(summary.items())[:4])
+        if compact:
+            console.print(compact)
+    console.print(f"JSON：{paths['json_path']}")
+    console.print(f"Markdown：{paths['markdown_path']}")
+    console.print("research_only=true；production_effect=none")
+    if str(payload["status"]) == "FAIL" or str(payload["status"]).endswith("_BLOCKED"):
+        raise typer.Exit(code=1)
 
 
 def _print_action_list(label: str, values: object) -> None:
