@@ -40,6 +40,125 @@ safety_boundary:
   order_effect: none
   production_effect: none
 
+impact_prioritization:
+  status: validation_only_prioritization
+  rationale: >
+    Rank uncalibrated high-impact thresholds by the investment interpretation
+    surface they can affect. The ranking is for calibration sequencing only and
+    cannot approve promotion, paper-shadow changes, official target weights, or
+    production weight changes.
+  impact_scope_order:
+    - signal_direction_affecting
+    - masking_dominance_affecting
+    - promotion_gate_affecting
+    - robustness_gate_affecting
+    - outcome_maturity_affecting
+    - production_weight_affecting
+  calibration_urgency_policy:
+    P0: promotion-blocking and decision-affecting
+    P1: validation conclusion affecting
+    P2: workflow quality affecting
+    P3: engineering/runtime only
+  first_batch_candidate_limit: 8
+  first_batch_candidate_ids:
+    - dynamic_allocation.risk_off_score_thresholds
+    - dynamic_allocation.risk_on_confirmation_thresholds
+    - trend_calibration.score_bands
+    - indicator_research.masking_high_min
+    - indicator_research.dominant_share_of_adjustment_min
+    - indicator_research.effectiveness_missed_upside_acceptable_rate
+    - indicator_research.effectiveness_min_available_outcome_cases
+    - indicator_research.robustness_cluster_dominance_share
+  impact_category_threshold_ids:
+    signal_direction_affecting:
+      - dynamic_allocation.risk_off_score_thresholds
+      - dynamic_allocation.risk_on_confirmation_thresholds
+      - dynamic_allocation.event_risk_high_threshold
+      - dynamic_allocation.rebalance_turnover_constraints
+      - dynamic_allocation.exposure_caps
+      - dynamic_robustness.false_signal_thresholds
+      - trend_calibration.score_bands
+    masking_dominance_affecting:
+      - indicator_research.effectiveness_drawdown_worse_tolerance
+      - indicator_research.effectiveness_missed_upside_acceptable_rate
+      - indicator_research.default_masking_ablation_cap_ratio
+      - indicator_research.masking_high_min
+      - indicator_research.dominant_hit_rate_min
+      - indicator_research.dominant_share_of_adjustment_min
+    promotion_gate_affecting:
+      - feedback_sample_policy.decision_outcomes_promotion_floor
+      - feedback_sample_policy.prediction_outcomes_promotion_floor
+      - backtest_validation.promotion_min_lag_sensitivity_days
+      - promotion_gate.confirmation_target_count_minimum
+      - promotion_gate.required_status_bands
+      - weight_promotion.minimum_sample_counts
+      - weight_promotion.maximum_synthetic_snapshot_ratio
+      - weight_promotion.minimum_reconciliation_pass_ratio
+      - weight_search.scorecard_promote_and_keep_testing_scores
+    robustness_gate_affecting:
+      - indicator_research.robustness_cluster_dominance_share
+      - indicator_research.robustness_top_date_concentration_share
+      - indicator_research.min_walk_forward_windows
+      - indicator_research.historical_trace_min_dates_for_stability
+      - backtest_validation.candidate_min_component_coverage
+      - backtest_validation.candidate_min_independent_windows
+      - backtest_validation.candidate_random_baseline_min_percentile
+      - backtest_validation.candidate_max_random_beats_share
+      - backtest_validation.promotion_min_lag_sensitivity_days
+      - dynamic_robustness.walk_forward_acceptance_thresholds
+      - dynamic_robustness.overfit_concentration_limits
+    outcome_maturity_affecting:
+      - indicator_research.effectiveness_min_available_outcome_cases
+      - indicator_research.effectiveness_min_short_horizon_mature_cases
+      - indicator_research.min_trigger_observations_for_mapping_research
+      - indicator_research.min_walk_forward_windows
+      - indicator_research.historical_trace_min_dates_for_stability
+      - feedback_sample_policy.decision_outcomes_promotion_floor
+      - feedback_sample_policy.prediction_outcomes_promotion_floor
+      - weight_promotion.minimum_sample_counts
+      - trend_calibration.minimum_sample_count
+    production_weight_affecting: []
+
+calibration_followup_summary:
+  task_id: TRADING-696
+  source_report: outputs/research_indicators/threshold_calibration_report.json
+  status: validation_only_followup_plan
+  sensitivity_tested_count: 5
+  validated_boundary_count: 0
+  still_uncalibrated_high_impact_count: 31
+  thresholds_still_blocking_promotion_count: 36
+  threshold_values_changed: false
+  promotion_gate_allowed: false
+  production_weight_change_allowed: false
+  paper_shadow_change_allowed: false
+  production_effect: none
+  notes: >
+    Follow-up metadata from TRADING-695 sensitivity testing. The five tested
+    thresholds remain sensitivity-tested only; no threshold is a validated
+    statistical boundary and no threshold current_value is changed.
+
+second_batch_calibration_prep_summary:
+  task_id: TRADING-697
+  status: validation_only_calibration_prep
+  prepared_threshold_count: 3
+  prepared_threshold_ids:
+    - dynamic_allocation.risk_off_score_thresholds
+    - dynamic_allocation.risk_on_confirmation_thresholds
+    - trend_calibration.score_bands
+  sensitivity_tested_count: 0
+  validated_boundary_count: 0
+  thresholds_changed_count: 0
+  max_allowed_status: SENSITIVITY_TESTED
+  promotion_gate_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  production_effect: none
+  notes: >
+    Prep metadata for second-batch dynamic allocation and trend calibration
+    thresholds. Tested values are scenario design inputs only; no threshold
+    current_value is changed and no threshold is a validated statistical
+    boundary.
+
 thresholds:
   - threshold_id: indicator_research.effectiveness_min_available_outcome_cases
     current_value: 50
@@ -54,7 +173,9 @@ thresholds:
     promotion_gate_affecting: true
     production_weight_affecting: false
     default_reason: Retained as a conservative guardrail from the validation-only masking review.
-    calibration_status: HEURISTIC_GUARDRAIL
+    calibration_status: uncalibrated
+    threshold_type: heuristic_guardrail
+    not_validated_statistical_boundary: true
     evidence_level: preliminary_short_horizon_only
     calibration_required: true
     no_promotion_dependency_without_review: true
@@ -72,7 +193,9 @@ thresholds:
     promotion_gate_affecting: true
     production_weight_affecting: false
     default_reason: Conservative validation floor; not fitted to observed outcomes.
-    calibration_status: HEURISTIC_GUARDRAIL
+    calibration_status: uncalibrated
+    threshold_type: heuristic_guardrail
+    not_validated_statistical_boundary: true
     evidence_level: preliminary
     calibration_required: true
     no_promotion_dependency_without_review: true

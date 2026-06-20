@@ -16,6 +16,8 @@ from ai_trading_system.indicator_research import (
     build_daily_indicator_inventory,
     build_daily_indicator_weight_trace,
     build_dependency_graph,
+    build_dynamic_trend_threshold_calibration_prep_report,
+    build_dynamic_trend_threshold_sensitivity_review,
     build_gate_availability_audit,
     build_historical_multi_stage_weight_trace_validation,
     build_indicator_research_gate,
@@ -25,6 +27,9 @@ from ai_trading_system.indicator_research import (
     build_mapping_plan,
     build_masking_audit,
     build_masking_casebook,
+    build_threshold_calibration_followup_plan,
+    build_threshold_calibration_report,
+    build_threshold_prioritization_report,
     build_threshold_registry_audit,
     build_valuation_crowding_ablation_validation,
     build_valuation_crowding_masking_effectiveness_review,
@@ -897,10 +902,460 @@ def test_threshold_registry_audit_summarizes_high_impact_defaults() -> None:
             assert threshold["calibration_status"] in {
                 "UNCALIBRATED_DEFAULT",
                 "HEURISTIC_GUARDRAIL",
+                "uncalibrated",
             }
             assert threshold["calibration_required"] is True
             assert threshold["no_promotion_dependency_without_review"] is True
             assert threshold["production_weight_affecting"] is False
+
+    floor_thresholds = {
+        threshold["threshold_id"]: threshold
+        for threshold in payload["thresholds"]
+        if threshold["threshold_id"]
+        in {
+            "indicator_research.effectiveness_min_available_outcome_cases",
+            "indicator_research.effectiveness_min_short_horizon_mature_cases",
+        }
+    }
+    assert floor_thresholds
+    for threshold in floor_thresholds.values():
+        assert threshold["calibration_status"] == "uncalibrated"
+        assert threshold["threshold_type"] == "heuristic_guardrail"
+        assert threshold["not_validated_statistical_boundary"] is True
+
+
+def test_threshold_prioritization_report_ranks_high_impact_candidates() -> None:
+    payload = build_threshold_prioritization_report()
+
+    assert payload["report_type"] == "threshold_prioritization_report"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    summary = payload["summary"]
+    assert summary["prioritized_threshold_count"] == 36
+    assert summary["uncalibrated_high_impact_count"] == 36
+    assert summary["production_effect"] == "none"
+    assert summary["promotion_gate_allowed"] is False
+    assert summary["paper_shadow_change_allowed"] is False
+    assert summary["production_weight_change_allowed"] is False
+    assert summary["production_weight_affecting_threshold_count"] == 0
+    assert 5 <= summary["first_batch_candidate_count"] <= 8
+    assert summary["high_impact_calibration_urgency_counts"]["P0"] == 36
+    assert summary["impact_scope_counts"]["signal_direction_affecting"] > 0
+    assert summary["impact_scope_counts"]["masking_dominance_affecting"] > 0
+    assert summary["impact_scope_counts"]["promotion_gate_affecting"] > 0
+    assert summary["impact_scope_counts"]["robustness_gate_affecting"] > 0
+    assert summary["impact_scope_counts"]["outcome_maturity_affecting"] > 0
+
+    prioritized = payload["prioritized_thresholds"]
+    assert len(prioritized) == 36
+    assert prioritized[0]["primary_impact_category"] == "signal_direction_affecting"
+    assert all(item["calibration_urgency"] == "P0" for item in prioritized)
+    assert all(item["production_weight_affecting"] is False for item in prioritized)
+    assert all(item["impact_categories"] for item in prioritized)
+
+    first_batch = payload["first_batch_calibration_candidates"]
+    assert len(first_batch) == summary["first_batch_candidate_count"]
+    assert [item["threshold_id"] for item in first_batch] == summary["first_batch_candidate_ids"]
+    assert first_batch[0]["threshold_id"] == "dynamic_allocation.risk_off_score_thresholds"
+    assert (
+        "indicator_research.effectiveness_min_available_outcome_cases"
+        in summary["first_batch_candidate_ids"]
+    )
+    assert any(
+        item["threshold_id"] == "indicator_research.effectiveness_min_available_outcome_cases"
+        and item["threshold_type"] == "heuristic_guardrail"
+        and item["not_validated_statistical_boundary"] is True
+        for item in prioritized
+    )
+
+    all_urgencies = {
+        item["threshold_id"]: item["calibration_urgency"]
+        for item in payload["all_thresholds_with_urgency"]
+    }
+    assert all_urgencies["validation_pack.rerun_count_for_stability"] == "P3"
+    assert all_urgencies["tests.indicator_research.masking_ratio_assertion"] == "P2"
+
+
+def test_threshold_calibration_report_sensitivity_schema_and_safety(tmp_path: Path) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+    bridge_root = _write_bridge_artifact_root(tmp_path)
+
+    payload = build_threshold_calibration_report(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        bridge_artifact_root=bridge_root,
+    )
+
+    assert payload["report_type"] == "threshold_calibration_report"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    summary = payload["summary"]
+    assert summary["tested_threshold_count"] == 5
+    assert summary["sensitivity_tested_count"] == 5
+    assert summary["thresholds_changed_count"] == 0
+    assert summary["production_effect"] == "none"
+    assert summary["promotion_gate_allowed"] is False
+    assert summary["production_weight_change_allowed"] is False
+    assert summary["paper_shadow_change_allowed"] is False
+
+    records = {row["threshold_id"]: row for row in payload["threshold_calibrations"]}
+    assert set(records) == {
+        "indicator_research.effectiveness_min_available_outcome_cases",
+        "indicator_research.robustness_cluster_dominance_share",
+        "indicator_research.effectiveness_missed_upside_acceptable_rate",
+        "indicator_research.masking_high_min",
+        "indicator_research.dominant_share_of_adjustment_min",
+    }
+    floor = records["indicator_research.effectiveness_min_available_outcome_cases"]
+    assert floor["threshold_type"] == "heuristic_guardrail"
+    assert floor["not_validated_statistical_boundary"] is True
+    assert floor["recommended_status"] == "SENSITIVITY_TESTED"
+    assert floor["recommended_action"] in {
+        "keep_current_value",
+        "adjust_candidate",
+        "insufficient_data",
+    }
+    assert floor["calibration_status_after_max"] == "SENSITIVITY_TESTED"
+    for record in records.values():
+        assert record["recommended_status"] == "SENSITIVITY_TESTED"
+        assert record["recommendation_by_value"]
+        assert set(record["promotion_gate_by_value"].values()) == {False}
+        assert record["production_weight_change_allowed"] is False
+        assert record["paper_shadow_change_allowed"] is False
+        first_row = record["recommendation_by_value"][0]
+        assert {
+            "tested_value",
+            "recommendation",
+            "promotion_gate_allowed",
+            "false_promotion_risk",
+            "false_rejection_risk",
+            "sample_quality_impact",
+            "valuation_crowding_recommendation",
+            "valuation_crowding_recommendation_changes",
+        } <= set(first_row)
+
+    checks = payload["robustness_checks"]
+    assert "date_equal_weight_aggregation" in checks
+    assert "asset_equal_weight_aggregation" in checks
+    assert "cluster_equal_weight_aggregation" in checks
+    assert "leave_one_date_out" in checks
+    assert "leave_one_cluster_out" in checks
+    assert "full_advisory_only_vs_all_sources_consistency" in checks
+    assert checks["promotion_gate_allowed"] is False
+
+
+def test_threshold_calibration_followup_plan_extracts_data_gaps(tmp_path: Path) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+    bridge_root = _write_bridge_artifact_root(tmp_path)
+
+    calibration_payload = build_threshold_calibration_report(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        bridge_artifact_root=bridge_root,
+    )
+    calibration_report_path = tmp_path / "threshold_calibration_report.json"
+    calibration_report_path.write_text(
+        json.dumps(calibration_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    payload = build_threshold_calibration_followup_plan(
+        calibration_report_path=calibration_report_path,
+    )
+
+    assert payload["report_type"] == "threshold_calibration_followup_plan"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    summary = payload["summary"]
+    assert summary["threshold_count"] == 5
+    assert summary["insufficient_data_threshold_count"] == 2
+    assert summary["keep_current_value_threshold_count"] == 3
+    assert summary["sensitivity_tested_count"] == 5
+    assert summary["validated_boundary_count"] == 0
+    assert summary["still_uncalibrated_high_impact_count"] == 31
+    assert summary["thresholds_still_blocking_promotion_count"] == 36
+    assert summary["thresholds_changed_count"] == 0
+    assert summary["production_effect"] == "none"
+
+    results = {row["threshold_id"]: row for row in payload["threshold_results"]}
+    assert set(results) == {
+        "indicator_research.effectiveness_min_available_outcome_cases",
+        "indicator_research.robustness_cluster_dominance_share",
+        "indicator_research.effectiveness_missed_upside_acceptable_rate",
+        "indicator_research.masking_high_min",
+        "indicator_research.dominant_share_of_adjustment_min",
+    }
+    for result in results.values():
+        assert result["current_value"] is not None
+        assert result["tested_values"]
+        assert result["recommendation"] in {"insufficient_data", "keep_current_value"}
+        assert result["reason"]
+        assert result["evidence_strength"]
+        assert isinstance(result["recommendation_changed"], bool)
+        assert result["current_value_changed"] is False
+        assert result["remaining_data_gap"]
+
+    gaps = {row["threshold_id"]: row for row in payload["data_gap_plan"]}
+    assert set(gaps) == {
+        "indicator_research.effectiveness_min_available_outcome_cases",
+        "indicator_research.robustness_cluster_dominance_share",
+    }
+    assert (
+        gaps["indicator_research.effectiveness_min_available_outcome_cases"]["missing_horizon"]
+        == "20d"
+    )
+    assert (
+        gaps["indicator_research.effectiveness_min_available_outcome_cases"]["missing_trace_source"]
+        == "full_advisory"
+    )
+    assert (
+        gaps["indicator_research.effectiveness_min_available_outcome_cases"]["pit_gate_limited"]
+        is True
+    )
+    assert (
+        gaps["indicator_research.effectiveness_min_available_outcome_cases"][
+            "needs_forward_maturity"
+        ]
+        is True
+    )
+    assert (
+        gaps["indicator_research.effectiveness_min_available_outcome_cases"][
+            "earlier_historical_replay_can_fill"
+        ]
+        is True
+    )
+    assert (
+        gaps["indicator_research.robustness_cluster_dominance_share"]["missing_trace_source"]
+        == "full_advisory and all_sources consistency"
+    )
+
+    keep_current = {
+        row["threshold_id"]: row for row in payload["keep_current_value_threshold_status"]
+    }
+    assert set(keep_current) == {
+        "indicator_research.effectiveness_missed_upside_acceptable_rate",
+        "indicator_research.masking_high_min",
+        "indicator_research.dominant_share_of_adjustment_min",
+    }
+    for row in keep_current.values():
+        assert row["calibration_status"] == "SENSITIVITY_TESTED"
+        assert row["not_validated_statistical_boundary"] is True
+        assert row["validated_statistical_boundary"] is False
+        assert row["current_value_changed"] is False
+        assert row["production_effect"] == "none"
+        assert row["promotion_gate_allowed"] is False
+
+
+def test_dynamic_trend_threshold_calibration_prep_report_schema_and_safety() -> None:
+    payload = build_dynamic_trend_threshold_calibration_prep_report()
+
+    assert payload["report_type"] == "dynamic_trend_threshold_calibration_prep_report"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    assert payload["production_effect"] == "none"
+    summary = payload["summary"]
+    assert summary["prepared_threshold_count"] == 3
+    assert summary["calibration_prepared_count"] == 3
+    assert summary["sensitivity_tested_count"] == 0
+    assert summary["validated_boundary_count"] == 0
+    assert summary["thresholds_changed_count"] == 0
+    assert summary["max_allowed_status"] == "SENSITIVITY_TESTED"
+    assert summary["promotion_gate_allowed"] is False
+    assert summary["paper_shadow_change_allowed"] is False
+
+    records = {row["threshold_id"]: row for row in payload["threshold_calibration_prep"]}
+    assert set(records) == {
+        "dynamic_allocation.risk_off_score_thresholds",
+        "dynamic_allocation.risk_on_confirmation_thresholds",
+        "trend_calibration.score_bands",
+    }
+    registry_summary = payload["registry_second_batch_calibration_prep_summary"]
+    assert registry_summary["prepared_threshold_count"] == 3
+    assert registry_summary["validated_boundary_count"] == 0
+    assert registry_summary["thresholds_changed_count"] == 0
+
+    for record in records.values():
+        assert record["current_value"]
+        assert record["where_used"]
+        assert record["decision_affecting_path"]
+        assert record["tested_values"]
+        assert record["sensitivity_impact"]
+        assert record["false_risk_off_impact"]
+        assert record["false_risk_on_impact"]
+        assert record["turnover_constraint_hit_impact"]
+        assert record["drawdown_missed_upside_impact"]
+        assert record["recommended_status"] == "CALIBRATION_PREPARED"
+        assert record["max_allowed_status"] == "SENSITIVITY_TESTED"
+        assert record["validated_boundary"] is False
+        assert record["current_value_changed"] is False
+        assert record["promotion_gate_allowed"] is False
+        assert record["paper_shadow_change_allowed"] is False
+        assert record["production_effect"] == "none"
+        for row in record["recommendation_by_value"]:
+            assert row["recommendation"] == "collect_evidence_only"
+            assert row["current_value_changed"] is False
+            assert row["validated_boundary"] is False
+            assert row["promotion_gate_allowed"] is False
+            assert row["production_effect"] == "none"
+            assert row["false_risk_off_impact"]
+            assert row["false_risk_on_impact"]
+            assert row["turnover_constraint_hit_impact"]
+            assert row["drawdown_missed_upside_impact"]
+
+
+def test_dynamic_trend_threshold_sensitivity_review_metrics_and_safety(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+
+    payload = build_dynamic_trend_threshold_sensitivity_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker="QQQ",
+    )
+
+    assert payload["report_type"] == "dynamic_trend_threshold_sensitivity_review"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    assert payload["production_effect"] == "none"
+    summary = payload["summary"]
+    assert summary["tested_threshold_count"] == 3
+    assert summary["sensitivity_tested_count"] == 3
+    assert summary["validated_boundary_count"] == 0
+    assert summary["thresholds_changed_count"] == 0
+    assert summary["mature_case_count"] > 0
+    assert summary["mature_date_count"] > 0
+    assert "sample_quality_breakdown" in summary
+
+    records = {row["threshold_id"]: row for row in payload["threshold_sensitivity_reviews"]}
+    assert set(records) == {
+        "dynamic_allocation.risk_off_score_thresholds",
+        "dynamic_allocation.risk_on_confirmation_thresholds",
+        "trend_calibration.score_bands",
+    }
+    required_metrics = {
+        "avg_return_1d",
+        "avg_return_5d",
+        "avg_return_10d",
+        "avg_return_20d",
+        "hit_rate_1d",
+        "hit_rate_5d",
+        "hit_rate_10d",
+        "hit_rate_20d",
+        "max_drawdown",
+        "drawdown_preservation",
+        "turnover",
+        "constraint_hit_count",
+        "risk_off_trigger_count",
+        "risk_on_confirmation_count",
+        "false_risk_off_count",
+        "false_risk_on_count",
+        "missed_upside_count",
+    }
+    expected_variant_kinds = {
+        "current_value",
+        "stricter",
+        "relaxed",
+        "capped_or_smoothed_candidate",
+        "no_change_baseline",
+    }
+    allowed_recommendations = {
+        "keep_current_value",
+        "adjust_candidate",
+        "insufficient_data",
+        "collect_evidence_only",
+        "sensitivity_tested_only",
+    }
+    for record in records.values():
+        assert record["calibration_status"] == "SENSITIVITY_TESTED"
+        assert record["not_validated_statistical_boundary"] is True
+        assert record["validated_boundary"] is False
+        assert record["current_value_changed"] is False
+        assert record["promotion_gate_allowed"] is False
+        assert record["production_effect"] == "none"
+        assert record["recommendation"]["validation_recommendation"] in allowed_recommendations
+        variants = record["scenario_variants"]
+        assert {variant["variant_kind"] for variant in variants} == expected_variant_kinds
+        for variant in variants:
+            assert required_metrics <= set(variant)
+            assert variant["sample_quality_breakdown"]["mature_case_count_by_horizon"]["1d"] > 0
+            assert variant["mature_case_count"] > 0
+            assert variant["full_advisory_case_count"] >= 0
+            assert variant["cluster_count"] > 0
+            assert variant["regime_count"] > 0
+            assert variant["by_horizon"]
+            assert variant["by_asset"]
+            assert variant["by_date"]
+            assert variant["by_regime"]
+            assert variant["by_event_window"]
+            assert "full_advisory_case_count" in variant["full_advisory_only"]
+            assert variant["component_backtest_bridge"]
+            assert variant["by_correlated_asset_cluster"]
+            assert variant["promotion_gate_by_value"] is False
+            assert variant["validated_boundary"] is False
+            assert variant["current_value_changed"] is False
+            assert variant["production_effect"] == "none"
+
+
+def test_dynamic_trend_threshold_sensitivity_review_coverage_extension(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    prices_path = _write_dynamic_trend_coverage_prices(tmp_path)
+    coverage_root = _write_dynamic_trend_coverage_extension_root(tmp_path)
+
+    payload = build_dynamic_trend_threshold_sensitivity_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        coverage_extension_root=coverage_root,
+        outcome_ticker="QQQ",
+    )
+
+    summary = payload["summary"]
+    assert summary["tested_threshold_count"] == 3
+    assert summary["validated_boundary_count"] == 0
+    assert summary["thresholds_changed_count"] == 0
+    assert summary["coverage_target_status"]["cluster_count_at_least_3"] is True
+    assert summary["coverage_target_status"]["regime_count_at_least_3"] is True
+    assert summary["coverage_target_status"]["mature_1d_5d_10d_available"] is True
+    assert summary["coverage_target_status"]["twenty_day_maturity_available"] is True
+    assert summary["cluster_count"] >= 3
+    assert summary["regime_count"] >= 3
+    assert summary["coverage_extension_case_count"] >= 18
+    assert (
+        summary["sample_quality_breakdown"]["case_origin_counts"]["coverage_extension_bridge"] >= 18
+    )
+    assert summary["sample_quality_breakdown"]["trace_source_counts"]["backtest_trace_bridge"] >= 18
+    assert summary["sample_quality_breakdown"]["mature_case_count_by_horizon"]["20d"] > 0
+    assert "pending_maturity_tracker" in summary
+
+    for record in payload["threshold_sensitivity_reviews"]:
+        assert record["calibration_status"] == "SENSITIVITY_TESTED"
+        assert record["validated_boundary"] is False
+        assert record["current_value_changed"] is False
+        assert record["promotion_gate_allowed"] is False
+        assert record["production_effect"] == "none"
+        assert record["recommendation"]["validation_recommendation"] in {
+            "sensitivity_tested_only",
+            "keep_current_value",
+            "adjust_candidate",
+            "insufficient_data",
+            "collect_evidence_only",
+        }
 
 
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
@@ -1066,10 +1521,16 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
     payload = write_indicator_framework_validation_pack(output_root=tmp_path)
 
     assert payload["status"] == "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
     expected = {
         "daily_indicator_inventory",
         "daily_indicator_coverage_gap_report",
         "threshold_registry_audit",
+        "threshold_prioritization_report",
+        "threshold_calibration_report",
+        "dynamic_trend_threshold_sensitivity_review",
         "indicator_dependency_graph",
         "multi_stage_weight_trace_contract",
         "constraint_attribution_report",
@@ -1098,6 +1559,28 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
     assert threshold_summary["heuristic_guardrail_count"] > 0
     assert threshold_summary["calibrated_count"] == 0
     assert threshold_summary["thresholds_blocking_promotion"]
+    prioritization_summary = payload["summary"]["threshold_prioritization_summary"]
+    assert prioritization_summary["prioritized_threshold_count"] == 36
+    assert prioritization_summary["first_batch_candidate_count"] <= 8
+    assert prioritization_summary["production_effect"] == "none"
+    assert prioritization_summary["promotion_gate_allowed"] is False
+    assert prioritization_summary["paper_shadow_change_allowed"] is False
+    calibration_summary = payload["summary"]["threshold_calibration_summary"]
+    assert calibration_summary["tested_threshold_count"] == 5
+    assert calibration_summary["sensitivity_tested_count"] == 5
+    assert calibration_summary["thresholds_changed_count"] == 0
+    assert calibration_summary["production_effect"] == "none"
+    assert calibration_summary["promotion_gate_allowed"] is False
+    assert calibration_summary["production_weight_change_allowed"] is False
+    assert calibration_summary["paper_shadow_change_allowed"] is False
+    dynamic_trend_summary = payload["summary"]["dynamic_trend_threshold_sensitivity_summary"]
+    assert dynamic_trend_summary["tested_threshold_count"] == 3
+    assert dynamic_trend_summary["validated_boundary_count"] == 0
+    assert dynamic_trend_summary["thresholds_changed_count"] == 0
+    assert dynamic_trend_summary["production_effect"] == "none"
+    assert dynamic_trend_summary["promotion_gate_allowed"] is False
+    assert dynamic_trend_summary["production_weight_change_allowed"] is False
+    assert dynamic_trend_summary["paper_shadow_change_allowed"] is False
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
@@ -1139,6 +1622,9 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["validation_rollup_repeatable"] is True
     assert payload["stable_fields"]["floor_calibration_repeatable"] is True
     assert payload["stable_fields"]["threshold_registry_audit_repeatable"] is True
+    assert payload["stable_fields"]["threshold_prioritization_repeatable"] is True
+    assert payload["stable_fields"]["threshold_calibration_repeatable"] is True
+    assert payload["stable_fields"]["dynamic_trend_threshold_sensitivity_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -1163,6 +1649,68 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     threshold_audit = runner.invoke(
         app,
         ["research", "indicators", "threshold-audit", "--output-root", str(tmp_path)],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    threshold_prioritization = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "threshold-prioritization",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    threshold_calibration = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "threshold-calibration",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    threshold_followup = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "threshold-calibration-followup",
+            "--calibration-report",
+            str(tmp_path / "threshold_calibration_report.json"),
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    dynamic_trend_prep = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "dynamic-trend-threshold-calibration-prep",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    dynamic_trend_sensitivity = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "dynamic-trend-threshold-sensitivity-review",
+            "--output-root",
+            str(tmp_path),
+        ],
         env={"COLUMNS": "160"},
         terminal_width=160,
     )
@@ -1308,6 +1856,11 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert inventory.exit_code == 0, inventory.output
     assert pack.exit_code == 0, pack.output
     assert threshold_audit.exit_code == 0, threshold_audit.output
+    assert threshold_prioritization.exit_code == 0, threshold_prioritization.output
+    assert threshold_calibration.exit_code == 0, threshold_calibration.output
+    assert threshold_followup.exit_code == 0, threshold_followup.output
+    assert dynamic_trend_prep.exit_code == 0, dynamic_trend_prep.output
+    assert dynamic_trend_sensitivity.exit_code == 0, dynamic_trend_sensitivity.output
     assert coverage_gap.exit_code == 0, coverage_gap.output
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
@@ -1324,6 +1877,11 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (tmp_path / "daily_indicator_inventory.json").exists()
     assert (tmp_path / "daily_indicator_coverage_gap_report.json").exists()
     assert (tmp_path / "threshold_registry_audit.json").exists()
+    assert (tmp_path / "threshold_prioritization_report.json").exists()
+    assert (tmp_path / "threshold_calibration_report.json").exists()
+    assert (tmp_path / "threshold_calibration_followup_plan.json").exists()
+    assert (tmp_path / "dynamic_trend_threshold_calibration_prep_report.json").exists()
+    assert (tmp_path / "dynamic_trend_threshold_sensitivity_review.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
     assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()
@@ -1505,6 +2063,175 @@ def _write_casebook_trace(tmp_path: Path) -> Path:
         ),
         encoding="utf-8",
     )
+    return path
+
+
+def _write_dynamic_trend_trace(tmp_path: Path) -> Path:
+    path = tmp_path / "dynamic_trend_trace.json"
+    rows = []
+    for row_date, trend_score, risk_score, semi_score in (
+        ("2023-01-03", 78.0, 70.0, 80.0),
+        ("2023-01-04", 38.0, 35.0, 45.0),
+    ):
+        rows.extend(
+            [
+                _complete_trace_row(
+                    row_date,
+                    row_type="indicator_component",
+                    module_id="trend_strength_indicator",
+                    daily_component_id="trend",
+                    mapping_version="scoring_rules_v1.trend",
+                    raw_indicator_value=[
+                        {
+                            "subject": "QQQ",
+                            "feature": "above_ma_200",
+                            "value": 1.0,
+                            "available": True,
+                        },
+                        {
+                            "subject": "SMH/SPY",
+                            "feature": "relative_strength_return_20d",
+                            "value": 0.08,
+                            "available": True,
+                        },
+                    ],
+                    normalized_indicator_score=trend_score,
+                    mapped_signal_contribution=trend_score * 0.25,
+                    pre_constraint_signal_weight=0.80,
+                    post_constraint_signal_weight=0.70,
+                    final_advisory_portfolio_facing_weight=0.35,
+                    weight_before=0.80,
+                    weight_after=0.70,
+                    constraint_hit=False,
+                    upstream_indicator_id="trend_strength_indicator",
+                    downstream_indicator_id="",
+                    b_intended_change=None,
+                    a_suppressed_change=None,
+                    reason_code="component_score_contribution_trace",
+                ),
+                _complete_trace_row(
+                    row_date,
+                    row_type="indicator_component",
+                    module_id="market_stress_indicator",
+                    daily_component_id="risk_sentiment",
+                    mapping_version="scoring_rules_v1.risk_sentiment+risk_budget_v1",
+                    raw_indicator_value=[
+                        {
+                            "subject": "^VIX",
+                            "feature": "vix_current",
+                            "value": 18.0,
+                            "available": True,
+                        }
+                    ],
+                    normalized_indicator_score=risk_score,
+                    mapped_signal_contribution=risk_score * 0.15,
+                    pre_constraint_signal_weight=0.80,
+                    post_constraint_signal_weight=0.70,
+                    final_advisory_portfolio_facing_weight=0.35,
+                    weight_before=0.80,
+                    weight_after=0.70,
+                    constraint_hit=False,
+                    upstream_indicator_id="market_stress_indicator",
+                    downstream_indicator_id="",
+                    b_intended_change=None,
+                    a_suppressed_change=None,
+                    reason_code="component_score_contribution_trace",
+                ),
+            ]
+        )
+        rows[-2]["signal_scores"] = [
+            {
+                "available": True,
+                "feature": "relative_strength_return_20d",
+                "subject": "SMH/SPY",
+                "raw_indicator_value": 0.08,
+                "normalized_indicator_score": semi_score,
+                "mapped_signal_contribution": 8.0,
+            }
+        ]
+    lineage_manifests = [
+        {
+            "source_artifact_path": f"fixture/daily_indicator_weight_trace_{row_date}.json",
+            "generated_at": f"{row_date}T21:30:00+00:00",
+            "as_of_date": row_date,
+            "decision_time": row_date,
+            "config_hash": f"config-{row_date}",
+            "input_snapshot_hash": f"inputs-{row_date}",
+            "trace_contract_version": "multi_stage_weight_trace_contract_v1",
+            "production_equivalent": True,
+        }
+        for row_date in ("2023-01-03", "2023-01-04")
+    ]
+    path.write_text(
+        json.dumps(
+            {"rows": rows, "lineage_manifests": lineage_manifests},
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _write_dynamic_trend_coverage_extension_root(tmp_path: Path) -> Path:
+    root = tmp_path / "coverage_extension"
+    control_root = root / "b2_fixture" / "b2-risk-overlay-current-form" / "b2_full_compute"
+    control_root.mkdir(parents=True)
+    rows = {
+        "uptrend": [("2023-01-30", 82.0, "NORMAL")],
+        "pullback": [("2023-02-20", 42.0, "RISK_OFF")],
+        "neutral": [("2023-03-20", 66.0, "NORMAL")],
+    }
+    for scenario, scenario_rows in rows.items():
+        path = control_root / f"b2_control_{scenario}_control_risk_signal_fixture.csv"
+        lines = [
+            (
+                "date,symbol,risk_score,risk_state,confidence,risk_confidence,"
+                "risk_coverage,missing_symbols_json,expected_symbols_json,"
+                "risk_blocking_reason,official_target_weights,production_effect"
+            )
+        ]
+        for row_date, risk_score, risk_state in scenario_rows:
+            lines.append(
+                f"{row_date},PORTFOLIO,{risk_score},{risk_state},1.0,1.0,1.0,[],"
+                '"[""QQQ"", ""SMH"", ""SPY""]",none,False,none'
+            )
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return root
+
+
+def _write_dynamic_trend_coverage_prices(tmp_path: Path) -> Path:
+    path = tmp_path / "dynamic_trend_coverage_prices.csv"
+    lines = ["date,ticker,adj_close"]
+    start = date(2023, 1, 3)
+    tickers = {
+        "QQQ": 1.00,
+        "SPY": 0.80,
+        "SMH": 1.30,
+        "MSFT": 2.00,
+        "NVDA": 3.00,
+        "AMD": 1.10,
+    }
+    qqq_prices: list[float] = []
+    for offset in range(110):
+        if offset < 42:
+            price = 100.0 + offset * 1.0
+        elif offset < 68:
+            price = 142.0 - (offset - 42) * 1.8
+        else:
+            price = 95.2 + (offset - 68) * 0.08
+        qqq_prices.append(price)
+    for offset, qqq_price in enumerate(qqq_prices):
+        row_date = start + timedelta(days=offset)
+        for ticker, multiplier in tickers.items():
+            adjustment = 1.0
+            if ticker in {"SMH", "NVDA", "AMD"}:
+                adjustment += min(0.20, offset * 0.002)
+            if ticker == "MSFT":
+                adjustment += 0.05
+            lines.append(
+                f"{row_date.isoformat()},{ticker},{qqq_price * multiplier * adjustment:.4f}"
+            )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 

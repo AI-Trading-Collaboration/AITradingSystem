@@ -30,6 +30,13 @@ DEFAULT_INDICATOR_REGISTRY_PATH = (
 DEFAULT_THRESHOLD_REGISTRY_PATH = PROJECT_ROOT / "config" / "research" / "threshold_registry.yaml"
 DEFAULT_INDICATOR_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_indicators"
 DEFAULT_DAILY_INDICATOR_TRACE_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_allocation_policy.yaml"
+)
+DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "trend_calibration.yaml"
+)
+DEFAULT_DYNAMIC_TREND_COVERAGE_EXTENSION_ROOT = PROJECT_ROOT / "outputs" / "research_campaigns"
 
 CONTROL_ONLY_DATA_QUALITY_STATUS = "NOT_REQUIRED_CONFIG_ONLY"
 SAFETY_BOUNDARY = {
@@ -108,6 +115,15 @@ VALIDATION_CORRELATED_ASSET_CLUSTERS = {
     "semiconductor_ai": {"SMH", "NVDA", "AMD", "TSM"},
     "mega_cap_software": {"MSFT", "GOOGL", "GOOG"},
 }
+DYNAMIC_TREND_COVERAGE_EXTENSION_ASSETS = ("QQQ", "SMH", "MSFT", "NVDA", "SPY", "AMD")
+DYNAMIC_TREND_TRADING_698_BASELINE_COVERAGE = {
+    "full_advisory_case_count": 22,
+    "cluster_count": 1,
+    "regime_count": 1,
+    "mature_case_count_by_horizon": {"1d": 20, "5d": 16, "10d": 11, "20d": 0},
+    "evidence_strength": "low",
+    "recommendation": "sensitivity_tested_only",
+}
 GATE_ROOT_CAUSE_CLASSES = (
     "expected_pit_limitation",
     "ingestion_issue",
@@ -167,8 +183,153 @@ HIGH_IMPACT_THRESHOLD_CLASS = "A"
 HIGH_IMPACT_UNCALIBRATED_STATUSES = {
     "UNCALIBRATED_DEFAULT",
     "HEURISTIC_GUARDRAIL",
+    "uncalibrated",
 }
 CALIBRATED_THRESHOLD_STATUS = "CALIBRATED"
+HEURISTIC_GUARDRAIL_THRESHOLD_TYPES = {
+    "heuristic_guardrail",
+    "HEURISTIC_GUARDRAIL",
+}
+DEFAULT_THRESHOLD_IMPACT_SCOPE_ORDER = (
+    "signal_direction_affecting",
+    "masking_dominance_affecting",
+    "promotion_gate_affecting",
+    "robustness_gate_affecting",
+    "outcome_maturity_affecting",
+    "production_weight_affecting",
+)
+CALIBRATION_URGENCY_ORDER = ("P0", "P1", "P2", "P3")
+INDICATOR_RESEARCH_THRESHOLD_CALIBRATION_IDS = (
+    "indicator_research.effectiveness_min_available_outcome_cases",
+    "indicator_research.robustness_cluster_dominance_share",
+    "indicator_research.effectiveness_missed_upside_acceptable_rate",
+    "indicator_research.masking_high_min",
+    "indicator_research.dominant_share_of_adjustment_min",
+)
+SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS = (
+    "dynamic_allocation.risk_off_score_thresholds",
+    "dynamic_allocation.risk_on_confirmation_thresholds",
+    "trend_calibration.score_bands",
+)
+THRESHOLD_CALIBRATION_TESTED_VALUES = {
+    "indicator_research.effectiveness_min_available_outcome_cases": [20, 30, 50, 80, 100],
+    "indicator_research.robustness_cluster_dominance_share": [0.33, 0.50, 0.67, 0.80],
+    "indicator_research.effectiveness_missed_upside_acceptable_rate": [
+        0.20,
+        0.30,
+        0.40,
+        0.50,
+        0.60,
+    ],
+    "indicator_research.masking_high_min": [0.40, 0.50, 0.60, 0.70, 0.80],
+    "indicator_research.dominant_share_of_adjustment_min": [0.20, 0.30, 0.40, 0.50],
+}
+SECOND_BATCH_DYNAMIC_TREND_TESTED_VALUES = {
+    "dynamic_allocation.risk_off_score_thresholds": [
+        {
+            "scenario_id": "stricter_defensive_trigger",
+            "risk_regime_score_max": 38.0,
+            "composite_trend_score_max": 40.0,
+            "growth_leadership_score_max": 40.0,
+        },
+        {
+            "scenario_id": "current_policy_baseline",
+            "risk_regime_score_max": 42.0,
+            "composite_trend_score_max": 45.0,
+            "growth_leadership_score_max": 45.0,
+        },
+        {
+            "scenario_id": "moderately_looser_defensive_trigger",
+            "risk_regime_score_max": 46.0,
+            "composite_trend_score_max": 50.0,
+            "growth_leadership_score_max": 50.0,
+        },
+        {
+            "scenario_id": "broad_defensive_trigger",
+            "risk_regime_score_max": 50.0,
+            "composite_trend_score_max": 55.0,
+            "growth_leadership_score_max": 55.0,
+        },
+    ],
+    "dynamic_allocation.risk_on_confirmation_thresholds": [
+        {
+            "scenario_id": "stricter_risk_on_confirmation",
+            "composite_trend_score_min": 75.0,
+            "risk_regime_score_min": 68.0,
+            "growth_leadership_score_min": 78.0,
+            "semiconductor_leadership_score_min": 80.0,
+        },
+        {
+            "scenario_id": "current_policy_baseline",
+            "composite_trend_score_min": 70.0,
+            "risk_regime_score_min": 62.0,
+            "growth_leadership_score_min": 72.0,
+            "semiconductor_leadership_score_min": 75.0,
+        },
+        {
+            "scenario_id": "moderately_looser_risk_on_confirmation",
+            "composite_trend_score_min": 65.0,
+            "risk_regime_score_min": 58.0,
+            "growth_leadership_score_min": 68.0,
+            "semiconductor_leadership_score_min": 70.0,
+        },
+        {
+            "scenario_id": "broad_risk_on_confirmation",
+            "composite_trend_score_min": 60.0,
+            "risk_regime_score_min": 55.0,
+            "growth_leadership_score_min": 65.0,
+            "semiconductor_leadership_score_min": 68.0,
+        },
+    ],
+    "trend_calibration.score_bands": [
+        {
+            "scenario_id": "lower_risk_on_boundary",
+            "risk_off": [0, 35],
+            "weak": [35, 50],
+            "neutral": [50, 68],
+            "risk_on": [68, 84],
+            "strong_risk_on": [84, 100],
+        },
+        {
+            "scenario_id": "current_policy_baseline",
+            "risk_off": [0, 40],
+            "weak": [40, 55],
+            "neutral": [55, 70],
+            "risk_on": [70, 85],
+            "strong_risk_on": [85, 100],
+        },
+        {
+            "scenario_id": "higher_confirmation_boundary",
+            "risk_off": [0, 45],
+            "weak": [45, 60],
+            "neutral": [60, 72],
+            "risk_on": [72, 87],
+            "strong_risk_on": [87, 100],
+        },
+        {
+            "scenario_id": "wider_neutral_band",
+            "risk_off": [0, 38],
+            "weak": [38, 58],
+            "neutral": [58, 75],
+            "risk_on": [75, 90],
+            "strong_risk_on": [90, 100],
+        },
+    ],
+}
+DYNAMIC_TREND_SENSITIVITY_VARIANT_KINDS = (
+    "current_value",
+    "stricter",
+    "relaxed",
+    "capped_or_smoothed_candidate",
+    "no_change_baseline",
+)
+DYNAMIC_TREND_VALIDATION_RECOMMENDATIONS = {
+    "keep_current_value",
+    "adjust_candidate",
+    "insufficient_data",
+    "collect_evidence_only",
+    "sensitivity_tested_only",
+}
 
 
 class IndicatorResearchError(ValueError):
@@ -871,6 +1032,90 @@ def build_threshold_registry_audit(
     )
 
 
+def build_threshold_prioritization_report(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    thresholds = [
+        _json_ready(dict(item))
+        for item in threshold_registry.get("thresholds", [])
+        if isinstance(item, Mapping)
+    ]
+    prioritization_policy = _json_ready(
+        dict(threshold_registry.get("impact_prioritization", {}))
+        if isinstance(threshold_registry.get("impact_prioritization"), Mapping)
+        else {}
+    )
+    prioritized_thresholds = _prioritized_threshold_records(
+        thresholds,
+        prioritization_policy,
+        high_impact_only=True,
+    )
+    all_thresholds_with_urgency = _prioritized_threshold_records(
+        thresholds,
+        prioritization_policy,
+        high_impact_only=False,
+    )
+    first_batch_candidates = _first_batch_threshold_candidates(
+        prioritized_thresholds,
+        prioritization_policy,
+    )
+    first_batch_ids = {str(candidate.get("threshold_id")) for candidate in first_batch_candidates}
+    for record in prioritized_thresholds:
+        record["first_batch_candidate"] = str(record.get("threshold_id")) in first_batch_ids
+    for record in all_thresholds_with_urgency:
+        record["first_batch_candidate"] = str(record.get("threshold_id")) in first_batch_ids
+    issues = _threshold_prioritization_issues(
+        thresholds,
+        prioritized_thresholds,
+        prioritization_policy,
+        first_batch_candidates,
+    )
+    summary = _threshold_prioritization_summary(
+        prioritized_thresholds,
+        all_thresholds_with_urgency,
+        first_batch_candidates,
+    )
+    status = (
+        "FAIL"
+        if any(issue.get("severity") == "error" for issue in issues)
+        else "PASS_WITH_WARNINGS" if summary["uncalibrated_high_impact_count"] > 0 else "PASS"
+    )
+    return _base_payload(
+        registry,
+        report_type="threshold_prioritization_report",
+        status=status,
+        summary=summary,
+        issues=issues,
+        threshold_registry_path=str(threshold_registry_path),
+        prioritization_policy=prioritization_policy,
+        prioritized_thresholds=prioritized_thresholds,
+        all_thresholds_with_urgency=all_thresholds_with_urgency,
+        first_batch_calibration_candidates=first_batch_candidates,
+        safety_boundary=_json_ready(
+            {
+                **dict(registry.safety_boundary),
+                **dict(threshold_registry.get("safety_boundary", {})),
+                "promotion_gate_allowed": False,
+                "production_weight_change_allowed": False,
+                "paper_shadow_change_allowed": False,
+            }
+        ),
+        reader_brief={
+            "key_result": status,
+            "first_batch_candidate_count": summary["first_batch_candidate_count"],
+            "first_batch_candidate_ids": summary["first_batch_candidate_ids"],
+            "next_action": (
+                "calibrate first-batch thresholds in validation-only mode before "
+                "allowing any promotion dependency"
+            ),
+        },
+    )
+
+
 def write_indicator_validation_pack_stability_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -880,6 +1125,7 @@ def write_indicator_validation_pack_stability_report(
     prices_path: Path | None = None,
     gate_audit_root: Path | None = None,
     bridge_artifact_root: Path | None = None,
+    coverage_extension_root: Path | None = None,
     outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
     capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
     start_date: str | None = None,
@@ -899,6 +1145,7 @@ def write_indicator_validation_pack_stability_report(
         prices_path=prices_path,
         gate_audit_root=gate_audit_root,
         bridge_artifact_root=bridge_artifact_root,
+        coverage_extension_root=coverage_extension_root,
         outcome_ticker=outcome_ticker,
         capped_masking_ratio=capped_masking_ratio,
         start_date=start_date,
@@ -915,6 +1162,7 @@ def write_indicator_validation_pack_stability_report(
         prices_path=prices_path,
         gate_audit_root=gate_audit_root,
         bridge_artifact_root=bridge_artifact_root,
+        coverage_extension_root=coverage_extension_root,
         outcome_ticker=outcome_ticker,
         capped_masking_ratio=capped_masking_ratio,
         start_date=start_date,
@@ -1014,6 +1262,18 @@ def write_indicator_validation_pack_stability_report(
         "threshold_registry_audit_repeatable": (
             first_projection["threshold_audit_summary"]
             == second_projection["threshold_audit_summary"]
+        ),
+        "threshold_prioritization_repeatable": (
+            first_projection["threshold_prioritization_summary"]
+            == second_projection["threshold_prioritization_summary"]
+        ),
+        "threshold_calibration_repeatable": (
+            first_projection["threshold_calibration_summary"]
+            == second_projection["threshold_calibration_summary"]
+        ),
+        "dynamic_trend_threshold_sensitivity_repeatable": (
+            first_projection["dynamic_trend_threshold_sensitivity_summary"]
+            == second_projection["dynamic_trend_threshold_sensitivity_summary"]
         ),
     }
     stable = all(stable_fields.values())
@@ -2706,6 +2966,478 @@ def build_long_horizon_evidence_floor_calibration_audit(
     )
 
 
+def build_threshold_calibration_report(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    threshold_by_id = {
+        str(item.get("threshold_id")): _json_ready(dict(item))
+        for item in threshold_registry.get("thresholds", [])
+        if isinstance(item, Mapping)
+    }
+    trace_rows = _filter_trace_rows(
+        _read_trace_rows(trace_path),
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    effectiveness = build_valuation_crowding_masking_effectiveness_review(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    robustness = build_valuation_crowding_masking_robustness_review(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    long_floor = build_long_horizon_evidence_floor_calibration_audit(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    masking_audit = build_masking_audit(
+        indicator_id="valuation_crowding_indicator",
+        registry_path=registry_path,
+        trace_path=trace_path,
+    )
+    cases_by_source = _robustness_cases_by_source(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    robustness_checks = _threshold_calibration_robustness_checks(
+        effectiveness,
+        robustness,
+        cases_by_source,
+        capped_masking_ratio,
+    )
+    records = [
+        _threshold_calibration_record(
+            threshold_id,
+            threshold=threshold_by_id.get(threshold_id, {"threshold_id": threshold_id}),
+            registry=registry,
+            trace_rows=trace_rows,
+            effectiveness=effectiveness,
+            robustness=robustness,
+            long_floor=long_floor,
+            masking_audit=masking_audit,
+            robustness_checks=robustness_checks,
+        )
+        for threshold_id in INDICATOR_RESEARCH_THRESHOLD_CALIBRATION_IDS
+    ]
+    threshold_audit_summary = _threshold_audit_summary(
+        [item for item in threshold_by_id.values() if isinstance(item, Mapping)]
+    )
+    summary = _threshold_calibration_summary(records, threshold_audit_summary)
+    issues = _threshold_calibration_issues(records, trace_path=trace_path, prices_path=prices_path)
+    return _base_payload(
+        registry,
+        report_type="threshold_calibration_report",
+        status="PASS_WITH_WARNINGS",
+        issues=issues,
+        summary=summary,
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        threshold_registry_path=str(threshold_registry_path),
+        calibrated_threshold_scope=list(INDICATOR_RESEARCH_THRESHOLD_CALIBRATION_IDS),
+        threshold_calibrations=records,
+        robustness_checks=robustness_checks,
+        source_effectiveness_summary=effectiveness.get("summary", {}),
+        source_robustness_summary=robustness.get("summary", {}),
+        source_long_horizon_floor_summary=long_floor.get("summary", {}),
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            **dict(threshold_registry.get("safety_boundary", {})),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+        },
+        reader_brief={
+            "key_result": "SENSITIVITY_TESTED_VALIDATION_ONLY",
+            "tested_threshold_count": summary["tested_threshold_count"],
+            "sensitivity_tested_count": summary["sensitivity_tested_count"],
+            "thresholds_changed_count": summary["thresholds_changed_count"],
+            "next_action": (
+                "review sensitivity-tested evidence; do not use these thresholds as "
+                "promotion dependencies until owner-reviewed calibration evidence matures"
+            ),
+        },
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
+def build_threshold_calibration_followup_plan(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    calibration_report_path: Path | None = None,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    calibration_report = _load_or_build_threshold_calibration_report(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        calibration_report_path=calibration_report_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    threshold_records = [
+        dict(record)
+        for record in calibration_report.get("threshold_calibrations", [])
+        if isinstance(record, Mapping)
+        and str(record.get("threshold_id")) in INDICATOR_RESEARCH_THRESHOLD_CALIBRATION_IDS
+    ]
+    result_rows = [_threshold_followup_result_row(record) for record in threshold_records]
+    data_gap_plan = [
+        _threshold_data_gap_plan(record)
+        for record in threshold_records
+        if str(record.get("recommended_action")) == "insufficient_data"
+    ]
+    keep_current_status = [
+        _threshold_keep_current_status(record)
+        for record in threshold_records
+        if str(record.get("recommended_action")) == "keep_current_value"
+    ]
+    summary = _threshold_followup_summary(
+        result_rows,
+        data_gap_plan,
+        keep_current_status,
+        calibration_report.get("summary", {}),
+    )
+    issues = _threshold_followup_issues(result_rows, data_gap_plan)
+    return _base_payload(
+        registry,
+        report_type="threshold_calibration_followup_plan",
+        status="PASS_WITH_WARNINGS" if data_gap_plan else "PASS",
+        summary=summary,
+        issues=issues,
+        threshold_registry_path=str(threshold_registry_path),
+        source_threshold_calibration_report_path=(
+            str(calibration_report_path) if calibration_report_path is not None else None
+        ),
+        source_threshold_calibration_summary=_json_ready(
+            calibration_report.get("summary", {})
+            if isinstance(calibration_report.get("summary"), Mapping)
+            else {}
+        ),
+        threshold_results=result_rows,
+        data_gap_plan=data_gap_plan,
+        keep_current_value_threshold_status=keep_current_status,
+        registry_calibration_followup_summary=_json_ready(
+            threshold_registry.get("calibration_followup_summary", {})
+        ),
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            **dict(threshold_registry.get("safety_boundary", {})),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+        },
+        allowed_uses=[
+            "calibration_followup_planning",
+            "data_gap_tracking",
+            "manual_review_input",
+        ],
+        reader_brief={
+            "key_result": "THRESHOLD_CALIBRATION_FOLLOWUP_PLAN_READY",
+            "threshold_count": summary["threshold_count"],
+            "insufficient_data_threshold_count": summary["insufficient_data_threshold_count"],
+            "keep_current_value_threshold_count": summary["keep_current_value_threshold_count"],
+            "thresholds_changed_count": summary["thresholds_changed_count"],
+            "next_action": (
+                "collect data gaps for insufficient thresholds; keep current values and "
+                "do not use sensitivity-tested thresholds as promotion dependencies"
+            ),
+        },
+    )
+
+
+def build_dynamic_trend_threshold_calibration_prep_report(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    threshold_by_id = {
+        str(item.get("threshold_id")): dict(item)
+        for item in threshold_registry.get("thresholds", [])
+        if isinstance(item, Mapping)
+    }
+    prep_records = [
+        _dynamic_trend_threshold_prep_record(
+            threshold_id,
+            threshold_by_id.get(threshold_id, {"threshold_id": threshold_id}),
+        )
+        for threshold_id in SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS
+    ]
+    summary = _dynamic_trend_threshold_prep_summary(prep_records)
+    issues = _dynamic_trend_threshold_prep_issues(prep_records)
+    return _base_payload(
+        registry,
+        report_type="dynamic_trend_threshold_calibration_prep_report",
+        status="PASS_WITH_WARNINGS",
+        summary=summary,
+        issues=issues,
+        threshold_registry_path=str(threshold_registry_path),
+        calibrated_threshold_scope=list(SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS),
+        threshold_calibration_prep=prep_records,
+        registry_second_batch_calibration_prep_summary=_json_ready(
+            threshold_registry.get("second_batch_calibration_prep_summary", {})
+        ),
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            **dict(threshold_registry.get("safety_boundary", {})),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+        },
+        allowed_uses=[
+            "calibration_prep",
+            "sensitivity_design",
+            "manual_review_input",
+        ],
+        reader_brief={
+            "key_result": "DYNAMIC_TREND_THRESHOLD_CALIBRATION_PREP_ONLY",
+            "prepared_threshold_count": summary["prepared_threshold_count"],
+            "validated_boundary_count": summary["validated_boundary_count"],
+            "thresholds_changed_count": summary["thresholds_changed_count"],
+            "next_action": (
+                "collect forward outcome, turnover, constraint-hit, drawdown, and "
+                "missed-upside evidence before any owner-reviewed threshold change"
+            ),
+        },
+    )
+
+
+def build_dynamic_trend_threshold_sensitivity_review(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    coverage_extension_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    threshold_by_id = {
+        str(item.get("threshold_id")): dict(item)
+        for item in threshold_registry.get("thresholds", [])
+        if isinstance(item, Mapping)
+    }
+    trace_rows = _filter_trace_rows(
+        _read_trace_rows(trace_path),
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    price_series_by_ticker = _read_price_series_by_ticker(prices_path)
+    gate_availability = _gate_availability_records(
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        trace_rows=trace_rows,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    policy_config = _load_dynamic_trend_policy_inputs()
+    trace_cases = _dynamic_trend_sensitivity_cases(
+        registry=registry,
+        trace_rows=trace_rows,
+        price_series_by_ticker=price_series_by_ticker,
+        gate_availability=gate_availability,
+        outcome_ticker=outcome_ticker,
+        trace_contract_version=_trace_contract_version_for_payload(
+            trace_path,
+            registry=registry,
+        ),
+    )
+    coverage_extension_cases = _dynamic_trend_coverage_extension_cases(
+        coverage_extension_root=coverage_extension_root,
+        price_series_by_ticker=price_series_by_ticker,
+        outcome_ticker=outcome_ticker,
+        trace_contract_version=_trace_contract_version_for_payload(
+            trace_path,
+            registry=registry,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    cases = trace_cases + coverage_extension_cases
+    records = [
+        _dynamic_trend_threshold_sensitivity_record(
+            threshold_id,
+            threshold=threshold_by_id.get(threshold_id, {"threshold_id": threshold_id}),
+            registry=registry,
+            cases=cases,
+            price_series_by_ticker=price_series_by_ticker,
+            policy_config=policy_config,
+        )
+        for threshold_id in SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS
+    ]
+    threshold_audit_summary = _threshold_audit_summary(
+        [item for item in threshold_by_id.values() if isinstance(item, Mapping)]
+    )
+    summary = _dynamic_trend_sensitivity_summary(records, cases, threshold_audit_summary)
+    issues = _dynamic_trend_sensitivity_issues(
+        records,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        coverage_extension_root=coverage_extension_root,
+    )
+    return _base_payload(
+        registry,
+        report_type="dynamic_trend_threshold_sensitivity_review",
+        status="PASS_WITH_WARNINGS",
+        issues=issues,
+        summary=summary,
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        threshold_registry_path=str(threshold_registry_path),
+        calibrated_threshold_scope=list(SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS),
+        threshold_sensitivity_reviews=records,
+        sample_case_count=len(cases),
+        base_trace_case_count=len(trace_cases),
+        coverage_extension_case_count=len(coverage_extension_cases),
+        coverage_extension_root=(
+            None if coverage_extension_root is None else str(coverage_extension_root)
+        ),
+        data_source_mode=_dynamic_trend_data_source_mode(cases),
+        validation_recommendation_set=sorted(DYNAMIC_TREND_VALIDATION_RECOMMENDATIONS),
+        max_allowed_status="SENSITIVITY_TESTED",
+        validated_boundary_count=0,
+        thresholds_changed_count=0,
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_effect="none",
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            **dict(threshold_registry.get("safety_boundary", {})),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+        },
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+        reader_brief={
+            "key_result": "DYNAMIC_TREND_THRESHOLD_SENSITIVITY_TESTED_VALIDATION_ONLY",
+            "tested_threshold_count": summary["tested_threshold_count"],
+            "sensitivity_tested_count": summary["sensitivity_tested_count"],
+            "thresholds_changed_count": summary["thresholds_changed_count"],
+            "next_action": (
+                "review sample quality and full-advisory gaps before any owner-reviewed "
+                "threshold change; do not use this artifact as promotion evidence"
+            ),
+        },
+    )
+
+
 def build_lineage_manifest_repair_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -3315,6 +4047,7 @@ def write_indicator_framework_validation_pack(
     prices_path: Path | None = None,
     gate_audit_root: Path | None = None,
     bridge_artifact_root: Path | None = None,
+    coverage_extension_root: Path | None = None,
     outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
     capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
     start_date: str | None = None,
@@ -3341,6 +4074,49 @@ def write_indicator_framework_validation_pack(
             build_threshold_registry_audit(
                 registry_path=registry_path,
                 threshold_registry_path=threshold_registry_path,
+            ),
+        ),
+        (
+            "threshold_prioritization_report",
+            build_threshold_prioritization_report(
+                registry_path=registry_path,
+                threshold_registry_path=threshold_registry_path,
+            ),
+        ),
+        (
+            "threshold_calibration_report",
+            build_threshold_calibration_report(
+                registry_path=registry_path,
+                threshold_registry_path=threshold_registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
+                bridge_artifact_root=bridge_artifact_root,
+                outcome_ticker=outcome_ticker,
+                capped_masking_ratio=capped_masking_ratio,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
+            "dynamic_trend_threshold_sensitivity_review",
+            build_dynamic_trend_threshold_sensitivity_review(
+                registry_path=registry_path,
+                threshold_registry_path=threshold_registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
+                bridge_artifact_root=bridge_artifact_root,
+                coverage_extension_root=coverage_extension_root,
+                outcome_ticker=outcome_ticker,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
             ),
         ),
         (
@@ -3616,6 +4392,18 @@ def write_indicator_framework_validation_pack(
         "summary",
         {},
     )
+    threshold_prioritization_summary = artifact_payloads.get(
+        "threshold_prioritization_report",
+        {},
+    ).get("summary", {})
+    threshold_calibration_summary = artifact_payloads.get(
+        "threshold_calibration_report",
+        {},
+    ).get("summary", {})
+    dynamic_trend_threshold_sensitivity_summary = artifact_payloads.get(
+        "dynamic_trend_threshold_sensitivity_review",
+        {},
+    ).get("summary", {})
     status = (
         "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_BLOCKED"
         if blocking
@@ -3631,10 +4419,23 @@ def write_indicator_framework_validation_pack(
             "prices_path_provided": prices_path is not None,
             "gate_audit_root_provided": gate_audit_root is not None,
             "bridge_artifact_root_provided": bridge_artifact_root is not None,
+            "coverage_extension_root_provided": coverage_extension_root is not None,
             "threshold_audit_summary": threshold_audit_summary,
+            "threshold_prioritization_summary": threshold_prioritization_summary,
+            "threshold_calibration_summary": threshold_calibration_summary,
+            "dynamic_trend_threshold_sensitivity_summary": (
+                dynamic_trend_threshold_sensitivity_summary
+            ),
             "no_parameter_mutation": True,
             "no_paper_shadow_live_broker_order_official_weights": True,
+            "production_effect": "none",
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
         },
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
         validation_checks=[
             {
                 "check_id": "ontology",
@@ -3643,6 +4444,12 @@ def write_indicator_framework_validation_pack(
             {"check_id": "inventory_coverage", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "coverage_gap_report", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "threshold_registry_audit", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "threshold_prioritization_report", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "threshold_calibration_report", "status": "PASS_WITH_WARNINGS"},
+            {
+                "check_id": "dynamic_trend_threshold_sensitivity_review",
+                "status": "PASS_WITH_WARNINGS",
+            },
             {"check_id": "dependency_graph", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "multi_stage_trace_contract", "status": "PASS"},
             {"check_id": "mapping_registry", "status": "PASS_WITH_WARNINGS"},
@@ -3793,14 +4600,10 @@ def _threshold_audit_summary(thresholds: Sequence[Mapping[str, Any]]) -> dict[st
         if str(threshold.get("threshold_class", "")).upper() == HIGH_IMPACT_THRESHOLD_CLASS
     ]
     uncalibrated_high_impact = [
-        threshold
-        for threshold in high_impact
-        if str(threshold.get("calibration_status", "")) in HIGH_IMPACT_UNCALIBRATED_STATUSES
+        threshold for threshold in high_impact if _is_uncalibrated_threshold_status(threshold)
     ]
     heuristic_guardrails = [
-        threshold
-        for threshold in thresholds
-        if str(threshold.get("calibration_status", "")) == "HEURISTIC_GUARDRAIL"
+        threshold for threshold in thresholds if _is_heuristic_guardrail_threshold(threshold)
     ]
     calibrated = [
         threshold
@@ -3839,6 +4642,3350 @@ def _threshold_audit_summary(thresholds: Sequence[Mapping[str, Any]]) -> dict[st
         "paper_shadow_change_allowed": False,
         "official_target_weights_mutated": False,
     }
+
+
+def _threshold_impact_scope_order(policy: Mapping[str, Any]) -> list[str]:
+    raw_order = policy.get("impact_scope_order", DEFAULT_THRESHOLD_IMPACT_SCOPE_ORDER)
+    if isinstance(raw_order, Sequence) and not isinstance(raw_order, str | bytes):
+        order = [str(item) for item in raw_order if str(item)]
+    else:
+        order = list(DEFAULT_THRESHOLD_IMPACT_SCOPE_ORDER)
+    for category in DEFAULT_THRESHOLD_IMPACT_SCOPE_ORDER:
+        if category not in order:
+            order.append(category)
+    return order
+
+
+def _threshold_impact_category_map(policy: Mapping[str, Any]) -> dict[str, set[str]]:
+    raw_mapping = policy.get("impact_category_threshold_ids", {})
+    if not isinstance(raw_mapping, Mapping):
+        return {}
+    mapping: dict[str, set[str]] = {}
+    for category, threshold_ids in raw_mapping.items():
+        if isinstance(threshold_ids, Sequence) and not isinstance(threshold_ids, str | bytes):
+            mapping[str(category)] = {str(threshold_id) for threshold_id in threshold_ids}
+    return mapping
+
+
+def _threshold_impact_categories(
+    threshold: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[str]:
+    threshold_id = str(threshold.get("threshold_id", ""))
+    order = _threshold_impact_scope_order(policy)
+    category_map = _threshold_impact_category_map(policy)
+    categories = [
+        category for category in order if threshold_id in category_map.get(category, set())
+    ]
+    if bool(threshold.get("production_weight_affecting")):
+        categories.append("production_weight_affecting")
+    if not categories and bool(threshold.get("promotion_gate_affecting")):
+        categories.append("promotion_gate_affecting")
+    return [category for category in order if category in set(categories)]
+
+
+def _threshold_calibration_urgency(threshold: Mapping[str, Any]) -> tuple[str, str]:
+    threshold_class = str(threshold.get("threshold_class", "")).upper()
+    if _threshold_blocks_promotion_dependency(threshold) and bool(
+        threshold.get("decision_affecting")
+    ):
+        return "P0", "promotion-blocking and decision-affecting"
+    if bool(threshold.get("decision_affecting")) or threshold_class == HIGH_IMPACT_THRESHOLD_CLASS:
+        return "P1", "validation conclusion affecting"
+    if threshold_class == "B":
+        return "P2", "workflow quality affecting"
+    return "P3", "engineering/runtime only"
+
+
+def _threshold_urgency_rank(urgency: str) -> int:
+    try:
+        return CALIBRATION_URGENCY_ORDER.index(urgency)
+    except ValueError:
+        return len(CALIBRATION_URGENCY_ORDER)
+
+
+def _prioritized_threshold_records(
+    thresholds: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+    *,
+    high_impact_only: bool,
+) -> list[dict[str, Any]]:
+    order = _threshold_impact_scope_order(policy)
+    order_rank = {category: index for index, category in enumerate(order)}
+    records: list[dict[str, Any]] = []
+    for threshold in thresholds:
+        is_uncalibrated_high_impact = _is_uncalibrated_high_impact_threshold(threshold)
+        if high_impact_only and not is_uncalibrated_high_impact:
+            continue
+        categories = _threshold_impact_categories(threshold, policy)
+        primary_category = categories[0] if categories else "uncategorized"
+        urgency, urgency_reason = _threshold_calibration_urgency(threshold)
+        record = {
+            "threshold_id": str(threshold.get("threshold_id", "")),
+            "current_value": _json_ready(threshold.get("current_value")),
+            "unit": threshold.get("unit", ""),
+            "threshold_class": threshold.get("threshold_class", ""),
+            "calibration_status": threshold.get("calibration_status", ""),
+            "threshold_type": threshold.get("threshold_type", ""),
+            "not_validated_statistical_boundary": bool(
+                threshold.get("not_validated_statistical_boundary", False)
+            ),
+            "impact_categories": categories,
+            "primary_impact_category": primary_category,
+            "impact_priority_rank": order_rank.get(primary_category, len(order)) + 1,
+            "calibration_urgency": urgency,
+            "calibration_urgency_reason": urgency_reason,
+            "decision_affecting": bool(threshold.get("decision_affecting")),
+            "promotion_gate_affecting": bool(threshold.get("promotion_gate_affecting")),
+            "production_weight_affecting": bool(threshold.get("production_weight_affecting")),
+            "calibration_required": bool(threshold.get("calibration_required")),
+            "no_promotion_dependency_without_review": bool(
+                threshold.get("no_promotion_dependency_without_review")
+            ),
+            "is_uncalibrated_high_impact": is_uncalibrated_high_impact,
+            "recommended_calibration_method": threshold.get(
+                "recommended_calibration_method",
+                "",
+            ),
+            "purpose": threshold.get("purpose", ""),
+            "where_used": _json_ready(threshold.get("where_used", [])),
+            "first_batch_candidate": False,
+        }
+        records.append(record)
+    return sorted(
+        records,
+        key=lambda item: (
+            int(item.get("impact_priority_rank", len(order) + 1)),
+            _threshold_urgency_rank(str(item.get("calibration_urgency", ""))),
+            str(item.get("threshold_id", "")),
+        ),
+    )
+
+
+def _first_batch_threshold_candidates(
+    prioritized_thresholds: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    by_id = {str(item.get("threshold_id")): dict(item) for item in prioritized_thresholds}
+    raw_limit = policy.get("first_batch_candidate_limit", 8)
+    try:
+        limit = max(1, min(8, int(raw_limit)))
+    except (TypeError, ValueError):
+        limit = 8
+    raw_candidate_ids = policy.get("first_batch_candidate_ids", [])
+    candidate_ids = (
+        [str(item) for item in raw_candidate_ids]
+        if isinstance(raw_candidate_ids, Sequence)
+        and not isinstance(raw_candidate_ids, str | bytes)
+        else []
+    )
+    selected = [by_id[threshold_id] for threshold_id in candidate_ids if threshold_id in by_id]
+    if not selected:
+        selected = [dict(item) for item in prioritized_thresholds[:limit]]
+    selected = selected[:limit]
+    for index, candidate in enumerate(selected, start=1):
+        candidate["first_batch_rank"] = index
+        candidate["first_batch_candidate"] = True
+        candidate["selection_reason"] = (
+            "Registry-selected validation-only calibration candidate; does not allow "
+            "promotion, paper-shadow, production, or official weight changes."
+        )
+    return selected
+
+
+def _threshold_prioritization_summary(
+    prioritized_thresholds: Sequence[Mapping[str, Any]],
+    all_thresholds: Sequence[Mapping[str, Any]],
+    first_batch_candidates: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    impact_counts: dict[str, int] = {
+        category: 0 for category in DEFAULT_THRESHOLD_IMPACT_SCOPE_ORDER
+    }
+    for threshold in prioritized_thresholds:
+        for category in threshold.get("impact_categories", []):
+            impact_counts[str(category)] = impact_counts.get(str(category), 0) + 1
+    urgency_counts: dict[str, int] = {urgency: 0 for urgency in CALIBRATION_URGENCY_ORDER}
+    for threshold in all_thresholds:
+        urgency = str(threshold.get("calibration_urgency", "P3"))
+        urgency_counts[urgency] = urgency_counts.get(urgency, 0) + 1
+    high_impact_urgency_counts: dict[str, int] = {
+        urgency: 0 for urgency in CALIBRATION_URGENCY_ORDER
+    }
+    for threshold in prioritized_thresholds:
+        urgency = str(threshold.get("calibration_urgency", "P3"))
+        high_impact_urgency_counts[urgency] = high_impact_urgency_counts.get(urgency, 0) + 1
+    first_batch_ids = [str(candidate.get("threshold_id")) for candidate in first_batch_candidates]
+    return {
+        "prioritized_threshold_count": len(prioritized_thresholds),
+        "uncalibrated_high_impact_count": len(prioritized_thresholds),
+        "all_threshold_count": len(all_thresholds),
+        "impact_scope_counts": dict(sorted(impact_counts.items())),
+        "calibration_urgency_counts": dict(sorted(urgency_counts.items())),
+        "high_impact_calibration_urgency_counts": dict(sorted(high_impact_urgency_counts.items())),
+        "first_batch_candidate_count": len(first_batch_candidates),
+        "first_batch_candidate_ids": first_batch_ids,
+        "production_weight_affecting_threshold_count": impact_counts.get(
+            "production_weight_affecting",
+            0,
+        ),
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "official_target_weights_mutated": False,
+        "validation_only": True,
+    }
+
+
+def _threshold_prioritization_issues(
+    thresholds: Sequence[Mapping[str, Any]],
+    prioritized_thresholds: Sequence[Mapping[str, Any]],
+    policy: Mapping[str, Any],
+    first_batch_candidates: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    categorized_ids = {str(item.get("threshold_id")) for item in prioritized_thresholds}
+    expected_ids = {
+        str(threshold.get("threshold_id"))
+        for threshold in thresholds
+        if _is_uncalibrated_high_impact_threshold(threshold)
+    }
+    missing_ids = sorted(expected_ids - categorized_ids)
+    if missing_ids:
+        issues.append(
+            {
+                "severity": "error",
+                "issue_id": "uncalibrated_high_impact_threshold_missing_prioritization",
+                "threshold_ids": missing_ids,
+                "message": "Every uncalibrated high-impact threshold must be prioritized.",
+            }
+        )
+    uncategorized = sorted(
+        str(item.get("threshold_id"))
+        for item in prioritized_thresholds
+        if not item.get("impact_categories")
+    )
+    if uncategorized:
+        issues.append(
+            {
+                "severity": "error",
+                "issue_id": "uncalibrated_high_impact_threshold_missing_impact_category",
+                "threshold_ids": uncategorized,
+                "message": "Every prioritized high-impact threshold must have an impact category.",
+            }
+        )
+    raw_candidate_ids = policy.get("first_batch_candidate_ids", [])
+    configured_ids = (
+        [str(item) for item in raw_candidate_ids]
+        if isinstance(raw_candidate_ids, Sequence)
+        and not isinstance(raw_candidate_ids, str | bytes)
+        else []
+    )
+    selected_ids = {str(candidate.get("threshold_id")) for candidate in first_batch_candidates}
+    missing_candidate_ids = sorted(set(configured_ids) - selected_ids)
+    if missing_candidate_ids:
+        issues.append(
+            {
+                "severity": "error",
+                "issue_id": "first_batch_candidate_not_prioritized_high_impact",
+                "threshold_ids": missing_candidate_ids,
+                "message": (
+                    "Configured first-batch candidates must be uncalibrated high-impact "
+                    "thresholds in the prioritization report."
+                ),
+            }
+        )
+    if len(first_batch_candidates) > 8:
+        issues.append(
+            {
+                "severity": "error",
+                "issue_id": "first_batch_candidate_limit_exceeded",
+                "candidate_count": len(first_batch_candidates),
+                "message": "First-batch calibration candidates must not exceed 8.",
+            }
+        )
+    return issues
+
+
+def _threshold_calibration_summary(
+    records: Sequence[Mapping[str, Any]],
+    threshold_audit_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    sensitivity_tested = [
+        record
+        for record in records
+        if str(record.get("recommended_status")) == "SENSITIVITY_TESTED"
+    ]
+    changed_candidates = [
+        record for record in records if str(record.get("recommended_action")) == "adjust_candidate"
+    ]
+    blocking_count = int(threshold_audit_summary.get("thresholds_blocking_promotion_count") or 0)
+    return {
+        "tested_threshold_count": len(records),
+        "sensitivity_tested_count": len(sensitivity_tested),
+        "still_uncalibrated_high_impact_count": max(0, blocking_count - len(sensitivity_tested)),
+        "thresholds_still_blocking_promotion_count": blocking_count,
+        "thresholds_changed_count": 0,
+        "adjust_candidate_count": len(changed_candidates),
+        "tested_threshold_ids": [str(record.get("threshold_id")) for record in records],
+        "sensitivity_tested_threshold_ids": [
+            str(record.get("threshold_id")) for record in sensitivity_tested
+        ],
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _threshold_calibration_issues(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    trace_path: Path | None,
+    prices_path: Path | None,
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = [
+        {
+            "severity": "info",
+            "issue_id": "threshold_calibration_validation_only",
+            "message": (
+                "Threshold calibration report is sensitivity analysis only and cannot "
+                "approve promotion, paper-shadow, production, or official weight changes."
+            ),
+        }
+    ]
+    if trace_path is None:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "threshold_calibration_trace_not_provided",
+                "message": "Trace-backed evidence is absent; thresholds remain insufficient_data.",
+            }
+        )
+    if prices_path is None:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "threshold_calibration_prices_not_provided",
+                "message": (
+                    "Outcome price evidence is absent; " "realized outcome sensitivity is limited."
+                ),
+            }
+        )
+    insufficient = [
+        str(record.get("threshold_id"))
+        for record in records
+        if str(record.get("recommended_action")) == "insufficient_data"
+    ]
+    if insufficient:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "thresholds_have_insufficient_data",
+                "threshold_ids": insufficient,
+                "message": (
+                    "Some thresholds remain sensitivity-tested " "but insufficient to calibrate."
+                ),
+            }
+        )
+    return issues
+
+
+def _load_or_build_threshold_calibration_report(
+    *,
+    registry_path: Path,
+    threshold_registry_path: Path,
+    calibration_report_path: Path | None,
+    trace_path: Path | None,
+    prices_path: Path | None,
+    gate_audit_root: Path | None,
+    bridge_artifact_root: Path | None,
+    outcome_ticker: str,
+    capped_masking_ratio: float,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+    asset_universe: str | None,
+) -> dict[str, Any]:
+    if calibration_report_path is not None:
+        payload = _read_optional_json(calibration_report_path)
+        if not payload:
+            raise IndicatorResearchError(
+                f"threshold calibration report not found or invalid: {calibration_report_path}"
+            )
+        if payload.get("report_type") != "threshold_calibration_report":
+            raise IndicatorResearchError(
+                "calibration report must have report_type=threshold_calibration_report"
+            )
+        return payload
+    return build_threshold_calibration_report(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+
+
+def _threshold_followup_result_row(record: Mapping[str, Any]) -> dict[str, Any]:
+    recommendation_rows = [
+        row for row in record.get("recommendation_by_value", []) if isinstance(row, Mapping)
+    ]
+    tested_values = [
+        row.get("tested_value") for row in recommendation_rows if "tested_value" in row
+    ]
+    recommendation_changed = bool(
+        record.get("valuation_crowding_recommendation_changes")
+        or any(
+            bool(row.get("valuation_crowding_recommendation_changes"))
+            for row in recommendation_rows
+        )
+        or record.get("adjust_candidate")
+    )
+    remaining_data_gap = list(record.get("remaining_limitations") or [])
+    if record.get("insufficient_data"):
+        remaining_data_gap.extend(
+            _data_gap_shortfalls_for_threshold(str(record.get("threshold_id")))
+        )
+    return {
+        "threshold_id": str(record.get("threshold_id")),
+        "current_value": _json_ready(record.get("current_value")),
+        "tested_values": _json_ready(record.get("tested_values", tested_values)),
+        "recommendation": str(record.get("recommended_action")),
+        "reason": str(record.get("reason")),
+        "evidence_strength": str(record.get("evidence_strength")),
+        "recommendation_changed": recommendation_changed,
+        "current_value_changed": False,
+        "remaining_data_gap": _dedupe_preserve_order(str(item) for item in remaining_data_gap),
+        "calibration_status": str(record.get("recommended_status")),
+        "not_validated_statistical_boundary": bool(
+            record.get("not_validated_statistical_boundary", True)
+        ),
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
+
+
+def _threshold_data_gap_plan(record: Mapping[str, Any]) -> dict[str, Any]:
+    threshold_id = str(record.get("threshold_id"))
+    if threshold_id == "indicator_research.effectiveness_min_available_outcome_cases":
+        sample_quality = _first_sample_quality(record)
+        return {
+            "threshold_id": threshold_id,
+            "missing_samples": (
+                "20d mature full_advisory outcome cases with enough independent dates, "
+                "assets, and correlated clusters to satisfy leave-one robustness."
+            ),
+            "missing_horizon": "20d",
+            "missing_trace_source": "full_advisory",
+            "component_or_backtest_gap": (
+                "component/backtest rows can support diagnostics but cannot replace "
+                "the full_advisory mature-case floor."
+            ),
+            "pit_gate_limited": True,
+            "pit_gate_reason": (
+                "Earlier replay must pass PIT feature availability, data quality, and lineage "
+                "equivalence before a case can count as full_advisory."
+            ),
+            "needs_forward_maturity": True,
+            "earlier_historical_replay_can_fill": True,
+            "earlier_historical_replay_condition": (
+                "Feasible only for dates where PIT replay can produce production-equivalent "
+                "full_advisory traces; blocked dates remain data gaps rather than synthetic cases."
+            ),
+            "observed_gap": {
+                "raw_case_count": sample_quality.get("raw_case_count", 0),
+                "effective_date_count": sample_quality.get("effective_date_count", 0),
+                "effective_cluster_count": sample_quality.get("effective_cluster_count", 0),
+                "robustness_gate_passed": bool(sample_quality.get("robustness_gate_passed")),
+            },
+            "next_data_collection_action": (
+                "Extend PIT historical replay to earlier AI-regime dates and wait for 20d "
+                "forward maturity for recent full_advisory cases."
+            ),
+            "promotion_gate_allowed": False,
+        }
+    if threshold_id == "indicator_research.robustness_cluster_dominance_share":
+        sample_quality = _first_sample_quality(record)
+        return {
+            "threshold_id": threshold_id,
+            "missing_samples": (
+                "Independent non-single-cluster observations across dates/assets/clusters, "
+                "plus matching full_advisory and all_sources comparison rows."
+            ),
+            "missing_horizon": "robustness aggregation across mature 1d/5d/10d and pending 20d",
+            "missing_trace_source": "full_advisory and all_sources consistency",
+            "component_or_backtest_gap": (
+                "component/backtest evidence is useful only if it remains directionally "
+                "consistent with full_advisory rows."
+            ),
+            "pit_gate_limited": True,
+            "pit_gate_reason": (
+                "Cluster robustness needs production-equivalent full_advisory lineage; "
+                "component-only repair cannot certify promotion evidence."
+            ),
+            "needs_forward_maturity": True,
+            "earlier_historical_replay_can_fill": True,
+            "earlier_historical_replay_condition": (
+                "Earlier replay can improve cluster diversity only if PIT gates pass and the "
+                "asset universe includes more than one correlated cluster."
+            ),
+            "observed_gap": {
+                "top_cluster_share": sample_quality.get("top_cluster_share"),
+                "cluster_count": sample_quality.get("cluster_count", 0),
+                "leave_one_cluster_out_stable": bool(
+                    sample_quality.get("leave_one_cluster_out_stable")
+                ),
+                "full_advisory_only_vs_all_sources_consistent": bool(
+                    sample_quality.get("full_advisory_only_vs_all_sources_consistent")
+                ),
+            },
+            "next_data_collection_action": (
+                "Expand replay coverage across more assets/clusters and retain full_advisory "
+                "vs all_sources comparison for each mature horizon."
+            ),
+            "promotion_gate_allowed": False,
+        }
+    return {
+        "threshold_id": threshold_id,
+        "missing_samples": "No insufficient-data plan required for this threshold.",
+        "missing_horizon": "not_applicable",
+        "missing_trace_source": "not_applicable",
+        "pit_gate_limited": False,
+        "needs_forward_maturity": False,
+        "earlier_historical_replay_can_fill": False,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _threshold_keep_current_status(record: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "threshold_id": str(record.get("threshold_id")),
+        "recommendation": "keep_current_value",
+        "calibration_status": "SENSITIVITY_TESTED",
+        "not_validated_statistical_boundary": True,
+        "validated_statistical_boundary": False,
+        "current_value_changed": False,
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "reason": str(record.get("reason")),
+    }
+
+
+def _threshold_followup_summary(
+    result_rows: Sequence[Mapping[str, Any]],
+    data_gap_plan: Sequence[Mapping[str, Any]],
+    keep_current_status: Sequence[Mapping[str, Any]],
+    calibration_summary: Any,
+) -> dict[str, Any]:
+    source_summary = calibration_summary if isinstance(calibration_summary, Mapping) else {}
+    return {
+        "threshold_count": len(result_rows),
+        "insufficient_data_threshold_count": len(data_gap_plan),
+        "keep_current_value_threshold_count": len(keep_current_status),
+        "recommendation_changed_count": sum(
+            1 for row in result_rows if bool(row.get("recommendation_changed"))
+        ),
+        "sensitivity_tested_count": int(source_summary.get("sensitivity_tested_count") or 0),
+        "validated_boundary_count": 0,
+        "still_uncalibrated_high_impact_count": int(
+            source_summary.get("still_uncalibrated_high_impact_count") or 0
+        ),
+        "thresholds_still_blocking_promotion_count": int(
+            source_summary.get("thresholds_still_blocking_promotion_count") or 0
+        ),
+        "thresholds_changed_count": 0,
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _threshold_followup_issues(
+    result_rows: Sequence[Mapping[str, Any]],
+    data_gap_plan: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "threshold_followup_validation_only",
+            "message": (
+                "Follow-up plan is planning metadata only and cannot change threshold "
+                "values or approve promotion, paper-shadow, production, or official weights."
+            ),
+        }
+    ]
+    if len(result_rows) != len(INDICATOR_RESEARCH_THRESHOLD_CALIBRATION_IDS):
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "threshold_followup_incomplete_scope",
+                "message": "Follow-up plan does not contain all expected calibration thresholds.",
+                "expected_threshold_ids": list(INDICATOR_RESEARCH_THRESHOLD_CALIBRATION_IDS),
+                "observed_threshold_ids": [row.get("threshold_id") for row in result_rows],
+            }
+        )
+    if data_gap_plan:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "threshold_followup_data_gaps_remaining",
+                "message": "Some sensitivity-tested thresholds still need data before calibration.",
+                "threshold_ids": [row.get("threshold_id") for row in data_gap_plan],
+            }
+        )
+    return issues
+
+
+def _first_sample_quality(record: Mapping[str, Any]) -> dict[str, Any]:
+    sample_quality = record.get("sample_quality_impact", {})
+    if isinstance(sample_quality, Mapping):
+        for value in sample_quality.values():
+            if isinstance(value, Mapping):
+                return dict(value)
+    rows = record.get("recommendation_by_value", [])
+    if isinstance(rows, Sequence) and not isinstance(rows, str | bytes | bytearray):
+        for row in rows:
+            if isinstance(row, Mapping) and isinstance(row.get("sample_quality_impact"), Mapping):
+                return dict(row["sample_quality_impact"])
+    return {}
+
+
+def _data_gap_shortfalls_for_threshold(threshold_id: str) -> list[str]:
+    if threshold_id == "indicator_research.effectiveness_min_available_outcome_cases":
+        return [
+            "Need additional 20d mature full_advisory cases.",
+            "Need independent-date and independent-cluster robustness.",
+            (
+                "Need PIT-valid historical replay or forward maturity; "
+                "synthetic cases are not allowed."
+            ),
+        ]
+    if threshold_id == "indicator_research.robustness_cluster_dominance_share":
+        return [
+            "Need more than one correlated cluster with stable leave-one-cluster behavior.",
+            (
+                "Need full_advisory_only vs all_sources consistency before "
+                "robustness can support calibration."
+            ),
+            (
+                "Need PIT-valid replay across broader assets/clusters; "
+                "component-only evidence is insufficient."
+            ),
+        ]
+    return []
+
+
+def _dedupe_preserve_order(items: Iterable[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        text = str(item)
+        if text and text not in seen:
+            seen.add(text)
+            result.append(text)
+    return result
+
+
+def _dynamic_trend_threshold_prep_record(
+    threshold_id: str,
+    threshold: Mapping[str, Any],
+) -> dict[str, Any]:
+    current_value = _json_ready(threshold.get("current_value"))
+    tested_values = SECOND_BATCH_DYNAMIC_TREND_TESTED_VALUES[threshold_id]
+    recommendation_rows = [
+        _dynamic_trend_threshold_prep_row(threshold_id, tested_value)
+        for tested_value in tested_values
+    ]
+    return {
+        "threshold_id": threshold_id,
+        "current_value": current_value,
+        "where_used": _json_ready(list(threshold.get("where_used") or [])),
+        "decision_affecting_path": _dynamic_trend_decision_path(threshold_id),
+        "tested_values": _json_ready(tested_values),
+        "sensitivity_impact": _dynamic_trend_sensitivity_impact(threshold_id),
+        "recommendation_by_value": recommendation_rows,
+        "false_risk_off_impact": _dynamic_trend_false_risk_off_impact(threshold_id),
+        "false_risk_on_impact": _dynamic_trend_false_risk_on_impact(threshold_id),
+        "turnover_constraint_hit_impact": _dynamic_trend_turnover_impact(threshold_id),
+        "drawdown_missed_upside_impact": _dynamic_trend_drawdown_upside_impact(threshold_id),
+        "recommended_status": "CALIBRATION_PREPARED",
+        "max_allowed_status": "SENSITIVITY_TESTED",
+        "validated_boundary": False,
+        "current_value_changed": False,
+        "threshold_value_change_allowed": False,
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_effect": "none",
+        "remaining_limitations": [
+            "No observed forward outcome, turnover, or constraint-hit estimate is computed here.",
+            "Owner-reviewed sensitivity evidence is required before any threshold change.",
+            "This prep artifact cannot be used as promotion evidence.",
+        ],
+    }
+
+
+def _dynamic_trend_threshold_prep_row(
+    threshold_id: str,
+    tested_value: Mapping[str, Any],
+) -> dict[str, Any]:
+    scenario_id = str(tested_value.get("scenario_id", "unnamed_scenario"))
+    return {
+        "scenario_id": scenario_id,
+        "tested_value": _json_ready(dict(tested_value)),
+        "recommendation": "collect_evidence_only",
+        "recommendation_reason": _dynamic_trend_recommendation_reason(
+            threshold_id,
+            scenario_id,
+        ),
+        "sensitivity_impact": _dynamic_trend_scenario_sensitivity_impact(
+            threshold_id,
+            scenario_id,
+        ),
+        "false_risk_off_impact": _dynamic_trend_scenario_false_risk_off_impact(
+            threshold_id,
+            scenario_id,
+        ),
+        "false_risk_on_impact": _dynamic_trend_scenario_false_risk_on_impact(
+            threshold_id,
+            scenario_id,
+        ),
+        "turnover_constraint_hit_impact": _dynamic_trend_scenario_turnover_impact(
+            threshold_id,
+            scenario_id,
+        ),
+        "drawdown_missed_upside_impact": _dynamic_trend_scenario_drawdown_upside_impact(
+            threshold_id,
+            scenario_id,
+        ),
+        "evidence_required": [
+            "forward_return_by_horizon",
+            "forward_drawdown_by_horizon",
+            "missed_upside_case_labels",
+            "false_risk_off_or_false_risk_on_case_labels",
+            "turnover_and_constraint_hit_rows",
+        ],
+        "current_value_changed": False,
+        "validated_boundary": False,
+        "promotion_gate_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _dynamic_trend_threshold_prep_summary(
+    prep_records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "prepared_threshold_count": len(prep_records),
+        "target_threshold_ids": [record.get("threshold_id") for record in prep_records],
+        "sensitivity_tested_count": 0,
+        "calibration_prepared_count": len(prep_records),
+        "validated_boundary_count": 0,
+        "thresholds_changed_count": 0,
+        "max_allowed_status": "SENSITIVITY_TESTED",
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _dynamic_trend_threshold_prep_issues(
+    prep_records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "dynamic_trend_threshold_prep_only",
+            "message": (
+                "Second-batch threshold calibration prep is planning metadata only; "
+                "it cannot change current values or approve production, paper-shadow, "
+                "official weights, or promotion."
+            ),
+        }
+    ]
+    if len(prep_records) != len(SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS):
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "dynamic_trend_threshold_prep_incomplete_scope",
+                "expected_threshold_ids": list(SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS),
+                "observed_threshold_ids": [record.get("threshold_id") for record in prep_records],
+            }
+        )
+    return issues
+
+
+def _dynamic_trend_decision_path(threshold_id: str) -> list[str]:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return [
+            "CompositeTrendScore / RiskRegimeScore / GrowthLeadershipScore",
+            "dynamic_allocation_policy.regime_selection_rules.risk_off",
+            "dynamic_allocation_policy.regime_selection_rules.growth_underperformance",
+            "risk_off or growth_underperformance candidate regime weights",
+            "weak_composite_defense / risk_regime_defense trend overlays",
+            "exposure constraints and rebalance turnover gates",
+            "validation-only allocation recommendation",
+        ]
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return [
+            (
+                "CompositeTrendScore / RiskRegimeScore / GrowthLeadershipScore / "
+                "SemiconductorLeadershipScore"
+            ),
+            "dynamic_allocation_policy.regime_selection_rules.risk_on",
+            "growth_leadership_overweight / semiconductor_leadership_overweight overlays",
+            "risk_on or semiconductor_leadership candidate regime weights",
+            "exposure constraints and rebalance turnover gates",
+            "validation-only allocation recommendation",
+        ]
+    return [
+        "trend_calibration composite score",
+        "trend_calibration.score_bands bucket assignment",
+        "forward attribution / drawdown bucket diagnostics",
+        "candidate-only trend signal config registry",
+        "dynamic allocation policy input review",
+        "manual owner review before any production interpretation",
+    ]
+
+
+def _dynamic_trend_sensitivity_impact(threshold_id: str) -> dict[str, Any]:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return {
+            "primary_direction": (
+                "lower values reduce defensive triggers; " "higher values expand defensive triggers"
+            ),
+            "decision_surface": "risk_off and growth_underperformance regime selection",
+            "expected_observable": (
+                "defensive regime frequency, cash allocation, and "
+                "growth/semiconductor underweight frequency"
+            ),
+        }
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return {
+            "primary_direction": (
+                "higher values require stronger confirmation; "
+                "lower values expand risk-on triggers"
+            ),
+            "decision_surface": "risk_on regime selection and leadership overlays",
+            "expected_observable": (
+                "risk-on regime frequency, QQQ/SMH overweight frequency, "
+                "and confirmation failures"
+            ),
+        }
+    return {
+        "primary_direction": (
+            "band boundary shifts change score bucket labels without changing raw scores"
+        ),
+        "decision_surface": (
+            "trend calibration bucket attribution and candidate signal config review"
+        ),
+        "expected_observable": (
+            "bucket membership, forward attribution lift, drawdown by bucket, "
+            "and missed-upside by bucket"
+        ),
+    }
+
+
+def _dynamic_trend_false_risk_off_impact(threshold_id: str) -> str:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return "Higher risk-off maxima can increase false defensive shifts and missed upside."
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return "Stricter risk-on minima can indirectly increase false risk-off or neutral holds."
+    return "Higher risk-off/weak band boundaries can label more observations as defensive."
+
+
+def _dynamic_trend_false_risk_on_impact(threshold_id: str) -> str:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return "Lower risk-off maxima can leave weak regimes classified as neutral or risk-on."
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return "Lower risk-on minima can increase false aggressive shifts before confirmation."
+    return "Lower risk-on band boundaries can label more observations as risk-on."
+
+
+def _dynamic_trend_turnover_impact(threshold_id: str) -> str:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return (
+            "Looser defensive triggers can raise cash-shift turnover and hit "
+            "max rebalance delta or cash caps."
+        )
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return (
+            "Looser confirmation can raise QQQ/SMH overlay turnover and hit "
+            "sleeve/cash constraints."
+        )
+    return "Narrower bands can increase bucket churn and downstream candidate config turnover."
+
+
+def _dynamic_trend_drawdown_upside_impact(threshold_id: str) -> str:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return (
+            "Looser defensive triggers may reduce drawdown but increase missed "
+            "upside; stricter triggers invert that risk."
+        )
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return (
+            "Looser risk-on triggers may improve upside capture but worsen "
+            "drawdown; stricter triggers may miss upside."
+        )
+    return (
+        "Defensive band shifts can reduce drawdown at the cost of missed upside; "
+        "risk-on shifts can do the reverse."
+    )
+
+
+def _dynamic_trend_recommendation_reason(threshold_id: str, scenario_id: str) -> str:
+    del scenario_id
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return (
+            "Risk-off thresholds need labeled false defensive shifts, "
+            "forward drawdown, and missed-upside evidence."
+        )
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return (
+            "Risk-on thresholds need confirmation failure, upside capture, "
+            "drawdown, and turnover evidence."
+        )
+    return (
+        "Trend score bands need bucket-level forward attribution, drawdown, "
+        "churn, and owner-reviewed labels."
+    )
+
+
+def _dynamic_trend_scenario_sensitivity_impact(threshold_id: str, scenario_id: str) -> str:
+    if "current_policy_baseline" in scenario_id:
+        return "Baseline scenario for comparison; no threshold value change."
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return (
+            "Expected to reduce defensive classifications."
+            if "stricter" in scenario_id
+            else "Expected to increase defensive classifications."
+        )
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return (
+            "Expected to reduce risk-on classifications."
+            if "stricter" in scenario_id
+            else "Expected to increase risk-on classifications."
+        )
+    if "lower_risk_on" in scenario_id:
+        return "Expected to increase risk-on bucket membership."
+    if "higher_confirmation" in scenario_id or "wider_neutral" in scenario_id:
+        return "Expected to reduce or delay risk-on bucket membership."
+    return "Expected to change trend bucket membership."
+
+
+def _dynamic_trend_scenario_false_risk_off_impact(
+    threshold_id: str,
+    scenario_id: str,
+) -> str:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return "lower" if "stricter" in scenario_id else "higher"
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return "higher" if "stricter" in scenario_id else "lower"
+    return (
+        "higher"
+        if "higher_confirmation" in scenario_id or "wider_neutral" in scenario_id
+        else "lower"
+    )
+
+
+def _dynamic_trend_scenario_false_risk_on_impact(
+    threshold_id: str,
+    scenario_id: str,
+) -> str:
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return "higher" if "stricter" in scenario_id else "lower"
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return "lower" if "stricter" in scenario_id else "higher"
+    return "higher" if "lower_risk_on" in scenario_id else "lower"
+
+
+def _dynamic_trend_scenario_turnover_impact(threshold_id: str, scenario_id: str) -> str:
+    if "current_policy_baseline" in scenario_id:
+        return "baseline"
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        return "lower" if "stricter" in scenario_id else "higher"
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        return "lower" if "stricter" in scenario_id else "higher"
+    return "higher" if "wider_neutral" not in scenario_id else "mixed"
+
+
+def _dynamic_trend_scenario_drawdown_upside_impact(
+    threshold_id: str,
+    scenario_id: str,
+) -> dict[str, str]:
+    if "current_policy_baseline" in scenario_id:
+        return {"drawdown_impact": "baseline", "missed_upside_impact": "baseline"}
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        if "stricter" in scenario_id:
+            return {"drawdown_impact": "potentially_worse", "missed_upside_impact": "lower"}
+        return {"drawdown_impact": "potentially_better", "missed_upside_impact": "higher"}
+    if threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        if "stricter" in scenario_id:
+            return {"drawdown_impact": "potentially_better", "missed_upside_impact": "higher"}
+        return {"drawdown_impact": "potentially_worse", "missed_upside_impact": "lower"}
+    if "lower_risk_on" in scenario_id:
+        return {"drawdown_impact": "potentially_worse", "missed_upside_impact": "lower"}
+    return {"drawdown_impact": "potentially_better", "missed_upside_impact": "higher"}
+
+
+def _load_dynamic_trend_policy_inputs() -> dict[str, Any]:
+    dynamic_policy = safe_load_yaml_path(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH)
+    trend_policy = safe_load_yaml_path(DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH)
+    return {
+        "dynamic_allocation_policy_path": str(DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH),
+        "trend_calibration_policy_path": str(DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH),
+        "dynamic_allocation_policy": (
+            dict(dynamic_policy) if isinstance(dynamic_policy, Mapping) else {}
+        ),
+        "trend_calibration_policy": dict(trend_policy) if isinstance(trend_policy, Mapping) else {},
+    }
+
+
+def _dynamic_trend_sensitivity_cases(
+    *,
+    registry: IndicatorResearchRegistry,
+    trace_rows: Sequence[Mapping[str, Any]],
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    gate_availability: Sequence[Mapping[str, Any]],
+    outcome_ticker: str,
+    trace_contract_version: str,
+) -> list[dict[str, Any]]:
+    availability_by_key = {
+        (
+            str(record.get("date") or ""),
+            str(record.get("asset") or DEFAULT_TRACE_ASSET).upper(),
+        ): record
+        for record in gate_availability
+    }
+    grouped: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in trace_rows:
+        row_date = str(row.get("date") or "")
+        if not row_date:
+            continue
+        asset = str(row.get("asset") or DEFAULT_TRACE_ASSET).upper()
+        grouped[(row_date, asset)].append(row)
+    cases = []
+    for (row_date, asset), rows in sorted(grouped.items()):
+        parsed_date = _parse_iso_date(row_date)
+        scores = _dynamic_trend_scores_for_rows(rows)
+        score_sources = _dynamic_trend_score_sources_for_rows(rows)
+        price_ticker, missing_asset_mapping = _price_ticker_mapping_for_asset(
+            asset,
+            price_series_by_ticker,
+            fallback_ticker=outcome_ticker,
+        )
+        outcome_payload = _forward_outcome_payload_with_availability(
+            price_series_by_ticker.get(price_ticker, []),
+            parsed_date,
+            missing_asset_mapping=missing_asset_mapping,
+        )
+        availability = availability_by_key.get((row_date, asset)) or availability_by_key.get(
+            (row_date, DEFAULT_TRACE_ASSET)
+        )
+        trace_source = str(
+            (availability or {}).get("trace_source") or COMPONENT_VALIDATION_TRACE_SOURCE
+        )
+        cases.append(
+            {
+                "case_id": f"dynamic_trend:{row_date}:{asset}",
+                "date": row_date,
+                "asset": asset,
+                "outcome_ticker": price_ticker,
+                "price_asset_mapping_missing": missing_asset_mapping,
+                "market_regime": registry.market_regime.regime_id,
+                "correlated_asset_cluster": _asset_cluster_id(asset),
+                "event_window_ids": _event_window_ids_for_date(row_date),
+                "scores": scores,
+                "score_sources": score_sources,
+                "missing_score_fields": _dynamic_trend_missing_score_fields(scores),
+                "proxy_score_fields": _dynamic_trend_proxy_score_fields(score_sources),
+                "trace_row_count": len(rows),
+                "constraint_hit": any(bool(row.get("constraint_hit")) for row in rows),
+                "trace_source": trace_source,
+                "confidence": str(
+                    (availability or {}).get("confidence") or TRACE_CONFIDENCE_COMPONENT
+                ),
+                "full_advisory_trace_eligible": bool(
+                    (availability or {}).get("full_advisory_trace_eligible")
+                ),
+                "component_validation_trace_eligible": bool(
+                    (availability or {}).get("component_validation_trace_eligible", True)
+                ),
+                "bridge_trace_eligible": trace_source == BACKTEST_TRACE_BRIDGE_SOURCE,
+                "outcomes": outcome_payload["outcomes"],
+                "outcome_windows": outcome_payload["windows"],
+                "outcome_status": outcome_payload["outcome_status"],
+                "outcome_missing": outcome_payload["outcome_missing"],
+                "outcome_not_mature": outcome_payload["outcome_not_mature"],
+                "outcome_join_key": _outcome_join_key(
+                    as_of_date=row_date,
+                    decision_time=row_date,
+                    asset=asset,
+                    scenario="dynamic_trend_threshold_sensitivity",
+                    trace_source=trace_source,
+                    trace_contract_version=trace_contract_version,
+                ),
+                "promotion_gate_allowed": False,
+                "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+            }
+        )
+    return cases
+
+
+def _dynamic_trend_coverage_extension_cases(
+    *,
+    coverage_extension_root: Path | None,
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    outcome_ticker: str,
+    trace_contract_version: str,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+    asset_universe: str | None,
+) -> list[dict[str, Any]]:
+    if coverage_extension_root is None or not coverage_extension_root.exists():
+        return []
+    requested_assets = _parse_asset_universe(asset_universe)
+    coverage_assets = requested_assets or list(DYNAMIC_TREND_COVERAGE_EXTENSION_ASSETS)
+    coverage_assets = [
+        asset.upper()
+        for asset in coverage_assets
+        if _dynamic_trend_weight_price_ticker(asset, price_series_by_ticker) is not None
+    ]
+    if not coverage_assets:
+        return []
+    records = _dynamic_trend_campaign_control_records(
+        coverage_extension_root,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+    )
+    cases: list[dict[str, Any]] = []
+    for record in records:
+        row_date = str(record.get("date") or "")
+        parsed_date = _parse_iso_date(row_date)
+        if parsed_date is None:
+            continue
+        scores = _dynamic_trend_coverage_bridge_scores(
+            record,
+            parsed_date,
+            price_series_by_ticker,
+        )
+        score_sources = {
+            "RiskRegimeScore": "coverage_bridge:research_campaign_control_window.risk_score",
+            "CompositeTrendScore": "coverage_bridge_proxy:cached_price_trailing_momentum",
+            "GrowthLeadershipScore": "coverage_bridge_proxy:QQQ/SPY_trailing_relative_strength",
+            "SemiconductorLeadershipScore": (
+                "coverage_bridge_proxy:SMH/SPY_trailing_relative_strength"
+            ),
+        }
+        regime = _dynamic_trend_realized_coverage_regime(parsed_date, price_series_by_ticker)
+        scenario = str(record.get("scenario") or "unknown_control_window")
+        for asset in coverage_assets:
+            price_ticker, missing_asset_mapping = _price_ticker_mapping_for_asset(
+                asset,
+                price_series_by_ticker,
+                fallback_ticker=outcome_ticker,
+            )
+            outcome_payload = _forward_outcome_payload_with_availability(
+                price_series_by_ticker.get(price_ticker, []),
+                parsed_date,
+                missing_asset_mapping=missing_asset_mapping,
+            )
+            event_window_ids = _event_window_ids_for_date(row_date)
+            event_window_ids.extend(
+                [
+                    f"campaign_control:{scenario}",
+                    f"coverage_regime:{regime}",
+                ]
+            )
+            cases.append(
+                {
+                    "case_id": f"dynamic_trend_coverage:{scenario}:{row_date}:{asset}",
+                    "date": row_date,
+                    "asset": asset,
+                    "outcome_ticker": price_ticker,
+                    "price_asset_mapping_missing": missing_asset_mapping,
+                    "market_regime": regime,
+                    "correlated_asset_cluster": _asset_cluster_id(asset),
+                    "event_window_ids": sorted(set(event_window_ids)),
+                    "scores": scores,
+                    "score_sources": score_sources,
+                    "missing_score_fields": _dynamic_trend_missing_score_fields(scores),
+                    "proxy_score_fields": _dynamic_trend_proxy_score_fields(score_sources),
+                    "trace_row_count": 0,
+                    "constraint_hit": False,
+                    "trace_source": BACKTEST_TRACE_BRIDGE_SOURCE,
+                    "confidence": TRACE_CONFIDENCE_BRIDGE,
+                    "full_advisory_trace_eligible": False,
+                    "component_validation_trace_eligible": False,
+                    "bridge_trace_eligible": True,
+                    "coverage_extension_case": True,
+                    "coverage_extension_source": "research_campaign_control_window",
+                    "coverage_extension_scenario": scenario,
+                    "coverage_extension_source_path": str(record.get("source_path") or ""),
+                    "coverage_extension_regime_source": (
+                        "cached_price_forward_return_bucket_for_validation_coverage"
+                    ),
+                    "campaign_risk_state": str(record.get("risk_state") or ""),
+                    "campaign_risk_score": _optional_float(record.get("risk_score")),
+                    "outcomes": outcome_payload["outcomes"],
+                    "outcome_windows": outcome_payload["windows"],
+                    "outcome_status": outcome_payload["outcome_status"],
+                    "outcome_missing": outcome_payload["outcome_missing"],
+                    "outcome_not_mature": outcome_payload["outcome_not_mature"],
+                    "outcome_join_key": _outcome_join_key(
+                        as_of_date=row_date,
+                        decision_time=row_date,
+                        asset=asset,
+                        scenario=f"dynamic_trend_coverage_extension:{scenario}",
+                        trace_source=BACKTEST_TRACE_BRIDGE_SOURCE,
+                        trace_contract_version=trace_contract_version,
+                    ),
+                    "promotion_gate_allowed": False,
+                    "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+                }
+            )
+    return cases
+
+
+def _dynamic_trend_campaign_control_records(
+    coverage_extension_root: Path,
+    *,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+) -> list[dict[str, Any]]:
+    records_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for path in sorted(coverage_extension_root.rglob("*control_risk_signal_*.csv")):
+        scenario = path.name.removeprefix("b2_control_").split("_control_risk_signal_")[0]
+        try:
+            with path.open("r", encoding="utf-8", newline="") as handle:
+                reader = csv.DictReader(handle)
+                for row in reader:
+                    row_date = str(row.get("date") or "")
+                    if not _dynamic_trend_date_allowed(
+                        row_date,
+                        start_date=start_date,
+                        end_date=end_date,
+                        event_window_start=event_window_start,
+                        event_window_end=event_window_end,
+                    ):
+                        continue
+                    key = (scenario, row_date)
+                    candidate = {
+                        "scenario": scenario,
+                        "date": row_date,
+                        "risk_score": row.get("risk_score"),
+                        "risk_state": row.get("risk_state"),
+                        "source_path": path,
+                    }
+                    existing = records_by_key.get(key)
+                    if existing is None or str(path) < str(existing.get("source_path") or ""):
+                        records_by_key[key] = candidate
+        except (OSError, csv.Error, UnicodeDecodeError):
+            continue
+    return [records_by_key[key] for key in sorted(records_by_key)]
+
+
+def _dynamic_trend_date_allowed(
+    row_date: str,
+    *,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+) -> bool:
+    parsed = _parse_iso_date(row_date)
+    if parsed is None:
+        return False
+    lower = _parse_iso_date(start_date or event_window_start or "")
+    upper = _parse_iso_date(end_date or event_window_end or "")
+    if lower is not None and parsed < lower:
+        return False
+    if upper is not None and parsed > upper:
+        return False
+    return True
+
+
+def _dynamic_trend_coverage_bridge_scores(
+    record: Mapping[str, Any],
+    signal_date: date,
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+) -> dict[str, float | None]:
+    qqq_momentum = _dynamic_trend_trailing_return(
+        price_series_by_ticker.get("QQQ", []), signal_date, 20
+    )
+    spy_momentum = _dynamic_trend_trailing_return(
+        price_series_by_ticker.get("SPY", []), signal_date, 20
+    )
+    composite_inputs = [value for value in (qqq_momentum, spy_momentum) if value is not None]
+    composite = _dynamic_trend_score_from_return(_mean(composite_inputs), multiplier=250.0)
+    growth = _dynamic_trend_relative_strength_score(
+        price_series_by_ticker,
+        "QQQ",
+        "SPY",
+        signal_date,
+    )
+    semiconductor = _dynamic_trend_relative_strength_score(
+        price_series_by_ticker,
+        "SMH",
+        "SPY",
+        signal_date,
+    )
+    return {
+        "CompositeTrendScore": composite,
+        "RiskRegimeScore": _optional_float(record.get("risk_score")),
+        "GrowthLeadershipScore": growth,
+        "SemiconductorLeadershipScore": semiconductor,
+    }
+
+
+def _dynamic_trend_trailing_return(
+    price_series: Sequence[tuple[date, float]],
+    signal_date: date,
+    lookback: int,
+) -> float | None:
+    index = next(
+        (idx for idx, (price_date, _) in enumerate(price_series) if price_date >= signal_date),
+        None,
+    )
+    if index is None or index < lookback:
+        return None
+    current = price_series[index][1]
+    previous = price_series[index - lookback][1]
+    if previous <= 0:
+        return None
+    return current / previous - 1
+
+
+def _dynamic_trend_score_from_return(
+    value: float | None,
+    *,
+    multiplier: float,
+) -> float | None:
+    if value is None:
+        return None
+    return max(0.0, min(100.0, 50.0 + value * multiplier))
+
+
+def _dynamic_trend_relative_strength_score(
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    asset: str,
+    benchmark: str,
+    signal_date: date,
+) -> float | None:
+    asset_return = _dynamic_trend_trailing_return(
+        price_series_by_ticker.get(asset, []),
+        signal_date,
+        20,
+    )
+    benchmark_return = _dynamic_trend_trailing_return(
+        price_series_by_ticker.get(benchmark, []),
+        signal_date,
+        20,
+    )
+    if asset_return is None or benchmark_return is None:
+        return None
+    return _dynamic_trend_score_from_return(asset_return - benchmark_return, multiplier=500.0)
+
+
+def _dynamic_trend_realized_coverage_regime(
+    signal_date: date,
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+) -> str:
+    qqq_outcome = _forward_outcome_payload_with_availability(
+        price_series_by_ticker.get("QQQ", []),
+        signal_date,
+    )
+    returns = qqq_outcome["outcomes"]
+    return_5d = _optional_float(returns.get("return_5d"))
+    return_20d = _optional_float(returns.get("return_20d"))
+    if (return_5d is not None and return_5d <= -0.02) or (
+        return_20d is not None and return_20d <= -0.05
+    ):
+        return "coverage_bridge_pullback"
+    if (return_5d is not None and return_5d >= 0.02) or (
+        return_20d is not None and return_20d >= 0.05
+    ):
+        return "coverage_bridge_uptrend"
+    return "coverage_bridge_neutral"
+
+
+def _dynamic_trend_scores_for_rows(rows: Sequence[Mapping[str, Any]]) -> dict[str, float | None]:
+    trend_rows = [row for row in rows if str(row.get("daily_component_id") or "") == "trend"]
+    risk_rows = [
+        row for row in rows if str(row.get("daily_component_id") or "") == "risk_sentiment"
+    ]
+    trend_score = _first_optional_score(trend_rows)
+    risk_score = _first_optional_score(risk_rows)
+    semiconductor_score = _leadership_proxy_from_signal_scores(
+        trend_rows,
+        subject="SMH/SPY",
+    )
+    growth_score = _leadership_proxy_from_signal_scores(
+        trend_rows,
+        subject="QQQ/SPY",
+    )
+    return {
+        "CompositeTrendScore": trend_score,
+        "RiskRegimeScore": risk_score,
+        "GrowthLeadershipScore": growth_score,
+        "SemiconductorLeadershipScore": semiconductor_score,
+    }
+
+
+def _dynamic_trend_score_sources_for_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> dict[str, str]:
+    sources: dict[str, str] = {}
+    if any(str(row.get("daily_component_id") or "") == "trend" for row in rows):
+        sources["CompositeTrendScore"] = "component_trace:trend.normalized_indicator_score"
+    if any(str(row.get("daily_component_id") or "") == "risk_sentiment" for row in rows):
+        sources["RiskRegimeScore"] = "component_trace:risk_sentiment.normalized_indicator_score"
+    if (
+        _leadership_proxy_from_signal_scores(
+            [row for row in rows if str(row.get("daily_component_id") or "") == "trend"],
+            subject="SMH/SPY",
+        )
+        is not None
+    ):
+        sources["SemiconductorLeadershipScore"] = (
+            "component_trace_proxy:trend.signal_scores.relative_strength_return_20d.SMH/SPY"
+        )
+    if (
+        _leadership_proxy_from_signal_scores(
+            [row for row in rows if str(row.get("daily_component_id") or "") == "trend"],
+            subject="QQQ/SPY",
+        )
+        is not None
+    ):
+        sources["GrowthLeadershipScore"] = (
+            "component_trace_proxy:trend.signal_scores.relative_strength_return_20d.QQQ/SPY"
+        )
+    return sources
+
+
+def _first_optional_score(rows: Sequence[Mapping[str, Any]]) -> float | None:
+    for row in rows:
+        value = _optional_float(row.get("normalized_indicator_score"))
+        if value is not None:
+            return value
+    return None
+
+
+def _leadership_proxy_from_signal_scores(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    subject: str,
+) -> float | None:
+    for row in rows:
+        signal_scores = row.get("signal_scores", [])
+        if not isinstance(signal_scores, Sequence) or isinstance(signal_scores, (str, bytes)):
+            continue
+        for signal in signal_scores:
+            if not isinstance(signal, Mapping):
+                continue
+            if str(signal.get("subject") or "").upper() != subject.upper():
+                continue
+            if str(signal.get("feature") or "") != "relative_strength_return_20d":
+                continue
+            value = _optional_float(signal.get("normalized_indicator_score"))
+            if value is None:
+                continue
+            return value * 100.0 if value <= 1.0 else value
+    return None
+
+
+def _dynamic_trend_missing_score_fields(
+    scores: Mapping[str, float | None],
+) -> list[str]:
+    return [key for key, value in sorted(scores.items()) if value is None]
+
+
+def _dynamic_trend_proxy_score_fields(score_sources: Mapping[str, str]) -> list[str]:
+    return [
+        key
+        for key, source in sorted(score_sources.items())
+        if "proxy" in str(source).lower() or "component_trace" in str(source).lower()
+    ]
+
+
+def _dynamic_trend_threshold_sensitivity_record(
+    threshold_id: str,
+    *,
+    threshold: Mapping[str, Any],
+    registry: IndicatorResearchRegistry,
+    cases: Sequence[Mapping[str, Any]],
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    policy_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    variants = [
+        _dynamic_trend_variant_review(
+            threshold_id=threshold_id,
+            variant=variant,
+            cases=cases,
+            price_series_by_ticker=price_series_by_ticker,
+            policy_config=policy_config,
+        )
+        for variant in _dynamic_trend_sensitivity_variant_specs(threshold_id, threshold)
+    ]
+    _apply_dynamic_trend_drawdown_preservation(variants)
+    sample_quality = dict(variants[0].get("sample_quality_breakdown", {})) if variants else {}
+    recommendation = _dynamic_trend_record_recommendation(
+        variants,
+        sample_quality=sample_quality,
+    )
+    return {
+        "threshold_id": threshold_id,
+        "current_value": _json_ready(threshold.get("current_value")),
+        "where_used": _json_ready(list(threshold.get("where_used") or [])),
+        "decision_affecting_path": _dynamic_trend_decision_path(threshold_id),
+        "tested_values": [_json_ready(variant["tested_value"]) for variant in variants],
+        "scenario_variants": variants,
+        "sample_quality": sample_quality,
+        "recommendation": recommendation,
+        "recommended_status": (
+            "SENSITIVITY_TESTED"
+            if recommendation["validation_recommendation"] != "insufficient_data"
+            else "UNCALIBRATED_DEFAULT"
+        ),
+        "calibration_status": (
+            "SENSITIVITY_TESTED"
+            if recommendation["validation_recommendation"] != "insufficient_data"
+            else "UNCALIBRATED_DEFAULT"
+        ),
+        "evidence_strength": _dynamic_trend_evidence_strength(sample_quality),
+        "remaining_limitations": _dynamic_trend_remaining_limitations(
+            threshold_id,
+            sample_quality,
+        ),
+        "not_validated_statistical_boundary": True,
+        "validated_boundary": False,
+        "current_value_changed": False,
+        "threshold_value_change_allowed": False,
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_effect": "none",
+        "market_regime": registry.market_regime.regime_id,
+    }
+
+
+def _dynamic_trend_sensitivity_variant_specs(
+    threshold_id: str,
+    threshold: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    current = dict(threshold.get("current_value") or {})
+    scenarios = {
+        str(item.get("scenario_id")): dict(item)
+        for item in SECOND_BATCH_DYNAMIC_TREND_TESTED_VALUES[threshold_id]
+        if isinstance(item, Mapping)
+    }
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        mapping = [
+            ("current_value", "current_policy_baseline"),
+            ("stricter", "stricter_defensive_trigger"),
+            ("relaxed", "moderately_looser_defensive_trigger"),
+            ("capped_or_smoothed_candidate", "broad_defensive_trigger"),
+            ("no_change_baseline", "current_policy_baseline"),
+        ]
+    elif threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        mapping = [
+            ("current_value", "current_policy_baseline"),
+            ("stricter", "stricter_risk_on_confirmation"),
+            ("relaxed", "moderately_looser_risk_on_confirmation"),
+            ("capped_or_smoothed_candidate", "broad_risk_on_confirmation"),
+            ("no_change_baseline", "current_policy_baseline"),
+        ]
+    else:
+        mapping = [
+            ("current_value", "current_policy_baseline"),
+            ("stricter", "higher_confirmation_boundary"),
+            ("relaxed", "lower_risk_on_boundary"),
+            ("capped_or_smoothed_candidate", "wider_neutral_band"),
+            ("no_change_baseline", "current_policy_baseline"),
+        ]
+    variants = []
+    for variant_kind, scenario_id in mapping:
+        tested_value = dict(scenarios.get(scenario_id) or current)
+        tested_value.setdefault("scenario_id", scenario_id)
+        variants.append(
+            {
+                "variant_id": f"{variant_kind}:{scenario_id}",
+                "variant_kind": variant_kind,
+                "scenario_id": scenario_id,
+                "tested_value": tested_value,
+                "current_value_changed": False,
+                "threshold_value_change_allowed": False,
+            }
+        )
+    return variants
+
+
+def _dynamic_trend_variant_review(
+    *,
+    threshold_id: str,
+    variant: Mapping[str, Any],
+    cases: Sequence[Mapping[str, Any]],
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    policy_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    evaluated = [
+        _dynamic_trend_evaluate_case_variant(
+            threshold_id=threshold_id,
+            variant=variant,
+            case=case,
+            price_series_by_ticker=price_series_by_ticker,
+            policy_config=policy_config,
+        )
+        for case in cases
+    ]
+    metrics = _dynamic_trend_metrics_for_evaluated_cases(evaluated)
+    sample_quality = _dynamic_trend_variant_sample_quality(evaluated)
+    return {
+        "variant_id": variant["variant_id"],
+        "variant_kind": variant["variant_kind"],
+        "scenario_id": variant["scenario_id"],
+        "tested_value": _json_ready(variant["tested_value"]),
+        **metrics,
+        "mature_date_count": sample_quality["mature_date_count"],
+        "mature_case_count": sample_quality["mature_case_count"],
+        "full_advisory_case_count": sample_quality["full_advisory_case_count"],
+        "cluster_count": sample_quality["cluster_count"],
+        "regime_count": sample_quality["regime_count"],
+        "sample_quality_breakdown": sample_quality,
+        "recommendation": _dynamic_trend_variant_recommendation(sample_quality),
+        "promotion_gate_by_value": False,
+        "calibration_status": "SENSITIVITY_TESTED" if evaluated else "UNCALIBRATED_DEFAULT",
+        "validated_boundary": False,
+        "current_value_changed": False,
+        "threshold_value_change_allowed": False,
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_effect": "none",
+        "by_horizon": _dynamic_trend_by_horizon(evaluated),
+        "by_asset": _dynamic_trend_group_rows(evaluated, "asset"),
+        "by_date": _dynamic_trend_group_rows(evaluated, "date"),
+        "by_regime": _dynamic_trend_group_rows(evaluated, "market_regime"),
+        "by_event_window": _dynamic_trend_event_window_rows(evaluated),
+        "full_advisory_only": _dynamic_trend_group_summary(
+            [case for case in evaluated if case.get("full_advisory_trace_eligible")]
+        ),
+        "component_backtest_bridge": _dynamic_trend_group_rows(evaluated, "trace_source"),
+        "by_correlated_asset_cluster": _dynamic_trend_group_rows(
+            evaluated,
+            "correlated_asset_cluster",
+        ),
+    }
+
+
+def _dynamic_trend_evaluate_case_variant(
+    *,
+    threshold_id: str,
+    variant: Mapping[str, Any],
+    case: Mapping[str, Any],
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    policy_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    decision = _dynamic_trend_case_decision(
+        threshold_id,
+        variant.get("tested_value", {}),
+        case,
+        policy_config=policy_config,
+    )
+    weights = _dynamic_trend_weights_for_state(decision["regime_state"], policy_config)
+    returns_by_horizon = {
+        horizon: _dynamic_trend_portfolio_return(
+            price_series_by_ticker,
+            signal_date=_parse_iso_date(str(case.get("date") or "")),
+            weights=weights,
+            horizon=horizon,
+        )
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    portfolio_path = _dynamic_trend_portfolio_path(
+        price_series_by_ticker,
+        signal_date=_parse_iso_date(str(case.get("date") or "")),
+        weights=weights,
+        horizon=20,
+    )
+    max_drawdown = _max_drawdown(portfolio_path) if portfolio_path else None
+    reference_return = _dynamic_trend_reference_return(returns_by_horizon)
+    false_risk_off = bool(decision["risk_off_triggered"] and reference_return is not None)
+    false_risk_off = false_risk_off and reference_return > 0
+    false_risk_on = bool(decision["risk_on_confirmed"] and reference_return is not None)
+    false_risk_on = false_risk_on and (
+        reference_return < 0 or (max_drawdown is not None and max_drawdown < -0.05)
+    )
+    missed_upside = bool(decision["risk_off_triggered"] and reference_return is not None)
+    missed_upside = missed_upside and reference_return > 0.02
+    constraint_hit = bool(case.get("constraint_hit")) or _dynamic_trend_constraint_hit(
+        weights,
+        policy_config,
+    )
+    return {
+        **dict(case),
+        "variant_id": variant.get("variant_id"),
+        "variant_kind": variant.get("variant_kind"),
+        "scenario_id": variant.get("scenario_id"),
+        "regime_state": decision["regime_state"],
+        "trend_band": decision.get("trend_band"),
+        "target_weights": weights,
+        "portfolio_returns": returns_by_horizon,
+        "portfolio_max_drawdown_20d": max_drawdown,
+        "risk_off_triggered": decision["risk_off_triggered"],
+        "risk_on_confirmed": decision["risk_on_confirmed"],
+        "false_risk_off": false_risk_off,
+        "false_risk_on": false_risk_on,
+        "missed_upside": missed_upside,
+        "constraint_hit": constraint_hit,
+        "decision_missing_fields": decision["missing_fields"],
+        "decision_score_fields_used": decision["score_fields_used"],
+        "promotion_gate_allowed": False,
+    }
+
+
+def _dynamic_trend_case_decision(
+    threshold_id: str,
+    tested_value: Any,
+    case: Mapping[str, Any],
+    *,
+    policy_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    values = dict(tested_value) if isinstance(tested_value, Mapping) else {}
+    scores = case.get("scores", {})
+    scores = scores if isinstance(scores, Mapping) else {}
+    risk_off_current = _dynamic_trend_current_risk_off_thresholds(policy_config)
+    risk_on_current = _dynamic_trend_current_risk_on_thresholds(policy_config)
+    missing_fields: list[str] = []
+    fields_used: list[str] = []
+    trend_band = None
+    if threshold_id == "dynamic_allocation.risk_off_score_thresholds":
+        risk_off_triggered, used, missing = _dynamic_trend_any_score_at_or_below(
+            scores,
+            {
+                "RiskRegimeScore": values.get("risk_regime_score_max"),
+                "CompositeTrendScore": values.get("composite_trend_score_max"),
+                "GrowthLeadershipScore": values.get("growth_leadership_score_max"),
+            },
+        )
+        risk_on_confirmed, risk_on_used, risk_on_missing = _dynamic_trend_all_scores_at_or_above(
+            scores,
+            risk_on_current,
+        )
+        fields_used = used + risk_on_used
+        missing_fields = missing + risk_on_missing
+    elif threshold_id == "dynamic_allocation.risk_on_confirmation_thresholds":
+        risk_off_triggered, risk_off_used, risk_off_missing = _dynamic_trend_any_score_at_or_below(
+            scores,
+            risk_off_current,
+        )
+        risk_on_confirmed, used, missing = _dynamic_trend_all_scores_at_or_above(
+            scores,
+            {
+                "CompositeTrendScore": values.get("composite_trend_score_min"),
+                "RiskRegimeScore": values.get("risk_regime_score_min"),
+                "GrowthLeadershipScore": values.get("growth_leadership_score_min"),
+                "SemiconductorLeadershipScore": values.get("semiconductor_leadership_score_min"),
+            },
+        )
+        fields_used = risk_off_used + used
+        missing_fields = risk_off_missing + missing
+    else:
+        composite = _optional_float(scores.get("CompositeTrendScore"))
+        trend_band = _dynamic_trend_score_band(composite, values)
+        risk_off_triggered = trend_band in {"risk_off", "weak"}
+        risk_on_confirmed = trend_band in {"risk_on", "strong_risk_on"}
+        fields_used = ["CompositeTrendScore"] if composite is not None else []
+        missing_fields = [] if composite is not None else ["CompositeTrendScore"]
+    if risk_off_triggered:
+        regime_state = "risk_off"
+    elif risk_on_confirmed:
+        regime_state = "risk_on"
+    else:
+        regime_state = "neutral"
+    return {
+        "regime_state": regime_state,
+        "trend_band": trend_band,
+        "risk_off_triggered": risk_off_triggered,
+        "risk_on_confirmed": risk_on_confirmed,
+        "score_fields_used": sorted(set(fields_used)),
+        "missing_fields": sorted(set(missing_fields)),
+    }
+
+
+def _dynamic_trend_current_risk_off_thresholds(
+    policy_config: Mapping[str, Any],
+) -> dict[str, float | None]:
+    policy = policy_config.get("dynamic_allocation_policy", {})
+    rules = policy.get("regime_selection_rules", {}) if isinstance(policy, Mapping) else {}
+    risk_off = rules.get("risk_off", {}) if isinstance(rules, Mapping) else {}
+    growth = rules.get("growth_underperformance", {}) if isinstance(rules, Mapping) else {}
+    return {
+        "RiskRegimeScore": _optional_float(risk_off.get("risk_regime_score_max")),
+        "CompositeTrendScore": _optional_float(risk_off.get("composite_trend_score_max")),
+        "GrowthLeadershipScore": _optional_float(growth.get("growth_leadership_score_max")),
+    }
+
+
+def _dynamic_trend_current_risk_on_thresholds(
+    policy_config: Mapping[str, Any],
+) -> dict[str, float | None]:
+    policy = policy_config.get("dynamic_allocation_policy", {})
+    rules = policy.get("regime_selection_rules", {}) if isinstance(policy, Mapping) else {}
+    risk_on = rules.get("risk_on", {}) if isinstance(rules, Mapping) else {}
+    semis = rules.get("semiconductor_leadership", {}) if isinstance(rules, Mapping) else {}
+    overlays = policy.get("trend_overlay_rules", []) if isinstance(policy, Mapping) else []
+    growth_threshold = None
+    if isinstance(overlays, Sequence) and not isinstance(overlays, (str, bytes)):
+        for overlay in overlays:
+            if not isinstance(overlay, Mapping):
+                continue
+            if overlay.get("score_id") == "GrowthLeadershipScore":
+                growth_threshold = _optional_float(overlay.get("threshold"))
+                break
+    return {
+        "CompositeTrendScore": _optional_float(risk_on.get("composite_trend_score_min")),
+        "RiskRegimeScore": _optional_float(risk_on.get("risk_regime_score_min")),
+        "GrowthLeadershipScore": growth_threshold,
+        "SemiconductorLeadershipScore": _optional_float(
+            semis.get("semiconductor_leadership_score_min")
+        ),
+    }
+
+
+def _dynamic_trend_any_score_at_or_below(
+    scores: Mapping[str, Any],
+    thresholds: Mapping[str, Any],
+) -> tuple[bool, list[str], list[str]]:
+    used: list[str] = []
+    missing: list[str] = []
+    triggered = False
+    for score_id, threshold in thresholds.items():
+        threshold_value = _optional_float(threshold)
+        if threshold_value is None:
+            continue
+        score = _optional_float(scores.get(score_id))
+        if score is None:
+            missing.append(score_id)
+            continue
+        used.append(score_id)
+        if score <= threshold_value:
+            triggered = True
+    return triggered, used, missing
+
+
+def _dynamic_trend_all_scores_at_or_above(
+    scores: Mapping[str, Any],
+    thresholds: Mapping[str, Any],
+) -> tuple[bool, list[str], list[str]]:
+    used: list[str] = []
+    missing: list[str] = []
+    checks: list[bool] = []
+    for score_id, threshold in thresholds.items():
+        threshold_value = _optional_float(threshold)
+        if threshold_value is None:
+            continue
+        score = _optional_float(scores.get(score_id))
+        if score is None:
+            missing.append(score_id)
+            continue
+        used.append(score_id)
+        checks.append(score >= threshold_value)
+    return bool(checks) and all(checks), used, missing
+
+
+def _dynamic_trend_score_band(score: float | None, bands: Mapping[str, Any]) -> str | None:
+    if score is None:
+        return None
+    for band_id in ("risk_off", "weak", "neutral", "risk_on", "strong_risk_on"):
+        value = bands.get(band_id)
+        if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+            continue
+        if len(value) < 2:
+            continue
+        lower = _optional_float(value[0])
+        upper = _optional_float(value[1])
+        if lower is None or upper is None:
+            continue
+        if lower <= score < upper or (band_id == "strong_risk_on" and lower <= score <= upper):
+            return band_id
+    return "out_of_band"
+
+
+def _dynamic_trend_weights_for_state(
+    state: str,
+    policy_config: Mapping[str, Any],
+) -> dict[str, float]:
+    policy = policy_config.get("dynamic_allocation_policy", {})
+    targets = policy.get("regime_weight_targets", {}) if isinstance(policy, Mapping) else {}
+    record = targets.get(state, {}) if isinstance(targets, Mapping) else {}
+    weights = record.get("weights", {}) if isinstance(record, Mapping) else {}
+    if not isinstance(weights, Mapping):
+        weights = {}
+    if not weights and isinstance(policy, Mapping):
+        weights = policy.get("base_weights", {})
+    return {str(asset).upper(): _float(weight) for asset, weight in dict(weights).items()}
+
+
+def _dynamic_trend_constraint_hit(
+    weights: Mapping[str, float],
+    policy_config: Mapping[str, Any],
+) -> bool:
+    policy = policy_config.get("dynamic_allocation_policy", {})
+    constraints = policy.get("exposure_constraints", {}) if isinstance(policy, Mapping) else {}
+    caps = constraints.get("asset_caps", {}) if isinstance(constraints, Mapping) else {}
+    floors = constraints.get("asset_floors", {}) if isinstance(constraints, Mapping) else {}
+    if not isinstance(caps, Mapping):
+        caps = {}
+    if not isinstance(floors, Mapping):
+        floors = {}
+    for asset, weight in weights.items():
+        cap = _optional_float(caps.get(asset))
+        floor = _optional_float(floors.get(asset))
+        if cap is not None and weight > cap:
+            return True
+        if floor is not None and weight < floor:
+            return True
+    semis = sum(weights.get(asset, 0.0) for asset in ("SMH", "SOXX"))
+    semi_max_source = (
+        constraints.get("semiconductor_sleeve_max") if isinstance(constraints, Mapping) else None
+    )
+    cash_max_source = constraints.get("cash_max") if isinstance(constraints, Mapping) else None
+    cash_min_source = constraints.get("cash_min") if isinstance(constraints, Mapping) else None
+    semi_max = _optional_float(semi_max_source)
+    cash_max = _optional_float(cash_max_source)
+    cash_min = _optional_float(cash_min_source)
+    return bool(
+        (semi_max is not None and semis > semi_max)
+        or (cash_max is not None and weights.get("CASH", 0.0) > cash_max)
+        or (cash_min is not None and weights.get("CASH", 0.0) < cash_min)
+    )
+
+
+def _dynamic_trend_portfolio_return(
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    *,
+    signal_date: date | None,
+    weights: Mapping[str, float],
+    horizon: int,
+) -> float | None:
+    if signal_date is None:
+        return None
+    total = 0.0
+    usable_weight = 0.0
+    for asset, weight in weights.items():
+        if asset == "CASH" or weight == 0:
+            usable_weight += weight
+            continue
+        ticker = _dynamic_trend_weight_price_ticker(asset, price_series_by_ticker)
+        if ticker is None:
+            continue
+        outcome = _forward_outcome_payload_with_availability(
+            price_series_by_ticker.get(ticker, []),
+            signal_date,
+        )
+        value = outcome["outcomes"].get(f"return_{horizon}d")
+        if isinstance(value, float):
+            total += weight * value
+            usable_weight += weight
+    return total if usable_weight >= 0.90 else None
+
+
+def _dynamic_trend_portfolio_path(
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    *,
+    signal_date: date | None,
+    weights: Mapping[str, float],
+    horizon: int,
+) -> list[float]:
+    if signal_date is None:
+        return []
+    calendar_series = price_series_by_ticker.get("QQQ") or next(
+        iter(price_series_by_ticker.values()),
+        [],
+    )
+    start_index = next(
+        (
+            index
+            for index, (price_date, _) in enumerate(calendar_series)
+            if price_date >= signal_date
+        ),
+        None,
+    )
+    if start_index is None or start_index + horizon >= len(calendar_series):
+        return []
+    calendar_dates = [item[0] for item in calendar_series[start_index : start_index + horizon + 1]]
+    path = []
+    usable_weights = 0.0
+    asset_price_maps: dict[str, tuple[float, dict[date, float], float]] = {}
+    for asset, weight in weights.items():
+        if asset == "CASH" or weight == 0:
+            usable_weights += weight
+            continue
+        ticker = _dynamic_trend_weight_price_ticker(asset, price_series_by_ticker)
+        if ticker is None:
+            continue
+        price_map = {price_date: price for price_date, price in price_series_by_ticker[ticker]}
+        start_price = price_map.get(calendar_dates[0])
+        if start_price is None or start_price <= 0:
+            continue
+        asset_price_maps[asset] = (start_price, price_map, weight)
+        usable_weights += weight
+    if usable_weights < 0.90:
+        return []
+    for price_date in calendar_dates:
+        value = weights.get("CASH", 0.0)
+        for start_price, price_map, weight in asset_price_maps.values():
+            price = price_map.get(price_date)
+            if price is None:
+                return []
+            value += weight * (price / start_price)
+        path.append(value)
+    return path
+
+
+def _dynamic_trend_weight_price_ticker(
+    asset: str,
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+) -> str | None:
+    normalized = asset.upper()
+    if normalized in price_series_by_ticker:
+        return normalized
+    if normalized == "SOXX" and "SMH" in price_series_by_ticker:
+        return "SMH"
+    alias = PRICE_TICKER_ALIASES.get(normalized)
+    if alias and alias in price_series_by_ticker:
+        return alias
+    return None
+
+
+def _dynamic_trend_reference_return(
+    returns_by_horizon: Mapping[int, float | None],
+) -> float | None:
+    for horizon in (20, 10, 5, 1):
+        value = returns_by_horizon.get(horizon)
+        if isinstance(value, float):
+            return value
+    return None
+
+
+def _dynamic_trend_metrics_for_evaluated_cases(
+    evaluated: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    dated_weights = [
+        (str(case.get("date") or ""), dict(case.get("target_weights") or {})) for case in evaluated
+    ]
+    dated_weights.sort(key=lambda item: item[0])
+    turnover = 0.0
+    for index in range(1, len(dated_weights)):
+        turnover += _dynamic_trend_weight_turnover(
+            dated_weights[index - 1][1],
+            dated_weights[index][1],
+        )
+    returns_by_horizon: dict[int, list[float]] = {
+        horizon: [] for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    for case in evaluated:
+        portfolio_returns = case.get("portfolio_returns", {})
+        if not isinstance(portfolio_returns, Mapping):
+            continue
+        for horizon in MASKING_OUTCOME_HORIZONS:
+            value = portfolio_returns.get(horizon)
+            if isinstance(value, float):
+                returns_by_horizon[horizon].append(value)
+    drawdowns = [
+        value
+        for value in (
+            case.get("portfolio_max_drawdown_20d")
+            for case in evaluated
+            if isinstance(case, Mapping)
+        )
+        if isinstance(value, float)
+    ]
+    metrics: dict[str, Any] = {
+        f"avg_return_{horizon}d": _mean(values) for horizon, values in returns_by_horizon.items()
+    }
+    metrics.update(
+        {
+            f"hit_rate_{horizon}d": _ratio(
+                sum(1 for value in values if value > 0),
+                len(values),
+            )
+            for horizon, values in returns_by_horizon.items()
+        }
+    )
+    metrics.update(
+        {
+            "max_drawdown": min(drawdowns) if drawdowns else None,
+            "drawdown_preservation": None,
+            "turnover": turnover,
+            "constraint_hit_count": sum(1 for case in evaluated if case.get("constraint_hit")),
+            "risk_off_trigger_count": sum(
+                1 for case in evaluated if case.get("risk_off_triggered")
+            ),
+            "risk_on_confirmation_count": sum(
+                1 for case in evaluated if case.get("risk_on_confirmed")
+            ),
+            "false_risk_off_count": sum(1 for case in evaluated if case.get("false_risk_off")),
+            "false_risk_on_count": sum(1 for case in evaluated if case.get("false_risk_on")),
+            "missed_upside_count": sum(1 for case in evaluated if case.get("missed_upside")),
+        }
+    )
+    return metrics
+
+
+def _dynamic_trend_weight_turnover(
+    previous: Mapping[str, float],
+    current: Mapping[str, float],
+) -> float:
+    assets = set(previous) | set(current)
+    return (
+        sum(abs(_float(current.get(asset)) - _float(previous.get(asset))) for asset in assets) / 2
+    )
+
+
+def _dynamic_trend_variant_sample_quality(
+    evaluated: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    mature_by_horizon = {
+        f"{horizon}d": sum(
+            1
+            for case in evaluated
+            if isinstance(case.get("portfolio_returns", {}), Mapping)
+            and isinstance(case.get("portfolio_returns", {}).get(horizon), float)
+        )
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    mature_dates_by_horizon = {
+        f"{horizon}d": len(
+            {
+                str(case.get("date") or "")
+                for case in evaluated
+                if isinstance(case.get("portfolio_returns", {}), Mapping)
+                and isinstance(case.get("portfolio_returns", {}).get(horizon), float)
+            }
+        )
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    missing_field_counts: dict[str, int] = defaultdict(int)
+    proxy_field_counts: dict[str, int] = defaultdict(int)
+    for case in evaluated:
+        for field in case.get("missing_score_fields", []):
+            missing_field_counts[str(field)] += 1
+        for field in case.get("proxy_score_fields", []):
+            proxy_field_counts[str(field)] += 1
+    trace_source_counts = {
+        source: sum(1 for case in evaluated if str(case.get("trace_source") or "") == source)
+        for source in sorted({str(case.get("trace_source") or "") for case in evaluated})
+        if source
+    }
+    case_origin_counts = {
+        "coverage_extension_bridge": sum(
+            1 for case in evaluated if case.get("coverage_extension_case")
+        ),
+        "historical_trace": sum(1 for case in evaluated if not case.get("coverage_extension_case")),
+    }
+    coverage_extension_cases = [case for case in evaluated if case.get("coverage_extension_case")]
+    return {
+        "case_count": len(evaluated),
+        "date_count": len({str(case.get("date") or "") for case in evaluated}),
+        "asset_count": len({str(case.get("asset") or "") for case in evaluated}),
+        "independent_signal_date_count": len(
+            {
+                (
+                    str(case.get("date") or ""),
+                    str(case.get("coverage_extension_scenario") or "historical_trace"),
+                )
+                for case in evaluated
+            }
+        ),
+        "mature_case_count": mature_by_horizon["20d"],
+        "mature_date_count": mature_dates_by_horizon["20d"],
+        "mature_case_count_by_horizon": mature_by_horizon,
+        "mature_date_count_by_horizon": mature_dates_by_horizon,
+        "pending_maturity_tracker": _dynamic_trend_pending_maturity_tracker(evaluated),
+        "full_advisory_case_count": sum(
+            1 for case in evaluated if case.get("full_advisory_trace_eligible")
+        ),
+        "component_case_count": sum(
+            1
+            for case in evaluated
+            if case.get("component_validation_trace_eligible")
+            and not case.get("full_advisory_trace_eligible")
+        ),
+        "backtest_bridge_case_count": sum(
+            1 for case in evaluated if case.get("trace_source") == BACKTEST_TRACE_BRIDGE_SOURCE
+        ),
+        "cluster_count": len(
+            {str(case.get("correlated_asset_cluster") or "") for case in evaluated}
+        ),
+        "regime_count": len({str(case.get("market_regime") or "") for case in evaluated}),
+        "trace_source_counts": trace_source_counts,
+        "case_origin_counts": case_origin_counts,
+        "coverage_extension_case_count": len(coverage_extension_cases),
+        "coverage_extension_source_file_count": len(
+            {
+                str(case.get("coverage_extension_source_path") or "")
+                for case in coverage_extension_cases
+                if case.get("coverage_extension_source_path")
+            }
+        ),
+        "coverage_extension_scenario_count": len(
+            {
+                str(case.get("coverage_extension_scenario") or "")
+                for case in coverage_extension_cases
+            }
+        ),
+        "coverage_extension_note": (
+            "Coverage extension cases are backtest bridge diagnostics; they improve "
+            "asset/cluster/regime coverage but do not increase full_advisory_case_count."
+        ),
+        "outcome_missing_count": sum(1 for case in evaluated if case.get("outcome_missing")),
+        "outcome_not_mature_count": sum(1 for case in evaluated if case.get("outcome_not_mature")),
+        "missing_score_field_counts": dict(sorted(missing_field_counts.items())),
+        "proxy_score_field_counts": dict(sorted(proxy_field_counts.items())),
+        "direct_dynamic_allocation_score_history_available": False,
+        "sample_quality_note": (
+            "Component-level trace is used for validation-only sensitivity; "
+            "direct production-equivalent dynamic allocation replay is not present."
+        ),
+    }
+
+
+def _dynamic_trend_pending_maturity_tracker(
+    evaluated: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    tracker: dict[str, dict[str, Any]] = {}
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        label = f"{horizon}d"
+        pending_cases = []
+        pending_dates = set()
+        missing_cases = 0
+        for case in evaluated:
+            portfolio_returns = case.get("portfolio_returns", {})
+            if isinstance(portfolio_returns, Mapping) and isinstance(
+                portfolio_returns.get(horizon),
+                float,
+            ):
+                continue
+            status = _dynamic_trend_case_horizon_status(case, horizon)
+            if status == OUTCOME_WINDOW_STATUS_NOT_MATURE:
+                pending_cases.append(str(case.get("case_id") or ""))
+                pending_dates.add(str(case.get("date") or ""))
+            elif status != OUTCOME_WINDOW_STATUS_AVAILABLE:
+                missing_cases += 1
+        tracker[label] = {
+            "pending_case_count": len(pending_cases),
+            "pending_date_count": len(pending_dates),
+            "missing_or_unavailable_case_count": missing_cases,
+            "sample_case_ids": [case_id for case_id in pending_cases if case_id][:10],
+            "next_rerun_condition": (
+                f"Rerun after at least {horizon} additional trading days are available "
+                "for pending signal dates."
+                if pending_cases
+                else "No pending maturity for this horizon in the evaluated sample."
+            ),
+        }
+    return tracker
+
+
+def _dynamic_trend_case_horizon_status(case: Mapping[str, Any], horizon: int) -> str:
+    windows = case.get("outcome_windows", [])
+    if isinstance(windows, Sequence) and not isinstance(windows, (str, bytes)):
+        for window in windows:
+            if not isinstance(window, Mapping):
+                continue
+            if int(window.get("horizon_trading_days") or 0) != horizon:
+                continue
+            return str(window.get("status") or "")
+    return ""
+
+
+def _dynamic_trend_by_horizon(
+    evaluated: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        values = [
+            case.get("portfolio_returns", {}).get(horizon)
+            for case in evaluated
+            if isinstance(case.get("portfolio_returns", {}), Mapping)
+            and isinstance(case.get("portfolio_returns", {}).get(horizon), float)
+        ]
+        value_list = [value for value in values if isinstance(value, float)]
+        rows.append(
+            {
+                "horizon": f"{horizon}d",
+                "horizon_trading_days": horizon,
+                "mature_case_count": len(value_list),
+                "mature_date_count": len(
+                    {
+                        str(case.get("date") or "")
+                        for case in evaluated
+                        if isinstance(case.get("portfolio_returns", {}), Mapping)
+                        and isinstance(case.get("portfolio_returns", {}).get(horizon), float)
+                    }
+                ),
+                "avg_return": _mean(value_list),
+                "hit_rate": _ratio(
+                    sum(1 for value in value_list if value > 0),
+                    len(value_list),
+                ),
+                "promotion_gate_allowed": False,
+            }
+        )
+    return rows
+
+
+def _dynamic_trend_group_rows(
+    evaluated: Sequence[Mapping[str, Any]],
+    field: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for case in evaluated:
+        grouped[str(case.get(field) or "UNKNOWN")].append(case)
+    return [
+        {"group": group_key, field: group_key, **_dynamic_trend_group_summary(group_cases)}
+        for group_key, group_cases in sorted(grouped.items())
+    ]
+
+
+def _dynamic_trend_event_window_rows(
+    evaluated: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for case in evaluated:
+        windows = case.get("event_window_ids", [])
+        if not windows:
+            grouped["outside_defined_event_window"].append(case)
+            continue
+        for window_id in windows:
+            grouped[str(window_id)].append(case)
+    return [
+        {"event_window_id": group_key, **_dynamic_trend_group_summary(group_cases)}
+        for group_key, group_cases in sorted(grouped.items())
+    ]
+
+
+def _dynamic_trend_group_summary(
+    group_cases: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    metrics = _dynamic_trend_metrics_for_evaluated_cases(group_cases)
+    sample_quality = _dynamic_trend_variant_sample_quality(group_cases)
+    return {
+        "case_count": len(group_cases),
+        "mature_case_count": sample_quality["mature_case_count"],
+        "mature_date_count": sample_quality["mature_date_count"],
+        "full_advisory_case_count": sample_quality["full_advisory_case_count"],
+        "cluster_count": sample_quality["cluster_count"],
+        "regime_count": sample_quality["regime_count"],
+        "avg_return_1d": metrics["avg_return_1d"],
+        "avg_return_5d": metrics["avg_return_5d"],
+        "avg_return_10d": metrics["avg_return_10d"],
+        "avg_return_20d": metrics["avg_return_20d"],
+        "hit_rate_1d": metrics["hit_rate_1d"],
+        "hit_rate_5d": metrics["hit_rate_5d"],
+        "hit_rate_10d": metrics["hit_rate_10d"],
+        "hit_rate_20d": metrics["hit_rate_20d"],
+        "max_drawdown": metrics["max_drawdown"],
+        "turnover": metrics["turnover"],
+        "constraint_hit_count": metrics["constraint_hit_count"],
+        "risk_off_trigger_count": metrics["risk_off_trigger_count"],
+        "risk_on_confirmation_count": metrics["risk_on_confirmation_count"],
+        "false_risk_off_count": metrics["false_risk_off_count"],
+        "false_risk_on_count": metrics["false_risk_on_count"],
+        "missed_upside_count": metrics["missed_upside_count"],
+        "promotion_gate_allowed": False,
+    }
+
+
+def _apply_dynamic_trend_drawdown_preservation(variants: Sequence[dict[str, Any]]) -> None:
+    baseline = next(
+        (variant for variant in variants if variant.get("variant_kind") == "no_change_baseline"),
+        None,
+    )
+    baseline_drawdown = _optional_float((baseline or {}).get("max_drawdown"))
+    for variant in variants:
+        drawdown = _optional_float(variant.get("max_drawdown"))
+        if baseline_drawdown is None or drawdown is None:
+            variant["drawdown_preservation"] = None
+        else:
+            variant["drawdown_preservation"] = drawdown - baseline_drawdown
+
+
+def _dynamic_trend_variant_recommendation(sample_quality: Mapping[str, Any]) -> str:
+    if int(sample_quality.get("case_count") or 0) <= 0:
+        return "insufficient_data"
+    if int(sample_quality.get("mature_case_count_by_horizon", {}).get("1d") or 0) <= 0:
+        return "insufficient_data"
+    if int(sample_quality.get("full_advisory_case_count") or 0) <= 0:
+        return "sensitivity_tested_only"
+    return "sensitivity_tested_only"
+
+
+def _dynamic_trend_record_recommendation(
+    variants: Sequence[Mapping[str, Any]],
+    *,
+    sample_quality: Mapping[str, Any],
+) -> dict[str, Any]:
+    variant_recommendations = {str(variant.get("recommendation")) for variant in variants}
+    if int(sample_quality.get("case_count") or 0) <= 0:
+        recommendation = "insufficient_data"
+        reason = "No trace cases are available for dynamic/trend sensitivity review."
+    elif int(sample_quality.get("mature_case_count_by_horizon", {}).get("1d") or 0) <= 0:
+        recommendation = "insufficient_data"
+        reason = "No mature forward outcome windows are available."
+    elif int(sample_quality.get("full_advisory_case_count") or 0) <= 0:
+        recommendation = "sensitivity_tested_only"
+        reason = (
+            "Sensitivity metrics are computed from component/backtest validation sources, "
+            "but full advisory equivalent cases are not sufficient for calibration."
+        )
+    else:
+        recommendation = "sensitivity_tested_only"
+        reason = (
+            "Sensitivity evidence is available, but this validation-only review does not "
+            "authorize a threshold value change or validated boundary."
+        )
+    if recommendation not in DYNAMIC_TREND_VALIDATION_RECOMMENDATIONS:
+        recommendation = "collect_evidence_only"
+    return {
+        "validation_recommendation": recommendation,
+        "reason": reason,
+        "variant_recommendations": sorted(variant_recommendations),
+        "whether_recommendation_changed": False,
+        "current_value_change_allowed": False,
+        "promotion_gate_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _dynamic_trend_evidence_strength(sample_quality: Mapping[str, Any]) -> str:
+    mature_20d = int(sample_quality.get("mature_case_count_by_horizon", {}).get("20d") or 0)
+    full_count = int(sample_quality.get("full_advisory_case_count") or 0)
+    cluster_count = int(sample_quality.get("cluster_count") or 0)
+    if mature_20d >= 50 and full_count >= 50 and cluster_count >= 2:
+        return "medium"
+    if int(sample_quality.get("mature_case_count_by_horizon", {}).get("1d") or 0) > 0:
+        return "low"
+    return "insufficient"
+
+
+def _dynamic_trend_remaining_limitations(
+    threshold_id: str,
+    sample_quality: Mapping[str, Any],
+) -> list[str]:
+    limitations = [
+        "This artifact is validation-only and cannot change current threshold values.",
+        (
+            "Direct production-equivalent dynamic allocation replay is not available "
+            "in the source trace."
+        ),
+    ]
+    if sample_quality.get("missing_score_field_counts"):
+        limitations.append("Some dynamic allocation score fields are missing from trace cases.")
+    if int(sample_quality.get("full_advisory_case_count") or 0) <= 0:
+        limitations.append("Full advisory equivalent cases are insufficient for calibration.")
+    if int(sample_quality.get("mature_case_count_by_horizon", {}).get("20d") or 0) < 50:
+        limitations.append("20d mature case count is below the heuristic validation floor.")
+    if threshold_id == "trend_calibration.score_bands":
+        limitations.append("Trend band review does not validate raw trend score construction.")
+    return limitations
+
+
+def _dynamic_trend_sensitivity_summary(
+    records: Sequence[Mapping[str, Any]],
+    cases: Sequence[Mapping[str, Any]],
+    threshold_audit_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    sensitivity_tested = sum(
+        1 for record in records if record.get("calibration_status") == "SENSITIVITY_TESTED"
+    )
+    first_quality = (
+        records[0].get("sample_quality", {}) if records and isinstance(records[0], Mapping) else {}
+    )
+    quality = dict(first_quality) if isinstance(first_quality, Mapping) else {}
+    if not quality:
+        quality = _dynamic_trend_variant_sample_quality(cases)
+    still_uncalibrated = int(threshold_audit_summary.get("uncalibrated_high_impact_count") or 0)
+    still_blocking = len(threshold_audit_summary.get("thresholds_blocking_promotion", []) or [])
+    return {
+        "tested_threshold_count": len(records),
+        "target_threshold_ids": [record.get("threshold_id") for record in records],
+        "sensitivity_tested_count": sensitivity_tested,
+        "validated_boundary_count": 0,
+        "thresholds_changed_count": 0,
+        "still_uncalibrated_high_impact_count": still_uncalibrated,
+        "thresholds_still_blocking_promotion_count": still_blocking,
+        "mature_date_count": quality["mature_date_count"],
+        "mature_case_count": quality["mature_case_count"],
+        "full_advisory_case_count": quality["full_advisory_case_count"],
+        "cluster_count": quality["cluster_count"],
+        "regime_count": quality["regime_count"],
+        "coverage_targets": {
+            "cluster_count_min": 3,
+            "regime_count_min": 3,
+            "mature_horizons_required": ["1d", "5d", "10d"],
+            "full_advisory_case_count_goal": "increase_when_production_equivalent_trace_exists",
+        },
+        "coverage_target_status": {
+            "cluster_count_at_least_3": int(quality.get("cluster_count") or 0) >= 3,
+            "regime_count_at_least_3": int(quality.get("regime_count") or 0) >= 3,
+            "mature_1d_5d_10d_available": all(
+                int(quality.get("mature_case_count_by_horizon", {}).get(label) or 0) > 0
+                for label in ("1d", "5d", "10d")
+            ),
+            "twenty_day_maturity_available": (
+                int(quality.get("mature_case_count_by_horizon", {}).get("20d") or 0) > 0
+            ),
+            "full_advisory_case_count_increased": (
+                int(quality.get("full_advisory_case_count") or 0)
+                > int(DYNAMIC_TREND_TRADING_698_BASELINE_COVERAGE["full_advisory_case_count"])
+            ),
+        },
+        "trading_698_baseline_coverage": dict(DYNAMIC_TREND_TRADING_698_BASELINE_COVERAGE),
+        "coverage_extension_case_count": quality.get("coverage_extension_case_count", 0),
+        "trace_source_counts": quality.get("trace_source_counts", {}),
+        "case_origin_counts": quality.get("case_origin_counts", {}),
+        "pending_maturity_tracker": quality.get("pending_maturity_tracker", {}),
+        "sample_quality_breakdown": quality,
+        "max_allowed_status": "SENSITIVITY_TESTED",
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _dynamic_trend_sensitivity_issues(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    trace_path: Path | None,
+    prices_path: Path | None,
+    coverage_extension_root: Path | None,
+) -> list[dict[str, Any]]:
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "dynamic_trend_threshold_sensitivity_validation_only",
+            "message": (
+                "Dynamic/trend threshold sensitivity review is validation-only; it cannot "
+                "change current values or approve production, paper-shadow, official weights, "
+                "or promotion."
+            ),
+        }
+    ]
+    if trace_path is None:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "dynamic_trend_trace_missing",
+                "message": "No trace path was provided; sensitivity evidence is data-limited.",
+            }
+        )
+    if prices_path is None:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "dynamic_trend_prices_missing",
+                "message": "No prices path was provided; forward return metrics are unavailable.",
+            }
+        )
+    if coverage_extension_root is None:
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "dynamic_trend_coverage_extension_not_requested",
+                "message": (
+                    "No coverage extension root was provided; cluster/regime coverage is limited "
+                    "to the source trace."
+                ),
+            }
+        )
+    elif not coverage_extension_root.exists():
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "dynamic_trend_coverage_extension_root_missing",
+                "message": f"Coverage extension root does not exist: {coverage_extension_root}",
+            }
+        )
+    if any(
+        record.get("sample_quality", {}).get("missing_score_field_counts") for record in records
+    ):
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "dynamic_trend_score_fields_missing",
+                "message": (
+                    "Some required dynamic allocation score fields are missing from source trace "
+                    "and are reported as data gaps, not imputed thresholds."
+                ),
+            }
+        )
+    return issues
+
+
+def _dynamic_trend_data_source_mode(cases: Sequence[Mapping[str, Any]]) -> str:
+    if not cases:
+        return "no_trace_cases"
+    has_full = any(case.get("full_advisory_trace_eligible") for case in cases)
+    has_bridge = any(case.get("coverage_extension_case") for case in cases)
+    if has_full and has_bridge:
+        return "mixed_full_advisory_component_and_coverage_bridge"
+    if has_bridge:
+        return "component_trace_plus_coverage_bridge"
+    if has_full:
+        return "mixed_full_advisory_and_component_trace"
+    return "component_trace_score_proxy"
+
+
+def _threshold_calibration_record(
+    threshold_id: str,
+    *,
+    threshold: Mapping[str, Any],
+    registry: IndicatorResearchRegistry,
+    trace_rows: Sequence[Mapping[str, Any]],
+    effectiveness: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+    long_floor: Mapping[str, Any],
+    masking_audit: Mapping[str, Any],
+    robustness_checks: Mapping[str, Any],
+) -> dict[str, Any]:
+    current_value = threshold.get("current_value")
+    tested_values = THRESHOLD_CALIBRATION_TESTED_VALUES[threshold_id]
+    if threshold_id == "indicator_research.effectiveness_min_available_outcome_cases":
+        sensitivity_rows = _calibrate_effectiveness_min_available_outcome_cases(
+            current_value=current_value,
+            tested_values=tested_values,
+            robustness=robustness,
+            long_floor=long_floor,
+        )
+        recommended_action = "insufficient_data"
+        reason = (
+            "20d full-advisory effective sample and leave-one robustness remain insufficient; "
+            "floor stays a heuristic guardrail."
+        )
+        evidence_strength = "LIMITED_SENSITIVITY_ONLY"
+        remaining_limitations = [
+            "20d full-advisory maturity remains below robust independent-date coverage.",
+            "The floor is not a validated statistical boundary.",
+        ]
+        threshold_type = "heuristic_guardrail"
+        not_validated = True
+    elif threshold_id == "indicator_research.robustness_cluster_dominance_share":
+        sensitivity_rows = _calibrate_robustness_cluster_dominance_share(
+            current_value=current_value,
+            tested_values=tested_values,
+            robustness_checks=robustness_checks,
+            robustness=robustness,
+        )
+        recommended_action = _threshold_action_from_rows(sensitivity_rows)
+        reason = _threshold_action_reason(
+            recommended_action,
+            "Cluster concentration sensitivity remains validation-only.",
+        )
+        evidence_strength = _evidence_strength_from_rows(sensitivity_rows)
+        remaining_limitations = [
+            "Leave-one-cluster and full-advisory/all-sources consistency are still required.",
+            "Threshold cannot enter promotion gate without owner-reviewed calibration.",
+        ]
+        threshold_type = threshold.get("threshold_type", "")
+        not_validated = bool(threshold.get("not_validated_statistical_boundary", False))
+    elif threshold_id == "indicator_research.effectiveness_missed_upside_acceptable_rate":
+        sensitivity_rows = _calibrate_effectiveness_missed_upside_acceptable_rate(
+            current_value=current_value,
+            tested_values=tested_values,
+            effectiveness=effectiveness,
+            robustness=robustness,
+        )
+        recommended_action = _threshold_action_from_rows(sensitivity_rows)
+        reason = _threshold_action_reason(
+            recommended_action,
+            "Missed-upside sensitivity is mixed across horizons and remains validation-only.",
+        )
+        evidence_strength = _evidence_strength_from_rows(sensitivity_rows)
+        remaining_limitations = [
+            "1d/5d/10d/20d evidence remains preliminary for stronger recommendation.",
+            "False risk-off and missed-upside labels need owner-reviewed case labels.",
+        ]
+        threshold_type = threshold.get("threshold_type", "")
+        not_validated = bool(threshold.get("not_validated_statistical_boundary", False))
+    elif threshold_id == "indicator_research.masking_high_min":
+        sensitivity_rows = _calibrate_masking_high_min(
+            current_value=current_value,
+            tested_values=tested_values,
+            masking_audit=masking_audit,
+        )
+        recommended_action = _threshold_action_from_rows(sensitivity_rows)
+        reason = _threshold_action_reason(
+            recommended_action,
+            "Masking high-min changes only diagnostic labels, not production behavior.",
+        )
+        evidence_strength = _evidence_strength_from_rows(sensitivity_rows)
+        remaining_limitations = [
+            "Masking ratio is a validation proxy and not causal evidence.",
+            "Trace coverage and realized outcome linkage remain required before promotion use.",
+        ]
+        threshold_type = threshold.get("threshold_type", "")
+        not_validated = bool(threshold.get("not_validated_statistical_boundary", False))
+    elif threshold_id == "indicator_research.dominant_share_of_adjustment_min":
+        sensitivity_rows = _calibrate_dominant_share_of_adjustment_min(
+            current_value=current_value,
+            tested_values=tested_values,
+            registry=registry,
+            trace_rows=trace_rows,
+        )
+        recommended_action = _threshold_action_from_rows(sensitivity_rows)
+        reason = _threshold_action_reason(
+            recommended_action,
+            "Dominance threshold sensitivity is diagnostic and does not alter scoring.",
+        )
+        evidence_strength = _evidence_strength_from_rows(sensitivity_rows)
+        remaining_limitations = [
+            "Dominance needs stable multi-date trace coverage.",
+            "Dominance labels do not prove independent incremental effect.",
+        ]
+        threshold_type = threshold.get("threshold_type", "")
+        not_validated = bool(threshold.get("not_validated_statistical_boundary", False))
+    else:
+        raise IndicatorResearchError(f"Unsupported threshold calibration id: {threshold_id}")
+    return {
+        "threshold_id": threshold_id,
+        "current_value": _json_ready(current_value),
+        "tested_values": tested_values,
+        "recommendation_by_value": sensitivity_rows,
+        "promotion_gate_by_value": {
+            str(row["tested_value"]): row["promotion_gate_allowed"] for row in sensitivity_rows
+        },
+        "false_promotion_risk": {
+            str(row["tested_value"]): row["false_promotion_risk"] for row in sensitivity_rows
+        },
+        "false_rejection_risk": {
+            str(row["tested_value"]): row["false_rejection_risk"] for row in sensitivity_rows
+        },
+        "sample_quality_impact": {
+            str(row["tested_value"]): row["sample_quality_impact"] for row in sensitivity_rows
+        },
+        "valuation_crowding_recommendation_changes": any(
+            bool(row["valuation_crowding_recommendation_changes"]) for row in sensitivity_rows
+        ),
+        "recommended_status": "SENSITIVITY_TESTED",
+        "recommended_action": recommended_action,
+        "keep_current_value": recommended_action == "keep_current_value",
+        "adjust_candidate": recommended_action == "adjust_candidate",
+        "insufficient_data": recommended_action == "insufficient_data",
+        "reason": reason,
+        "evidence_strength": evidence_strength,
+        "remaining_limitations": remaining_limitations,
+        "threshold_type": threshold_type,
+        "not_validated_statistical_boundary": not_validated,
+        "calibration_status_before": threshold.get("calibration_status", ""),
+        "calibration_status_after_max": "SENSITIVITY_TESTED",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
+
+
+def _calibration_row(
+    *,
+    tested_value: Any,
+    recommendation: str,
+    current_recommendation: str,
+    false_promotion_risk: str,
+    false_rejection_risk: str,
+    sample_quality_impact: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "tested_value": tested_value,
+        "recommendation": recommendation,
+        "promotion_gate_allowed": False,
+        "false_promotion_risk": false_promotion_risk,
+        "false_rejection_risk": false_rejection_risk,
+        "sample_quality_impact": dict(sample_quality_impact),
+        "valuation_crowding_recommendation": recommendation,
+        "valuation_crowding_recommendation_changes": recommendation != current_recommendation,
+    }
+
+
+def _calibrate_effectiveness_min_available_outcome_cases(
+    *,
+    current_value: Any,
+    tested_values: Sequence[Any],
+    robustness: Mapping[str, Any],
+    long_floor: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    effective_sample = long_floor.get("effective_sample_size", {})
+    if not isinstance(effective_sample, Mapping):
+        effective_sample = {}
+    robustness_gate = long_floor.get("robustness_based_gate", {})
+    if not isinstance(robustness_gate, Mapping):
+        robustness_gate = {}
+    current_recommendation = _floor_recommendation_for_value(
+        _safe_int(current_value, EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES),
+        effective_sample=effective_sample,
+        robustness_gate=robustness_gate,
+        robustness=robustness,
+    )
+    rows = []
+    for raw_value in tested_values:
+        value = _safe_int(raw_value, EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES)
+        sample_pass = int(effective_sample.get("raw_case_count") or 0) >= value
+        robustness_pass = bool(robustness_gate.get("passed"))
+        recommendation = _floor_recommendation_for_value(
+            value,
+            effective_sample=effective_sample,
+            robustness_gate=robustness_gate,
+            robustness=robustness,
+        )
+        rows.append(
+            _calibration_row(
+                tested_value=value,
+                recommendation=recommendation,
+                current_recommendation=current_recommendation,
+                false_promotion_risk=("HIGH" if sample_pass and not robustness_pass else "LOW"),
+                false_rejection_risk=("MEDIUM" if not sample_pass and robustness_pass else "LOW"),
+                sample_quality_impact={
+                    "raw_case_count": effective_sample.get("raw_case_count", 0),
+                    "effective_date_count": effective_sample.get("effective_date_count", 0),
+                    "effective_cluster_count": effective_sample.get(
+                        "effective_cluster_count",
+                        0,
+                    ),
+                    "sample_passes_tested_value": sample_pass,
+                    "robustness_gate_passed": robustness_pass,
+                    "threshold_type": "heuristic_guardrail",
+                    "not_validated_statistical_boundary": True,
+                },
+            )
+        )
+    return rows
+
+
+def _floor_recommendation_for_value(
+    value: int,
+    *,
+    effective_sample: Mapping[str, Any],
+    robustness_gate: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> str:
+    raw_count = int(effective_sample.get("raw_case_count") or 0)
+    if raw_count < value:
+        return "insufficient_long_horizon_evidence"
+    if not bool(robustness_gate.get("passed")):
+        return "keep_preliminary_short_horizon_only"
+    return str(
+        robustness.get("summary", {}).get(
+            "final_validation_recommendation",
+            "keep_preliminary_short_horizon_only",
+        )
+        if isinstance(robustness.get("summary"), Mapping)
+        else "keep_preliminary_short_horizon_only"
+    )
+
+
+def _calibrate_robustness_cluster_dominance_share(
+    *,
+    current_value: Any,
+    tested_values: Sequence[Any],
+    robustness_checks: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    cluster_check = robustness_checks.get("leave_one_cluster_out", {})
+    if not isinstance(cluster_check, Mapping):
+        cluster_check = {}
+    consistency = robustness_checks.get("full_advisory_only_vs_all_sources_consistency", {})
+    if not isinstance(consistency, Mapping):
+        consistency = {}
+    top_cluster_share = _optional_float(
+        robustness.get("ten_day_baseline_support_attribution", {}).get("top_cluster_share")
+        if isinstance(robustness.get("ten_day_baseline_support_attribution"), Mapping)
+        else None
+    )
+    if top_cluster_share is None:
+        top_cluster_share = 1.0
+    current_recommendation = _cluster_recommendation_for_value(
+        _safe_float(current_value, ROBUSTNESS_CLUSTER_DOMINANCE_SHARE),
+        top_cluster_share=top_cluster_share,
+        leave_one_stable=bool(cluster_check.get("stable")),
+        full_vs_all_consistent=bool(consistency.get("consistent")),
+        robustness=robustness,
+    )
+    rows = []
+    for raw_value in tested_values:
+        value = _safe_float(raw_value, ROBUSTNESS_CLUSTER_DOMINANCE_SHARE)
+        pass_threshold = top_cluster_share <= value
+        recommendation = _cluster_recommendation_for_value(
+            value,
+            top_cluster_share=top_cluster_share,
+            leave_one_stable=bool(cluster_check.get("stable")),
+            full_vs_all_consistent=bool(consistency.get("consistent")),
+            robustness=robustness,
+        )
+        rows.append(
+            _calibration_row(
+                tested_value=value,
+                recommendation=recommendation,
+                current_recommendation=current_recommendation,
+                false_promotion_risk=(
+                    "HIGH"
+                    if pass_threshold
+                    and (not cluster_check.get("stable") or not consistency.get("consistent"))
+                    else "LOW"
+                ),
+                false_rejection_risk="MEDIUM" if not pass_threshold else "LOW",
+                sample_quality_impact={
+                    "top_cluster_share": top_cluster_share,
+                    "cluster_count": cluster_check.get("group_count", 0),
+                    "threshold_passed": pass_threshold,
+                    "leave_one_cluster_out_stable": bool(cluster_check.get("stable")),
+                    "full_advisory_only_vs_all_sources_consistent": bool(
+                        consistency.get("consistent")
+                    ),
+                },
+            )
+        )
+    return rows
+
+
+def _cluster_recommendation_for_value(
+    value: float,
+    *,
+    top_cluster_share: float,
+    leave_one_stable: bool,
+    full_vs_all_consistent: bool,
+    robustness: Mapping[str, Any],
+) -> str:
+    if top_cluster_share > value:
+        return "cluster_dominated_insufficient_robustness"
+    if not leave_one_stable or not full_vs_all_consistent:
+        return "keep_preliminary_short_horizon_only"
+    return str(
+        robustness.get("summary", {}).get(
+            "final_validation_recommendation",
+            "keep_preliminary_short_horizon_only",
+        )
+        if isinstance(robustness.get("summary"), Mapping)
+        else "keep_preliminary_short_horizon_only"
+    )
+
+
+def _calibrate_effectiveness_missed_upside_acceptable_rate(
+    *,
+    current_value: Any,
+    tested_values: Sequence[Any],
+    effectiveness: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    observed_rate = _baseline_missed_upside_rate(effectiveness)
+    conservative_gate = (
+        robustness.get("conservative_evidence_gate", {})
+        if isinstance(robustness.get("conservative_evidence_gate"), Mapping)
+        else {}
+    )
+    current_recommendation = _missed_upside_recommendation_for_value(
+        _safe_float(current_value, EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE),
+        observed_rate=observed_rate,
+        conservative_gate=conservative_gate,
+        robustness=robustness,
+    )
+    rows = []
+    for raw_value in tested_values:
+        value = _safe_float(raw_value, EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE)
+        pass_threshold = observed_rate is not None and observed_rate <= value
+        recommendation = _missed_upside_recommendation_for_value(
+            value,
+            observed_rate=observed_rate,
+            conservative_gate=conservative_gate,
+            robustness=robustness,
+        )
+        rows.append(
+            _calibration_row(
+                tested_value=value,
+                recommendation=recommendation,
+                current_recommendation=current_recommendation,
+                false_promotion_risk=(
+                    "HIGH"
+                    if pass_threshold and not _conservative_gate_all_pass(conservative_gate)
+                    else "LOW"
+                ),
+                false_rejection_risk="MEDIUM" if not pass_threshold else "LOW",
+                sample_quality_impact={
+                    "observed_missed_upside_rate": observed_rate,
+                    "threshold_passed": pass_threshold,
+                    "conservative_gate_all_passed": _conservative_gate_all_pass(conservative_gate),
+                },
+            )
+        )
+    return rows
+
+
+def _baseline_missed_upside_rate(effectiveness: Mapping[str, Any]) -> float:
+    rows = [
+        row
+        for row in effectiveness.get("conclusion_matrix", [])
+        if isinstance(row, Mapping)
+        and row.get("scenario_id") == "baseline"
+        and row.get("horizon") in {"1d", "5d", "10d"}
+    ]
+    sample_count = sum(int(row.get("sample_count") or 0) for row in rows)
+    missed_count = sum(int(row.get("missed_upside_count") or 0) for row in rows)
+    return _ratio(missed_count, sample_count)
+
+
+def _missed_upside_recommendation_for_value(
+    value: float,
+    *,
+    observed_rate: float | None,
+    conservative_gate: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> str:
+    if observed_rate is None:
+        return "insufficient_evidence"
+    if observed_rate > value:
+        return "missed_upside_above_threshold"
+    if not _conservative_gate_all_pass(conservative_gate):
+        return "keep_preliminary_short_horizon_only"
+    return str(
+        robustness.get("summary", {}).get(
+            "final_validation_recommendation",
+            "keep_preliminary_short_horizon_only",
+        )
+        if isinstance(robustness.get("summary"), Mapping)
+        else "keep_preliminary_short_horizon_only"
+    )
+
+
+def _calibrate_masking_high_min(
+    *,
+    current_value: Any,
+    tested_values: Sequence[Any],
+    masking_audit: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    masking_results = [
+        row for row in masking_audit.get("masking_results", []) if isinstance(row, Mapping)
+    ]
+    ratios = [_optional_float(row.get("masking_ratio")) for row in masking_results]
+    ratios = [ratio for ratio in ratios if ratio is not None]
+    current_recommendation = _masking_high_recommendation_for_value(
+        _safe_float(current_value, 0.60),
+        ratios=ratios,
+    )
+    rows = []
+    for raw_value in tested_values:
+        value = _safe_float(raw_value, 0.60)
+        high_count = sum(1 for ratio in ratios if ratio >= value)
+        recommendation = _masking_high_recommendation_for_value(value, ratios=ratios)
+        rows.append(
+            _calibration_row(
+                tested_value=value,
+                recommendation=recommendation,
+                current_recommendation=current_recommendation,
+                false_promotion_risk=(
+                    "MEDIUM" if high_count and value < _safe_float(current_value, 0.60) else "LOW"
+                ),
+                false_rejection_risk=("MEDIUM" if not high_count and ratios else "LOW"),
+                sample_quality_impact={
+                    "observed_masking_ratio_count": len(ratios),
+                    "max_masking_ratio": max(ratios) if ratios else None,
+                    "high_masking_pair_count": high_count,
+                    "threshold_passed": high_count > 0,
+                },
+            )
+        )
+    return rows
+
+
+def _masking_high_recommendation_for_value(
+    value: float,
+    *,
+    ratios: Sequence[float],
+) -> str:
+    if not ratios:
+        return "insufficient_trace_data"
+    return (
+        "B_EFFECT_MASKED_BY_A"
+        if any(ratio >= value for ratio in ratios)
+        else "LOW_OR_MODERATE_MASKING_ONLY"
+    )
+
+
+def _calibrate_dominant_share_of_adjustment_min(
+    *,
+    current_value: Any,
+    tested_values: Sequence[Any],
+    registry: IndicatorResearchRegistry,
+    trace_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    dominance = _dominance_from_trace(registry, trace_rows) if trace_rows else []
+    valuation_record = next(
+        (row for row in dominance if row.get("indicator_id") == "valuation_crowding_indicator"),
+        {},
+    )
+    share = _optional_float(valuation_record.get("share_of_total_weight_adjustment"))
+    hit_rate = _optional_float(valuation_record.get("hit_rate")) or 0.0
+    if share is None:
+        share = 0.0
+    hit_rate_threshold = registry.validation_policy.dominance.dominant_hit_rate_min
+    current_recommendation = _dominance_recommendation_for_value(
+        _safe_float(
+            current_value, registry.validation_policy.dominance.dominant_share_of_adjustment_min
+        ),
+        share=share,
+        hit_rate=hit_rate,
+        hit_rate_threshold=hit_rate_threshold,
+    )
+    rows = []
+    for raw_value in tested_values:
+        value = _safe_float(
+            raw_value,
+            registry.validation_policy.dominance.dominant_share_of_adjustment_min,
+        )
+        dominant = share >= value or hit_rate >= hit_rate_threshold
+        recommendation = _dominance_recommendation_for_value(
+            value,
+            share=share,
+            hit_rate=hit_rate,
+            hit_rate_threshold=hit_rate_threshold,
+        )
+        rows.append(
+            _calibration_row(
+                tested_value=value,
+                recommendation=recommendation,
+                current_recommendation=current_recommendation,
+                false_promotion_risk=(
+                    "MEDIUM"
+                    if dominant
+                    and len({str(row.get("date")) for row in trace_rows if row.get("date")})
+                    < HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY
+                    else "LOW"
+                ),
+                false_rejection_risk="MEDIUM" if not dominant and share > 0 else "LOW",
+                sample_quality_impact={
+                    "share_of_total_weight_adjustment": share,
+                    "hit_rate": hit_rate,
+                    "hit_rate_threshold": hit_rate_threshold,
+                    "dominant_under_tested_value": dominant,
+                    "trace_date_count": len(
+                        {str(row.get("date")) for row in trace_rows if row.get("date")}
+                    ),
+                },
+            )
+        )
+    return rows
+
+
+def _dominance_recommendation_for_value(
+    value: float,
+    *,
+    share: float,
+    hit_rate: float,
+    hit_rate_threshold: float,
+) -> str:
+    if share >= value or hit_rate >= hit_rate_threshold:
+        return "DOMINANT_WEIGHT_DRIVER"
+    return "NOT_DOMINANT"
+
+
+def _threshold_calibration_robustness_checks(
+    effectiveness: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+    cases_by_source: Mapping[str, Sequence[Mapping[str, Any]]],
+    capped_masking_ratio: float,
+) -> dict[str, Any]:
+    aggregation = (
+        robustness.get("aggregation", {})
+        if isinstance(robustness.get("aggregation"), Mapping)
+        else _robustness_aggregation(effectiveness)
+    )
+    full_winners = _winners_by_horizon(aggregation.get("full_advisory_only", {}))
+    all_winners = _winners_by_horizon(aggregation.get("all_validation_sources", {}))
+    all_cases = list(cases_by_source.get("all_validation_sources", []))
+    return {
+        "date_equal_weight_aggregation": aggregation.get("equal_weight_by_date", {}),
+        "asset_equal_weight_aggregation": aggregation.get("equal_weight_by_asset", {}),
+        "cluster_equal_weight_aggregation": aggregation.get(
+            "equal_weight_by_correlated_asset_cluster",
+            {},
+        ),
+        "leave_one_date_out": _leave_one_group_out_check(
+            all_cases,
+            group_field="date",
+            capped_masking_ratio=capped_masking_ratio,
+        ),
+        "leave_one_cluster_out": _leave_one_group_out_check(
+            all_cases,
+            group_field="correlated_asset_cluster",
+            capped_masking_ratio=capped_masking_ratio,
+        ),
+        "full_advisory_only_vs_all_sources_consistency": {
+            "full_advisory_winners": full_winners,
+            "all_sources_winners": all_winners,
+            "consistent": not _winner_conflict(full_winners, all_winners),
+            "promotion_gate_allowed": False,
+        },
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
+
+
+def _leave_one_group_out_check(
+    cases: Sequence[Mapping[str, Any]],
+    *,
+    group_field: str,
+    capped_masking_ratio: float,
+) -> dict[str, Any]:
+    normalized_cases = []
+    for case in cases:
+        row = dict(case)
+        if group_field == "correlated_asset_cluster" and not row.get(group_field):
+            row[group_field] = _asset_cluster_id(str(row.get("asset") or DEFAULT_TRACE_ASSET))
+        normalized_cases.append(row)
+    groups = sorted({str(case.get(group_field) or "UNKNOWN") for case in normalized_cases})
+    baseline = _baseline_delta_recommendation(normalized_cases, capped_masking_ratio)
+    rows = []
+    for group in groups:
+        remaining = [
+            case for case in normalized_cases if str(case.get(group_field) or "UNKNOWN") != group
+        ]
+        recommendation = _baseline_delta_recommendation(remaining, capped_masking_ratio)
+        rows.append(
+            {
+                "left_out_group": group,
+                "remaining_case_count": len(remaining),
+                "recommendation": recommendation,
+                "matches_baseline": recommendation == baseline,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return {
+        "group_field": group_field,
+        "group_count": len(groups),
+        "baseline_recommendation": baseline,
+        "stable": bool(rows) and all(row["matches_baseline"] for row in rows),
+        "rows": rows,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _baseline_delta_recommendation(
+    cases: Sequence[Mapping[str, Any]],
+    capped_masking_ratio: float,
+) -> str:
+    scoped = {
+        "full_advisory_only": list(cases),
+        "component_only": [],
+        "backtest_bridge": [],
+    }
+    rows = [
+        row
+        for row in _case_comparison_rows(scoped, capped_masking_ratio)
+        if row.get("comparison_id") == "baseline_vs_no_valuation_crowding_masking"
+        and row.get("horizon") in {"1d", "5d", "10d"}
+    ]
+    if not rows:
+        return "insufficient_evidence"
+    avg_delta = _mean([_float(row.get("delta_return")) for row in rows])
+    if avg_delta is None:
+        return "insufficient_evidence"
+    if avg_delta > 0:
+        return "keep_baseline_masking_candidate"
+    if avg_delta < 0:
+        return "baseline_over_defensive_candidate"
+    return "neutral_or_mixed"
+
+
+def _threshold_action_from_rows(rows: Sequence[Mapping[str, Any]]) -> str:
+    if not rows:
+        return "insufficient_data"
+    current_rows = [
+        row for row in rows if not bool(row.get("valuation_crowding_recommendation_changes"))
+    ]
+    if not current_rows:
+        return "adjust_candidate"
+    current = current_rows[0]
+    if str(current.get("recommendation")) in {
+        "insufficient_evidence",
+        "insufficient_long_horizon_evidence",
+        "insufficient_trace_data",
+        "cluster_dominated_insufficient_robustness",
+        "keep_preliminary_short_horizon_only",
+    }:
+        return "insufficient_data"
+    if any(row.get("valuation_crowding_recommendation_changes") for row in rows):
+        return "keep_current_value"
+    return "keep_current_value"
+
+
+def _threshold_action_reason(action: str, default_reason: str) -> str:
+    if action == "insufficient_data":
+        return f"{default_reason} Evidence is not strong enough to calibrate or change the value."
+    if action == "adjust_candidate":
+        return (
+            f"{default_reason} Sensitivity suggests a candidate adjustment for owner review only."
+        )
+    return f"{default_reason} Current value remains the validation-only baseline."
+
+
+def _evidence_strength_from_rows(rows: Sequence[Mapping[str, Any]]) -> str:
+    if not rows:
+        return "NO_TRACE_EVIDENCE"
+    high_risk = any(str(row.get("false_promotion_risk")) == "HIGH" for row in rows)
+    changed = any(bool(row.get("valuation_crowding_recommendation_changes")) for row in rows)
+    if high_risk:
+        return "LIMITED_SENSITIVITY_ONLY"
+    if changed:
+        return "MODERATE_SENSITIVITY_DIAGNOSTIC"
+    return "SENSITIVITY_STABLE_DIAGNOSTIC"
+
+
+def _conservative_gate_all_pass(gate: Mapping[str, Any]) -> bool:
+    checks = gate.get("checks", [])
+    if not isinstance(checks, Sequence) or isinstance(checks, (str, bytes)):
+        return False
+    usable = [check for check in checks if isinstance(check, Mapping)]
+    return bool(usable) and all(bool(check.get("passed")) for check in usable)
+
+
+def _safe_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _threshold_registry_issues(
@@ -3918,11 +8065,21 @@ def _threshold_registry_issues(
     return issues
 
 
+def _is_uncalibrated_threshold_status(threshold: Mapping[str, Any]) -> bool:
+    status = str(threshold.get("calibration_status", ""))
+    return status in HIGH_IMPACT_UNCALIBRATED_STATUSES or status.lower() == "uncalibrated"
+
+
+def _is_heuristic_guardrail_threshold(threshold: Mapping[str, Any]) -> bool:
+    status = str(threshold.get("calibration_status", ""))
+    threshold_type = str(threshold.get("threshold_type", ""))
+    return status == "HEURISTIC_GUARDRAIL" or threshold_type in HEURISTIC_GUARDRAIL_THRESHOLD_TYPES
+
+
 def _is_uncalibrated_high_impact_threshold(threshold: Mapping[str, Any]) -> bool:
-    return (
-        str(threshold.get("threshold_class", "")).upper() == HIGH_IMPACT_THRESHOLD_CLASS
-        and str(threshold.get("calibration_status", "")) in HIGH_IMPACT_UNCALIBRATED_STATUSES
-    )
+    return str(
+        threshold.get("threshold_class", "")
+    ).upper() == HIGH_IMPACT_THRESHOLD_CLASS and _is_uncalibrated_threshold_status(threshold)
 
 
 def _threshold_blocks_promotion_dependency(threshold: Mapping[str, Any]) -> bool:
@@ -9754,6 +13911,9 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "indicator_research_coverage_audit",
         "daily_indicator_coverage_gap_report",
         "threshold_registry_audit",
+        "threshold_prioritization_report",
+        "threshold_calibration_report",
+        "dynamic_trend_threshold_sensitivity_review",
         "indicator_dependency_graph",
         "indicator_masking_and_dominance_audit_valuation_crowding",
         "valuation_crowding_pilot_validation_report",
@@ -9776,6 +13936,18 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     inventory = _read_pack_artifact_json(artifacts, "daily_indicator_inventory")
     coverage_gap = _read_pack_artifact_json(artifacts, "daily_indicator_coverage_gap_report")
     threshold_audit = _read_pack_artifact_json(artifacts, "threshold_registry_audit")
+    threshold_prioritization = _read_pack_artifact_json(
+        artifacts,
+        "threshold_prioritization_report",
+    )
+    threshold_calibration = _read_pack_artifact_json(
+        artifacts,
+        "threshold_calibration_report",
+    )
+    dynamic_trend_sensitivity = _read_pack_artifact_json(
+        artifacts,
+        "dynamic_trend_threshold_sensitivity_review",
+    )
     masking = _read_pack_artifact_json(
         artifacts,
         "indicator_masking_and_dominance_audit_valuation_crowding",
@@ -9847,6 +14019,21 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         ),
         "threshold_audit_summary": (
             threshold_audit.get("summary", {}) if isinstance(threshold_audit, Mapping) else {}
+        ),
+        "threshold_prioritization_summary": (
+            threshold_prioritization.get("summary", {})
+            if isinstance(threshold_prioritization, Mapping)
+            else {}
+        ),
+        "threshold_calibration_summary": (
+            threshold_calibration.get("summary", {})
+            if isinstance(threshold_calibration, Mapping)
+            else {}
+        ),
+        "dynamic_trend_threshold_sensitivity_summary": (
+            dynamic_trend_sensitivity.get("summary", {})
+            if isinstance(dynamic_trend_sensitivity, Mapping)
+            else {}
         ),
         "coverage_gap_unregistered": (
             coverage_gap.get("unregistered_daily_indicators", [])

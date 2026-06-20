@@ -20,6 +20,8 @@ from ai_trading_system.indicator_research import (
     build_daily_indicator_coverage_gap_report,
     build_daily_indicator_inventory,
     build_dependency_graph,
+    build_dynamic_trend_threshold_calibration_prep_report,
+    build_dynamic_trend_threshold_sensitivity_review,
     build_gate_availability_audit,
     build_historical_multi_stage_weight_trace_validation,
     build_indicator_diagnostics,
@@ -32,6 +34,9 @@ from ai_trading_system.indicator_research import (
     build_masking_casebook,
     build_multi_stage_weight_trace_contract,
     build_ontology_payload,
+    build_threshold_calibration_followup_plan,
+    build_threshold_calibration_report,
+    build_threshold_prioritization_report,
     build_threshold_registry_audit,
     build_valuation_crowding_ablation_validation,
     build_valuation_crowding_masking_effectiveness_review,
@@ -205,6 +210,340 @@ def indicator_threshold_audit_command(
         artifact_id="threshold_registry_audit",
     )
     _print_indicator_artifact("Threshold registry audit", payload, paths)
+
+
+@indicators_app.command("threshold-prioritization")
+def indicator_threshold_prioritization_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-693 high-impact threshold prioritization report。"""
+    payload = _build_indicator_payload(
+        lambda: build_threshold_prioritization_report(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="threshold_prioritization_report",
+    )
+    _print_indicator_artifact("Threshold prioritization report", payload, paths)
+
+
+@indicators_app.command("threshold-calibration")
+def indicator_threshold_calibration_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage / historical trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 realized outcome prices CSV。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit root。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--bridge-artifact-root", help="可选 backtest/advisory bridge artifact root。"
+        ),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="默认 outcome ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="Capped masking counterfactual ratio。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 trace/filter start date。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 trace/filter end date。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选 event window start。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选 event window end。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="逗号分隔 asset universe。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-695 indicator research threshold calibration sensitivity report。"""
+    payload = _build_indicator_payload(
+        lambda: build_threshold_calibration_report(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="threshold_calibration_report",
+    )
+    _print_indicator_artifact("Threshold calibration report", payload, paths)
+
+
+@indicators_app.command("threshold-calibration-followup")
+def indicator_threshold_calibration_followup_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    calibration_report_path: Annotated[
+        Path | None,
+        typer.Option("--calibration-report", help="可选 threshold_calibration_report JSON。"),
+    ] = None,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="无 calibration report 时可选 trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="无 calibration report 时可选 prices CSV。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="无 calibration report 时可选 gate audit root。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--bridge-artifact-root",
+            help="无 calibration report 时可选 bridge artifact root。",
+        ),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="默认 outcome ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="Capped masking counterfactual ratio。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 trace/filter start date。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 trace/filter end date。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选 event window start。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选 event window end。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="逗号分隔 asset universe。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-696 threshold calibration follow-up plan。"""
+    payload = _build_indicator_payload(
+        lambda: build_threshold_calibration_followup_plan(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+            calibration_report_path=calibration_report_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="threshold_calibration_followup_plan",
+    )
+    _print_indicator_artifact("Threshold calibration follow-up plan", payload, paths)
+
+
+@indicators_app.command("dynamic-trend-threshold-calibration-prep")
+def indicator_dynamic_trend_threshold_calibration_prep_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-697 dynamic allocation / trend threshold calibration prep report。"""
+    payload = _build_indicator_payload(
+        lambda: build_dynamic_trend_threshold_calibration_prep_report(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="dynamic_trend_threshold_calibration_prep_report",
+    )
+    _print_indicator_artifact("Dynamic/trend threshold calibration prep report", payload, paths)
+
+
+@indicators_app.command("dynamic-trend-threshold-sensitivity-review")
+def indicator_dynamic_trend_threshold_sensitivity_review_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage / historical trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 realized outcome prices CSV。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit root。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--bridge-artifact-root", help="可选 backtest/advisory bridge artifact root。"
+        ),
+    ] = None,
+    coverage_extension_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--coverage-extension-root",
+            help="可选 TRADING-699 coverage extension root，例如 outputs/research_campaigns。",
+        ),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="默认 outcome ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 trace/filter start date。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 trace/filter end date。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选 event window start。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选 event window end。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="逗号分隔 asset universe。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-698 dynamic allocation / trend threshold sensitivity review。"""
+    payload = _build_indicator_payload(
+        lambda: build_dynamic_trend_threshold_sensitivity_review(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            coverage_extension_root=coverage_extension_root,
+            outcome_ticker=outcome_ticker,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="dynamic_trend_threshold_sensitivity_review",
+    )
+    _print_indicator_artifact(
+        "Dynamic/trend threshold sensitivity review",
+        payload,
+        paths,
+    )
 
 
 @indicators_app.command("graph")
@@ -1314,6 +1653,13 @@ def indicator_validation_pack_command(
         Path | None,
         typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
     ] = None,
+    coverage_extension_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--coverage-extension-root",
+            help="可选 TRADING-699 coverage extension root，例如 outputs/research_campaigns。",
+        ),
+    ] = None,
     outcome_ticker: Annotated[
         str,
         typer.Option("--outcome-ticker", help="casebook/ablation outcome 代理 ticker。"),
@@ -1357,6 +1703,7 @@ def indicator_validation_pack_command(
             prices_path=prices_path,
             gate_audit_root=gate_audit_root,
             bridge_artifact_root=bridge_artifact_root,
+            coverage_extension_root=coverage_extension_root,
             outcome_ticker=outcome_ticker,
             capped_masking_ratio=capped_masking_ratio,
             start_date=start_date,
@@ -1401,6 +1748,13 @@ def indicator_validation_pack_stability_command(
         Path | None,
         typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
     ] = None,
+    coverage_extension_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--coverage-extension-root",
+            help="可选 TRADING-699 coverage extension root，例如 outputs/research_campaigns。",
+        ),
+    ] = None,
     outcome_ticker: Annotated[
         str,
         typer.Option("--outcome-ticker", help="casebook/ablation outcome 代理 ticker。"),
@@ -1444,6 +1798,7 @@ def indicator_validation_pack_stability_command(
             prices_path=prices_path,
             gate_audit_root=gate_audit_root,
             bridge_artifact_root=bridge_artifact_root,
+            coverage_extension_root=coverage_extension_root,
             outcome_ticker=outcome_ticker,
             capped_masking_ratio=capped_masking_ratio,
             start_date=start_date,

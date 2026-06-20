@@ -90,6 +90,28 @@ calibration backlog。
    - `thresholds_blocking_promotion`
    - `thresholds_blocking_promotion_count`
 
+6. High-impact threshold prioritization report：
+   - 基于 `threshold_registry.yaml` 对 36 个 uncalibrated high-impact thresholds
+     按影响范围排序：
+     - `signal_direction_affecting`
+     - `masking_dominance_affecting`
+     - `promotion_gate_affecting`
+     - `robustness_gate_affecting`
+     - `outcome_maturity_affecting`
+     - `production_weight_affecting`
+   - 为每个 threshold 标记 `calibration_urgency`：
+     - `P0`：promotion-blocking and decision-affecting
+     - `P1`：validation conclusion affecting
+     - `P2`：workflow quality affecting
+     - `P3`：engineering/runtime only
+   - 选出第一批 5～8 个 calibration candidates。
+   - floor 50 类阈值必须显式标记
+     `calibration_status=uncalibrated`、`threshold_type=heuristic_guardrail` 和
+     `not_validated_statistical_boundary=true`。
+   - Validation pack summary 暴露 `threshold_prioritization_summary`，但继续固定
+     `production_effect=none`、`promotion_gate_allowed=false`、
+     `paper_shadow_change_allowed=false`。
+
 ## 验收
 
 - `threshold_registry.yaml` 存在，并覆盖本任务列出的模块族。
@@ -99,6 +121,8 @@ calibration backlog。
   `threshold_audit_summary`。
 - 所有 A 类未校准阈值均带 promotion review block 标记。
 - Calibration backlog 按 owner 关心的六类优先级输出。
+- High-impact threshold prioritization report 可由 builder/CLI/validation pack 生成，
+  并输出 urgency counts、impact-scope counts 和 first-batch calibration candidates。
 - focused 并行 pytest / validation tier 通过，或明确记录阻塞。
 
 ## 状态记录
@@ -139,3 +163,26 @@ calibration backlog。
   和 full 并行 validation tier 2977 passed / 643 warnings / 209.82s。所有新增
   输出继续 `promotion_gate_allowed=false`、`production_weight_change_allowed=false`、
   `paper_shadow_change_allowed=false`。
+- 2026-06-20：按 owner validation-only 指令进入 high-impact threshold
+  prioritization 增量。目标是在不修改 production / paper-shadow / official weights
+  的前提下，基于 registry 对 36 个 uncalibrated high-impact thresholds 生成影响范围
+  排序、urgency 分级、第一批 calibration candidates，并把 floor 50 类阈值显式标记为
+  uncalibrated heuristic guardrail / not validated statistical boundary。
+- 2026-06-20：high-impact threshold prioritization 增量实现完成并复验。新增
+  `threshold_prioritization_report` builder/CLI/validation-pack artifact；真实 CLI 输出
+  `prioritized_threshold_count=36`、`first_batch_candidate_count=8`、
+  `production_weight_affecting_threshold_count=0`、`production_effect=none`、
+  `promotion_gate_allowed=false`、`paper_shadow_change_allowed=false`。第一批 candidates
+  为 `dynamic_allocation.risk_off_score_thresholds`、
+  `dynamic_allocation.risk_on_confirmation_thresholds`、`trend_calibration.score_bands`、
+  `indicator_research.masking_high_min`、
+  `indicator_research.dominant_share_of_adjustment_min`、
+  `indicator_research.effectiveness_missed_upside_acceptable_rate`、
+  `indicator_research.effectiveness_min_available_outcome_cases` 和
+  `indicator_research.robustness_cluster_dominance_share`。Validation pack artifacts=34，
+  summary 已包含 `threshold_prioritization_summary`；stability `PASS stable=true`。验证通过
+  focused 并行 pytest 37 passed、文档/配置 focused 并行 pytest 64 passed、Ruff、
+  py_compile、真实 CLI threshold-prioritization / threshold-audit / validation-pack /
+  validation-pack-stability、`git diff --check` 和 full 并行 validation tier
+  2978 passed / 642 warnings / 153.73s；runtime artifact：
+  `outputs/validation_runtime/full_20260620T100912Z/test_runtime_summary.json`。
