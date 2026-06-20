@@ -19,6 +19,7 @@ from ai_trading_system.indicator_research import (
     build_gate_availability_audit,
     build_historical_multi_stage_weight_trace_validation,
     build_indicator_research_gate,
+    build_indicator_research_validation_rollup,
     build_lineage_manifest_repair_report,
     build_mapping_plan,
     build_masking_audit,
@@ -239,7 +240,7 @@ def test_valuation_crowding_pilot_validation_explains_high_impact_masking(
 
 def test_masking_casebook_artifact_generation(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
-    prices_path = _write_outcome_prices(tmp_path)
+    prices_path = _write_short_outcome_prices(tmp_path)
 
     payload = build_masking_casebook(
         trace_path=trace_path,
@@ -269,7 +270,7 @@ def test_masking_casebook_artifact_generation(tmp_path: Path) -> None:
 
 def test_masking_casebook_expands_asset_universe_sample_counts(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
-    prices_path = _write_outcome_prices(tmp_path)
+    prices_path = _write_short_outcome_prices(tmp_path)
 
     payload = build_masking_casebook(
         trace_path=trace_path,
@@ -736,6 +737,75 @@ def test_masking_robustness_review_support_attribution_and_maturity_tracker(
     assert tracker["promotion_gate_allowed"] is False
 
 
+def test_indicator_research_validation_rollup_schema_tracker_and_rerun_criteria(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_many_casebook_trace(tmp_path, date_count=1)
+    prices_path = _write_short_outcome_prices(tmp_path)
+    gate_root = _write_many_gate_audit_root(tmp_path, date_count=1)
+
+    payload = build_indicator_research_validation_rollup(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+        start_date="2023-01-03",
+        end_date="2023-01-03",
+    )
+
+    assert payload["report_type"] == "indicator_research_validation_rollup"
+    assert payload["summary"]["framework_readiness"] == "READY_WITH_LIMITATIONS"
+    assert payload["summary"]["outcome_maturity_status"] == (
+        "SHORT_HORIZON_MATURE_LONG_HORIZON_PENDING"
+    )
+    assert payload["summary"]["valuation_crowding_final_validation_recommendation"] == (
+        "keep_preliminary_short_horizon_only"
+    )
+    recommendation = payload["valuation_crowding_masking_current_recommendation"]
+    assert recommendation["final_validation_recommendation"] == (
+        "keep_preliminary_short_horizon_only"
+    )
+    assert recommendation["ten_day_conclusion"] == "supports_baseline_masking"
+    assert recommendation["one_day_conclusion"] == "neutral_or_incomplete"
+    assert recommendation["five_day_conclusion"] == "neutral_or_incomplete"
+    assert recommendation["twenty_day_conclusion"] == (
+        "insufficient_long_horizon_evidence"
+    )
+    assert recommendation["promotion_gate_allowed"] is False
+    assert recommendation["production_weight_change_allowed"] is False
+    assert recommendation["paper_shadow_change_allowed"] is False
+
+    indicator_status = payload["valuation_crowding_indicator_status"]
+    assert indicator_status["coverage_status"] == "HIGH_IMPACT_UNVALIDATED"
+    assert indicator_status["validation_status"] == "PRELIMINARY_SHORT_HORIZON_ONLY"
+    assert indicator_status["promotion_status"] == "NO_PROMOTION_ALLOWED"
+
+    tracker = payload["pending_maturity_tracker"]
+    assert tracker["current_mature_cases_by_horizon"]["1d"] > 0
+    assert tracker["current_mature_cases_by_horizon"]["20d"] == 0
+    assert tracker["pending_20d_cases"] > 0
+    assert tracker["expected_maturity_dates"]
+    assert tracker["by_asset"]
+    assert tracker["by_date"]
+    assert tracker["by_cluster"]
+    assert tracker["next_recommended_rerun_date"]
+    assert tracker["promotion_gate_allowed"] is False
+
+    criteria = payload["rerun_criteria"]
+    criterion_ids = {item["criterion_id"] for item in criteria["criteria"]}
+    assert {
+        "20d_full_advisory_maturity_floor",
+        "primary_horizon_consensus",
+        "challenger_stable_advantage",
+        "risk_flag_deterioration",
+    } <= criterion_ids
+    assert criteria["promotion_gate_allowed"] is False
+    assert criteria["production_weight_change_allowed"] is False
+    assert criteria["paper_shadow_change_allowed"] is False
+    assert payload["remaining_limitations"]
+
+
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
 
@@ -917,6 +987,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "valuation_crowding_outcome_availability_audit",
         "valuation_crowding_masking_effectiveness_review",
         "valuation_crowding_masking_robustness_review",
+        "indicator_research_validation_rollup",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
@@ -963,6 +1034,7 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["backtest_trace_bridge_repeatable"] is True
     assert payload["stable_fields"]["outcome_availability_repeatable"] is True
     assert payload["stable_fields"]["masking_robustness_repeatable"] is True
+    assert payload["stable_fields"]["validation_rollup_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -1020,6 +1092,18 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "research",
             "indicators",
             "masking-robustness-review",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    validation_rollup = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "validation-rollup",
             "--output-root",
             str(tmp_path),
         ],
@@ -1106,6 +1190,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert ablation.exit_code == 0, ablation.output
     assert effectiveness.exit_code == 0, effectiveness.output
     assert robustness.exit_code == 0, robustness.output
+    assert validation_rollup.exit_code == 0, validation_rollup.output
     assert outcome_availability.exit_code == 0, outcome_availability.output
     assert historical_trace.exit_code == 0, historical_trace.output
     assert gate_availability.exit_code == 0, gate_availability.output
@@ -1119,6 +1204,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()
     assert (tmp_path / "valuation_crowding_masking_effectiveness_review.json").exists()
     assert (tmp_path / "valuation_crowding_masking_robustness_review.json").exists()
+    assert (tmp_path / "indicator_research_validation_rollup.json").exists()
     assert (tmp_path / "historical_multi_stage_weight_trace_validation.json").exists()
     assert (tmp_path / "historical_trace_gate_availability_audit.json").exists()
     assert (tmp_path / "lineage_manifest_repair_report.json").exists()

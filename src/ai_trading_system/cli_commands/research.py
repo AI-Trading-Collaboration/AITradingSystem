@@ -23,6 +23,7 @@ from ai_trading_system.indicator_research import (
     build_historical_multi_stage_weight_trace_validation,
     build_indicator_diagnostics,
     build_indicator_research_gate,
+    build_indicator_research_validation_rollup,
     build_lineage_manifest_repair_report,
     build_mapping_plan,
     build_masking_audit,
@@ -693,6 +694,86 @@ def indicator_masking_robustness_review_command(
         artifact_id="valuation_crowding_masking_robustness_review",
     )
     _print_indicator_artifact("Masking robustness review", payload, paths)
+
+
+@indicators_app.command("validation-rollup")
+def indicator_validation_rollup_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 forward outcome。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="rollup outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-665～691 indicator research validation rollup。"""
+    payload = _build_indicator_payload(
+        lambda: build_indicator_research_validation_rollup(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="indicator_research_validation_rollup",
+    )
+    _print_indicator_artifact("Indicator research validation rollup", payload, paths)
 
 
 @indicators_app.command("outcome-availability-audit")

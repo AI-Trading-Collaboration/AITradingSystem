@@ -891,6 +891,12 @@ def write_indicator_validation_pack_stability_report(
             and first_projection["masking_robustness_delta_count"]
             == second_projection["masking_robustness_delta_count"]
         ),
+        "validation_rollup_repeatable": (
+            first_projection["validation_rollup_summary"]
+            == second_projection["validation_rollup_summary"]
+            and first_projection["validation_rollup_recommendation"]
+            == second_projection["validation_rollup_recommendation"]
+        ),
         "lineage_manifest_repair_repeatable": (
             first_projection["lineage_manifest_repair_summary"]
             == second_projection["lineage_manifest_repair_summary"]
@@ -2262,6 +2268,202 @@ def build_valuation_crowding_masking_robustness_review(
     )
 
 
+def build_indicator_research_validation_rollup(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    coverage_gap = build_daily_indicator_coverage_gap_report(
+        registry_path=registry_path,
+        trace_path=trace_path,
+    )
+    historical_trace = build_historical_multi_stage_weight_trace_validation(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        gate_audit_root=gate_audit_root,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    gate_availability = build_gate_availability_audit(
+        registry_path=registry_path,
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    lineage_repair = build_lineage_manifest_repair_report(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        gate_audit_root=gate_audit_root,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    outcome_availability = build_valuation_crowding_outcome_availability_audit(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    robustness = build_valuation_crowding_masking_robustness_review(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    maturity_tracker = _validation_rollup_pending_maturity_tracker(
+        outcome_availability,
+        robustness,
+    )
+    rerun_criteria = _validation_rollup_rerun_criteria(
+        outcome_availability,
+        robustness,
+        maturity_tracker,
+    )
+    valuation_status = _validation_rollup_valuation_status(registry)
+    limitations = _validation_rollup_remaining_limitations(
+        coverage_gap,
+        historical_trace,
+        gate_availability,
+        outcome_availability,
+        robustness,
+    )
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "validation_rollup_not_promotion_gate",
+            "message": (
+                "This rollup summarizes validation artifacts only and must not be "
+                "used as a promotion gate or production weight change approval."
+            ),
+        }
+    ]
+    return _base_payload(
+        registry,
+        report_type="indicator_research_validation_rollup",
+        status="PASS_WITH_WARNINGS",
+        issues=issues,
+        summary={
+            "framework_readiness": "READY_WITH_LIMITATIONS",
+            "coverage_status": coverage_gap.get("status"),
+            "trace_status": historical_trace.get("status"),
+            "gate_lineage_status": _validation_rollup_gate_lineage_status(
+                gate_availability,
+                lineage_repair,
+            ),
+            "outcome_maturity_status": _validation_rollup_outcome_maturity_status(
+                outcome_availability
+            ),
+            "valuation_crowding_final_validation_recommendation": (
+                "keep_preliminary_short_horizon_only"
+            ),
+            "pending_20d_cases": maturity_tracker["pending_20d_cases"],
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_weight_logic_changed": False,
+            "read_only": True,
+        },
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        framework_readiness={
+            "status": "READY_WITH_LIMITATIONS",
+            "validation_pack_status": (
+                "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_READY_WITH_LIMITATIONS"
+            ),
+            "production_effect": "none",
+            "remaining_validation_required": True,
+        },
+        coverage_status={
+            "status": coverage_gap.get("status"),
+            "summary": coverage_gap.get("summary", {}),
+            "high_impact_unvalidated": coverage_gap.get("high_impact_unvalidated", []),
+        },
+        trace_status={
+            "status": historical_trace.get("status"),
+            "summary": historical_trace.get("summary", {}),
+            "trace_contract_field_audit": historical_trace.get(
+                "trace_contract_field_audit",
+                {},
+            ),
+        },
+        gate_lineage_status={
+            "gate_availability_status": gate_availability.get("status"),
+            "gate_availability_summary": gate_availability.get("summary", {}),
+            "lineage_manifest_status": lineage_repair.get("status"),
+            "lineage_manifest_summary": lineage_repair.get("summary", {}),
+        },
+        outcome_maturity_status={
+            "status": outcome_availability.get("status"),
+            "summary": outcome_availability.get("summary", {}),
+            "mature_sample_quality": outcome_availability.get(
+                "mature_sample_quality",
+                {},
+            ),
+        },
+        valuation_crowding_masking_current_recommendation={
+            "final_validation_recommendation": "keep_preliminary_short_horizon_only",
+            "ten_day_conclusion": "supports_baseline_masking",
+            "one_day_conclusion": "neutral_or_incomplete",
+            "five_day_conclusion": "neutral_or_incomplete",
+            "twenty_day_conclusion": "insufficient_long_horizon_evidence",
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "source_robustness_summary": robustness.get("summary", {}),
+            "conservative_evidence_gate": robustness.get(
+                "conservative_evidence_gate",
+                {},
+            ),
+        },
+        valuation_crowding_indicator_status=valuation_status,
+        pending_maturity_tracker=maturity_tracker,
+        rerun_criteria=rerun_criteria,
+        remaining_limitations=limitations,
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
 def build_lineage_manifest_repair_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -3049,6 +3251,23 @@ def write_indicator_framework_validation_pack(
             ),
         ),
         (
+            "indicator_research_validation_rollup",
+            build_indicator_research_validation_rollup(
+                registry_path=registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
+                bridge_artifact_root=bridge_artifact_root,
+                outcome_ticker=outcome_ticker,
+                capped_masking_ratio=capped_masking_ratio,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
             "historical_multi_stage_weight_trace_validation",
             build_historical_multi_stage_weight_trace_validation(
                 registry_path=registry_path,
@@ -3164,6 +3383,7 @@ def write_indicator_framework_validation_pack(
             {"check_id": "outcome_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_effectiveness_review", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_robustness_review", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "validation_rollup", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "historical_trace_validation", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "gate_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "component_historical_trace", "status": "PASS_WITH_WARNINGS"},
@@ -7595,10 +7815,12 @@ def _pending_twenty_day_detail(record: Mapping[str, Any]) -> dict[str, Any]:
     as_of_date = str(record.get("as_of_date") or record.get("date") or "")
     parsed = _parse_iso_date(as_of_date)
     expected = _add_business_days(parsed, 20) if parsed is not None else None
+    asset = str(record.get("asset") or "")
     return {
         "case_id": record.get("case_id"),
         "as_of_date": as_of_date,
-        "asset": record.get("asset"),
+        "asset": asset,
+        "correlated_asset_cluster": _asset_cluster_id(asset),
         "scenario": record.get("scenario"),
         "trace_source": record.get("trace_source"),
         "expected_maturity_date": None if expected is None else expected.isoformat(),
@@ -7636,6 +7858,298 @@ def _pending_tracker_group(
         }
         for group_key, group_rows in sorted(grouped.items())
     ]
+
+
+def _validation_rollup_pending_maturity_tracker(
+    outcome_availability: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> dict[str, Any]:
+    summary = outcome_availability.get("summary", {})
+    mature_by_horizon = (
+        summary.get("mature_case_count_by_horizon", {})
+        if isinstance(summary, Mapping)
+        else {}
+    )
+    not_mature_by_horizon = (
+        summary.get("not_mature_count_by_horizon", {})
+        if isinstance(summary, Mapping)
+        else {}
+    )
+    source_tracker = robustness.get("pending_20d_maturity_tracker", {})
+    tracker = dict(source_tracker) if isinstance(source_tracker, Mapping) else {}
+    expected = [
+        item
+        for item in tracker.get("expected_maturity_dates", [])
+        if isinstance(item, Mapping)
+    ]
+    tracker["current_mature_cases_by_horizon"] = {
+        f"{horizon}d": int(mature_by_horizon.get(f"{horizon}d") or 0)
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    tracker["current_not_mature_cases_by_horizon"] = {
+        f"{horizon}d": int(not_mature_by_horizon.get(f"{horizon}d") or 0)
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    tracker["by_cluster"] = _pending_tracker_group(
+        expected,
+        "correlated_asset_cluster",
+    )
+    next_date = _earliest_expected_maturity_date(expected)
+    tracker["next_recommended_rerun_date"] = next_date
+    tracker["criteria_to_rerun_robustness_review"] = [
+        "20d_full_advisory_mature_cases_reaches_validation_floor",
+        "two_of_1d_5d_10d_support_same_scenario",
+        "capped_or_no_mask_beats_baseline_in_full_advisory_and_cluster_equal_weight",
+        "missed_upside_or_false_risk_off_deteriorates_materially",
+    ]
+    tracker["promotion_gate_allowed"] = False
+    tracker["allowed_uses"] = list(NON_PROMOTION_ALLOWED_USES)
+    return tracker
+
+
+def _earliest_expected_maturity_date(
+    expected: Sequence[Mapping[str, Any]],
+) -> str | None:
+    dates = sorted(
+        str(item.get("expected_maturity_date"))
+        for item in expected
+        if item.get("expected_maturity_date")
+    )
+    return dates[0] if dates else None
+
+
+def _validation_rollup_rerun_criteria(
+    outcome_availability: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+    maturity_tracker: Mapping[str, Any],
+) -> dict[str, Any]:
+    mature_quality = outcome_availability.get("mature_sample_quality", {})
+    full_mature = (
+        mature_quality.get("full_advisory_mature_count_by_horizon", {})
+        if isinstance(mature_quality, Mapping)
+        else {}
+    )
+    full_20d = int(full_mature.get("20d") or 0)
+    conservative_gate = robustness.get("conservative_evidence_gate", {})
+    checks = (
+        conservative_gate.get("checks", [])
+        if isinstance(conservative_gate, Mapping)
+        else []
+    )
+    check_map = {
+        str(item.get("check_id")): bool(item.get("passed"))
+        for item in checks
+        if isinstance(item, Mapping)
+    }
+    horizon_contributions = (
+        conservative_gate.get("horizon_contributions", {})
+        if isinstance(conservative_gate, Mapping)
+        else {}
+    )
+    primary_consensus = check_map.get("two_primary_horizons_consistent", False)
+    capped_or_no_mask_advantage = _rollup_challenger_advantage_detected(robustness)
+    risk_deteriorated = not check_map.get(
+        "missed_upside_false_risk_off_not_worse",
+        True,
+    )
+    criteria = [
+        {
+            "criterion_id": "20d_full_advisory_maturity_floor",
+            "description": (
+                "Rerun once 20d full advisory mature cases reach the validation floor."
+            ),
+            "current_value": full_20d,
+            "threshold": EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES,
+            "currently_met": full_20d >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES,
+        },
+        {
+            "criterion_id": "primary_horizon_consensus",
+            "description": "Rerun if at least two of 1d/5d/10d support the same scenario.",
+            "current_value": dict(horizon_contributions)
+            if isinstance(horizon_contributions, Mapping)
+            else {},
+            "threshold": "two_primary_horizons_same_scenario",
+            "currently_met": primary_consensus,
+        },
+        {
+            "criterion_id": "challenger_stable_advantage",
+            "description": (
+                "Rerun if capped/no-mask is stable versus baseline in full advisory "
+                "and correlated-cluster equal-weight views."
+            ),
+            "current_value": capped_or_no_mask_advantage,
+            "threshold": "full_advisory_and_cluster_equal_weight_advantage",
+            "currently_met": capped_or_no_mask_advantage,
+        },
+        {
+            "criterion_id": "risk_flag_deterioration",
+            "description": (
+                "Rerun if missed_upside or false_risk_off deteriorates materially."
+            ),
+            "current_value": {
+                "missed_upside_false_risk_off_not_worse": not risk_deteriorated,
+            },
+            "threshold": "material_deterioration_detected",
+            "currently_met": risk_deteriorated,
+        },
+    ]
+    return {
+        "next_recommended_rerun_date": maturity_tracker.get(
+            "next_recommended_rerun_date"
+        ),
+        "criteria": criteria,
+        "any_currently_met": any(item["currently_met"] for item in criteria),
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
+
+
+def _rollup_challenger_advantage_detected(robustness: Mapping[str, Any]) -> bool:
+    aggregation = robustness.get("aggregation", {})
+    if not isinstance(aggregation, Mapping):
+        return False
+    full_winner = _aggregation_layer_winner(
+        aggregation.get("full_advisory_only", {}),
+        horizon=10,
+    )
+    cluster_winner = _aggregation_layer_winner(
+        aggregation.get("equal_weight_by_correlated_asset_cluster", {}),
+        horizon=10,
+    )
+    challengers = {"capped_masking", "no_valuation_crowding_masking"}
+    return full_winner in challengers and cluster_winner == full_winner
+
+
+def _aggregation_layer_winner(layer: Any, *, horizon: int) -> str:
+    if not isinstance(layer, Mapping):
+        return ""
+    for row in layer.get("horizon_results", []):
+        if not isinstance(row, Mapping):
+            continue
+        if int(row.get("horizon_trading_days") or 0) == horizon:
+            return str(row.get("winning_scenario") or "")
+    return ""
+
+
+def _validation_rollup_valuation_status(
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    indicator = _indicator_or_raise(registry, "valuation_crowding_indicator")
+    inventory = _inventory_record(registry, indicator)
+    return {
+        "indicator_id": indicator.indicator_id,
+        "coverage_status": "HIGH_IMPACT_UNVALIDATED",
+        "validation_status": "PRELIMINARY_SHORT_HORIZON_ONLY",
+        "promotion_status": "NO_PROMOTION_ALLOWED",
+        "registry_coverage_status": inventory.get("coverage_status"),
+        "expected_impact": indicator.expected_impact.model_dump(mode="json"),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _validation_rollup_gate_lineage_status(
+    gate_availability: Mapping[str, Any],
+    lineage_repair: Mapping[str, Any],
+) -> str:
+    gate_summary = gate_availability.get("summary", {})
+    lineage_summary = lineage_repair.get("summary", {})
+    lineage_missing = 0
+    if isinstance(lineage_summary, Mapping):
+        root_counts = lineage_summary.get("root_cause_reason_class_counts", {})
+        if isinstance(root_counts, Mapping):
+            lineage_missing = int(root_counts.get("lineage_manifest_missing") or 0)
+    if lineage_missing:
+        return "LINEAGE_MANIFEST_REPAIR_REQUIRED"
+    if (
+        isinstance(gate_summary, Mapping)
+        and int(gate_summary.get("full_advisory_trace_eligible_count") or 0) > 0
+    ):
+        return "FULL_ADVISORY_AND_COMPONENT_TRACE_AVAILABLE_WITH_LIMITATIONS"
+    return "COMPONENT_OR_PARTIAL_TRACE_ONLY"
+
+
+def _validation_rollup_outcome_maturity_status(
+    outcome_availability: Mapping[str, Any],
+) -> str:
+    mature_quality = outcome_availability.get("mature_sample_quality", {})
+    if not isinstance(mature_quality, Mapping):
+        return "OUTCOME_MATURITY_UNKNOWN"
+    full_mature = mature_quality.get("full_advisory_mature_count_by_horizon", {})
+    if not isinstance(full_mature, Mapping):
+        return "OUTCOME_MATURITY_UNKNOWN"
+    if int(full_mature.get("20d") or 0) < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
+        return "SHORT_HORIZON_MATURE_LONG_HORIZON_PENDING"
+    return "ALL_PRIMARY_HORIZONS_MATURE_ENOUGH_FOR_REVIEW"
+
+
+def _validation_rollup_remaining_limitations(
+    coverage_gap: Mapping[str, Any],
+    historical_trace: Mapping[str, Any],
+    gate_availability: Mapping[str, Any],
+    outcome_availability: Mapping[str, Any],
+    robustness: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    limitations: list[dict[str, Any]] = []
+    coverage_summary = coverage_gap.get("summary", {})
+    if isinstance(coverage_summary, Mapping) and int(
+        coverage_summary.get("high_impact_unvalidated_count") or 0
+    ):
+        limitations.append(
+            {
+                "limitation_id": "high_impact_unvalidated_indicator",
+                "status": "OPEN",
+                "detail": "valuation_crowding_indicator remains HIGH_IMPACT_UNVALIDATED.",
+            }
+        )
+    trace_summary = historical_trace.get("summary", {})
+    if isinstance(trace_summary, Mapping) and not bool(
+        trace_summary.get("sufficient_history_for_stability")
+    ):
+        limitations.append(
+            {
+                "limitation_id": "historical_trace_window_short",
+                "status": "OPEN",
+                "detail": "Historical trace is below the configured stability window.",
+            }
+        )
+    gate_summary = gate_availability.get("summary", {})
+    if isinstance(gate_summary, Mapping) and int(
+        gate_summary.get("full_advisory_trace_eligible_count") or 0
+    ) < int(gate_summary.get("audited_date_count") or 0):
+        limitations.append(
+            {
+                "limitation_id": "full_advisory_gate_availability_limited",
+                "status": "OPEN",
+                "detail": (
+                    "Some audited dates remain component-only or fail-closed; "
+                    "production gate was not relaxed."
+                ),
+            }
+        )
+    outcome_summary = outcome_availability.get("summary", {})
+    if isinstance(outcome_summary, Mapping) and int(
+        outcome_summary.get("20d_mature_case_count") or 0
+    ) < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
+        limitations.append(
+            {
+                "limitation_id": "insufficient_long_horizon_evidence",
+                "status": "OPEN",
+                "detail": "20d mature outcome remains below validation floor.",
+            }
+        )
+    conservative_gate = robustness.get("conservative_evidence_gate", {})
+    if isinstance(conservative_gate, Mapping) and str(
+        conservative_gate.get("final_validation_recommendation")
+    ) == "keep_preliminary_short_horizon_only":
+        limitations.append(
+            {
+                "limitation_id": "conservative_evidence_gate_not_met",
+                "status": "OPEN",
+                "detail": conservative_gate.get("rationale", ""),
+            }
+        )
+    return limitations
 
 
 def _conservative_evidence_gate(
@@ -8629,6 +9143,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "valuation_crowding_outcome_availability_audit",
         "valuation_crowding_masking_effectiveness_review",
         "valuation_crowding_masking_robustness_review",
+        "indicator_research_validation_rollup",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
@@ -8671,6 +9186,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     robustness_review = _read_pack_artifact_json(
         artifacts,
         "valuation_crowding_masking_robustness_review",
+    )
+    validation_rollup = _read_pack_artifact_json(
+        artifacts,
+        "indicator_research_validation_rollup",
     )
     outcome_availability = _read_pack_artifact_json(
         artifacts,
@@ -8773,6 +9292,16 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
             len(robustness_review.get("scenario_delta_matrix", []))
             if isinstance(robustness_review, Mapping)
             else 0
+        ),
+        "validation_rollup_summary": (
+            validation_rollup.get("summary", {})
+            if isinstance(validation_rollup, Mapping)
+            else {}
+        ),
+        "validation_rollup_recommendation": (
+            validation_rollup.get("valuation_crowding_masking_current_recommendation", {})
+            if isinstance(validation_rollup, Mapping)
+            else {}
         ),
         "lineage_manifest_repair_summary": (
             lineage_repair.get("summary", {}) if isinstance(lineage_repair, Mapping) else {}
