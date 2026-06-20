@@ -47,6 +47,11 @@ EDGE_TYPES_THAT_CAN_MASK = {"MASKS", "CAPS", "CONDITIONS"}
 TRACE_REQUIRED_STATUS = "TRACE_DATA_REQUIRED"
 DEFAULT_MASKING_OUTCOME_TICKER = "QQQ"
 MASKING_OUTCOME_HORIZONS = (1, 5, 10, 20)
+MASKING_ABLATION_SCENARIOS = (
+    "baseline",
+    "no_valuation_crowding_masking",
+    "capped_masking",
+)
 # Validation-only scenario cap used for counterfactual reporting; not a production policy.
 DEFAULT_MASKING_ABLATION_CAP_RATIO = 0.50
 # Isolated daily traces stay useful, but stability claims need a multi-date diagnostic window.
@@ -62,6 +67,11 @@ TRACE_CONFIDENCE_NOT_ELIGIBLE = "LOW_NOT_TRACE_ELIGIBLE"
 NON_PROMOTION_ALLOWED_USES = ["diagnostic", "ablation", "sensitivity_analysis"]
 DEFAULT_TRACE_ASSET = "AI_RISK_ASSET_BASKET"
 PRICE_TICKER_ALIASES = {"GOOGL": "GOOG"}
+VALIDATION_CORRELATED_ASSET_CLUSTERS = {
+    "broad_index": {"QQQ", "SPY"},
+    "semiconductor_ai": {"SMH", "NVDA", "AMD", "TSM"},
+    "mega_cap_software": {"MSFT", "GOOGL", "GOOG"},
+}
 GATE_ROOT_CAUSE_CLASSES = (
     "expected_pit_limitation",
     "ingestion_issue",
@@ -832,6 +842,14 @@ def write_indicator_validation_pack_stability_report(
             first_projection["backtest_trace_bridge_summary"]
             == second_projection["backtest_trace_bridge_summary"]
         ),
+        "masking_effectiveness_repeatable": (
+            first_projection["masking_effectiveness_summary"]
+            == second_projection["masking_effectiveness_summary"]
+        ),
+        "lineage_manifest_repair_repeatable": (
+            first_projection["lineage_manifest_repair_summary"]
+            == second_projection["lineage_manifest_repair_summary"]
+        ),
     }
     stable = all(stable_fields.values())
     payload = _base_payload(
@@ -1590,6 +1608,388 @@ def build_valuation_crowding_ablation_validation(
     )
 
 
+def build_valuation_crowding_masking_effectiveness_review(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    if not 0 <= capped_masking_ratio <= 1:
+        raise IndicatorResearchError("capped_masking_ratio must be between 0 and 1")
+    casebook = build_masking_casebook(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    cases = [dict(item) for item in casebook.get("casebook", []) if isinstance(item, Mapping)]
+    gate_audit = build_gate_availability_audit(
+        registry_path=registry_path,
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    availability = [
+        dict(item)
+        for item in gate_audit.get("gate_availability", [])
+        if isinstance(item, Mapping)
+    ]
+    full_dates = {
+        str(record.get("date"))
+        for record in availability
+        if record.get("full_advisory_trace_eligible")
+    }
+    component_only_dates = {
+        str(record.get("date"))
+        for record in availability
+        if record.get("component_validation_trace_eligible")
+        and not record.get("full_advisory_trace_eligible")
+    }
+    full_cases = [case for case in cases if str(case.get("date") or "") in full_dates]
+    component_cases = [
+        case for case in cases if str(case.get("date") or "") in component_only_dates
+    ]
+    bridge = build_backtest_trace_bridge(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    bridge_cases = [
+        _bridge_record_to_effectiveness_case(record)
+        for record in bridge.get("bridge_records", [])
+        if isinstance(record, Mapping)
+    ]
+    layers = {
+        "full_advisory_only": _masking_effectiveness_layer(
+            "full_advisory_only",
+            full_cases,
+            registry,
+            capped_masking_ratio=capped_masking_ratio,
+            trace_source=FULL_ADVISORY_TRACE_SOURCE,
+            confidence=TRACE_CONFIDENCE_FULL_ADVISORY,
+        ),
+        "component_only": _masking_effectiveness_layer(
+            "component_only",
+            component_cases,
+            registry,
+            capped_masking_ratio=capped_masking_ratio,
+            trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+            confidence=TRACE_CONFIDENCE_COMPONENT,
+        ),
+        "backtest_bridge": _masking_effectiveness_layer(
+            "backtest_bridge",
+            bridge_cases,
+            registry,
+            capped_masking_ratio=capped_masking_ratio,
+            trace_source=BACKTEST_TRACE_BRIDGE_SOURCE,
+            confidence=TRACE_CONFIDENCE_BRIDGE,
+        ),
+    }
+    by_date = [
+        {
+            "date": group_key,
+            **_masking_effectiveness_layer(
+                group_key,
+                group_cases,
+                registry,
+                capped_masking_ratio=capped_masking_ratio,
+                trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+                confidence=TRACE_CONFIDENCE_COMPONENT,
+            ),
+        }
+        for group_key, group_cases in _group_cases(cases, "date").items()
+    ]
+    by_asset = [
+        {
+            "asset": group_key,
+            **_masking_effectiveness_layer(
+                group_key,
+                group_cases,
+                registry,
+                capped_masking_ratio=capped_masking_ratio,
+                trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+                confidence=TRACE_CONFIDENCE_COMPONENT,
+            ),
+        }
+        for group_key, group_cases in _group_cases(cases, "asset").items()
+    ]
+    by_regime = [
+        {
+            "regime": group_key,
+            **_masking_effectiveness_layer(
+                group_key,
+                group_cases,
+                registry,
+                capped_masking_ratio=capped_masking_ratio,
+                trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+                confidence=TRACE_CONFIDENCE_COMPONENT,
+            ),
+        }
+        for group_key, group_cases in _group_cases_by_regime(cases, registry).items()
+    ]
+    by_event_window = [
+        {
+            "event_window_id": str(window["event_window_id"]),
+            "label": window["label"],
+            "start_date": window["start_date"],
+            "end_date": window["end_date"],
+            **_masking_effectiveness_layer(
+                str(window["event_window_id"]),
+                _cases_for_event_window(cases, window),
+                registry,
+                capped_masking_ratio=capped_masking_ratio,
+                trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+                confidence=TRACE_CONFIDENCE_COMPONENT,
+            ),
+        }
+        for window in DEFAULT_EVENT_WINDOW_CATALOG
+    ]
+    recommendation = _masking_effectiveness_recommendation(layers["full_advisory_only"])
+    issues = list(casebook.get("issues", [])) if isinstance(casebook.get("issues"), list) else []
+    if not cases:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "effectiveness_requires_masking_cases",
+                "message": (
+                    "Effectiveness review emitted schema only; trace-backed cases are "
+                    "required."
+                ),
+            }
+        )
+    if layers["component_only"]["sample_quality"]["case_count"] == 0:
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "component_only_has_no_masking_cases",
+                "message": (
+                    "Component-only eligibility exists, but no component-only masking case "
+                    "has a trace-backed pre/post mask signal; it is not counted as "
+                    "effectiveness evidence."
+                ),
+            }
+        )
+    if recommendation["decision_recommendation"] == "insufficient_evidence":
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "effectiveness_recommendation_insufficient_evidence",
+                "message": recommendation["rationale"],
+            }
+        )
+    status = (
+        "PASS"
+        if cases and recommendation["decision_recommendation"] != "insufficient_evidence"
+        else "PASS_WITH_WARNINGS"
+    )
+    return _base_payload(
+        registry,
+        report_type="valuation_crowding_masking_effectiveness_review",
+        status=status,
+        issues=issues,
+        summary={
+            **_masking_effectiveness_sample_quality(cases, registry),
+            "scenario_count": len(MASKING_ABLATION_SCENARIOS),
+            "layer_count": len(layers),
+            "capped_masking_ratio": capped_masking_ratio,
+            "outcome_ticker": outcome_ticker,
+            "decision_recommendation": recommendation["decision_recommendation"],
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "read_only": True,
+            "production_weight_logic_changed": False,
+            "full_advisory_trace_eligible_count": gate_audit["summary"].get(
+                "full_advisory_trace_eligible_count"
+            ),
+            "component_validation_trace_eligible_count": gate_audit["summary"].get(
+                "component_validation_trace_eligible_count"
+            ),
+            "backtest_bridge_case_count": len(bridge_cases),
+        },
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        decision_recommendation=recommendation,
+        layers=layers,
+        by_date=by_date,
+        by_asset=by_asset,
+        by_regime=by_regime,
+        by_event_window=by_event_window,
+        gate_availability_summary=gate_audit.get("summary", {}),
+        backtest_bridge_summary=bridge.get("summary", {}),
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
+def build_lineage_manifest_repair_report(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    root_cause_audit_path: Path | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    trace_rows = _filter_trace_rows(
+        _read_trace_rows(trace_path),
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    current_availability = _gate_availability_records(
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        trace_rows=trace_rows,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    root_cause_records = _lineage_repair_root_cause_records(
+        root_cause_audit_path=root_cause_audit_path,
+        current_availability=current_availability,
+    )
+    lineage_missing_cases = [
+        record
+        for record in root_cause_records
+        if record.get("reason_class") == "lineage_manifest_missing"
+    ]
+    affected_by_date: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for record in lineage_missing_cases:
+        row_date = str(record.get("date") or "")
+        if row_date:
+            affected_by_date[row_date].append(record)
+    affected_artifacts = [
+        _lineage_repair_artifact_record(
+            row_date,
+            cases,
+            trace_path=trace_path,
+            gate_audit_root=gate_audit_root,
+        )
+        for row_date, cases in sorted(affected_by_date.items())
+    ]
+    validation_status_counts: dict[str, int] = {}
+    for artifact in affected_artifacts:
+        status = str(artifact.get("manifest_validation_status") or "UNKNOWN")
+        validation_status_counts[status] = validation_status_counts.get(status, 0) + 1
+    current_summary = _gate_availability_summary(current_availability)
+    current_reason_class_counts = current_summary.get("root_cause_reason_class_counts", {})
+    lineage_missing_after = (
+        current_reason_class_counts.get("lineage_manifest_missing", 0)
+        if isinstance(current_reason_class_counts, Mapping)
+        else 0
+    )
+    issues: list[dict[str, Any]] = []
+    if affected_artifacts:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "lineage_manifest_missing_artifacts_require_repair",
+                "message": (
+                    "Affected artifacts lack production-equivalent lineage proof; "
+                    "do not count them as full advisory equivalent until replay "
+                    "artifacts and manifests validate."
+                ),
+            }
+        )
+    if current_summary.get("full_advisory_trace_eligible_count", 0) <= 22:
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "full_advisory_count_not_increased_without_gate_relaxation",
+                "message": (
+                    "Full advisory eligibility has not exceeded the prior 22-date baseline; "
+                    "repair must not relax production data quality or feature gates."
+                ),
+            }
+        )
+    return _base_payload(
+        registry,
+        report_type="lineage_manifest_repair_report",
+        status="PASS_WITH_WARNINGS" if issues else "PASS",
+        issues=issues,
+        summary={
+            "affected_root_cause_case_count": len(lineage_missing_cases),
+            "affected_artifact_count": len(affected_artifacts),
+            "manifest_validation_status_counts": dict(sorted(validation_status_counts.items())),
+            "production_equivalent_manifest_count": sum(
+                1 for item in affected_artifacts if item.get("production_equivalent")
+            ),
+            "source_artifact_missing_count": sum(
+                1
+                for item in affected_artifacts
+                if item.get("manifest_validation_status") == "SOURCE_ARTIFACT_MISSING"
+            ),
+            "audited_date_count": current_summary.get("audited_date_count"),
+            "full_advisory_trace_eligible_count": current_summary.get(
+                "full_advisory_trace_eligible_count"
+            ),
+            "component_validation_trace_eligible_count": current_summary.get(
+                "component_validation_trace_eligible_count"
+            ),
+            "lineage_manifest_missing_after_gate_audit": lineage_missing_after,
+            "data_quality_gate_relaxed": False,
+            "production_weight_logic_changed": False,
+            "promotion_gate_allowed": False,
+        },
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        affected_artifacts=affected_artifacts,
+        gate_availability_summary=current_summary,
+        source_root_cause_audit_path=(
+            None if root_cause_audit_path is None else str(root_cause_audit_path)
+        ),
+        rule=(
+            "Lineage repair can only validate or regenerate production-equivalent "
+            "replay manifests. It must not relax production data_quality_gate, feature "
+            "availability, or any production weight calculation logic."
+        ),
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
 def build_historical_multi_stage_weight_trace_validation(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -2181,6 +2581,23 @@ def write_indicator_framework_validation_pack(
             ),
         ),
         (
+            "valuation_crowding_masking_effectiveness_review",
+            build_valuation_crowding_masking_effectiveness_review(
+                registry_path=registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
+                bridge_artifact_root=bridge_artifact_root,
+                outcome_ticker=outcome_ticker,
+                capped_masking_ratio=capped_masking_ratio,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
             "historical_multi_stage_weight_trace_validation",
             build_historical_multi_stage_weight_trace_validation(
                 registry_path=registry_path,
@@ -2234,6 +2651,19 @@ def write_indicator_framework_validation_pack(
                 asset_universe=asset_universe,
             ),
         ),
+        (
+            "lineage_manifest_repair_report",
+            build_lineage_manifest_repair_report(
+                registry_path=registry_path,
+                trace_path=trace_path,
+                gate_audit_root=gate_audit_root,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
     ]
     artifacts = {
         artifact_id: write_indicator_artifact_pair(
@@ -2280,10 +2710,12 @@ def write_indicator_framework_validation_pack(
             {"check_id": "valuation_crowding_pilot", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_casebook", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "counterfactual_ablation", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "masking_effectiveness_review", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "historical_trace_validation", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "gate_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "component_historical_trace", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "backtest_trace_bridge", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "lineage_manifest_repair", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "no_parameter_mutation", "status": "PASS"},
             {"check_id": "no_forbidden_production_effects", "status": "PASS"},
         ],
@@ -3292,6 +3724,82 @@ def _lineage_summary(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             1 for record in records if not _lineage_manifest_complete(record)
         ),
     }
+
+
+def _lineage_repair_root_cause_records(
+    *,
+    root_cause_audit_path: Path | None,
+    current_availability: Sequence[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    if root_cause_audit_path is None:
+        return [
+            record
+            for record in current_availability
+            if not record.get("full_advisory_trace_eligible")
+        ]
+    if not root_cause_audit_path.exists():
+        raise IndicatorResearchError(f"root cause audit path not found: {root_cause_audit_path}")
+    raw = json.loads(root_cause_audit_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, Mapping):
+        raise IndicatorResearchError("root cause audit JSON must be an object")
+    records = raw.get("gate_root_cause_analysis", [])
+    if not isinstance(records, list):
+        raise IndicatorResearchError("root cause audit JSON missing gate_root_cause_analysis list")
+    return [record for record in records if isinstance(record, Mapping)]
+
+
+def _lineage_repair_artifact_record(
+    row_date: str,
+    cases: Sequence[Mapping[str, Any]],
+    *,
+    trace_path: Path | None,
+    gate_audit_root: Path | None,
+) -> dict[str, Any]:
+    source_path = _lineage_repair_source_path(row_date, gate_audit_root=gate_audit_root)
+    manifest: dict[str, Any] = {}
+    if source_path.exists():
+        manifest = _lineage_manifest_from_source_trace(
+            trace_path or source_path,
+            str(source_path),
+        ) or {}
+        if _lineage_manifest_complete(manifest):
+            validation_status = "VALID_PRODUCTION_EQUIVALENT"
+            repair_action = "no_repair_needed"
+        else:
+            validation_status = "MANIFEST_INCOMPLETE"
+            repair_action = "regenerate_lineage_manifest_from_existing_artifact"
+    else:
+        validation_status = "SOURCE_ARTIFACT_MISSING"
+        repair_action = "rerun_pit_sliced_replay_without_gate_relaxation"
+    case_assets = {
+        str(case.get("asset")).upper()
+        for case in cases
+        if case.get("asset") not in (None, "")
+    }
+    return {
+        "source_artifact_path": str(source_path),
+        "generated_at": str(manifest.get("generated_at") or ""),
+        "as_of_date": str(manifest.get("as_of_date") or row_date),
+        "decision_time": str(manifest.get("decision_time") or row_date),
+        "config_hash": str(manifest.get("config_hash") or ""),
+        "input_snapshot_hash": str(manifest.get("input_snapshot_hash") or ""),
+        "trace_contract_version": str(manifest.get("trace_contract_version") or ""),
+        "production_equivalent": bool(manifest.get("production_equivalent")),
+        "manifest_validation_status": validation_status,
+        "proof_status": str(manifest.get("proof_status") or validation_status),
+        "affected_root_cause_case_count": len(cases),
+        "affected_asset_count": len(case_assets),
+        "affected_assets": sorted(case_assets),
+        "repair_action": repair_action,
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+    }
+
+
+def _lineage_repair_source_path(row_date: str, *, gate_audit_root: Path | None) -> Path:
+    if gate_audit_root is None:
+        return PROJECT_ROOT / "outputs" / "reports" / row_date / "daily_indicator_weight_trace.json"
+    return gate_audit_root / row_date / "daily_indicator_weight_trace.json"
 
 
 def _read_optional_json(path: Path) -> dict[str, Any]:
@@ -4379,6 +4887,226 @@ def _max_drawdown(prices: Sequence[float]) -> float | None:
     return max_drawdown
 
 
+def _masking_effectiveness_layer(
+    layer_id: str,
+    cases: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+    *,
+    capped_masking_ratio: float,
+    trace_source: str,
+    confidence: str,
+) -> dict[str, Any]:
+    case_rows = [dict(case) for case in cases]
+    return {
+        "layer_id": layer_id,
+        "trace_source": trace_source,
+        "confidence": confidence,
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+        "sample_quality": _masking_effectiveness_sample_quality(case_rows, registry),
+        "scenarios": {
+            scenario_id: _ablation_scenario_metrics(
+                case_rows,
+                scenario_id,
+                capped_masking_ratio,
+            )
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        },
+    }
+
+
+def _masking_effectiveness_sample_quality(
+    cases: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    dates = {str(case.get("date")) for case in cases if case.get("date")}
+    assets = {str(case.get("asset")).upper() for case in cases if case.get("asset")}
+    regimes = {
+        str(case.get("market_regime") or registry.market_regime.regime_id)
+        for case in cases
+    }
+    clusters = {_asset_cluster_id(asset) for asset in assets}
+    return {
+        "date_count": len(dates),
+        "asset_count": len(assets),
+        "case_count": len(cases),
+        "unique_regime_count": len(regimes) if cases else 0,
+        "correlated_asset_cluster_count": len(clusters),
+        "outcome_missing_count": sum(1 for case in cases if case.get("outcome_missing")),
+    }
+
+
+def _asset_cluster_id(asset: str) -> str:
+    normalized = asset.upper()
+    for cluster_id, members in VALIDATION_CORRELATED_ASSET_CLUSTERS.items():
+        if normalized in members:
+            return cluster_id
+    if normalized == DEFAULT_TRACE_ASSET:
+        return "synthetic_ai_risk_asset_basket"
+    return f"single_asset:{normalized}"
+
+
+def _group_cases(
+    cases: Sequence[Mapping[str, Any]],
+    field: str,
+) -> dict[str, list[Mapping[str, Any]]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for case in cases:
+        value = str(case.get(field) or "")
+        if value:
+            grouped[value].append(case)
+    return dict(sorted(grouped.items()))
+
+
+def _group_cases_by_regime(
+    cases: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+) -> dict[str, list[Mapping[str, Any]]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for case in cases:
+        regime = str(case.get("market_regime") or registry.market_regime.regime_id)
+        grouped[regime].append(case)
+    return dict(sorted(grouped.items()))
+
+
+def _cases_for_event_window(
+    cases: Sequence[Mapping[str, Any]],
+    window: Mapping[str, Any],
+) -> list[Mapping[str, Any]]:
+    event_id = str(window.get("event_window_id") or "")
+    start = _parse_iso_date(str(window.get("start_date") or ""))
+    end = _parse_iso_date(str(window.get("end_date") or ""))
+    return [
+        case
+        for case in cases
+        if event_id in set(case.get("event_window_ids") or [])
+        or _date_in_window(str(case.get("date") or ""), start=start, end=end)
+    ]
+
+
+def _bridge_record_to_effectiveness_case(record: Mapping[str, Any]) -> dict[str, Any]:
+    case = dict(record)
+    outcomes = case.get("outcomes", {})
+    if not isinstance(outcomes, Mapping):
+        outcomes = {}
+    returns = [
+        value
+        for key, value in outcomes.items()
+        if str(key).startswith("return_") and isinstance(value, float)
+    ]
+    a_suppressed = _float(case.get("a_suppressed_change"))
+    drawdown_reduced = a_suppressed > 0 and any(value < 0 for value in returns)
+    missed_upside = a_suppressed > 0 and any(value > 0 for value in returns)
+    case["drawdown_reduced"] = drawdown_reduced
+    case["missed_upside"] = missed_upside
+    case["false_risk_off"] = missed_upside and not drawdown_reduced
+    case["outcome_missing"] = any(
+        outcomes.get(f"return_{horizon}d") is None for horizon in MASKING_OUTCOME_HORIZONS
+    )
+    case["event_window_ids"] = _event_window_ids_for_date(str(case.get("date") or ""))
+    return case
+
+
+def _masking_effectiveness_recommendation(
+    full_layer: Mapping[str, Any],
+) -> dict[str, Any]:
+    sample_quality = full_layer.get("sample_quality", {})
+    if not isinstance(sample_quality, Mapping):
+        sample_quality = {}
+    case_count = int(sample_quality.get("case_count") or 0)
+    outcome_missing_count = int(sample_quality.get("outcome_missing_count") or 0)
+    date_count = int(sample_quality.get("date_count") or 0)
+    asset_count = int(sample_quality.get("asset_count") or 0)
+    if (
+        case_count < 50
+        or date_count < HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY
+        or asset_count < 5
+        or (case_count > 0 and outcome_missing_count / case_count > 0.25)
+    ):
+        return {
+            "decision_recommendation": "insufficient_evidence",
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "rationale": (
+                "Sample is not mature enough for a directional masking policy decision: "
+                f"date_count={date_count}, asset_count={asset_count}, "
+                f"case_count={case_count}, outcome_missing_count={outcome_missing_count}."
+            ),
+        }
+    scenarios = full_layer.get("scenarios", {})
+    if not isinstance(scenarios, Mapping):
+        return {
+            "decision_recommendation": "insufficient_evidence",
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "rationale": "Scenario metrics are missing from full advisory layer.",
+        }
+    baseline = scenarios.get("baseline", {})
+    no_mask = scenarios.get("no_valuation_crowding_masking", {})
+    capped = scenarios.get("capped_masking", {})
+    if not all(isinstance(item, Mapping) for item in (baseline, no_mask, capped)):
+        return {
+            "decision_recommendation": "insufficient_evidence",
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "rationale": "Scenario metrics are not comparable.",
+        }
+    baseline_drawdown = _optional_float(baseline.get("max_drawdown"))
+    capped_drawdown = _optional_float(capped.get("max_drawdown"))
+    no_mask_drawdown = _optional_float(no_mask.get("max_drawdown"))
+    baseline_20d = _optional_float(baseline.get("avg_return_20d"))
+    capped_20d = _optional_float(capped.get("avg_return_20d"))
+    no_mask_20d = _optional_float(no_mask.get("avg_return_20d"))
+    if (
+        baseline_drawdown is not None
+        and no_mask_drawdown is not None
+        and baseline_drawdown >= no_mask_drawdown
+        and (
+            capped_drawdown is None
+            or baseline_drawdown >= capped_drawdown
+            or (baseline_20d or 0.0) >= (capped_20d or 0.0)
+        )
+    ):
+        decision = "keep_baseline_masking"
+        rationale = "Baseline has the strongest drawdown preservation in the comparable layer."
+    elif (
+        capped_drawdown is not None
+        and baseline_drawdown is not None
+        and capped_drawdown >= baseline_drawdown
+        and (capped_20d or 0.0) >= (baseline_20d or 0.0)
+    ):
+        decision = "prefer_capped_masking"
+        rationale = "Capped masking improves or matches drawdown while preserving return."
+    elif (
+        no_mask_20d is not None
+        and baseline_20d is not None
+        and no_mask_20d > baseline_20d
+        and no_mask_drawdown is not None
+        and baseline_drawdown is not None
+        and no_mask_drawdown >= baseline_drawdown
+    ):
+        decision = "disable_masking_candidate"
+        rationale = "No-masking scenario dominates baseline on return and drawdown."
+    else:
+        decision = "insufficient_evidence"
+        rationale = "Scenario metrics do not support a stable validation recommendation."
+    return {
+        "decision_recommendation": decision,
+        "recommendation_scope": "validation_only",
+        "promotion_gate_allowed": False,
+        "rationale": rationale,
+    }
+
+
+def _optional_float(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _ablation_scenario_metrics(
     cases: Sequence[Mapping[str, Any]],
     scenario_id: str,
@@ -4967,10 +5695,12 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "valuation_crowding_pilot_validation_report",
         "indicator_masking_casebook_valuation_crowding_trend",
         "valuation_crowding_ablation_validation",
+        "valuation_crowding_masking_effectiveness_review",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
         "backtest_trace_bridge",
+        "lineage_manifest_repair_report",
     ):
         paths = artifacts.get(artifact_id)
         if isinstance(paths, Mapping) and paths.get("json_path"):
@@ -5000,6 +5730,14 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     backtest_bridge = _read_pack_artifact_json(
         artifacts,
         "backtest_trace_bridge",
+    )
+    effectiveness_review = _read_pack_artifact_json(
+        artifacts,
+        "valuation_crowding_masking_effectiveness_review",
+    )
+    lineage_repair = _read_pack_artifact_json(
+        artifacts,
+        "lineage_manifest_repair_report",
     )
     high_impact = coverage_gap.get("high_impact_unvalidated", [])
     historical_summary = (
@@ -5074,6 +5812,14 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         ),
         "backtest_trace_bridge_summary": (
             backtest_bridge.get("summary", {}) if isinstance(backtest_bridge, Mapping) else {}
+        ),
+        "masking_effectiveness_summary": (
+            effectiveness_review.get("summary", {})
+            if isinstance(effectiveness_review, Mapping)
+            else {}
+        ),
+        "lineage_manifest_repair_summary": (
+            lineage_repair.get("summary", {}) if isinstance(lineage_repair, Mapping) else {}
         ),
     }
 

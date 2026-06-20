@@ -65,6 +65,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
 from ai_trading_system.reports import reader_brief
 
 
+@pytest.fixture(scope="module")
+def real_smoke_cache(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path, str]:
+    return _write_real_smoke_cache(tmp_path_factory.mktemp("dynamic_v3_real_smoke_cache"))
+
+
 def test_parameter_sweep_config_validation_and_candidate_id(tmp_path: Path) -> None:
     config_path = _tiny_config_path(tmp_path)
     config = load_parameter_sweep_config(config_path)
@@ -502,15 +507,18 @@ def test_dynamic_v3_parameter_research_cli_smoke(tmp_path: Path) -> None:
     assert "production_candidate_generated=false" in leaderboard_result.output
 
 
-def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path) -> None:
-    prices_path, rates_path, as_of = _write_real_smoke_cache(tmp_path)
+def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(
+    tmp_path: Path,
+    real_smoke_cache: tuple[Path, Path, str],
+) -> None:
+    prices_path, rates_path, as_of = real_smoke_cache
     config_path = _real_smoke_config_path(tmp_path, as_of)
     output_dir = tmp_path / "real_sweeps"
 
     result = run_parameter_sweep(
         config_path=config_path,
         output_dir=output_dir,
-        workers=1,
+        workers=2,
         evaluator_mode="real_dynamic_v3_rescue",
         prices_path=prices_path,
         rates_path=rates_path,
@@ -1009,8 +1017,11 @@ def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
     assert governance_report_payload(output_dir=tmp_path / "governance")["status"] == "PASS"
 
 
-def test_dynamic_v3_data_and_injection_audit_contracts(tmp_path: Path) -> None:
-    prices_path, rates_path, as_of = _write_real_smoke_cache(tmp_path)
+def test_dynamic_v3_data_and_injection_audit_contracts(
+    tmp_path: Path,
+    real_smoke_cache: tuple[Path, Path, str],
+) -> None:
+    prices_path, rates_path, as_of = real_smoke_cache
     config_path = _real_smoke_config_path(tmp_path, as_of)
 
     data_audit = run_data_audit(

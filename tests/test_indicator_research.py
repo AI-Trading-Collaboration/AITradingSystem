@@ -18,10 +18,12 @@ from ai_trading_system.indicator_research import (
     build_gate_availability_audit,
     build_historical_multi_stage_weight_trace_validation,
     build_indicator_research_gate,
+    build_lineage_manifest_repair_report,
     build_mapping_plan,
     build_masking_audit,
     build_masking_casebook,
     build_valuation_crowding_ablation_validation,
+    build_valuation_crowding_masking_effectiveness_review,
     build_valuation_crowding_pilot_audit,
     build_valuation_crowding_pilot_validation_report,
     load_indicator_registry,
@@ -325,6 +327,66 @@ def test_valuation_crowding_ablation_result_schema(tmp_path: Path) -> None:
     assert payload["summary"]["production_weight_logic_changed"] is False
 
 
+def test_masking_effectiveness_review_outputs_required_layers_and_recommendation(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+    bridge_root = _write_bridge_artifact_root(tmp_path)
+
+    payload = build_valuation_crowding_masking_effectiveness_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        bridge_artifact_root=bridge_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+        start_date="2023-01-03",
+        end_date="2023-01-05",
+    )
+
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert set(payload["layers"]) == {
+        "full_advisory_only",
+        "component_only",
+        "backtest_bridge",
+    }
+    full_quality = payload["layers"]["full_advisory_only"]["sample_quality"]
+    assert full_quality["date_count"] == 2
+    assert full_quality["asset_count"] == 5
+    assert full_quality["case_count"] == 10
+    assert full_quality["unique_regime_count"] == 1
+    assert full_quality["correlated_asset_cluster_count"] == 3
+    assert payload["layers"]["component_only"]["sample_quality"]["case_count"] == 0
+    for layer in payload["layers"].values():
+        for scenario in layer["scenarios"].values():
+            assert {
+                "avg_return_1d",
+                "avg_return_5d",
+                "avg_return_10d",
+                "avg_return_20d",
+                "hit_rate_1d",
+                "hit_rate_5d",
+                "hit_rate_10d",
+                "hit_rate_20d",
+                "max_drawdown",
+                "drawdown_preservation",
+                "missed_upside_count",
+                "false_risk_off_count",
+                "drawdown_reduced_count",
+                "turnover",
+                "constraint_hit_count",
+            } <= set(scenario)
+    assert payload["summary"]["decision_recommendation"] == "insufficient_evidence"
+    assert payload["decision_recommendation"]["recommendation_scope"] == "validation_only"
+    assert payload["decision_recommendation"]["promotion_gate_allowed"] is False
+    assert payload["by_date"]
+    assert payload["by_asset"]
+    assert payload["by_regime"]
+    assert payload["by_event_window"]
+
+
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
 
@@ -449,6 +511,37 @@ def test_backtest_trace_bridge_schema_and_non_promotion_marker(tmp_path: Path) -
     assert source["promotion_gate_allowed"] is False
 
 
+def test_lineage_manifest_repair_report_lists_missing_affected_artifacts(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+
+    payload = build_lineage_manifest_repair_report(
+        trace_path=trace_path,
+        gate_audit_root=gate_root,
+        start_date="2023-01-03",
+        end_date="2023-01-06",
+        asset_universe="QQQ,SPY",
+    )
+
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["summary"]["affected_root_cause_case_count"] == 2
+    assert payload["summary"]["affected_artifact_count"] == 1
+    assert payload["summary"]["source_artifact_missing_count"] == 1
+    assert payload["summary"]["lineage_manifest_missing_after_gate_audit"] == 2
+    artifact = payload["affected_artifacts"][0]
+    assert artifact["source_artifact_path"].replace("\\", "/").endswith(
+        "gate_audit/2023-01-06/daily_indicator_weight_trace.json"
+    )
+    assert artifact["as_of_date"] == "2023-01-06"
+    assert artifact["decision_time"] == "2023-01-06"
+    assert artifact["production_equivalent"] is False
+    assert artifact["manifest_validation_status"] == "SOURCE_ARTIFACT_MISSING"
+    assert artifact["promotion_gate_allowed"] is False
+    assert artifact["allowed_uses"] == ["diagnostic", "ablation", "sensitivity_analysis"]
+
+
 def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> None:
     payload = write_indicator_framework_validation_pack(output_root=tmp_path)
 
@@ -464,10 +557,12 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "valuation_crowding_pilot_validation_report",
         "indicator_masking_casebook_valuation_crowding_trend",
         "valuation_crowding_ablation_validation",
+        "valuation_crowding_masking_effectiveness_review",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
         "backtest_trace_bridge",
+        "lineage_manifest_repair_report",
         "indicator_to_signal_research_framework_v1_validation_pack",
     }
     assert expected <= set(payload["artifacts"])
@@ -546,6 +641,18 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
         env={"COLUMNS": "160"},
         terminal_width=160,
     )
+    effectiveness = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "masking-effectiveness-review",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
     historical_trace = runner.invoke(
         app,
         [
@@ -564,6 +671,18 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "research",
             "indicators",
             "gate-availability-audit",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    lineage_repair = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "lineage-manifest-repair",
             "--output-root",
             str(tmp_path),
         ],
@@ -600,16 +719,20 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert coverage_gap.exit_code == 0, coverage_gap.output
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
+    assert effectiveness.exit_code == 0, effectiveness.output
     assert historical_trace.exit_code == 0, historical_trace.output
     assert gate_availability.exit_code == 0, gate_availability.output
+    assert lineage_repair.exit_code == 0, lineage_repair.output
     assert component_trace.exit_code == 0, component_trace.output
     assert backtest_bridge.exit_code == 0, backtest_bridge.output
     assert (tmp_path / "daily_indicator_inventory.json").exists()
     assert (tmp_path / "daily_indicator_coverage_gap_report.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
+    assert (tmp_path / "valuation_crowding_masking_effectiveness_review.json").exists()
     assert (tmp_path / "historical_multi_stage_weight_trace_validation.json").exists()
     assert (tmp_path / "historical_trace_gate_availability_audit.json").exists()
+    assert (tmp_path / "lineage_manifest_repair_report.json").exists()
     assert (tmp_path / "component_level_historical_trace.json").exists()
     assert (tmp_path / "backtest_trace_bridge.json").exists()
     assert (

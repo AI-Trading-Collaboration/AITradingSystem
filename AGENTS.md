@@ -113,6 +113,17 @@ into separate unaudited scheduler entries.
 - If a design decision affects investment interpretation, record it in docs or
   configuration rather than leaving it implicit in code.
 
+## Pytest Validation Discipline
+
+When a task needs pytest validation, use parallel pytest by default through
+`python scripts/run_validation_tier.py <suite> --write-runtime-artifact`, or use
+equivalent explicit pytest-xdist arguments for focused one-off tests:
+`python -m pytest -n 16 --dist loadfile ...`.
+
+Run serial pytest only for explicit reproduction or debugging of a
+parallelism-related failure, and make that exception visible in the validation
+notes. Do not silently replace a failed parallel run with a serial PASS.
+
 ## Heuristic and Threshold Governance
 
 Investment-facing heuristics are model policy, not incidental code.

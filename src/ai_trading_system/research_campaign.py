@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from itertools import combinations
 from pathlib import Path
@@ -684,6 +685,7 @@ def run_campaign_stage(
     window_policy_path: Path = DEFAULT_WINDOW_POLICY_PATH,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     directory = campaign_directory(campaign_id, campaign_root)
     spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
@@ -779,6 +781,7 @@ def run_campaign_stage(
             window_policy_path=window_policy_path,
             output_root=output_root,
             evidence_store=evidence,
+            b2_compute_cache=b2_compute_cache,
         )
         if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
             adapter_payload = _write_stage_adapter_run_artifacts(
@@ -828,6 +831,7 @@ def run_campaign_stage(
             window_policy_path=window_policy_path,
             output_root=output_root,
             evidence_store=evidence,
+            b2_compute_cache=b2_compute_cache,
         )
         if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
             adapter_payload = _write_stage_adapter_run_artifacts(
@@ -908,6 +912,7 @@ def run_campaign_stage(
             window_policy_path=window_policy_path,
             output_root=output_root,
             evidence_store=evidence,
+            b2_compute_cache=b2_compute_cache,
         )
         if adapter_run.status != "ADAPTER_NOT_CONFIGURED":
             adapter_payload = _write_stage_adapter_run_artifacts(
@@ -1313,6 +1318,7 @@ def build_b2_compute_adapter_smoke_report(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
     adapter_run = run_stage_adapter(
@@ -1322,6 +1328,7 @@ def build_b2_compute_adapter_smoke_report(
         run_id=f"{campaign_id}-b2-compute-smoke-{_compact_time()}",
         adapter_registry_path=adapter_registry_path,
         output_root=output_root,
+        b2_compute_cache=b2_compute_cache,
     )
     run_artifact = _write_stage_adapter_run_artifacts(
         adapter_run.model_dump(mode="json"),
@@ -1374,6 +1381,7 @@ def build_b2_compute_parity_validation(
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
     smoke_report: dict[str, Any] | None = None,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
     smoke = smoke_report or build_b2_compute_adapter_smoke_report(
@@ -1381,6 +1389,7 @@ def build_b2_compute_parity_validation(
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
+        b2_compute_cache=b2_compute_cache,
     )
     adapter_run = smoke["adapter_run"]
     evidence_by_metric = {
@@ -1509,6 +1518,7 @@ def build_b2_full_diagnostic_compute_report(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
     adapter_run = run_stage_adapter(
@@ -1518,6 +1528,7 @@ def build_b2_full_diagnostic_compute_report(
         run_id=f"{campaign_id}-b2-full-compute-{_compact_time()}",
         adapter_registry_path=adapter_registry_path,
         output_root=output_root,
+        b2_compute_cache=b2_compute_cache,
     )
     run_artifact = _write_stage_adapter_run_artifacts(
         adapter_run.model_dump(mode="json"),
@@ -1576,6 +1587,7 @@ def build_b2_gate_compute_report(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     spec, state, evidence = load_campaign_bundle(campaign_id, campaign_root)
     adapter_run = run_stage_adapter(
@@ -1586,6 +1598,7 @@ def build_b2_gate_compute_report(
         adapter_registry_path=adapter_registry_path,
         output_root=output_root,
         evidence_store=evidence,
+        b2_compute_cache=b2_compute_cache,
     )
     run_artifact = _write_stage_adapter_run_artifacts(
         adapter_run.model_dump(mode="json"),
@@ -1654,6 +1667,7 @@ def build_b2_campaign_e2e_compute_report(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     _, source_state, _ = load_campaign_bundle(campaign_id, campaign_root)
     diagnostic_replay_from_archive = source_state.current_stage == "ARCHIVED"
@@ -1683,6 +1697,7 @@ def build_b2_campaign_e2e_compute_report(
                 campaign_root=tmp_root,
                 adapter_registry_path=adapter_registry_path,
                 output_root=output_root / "b2_campaign_e2e_compute",
+                b2_compute_cache=b2_compute_cache,
             )
             for stage in ("TARGETED_EVIDENCE", "FULL_DIAGNOSTIC", "INTERACTION", "GATE")
         ]
@@ -1756,24 +1771,28 @@ def build_b2_campaign_full_parity_validation(
     full_compute: dict[str, Any] | None = None,
     gate_compute: dict[str, Any] | None = None,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     targeted = targeted_parity or build_b2_compute_parity_validation(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
+        b2_compute_cache=b2_compute_cache,
     )
     full = full_compute or build_b2_full_diagnostic_compute_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
+        b2_compute_cache=b2_compute_cache,
     )
     gate = gate_compute or build_b2_gate_compute_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
+        b2_compute_cache=b2_compute_cache,
     )
     audited_full = _read_json(
         PROJECT_ROOT / "docs" / "research" / "b2_full_diagnostic_with_control_windows.json"
@@ -1851,6 +1870,7 @@ def build_campaign_evidence_budget_final_decision_drill(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="campaign-budget-final-decision-") as tmp:
         tmp_root = Path(tmp) / "campaigns"
@@ -1870,6 +1890,7 @@ def build_campaign_evidence_budget_final_decision_drill(
             campaign_root=tmp_root,
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "budget_final_decision_drill",
+            b2_compute_cache=b2_compute_cache,
         )
     checks = [
         {
@@ -1910,8 +1931,11 @@ def build_legacy_b2_runner_deprecation_readiness(
     *,
     full_parity: dict[str, Any] | None = None,
     compatibility_path: Path = DEFAULT_COMPATIBILITY_PATH,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
-    parity = full_parity or build_b2_campaign_full_parity_validation()
+    parity = full_parity or build_b2_campaign_full_parity_validation(
+        b2_compute_cache=b2_compute_cache
+    )
     policy = load_compatibility_policy(compatibility_path)
     b2_runners = [
         runner
@@ -2039,6 +2063,7 @@ def build_campaign_managed_b2_final_repeatability_run(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     command = "aits research campaign run --id b2-risk-overlay-current-form --stage next"
     _, current_state, _ = load_campaign_bundle(campaign_id, campaign_root)
@@ -2095,6 +2120,7 @@ def build_campaign_managed_b2_final_repeatability_run(
             campaign_root=tmp_root,
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "b2_final_repeatability_run",
+            b2_compute_cache=b2_compute_cache,
         )
         after = build_status_payload(
             campaign_id=campaign_id,
@@ -2171,6 +2197,7 @@ def build_campaign_b2_final_gate(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     _, current_state, _ = load_campaign_bundle(campaign_id, campaign_root)
     if current_state.current_stage == "ARCHIVED":
@@ -2221,6 +2248,7 @@ def build_campaign_b2_final_gate(
             campaign_root=tmp_root,
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "b2_final_gate" / "final_repeatability",
+            b2_compute_cache=b2_compute_cache,
         )
         spec, state, evidence = load_campaign_bundle(campaign_id, tmp_root)
         adapter_run = run_stage_adapter(
@@ -2231,6 +2259,7 @@ def build_campaign_b2_final_gate(
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "b2_final_gate",
             evidence_store=evidence,
+            b2_compute_cache=b2_compute_cache,
         )
         run_artifact = _write_stage_adapter_run_artifacts(
             adapter_run.model_dump(mode="json"),
@@ -2294,6 +2323,7 @@ def build_campaign_b2_owner_review_packet(
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
     final_gate: dict[str, Any] | None = None,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     spec, state, _ = load_campaign_bundle(campaign_id, campaign_root)
     gate = final_gate or build_campaign_b2_final_gate(
@@ -2301,6 +2331,7 @@ def build_campaign_b2_owner_review_packet(
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
+        b2_compute_cache=b2_compute_cache,
     )
     evidence_summary = _b2_owner_packet_evidence_summary()
     owner_options = _b2_owner_options(gate["final_gate_decision"])
@@ -2370,12 +2401,14 @@ def build_campaign_b2_branch_finalization(
     campaign_id: str = "b2-risk-overlay-current-form",
     final_gate: dict[str, Any] | None = None,
     owner_packet: dict[str, Any] | None = None,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     gate = final_gate or build_campaign_b2_final_gate(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
+        b2_compute_cache=b2_compute_cache,
     )
     packet = owner_packet or build_campaign_b2_owner_review_packet(
         campaign_root=campaign_root,
@@ -2383,6 +2416,7 @@ def build_campaign_b2_branch_finalization(
         adapter_registry_path=adapter_registry_path,
         campaign_id=campaign_id,
         final_gate=gate,
+        b2_compute_cache=b2_compute_cache,
     )
     branch_decision = _b2_branch_decision_from_final_gate(gate["final_gate_decision"])
     promotion_flags = {
@@ -3017,6 +3051,7 @@ def build_campaign_run_next_stage_smoke_report(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="campaign-run-next-smoke-") as tmp:
         tmp_root = Path(tmp) / "campaigns"
@@ -3028,6 +3063,7 @@ def build_campaign_run_next_stage_smoke_report(
                 campaign_root=tmp_root,
                 adapter_registry_path=adapter_registry_path,
                 output_root=output_root / "run_next_stage_smoke",
+                b2_compute_cache=b2_compute_cache,
             )
             blocked_reason = None
         except ResearchCampaignError as exc:
@@ -3081,6 +3117,7 @@ def build_evidence_budget_forced_transition_report(
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
     campaign_id: str = "b2-risk-overlay-current-form",
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     _, current_state, _ = load_campaign_bundle(campaign_id, campaign_root)
     if current_state.current_stage == "ARCHIVED":
@@ -3090,6 +3127,7 @@ def build_evidence_budget_forced_transition_report(
             campaign_root=campaign_root,
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "budget_forced_transition",
+            b2_compute_cache=b2_compute_cache,
         )
         checks = [
             {
@@ -3131,6 +3169,7 @@ def build_evidence_budget_forced_transition_report(
             campaign_root=tmp_root,
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "budget_forced_transition",
+            b2_compute_cache=b2_compute_cache,
         )
 
     with tempfile.TemporaryDirectory(prefix="campaign-budget-exhausted-") as tmp:
@@ -3151,6 +3190,7 @@ def build_evidence_budget_forced_transition_report(
             campaign_root=tmp_root,
             adapter_registry_path=adapter_registry_path,
             output_root=output_root / "budget_forced_transition",
+            b2_compute_cache=b2_compute_cache,
         )
 
     checks = [
@@ -3450,96 +3490,210 @@ def build_campaign_control_plane_v1_validation_pack(
     campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    precomputed_payloads: Mapping[str, Mapping[str, Any]] | None = None,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
+    precomputed = dict(precomputed_payloads or {})
+
+    def payload_or_build(
+        artifact_id: str,
+        builder: Callable[[], dict[str, Any]],
+    ) -> dict[str, Any]:
+        payload = precomputed.get(artifact_id)
+        if isinstance(payload, Mapping):
+            return dict(payload)
+        return builder()
+
     contract_validation = validate_stage_adapter_contracts(
         adapter_registry_path=adapter_registry_path
     )
-    parity_map = build_b2_campaign_adapter_parity_map(adapter_registry_path=adapter_registry_path)
-    b2_parity = build_b2_campaign_parity_validation(campaign_root=campaign_root)
-    budget = build_evidence_budget_enforcement_report(campaign_root=campaign_root)
-    next_actions = build_campaign_next_action_parity_review(campaign_root=campaign_root)
-    b2_compute_smoke = build_b2_compute_adapter_smoke_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    parity_map = payload_or_build(
+        "b2_campaign_adapter_parity_map",
+        lambda: build_b2_campaign_adapter_parity_map(adapter_registry_path=adapter_registry_path),
     )
-    b2_compute_parity = build_b2_compute_parity_validation(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
-        smoke_report=b2_compute_smoke,
+    b2_parity = payload_or_build(
+        "b2_campaign_parity_validation",
+        lambda: build_b2_campaign_parity_validation(campaign_root=campaign_root),
     )
-    b2_full_compute = build_b2_full_diagnostic_compute_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    budget = payload_or_build(
+        "evidence_budget_enforcement_report",
+        lambda: build_evidence_budget_enforcement_report(campaign_root=campaign_root),
     )
-    b2_gate_compute = build_b2_gate_compute_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    next_actions = payload_or_build(
+        "campaign_next_action_parity_review",
+        lambda: build_campaign_next_action_parity_review(campaign_root=campaign_root),
     )
-    b2_e2e_compute = build_b2_campaign_e2e_compute_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    b2_compute_smoke = payload_or_build(
+        "b2_targeted_evidence_compute_adapter",
+        lambda: build_b2_compute_adapter_smoke_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    b2_full_parity = build_b2_campaign_full_parity_validation(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
-        targeted_parity=b2_compute_parity,
-        full_compute=b2_full_compute,
-        gate_compute=b2_gate_compute,
+    b2_compute_parity = payload_or_build(
+        "b2_targeted_evidence_compute_parity",
+        lambda: build_b2_compute_parity_validation(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            smoke_report=b2_compute_smoke,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    run_next_smoke = build_campaign_run_next_stage_smoke_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    b2_full_compute = payload_or_build(
+        "b2_full_diagnostic_compute_adapter",
+        lambda: build_b2_full_diagnostic_compute_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    forced_budget = build_evidence_budget_forced_transition_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    b2_gate_compute = payload_or_build(
+        "b2_gate_compute_adapter",
+        lambda: build_b2_gate_compute_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    final_decision_drill = build_campaign_evidence_budget_final_decision_drill(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    b2_e2e_compute = payload_or_build(
+        "b2_campaign_e2e_compute",
+        lambda: build_b2_campaign_e2e_compute_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    b3_compute_smoke = build_b3_signal_compute_adapter_smoke_report(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    b2_full_parity = payload_or_build(
+        "b2_campaign_full_parity_validation",
+        lambda: build_b2_campaign_full_parity_validation(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            targeted_parity=b2_compute_parity,
+            full_compute=b2_full_compute,
+            gate_compute=b2_gate_compute,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    status_ux = build_campaign_status_ux_report(campaign_root=campaign_root)
-    deprecation_plan = build_case_specific_runner_deprecation_plan()
-    legacy_b2_readiness = build_legacy_b2_runner_deprecation_readiness(full_parity=b2_full_parity)
-    b2_next_action_freeze = build_campaign_b2_next_action_freeze(campaign_root=campaign_root)
-    b2_final_repeatability = build_campaign_managed_b2_final_repeatability_run(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    run_next_smoke = payload_or_build(
+        "campaign_run_next_stage_smoke",
+        lambda: build_campaign_run_next_stage_smoke_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    b2_final_gate = build_campaign_b2_final_gate(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
+    forced_budget = payload_or_build(
+        "evidence_budget_forced_transition_report",
+        lambda: build_evidence_budget_forced_transition_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    b2_owner_packet = build_campaign_b2_owner_review_packet(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
-        final_gate=b2_final_gate,
+    final_decision_drill = payload_or_build(
+        "campaign_evidence_budget_final_decision_drill",
+        lambda: build_campaign_evidence_budget_final_decision_drill(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
     )
-    b2_branch_finalization = build_campaign_b2_branch_finalization(
-        campaign_root=campaign_root,
-        output_root=output_root,
-        adapter_registry_path=adapter_registry_path,
-        final_gate=b2_final_gate,
-        owner_packet=b2_owner_packet,
+    b3_compute_smoke = payload_or_build(
+        "b3_signal_compute_adapter_smoke",
+        lambda: build_b3_signal_compute_adapter_smoke_report(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+        ),
     )
-    post_b2_artifacts = _build_b2_post_campaign_validation_artifacts(campaign_root=campaign_root)
+    status_ux = payload_or_build(
+        "campaign_status_plan_ux_report",
+        lambda: build_campaign_status_ux_report(campaign_root=campaign_root),
+    )
+    deprecation_plan = payload_or_build(
+        "case_specific_runner_deprecation_plan",
+        build_case_specific_runner_deprecation_plan,
+    )
+    legacy_b2_readiness = payload_or_build(
+        "legacy_b2_runner_deprecation_readiness",
+        lambda: build_legacy_b2_runner_deprecation_readiness(
+            full_parity=b2_full_parity,
+            b2_compute_cache=b2_compute_cache,
+        ),
+    )
+    b2_next_action_freeze = payload_or_build(
+        "campaign_b2_next_action_freeze",
+        lambda: build_campaign_b2_next_action_freeze(campaign_root=campaign_root),
+    )
+    b2_final_repeatability = payload_or_build(
+        "campaign_managed_b2_final_repeatability_run",
+        lambda: build_campaign_managed_b2_final_repeatability_run(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
+    )
+    b2_final_gate = payload_or_build(
+        "campaign_b2_final_gate",
+        lambda: build_campaign_b2_final_gate(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
+        ),
+    )
+    b2_owner_packet = payload_or_build(
+        "campaign_b2_owner_review_packet",
+        lambda: build_campaign_b2_owner_review_packet(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            final_gate=b2_final_gate,
+            b2_compute_cache=b2_compute_cache,
+        ),
+    )
+    b2_branch_finalization = payload_or_build(
+        "campaign_b2_branch_finalization",
+        lambda: build_campaign_b2_branch_finalization(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            final_gate=b2_final_gate,
+            owner_packet=b2_owner_packet,
+            b2_compute_cache=b2_compute_cache,
+        ),
+    )
+    post_b2_artifact_ids = (
+        "campaign_b2_owner_decision_record",
+        "b2_current_form_campaign_archive",
+        "campaign_b2_reusable_evidence_report",
+        "slow_drawdown_defensive_overlay_rfc",
+        "reentry_policy_design_contract",
+        "fast_shock_trigger_feasibility_rfc",
+        "post_b2_campaign_program_snapshot",
+    )
+    if all(
+        isinstance(precomputed.get(artifact_id), Mapping)
+        for artifact_id in post_b2_artifact_ids
+    ):
+        post_b2_artifacts = {
+            artifact_id: dict(precomputed[artifact_id]) for artifact_id in post_b2_artifact_ids
+        }
+    else:
+        post_b2_artifacts = _build_b2_post_campaign_validation_artifacts(
+            campaign_root=campaign_root
+        )
     _, b2_current_state, _ = load_campaign_bundle(
         "b2-risk-overlay-current-form",
         campaign_root,
@@ -3805,26 +3959,31 @@ def write_campaign_control_plane_v1_validation_artifacts(
 ) -> dict[str, Any]:
     output_dir = output_root / "control_plane_v1_rc5_validation"
     output_dir.mkdir(parents=True, exist_ok=True)
+    b2_compute_cache = _B2ComputePayloadCache()
     b2_compute_smoke = build_b2_compute_adapter_smoke_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
+        b2_compute_cache=b2_compute_cache,
     )
     b2_compute_parity = build_b2_compute_parity_validation(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         smoke_report=b2_compute_smoke,
+        b2_compute_cache=b2_compute_cache,
     )
     b2_full_compute = build_b2_full_diagnostic_compute_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
+        b2_compute_cache=b2_compute_cache,
     )
     b2_gate_compute = build_b2_gate_compute_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
+        b2_compute_cache=b2_compute_cache,
     )
     b2_full_parity = build_b2_campaign_full_parity_validation(
         campaign_root=campaign_root,
@@ -3833,17 +3992,20 @@ def write_campaign_control_plane_v1_validation_artifacts(
         targeted_parity=b2_compute_parity,
         full_compute=b2_full_compute,
         gate_compute=b2_gate_compute,
+        b2_compute_cache=b2_compute_cache,
     )
     b2_final_gate = build_campaign_b2_final_gate(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
+        b2_compute_cache=b2_compute_cache,
     )
     b2_owner_packet = build_campaign_b2_owner_review_packet(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         final_gate=b2_final_gate,
+        b2_compute_cache=b2_compute_cache,
     )
     post_b2_artifacts = _build_b2_post_campaign_validation_artifacts(campaign_root=campaign_root)
     payloads = {
@@ -3867,18 +4029,21 @@ def write_campaign_control_plane_v1_validation_artifacts(
             campaign_root=campaign_root,
             output_root=output_root,
             adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
         ),
         "b2_campaign_full_parity_validation": b2_full_parity,
         "campaign_run_next_stage_smoke": build_campaign_run_next_stage_smoke_report(
             campaign_root=campaign_root,
             output_root=output_root,
             adapter_registry_path=adapter_registry_path,
+            b2_compute_cache=b2_compute_cache,
         ),
         "evidence_budget_forced_transition_report": (
             build_evidence_budget_forced_transition_report(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
+                b2_compute_cache=b2_compute_cache,
             )
         ),
         "campaign_evidence_budget_final_decision_drill": (
@@ -3886,6 +4051,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
+                b2_compute_cache=b2_compute_cache,
             )
         ),
         "b3_signal_compute_adapter_smoke": build_b3_signal_compute_adapter_smoke_report(
@@ -3898,7 +4064,10 @@ def write_campaign_control_plane_v1_validation_artifacts(
         ),
         "case_specific_runner_deprecation_plan": (build_case_specific_runner_deprecation_plan()),
         "legacy_b2_runner_deprecation_readiness": (
-            build_legacy_b2_runner_deprecation_readiness(full_parity=b2_full_parity)
+            build_legacy_b2_runner_deprecation_readiness(
+                full_parity=b2_full_parity,
+                b2_compute_cache=b2_compute_cache,
+            )
         ),
         "campaign_b2_next_action_freeze": build_campaign_b2_next_action_freeze(
             campaign_root=campaign_root
@@ -3908,6 +4077,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
+                b2_compute_cache=b2_compute_cache,
             )
         ),
         "campaign_b2_final_gate": b2_final_gate,
@@ -3918,16 +4088,19 @@ def write_campaign_control_plane_v1_validation_artifacts(
             adapter_registry_path=adapter_registry_path,
             final_gate=b2_final_gate,
             owner_packet=b2_owner_packet,
+            b2_compute_cache=b2_compute_cache,
         ),
         **post_b2_artifacts,
-        "campaign_control_plane_v1_validation_pack": (
-            build_campaign_control_plane_v1_validation_pack(
-                campaign_root=campaign_root,
-                output_root=output_root,
-                adapter_registry_path=adapter_registry_path,
-            )
-        ),
     }
+    payloads["campaign_control_plane_v1_validation_pack"] = (
+        build_campaign_control_plane_v1_validation_pack(
+            campaign_root=campaign_root,
+            output_root=output_root,
+            adapter_registry_path=adapter_registry_path,
+            precomputed_payloads=payloads,
+            b2_compute_cache=b2_compute_cache,
+        )
+    )
     written: dict[str, dict[str, str]] = {}
     for basename, payload in payloads.items():
         json_path = output_dir / f"{basename}.json"
@@ -4708,6 +4881,7 @@ def run_stage_adapter(
     window_policy_path: Path = DEFAULT_WINDOW_POLICY_PATH,
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     evidence_store: list[EvidenceRecord] | None = None,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> StageAdapterRunOutput:
     adapter_stage = _adapter_stage_for_workflow_stage(
         spec=spec,
@@ -4833,6 +5007,7 @@ def run_stage_adapter(
             window_policy_path=window_policy_path,
             output_root=output_root,
             evidence_store=evidence_store or [],
+            b2_compute_cache=b2_compute_cache,
         )
 
     evidence_records: list[dict[str, Any]] = []
@@ -5212,6 +5387,92 @@ def _adapter_safety_metadata() -> dict[str, Any]:
     }
 
 
+def _clone_payload_map(payloads: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
+    return json.loads(json.dumps(payloads))
+
+
+class _B2ComputePayloadCache:
+    """Per-validation-run cache for expensive B2 research payload builders."""
+
+    def __init__(self, generated_at: datetime | None = None) -> None:
+        self.generated_at = generated_at or datetime.now(UTC)
+        self._control_payloads: dict[str, dict[str, Any]] | None = None
+        self._targeted_payloads: dict[str, dict[str, Any]] | None = None
+        self._full_payloads: dict[str, dict[str, Any]] | None = None
+
+    def control(
+        self, output_dir: Path
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, tuple[Path, Path]]]:
+        from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+            run_b2_control_window_research,
+            write_b2_control_window_payloads,
+        )
+
+        if self._control_payloads is None:
+            payloads, paths = run_b2_control_window_research(
+                output_dir=output_dir,
+                alias_dir=None,
+                generated_at=self.generated_at,
+            )
+            self._control_payloads = _clone_payload_map(payloads)
+            return payloads, paths
+        payloads = _clone_payload_map(self._control_payloads)
+        paths = write_b2_control_window_payloads(
+            payloads,
+            output_dir=output_dir,
+            alias_dir=None,
+        )
+        return payloads, paths
+
+    def targeted(
+        self, output_dir: Path
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, tuple[Path, Path]]]:
+        from ai_trading_system.etf_portfolio.weight_research_b2_targeted_evidence import (
+            run_b2_targeted_evidence_research,
+            write_b2_targeted_evidence_payloads,
+        )
+
+        if self._targeted_payloads is None:
+            payloads, paths = run_b2_targeted_evidence_research(
+                output_dir=output_dir,
+                alias_dir=None,
+                generated_at=self.generated_at,
+            )
+            self._targeted_payloads = _clone_payload_map(payloads)
+            return payloads, paths
+        payloads = _clone_payload_map(self._targeted_payloads)
+        paths = write_b2_targeted_evidence_payloads(
+            payloads,
+            output_dir=output_dir,
+            alias_dir=None,
+        )
+        return payloads, paths
+
+    def full(
+        self, output_dir: Path
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, tuple[Path, Path]]]:
+        from ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic import (
+            run_b2_full_diagnostic_research,
+            write_b2_full_diagnostic_payloads,
+        )
+
+        if self._full_payloads is None:
+            payloads, paths = run_b2_full_diagnostic_research(
+                output_dir=output_dir,
+                alias_dir=None,
+                generated_at=self.generated_at,
+            )
+            self._full_payloads = _clone_payload_map(payloads)
+            return payloads, paths
+        payloads = _clone_payload_map(self._full_payloads)
+        paths = write_b2_full_diagnostic_payloads(
+            payloads,
+            output_dir=output_dir,
+            alias_dir=None,
+        )
+        return payloads, paths
+
+
 def _adapter_safety_issues(payload: dict[str, Any], adapter_id: str) -> list[dict[str, Any]]:
     required = _adapter_safety_metadata()
     issues: list[dict[str, Any]] = []
@@ -5243,6 +5504,7 @@ def _run_compute_stage_adapter(
     window_policy_path: Path,
     output_root: Path,
     evidence_store: list[EvidenceRecord],
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> StageAdapterRunOutput:
     validation = build_campaign_validation_payload(
         spec=spec,
@@ -5278,6 +5540,7 @@ def _run_compute_stage_adapter(
             input_artifacts=input_artifacts,
             output_root=output_root,
             evidence_store=evidence_store,
+            b2_compute_cache=b2_compute_cache,
         )
     if contract.adapter_id == "b3-signal-precheck-compute-adapter-v1":
         return _run_b3_signal_compute_adapter(
@@ -5314,6 +5577,7 @@ def _run_b2_control_window_compute_adapter(
     input_artifacts: list[dict[str, Any]],
     output_root: Path,
     evidence_store: list[EvidenceRecord],
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> StageAdapterRunOutput:
     if adapter_stage == "TARGETED_EVIDENCE":
         return _run_b2_targeted_evidence_compute_adapter(
@@ -5324,6 +5588,7 @@ def _run_b2_control_window_compute_adapter(
             contract=contract,
             input_artifacts=input_artifacts,
             output_root=output_root,
+            b2_compute_cache=b2_compute_cache,
         )
     if adapter_stage == "FULL_DIAGNOSTIC":
         return _run_b2_full_diagnostic_compute_adapter(
@@ -5334,6 +5599,7 @@ def _run_b2_control_window_compute_adapter(
             contract=contract,
             input_artifacts=input_artifacts,
             output_root=output_root,
+            b2_compute_cache=b2_compute_cache,
         )
     if adapter_stage == "GATE":
         return _run_b2_gate_compute_adapter(
@@ -5345,17 +5611,20 @@ def _run_b2_control_window_compute_adapter(
             input_artifacts=input_artifacts,
             evidence_store=evidence_store,
         )
-    from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
-        run_b2_control_window_research,
-    )
-
     compute_dir = output_root / spec.campaign_id / "b2_compute"
     try:
-        payloads, paths = run_b2_control_window_research(
-            output_dir=compute_dir,
-            alias_dir=None,
-            generated_at=datetime.now(UTC),
-        )
+        if b2_compute_cache is not None:
+            payloads, paths = b2_compute_cache.control(compute_dir)
+        else:
+            from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+                run_b2_control_window_research,
+            )
+
+            payloads, paths = run_b2_control_window_research(
+                output_dir=compute_dir,
+                alias_dir=None,
+                generated_at=datetime.now(UTC),
+            )
     except Exception as exc:  # pragma: no cover - exercised through blocked status in CLI use.
         return _adapter_blocked_output(
             run_id=run_id,
@@ -5454,26 +5723,33 @@ def _run_b2_targeted_evidence_compute_adapter(
     contract: StageAdapterContract,
     input_artifacts: list[dict[str, Any]],
     output_root: Path,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> StageAdapterRunOutput:
-    from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
-        run_b2_control_window_research,
-    )
-    from ai_trading_system.etf_portfolio.weight_research_b2_targeted_evidence import (
-        run_b2_targeted_evidence_research,
-    )
-
     compute_dir = output_root / spec.campaign_id / "b2_targeted_compute"
     try:
-        targeted_payloads, targeted_paths = run_b2_targeted_evidence_research(
-            output_dir=compute_dir,
-            alias_dir=None,
-            generated_at=datetime.now(UTC),
-        )
-        control_payloads, control_paths = run_b2_control_window_research(
-            output_dir=compute_dir / "control_windows",
-            alias_dir=None,
-            generated_at=datetime.now(UTC),
-        )
+        if b2_compute_cache is not None:
+            targeted_payloads, targeted_paths = b2_compute_cache.targeted(compute_dir)
+            control_payloads, control_paths = b2_compute_cache.control(
+                compute_dir / "control_windows"
+            )
+        else:
+            from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+                run_b2_control_window_research,
+            )
+            from ai_trading_system.etf_portfolio.weight_research_b2_targeted_evidence import (
+                run_b2_targeted_evidence_research,
+            )
+
+            targeted_payloads, targeted_paths = run_b2_targeted_evidence_research(
+                output_dir=compute_dir,
+                alias_dir=None,
+                generated_at=datetime.now(UTC),
+            )
+            control_payloads, control_paths = run_b2_control_window_research(
+                output_dir=compute_dir / "control_windows",
+                alias_dir=None,
+                generated_at=datetime.now(UTC),
+            )
     except Exception as exc:  # pragma: no cover - runtime failure is reported fail-closed.
         return _adapter_blocked_output(
             run_id=run_id,
@@ -5568,26 +5844,33 @@ def _run_b2_full_diagnostic_compute_adapter(
     contract: StageAdapterContract,
     input_artifacts: list[dict[str, Any]],
     output_root: Path,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> StageAdapterRunOutput:
-    from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
-        run_b2_control_window_research,
-    )
-    from ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic import (
-        run_b2_full_diagnostic_research,
-    )
-
     compute_dir = output_root / spec.campaign_id / "b2_full_compute"
     try:
-        full_payloads, full_paths = run_b2_full_diagnostic_research(
-            output_dir=compute_dir,
-            alias_dir=None,
-            generated_at=datetime.now(UTC),
-        )
-        control_payloads, control_paths = run_b2_control_window_research(
-            output_dir=compute_dir / "control_windows",
-            alias_dir=None,
-            generated_at=datetime.now(UTC),
-        )
+        if b2_compute_cache is not None:
+            full_payloads, full_paths = b2_compute_cache.full(compute_dir)
+            control_payloads, control_paths = b2_compute_cache.control(
+                compute_dir / "control_windows"
+            )
+        else:
+            from ai_trading_system.etf_portfolio.weight_research_b2_control_windows import (
+                run_b2_control_window_research,
+            )
+            from ai_trading_system.etf_portfolio.weight_research_b2_full_diagnostic import (
+                run_b2_full_diagnostic_research,
+            )
+
+            full_payloads, full_paths = run_b2_full_diagnostic_research(
+                output_dir=compute_dir,
+                alias_dir=None,
+                generated_at=datetime.now(UTC),
+            )
+            control_payloads, control_paths = run_b2_control_window_research(
+                output_dir=compute_dir / "control_windows",
+                alias_dir=None,
+                generated_at=datetime.now(UTC),
+            )
     except Exception as exc:  # pragma: no cover - runtime failure is reported fail-closed.
         return _adapter_blocked_output(
             run_id=run_id,

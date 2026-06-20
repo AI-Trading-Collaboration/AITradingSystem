@@ -1,6 +1,6 @@
 # TRADING-347 Full Test Runtime Stabilization
 
-最后更新：2026-06-15
+最后更新：2026-06-20
 
 ## 1. 背景
 
@@ -63,6 +63,12 @@ artifact 必须披露：
 
 ## 6. CI-Friendly Commands
 
+后续所有需要 pytest 验证证据的任务默认使用并行模式。首选入口是
+`python scripts/run_validation_tier.py <suite> --write-runtime-artifact`，该 runner 默认
+`-n 16 --dist loadfile`；focused one-off pytest 也应显式使用
+`python -m pytest -n 16 --dist loadfile ...`。只有在复现串行行为或排查
+parallelism-related failure 时才使用 `--workers 1` / 串行 pytest，并在交付说明中记录原因。
+
 ```powershell
 python scripts/run_validation_tier.py fast-unit --write-runtime-artifact
 python scripts/run_validation_tier.py contract-validation --write-runtime-artifact
@@ -72,7 +78,7 @@ python scripts/run_validation_tier.py slow-research-regression --write-runtime-a
 python scripts/run_validation_tier.py full --write-runtime-artifact
 ```
 
-低核或复现环境可加 `--workers 1`。CI 可以先并行/串行执行前三个 blocking suite，
+低核或复现环境可加 `--workers 1`，但这属于显式例外而不是默认路径。CI 可以先并行执行前三个 blocking suite，
 再按改动范围执行 `integration` 或 `slow-research-regression`；完整发布或跨模块 P0
 变更仍应尽量跑 `full`。如果 `full` 或 slow suite 超时，交付说明必须列出已经通过的
 suite、超时时间和 visible slow-test clues，不能写成 PASS。
@@ -103,3 +109,63 @@ suite、超时时间和 visible slow-test clues，不能写成 PASS。
   documentation contract PASS；report index `PASS_WITH_WARNINGS` 仅保留既有 missing/stale
   visibility。Slow research regression 已作为独立 suite 和旧 `dynamic-v3` alias 隔离；
   本轮不把未运行 slow suite 写成 passing evidence。
+- 2026-06-20：继续 runtime optimization 诊断并修复一个重复构建热点。原始串行
+  `python -m pytest -q` 为 2961 passed / 1805.89 秒；既有 runner 并行 full
+  `--dist loadfile` 为 2961 passed / 253.37 秒，`--dist load` 为 2961 passed /
+  281.59 秒，确认默认 `loadfile` 更合适。最慢用例
+  `test_campaign_control_plane_validation_pack_writes_expected_artifacts` 原先在 full
+  durations 中约 137～161 秒；通过让 Campaign validation pack builder 复用 writer 已
+  生成的 component payload，focused rerun call 降至约 60～73 秒，优化后并行 full 为 2961 passed /
+  195.72 秒（runner elapsed 210.84 秒）。本优化只减少 validation artifact 重复构建，
+  不改变 strategy logic、cached data、production state、broker/order 或投资解释路径。
+- 2026-06-20：owner 决定后续所有需要 pytest 验证的任务默认使用并行模式。项目文档已
+  明确：首选 validation tier runner；focused one-off pytest 使用
+  `python -m pytest -n 16 --dist loadfile ...`；串行 pytest 仅用于显式复现或
+  parallelism-related failure 诊断，且不能把并行失败静默改写成串行 PASS。
+- 2026-06-20：追加瓶颈定位。`full -n 16 --dist loadfile` 采样为 2961 passed /
+  241.41 秒，`full -n 16 --dist worksteal` 为 2961 passed / 242.73 秒，`full -n 24
+  --dist loadfile` 为 2961 passed / 247.73 秒；增加 worker 或切换 `worksteal` 未改善
+  wall time。Top durations 显示 `tests/test_research_campaign.py` 单文件在 top list 中
+  累计约 221～228 秒，最大单测
+  `test_campaign_control_plane_validation_pack_writes_expected_artifacts` 为 102～115 秒。
+  临时目录函数级计时显示完整 writer 约 76 秒，其中主要来自 `b2_e2e_compute` 约 22 秒、
+  `b2_compute_smoke` / `b2_full_compute` / `b2_final_gate` / `run_next_smoke` /
+  `forced_budget` / `b2_final_repeatability` 各约 10～12 秒；`validation_pack_precomputed`
+  约 0.03 秒，Markdown render 和 post-B2 文档生成不是主瓶颈。当前主瓶颈是少数
+  Campaign/research artifact 集成测试的单测粒度和串行 compute builder，而不是并行数量不足。
+- 2026-06-20：进入下一轮瓶颈优化实现；目标是只在 validation pack writer 内复用同一轮
+  B2 Campaign compute payload，减少重复 `run_b2_control_window_research` /
+  targeted / full diagnostic 计算，不改变 Campaign runtime production path、strategy
+  logic、cached data、broker/order、official weights 或测试覆盖语义。
+- 2026-06-20：B2 compute payload cache 优化完成并验证。新增 validation-run scoped
+  `_B2ComputePayloadCache`，只在 Campaign validation artifact builder / focused tests 中复用
+  B2 targeted、control-window 和 full diagnostic payload；每次复用仍重新写入当前 run 的
+  output directory，默认 CLI/production Campaign runtime 不启用该 cache。focused 最慢
+  validation-pack 测试 call time 从约 102～115 秒降至 19.30 秒；
+  `tests/test_research_campaign.py` 从 127.68 秒降至 44.44 秒；全量并行 full tier
+  通过，runtime artifact 写入
+  `outputs/validation_runtime/trading-347-bottleneck-after-b2-cache`，2961 passed /
+  643 warnings / pytest 173.30 秒（runner elapsed 174.02 秒）。新的 full slowest list
+  显示主要瓶颈已转移到 Dynamic v3 / rescue / roadmap 研究回归测试，worker 数量不再是
+  当前主因。
+- 2026-06-20：进入下一轮 Dynamic v3 validation runtime 优化。focused 计时显示
+  `tests/test_etf_dynamic_v3_failure_attribution.py` 为 3 passed / 52.52 秒，两个慢测
+  分别约 25.56 秒和 23.50 秒，主要成本是重复构建同一 synthetic validation sample。
+  本轮目标是在 failure-attribution validation sample 构建路径增加进程内只读缓存，并让
+  focused tests 复用同一 sample；默认报告/CLI 仍输出 fresh validation artifact，不改变
+  Dynamic v3 策略逻辑、cached data、paper-shadow/live/broker/order/official weights。
+- 2026-06-20：Dynamic v3 validation sample cache 优化完成并进入 full-tier 复验。
+  `dynamic_v3_failure_attribution` 新增 checksum-keyed validation sample cache，focused 文件从
+  52.52 秒降至 29.05 秒；`dynamic_rescue` 新增同类 validation sample cache，focused 文件从
+  58.70 秒降至 20.08 秒；`dynamic_v3_parameter_research` 将 real sweep smoke 的候选
+  evaluation 改为 2 worker 并为 real-smoke input + fixed robustness reports 增加只读复用，
+  focused 文件从 56.10 秒降至 40.85 秒。三组 Dynamic v3 focused 回归合并运行
+  24 passed / 39.79 秒。1 候选 smoke 尝试因 `real_neighbor_count` 合同不足已回退，
+  未降低 robustness 覆盖。
+- 2026-06-20：Dynamic v3 cache full-tier 复验通过。全量并行 full tier 输出
+  2961 passed / 643 warnings / pytest 167.65 秒（runner elapsed 168.27 秒），runtime
+  artifact 写入 `outputs/validation_runtime/trading-347-dynamic-v3-cache-full`。相对
+  B2 cache 后的 174.02 秒继续下降约 5.75 秒；新的 top durations 分散在
+  failure attribution、parameter research、signal feature quality、owner roadmap、micro
+  search、gate calibration、portfolio sensitivity 等多个 25～32 秒级单测，当前瓶颈已从
+  单一文件尾部转为多条独立研究回归链路的单测内部计算成本。

@@ -23,12 +23,14 @@ from ai_trading_system.indicator_research import (
     build_historical_multi_stage_weight_trace_validation,
     build_indicator_diagnostics,
     build_indicator_research_gate,
+    build_lineage_manifest_repair_report,
     build_mapping_plan,
     build_masking_audit,
     build_masking_casebook,
     build_multi_stage_weight_trace_contract,
     build_ontology_payload,
     build_valuation_crowding_ablation_validation,
+    build_valuation_crowding_masking_effectiveness_review,
     build_valuation_crowding_pilot_audit,
     build_valuation_crowding_pilot_validation_report,
     write_indicator_artifact_pair,
@@ -531,6 +533,86 @@ def indicator_ablation_validation_command(
     _print_indicator_artifact("Valuation/crowding ablation validation", payload, paths)
 
 
+@indicators_app.command("masking-effectiveness-review")
+def indicator_masking_effectiveness_review_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 forward outcome。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="effectiveness outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 valuation/crowding masking effectiveness review。"""
+    payload = _build_indicator_payload(
+        lambda: build_valuation_crowding_masking_effectiveness_review(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="valuation_crowding_masking_effectiveness_review",
+    )
+    _print_indicator_artifact("Masking effectiveness review", payload, paths)
+
+
 @indicators_app.command("historical-trace-validation")
 def indicator_historical_trace_validation_command(
     registry_path: Annotated[
@@ -649,6 +731,74 @@ def indicator_gate_availability_audit_command(
         artifact_id="historical_trace_gate_availability_audit",
     )
     _print_indicator_artifact("Historical gate availability audit", payload, paths)
+
+
+@indicators_app.command("lineage-manifest-repair")
+def indicator_lineage_manifest_repair_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 historical/replay multi-stage trace JSON。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="historical gate audit 输出根目录。"),
+    ] = None,
+    root_cause_audit_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--root-cause-audit-path",
+            help="可选修复前 gate availability audit JSON，用于锁定 affected artifacts。",
+        ),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 historical replay lineage manifest repair report。"""
+    payload = _build_indicator_payload(
+        lambda: build_lineage_manifest_repair_report(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            gate_audit_root=gate_audit_root,
+            root_cause_audit_path=root_cause_audit_path,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="lineage_manifest_repair_report",
+    )
+    _print_indicator_artifact("Lineage manifest repair", payload, paths)
 
 
 @indicators_app.command("component-historical-trace")

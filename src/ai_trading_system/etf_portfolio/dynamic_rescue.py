@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
+from functools import lru_cache
 from hashlib import sha256
 from math import prod
 from pathlib import Path
@@ -727,6 +728,57 @@ def build_dynamic_rescue_batch_report(
     return payload
 
 
+def build_dynamic_rescue_validation_sample_report(
+    *,
+    policy_config_path: Path | str = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
+    dynamic_robustness_policy_path: Path
+    | str = DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH,
+    dynamic_policy_path: Path | str = DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
+) -> dict[str, Any]:
+    cache_keys = [
+        _path_cache_key(Path(item))
+        for item in (
+            policy_config_path,
+            dynamic_robustness_policy_path,
+            dynamic_policy_path,
+        )
+    ]
+    payload_text = _cached_dynamic_rescue_validation_sample_report(
+        *[part for key in cache_keys for part in key]
+    )
+    return json.loads(payload_text)
+
+
+@lru_cache(maxsize=8)
+def _cached_dynamic_rescue_validation_sample_report(
+    policy_config_path_text: str,
+    _policy_config_hash: str,
+    dynamic_robustness_policy_path_text: str,
+    _dynamic_robustness_policy_hash: str,
+    dynamic_policy_path_text: str,
+    _dynamic_policy_hash: str,
+) -> str:
+    policy = load_dynamic_failure_diagnostics_policy_config(Path(policy_config_path_text))
+    robustness_policy = load_dynamic_robustness_policy_config(
+        Path(dynamic_robustness_policy_path_text)
+    )
+    dynamic_policy = load_dynamic_allocation_policy_config(Path(dynamic_policy_path_text))
+    from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
+
+    sample_report = build_dynamic_rescue_batch_report(
+        prices=_synthetic_validation_prices(robustness_policy),
+        etf_config=load_etf_config_bundle(),
+        policy=policy,
+        dynamic_robustness_policy=robustness_policy,
+        dynamic_policy=dynamic_policy,
+        candidate_id="validation_dynamic_candidate",
+        data_quality_status="VALIDATION_SAMPLE",
+        data_quality_report="validation_sample",
+    )
+    _assert_dynamic_rescue_payload_safe(sample_report)
+    return json.dumps(sample_report, ensure_ascii=False, sort_keys=True, default=str)
+
+
 def build_dynamic_rescue_validation_report(
     *,
     policy_config_path: Path = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
@@ -755,17 +807,10 @@ def build_dynamic_rescue_validation_report(
     sample_report: dict[str, Any] | None = None
     if policy is not None and robustness_policy is not None and dynamic_policy is not None:
         try:
-            from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
-
-            sample_report = build_dynamic_rescue_batch_report(
-                prices=_synthetic_validation_prices(robustness_policy),
-                etf_config=load_etf_config_bundle(),
-                policy=policy,
-                dynamic_robustness_policy=robustness_policy,
-                dynamic_policy=dynamic_policy,
-                candidate_id="validation_dynamic_candidate",
-                data_quality_status="VALIDATION_SAMPLE",
-                data_quality_report="validation_sample",
+            sample_report = build_dynamic_rescue_validation_sample_report(
+                policy_config_path=policy_config_path,
+                dynamic_robustness_policy_path=dynamic_robustness_policy_path,
+                dynamic_policy_path=dynamic_policy_path,
             )
             dataset = _mapping(sample_report.get("failure_dataset"))
             _append_check(
@@ -1912,6 +1957,13 @@ def _stable_hash(value: Any) -> str:
     return sha256(
         json.dumps(value, ensure_ascii=False, sort_keys=True, default=_json_default).encode("utf-8")
     ).hexdigest()
+
+
+def _path_cache_key(path: Path) -> tuple[str, str]:
+    resolved = path.resolve()
+    if not resolved.exists():
+        return str(resolved), "missing"
+    return str(resolved), sha256(resolved.read_bytes()).hexdigest()
 
 
 def _mapping(value: Any) -> dict[str, Any]:

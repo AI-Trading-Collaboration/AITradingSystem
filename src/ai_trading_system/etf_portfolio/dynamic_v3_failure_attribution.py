@@ -4,6 +4,7 @@ import json
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
+from functools import lru_cache
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -263,6 +264,105 @@ def latest_dynamic_v3_failure_attribution_real_evaluation_path(
         key=lambda item: item.stat().st_mtime,
     )
     return matches[-1] if matches else None
+
+
+def build_dynamic_v3_failure_attribution_validation_sample_report(
+    *,
+    config_path: Path | str = DEFAULT_DYNAMIC_V3_FAILURE_ATTRIBUTION_POLICY_CONFIG_PATH,
+    real_evaluation_config_path: Path
+    | str = DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
+    v3_rescue_config_path: Path | str = DEFAULT_DYNAMIC_V3_RESCUE_POLICY_CONFIG_PATH,
+    dynamic_robustness_config_path: Path
+    | str = DEFAULT_DYNAMIC_ROBUSTNESS_POLICY_CONFIG_PATH,
+    dynamic_allocation_config_path: Path
+    | str = DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
+    failure_diagnostics_config_path: Path
+    | str = DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
+) -> dict[str, Any]:
+    """Build the deterministic synthetic validation sample once per process."""
+
+    cache_keys = [
+        _path_cache_key(Path(item))
+        for item in (
+            config_path,
+            real_evaluation_config_path,
+            v3_rescue_config_path,
+            dynamic_robustness_config_path,
+            dynamic_allocation_config_path,
+            failure_diagnostics_config_path,
+        )
+    ]
+    payload_text = _cached_dynamic_v3_failure_attribution_validation_sample_report(
+        *[part for key in cache_keys for part in key]
+    )
+    return json.loads(payload_text)
+
+
+@lru_cache(maxsize=8)
+def _cached_dynamic_v3_failure_attribution_validation_sample_report(
+    config_path_text: str,
+    _config_hash: str,
+    real_evaluation_config_path_text: str,
+    _real_evaluation_config_hash: str,
+    v3_rescue_config_path_text: str,
+    _v3_rescue_config_hash: str,
+    dynamic_robustness_config_path_text: str,
+    _dynamic_robustness_config_hash: str,
+    dynamic_allocation_config_path_text: str,
+    _dynamic_allocation_config_hash: str,
+    failure_diagnostics_config_path_text: str,
+    _failure_diagnostics_config_hash: str,
+) -> str:
+    policy = load_dynamic_v3_failure_attribution_policy_config(Path(config_path_text))
+    robustness_policy = load_dynamic_robustness_policy_config(
+        Path(dynamic_robustness_config_path_text)
+    )
+    prices = _synthetic_validation_prices(robustness_policy)
+    from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
+
+    etf_config = load_etf_config_bundle()
+    real_policy = load_dynamic_v3_real_evaluation_policy_config(
+        Path(real_evaluation_config_path_text)
+    )
+    v3_policy = load_dynamic_v3_rescue_policy_config(Path(v3_rescue_config_path_text))
+    dynamic_allocation = load_dynamic_allocation_policy_config(
+        Path(dynamic_allocation_config_path_text)
+    )
+    failure_policy = load_dynamic_failure_diagnostics_policy_config(
+        Path(failure_diagnostics_config_path_text)
+    )
+    sample_real_report = build_dynamic_v3_real_evaluation_report(
+        prices=prices,
+        etf_config=etf_config,
+        policy=real_policy,
+        v3_rescue_policy=v3_policy,
+        dynamic_robustness_policy=robustness_policy,
+        dynamic_policy=dynamic_allocation,
+        failure_policy=failure_policy,
+        start=policy.market_regime.default_backtest_start,
+        data_quality_status="SYNTHETIC_VALIDATION_PASS",
+        data_quality_report="validation_sample",
+        prices_path=Path("validation_sample_prices"),
+    )
+    sample_report = build_dynamic_v3_failure_attribution_report(
+        prices=prices,
+        etf_config=etf_config,
+        policy=policy,
+        real_evaluation_report=sample_real_report,
+        real_evaluation_report_path=Path("validation_sample_real_evaluation"),
+        real_policy=real_policy,
+        v3_rescue_policy=v3_policy,
+        dynamic_robustness_policy=robustness_policy,
+        dynamic_policy=dynamic_allocation,
+        failure_policy=failure_policy,
+        start=policy.market_regime.default_backtest_start,
+        data_quality_status="SYNTHETIC_VALIDATION_PASS",
+        data_quality_report="validation_sample",
+        prices_path=Path("validation_sample_prices"),
+        allow_non_reject_for_validation=True,
+    )
+    _assert_dynamic_v3_failure_attribution_payload_safe(sample_report)
+    return json.dumps(sample_report, ensure_ascii=False, sort_keys=True, default=str)
 
 
 def build_dynamic_v3_failure_attribution_report(
@@ -553,54 +653,13 @@ def build_dynamic_v3_failure_attribution_validation_report(
         _append_check(checks, "failure_attribution_config_valid", False, str(exc))
     if policy is not None:
         try:
-            robustness_policy = load_dynamic_robustness_policy_config(
-                Path(dynamic_robustness_config_path)
-            )
-            prices = _synthetic_validation_prices(robustness_policy)
-            from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
-
-            etf_config = load_etf_config_bundle()
-            real_policy = load_dynamic_v3_real_evaluation_policy_config(
-                Path(real_evaluation_config_path)
-            )
-            v3_policy = load_dynamic_v3_rescue_policy_config(Path(v3_rescue_config_path))
-            dynamic_allocation = load_dynamic_allocation_policy_config(
-                Path(dynamic_allocation_config_path)
-            )
-            failure_policy = load_dynamic_failure_diagnostics_policy_config(
-                Path(failure_diagnostics_config_path)
-            )
-            sample_real_report = build_dynamic_v3_real_evaluation_report(
-                prices=prices,
-                etf_config=etf_config,
-                policy=real_policy,
-                v3_rescue_policy=v3_policy,
-                dynamic_robustness_policy=robustness_policy,
-                dynamic_policy=dynamic_allocation,
-                failure_policy=failure_policy,
-                start=policy.market_regime.default_backtest_start,
-                data_quality_status="SYNTHETIC_VALIDATION_PASS",
-                data_quality_report="validation_sample",
-                prices_path=Path("validation_sample_prices"),
-                generated_at=generated,
-            )
-            sample_report = build_dynamic_v3_failure_attribution_report(
-                prices=prices,
-                etf_config=etf_config,
-                policy=policy,
-                real_evaluation_report=sample_real_report,
-                real_evaluation_report_path=Path("validation_sample_real_evaluation"),
-                real_policy=real_policy,
-                v3_rescue_policy=v3_policy,
-                dynamic_robustness_policy=robustness_policy,
-                dynamic_policy=dynamic_allocation,
-                failure_policy=failure_policy,
-                start=policy.market_regime.default_backtest_start,
-                data_quality_status="SYNTHETIC_VALIDATION_PASS",
-                data_quality_report="validation_sample",
-                prices_path=Path("validation_sample_prices"),
-                generated_at=generated,
-                allow_non_reject_for_validation=True,
+            sample_report = build_dynamic_v3_failure_attribution_validation_sample_report(
+                config_path=config_path,
+                real_evaluation_config_path=real_evaluation_config_path,
+                v3_rescue_config_path=v3_rescue_config_path,
+                dynamic_robustness_config_path=dynamic_robustness_config_path,
+                dynamic_allocation_config_path=dynamic_allocation_config_path,
+                failure_diagnostics_config_path=failure_diagnostics_config_path,
             )
             _append_check(
                 checks,
@@ -1714,6 +1773,13 @@ def _read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return ""
+
+
+def _path_cache_key(path: Path) -> tuple[str, str]:
+    resolved = path.resolve()
+    if not resolved.exists():
+        return str(resolved), "missing"
+    return str(resolved), sha256(resolved.read_bytes()).hexdigest()
 
 
 def _stable_id(prefix: str, *parts: Any) -> str:

@@ -6,30 +6,12 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
-from ai_trading_system.etf_portfolio.dynamic_allocation import (
-    load_dynamic_allocation_policy_config,
-)
-from ai_trading_system.etf_portfolio.dynamic_rescue import (
-    load_dynamic_failure_diagnostics_policy_config,
-)
-from ai_trading_system.etf_portfolio.dynamic_robustness import (
-    _synthetic_validation_prices,
-    load_dynamic_robustness_policy_config,
-)
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     DYNAMIC_V3_FAILURE_ATTRIBUTION_REPORT_TYPE,
-    build_dynamic_v3_failure_attribution_report,
+    build_dynamic_v3_failure_attribution_validation_sample_report,
     load_dynamic_v3_failure_attribution_policy_config,
     write_dynamic_v3_failure_attribution_report,
 )
-from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
-    build_dynamic_v3_real_evaluation_report,
-    load_dynamic_v3_real_evaluation_policy_config,
-)
-from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
-    load_dynamic_v3_rescue_policy_config,
-)
-from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
 from ai_trading_system.reports import reader_brief
 
 
@@ -115,44 +97,7 @@ def test_dynamic_v3_failure_attribution_validation_report_and_cli_pass(
 
 
 def _sample_failure_attribution_report() -> dict[str, object]:
-    policy = load_dynamic_v3_failure_attribution_policy_config()
-    real_policy = load_dynamic_v3_real_evaluation_policy_config()
-    robustness_policy = load_dynamic_robustness_policy_config()
-    prices = _synthetic_validation_prices(robustness_policy)
-    etf_config = load_etf_config_bundle()
-    v3_policy = load_dynamic_v3_rescue_policy_config()
-    dynamic_policy = load_dynamic_allocation_policy_config()
-    failure_policy = load_dynamic_failure_diagnostics_policy_config()
-    real_report = build_dynamic_v3_real_evaluation_report(
-        prices=prices,
-        etf_config=etf_config,
-        policy=real_policy,
-        v3_rescue_policy=v3_policy,
-        dynamic_robustness_policy=robustness_policy,
-        dynamic_policy=dynamic_policy,
-        failure_policy=failure_policy,
-        start=policy.market_regime.default_backtest_start,
-        data_quality_status="SYNTHETIC_VALIDATION_PASS",
-        data_quality_report="validation_sample",
-        prices_path=Path("validation_sample_prices"),
-    )
-    return build_dynamic_v3_failure_attribution_report(
-        prices=prices,
-        etf_config=etf_config,
-        policy=policy,
-        real_evaluation_report=real_report,
-        real_evaluation_report_path=Path("validation_sample_real_evaluation"),
-        real_policy=real_policy,
-        v3_rescue_policy=v3_policy,
-        dynamic_robustness_policy=robustness_policy,
-        dynamic_policy=dynamic_policy,
-        failure_policy=failure_policy,
-        start=policy.market_regime.default_backtest_start,
-        data_quality_status="SYNTHETIC_VALIDATION_PASS",
-        data_quality_report="validation_sample",
-        prices_path=Path("validation_sample_prices"),
-        allow_non_reject_for_validation=True,
-    )
+    return build_dynamic_v3_failure_attribution_validation_sample_report()
 
 
 def _report_record(report_id: str, path: Path) -> dict[str, object]:

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -11,6 +12,7 @@ from ai_trading_system.cli import app
 from ai_trading_system.research_campaign import (
     DEFAULT_MODULE_REGISTRY_PATH,
     CampaignSpec,
+    _B2ComputePayloadCache,
     build_b2_campaign_e2e_compute_report,
     build_b2_campaign_full_parity_validation,
     build_b2_compute_adapter_smoke_report,
@@ -53,6 +55,11 @@ from ai_trading_system.research_campaign import (
 
 B2_SPEC = Path("docs/examples/research_campaigns/b2_risk_overlay_current_form.yaml")
 B3_SPEC = Path("docs/examples/research_campaigns/b3_slow_tilt_signal_precheck.yaml")
+
+
+@pytest.fixture(scope="module")
+def shared_b2_compute_cache() -> _B2ComputePayloadCache:
+    return _B2ComputePayloadCache()
 
 
 def test_b2_and_b3_sample_specs_validate() -> None:
@@ -122,7 +129,10 @@ def test_b3_migration_stays_signal_only_and_does_not_require_portfolio_metrics(
     assert state.safety_boundary["official_target_weights"] is False
 
 
-def test_b2_stage_runner_uses_configured_compute_adapter(tmp_path: Path) -> None:
+def test_b2_stage_runner_uses_configured_compute_adapter(
+    tmp_path: Path,
+    shared_b2_compute_cache: _B2ComputePayloadCache,
+) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
 
     payload = run_campaign_stage(
@@ -130,6 +140,7 @@ def test_b2_stage_runner_uses_configured_compute_adapter(tmp_path: Path) -> None
         requested_stage="TARGETED_EVIDENCE",
         campaign_root=tmp_path,
         output_root=tmp_path / "outputs",
+        b2_compute_cache=shared_b2_compute_cache,
     )
 
     assert payload["outcome"] == "NEEDS_MORE_EVIDENCE"
@@ -217,21 +228,27 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
         assert Path(paths["markdown_path"]).exists()
 
 
-def test_b2_compute_parity_and_run_next_smoke_pass(tmp_path: Path) -> None:
+def test_b2_compute_parity_and_run_next_smoke_pass(
+    tmp_path: Path,
+    shared_b2_compute_cache: _B2ComputePayloadCache,
+) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
 
     smoke = build_b2_compute_adapter_smoke_report(
         campaign_root=tmp_path,
         output_root=tmp_path / "outputs",
+        b2_compute_cache=shared_b2_compute_cache,
     )
     parity = build_b2_compute_parity_validation(
         campaign_root=tmp_path,
         output_root=tmp_path / "outputs",
         smoke_report=smoke,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     run_next = build_campaign_run_next_stage_smoke_report(
         campaign_root=tmp_path,
         output_root=tmp_path / "outputs",
+        b2_compute_cache=shared_b2_compute_cache,
     )
 
     assert smoke["status"] == "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
@@ -242,6 +259,7 @@ def test_b2_compute_parity_and_run_next_smoke_pass(tmp_path: Path) -> None:
 
 def test_b2_full_gate_e2e_parity_budget_drill_and_legacy_readiness(
     tmp_path: Path,
+    shared_b2_compute_cache: _B2ComputePayloadCache,
 ) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
 
@@ -249,18 +267,22 @@ def test_b2_full_gate_e2e_parity_budget_drill_and_legacy_readiness(
     targeted = build_b2_compute_parity_validation(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     full = build_b2_full_diagnostic_compute_report(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     gate = build_b2_gate_compute_report(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     e2e = build_b2_campaign_e2e_compute_report(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     full_parity = build_b2_campaign_full_parity_validation(
         campaign_root=tmp_path,
@@ -268,12 +290,17 @@ def test_b2_full_gate_e2e_parity_budget_drill_and_legacy_readiness(
         targeted_parity=targeted,
         full_compute=full,
         gate_compute=gate,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     final_drill = build_campaign_evidence_budget_final_decision_drill(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
-    legacy = build_legacy_b2_runner_deprecation_readiness(full_parity=full_parity)
+    legacy = build_legacy_b2_runner_deprecation_readiness(
+        full_parity=full_parity,
+        b2_compute_cache=shared_b2_compute_cache,
+    )
 
     assert full["status"] == "B2_FULL_DIAGNOSTIC_COMPUTE_PASS"
     assert full["adapter_run"]["status"] == "B2_FULL_DIAGNOSTIC_COMPLETE"
@@ -289,6 +316,7 @@ def test_b2_full_gate_e2e_parity_budget_drill_and_legacy_readiness(
 
 def test_b2_finalization_freeze_repeatability_gate_packet_and_branch(
     tmp_path: Path,
+    shared_b2_compute_cache: _B2ComputePayloadCache,
 ) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
 
@@ -297,10 +325,12 @@ def test_b2_finalization_freeze_repeatability_gate_packet_and_branch(
     repeatability = build_campaign_managed_b2_final_repeatability_run(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     final_gate = build_campaign_b2_final_gate(
         campaign_root=tmp_path,
         output_root=output_root,
+        b2_compute_cache=shared_b2_compute_cache,
     )
     packet = build_campaign_b2_owner_review_packet(
         campaign_root=tmp_path,
@@ -418,6 +448,7 @@ def test_b2_owner_decision_archive_reusable_evidence_and_redesign_snapshot(
 
 def test_budget_forced_transition_b3_smoke_status_ux_and_deprecation_plan(
     tmp_path: Path,
+    shared_b2_compute_cache: _B2ComputePayloadCache,
 ) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
     initialize_campaign(spec_path=B3_SPEC, campaign_root=tmp_path)
@@ -425,6 +456,7 @@ def test_budget_forced_transition_b3_smoke_status_ux_and_deprecation_plan(
     budget = build_evidence_budget_forced_transition_report(
         campaign_root=tmp_path,
         output_root=tmp_path / "outputs",
+        b2_compute_cache=shared_b2_compute_cache,
     )
     b3_smoke = build_b3_signal_compute_adapter_smoke_report(
         campaign_root=tmp_path,

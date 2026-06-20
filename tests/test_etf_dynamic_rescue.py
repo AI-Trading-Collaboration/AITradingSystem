@@ -8,24 +8,16 @@ import yaml
 from typer.testing import CliRunner
 
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
-from ai_trading_system.etf_portfolio.dynamic_allocation import (
-    load_dynamic_allocation_policy_config,
-)
 from ai_trading_system.etf_portfolio.dynamic_rescue import (
     DEFAULT_DYNAMIC_FAILURE_DIAGNOSTICS_POLICY_CONFIG_PATH,
     DYNAMIC_RESCUE_SAFETY,
     DynamicRescueError,
-    build_dynamic_rescue_batch_report,
     build_dynamic_rescue_validation_report,
+    build_dynamic_rescue_validation_sample_report,
     load_dynamic_failure_diagnostics_policy_config,
     write_dynamic_failure_dataset,
     write_dynamic_rescue_report,
 )
-from ai_trading_system.etf_portfolio.dynamic_robustness import (
-    _synthetic_validation_prices,
-    load_dynamic_robustness_policy_config,
-)
-from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
 from ai_trading_system.reports import reader_brief
 
 
@@ -167,18 +159,7 @@ def test_dynamic_rescue_validation_report_and_cli_pass(tmp_path: Path) -> None:
 
 
 def _sample_dynamic_rescue_report() -> dict[str, object]:
-    policy = load_dynamic_failure_diagnostics_policy_config()
-    robustness_policy = load_dynamic_robustness_policy_config()
-    return build_dynamic_rescue_batch_report(
-        prices=_synthetic_validation_prices(robustness_policy),
-        etf_config=load_etf_config_bundle(),
-        policy=policy,
-        dynamic_robustness_policy=robustness_policy,
-        dynamic_policy=load_dynamic_allocation_policy_config(),
-        candidate_id="dynamic-candidate-rescue-test",
-        data_quality_status="VALIDATION_SAMPLE",
-        data_quality_report="validation_sample",
-    )
+    return build_dynamic_rescue_validation_sample_report()
 
 
 def _report_record(report_id: str, path: Path) -> dict[str, object]:

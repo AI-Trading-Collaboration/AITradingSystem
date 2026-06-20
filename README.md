@@ -83,12 +83,12 @@ tests/                   单元测试
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev,data,dashboard,brokers]"
-python -m pytest
+python scripts/run_validation_tier.py fast-unit --write-runtime-artifact
 ```
 
-日常开发不要盲等 full pytest。先按改动范围运行分层验证，默认使用 16 worker
-并行 pytest（`-n 16 --dist loadfile`），输出中会显示实际 pytest 命令、workers、
-distribution 和慢测试耗时：
+后续所有需要 pytest 证据的任务默认使用并行 pytest。日常开发不要盲等 full pytest；
+先按改动范围运行分层验证，默认使用 16 worker 并行 pytest（`-n 16 --dist loadfile`），
+输出中会显示实际 pytest 命令、workers、distribution 和慢测试耗时：
 
 ```powershell
 python scripts/run_validation_tier.py --list
@@ -101,7 +101,9 @@ python scripts/run_validation_tier.py slow-research-regression --write-runtime-a
 python scripts/run_validation_tier.py full --write-runtime-artifact
 ```
 
-需要复现串行行为时显式加 `--workers 1`；不要把并行失败静默改写成串行 PASS。
+focused one-off pytest 也默认显式使用 `python -m pytest -n 16 --dist loadfile ...`。
+需要复现串行行为或定位并行相关故障时才显式加 `--workers 1` 或去掉 xdist 参数；
+不要把并行失败静默改写成串行 PASS。
 `--write-runtime-artifact` 会写出
 `outputs/validation_runtime/<run_id>/test_runtime_summary.json` 和
 `test_runtime_reader_brief.md`，用于记录 suite、命令、runtime、promotion-blocking

@@ -431,6 +431,9 @@ class RealEvaluationContext:
     fixed_robustness_cache_manifest: dict[str, Any]
 
 
+_FIXED_ROBUSTNESS_REPORT_CACHE: dict[str, dict[str, Any]] = {}
+
+
 class SweepRunConfig(BaseModel):
     name: str = Field(min_length=1)
     description: str = Field(min_length=1)
@@ -10328,6 +10331,59 @@ def _with_evaluator_mode(
     )
 
 
+def _fixed_robustness_reports_for_real_context(
+    *,
+    prices: pd.DataFrame,
+    etf_config: Any,
+    real_policy: DynamicV3RealEvaluationPolicyConfig,
+    dynamic_robustness_policy: Any,
+    dynamic_policy: Any,
+    failure_policy: Any,
+    start: date,
+    end: date,
+    data_quality_status: str,
+    data_quality_report: str,
+    prices_path: Path,
+    data_manifest_hash: str,
+) -> dict[str, Any]:
+    cache_key = _stable_id(
+        "fixed-robustness-context",
+        data_manifest_hash,
+        str(prices_path.resolve()),
+        start,
+        end,
+        data_quality_status,
+        real_policy.model_dump(mode="json"),
+        dynamic_robustness_policy.model_dump(mode="json"),
+        dynamic_policy.model_dump(mode="json"),
+        failure_policy.model_dump(mode="json"),
+    )
+    cached = _FIXED_ROBUSTNESS_REPORT_CACHE.get(cache_key)
+    if cached is not None:
+        fixed_cache = _clone_jsonable(cached)
+        fixed_cache["cache_reused_in_process"] = True
+        fixed_cache["cache_reuse_source"] = "in_memory_validation_runtime_cache"
+        return fixed_cache
+
+    fixed_cache = precompute_dynamic_v3_fixed_robustness_reports(
+        prices=prices,
+        etf_config=etf_config,
+        policy=real_policy,
+        dynamic_robustness_policy=dynamic_robustness_policy,
+        dynamic_policy=dynamic_policy,
+        failure_policy=failure_policy,
+        start=start,
+        end=end,
+        data_quality_status=data_quality_status,
+        data_quality_report=data_quality_report,
+        prices_path=prices_path,
+    )
+    fixed_cache["cache_reused_in_process"] = False
+    fixed_cache["cache_reuse_source"] = "fresh_precompute"
+    _FIXED_ROBUSTNESS_REPORT_CACHE[cache_key] = _clone_jsonable(fixed_cache)
+    return fixed_cache
+
+
 def _prepare_real_evaluation_context(
     *,
     config: DynamicV3ParameterSweepConfig,
@@ -10386,10 +10442,10 @@ def _prepare_real_evaluation_context(
     dynamic_robustness_policy = load_dynamic_robustness_policy_config()
     dynamic_policy = load_dynamic_allocation_policy_config()
     failure_policy = load_dynamic_failure_diagnostics_policy_config()
-    fixed_cache = precompute_dynamic_v3_fixed_robustness_reports(
+    fixed_cache = _fixed_robustness_reports_for_real_context(
         prices=prices,
         etf_config=etf_config,
-        policy=real_policy,
+        real_policy=real_policy,
         dynamic_robustness_policy=dynamic_robustness_policy,
         dynamic_policy=dynamic_policy,
         failure_policy=failure_policy,
@@ -10398,6 +10454,7 @@ def _prepare_real_evaluation_context(
         data_quality_status=quality_report.status,
         data_quality_report=str(quality_output),
         prices_path=prices_path,
+        data_manifest_hash=data_manifest_hash,
     )
     fixed_cache_manifest = {key: value for key, value in fixed_cache.items() if key != "reports"}
     _write_json(sweep_dir / "fixed_robustness_cache_manifest.json", fixed_cache_manifest)
@@ -19031,6 +19088,10 @@ def _latest_child_dir(path: Path) -> Path | None:
 
 def _canonical_json(payload: Any) -> str:
     return json.dumps(_jsonable(payload), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _clone_jsonable(payload: Any) -> Any:
+    return json.loads(json.dumps(_jsonable(payload), ensure_ascii=False, sort_keys=True))
 
 
 def _jsonable(value: Any) -> Any:
