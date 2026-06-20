@@ -117,7 +117,9 @@ calibration backlog。
   `thresholds_blocking_promotion_count=36`，`production_effect=none`。验证通过
   focused 并行 pytest 36 passed、task/docs 并行 pytest 10 passed、config 并行
   pytest 17 passed、Ruff、py_compile、Black check、真实 CLI threshold-audit /
-  validation-pack 和 `git diff --check`。
+  validation-pack、`git diff --check` 和 full 并行 validation tier 2977 passed /
+  642 warnings / 211.02s；runtime artifact：
+  `outputs/validation_runtime/full_20260620T093328Z/test_runtime_summary.json`。
 - 2026-06-20：补齐 long-horizon evidence floor calibration audit 并复验。真实
   expanded historical trace rerun 输出
   `current_20d_full_advisory_mature_cases=32`、`current_floor=50`、
