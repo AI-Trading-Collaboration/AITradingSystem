@@ -31,6 +31,7 @@ from ai_trading_system.indicator_research import (
     build_ontology_payload,
     build_valuation_crowding_ablation_validation,
     build_valuation_crowding_masking_effectiveness_review,
+    build_valuation_crowding_outcome_availability_audit,
     build_valuation_crowding_pilot_audit,
     build_valuation_crowding_pilot_validation_report,
     write_indicator_artifact_pair,
@@ -611,6 +612,81 @@ def indicator_masking_effectiveness_review_command(
         artifact_id="valuation_crowding_masking_effectiveness_review",
     )
     _print_indicator_artifact("Masking effectiveness review", payload, paths)
+
+
+@indicators_app.command("outcome-availability-audit")
+def indicator_outcome_availability_audit_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 realized outcome。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 valuation/crowding realized outcome availability audit。"""
+    payload = _build_indicator_payload(
+        lambda: build_valuation_crowding_outcome_availability_audit(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="valuation_crowding_outcome_availability_audit",
+    )
+    _print_indicator_artifact("Outcome availability audit", payload, paths)
 
 
 @indicators_app.command("historical-trace-validation")

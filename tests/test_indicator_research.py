@@ -24,6 +24,7 @@ from ai_trading_system.indicator_research import (
     build_masking_casebook,
     build_valuation_crowding_ablation_validation,
     build_valuation_crowding_masking_effectiveness_review,
+    build_valuation_crowding_outcome_availability_audit,
     build_valuation_crowding_pilot_audit,
     build_valuation_crowding_pilot_validation_report,
     load_indicator_registry,
@@ -327,6 +328,83 @@ def test_valuation_crowding_ablation_result_schema(tmp_path: Path) -> None:
     assert payload["summary"]["production_weight_logic_changed"] is False
 
 
+def test_outcome_availability_audit_schema_and_join_key(tmp_path: Path) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+    bridge_root = _write_bridge_artifact_root(tmp_path)
+
+    payload = build_valuation_crowding_outcome_availability_audit(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        bridge_artifact_root=bridge_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY",
+    )
+
+    assert payload["report_type"] == "valuation_crowding_outcome_availability_audit"
+    assert payload["summary"]["total_cases"] > 0
+    assert payload["summary"]["outcome_available_count"] > 0
+    assert payload["summary"]["outcome_missing_count"] == 0
+    assert set(payload["by_window"]) == {"10d", "1d", "20d", "5d"}
+    assert payload["by_asset"]
+    assert payload["by_date"]
+    assert payload["summary"]["promotion_gate_allowed"] is False
+    record = payload["records"][0]
+    expected_key_fields = {
+        "as_of_date",
+        "decision_time",
+        "asset",
+        "scenario",
+        "trace_source",
+        "trace_contract_version",
+    }
+    assert expected_key_fields == set(payload["join_key_fields"])
+    assert expected_key_fields <= set(record["outcome_join_key"])
+    assert all(record["outcome_join_key"][field] for field in expected_key_fields)
+    assert record["promotion_gate_allowed"] is False
+
+
+def test_outcome_not_mature_is_not_hard_missing(tmp_path: Path) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_short_outcome_prices(tmp_path)
+
+    payload = build_valuation_crowding_outcome_availability_audit(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker="QQQ",
+    )
+
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["summary"]["outcome_not_mature_count"] > 0
+    assert payload["summary"]["outcome_missing_count"] == 0
+    assert payload["summary"]["missing_price_count"] == 0
+    assert payload["by_window"]["20d"]["not_mature_count"] > 0
+
+
+def test_effectiveness_review_requires_available_outcomes_for_recommendation(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_short_outcome_prices(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+
+    payload = build_valuation_crowding_masking_effectiveness_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+    )
+
+    assert payload["decision_recommendation"]["decision_recommendation"] == (
+        "insufficient_evidence"
+    )
+    assert payload["decision_recommendation"]["promotion_gate_allowed"] is False
+    assert payload["summary"]["promotion_gate_allowed"] is False
+    assert payload["summary"]["outcome_not_mature_count"] > 0
+    assert payload["outcome_availability_summary"]["outcome_missing_count"] == 0
+
+
 def test_masking_effectiveness_review_outputs_required_layers_and_recommendation(
     tmp_path: Path,
 ) -> None:
@@ -358,6 +436,9 @@ def test_masking_effectiveness_review_outputs_required_layers_and_recommendation
     assert full_quality["case_count"] == 10
     assert full_quality["unique_regime_count"] == 1
     assert full_quality["correlated_asset_cluster_count"] == 3
+    assert full_quality["outcome_available_count"] == 10
+    assert full_quality["outcome_not_mature_count"] == 0
+    assert payload["outcome_availability_summary"]["outcome_available_count"] > 0
     assert payload["layers"]["component_only"]["sample_quality"]["case_count"] == 0
     for layer in payload["layers"].values():
         for scenario in layer["scenarios"].values():
@@ -502,6 +583,14 @@ def test_backtest_trace_bridge_schema_and_non_promotion_marker(tmp_path: Path) -
     assert record["confidence"] == "MEDIUM_BACKTEST_BRIDGE_DIAGNOSTIC"
     assert record["promotion_gate_allowed"] is False
     assert record["allowed_uses"] == ["diagnostic", "ablation", "sensitivity_analysis"]
+    assert {
+        "as_of_date",
+        "decision_time",
+        "asset",
+        "scenario",
+        "trace_source",
+        "trace_contract_version",
+    } <= set(record["outcome_join_key"])
     assert {"return_1d", "return_5d", "return_10d", "return_20d"} <= set(
         record["outcomes"]
     )
@@ -557,6 +646,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "valuation_crowding_pilot_validation_report",
         "indicator_masking_casebook_valuation_crowding_trend",
         "valuation_crowding_ablation_validation",
+        "valuation_crowding_outcome_availability_audit",
         "valuation_crowding_masking_effectiveness_review",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
@@ -602,6 +692,7 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["gate_availability_repeatable"] is True
     assert payload["stable_fields"]["component_trace_repeatable"] is True
     assert payload["stable_fields"]["backtest_trace_bridge_repeatable"] is True
+    assert payload["stable_fields"]["outcome_availability_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -647,6 +738,18 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "research",
             "indicators",
             "masking-effectiveness-review",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    outcome_availability = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "outcome-availability-audit",
             "--output-root",
             str(tmp_path),
         ],
@@ -720,6 +823,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
     assert effectiveness.exit_code == 0, effectiveness.output
+    assert outcome_availability.exit_code == 0, outcome_availability.output
     assert historical_trace.exit_code == 0, historical_trace.output
     assert gate_availability.exit_code == 0, gate_availability.output
     assert lineage_repair.exit_code == 0, lineage_repair.output
@@ -729,6 +833,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (tmp_path / "daily_indicator_coverage_gap_report.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
+    assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()
     assert (tmp_path / "valuation_crowding_masking_effectiveness_review.json").exists()
     assert (tmp_path / "historical_multi_stage_weight_trace_validation.json").exists()
     assert (tmp_path / "historical_trace_gate_availability_audit.json").exists()
@@ -1000,6 +1105,25 @@ def _write_outcome_prices(tmp_path: Path) -> Path:
         "TSM": 0.95,
     }
     for offset, price in enumerate(prices):
+        row_date = start + timedelta(days=offset)
+        for ticker, multiplier in tickers.items():
+            lines.append(f"{row_date.isoformat()},{ticker},{price * multiplier:.4f}")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_short_outcome_prices(tmp_path: Path) -> Path:
+    path = tmp_path / "prices_daily_short.csv"
+    lines = ["date,ticker,adj_close"]
+    start = date(2023, 1, 3)
+    tickers = {
+        "QQQ": 1.00,
+        "SPY": 0.75,
+        "SMH": 1.25,
+        "MSFT": 2.00,
+        "GOOGL": 1.50,
+    }
+    for offset, price in enumerate((100.0, 101.0, 102.0)):
         row_date = start + timedelta(days=offset)
         for ticker, multiplier in tickers.items():
             lines.append(f"{row_date.isoformat()},{ticker},{price * multiplier:.4f}")

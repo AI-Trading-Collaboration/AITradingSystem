@@ -52,6 +52,32 @@ MASKING_ABLATION_SCENARIOS = (
     "no_valuation_crowding_masking",
     "capped_masking",
 )
+OUTCOME_JOIN_KEY_FIELDS = (
+    "as_of_date",
+    "decision_time",
+    "asset",
+    "scenario",
+    "trace_source",
+    "trace_contract_version",
+)
+OUTCOME_WINDOW_STATUS_AVAILABLE = "available"
+OUTCOME_WINDOW_STATUS_NOT_MATURE = "outcome_not_mature"
+OUTCOME_WINDOW_STATUS_MISSING_PRICE = "missing_price"
+OUTCOME_WINDOW_STATUS_MISSING_ASSET_MAPPING = "missing_asset_mapping"
+OUTCOME_WINDOW_STATUS_MISSING_CALENDAR = "missing_calendar"
+OUTCOME_WINDOW_STATUS_MISSING_JOIN_KEY = "missing_join_key"
+OUTCOME_HARD_MISSING_STATUSES = {
+    OUTCOME_WINDOW_STATUS_MISSING_PRICE,
+    OUTCOME_WINDOW_STATUS_MISSING_ASSET_MAPPING,
+    OUTCOME_WINDOW_STATUS_MISSING_CALENDAR,
+    OUTCOME_WINDOW_STATUS_MISSING_JOIN_KEY,
+}
+# Validation-only pilot floor for issuing a directional masking recommendation.
+EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES = 50
+# Validation-only drawdown tolerance for no-mask comparison; not a production policy.
+EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE = 0.10
+# Validation-only missed-upside ceiling for retaining baseline masking.
+EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE = 0.40
 # Validation-only scenario cap used for counterfactual reporting; not a production policy.
 DEFAULT_MASKING_ABLATION_CAP_RATIO = 0.50
 # Isolated daily traces stay useful, but stability claims need a multi-date diagnostic window.
@@ -846,6 +872,10 @@ def write_indicator_validation_pack_stability_report(
             first_projection["masking_effectiveness_summary"]
             == second_projection["masking_effectiveness_summary"]
         ),
+        "outcome_availability_repeatable": (
+            first_projection["outcome_availability_summary"]
+            == second_projection["outcome_availability_summary"]
+        ),
         "lineage_manifest_repair_repeatable": (
             first_projection["lineage_manifest_repair_summary"]
             == second_projection["lineage_manifest_repair_summary"]
@@ -1429,10 +1459,14 @@ def build_masking_casebook(
     component_index = _component_trace_index(trace_rows)
     price_series_by_ticker = _read_price_series_by_ticker(prices_path)
     fallback_price_series = price_series_by_ticker.get(outcome_ticker.upper(), [])
+    trace_contract_version = _trace_contract_version_for_payload(
+        trace_path,
+        registry=registry,
+    )
     cases = []
     for row in pair_rows:
         for case_asset in _casebook_assets_for_row(row, asset_universe=asset_universe):
-            case_outcome_ticker = _price_ticker_for_asset(
+            case_outcome_ticker, missing_asset_mapping = _price_ticker_mapping_for_asset(
                 case_asset,
                 price_series_by_ticker,
                 fallback_ticker=outcome_ticker,
@@ -1447,6 +1481,8 @@ def build_masking_casebook(
                     ),
                     outcome_ticker=case_outcome_ticker,
                     case_asset=case_asset,
+                    trace_contract_version=trace_contract_version,
+                    missing_asset_mapping=missing_asset_mapping,
                 )
             )
     issues: list[dict[str, Any]] = []
@@ -1493,6 +1529,9 @@ def build_masking_casebook(
             "missed_upside_count": sum(1 for case in cases if case["missed_upside"]),
             "false_risk_off_count": sum(1 for case in cases if case["false_risk_off"]),
             "outcome_missing_count": sum(1 for case in cases if case["outcome_missing"]),
+            "outcome_not_mature_count": sum(
+                1 for case in cases if case.get("outcome_not_mature")
+            ),
             **_trace_sample_quality_stats(registry, trace_rows, cases=cases),
         },
         filters=_trace_filter_payload(
@@ -1608,6 +1647,119 @@ def build_valuation_crowding_ablation_validation(
     )
 
 
+def build_valuation_crowding_outcome_availability_audit(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    if not 0 <= capped_masking_ratio <= 1:
+        raise IndicatorResearchError("capped_masking_ratio must be between 0 and 1")
+    casebook = build_masking_casebook(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    casebook_cases = [
+        dict(item) for item in casebook.get("casebook", []) if isinstance(item, Mapping)
+    ]
+    bridge = build_backtest_trace_bridge(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    bridge_cases = [
+        dict(item) for item in bridge.get("bridge_records", []) if isinstance(item, Mapping)
+    ]
+    records = _outcome_availability_records(casebook_cases, bridge_cases)
+    summary = _outcome_availability_summary(records)
+    issues: list[dict[str, Any]] = []
+    if not records:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "outcome_availability_requires_cases",
+                "message": "No casebook, ablation, or bridge cases were available to audit.",
+            }
+        )
+    if summary["outcome_missing_count"]:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "outcome_hard_missing_detected",
+                "message": (
+                    "Some outcome windows have hard missing price, mapping, calendar, "
+                    "or join-key issues."
+                ),
+            }
+        )
+    if summary["outcome_not_mature_count"]:
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "outcome_windows_not_mature",
+                "message": (
+                    "Some realized outcome windows have not matured; these are not "
+                    "counted as hard missing."
+                ),
+            }
+        )
+    return _base_payload(
+        registry,
+        report_type="valuation_crowding_outcome_availability_audit",
+        status="PASS_WITH_WARNINGS" if issues else "PASS",
+        issues=issues,
+        summary={
+            **summary,
+            "outcome_ticker": outcome_ticker,
+            "capped_masking_ratio": capped_masking_ratio,
+            "promotion_gate_allowed": False,
+            "read_only": True,
+            "production_weight_logic_changed": False,
+        },
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        join_key_fields=list(OUTCOME_JOIN_KEY_FIELDS),
+        by_window=summary["by_window"],
+        by_asset=summary["by_asset"],
+        by_date=summary["by_date"],
+        records=records,
+        rule=(
+            "Signal generation remains PIT/as-of. Realized outcome evaluation may use "
+            "prices after decision_time and uses trading-day windows from the realized "
+            "price series. outcome_not_mature is not a hard missing condition."
+        ),
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
 def build_valuation_crowding_masking_effectiveness_review(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -1685,6 +1837,8 @@ def build_valuation_crowding_masking_effectiveness_review(
         for record in bridge.get("bridge_records", [])
         if isinstance(record, Mapping)
     ]
+    outcome_records = _outcome_availability_records(cases, bridge_cases)
+    outcome_availability_summary = _outcome_availability_summary(outcome_records)
     layers = {
         "full_advisory_only": _masking_effectiveness_layer(
             "full_advisory_only",
@@ -1820,6 +1974,15 @@ def build_valuation_crowding_masking_effectiveness_review(
             "capped_masking_ratio": capped_masking_ratio,
             "outcome_ticker": outcome_ticker,
             "decision_recommendation": recommendation["decision_recommendation"],
+            "outcome_available_count": outcome_availability_summary[
+                "outcome_available_count"
+            ],
+            "outcome_missing_count": outcome_availability_summary[
+                "outcome_missing_count"
+            ],
+            "outcome_not_mature_count": outcome_availability_summary[
+                "outcome_not_mature_count"
+            ],
             "recommendation_scope": "validation_only",
             "promotion_gate_allowed": False,
             "read_only": True,
@@ -1847,6 +2010,8 @@ def build_valuation_crowding_masking_effectiveness_review(
         by_event_window=by_event_window,
         gate_availability_summary=gate_audit.get("summary", {}),
         backtest_bridge_summary=bridge.get("summary", {}),
+        outcome_availability_summary=outcome_availability_summary,
+        outcome_availability_records=outcome_records,
         allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
     )
 
@@ -2320,6 +2485,10 @@ def build_backtest_trace_bridge(
     )
     price_series_by_ticker = _read_price_series_by_ticker(prices_path)
     fallback_price_series = price_series_by_ticker.get(outcome_ticker.upper(), [])
+    trace_contract_version = _trace_contract_version_for_payload(
+        trace_path,
+        registry=registry,
+    )
     pair_rows = _pair_trace_rows(
         trace_rows,
         "valuation_crowding_indicator",
@@ -2328,7 +2497,7 @@ def build_backtest_trace_bridge(
     bridge_records = []
     for row in pair_rows:
         for case_asset in _casebook_assets_for_row(row, asset_universe=asset_universe):
-            case_outcome_ticker = _price_ticker_for_asset(
+            case_outcome_ticker, missing_asset_mapping = _price_ticker_mapping_for_asset(
                 case_asset,
                 price_series_by_ticker,
                 fallback_ticker=outcome_ticker,
@@ -2342,6 +2511,8 @@ def build_backtest_trace_bridge(
                     ),
                     outcome_ticker=case_outcome_ticker,
                     case_asset=case_asset,
+                    trace_contract_version=trace_contract_version,
+                    missing_asset_mapping=missing_asset_mapping,
                 )
             )
     source_artifacts = _scan_bridge_source_artifacts(bridge_artifact_root)
@@ -2581,6 +2752,22 @@ def write_indicator_framework_validation_pack(
             ),
         ),
         (
+            "valuation_crowding_outcome_availability_audit",
+            build_valuation_crowding_outcome_availability_audit(
+                registry_path=registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                bridge_artifact_root=bridge_artifact_root,
+                outcome_ticker=outcome_ticker,
+                capped_masking_ratio=capped_masking_ratio,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
             "valuation_crowding_masking_effectiveness_review",
             build_valuation_crowding_masking_effectiveness_review(
                 registry_path=registry_path,
@@ -2710,6 +2897,7 @@ def write_indicator_framework_validation_pack(
             {"check_id": "valuation_crowding_pilot", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_casebook", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "counterfactual_ablation", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "outcome_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_effectiveness_review", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "historical_trace_validation", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "gate_availability_audit", "status": "PASS_WITH_WARNINGS"},
@@ -3459,6 +3647,36 @@ def _read_trace_rows(trace_path: Path | None) -> list[dict[str, Any]]:
     if not isinstance(rows, list):
         raise IndicatorResearchError("trace JSON must be a list or contain a rows list")
     return [dict(row) for row in rows if isinstance(row, Mapping)]
+
+
+def _trace_contract_version_for_payload(
+    trace_path: Path | None,
+    *,
+    registry: IndicatorResearchRegistry,
+) -> str:
+    if trace_path is None:
+        return registry.trace_contract.contract_id
+    try:
+        payload = _read_trace_payload(trace_path)
+    except (OSError, json.JSONDecodeError, IndicatorResearchError):
+        return registry.trace_contract.contract_id
+    summary = payload.get("summary", {})
+    if not isinstance(summary, Mapping):
+        summary = {}
+    for value in (
+        payload.get("trace_contract_version"),
+        payload.get("trace_contract_id"),
+        summary.get("trace_contract_version"),
+        summary.get("trace_contract_id"),
+    ):
+        if value not in (None, ""):
+            return str(value)
+    manifests = _explicit_lineage_manifests(payload)
+    for manifest in manifests:
+        version = manifest.get("trace_contract_version") or manifest.get("trace_contract_id")
+        if version not in (None, ""):
+            return str(version)
+    return registry.trace_contract.contract_id
 
 
 def _trace_lineage_records(
@@ -4477,15 +4695,27 @@ def _backtest_bridge_record(
     price_series: Sequence[tuple[date, float]],
     outcome_ticker: str,
     case_asset: str | None = None,
+    trace_contract_version: str,
+    missing_asset_mapping: bool = False,
 ) -> dict[str, Any]:
     signal_date = _parse_iso_date(str(row.get("date") or ""))
     asset = (case_asset or str(row.get("asset") or DEFAULT_TRACE_ASSET)).upper()
+    outcome_payload = _forward_outcome_payload_with_availability(
+        price_series,
+        signal_date,
+        missing_asset_mapping=missing_asset_mapping,
+    )
+    outcomes = outcome_payload["outcomes"]
     return {
+        "as_of_date": row.get("date"),
         "date": row.get("date"),
+        "decision_time": str(row.get("decision_time") or row.get("date") or ""),
         "asset": asset,
+        "scenario": "baseline",
         "source_trace_asset": row.get("asset"),
         "trace_source": BACKTEST_TRACE_BRIDGE_SOURCE,
         "confidence": TRACE_CONFIDENCE_BRIDGE,
+        "trace_contract_version": trace_contract_version,
         "promotion_gate_allowed": False,
         "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
         "upstream_indicator_id": row.get("upstream_indicator_id"),
@@ -4507,7 +4737,19 @@ def _backtest_bridge_record(
         "constraint_hit": bool(row.get("constraint_hit")),
         "reason_code": row.get("reason_code"),
         "outcome_ticker": outcome_ticker,
-        "outcomes": _forward_outcome_payload(price_series, signal_date),
+        "outcome_join_key": _outcome_join_key(
+            as_of_date=str(row.get("date") or ""),
+            decision_time=str(row.get("decision_time") or row.get("date") or ""),
+            asset=asset,
+            scenario="baseline",
+            trace_source=BACKTEST_TRACE_BRIDGE_SOURCE,
+            trace_contract_version=trace_contract_version,
+        ),
+        "outcomes": outcomes,
+        "outcome_windows": outcome_payload["windows"],
+        "outcome_missing": outcome_payload["outcome_missing"],
+        "outcome_not_mature": outcome_payload["outcome_not_mature"],
+        "outcome_status": outcome_payload["outcome_status"],
     }
 
 
@@ -4737,6 +4979,8 @@ def _masking_casebook_row(
     price_series: Sequence[tuple[date, float]],
     outcome_ticker: str,
     case_asset: str | None = None,
+    trace_contract_version: str,
+    missing_asset_mapping: bool = False,
 ) -> dict[str, Any]:
     row_date = str(row.get("date") or "")
     asset = (case_asset or str(row.get("asset") or DEFAULT_TRACE_ASSET)).upper()
@@ -4757,7 +5001,12 @@ def _masking_casebook_row(
     )
     b_intended = _float(row.get("b_intended_change"))
     a_suppressed = _float(row.get("a_suppressed_change"))
-    outcomes = _forward_outcome_payload(price_series, signal_date)
+    outcome_payload = _forward_outcome_payload_with_availability(
+        price_series,
+        signal_date,
+        missing_asset_mapping=missing_asset_mapping,
+    )
+    outcomes = outcome_payload["outcomes"]
     returns = [
         value
         for key, value in outcomes.items()
@@ -4766,18 +5015,20 @@ def _masking_casebook_row(
     drawdown_reduced = a_suppressed > 0 and any(value < 0 for value in returns)
     missed_upside = a_suppressed > 0 and any(value > 0 for value in returns)
     false_risk_off = missed_upside and not drawdown_reduced
-    outcome_missing = any(
-        outcomes.get(f"return_{horizon}d") is None for horizon in MASKING_OUTCOME_HORIZONS
-    )
+    decision_time = str(row.get("decision_time") or row_date)
     return {
+        "as_of_date": row_date,
         "case_id": f"{row_date}:{asset}:{row.get('reason_code', '')}",
         "date": row_date,
+        "decision_time": decision_time,
+        "scenario": "baseline",
         "sample_id": (
             f"{row_date}:{row.get('module_id', '')}:"
             f"{row.get('downstream_indicator_id', '')}"
         ),
         "asset": asset,
         "source_trace_asset": row.get("asset"),
+        "trace_contract_version": trace_contract_version,
         "outcome_ticker": outcome_ticker,
         "trend_raw_direction": _trend_direction(trend_component, b_intended),
         "valuation_crowding_raw_direction": _valuation_direction(
@@ -4799,11 +5050,22 @@ def _masking_casebook_row(
         "b_intended_change": b_intended,
         "a_suppressed_change": a_suppressed,
         "masking_ratio": None if abs(b_intended) <= 0 else abs(a_suppressed) / abs(b_intended),
+        "outcome_join_key": _outcome_join_key(
+            as_of_date=row_date,
+            decision_time=decision_time,
+            asset=asset,
+            scenario="baseline",
+            trace_source=COMPONENT_VALIDATION_TRACE_SOURCE,
+            trace_contract_version=trace_contract_version,
+        ),
         "outcomes": outcomes,
+        "outcome_windows": outcome_payload["windows"],
         "drawdown_reduced": drawdown_reduced,
         "missed_upside": missed_upside,
         "false_risk_off": false_risk_off,
-        "outcome_missing": outcome_missing,
+        "outcome_missing": outcome_payload["outcome_missing"],
+        "outcome_not_mature": outcome_payload["outcome_not_mature"],
+        "outcome_status": outcome_payload["outcome_status"],
         "constraint_hit": bool(row.get("constraint_hit")),
         "reason_code": row.get("reason_code"),
         "trace_source": COMPONENT_VALIDATION_TRACE_SOURCE,
@@ -4848,29 +5110,403 @@ def _forward_outcome_payload(
     price_series: Sequence[tuple[date, float]],
     signal_date: date | None,
 ) -> dict[str, Any]:
-    payload: dict[str, Any] = {
+    return _forward_outcome_payload_with_availability(
+        price_series,
+        signal_date,
+    )["outcomes"]
+
+
+def _forward_outcome_payload_with_availability(
+    price_series: Sequence[tuple[date, float]],
+    signal_date: date | None,
+    *,
+    missing_asset_mapping: bool = False,
+) -> dict[str, Any]:
+    outcomes: dict[str, Any] = {
         **{f"return_{horizon}d": None for horizon in MASKING_OUTCOME_HORIZONS},
         "max_drawdown_20d": None,
     }
-    if signal_date is None or not price_series:
-        return payload
+    if signal_date is None:
+        windows = [
+            _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_JOIN_KEY)
+            for horizon in MASKING_OUTCOME_HORIZONS
+        ]
+        return _outcome_payload_from_windows(outcomes, windows)
+    if missing_asset_mapping:
+        windows = [
+            _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_ASSET_MAPPING)
+            for horizon in MASKING_OUTCOME_HORIZONS
+        ]
+        return _outcome_payload_from_windows(outcomes, windows)
+    if not price_series:
+        windows = [
+            _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_CALENDAR)
+            for horizon in MASKING_OUTCOME_HORIZONS
+        ]
+        return _outcome_payload_from_windows(outcomes, windows)
     start_index = next(
         (index for index, (price_date, _) in enumerate(price_series) if price_date >= signal_date),
         None,
     )
     if start_index is None:
-        return payload
+        windows = [
+            _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_PRICE)
+            for horizon in MASKING_OUTCOME_HORIZONS
+        ]
+        return _outcome_payload_from_windows(outcomes, windows)
     start_price = price_series[start_index][1]
     if start_price <= 0:
-        return payload
+        windows = [
+            _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_PRICE)
+            for horizon in MASKING_OUTCOME_HORIZONS
+        ]
+        return _outcome_payload_from_windows(outcomes, windows)
+    windows = []
     for horizon in MASKING_OUTCOME_HORIZONS:
         target_index = start_index + horizon
         if target_index < len(price_series):
-            payload[f"return_{horizon}d"] = price_series[target_index][1] / start_price - 1
-    payload["max_drawdown_20d"] = _max_drawdown(
-        [price for _, price in price_series[start_index : start_index + 21]]
+            target_date, target_price = price_series[target_index]
+            value = target_price / start_price - 1
+            outcomes[f"return_{horizon}d"] = value
+            windows.append(
+                _outcome_window_record(
+                    horizon,
+                    OUTCOME_WINDOW_STATUS_AVAILABLE,
+                    target_date=target_date,
+                    realized_return=value,
+                )
+            )
+        else:
+            windows.append(
+                _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_NOT_MATURE)
+            )
+    if start_index + 20 < len(price_series):
+        outcomes["max_drawdown_20d"] = _max_drawdown(
+            [price for _, price in price_series[start_index : start_index + 21]]
+        )
+    return _outcome_payload_from_windows(outcomes, windows)
+
+
+def _outcome_window_record(
+    horizon: int,
+    status: str,
+    *,
+    target_date: date | None = None,
+    realized_return: float | None = None,
+) -> dict[str, Any]:
+    return {
+        "window": f"{horizon}d",
+        "horizon_trading_days": horizon,
+        "status": status,
+        "target_date": None if target_date is None else target_date.isoformat(),
+        "realized_return": realized_return,
+    }
+
+
+def _outcome_payload_from_windows(
+    outcomes: Mapping[str, Any],
+    windows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    hard_missing = any(
+        str(window.get("status") or "") in OUTCOME_HARD_MISSING_STATUSES
+        for window in windows
     )
-    return payload
+    not_mature = any(
+        window.get("status") == OUTCOME_WINDOW_STATUS_NOT_MATURE
+        for window in windows
+    )
+    all_available = all(
+        window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE
+        for window in windows
+    )
+    return {
+        "outcomes": dict(outcomes),
+        "windows": [dict(window) for window in windows],
+        "outcome_missing": hard_missing,
+        "outcome_not_mature": not_mature,
+        "outcome_status": (
+            "available"
+            if all_available
+            else (
+                "missing"
+                if hard_missing
+                else (
+                    OUTCOME_WINDOW_STATUS_NOT_MATURE
+                    if not_mature
+                    else "unknown"
+                )
+            )
+        ),
+    }
+
+
+def _outcome_join_key(
+    *,
+    as_of_date: str,
+    decision_time: str,
+    asset: str,
+    scenario: str,
+    trace_source: str,
+    trace_contract_version: str,
+) -> dict[str, str]:
+    return {
+        "as_of_date": as_of_date,
+        "decision_time": decision_time,
+        "asset": asset,
+        "scenario": scenario,
+        "trace_source": trace_source,
+        "trace_contract_version": trace_contract_version,
+    }
+
+
+def _outcome_availability_record(
+    case: Mapping[str, Any],
+    *,
+    source_case_type: str,
+    scenario: str,
+) -> dict[str, Any]:
+    join_key = _case_outcome_join_key(case, scenario=scenario)
+    missing_join_key_fields = [
+        field for field in OUTCOME_JOIN_KEY_FIELDS if not str(join_key.get(field) or "")
+    ]
+    if missing_join_key_fields:
+        windows = [
+            _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_JOIN_KEY)
+            for horizon in MASKING_OUTCOME_HORIZONS
+        ]
+    else:
+        raw_windows = case.get("outcome_windows", [])
+        if isinstance(raw_windows, Sequence) and not isinstance(raw_windows, (str, bytes)):
+            windows = [dict(item) for item in raw_windows if isinstance(item, Mapping)]
+        else:
+            windows = []
+        if not windows:
+            windows = [
+                _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_MISSING_PRICE)
+                for horizon in MASKING_OUTCOME_HORIZONS
+            ]
+    statuses = {str(window.get("status") or "") for window in windows}
+    hard_missing = bool(statuses & OUTCOME_HARD_MISSING_STATUSES)
+    not_mature = OUTCOME_WINDOW_STATUS_NOT_MATURE in statuses
+    all_available = all(
+        window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE for window in windows
+    )
+    return {
+        "source_case_type": source_case_type,
+        "case_id": case.get("case_id"),
+        "as_of_date": join_key["as_of_date"],
+        "date": join_key["as_of_date"],
+        "decision_time": join_key["decision_time"],
+        "asset": join_key["asset"],
+        "scenario": join_key["scenario"],
+        "trace_source": join_key["trace_source"],
+        "trace_contract_version": join_key["trace_contract_version"],
+        "outcome_join_key": join_key,
+        "missing_join_key_fields": missing_join_key_fields,
+        "outcome_windows": windows,
+        "outcomes": dict(case.get("outcomes", {}))
+        if isinstance(case.get("outcomes"), Mapping)
+        else {},
+        "outcome_available": all_available,
+        "outcome_missing": hard_missing,
+        "outcome_not_mature": not_mature,
+        "missing_price": OUTCOME_WINDOW_STATUS_MISSING_PRICE in statuses,
+        "missing_asset_mapping": OUTCOME_WINDOW_STATUS_MISSING_ASSET_MAPPING in statuses,
+        "missing_calendar": OUTCOME_WINDOW_STATUS_MISSING_CALENDAR in statuses,
+        "missing_join_key": bool(missing_join_key_fields),
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+    }
+
+
+def _outcome_availability_records(
+    casebook_cases: Sequence[Mapping[str, Any]],
+    bridge_cases: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for case in casebook_cases:
+        records.append(
+            _outcome_availability_record(
+                case,
+                source_case_type="masking_casebook",
+                scenario=str(case.get("scenario") or "baseline"),
+            )
+        )
+        for scenario_id in MASKING_ABLATION_SCENARIOS:
+            records.append(
+                _outcome_availability_record(
+                    case,
+                    source_case_type="ablation_scenario",
+                    scenario=scenario_id,
+                )
+            )
+    for case in bridge_cases:
+        for scenario_id in MASKING_ABLATION_SCENARIOS:
+            records.append(
+                _outcome_availability_record(
+                    case,
+                    source_case_type="backtest_bridge",
+                    scenario=scenario_id,
+                )
+            )
+    return records
+
+
+def _case_outcome_join_key(case: Mapping[str, Any], *, scenario: str) -> dict[str, str]:
+    join_key = case.get("outcome_join_key", {})
+    if not isinstance(join_key, Mapping):
+        join_key = {}
+    return {
+        "as_of_date": str(
+            join_key.get("as_of_date")
+            or case.get("as_of_date")
+            or case.get("date")
+            or ""
+        ),
+        "decision_time": str(
+            join_key.get("decision_time")
+            or case.get("decision_time")
+            or case.get("date")
+            or ""
+        ),
+        "asset": str(join_key.get("asset") or case.get("asset") or "").upper(),
+        "scenario": scenario,
+        "trace_source": str(
+            join_key.get("trace_source") or case.get("trace_source") or ""
+        ),
+        "trace_contract_version": str(
+            join_key.get("trace_contract_version")
+            or case.get("trace_contract_version")
+            or ""
+        ),
+    }
+
+
+def _outcome_availability_summary(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    by_window = {
+        f"{horizon}d": _outcome_empty_availability_bucket(f"{horizon}d")
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    by_asset: dict[str, dict[str, Any]] = {}
+    by_date: dict[str, dict[str, Any]] = {}
+    for record in records:
+        _outcome_update_bucket(by_asset, str(record.get("asset") or "UNKNOWN"), record)
+        _outcome_update_bucket(by_date, str(record.get("as_of_date") or "UNKNOWN"), record)
+        for window in record.get("outcome_windows", []):
+            if not isinstance(window, Mapping):
+                continue
+            window_id = str(window.get("window") or "")
+            bucket = by_window.setdefault(
+                window_id,
+                _outcome_empty_availability_bucket(window_id),
+            )
+            _outcome_update_window_bucket(bucket, str(window.get("status") or "unknown"))
+    return {
+        "total_cases": len(records),
+        "outcome_available_count": sum(
+            1 for record in records if record.get("outcome_available")
+        ),
+        "outcome_missing_count": sum(
+            1 for record in records if record.get("outcome_missing")
+        ),
+        "outcome_not_mature_count": sum(
+            1 for record in records if record.get("outcome_not_mature")
+        ),
+        "missing_price_count": sum(1 for record in records if record.get("missing_price")),
+        "missing_asset_mapping_count": sum(
+            1 for record in records if record.get("missing_asset_mapping")
+        ),
+        "missing_calendar_count": sum(
+            1 for record in records if record.get("missing_calendar")
+        ),
+        "missing_join_key_count": sum(
+            1 for record in records if record.get("missing_join_key")
+        ),
+        "date_count": len(
+            {str(record.get("as_of_date") or "") for record in records if record.get("as_of_date")}
+        ),
+        "asset_count": len(
+            {str(record.get("asset") or "") for record in records if record.get("asset")}
+        ),
+        "scenario_count": len(
+            {
+                str(record.get("scenario") or "")
+                for record in records
+                if record.get("scenario")
+            }
+        ),
+        "source_case_type_count": len(
+            {
+                str(record.get("source_case_type") or "")
+                for record in records
+                if record.get("source_case_type")
+            }
+        ),
+        "by_window": dict(sorted(by_window.items())),
+        "by_asset": [
+            {"asset": key, **value} for key, value in sorted(by_asset.items())
+        ],
+        "by_date": [
+            {"date": key, **value} for key, value in sorted(by_date.items())
+        ],
+    }
+
+
+def _outcome_empty_availability_bucket(label: str) -> dict[str, Any]:
+    return {
+        "label": label,
+        "total_cases": 0,
+        "available_count": 0,
+        "missing_count": 0,
+        "not_mature_count": 0,
+        "missing_price_count": 0,
+        "missing_asset_mapping_count": 0,
+        "missing_calendar_count": 0,
+        "missing_join_key_count": 0,
+    }
+
+
+def _outcome_update_bucket(
+    buckets: dict[str, dict[str, Any]],
+    key: str,
+    record: Mapping[str, Any],
+) -> None:
+    bucket = buckets.setdefault(key, _outcome_empty_availability_bucket(key))
+    bucket["total_cases"] += 1
+    if record.get("outcome_available"):
+        bucket["available_count"] += 1
+    if record.get("outcome_missing"):
+        bucket["missing_count"] += 1
+    if record.get("outcome_not_mature"):
+        bucket["not_mature_count"] += 1
+    if record.get("missing_price"):
+        bucket["missing_price_count"] += 1
+    if record.get("missing_asset_mapping"):
+        bucket["missing_asset_mapping_count"] += 1
+    if record.get("missing_calendar"):
+        bucket["missing_calendar_count"] += 1
+    if record.get("missing_join_key"):
+        bucket["missing_join_key_count"] += 1
+
+
+def _outcome_update_window_bucket(bucket: dict[str, Any], status: str) -> None:
+    bucket["total_cases"] += 1
+    if status == OUTCOME_WINDOW_STATUS_AVAILABLE:
+        bucket["available_count"] += 1
+    elif status == OUTCOME_WINDOW_STATUS_NOT_MATURE:
+        bucket["not_mature_count"] += 1
+    else:
+        bucket["missing_count"] += 1
+        if status == OUTCOME_WINDOW_STATUS_MISSING_PRICE:
+            bucket["missing_price_count"] += 1
+        elif status == OUTCOME_WINDOW_STATUS_MISSING_ASSET_MAPPING:
+            bucket["missing_asset_mapping_count"] += 1
+        elif status == OUTCOME_WINDOW_STATUS_MISSING_CALENDAR:
+            bucket["missing_calendar_count"] += 1
+        elif status == OUTCOME_WINDOW_STATUS_MISSING_JOIN_KEY:
+            bucket["missing_join_key_count"] += 1
 
 
 def _max_drawdown(prices: Sequence[float]) -> float | None:
@@ -4933,6 +5569,10 @@ def _masking_effectiveness_sample_quality(
         "unique_regime_count": len(regimes) if cases else 0,
         "correlated_asset_cluster_count": len(clusters),
         "outcome_missing_count": sum(1 for case in cases if case.get("outcome_missing")),
+        "outcome_available_count": sum(1 for case in cases if _case_outcome_available(case)),
+        "outcome_not_mature_count": sum(
+            1 for case in cases if case.get("outcome_not_mature")
+        ),
     }
 
 
@@ -5000,11 +5640,38 @@ def _bridge_record_to_effectiveness_case(record: Mapping[str, Any]) -> dict[str,
     case["drawdown_reduced"] = drawdown_reduced
     case["missed_upside"] = missed_upside
     case["false_risk_off"] = missed_upside and not drawdown_reduced
-    case["outcome_missing"] = any(
-        outcomes.get(f"return_{horizon}d") is None for horizon in MASKING_OUTCOME_HORIZONS
-    )
+    if "outcome_windows" in case:
+        statuses = {
+            str(window.get("status") or "")
+            for window in case.get("outcome_windows", [])
+            if isinstance(window, Mapping)
+        }
+        case["outcome_missing"] = bool(statuses & OUTCOME_HARD_MISSING_STATUSES)
+        case["outcome_not_mature"] = OUTCOME_WINDOW_STATUS_NOT_MATURE in statuses
+    else:
+        case["outcome_missing"] = any(
+            outcomes.get(f"return_{horizon}d") is None for horizon in MASKING_OUTCOME_HORIZONS
+        )
     case["event_window_ids"] = _event_window_ids_for_date(str(case.get("date") or ""))
     return case
+
+
+def _case_outcome_available(case: Mapping[str, Any]) -> bool:
+    windows = case.get("outcome_windows", [])
+    if isinstance(windows, Sequence) and not isinstance(windows, (str, bytes)):
+        usable = [window for window in windows if isinstance(window, Mapping)]
+        if usable:
+            return all(
+                window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE
+                for window in usable
+            )
+    outcomes = case.get("outcomes", {})
+    if not isinstance(outcomes, Mapping):
+        return False
+    return all(
+        isinstance(outcomes.get(f"return_{horizon}d"), float)
+        for horizon in MASKING_OUTCOME_HORIZONS
+    )
 
 
 def _masking_effectiveness_recommendation(
@@ -5015,13 +5682,15 @@ def _masking_effectiveness_recommendation(
         sample_quality = {}
     case_count = int(sample_quality.get("case_count") or 0)
     outcome_missing_count = int(sample_quality.get("outcome_missing_count") or 0)
+    outcome_available_count = int(sample_quality.get("outcome_available_count") or 0)
+    outcome_not_mature_count = int(sample_quality.get("outcome_not_mature_count") or 0)
     date_count = int(sample_quality.get("date_count") or 0)
     asset_count = int(sample_quality.get("asset_count") or 0)
     if (
-        case_count < 50
+        outcome_available_count < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
         or date_count < HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY
         or asset_count < 5
-        or (case_count > 0 and outcome_missing_count / case_count > 0.25)
+        or outcome_missing_count > 0
     ):
         return {
             "decision_recommendation": "insufficient_evidence",
@@ -5030,7 +5699,9 @@ def _masking_effectiveness_recommendation(
             "rationale": (
                 "Sample is not mature enough for a directional masking policy decision: "
                 f"date_count={date_count}, asset_count={asset_count}, "
-                f"case_count={case_count}, outcome_missing_count={outcome_missing_count}."
+                f"case_count={case_count}, outcome_available_count={outcome_available_count}, "
+                f"outcome_missing_count={outcome_missing_count}, "
+                f"outcome_not_mature_count={outcome_not_mature_count}."
             ),
         }
     scenarios = full_layer.get("scenarios", {})
@@ -5058,24 +5729,12 @@ def _masking_effectiveness_recommendation(
     capped_20d = _optional_float(capped.get("avg_return_20d"))
     no_mask_20d = _optional_float(no_mask.get("avg_return_20d"))
     if (
-        baseline_drawdown is not None
-        and no_mask_drawdown is not None
-        and baseline_drawdown >= no_mask_drawdown
-        and (
-            capped_drawdown is None
-            or baseline_drawdown >= capped_drawdown
-            or (baseline_20d or 0.0) >= (capped_20d or 0.0)
-        )
-    ):
-        decision = "keep_baseline_masking"
-        rationale = "Baseline has the strongest drawdown preservation in the comparable layer."
-    elif (
         capped_drawdown is not None
         and baseline_drawdown is not None
-        and capped_drawdown >= baseline_drawdown
         and (capped_20d or 0.0) >= (baseline_20d or 0.0)
+        and capped_drawdown >= baseline_drawdown
     ):
-        decision = "prefer_capped_masking"
+        decision = "prefer_capped_masking_candidate"
         rationale = "Capped masking improves or matches drawdown while preserving return."
     elif (
         no_mask_20d is not None
@@ -5083,10 +5742,21 @@ def _masking_effectiveness_recommendation(
         and no_mask_20d > baseline_20d
         and no_mask_drawdown is not None
         and baseline_drawdown is not None
-        and no_mask_drawdown >= baseline_drawdown
+        and no_mask_drawdown
+        >= baseline_drawdown - abs(baseline_drawdown) * EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE
     ):
-        decision = "disable_masking_candidate"
-        rationale = "No-masking scenario dominates baseline on return and drawdown."
+        decision = "baseline_over_defensive_candidate"
+        rationale = "No-masking outperforms baseline without materially worse drawdown."
+    elif (
+        baseline_drawdown is not None
+        and no_mask_drawdown is not None
+        and baseline_drawdown > no_mask_drawdown
+        and case_count > 0
+        and int(baseline.get("missed_upside_count") or 0) / case_count
+        <= EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE
+    ):
+        decision = "keep_baseline_masking_candidate"
+        rationale = "Baseline materially reduces drawdown and missed-upside rate is acceptable."
     else:
         decision = "insufficient_evidence"
         rationale = "Scenario metrics do not support a stable validation recommendation."
@@ -5187,6 +5857,10 @@ def _ablation_scenario_metrics(
             "asset_count": len({str(case.get("asset")) for case in cases if case.get("asset")}),
             "case_count": len(cases),
             "outcome_missing_count": sum(1 for case in cases if case.get("outcome_missing")),
+            "outcome_available_count": sum(1 for case in cases if _case_outcome_available(case)),
+            "outcome_not_mature_count": sum(
+                1 for case in cases if case.get("outcome_not_mature")
+            ),
         },
     }
 
@@ -5301,13 +5975,30 @@ def _price_ticker_for_asset(
     *,
     fallback_ticker: str,
 ) -> str:
+    ticker, _ = _price_ticker_mapping_for_asset(
+        asset,
+        price_series_by_ticker,
+        fallback_ticker=fallback_ticker,
+    )
+    return ticker
+
+
+def _price_ticker_mapping_for_asset(
+    asset: str,
+    price_series_by_ticker: Mapping[str, Sequence[tuple[date, float]]],
+    *,
+    fallback_ticker: str,
+) -> tuple[str, bool]:
     ticker = asset.upper()
     if ticker in price_series_by_ticker:
-        return ticker
+        return ticker, False
     alias = PRICE_TICKER_ALIASES.get(ticker)
     if alias and alias in price_series_by_ticker:
-        return alias
-    return fallback_ticker.upper()
+        return alias, False
+    fallback = fallback_ticker.upper()
+    if ticker == DEFAULT_TRACE_ASSET or fallback in price_series_by_ticker:
+        return fallback, False
+    return fallback, True
 
 
 def _event_window_ids_for_date(row_date: str) -> list[str]:
@@ -5695,6 +6386,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "valuation_crowding_pilot_validation_report",
         "indicator_masking_casebook_valuation_crowding_trend",
         "valuation_crowding_ablation_validation",
+        "valuation_crowding_outcome_availability_audit",
         "valuation_crowding_masking_effectiveness_review",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
@@ -5734,6 +6426,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     effectiveness_review = _read_pack_artifact_json(
         artifacts,
         "valuation_crowding_masking_effectiveness_review",
+    )
+    outcome_availability = _read_pack_artifact_json(
+        artifacts,
+        "valuation_crowding_outcome_availability_audit",
     )
     lineage_repair = _read_pack_artifact_json(
         artifacts,
@@ -5816,6 +6512,11 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "masking_effectiveness_summary": (
             effectiveness_review.get("summary", {})
             if isinstance(effectiveness_review, Mapping)
+            else {}
+        ),
+        "outcome_availability_summary": (
+            outcome_availability.get("summary", {})
+            if isinstance(outcome_availability, Mapping)
             else {}
         ),
         "lineage_manifest_repair_summary": (
