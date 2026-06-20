@@ -1316,6 +1316,10 @@ def write_indicator_validation_pack_stability_report(
             first_projection["dynamic_trend_bridge_consistency_summary"]
             == second_projection["dynamic_trend_bridge_consistency_summary"]
         ),
+        "dynamic_trend_full_advisory_expansion_repeatable": (
+            first_projection["dynamic_trend_full_advisory_expansion_summary"]
+            == second_projection["dynamic_trend_full_advisory_expansion_summary"]
+        ),
     }
     stable = all(stable_fields.values())
     payload = _base_payload(
@@ -3576,6 +3580,162 @@ def build_dynamic_trend_bridge_consistency_audit(
     )
 
 
+def build_dynamic_trend_full_advisory_expansion_report(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    coverage_extension_root: Path | None = None,
+    expanded_trace_output_path: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    source_trace_rows = _filter_trace_rows(
+        _read_trace_rows(trace_path),
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    before_sensitivity = build_dynamic_trend_threshold_sensitivity_review(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        coverage_extension_root=coverage_extension_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    initial_availability = _gate_availability_records(
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        trace_rows=source_trace_rows,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    expansion = _dynamic_trend_full_advisory_expansion(
+        trace_path=trace_path,
+        trace_rows=source_trace_rows,
+        gate_audit_root=gate_audit_root,
+        availability=initial_availability,
+        expanded_trace_output_path=expanded_trace_output_path,
+    )
+    after_trace_path = (
+        Path(str(expansion["generated_expanded_trace_path"]))
+        if expansion.get("generated_expanded_trace_path")
+        else trace_path
+    )
+    after_sensitivity = build_dynamic_trend_threshold_sensitivity_review(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        trace_path=after_trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        coverage_extension_root=coverage_extension_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    consistency_after = build_dynamic_trend_bridge_consistency_audit(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        sensitivity_review_payload=after_sensitivity,
+        trace_path=after_trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        coverage_extension_root=coverage_extension_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    summary = _dynamic_trend_full_advisory_expansion_summary(
+        before_sensitivity=before_sensitivity,
+        after_sensitivity=after_sensitivity,
+        availability=initial_availability,
+        expansion=expansion,
+    )
+    issues = _dynamic_trend_full_advisory_expansion_issues(summary)
+    return _base_payload(
+        registry,
+        report_type="dynamic_trend_full_advisory_expansion_report",
+        status="PASS_WITH_WARNINGS",
+        issues=issues,
+        summary=summary,
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        threshold_registry_path=str(threshold_registry_path),
+        source_trace_path=None if trace_path is None else str(trace_path),
+        prices_path=None if prices_path is None else str(prices_path),
+        gate_audit_root=None if gate_audit_root is None else str(gate_audit_root),
+        coverage_extension_root=(
+            None if coverage_extension_root is None else str(coverage_extension_root)
+        ),
+        date_expansion_audit=expansion["date_expansion_audit"],
+        candidate_trace_paths_before=expansion["candidate_trace_paths_before"],
+        candidate_trace_paths_after=expansion["candidate_trace_paths_after"],
+        generated_expanded_trace_path=expansion["generated_expanded_trace_path"],
+        dynamic_trend_sensitivity_before_summary=_json_ready(before_sensitivity.get("summary", {})),
+        dynamic_trend_sensitivity_after_summary=_json_ready(after_sensitivity.get("summary", {})),
+        consistency_audit_after_expansion_summary=_json_ready(consistency_after.get("summary", {})),
+        consistency_audit_after_expansion_records=_json_ready(
+            consistency_after.get("threshold_bridge_consistency_audits", [])
+        ),
+        validated_boundary_count=0,
+        thresholds_changed_count=0,
+        bridge_only_promotion_gate_evidence_allowed=False,
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_effect="none",
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            **dict(threshold_registry.get("safety_boundary", {})),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+        },
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+        reader_brief={
+            "key_result": "DYNAMIC_TREND_FULL_ADVISORY_EXPANSION_VALIDATION_ONLY",
+            "full_advisory_case_count_before": summary["full_advisory_case_count_before"],
+            "full_advisory_case_count_after": summary["full_advisory_case_count_after"],
+            "blocked_by_reason": summary["blocked_by_reason"],
+            "next_action": (
+                "repair only replay/config/lineage gaps that pass production gates; do not "
+                "relax PIT feature availability or use bridge evidence alone for promotion"
+            ),
+        },
+    )
+
+
 def build_lineage_manifest_repair_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -4227,6 +4387,25 @@ def write_indicator_framework_validation_pack(
         event_window_end=event_window_end,
         asset_universe=asset_universe,
     )
+    dynamic_trend_full_advisory_expansion_payload = (
+        build_dynamic_trend_full_advisory_expansion_report(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            coverage_extension_root=coverage_extension_root,
+            expanded_trace_output_path=(
+                validation_root / "dynamic_trend_full_advisory_expanded_trace.json"
+            ),
+            outcome_ticker=outcome_ticker,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
     artifact_builders: list[tuple[str, dict[str, Any]]] = [
         ("indicator_research_ontology", build_ontology_payload(registry_path=registry_path)),
         ("daily_indicator_inventory", build_daily_indicator_inventory(registry_path=registry_path)),
@@ -4277,6 +4456,10 @@ def write_indicator_framework_validation_pack(
         (
             "dynamic_trend_bridge_consistency_audit",
             dynamic_trend_bridge_consistency_payload,
+        ),
+        (
+            "dynamic_trend_full_advisory_expansion_report",
+            dynamic_trend_full_advisory_expansion_payload,
         ),
         (
             "indicator_dependency_graph",
@@ -4567,6 +4750,10 @@ def write_indicator_framework_validation_pack(
         "dynamic_trend_bridge_consistency_audit",
         {},
     ).get("summary", {})
+    dynamic_trend_full_advisory_expansion_summary = artifact_payloads.get(
+        "dynamic_trend_full_advisory_expansion_report",
+        {},
+    ).get("summary", {})
     status = (
         "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_BLOCKED"
         if blocking
@@ -4590,6 +4777,9 @@ def write_indicator_framework_validation_pack(
                 dynamic_trend_threshold_sensitivity_summary
             ),
             "dynamic_trend_bridge_consistency_summary": (dynamic_trend_bridge_consistency_summary),
+            "dynamic_trend_full_advisory_expansion_summary": (
+                dynamic_trend_full_advisory_expansion_summary
+            ),
             "no_parameter_mutation": True,
             "no_paper_shadow_live_broker_order_official_weights": True,
             "production_effect": "none",
@@ -4616,6 +4806,10 @@ def write_indicator_framework_validation_pack(
             },
             {
                 "check_id": "dynamic_trend_bridge_consistency_audit",
+                "status": "PASS_WITH_WARNINGS",
+            },
+            {
+                "check_id": "dynamic_trend_full_advisory_expansion_report",
                 "status": "PASS_WITH_WARNINGS",
             },
             {"check_id": "dependency_graph", "status": "PASS_WITH_WARNINGS"},
@@ -7974,6 +8168,368 @@ def _dynamic_trend_bridge_consistency_issues(
                     "Full-advisory cases are insufficient for source-layer consistency "
                     "assessment; evidence_strength stays low and recommendation stays "
                     "sensitivity_tested_only."
+                ),
+            }
+        )
+    return issues
+
+
+def _dynamic_trend_full_advisory_expansion(
+    *,
+    trace_path: Path | None,
+    trace_rows: Sequence[Mapping[str, Any]],
+    gate_audit_root: Path | None,
+    availability: Sequence[Mapping[str, Any]],
+    expanded_trace_output_path: Path | None,
+) -> dict[str, Any]:
+    source_paths_before = _trace_source_paths(trace_path)
+    discovered = _discover_gate_root_daily_trace_paths(gate_audit_root)
+    candidate_by_date: dict[str, Path] = {}
+    for path in source_paths_before + discovered:
+        row_date = _daily_trace_candidate_date(path)
+        if row_date:
+            candidate_by_date[row_date] = path
+    eligible_dates = {
+        str(record.get("date") or "")
+        for record in availability
+        if record.get("full_advisory_trace_eligible")
+    }
+    date_records = _dynamic_trend_full_advisory_date_records(
+        availability,
+        candidate_by_date=candidate_by_date,
+        gate_audit_root=gate_audit_root,
+    )
+    eligible_paths = [
+        candidate_by_date[row_date]
+        for row_date in sorted(eligible_dates)
+        if row_date in candidate_by_date
+    ]
+    generated_path = None
+    if eligible_paths and expanded_trace_output_path is not None:
+        _write_rebuilt_historical_trace_from_sources(eligible_paths, expanded_trace_output_path)
+        generated_path = str(expanded_trace_output_path)
+    return {
+        "candidate_trace_paths_before": [str(path) for path in source_paths_before],
+        "candidate_trace_paths_after": [str(path) for path in eligible_paths],
+        "candidate_trace_path_count_before": len(source_paths_before),
+        "candidate_trace_path_count_after": len(eligible_paths),
+        "discovered_trace_path_count": len(discovered),
+        "generated_expanded_trace_path": generated_path,
+        "date_expansion_audit": date_records,
+        "source_trace_row_count": len(trace_rows),
+    }
+
+
+def _trace_source_paths(trace_path: Path | None) -> list[Path]:
+    if trace_path is None or not trace_path.exists():
+        return []
+    try:
+        payload = _read_trace_payload(trace_path)
+    except (OSError, json.JSONDecodeError, IndicatorResearchError):
+        return []
+    source_paths = payload.get("source_trace_paths", [])
+    if isinstance(source_paths, str):
+        source_paths = [source_paths]
+    if not isinstance(source_paths, Sequence):
+        return []
+    paths = []
+    for source_path in source_paths:
+        resolved = _resolve_trace_source_path(trace_path, str(source_path))
+        if resolved is not None:
+            paths.append(resolved)
+    return sorted(paths, key=lambda item: str(item))
+
+
+def _discover_gate_root_daily_trace_paths(gate_audit_root: Path | None) -> list[Path]:
+    if gate_audit_root is None or not gate_audit_root.exists():
+        return []
+    paths = []
+    for child in sorted(gate_audit_root.iterdir()):
+        if not child.is_dir() or _parse_iso_date(child.name) is None:
+            continue
+        trace_path = child / "daily_indicator_weight_trace.json"
+        if trace_path.exists():
+            paths.append(trace_path)
+    return paths
+
+
+def _daily_trace_candidate_date(path: Path) -> str:
+    try:
+        payload = _read_trace_payload(path)
+        rows = _read_trace_rows(path)
+    except (OSError, json.JSONDecodeError, IndicatorResearchError):
+        return ""
+    return _source_trace_as_of_date(payload, rows)
+
+
+def _dynamic_trend_full_advisory_date_records(
+    availability: Sequence[Mapping[str, Any]],
+    *,
+    candidate_by_date: Mapping[str, Path],
+    gate_audit_root: Path | None,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for record in availability:
+        row_date = str(record.get("date") or "")
+        if row_date:
+            grouped[row_date].append(record)
+    records = []
+    for row_date, rows in sorted(grouped.items()):
+        full_eligible = any(row.get("full_advisory_trace_eligible") for row in rows)
+        reason_classes = sorted(
+            {
+                str(row.get("reason_class") or "")
+                for row in rows
+                if not row.get("full_advisory_trace_eligible")
+            }
+        )
+        blocked_gates = sorted(
+            {str(gate) for row in rows for gate in row.get("blocked_gates", []) if str(gate)}
+        )
+        candidate_path = candidate_by_date.get(row_date)
+        lineage = (
+            _lineage_manifest_from_source_trace(candidate_path, str(candidate_path))
+            if candidate_path is not None
+            else None
+        )
+        lineage_complete = _lineage_manifest_complete(lineage)
+        data_quality_status = _date_gate_status(gate_audit_root, row_date, "data_quality.md")
+        feature_status = _date_gate_status(gate_audit_root, row_date, "feature_availability.md")
+        primary_reason = _primary_dynamic_trend_expansion_reason(
+            full_eligible=full_eligible,
+            reason_classes=reason_classes,
+            blocked_gates=blocked_gates,
+            candidate_path=candidate_path,
+            lineage_complete=lineage_complete,
+        )
+        records.append(
+            {
+                "date": row_date,
+                "asset_count": len({str(row.get("asset") or "") for row in rows}),
+                "case_count": len(rows),
+                "full_advisory_trace_eligible": full_eligible,
+                "candidate_trace_path": None if candidate_path is None else str(candidate_path),
+                "candidate_trace_exists": candidate_path is not None,
+                "lineage_manifest_complete": lineage_complete,
+                "lineage_proof_status": str((lineage or {}).get("proof_status") or "MISSING"),
+                "data_quality_status": data_quality_status,
+                "feature_availability_status": feature_status,
+                "blocked_gates": blocked_gates,
+                "reason_classes": reason_classes,
+                "primary_blocked_reason": primary_reason,
+                "repairable_without_relaxing_gate": (
+                    not full_eligible and primary_reason != "expected_pit_limitation"
+                ),
+                "promotion_gate_allowed": False,
+                "production_effect": "none",
+            }
+        )
+    return records
+
+
+def _date_gate_status(gate_audit_root: Path | None, row_date: str, report_name: str) -> str:
+    if gate_audit_root is None:
+        return "MISSING"
+    return str(_read_gate_report_status(gate_audit_root / row_date / report_name).get("status"))
+
+
+def _primary_dynamic_trend_expansion_reason(
+    *,
+    full_eligible: bool,
+    reason_classes: Sequence[str],
+    blocked_gates: Sequence[str],
+    candidate_path: Path | None,
+    lineage_complete: bool,
+) -> str:
+    if full_eligible:
+        return "eligible"
+    if "expected_pit_limitation" in reason_classes:
+        return "expected_pit_limitation"
+    if "lineage_manifest_missing" in reason_classes or (
+        candidate_path is not None and not lineage_complete
+    ):
+        return "lineage_manifest_missing"
+    if "replay_config_issue" in reason_classes:
+        return "replay_config_issue"
+    if candidate_path is None or "historical_replay_trace" in blocked_gates:
+        return "score_daily_trace_missing"
+    if "timestamp_model_issue" in reason_classes:
+        return "decision_time_mismatch"
+    if not lineage_complete:
+        return "artifact_not_proven_full_advisory_equivalent"
+    return next((reason for reason in reason_classes if reason), "ingestion_issue")
+
+
+def _write_rebuilt_historical_trace_from_sources(
+    source_paths: Sequence[Path],
+    output_path: Path,
+) -> None:
+    rows: list[Mapping[str, Any]] = []
+    source_path_texts: list[str] = []
+    for path in source_paths:
+        rows.extend(_read_trace_rows(path))
+        source_path_texts.append(str(path))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(
+            {
+                "report_type": "historical_multi_stage_weight_trace",
+                "rows": _json_ready(rows),
+                "source_trace_paths": source_path_texts,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _dynamic_trend_full_advisory_expansion_summary(
+    *,
+    before_sensitivity: Mapping[str, Any],
+    after_sensitivity: Mapping[str, Any],
+    availability: Sequence[Mapping[str, Any]],
+    expansion: Mapping[str, Any],
+) -> dict[str, Any]:
+    date_records = expansion.get("date_expansion_audit", [])
+    if not isinstance(date_records, Sequence) or isinstance(date_records, (str, bytes)):
+        date_records = []
+    blocked_records = [
+        record
+        for record in date_records
+        if isinstance(record, Mapping) and not record.get("full_advisory_trace_eligible")
+    ]
+    blocked_by_reason: dict[str, int] = {}
+    for record in blocked_records:
+        reason = str(record.get("primary_blocked_reason") or "UNKNOWN")
+        blocked_by_reason[reason] = blocked_by_reason.get(reason, 0) + 1
+    availability_summary = _gate_availability_summary(availability)
+    before_summary = before_sensitivity.get("summary", {})
+    after_summary = after_sensitivity.get("summary", {})
+    if not isinstance(before_summary, Mapping):
+        before_summary = {}
+    if not isinstance(after_summary, Mapping):
+        after_summary = {}
+    return {
+        "requested_date_count": len(date_records),
+        "eligible_date_count": sum(
+            1
+            for record in date_records
+            if isinstance(record, Mapping) and record.get("full_advisory_trace_eligible")
+        ),
+        "blocked_date_count": len(blocked_records),
+        "full_advisory_case_count_before": int(before_summary.get("full_advisory_case_count") or 0),
+        "full_advisory_case_count_after": int(after_summary.get("full_advisory_case_count") or 0),
+        "backtest_bridge_case_count": int(
+            (
+                after_summary.get("trace_source_counts", {}).get(BACKTEST_TRACE_BRIDGE_SOURCE)
+                if isinstance(after_summary.get("trace_source_counts"), Mapping)
+                else 0
+            )
+            or 0
+        ),
+        "blocked_by_reason": dict(sorted(blocked_by_reason.items())),
+        "blocked_case_count_by_reason": availability_summary.get(
+            "root_cause_reason_class_counts",
+            {},
+        ),
+        "repairable_without_relaxing_gate": any(
+            bool(record.get("repairable_without_relaxing_gate"))
+            for record in blocked_records
+            if isinstance(record, Mapping)
+        ),
+        "repairable_without_relaxing_gate_date_count": sum(
+            1
+            for record in blocked_records
+            if isinstance(record, Mapping) and record.get("repairable_without_relaxing_gate")
+        ),
+        "expected_pit_limitation_count": int(
+            availability_summary.get("root_cause_reason_class_counts", {}).get(
+                "expected_pit_limitation",
+                0,
+            )
+            if isinstance(availability_summary.get("root_cause_reason_class_counts"), Mapping)
+            else 0
+        ),
+        "expected_pit_limitation_date_count": blocked_by_reason.get(
+            "expected_pit_limitation",
+            0,
+        ),
+        "lineage_missing_count": int(
+            availability_summary.get("root_cause_reason_class_counts", {}).get(
+                "lineage_manifest_missing",
+                0,
+            )
+            if isinstance(availability_summary.get("root_cause_reason_class_counts"), Mapping)
+            else 0
+        ),
+        "lineage_missing_date_count": blocked_by_reason.get("lineage_manifest_missing", 0),
+        "replay_config_issue_count": int(
+            availability_summary.get("root_cause_reason_class_counts", {}).get(
+                "replay_config_issue",
+                0,
+            )
+            if isinstance(availability_summary.get("root_cause_reason_class_counts"), Mapping)
+            else 0
+        ),
+        "replay_config_issue_date_count": blocked_by_reason.get("replay_config_issue", 0),
+        "score_daily_trace_missing_date_count": blocked_by_reason.get(
+            "score_daily_trace_missing",
+            0,
+        ),
+        "candidate_trace_path_count_before": expansion.get("candidate_trace_path_count_before", 0),
+        "candidate_trace_path_count_after": expansion.get("candidate_trace_path_count_after", 0),
+        "discovered_trace_path_count": expansion.get("discovered_trace_path_count", 0),
+        "full_advisory_case_count_increased": int(
+            after_summary.get("full_advisory_case_count") or 0
+        )
+        > int(before_summary.get("full_advisory_case_count") or 0),
+        "max_allowed_status": "SENSITIVITY_TESTED",
+        "validated_boundary_count": 0,
+        "thresholds_changed_count": 0,
+        "bridge_only_promotion_gate_evidence_allowed": False,
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _dynamic_trend_full_advisory_expansion_issues(
+    summary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "dynamic_trend_full_advisory_expansion_validation_only",
+            "message": (
+                "Full-advisory expansion audit is validation-only; it cannot change threshold "
+                "values or approve production, paper-shadow, official weights, or promotion."
+            ),
+        }
+    ]
+    if not summary.get("full_advisory_case_count_increased"):
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "full_advisory_case_count_not_increased",
+                "message": (
+                    "No additional production-equivalent full-advisory dynamic/trend traces were "
+                    "available without relaxing data-quality, PIT feature, or lineage gates."
+                ),
+            }
+        )
+    if int(summary.get("expected_pit_limitation_count") or 0) > 0:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "expected_pit_limitation_blocks_expansion",
+                "message": (
+                    "Some requested dates are blocked by PIT feature availability; they cannot "
+                    "be repaired by replay without changing the production gate."
                 ),
             }
         )
@@ -14644,6 +15200,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "threshold_calibration_report",
         "dynamic_trend_threshold_sensitivity_review",
         "dynamic_trend_bridge_consistency_audit",
+        "dynamic_trend_full_advisory_expansion_report",
         "indicator_dependency_graph",
         "indicator_masking_and_dominance_audit_valuation_crowding",
         "valuation_crowding_pilot_validation_report",
@@ -14681,6 +15238,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     dynamic_trend_bridge_consistency = _read_pack_artifact_json(
         artifacts,
         "dynamic_trend_bridge_consistency_audit",
+    )
+    dynamic_trend_full_advisory_expansion = _read_pack_artifact_json(
+        artifacts,
+        "dynamic_trend_full_advisory_expansion_report",
     )
     masking = _read_pack_artifact_json(
         artifacts,
@@ -14772,6 +15333,11 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "dynamic_trend_bridge_consistency_summary": (
             dynamic_trend_bridge_consistency.get("summary", {})
             if isinstance(dynamic_trend_bridge_consistency, Mapping)
+            else {}
+        ),
+        "dynamic_trend_full_advisory_expansion_summary": (
+            dynamic_trend_full_advisory_expansion.get("summary", {})
+            if isinstance(dynamic_trend_full_advisory_expansion, Mapping)
             else {}
         ),
         "coverage_gap_unregistered": (

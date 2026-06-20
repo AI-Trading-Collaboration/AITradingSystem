@@ -21,6 +21,7 @@ from ai_trading_system.indicator_research import (
     build_daily_indicator_inventory,
     build_dependency_graph,
     build_dynamic_trend_bridge_consistency_audit,
+    build_dynamic_trend_full_advisory_expansion_report,
     build_dynamic_trend_threshold_calibration_prep_report,
     build_dynamic_trend_threshold_sensitivity_review,
     build_gate_availability_audit,
@@ -644,6 +645,96 @@ def indicator_dynamic_trend_bridge_consistency_audit_command(
     )
     _print_indicator_artifact(
         "Dynamic/trend bridge consistency audit",
+        payload,
+        paths,
+    )
+
+
+@indicators_app.command("dynamic-trend-full-advisory-expansion")
+def indicator_dynamic_trend_full_advisory_expansion_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="TRADING-699/700 expanded historical trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 realized outcome prices CSV。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="historical gate audit root。"),
+    ] = None,
+    coverage_extension_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--coverage-extension-root",
+            help="可选 TRADING-699 coverage extension root，例如 outputs/research_campaigns。",
+        ),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="默认 outcome ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 trace/filter start date。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 trace/filter end date。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选 event window start。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选 event window end。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="逗号分隔 asset universe。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-701 dynamic/trend full-advisory expansion report。"""
+    payload = _build_indicator_payload(
+        lambda: build_dynamic_trend_full_advisory_expansion_report(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            coverage_extension_root=coverage_extension_root,
+            expanded_trace_output_path=(
+                output_root / "dynamic_trend_full_advisory_expanded_trace.json"
+            ),
+            outcome_ticker=outcome_ticker,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="dynamic_trend_full_advisory_expansion_report",
+    )
+    _print_indicator_artifact(
+        "Dynamic/trend full-advisory expansion report",
         payload,
         paths,
     )

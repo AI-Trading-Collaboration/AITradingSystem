@@ -17,6 +17,7 @@ from ai_trading_system.indicator_research import (
     build_daily_indicator_weight_trace,
     build_dependency_graph,
     build_dynamic_trend_bridge_consistency_audit,
+    build_dynamic_trend_full_advisory_expansion_report,
     build_dynamic_trend_threshold_calibration_prep_report,
     build_dynamic_trend_threshold_sensitivity_review,
     build_gate_availability_audit,
@@ -1424,6 +1425,59 @@ def test_dynamic_trend_bridge_consistency_audit_source_layer_safety(
         assert record["variant_source_consistency"]
 
 
+def test_dynamic_trend_full_advisory_expansion_report_blocks_pit_failures(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    prices_path = _write_dynamic_trend_coverage_prices(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+    coverage_root = _write_dynamic_trend_coverage_extension_root(tmp_path)
+
+    payload = build_dynamic_trend_full_advisory_expansion_report(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        coverage_extension_root=coverage_root,
+        expanded_trace_output_path=tmp_path / "rebuilt_dynamic_trend_trace.json",
+        outcome_ticker="QQQ",
+        start_date="2023-01-03",
+        end_date="2023-01-05",
+    )
+
+    assert payload["report_type"] == "dynamic_trend_full_advisory_expansion_report"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    assert payload["production_effect"] == "none"
+    summary = payload["summary"]
+    assert summary["requested_date_count"] == 3
+    assert summary["eligible_date_count"] == 2
+    assert summary["blocked_date_count"] == 1
+    assert summary["full_advisory_case_count_before"] == 2
+    assert summary["full_advisory_case_count_after"] == 2
+    assert summary["full_advisory_case_count_increased"] is False
+    assert summary["blocked_by_reason"]["expected_pit_limitation"] == 1
+    assert summary["expected_pit_limitation_count"] >= 1
+    assert summary["lineage_missing_count"] == 0
+    assert summary["replay_config_issue_count"] == 0
+    assert summary["repairable_without_relaxing_gate"] is False
+    assert summary["bridge_only_promotion_gate_evidence_allowed"] is False
+    assert payload["consistency_audit_after_expansion_summary"]["recommendation"] == (
+        "sensitivity_tested_only"
+    )
+    assert payload["consistency_audit_after_expansion_summary"]["evidence_strength"] == "low"
+    assert payload["consistency_audit_after_expansion_summary"]["validated_boundary_count"] == 0
+    blocked = [
+        row
+        for row in payload["date_expansion_audit"]
+        if row["primary_blocked_reason"] == "expected_pit_limitation"
+    ]
+    assert blocked
+    assert blocked[0]["repairable_without_relaxing_gate"] is False
+    assert blocked[0]["promotion_gate_allowed"] is False
+
+
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
 
@@ -1598,6 +1652,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "threshold_calibration_report",
         "dynamic_trend_threshold_sensitivity_review",
         "dynamic_trend_bridge_consistency_audit",
+        "dynamic_trend_full_advisory_expansion_report",
         "indicator_dependency_graph",
         "multi_stage_weight_trace_contract",
         "constraint_attribution_report",
@@ -1659,6 +1714,15 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
     assert bridge_consistency_summary["production_weight_change_allowed"] is False
     assert bridge_consistency_summary["paper_shadow_change_allowed"] is False
     assert bridge_consistency_summary["bridge_only_promotion_gate_evidence_allowed"] is False
+    expansion_summary = payload["summary"]["dynamic_trend_full_advisory_expansion_summary"]
+    assert expansion_summary["full_advisory_case_count_after"] >= 0
+    assert expansion_summary["validated_boundary_count"] == 0
+    assert expansion_summary["thresholds_changed_count"] == 0
+    assert expansion_summary["production_effect"] == "none"
+    assert expansion_summary["promotion_gate_allowed"] is False
+    assert expansion_summary["production_weight_change_allowed"] is False
+    assert expansion_summary["paper_shadow_change_allowed"] is False
+    assert expansion_summary["bridge_only_promotion_gate_evidence_allowed"] is False
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
@@ -1704,6 +1768,7 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["threshold_calibration_repeatable"] is True
     assert payload["stable_fields"]["dynamic_trend_threshold_sensitivity_repeatable"] is True
     assert payload["stable_fields"]["dynamic_trend_bridge_consistency_repeatable"] is True
+    assert payload["stable_fields"]["dynamic_trend_full_advisory_expansion_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -1801,6 +1866,18 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "dynamic-trend-bridge-consistency-audit",
             "--sensitivity-review",
             str(tmp_path / "dynamic_trend_threshold_sensitivity_review.json"),
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    dynamic_trend_full_advisory_expansion = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "dynamic-trend-full-advisory-expansion",
             "--output-root",
             str(tmp_path),
         ],
@@ -1955,6 +2032,9 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert dynamic_trend_prep.exit_code == 0, dynamic_trend_prep.output
     assert dynamic_trend_sensitivity.exit_code == 0, dynamic_trend_sensitivity.output
     assert dynamic_trend_bridge_consistency.exit_code == 0, dynamic_trend_bridge_consistency.output
+    assert (
+        dynamic_trend_full_advisory_expansion.exit_code == 0
+    ), dynamic_trend_full_advisory_expansion.output
     assert coverage_gap.exit_code == 0, coverage_gap.output
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
@@ -1977,6 +2057,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (tmp_path / "dynamic_trend_threshold_calibration_prep_report.json").exists()
     assert (tmp_path / "dynamic_trend_threshold_sensitivity_review.json").exists()
     assert (tmp_path / "dynamic_trend_bridge_consistency_audit.json").exists()
+    assert (tmp_path / "dynamic_trend_full_advisory_expansion_report.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
     assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()
