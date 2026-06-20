@@ -12,6 +12,7 @@ from ai_trading_system.indicator_research import (
     DEFAULT_INDICATOR_REGISTRY_PATH,
     DEFAULT_MASKING_ABLATION_CAP_RATIO,
     DEFAULT_MASKING_OUTCOME_TICKER,
+    DEFAULT_THRESHOLD_REGISTRY_PATH,
     IndicatorResearchError,
     build_backtest_trace_bridge,
     build_component_level_historical_trace,
@@ -25,11 +26,13 @@ from ai_trading_system.indicator_research import (
     build_indicator_research_gate,
     build_indicator_research_validation_rollup,
     build_lineage_manifest_repair_report,
+    build_long_horizon_evidence_floor_calibration_audit,
     build_mapping_plan,
     build_masking_audit,
     build_masking_casebook,
     build_multi_stage_weight_trace_contract,
     build_ontology_payload,
+    build_threshold_registry_audit,
     build_valuation_crowding_ablation_validation,
     build_valuation_crowding_masking_effectiveness_review,
     build_valuation_crowding_masking_robustness_review,
@@ -91,9 +94,7 @@ def indicator_ontology_command(
     ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
 ) -> None:
     """验证并输出 indicator / signal / constraint ontology。"""
-    payload = _build_indicator_payload(
-        lambda: build_ontology_payload(registry_path=registry_path)
-    )
+    payload = _build_indicator_payload(lambda: build_ontology_payload(registry_path=registry_path))
     paths = write_indicator_artifact_pair(
         payload,
         output_root=output_root,
@@ -174,6 +175,36 @@ def indicator_coverage_gap_command(
         artifact_id="daily_indicator_coverage_gap_report",
     )
     _print_indicator_artifact("Daily indicator coverage gap", payload, paths)
+
+
+@indicators_app.command("threshold-audit")
+def indicator_threshold_audit_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-693 threshold registry audit。"""
+    payload = _build_indicator_payload(
+        lambda: build_threshold_registry_audit(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="threshold_registry_audit",
+    )
+    _print_indicator_artifact("Threshold registry audit", payload, paths)
 
 
 @indicators_app.command("graph")
@@ -776,6 +807,86 @@ def indicator_validation_rollup_command(
     _print_indicator_artifact("Indicator research validation rollup", payload, paths)
 
 
+@indicators_app.command("long-horizon-floor-calibration-audit")
+def indicator_long_horizon_floor_calibration_audit_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
+    ] = None,
+    prices_path: Annotated[
+        Path | None,
+        typer.Option("--prices-path", help="可选 prices_daily.csv，用于 forward outcome。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
+    bridge_artifact_root: Annotated[
+        Path | None,
+        typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
+    ] = None,
+    outcome_ticker: Annotated[
+        str,
+        typer.Option("--outcome-ticker", help="calibration audit outcome 代理 ticker。"),
+    ] = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: Annotated[
+        float,
+        typer.Option("--capped-masking-ratio", help="只读 capped masking 诊断上限。"),
+    ] = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 long-horizon evidence floor calibration audit。"""
+    payload = _build_indicator_payload(
+        lambda: build_long_horizon_evidence_floor_calibration_audit(
+            registry_path=registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            outcome_ticker=outcome_ticker,
+            capped_masking_ratio=capped_masking_ratio,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="long_horizon_evidence_floor_calibration_audit",
+    )
+    _print_indicator_artifact("Long-horizon floor calibration audit", payload, paths)
+
+
 @indicators_app.command("outcome-availability-audit")
 def indicator_outcome_availability_audit_command(
     registry_path: Annotated[
@@ -1180,6 +1291,10 @@ def indicator_validation_pack_command(
         Path,
         typer.Option("--registry", help="Indicator research registry 路径。"),
     ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
     trace_path: Annotated[
         Path | None,
         typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
@@ -1236,6 +1351,7 @@ def indicator_validation_pack_command(
     payload = _build_indicator_payload(
         lambda: write_indicator_framework_validation_pack(
             registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
             output_root=output_root,
             trace_path=trace_path,
             prices_path=prices_path,
@@ -1262,6 +1378,10 @@ def indicator_validation_pack_stability_command(
         Path,
         typer.Option("--registry", help="Indicator research registry 路径。"),
     ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Annotated[
+        Path,
+        typer.Option("--threshold-registry", help="Threshold registry 路径。"),
+    ] = DEFAULT_THRESHOLD_REGISTRY_PATH,
     trace_path: Annotated[
         Path | None,
         typer.Option("--trace-path", help="可选 multi-stage weight trace JSON。"),
@@ -1318,6 +1438,7 @@ def indicator_validation_pack_stability_command(
     payload = _build_indicator_payload(
         lambda: write_indicator_validation_pack_stability_report(
             registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
             output_root=output_root,
             trace_path=trace_path,
             prices_path=prices_path,

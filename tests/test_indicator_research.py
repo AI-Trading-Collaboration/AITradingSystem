@@ -21,9 +21,11 @@ from ai_trading_system.indicator_research import (
     build_indicator_research_gate,
     build_indicator_research_validation_rollup,
     build_lineage_manifest_repair_report,
+    build_long_horizon_evidence_floor_calibration_audit,
     build_mapping_plan,
     build_masking_audit,
     build_masking_casebook,
+    build_threshold_registry_audit,
     build_valuation_crowding_ablation_validation,
     build_valuation_crowding_masking_effectiveness_review,
     build_valuation_crowding_masking_robustness_review,
@@ -91,8 +93,7 @@ def test_dependency_graph_keeps_valuation_masking_edge_visible() -> None:
         item["indicator_id"]: item["dominance_status"] for item in payload["dominance_audit"]
     }
     assert (
-        dominance["valuation_crowding_indicator"]
-        == "DOMINANT_WEIGHT_DRIVER_EXPECTED_UNVALIDATED"
+        dominance["valuation_crowding_indicator"] == "DOMINANT_WEIGHT_DRIVER_EXPECTED_UNVALIDATED"
     )
 
 
@@ -227,9 +228,12 @@ def test_valuation_crowding_pilot_validation_explains_high_impact_masking(
 
     assert payload["status"] == "VALUATION_CROWDING_RESEARCH_COVERAGE_KNOWN"
     assert payload["mapping_to_signal"]["direction"] == "higher_valuation_or_crowding_is_bearish"
-    assert payload["effective_thresholds"]["position_gate_thresholds"][
-        "expensive_or_crowded_max_position"
-    ] == 0.70
+    assert (
+        payload["effective_thresholds"]["position_gate_thresholds"][
+            "expensive_or_crowded_max_position"
+        ]
+        == 0.70
+    )
     assert payload["high_impact_unvalidated_reason"]["coverage_status"] == (
         "HIGH_IMPACT_UNVALIDATED"
     )
@@ -258,9 +262,7 @@ def test_masking_casebook_artifact_generation(tmp_path: Path) -> None:
     assert case["valuation_crowding_raw_direction"] == "valuation_crowding_risk_off"
     assert case["pre_mask_signal"] > case["post_mask_signal"]
     assert case["final_advisory_facing_weight"] > 0
-    assert {"return_1d", "return_5d", "return_10d", "return_20d"} <= set(
-        case["outcomes"]
-    )
+    assert {"return_1d", "return_5d", "return_10d", "return_20d"} <= set(case["outcomes"])
     assert isinstance(case["drawdown_reduced"], bool)
     assert isinstance(case["missed_upside"], bool)
     assert isinstance(case["false_risk_off"], bool)
@@ -434,14 +436,8 @@ def test_twenty_day_not_mature_does_not_drop_short_horizon_review(
     assert by_horizon["1d"]["sample_quality"]["mature_case_count"] > 0
     assert by_horizon["5d"]["sample_quality"]["mature_case_count"] > 0
     assert by_horizon["20d"]["sample_quality"]["mature_case_count"] == 0
-    assert (
-        by_horizon["1d"]["scenarios"]["baseline"]["avg_return"]
-        is not None
-    )
-    assert (
-        by_horizon["5d"]["scenarios"]["baseline"]["avg_return"]
-        is not None
-    )
+    assert by_horizon["1d"]["scenarios"]["baseline"]["avg_return"] is not None
+    assert by_horizon["5d"]["scenarios"]["baseline"]["avg_return"] is not None
     assert by_horizon["20d"]["scenarios"]["baseline"]["avg_return"] is None
     assert payload["decision_recommendation"]["decision_recommendation"] == (
         "insufficient_evidence"
@@ -554,9 +550,7 @@ def test_horizon_effectiveness_conclusion_matrix_schema_and_long_horizon_flag(
     )
 
     assert payload["summary"]["promotion_gate_allowed"] is False
-    assert payload["summary"]["decision_recommendation"] == (
-        "preliminary_short_horizon_only"
-    )
+    assert payload["summary"]["decision_recommendation"] == ("preliminary_short_horizon_only")
     assert payload["decision_recommendation"]["promotion_gate_allowed"] is False
     matrix = payload["conclusion_matrix"]
     assert len(matrix) == 12
@@ -613,21 +607,15 @@ def test_conflicting_horizon_contributions_remain_preliminary() -> None:
         [
             {
                 "horizon_trading_days": 1,
-                "recommendation_contribution": (
-                    "supports_prefer_capped_masking_candidate"
-                ),
+                "recommendation_contribution": ("supports_prefer_capped_masking_candidate"),
             },
             {
                 "horizon_trading_days": 5,
-                "recommendation_contribution": (
-                    "supports_keep_baseline_masking_candidate"
-                ),
+                "recommendation_contribution": ("supports_keep_baseline_masking_candidate"),
             },
             {
                 "horizon_trading_days": 10,
-                "recommendation_contribution": (
-                    "supports_prefer_capped_masking_candidate"
-                ),
+                "recommendation_contribution": ("supports_prefer_capped_masking_candidate"),
             },
         ]
     )
@@ -687,9 +675,7 @@ def test_masking_robustness_review_delta_aggregation_and_gate_schema(
         "missed_upside_false_risk_off_not_worse",
         "promotion_gate_allowed_false",
     } <= check_ids
-    assert gate["final_validation_recommendation"] == (
-        "keep_preliminary_short_horizon_only"
-    )
+    assert gate["final_validation_recommendation"] == ("keep_preliminary_short_horizon_only")
     assert payload["final_validation_recommendation"]["promotion_gate_allowed"] is False
 
 
@@ -769,9 +755,7 @@ def test_indicator_research_validation_rollup_schema_tracker_and_rerun_criteria(
     assert recommendation["ten_day_conclusion"] == "supports_baseline_masking"
     assert recommendation["one_day_conclusion"] == "neutral_or_incomplete"
     assert recommendation["five_day_conclusion"] == "neutral_or_incomplete"
-    assert recommendation["twenty_day_conclusion"] == (
-        "insufficient_long_horizon_evidence"
-    )
+    assert recommendation["twenty_day_conclusion"] == ("insufficient_long_horizon_evidence")
     assert recommendation["promotion_gate_allowed"] is False
     assert recommendation["production_weight_change_allowed"] is False
     assert recommendation["paper_shadow_change_allowed"] is False
@@ -804,6 +788,119 @@ def test_indicator_research_validation_rollup_schema_tracker_and_rerun_criteria(
     assert criteria["production_weight_change_allowed"] is False
     assert criteria["paper_shadow_change_allowed"] is False
     assert payload["remaining_limitations"]
+
+
+def test_long_horizon_floor_calibration_audit_sensitivity_and_gate_schema(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_many_casebook_trace(tmp_path)
+    prices_path = _write_outcome_prices(tmp_path)
+    gate_root = _write_many_gate_audit_root(tmp_path)
+
+    payload = build_long_horizon_evidence_floor_calibration_audit(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+        start_date="2023-01-03",
+        end_date="2023-01-22",
+    )
+
+    assert payload["report_type"] == "long_horizon_evidence_floor_calibration_audit"
+    floor = payload["floor_interpretation"]
+    assert floor["floor_id"] == "heuristic_min_full_advisory_cases"
+    assert floor["role"] == "conservative_guardrail"
+    assert floor["calibration_status"] == "uncalibrated"
+    assert floor["validated_statistical_threshold"] is False
+    assert floor["promotion_gate_allowed"] is False
+
+    sensitivity = payload["threshold_sensitivity"]
+    assert sensitivity["floors"] == [20, 30, 50, 80, 100]
+    rows = sensitivity["recommendation_by_floor"]
+    assert {row["floor"] for row in rows} == {20, 30, 50, 80, 100}
+    assert all("recommendation_by_floor" in row for row in rows)
+    assert "first_floor_where_recommendation_stabilizes" in sensitivity
+    assert sensitivity["twenty_day_conclusion_driver"] in {
+        "sample_count_only",
+        "robustness_failures",
+        "sample_count_and_robustness_failures",
+        "sample_count_and_robustness_passed",
+    }
+
+    sample = payload["effective_sample_size"]
+    assert sample["raw_case_count"] > 0
+    assert sample["unique_date_count"] > 0
+    assert sample["unique_asset_count"] > 0
+    assert sample["correlated_asset_cluster_count"] > 0
+    assert sample["effective_date_count"] == sample["unique_date_count"]
+    assert sample["effective_cluster_count"] == sample["correlated_asset_cluster_count"]
+
+    gate = payload["robustness_based_gate"]
+    assert {
+        "leave_one_date_out_stable",
+        "leave_one_asset_out_stable",
+        "leave_one_cluster_out_stable",
+        "full_advisory_only_all_sources_not_conflicting",
+        "row_level_date_equal_weight_not_conflicting",
+        "cluster_equal_weight_not_single_cluster_dominated",
+    } <= set(gate)
+    check_ids = {check["check_id"] for check in gate["checks"]}
+    assert {
+        "leave_one_date_out_stable",
+        "leave_one_asset_out_stable",
+        "leave_one_cluster_out_stable",
+        "full_advisory_only_all_sources_not_conflicting",
+        "row_level_date_equal_weight_not_conflicting",
+        "cluster_equal_weight_not_single_cluster_dominated",
+    } <= check_ids
+
+    conclusion = payload["calibration_conclusion"]
+    assert conclusion["calibration_conclusion"] in {
+        "floor_50_retained_as_heuristic",
+        "floor_50_adjusted_to_X",
+        "replace_fixed_floor_with_evidence_bands",
+        "insufficient_data_to_calibrate_floor",
+    }
+    assert conclusion["calibration_status"] == "uncalibrated"
+    assert conclusion["promotion_gate_allowed"] is False
+    assert conclusion["production_weight_change_allowed"] is False
+    assert conclusion["paper_shadow_change_allowed"] is False
+    assert payload["summary"]["promotion_gate_allowed"] is False
+
+
+def test_threshold_registry_audit_summarizes_high_impact_defaults() -> None:
+    payload = build_threshold_registry_audit()
+
+    assert payload["report_type"] == "threshold_registry_audit"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    summary = payload["summary"]
+    assert summary["total_threshold_count"] >= 30
+    assert summary["high_impact_threshold_count"] > 0
+    assert summary["uncalibrated_high_impact_count"] == summary["high_impact_threshold_count"]
+    assert summary["heuristic_guardrail_count"] > 0
+    assert summary["calibrated_count"] == 0
+    assert summary["thresholds_blocking_promotion_count"] == len(
+        summary["thresholds_blocking_promotion"]
+    )
+    assert (
+        "indicator_research.effectiveness_min_available_outcome_cases"
+        in summary["thresholds_blocking_promotion"]
+    )
+    assert summary["production_weight_affecting_threshold_count"] == 0
+    assert summary["production_weight_logic_changed"] is False
+    assert summary["paper_shadow_change_allowed"] is False
+    assert payload["calibration_backlog"]
+
+    for threshold in payload["thresholds"]:
+        if threshold["threshold_class"] == "A":
+            assert threshold["calibration_status"] in {
+                "UNCALIBRATED_DEFAULT",
+                "HEURISTIC_GUARDRAIL",
+            }
+            assert threshold["calibration_required"] is True
+            assert threshold["no_promotion_dependency_without_review"] is True
+            assert threshold["production_weight_affecting"] is False
 
 
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
@@ -889,12 +986,8 @@ def test_component_level_historical_trace_marks_non_promotion_source_confidence(
     assert rows
     component_only = [row for row in rows if row["date"] == "2023-01-04"]
     assert component_only
-    assert {row["trace_source"] for row in component_only} == {
-        "component_level_validation_trace"
-    }
-    assert {row["confidence"] for row in component_only} == {
-        "MEDIUM_COMPONENT_DIAGNOSTIC"
-    }
+    assert {row["trace_source"] for row in component_only} == {"component_level_validation_trace"}
+    assert {row["confidence"] for row in component_only} == {"MEDIUM_COMPONENT_DIAGNOSTIC"}
     assert all(row["promotion_gate_allowed"] is False for row in rows)
     assert payload["summary"]["partial_component_only_count"] == 1
 
@@ -929,9 +1022,7 @@ def test_backtest_trace_bridge_schema_and_non_promotion_marker(tmp_path: Path) -
         "trace_source",
         "trace_contract_version",
     } <= set(record["outcome_join_key"])
-    assert {"return_1d", "return_5d", "return_10d", "return_20d"} <= set(
-        record["outcomes"]
-    )
+    assert {"return_1d", "return_5d", "return_10d", "return_20d"} <= set(record["outcomes"])
     source = payload["source_artifacts"][0]
     assert source["source_artifact_path"].endswith("historical_backtest_summary.json")
     assert source["as_of_date"] == "2023-01-04"
@@ -958,8 +1049,10 @@ def test_lineage_manifest_repair_report_lists_missing_affected_artifacts(
     assert payload["summary"]["source_artifact_missing_count"] == 1
     assert payload["summary"]["lineage_manifest_missing_after_gate_audit"] == 2
     artifact = payload["affected_artifacts"][0]
-    assert artifact["source_artifact_path"].replace("\\", "/").endswith(
-        "gate_audit/2023-01-06/daily_indicator_weight_trace.json"
+    assert (
+        artifact["source_artifact_path"]
+        .replace("\\", "/")
+        .endswith("gate_audit/2023-01-06/daily_indicator_weight_trace.json")
     )
     assert artifact["as_of_date"] == "2023-01-06"
     assert artifact["decision_time"] == "2023-01-06"
@@ -976,6 +1069,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
     expected = {
         "daily_indicator_inventory",
         "daily_indicator_coverage_gap_report",
+        "threshold_registry_audit",
         "indicator_dependency_graph",
         "multi_stage_weight_trace_contract",
         "constraint_attribution_report",
@@ -988,6 +1082,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "valuation_crowding_masking_effectiveness_review",
         "valuation_crowding_masking_robustness_review",
         "indicator_research_validation_rollup",
+        "long_horizon_evidence_floor_calibration_audit",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
@@ -996,6 +1091,13 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "indicator_to_signal_research_framework_v1_validation_pack",
     }
     assert expected <= set(payload["artifacts"])
+    threshold_summary = payload["summary"]["threshold_audit_summary"]
+    assert threshold_summary["total_threshold_count"] >= 30
+    assert threshold_summary["high_impact_threshold_count"] > 0
+    assert threshold_summary["uncalibrated_high_impact_count"] > 0
+    assert threshold_summary["heuristic_guardrail_count"] > 0
+    assert threshold_summary["calibrated_count"] == 0
+    assert threshold_summary["thresholds_blocking_promotion"]
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
@@ -1035,6 +1137,8 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["outcome_availability_repeatable"] is True
     assert payload["stable_fields"]["masking_robustness_repeatable"] is True
     assert payload["stable_fields"]["validation_rollup_repeatable"] is True
+    assert payload["stable_fields"]["floor_calibration_repeatable"] is True
+    assert payload["stable_fields"]["threshold_registry_audit_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -1053,6 +1157,12 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     pack = runner.invoke(
         app,
         ["research", "indicators", "validation-pack", "--output-root", str(tmp_path)],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    threshold_audit = runner.invoke(
+        app,
+        ["research", "indicators", "threshold-audit", "--output-root", str(tmp_path)],
         env={"COLUMNS": "160"},
         terminal_width=160,
     )
@@ -1104,6 +1214,18 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "research",
             "indicators",
             "validation-rollup",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    floor_calibration = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "long-horizon-floor-calibration-audit",
             "--output-root",
             str(tmp_path),
         ],
@@ -1185,12 +1307,14 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
 
     assert inventory.exit_code == 0, inventory.output
     assert pack.exit_code == 0, pack.output
+    assert threshold_audit.exit_code == 0, threshold_audit.output
     assert coverage_gap.exit_code == 0, coverage_gap.output
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
     assert effectiveness.exit_code == 0, effectiveness.output
     assert robustness.exit_code == 0, robustness.output
     assert validation_rollup.exit_code == 0, validation_rollup.output
+    assert floor_calibration.exit_code == 0, floor_calibration.output
     assert outcome_availability.exit_code == 0, outcome_availability.output
     assert historical_trace.exit_code == 0, historical_trace.output
     assert gate_availability.exit_code == 0, gate_availability.output
@@ -1199,12 +1323,14 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert backtest_bridge.exit_code == 0, backtest_bridge.output
     assert (tmp_path / "daily_indicator_inventory.json").exists()
     assert (tmp_path / "daily_indicator_coverage_gap_report.json").exists()
+    assert (tmp_path / "threshold_registry_audit.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
     assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()
     assert (tmp_path / "valuation_crowding_masking_effectiveness_review.json").exists()
     assert (tmp_path / "valuation_crowding_masking_robustness_review.json").exists()
     assert (tmp_path / "indicator_research_validation_rollup.json").exists()
+    assert (tmp_path / "long_horizon_evidence_floor_calibration_audit.json").exists()
     assert (tmp_path / "historical_multi_stage_weight_trace_validation.json").exists()
     assert (tmp_path / "historical_trace_gate_availability_audit.json").exists()
     assert (tmp_path / "lineage_manifest_repair_report.json").exists()
@@ -1429,9 +1555,7 @@ def _write_many_casebook_trace(tmp_path: Path, *, date_count: int = 20) -> Path:
                     row_type="indicator_component",
                     module_id="valuation_crowding_indicator",
                     daily_component_id="valuation",
-                    mapping_version=(
-                        "scoring_rules_v1.valuation+position_gate_valuation_v1"
-                    ),
+                    mapping_version=("scoring_rules_v1.valuation+position_gate_valuation_v1"),
                     raw_indicator_value=[
                         {
                             "subject": "AI_CORE_MEDIAN",
@@ -1459,9 +1583,7 @@ def _write_many_casebook_trace(tmp_path: Path, *, date_count: int = 20) -> Path:
                     row_type="constraint_gate",
                     module_id="valuation_crowding_indicator",
                     daily_component_id="valuation",
-                    mapping_version=(
-                        "scoring_rules_v1.valuation+position_gate_valuation_v1"
-                    ),
+                    mapping_version=("scoring_rules_v1.valuation+position_gate_valuation_v1"),
                     raw_indicator_value={
                         "gate_id": "valuation",
                         "label": "估值拥挤",
@@ -1486,9 +1608,7 @@ def _write_many_casebook_trace(tmp_path: Path, *, date_count: int = 20) -> Path:
         )
         lineage_manifests.append(
             {
-                "source_artifact_path": (
-                    f"fixture/daily_indicator_weight_trace_{row_date}.json"
-                ),
+                "source_artifact_path": (f"fixture/daily_indicator_weight_trace_{row_date}.json"),
                 "generated_at": f"{row_date}T21:30:00+00:00",
                 "as_of_date": row_date,
                 "decision_time": row_date,

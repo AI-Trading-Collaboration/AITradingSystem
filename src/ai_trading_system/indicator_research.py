@@ -27,6 +27,7 @@ REPORT_TYPE_PREFIX = "indicator_research"
 DEFAULT_INDICATOR_REGISTRY_PATH = (
     PROJECT_ROOT / "config" / "research" / "indicator_research_registry.yaml"
 )
+DEFAULT_THRESHOLD_REGISTRY_PATH = PROJECT_ROOT / "config" / "research" / "threshold_registry.yaml"
 DEFAULT_INDICATOR_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_indicators"
 DEFAULT_DAILY_INDICATOR_TRACE_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "reports"
 
@@ -146,6 +147,28 @@ DEFAULT_EVENT_WINDOW_CATALOG = (
         "end_date": "2026-06-12",
     },
 )
+
+THRESHOLD_REQUIRED_FIELDS = (
+    "threshold_id",
+    "current_value",
+    "unit",
+    "where_used",
+    "purpose",
+    "impact_scope",
+    "decision_affecting",
+    "promotion_gate_affecting",
+    "production_weight_affecting",
+    "default_reason",
+    "calibration_status",
+    "evidence_level",
+    "recommended_calibration_method",
+)
+HIGH_IMPACT_THRESHOLD_CLASS = "A"
+HIGH_IMPACT_UNCALIBRATED_STATUSES = {
+    "UNCALIBRATED_DEFAULT",
+    "HEURISTIC_GUARDRAIL",
+}
+CALIBRATED_THRESHOLD_STATUS = "CALIBRATED"
 
 
 class IndicatorResearchError(ValueError):
@@ -480,9 +503,7 @@ def build_coverage_audit(
     registry = load_indicator_registry(registry_path)
     inventory = build_daily_indicator_inventory(registry_path=registry_path)
     items = list(inventory["inventory"])
-    high_impact = [
-        item for item in items if item["coverage_status"] == "HIGH_IMPACT_UNVALIDATED"
-    ]
+    high_impact = [item for item in items if item["coverage_status"] == "HIGH_IMPACT_UNVALIDATED"]
     conditional = _conditional_conclusion_warnings(registry)
     status = "PASS_WITH_WARNINGS" if high_impact or conditional else "PASS"
     return _base_payload(
@@ -616,9 +637,7 @@ def build_daily_indicator_weight_trace(
             module_id = indicator.indicator_id
             mapping_version = indicator.mapping_version
             coverage_status = _coverage_status(registry, indicator)
-        contribution = (
-            _float(component.score) * _float(component.weight) / total_component_weight
-        )
+        contribution = _float(component.score) * _float(component.weight) / total_component_weight
         rows.append(
             _daily_trace_row(
                 as_of_text=as_of_text,
@@ -766,9 +785,96 @@ def build_daily_indicator_coverage_gap_report(
     )
 
 
+def load_threshold_registry(
+    path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+) -> dict[str, Any]:
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, Mapping):
+        raise IndicatorResearchError(f"threshold registry must be a mapping: {path}")
+    thresholds = raw.get("thresholds")
+    if not isinstance(thresholds, Sequence) or isinstance(thresholds, (str, bytes)):
+        raise IndicatorResearchError("threshold registry must define a thresholds list")
+    backlog = raw.get("calibration_backlog", [])
+    if not isinstance(backlog, Sequence) or isinstance(backlog, (str, bytes)):
+        raise IndicatorResearchError(
+            "threshold registry calibration_backlog must be a list when provided"
+        )
+    return dict(raw)
+
+
+def build_threshold_registry_audit(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    thresholds = [
+        _json_ready(dict(item))
+        for item in threshold_registry.get("thresholds", [])
+        if isinstance(item, Mapping)
+    ]
+    backlog = [
+        _json_ready(dict(item))
+        for item in threshold_registry.get("calibration_backlog", [])
+        if isinstance(item, Mapping)
+    ]
+    issues = _threshold_registry_issues(threshold_registry, thresholds)
+    summary = _threshold_audit_summary(thresholds)
+    status = (
+        "FAIL"
+        if any(issue.get("severity") == "error" for issue in issues)
+        else "PASS_WITH_WARNINGS" if summary["uncalibrated_high_impact_count"] > 0 else "PASS"
+    )
+    return _base_payload(
+        registry,
+        report_type="threshold_registry_audit",
+        status=status,
+        summary=summary,
+        issues=issues,
+        threshold_registry_metadata=_json_ready(
+            {
+                key: threshold_registry.get(key)
+                for key in (
+                    "schema_version",
+                    "registry_id",
+                    "task_id",
+                    "version",
+                    "status",
+                    "owner",
+                    "mode",
+                    "production_effect",
+                )
+            }
+        ),
+        threshold_registry_path=str(threshold_registry_path),
+        threshold_scope=_json_ready(threshold_registry.get("scope", {})),
+        thresholds=thresholds,
+        calibration_backlog=backlog,
+        safety_boundary=_json_ready(
+            {
+                **dict(registry.safety_boundary),
+                **dict(threshold_registry.get("safety_boundary", {})),
+            }
+        ),
+        reader_brief={
+            "key_result": status,
+            "total_threshold_count": summary["total_threshold_count"],
+            "high_impact_threshold_count": summary["high_impact_threshold_count"],
+            "uncalibrated_high_impact_count": summary["uncalibrated_high_impact_count"],
+            "thresholds_blocking_promotion": summary["thresholds_blocking_promotion"],
+            "next_action": (
+                "review calibration backlog before using any A-class default as "
+                "promotion dependency"
+            ),
+        },
+    )
+
+
 def write_indicator_validation_pack_stability_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
     output_root: Path = DEFAULT_INDICATOR_OUTPUT_ROOT,
     trace_path: Path | None = None,
     prices_path: Path | None = None,
@@ -787,6 +893,7 @@ def write_indicator_validation_pack_stability_report(
     stability_root = validation_root / "validation_pack_rerun_stability"
     first = write_indicator_framework_validation_pack(
         registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
         output_root=stability_root / "run_1",
         trace_path=trace_path,
         prices_path=prices_path,
@@ -802,6 +909,7 @@ def write_indicator_validation_pack_stability_report(
     )
     second = write_indicator_framework_validation_pack(
         registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
         output_root=stability_root / "run_2",
         trace_path=trace_path,
         prices_path=prices_path,
@@ -826,20 +934,17 @@ def write_indicator_validation_pack_stability_report(
             == second_projection["validation_check_statuses"]
         ),
         "key_artifact_statuses": (
-            first_projection["key_artifact_statuses"]
-            == second_projection["key_artifact_statuses"]
+            first_projection["key_artifact_statuses"] == second_projection["key_artifact_statuses"]
         ),
         "registry_coverage_counts": (
             first_projection["registry_coverage_counts"]
             == second_projection["registry_coverage_counts"]
         ),
         "coverage_gap_summary": (
-            first_projection["coverage_gap_summary"]
-            == second_projection["coverage_gap_summary"]
+            first_projection["coverage_gap_summary"] == second_projection["coverage_gap_summary"]
         ),
         "trace_field_audit": (
-            first_projection["trace_field_audit"]
-            == second_projection["trace_field_audit"]
+            first_projection["trace_field_audit"] == second_projection["trace_field_audit"]
         ),
         "trace_fields_complete": (
             first_projection["trace_field_missing_count"] == 0
@@ -854,8 +959,7 @@ def write_indicator_validation_pack_stability_report(
             == second_projection["high_impact_unvalidated_ids"]
         ),
         "masking_diagnostics_repeatable": (
-            first_projection["masking_diagnostics"]
-            == second_projection["masking_diagnostics"]
+            first_projection["masking_diagnostics"] == second_projection["masking_diagnostics"]
         ),
         "masking_casebook_repeatable": (
             first_projection["masking_casebook_summary"]
@@ -897,9 +1001,19 @@ def write_indicator_validation_pack_stability_report(
             and first_projection["validation_rollup_recommendation"]
             == second_projection["validation_rollup_recommendation"]
         ),
+        "floor_calibration_repeatable": (
+            first_projection["floor_calibration_summary"]
+            == second_projection["floor_calibration_summary"]
+            and first_projection["floor_calibration_sensitivity"]
+            == second_projection["floor_calibration_sensitivity"]
+        ),
         "lineage_manifest_repair_repeatable": (
             first_projection["lineage_manifest_repair_summary"]
             == second_projection["lineage_manifest_repair_summary"]
+        ),
+        "threshold_registry_audit_repeatable": (
+            first_projection["threshold_audit_summary"]
+            == second_projection["threshold_audit_summary"]
         ),
     }
     stable = all(stable_fields.values())
@@ -1550,9 +1664,7 @@ def build_masking_casebook(
             "missed_upside_count": sum(1 for case in cases if case["missed_upside"]),
             "false_risk_off_count": sum(1 for case in cases if case["false_risk_off"]),
             "outcome_missing_count": sum(1 for case in cases if case["outcome_missing"]),
-            "outcome_not_mature_count": sum(
-                1 for case in cases if case.get("outcome_not_mature")
-            ),
+            "outcome_not_mature_count": sum(1 for case in cases if case.get("outcome_not_mature")),
             **_trace_sample_quality_stats(registry, trace_rows, cases=cases),
         },
         filters=_trace_filter_payload(
@@ -1843,9 +1955,7 @@ def build_valuation_crowding_masking_effectiveness_review(
         asset_universe=asset_universe,
     )
     availability = [
-        dict(item)
-        for item in gate_audit.get("gate_availability", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in gate_audit.get("gate_availability", []) if isinstance(item, Mapping)
     ]
     full_dates = {
         str(record.get("date"))
@@ -2002,9 +2112,7 @@ def build_valuation_crowding_masking_effectiveness_review(
                 confidence=TRACE_CONFIDENCE_COMPONENT,
             ),
         }
-        for group_key, group_cases in _group_cases_by_correlated_asset_cluster(
-            cases
-        ).items()
+        for group_key, group_cases in _group_cases_by_correlated_asset_cluster(cases).items()
     ]
     recommendation = _masking_effectiveness_recommendation(
         layers["full_advisory_only"],
@@ -2018,8 +2126,7 @@ def build_valuation_crowding_masking_effectiveness_review(
                 "severity": "warning",
                 "issue_id": "effectiveness_requires_masking_cases",
                 "message": (
-                    "Effectiveness review emitted schema only; trace-backed cases are "
-                    "required."
+                    "Effectiveness review emitted schema only; trace-backed cases are " "required."
                 ),
             }
         )
@@ -2085,16 +2192,10 @@ def build_valuation_crowding_masking_effectiveness_review(
             "capped_masking_ratio": capped_masking_ratio,
             "outcome_ticker": outcome_ticker,
             "decision_recommendation": recommendation["decision_recommendation"],
-            "outcome_available_count": outcome_availability_summary[
-                "outcome_available_count"
-            ],
+            "outcome_available_count": outcome_availability_summary["outcome_available_count"],
             **_horizon_specific_summary_counts(outcome_availability_summary),
-            "outcome_missing_count": outcome_availability_summary[
-                "outcome_missing_count"
-            ],
-            "outcome_not_mature_count": outcome_availability_summary[
-                "outcome_not_mature_count"
-            ],
+            "outcome_missing_count": outcome_availability_summary["outcome_missing_count"],
+            "outcome_not_mature_count": outcome_availability_summary["outcome_not_mature_count"],
             "recommendation_scope": "validation_only",
             "promotion_gate_allowed": False,
             "read_only": True,
@@ -2175,9 +2276,7 @@ def build_valuation_crowding_masking_robustness_review(
         event_window_end=event_window_end,
         asset_universe=asset_universe,
     )
-    scenario_delta_matrix = _scenario_delta_matrix(
-        effectiveness.get("conclusion_matrix", [])
-    )
+    scenario_delta_matrix = _scenario_delta_matrix(effectiveness.get("conclusion_matrix", []))
     aggregation = _robustness_aggregation(effectiveness)
     case_diagnostics = _robustness_case_diagnostics(cases_by_source, capped_masking_ratio)
     ten_day_support = _ten_day_baseline_support_attribution(
@@ -2231,9 +2330,7 @@ def build_valuation_crowding_masking_robustness_review(
             "final_validation_recommendation": final_recommendation,
             "scenario_delta_row_count": len(scenario_delta_matrix),
             "case_diagnostic_count": case_diagnostics["diagnostic_case_count"],
-            "current_20d_mature_cases": maturity_tracker[
-                "current_20d_mature_cases"
-            ],
+            "current_20d_mature_cases": maturity_tracker["current_20d_mature_cases"],
             "pending_20d_cases": maturity_tracker["pending_20d_cases"],
             "promotion_gate_allowed": False,
             "production_weight_change_allowed": False,
@@ -2460,6 +2557,151 @@ def build_indicator_research_validation_rollup(
         pending_maturity_tracker=maturity_tracker,
         rerun_criteria=rerun_criteria,
         remaining_limitations=limitations,
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+    )
+
+
+def build_long_horizon_evidence_floor_calibration_audit(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    robustness = build_valuation_crowding_masking_robustness_review(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    cases_by_source = _robustness_cases_by_source(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    outcome_availability = build_valuation_crowding_outcome_availability_audit(
+        registry_path=registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        outcome_ticker=outcome_ticker,
+        capped_masking_ratio=capped_masking_ratio,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    full_20d_cases = [
+        case
+        for case in cases_by_source.get("full_advisory_only", [])
+        if _case_horizon_available(case, 20)
+    ]
+    full_20d_sample_records = _full_advisory_mature_outcome_records(
+        outcome_availability.get("records", []),
+        horizon=20,
+    )
+    effective_sample = _long_horizon_effective_sample_size(
+        full_20d_sample_records,
+        registry,
+    )
+    robustness_gate = _long_horizon_robustness_based_gate(
+        full_20d_cases,
+        robustness,
+        capped_masking_ratio,
+    )
+    sensitivity = _long_horizon_threshold_sensitivity(
+        full_case_count=effective_sample["raw_case_count"],
+        robustness_gate=robustness_gate,
+        current_recommendation=str(
+            robustness.get("summary", {}).get(
+                "final_validation_recommendation",
+                "keep_preliminary_short_horizon_only",
+            )
+            if isinstance(robustness.get("summary"), Mapping)
+            else "keep_preliminary_short_horizon_only"
+        ),
+    )
+    calibration_conclusion = _long_horizon_calibration_conclusion(
+        effective_sample,
+        robustness_gate,
+        sensitivity,
+    )
+    return _base_payload(
+        registry,
+        report_type="long_horizon_evidence_floor_calibration_audit",
+        status="PASS_WITH_WARNINGS",
+        issues=[
+            {
+                "severity": "info",
+                "issue_id": "floor_50_is_uncalibrated_guardrail",
+                "message": (
+                    "The current 50-case floor is treated as an uncalibrated "
+                    "conservative guardrail, not as a validated statistical threshold."
+                ),
+            }
+        ],
+        summary={
+            "current_20d_full_advisory_mature_cases": effective_sample["raw_case_count"],
+            "current_floor": EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES,
+            "floor_name": "heuristic_min_full_advisory_cases",
+            "calibration_status": "uncalibrated",
+            "current_recommendation": "keep_preliminary_short_horizon_only",
+            "recommendation_changes_across_floors": sensitivity["recommendation_changes"],
+            "calibration_conclusion": calibration_conclusion["calibration_conclusion"],
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "read_only": True,
+            "production_weight_logic_changed": False,
+        },
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        floor_interpretation={
+            "floor_id": "heuristic_min_full_advisory_cases",
+            "current_value": EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES,
+            "role": "conservative_guardrail",
+            "calibration_status": "uncalibrated",
+            "validated_statistical_threshold": False,
+            "used_for": "validation_only_long_horizon_evidence_guardrail",
+            "promotion_gate_allowed": False,
+        },
+        threshold_sensitivity=sensitivity,
+        effective_sample_size=effective_sample,
+        robustness_based_gate=robustness_gate,
+        calibration_conclusion=calibration_conclusion,
+        source_robustness_summary=robustness.get("summary", {}),
         allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
     )
 
@@ -2759,9 +3001,11 @@ def build_gate_availability_audit(
     return _base_payload(
         registry,
         report_type="historical_trace_gate_availability_audit",
-        status="PASS_WITH_WARNINGS"
-        if any(not record["full_advisory_trace_eligible"] for record in records)
-        else "PASS",
+        status=(
+            "PASS_WITH_WARNINGS"
+            if any(not record["full_advisory_trace_eligible"] for record in records)
+            else "PASS"
+        ),
         summary=summary,
         filters=_trace_filter_payload(
             start_date=start_date,
@@ -2823,8 +3067,7 @@ def build_component_level_historical_trace(
     }
     for row in source_rows:
         is_component = (
-            row.get("row_type") == "indicator_component"
-            and row.get("module_id") in keep_modules
+            row.get("row_type") == "indicator_component" and row.get("module_id") in keep_modules
         )
         is_masking_pair = (
             row.get("upstream_indicator_id") == "valuation_crowding_indicator"
@@ -2839,9 +3082,7 @@ def build_component_level_historical_trace(
             availability_by_date.get(row_date, {}),
         )
         full_eligible = bool(gate_record.get("full_advisory_trace_eligible", True))
-        component_eligible = bool(
-            gate_record.get("component_validation_trace_eligible", True)
-        )
+        component_eligible = bool(gate_record.get("component_validation_trace_eligible", True))
         rows.append(
             {
                 **dict(row),
@@ -3068,6 +3309,7 @@ def write_indicator_artifact_pair(
 def write_indicator_framework_validation_pack(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
     output_root: Path = DEFAULT_INDICATOR_OUTPUT_ROOT,
     trace_path: Path | None = None,
     prices_path: Path | None = None,
@@ -3092,6 +3334,13 @@ def write_indicator_framework_validation_pack(
             build_daily_indicator_coverage_gap_report(
                 registry_path=registry_path,
                 trace_path=trace_path,
+            ),
+        ),
+        (
+            "threshold_registry_audit",
+            build_threshold_registry_audit(
+                registry_path=registry_path,
+                threshold_registry_path=threshold_registry_path,
             ),
         ),
         (
@@ -3268,6 +3517,23 @@ def write_indicator_framework_validation_pack(
             ),
         ),
         (
+            "long_horizon_evidence_floor_calibration_audit",
+            build_long_horizon_evidence_floor_calibration_audit(
+                registry_path=registry_path,
+                trace_path=trace_path,
+                prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
+                bridge_artifact_root=bridge_artifact_root,
+                outcome_ticker=outcome_ticker,
+                capped_masking_ratio=capped_masking_ratio,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
             "historical_multi_stage_weight_trace_validation",
             build_historical_multi_stage_weight_trace_validation(
                 registry_path=registry_path,
@@ -3345,6 +3611,11 @@ def write_indicator_framework_validation_pack(
     }
     statuses = [payload["status"] for _, payload in artifact_builders]
     blocking = [status for status in statuses if str(status).endswith("BLOCKED")]
+    artifact_payloads = {artifact_id: payload for artifact_id, payload in artifact_builders}
+    threshold_audit_summary = artifact_payloads.get("threshold_registry_audit", {}).get(
+        "summary",
+        {},
+    )
     status = (
         "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_BLOCKED"
         if blocking
@@ -3360,6 +3631,7 @@ def write_indicator_framework_validation_pack(
             "prices_path_provided": prices_path is not None,
             "gate_audit_root_provided": gate_audit_root is not None,
             "bridge_artifact_root_provided": bridge_artifact_root is not None,
+            "threshold_audit_summary": threshold_audit_summary,
             "no_parameter_mutation": True,
             "no_paper_shadow_live_broker_order_official_weights": True,
         },
@@ -3370,6 +3642,7 @@ def write_indicator_framework_validation_pack(
             },
             {"check_id": "inventory_coverage", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "coverage_gap_report", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "threshold_registry_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "dependency_graph", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "multi_stage_trace_contract", "status": "PASS"},
             {"check_id": "mapping_registry", "status": "PASS_WITH_WARNINGS"},
@@ -3384,6 +3657,7 @@ def write_indicator_framework_validation_pack(
             {"check_id": "masking_effectiveness_review", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "masking_robustness_review", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "validation_rollup", "status": "PASS_WITH_WARNINGS"},
+            {"check_id": "long_horizon_floor_calibration", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "historical_trace_validation", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "gate_availability_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "component_historical_trace", "status": "PASS_WITH_WARNINGS"},
@@ -3499,6 +3773,164 @@ def _base_payload(
     }
     payload.update(extra)
     return payload
+
+
+def _json_ready(value: Any) -> Any:
+    if isinstance(value, datetime | date):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
+        return [_json_ready(item) for item in value]
+    return value
+
+
+def _threshold_audit_summary(thresholds: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    total = len(thresholds)
+    high_impact = [
+        threshold
+        for threshold in thresholds
+        if str(threshold.get("threshold_class", "")).upper() == HIGH_IMPACT_THRESHOLD_CLASS
+    ]
+    uncalibrated_high_impact = [
+        threshold
+        for threshold in high_impact
+        if str(threshold.get("calibration_status", "")) in HIGH_IMPACT_UNCALIBRATED_STATUSES
+    ]
+    heuristic_guardrails = [
+        threshold
+        for threshold in thresholds
+        if str(threshold.get("calibration_status", "")) == "HEURISTIC_GUARDRAIL"
+    ]
+    calibrated = [
+        threshold
+        for threshold in thresholds
+        if str(threshold.get("calibration_status", "")) == CALIBRATED_THRESHOLD_STATUS
+    ]
+    blocking_ids = sorted(
+        str(threshold.get("threshold_id"))
+        for threshold in thresholds
+        if _threshold_blocks_promotion_dependency(threshold)
+    )
+    class_counts: dict[str, int] = defaultdict(int)
+    status_counts: dict[str, int] = defaultdict(int)
+    for threshold in thresholds:
+        class_counts[str(threshold.get("threshold_class") or "UNCLASSIFIED")] += 1
+        status_counts[str(threshold.get("calibration_status") or "UNKNOWN")] += 1
+    return {
+        "total_threshold_count": total,
+        "high_impact_threshold_count": len(high_impact),
+        "uncalibrated_high_impact_count": len(uncalibrated_high_impact),
+        "heuristic_guardrail_count": len(heuristic_guardrails),
+        "calibrated_count": len(calibrated),
+        "thresholds_blocking_promotion": blocking_ids,
+        "thresholds_blocking_promotion_count": len(blocking_ids),
+        "threshold_class_counts": dict(sorted(class_counts.items())),
+        "calibration_status_counts": dict(sorted(status_counts.items())),
+        "uncalibrated_high_impact_ids": sorted(
+            str(threshold.get("threshold_id")) for threshold in uncalibrated_high_impact
+        ),
+        "production_weight_affecting_threshold_count": sum(
+            1 for threshold in thresholds if bool(threshold.get("production_weight_affecting"))
+        ),
+        "validation_only": True,
+        "promotion_dependency_review_required": bool(blocking_ids),
+        "production_weight_logic_changed": False,
+        "paper_shadow_change_allowed": False,
+        "official_target_weights_mutated": False,
+    }
+
+
+def _threshold_registry_issues(
+    registry: Mapping[str, Any],
+    thresholds: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    raw_thresholds = registry.get("thresholds", [])
+    if len(thresholds) != len(raw_thresholds):
+        issues.append(
+            {
+                "severity": "error",
+                "issue_id": "threshold_registry_contains_non_mapping_entry",
+                "message": "Every threshold registry item must be a mapping.",
+            }
+        )
+    seen: set[str] = set()
+    high_impact_missing_review_flags = []
+    for index, threshold in enumerate(thresholds):
+        threshold_id = str(threshold.get("threshold_id") or f"threshold_{index}")
+        missing = [field for field in THRESHOLD_REQUIRED_FIELDS if field not in threshold]
+        if missing:
+            issues.append(
+                {
+                    "severity": "error",
+                    "issue_id": "threshold_record_missing_required_fields",
+                    "threshold_id": threshold_id,
+                    "missing_fields": missing,
+                    "message": f"{threshold_id} is missing required fields: {missing}.",
+                }
+            )
+        if threshold_id in seen:
+            issues.append(
+                {
+                    "severity": "error",
+                    "issue_id": "duplicate_threshold_id",
+                    "threshold_id": threshold_id,
+                    "message": f"Duplicate threshold_id: {threshold_id}.",
+                }
+            )
+        seen.add(threshold_id)
+        if _is_uncalibrated_high_impact_threshold(threshold) and not (
+            bool(threshold.get("calibration_required"))
+            and bool(threshold.get("no_promotion_dependency_without_review"))
+        ):
+            high_impact_missing_review_flags.append(threshold_id)
+    if high_impact_missing_review_flags:
+        issues.append(
+            {
+                "severity": "error",
+                "issue_id": "uncalibrated_high_impact_threshold_missing_review_block",
+                "threshold_ids": sorted(high_impact_missing_review_flags),
+                "message": (
+                    "A-class uncalibrated thresholds must set calibration_required=true "
+                    "and no_promotion_dependency_without_review=true."
+                ),
+            }
+        )
+    blocking_ids = [
+        str(threshold.get("threshold_id"))
+        for threshold in thresholds
+        if _threshold_blocks_promotion_dependency(threshold)
+    ]
+    if blocking_ids:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "uncalibrated_high_impact_thresholds_block_promotion_dependency",
+                "threshold_count": len(blocking_ids),
+                "threshold_ids": sorted(blocking_ids),
+                "message": (
+                    "A-class uncalibrated defaults are inventory-complete but cannot "
+                    "be used as promotion dependencies without owner review."
+                ),
+            }
+        )
+    return issues
+
+
+def _is_uncalibrated_high_impact_threshold(threshold: Mapping[str, Any]) -> bool:
+    return (
+        str(threshold.get("threshold_class", "")).upper() == HIGH_IMPACT_THRESHOLD_CLASS
+        and str(threshold.get("calibration_status", "")) in HIGH_IMPACT_UNCALIBRATED_STATUSES
+    )
+
+
+def _threshold_blocks_promotion_dependency(threshold: Mapping[str, Any]) -> bool:
+    return (
+        _is_uncalibrated_high_impact_threshold(threshold)
+        and bool(threshold.get("calibration_required"))
+        and bool(threshold.get("no_promotion_dependency_without_review"))
+    )
 
 
 def _registry_contract_issues(registry: IndicatorResearchRegistry) -> list[dict[str, Any]]:
@@ -4078,12 +4510,8 @@ def _registered_indicator_gap_record(
         and indicator.constraint_type == "NOT_A_CONSTRAINT"
     ):
         missing.append("constraint")
-    if (
-        (indicator.affects_signal or indicator.affects_weight)
-        and (
-            not indicator.mapping_version
-            or indicator.mapping_version not in mapping_versions
-        )
+    if (indicator.affects_signal or indicator.affects_weight) and (
+        not indicator.mapping_version or indicator.mapping_version not in mapping_versions
     ):
         missing.append("mapping")
     if not any(
@@ -4189,8 +4617,7 @@ def _trace_lineage_records(
         ]
         return [record for record in records if record is not None]
     return [
-        _fallback_lineage_manifest(trace_path, row_date)
-        for row_date in _trace_dates(trace_rows)
+        _fallback_lineage_manifest(trace_path, row_date) for row_date in _trace_dates(trace_rows)
     ]
 
 
@@ -4461,10 +4888,13 @@ def _lineage_repair_artifact_record(
     source_path = _lineage_repair_source_path(row_date, gate_audit_root=gate_audit_root)
     manifest: dict[str, Any] = {}
     if source_path.exists():
-        manifest = _lineage_manifest_from_source_trace(
-            trace_path or source_path,
-            str(source_path),
-        ) or {}
+        manifest = (
+            _lineage_manifest_from_source_trace(
+                trace_path or source_path,
+                str(source_path),
+            )
+            or {}
+        )
         if _lineage_manifest_complete(manifest):
             validation_status = "VALID_PRODUCTION_EQUIVALENT"
             repair_action = "no_repair_needed"
@@ -4475,9 +4905,7 @@ def _lineage_repair_artifact_record(
         validation_status = "SOURCE_ARTIFACT_MISSING"
         repair_action = "rerun_pit_sliced_replay_without_gate_relaxation"
     case_assets = {
-        str(case.get("asset")).upper()
-        for case in cases
-        if case.get("asset") not in (None, "")
+        str(case.get("asset")).upper() for case in cases if case.get("asset") not in (None, "")
     }
     return {
         "source_artifact_path": str(source_path),
@@ -4605,9 +5033,7 @@ def _trace_sample_quality_stats(
     trace_dates = {str(row.get("date")) for row in trace_rows if row.get("date")}
     case_rows = list(cases or [])
     availability = list(gate_availability or [])
-    availability_dates = {
-        str(record.get("date")) for record in availability if record.get("date")
-    }
+    availability_dates = {str(record.get("date")) for record in availability if record.get("date")}
     if availability:
         full_dates = {
             str(record.get("date"))
@@ -4639,8 +5065,7 @@ def _trace_sample_quality_stats(
     )
     sample_case_count = len(case_rows) if case_rows else len(availability) or masking_case_count
     regimes = {
-        str(row.get("market_regime") or registry.market_regime.regime_id)
-        for row in trace_rows
+        str(row.get("market_regime") or registry.market_regime.regime_id) for row in trace_rows
     }
     return {
         "date_count": len(
@@ -4672,9 +5097,7 @@ def _event_window_coverage(
         start = _parse_iso_date(str(window["start_date"]))
         end = _parse_iso_date(str(window["end_date"]))
         window_rows = [
-            row
-            for row in rows
-            if _date_in_window(str(row.get("date") or ""), start=start, end=end)
+            row for row in rows if _date_in_window(str(row.get("date") or ""), start=start, end=end)
         ]
         coverage.append(
             {
@@ -4855,11 +5278,7 @@ def _gate_record_assets(
     }
     if date_assets:
         return sorted(date_assets)
-    all_assets = {
-        str(row.get("asset") or "").upper()
-        for row in trace_rows
-        if row.get("asset")
-    }
+    all_assets = {str(row.get("asset") or "").upper() for row in trace_rows if row.get("asset")}
     if all_assets:
         return sorted(all_assets)
     return [DEFAULT_TRACE_ASSET]
@@ -4998,8 +5417,7 @@ def _classify_gate_root_cause(
     issue: Mapping[str, Any],
 ) -> str:
     issue_text = " ".join(
-        str(issue.get(key) or "")
-        for key in ("code", "rule_or_source", "message")
+        str(issue.get(key) or "") for key in ("code", "rule_or_source", "message")
     )
     lowered = issue_text.lower()
     if not feature_passed and "available_time_after_decision_time" in lowered:
@@ -5034,8 +5452,7 @@ def _issue_time(issue: Mapping[str, Any], field: str) -> str:
             return str(value)
     message = str(issue.get("message") or "")
     date_time_pattern = (
-        rf"{re.escape(field)}\s*[=:：]\s*"
-        r"([0-9]{4}-[0-9]{2}-[0-9]{2}(?:[T ][^。；;,\s]+)?)"
+        rf"{re.escape(field)}\s*[=:：]\s*" r"([0-9]{4}-[0-9]{2}-[0-9]{2}(?:[T ][^。；;,\s]+)?)"
     )
     match = re.search(date_time_pattern, message)
     return "" if match is None else match.group(1)
@@ -5142,9 +5559,7 @@ def _gate_availability_summary(records: Sequence[Mapping[str, Any]]) -> dict[str
     audited_dates = {str(record.get("date")) for record in records if record.get("date")}
     assets = {str(record.get("asset")) for record in records if record.get("asset")}
     full_dates = {
-        str(record.get("date"))
-        for record in records
-        if record.get("full_advisory_trace_eligible")
+        str(record.get("date")) for record in records if record.get("full_advisory_trace_eligible")
     }
     component_dates = {
         str(record.get("date"))
@@ -5284,10 +5699,7 @@ def _bridge_artifact_record(path: Path) -> dict[str, Any] | None:
         "artifact_path": str(path),
         **lineage,
         "artifact_type": str(
-            raw.get("report_type")
-            or raw.get("artifact_type")
-            or raw.get("type")
-            or path.stem
+            raw.get("report_type") or raw.get("artifact_type") or raw.get("type") or path.stem
         ),
         "status": str(raw.get("status") or raw.get("validation_status") or "UNKNOWN"),
         "date": "" if date_value is None else str(date_value)[:10],
@@ -5508,8 +5920,7 @@ def _masking_casebook_row(
         "decision_time": decision_time,
         "scenario": "baseline",
         "sample_id": (
-            f"{row_date}:{row.get('module_id', '')}:"
-            f"{row.get('downstream_indicator_id', '')}"
+            f"{row_date}:{row.get('module_id', '')}:" f"{row.get('downstream_indicator_id', '')}"
         ),
         "asset": asset,
         "source_trace_asset": row.get("asset"),
@@ -5695,9 +6106,7 @@ def _outcome_window_record(
         "status": status,
         "target_date": None if target_date is None else target_date.isoformat(),
         "latest_available_price_date": (
-            None
-            if latest_available_price_date is None
-            else latest_available_price_date.isoformat()
+            None if latest_available_price_date is None else latest_available_price_date.isoformat()
         ),
         "evaluation_cutoff_met": evaluation_cutoff_met,
         "realized_return": realized_return,
@@ -5709,16 +6118,11 @@ def _outcome_payload_from_windows(
     windows: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     hard_missing = any(
-        str(window.get("status") or "") in OUTCOME_HARD_MISSING_STATUSES
-        for window in windows
+        str(window.get("status") or "") in OUTCOME_HARD_MISSING_STATUSES for window in windows
     )
-    not_mature = any(
-        window.get("status") == OUTCOME_WINDOW_STATUS_NOT_MATURE
-        for window in windows
-    )
+    not_mature = any(window.get("status") == OUTCOME_WINDOW_STATUS_NOT_MATURE for window in windows)
     all_available = all(
-        window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE
-        for window in windows
+        window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE for window in windows
     )
     return {
         "outcomes": dict(outcomes),
@@ -5731,11 +6135,7 @@ def _outcome_payload_from_windows(
             else (
                 "missing"
                 if hard_missing
-                else (
-                    OUTCOME_WINDOW_STATUS_NOT_MATURE
-                    if not_mature
-                    else "unknown"
-                )
+                else (OUTCOME_WINDOW_STATUS_NOT_MATURE if not_mature else "unknown")
             )
         ),
     }
@@ -5784,9 +6184,7 @@ def _trace_eligibility_date_sets(
         asset_universe=asset_universe,
     )
     availability = [
-        dict(item)
-        for item in gate_audit.get("gate_availability", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in gate_audit.get("gate_availability", []) if isinstance(item, Mapping)
     ]
     full_dates = {
         str(record.get("date"))
@@ -5857,9 +6255,9 @@ def _outcome_availability_record(
         "outcome_join_key": join_key,
         "missing_join_key_fields": missing_join_key_fields,
         "outcome_windows": windows,
-        "outcomes": dict(case.get("outcomes", {}))
-        if isinstance(case.get("outcomes"), Mapping)
-        else {},
+        "outcomes": (
+            dict(case.get("outcomes", {})) if isinstance(case.get("outcomes"), Mapping) else {}
+        ),
         "outcome_available": all_available,
         "mature_horizons": _case_mature_horizons_from_windows(windows),
         "not_mature_horizons": _case_not_mature_horizons_from_windows(windows),
@@ -5926,26 +6324,16 @@ def _case_outcome_join_key(case: Mapping[str, Any], *, scenario: str) -> dict[st
         join_key = {}
     return {
         "as_of_date": str(
-            join_key.get("as_of_date")
-            or case.get("as_of_date")
-            or case.get("date")
-            or ""
+            join_key.get("as_of_date") or case.get("as_of_date") or case.get("date") or ""
         ),
         "decision_time": str(
-            join_key.get("decision_time")
-            or case.get("decision_time")
-            or case.get("date")
-            or ""
+            join_key.get("decision_time") or case.get("decision_time") or case.get("date") or ""
         ),
         "asset": str(join_key.get("asset") or case.get("asset") or "").upper(),
         "scenario": scenario,
-        "trace_source": str(
-            join_key.get("trace_source") or case.get("trace_source") or ""
-        ),
+        "trace_source": str(join_key.get("trace_source") or case.get("trace_source") or ""),
         "trace_contract_version": str(
-            join_key.get("trace_contract_version")
-            or case.get("trace_contract_version")
-            or ""
+            join_key.get("trace_contract_version") or case.get("trace_contract_version") or ""
         ),
     }
 
@@ -5981,12 +6369,8 @@ def _outcome_availability_summary(
     }
     return {
         "total_cases": len(records),
-        "outcome_available_count": sum(
-            1 for record in records if record.get("outcome_available")
-        ),
-        "outcome_missing_count": sum(
-            1 for record in records if record.get("outcome_missing")
-        ),
+        "outcome_available_count": sum(1 for record in records if record.get("outcome_available")),
+        "outcome_missing_count": sum(1 for record in records if record.get("outcome_missing")),
         "outcome_not_mature_count": sum(
             1 for record in records if record.get("outcome_not_mature")
         ),
@@ -5994,12 +6378,8 @@ def _outcome_availability_summary(
         "missing_asset_mapping_count": sum(
             1 for record in records if record.get("missing_asset_mapping")
         ),
-        "missing_calendar_count": sum(
-            1 for record in records if record.get("missing_calendar")
-        ),
-        "missing_join_key_count": sum(
-            1 for record in records if record.get("missing_join_key")
-        ),
+        "missing_calendar_count": sum(1 for record in records if record.get("missing_calendar")),
+        "missing_join_key_count": sum(1 for record in records if record.get("missing_join_key")),
         "date_count": len(
             {str(record.get("as_of_date") or "") for record in records if record.get("as_of_date")}
         ),
@@ -6007,11 +6387,7 @@ def _outcome_availability_summary(
             {str(record.get("asset") or "") for record in records if record.get("asset")}
         ),
         "scenario_count": len(
-            {
-                str(record.get("scenario") or "")
-                for record in records
-                if record.get("scenario")
-            }
+            {str(record.get("scenario") or "") for record in records if record.get("scenario")}
         ),
         "source_case_type_count": len(
             {
@@ -6023,12 +6399,8 @@ def _outcome_availability_summary(
         "mature_case_count_by_horizon": horizon_mature_counts,
         "not_mature_count_by_horizon": horizon_not_mature_counts,
         "by_window": dict(sorted(by_window.items())),
-        "by_asset": [
-            {"asset": key, **value} for key, value in sorted(by_asset.items())
-        ],
-        "by_date": [
-            {"date": key, **value} for key, value in sorted(by_date.items())
-        ],
+        "by_asset": [{"asset": key, **value} for key, value in sorted(by_asset.items())],
+        "by_date": [{"date": key, **value} for key, value in sorted(by_date.items())],
     }
 
 
@@ -6070,11 +6442,7 @@ def _mature_outcome_sample_quality(
             }
         )
         mature_asset_count[label] = len(
-            {
-                str(record.get("asset") or "")
-                for record in mature_records
-                if record.get("asset")
-            }
+            {str(record.get("asset") or "") for record in mature_records if record.get("asset")}
         )
         mature_case_count[label] = len(mature_records)
         full_mature_count[label] = sum(
@@ -6083,14 +6451,10 @@ def _mature_outcome_sample_quality(
             if record.get("eligibility_layer") == "full_advisory_only"
         )
         component_mature_count[label] = sum(
-            1
-            for record in mature_records
-            if record.get("eligibility_layer") == "component_only"
+            1 for record in mature_records if record.get("eligibility_layer") == "component_only"
         )
         bridge_mature_count[label] = sum(
-            1
-            for record in mature_records
-            if record.get("eligibility_layer") == "backtest_bridge"
+            1 for record in mature_records if record.get("eligibility_layer") == "backtest_bridge"
         )
     return {
         "mature_date_count_by_horizon": mature_date_count,
@@ -6111,9 +6475,7 @@ def _mature_outcome_sample_quality(
         ),
         "by_regime": _mature_outcome_group_availability(
             records,
-            lambda record: [
-                str(record.get("market_regime") or registry.market_regime.regime_id)
-            ],
+            lambda record: [str(record.get("market_regime") or registry.market_regime.regime_id)],
             key_field="regime",
         ),
         "by_event_window": _mature_outcome_group_availability(
@@ -6138,18 +6500,9 @@ def _mature_outcome_group_availability(
                 {
                     key_field: key,
                     "total_cases": 0,
-                    **{
-                        f"{horizon}d_mature_case_count": 0
-                        for horizon in MASKING_OUTCOME_HORIZONS
-                    },
-                    **{
-                        f"{horizon}d_not_mature_count": 0
-                        for horizon in MASKING_OUTCOME_HORIZONS
-                    },
-                    **{
-                        f"{horizon}d_missing_count": 0
-                        for horizon in MASKING_OUTCOME_HORIZONS
-                    },
+                    **{f"{horizon}d_mature_case_count": 0 for horizon in MASKING_OUTCOME_HORIZONS},
+                    **{f"{horizon}d_not_mature_count": 0 for horizon in MASKING_OUTCOME_HORIZONS},
+                    **{f"{horizon}d_missing_count": 0 for horizon in MASKING_OUTCOME_HORIZONS},
                 },
             )
             bucket["total_cases"] += 1
@@ -6369,17 +6722,12 @@ def _masking_effectiveness_horizon_sample_quality(
 ) -> dict[str, Any]:
     mature_cases = [case for case in cases if _case_horizon_available(case, horizon)]
     dates = {str(case.get("date")) for case in mature_cases if case.get("date")}
-    assets = {
-        str(case.get("asset")).upper() for case in mature_cases if case.get("asset")
-    }
+    assets = {str(case.get("asset")).upper() for case in mature_cases if case.get("asset")}
     regimes = {
-        str(case.get("market_regime") or registry.market_regime.regime_id)
-        for case in mature_cases
+        str(case.get("market_regime") or registry.market_regime.regime_id) for case in mature_cases
     }
     hard_missing = sum(
-        1
-        for case in cases
-        if _case_horizon_status(case, horizon) in OUTCOME_HARD_MISSING_STATUSES
+        1 for case in cases if _case_horizon_status(case, horizon) in OUTCOME_HARD_MISSING_STATUSES
     )
     not_mature = sum(
         1
@@ -6407,10 +6755,7 @@ def _masking_effectiveness_sample_quality(
 ) -> dict[str, Any]:
     dates = {str(case.get("date")) for case in cases if case.get("date")}
     assets = {str(case.get("asset")).upper() for case in cases if case.get("asset")}
-    regimes = {
-        str(case.get("market_regime") or registry.market_regime.regime_id)
-        for case in cases
-    }
+    regimes = {str(case.get("market_regime") or registry.market_regime.regime_id) for case in cases}
     clusters = {_asset_cluster_id(asset) for asset in assets}
     horizon_counts = _case_horizon_maturity_counts(cases)
     return {
@@ -6421,9 +6766,7 @@ def _masking_effectiveness_sample_quality(
         "correlated_asset_cluster_count": len(clusters),
         "outcome_missing_count": sum(1 for case in cases if case.get("outcome_missing")),
         "outcome_available_count": sum(1 for case in cases if _case_outcome_available(case)),
-        "outcome_not_mature_count": sum(
-            1 for case in cases if case.get("outcome_not_mature")
-        ),
+        "outcome_not_mature_count": sum(1 for case in cases if case.get("outcome_not_mature")),
         "mature_case_count_by_horizon": horizon_counts["mature_case_count_by_horizon"],
         "not_mature_count_by_horizon": horizon_counts["not_mature_count_by_horizon"],
         **_horizon_specific_summary_counts(horizon_counts),
@@ -6544,10 +6887,7 @@ def _case_outcome_available(case: Mapping[str, Any]) -> bool:
     if isinstance(windows, Sequence) and not isinstance(windows, (str, bytes)):
         usable = [window for window in windows if isinstance(window, Mapping)]
         if usable:
-            return all(
-                window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE
-                for window in usable
-            )
+            return all(window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE for window in usable)
     outcomes = case.get("outcomes", {})
     if not isinstance(outcomes, Mapping):
         return False
@@ -6599,8 +6939,7 @@ def _masking_effectiveness_recommendation(
         for horizon in (1, 5)
     )
     primary_horizon_ready = all(
-        int(mature_by_horizon.get(f"{horizon}d") or 0)
-        >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+        int(mature_by_horizon.get(f"{horizon}d") or 0) >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
         for horizon in (1, 5, 10)
     )
     if (
@@ -6711,9 +7050,7 @@ def _matrix_based_horizon_recommendation(
     contributions: dict[int, str] = {}
     for horizon in (1, 5, 10):
         rows = [
-            row
-            for row in conclusion_matrix
-            if int(row.get("horizon_trading_days") or 0) == horizon
+            row for row in conclusion_matrix if int(row.get("horizon_trading_days") or 0) == horizon
         ]
         if not rows:
             contributions[horizon] = "insufficient_evidence"
@@ -6764,9 +7101,7 @@ def _matrix_based_horizon_recommendation(
                 "validation recommendation."
             ),
         }
-    if len(actionable) == 1 and all(
-        decision in actionable for decision in contributions.values()
-    ):
+    if len(actionable) == 1 and all(decision in actionable for decision in contributions.values()):
         decision = next(iter(actionable))
         return {
             "decision_recommendation": decision,
@@ -6821,10 +7156,7 @@ def _scenario_avg_return_for_horizons(
     scenario: Mapping[str, Any],
     horizons: Sequence[int],
 ) -> float | None:
-    values = [
-        _optional_float(scenario.get(f"avg_return_{horizon}d"))
-        for horizon in horizons
-    ]
+    values = [_optional_float(scenario.get(f"avg_return_{horizon}d")) for horizon in horizons]
     usable = [value for value in values if value is not None]
     if not usable:
         return None
@@ -6912,8 +7244,7 @@ def _scenario_horizon_comparison_metrics(
     evidence_status = (
         "insufficient_long_horizon_evidence"
         if horizon == 20
-        and quality["full_advisory_mature_case_count"]
-        < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+        and quality["full_advisory_mature_case_count"] < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
         else "mature_horizon_evidence"
     )
     return {
@@ -6941,13 +7272,9 @@ def _scenario_horizon_comparison_metrics(
         "mature_date_count": quality["mature_date_count"],
         "mature_asset_count": quality["mature_asset_count"],
         "mature_case_count": quality["mature_case_count"],
-        "full_advisory_mature_case_count": quality[
-            "full_advisory_mature_case_count"
-        ],
+        "full_advisory_mature_case_count": quality["full_advisory_mature_case_count"],
         "unique_regime_count": quality["unique_regime_count"],
-        "correlated_asset_cluster_count": quality[
-            "correlated_asset_cluster_count"
-        ],
+        "correlated_asset_cluster_count": quality["correlated_asset_cluster_count"],
         "sample_quality": quality,
         "return_profile": {
             "avg_return": combined_metrics["avg_return"],
@@ -6990,14 +7317,11 @@ def _scenario_horizon_sample_quality(
 ) -> dict[str, Any]:
     mature_cases = [case for case in all_cases if _case_horizon_available(case, horizon)]
     full_mature = [case for case in full_cases if _case_horizon_available(case, horizon)]
-    component_mature = [
-        case for case in component_cases if _case_horizon_available(case, horizon)
-    ]
+    component_mature = [case for case in component_cases if _case_horizon_available(case, horizon)]
     bridge_mature = [case for case in bridge_cases if _case_horizon_available(case, horizon)]
     assets = {str(case.get("asset")).upper() for case in mature_cases if case.get("asset")}
     regimes = {
-        str(case.get("market_regime") or registry.market_regime.regime_id)
-        for case in mature_cases
+        str(case.get("market_regime") or registry.market_regime.regime_id) for case in mature_cases
     }
     dates = {str(case.get("date")) for case in mature_cases if case.get("date")}
     return {
@@ -7008,9 +7332,7 @@ def _scenario_horizon_sample_quality(
         "component_only_mature_case_count": len(component_mature),
         "backtest_bridge_mature_case_count": len(bridge_mature),
         "unique_regime_count": len(regimes) if mature_cases else 0,
-        "correlated_asset_cluster_count": len(
-            {_asset_cluster_id(asset) for asset in assets}
-        ),
+        "correlated_asset_cluster_count": len({_asset_cluster_id(asset) for asset in assets}),
         "promotion_gate_allowed": False,
     }
 
@@ -7024,10 +7346,7 @@ def _scenario_horizon_recommendation_contributions(
     no_mask = scenario_metrics.get("no_valuation_crowding_masking", {})
     capped = scenario_metrics.get("capped_masking", {})
     full_sample_count = int(baseline.get("full_advisory_sample_count") or 0)
-    if (
-        horizon == 20
-        and full_sample_count < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
-    ):
+    if horizon == 20 and full_sample_count < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
         return {
             scenario_id: "insufficient_long_horizon_evidence"
             for scenario_id in MASKING_ABLATION_SCENARIOS
@@ -7053,14 +7372,10 @@ def _scenario_horizon_recommendation_contributions(
     ]
     if len(supported) > 1:
         return {
-            scenario_id: "conflicting_horizon_signal"
-            for scenario_id in MASKING_ABLATION_SCENARIOS
+            scenario_id: "conflicting_horizon_signal" for scenario_id in MASKING_ABLATION_SCENARIOS
         }
     if not supported:
-        return {
-            scenario_id: "neutral_or_mixed"
-            for scenario_id in MASKING_ABLATION_SCENARIOS
-        }
+        return {scenario_id: "neutral_or_mixed" for scenario_id in MASKING_ABLATION_SCENARIOS}
     decision = supported[0]
     return {
         "baseline": (
@@ -7070,8 +7385,7 @@ def _scenario_horizon_recommendation_contributions(
         ),
         "no_valuation_crowding_masking": (
             f"supports_{decision}"
-            if decision
-            in {"baseline_over_defensive_candidate", "disable_masking_candidate"}
+            if decision in {"baseline_over_defensive_candidate", "disable_masking_candidate"}
             else "neutral_or_mixed"
         ),
         "capped_masking": (
@@ -7119,9 +7433,7 @@ def _robustness_cases_by_source(
         asset_universe=asset_universe,
     )
     availability = [
-        dict(item)
-        for item in gate_audit.get("gate_availability", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in gate_audit.get("gate_availability", []) if isinstance(item, Mapping)
     ]
     full_dates = {
         str(record.get("date"))
@@ -7273,9 +7585,11 @@ def _equal_weight_group_aggregation(
     *,
     group_field: str,
 ) -> dict[str, Any]:
-    groups = [
-        group for group in group_layers if isinstance(group, Mapping) and group.get(group_field)
-    ] if isinstance(group_layers, Sequence) and not isinstance(group_layers, (str, bytes)) else []
+    groups = (
+        [group for group in group_layers if isinstance(group, Mapping) and group.get(group_field)]
+        if isinstance(group_layers, Sequence) and not isinstance(group_layers, (str, bytes))
+        else []
+    )
     horizon_results = []
     for horizon in MASKING_OUTCOME_HORIZONS:
         scenario_values: dict[str, list[float]] = {
@@ -7299,8 +7613,7 @@ def _equal_weight_group_aggregation(
                 if value is not None:
                     scenario_values[scenario_id].append(value)
         scenario_avg_returns = {
-            scenario_id: _mean(values)
-            for scenario_id, values in scenario_values.items()
+            scenario_id: _mean(values) for scenario_id, values in scenario_values.items()
         }
         horizon_results.append(
             {
@@ -7333,9 +7646,7 @@ def _single_layer_aggregation(layer: Mapping[str, Any]) -> dict[str, Any]:
             by_horizon = scenario.get("by_horizon", {}) if isinstance(scenario, Mapping) else {}
             metrics = by_horizon.get(f"{horizon}d", {}) if isinstance(by_horizon, Mapping) else {}
             scenario_avg_returns[scenario_id] = (
-                _optional_float(metrics.get("avg_return"))
-                if isinstance(metrics, Mapping)
-                else None
+                _optional_float(metrics.get("avg_return")) if isinstance(metrics, Mapping) else None
             )
         horizon_results.append(
             {
@@ -7413,15 +7724,11 @@ def _robustness_case_diagnostics(
             reverse=True,
         )[:10],
         "top_losing_cases": sorted(baseline_rows, key=lambda row: row["delta_return"])[:10],
-        "false_risk_off_cases": [
-            row for row in baseline_rows if row.get("false_risk_off")
-        ][:20],
-        "missed_upside_cases": [
-            row for row in baseline_rows if row.get("missed_upside")
-        ][:20],
-        "drawdown_reduction_cases": [
-            row for row in baseline_rows if row.get("drawdown_reduced")
-        ][:20],
+        "false_risk_off_cases": [row for row in baseline_rows if row.get("false_risk_off")][:20],
+        "missed_upside_cases": [row for row in baseline_rows if row.get("missed_upside")][:20],
+        "drawdown_reduction_cases": [row for row in baseline_rows if row.get("drawdown_reduced")][
+            :20
+        ],
         "by_asset": _case_diagnostic_group_summary(baseline_rows, "asset"),
         "by_regime": _case_diagnostic_group_summary(baseline_rows, "market_regime"),
         "by_event_window": _case_diagnostic_event_window_summary(baseline_rows),
@@ -7504,9 +7811,7 @@ def _case_diagnostic_group_summary(
         {
             field: group_key,
             "case_count": len(group_rows),
-            "avg_delta_return": _mean(
-                [_float(row.get("delta_return")) for row in group_rows]
-            ),
+            "avg_delta_return": _mean([_float(row.get("delta_return")) for row in group_rows]),
             "positive_delta_count": sum(
                 1 for row in group_rows if _float(row.get("delta_return")) > 0
             ),
@@ -7531,9 +7836,7 @@ def _case_diagnostic_event_window_summary(
         {
             "event_window_id": event_id,
             "case_count": len(group_rows),
-            "avg_delta_return": _mean(
-                [_float(row.get("delta_return")) for row in group_rows]
-            ),
+            "avg_delta_return": _mean([_float(row.get("delta_return")) for row in group_rows]),
             "promotion_gate_allowed": False,
         }
         for event_id, group_rows in sorted(grouped.items())
@@ -7571,8 +7874,7 @@ def _ten_day_baseline_support_attribution(
         "baseline_win_case_count": len(winning_rows),
         "baseline_total_case_count": len(rows),
         "top_date_share": top_date_share,
-        "wins_concentrated_in_few_dates": top_date_share
-        > ROBUSTNESS_TOP_DATE_CONCENTRATION_SHARE,
+        "wins_concentrated_in_few_dates": top_date_share > ROBUSTNESS_TOP_DATE_CONCENTRATION_SHARE,
         "top_cluster_share": top_cluster_share,
         "semiconductor_ai_cluster_share": _named_group_share(
             by_cluster,
@@ -7582,8 +7884,7 @@ def _ten_day_baseline_support_attribution(
         "source_counts": source_counts,
         "component_or_bridge_driven": (
             source_counts.get("full_advisory_only", 0)
-            < source_counts.get("backtest_bridge", 0)
-            + source_counts.get("component_only", 0)
+            < source_counts.get("backtest_bridge", 0) + source_counts.get("component_only", 0)
         ),
         "full_advisory_only_avg_positive_delta": full_delta,
         "all_sources_avg_positive_delta": all_delta,
@@ -7618,9 +7919,7 @@ def _named_group_share(
     if total <= 0:
         return 0.0
     named = sum(
-        int(row.get("case_count") or 0)
-        for row in group_rows
-        if row.get(group_field) == group_name
+        int(row.get("case_count") or 0) for row in group_rows if row.get(group_field) == group_name
     )
     return named / total
 
@@ -7661,16 +7960,9 @@ def _short_horizon_neutral_explanation(
     explanations = []
     for horizon in (1, 5):
         returns = _raw_returns_for_horizon(all_cases, horizon)
-        delta_rows = [
-            row
-            for row in scenario_delta_matrix
-            if row.get("horizon") == f"{horizon}d"
-        ]
+        delta_rows = [row for row in scenario_delta_matrix if row.get("horizon") == f"{horizon}d"]
         max_delta = max(
-            (
-                abs(_optional_float(row.get("delta_avg_return")) or 0.0)
-                for row in delta_rows
-            ),
+            (abs(_optional_float(row.get("delta_avg_return")) or 0.0) for row in delta_rows),
             default=0.0,
         )
         positive_share = _ratio(sum(1 for value in returns if value > 0), len(returns))
@@ -7690,8 +7982,7 @@ def _short_horizon_neutral_explanation(
                 "scenario_difference_small": max_delta < ROBUSTNESS_SMALL_RETURN_DELTA,
                 "max_abs_delta_avg_return": max_delta,
                 "outcome_noise_std": _stddev(returns),
-                "outcome_noise_high": (_stddev(returns) or 0.0)
-                > ROBUSTNESS_HIGH_NOISE_STD,
+                "outcome_noise_high": (_stddev(returns) or 0.0) > ROBUSTNESS_HIGH_NOISE_STD,
                 "diluted_by_same_date_or_cluster": _short_horizon_diluted(
                     effectiveness,
                     horizon,
@@ -7788,8 +8079,7 @@ def _pending_twenty_day_maturity_tracker(
 ) -> dict[str, Any]:
     records = (
         [record for record in outcome_records if isinstance(record, Mapping)]
-        if isinstance(outcome_records, Sequence)
-        and not isinstance(outcome_records, (str, bytes))
+        if isinstance(outcome_records, Sequence) and not isinstance(outcome_records, (str, bytes))
         else []
     )
     mature: list[Mapping[str, Any]] = []
@@ -7851,8 +8141,7 @@ def _pending_tracker_group(
             field: group_key,
             "pending_20d_cases": len(group_rows),
             "earliest_expected_maturity_date": min(
-                str(row.get("expected_maturity_date") or "9999-12-31")
-                for row in group_rows
+                str(row.get("expected_maturity_date") or "9999-12-31") for row in group_rows
             ),
             "promotion_gate_allowed": False,
         }
@@ -7866,21 +8155,15 @@ def _validation_rollup_pending_maturity_tracker(
 ) -> dict[str, Any]:
     summary = outcome_availability.get("summary", {})
     mature_by_horizon = (
-        summary.get("mature_case_count_by_horizon", {})
-        if isinstance(summary, Mapping)
-        else {}
+        summary.get("mature_case_count_by_horizon", {}) if isinstance(summary, Mapping) else {}
     )
     not_mature_by_horizon = (
-        summary.get("not_mature_count_by_horizon", {})
-        if isinstance(summary, Mapping)
-        else {}
+        summary.get("not_mature_count_by_horizon", {}) if isinstance(summary, Mapping) else {}
     )
     source_tracker = robustness.get("pending_20d_maturity_tracker", {})
     tracker = dict(source_tracker) if isinstance(source_tracker, Mapping) else {}
     expected = [
-        item
-        for item in tracker.get("expected_maturity_dates", [])
-        if isinstance(item, Mapping)
+        item for item in tracker.get("expected_maturity_dates", []) if isinstance(item, Mapping)
     ]
     tracker["current_mature_cases_by_horizon"] = {
         f"{horizon}d": int(mature_by_horizon.get(f"{horizon}d") or 0)
@@ -7931,11 +8214,7 @@ def _validation_rollup_rerun_criteria(
     )
     full_20d = int(full_mature.get("20d") or 0)
     conservative_gate = robustness.get("conservative_evidence_gate", {})
-    checks = (
-        conservative_gate.get("checks", [])
-        if isinstance(conservative_gate, Mapping)
-        else []
-    )
+    checks = conservative_gate.get("checks", []) if isinstance(conservative_gate, Mapping) else []
     check_map = {
         str(item.get("check_id")): bool(item.get("passed"))
         for item in checks
@@ -7965,9 +8244,9 @@ def _validation_rollup_rerun_criteria(
         {
             "criterion_id": "primary_horizon_consensus",
             "description": "Rerun if at least two of 1d/5d/10d support the same scenario.",
-            "current_value": dict(horizon_contributions)
-            if isinstance(horizon_contributions, Mapping)
-            else {},
+            "current_value": (
+                dict(horizon_contributions) if isinstance(horizon_contributions, Mapping) else {}
+            ),
             "threshold": "two_primary_horizons_same_scenario",
             "currently_met": primary_consensus,
         },
@@ -7983,9 +8262,7 @@ def _validation_rollup_rerun_criteria(
         },
         {
             "criterion_id": "risk_flag_deterioration",
-            "description": (
-                "Rerun if missed_upside or false_risk_off deteriorates materially."
-            ),
+            "description": ("Rerun if missed_upside or false_risk_off deteriorates materially."),
             "current_value": {
                 "missed_upside_false_risk_off_not_worse": not risk_deteriorated,
             },
@@ -7994,9 +8271,7 @@ def _validation_rollup_rerun_criteria(
         },
     ]
     return {
-        "next_recommended_rerun_date": maturity_tracker.get(
-            "next_recommended_rerun_date"
-        ),
+        "next_recommended_rerun_date": maturity_tracker.get("next_recommended_rerun_date"),
         "criteria": criteria,
         "any_currently_met": any(item["currently_met"] for item in criteria),
         "promotion_gate_allowed": False,
@@ -8128,9 +8403,11 @@ def _validation_rollup_remaining_limitations(
             }
         )
     outcome_summary = outcome_availability.get("summary", {})
-    if isinstance(outcome_summary, Mapping) and int(
-        outcome_summary.get("20d_mature_case_count") or 0
-    ) < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
+    if (
+        isinstance(outcome_summary, Mapping)
+        and int(outcome_summary.get("20d_mature_case_count") or 0)
+        < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+    ):
         limitations.append(
             {
                 "limitation_id": "insufficient_long_horizon_evidence",
@@ -8139,9 +8416,11 @@ def _validation_rollup_remaining_limitations(
             }
         )
     conservative_gate = robustness.get("conservative_evidence_gate", {})
-    if isinstance(conservative_gate, Mapping) and str(
-        conservative_gate.get("final_validation_recommendation")
-    ) == "keep_preliminary_short_horizon_only":
+    if (
+        isinstance(conservative_gate, Mapping)
+        and str(conservative_gate.get("final_validation_recommendation"))
+        == "keep_preliminary_short_horizon_only"
+    ):
         limitations.append(
             {
                 "limitation_id": "conservative_evidence_gate_not_met",
@@ -8150,6 +8429,365 @@ def _validation_rollup_remaining_limitations(
             }
         )
     return limitations
+
+
+def _full_advisory_mature_outcome_records(
+    records: Any,
+    *,
+    horizon: int,
+) -> list[Mapping[str, Any]]:
+    usable = (
+        [record for record in records if isinstance(record, Mapping)]
+        if isinstance(records, Sequence) and not isinstance(records, (str, bytes))
+        else []
+    )
+    return [
+        record
+        for record in usable
+        if str(record.get("eligibility_layer") or "") == "full_advisory_only"
+        and _case_horizon_available(record, horizon)
+    ]
+
+
+def _long_horizon_effective_sample_size(
+    full_20d_cases: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    dates = {str(case.get("date") or "") for case in full_20d_cases if case.get("date")}
+    assets = {str(case.get("asset") or DEFAULT_TRACE_ASSET).upper() for case in full_20d_cases}
+    clusters = {_asset_cluster_id(asset) for asset in assets}
+    regimes = {
+        str(case.get("market_regime") or registry.market_regime.regime_id)
+        for case in full_20d_cases
+    }
+    return {
+        "raw_case_count": len(full_20d_cases),
+        "unique_date_count": len(dates),
+        "unique_asset_count": len(assets),
+        "correlated_asset_cluster_count": len(clusters),
+        "regime_count": len(regimes) if full_20d_cases else 0,
+        "effective_date_count": len(dates),
+        "effective_cluster_count": len(clusters),
+        "effective_sample_method": (
+            "conservative_proxy_counts_dates_and_correlated_clusters_not_rows"
+        ),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _long_horizon_robustness_based_gate(
+    full_20d_cases: Sequence[Mapping[str, Any]],
+    robustness: Mapping[str, Any],
+    capped_masking_ratio: float,
+) -> dict[str, Any]:
+    aggregation = robustness.get("aggregation", {})
+    aggregation = aggregation if isinstance(aggregation, Mapping) else {}
+    base_winner = _scenario_winner_for_cases(
+        full_20d_cases,
+        horizon=20,
+        capped_masking_ratio=capped_masking_ratio,
+    )
+    leave_one_date = _leave_one_group_out_stability(
+        full_20d_cases,
+        group_field="date",
+        base_winner=base_winner,
+        capped_masking_ratio=capped_masking_ratio,
+    )
+    leave_one_asset = _leave_one_group_out_stability(
+        full_20d_cases,
+        group_field="asset",
+        base_winner=base_winner,
+        capped_masking_ratio=capped_masking_ratio,
+    )
+    leave_one_cluster = _leave_one_group_out_stability(
+        full_20d_cases,
+        group_field="correlated_asset_cluster",
+        base_winner=base_winner,
+        capped_masking_ratio=capped_masking_ratio,
+    )
+    full_winner = _aggregation_layer_winner(
+        aggregation.get("full_advisory_only", {}),
+        horizon=20,
+    )
+    all_winner = _aggregation_layer_winner(
+        aggregation.get("all_validation_sources", {}),
+        horizon=20,
+    )
+    date_winner = _aggregation_layer_winner(
+        aggregation.get("equal_weight_by_date", {}),
+        horizon=20,
+    )
+    cluster_winner = _aggregation_layer_winner(
+        aggregation.get("equal_weight_by_correlated_asset_cluster", {}),
+        horizon=20,
+    )
+    cluster_share = _max_group_share(full_20d_cases, "correlated_asset_cluster")
+    full_vs_all = _winners_not_conflicting(full_winner, all_winner)
+    row_vs_date = _winners_not_conflicting(all_winner, date_winner)
+    cluster_not_dominated = (
+        cluster_share <= ROBUSTNESS_CLUSTER_DOMINANCE_SHARE
+        and _winners_not_conflicting(all_winner, cluster_winner)
+    )
+    checks = [
+        {
+            "check_id": "leave_one_date_out_stable",
+            "passed": leave_one_date["stable"],
+            "details": leave_one_date,
+        },
+        {
+            "check_id": "leave_one_asset_out_stable",
+            "passed": leave_one_asset["stable"],
+            "details": leave_one_asset,
+        },
+        {
+            "check_id": "leave_one_cluster_out_stable",
+            "passed": leave_one_cluster["stable"],
+            "details": leave_one_cluster,
+        },
+        {
+            "check_id": "full_advisory_only_all_sources_not_conflicting",
+            "passed": full_vs_all,
+            "full_advisory_winner": full_winner,
+            "all_sources_winner": all_winner,
+        },
+        {
+            "check_id": "row_level_date_equal_weight_not_conflicting",
+            "passed": row_vs_date,
+            "row_level_winner": all_winner,
+            "date_equal_weight_winner": date_winner,
+        },
+        {
+            "check_id": "cluster_equal_weight_not_single_cluster_dominated",
+            "passed": cluster_not_dominated,
+            "cluster_equal_weight_winner": cluster_winner,
+            "max_cluster_case_share": cluster_share,
+            "max_allowed_cluster_case_share": ROBUSTNESS_CLUSTER_DOMINANCE_SHARE,
+        },
+    ]
+    return {
+        "base_20d_full_advisory_winner": base_winner,
+        "leave_one_date_out_stable": leave_one_date["stable"],
+        "leave_one_asset_out_stable": leave_one_asset["stable"],
+        "leave_one_cluster_out_stable": leave_one_cluster["stable"],
+        "full_advisory_only_all_sources_not_conflicting": full_vs_all,
+        "row_level_date_equal_weight_not_conflicting": row_vs_date,
+        "cluster_equal_weight_not_single_cluster_dominated": cluster_not_dominated,
+        "checks": checks,
+        "passed": all(check["passed"] for check in checks),
+        "promotion_gate_allowed": False,
+    }
+
+
+def _scenario_winner_for_cases(
+    cases: Sequence[Mapping[str, Any]],
+    *,
+    horizon: int,
+    capped_masking_ratio: float,
+) -> str:
+    scenario_values: dict[str, list[float]] = {
+        scenario_id: [] for scenario_id in MASKING_ABLATION_SCENARIOS
+    }
+    for case in cases:
+        if not _case_horizon_available(case, horizon):
+            continue
+        outcomes = case.get("outcomes", {})
+        if not isinstance(outcomes, Mapping):
+            continue
+        raw_return = outcomes.get(f"return_{horizon}d")
+        if not isinstance(raw_return, float):
+            continue
+        for scenario_id in MASKING_ABLATION_SCENARIOS:
+            weight, _ = _scenario_weight(case, scenario_id, capped_masking_ratio)
+            scenario_values[scenario_id].append(weight * raw_return)
+    return _winning_scenario(
+        {scenario_id: _mean(values) for scenario_id, values in scenario_values.items()}
+    )
+
+
+def _leave_one_group_out_stability(
+    cases: Sequence[Mapping[str, Any]],
+    *,
+    group_field: str,
+    base_winner: str,
+    capped_masking_ratio: float,
+) -> dict[str, Any]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for case in cases:
+        if group_field == "correlated_asset_cluster":
+            key = _asset_cluster_id(str(case.get("asset") or DEFAULT_TRACE_ASSET))
+        else:
+            key = str(case.get(group_field) or "UNKNOWN")
+        grouped[key].append(case)
+    leave_one_results = []
+    for group_key in sorted(grouped):
+        remaining = [case for case in cases if case not in grouped[group_key]]
+        winner = _scenario_winner_for_cases(
+            remaining,
+            horizon=20,
+            capped_masking_ratio=capped_masking_ratio,
+        )
+        leave_one_results.append(
+            {
+                group_field: group_key,
+                "remaining_case_count": len(remaining),
+                "winning_scenario": winner,
+                "matches_base_winner": winner == base_winner,
+            }
+        )
+    stable = (
+        len(grouped) > 1
+        and base_winner != "insufficient_evidence"
+        and all(result["matches_base_winner"] for result in leave_one_results)
+    )
+    return {
+        "stable": stable,
+        "base_winner": base_winner,
+        "group_count": len(grouped),
+        "leave_one_results": leave_one_results,
+        "promotion_gate_allowed": False,
+    }
+
+
+def _winners_not_conflicting(left: str, right: str) -> bool:
+    if not left or not right:
+        return False
+    if "insufficient" in left or "insufficient" in right:
+        return False
+    return left == right
+
+
+def _max_group_share(
+    cases: Sequence[Mapping[str, Any]],
+    group_field: str,
+) -> float:
+    if not cases:
+        return 0.0
+    grouped: dict[str, int] = defaultdict(int)
+    for case in cases:
+        if group_field == "correlated_asset_cluster":
+            key = _asset_cluster_id(str(case.get("asset") or DEFAULT_TRACE_ASSET))
+        else:
+            key = str(case.get(group_field) or "UNKNOWN")
+        grouped[key] += 1
+    return max(grouped.values(), default=0) / len(cases)
+
+
+def _long_horizon_threshold_sensitivity(
+    *,
+    full_case_count: int,
+    robustness_gate: Mapping[str, Any],
+    current_recommendation: str,
+) -> dict[str, Any]:
+    floors = (20, 30, 50, 80, 100)
+    base_winner = str(robustness_gate.get("base_20d_full_advisory_winner") or "")
+    robustness_failures = [
+        str(check.get("check_id"))
+        for check in robustness_gate.get("checks", [])
+        if isinstance(check, Mapping) and not check.get("passed")
+    ]
+    rows = []
+    recommendations = []
+    for floor in floors:
+        sample_count_passed = full_case_count >= floor
+        if not sample_count_passed:
+            recommendation = "keep_preliminary_short_horizon_only"
+            driver = "sample_count_below_floor"
+        elif not bool(robustness_gate.get("passed")):
+            recommendation = "keep_preliminary_short_horizon_only"
+            driver = "robustness_failures"
+        else:
+            recommendation = _scenario_winner_to_recommendation(base_winner)
+            driver = "sample_count_and_robustness_passed"
+        recommendations.append(recommendation)
+        rows.append(
+            {
+                "floor": floor,
+                "floor_label": "heuristic_min_full_advisory_cases",
+                "calibration_status": "uncalibrated",
+                "full_advisory_mature_cases": full_case_count,
+                "sample_count_passed": sample_count_passed,
+                "robustness_gate_passed": bool(robustness_gate.get("passed")),
+                "recommendation_by_floor": recommendation,
+                "recommendation_changes_from_current": recommendation != current_recommendation,
+                "conclusion_driver": driver,
+                "robustness_failures": robustness_failures,
+                "promotion_gate_allowed": False,
+            }
+        )
+    return {
+        "floors": list(floors),
+        "recommendation_by_floor": rows,
+        "recommendation_changes": len(set(recommendations)) > 1,
+        "first_floor_where_recommendation_stabilizes": (_first_stable_floor(rows)),
+        "twenty_day_conclusion_driver": _twenty_day_conclusion_driver(rows),
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
+
+
+def _scenario_winner_to_recommendation(winner: str) -> str:
+    if winner == "baseline":
+        return "keep_baseline_masking_candidate"
+    if winner == "capped_masking":
+        return "prefer_capped_masking_candidate"
+    if winner == "no_valuation_crowding_masking":
+        return "baseline_over_defensive_candidate"
+    return "keep_preliminary_short_horizon_only"
+
+
+def _first_stable_floor(rows: Sequence[Mapping[str, Any]]) -> int | None:
+    for index, row in enumerate(rows):
+        recommendation = row.get("recommendation_by_floor")
+        if all(later.get("recommendation_by_floor") == recommendation for later in rows[index:]):
+            return int(row.get("floor") or 0)
+    return None
+
+
+def _twenty_day_conclusion_driver(rows: Sequence[Mapping[str, Any]]) -> str:
+    drivers = {str(row.get("conclusion_driver")) for row in rows if row.get("conclusion_driver")}
+    if drivers == {"sample_count_below_floor"}:
+        return "sample_count_only"
+    if "robustness_failures" in drivers and "sample_count_below_floor" in drivers:
+        return "sample_count_and_robustness_failures"
+    if "robustness_failures" in drivers:
+        return "robustness_failures"
+    return "sample_count_and_robustness_passed"
+
+
+def _long_horizon_calibration_conclusion(
+    effective_sample: Mapping[str, Any],
+    robustness_gate: Mapping[str, Any],
+    sensitivity: Mapping[str, Any],
+) -> dict[str, Any]:
+    raw_case_count = int(effective_sample.get("raw_case_count") or 0)
+    effective_date_count = int(effective_sample.get("effective_date_count") or 0)
+    effective_cluster_count = int(effective_sample.get("effective_cluster_count") or 0)
+    if effective_date_count < HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY:
+        conclusion = "insufficient_data_to_calibrate_floor"
+        action = "floor_50_retained_as_heuristic"
+    elif bool(robustness_gate.get("passed")) and not bool(
+        sensitivity.get("recommendation_changes")
+    ):
+        conclusion = "replace_fixed_floor_with_evidence_bands"
+        action = "replace_fixed_floor_with_evidence_bands"
+    else:
+        conclusion = "insufficient_data_to_calibrate_floor"
+        action = "floor_50_retained_as_heuristic"
+    return {
+        "calibration_conclusion": conclusion,
+        "floor_50_action": action,
+        "floor_50_retained_as_heuristic": action == "floor_50_retained_as_heuristic",
+        "candidate_adjusted_floor": None,
+        "raw_case_count": raw_case_count,
+        "effective_date_count": effective_date_count,
+        "effective_cluster_count": effective_cluster_count,
+        "robustness_gate_passed": bool(robustness_gate.get("passed")),
+        "calibration_status": "uncalibrated",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+    }
 
 
 def _conservative_evidence_gate(
@@ -8289,11 +8927,7 @@ def _risk_not_worse_for_action(
 ) -> bool:
     if action is None:
         return False
-    relevant = [
-        row
-        for row in scenario_delta_matrix
-        if row.get("horizon") in {"1d", "5d", "10d"}
-    ]
+    relevant = [row for row in scenario_delta_matrix if row.get("horizon") in {"1d", "5d", "10d"}]
     if action == "prefer_capped_masking_candidate":
         comparison = "baseline_vs_capped_masking"
     elif action in {"baseline_over_defensive_candidate", "disable_masking_candidate"}:
@@ -8390,8 +9024,7 @@ def _drawdown_not_materially_worse(
     if baseline_drawdown is None or challenger_drawdown is None:
         return False
     return challenger_drawdown >= (
-        baseline_drawdown
-        - abs(baseline_drawdown) * EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE
+        baseline_drawdown - abs(baseline_drawdown) * EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE
     )
 
 
@@ -8489,9 +9122,7 @@ def _ablation_scenario_metrics(
         for index in range(1, len(dated_weights))
     )
     averages = {
-        f"avg_return_{horizon}d": (
-            sum(values) / len(values) if values else None
-        )
+        f"avg_return_{horizon}d": (sum(values) / len(values) if values else None)
         for horizon, values in weighted_returns.items()
     }
     hit_rates = {
@@ -8520,15 +9151,11 @@ def _ablation_scenario_metrics(
             for horizon in MASKING_OUTCOME_HORIZONS
         },
         **{
-            f"missed_upside_count_{horizon}d": by_horizon[f"{horizon}d"][
-                "missed_upside_count"
-            ]
+            f"missed_upside_count_{horizon}d": by_horizon[f"{horizon}d"]["missed_upside_count"]
             for horizon in MASKING_OUTCOME_HORIZONS
         },
         **{
-            f"false_risk_off_count_{horizon}d": by_horizon[f"{horizon}d"][
-                "false_risk_off_count"
-            ]
+            f"false_risk_off_count_{horizon}d": by_horizon[f"{horizon}d"]["false_risk_off_count"]
             for horizon in MASKING_OUTCOME_HORIZONS
         },
         "sample_quality_breakdown": {
@@ -8537,9 +9164,7 @@ def _ablation_scenario_metrics(
             "case_count": len(cases),
             "outcome_missing_count": sum(1 for case in cases if case.get("outcome_missing")),
             "outcome_available_count": sum(1 for case in cases if _case_outcome_available(case)),
-            "outcome_not_mature_count": sum(
-                1 for case in cases if case.get("outcome_not_mature")
-            ),
+            "outcome_not_mature_count": sum(1 for case in cases if case.get("outcome_not_mature")),
             **_horizon_specific_summary_counts(_case_horizon_maturity_counts(cases)),
         },
     }
@@ -8574,9 +9199,7 @@ def _ablation_scenario_horizon_metrics(
         )
         weighted_returns.append(weight * value)
         raw_returns.append(value)
-        dated_weights.append(
-            (str(case.get("date") or ""), str(case.get("asset") or ""), weight)
-        )
+        dated_weights.append((str(case.get("date") or ""), str(case.get("asset") or ""), weight))
         if applied_suppression > 0:
             constraint_hit_count += 1
             drawdown_reduced = value < 0
@@ -8595,16 +9218,10 @@ def _ablation_scenario_horizon_metrics(
     return {
         "horizon": f"{horizon}d",
         "horizon_trading_days": horizon,
-        "avg_return": (
-            sum(weighted_returns) / len(weighted_returns)
-            if weighted_returns
-            else None
-        ),
+        "avg_return": (sum(weighted_returns) / len(weighted_returns) if weighted_returns else None),
         "median_return": _median(weighted_returns),
         "hit_rate": (
-            sum(1 for value in raw_returns if value > 0) / len(raw_returns)
-            if raw_returns
-            else None
+            sum(1 for value in raw_returns if value > 0) / len(raw_returns) if raw_returns else None
         ),
         "downside_capture": _downside_capture(raw_returns, weighted_returns),
         "max_drawdown": min(weighted_returns) if weighted_returns else None,
@@ -8986,7 +9603,8 @@ def _gate_outcome(
     if coverage_status == "HIGH_IMPACT_UNVALIDATED":
         return "OWNER_REVIEW_REQUIRED"
     if any(
-        str(item.get("conclusion_status")) in {
+        str(item.get("conclusion_status"))
+        in {
             "B_EFFECT_MASKED_BY_A",
             "B_EFFECT_CONDITIONAL_ON_HIGH_IMPACT_UNVALIDATED_A",
         }
@@ -9135,6 +9753,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "daily_indicator_inventory",
         "indicator_research_coverage_audit",
         "daily_indicator_coverage_gap_report",
+        "threshold_registry_audit",
         "indicator_dependency_graph",
         "indicator_masking_and_dominance_audit_valuation_crowding",
         "valuation_crowding_pilot_validation_report",
@@ -9144,6 +9763,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "valuation_crowding_masking_effectiveness_review",
         "valuation_crowding_masking_robustness_review",
         "indicator_research_validation_rollup",
+        "long_horizon_evidence_floor_calibration_audit",
         "historical_multi_stage_weight_trace_validation",
         "historical_trace_gate_availability_audit",
         "component_level_historical_trace",
@@ -9155,6 +9775,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
             key_artifact_statuses[artifact_id] = _read_json_status(Path(str(paths["json_path"])))
     inventory = _read_pack_artifact_json(artifacts, "daily_indicator_inventory")
     coverage_gap = _read_pack_artifact_json(artifacts, "daily_indicator_coverage_gap_report")
+    threshold_audit = _read_pack_artifact_json(artifacts, "threshold_registry_audit")
     masking = _read_pack_artifact_json(
         artifacts,
         "indicator_masking_and_dominance_audit_valuation_crowding",
@@ -9191,6 +9812,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         artifacts,
         "indicator_research_validation_rollup",
     )
+    floor_calibration = _read_pack_artifact_json(
+        artifacts,
+        "long_horizon_evidence_floor_calibration_audit",
+    )
     outcome_availability = _read_pack_artifact_json(
         artifacts,
         "valuation_crowding_outcome_availability_audit",
@@ -9220,17 +9845,16 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "coverage_gap_summary": (
             coverage_gap.get("summary", {}) if isinstance(coverage_gap, Mapping) else {}
         ),
+        "threshold_audit_summary": (
+            threshold_audit.get("summary", {}) if isinstance(threshold_audit, Mapping) else {}
+        ),
         "coverage_gap_unregistered": (
             coverage_gap.get("unregistered_daily_indicators", [])
             if isinstance(coverage_gap, Mapping)
             else []
         ),
         "high_impact_unvalidated_ids": (
-            [
-                item.get("indicator_id")
-                for item in high_impact
-                if isinstance(item, Mapping)
-            ]
+            [item.get("indicator_id") for item in high_impact if isinstance(item, Mapping)]
             if isinstance(high_impact, list)
             else []
         ),
@@ -9251,9 +9875,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
             casebook.get("summary", {}) if isinstance(casebook, Mapping) else {}
         ),
         "gate_availability_summary": (
-            gate_availability.get("summary", {})
-            if isinstance(gate_availability, Mapping)
-            else {}
+            gate_availability.get("summary", {}) if isinstance(gate_availability, Mapping) else {}
         ),
         "sample_quality_summary": {
             key: historical_summary.get(key)
@@ -9284,9 +9906,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
             else {}
         ),
         "masking_robustness_summary": (
-            robustness_review.get("summary", {})
-            if isinstance(robustness_review, Mapping)
-            else {}
+            robustness_review.get("summary", {}) if isinstance(robustness_review, Mapping) else {}
         ),
         "masking_robustness_delta_count": (
             len(robustness_review.get("scenario_delta_matrix", []))
@@ -9294,13 +9914,19 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
             else 0
         ),
         "validation_rollup_summary": (
-            validation_rollup.get("summary", {})
-            if isinstance(validation_rollup, Mapping)
-            else {}
+            validation_rollup.get("summary", {}) if isinstance(validation_rollup, Mapping) else {}
         ),
         "validation_rollup_recommendation": (
             validation_rollup.get("valuation_crowding_masking_current_recommendation", {})
             if isinstance(validation_rollup, Mapping)
+            else {}
+        ),
+        "floor_calibration_summary": (
+            floor_calibration.get("summary", {}) if isinstance(floor_calibration, Mapping) else {}
+        ),
+        "floor_calibration_sensitivity": (
+            floor_calibration.get("threshold_sensitivity", {})
+            if isinstance(floor_calibration, Mapping)
             else {}
         ),
         "lineage_manifest_repair_summary": (

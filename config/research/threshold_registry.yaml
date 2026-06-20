@@ -1,0 +1,970 @@
+schema_version: 1
+registry_id: threshold_registry_v1
+task_id: TRADING-693
+version: 2026-06-20
+status: validation_inventory
+owner: system_validation
+mode: validation_only
+production_effect: none
+rationale: >
+  Inventory engineering default thresholds and magic numbers that can affect
+  research conclusions, validation quality, candidate promotion interpretation,
+  backtest/replay acceptance, masking diagnostics, outcome maturity, robustness,
+  and allocation constraints. This registry does not change production,
+  paper-shadow, or official target weights.
+scope:
+  include:
+    - config
+    - indicator_research
+    - validation_pack
+    - masking_diagnostics
+    - outcome_maturity
+    - promotion_gates
+    - robustness_gates
+    - backtest_replay_allocation_constraints
+    - tests_with_hardcoded_thresholds
+  exclude:
+    - pure formatting precision
+    - array indices
+    - protocol or schema version numbers
+    - market regime anchor dates
+    - retry and timeout constants that do not affect investment interpretation
+safety_boundary:
+  validation_only: true
+  manual_review_only: true
+  production_weight_logic_changed: false
+  production_weight_affecting: false
+  paper_shadow_change_allowed: false
+  official_target_weights_mutated: false
+  broker_effect: none
+  order_effect: none
+  production_effect: none
+
+thresholds:
+  - threshold_id: indicator_research.effectiveness_min_available_outcome_cases
+    current_value: 50
+    unit: mature_cases
+    where_used:
+      - src/ai_trading_system/indicator_research.py:EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+      - docs/requirements/TRADING-693_Long_Horizon_Evidence_Floor_Calibration_Audit.md
+    purpose: Long-horizon full-advisory mature outcome floor for masking policy validation.
+    impact_scope: high-impact long-horizon decision and promotion-readiness interpretation
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Retained as a conservative guardrail from the validation-only masking review.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: preliminary_short_horizon_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Estimate precision and stability across rolling 20d forward windows, independent dates, assets, clusters, and regimes.
+
+  - threshold_id: indicator_research.effectiveness_min_short_horizon_mature_cases
+    current_value: 50
+    unit: mature_cases
+    where_used:
+      - src/ai_trading_system/indicator_research.py:EFFECTIVENESS_MIN_SHORT_HORIZON_MATURE_CASES
+    purpose: Minimum 1d/5d mature outcomes before short-horizon masking recommendation can move beyond insufficient evidence.
+    impact_scope: high-impact validation recommendation strength
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Conservative validation floor; not fitted to observed outcomes.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: preliminary
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Sensitivity analysis over 20/30/50/80/100 mature-case floors with false positive and false risk-off attribution.
+
+  - threshold_id: indicator_research.effectiveness_drawdown_worse_tolerance
+    current_value: 0.10
+    unit: fraction_of_baseline_drawdown
+    where_used:
+      - src/ai_trading_system/indicator_research.py:EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE
+    purpose: Tolerance for treating no-masking drawdown as not materially worse than baseline.
+    impact_scope: high-impact scenario conclusion boundary
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Validation-only materiality guardrail without statistical calibration.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: unit_tests_and_validation_artifacts_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Calibrate against drawdown-event casebook labels and bootstrapped downside-capture deltas.
+
+  - threshold_id: indicator_research.effectiveness_missed_upside_acceptable_rate
+    current_value: 0.40
+    unit: share_of_cases
+    where_used:
+      - src/ai_trading_system/indicator_research.py:EFFECTIVENESS_MISSED_UPSIDE_ACCEPTABLE_RATE
+    purpose: Maximum missed-upside rate allowed when retaining baseline valuation/crowding masking candidate.
+    impact_scope: high-impact masking recommendation boundary
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Subjective guardrail carried by validation-only review.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: preliminary
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Compare missed-upside distribution to drawdown protection benefit by horizon and event window.
+
+  - threshold_id: indicator_research.default_masking_ablation_cap_ratio
+    current_value: 0.50
+    unit: ratio
+    where_used:
+      - src/ai_trading_system/indicator_research.py:DEFAULT_MASKING_ABLATION_CAP_RATIO
+    purpose: Counterfactual capped-masking scenario ratio in valuation/crowding diagnostics.
+    impact_scope: high-impact scenario design and signal masking interpretation
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Validation-only scenario default, not an approved production cap.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: scenario_sensitivity_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Sweep cap ratios by horizon, regime, and drawdown/upside utility before owner review.
+
+  - threshold_id: indicator_research.robustness_cluster_dominance_share
+    current_value: 0.50
+    unit: share_of_cases
+    where_used:
+      - src/ai_trading_system/indicator_research.py:ROBUSTNESS_CLUSTER_DOMINANCE_SHARE
+    purpose: Maximum single correlated cluster share before robustness evidence is treated as dominated.
+    impact_scope: high-impact robustness gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Conservative anti-concentration guardrail.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: diagnostic_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Estimate cluster concentration sensitivity using leave-one-cluster-out and equal-weight cluster aggregation.
+
+  - threshold_id: indicator_research.robustness_top_date_concentration_share
+    current_value: 0.50
+    unit: share_of_cases
+    where_used:
+      - src/ai_trading_system/indicator_research.py:ROBUSTNESS_TOP_DATE_CONCENTRATION_SHARE
+    purpose: Top-date concentration threshold for robustness support attribution.
+    impact_scope: high-impact robustness support attribution
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Conservative anti-single-date guardrail.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: diagnostic_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Validate against leave-one-date-out stability and event-window balance.
+
+  - threshold_id: indicator_research.masking_high_min
+    current_value: 0.60
+    unit: masking_ratio
+    where_used:
+      - config/research/indicator_research_registry.yaml:validation_policy.masking.high_min
+      - src/ai_trading_system/indicator_research.py:MaskingPolicy
+    purpose: Ratio at which upstream valuation/crowding is classified as high masking.
+    impact_scope: high-impact masking diagnostic label
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Baseline diagnostic threshold; review required before using as promotion evidence.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: registry_baseline_and_focused_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Compare masking-ratio bins to forward outcome deltas and false risk-off labels.
+
+  - threshold_id: indicator_research.masking_moderate_min
+    current_value: 0.25
+    unit: masking_ratio
+    where_used:
+      - config/research/indicator_research_registry.yaml:validation_policy.masking.moderate_min
+    purpose: Ratio at which upstream masking becomes moderate.
+    impact_scope: research workflow masking triage
+    threshold_class: B
+    decision_affecting: true
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Diagnostic triage baseline.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: registry_baseline_and_focused_tests
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Re-estimate after high-min calibration; keep moderate label as triage only until reviewed.
+
+  - threshold_id: indicator_research.dominant_hit_rate_min
+    current_value: 0.50
+    unit: share_of_dates
+    where_used:
+      - config/research/indicator_research_registry.yaml:validation_policy.dominance.dominant_hit_rate_min
+    purpose: Minimum hit-rate for classifying a component as a dominant weight driver.
+    impact_scope: high-impact signal dominance label
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Baseline dominance guardrail.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Calibrate dominance labels against realized contribution share and owner-reviewed masking cases.
+
+  - threshold_id: indicator_research.dominant_share_of_adjustment_min
+    current_value: 0.30
+    unit: share_of_total_weight_adjustment
+    where_used:
+      - config/research/indicator_research_registry.yaml:validation_policy.dominance.dominant_share_of_adjustment_min
+    purpose: Minimum share of total adjustment for dominance classification.
+    impact_scope: high-impact signal dominance label
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Baseline dominance guardrail.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Sweep share threshold and compare to false dominance and missed influence cases.
+
+  - threshold_id: indicator_research.min_trigger_observations_for_mapping_research
+    current_value: 20
+    unit: observations
+    where_used:
+      - config/research/indicator_research_registry.yaml:validation_policy.calibration.min_trigger_observations_for_mapping_research
+    purpose: Minimum observed triggers before mapping research can proceed.
+    impact_scope: evidence floor for signal mapping research
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Research floor baseline.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: registry_baseline
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Power-style sample-size review by trigger frequency, outcome variance, and regime coverage.
+
+  - threshold_id: indicator_research.min_walk_forward_windows
+    current_value: 4
+    unit: windows
+    where_used:
+      - config/research/indicator_research_registry.yaml:validation_policy.calibration.min_walk_forward_windows
+    purpose: Minimum walk-forward windows for mapping calibration evidence.
+    impact_scope: evidence floor for signal mapping research
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Research floor baseline.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: registry_baseline
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Rolling-window stability study with date, asset, and regime stratification.
+
+  - threshold_id: indicator_research.historical_trace_min_dates_for_stability
+    current_value: 20
+    unit: dates
+    where_used:
+      - src/ai_trading_system/indicator_research.py:HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY
+    purpose: Minimum historical trace dates for stability claims.
+    impact_scope: high-impact validation quality and conclusion strength
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Conservative stability floor for validation-only trace diagnostics.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: validation_pack_observation
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Evaluate stability breakpoints over replay date counts and event-window diversity.
+
+  - threshold_id: feedback_sample_policy.decision_outcomes_promotion_floor
+    current_value: 60
+    unit: outcomes
+    where_used:
+      - config/feedback_sample_policy.yaml:decision_outcomes.promotion_floor
+    purpose: Minimum decision-outcome sample count before promotion readiness can be claimed.
+    impact_scope: high-impact promotion evidence floor
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot promotion floor kept high to prevent low-sample production interpretation.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Re-estimate after enough forward decision outcomes accumulate in ai_after_chatgpt regime.
+
+  - threshold_id: feedback_sample_policy.prediction_outcomes_promotion_floor
+    current_value: 30
+    unit: outcomes
+    where_used:
+      - config/feedback_sample_policy.yaml:prediction_outcomes.promotion_floor
+    purpose: Minimum prediction outcome sample count for promotion interpretation.
+    impact_scope: high-impact promotion evidence floor
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot promotion floor for forward prediction ledger evidence.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Compare floor sensitivity to forward prediction hit-rate confidence intervals by horizon.
+
+  - threshold_id: backtest_validation.candidate_min_component_coverage
+    current_value: 0.90
+    unit: coverage_ratio
+    where_used:
+      - config/backtest_validation_policy.yaml:robustness.candidate_min_component_coverage
+    purpose: Minimum component coverage for candidate robustness evidence.
+    impact_scope: high-impact backtest credibility gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot data-credibility floor migrated from prior behavior.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Estimate performance degradation by coverage bucket and missing-component type.
+
+  - threshold_id: backtest_validation.candidate_min_independent_windows
+    current_value: 6
+    unit: windows
+    where_used:
+      - config/backtest_validation_policy.yaml:robustness.candidate_min_independent_windows
+    purpose: Minimum independent windows for candidate robustness review.
+    impact_scope: high-impact robustness evidence floor
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot robustness floor.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Rolling-origin validation to quantify pass-rate stability as independent windows increase.
+
+  - threshold_id: backtest_validation.candidate_random_baseline_min_percentile
+    current_value: 0.90
+    unit: percentile
+    where_used:
+      - config/backtest_validation_policy.yaml:robustness.candidate_random_baseline_min_percentile
+    purpose: Minimum percentile versus same-turnover random strategies.
+    impact_scope: high-impact robustness gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Conservative random-baseline guardrail.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Bootstrap random-baseline percentile stability across seeds, windows, and turnover buckets.
+
+  - threshold_id: backtest_validation.candidate_max_random_beats_share
+    current_value: 0.10
+    unit: share
+    where_used:
+      - config/backtest_validation_policy.yaml:robustness.candidate_max_random_beats_share
+    purpose: Maximum share of random strategies allowed to beat candidate.
+    impact_scope: high-impact robustness gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Conservative random-baseline guardrail.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Calibrate jointly with candidate_random_baseline_min_percentile using seed sensitivity.
+
+  - threshold_id: backtest_validation.promotion_min_lag_sensitivity_days
+    current_value: 3
+    unit: days
+    where_used:
+      - config/backtest_validation_policy.yaml:promotion.min_lag_sensitivity_days
+    purpose: Minimum lag-sensitivity coverage before promotion evidence is accepted.
+    impact_scope: high-impact promotion gate and no-lookahead evidence
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot gate for lag sensitivity.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Lag perturbation study over execution delay and data availability timestamps.
+
+  - threshold_id: promotion_gate.confirmation_target_count_minimum
+    current_value: 3
+    unit: targets
+    where_used:
+      - config/research/promotion_gate_thresholds.yaml:threshold_bands.confirmation_target_count
+    purpose: Minimum explicit confirmation targets before formal research or paper-shadow eligibility.
+    impact_scope: high-impact promotion gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot threshold to avoid one-off qualitative confirmation.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: pilot_policy_with_tests
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Compare confirmation-target families against completed forward evaluation outcomes.
+
+  - threshold_id: promotion_gate.required_status_bands
+    current_value:
+      stress_strength: STRONG
+      drawdown_mismatch_reduction: IMPROVED
+      flip_rotation_reduction: IMPROVED_BOTH
+      ab_review_confidence: PROMISING
+    unit: categorical_band
+    where_used:
+      - config/research/promotion_gate_thresholds.yaml:threshold_bands
+    purpose: Required categorical gate bands for formal research or paper-shadow eligibility.
+    impact_scope: high-impact promotion gate taxonomy
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot governance policy; not outcome-calibrated.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: policy_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Build confusion matrix of band labels versus forward/paper-shadow outcomes before owner review.
+
+  - threshold_id: weight_promotion.minimum_sample_counts
+    current_value:
+      paper_signal: 7
+      shadow: 7
+      production_baseline: 7
+      filled: 3
+    unit: samples
+    where_used:
+      - config/weight_promotion_gate_policy.yaml:thresholds
+    purpose: Minimum sample counts for manual-review-only weight promotion gate inputs.
+    impact_scope: high-impact weight promotion readiness
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot baseline for manual review only.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: unit_tests_and_manual_review_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Use forward paper/shadow/replay sample accumulation to estimate minimum sample stability.
+
+  - threshold_id: weight_promotion.maximum_synthetic_snapshot_ratio
+    current_value: 0.25
+    unit: share
+    where_used:
+      - config/weight_promotion_gate_policy.yaml:thresholds.maximum_synthetic_snapshot_ratio
+    purpose: Maximum synthetic snapshot ratio allowed in promotion review evidence.
+    impact_scope: high-impact data provenance gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot data-quality guardrail.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: policy_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Quantify sensitivity of promotion decisions to synthetic snapshot share and reconciliation failures.
+
+  - threshold_id: weight_promotion.minimum_reconciliation_pass_ratio
+    current_value: 0.90
+    unit: pass_ratio
+    where_used:
+      - config/weight_promotion_gate_policy.yaml:thresholds.minimum_reconciliation_pass_ratio
+    purpose: Minimum reconciliation pass ratio for weight promotion evidence.
+    impact_scope: high-impact reconciliation gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot reconciliation guardrail.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: policy_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Compare pass-ratio bands to downstream fill, replay, and shadow discrepancies.
+
+  - threshold_id: dynamic_allocation.risk_off_score_thresholds
+    current_value:
+      risk_regime_score_max: 42.0
+      composite_trend_score_max: 45.0
+      growth_leadership_score_max: 45.0
+    unit: score_0_100
+    where_used:
+      - config/etf_portfolio/dynamic_allocation_policy.yaml:regime_selection_rules
+    purpose: Risk-off and growth-underperformance state selection thresholds.
+    impact_scope: high-impact candidate allocation and risk-off classification
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only pilot allocation mapping.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Calibrate risk-off labels against forward drawdown, missed upside, and trend-confirmation failures.
+
+  - threshold_id: dynamic_allocation.risk_on_confirmation_thresholds
+    current_value:
+      composite_trend_score_min: 70.0
+      risk_regime_score_min: 62.0
+      growth_leadership_score_min: 72.0
+      semiconductor_leadership_score_min: 75.0
+    unit: score_0_100
+    where_used:
+      - config/etf_portfolio/dynamic_allocation_policy.yaml:regime_selection_rules
+      - config/etf_portfolio/dynamic_allocation_policy.yaml:trend_overlay_rules
+    purpose: Risk-on and leadership confirmation thresholds for candidate allocation overlays.
+    impact_scope: high-impact trend confirmation and allocation intent
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only pilot allocation mapping.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Grid-search confirmation thresholds with forward outcome and turnover penalties.
+
+  - threshold_id: dynamic_allocation.event_risk_high_threshold
+    current_value: 70.0
+    unit: score_0_100
+    where_used:
+      - config/etf_portfolio/dynamic_allocation_policy.yaml:event_risk_overlay.high_threshold
+    purpose: Event-risk score threshold that raises cash and reduces growth/semiconductor exposure in candidate policy.
+    impact_scope: high-impact risk-off overlay
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only pilot event-risk boundary.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Calibrate event-risk threshold against realized event drawdowns and false defensive shifts.
+
+  - threshold_id: dynamic_allocation.rebalance_turnover_constraints
+    current_value:
+      score_change_threshold: 5.0
+      regime_confirmation_days: 3
+      minimum_holding_days: 5
+      max_single_rebalance_delta: 0.10
+      weekly_turnover_cap: 0.20
+      min_rebalance_weight_delta: 0.02
+    unit: mixed
+    where_used:
+      - config/etf_portfolio/dynamic_allocation_policy.yaml:rebalance_policy
+    purpose: Candidate rebalance, confirmation, holding-period, and turnover constraints.
+    impact_scope: high-impact replay and allocation path constraints
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only overtrading guardrails.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Turnover/cost utility sweep across confirmation days and holding periods.
+
+  - threshold_id: dynamic_allocation.exposure_caps
+    current_value:
+      SPY: 0.60
+      QQQ: 0.50
+      SMH: 0.25
+      SOXX: 0.10
+      CASH: 0.35
+      semiconductor_sleeve_max: 0.25
+      cash_min: 0.05
+    unit: portfolio_weight
+    where_used:
+      - config/etf_portfolio/dynamic_allocation_policy.yaml:exposure_constraints
+    purpose: Candidate allocation exposure caps and floors.
+    impact_scope: high-impact allocation constraint
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only exposure guardrails, not official weights.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Portfolio utility and stress-event calibration across concentration and cash constraints.
+
+  - threshold_id: dynamic_robustness.false_signal_thresholds
+    current_value:
+      forward_horizon_days: 10
+      market_up_threshold: 0.02
+      forward_drawdown_threshold: -0.04
+      cash_overweight_threshold: 0.05
+      growth_underweight_threshold: -0.05
+      growth_overweight_threshold: 0.05
+    unit: mixed
+    where_used:
+      - config/etf_portfolio/dynamic_robustness.yaml:false_signal
+    purpose: False risk-on/off and allocation misclassification diagnostics.
+    impact_scope: high-impact false-signal diagnosis
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only false-signal diagnostic defaults.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Label false risk-off/risk-on cases against forward drawdown and market-up windows.
+
+  - threshold_id: dynamic_robustness.walk_forward_acceptance_thresholds
+    current_value:
+      min_windows: 3
+      min_pass_ratio: 0.50
+      min_sharpe: 0.0
+      max_drawdown_floor: -0.25
+    unit: mixed
+    where_used:
+      - config/etf_portfolio/dynamic_robustness.yaml:walk_forward
+    purpose: Walk-forward acceptance thresholds for candidate-only dynamic robustness review.
+    impact_scope: high-impact robustness gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only pilot robustness defaults.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Walk-forward sensitivity by window length, pass ratio, drawdown floor, and Sharpe boundary.
+
+  - threshold_id: dynamic_robustness.overfit_concentration_limits
+    current_value:
+      max_single_window_return_share: 0.70
+      min_positive_walk_forward_ratio: 0.50
+      max_parameter_sensitivity_return_range: 0.20
+      max_regime_return_concentration: 0.75
+      max_turnover: 8.0
+      max_allocation_path_instability: 0.20
+    unit: mixed
+    where_used:
+      - config/etf_portfolio/dynamic_robustness.yaml:overfit
+    purpose: Overfit and concentration limits for candidate robustness review.
+    impact_scope: high-impact robustness gate
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only overfit guardrails.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Overfit diagnostics across bootstrap, random baseline, parameter sensitivity, and regime split results.
+
+  - threshold_id: weight_search.scorecard_promote_and_keep_testing_scores
+    current_value:
+      promote_score: 0.72
+      keep_testing_score: 0.56
+    unit: score
+    where_used:
+      - config/etf_portfolio/dynamic_v3_rescue/weight_search_space_v2.yaml:scorecard_policy
+    purpose: Research-screening score boundaries for candidate transforms.
+    impact_scope: high-impact candidate ranking and promotion-readiness interpretation
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Pilot scorecard boundaries for research screening only.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: batch_search_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Calibrate score cutoffs against subsequent validation outcomes, regime stability, and owner-reviewed false positives.
+
+  - threshold_id: weight_search.risk_exposure_and_turnover_grid
+    current_value:
+      max_rebalance_turnover: [0.04, 0.06, 0.08]
+      risk_asset_cap: [0.85, 0.90, 0.95]
+      semiconductor_cap: [0.20, 0.25, 0.30]
+      min_cash: [0.10, 0.15, 0.20]
+    unit: portfolio_weight
+    where_used:
+      - config/etf_portfolio/dynamic_v3_rescue/weight_search_space_v2.yaml:families
+    purpose: Search-grid constraints for rescue candidate generation.
+    impact_scope: validation quality and research search coverage
+    threshold_class: B
+    decision_affecting: true
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Research-screening grid defaults.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: batch_search_tests_only
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Expand only after search diagnostics show boundary clipping or missing viable candidates.
+
+  - threshold_id: trend_calibration.score_bands
+    current_value:
+      risk_off: [0, 40]
+      weak: [40, 55]
+      neutral: [55, 70]
+      risk_on: [70, 85]
+      strong_risk_on: [85, 100]
+    unit: score_0_100
+    where_used:
+      - config/etf_portfolio/trend_calibration.yaml:score_bands
+    purpose: Score-to-regime bands for trend calibration review.
+    impact_scope: high-impact risk-off / trend confirmation interpretation
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only trend calibration bands.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Optimize bands against forward attribution buckets and false risk-on/off cases.
+
+  - threshold_id: trend_calibration.minimum_sample_count
+    current_value: 20
+    unit: samples
+    where_used:
+      - config/etf_portfolio/trend_calibration.yaml:forward_attribution.minimum_sample_count
+    purpose: Minimum forward-attribution sample count for trend calibration evidence.
+    impact_scope: high-impact evidence floor
+    threshold_class: A
+    decision_affecting: true
+    promotion_gate_affecting: true
+    production_weight_affecting: false
+    default_reason: Candidate-only evidence floor.
+    calibration_status: HEURISTIC_GUARDRAIL
+    evidence_level: focused_tests_only
+    calibration_required: true
+    no_promotion_dependency_without_review: true
+    recommended_calibration_method: Sample-size sensitivity by score bucket, horizon, and regime.
+
+  - threshold_id: trend_calibration.redundancy_warning_thresholds
+    current_value:
+      medium_correlation: 0.60
+      high_correlation: 0.80
+      rank_correlation_warning: 0.75
+    unit: correlation
+    where_used:
+      - config/etf_portfolio/trend_calibration.yaml:redundancy
+    purpose: Redundancy warning thresholds for signal-weight research.
+    impact_scope: validation quality and research workflow
+    threshold_class: B
+    decision_affecting: true
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Diagnostic correlation bands.
+    calibration_status: UNCALIBRATED_DEFAULT
+    evidence_level: focused_tests_only
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Calibrate after signal families have enough forward samples and redundancy labels.
+
+  - threshold_id: backtest_validation.bootstrap_iterations
+    current_value: 200
+    unit: iterations
+    where_used:
+      - config/backtest_validation_policy.yaml:robustness.bootstrap_iterations
+    purpose: Bootstrap iteration count for robustness statistical proxy.
+    impact_scope: engineering runtime / validation precision
+    threshold_class: C
+    decision_affecting: false
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Runtime-conscious default for local validation.
+    calibration_status: ENGINEERING_DEFAULT
+    evidence_level: runtime_pragmatic
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Increase only if bootstrap result variance remains material under repeated validation.
+
+  - threshold_id: validation_pack.rerun_count_for_stability
+    current_value: 2
+    unit: reruns
+    where_used:
+      - src/ai_trading_system/indicator_research.py:write_indicator_validation_pack_stability_report
+    purpose: Number of validation-pack reruns used for stability comparison.
+    impact_scope: engineering runtime / validation smoke coverage
+    threshold_class: C
+    decision_affecting: false
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Minimal repeatability check to bound runtime.
+    calibration_status: ENGINEERING_DEFAULT
+    evidence_level: runtime_pragmatic
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Raise for release-candidate validation only if rerun variance appears.
+
+  - threshold_id: tests.parameter_replay.robustness_policy_fixture_thresholds
+    current_value:
+      candidate_min_component_coverage: 0.90
+      candidate_max_placeholder_share: 0.0
+      candidate_min_bootstrap_ci_lower_total_return_delta: 0.0
+      candidate_label_horizon_days: 20
+      candidate_embargo_days: 5
+      candidate_min_independent_windows: 1
+    unit: mixed
+    where_used:
+      - tests/test_parameter_replay.py:_write_robustness_summary
+    purpose: Test fixture thresholds that can ossify expected robustness schema interpretation.
+    impact_scope: validation quality and test contract
+    threshold_class: B
+    decision_affecting: false
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Fixture mirrors robustness policy fields for parser coverage.
+    calibration_status: TEST_FIXTURE_DEFAULT
+    evidence_level: test_contract_only
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Keep aligned with policy registry; do not treat fixture values as calibrated evidence.
+
+  - threshold_id: tests.indicator_research.masking_ratio_assertion
+    current_value: 0.767
+    unit: rounded_ratio
+    where_used:
+      - tests/test_indicator_research.py:test_masking_audit_computes_ratio_from_multi_stage_trace
+    purpose: Hardcoded expected masking ratio in focused test.
+    impact_scope: validation quality and test contract
+    threshold_class: B
+    decision_affecting: false
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Fixture arithmetic expectation, not policy calibration.
+    calibration_status: TEST_FIXTURE_DEFAULT
+    evidence_level: test_contract_only
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Keep as deterministic fixture; policy thresholds live in registry/config.
+
+  - threshold_id: tests.etf_dynamic_robustness.warmup_min_assertion
+    current_value: 30
+    unit: days
+    where_used:
+      - tests/test_etf_dynamic_robustness.py:test_dynamic_robustness_policy_loads_and_rejects_unsafe
+    purpose: Test assertion that warmup days remain at least a minimal history window.
+    impact_scope: engineering validation contract
+    threshold_class: C
+    decision_affecting: false
+    promotion_gate_affecting: false
+    production_weight_affecting: false
+    default_reason: Test guard that production-like robustness config does not shrink to tiny fixture history.
+    calibration_status: TEST_FIXTURE_DEFAULT
+    evidence_level: test_contract_only
+    calibration_required: false
+    no_promotion_dependency_without_review: false
+    recommended_calibration_method: Replace with config-derived assertion if warmup policy is recalibrated.
+
+calibration_backlog:
+  - priority: P0
+    focus_area: valuation_crowding_thresholds
+    threshold_ids:
+      - indicator_research.effectiveness_drawdown_worse_tolerance
+      - indicator_research.effectiveness_missed_upside_acceptable_rate
+      - indicator_research.default_masking_ablation_cap_ratio
+    reason: Valuation/crowding masking can alter signal interpretation and must remain review-blocked until calibrated.
+    recommended_plan: Use casebook, ablation, horizon matrix, and drawdown/upside utility to calibrate masking policy bands.
+
+  - priority: P0
+    focus_area: evidence_floor_and_sample_floor
+    threshold_ids:
+      - indicator_research.effectiveness_min_available_outcome_cases
+      - indicator_research.effectiveness_min_short_horizon_mature_cases
+      - indicator_research.min_trigger_observations_for_mapping_research
+      - indicator_research.min_walk_forward_windows
+      - feedback_sample_policy.decision_outcomes_promotion_floor
+      - feedback_sample_policy.prediction_outcomes_promotion_floor
+      - trend_calibration.minimum_sample_count
+    reason: Sample floors define whether conclusions are considered mature enough for review.
+    recommended_plan: Run floor sensitivity, effective sample size, and confidence interval analysis by horizon/regime/cluster.
+
+  - priority: P0
+    focus_area: masking_ratio_threshold
+    threshold_ids:
+      - indicator_research.masking_high_min
+      - indicator_research.masking_moderate_min
+      - indicator_research.dominant_hit_rate_min
+      - indicator_research.dominant_share_of_adjustment_min
+    reason: Masking and dominance labels can change research priority and interpretation.
+    recommended_plan: Map masking-ratio and dominance bins to realized contribution and false risk-off/missed-upside labels.
+
+  - priority: P1
+    focus_area: robustness_gate_threshold
+    threshold_ids:
+      - indicator_research.robustness_cluster_dominance_share
+      - indicator_research.robustness_top_date_concentration_share
+      - backtest_validation.candidate_min_component_coverage
+      - backtest_validation.candidate_min_independent_windows
+      - backtest_validation.candidate_random_baseline_min_percentile
+      - dynamic_robustness.walk_forward_acceptance_thresholds
+      - dynamic_robustness.overfit_concentration_limits
+    reason: Robustness gates determine whether evidence is broad enough or overfit.
+    recommended_plan: Use leave-one-date/asset/cluster, bootstrap, random baseline, and walk-forward sensitivity studies.
+
+  - priority: P1
+    focus_area: promotion_gate_threshold
+    threshold_ids:
+      - promotion_gate.confirmation_target_count_minimum
+      - promotion_gate.required_status_bands
+      - weight_promotion.minimum_sample_counts
+      - weight_promotion.maximum_synthetic_snapshot_ratio
+      - weight_promotion.minimum_reconciliation_pass_ratio
+      - weight_search.scorecard_promote_and_keep_testing_scores
+    reason: These thresholds can be mistaken for readiness unless owner-reviewed and calibrated.
+    recommended_plan: Compare promotion gate pass/fail taxonomy to later owner-reviewed forward and paper-shadow outcomes.
+
+  - priority: P1
+    focus_area: risk_off_and_trend_confirmation_threshold
+    threshold_ids:
+      - dynamic_allocation.risk_off_score_thresholds
+      - dynamic_allocation.risk_on_confirmation_thresholds
+      - dynamic_allocation.event_risk_high_threshold
+      - trend_calibration.score_bands
+      - dynamic_robustness.false_signal_thresholds
+    reason: Risk-off and trend confirmation thresholds shape candidate allocation behavior and false defensive/aggressive shifts.
+    recommended_plan: Calibrate score bands against realized drawdown, upside capture, turnover, and false risk-on/off case labels.
