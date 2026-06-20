@@ -345,6 +345,11 @@ def test_outcome_availability_audit_schema_and_join_key(tmp_path: Path) -> None:
     assert payload["summary"]["total_cases"] > 0
     assert payload["summary"]["outcome_available_count"] > 0
     assert payload["summary"]["outcome_missing_count"] == 0
+    assert payload["summary"]["1d_mature_case_count"] > 0
+    assert payload["summary"]["5d_mature_case_count"] > 0
+    assert payload["summary"]["20d_mature_case_count"] > 0
+    assert "mature_case_count_by_horizon" in payload["mature_sample_quality"]
+    assert "full_advisory_mature_count_by_horizon" in payload["mature_sample_quality"]
     assert set(payload["by_window"]) == {"10d", "1d", "20d", "5d"}
     assert payload["by_asset"]
     assert payload["by_date"]
@@ -364,6 +369,32 @@ def test_outcome_availability_audit_schema_and_join_key(tmp_path: Path) -> None:
     assert record["promotion_gate_allowed"] is False
 
 
+def test_horizon_specific_outcome_maturity_and_cutoff(tmp_path: Path) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_medium_outcome_prices(tmp_path)
+
+    payload = build_valuation_crowding_outcome_availability_audit(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        outcome_ticker="QQQ",
+    )
+
+    assert payload["summary"]["1d_mature_case_count"] > 0
+    assert payload["summary"]["5d_mature_case_count"] > 0
+    assert payload["summary"]["10d_mature_case_count"] == 0
+    assert payload["summary"]["20d_mature_case_count"] == 0
+    assert payload["summary"]["10d_not_mature_count"] > 0
+    assert payload["summary"]["20d_not_mature_count"] > 0
+    assert payload["summary"]["outcome_missing_count"] == 0
+    first = payload["records"][0]
+    windows = {window["window"]: window for window in first["outcome_windows"]}
+    assert windows["1d"]["evaluation_cutoff_met"] is True
+    assert windows["5d"]["evaluation_cutoff_met"] is True
+    assert windows["10d"]["evaluation_cutoff_met"] is False
+    assert windows["20d"]["evaluation_cutoff_met"] is False
+    assert windows["5d"]["target_date"] <= windows["5d"]["latest_available_price_date"]
+
+
 def test_outcome_not_mature_is_not_hard_missing(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
     prices_path = _write_short_outcome_prices(tmp_path)
@@ -379,6 +410,40 @@ def test_outcome_not_mature_is_not_hard_missing(tmp_path: Path) -> None:
     assert payload["summary"]["outcome_missing_count"] == 0
     assert payload["summary"]["missing_price_count"] == 0
     assert payload["by_window"]["20d"]["not_mature_count"] > 0
+
+
+def test_twenty_day_not_mature_does_not_drop_short_horizon_review(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_casebook_trace(tmp_path)
+    prices_path = _write_medium_outcome_prices(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+
+    payload = build_valuation_crowding_masking_effectiveness_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_root,
+        outcome_ticker="QQQ",
+        asset_universe="QQQ,SPY,SMH,MSFT,GOOGL",
+    )
+
+    by_horizon = {item["horizon"]: item for item in payload["by_horizon"]}
+    assert by_horizon["1d"]["sample_quality"]["mature_case_count"] > 0
+    assert by_horizon["5d"]["sample_quality"]["mature_case_count"] > 0
+    assert by_horizon["20d"]["sample_quality"]["mature_case_count"] == 0
+    assert (
+        by_horizon["1d"]["scenarios"]["baseline"]["avg_return"]
+        is not None
+    )
+    assert (
+        by_horizon["5d"]["scenarios"]["baseline"]["avg_return"]
+        is not None
+    )
+    assert by_horizon["20d"]["scenarios"]["baseline"]["avg_return"] is None
+    assert payload["decision_recommendation"]["decision_recommendation"] == (
+        "insufficient_evidence"
+    )
+    assert payload["summary"]["promotion_gate_allowed"] is False
 
 
 def test_effectiveness_review_requires_available_outcomes_for_recommendation(
@@ -1124,6 +1189,26 @@ def _write_short_outcome_prices(tmp_path: Path) -> Path:
         "GOOGL": 1.50,
     }
     for offset, price in enumerate((100.0, 101.0, 102.0)):
+        row_date = start + timedelta(days=offset)
+        for ticker, multiplier in tickers.items():
+            lines.append(f"{row_date.isoformat()},{ticker},{price * multiplier:.4f}")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_medium_outcome_prices(tmp_path: Path) -> Path:
+    path = tmp_path / "prices_daily_medium.csv"
+    lines = ["date,ticker,adj_close"]
+    start = date(2023, 1, 3)
+    tickers = {
+        "QQQ": 1.00,
+        "SPY": 0.75,
+        "SMH": 1.25,
+        "MSFT": 2.00,
+        "GOOGL": 1.50,
+    }
+    prices = (100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0)
+    for offset, price in enumerate(prices):
         row_date = start + timedelta(days=offset)
         for ticker, multiplier in tickers.items():
             lines.append(f"{row_date.isoformat()},{ticker},{price * multiplier:.4f}")

@@ -74,6 +74,8 @@ OUTCOME_HARD_MISSING_STATUSES = {
 }
 # Validation-only pilot floor for issuing a directional masking recommendation.
 EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES = 50
+# Validation-only short-horizon maturity floor for preliminary recommendation.
+EFFECTIVENESS_MIN_SHORT_HORIZON_MATURE_CASES = 50
 # Validation-only drawdown tolerance for no-mask comparison; not a production policy.
 EFFECTIVENESS_DRAWDOWN_WORSE_TOLERANCE = 0.10
 # Validation-only missed-upside ceiling for retaining baseline masking.
@@ -1652,6 +1654,7 @@ def build_valuation_crowding_outcome_availability_audit(
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
     trace_path: Path | None = None,
     prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
     bridge_artifact_root: Path | None = None,
     outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
     capped_masking_ratio: float = DEFAULT_MASKING_ABLATION_CAP_RATIO,
@@ -1693,8 +1696,24 @@ def build_valuation_crowding_outcome_availability_audit(
     bridge_cases = [
         dict(item) for item in bridge.get("bridge_records", []) if isinstance(item, Mapping)
     ]
-    records = _outcome_availability_records(casebook_cases, bridge_cases)
+    full_dates, component_only_dates = _trace_eligibility_date_sets(
+        registry_path=registry_path,
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    records = _outcome_availability_records(
+        casebook_cases,
+        bridge_cases,
+        full_dates=full_dates,
+        component_only_dates=component_only_dates,
+    )
     summary = _outcome_availability_summary(records)
+    mature_sample_quality = _mature_outcome_sample_quality(records, registry)
     issues: list[dict[str, Any]] = []
     if not records:
         issues.append(
@@ -1733,6 +1752,7 @@ def build_valuation_crowding_outcome_availability_audit(
         issues=issues,
         summary={
             **summary,
+            **_horizon_specific_summary_counts(summary),
             "outcome_ticker": outcome_ticker,
             "capped_masking_ratio": capped_masking_ratio,
             "promotion_gate_allowed": False,
@@ -1750,6 +1770,9 @@ def build_valuation_crowding_outcome_availability_audit(
         by_window=summary["by_window"],
         by_asset=summary["by_asset"],
         by_date=summary["by_date"],
+        mature_sample_quality=mature_sample_quality,
+        by_regime=mature_sample_quality["by_regime"],
+        by_event_window=mature_sample_quality["by_event_window"],
         records=records,
         rule=(
             "Signal generation remains PIT/as-of. Realized outcome evaluation may use "
@@ -1837,8 +1860,14 @@ def build_valuation_crowding_masking_effectiveness_review(
         for record in bridge.get("bridge_records", [])
         if isinstance(record, Mapping)
     ]
-    outcome_records = _outcome_availability_records(cases, bridge_cases)
+    outcome_records = _outcome_availability_records(
+        cases,
+        bridge_cases,
+        full_dates=full_dates,
+        component_only_dates=component_only_dates,
+    )
     outcome_availability_summary = _outcome_availability_summary(outcome_records)
+    mature_sample_quality = _mature_outcome_sample_quality(outcome_records, registry)
     layers = {
         "full_advisory_only": _masking_effectiveness_layer(
             "full_advisory_only",
@@ -1924,7 +1953,21 @@ def build_valuation_crowding_masking_effectiveness_review(
         }
         for window in DEFAULT_EVENT_WINDOW_CATALOG
     ]
-    recommendation = _masking_effectiveness_recommendation(layers["full_advisory_only"])
+    by_horizon = [
+        _masking_effectiveness_horizon_layer(
+            horizon,
+            full_cases,
+            registry,
+            capped_masking_ratio=capped_masking_ratio,
+            trace_source=FULL_ADVISORY_TRACE_SOURCE,
+            confidence=TRACE_CONFIDENCE_FULL_ADVISORY,
+        )
+        for horizon in MASKING_OUTCOME_HORIZONS
+    ]
+    recommendation = _masking_effectiveness_recommendation(
+        layers["full_advisory_only"],
+        by_horizon=by_horizon,
+    )
     issues = list(casebook.get("issues", [])) if isinstance(casebook.get("issues"), list) else []
     if not cases:
         issues.append(
@@ -1957,9 +2000,19 @@ def build_valuation_crowding_masking_effectiveness_review(
                 "message": recommendation["rationale"],
             }
         )
+    if recommendation["decision_recommendation"] == "preliminary_short_horizon_only":
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "effectiveness_recommendation_short_horizon_only",
+                "message": recommendation["rationale"],
+            }
+        )
     status = (
         "PASS"
-        if cases and recommendation["decision_recommendation"] != "insufficient_evidence"
+        if cases
+        and recommendation["decision_recommendation"]
+        not in {"insufficient_evidence", "preliminary_short_horizon_only"}
         else "PASS_WITH_WARNINGS"
     )
     return _base_payload(
@@ -1977,6 +2030,7 @@ def build_valuation_crowding_masking_effectiveness_review(
             "outcome_available_count": outcome_availability_summary[
                 "outcome_available_count"
             ],
+            **_horizon_specific_summary_counts(outcome_availability_summary),
             "outcome_missing_count": outcome_availability_summary[
                 "outcome_missing_count"
             ],
@@ -2008,9 +2062,11 @@ def build_valuation_crowding_masking_effectiveness_review(
         by_asset=by_asset,
         by_regime=by_regime,
         by_event_window=by_event_window,
+        by_horizon=by_horizon,
         gate_availability_summary=gate_audit.get("summary", {}),
         backtest_bridge_summary=bridge.get("summary", {}),
         outcome_availability_summary=outcome_availability_summary,
+        mature_sample_quality=mature_sample_quality,
         outcome_availability_records=outcome_records,
         allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
     )
@@ -2757,6 +2813,7 @@ def write_indicator_framework_validation_pack(
                 registry_path=registry_path,
                 trace_path=trace_path,
                 prices_path=prices_path,
+                gate_audit_root=gate_audit_root,
                 bridge_artifact_root=bridge_artifact_root,
                 outcome_ticker=outcome_ticker,
                 capped_masking_ratio=capped_masking_ratio,
@@ -5161,6 +5218,7 @@ def _forward_outcome_payload_with_availability(
             for horizon in MASKING_OUTCOME_HORIZONS
         ]
         return _outcome_payload_from_windows(outcomes, windows)
+    latest_available_price_date = price_series[-1][0]
     windows = []
     for horizon in MASKING_OUTCOME_HORIZONS:
         target_index = start_index + horizon
@@ -5174,11 +5232,18 @@ def _forward_outcome_payload_with_availability(
                     OUTCOME_WINDOW_STATUS_AVAILABLE,
                     target_date=target_date,
                     realized_return=value,
+                    latest_available_price_date=latest_available_price_date,
+                    evaluation_cutoff_met=True,
                 )
             )
         else:
             windows.append(
-                _outcome_window_record(horizon, OUTCOME_WINDOW_STATUS_NOT_MATURE)
+                _outcome_window_record(
+                    horizon,
+                    OUTCOME_WINDOW_STATUS_NOT_MATURE,
+                    latest_available_price_date=latest_available_price_date,
+                    evaluation_cutoff_met=False,
+                )
             )
     if start_index + 20 < len(price_series):
         outcomes["max_drawdown_20d"] = _max_drawdown(
@@ -5193,12 +5258,20 @@ def _outcome_window_record(
     *,
     target_date: date | None = None,
     realized_return: float | None = None,
+    latest_available_price_date: date | None = None,
+    evaluation_cutoff_met: bool | None = None,
 ) -> dict[str, Any]:
     return {
         "window": f"{horizon}d",
         "horizon_trading_days": horizon,
         "status": status,
         "target_date": None if target_date is None else target_date.isoformat(),
+        "latest_available_price_date": (
+            None
+            if latest_available_price_date is None
+            else latest_available_price_date.isoformat()
+        ),
+        "evaluation_cutoff_met": evaluation_cutoff_met,
         "realized_return": realized_return,
     }
 
@@ -5259,11 +5332,55 @@ def _outcome_join_key(
     }
 
 
+def _trace_eligibility_date_sets(
+    *,
+    registry_path: Path,
+    gate_audit_root: Path | None,
+    trace_path: Path | None,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+    asset_universe: str | None,
+) -> tuple[set[str], set[str]]:
+    if gate_audit_root is None:
+        return set(), set()
+    gate_audit = build_gate_availability_audit(
+        registry_path=registry_path,
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    availability = [
+        dict(item)
+        for item in gate_audit.get("gate_availability", [])
+        if isinstance(item, Mapping)
+    ]
+    full_dates = {
+        str(record.get("date"))
+        for record in availability
+        if record.get("full_advisory_trace_eligible")
+    }
+    component_only_dates = {
+        str(record.get("date"))
+        for record in availability
+        if record.get("component_validation_trace_eligible")
+        and not record.get("full_advisory_trace_eligible")
+    }
+    return full_dates, component_only_dates
+
+
 def _outcome_availability_record(
     case: Mapping[str, Any],
     *,
     source_case_type: str,
     scenario: str,
+    full_dates: set[str] | None = None,
+    component_only_dates: set[str] | None = None,
 ) -> dict[str, Any]:
     join_key = _case_outcome_join_key(case, scenario=scenario)
     missing_join_key_fields = [
@@ -5291,11 +5408,19 @@ def _outcome_availability_record(
     all_available = all(
         window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE for window in windows
     )
+    as_of_date = join_key["as_of_date"]
+    eligibility_layer = _outcome_record_eligibility_layer(
+        as_of_date,
+        source_case_type=source_case_type,
+        full_dates=full_dates or set(),
+        component_only_dates=component_only_dates or set(),
+    )
     return {
         "source_case_type": source_case_type,
+        "eligibility_layer": eligibility_layer,
         "case_id": case.get("case_id"),
-        "as_of_date": join_key["as_of_date"],
-        "date": join_key["as_of_date"],
+        "as_of_date": as_of_date,
+        "date": as_of_date,
         "decision_time": join_key["decision_time"],
         "asset": join_key["asset"],
         "scenario": join_key["scenario"],
@@ -5308,12 +5433,18 @@ def _outcome_availability_record(
         if isinstance(case.get("outcomes"), Mapping)
         else {},
         "outcome_available": all_available,
+        "mature_horizons": _case_mature_horizons_from_windows(windows),
+        "not_mature_horizons": _case_not_mature_horizons_from_windows(windows),
         "outcome_missing": hard_missing,
         "outcome_not_mature": not_mature,
         "missing_price": OUTCOME_WINDOW_STATUS_MISSING_PRICE in statuses,
         "missing_asset_mapping": OUTCOME_WINDOW_STATUS_MISSING_ASSET_MAPPING in statuses,
         "missing_calendar": OUTCOME_WINDOW_STATUS_MISSING_CALENDAR in statuses,
         "missing_join_key": bool(missing_join_key_fields),
+        "market_regime": str(case.get("market_regime") or ""),
+        "event_window_ids": list(
+            case.get("event_window_ids") or _event_window_ids_for_date(as_of_date)
+        ),
         "promotion_gate_allowed": False,
         "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
     }
@@ -5322,6 +5453,9 @@ def _outcome_availability_record(
 def _outcome_availability_records(
     casebook_cases: Sequence[Mapping[str, Any]],
     bridge_cases: Sequence[Mapping[str, Any]],
+    *,
+    full_dates: set[str] | None = None,
+    component_only_dates: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for case in casebook_cases:
@@ -5330,6 +5464,8 @@ def _outcome_availability_records(
                 case,
                 source_case_type="masking_casebook",
                 scenario=str(case.get("scenario") or "baseline"),
+                full_dates=full_dates,
+                component_only_dates=component_only_dates,
             )
         )
         for scenario_id in MASKING_ABLATION_SCENARIOS:
@@ -5338,6 +5474,8 @@ def _outcome_availability_records(
                     case,
                     source_case_type="ablation_scenario",
                     scenario=scenario_id,
+                    full_dates=full_dates,
+                    component_only_dates=component_only_dates,
                 )
             )
     for case in bridge_cases:
@@ -5347,6 +5485,8 @@ def _outcome_availability_records(
                     case,
                     source_case_type="backtest_bridge",
                     scenario=scenario_id,
+                    full_dates=full_dates,
+                    component_only_dates=component_only_dates,
                 )
             )
     return records
@@ -5403,6 +5543,14 @@ def _outcome_availability_summary(
                 _outcome_empty_availability_bucket(window_id),
             )
             _outcome_update_window_bucket(bucket, str(window.get("status") or "unknown"))
+    horizon_mature_counts = {
+        f"{horizon}d": by_window[f"{horizon}d"]["available_count"]
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
+    horizon_not_mature_counts = {
+        f"{horizon}d": by_window[f"{horizon}d"]["not_mature_count"]
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
     return {
         "total_cases": len(records),
         "outcome_available_count": sum(
@@ -5444,6 +5592,8 @@ def _outcome_availability_summary(
                 if record.get("source_case_type")
             }
         ),
+        "mature_case_count_by_horizon": horizon_mature_counts,
+        "not_mature_count_by_horizon": horizon_not_mature_counts,
         "by_window": dict(sorted(by_window.items())),
         "by_asset": [
             {"asset": key, **value} for key, value in sorted(by_asset.items())
@@ -5452,6 +5602,193 @@ def _outcome_availability_summary(
             {"date": key, **value} for key, value in sorted(by_date.items())
         ],
     }
+
+
+def _horizon_specific_summary_counts(summary: Mapping[str, Any]) -> dict[str, int]:
+    mature = summary.get("mature_case_count_by_horizon", {})
+    if not isinstance(mature, Mapping):
+        mature = {}
+    not_mature = summary.get("not_mature_count_by_horizon", {})
+    if not isinstance(not_mature, Mapping):
+        not_mature = {}
+    fields: dict[str, int] = {}
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        label = f"{horizon}d"
+        fields[f"{label}_mature_case_count"] = int(mature.get(label) or 0)
+        fields[f"{label}_not_mature_count"] = int(not_mature.get(label) or 0)
+    return fields
+
+
+def _mature_outcome_sample_quality(
+    records: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    mature_date_count: dict[str, int] = {}
+    mature_asset_count: dict[str, int] = {}
+    mature_case_count: dict[str, int] = {}
+    full_mature_count: dict[str, int] = {}
+    component_mature_count: dict[str, int] = {}
+    bridge_mature_count: dict[str, int] = {}
+    for horizon in MASKING_OUTCOME_HORIZONS:
+        label = f"{horizon}d"
+        mature_records = [
+            record for record in records if _record_horizon_status(record, horizon) == "available"
+        ]
+        mature_date_count[label] = len(
+            {
+                str(record.get("as_of_date") or "")
+                for record in mature_records
+                if record.get("as_of_date")
+            }
+        )
+        mature_asset_count[label] = len(
+            {
+                str(record.get("asset") or "")
+                for record in mature_records
+                if record.get("asset")
+            }
+        )
+        mature_case_count[label] = len(mature_records)
+        full_mature_count[label] = sum(
+            1
+            for record in mature_records
+            if record.get("eligibility_layer") == "full_advisory_only"
+        )
+        component_mature_count[label] = sum(
+            1
+            for record in mature_records
+            if record.get("eligibility_layer") == "component_only"
+        )
+        bridge_mature_count[label] = sum(
+            1
+            for record in mature_records
+            if record.get("eligibility_layer") == "backtest_bridge"
+        )
+    return {
+        "mature_date_count_by_horizon": mature_date_count,
+        "mature_asset_count_by_horizon": mature_asset_count,
+        "mature_case_count_by_horizon": mature_case_count,
+        "full_advisory_mature_count_by_horizon": full_mature_count,
+        "component_only_mature_count_by_horizon": component_mature_count,
+        "backtest_bridge_mature_count_by_horizon": bridge_mature_count,
+        "by_asset": _mature_outcome_group_availability(
+            records,
+            lambda record: [str(record.get("asset") or "UNKNOWN")],
+            key_field="asset",
+        ),
+        "by_date": _mature_outcome_group_availability(
+            records,
+            lambda record: [str(record.get("as_of_date") or "UNKNOWN")],
+            key_field="date",
+        ),
+        "by_regime": _mature_outcome_group_availability(
+            records,
+            lambda record: [
+                str(record.get("market_regime") or registry.market_regime.regime_id)
+            ],
+            key_field="regime",
+        ),
+        "by_event_window": _mature_outcome_group_availability(
+            records,
+            _event_window_group_keys_for_record,
+            key_field="event_window_id",
+        ),
+    }
+
+
+def _mature_outcome_group_availability(
+    records: Sequence[Mapping[str, Any]],
+    key_fn: Any,
+    *,
+    key_field: str,
+) -> list[dict[str, Any]]:
+    buckets: dict[str, dict[str, Any]] = {}
+    for record in records:
+        for key in key_fn(record):
+            bucket = buckets.setdefault(
+                key,
+                {
+                    key_field: key,
+                    "total_cases": 0,
+                    **{
+                        f"{horizon}d_mature_case_count": 0
+                        for horizon in MASKING_OUTCOME_HORIZONS
+                    },
+                    **{
+                        f"{horizon}d_not_mature_count": 0
+                        for horizon in MASKING_OUTCOME_HORIZONS
+                    },
+                    **{
+                        f"{horizon}d_missing_count": 0
+                        for horizon in MASKING_OUTCOME_HORIZONS
+                    },
+                },
+            )
+            bucket["total_cases"] += 1
+            for horizon in MASKING_OUTCOME_HORIZONS:
+                label = f"{horizon}d"
+                status = _record_horizon_status(record, horizon)
+                if status == OUTCOME_WINDOW_STATUS_AVAILABLE:
+                    bucket[f"{label}_mature_case_count"] += 1
+                elif status == OUTCOME_WINDOW_STATUS_NOT_MATURE:
+                    bucket[f"{label}_not_mature_count"] += 1
+                elif status in OUTCOME_HARD_MISSING_STATUSES:
+                    bucket[f"{label}_missing_count"] += 1
+    return [buckets[key] for key in sorted(buckets)]
+
+
+def _event_window_group_keys_for_record(record: Mapping[str, Any]) -> list[str]:
+    raw = record.get("event_window_ids")
+    if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes)):
+        values = [str(item) for item in raw if str(item)]
+    else:
+        values = []
+    return values or ["no_event_window"]
+
+
+def _outcome_record_eligibility_layer(
+    as_of_date: str,
+    *,
+    source_case_type: str,
+    full_dates: set[str],
+    component_only_dates: set[str],
+) -> str:
+    if source_case_type == "backtest_bridge":
+        return "backtest_bridge"
+    if as_of_date in full_dates:
+        return "full_advisory_only"
+    if as_of_date in component_only_dates:
+        return "component_only"
+    return "component_only"
+
+
+def _case_mature_horizons_from_windows(
+    windows: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    return [
+        str(window.get("window") or "")
+        for window in windows
+        if window.get("status") == OUTCOME_WINDOW_STATUS_AVAILABLE
+    ]
+
+
+def _case_not_mature_horizons_from_windows(
+    windows: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    return [
+        str(window.get("window") or "")
+        for window in windows
+        if window.get("status") == OUTCOME_WINDOW_STATUS_NOT_MATURE
+    ]
+
+
+def _record_horizon_status(record: Mapping[str, Any], horizon: int) -> str:
+    for window in record.get("outcome_windows", []):
+        if not isinstance(window, Mapping):
+            continue
+        if str(window.get("window") or "") == f"{horizon}d":
+            return str(window.get("status") or "unknown")
+    return "unknown"
 
 
 def _outcome_empty_availability_bucket(label: str) -> dict[str, Any]:
@@ -5551,6 +5888,76 @@ def _masking_effectiveness_layer(
     }
 
 
+def _masking_effectiveness_horizon_layer(
+    horizon: int,
+    cases: Sequence[Mapping[str, Any]],
+    registry: IndicatorResearchRegistry,
+    *,
+    capped_masking_ratio: float,
+    trace_source: str,
+    confidence: str,
+) -> dict[str, Any]:
+    case_rows = [dict(case) for case in cases]
+    return {
+        "horizon": f"{horizon}d",
+        "horizon_trading_days": horizon,
+        "trace_source": trace_source,
+        "confidence": confidence,
+        "promotion_gate_allowed": False,
+        "allowed_uses": list(NON_PROMOTION_ALLOWED_USES),
+        "sample_quality": _masking_effectiveness_horizon_sample_quality(
+            case_rows,
+            horizon,
+            registry,
+        ),
+        "scenarios": {
+            scenario_id: _ablation_scenario_horizon_metrics(
+                case_rows,
+                scenario_id,
+                capped_masking_ratio,
+                horizon,
+            )
+            for scenario_id in MASKING_ABLATION_SCENARIOS
+        },
+    }
+
+
+def _masking_effectiveness_horizon_sample_quality(
+    cases: Sequence[Mapping[str, Any]],
+    horizon: int,
+    registry: IndicatorResearchRegistry,
+) -> dict[str, Any]:
+    mature_cases = [case for case in cases if _case_horizon_available(case, horizon)]
+    dates = {str(case.get("date")) for case in mature_cases if case.get("date")}
+    assets = {
+        str(case.get("asset")).upper() for case in mature_cases if case.get("asset")
+    }
+    regimes = {
+        str(case.get("market_regime") or registry.market_regime.regime_id)
+        for case in mature_cases
+    }
+    hard_missing = sum(
+        1
+        for case in cases
+        if _case_horizon_status(case, horizon) in OUTCOME_HARD_MISSING_STATUSES
+    )
+    not_mature = sum(
+        1
+        for case in cases
+        if _case_horizon_status(case, horizon) == OUTCOME_WINDOW_STATUS_NOT_MATURE
+    )
+    return {
+        "date_count": len(dates),
+        "asset_count": len(assets),
+        "case_count": len(cases),
+        "mature_case_count": len(mature_cases),
+        "not_mature_count": not_mature,
+        "outcome_missing_count": hard_missing,
+        "unique_regime_count": len(regimes) if mature_cases else 0,
+        "correlated_asset_cluster_count": len({_asset_cluster_id(asset) for asset in assets}),
+    }
+
+
 def _masking_effectiveness_sample_quality(
     cases: Sequence[Mapping[str, Any]],
     registry: IndicatorResearchRegistry,
@@ -5562,6 +5969,7 @@ def _masking_effectiveness_sample_quality(
         for case in cases
     }
     clusters = {_asset_cluster_id(asset) for asset in assets}
+    horizon_counts = _case_horizon_maturity_counts(cases)
     return {
         "date_count": len(dates),
         "asset_count": len(assets),
@@ -5573,6 +5981,28 @@ def _masking_effectiveness_sample_quality(
         "outcome_not_mature_count": sum(
             1 for case in cases if case.get("outcome_not_mature")
         ),
+        "mature_case_count_by_horizon": horizon_counts["mature_case_count_by_horizon"],
+        "not_mature_count_by_horizon": horizon_counts["not_mature_count_by_horizon"],
+        **_horizon_specific_summary_counts(horizon_counts),
+    }
+
+
+def _case_horizon_maturity_counts(
+    cases: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, int]]:
+    mature = {f"{horizon}d": 0 for horizon in MASKING_OUTCOME_HORIZONS}
+    not_mature = {f"{horizon}d": 0 for horizon in MASKING_OUTCOME_HORIZONS}
+    for case in cases:
+        for horizon in MASKING_OUTCOME_HORIZONS:
+            status = _case_horizon_status(case, horizon)
+            label = f"{horizon}d"
+            if status == OUTCOME_WINDOW_STATUS_AVAILABLE:
+                mature[label] += 1
+            elif status == OUTCOME_WINDOW_STATUS_NOT_MATURE:
+                not_mature[label] += 1
+    return {
+        "mature_case_count_by_horizon": mature,
+        "not_mature_count_by_horizon": not_mature,
     }
 
 
@@ -5674,8 +6104,28 @@ def _case_outcome_available(case: Mapping[str, Any]) -> bool:
     )
 
 
+def _case_horizon_status(case: Mapping[str, Any], horizon: int) -> str:
+    windows = case.get("outcome_windows", [])
+    if isinstance(windows, Sequence) and not isinstance(windows, (str, bytes)):
+        for window in windows:
+            if not isinstance(window, Mapping):
+                continue
+            if str(window.get("window") or "") == f"{horizon}d":
+                return str(window.get("status") or "unknown")
+    outcomes = case.get("outcomes", {})
+    if isinstance(outcomes, Mapping) and isinstance(outcomes.get(f"return_{horizon}d"), float):
+        return OUTCOME_WINDOW_STATUS_AVAILABLE
+    return "unknown"
+
+
+def _case_horizon_available(case: Mapping[str, Any], horizon: int) -> bool:
+    return _case_horizon_status(case, horizon) == OUTCOME_WINDOW_STATUS_AVAILABLE
+
+
 def _masking_effectiveness_recommendation(
     full_layer: Mapping[str, Any],
+    *,
+    by_horizon: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     sample_quality = full_layer.get("sample_quality", {})
     if not isinstance(sample_quality, Mapping):
@@ -5686,8 +6136,21 @@ def _masking_effectiveness_recommendation(
     outcome_not_mature_count = int(sample_quality.get("outcome_not_mature_count") or 0)
     date_count = int(sample_quality.get("date_count") or 0)
     asset_count = int(sample_quality.get("asset_count") or 0)
+    mature_by_horizon = sample_quality.get("mature_case_count_by_horizon", {})
+    if not isinstance(mature_by_horizon, Mapping):
+        mature_by_horizon = {}
+    short_horizon_ready = all(
+        int(mature_by_horizon.get(f"{horizon}d") or 0)
+        >= EFFECTIVENESS_MIN_SHORT_HORIZON_MATURE_CASES
+        for horizon in (1, 5)
+    )
+    long_horizon_ready = all(
+        int(mature_by_horizon.get(f"{horizon}d") or 0)
+        >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+        for horizon in (10, 20)
+    )
     if (
-        outcome_available_count < EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES
+        not short_horizon_ready
         or date_count < HISTORICAL_TRACE_MIN_DATES_FOR_STABILITY
         or asset_count < 5
         or outcome_missing_count > 0
@@ -5701,7 +6164,20 @@ def _masking_effectiveness_recommendation(
                 f"date_count={date_count}, asset_count={asset_count}, "
                 f"case_count={case_count}, outcome_available_count={outcome_available_count}, "
                 f"outcome_missing_count={outcome_missing_count}, "
-                f"outcome_not_mature_count={outcome_not_mature_count}."
+                f"outcome_not_mature_count={outcome_not_mature_count}, "
+                f"mature_case_count_by_horizon={dict(mature_by_horizon)}."
+            ),
+        }
+    if short_horizon_ready and not long_horizon_ready:
+        return {
+            "decision_recommendation": "preliminary_short_horizon_only",
+            "recommendation_scope": "validation_only",
+            "promotion_gate_allowed": False,
+            "rationale": (
+                "1d/5d mature outcomes are sufficient for preliminary validation, "
+                "but 10d/20d horizons are not mature enough for a directional "
+                f"masking policy decision: mature_case_count_by_horizon="
+                f"{dict(mature_by_horizon)}."
             ),
         }
     scenarios = full_layer.get("scenarios", {})
@@ -5725,21 +6201,22 @@ def _masking_effectiveness_recommendation(
     baseline_drawdown = _optional_float(baseline.get("max_drawdown"))
     capped_drawdown = _optional_float(capped.get("max_drawdown"))
     no_mask_drawdown = _optional_float(no_mask.get("max_drawdown"))
-    baseline_20d = _optional_float(baseline.get("avg_return_20d"))
-    capped_20d = _optional_float(capped.get("avg_return_20d"))
-    no_mask_20d = _optional_float(no_mask.get("avg_return_20d"))
+    mature_horizons = _recommendation_mature_horizons(by_horizon)
+    baseline_return = _scenario_avg_return_for_horizons(baseline, mature_horizons)
+    capped_return = _scenario_avg_return_for_horizons(capped, mature_horizons)
+    no_mask_return = _scenario_avg_return_for_horizons(no_mask, mature_horizons)
     if (
         capped_drawdown is not None
         and baseline_drawdown is not None
-        and (capped_20d or 0.0) >= (baseline_20d or 0.0)
+        and (capped_return or 0.0) >= (baseline_return or 0.0)
         and capped_drawdown >= baseline_drawdown
     ):
         decision = "prefer_capped_masking_candidate"
         rationale = "Capped masking improves or matches drawdown while preserving return."
     elif (
-        no_mask_20d is not None
-        and baseline_20d is not None
-        and no_mask_20d > baseline_20d
+        no_mask_return is not None
+        and baseline_return is not None
+        and no_mask_return > baseline_return
         and no_mask_drawdown is not None
         and baseline_drawdown is not None
         and no_mask_drawdown
@@ -5777,6 +6254,37 @@ def _optional_float(value: Any) -> float | None:
         return None
 
 
+def _recommendation_mature_horizons(
+    by_horizon: Sequence[Mapping[str, Any]] | None,
+) -> list[int]:
+    if not by_horizon:
+        return list(MASKING_OUTCOME_HORIZONS)
+    mature = []
+    for row in by_horizon:
+        sample_quality = row.get("sample_quality", {})
+        if not isinstance(sample_quality, Mapping):
+            continue
+        horizon = int(row.get("horizon_trading_days") or 0)
+        mature_count = int(sample_quality.get("mature_case_count") or 0)
+        if horizon and mature_count >= EFFECTIVENESS_MIN_AVAILABLE_OUTCOME_CASES:
+            mature.append(horizon)
+    return mature or list(MASKING_OUTCOME_HORIZONS)
+
+
+def _scenario_avg_return_for_horizons(
+    scenario: Mapping[str, Any],
+    horizons: Sequence[int],
+) -> float | None:
+    values = [
+        _optional_float(scenario.get(f"avg_return_{horizon}d"))
+        for horizon in horizons
+    ]
+    usable = [value for value in values if value is not None]
+    if not usable:
+        return None
+    return sum(usable) / len(usable)
+
+
 def _ablation_scenario_metrics(
     cases: Sequence[Mapping[str, Any]],
     scenario_id: str,
@@ -5791,6 +6299,15 @@ def _ablation_scenario_metrics(
     missed_upside_count = 0
     drawdown_reduced_count = 0
     drawdown_preservation = 0.0
+    by_horizon = {
+        f"{horizon}d": _ablation_scenario_horizon_metrics(
+            cases,
+            scenario_id,
+            capped_masking_ratio,
+            horizon,
+        )
+        for horizon in MASKING_OUTCOME_HORIZONS
+    }
     for case in cases:
         weight, applied_suppression = _scenario_weight(case, scenario_id, capped_masking_ratio)
         no_mask_weight, _ = _scenario_weight(
@@ -5852,6 +6369,25 @@ def _ablation_scenario_metrics(
         "turnover": turnover,
         "constraint_hit_count": constraint_hit_count,
         "case_count": len(cases),
+        "by_horizon": by_horizon,
+        **{
+            f"drawdown_reduced_count_{horizon}d": by_horizon[f"{horizon}d"][
+                "drawdown_reduced_count"
+            ]
+            for horizon in MASKING_OUTCOME_HORIZONS
+        },
+        **{
+            f"missed_upside_count_{horizon}d": by_horizon[f"{horizon}d"][
+                "missed_upside_count"
+            ]
+            for horizon in MASKING_OUTCOME_HORIZONS
+        },
+        **{
+            f"false_risk_off_count_{horizon}d": by_horizon[f"{horizon}d"][
+                "false_risk_off_count"
+            ]
+            for horizon in MASKING_OUTCOME_HORIZONS
+        },
         "sample_quality_breakdown": {
             "date_count": len({str(case.get("date")) for case in cases if case.get("date")}),
             "asset_count": len({str(case.get("asset")) for case in cases if case.get("asset")}),
@@ -5861,7 +6397,68 @@ def _ablation_scenario_metrics(
             "outcome_not_mature_count": sum(
                 1 for case in cases if case.get("outcome_not_mature")
             ),
+            **_horizon_specific_summary_counts(_case_horizon_maturity_counts(cases)),
         },
+    }
+
+
+def _ablation_scenario_horizon_metrics(
+    cases: Sequence[Mapping[str, Any]],
+    scenario_id: str,
+    capped_masking_ratio: float,
+    horizon: int,
+) -> dict[str, Any]:
+    weighted_returns: list[float] = []
+    raw_returns: list[float] = []
+    drawdown_reduced_count = 0
+    false_risk_off_count = 0
+    missed_upside_count = 0
+    constraint_hit_count = 0
+    for case in cases:
+        if not _case_horizon_available(case, horizon):
+            continue
+        outcomes = case.get("outcomes", {})
+        if not isinstance(outcomes, Mapping):
+            continue
+        value = outcomes.get(f"return_{horizon}d")
+        if not isinstance(value, float):
+            continue
+        weight, applied_suppression = _scenario_weight(
+            case,
+            scenario_id,
+            capped_masking_ratio,
+        )
+        weighted_returns.append(weight * value)
+        raw_returns.append(value)
+        if applied_suppression > 0:
+            constraint_hit_count += 1
+            drawdown_reduced = value < 0
+            missed_upside = value > 0
+            if drawdown_reduced:
+                drawdown_reduced_count += 1
+            if missed_upside:
+                missed_upside_count += 1
+            if missed_upside and not drawdown_reduced:
+                false_risk_off_count += 1
+    return {
+        "horizon": f"{horizon}d",
+        "horizon_trading_days": horizon,
+        "avg_return": (
+            sum(weighted_returns) / len(weighted_returns)
+            if weighted_returns
+            else None
+        ),
+        "hit_rate": (
+            sum(1 for value in raw_returns if value > 0) / len(raw_returns)
+            if raw_returns
+            else None
+        ),
+        "mature_case_count": len(raw_returns),
+        "drawdown_reduced_count": drawdown_reduced_count,
+        "missed_upside_count": missed_upside_count,
+        "false_risk_off_count": false_risk_off_count,
+        "constraint_hit_count": constraint_hit_count,
+        "promotion_gate_allowed": False,
     }
 
 

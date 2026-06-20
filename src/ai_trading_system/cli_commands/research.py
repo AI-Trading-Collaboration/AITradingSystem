@@ -628,6 +628,10 @@ def indicator_outcome_availability_audit_command(
         Path | None,
         typer.Option("--prices-path", help="可选 prices_daily.csv，用于 realized outcome。"),
     ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="可选 historical gate audit 输出根目录。"),
+    ] = None,
     bridge_artifact_root: Annotated[
         Path | None,
         typer.Option("--bridge-artifact-root", help="可选 backtest/simulation artifact 根目录。"),
@@ -671,6 +675,7 @@ def indicator_outcome_availability_audit_command(
             registry_path=registry_path,
             trace_path=trace_path,
             prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
             bridge_artifact_root=bridge_artifact_root,
             outcome_ticker=outcome_ticker,
             capped_masking_ratio=capped_masking_ratio,
