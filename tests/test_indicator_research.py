@@ -16,6 +16,7 @@ from ai_trading_system.indicator_research import (
     build_daily_indicator_inventory,
     build_daily_indicator_weight_trace,
     build_dependency_graph,
+    build_dynamic_trend_bridge_consistency_audit,
     build_dynamic_trend_threshold_calibration_prep_report,
     build_dynamic_trend_threshold_sensitivity_review,
     build_gate_availability_audit,
@@ -1358,6 +1359,71 @@ def test_dynamic_trend_threshold_sensitivity_review_coverage_extension(
         }
 
 
+def test_dynamic_trend_bridge_consistency_audit_source_layer_safety(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    prices_path = _write_dynamic_trend_coverage_prices(tmp_path)
+    coverage_root = _write_dynamic_trend_coverage_extension_root(tmp_path)
+    sensitivity = build_dynamic_trend_threshold_sensitivity_review(
+        trace_path=trace_path,
+        prices_path=prices_path,
+        coverage_extension_root=coverage_root,
+        outcome_ticker="QQQ",
+    )
+    sensitivity_path = tmp_path / "dynamic_trend_threshold_sensitivity_review.json"
+    sensitivity_path.write_text(json.dumps(sensitivity, ensure_ascii=False), encoding="utf-8")
+
+    payload = build_dynamic_trend_bridge_consistency_audit(
+        sensitivity_review_path=sensitivity_path,
+    )
+
+    assert payload["report_type"] == "dynamic_trend_bridge_consistency_audit"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    assert payload["production_effect"] == "none"
+    assert payload["bridge_only_promotion_gate_evidence_allowed"] is False
+    summary = payload["summary"]
+    assert summary["tested_threshold_count"] == 3
+    assert summary["backtest_bridge_case_count"] >= 18
+    assert summary["validated_boundary_count"] == 0
+    assert summary["thresholds_changed_count"] == 0
+    assert summary["recommendation"] == "sensitivity_tested_only"
+    assert summary["evidence_strength"] == "low"
+    assert summary["bridge_only_promotion_gate_evidence_allowed"] is False
+    assert summary["bridge_reliability_counts"]["insufficient_full_advisory_to_assess"] == 3
+
+    expected_labels = {
+        "bridge_consistent_with_full_advisory",
+        "bridge_directionally_consistent_but_magnitude_uncertain",
+        "bridge_conflicts_with_full_advisory",
+        "insufficient_full_advisory_to_assess",
+    }
+    for record in payload["threshold_bridge_consistency_audits"]:
+        assert record["recommendation"] == "sensitivity_tested_only"
+        assert record["evidence_strength"] == "low"
+        assert record["validated_boundary"] is False
+        assert record["current_value_changed"] is False
+        assert record["threshold_value_change_allowed"] is False
+        assert record["promotion_gate_allowed"] is False
+        assert record["production_effect"] == "none"
+        assert record["bridge_reliability"] in expected_labels
+        assert record["bridge_reliability"] == "insufficient_full_advisory_to_assess"
+        assert record["recommendation_by_full_advisory_only"] == "insufficient_data"
+        assert record["recommendation_by_backtest_bridge_only"] == "sensitivity_tested_only"
+        assert record["direction_agreement"]["status"] == "insufficient_full_advisory_to_assess"
+        assert "metric_delta_by_source" in record
+        assert "false_risk_off_delta" in record
+        assert "false_risk_on_delta" in record
+        assert "missed_upside_delta" in record
+        assert "drawdown_preservation_delta" in record
+        assert "turnover_delta" in record
+        assert "constraint_hit_delta" in record
+        assert record["variant_source_consistency"]
+
+
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
 
@@ -1531,6 +1597,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "threshold_prioritization_report",
         "threshold_calibration_report",
         "dynamic_trend_threshold_sensitivity_review",
+        "dynamic_trend_bridge_consistency_audit",
         "indicator_dependency_graph",
         "multi_stage_weight_trace_contract",
         "constraint_attribution_report",
@@ -1581,6 +1648,17 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
     assert dynamic_trend_summary["promotion_gate_allowed"] is False
     assert dynamic_trend_summary["production_weight_change_allowed"] is False
     assert dynamic_trend_summary["paper_shadow_change_allowed"] is False
+    bridge_consistency_summary = payload["summary"]["dynamic_trend_bridge_consistency_summary"]
+    assert bridge_consistency_summary["tested_threshold_count"] == 3
+    assert bridge_consistency_summary["validated_boundary_count"] == 0
+    assert bridge_consistency_summary["thresholds_changed_count"] == 0
+    assert bridge_consistency_summary["recommendation"] == "sensitivity_tested_only"
+    assert bridge_consistency_summary["evidence_strength"] == "low"
+    assert bridge_consistency_summary["production_effect"] == "none"
+    assert bridge_consistency_summary["promotion_gate_allowed"] is False
+    assert bridge_consistency_summary["production_weight_change_allowed"] is False
+    assert bridge_consistency_summary["paper_shadow_change_allowed"] is False
+    assert bridge_consistency_summary["bridge_only_promotion_gate_evidence_allowed"] is False
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
@@ -1625,6 +1703,7 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["threshold_prioritization_repeatable"] is True
     assert payload["stable_fields"]["threshold_calibration_repeatable"] is True
     assert payload["stable_fields"]["dynamic_trend_threshold_sensitivity_repeatable"] is True
+    assert payload["stable_fields"]["dynamic_trend_bridge_consistency_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -1708,6 +1787,20 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "research",
             "indicators",
             "dynamic-trend-threshold-sensitivity-review",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    dynamic_trend_bridge_consistency = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "dynamic-trend-bridge-consistency-audit",
+            "--sensitivity-review",
+            str(tmp_path / "dynamic_trend_threshold_sensitivity_review.json"),
             "--output-root",
             str(tmp_path),
         ],
@@ -1861,6 +1954,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert threshold_followup.exit_code == 0, threshold_followup.output
     assert dynamic_trend_prep.exit_code == 0, dynamic_trend_prep.output
     assert dynamic_trend_sensitivity.exit_code == 0, dynamic_trend_sensitivity.output
+    assert dynamic_trend_bridge_consistency.exit_code == 0, dynamic_trend_bridge_consistency.output
     assert coverage_gap.exit_code == 0, coverage_gap.output
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
@@ -1882,6 +1976,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (tmp_path / "threshold_calibration_followup_plan.json").exists()
     assert (tmp_path / "dynamic_trend_threshold_calibration_prep_report.json").exists()
     assert (tmp_path / "dynamic_trend_threshold_sensitivity_review.json").exists()
+    assert (tmp_path / "dynamic_trend_bridge_consistency_audit.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
     assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()

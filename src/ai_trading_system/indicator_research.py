@@ -330,6 +330,43 @@ DYNAMIC_TREND_VALIDATION_RECOMMENDATIONS = {
     "collect_evidence_only",
     "sensitivity_tested_only",
 }
+DYNAMIC_TREND_BRIDGE_RELIABILITY_LABELS = (
+    "bridge_consistent_with_full_advisory",
+    "bridge_directionally_consistent_but_magnitude_uncertain",
+    "bridge_conflicts_with_full_advisory",
+    "insufficient_full_advisory_to_assess",
+)
+DYNAMIC_TREND_SOURCE_COMPARISON_METRICS = (
+    "avg_return_1d",
+    "avg_return_5d",
+    "avg_return_10d",
+    "avg_return_20d",
+    "hit_rate_1d",
+    "hit_rate_5d",
+    "hit_rate_10d",
+    "hit_rate_20d",
+    "max_drawdown",
+    "drawdown_preservation",
+    "turnover",
+    "constraint_hit_count",
+    "risk_off_trigger_count",
+    "risk_on_confirmation_count",
+    "false_risk_off_count",
+    "false_risk_on_count",
+    "missed_upside_count",
+)
+DYNAMIC_TREND_DIRECTIONAL_METRICS = (
+    "avg_return_1d",
+    "avg_return_5d",
+    "avg_return_10d",
+    "avg_return_20d",
+    "max_drawdown",
+    "turnover",
+    "constraint_hit_count",
+    "false_risk_off_count",
+    "false_risk_on_count",
+    "missed_upside_count",
+)
 
 
 class IndicatorResearchError(ValueError):
@@ -1274,6 +1311,10 @@ def write_indicator_validation_pack_stability_report(
         "dynamic_trend_threshold_sensitivity_repeatable": (
             first_projection["dynamic_trend_threshold_sensitivity_summary"]
             == second_projection["dynamic_trend_threshold_sensitivity_summary"]
+        ),
+        "dynamic_trend_bridge_consistency_repeatable": (
+            first_projection["dynamic_trend_bridge_consistency_summary"]
+            == second_projection["dynamic_trend_bridge_consistency_summary"]
         ),
     }
     stable = all(stable_fields.values())
@@ -3438,6 +3479,103 @@ def build_dynamic_trend_threshold_sensitivity_review(
     )
 
 
+def build_dynamic_trend_bridge_consistency_audit(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    threshold_registry_path: Path = DEFAULT_THRESHOLD_REGISTRY_PATH,
+    sensitivity_review_path: Path | None = None,
+    sensitivity_review_payload: Mapping[str, Any] | None = None,
+    trace_path: Path | None = None,
+    prices_path: Path | None = None,
+    gate_audit_root: Path | None = None,
+    bridge_artifact_root: Path | None = None,
+    coverage_extension_root: Path | None = None,
+    outcome_ticker: str = DEFAULT_MASKING_OUTCOME_TICKER,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+) -> dict[str, Any]:
+    registry = load_indicator_registry(registry_path)
+    threshold_registry = load_threshold_registry(threshold_registry_path)
+    sensitivity_review = _load_dynamic_trend_sensitivity_review_for_consistency(
+        sensitivity_review_path=sensitivity_review_path,
+        sensitivity_review_payload=sensitivity_review_payload,
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        coverage_extension_root=coverage_extension_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    records = _dynamic_trend_bridge_consistency_records(sensitivity_review)
+    summary = _dynamic_trend_bridge_consistency_summary(records, sensitivity_review)
+    issues = _dynamic_trend_bridge_consistency_issues(
+        summary,
+        sensitivity_review_path=sensitivity_review_path,
+    )
+    return _base_payload(
+        registry,
+        report_type="dynamic_trend_bridge_consistency_audit",
+        status="PASS_WITH_WARNINGS",
+        issues=issues,
+        summary=summary,
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        threshold_registry_path=str(threshold_registry_path),
+        source_sensitivity_review_path=(
+            None if sensitivity_review_path is None else str(sensitivity_review_path)
+        ),
+        calibrated_threshold_scope=list(SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS),
+        source_dynamic_trend_threshold_sensitivity_summary=_json_ready(
+            sensitivity_review.get("summary", {})
+        ),
+        threshold_bridge_consistency_audits=records,
+        validation_recommendation_set=sorted(DYNAMIC_TREND_VALIDATION_RECOMMENDATIONS),
+        bridge_reliability_label_set=list(DYNAMIC_TREND_BRIDGE_RELIABILITY_LABELS),
+        max_allowed_status="SENSITIVITY_TESTED",
+        validated_boundary_count=0,
+        thresholds_changed_count=0,
+        bridge_only_promotion_gate_evidence_allowed=False,
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_effect="none",
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            **dict(threshold_registry.get("safety_boundary", {})),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+        },
+        allowed_uses=list(NON_PROMOTION_ALLOWED_USES),
+        reader_brief={
+            "key_result": "DYNAMIC_TREND_BRIDGE_CONSISTENCY_AUDITED_VALIDATION_ONLY",
+            "tested_threshold_count": summary["tested_threshold_count"],
+            "bridge_reliability_counts": summary["bridge_reliability_counts"],
+            "evidence_strength": summary["evidence_strength"],
+            "recommendation": summary["recommendation"],
+            "next_action": (
+                "collect more full-advisory dynamic/trend cases before any owner-reviewed "
+                "threshold change; do not use bridge evidence alone for promotion gates"
+            ),
+        },
+    )
+
+
 def build_lineage_manifest_repair_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -4058,6 +4196,37 @@ def write_indicator_framework_validation_pack(
 ) -> dict[str, Any]:
     registry = load_indicator_registry(registry_path)
     validation_root = output_root / "control_plane_v1_validation"
+    dynamic_trend_threshold_sensitivity_payload = build_dynamic_trend_threshold_sensitivity_review(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        coverage_extension_root=coverage_extension_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    dynamic_trend_bridge_consistency_payload = build_dynamic_trend_bridge_consistency_audit(
+        registry_path=registry_path,
+        threshold_registry_path=threshold_registry_path,
+        sensitivity_review_payload=dynamic_trend_threshold_sensitivity_payload,
+        trace_path=trace_path,
+        prices_path=prices_path,
+        gate_audit_root=gate_audit_root,
+        bridge_artifact_root=bridge_artifact_root,
+        coverage_extension_root=coverage_extension_root,
+        outcome_ticker=outcome_ticker,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
     artifact_builders: list[tuple[str, dict[str, Any]]] = [
         ("indicator_research_ontology", build_ontology_payload(registry_path=registry_path)),
         ("daily_indicator_inventory", build_daily_indicator_inventory(registry_path=registry_path)),
@@ -4103,21 +4272,11 @@ def write_indicator_framework_validation_pack(
         ),
         (
             "dynamic_trend_threshold_sensitivity_review",
-            build_dynamic_trend_threshold_sensitivity_review(
-                registry_path=registry_path,
-                threshold_registry_path=threshold_registry_path,
-                trace_path=trace_path,
-                prices_path=prices_path,
-                gate_audit_root=gate_audit_root,
-                bridge_artifact_root=bridge_artifact_root,
-                coverage_extension_root=coverage_extension_root,
-                outcome_ticker=outcome_ticker,
-                start_date=start_date,
-                end_date=end_date,
-                event_window_start=event_window_start,
-                event_window_end=event_window_end,
-                asset_universe=asset_universe,
-            ),
+            dynamic_trend_threshold_sensitivity_payload,
+        ),
+        (
+            "dynamic_trend_bridge_consistency_audit",
+            dynamic_trend_bridge_consistency_payload,
         ),
         (
             "indicator_dependency_graph",
@@ -4404,6 +4563,10 @@ def write_indicator_framework_validation_pack(
         "dynamic_trend_threshold_sensitivity_review",
         {},
     ).get("summary", {})
+    dynamic_trend_bridge_consistency_summary = artifact_payloads.get(
+        "dynamic_trend_bridge_consistency_audit",
+        {},
+    ).get("summary", {})
     status = (
         "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_BLOCKED"
         if blocking
@@ -4426,6 +4589,7 @@ def write_indicator_framework_validation_pack(
             "dynamic_trend_threshold_sensitivity_summary": (
                 dynamic_trend_threshold_sensitivity_summary
             ),
+            "dynamic_trend_bridge_consistency_summary": (dynamic_trend_bridge_consistency_summary),
             "no_parameter_mutation": True,
             "no_paper_shadow_live_broker_order_official_weights": True,
             "production_effect": "none",
@@ -4448,6 +4612,10 @@ def write_indicator_framework_validation_pack(
             {"check_id": "threshold_calibration_report", "status": "PASS_WITH_WARNINGS"},
             {
                 "check_id": "dynamic_trend_threshold_sensitivity_review",
+                "status": "PASS_WITH_WARNINGS",
+            },
+            {
+                "check_id": "dynamic_trend_bridge_consistency_audit",
                 "status": "PASS_WITH_WARNINGS",
             },
             {"check_id": "dependency_graph", "status": "PASS_WITH_WARNINGS"},
@@ -7245,6 +7413,567 @@ def _dynamic_trend_sensitivity_issues(
                 "message": (
                     "Some required dynamic allocation score fields are missing from source trace "
                     "and are reported as data gaps, not imputed thresholds."
+                ),
+            }
+        )
+    return issues
+
+
+def _load_dynamic_trend_sensitivity_review_for_consistency(
+    *,
+    sensitivity_review_path: Path | None,
+    sensitivity_review_payload: Mapping[str, Any] | None,
+    registry_path: Path,
+    threshold_registry_path: Path,
+    trace_path: Path | None,
+    prices_path: Path | None,
+    gate_audit_root: Path | None,
+    bridge_artifact_root: Path | None,
+    coverage_extension_root: Path | None,
+    outcome_ticker: str,
+    start_date: str | None,
+    end_date: str | None,
+    event_window_start: str | None,
+    event_window_end: str | None,
+    asset_universe: str | None,
+) -> Mapping[str, Any]:
+    if sensitivity_review_payload is not None:
+        payload = dict(sensitivity_review_payload)
+    elif sensitivity_review_path is not None:
+        if not sensitivity_review_path.exists():
+            raise IndicatorResearchError(
+                f"Dynamic trend sensitivity review not found: {sensitivity_review_path}"
+            )
+        raw = json.loads(sensitivity_review_path.read_text(encoding="utf-8"))
+        if not isinstance(raw, Mapping):
+            raise IndicatorResearchError(
+                f"Dynamic trend sensitivity review is not an object: {sensitivity_review_path}"
+            )
+        payload = dict(raw)
+    else:
+        payload = build_dynamic_trend_threshold_sensitivity_review(
+            registry_path=registry_path,
+            threshold_registry_path=threshold_registry_path,
+            trace_path=trace_path,
+            prices_path=prices_path,
+            gate_audit_root=gate_audit_root,
+            bridge_artifact_root=bridge_artifact_root,
+            coverage_extension_root=coverage_extension_root,
+            outcome_ticker=outcome_ticker,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        )
+    if payload.get("report_type") != "dynamic_trend_threshold_sensitivity_review":
+        raise IndicatorResearchError(
+            "TRADING-700 consistency audit requires a dynamic_trend_threshold_sensitivity_review "
+            "payload."
+        )
+    return payload
+
+
+def _dynamic_trend_bridge_consistency_records(
+    sensitivity_review: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    records = sensitivity_review.get("threshold_sensitivity_reviews", [])
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        records = []
+    by_id = {
+        str(record.get("threshold_id")): record for record in records if isinstance(record, Mapping)
+    }
+    return [
+        _dynamic_trend_bridge_consistency_record(
+            threshold_id,
+            source_record=by_id.get(threshold_id, {}),
+        )
+        for threshold_id in SECOND_BATCH_DYNAMIC_TREND_THRESHOLD_IDS
+    ]
+
+
+def _dynamic_trend_bridge_consistency_record(
+    threshold_id: str,
+    *,
+    source_record: Mapping[str, Any],
+) -> dict[str, Any]:
+    variants = source_record.get("scenario_variants", [])
+    if not isinstance(variants, Sequence) or isinstance(variants, (str, bytes)):
+        variants = []
+    variant_rows = [
+        _dynamic_trend_variant_source_consistency(variant)
+        for variant in variants
+        if isinstance(variant, Mapping)
+    ]
+    primary = _primary_dynamic_trend_consistency_variant(variant_rows)
+    direction = _dynamic_trend_source_direction_agreement(variant_rows)
+    full_recommendation = _dynamic_trend_threshold_source_recommendation(
+        variant_rows,
+        source_layer="full_advisory_only",
+    )
+    bridge_recommendation = _dynamic_trend_threshold_source_recommendation(
+        variant_rows,
+        source_layer="backtest_bridge_only",
+    )
+    reliability = _dynamic_trend_bridge_reliability_label(direction, variant_rows)
+    return {
+        "threshold_id": threshold_id,
+        "current_value": _json_ready(source_record.get("current_value")),
+        "tested_values": _json_ready(source_record.get("tested_values", [])),
+        "recommendation": "sensitivity_tested_only",
+        "recommended_status": "SENSITIVITY_TESTED",
+        "evidence_strength": "low",
+        "recommendation_by_full_advisory_only": full_recommendation,
+        "recommendation_by_backtest_bridge_only": bridge_recommendation,
+        "direction_agreement": direction,
+        "bridge_reliability": reliability,
+        "metric_delta_by_source": primary.get("metric_delta_by_source", {}),
+        "false_risk_off_delta": primary.get("metric_delta_by_source", {}).get(
+            "false_risk_off_count"
+        ),
+        "false_risk_on_delta": primary.get("metric_delta_by_source", {}).get("false_risk_on_count"),
+        "missed_upside_delta": primary.get("metric_delta_by_source", {}).get("missed_upside_count"),
+        "drawdown_preservation_delta": primary.get("metric_delta_by_source", {}).get(
+            "drawdown_preservation"
+        ),
+        "turnover_delta": primary.get("metric_delta_by_source", {}).get("turnover"),
+        "constraint_hit_delta": primary.get("metric_delta_by_source", {}).get(
+            "constraint_hit_count"
+        ),
+        "variant_source_consistency": variant_rows,
+        "remaining_limitations": _dynamic_trend_bridge_consistency_limitations(
+            threshold_id,
+            variant_rows,
+        ),
+        "validated_boundary": False,
+        "not_validated_statistical_boundary": True,
+        "current_value_changed": False,
+        "threshold_value_change_allowed": False,
+        "bridge_only_promotion_gate_evidence_allowed": False,
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _dynamic_trend_variant_source_consistency(
+    variant: Mapping[str, Any],
+) -> dict[str, Any]:
+    full = _dynamic_trend_full_advisory_metrics(variant)
+    bridge = _dynamic_trend_trace_source_metrics(variant, BACKTEST_TRACE_BRIDGE_SOURCE)
+    full_quality = _dynamic_trend_source_quality(full, source_layer="full_advisory_only")
+    bridge_quality = _dynamic_trend_source_quality(bridge, source_layer="backtest_bridge_only")
+    delta = _dynamic_trend_metric_delta_by_source(full, bridge)
+    return {
+        "variant_id": variant.get("variant_id"),
+        "variant_kind": variant.get("variant_kind"),
+        "scenario_id": variant.get("scenario_id"),
+        "tested_value": _json_ready(variant.get("tested_value", {})),
+        "recommendation_by_full_advisory_only": _dynamic_trend_source_recommendation(full_quality),
+        "recommendation_by_backtest_bridge_only": _dynamic_trend_source_recommendation(
+            bridge_quality
+        ),
+        "direction_agreement": "insufficient_full_advisory_to_assess",
+        "full_advisory_only": _dynamic_trend_source_metrics_projection(full),
+        "backtest_bridge_only": _dynamic_trend_source_metrics_projection(bridge),
+        "full_advisory_sample_quality": full_quality,
+        "backtest_bridge_sample_quality": bridge_quality,
+        "metric_delta_by_source": delta,
+        "false_risk_off_delta": delta.get("false_risk_off_count"),
+        "false_risk_on_delta": delta.get("false_risk_on_count"),
+        "missed_upside_delta": delta.get("missed_upside_count"),
+        "drawdown_preservation_delta": delta.get("drawdown_preservation"),
+        "turnover_delta": delta.get("turnover"),
+        "constraint_hit_delta": delta.get("constraint_hit_count"),
+        "promotion_gate_allowed": False,
+        "production_effect": "none",
+    }
+
+
+def _dynamic_trend_full_advisory_metrics(variant: Mapping[str, Any]) -> Mapping[str, Any]:
+    full = variant.get("full_advisory_only", {})
+    return full if isinstance(full, Mapping) else {}
+
+
+def _dynamic_trend_trace_source_metrics(
+    variant: Mapping[str, Any],
+    trace_source: str,
+) -> Mapping[str, Any]:
+    rows = variant.get("component_backtest_bridge", [])
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+        return {}
+    for row in rows:
+        if isinstance(row, Mapping) and str(row.get("trace_source") or "") == trace_source:
+            return row
+    return {}
+
+
+def _dynamic_trend_source_metrics_projection(metrics: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: _json_ready(metrics.get(key))
+        for key in (
+            "case_count",
+            "mature_case_count",
+            "mature_date_count",
+            "full_advisory_case_count",
+            "cluster_count",
+            "regime_count",
+            *DYNAMIC_TREND_SOURCE_COMPARISON_METRICS,
+        )
+        if key in metrics
+    }
+
+
+def _dynamic_trend_source_quality(
+    metrics: Mapping[str, Any],
+    *,
+    source_layer: str,
+) -> dict[str, Any]:
+    case_count = int(metrics.get("case_count") or 0)
+    mature_case_count = int(metrics.get("mature_case_count") or 0)
+    mature_date_count = int(metrics.get("mature_date_count") or 0)
+    full_advisory_case_count = int(metrics.get("full_advisory_case_count") or 0)
+    cluster_count = int(metrics.get("cluster_count") or 0)
+    regime_count = int(metrics.get("regime_count") or 0)
+    data_gaps: list[str] = []
+    if case_count <= 0:
+        data_gaps.append("case_count=0")
+    if mature_case_count <= 0:
+        data_gaps.append("20d_mature_case_count=0")
+    if source_layer == "full_advisory_only":
+        if case_count < 50:
+            data_gaps.append("full_advisory_case_count_below_consistency_floor_50")
+        if mature_case_count < 50:
+            data_gaps.append("full_advisory_20d_mature_case_count_below_floor_50")
+        if cluster_count < 2:
+            data_gaps.append("full_advisory_cluster_count_below_2")
+        if regime_count < 2:
+            data_gaps.append("full_advisory_regime_count_below_2")
+    return {
+        "source_layer": source_layer,
+        "case_count": case_count,
+        "mature_case_count": mature_case_count,
+        "mature_date_count": mature_date_count,
+        "full_advisory_case_count": full_advisory_case_count,
+        "cluster_count": cluster_count,
+        "regime_count": regime_count,
+        "sufficient_for_consistency_assessment": not data_gaps,
+        "data_gaps": data_gaps,
+    }
+
+
+def _dynamic_trend_source_recommendation(source_quality: Mapping[str, Any]) -> str:
+    if int(source_quality.get("case_count") or 0) <= 0:
+        return "insufficient_data"
+    if int(source_quality.get("mature_case_count") or 0) <= 0:
+        return "insufficient_data"
+    if not source_quality.get("sufficient_for_consistency_assessment"):
+        return "insufficient_data"
+    return "sensitivity_tested_only"
+
+
+def _dynamic_trend_threshold_source_recommendation(
+    variant_rows: Sequence[Mapping[str, Any]],
+    *,
+    source_layer: str,
+) -> str:
+    recommendations = {
+        str(row.get(f"recommendation_by_{source_layer}") or "")
+        for row in variant_rows
+        if isinstance(row, Mapping)
+    }
+    if "sensitivity_tested_only" in recommendations:
+        return "sensitivity_tested_only"
+    if "collect_evidence_only" in recommendations:
+        return "collect_evidence_only"
+    return "insufficient_data"
+
+
+def _dynamic_trend_metric_delta_by_source(
+    full: Mapping[str, Any],
+    bridge: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        field: _numeric_delta(bridge.get(field), full.get(field))
+        for field in DYNAMIC_TREND_SOURCE_COMPARISON_METRICS
+    }
+
+
+def _numeric_delta(left: Any, right: Any) -> Any:
+    if isinstance(left, bool) or isinstance(right, bool):
+        return None
+    if left is None or right is None:
+        return None
+    if isinstance(left, int) and isinstance(right, int):
+        return left - right
+    left_value = _optional_float(left)
+    right_value = _optional_float(right)
+    if left_value is None or right_value is None:
+        return None
+    return left_value - right_value
+
+
+def _primary_dynamic_trend_consistency_variant(
+    variant_rows: Sequence[Mapping[str, Any]],
+) -> Mapping[str, Any]:
+    for row in variant_rows:
+        if isinstance(row, Mapping) and row.get("variant_kind") == "current_value":
+            return row
+    return variant_rows[0] if variant_rows else {}
+
+
+def _dynamic_trend_source_direction_agreement(
+    variant_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    full_qualities = [
+        row.get("full_advisory_sample_quality", {})
+        for row in variant_rows
+        if isinstance(row, Mapping)
+    ]
+    if not full_qualities or any(
+        not isinstance(quality, Mapping) or not quality.get("sufficient_for_consistency_assessment")
+        for quality in full_qualities
+    ):
+        return {
+            "status": "insufficient_full_advisory_to_assess",
+            "agreement_ratio": None,
+            "agreed_metric_count": 0,
+            "conflicting_metric_count": 0,
+            "insufficient_reason": (
+                "Full-advisory source layer is below the consistency assessment floor; "
+                "bridge magnitude cannot validate direction."
+            ),
+        }
+    baseline = next(
+        (
+            row
+            for row in variant_rows
+            if isinstance(row, Mapping) and row.get("variant_kind") == "no_change_baseline"
+        ),
+        None,
+    )
+    if not isinstance(baseline, Mapping):
+        return {
+            "status": "insufficient_baseline_to_assess",
+            "agreement_ratio": None,
+            "agreed_metric_count": 0,
+            "conflicting_metric_count": 0,
+            "insufficient_reason": "No no-change baseline variant is available.",
+        }
+    agreed = 0
+    conflicted = 0
+    compared = 0
+    for row in variant_rows:
+        if not isinstance(row, Mapping) or row.get("variant_kind") == "no_change_baseline":
+            continue
+        for metric in DYNAMIC_TREND_DIRECTIONAL_METRICS:
+            full_sign = _directional_metric_sign(
+                row.get("full_advisory_only", {}).get(metric),
+                baseline.get("full_advisory_only", {}).get(metric),
+                metric,
+            )
+            bridge_sign = _directional_metric_sign(
+                row.get("backtest_bridge_only", {}).get(metric),
+                baseline.get("backtest_bridge_only", {}).get(metric),
+                metric,
+            )
+            if full_sign is None or bridge_sign is None:
+                continue
+            compared += 1
+            if full_sign == bridge_sign:
+                agreed += 1
+            else:
+                conflicted += 1
+    ratio = _ratio(agreed, compared)
+    return {
+        "status": "directionally_agree" if conflicted == 0 else "directionally_conflict",
+        "agreement_ratio": ratio,
+        "agreed_metric_count": agreed,
+        "conflicting_metric_count": conflicted,
+        "compared_metric_count": compared,
+        "insufficient_reason": None,
+    }
+
+
+def _directional_metric_sign(value: Any, baseline: Any, metric: str) -> int | None:
+    delta = _numeric_delta(value, baseline)
+    if delta is None:
+        return None
+    if metric in {
+        "max_drawdown",
+        "turnover",
+        "constraint_hit_count",
+        "false_risk_off_count",
+        "false_risk_on_count",
+        "missed_upside_count",
+    }:
+        delta = -delta
+    if abs(float(delta)) < 1e-12:
+        return 0
+    return 1 if float(delta) > 0 else -1
+
+
+def _dynamic_trend_bridge_reliability_label(
+    direction: Mapping[str, Any],
+    variant_rows: Sequence[Mapping[str, Any]],
+) -> str:
+    if str(direction.get("status") or "") == "insufficient_full_advisory_to_assess":
+        return "insufficient_full_advisory_to_assess"
+    if int(direction.get("conflicting_metric_count") or 0) > 0:
+        return "bridge_conflicts_with_full_advisory"
+    if _dynamic_trend_bridge_magnitude_uncertain(variant_rows):
+        return "bridge_directionally_consistent_but_magnitude_uncertain"
+    return "bridge_consistent_with_full_advisory"
+
+
+def _dynamic_trend_bridge_magnitude_uncertain(
+    variant_rows: Sequence[Mapping[str, Any]],
+) -> bool:
+    for row in variant_rows:
+        if not isinstance(row, Mapping):
+            continue
+        full_quality = row.get("full_advisory_sample_quality", {})
+        bridge_quality = row.get("backtest_bridge_sample_quality", {})
+        if not isinstance(full_quality, Mapping) or not isinstance(bridge_quality, Mapping):
+            return True
+        full_cases = int(full_quality.get("case_count") or 0)
+        bridge_cases = int(bridge_quality.get("case_count") or 0)
+        if full_cases <= 0 or bridge_cases >= full_cases * 5:
+            return True
+    return False
+
+
+def _dynamic_trend_bridge_consistency_limitations(
+    threshold_id: str,
+    variant_rows: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    limitations = [
+        "This artifact is validation-only and cannot change current threshold values.",
+        "backtest_trace_bridge cannot be used alone as promotion gate evidence.",
+        "Bridge evidence is diagnostic and not production-equivalent full advisory replay.",
+    ]
+    primary = _primary_dynamic_trend_consistency_variant(variant_rows)
+    full_quality = primary.get("full_advisory_sample_quality", {})
+    if isinstance(full_quality, Mapping) and full_quality.get("data_gaps"):
+        limitations.append(
+            "Full-advisory source layer is insufficient for consistency assessment: "
+            + ", ".join(str(item) for item in full_quality.get("data_gaps", []))
+        )
+    if threshold_id == "trend_calibration.score_bands":
+        limitations.append("Trend score band audit does not validate raw trend score construction.")
+    return limitations
+
+
+def _dynamic_trend_bridge_consistency_summary(
+    records: Sequence[Mapping[str, Any]],
+    sensitivity_review: Mapping[str, Any],
+) -> dict[str, Any]:
+    sensitivity_summary = sensitivity_review.get("summary", {})
+    if not isinstance(sensitivity_summary, Mapping):
+        sensitivity_summary = {}
+    sample_quality = sensitivity_summary.get("sample_quality_breakdown", {})
+    if not isinstance(sample_quality, Mapping):
+        sample_quality = {}
+    trace_source_counts = sample_quality.get("trace_source_counts", {})
+    if not isinstance(trace_source_counts, Mapping):
+        trace_source_counts = {}
+    reliability_counts = {
+        label: sum(1 for record in records if record.get("bridge_reliability") == label)
+        for label in DYNAMIC_TREND_BRIDGE_RELIABILITY_LABELS
+    }
+    full_advisory_case_count = int(
+        trace_source_counts.get(FULL_ADVISORY_TRACE_SOURCE)
+        or sample_quality.get("full_advisory_case_count")
+        or sensitivity_summary.get("full_advisory_case_count")
+        or 0
+    )
+    backtest_bridge_case_count = int(
+        trace_source_counts.get(BACKTEST_TRACE_BRIDGE_SOURCE)
+        or sample_quality.get("backtest_bridge_case_count")
+        or 0
+    )
+    return {
+        "tested_threshold_count": len(records),
+        "target_threshold_ids": [record.get("threshold_id") for record in records],
+        "source_sensitivity_report_type": sensitivity_review.get("report_type"),
+        "source_sensitivity_status": sensitivity_review.get("status"),
+        "full_advisory_case_count": full_advisory_case_count,
+        "backtest_bridge_case_count": backtest_bridge_case_count,
+        "cluster_count": int(sensitivity_summary.get("cluster_count") or 0),
+        "regime_count": int(sensitivity_summary.get("regime_count") or 0),
+        "mature_case_count_by_horizon": _json_ready(
+            sample_quality.get("mature_case_count_by_horizon", {})
+        ),
+        "trace_source_counts": _json_ready(trace_source_counts),
+        "bridge_reliability_counts": reliability_counts,
+        "insufficient_full_advisory_to_assess_count": reliability_counts[
+            "insufficient_full_advisory_to_assess"
+        ],
+        "directionally_consistent_count": (
+            reliability_counts["bridge_consistent_with_full_advisory"]
+            + reliability_counts["bridge_directionally_consistent_but_magnitude_uncertain"]
+        ),
+        "conflict_count": reliability_counts["bridge_conflicts_with_full_advisory"],
+        "recommendation": "sensitivity_tested_only",
+        "evidence_strength": "low",
+        "validated_boundary_count": 0,
+        "thresholds_changed_count": 0,
+        "backtest_bridge_promotion_gate_evidence_allowed": False,
+        "bridge_only_promotion_gate_evidence_allowed": False,
+        "max_allowed_status": "SENSITIVITY_TESTED",
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+        "production_weight_change_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _dynamic_trend_bridge_consistency_issues(
+    summary: Mapping[str, Any],
+    *,
+    sensitivity_review_path: Path | None,
+) -> list[dict[str, Any]]:
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "dynamic_trend_bridge_consistency_validation_only",
+            "message": (
+                "TRADING-700 source-layer consistency audit is validation-only; it cannot "
+                "change current threshold values or approve production, paper-shadow, official "
+                "weights, or promotion."
+            ),
+        },
+        {
+            "severity": "warning",
+            "issue_id": "backtest_trace_bridge_not_promotion_gate_evidence",
+            "message": (
+                "backtest_trace_bridge diagnostics cannot be used alone as promotion gate "
+                "evidence; full-advisory consistency remains required."
+            ),
+        },
+    ]
+    if sensitivity_review_path is None:
+        issues.append(
+            {
+                "severity": "info",
+                "issue_id": "dynamic_trend_sensitivity_review_built_inline",
+                "message": (
+                    "No sensitivity review path was provided; the consistency audit used an "
+                    "inline dynamic trend sensitivity payload."
+                ),
+            }
+        )
+    if int(summary.get("insufficient_full_advisory_to_assess_count") or 0) > 0:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "full_advisory_insufficient_for_bridge_consistency",
+                "message": (
+                    "Full-advisory cases are insufficient for source-layer consistency "
+                    "assessment; evidence_strength stays low and recommendation stays "
+                    "sensitivity_tested_only."
                 ),
             }
         )
@@ -13914,6 +14643,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "threshold_prioritization_report",
         "threshold_calibration_report",
         "dynamic_trend_threshold_sensitivity_review",
+        "dynamic_trend_bridge_consistency_audit",
         "indicator_dependency_graph",
         "indicator_masking_and_dominance_audit_valuation_crowding",
         "valuation_crowding_pilot_validation_report",
@@ -13947,6 +14677,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     dynamic_trend_sensitivity = _read_pack_artifact_json(
         artifacts,
         "dynamic_trend_threshold_sensitivity_review",
+    )
+    dynamic_trend_bridge_consistency = _read_pack_artifact_json(
+        artifacts,
+        "dynamic_trend_bridge_consistency_audit",
     )
     masking = _read_pack_artifact_json(
         artifacts,
@@ -14033,6 +14767,11 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "dynamic_trend_threshold_sensitivity_summary": (
             dynamic_trend_sensitivity.get("summary", {})
             if isinstance(dynamic_trend_sensitivity, Mapping)
+            else {}
+        ),
+        "dynamic_trend_bridge_consistency_summary": (
+            dynamic_trend_bridge_consistency.get("summary", {})
+            if isinstance(dynamic_trend_bridge_consistency, Mapping)
             else {}
         ),
         "coverage_gap_unregistered": (
