@@ -12,7 +12,7 @@
 TRADING-701 确认 dynamic/trend full-advisory equivalent trace 样本仍停留在 22，
 另有 18 个 requested dates 被归为 `expected_pit_limitation`。当前分类过粗，无法
 区分真正不可在 decision time 前获得的数据、timestamp/manifest/config 可修复问题、
-vendor current-view-only 风险、reconstruction gap gap、calendar/asset mapping
+vendor current-view-only 风险、feature reconstruction gap、calendar/asset mapping
 或仍需人工复核的数据源缺口。
 
 ## 目标
@@ -40,13 +40,17 @@ vendor current-view-only 风险、reconstruction gap gap、calendar/asset mappin
    - `fail_closed_rule`
 3. 对历史 blocked dates 重新分类：
    - `true_not_available_before_decision_time`
-   - `availability_timestamp_missing`
+   - `available_time_missing`
    - `timestamp_model_too_conservative`
    - `source_snapshot_missing`
-   - `reconstruction_gap`
+   - `feature_reconstruction_gap`
    - `lineage_manifest_missing`
    - `replay_config_issue`
+   - `calendar_mapping_issue`
+   - `asset_mapping_issue`
+   - `price_window_not_mature`
    - `vendor_current_view_only`
+   - `unknown_requires_manual_review`
 4. 输出 `outputs/research_indicators/pit_source_readiness_audit.json/md`。
 
 ## 实现设计

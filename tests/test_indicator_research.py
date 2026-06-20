@@ -1568,12 +1568,12 @@ def test_pit_source_readiness_marks_available_time_missing_repairable(
     )
 
     summary = payload["summary"]
-    assert summary["blocked_by_reason_class"]["availability_timestamp_missing"] == 1
-    assert summary["availability_timestamp_missing_count"] == 1
+    assert summary["blocked_by_reason_class"]["available_time_missing"] == 1
+    assert summary["available_time_missing_count"] == 1
     assert summary["repairable_without_gate_relaxation_count"] == 1
     assert summary["expected_full_advisory_case_gain_if_repaired"] == 1
     blocked = payload["blocked_date_reclassification"][0]
-    assert blocked["refined_reason_class"] == "availability_timestamp_missing"
+    assert blocked["refined_reason_class"] == "available_time_missing"
     assert blocked["repairable_without_relaxing_gate"] is True
     assert blocked["next_recommendation"] == "fix_timestamp_or_manifest"
     assert blocked["production_gate_relaxation_allowed"] is False

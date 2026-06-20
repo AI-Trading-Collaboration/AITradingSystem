@@ -137,21 +137,27 @@ GATE_ROOT_CAUSE_CLASSES = (
 )
 PIT_SOURCE_READINESS_REASON_CLASSES = (
     "true_not_available_before_decision_time",
-    "availability_timestamp_missing",
+    "available_time_missing",
     "timestamp_model_too_conservative",
     "source_snapshot_missing",
-    "reconstruction_gap",
+    "feature_reconstruction_gap",
     "lineage_manifest_missing",
     "replay_config_issue",
+    "calendar_mapping_issue",
+    "asset_mapping_issue",
+    "price_window_not_mature",
     "vendor_current_view_only",
+    "unknown_requires_manual_review",
 )
 PIT_SOURCE_REPAIRABLE_REASON_CLASSES = {
-    "availability_timestamp_missing",
+    "available_time_missing",
     "timestamp_model_too_conservative",
     "source_snapshot_missing",
-    "reconstruction_gap",
+    "feature_reconstruction_gap",
     "lineage_manifest_missing",
     "replay_config_issue",
+    "calendar_mapping_issue",
+    "asset_mapping_issue",
 }
 DEFAULT_EVENT_WINDOW_CATALOG = (
     {
@@ -9390,12 +9396,18 @@ def _pit_reclassified_reason_class(
     text = _pit_detail_text(records, detail)
     if "current_view_only" in text or "current view only" in text:
         return "vendor_current_view_only"
-                if "reconstruction_gap" in text or ("reconstruct" in text and "gap" in text):
-        return "reconstruction_gap"
+    if "calendar_mapping" in text or "trading_calendar" in text:
+        return "calendar_mapping_issue"
+    if "asset_mapping" in text or "ticker_mapping" in text:
+        return "asset_mapping_issue"
+    if "price_window_not_mature" in text or "outcome_not_mature" in text:
+        return "price_window_not_mature"
+    if "reconstruction_gap" in text or ("reconstruct" in text and "gap" in text):
+        return "feature_reconstruction_gap"
     if "report_missing" in text or "snapshot_missing" in text or "source_snapshot_missing" in text:
         return "source_snapshot_missing"
     if "missing_available_time" in text or "available_time_missing" in text:
-        return "availability_timestamp_missing"
+        return "available_time_missing"
     source_checks = detail.get("source_checks", [])
     if isinstance(source_checks, Sequence) and any(
         isinstance(row, Mapping) and int(row.get("future_available_time_count") or 0) > 0
@@ -9413,7 +9425,7 @@ def _pit_reclassified_reason_class(
         return "lineage_manifest_missing"
     if "replay_config_issue" in raw_classes or "historical_replay_trace" in blocked_gates:
         return "replay_config_issue"
-    return "source_snapshot_missing"
+    return "unknown_requires_manual_review"
 
 
 def _pit_detail_text(
@@ -9478,18 +9490,24 @@ def _pit_candidate_data_sources(reason_class: str, feature: Mapping[str, str]) -
     source = feature.get("source") or feature.get("feature_id") or "UNKNOWN"
     if reason_class == "true_not_available_before_decision_time":
         return []
-    if reason_class == "availability_timestamp_missing":
+    if reason_class == "available_time_missing":
         return [f"{source}: source feed with auditable available_time / accepted_time fields"]
     if reason_class == "timestamp_model_too_conservative":
         return [f"{source}: reviewed timestamp model with empirical release/ingestion proof"]
     if reason_class == "source_snapshot_missing":
         return [f"{source}: reproducible as-of snapshot archive and checksum manifest"]
-    if reason_class == "reconstruction_gap":
+    if reason_class == "feature_reconstruction_gap":
         return [f"{source}: rebuilt PIT reconstruction with source lineage and accepted_time proof"]
     if reason_class == "lineage_manifest_missing":
         return [f"{source}: trace lineage manifest with production_equivalent=true"]
     if reason_class == "replay_config_issue":
         return [f"{source}: historical replay config that writes score_daily trace and manifest"]
+    if reason_class == "calendar_mapping_issue":
+        return [f"{source}: trading-calendar mapping proof for the decision date"]
+    if reason_class == "asset_mapping_issue":
+        return [f"{source}: audited asset/ticker mapping manifest"]
+    if reason_class == "price_window_not_mature":
+        return []
     if reason_class == "vendor_current_view_only":
         return [
             f"{source}: vendor PIT archive or internally captured forward-only snapshot history"
@@ -9499,15 +9517,17 @@ def _pit_candidate_data_sources(reason_class: str, feature: Mapping[str, str]) -
 
 def _pit_next_recommendation(reason_class: str) -> str:
     if reason_class in {
-        "availability_timestamp_missing",
+        "available_time_missing",
         "timestamp_model_too_conservative",
         "lineage_manifest_missing",
         "replay_config_issue",
+        "calendar_mapping_issue",
+        "asset_mapping_issue",
     }:
         return "fix_timestamp_or_manifest"
     if reason_class in {
         "source_snapshot_missing",
-        "reconstruction_gap",
+        "feature_reconstruction_gap",
         "vendor_current_view_only",
     }:
         return "adopt_more_reliable_pit_source"
@@ -9558,7 +9578,7 @@ def _pit_source_readiness_summary(
     repairable_count = 0
     true_pit_count = 0
     expected_gain = 0
-    source_snapshot_missing_count = 0
+    unknown_availability_count = 0
     for row in reclassification:
         feature = str(row.get("feature_id") or "UNKNOWN")
         reason = str(row.get("refined_reason_class") or "UNKNOWN")
@@ -9569,8 +9589,8 @@ def _pit_source_readiness_summary(
             expected_gain += int(row.get("expected_full_advisory_case_gain_if_repaired") or 0)
         if reason == "true_not_available_before_decision_time":
             true_pit_count += 1
-        if reason == "source_snapshot_missing":
-            source_snapshot_missing_count += 1
+        if reason == "unknown_requires_manual_review":
+            unknown_availability_count += 1
         candidate_sources.update(str(item) for item in row.get("candidate_data_source_needed", []))
     blocked_date_count = len({str(row.get("date") or "") for row in reclassification})
     pit_sensitive_count = sum(1 for contract in contracts if contract.get("pit_sensitive"))
@@ -9589,10 +9609,10 @@ def _pit_source_readiness_summary(
         "repairable_without_gate_relaxation_count": repairable_count,
         "not_repairable_true_pit_limitation_count": true_pit_count,
         "true_pit_limitation_count": true_pit_count,
-        "unknown_availability_count": source_snapshot_missing_count,
+        "unknown_availability_count": unknown_availability_count,
         "source_snapshot_missing_count": blocked_by_reason_class.get("source_snapshot_missing", 0),
-        "availability_timestamp_missing_count": blocked_by_reason_class.get(
-            "availability_timestamp_missing",
+        "available_time_missing_count": blocked_by_reason_class.get(
+            "available_time_missing",
             0,
         ),
         "timestamp_model_issue_count": blocked_by_reason_class.get(
