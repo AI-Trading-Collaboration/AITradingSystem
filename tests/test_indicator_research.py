@@ -29,6 +29,7 @@ from ai_trading_system.indicator_research import (
     build_mapping_plan,
     build_masking_audit,
     build_masking_casebook,
+    build_pit_source_readiness_audit,
     build_threshold_calibration_followup_plan,
     build_threshold_calibration_report,
     build_threshold_prioritization_report,
@@ -1478,6 +1479,187 @@ def test_dynamic_trend_full_advisory_expansion_report_blocks_pit_failures(
     assert blocked[0]["promotion_gate_allowed"] is False
 
 
+def test_pit_source_readiness_audit_reclassifies_blocked_dates(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    gate_root = _write_gate_audit_root(tmp_path)
+
+    payload = build_pit_source_readiness_audit(
+        trace_path=trace_path,
+        gate_audit_root=gate_root,
+        start_date="2023-01-03",
+        end_date="2023-01-05",
+    )
+
+    assert payload["report_type"] == "pit_source_readiness_audit"
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["promotion_gate_allowed"] is False
+    assert payload["production_weight_change_allowed"] is False
+    assert payload["paper_shadow_change_allowed"] is False
+    assert payload["production_effect"] == "none"
+    summary = payload["summary"]
+    assert summary["pit_contract_count"] == len(payload["pit_availability_contracts"])
+    assert summary["pit_sensitive_feature_count"] == len(payload["pit_availability_contracts"])
+    assert summary["missing_availability_contract_count"] == 0
+    assert summary["total_blocked_dates"] == 1
+    assert summary["blocked_date_count"] == 1
+    assert summary["blocked_by_feature"]["sec_fundamentals_filing"] == 1
+    assert summary["blocked_by_reason_class"]["true_not_available_before_decision_time"] == 1
+    assert summary["repairable_without_relaxing_gate_count"] == 0
+    assert summary["repairable_without_gate_relaxation_count"] == 0
+    assert summary["not_repairable_true_pit_limitation_count"] == 1
+    assert summary["true_pit_limitation_count"] == 1
+    assert summary["candidate_data_source_needed"] == []
+    assert summary["expected_full_advisory_case_gain_if_repaired"] == 0
+    assert summary["lookahead_violation_count"] == 0
+    assert summary["production_effect"] == "none"
+    assert summary["promotion_gate_allowed"] is False
+    assert summary["paper_shadow_change_allowed"] is False
+    assert summary["production_weight_change_allowed"] is False
+
+    contracts = payload["pit_availability_contracts"]
+    groups = {contract["feature_group"] for contract in contracts}
+    assert "sec_edgar_reconstructed_pit_features" in groups
+    assert "fundamental_valuation_features" in groups
+    assert "macro_calendar_event_features" in groups
+    assert "trend_risk_on_risk_off_features" in groups
+    assert "data_quality_gate_dependencies" in groups
+    sec_contract = next(
+        contract
+        for contract in contracts
+        if contract["feature_group"] == "sec_edgar_reconstructed_pit_features"
+    )
+    assert sec_contract["available_time"]
+    assert sec_contract["decision_time"]
+    assert sec_contract["time_fields"]["available_time"]
+    assert sec_contract["revision_policy"]["as_reported_available"] is True
+    assert sec_contract["snapshot_policy"]["source_manifest_required"] is True
+    assert sec_contract["risk_flags"]["reconstruction_risk"] is True
+    assert sec_contract["fail_closed_rule"]
+
+    blocked = payload["blocked_date_reclassification"][0]
+    assert blocked["date"] == "2023-01-05"
+    assert blocked["source"] == "sec_edgar_reconstructed_pit_features"
+    assert blocked["refined_reason_class"] == "true_not_available_before_decision_time"
+    assert blocked["repairable_without_relaxing_gate"] is False
+    assert blocked["next_recommendation"] == "maintain_fail_closed"
+    assert blocked["available_time_lte_decision_time_required"] is True
+    assert blocked["future_data_for_signal_allowed"] is False
+
+
+def test_pit_source_readiness_marks_available_time_missing_repairable(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    gate_root = _write_gate_audit_root(
+        tmp_path,
+        issue_code="missing_available_time",
+        issue_rule="valuation_snapshots",
+        issue_source="vendor_current_snapshot",
+        issue_message="available_time_missing for historical replay source.",
+    )
+
+    payload = build_pit_source_readiness_audit(
+        trace_path=trace_path,
+        gate_audit_root=gate_root,
+        start_date="2023-01-03",
+        end_date="2023-01-05",
+    )
+
+    summary = payload["summary"]
+    assert summary["blocked_by_reason_class"]["availability_timestamp_missing"] == 1
+    assert summary["availability_timestamp_missing_count"] == 1
+    assert summary["repairable_without_gate_relaxation_count"] == 1
+    assert summary["expected_full_advisory_case_gain_if_repaired"] == 1
+    blocked = payload["blocked_date_reclassification"][0]
+    assert blocked["refined_reason_class"] == "availability_timestamp_missing"
+    assert blocked["repairable_without_relaxing_gate"] is True
+    assert blocked["next_recommendation"] == "fix_timestamp_or_manifest"
+    assert blocked["production_gate_relaxation_allowed"] is False
+
+
+def test_pit_source_readiness_marks_source_snapshot_missing_repairable(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    gate_root = _write_gate_audit_root(
+        tmp_path,
+        issue_code="source_snapshot_missing",
+        issue_rule="sec_fundamentals_filing",
+        issue_source="sec_edgar_reconstructed_pit_features",
+        issue_message="source_snapshot_missing for historical SEC reconstruction.",
+    )
+
+    payload = build_pit_source_readiness_audit(
+        trace_path=trace_path,
+        gate_audit_root=gate_root,
+        start_date="2023-01-03",
+        end_date="2023-01-05",
+    )
+
+    summary = payload["summary"]
+    assert summary["blocked_by_reason_class"]["source_snapshot_missing"] == 1
+    assert summary["source_snapshot_missing_count"] == 1
+    assert summary["repairable_without_gate_relaxation_count"] == 1
+    assert payload["blocked_date_reclassification"][0]["next_recommendation"] == (
+        "adopt_more_reliable_pit_source"
+    )
+
+
+def test_pit_source_readiness_vendor_current_view_only_needs_source_not_gain(
+    tmp_path: Path,
+) -> None:
+    trace_path = _write_dynamic_trend_trace(tmp_path)
+    gate_root = _write_gate_audit_root(
+        tmp_path,
+        issue_code="vendor_current_view_only",
+        issue_rule="valuation_snapshots",
+        issue_source="fmp_historical_valuation",
+        issue_message="vendor_current_view_only risk; no as-of snapshot manifest.",
+    )
+
+    payload = build_pit_source_readiness_audit(
+        trace_path=trace_path,
+        gate_audit_root=gate_root,
+        start_date="2023-01-03",
+        end_date="2023-01-05",
+    )
+
+    summary = payload["summary"]
+    assert summary["blocked_by_reason_class"]["vendor_current_view_only"] == 1
+    assert summary["vendor_current_view_only_count"] == 1
+    assert summary["repairable_without_gate_relaxation_count"] == 0
+    assert summary["expected_full_advisory_case_gain_if_repaired"] == 0
+    assert summary["candidate_data_source_needed"]
+    blocked = payload["blocked_date_reclassification"][0]
+    assert blocked["repairable_without_relaxing_gate"] is False
+    assert blocked["next_recommendation"] == "adopt_more_reliable_pit_source"
+
+
+def test_pit_source_readiness_contract_schema_is_complete() -> None:
+    payload = build_pit_source_readiness_audit()
+    required_time_fields = {
+        "raw_event_time",
+        "release_time",
+        "accepted_time",
+        "available_time",
+        "ingestion_time",
+        "decision_time",
+    }
+
+    assert payload["summary"]["missing_availability_contract_count"] == 0
+    for contract in payload["pit_availability_contracts"]:
+        assert required_time_fields <= set(contract["time_fields"])
+        assert "revision_expected" in contract["revision_policy"]
+        assert "as_of_snapshot_available" in contract["snapshot_policy"]
+        assert "current_view_only_risk" in contract["risk_flags"]
+        assert contract["fail_closed_rule"]
+        assert contract["repair_strategy"]
+        assert contract["production_effect"] == "none"
+        assert contract["promotion_gate_allowed"] is False
+
+
 def test_historical_trace_validation_accepts_replay_style_trace(tmp_path: Path) -> None:
     trace_path = _write_casebook_trace(tmp_path)
 
@@ -1653,6 +1835,7 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
         "dynamic_trend_threshold_sensitivity_review",
         "dynamic_trend_bridge_consistency_audit",
         "dynamic_trend_full_advisory_expansion_report",
+        "pit_source_readiness_audit",
         "indicator_dependency_graph",
         "multi_stage_weight_trace_contract",
         "constraint_attribution_report",
@@ -1723,6 +1906,14 @@ def test_indicator_validation_pack_writes_expected_artifacts(tmp_path: Path) -> 
     assert expansion_summary["production_weight_change_allowed"] is False
     assert expansion_summary["paper_shadow_change_allowed"] is False
     assert expansion_summary["bridge_only_promotion_gate_evidence_allowed"] is False
+    pit_readiness_summary = payload["summary"]["pit_source_readiness_summary"]
+    assert pit_readiness_summary["total_blocked_dates"] >= 0
+    assert pit_readiness_summary["production_effect"] == "none"
+    assert pit_readiness_summary["promotion_gate_allowed"] is False
+    assert pit_readiness_summary["production_weight_change_allowed"] is False
+    assert pit_readiness_summary["paper_shadow_change_allowed"] is False
+    assert pit_readiness_summary["data_quality_gate_relaxed"] is False
+    assert pit_readiness_summary["future_data_for_signal_allowed"] is False
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
@@ -1769,6 +1960,7 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     assert payload["stable_fields"]["dynamic_trend_threshold_sensitivity_repeatable"] is True
     assert payload["stable_fields"]["dynamic_trend_bridge_consistency_repeatable"] is True
     assert payload["stable_fields"]["dynamic_trend_full_advisory_expansion_repeatable"] is True
+    assert payload["stable_fields"]["pit_source_readiness_repeatable"] is True
     assert (
         tmp_path
         / "control_plane_v1_validation"
@@ -1878,6 +2070,25 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
             "research",
             "indicators",
             "dynamic-trend-full-advisory-expansion",
+            "--output-root",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    pit_source_readiness = runner.invoke(
+        app,
+        [
+            "research",
+            "indicators",
+            "pit-source-readiness-audit",
+            "--date-range",
+            "2023-01-03:2023-01-05",
+            "--pit-contract-registry",
+            "config/research/pit_feature_availability_contracts.yaml",
+            "--feature-family",
+            "sec_edgar_reconstructed_pit_features",
+            "--exclude-macro",
             "--output-root",
             str(tmp_path),
         ],
@@ -2035,6 +2246,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (
         dynamic_trend_full_advisory_expansion.exit_code == 0
     ), dynamic_trend_full_advisory_expansion.output
+    assert pit_source_readiness.exit_code == 0, pit_source_readiness.output
     assert coverage_gap.exit_code == 0, coverage_gap.output
     assert casebook.exit_code == 0, casebook.output
     assert ablation.exit_code == 0, ablation.output
@@ -2058,6 +2270,7 @@ def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     assert (tmp_path / "dynamic_trend_threshold_sensitivity_review.json").exists()
     assert (tmp_path / "dynamic_trend_bridge_consistency_audit.json").exists()
     assert (tmp_path / "dynamic_trend_full_advisory_expansion_report.json").exists()
+    assert (tmp_path / "pit_source_readiness_audit.json").exists()
     assert (tmp_path / "indicator_masking_casebook_valuation_crowding_trend.json").exists()
     assert (tmp_path / "valuation_crowding_ablation_validation.json").exists()
     assert (tmp_path / "valuation_crowding_outcome_availability_audit.json").exists()
@@ -2674,6 +2887,10 @@ def _write_gate_audit_root(
     tmp_path: Path,
     *,
     component_only_date: str = "2023-01-05",
+    issue_code: str = "feature_source_available_time_after_decision_time",
+    issue_rule: str = "sec_fundamentals_filing",
+    issue_source: str = "sec_edgar_reconstructed_pit_features",
+    issue_message: str = "12 行 available_time 晚于 decision_time。",
 ) -> Path:
     root = tmp_path / "gate_audit"
     for row_date in ("2023-01-03", "2023-01-04", component_only_date):
@@ -2700,9 +2917,11 @@ def _write_gate_audit_root(
         feature_status = "FAIL" if row_date == component_only_date else "PASS"
         issue_rows = (
             [
-                "| ERROR | feature_source_available_time_after_decision_time | "
-                "sec_fundamentals_filing | sec_edgar_reconstructed_pit_features | "
-                "12 行 available_time 晚于 decision_time。 |",
+                "| ERROR | "
+                f"{issue_code} | "
+                f"{issue_rule} | "
+                f"{issue_source} | "
+                f"{issue_message} |",
             ]
             if feature_status == "FAIL"
             else ["未发现 feature availability 问题。"]

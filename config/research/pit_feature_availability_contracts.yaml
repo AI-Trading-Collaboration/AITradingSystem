@@ -1,0 +1,265 @@
+schema_version: 1
+registry_id: pit_feature_availability_contracts_v1
+status: REVIEWED_BASELINE
+owner: data_governance
+last_review_date: "2026-06-21"
+production_effect: none
+promotion_gate_allowed: false
+paper_shadow_change_allowed: false
+production_weight_change_allowed: false
+
+contract_templates:
+  price_trend_risk: &price_trend_risk
+    feature_family: trend_risk
+    source:
+      - prices_daily
+      - validated_market_cache
+    current_status: REVIEWED_BASELINE
+    pit_sensitive: true
+    required_for_full_advisory: true
+    required_for_component_validation: true
+    time_fields:
+      raw_event_time: bar close date
+      release_time: exchange close or official index publication
+      accepted_time: not_applicable
+      available_time: download_manifest.downloaded_at; if absent, next session after source_date
+      ingestion_time: download_manifest.downloaded_at
+      decision_time: score/backtest signal_date
+    revision_policy:
+      revision_expected: false
+      as_reported_available: true
+      revised_current_view_available: false
+      revision_handling: market prices are treated as non-revision-prone after vendor validation
+    snapshot_policy:
+      as_of_snapshot_available: true
+      snapshot_manifest_required: true
+      source_manifest_required: true
+    risk_flags:
+      current_view_only_risk: false
+      lookahead_risk: medium_requires_decision_time_filter
+      timestamp_model_risk: true
+      reconstruction_risk: false
+    fail_closed_rule: exclude full-advisory replay row when price available_time or market cache validation is missing
+    repair_strategy: repair download manifest, market cache validation, or as-of price snapshot proof
+    owner: data_governance
+    last_review_date: "2026-06-21"
+
+  sec_edgar_fundamental: &sec_edgar_fundamental
+    feature_family: sec_edgar
+    source:
+      - sec_fundamental_features
+      - sec_edgar_reconstructed_pit_features
+      - tsm_ir_quarterly_metrics
+    current_status: REVIEWED_BASELINE_HIGH_RISK
+    pit_sensitive: true
+    required_for_full_advisory: true
+    required_for_component_validation: true
+    time_fields:
+      raw_event_time: fiscal period end
+      release_time: SEC accepted time or official IR filed_date
+      accepted_time: SEC accepted_time or official IR filed_date
+      available_time: filed_date, accepted_time, or max_input_available_time_utc with conservative daily availability
+      ingestion_time: sec_pit reconstruction ingestion manifest / max_input_available_time_utc
+      decision_time: score/backtest signal_date
+    revision_policy:
+      revision_expected: true
+      as_reported_available: true
+      revised_current_view_available: true
+      revision_handling: amended filings and reconstructed current views require separate source lineage and may not overwrite as-reported PIT intervals
+    snapshot_policy:
+      as_of_snapshot_available: true
+      snapshot_manifest_required: true
+      source_manifest_required: true
+    risk_flags:
+      current_view_only_risk: false
+      lookahead_risk: high_without_available_time_and_as_of_snapshot
+      timestamp_model_risk: true
+      reconstruction_risk: true
+    fail_closed_rule: exclude full-advisory replay row when SEC available_time exceeds decision_time or source lineage is missing
+    repair_strategy: backfill acceptedDatetime, source_manifest, reconstruction lineage, and max_input_available_time_utc before rerun
+    owner: data_governance
+    last_review_date: "2026-06-21"
+
+  macro_calendar: &macro_calendar
+    feature_family: macro
+    source:
+      - rates_daily
+      - risk_event_occurrences
+      - risk_event_review_attestations
+    current_status: REVIEWED_BASELINE
+    pit_sensitive: true
+    required_for_full_advisory: true
+    required_for_component_validation: true
+    time_fields:
+      raw_event_time: observation date or event trigger time
+      release_time: FRED release/update timestamp or evidence publication time
+      accepted_time: not_applicable
+      available_time: download_manifest.downloaded_at, captured_at, reviewed_at, or resolved_at
+      ingestion_time: source ingestion manifest or human review record
+      decision_time: score/backtest signal_date
+    revision_policy:
+      revision_expected: true
+      as_reported_available: false
+      revised_current_view_available: true
+      revision_handling: revised macro history requires vintage support disclosure; risk-event status must be reinterpreted as of decision_time
+    snapshot_policy:
+      as_of_snapshot_available: true
+      snapshot_manifest_required: true
+      source_manifest_required: true
+    risk_flags:
+      current_view_only_risk: false
+      lookahead_risk: medium_requires_decision_time_filter
+      timestamp_model_risk: true
+      reconstruction_risk: false
+    fail_closed_rule: exclude full-advisory replay row when macro/event available_time or review attestation is missing
+    repair_strategy: add vintage macro snapshot, event review timestamp, or calendar mapping proof
+    owner: data_governance
+    last_review_date: "2026-06-21"
+
+  valuation_snapshot: &valuation_snapshot
+    feature_family: fundamental
+    source:
+      - valuation_snapshots
+      - fmp_forward_pit
+      - pit_snapshot_manifest
+    current_status: REVIEWED_BASELINE_CURRENT_VIEW_RISK
+    pit_sensitive: true
+    required_for_full_advisory: true
+    required_for_component_validation: true
+    time_fields:
+      raw_event_time: vendor estimate date or valuation as_of
+      release_time: vendor timestamp when available
+      accepted_time: not_applicable
+      available_time: captured_at or PIT normalized available_time
+      ingestion_time: captured_at / pit snapshot manifest downloaded_at
+      decision_time: score/backtest signal_date
+    revision_policy:
+      revision_expected: true
+      as_reported_available: false
+      revised_current_view_available: true
+      revision_handling: vendor historical endpoints without captured_at remain C-grade exploration and cannot prove full-advisory replay
+    snapshot_policy:
+      as_of_snapshot_available: false
+      snapshot_manifest_required: true
+      source_manifest_required: true
+    risk_flags:
+      current_view_only_risk: true
+      lookahead_risk: high_without_available_time_and_as_of_snapshot
+      timestamp_model_risk: true
+      reconstruction_risk: false
+    fail_closed_rule: downgrade to component diagnostic when PIT valuation snapshot or captured_at proof is missing
+    repair_strategy: build forward-only captured valuation snapshot archive or license vendor PIT archive
+    owner: data_governance
+    last_review_date: "2026-06-21"
+
+  manual_review: &manual_review
+    feature_family: manual_or_other
+    source:
+      - market_evidence
+      - trade_theses
+      - manual_review_records
+    current_status: REVIEWED_BASELINE
+    pit_sensitive: true
+    required_for_full_advisory: true
+    required_for_component_validation: false
+    time_fields:
+      raw_event_time: source event or owner-configured effective time
+      release_time: source published_at, owner review date, or config version time
+      accepted_time: not_applicable
+      available_time: captured_at, ingested_at, reviewed_at, or config version effective time
+      ingestion_time: local artifact recorded_at or reviewed_at
+      decision_time: score/backtest signal_date
+    revision_policy:
+      revision_expected: true
+      as_reported_available: true
+      revised_current_view_available: true
+      revision_handling: manual status changes must preserve recorded_at/status_updated_at for replay filtering
+    snapshot_policy:
+      as_of_snapshot_available: true
+      snapshot_manifest_required: true
+      source_manifest_required: true
+    risk_flags:
+      current_view_only_risk: false
+      lookahead_risk: medium_requires_decision_time_filter
+      timestamp_model_risk: true
+      reconstruction_risk: false
+    fail_closed_rule: exclude full-advisory replay row when manual review/config visibility proof is missing
+    repair_strategy: add append-only review/config manifest with effective_as_of and recorded_at
+    owner: research_governance
+    last_review_date: "2026-06-21"
+
+contracts:
+  trend_strength_indicator.trend.SPY.above_ma_100:
+    <<: *price_trend_risk
+  trend_strength_indicator.trend.SPY.above_ma_200:
+    <<: *price_trend_risk
+  trend_strength_indicator.trend.QQQ.above_ma_100:
+    <<: *price_trend_risk
+  trend_strength_indicator.trend.QQQ.above_ma_200:
+    <<: *price_trend_risk
+  trend_strength_indicator.trend.SMH_SPY.relative_strength_return_20d:
+    <<: *price_trend_risk
+  fundamental_quality_indicator.fundamentals.AI_CORE_MEDIAN.gross_margin_quarterly_median:
+    <<: *sec_edgar_fundamental
+  fundamental_quality_indicator.fundamentals.AI_CORE_MEDIAN.operating_margin_quarterly_median:
+    <<: *sec_edgar_fundamental
+  fundamental_quality_indicator.fundamentals.AI_CORE_MEDIAN.research_and_development_intensity_quarterly_median:
+    <<: *sec_edgar_fundamental
+  macro_liquidity_indicator.macro_liquidity.DGS10.rate_change_20d:
+    <<: *macro_calendar
+  macro_liquidity_indicator.macro_liquidity.DGS2.rate_change_20d:
+    <<: *macro_calendar
+  macro_liquidity_indicator.macro_liquidity.DTWEXBGS.return_20d:
+    <<: *macro_calendar
+  market_stress_indicator.risk_sentiment.VIX.vix_current:
+    <<: *price_trend_risk
+  market_stress_indicator.risk_sentiment.VIX.vix_percentile_252:
+    <<: *price_trend_risk
+  market_stress_indicator.risk_sentiment.VIX.return_5d:
+    <<: *price_trend_risk
+  valuation_crowding_indicator.valuation.AI_CORE_MEDIAN.valuation_percentile:
+    <<: *valuation_snapshot
+  valuation_crowding_indicator.valuation.AI_CORE.overheated_snapshot_ratio:
+    <<: *valuation_snapshot
+  policy_geopolitics_risk_indicator.POLICY_GEOPOLITICS.active_or_watch_l3_count.count:
+    <<: *macro_calendar
+  policy_geopolitics_risk_indicator.POLICY_GEOPOLITICS.active_or_watch_l2_count.count:
+    <<: *macro_calendar
+  policy_geopolitics_risk_indicator.POLICY_GEOPOLITICS.minimum_exposure_multiplier.multiplier:
+    <<: *macro_calendar
+  confidence_reliability_indicator.confidence.score_components.source_type_confidence:
+    <<: *manual_review
+  confidence_reliability_indicator.confidence.manual_review.failure_or_warning:
+    <<: *manual_review
+  data_quality_gate_indicator.data_quality.cached_market_macro_data.validate_data_status:
+    <<: *manual_review
+    feature_family: data_quality
+    source:
+      - aits_validate_data
+      - cache_catalog
+      - data_refresh_audit
+    fail_closed_rule: run aits validate-data first and stop on failure
+    repair_strategy: repair cached market/macro data quality gate before any downstream report
+    owner: data_governance
+  thesis_manual_review_indicator.thesis.trade_theses.validation_status:
+    <<: *manual_review
+    source:
+      - trade_theses
+  portfolio_limit_indicator.portfolio.max_total_ai_exposure.configured_limit:
+    <<: *manual_review
+    feature_family: configuration
+    source:
+      - portfolio_positions_snapshot
+      - portfolio_limit_config
+  portfolio_limit_indicator.portfolio.concentration.ai_exposure_bucket:
+    <<: *manual_review
+    feature_family: configuration
+    source:
+      - portfolio_positions_snapshot
+      - portfolio_limit_config
+  execution_deadband_indicator.execution.position_change.minimum_action_delta:
+    <<: *manual_review
+    feature_family: configuration
+    source:
+      - scoring_rules_config
+      - execution_policy_config

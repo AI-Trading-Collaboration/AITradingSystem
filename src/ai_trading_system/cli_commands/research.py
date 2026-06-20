@@ -7,11 +7,13 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from ai_trading_system.feature_availability import DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH
 from ai_trading_system.indicator_research import (
     DEFAULT_INDICATOR_OUTPUT_ROOT,
     DEFAULT_INDICATOR_REGISTRY_PATH,
     DEFAULT_MASKING_ABLATION_CAP_RATIO,
     DEFAULT_MASKING_OUTCOME_TICKER,
+    DEFAULT_PIT_FEATURE_CONTRACT_REGISTRY_PATH,
     DEFAULT_THRESHOLD_REGISTRY_PATH,
     IndicatorResearchError,
     build_backtest_trace_bridge,
@@ -36,6 +38,7 @@ from ai_trading_system.indicator_research import (
     build_masking_casebook,
     build_multi_stage_weight_trace_contract,
     build_ontology_payload,
+    build_pit_source_readiness_audit,
     build_threshold_calibration_followup_plan,
     build_threshold_calibration_report,
     build_threshold_prioritization_report,
@@ -738,6 +741,130 @@ def indicator_dynamic_trend_full_advisory_expansion_command(
         payload,
         paths,
     )
+
+
+@indicators_app.command("pit-source-readiness-audit")
+def indicator_pit_source_readiness_audit_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", help="Indicator research registry 路径。"),
+    ] = DEFAULT_INDICATOR_REGISTRY_PATH,
+    feature_availability_config_path: Annotated[
+        Path,
+        typer.Option("--feature-availability-config", help="PIT feature availability catalog。"),
+    ] = DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    pit_contract_registry_path: Annotated[
+        Path,
+        typer.Option(
+            "--pit-contract-registry", help="PIT feature availability contract registry。"
+        ),
+    ] = DEFAULT_PIT_FEATURE_CONTRACT_REGISTRY_PATH,
+    trace_path: Annotated[
+        Path | None,
+        typer.Option("--trace-path", help="可选 historical/replay multi-stage trace JSON。"),
+    ] = None,
+    blocked_dates_source_path: Annotated[
+        Path | None,
+        typer.Option("--blocked-dates-source", help="可选 blocked-date source artifact JSON。"),
+    ] = None,
+    date_range: Annotated[
+        str | None,
+        typer.Option("--date-range", help="可选日期区间 START:END 或 START..END。"),
+    ] = None,
+    gate_audit_root: Annotated[
+        Path | None,
+        typer.Option("--gate-audit-root", help="historical gate audit 输出根目录。"),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        typer.Option("--start-date", help="可选 historical trace 起始日期 YYYY-MM-DD。"),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        typer.Option("--end-date", help="可选 historical trace 结束日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_start: Annotated[
+        str | None,
+        typer.Option("--event-window-start", help="可选事件窗口起始日期 YYYY-MM-DD。"),
+    ] = None,
+    event_window_end: Annotated[
+        str | None,
+        typer.Option("--event-window-end", help="可选事件窗口结束日期 YYYY-MM-DD。"),
+    ] = None,
+    asset_universe: Annotated[
+        str | None,
+        typer.Option("--asset-universe", help="可选资产集合，逗号分隔。"),
+    ] = None,
+    feature_family: Annotated[
+        str | None,
+        typer.Option("--feature-family", help="可选 PIT feature family 过滤。"),
+    ] = None,
+    include_sec_edgar: Annotated[
+        bool,
+        typer.Option(
+            "--include-sec-edgar/--exclude-sec-edgar", help="是否包含 SEC/EDGAR PIT features。"
+        ),
+    ] = True,
+    include_fundamental: Annotated[
+        bool,
+        typer.Option(
+            "--include-fundamental/--exclude-fundamental",
+            help="是否包含 fundamental / valuation features。",
+        ),
+    ] = True,
+    include_macro: Annotated[
+        bool,
+        typer.Option(
+            "--include-macro/--exclude-macro", help="是否包含 macro / calendar features。"
+        ),
+    ] = True,
+    include_price: Annotated[
+        bool,
+        typer.Option(
+            "--include-price/--exclude-price",
+            help="是否包含 price / volume / volatility features。",
+        ),
+    ] = True,
+    include_trend_risk: Annotated[
+        bool,
+        typer.Option(
+            "--include-trend-risk/--exclude-trend-risk", help="是否包含 trend / risk features。"
+        ),
+    ] = True,
+    output_root: Annotated[
+        Path,
+        typer.Option("--output-root", help="Indicator research 输出目录。"),
+    ] = DEFAULT_INDICATOR_OUTPUT_ROOT,
+) -> None:
+    """输出 TRADING-702 PIT data source readiness audit。"""
+    payload = _build_indicator_payload(
+        lambda: build_pit_source_readiness_audit(
+            registry_path=registry_path,
+            feature_availability_config_path=feature_availability_config_path,
+            pit_contract_registry_path=pit_contract_registry_path,
+            gate_audit_root=gate_audit_root,
+            trace_path=trace_path,
+            blocked_dates_source_path=blocked_dates_source_path,
+            date_range=date_range,
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+            feature_family=feature_family,
+            include_sec_edgar=include_sec_edgar,
+            include_fundamental=include_fundamental,
+            include_macro=include_macro,
+            include_price=include_price,
+            include_trend_risk=include_trend_risk,
+        )
+    )
+    paths = write_indicator_artifact_pair(
+        payload,
+        output_root=output_root,
+        artifact_id="pit_source_readiness_audit",
+    )
+    _print_indicator_artifact("PIT source readiness audit", payload, paths)
 
 
 @indicators_app.command("graph")

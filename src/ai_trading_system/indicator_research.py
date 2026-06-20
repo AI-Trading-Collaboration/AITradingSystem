@@ -20,6 +20,7 @@ from ai_trading_system.config import (
     load_market_regimes,
     load_scoring_rules,
 )
+from ai_trading_system.feature_availability import DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = "1.0"
@@ -28,6 +29,9 @@ DEFAULT_INDICATOR_REGISTRY_PATH = (
     PROJECT_ROOT / "config" / "research" / "indicator_research_registry.yaml"
 )
 DEFAULT_THRESHOLD_REGISTRY_PATH = PROJECT_ROOT / "config" / "research" / "threshold_registry.yaml"
+DEFAULT_PIT_FEATURE_CONTRACT_REGISTRY_PATH = (
+    PROJECT_ROOT / "config" / "research" / "pit_feature_availability_contracts.yaml"
+)
 DEFAULT_INDICATOR_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_indicators"
 DEFAULT_DAILY_INDICATOR_TRACE_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "reports"
 DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH = (
@@ -131,6 +135,24 @@ GATE_ROOT_CAUSE_CLASSES = (
     "replay_config_issue",
     "lineage_manifest_missing",
 )
+PIT_SOURCE_READINESS_REASON_CLASSES = (
+    "true_not_available_before_decision_time",
+    "availability_timestamp_missing",
+    "timestamp_model_too_conservative",
+    "source_snapshot_missing",
+    "reconstruction_gap",
+    "lineage_manifest_missing",
+    "replay_config_issue",
+    "vendor_current_view_only",
+)
+PIT_SOURCE_REPAIRABLE_REASON_CLASSES = {
+    "availability_timestamp_missing",
+    "timestamp_model_too_conservative",
+    "source_snapshot_missing",
+    "reconstruction_gap",
+    "lineage_manifest_missing",
+    "replay_config_issue",
+}
 DEFAULT_EVENT_WINDOW_CATALOG = (
     {
         "event_window_id": "strong_trend_up",
@@ -1319,6 +1341,10 @@ def write_indicator_validation_pack_stability_report(
         "dynamic_trend_full_advisory_expansion_repeatable": (
             first_projection["dynamic_trend_full_advisory_expansion_summary"]
             == second_projection["dynamic_trend_full_advisory_expansion_summary"]
+        ),
+        "pit_source_readiness_repeatable": (
+            first_projection["pit_source_readiness_summary"]
+            == second_projection["pit_source_readiness_summary"]
         ),
     }
     stable = all(stable_fields.values())
@@ -3736,6 +3762,152 @@ def build_dynamic_trend_full_advisory_expansion_report(
     )
 
 
+def build_pit_source_readiness_audit(
+    *,
+    registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
+    feature_availability_config_path: Path = DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    pit_contract_registry_path: Path = DEFAULT_PIT_FEATURE_CONTRACT_REGISTRY_PATH,
+    gate_audit_root: Path | None = None,
+    trace_path: Path | None = None,
+    blocked_dates_source_path: Path | None = None,
+    date_range: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    event_window_start: str | None = None,
+    event_window_end: str | None = None,
+    asset_universe: str | None = None,
+    feature_family: str | None = None,
+    include_sec_edgar: bool = True,
+    include_fundamental: bool = True,
+    include_macro: bool = True,
+    include_price: bool = True,
+    include_trend_risk: bool = True,
+) -> dict[str, Any]:
+    start_date, end_date = _pit_apply_date_range(
+        date_range,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    registry = load_indicator_registry(registry_path)
+    trace_rows = _filter_trace_rows(
+        _read_trace_rows(trace_path),
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    availability = _gate_availability_records(
+        gate_audit_root=gate_audit_root,
+        trace_path=trace_path,
+        trace_rows=trace_rows,
+        start_date=start_date,
+        end_date=end_date,
+        event_window_start=event_window_start,
+        event_window_end=event_window_end,
+        asset_universe=asset_universe,
+    )
+    blocked_source_dates = _pit_blocked_dates_from_source(blocked_dates_source_path)
+    if blocked_source_dates:
+        availability = [
+            record
+            for record in availability
+            if str(record.get("date") or "") in blocked_source_dates
+        ]
+    feature_rules = _pit_feature_availability_rules(feature_availability_config_path)
+    contract_registry = _pit_contract_registry_records(pit_contract_registry_path)
+    contracts = _pit_availability_contracts(
+        registry,
+        feature_rules,
+        contract_registry=contract_registry,
+    )
+    contracts = _pit_filter_contracts(
+        contracts,
+        feature_family=feature_family,
+        include_sec_edgar=include_sec_edgar,
+        include_fundamental=include_fundamental,
+        include_macro=include_macro,
+        include_price=include_price,
+        include_trend_risk=include_trend_risk,
+    )
+    reclassification = _pit_blocked_date_reclassification(
+        availability,
+        gate_audit_root=gate_audit_root,
+    )
+    feature_inventory = _pit_sensitive_feature_inventory(registry, contracts)
+    recommendations = _pit_source_readiness_recommendations(reclassification)
+    summary = _pit_source_readiness_summary(
+        reclassification,
+        contracts=contracts,
+        recommendations=recommendations,
+    )
+    issues = _pit_source_readiness_issues(summary)
+    return _base_payload(
+        registry,
+        report_type="pit_source_readiness_audit",
+        status="PASS_WITH_WARNINGS" if summary["total_blocked_dates"] else "PASS",
+        issues=issues,
+        summary=summary,
+        filters=_trace_filter_payload(
+            start_date=start_date,
+            end_date=end_date,
+            event_window_start=event_window_start,
+            event_window_end=event_window_end,
+            asset_universe=asset_universe,
+        ),
+        date_range=date_range,
+        feature_availability_config_path=str(feature_availability_config_path),
+        pit_contract_registry_path=str(pit_contract_registry_path),
+        gate_audit_root=None if gate_audit_root is None else str(gate_audit_root),
+        source_trace_path=None if trace_path is None else str(trace_path),
+        blocked_dates_source_path=(
+            None if blocked_dates_source_path is None else str(blocked_dates_source_path)
+        ),
+        feature_family_filter=feature_family,
+        include_filters={
+            "include_sec_edgar": include_sec_edgar,
+            "include_fundamental": include_fundamental,
+            "include_macro": include_macro,
+            "include_price": include_price,
+            "include_trend_risk": include_trend_risk,
+        },
+        pit_sensitive_feature_inventory=feature_inventory,
+        pit_availability_contracts=contracts,
+        blocked_date_reclassification=reclassification,
+        next_recommendations=recommendations,
+        allowed_repair_conditions={
+            "available_time_lte_decision_time": True,
+            "as_of_snapshot_reproducible": True,
+            "trace_manifest_proven": True,
+            "production_gate_relaxed": False,
+            "future_data_for_signal_allowed": False,
+        },
+        promotion_gate_allowed=False,
+        production_weight_change_allowed=False,
+        paper_shadow_change_allowed=False,
+        production_effect="none",
+        safety_boundary={
+            **dict(registry.safety_boundary),
+            "promotion_gate_allowed": False,
+            "production_weight_change_allowed": False,
+            "paper_shadow_change_allowed": False,
+            "production_gate_relaxed": False,
+        },
+        reader_brief={
+            "key_result": "PIT_SOURCE_READINESS_AUDIT_VALIDATION_ONLY",
+            "total_blocked_dates": summary["total_blocked_dates"],
+            "blocked_by_reason_class": summary["blocked_by_reason_class"],
+            "expected_full_advisory_case_gain_if_repaired": summary[
+                "expected_full_advisory_case_gain_if_repaired"
+            ],
+            "next_action": (
+                "repair only timestamp/manifest/source gaps that preserve PIT proof; "
+                "maintain fail-closed for true PIT limitations"
+            ),
+        },
+    )
+
+
 def build_lineage_manifest_repair_report(
     *,
     registry_path: Path = DEFAULT_INDICATOR_REGISTRY_PATH,
@@ -4462,6 +4634,19 @@ def write_indicator_framework_validation_pack(
             dynamic_trend_full_advisory_expansion_payload,
         ),
         (
+            "pit_source_readiness_audit",
+            build_pit_source_readiness_audit(
+                registry_path=registry_path,
+                gate_audit_root=gate_audit_root,
+                trace_path=trace_path,
+                start_date=start_date,
+                end_date=end_date,
+                event_window_start=event_window_start,
+                event_window_end=event_window_end,
+                asset_universe=asset_universe,
+            ),
+        ),
+        (
             "indicator_dependency_graph",
             build_dependency_graph(registry_path=registry_path, trace_path=trace_path),
         ),
@@ -4754,6 +4939,10 @@ def write_indicator_framework_validation_pack(
         "dynamic_trend_full_advisory_expansion_report",
         {},
     ).get("summary", {})
+    pit_source_readiness_summary = artifact_payloads.get(
+        "pit_source_readiness_audit",
+        {},
+    ).get("summary", {})
     status = (
         "INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1_BLOCKED"
         if blocking
@@ -4780,6 +4969,7 @@ def write_indicator_framework_validation_pack(
             "dynamic_trend_full_advisory_expansion_summary": (
                 dynamic_trend_full_advisory_expansion_summary
             ),
+            "pit_source_readiness_summary": pit_source_readiness_summary,
             "no_parameter_mutation": True,
             "no_paper_shadow_live_broker_order_official_weights": True,
             "production_effect": "none",
@@ -4812,6 +5002,7 @@ def write_indicator_framework_validation_pack(
                 "check_id": "dynamic_trend_full_advisory_expansion_report",
                 "status": "PASS_WITH_WARNINGS",
             },
+            {"check_id": "pit_source_readiness_audit", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "dependency_graph", "status": "PASS_WITH_WARNINGS"},
             {"check_id": "multi_stage_trace_contract", "status": "PASS"},
             {"check_id": "mapping_registry", "status": "PASS_WITH_WARNINGS"},
@@ -8536,6 +8727,940 @@ def _dynamic_trend_full_advisory_expansion_issues(
     return issues
 
 
+def _pit_apply_date_range(
+    date_range: str | None,
+    *,
+    start_date: str | None,
+    end_date: str | None,
+) -> tuple[str | None, str | None]:
+    if not date_range or start_date or end_date:
+        return start_date, end_date
+    normalized = date_range.replace("..", ":").replace(",", ":")
+    parts = [part.strip() for part in normalized.split(":") if part.strip()]
+    if len(parts) != 2:
+        raise IndicatorResearchError("--date-range must be START:END or START..END")
+    return parts[0], parts[1]
+
+
+def _pit_blocked_dates_from_source(path: Path | None) -> set[str]:
+    if path is None or not path.exists():
+        return set()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    dates: set[str] = set()
+    for key in (
+        "blocked_date_reclassification",
+        "date_expansion_audit",
+        "blocked_dates",
+    ):
+        rows = payload.get(key, [])
+        if isinstance(rows, Mapping):
+            rows = rows.values()
+        if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+            continue
+        for row in rows:
+            if isinstance(row, Mapping):
+                if row.get("full_advisory_trace_eligible") is True:
+                    continue
+                row_date = str(row.get("date") or row.get("as_of_date") or "")
+            else:
+                row_date = str(row or "")
+            if row_date:
+                dates.add(row_date)
+    return dates
+
+
+def _pit_contract_registry_records(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    try:
+        raw = safe_load_yaml_path(path) or {}
+    except (OSError, TypeError, ValueError):
+        return {}
+    contracts = raw.get("contracts", {})
+    parsed: dict[str, dict[str, Any]] = {}
+    if isinstance(contracts, Mapping):
+        iterable = [
+            {
+                "feature_id": str(feature_id),
+                **(dict(contract) if isinstance(contract, Mapping) else {}),
+            }
+            for feature_id, contract in contracts.items()
+        ]
+    elif isinstance(contracts, Sequence) and not isinstance(contracts, (str, bytes)):
+        iterable = [dict(item) for item in contracts if isinstance(item, Mapping)]
+    else:
+        iterable = []
+    for item in iterable:
+        feature_id = str(item.get("feature_id") or "")
+        if not feature_id:
+            continue
+        parsed[feature_id] = item
+    return parsed
+
+
+def _pit_filter_contracts(
+    contracts: Sequence[Mapping[str, Any]],
+    *,
+    feature_family: str | None,
+    include_sec_edgar: bool,
+    include_fundamental: bool,
+    include_macro: bool,
+    include_price: bool,
+    include_trend_risk: bool,
+) -> list[dict[str, Any]]:
+    requested = None if feature_family is None else feature_family.strip().lower()
+    output: list[dict[str, Any]] = []
+    for contract in contracts:
+        family = str(contract.get("feature_family") or contract.get("feature_group") or "").lower()
+        group = str(contract.get("feature_group") or "").lower()
+        if requested and requested not in {family, group}:
+            continue
+        if not include_sec_edgar and group == "sec_edgar_reconstructed_pit_features":
+            continue
+        if not include_fundamental and group == "fundamental_valuation_features":
+            continue
+        if not include_macro and group == "macro_calendar_event_features":
+            continue
+        if not include_price and family == "price":
+            continue
+        if not include_trend_risk and group == "trend_risk_on_risk_off_features":
+            continue
+        output.append(dict(contract))
+    return output
+
+
+def _pit_feature_availability_rules(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    try:
+        raw = safe_load_yaml_path(path) or {}
+    except (OSError, TypeError, ValueError):
+        return {}
+    rules = raw.get("rules", [])
+    if not isinstance(rules, Sequence) or isinstance(rules, (str, bytes)):
+        return {}
+    parsed: dict[str, dict[str, Any]] = {}
+    for item in rules:
+        if not isinstance(item, Mapping):
+            continue
+        rule_id = str(item.get("rule_id") or "")
+        if not rule_id:
+            continue
+        parsed[rule_id] = {
+            "rule_id": rule_id,
+            "family": str(item.get("family") or ""),
+            "label": str(item.get("label") or ""),
+            "sources": [str(source) for source in item.get("sources", [])],
+            "raw_event_time": str(item.get("event_time") or ""),
+            "release_time": str(item.get("source_published_at") or ""),
+            "accepted_time": _pit_rule_accepted_time(rule_id, item),
+            "available_time": str(item.get("available_time") or ""),
+            "ingestion_time": _pit_rule_ingestion_time(rule_id, item),
+            "decision_time": str(item.get("decision_time") or ""),
+            "revision_policy": str(item.get("notes") or ""),
+            "missing_available_time_policy": str(item.get("missing_available_time_policy") or ""),
+            "minimum_backtest_grade": str(item.get("minimum_backtest_grade") or ""),
+        }
+    return parsed
+
+
+def _pit_rule_accepted_time(rule_id: str, item: Mapping[str, Any]) -> str:
+    if rule_id == "sec_fundamentals_filing":
+        return "SEC accepted_time or official IR filed_date"
+    release_time = str(item.get("source_published_at") or "")
+    return release_time or "not_applicable"
+
+
+def _pit_rule_ingestion_time(rule_id: str, item: Mapping[str, Any]) -> str:
+    available = str(item.get("available_time") or "")
+    if any(token in available.lower() for token in ("captured_at", "downloaded_at", "ingested_at")):
+        return available
+    if rule_id == "sec_fundamentals_filing":
+        return "sec_pit reconstruction ingestion manifest / max_input_available_time_utc"
+    return "source ingestion manifest required for replay proof"
+
+
+def _pit_availability_contracts(
+    registry: IndicatorResearchRegistry,
+    feature_rules: Mapping[str, Mapping[str, Any]],
+    *,
+    contract_registry: Mapping[str, Mapping[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    contract_registry = contract_registry or {}
+    contracts: list[dict[str, Any]] = []
+    for indicator in registry.indicators:
+        for feature in indicator.source_features:
+            rule_id = _pit_rule_for_source_feature(indicator, feature)
+            rule = feature_rules.get(rule_id, {})
+            feature_id = _pit_feature_id(indicator, feature)
+            derived = {
+                "feature_id": feature_id,
+                "indicator_id": indicator.indicator_id,
+                "feature_group": _pit_feature_group(indicator, feature, rule_id),
+                "feature_family": _pit_feature_family(feature, rule_id),
+                "category": feature.category,
+                "subject": feature.subject,
+                "feature": feature.feature,
+                "source": list(rule.get("sources", [])) or _pit_fallback_sources(feature),
+                "current_status": "DERIVED_BASELINE_REVIEW_REQUIRED",
+                "pit_sensitive": True,
+                "required_for_full_advisory": indicator.used_in_daily_report,
+                "required_for_component_validation": indicator.affects_signal,
+                "raw_event_time": rule.get("raw_event_time") or "source event/as_of time",
+                "release_time": rule.get("release_time") or "source release time required",
+                "accepted_time": rule.get("accepted_time") or "not_applicable",
+                "available_time": rule.get("available_time")
+                or indicator.data_gate.get("lookahead", "AVAILABLE_TIME_REQUIRED"),
+                "ingestion_time": rule.get("ingestion_time") or "ingestion manifest required",
+                "decision_time": rule.get("decision_time") or "score/backtest signal_date",
+                "revision_policy": indicator.data_gate.get("revision")
+                or rule.get("revision_policy")
+                or "revision policy required",
+                "as_of_snapshot_available": _pit_as_of_snapshot_available(rule_id, feature),
+                "current_view_only_risk": _pit_current_view_only_risk(rule_id, feature),
+                "lookahead_risk": _pit_lookahead_risk(rule_id, indicator),
+                "fail_closed_rule": _pit_fail_closed_rule(rule_id, indicator, rule),
+                "repair_strategy": "define reviewed PIT contract and rerun readiness audit",
+                "owner": indicator.owner,
+                "last_review_date": "",
+                "production_effect": "none",
+                "promotion_gate_allowed": False,
+            }
+            contracts.append(
+                _pit_merge_availability_contract(
+                    derived,
+                    contract_registry.get(feature_id, {}),
+                )
+            )
+    return sorted(contracts, key=lambda item: str(item["feature_id"]))
+
+
+def _pit_merge_availability_contract(
+    derived: Mapping[str, Any],
+    reviewed: Mapping[str, Any],
+) -> dict[str, Any]:
+    time_fields = reviewed.get("time_fields", {}) if isinstance(reviewed, Mapping) else {}
+    if not isinstance(time_fields, Mapping):
+        time_fields = {}
+    revision_policy = reviewed.get("revision_policy", {}) if isinstance(reviewed, Mapping) else {}
+    snapshot_policy = reviewed.get("snapshot_policy", {}) if isinstance(reviewed, Mapping) else {}
+    risk_flags = reviewed.get("risk_flags", {}) if isinstance(reviewed, Mapping) else {}
+    if not isinstance(revision_policy, Mapping):
+        revision_policy = {"revision_handling": str(revision_policy)}
+    if not isinstance(snapshot_policy, Mapping):
+        snapshot_policy = {}
+    if not isinstance(risk_flags, Mapping):
+        risk_flags = {}
+    source = (
+        reviewed.get("source", derived.get("source", [])) if reviewed else derived.get("source", [])
+    )
+    raw_event_time = str(time_fields.get("raw_event_time") or derived.get("raw_event_time") or "")
+    release_time = str(time_fields.get("release_time") or derived.get("release_time") or "")
+    accepted_time = str(time_fields.get("accepted_time") or derived.get("accepted_time") or "")
+    available_time = str(time_fields.get("available_time") or derived.get("available_time") or "")
+    ingestion_time = str(time_fields.get("ingestion_time") or derived.get("ingestion_time") or "")
+    decision_time = str(time_fields.get("decision_time") or derived.get("decision_time") or "")
+    as_of_snapshot_available = _pit_bool(
+        snapshot_policy.get("as_of_snapshot_available"),
+        bool(derived.get("as_of_snapshot_available")),
+    )
+    current_view_only_risk = _pit_bool(
+        risk_flags.get("current_view_only_risk"),
+        bool(derived.get("current_view_only_risk")),
+    )
+    lookahead_risk = risk_flags.get("lookahead_risk", derived.get("lookahead_risk"))
+    merged = {
+        **dict(derived),
+        **{key: value for key, value in reviewed.items() if key not in {"time_fields"}},
+        "source": _pit_list(source),
+        "current_status": str(
+            reviewed.get("current_status")
+            or (
+                "REVIEWED_BASELINE"
+                if reviewed
+                else derived.get("current_status", "DERIVED_BASELINE_REVIEW_REQUIRED")
+            )
+        ),
+        "missing_availability_contract": False,
+        "pit_sensitive": _pit_bool(reviewed.get("pit_sensitive"), True),
+        "required_for_full_advisory": _pit_bool(
+            reviewed.get("required_for_full_advisory"),
+            bool(derived.get("required_for_full_advisory")),
+        ),
+        "required_for_component_validation": _pit_bool(
+            reviewed.get("required_for_component_validation"),
+            bool(derived.get("required_for_component_validation")),
+        ),
+        "time_fields": {
+            "raw_event_time": raw_event_time,
+            "release_time": release_time,
+            "accepted_time": accepted_time,
+            "available_time": available_time,
+            "ingestion_time": ingestion_time,
+            "decision_time": decision_time,
+        },
+        "raw_event_time": raw_event_time,
+        "release_time": release_time,
+        "accepted_time": accepted_time,
+        "available_time": available_time,
+        "ingestion_time": ingestion_time,
+        "decision_time": decision_time,
+        "revision_policy": {
+            "revision_expected": _pit_bool(revision_policy.get("revision_expected"), False),
+            "as_reported_available": _pit_bool(
+                revision_policy.get("as_reported_available"),
+                not current_view_only_risk,
+            ),
+            "revised_current_view_available": _pit_bool(
+                revision_policy.get("revised_current_view_available"),
+                current_view_only_risk,
+            ),
+            "revision_handling": str(
+                revision_policy.get("revision_handling")
+                or derived.get("revision_policy")
+                or "revision policy required"
+            ),
+        },
+        "snapshot_policy": {
+            "as_of_snapshot_available": as_of_snapshot_available,
+            "snapshot_manifest_required": _pit_bool(
+                snapshot_policy.get("snapshot_manifest_required"),
+                True,
+            ),
+            "source_manifest_required": _pit_bool(
+                snapshot_policy.get("source_manifest_required"),
+                True,
+            ),
+        },
+        "as_of_snapshot_available": as_of_snapshot_available,
+        "risk_flags": {
+            "current_view_only_risk": current_view_only_risk,
+            "lookahead_risk": str(lookahead_risk or ""),
+            "timestamp_model_risk": _pit_bool(
+                risk_flags.get("timestamp_model_risk"),
+                "available_time" in str(lookahead_risk or "").lower(),
+            ),
+            "reconstruction_risk": _pit_bool(
+                risk_flags.get("reconstruction_risk"),
+                str(derived.get("feature_group")) == "sec_edgar_reconstructed_pit_features",
+            ),
+        },
+        "current_view_only_risk": current_view_only_risk,
+        "lookahead_risk": str(lookahead_risk or ""),
+        "fail_closed_rule": str(
+            reviewed.get("fail_closed_rule") or derived.get("fail_closed_rule") or ""
+        ),
+        "repair_strategy": str(
+            reviewed.get("repair_strategy") or derived.get("repair_strategy") or ""
+        ),
+        "owner": str(reviewed.get("owner") or derived.get("owner") or ""),
+        "last_review_date": str(
+            reviewed.get("last_review_date") or derived.get("last_review_date") or ""
+        ),
+        "production_effect": "none",
+        "promotion_gate_allowed": False,
+    }
+    return merged
+
+
+def _pit_bool(value: Any, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
+
+
+def _pit_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [str(item) for item in value]
+    if value is None:
+        return []
+    return [str(value)]
+
+
+def _pit_rule_for_source_feature(indicator: IndicatorSpec, feature: SourceFeature) -> str:
+    category = feature.category.lower()
+    indicator_id = indicator.indicator_id.lower()
+    if category in {"fundamentals", "fundamental"} or "fundamental" in indicator_id:
+        return "sec_fundamentals_filing"
+    if category in {"valuation", "crowding"}:
+        return "valuation_snapshots"
+    if category in {"macro_liquidity", "macro", "rates"}:
+        return "macro_rates_daily"
+    if category in {"policy_geopolitics", "risk_events", "news_evidence"}:
+        return "risk_event_occurrences"
+    if category in {"risk_sentiment", "volatility", "trend"}:
+        return "market_prices_daily"
+    if category == "data_quality":
+        return "data_quality_gate_dependency"
+    if category in {"confidence", "thesis", "portfolio", "execution"}:
+        return "market_evidence"
+    return "market_prices_daily"
+
+
+def _pit_feature_family(feature: SourceFeature, rule_id: str) -> str:
+    category = feature.category.lower()
+    if rule_id == "sec_fundamentals_filing":
+        return "sec_edgar"
+    if category in {"fundamentals", "fundamental", "valuation", "crowding"}:
+        return "fundamental"
+    if category in {"macro_liquidity", "macro", "rates", "policy_geopolitics", "risk_events"}:
+        return "macro"
+    if category in {"trend", "risk_sentiment", "volatility"}:
+        return "trend_risk"
+    if category == "data_quality":
+        return "data_quality"
+    if category in {"portfolio", "execution"}:
+        return "configuration"
+    return "manual_or_other"
+
+
+def _pit_feature_id(indicator: IndicatorSpec, feature: SourceFeature) -> str:
+    parts = (indicator.indicator_id, feature.category, feature.subject, feature.feature)
+    return ".".join(_slug_part(part) for part in parts if str(part))
+
+
+def _slug_part(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value).strip()).strip("_")
+
+
+def _pit_feature_group(
+    indicator: IndicatorSpec,
+    feature: SourceFeature,
+    rule_id: str,
+) -> str:
+    category = feature.category.lower()
+    if rule_id == "sec_fundamentals_filing":
+        return "sec_edgar_reconstructed_pit_features"
+    if category in {"fundamentals", "valuation", "crowding"}:
+        return "fundamental_valuation_features"
+    if category in {"macro_liquidity", "macro", "policy_geopolitics", "risk_events"}:
+        return "macro_calendar_event_features"
+    if category in {"trend", "risk_sentiment", "volatility"}:
+        return "trend_risk_on_risk_off_features"
+    if category == "data_quality":
+        return "data_quality_gate_dependencies"
+    return "other_pit_sensitive_features"
+
+
+def _pit_fallback_sources(feature: SourceFeature) -> list[str]:
+    category = feature.category.lower()
+    if category == "data_quality":
+        return ["aits_validate_data", "cache_catalog", "data_refresh_audit"]
+    if category == "portfolio":
+        return ["portfolio_positions_snapshot"]
+    if category == "thesis":
+        return ["trade_theses"]
+    return [category]
+
+
+def _pit_as_of_snapshot_available(rule_id: str, feature: SourceFeature) -> bool:
+    category = feature.category.lower()
+    if rule_id in {"market_prices_daily", "macro_rates_daily", "sec_fundamentals_filing"}:
+        return True
+    if category in {"data_quality", "thesis", "portfolio", "execution"}:
+        return True
+    return False
+
+
+def _pit_current_view_only_risk(rule_id: str, feature: SourceFeature) -> bool:
+    return rule_id == "valuation_snapshots" or feature.category.lower() in {"valuation", "crowding"}
+
+
+def _pit_lookahead_risk(rule_id: str, indicator: IndicatorSpec) -> str:
+    if rule_id in {"sec_fundamentals_filing", "valuation_snapshots", "risk_event_occurrences"}:
+        return "high_without_available_time_and_as_of_snapshot"
+    if indicator.data_gate.get("lookahead") in {"NOT_APPLICABLE", "REQUIRED_GATE"}:
+        return "low_if_gate_manifest_present"
+    return "medium_requires_decision_time_filter"
+
+
+def _pit_fail_closed_rule(
+    rule_id: str,
+    indicator: IndicatorSpec,
+    rule: Mapping[str, Any],
+) -> str:
+    if indicator.indicator_id == "data_quality_gate_indicator":
+        return "run aits validate-data first and stop on failure"
+    if rule_id == "sec_fundamentals_filing":
+        return (
+            "exclude full-advisory replay row when available_time > decision_time or "
+            "SEC lineage is missing"
+        )
+    if rule_id == "valuation_snapshots":
+        return (
+            "downgrade to component diagnostic when PIT valuation snapshot or "
+            "captured_at proof is missing"
+        )
+    policy = str(rule.get("missing_available_time_policy") or "fail_closed_without_available_time")
+    return f"{policy}; no full-advisory equivalence without available_time <= decision_time"
+
+
+def _pit_sensitive_feature_inventory(
+    registry: IndicatorResearchRegistry,
+    contracts: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    indicators_by_id = {indicator.indicator_id: indicator for indicator in registry.indicators}
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for contract in contracts:
+        grouped[str(contract.get("feature_group") or "other_pit_sensitive_features")].append(
+            contract
+        )
+    inventory = []
+    for group, rows in sorted(grouped.items()):
+        indicator_ids = sorted({str(row.get("indicator_id") or "") for row in rows})
+        inventory.append(
+            {
+                "feature_group": group,
+                "feature_count": len(rows),
+                "indicator_ids": indicator_ids,
+                "affects_signal": any(
+                    indicators_by_id[item].affects_signal for item in indicator_ids
+                ),
+                "affects_weight": any(
+                    indicators_by_id[item].affects_weight for item in indicator_ids
+                ),
+                "feature_ids": sorted(str(row.get("feature_id") or "") for row in rows),
+                "production_effect": "none",
+            }
+        )
+    return inventory
+
+
+def _pit_blocked_date_reclassification(
+    availability: Sequence[Mapping[str, Any]],
+    *,
+    gate_audit_root: Path | None,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for record in availability:
+        row_date = str(record.get("date") or "")
+        if row_date and not record.get("full_advisory_trace_eligible"):
+            grouped[row_date].append(record)
+    rows = []
+    for row_date, records in sorted(grouped.items()):
+        detail = _feature_availability_report_detail(gate_audit_root, row_date)
+        reason_class = _pit_reclassified_reason_class(records, detail)
+        blocking_feature = _pit_blocking_feature(records, detail)
+        repairable = reason_class in PIT_SOURCE_REPAIRABLE_REASON_CLASSES
+        candidate_sources = _pit_candidate_data_sources(reason_class, blocking_feature)
+        case_count = len(records)
+        rows.append(
+            {
+                "date": row_date,
+                "case_count": case_count,
+                "asset_count": len({str(record.get("asset") or "") for record in records}),
+                "feature_id": blocking_feature["feature_id"],
+                "source": blocking_feature["source"],
+                "raw_gate_reason_class": sorted(
+                    {str(record.get("reason_class") or "UNKNOWN") for record in records}
+                ),
+                "refined_reason_class": reason_class,
+                "repairable_without_relaxing_gate": repairable,
+                "expected_full_advisory_case_gain_if_repaired": case_count if repairable else 0,
+                "candidate_data_source_needed": candidate_sources,
+                "next_recommendation": _pit_next_recommendation(reason_class),
+                "available_time_lte_decision_time_required": True,
+                "as_of_snapshot_required": True,
+                "trace_manifest_required": True,
+                "production_gate_relaxation_allowed": False,
+                "future_data_for_signal_allowed": False,
+                "feature_availability_status": str(records[0].get("feature_availability_status")),
+                "data_quality_status": str(records[0].get("data_quality_status")),
+                "source_check_status": detail.get("source_check_status_by_source", {}),
+                "promotion_gate_allowed": False,
+                "production_effect": "none",
+            }
+        )
+    return rows
+
+
+def _feature_availability_report_detail(
+    gate_audit_root: Path | None,
+    row_date: str,
+) -> dict[str, Any]:
+    path = (
+        None if gate_audit_root is None else gate_audit_root / row_date / "feature_availability.md"
+    )
+    if path is None or not path.exists():
+        return {
+            "path": None if path is None else str(path),
+            "rules": [],
+            "issues": [{"code": "feature_availability_report_missing", "source": ""}],
+            "source_checks": [],
+            "source_check_status_by_source": {},
+        }
+    text = path.read_text(encoding="utf-8")
+    issues = [
+        {
+            "severity": row.get("Severity", ""),
+            "code": row.get("Code", ""),
+            "rule": row.get("Rule", ""),
+            "source": row.get("Source", ""),
+            "message": row.get("说明", ""),
+        }
+        for row in _markdown_table_rows(text, ("Severity", "Code", "Rule", "Source", "说明"))
+    ]
+    source_checks = [
+        {
+            "source": row.get("Source", ""),
+            "status": row.get("状态", ""),
+            "row_count": _int_from_text(row.get("行数", "")),
+            "event_time_field": row.get("Event Time 字段", ""),
+            "available_time_field": row.get("Available Time 字段", ""),
+            "available_time_coverage": row.get("覆盖率", ""),
+            "future_available_time_count": _int_from_text(row.get("未来可见时间", "")),
+            "fallback": row.get("Fallback", ""),
+            "input": row.get("输入", ""),
+        }
+        for row in _markdown_table_rows(
+            text,
+            (
+                "Source",
+                "状态",
+                "行数",
+                "Event Time 字段",
+                "Available Time 字段",
+                "覆盖率",
+                "未来可见时间",
+                "Fallback",
+                "输入",
+            ),
+        )
+    ]
+    return {
+        "path": str(path),
+        "issues": issues,
+        "source_checks": source_checks,
+        "source_check_status_by_source": {
+            str(row.get("source") or ""): str(row.get("status") or "") for row in source_checks
+        },
+    }
+
+
+def _markdown_table_rows(text: str, headers: Sequence[str]) -> list[dict[str, str]]:
+    header_line = "| " + " | ".join(headers) + " |"
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip() != header_line:
+            continue
+        rows: list[dict[str, str]] = []
+        for row_line in lines[index + 2 :]:
+            stripped = row_line.strip()
+            if not stripped.startswith("|"):
+                break
+            cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            if len(cells) < len(headers):
+                continue
+            rows.append(dict(zip(headers, cells, strict=False)))
+        return rows
+    return []
+
+
+def _int_from_text(value: Any) -> int:
+    text = str(value or "")
+    match = re.search(r"-?\d+", text.replace(",", ""))
+    return 0 if match is None else int(match.group(0))
+
+
+def _pit_reclassified_reason_class(
+    records: Sequence[Mapping[str, Any]],
+    detail: Mapping[str, Any],
+) -> str:
+    raw_classes = {str(record.get("reason_class") or "") for record in records}
+    blocked_gates = {
+        str(gate) for record in records for gate in record.get("blocked_gates", []) if str(gate)
+    }
+    has_feature_gate = "feature_availability_gate" in blocked_gates
+    if not has_feature_gate and (
+        "lineage_manifest_missing" in raw_classes
+        or "historical_replay_lineage_manifest" in blocked_gates
+    ):
+        return "lineage_manifest_missing"
+    if not has_feature_gate and (
+        "replay_config_issue" in raw_classes or "historical_replay_trace" in blocked_gates
+    ):
+        return "replay_config_issue"
+    text = _pit_detail_text(records, detail)
+    if "current_view_only" in text or "current view only" in text:
+        return "vendor_current_view_only"
+                if "reconstruction_gap" in text or ("reconstruct" in text and "gap" in text):
+        return "reconstruction_gap"
+    if "report_missing" in text or "snapshot_missing" in text or "source_snapshot_missing" in text:
+        return "source_snapshot_missing"
+    if "missing_available_time" in text or "available_time_missing" in text:
+        return "availability_timestamp_missing"
+    source_checks = detail.get("source_checks", [])
+    if isinstance(source_checks, Sequence) and any(
+        isinstance(row, Mapping) and int(row.get("future_available_time_count") or 0) > 0
+        for row in source_checks
+    ):
+        return "true_not_available_before_decision_time"
+    if "available_time_after_decision_time" in text:
+        return "true_not_available_before_decision_time"
+    if any(token in text for token in ("timestamp", "available_time", "decision_time")):
+        return "timestamp_model_too_conservative"
+    if (
+        "lineage_manifest_missing" in raw_classes
+        or "historical_replay_lineage_manifest" in blocked_gates
+    ):
+        return "lineage_manifest_missing"
+    if "replay_config_issue" in raw_classes or "historical_replay_trace" in blocked_gates:
+        return "replay_config_issue"
+    return "source_snapshot_missing"
+
+
+def _pit_detail_text(
+    records: Sequence[Mapping[str, Any]],
+    detail: Mapping[str, Any],
+) -> str:
+    parts: list[str] = []
+    for record in records:
+        for key in (
+            "reason_if_not_full_eligible",
+            "missing_or_late_feature",
+            "feature_available_time",
+            "decision_time",
+        ):
+            parts.append(str(record.get(key) or ""))
+        for issue in record.get("feature_availability_fail_closed_reasons", []):
+            if isinstance(issue, Mapping):
+                parts.extend(
+                    str(issue.get(key) or "")
+                    for key in ("code", "rule_or_source", "source", "message")
+                )
+    for issue in detail.get("issues", []):
+        if isinstance(issue, Mapping):
+            parts.extend(str(issue.get(key) or "") for key in ("code", "rule", "source", "message"))
+    for check in detail.get("source_checks", []):
+        if isinstance(check, Mapping):
+            parts.extend(
+                str(check.get(key) or "")
+                for key in ("source", "status", "available_time_field", "fallback", "input")
+            )
+    return " ".join(parts).lower()
+
+
+def _pit_blocking_feature(
+    records: Sequence[Mapping[str, Any]],
+    detail: Mapping[str, Any],
+) -> dict[str, str]:
+    for issue in detail.get("issues", []):
+        if not isinstance(issue, Mapping):
+            continue
+        source = str(issue.get("source") or "")
+        rule = str(issue.get("rule") or "")
+        if source or rule:
+            return {"feature_id": rule or source or "UNKNOWN", "source": source or rule}
+    for record in records:
+        for issue in record.get("feature_availability_fail_closed_reasons", []):
+            if not isinstance(issue, Mapping):
+                continue
+            source = str(issue.get("source") or "")
+            rule = str(issue.get("rule_or_source") or "")
+            if source or rule:
+                return {"feature_id": rule or source or "UNKNOWN", "source": source or rule}
+    for check in detail.get("source_checks", []):
+        if isinstance(check, Mapping) and str(check.get("status") or "") == "FAIL":
+            source = str(check.get("source") or "UNKNOWN")
+            return {"feature_id": source, "source": source}
+    feature = next((str(record.get("missing_or_late_feature") or "") for record in records), "")
+    return {"feature_id": feature or "UNKNOWN", "source": feature or "UNKNOWN"}
+
+
+def _pit_candidate_data_sources(reason_class: str, feature: Mapping[str, str]) -> list[str]:
+    source = feature.get("source") or feature.get("feature_id") or "UNKNOWN"
+    if reason_class == "true_not_available_before_decision_time":
+        return []
+    if reason_class == "availability_timestamp_missing":
+        return [f"{source}: source feed with auditable available_time / accepted_time fields"]
+    if reason_class == "timestamp_model_too_conservative":
+        return [f"{source}: reviewed timestamp model with empirical release/ingestion proof"]
+    if reason_class == "source_snapshot_missing":
+        return [f"{source}: reproducible as-of snapshot archive and checksum manifest"]
+    if reason_class == "reconstruction_gap":
+        return [f"{source}: rebuilt PIT reconstruction with source lineage and accepted_time proof"]
+    if reason_class == "lineage_manifest_missing":
+        return [f"{source}: trace lineage manifest with production_equivalent=true"]
+    if reason_class == "replay_config_issue":
+        return [f"{source}: historical replay config that writes score_daily trace and manifest"]
+    if reason_class == "vendor_current_view_only":
+        return [
+            f"{source}: vendor PIT archive or internally captured forward-only snapshot history"
+        ]
+    return [f"{source}: PIT source investigation required"]
+
+
+def _pit_next_recommendation(reason_class: str) -> str:
+    if reason_class in {
+        "availability_timestamp_missing",
+        "timestamp_model_too_conservative",
+        "lineage_manifest_missing",
+        "replay_config_issue",
+    }:
+        return "fix_timestamp_or_manifest"
+    if reason_class in {
+        "source_snapshot_missing",
+        "reconstruction_gap",
+        "vendor_current_view_only",
+    }:
+        return "adopt_more_reliable_pit_source"
+    if reason_class == "true_not_available_before_decision_time":
+        return "maintain_fail_closed"
+    return "component_level_diagnostic_only"
+
+
+def _pit_source_readiness_recommendations(
+    reclassification: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in reclassification:
+        grouped[str(row.get("next_recommendation") or "component_level_diagnostic_only")].append(
+            row
+        )
+    recommendations = []
+    for recommendation, rows in sorted(grouped.items()):
+        recommendations.append(
+            {
+                "recommendation": recommendation,
+                "date_count": len({str(row.get("date") or "") for row in rows}),
+                "feature_ids": sorted({str(row.get("feature_id") or "") for row in rows}),
+                "candidate_data_source_needed": sorted(
+                    {
+                        str(source)
+                        for row in rows
+                        for source in row.get("candidate_data_source_needed", [])
+                        if str(source)
+                    }
+                ),
+                "production_gate_relaxation_allowed": False,
+                "production_effect": "none",
+            }
+        )
+    return recommendations
+
+
+def _pit_source_readiness_summary(
+    reclassification: Sequence[Mapping[str, Any]],
+    *,
+    contracts: Sequence[Mapping[str, Any]],
+    recommendations: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    blocked_by_feature: dict[str, int] = {}
+    blocked_by_reason_class: dict[str, int] = {}
+    candidate_sources: set[str] = set()
+    repairable_count = 0
+    true_pit_count = 0
+    expected_gain = 0
+    source_snapshot_missing_count = 0
+    for row in reclassification:
+        feature = str(row.get("feature_id") or "UNKNOWN")
+        reason = str(row.get("refined_reason_class") or "UNKNOWN")
+        blocked_by_feature[feature] = blocked_by_feature.get(feature, 0) + 1
+        blocked_by_reason_class[reason] = blocked_by_reason_class.get(reason, 0) + 1
+        if row.get("repairable_without_relaxing_gate"):
+            repairable_count += 1
+            expected_gain += int(row.get("expected_full_advisory_case_gain_if_repaired") or 0)
+        if reason == "true_not_available_before_decision_time":
+            true_pit_count += 1
+        if reason == "source_snapshot_missing":
+            source_snapshot_missing_count += 1
+        candidate_sources.update(str(item) for item in row.get("candidate_data_source_needed", []))
+    blocked_date_count = len({str(row.get("date") or "") for row in reclassification})
+    pit_sensitive_count = sum(1 for contract in contracts if contract.get("pit_sensitive"))
+    missing_contract_count = sum(
+        1 for contract in contracts if contract.get("missing_availability_contract")
+    )
+    return {
+        "pit_contract_count": len(contracts),
+        "pit_sensitive_feature_count": pit_sensitive_count,
+        "missing_availability_contract_count": missing_contract_count,
+        "total_blocked_dates": blocked_date_count,
+        "blocked_date_count": blocked_date_count,
+        "blocked_by_feature": dict(sorted(blocked_by_feature.items())),
+        "blocked_by_reason_class": dict(sorted(blocked_by_reason_class.items())),
+        "repairable_without_relaxing_gate_count": repairable_count,
+        "repairable_without_gate_relaxation_count": repairable_count,
+        "not_repairable_true_pit_limitation_count": true_pit_count,
+        "true_pit_limitation_count": true_pit_count,
+        "unknown_availability_count": source_snapshot_missing_count,
+        "source_snapshot_missing_count": blocked_by_reason_class.get("source_snapshot_missing", 0),
+        "availability_timestamp_missing_count": blocked_by_reason_class.get(
+            "availability_timestamp_missing",
+            0,
+        ),
+        "timestamp_model_issue_count": blocked_by_reason_class.get(
+            "timestamp_model_too_conservative",
+            0,
+        ),
+        "vendor_current_view_only_count": blocked_by_reason_class.get(
+            "vendor_current_view_only",
+            0,
+        ),
+        "candidate_data_source_needed": sorted(candidate_sources),
+        "expected_full_advisory_case_gain_if_repaired": expected_gain,
+        "pit_availability_contract_count": len(contracts),
+        "current_view_only_risk_contract_count": sum(
+            1 for contract in contracts if contract.get("current_view_only_risk")
+        ),
+        "next_recommendation_counts": {
+            str(item.get("recommendation")): int(item.get("date_count") or 0)
+            for item in recommendations
+        },
+        "production_effect": "none",
+        "lookahead_violation_count": 0,
+        "promotion_gate_allowed": False,
+        "paper_shadow_change_allowed": False,
+        "production_weight_change_allowed": False,
+        "data_quality_gate_relaxed": False,
+        "future_data_for_signal_allowed": False,
+        "validation_only": True,
+    }
+
+
+def _pit_source_readiness_issues(summary: Mapping[str, Any]) -> list[dict[str, Any]]:
+    issues = [
+        {
+            "severity": "info",
+            "issue_id": "pit_source_readiness_validation_only",
+            "message": (
+                "PIT source readiness audit is validation-only; it cannot relax data-quality, "
+                "feature availability, lineage, production-equivalent proof, promotion, "
+                "paper-shadow, production weight, or official weight gates."
+            ),
+        }
+    ]
+    if int(summary.get("not_repairable_true_pit_limitation_count") or 0) > 0:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "true_pit_limitation_must_fail_closed",
+                "message": (
+                    "Some blocked dates have feature available_time after decision_time; they "
+                    "must remain fail-closed and cannot be repaired by replay."
+                ),
+            }
+        )
+    if int(summary.get("repairable_without_relaxing_gate_count") or 0) > 0:
+        issues.append(
+            {
+                "severity": "warning",
+                "issue_id": "repairable_pit_source_gaps_exist",
+                "message": (
+                    "Some PIT source gaps may be repairable, but only with available_time <= "
+                    "decision_time, reproducible as-of snapshots, and trace manifest proof."
+                ),
+            }
+        )
+    return issues
+
+
 def _dynamic_trend_data_source_mode(cases: Sequence[Mapping[str, Any]]) -> str:
     if not cases:
         return "no_trace_cases"
@@ -10958,6 +12083,7 @@ def _read_gate_report_status(path: Path | None) -> dict[str, Any]:
             "severity": severity,
             "code": cells[1] if len(cells) > 1 else "",
             "rule_or_source": cells[2] if len(cells) > 2 else "",
+            "source": cells[3] if len(cells) > 3 else "",
             "message": cells[4] if len(cells) > 4 else cells[-1],
         }
         issues.append(issue)
@@ -15201,6 +16327,7 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "dynamic_trend_threshold_sensitivity_review",
         "dynamic_trend_bridge_consistency_audit",
         "dynamic_trend_full_advisory_expansion_report",
+        "pit_source_readiness_audit",
         "indicator_dependency_graph",
         "indicator_masking_and_dominance_audit_valuation_crowding",
         "valuation_crowding_pilot_validation_report",
@@ -15242,6 +16369,10 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
     dynamic_trend_full_advisory_expansion = _read_pack_artifact_json(
         artifacts,
         "dynamic_trend_full_advisory_expansion_report",
+    )
+    pit_source_readiness = _read_pack_artifact_json(
+        artifacts,
+        "pit_source_readiness_audit",
     )
     masking = _read_pack_artifact_json(
         artifacts,
@@ -15338,6 +16469,11 @@ def _validation_pack_stability_projection(pack: Mapping[str, Any]) -> dict[str, 
         "dynamic_trend_full_advisory_expansion_summary": (
             dynamic_trend_full_advisory_expansion.get("summary", {})
             if isinstance(dynamic_trend_full_advisory_expansion, Mapping)
+            else {}
+        ),
+        "pit_source_readiness_summary": (
+            pit_source_readiness.get("summary", {})
+            if isinstance(pit_source_readiness, Mapping)
             else {}
         ),
         "coverage_gap_unregistered": (
